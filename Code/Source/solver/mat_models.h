@@ -38,6 +38,10 @@
 
 #include "mat_fun.h"
 
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Dense"
+#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+
 namespace mat_models {
 
 void actv_strain(const ComMod& com_mod, const CepMod& cep_mod, const double gf, 
@@ -45,12 +49,11 @@ void actv_strain(const ComMod& com_mod, const CepMod& cep_mod, const double gf,
 
 void cc_to_voigt(const int nsd, const Tensor4<double>& CC, Array<double>& Dm);
 
+void voigt_to_cc(const int nsd, const Array<double>& Dm, Tensor4<double>& CC);
+
 void get_fib_stress(const ComMod& com_mod, const CepMod& cep_mod, const fibStrsType& Tfl, double& g);
 
 void get_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& lDmn, const Array<double>& F, const int nfd,
-    const Array<double>& fl, const double ya, Array<double>& S, Array<double>& Dm);
-
-void get_pk2cc_dev(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& lDmn, const Array<double>& F, const int nfd,
     const Array<double>& fl, const double ya, Array<double>& S, Array<double>& Dm, double& Ja);
 
 void get_pk2cc_shlc(const ComMod& com_mod, const dmnType& lDmn, const int nfd, const Array<double>& fNa0,
@@ -67,6 +70,14 @@ void get_svol_p(const ComMod& com_mod, const CepMod& cep_mod, const stModelType&
 void g_vol_pen(const ComMod& com_mod, const dmnType& lDmn, const double p, 
     double& ro, double& bt, double& dro, double& dbt, const double Ja);
 
+void get_visc_stress_pot(const double mu, const int eNoN, const Array<double>& Nx, const double vx, const double F,
+                        Array<double>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v);
+
+void get_visc_stress_newt(const double mu, const int eNoN, const Array<double>& Nx, const Array<double>& vx, const Array<double>& F,
+                        Array<double>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v);
+
+void get_visc_stress_and_tangent(const dmnType& lDmn, const int eNoN, const Array<double>& Nx, const  Array<double>& vx, const  Array<double>& F,
+                        Array<double>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v);
 };
 
 #endif

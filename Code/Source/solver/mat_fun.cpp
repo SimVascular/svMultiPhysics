@@ -30,12 +30,8 @@
 
 #include "mat_fun.h"
 
-/*
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
-*/
-
 #include "consts.h"
+
 #include "utils.h"
 
 #include <math.h>

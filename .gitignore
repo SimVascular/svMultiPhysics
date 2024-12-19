@@ -23,7 +23,7 @@ Documentation/html/
 
 # genBC files
 **/genBC/obj/
-**/genBC_svFSIplus/obj/
+**/genBC_svMultiPhysics/obj/
 genBC.exe
 AllData
 GenBC.int
