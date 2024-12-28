@@ -19,10 +19,11 @@ var searchData=
   ['fn_16',['fn',['../classmsh_type.html#a9c929b21d27ff353949f96f8df56d14f',1,'mshType::fN'],['../class_cep_mod.html#ab5fdf4316f4fc2049094b2bf04007554',1,'CepMod::fn']]],
   ['fnorm_17',['fNorm',['../classls_type.html#a222668a1cfbbb101310893855a83e227',1,'lsType']]],
   ['fortran_20modules_18',['Fortran Modules',['../md_solver_2_r_e_a_d_m_e.html#autotoc_md6',1,'']]],
-  ['freq_19',['freq',['../classrmsh_type.html#a6bd3b7b6c5a5631dbf67b36a723d4095',1,'rmshType']]],
-  ['fs_20',['fs',['../classmsh_type.html#a3a5db0afbd96be27208a4a49236bf6ca',1,'mshType']]],
-  ['fsils_21',['FSILS',['../classeq_type.html#ad3040eeb5a17e16bebf2e67eef664815',1,'eqType']]],
-  ['fsilslinearalgebra_22',['FsilsLinearAlgebra',['../class_fsils_linear_algebra.html',1,'']]],
-  ['fstype_23',['fsType',['../classfs_type.html',1,'']]],
-  ['fts_24',['fTS',['../classrmsh_type.html#adb91737cc84a4b6015382cbf21d345b4',1,'rmshType']]]
+  ['fourth_5forder_5fidentity_19',['fourth_order_identity',['../namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125',1,'mat_fun']]],
+  ['freq_20',['freq',['../classrmsh_type.html#a6bd3b7b6c5a5631dbf67b36a723d4095',1,'rmshType']]],
+  ['fs_21',['fs',['../classmsh_type.html#a3a5db0afbd96be27208a4a49236bf6ca',1,'mshType']]],
+  ['fsils_22',['FSILS',['../classeq_type.html#ad3040eeb5a17e16bebf2e67eef664815',1,'eqType']]],
+  ['fsilslinearalgebra_23',['FsilsLinearAlgebra',['../class_fsils_linear_algebra.html',1,'']]],
+  ['fstype_24',['fsType',['../classfs_type.html',1,'']]],
+  ['fts_25',['fTS',['../classrmsh_type.html#adb91737cc84a4b6015382cbf21d345b4',1,'rmshType']]]
 ];

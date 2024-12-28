@@ -33,7 +33,7 @@ var searchData=
   ['solidviscositynewtonianparameters_30',['SolidViscosityNewtonianParameters',['../class_solid_viscosity_newtonian_parameters.html',1,'']]],
   ['solidviscosityparameters_31',['SolidViscosityParameters',['../class_solid_viscosity_parameters.html',1,'']]],
   ['solidviscositypotentialparameters_32',['SolidViscosityPotentialParameters',['../class_solid_viscosity_potential_parameters.html',1,'']]],
-  ['solve_33',['solve',['../class_fsils_linear_algebra.html#ac44c1ff57aded7eba1bdee3fd0e47d11',1,'FsilsLinearAlgebra::solve()'],['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#a615633468c07ec973ee47f7e1451d86b',1,'TrilinosLinearAlgebra::TrilinosImpl::solve()'],['../class_trilinos_linear_algebra.html#a115c007fa3def28077a5eac0629e6880',1,'TrilinosLinearAlgebra::solve()'],['../class_petsc_linear_algebra.html#a5642b3ebd61d14577a44c19f8d35bf21',1,'PetscLinearAlgebra::solve()']]],
+  ['solve_33',['solve',['../class_fsils_linear_algebra.html#ac44c1ff57aded7eba1bdee3fd0e47d11',1,'FsilsLinearAlgebra::solve()'],['../class_petsc_linear_algebra.html#a5642b3ebd61d14577a44c19f8d35bf21',1,'PetscLinearAlgebra::solve()'],['../class_trilinos_linear_algebra.html#a115c007fa3def28077a5eac0629e6880',1,'TrilinosLinearAlgebra::solve()'],['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#a615633468c07ec973ee47f7e1451d86b',1,'TrilinosLinearAlgebra::TrilinosImpl::solve(ComMod &amp;com_mod, eqType &amp;lEq, const Vector&lt; int &gt; &amp;incL, const Vector&lt; double &gt; &amp;res)']]],
   ['solve_5fassembled_34',['solve_assembled',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#ad9c0e37a84c07aca16b9837173daf105',1,'TrilinosLinearAlgebra::TrilinosImpl']]],
   ['ssteq_35',['sstEq',['../class_com_mod.html#afee120d485cad75438312953ccad3b46',1,'ComMod']]],
   ['stacktype_36',['stackType',['../classutils_1_1stack_type.html',1,'utils']]],
@@ -48,10 +48,11 @@ var searchData=
   ['stimulusparameters_45',['StimulusParameters',['../class_stimulus_parameters.html',1,'']]],
   ['stmodeltype_46',['stModelType',['../classst_model_type.html',1,'']]],
   ['stoptrigname_47',['stopTrigName',['../class_com_mod.html#a0290e34e97980f78795c8c72a1541ff7',1,'ComMod']]],
-  ['stvenantkirchhoffparameters_48',['stvenantkirchhoffparameters',['../class_st_venant_kirchhoff_parameters.html#aa8fdfd03805800a34392f4abfcf47b31',1,'StVenantKirchhoffParameters::StVenantKirchhoffParameters()'],['../class_st_venant_kirchhoff_parameters.html',1,'StVenantKirchhoffParameters']]],
+  ['stvenantkirchhoffparameters_48',['stvenantkirchhoffparameters',['../class_st_venant_kirchhoff_parameters.html',1,'StVenantKirchhoffParameters'],['../class_st_venant_kirchhoff_parameters.html#aa8fdfd03805800a34392f4abfcf47b31',1,'StVenantKirchhoffParameters::StVenantKirchhoffParameters()']]],
   ['suc_49',['suc',['../classls_type.html#a85cac07335a1be04e7af0d3fcfe0267b',1,'lsType']]],
   ['sv_50',['sv',['../class_cep_mod_ap.html#a04704a7bfbc96e5e376b277e87e1c474',1,'CepModAp::sV'],['../class_cep_mod_bo.html#ab2c5df41ef7cde5e4e7b757c68f834fa',1,'CepModBo::sV'],['../class_cep_mod_ttp.html#a3eb1e4b65c41edb8da2abc3106f04bf9',1,'CepModTtp::sV']]],
   ['svalue_51',['svalue',['../class_parameter.html#ad69299072fa6701f4c2843f7e6e0b6fe',1,'Parameter::svalue()'],['../class_vector_parameter.html#ad9662a2f9a7a5cc7e6d771b5477fc963',1,'VectorParameter::svalue()']]],
   ['svmultiphysics_52',['svMultiPhysics',['../index.html',1,'']]],
-  ['sym_53',['sym',['../classeq_type.html#a1ea00f2cdccf8b7d61fe0d0a2ddbaa86',1,'eqType']]]
+  ['sym_53',['sym',['../classeq_type.html#a1ea00f2cdccf8b7d61fe0d0a2ddbaa86',1,'eqType']]],
+  ['symmetric_5fdyadic_5fproduct_54',['symmetric_dyadic_product',['../namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe',1,'mat_fun']]]
 ];

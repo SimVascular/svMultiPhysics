@@ -16,6 +16,8 @@ var searchData=
   ['dof_13',['dof',['../classeq_type.html#ad256e1ab17832d3c425de3925678a742',1,'eqType::dof'],['../class_com_mod.html#a2e33f05e98147d2b0e32c410fe24265f',1,'ComMod::dof']]],
   ['domainparameters_14',['DomainParameters',['../class_domain_parameters.html',1,'']]],
   ['dot_15',['dot',['../class_vector.html#a5be8b64d660df6e59dc41305a3c5a2a1',1,'Vector']]],
-  ['dt_16',['dt',['../classcep_model_type.html#a9150e6fecfe73b9e008600f0c4211cc1',1,'cepModelType::dt'],['../class_com_mod.html#a8a94399601d9bfca1102b5e5be27a055',1,'ComMod::dt']]],
-  ['dx_17',['dx',['../classmsh_type.html#a4578725ffdbfede707e48b4358d47de9',1,'mshType']]]
+  ['double_5fdot_5fproduct_16',['double_dot_product',['../namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577',1,'mat_fun']]],
+  ['dt_17',['dt',['../classcep_model_type.html#a9150e6fecfe73b9e008600f0c4211cc1',1,'cepModelType::dt'],['../class_com_mod.html#a8a94399601d9bfca1102b5e5be27a055',1,'ComMod::dt']]],
+  ['dx_18',['dx',['../classmsh_type.html#a4578725ffdbfede707e48b4358d47de9',1,'mshType']]],
+  ['dyadic_5fproduct_19',['dyadic_product',['../namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54',1,'mat_fun']]]
 ];

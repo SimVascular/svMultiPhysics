@@ -20,7 +20,7 @@ var searchData=
   ['todo_20list_17',['Todo List',['../todo.html',1,'']]],
   ['tol_18',['tol',['../classeq_type.html#a6c12a0776a7ceeb92dd9d48aa1117ff6',1,'eqType']]],
   ['tracetype_19',['traceType',['../classtrace_type.html',1,'']]],
-  ['transpose_20',['transpose',['../namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1',1,'mat_fun']]],
+  ['transpose_20',['transpose',['../namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1',1,'mat_fun::transpose(const Array&lt; double &gt; &amp;A)'],['../namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91',1,'mat_fun::transpose(const Tensor&lt; nsd &gt; &amp;A)']]],
   ['trc_21',['trc',['../classmsh_type.html#a14e868eaaa895cdf881c8c0094ee954e',1,'mshType']]],
   ['trilinos_22',['Trilinos',['../struct_trilinos.html',1,'']]],
   ['trilinosimpl_23',['TrilinosImpl',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html',1,'TrilinosLinearAlgebra']]],

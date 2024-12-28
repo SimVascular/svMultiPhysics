@@ -13,5 +13,6 @@ var searchData=
   ['solve_10',['solve',['../class_fsils_linear_algebra.html#ac44c1ff57aded7eba1bdee3fd0e47d11',1,'FsilsLinearAlgebra::solve()'],['../class_petsc_linear_algebra.html#a5642b3ebd61d14577a44c19f8d35bf21',1,'PetscLinearAlgebra::solve()'],['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#a615633468c07ec973ee47f7e1451d86b',1,'TrilinosLinearAlgebra::TrilinosImpl::solve()'],['../class_trilinos_linear_algebra.html#a115c007fa3def28077a5eac0629e6880',1,'TrilinosLinearAlgebra::solve()']]],
   ['solve_5fassembled_11',['solve_assembled',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#ad9c0e37a84c07aca16b9837173daf105',1,'TrilinosLinearAlgebra::TrilinosImpl']]],
   ['stvenantkirchhoffparameters_12',['StVenantKirchhoffParameters',['../class_st_venant_kirchhoff_parameters.html#aa8fdfd03805800a34392f4abfcf47b31',1,'StVenantKirchhoffParameters']]],
-  ['svalue_13',['svalue',['../class_parameter.html#ad69299072fa6701f4c2843f7e6e0b6fe',1,'Parameter::svalue()'],['../class_vector_parameter.html#ad9662a2f9a7a5cc7e6d771b5477fc963',1,'VectorParameter::svalue()']]]
+  ['svalue_13',['svalue',['../class_parameter.html#ad69299072fa6701f4c2843f7e6e0b6fe',1,'Parameter::svalue()'],['../class_vector_parameter.html#ad9662a2f9a7a5cc7e6d771b5477fc963',1,'VectorParameter::svalue()']]],
+  ['symmetric_5fdyadic_5fproduct_14',['symmetric_dyadic_product',['../namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe',1,'mat_fun']]]
 ];

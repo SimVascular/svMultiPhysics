@@ -71,6 +71,7 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">mat_fun Namespace Reference</div></div>
@@ -80,6 +81,17 @@ $(function() {
 <p>The classes defined here duplicate the data structures in the Fortran MATFUN module defined in MATFUN.f.  
 <a href="namespacemat__fun.html#details">More...</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a08c6284789e31d0f22dd0e0f23cc51cf" id="r_a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memTemplParams" colspan="2"><a id="a08c6284789e31d0f22dd0e0f23cc51cf" name="a08c6284789e31d0f22dd0e0f23cc51cf"></a>
+template&lt;size_t nsd&gt; </td></tr>
+<tr class="memitem:a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Matrix</b> = Eigen::Matrix&lt; double, nsd, nsd &gt;</td></tr>
+<tr class="separator:a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbc3701ff3b1c00c4c34e501c5396f1f" id="r_acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memTemplParams" colspan="2"><a id="acbc3701ff3b1c00c4c34e501c5396f1f" name="acbc3701ff3b1c00c4c34e501c5396f1f"></a>
+template&lt;size_t nsd&gt; </td></tr>
+<tr class="memitem:acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Tensor</b> = Eigen::TensorFixedSize&lt; double, Eigen::Sizes&lt; nsd, nsd, nsd, nsd &gt; &gt;</td></tr>
+<tr class="separator:acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:ad504ada70491864776462a52dbc73246" id="r_ad504ada70491864776462a52dbc73246"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#ad504ada70491864776462a52dbc73246">mat_ddot</a> (const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, const int nd)</td></tr>
@@ -166,6 +178,46 @@ Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>mat_
 <tr class="memitem:af4fceb5170d96ba4f07c6f1a4d7b65a3" id="r_af4fceb5170d96ba4f07c6f1a4d7b65a3"><td class="memItemLeft" align="right" valign="top"><a id="af4fceb5170d96ba4f07c6f1a4d7b65a3" name="af4fceb5170d96ba4f07c6f1a4d7b65a3"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>mat_mul6x3</b> (const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, Array&lt; double &gt; &amp;C)</td></tr>
 <tr class="separator:af4fceb5170d96ba4f07c6f1a4d7b65a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a794d3d6acffd6e76311a63a7ec81e877" id="r_a794d3d6acffd6e76311a63a7ec81e877"><td class="memTemplParams" colspan="2"><a id="a794d3d6acffd6e76311a63a7ec81e877" name="a794d3d6acffd6e76311a63a7ec81e877"></a>
+template&lt;typename MatrixType &gt; </td></tr>
+<tr class="memitem:a794d3d6acffd6e76311a63a7ec81e877"><td class="memTemplItemLeft" align="right" valign="top">MatrixType&#160;</td><td class="memTemplItemRight" valign="bottom"><b>convert_to_eigen_matrix</b> (const Array&lt; double &gt; &amp;src)</td></tr>
+<tr class="separator:a794d3d6acffd6e76311a63a7ec81e877"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27bd275100972fd8f974c63421a65531" id="r_a27bd275100972fd8f974c63421a65531"><td class="memTemplParams" colspan="2"><a id="a27bd275100972fd8f974c63421a65531" name="a27bd275100972fd8f974c63421a65531"></a>
+template&lt;typename MatrixType &gt; </td></tr>
+<tr class="memitem:a27bd275100972fd8f974c63421a65531"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>convert_to_array</b> (const MatrixType &amp;mat, Array&lt; double &gt; &amp;dest)</td></tr>
+<tr class="separator:a27bd275100972fd8f974c63421a65531"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3469dea7af7dde2c4920d06ba7970bab" id="r_a3469dea7af7dde2c4920d06ba7970bab"><td class="memTemplParams" colspan="2"><a id="a3469dea7af7dde2c4920d06ba7970bab" name="a3469dea7af7dde2c4920d06ba7970bab"></a>
+template&lt;typename MatrixType &gt; </td></tr>
+<tr class="memitem:a3469dea7af7dde2c4920d06ba7970bab"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>copy_Dm</b> (const MatrixType &amp;mat, Array&lt; double &gt; &amp;dest, int rows, int cols)</td></tr>
+<tr class="separator:a3469dea7af7dde2c4920d06ba7970bab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af95b6d49ae33323576bbfcf0f9708769" id="r_af95b6d49ae33323576bbfcf0f9708769"><td class="memTemplParams" colspan="2"><a id="af95b6d49ae33323576bbfcf0f9708769" name="af95b6d49ae33323576bbfcf0f9708769"></a>
+template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:af95b6d49ae33323576bbfcf0f9708769"><td class="memTemplItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, nsd, 1 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>cross_product</b> (const Eigen::Matrix&lt; double, nsd, 1 &gt; &amp;u, const Eigen::Matrix&lt; double, nsd, 1 &gt; &amp;v)</td></tr>
+<tr class="separator:af95b6d49ae33323576bbfcf0f9708769"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2879f10328583d9c9c31526b87fbed09" id="r_a2879f10328583d9c9c31526b87fbed09"><td class="memTemplParams" colspan="2"><a id="a2879f10328583d9c9c31526b87fbed09" name="a2879f10328583d9c9c31526b87fbed09"></a>
+template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:a2879f10328583d9c9c31526b87fbed09"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><b>double_dot_product</b> (const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</td></tr>
+<tr class="separator:a2879f10328583d9c9c31526b87fbed09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbbee355035575333a0beda4d7ddc577" id="r_abbbee355035575333a0beda4d7ddc577"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:abbbee355035575333a0beda4d7ddc577"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577">double_dot_product</a> (const Tensor&lt; nsd &gt; &amp;A, const std::array&lt; int, 2 &gt; &amp;dimsA, const Tensor&lt; nsd &gt; &amp;B, const std::array&lt; int, 2 &gt; &amp;dimsB)</td></tr>
+<tr class="memdesc:abbbee355035575333a0beda4d7ddc577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contracts two 4th order tensors A and B over two dimensions,.  <br /></td></tr>
+<tr class="separator:abbbee355035575333a0beda4d7ddc577"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa83612e70dad93bbf2bcc8134c0fb54" id="r_afa83612e70dad93bbf2bcc8134c0fb54"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:afa83612e70dad93bbf2bcc8134c0fb54"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">dyadic_product</a> (const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</td></tr>
+<tr class="memdesc:afa83612e70dad93bbf2bcc8134c0fb54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the dyadic product of two 2nd order tensors A and B, C_ijkl = A_ij * B_kl.  <br /></td></tr>
+<tr class="separator:afa83612e70dad93bbf2bcc8134c0fb54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1be24b26bf2e35a1d8f171f808da125" id="r_ad1be24b26bf2e35a1d8f171f808da125"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:ad1be24b26bf2e35a1d8f171f808da125"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">fourth_order_identity</a> ()</td></tr>
+<tr class="memdesc:ad1be24b26bf2e35a1d8f171f808da125"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a 4th order identity tensor: I_ijkl = 0.5 * (δ_ik * δ_jl + δ_il * δ_jk)  <br /></td></tr>
+<tr class="separator:ad1be24b26bf2e35a1d8f171f808da125"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ac506079f38e325c16e6f23acc29dbe" id="r_a1ac506079f38e325c16e6f23acc29dbe"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:a1ac506079f38e325c16e6f23acc29dbe"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">symmetric_dyadic_product</a> (const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</td></tr>
+<tr class="memdesc:a1ac506079f38e325c16e6f23acc29dbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)  <br /></td></tr>
+<tr class="separator:a1ac506079f38e325c16e6f23acc29dbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c62ffa3fe5c3b76894a7de2c4e73b91" id="r_a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91">transpose</a> (const Tensor&lt; nsd &gt; &amp;A)</td></tr>
+<tr class="memdesc:a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Performs a tensor transpose operation on a 4th order tensor A, B_ijkl = A_klij.  <br /></td></tr>
+<tr class="separator:a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -178,6 +230,124 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 <p>This module defines data structures for generally performed matrix and tensor operations.</p>
 <dl class="todo"><dt><b><a class="el" href="todo.html#_todo000005">Todo:</a></b></dt><dd>[TODO:DaveP] this should just be a namespace? </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a id="abbbee355035575333a0beda4d7ddc577" name="abbbee355035575333a0beda4d7ddc577"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abbbee355035575333a0beda4d7ddc577">&#9670;&#160;</a></span>double_dot_product()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Tensor&lt; nsd &gt; mat_fun::double_dot_product </td>
+          <td>(</td>
+          <td class="paramtype">const Tensor&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::array&lt; int, 2 &gt; &amp;&#160;</td>
+          <td class="paramname"><em>dimsA</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Tensor&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramname"><em>B</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::array&lt; int, 2 &gt; &amp;&#160;</td>
+          <td class="paramname"><em>dimsB</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Contracts two 4th order tensors A and B over two dimensions,. </p>
+
+</div>
+</div>
+<a id="afa83612e70dad93bbf2bcc8134c0fb54" name="afa83612e70dad93bbf2bcc8134c0fb54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa83612e70dad93bbf2bcc8134c0fb54">&#9670;&#160;</a></span>dyadic_product()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Tensor&lt; nsd &gt; mat_fun::dyadic_product </td>
+          <td>(</td>
+          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramname"><em>B</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Compute the dyadic product of two 2nd order tensors A and B, C_ijkl = A_ij * B_kl. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">nsd,the</td><td>number of spatial dimensions </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">A,the</td><td>first 2nd order tensor </td></tr>
+    <tr><td class="paramname">B,the</td><td>second 2nd order tensor </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tensor&lt;nsd&gt; </dd></dl>
+
+</div>
+</div>
+<a id="ad1be24b26bf2e35a1d8f171f808da125" name="ad1be24b26bf2e35a1d8f171f808da125"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1be24b26bf2e35a1d8f171f808da125">&#9670;&#160;</a></span>fourth_order_identity()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Tensor&lt; nsd &gt; mat_fun::fourth_order_identity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create a 4th order identity tensor: I_ijkl = 0.5 * (δ_ik * δ_jl + δ_il * δ_jk) </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">nsd,the</td><td>number of spatial dimensions </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tensor&lt;nsd&gt; </dd></dl>
+
+</div>
+</div>
 <a id="ad504ada70491864776462a52dbc73246" name="ad504ada70491864776462a52dbc73246"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad504ada70491864776462a52dbc73246">&#9670;&#160;</a></span>mat_ddot()</h2>
 
@@ -615,6 +785,39 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 
 </div>
 </div>
+<a id="a1ac506079f38e325c16e6f23acc29dbe" name="a1ac506079f38e325c16e6f23acc29dbe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ac506079f38e325c16e6f23acc29dbe">&#9670;&#160;</a></span>symmetric_dyadic_product()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Tensor&lt; nsd &gt; mat_fun::symmetric_dyadic_product </td>
+          <td>(</td>
+          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramname"><em>B</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk) </p>
+<p>Reproduces 'FUNCTION TEN_SYMMPROD(A, B, nd) RESULT(C)'. </p>
+
+</div>
+</div>
 <a id="af3367681f82e87222e557415681edd4a" name="af3367681f82e87222e557415681edd4a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af3367681f82e87222e557415681edd4a">&#9670;&#160;</a></span>ten_asym_prod12()</h2>
 
@@ -876,7 +1079,7 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 </div>
 </div>
 <a id="a7e7e91ed6a7fbc8f265080bb032b93c1" name="a7e7e91ed6a7fbc8f265080bb032b93c1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e7e91ed6a7fbc8f265080bb032b93c1">&#9670;&#160;</a></span>transpose()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e7e91ed6a7fbc8f265080bb032b93c1">&#9670;&#160;</a></span>transpose() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -892,6 +1095,41 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 </div><div class="memdoc">
 
 <p>Reproduces Fortran TRANSPOSE. </p>
+
+</div>
+</div>
+<a id="a5c62ffa3fe5c3b76894a7de2c4e73b91" name="a5c62ffa3fe5c3b76894a7de2c4e73b91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c62ffa3fe5c3b76894a7de2c4e73b91">&#9670;&#160;</a></span>transpose() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Tensor&lt; nsd &gt; mat_fun::transpose </td>
+          <td>(</td>
+          <td class="paramtype">const Tensor&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Performs a tensor transpose operation on a 4th order tensor A, B_ijkl = A_klij. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">nsd,the</td><td>number of spatial dimensions </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">A,the</td><td>input 4th order tensor </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tensor&lt;nsd&gt; </dd></dl>
 
 </div>
 </div>
