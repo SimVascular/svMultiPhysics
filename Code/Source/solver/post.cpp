@@ -36,8 +36,6 @@
 #include "initialize.h"
 #include "mat_fun.h"
 #include "mat_models.h"
-#include "mat_fun_carray.h"
-#include "mat_models_carray.h"
 #include "nn.h"
 #include "shells.h"
 #include "utils.h"
@@ -1936,8 +1934,11 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
             Array<double> Dm(nsymd,nsymd);
             double Ja;
             
-            mat_models::get_pk2cc_dev(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya, S, Dm, Ja);
+            mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya, S, Dm, Ja);
 
+            // TODO: Add viscous stress
+
+            // Add pressure
             auto C = mat_mul(transpose(F), F);
             S = S + p*mat_inv(C, nsd);
 
@@ -1950,7 +1951,10 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
 
           } else if (cPhys == EquationType::phys_struct) {
             Array<double> Dm(nsymd,nsymd);
-            mat_models::get_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya, S, Dm);
+            double Ja;
+            mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya, S, Dm, Ja);
+
+            // TODO: Add viscous stress
 
             auto P1 = mat_mul(F, S);
             sigma = mat_mul(P1, transpose(F));

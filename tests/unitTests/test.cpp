@@ -44,7 +44,7 @@ using namespace std;
 class MaterialModelTest : public ::testing::Test {
 protected:
     // Variables common across tests
-    double F[3][3] = {}; // Deformation gradient
+    Array<double> F; // Deformation gradient
     double deformation_perturbation_small = 0.003; // Small perturbation factor
     double deformation_perturbation_medium = 0.03; // Medium perturbation factor
     double deformation_perturbation_large = 0.3; // Large perturbation factor
@@ -67,43 +67,53 @@ protected:
     std::vector<Array3x3> F_large_list;
 
     // Function to convert C array to std::array
-    Array3x3 convertToStdArray(double F[3][3]) {
+    Array3x3 convertToStdArray(const Array<double> &F) {
+
+        int N = F.ncols();
+        assert(F.nrows() == N);
+        assert(N == 3);
+
         Array3x3 stdArray;
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
-                stdArray[i][j] = F[i][j];
+                stdArray[i][j] = F(i,j);
             }
         }
         return stdArray;
     }
 
-    // Function to convert std::array to C array
-    void convertToCArray(Array3x3 stdArray, double F[3][3]) {
+    // Function to convert std::array to Array
+    void convertToArray(Array3x3 stdArray, Array<double> F) {
+
+        int N = F.ncols();
+        assert(F.nrows() == N);
+        assert(N == 3);
+
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
-                F[i][j] = stdArray[i][j];
+                F(i,j) = stdArray[i][j];
             }
         }
     }
 
     void SetUp() override {
-        double F[3][3]; // Declare the C array
+        F.resize(3,3); // Deformation gradient
 
         // Create random deformation gradients for small perturbations
         for (int i = 0; i < n_F; i++) {
-            create_random_perturbed_identity_F(F, deformation_perturbation_small);
+            F = create_random_perturbed_identity_F(3, deformation_perturbation_small);
             F_small_list.push_back(convertToStdArray(F));
         }
 
         // Create random deformation gradients for medium perturbations
         for (int i = 0; i < n_F; i++) {
-            create_random_perturbed_identity_F(F, deformation_perturbation_medium);
+            F = create_random_perturbed_identity_F(3, deformation_perturbation_medium);
             F_medium_list.push_back(convertToStdArray(F));
         }
 
         // Create random deformation gradients for large perturbations
         for (int i = 0; i < n_F; i++) {
-            create_random_perturbed_identity_F(F, deformation_perturbation_large);
+            F = create_random_perturbed_identity_F(3, deformation_perturbation_large);
             F_large_list.push_back(convertToStdArray(F));
         }
     }
@@ -662,51 +672,51 @@ TEST_F(STRUCT_NeoHookeanTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestNH->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(STRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
     
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(STRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
-    for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+    for (auto F_std : F_medium_list) { 
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(STRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -717,8 +727,8 @@ TEST_F(STRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderR
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -731,8 +741,8 @@ TEST_F(STRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderR
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -745,8 +755,8 @@ TEST_F(STRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderR
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -760,51 +770,51 @@ TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestNH->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -815,8 +825,8 @@ TEST_F(USTRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrder
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -829,8 +839,8 @@ TEST_F(USTRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrder
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -843,8 +853,8 @@ TEST_F(USTRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrder
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -864,51 +874,51 @@ TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {1.0, 0.0, 0.0,
-                      0.0, 1.0, 0.0,
-                      0.0, 0.0, 1.0};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestMR->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -919,8 +929,8 @@ TEST_F(STRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrde
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -933,8 +943,8 @@ TEST_F(STRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrde
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -947,8 +957,8 @@ TEST_F(STRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrde
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -963,51 +973,51 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {1.0, 0.0, 0.0,
-                      0.0, 1.0, 0.0,
-                      0.0, 0.0, 1.0};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestMR->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -1018,8 +1028,8 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrd
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1032,8 +1042,8 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrd
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1046,8 +1056,8 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrd
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1067,90 +1077,90 @@ TEST_F(STRUCT_HolzapfelOgdenTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestHO->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial stretch
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial stretch
 TEST_F(STRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderTriaxialStretch) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(STRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(STRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 1.0}};
+    Array<double> F = {{1.2, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 1.0}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(STRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(STRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(STRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -1160,35 +1170,35 @@ TEST_F(STRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOr
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(STRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(STRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 1.0}};
+    Array<double> F = {{1.2, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 1.0}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1200,8 +1210,8 @@ TEST_F(STRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOr
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1214,8 +1224,8 @@ TEST_F(STRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOr
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1228,8 +1238,8 @@ TEST_F(STRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOr
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1243,90 +1253,90 @@ TEST_F(USTRUCT_HolzapfelOgdenTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestHO->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial stretch
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial stretch
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderTriaxialStretch) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                       {0.0, 0.8, 0.0},
-                       {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
     
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
+    Array<double> F = {{1.2, 0.0, 0.0},
                         {0.0, 0.8, 0.0},
                         {0.0, 0.0, 1.0}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -1336,35 +1346,35 @@ TEST_F(USTRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceO
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(USTRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 1.0}};
+    Array<double> F = {{1.2, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 1.0}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1376,8 +1386,8 @@ TEST_F(USTRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceO
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1390,8 +1400,8 @@ TEST_F(USTRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceO
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1404,8 +1414,8 @@ TEST_F(USTRUCT_HolzapfelOgdenTest, TestMaterialElasticityConsistencyConvergenceO
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1425,90 +1435,90 @@ TEST_F(STRUCT_HolzapfelOgdenMATest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestHO_ma->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial stretch
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial stretch
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderTriaxialStretch) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
     
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                       {0.0, 0.8, 0.0},
-                       {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
-                       {0.0, 0.8, 0.0},
-                       {0.0, 0.0, 1.0}};
+    Array<double> F = {{1.2, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 1.0}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -1518,35 +1528,35 @@ TEST_F(STRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergence
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(STRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 1.0}};
+    Array<double> F = {{1.2, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 1.0}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1558,8 +1568,8 @@ TEST_F(STRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergence
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1572,8 +1582,8 @@ TEST_F(STRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergence
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Set convergence order tolerances larger and special delta_max/delta_min to get this test to pass
         convergence_order_tol = 0.15;
@@ -1591,8 +1601,8 @@ TEST_F(STRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergence
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Set convergence order tolerances larger and special delta_max/delta_min to get this test to pass
         //convergence_order_tol = 0.02;
@@ -1612,91 +1622,91 @@ TEST_F(USTRUCT_HolzapfelOgdenMATest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestHO_ma->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial stretch
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial stretch
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderTriaxialStretch) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
     
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                       {0.0, 0.8, 0.0},
-                       {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 1.0}};
+    Array<double> F = {{1.2, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 1.0}};
 
-    // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+    // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
     TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestHO_ma->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -1706,35 +1716,35 @@ TEST_F(USTRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenc
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial stretch
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.3}};
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.3}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for triaxial compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for triaxial compression
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenceOrderTriaxialCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for triaxial compression
-    double F[3][3] = {{0.9, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 0.7}};
+    Array<double> F = {{0.9, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 0.7}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for biaxial stretch/compression
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for biaxial stretch/compression
 TEST_F(USTRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenceOrderBiaxialStretchCompression) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Create a deformation gradient F for biaxial stretch/compression
-    double F[3][3] = {{1.2, 0.0, 0.0},
-                    {0.0, 0.8, 0.0},
-                    {0.0, 0.0, 1.0}};
+    Array<double> F = {{1.2, 0.0, 0.0},
+                        {0.0, 0.8, 0.0},
+                        {0.0, 0.0, 1.0}};
 
     // Check order of convergence of consistency of material elasticity
     TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1746,8 +1756,8 @@ TEST_F(USTRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenc
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1760,8 +1770,8 @@ TEST_F(USTRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenc
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1774,8 +1784,8 @@ TEST_F(USTRUCT_HolzapfelOgdenMATest, TestMaterialElasticityConsistencyConvergenc
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestHO_ma->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1797,10 +1807,10 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestQVP->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
@@ -1809,52 +1819,52 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressPrescribedIsochoricDe
     //verbose = true; // Show values of S and S_ref
 
     // Check isochoric deformation produces zero PK2 stress
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.0/(1.1*1.2)}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.0/(1.1*1.2)}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestQVP->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -1865,8 +1875,8 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1879,8 +1889,8 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1893,8 +1903,8 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -1939,10 +1949,10 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestST91->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
@@ -1951,52 +1961,52 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressPrescribedIsochori
     //verbose = true; // Show values of S and S_ref
 
     // Check isochoric deformation produces zero PK2 stress
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.0/(1.1*1.2)}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.0/(1.1*1.2)}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestST91->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -2007,8 +2017,8 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsisten
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -2021,8 +2031,8 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsisten
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -2035,8 +2045,8 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsisten
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -2079,10 +2089,10 @@ TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestPK2StressIdentityF) {
     //verbose = true; // Show values of S and S_ref
 
     // Check identity F produces zero PK2 stress
-    double F[3][3] = {{1.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0},
-                       {0.0, 0.0, 1.0}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestM94->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
@@ -2091,51 +2101,51 @@ TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestPK2StressPrescribedIsochoricDefo
     //verbose = true; // Show values of S and S_ref
 
     // Check isochoric deformation produces zero PK2 stress
-    double F[3][3] = {{1.1, 0.0, 0.0},
-                       {0.0, 1.2, 0.0},
-                       {0.0, 0.0, 1.0/(1.1*1.2)}};
-    double S_ref[3][3] = {}; // PK2 stress initialized to zero
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.0/(1.1*1.2)}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
     TestM94->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (small)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
 TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestM94->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (medium)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
 TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestM94->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
 
-// Test order of convergence between finite difference PK2 stress and get_pk2cc() PK2 stress for random F (large)
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
 TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
-        // Check order of convergence between finite difference and get_pk2cc() PK2 stress
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestM94->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
     }
 }
@@ -2146,8 +2156,8 @@ TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestMaterialElasticityConsistencyCon
 
     // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestM94->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -2160,8 +2170,8 @@ TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestMaterialElasticityConsistencyCon
 
     // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestM94->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -2174,8 +2184,8 @@ TEST_F(STRUCT_Miehe94VolumetricPenaltyTest, TestMaterialElasticityConsistencyCon
 
     // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
-        convertToCArray(F_std, F);
+        // Convert to Array
+        convertToArray(F_std, F);
 
         // Check order of convergence of consistency of material elasticity
         TestM94->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);

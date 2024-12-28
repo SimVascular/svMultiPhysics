@@ -52,7 +52,6 @@
 #include "fs.h"
 #include "mat_fun.h"
 #include "mat_models.h"
-#include "mat_models_carray.h"
 #include "nn.h"
 #include "utils.h"
 
@@ -528,7 +527,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   double tauC = 0.0;
 
   if (vmsFlag) {
-    mat_models::get_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
+    mat_models::compute_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
 
   } else {
     tauM = 0.0;
@@ -751,7 +750,7 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   double tauC = 0.0;
 
   if (vmsFlag) {
-    mat_models::get_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
+    mat_models::compute_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
 
   } else {
     tauM = 0.0;
@@ -968,14 +967,14 @@ void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   // isochoric elasticity tensor in Voigt notation (Dm)
   Array<double> Siso(2,2), Dm(3,3);
   double Ja = 0;
-  mat_models::get_pk2cc_dev(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g, Siso, Dm, Ja);
+  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g, Siso, Dm, Ja);
 
    // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
   Array<double> Svis(2,2);
   Array3<double> Kvis_u(4, eNoNw, eNoNw);
   Array3<double> Kvis_v(4, eNoNw, eNoNw);
   
-  mat_models_carray::get_visc_stress_and_tangent<2>(dmn, eNoNw, Nwx, vx, F, Svis, Kvis_u, Kvis_v);
+  mat_models::compute_visc_stress_and_tangent(dmn, eNoNw, Nwx, vx, F, Svis, Kvis_u, Kvis_v);
 
   // Compute rho and beta depending on the volumetric penalty model
   //
@@ -990,7 +989,7 @@ void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   double tauC = 0.0;
 
   if (vmsFlag) {
-    mat_models::get_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
+    mat_models::compute_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
   } else {
     tauM = 0.0;
     tauC = 0.0;
@@ -1269,14 +1268,14 @@ void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   //
   Array<double> Siso(3,3), Dm(6,6);
   double Ja = 0;
-  mat_models::get_pk2cc_dev(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g, Siso, Dm, Ja);
+  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g, Siso, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
   Array<double> Svis(3,3);
   Array3<double> Kvis_u(9, eNoNw, eNoNw);
   Array3<double> Kvis_v(9, eNoNw, eNoNw);
   
-  mat_models_carray::get_visc_stress_and_tangent<3>(dmn, eNoNw, Nwx, vx, F, Svis, Kvis_u, Kvis_v);
+  mat_models::compute_visc_stress_and_tangent(dmn, eNoNw, Nwx, vx, F, Svis, Kvis_u, Kvis_v);
 
 
   // Compute rho and beta depending on the volumetric penalty model
@@ -1292,7 +1291,7 @@ void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   double tauC = 0.0;
 
   if (vmsFlag) {
-    mat_models::get_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
+    mat_models::compute_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
   } else { 
     tauM = 0.0;
     tauC = 0.0;

@@ -1795,11 +1795,11 @@ void shl_strs_res(const ComMod& com_mod, const dmnType& lDmn, const int nFn, con
 
     // For incompressible materials
     if (flag) {
-      mat_models::get_pk2cc_shli(com_mod, lDmn, nFn, fNa0, gg_0, gg_x, g33, Sml, Dml);
+      mat_models::compute_pk2cc_shli(com_mod, lDmn, nFn, fNa0, gg_0, gg_x, g33, Sml, Dml);
 
     // For compressible materials
     } else { 
-      mat_models::get_pk2cc_shlc(com_mod, lDmn, nFn, fNa0, gg_0, gg_x, g33, Sml, Dml);
+      mat_models::compute_pk2cc_shlc(com_mod, lDmn, nFn, fNa0, gg_0, gg_x, g33, Sml, Dml);
     }
 
     //dmsg << "      " << " ";
