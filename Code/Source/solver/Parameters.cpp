@@ -63,6 +63,7 @@
 #include "Parameters.h"
 #include "consts.h"
 #include "LinearAlgebra.h"
+#include "ustruct.h"
 
 #include <iostream>
 #include <regex>
@@ -789,6 +790,20 @@ void ConstitutiveModelParameters::set_values(tinyxml2::XMLElement* xml_elem)
   SetConstitutiveModelParamMap[model_type](this, xml_elem);
 
   value_set = true;
+}
+
+/// @brief Check if a constitutive model is valid for the given equation.
+//
+void ConstitutiveModelParameters::check_constitutive_model(const Parameter<std::string>& eq_type_str)
+{
+  auto eq_type = consts::equation_name_to_type.at(eq_type_str.value());
+  auto model = consts::constitutive_model_name_to_type.at(type.value());
+
+  if (eq_type == consts::EquationType::phys_ustruct) {
+    if (! ustruct::constitutive_model_is_valid(model)) {
+      throw std::runtime_error("The " + type.value() + " constitutive model is not valid for ustruct equations.");
+    }
+  }
 }
 
 //////////////////////////////////////////////////////////
@@ -1864,7 +1879,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
   //
   while (item != nullptr) {
     auto name = std::string(item->Value());
-    //std::cout << "[EquationParameters::set_values] name: " << name << std::endl;
 
     if (name == BodyForceParameters::xml_element_name_) {
       auto bf_params = new BodyForceParameters();
@@ -1878,6 +1892,7 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
 
     } else if (name == ConstitutiveModelParameters::xml_element_name_) {
       default_domain->constitutive_model.set_values(item);
+      default_domain->constitutive_model.check_constitutive_model(type);
 
     } else if (name == CoupleCplBCParameters::xml_element_name_) {
       couple_to_cplBC.set_values(item);

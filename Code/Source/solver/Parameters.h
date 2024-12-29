@@ -510,6 +510,7 @@ class ConstitutiveModelParameters : public ParameterLists
   public:
     ConstitutiveModelParameters();
     void print_parameters();
+    void check_constitutive_model(const Parameter<std::string>& eq_type);
     bool defined() const { return value_set; };
     void set_values(tinyxml2::XMLElement* modl_params);
     static const std::string xml_element_name_;
