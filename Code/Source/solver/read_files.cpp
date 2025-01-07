@@ -122,7 +122,7 @@ void face_match(ComMod& com_mod, faceType& lFa, faceType& gFa, Vector<int>& ptr)
     blk[iBlk].n = blk[iBlk].n + 1;
   }
 
-  for (int a = 0; a < gFa.nNo; a++) {
+  for (int a = 0; a < lFa.nNo; a++) {
     auto coord = lFa.x.col(a);
     int iBlk = find_blk(nsd, nBlkd, nFlt, xMin, dx, coord);
     auto minS = std::numeric_limits<double>::max();
