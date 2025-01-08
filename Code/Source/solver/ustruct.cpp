@@ -210,6 +210,21 @@ void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const V
   }
 }
 
+/// @brief Check is a constitutive model is valid for the ustruct equation.
+//
+bool constitutive_model_is_valid(consts::ConstitutiveModelType model)
+{ 
+  using namespace consts;
+    
+  static std::set<ConstitutiveModelType> unsupported_models { 
+    ConstitutiveModelType::stIso_lin,
+    ConstitutiveModelType::stIso_StVK,
+    ConstitutiveModelType::stIso_mStVK
+  };
+
+  return unsupported_models.count(model) == 0;
+}   
+
 /// @brief Reproduces Fortran CONSTRUCT_uSOLID.
 //
 void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, 

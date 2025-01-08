@@ -43,6 +43,8 @@ void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const V
     const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV, 
     Array<double>& lR, Array3<double>& lK, Array3<double>& lKd);
 
+bool constitutive_model_is_valid(consts::ConstitutiveModelType model);
+
 void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg, 
     const Array<double>& Dg);
 

@@ -408,10 +408,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
   // Now, add isochoric and total stress, elasticity tensors
   switch (stM.isoType) {
     case ConstitutiveModelType::stIso_lin: {
-      if (ustruct) {
-        throw std::runtime_error("[compute_pk2cc] Linear isotropic material model not valid for ustruct physics.");
-      }
-
       double g1 = stM.C10;    // mu
       S += g1*Idm;
       return; 
@@ -419,10 +415,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
 
     // St.Venant-Kirchhoff
     case ConstitutiveModelType::stIso_StVK: {
-      if (ustruct) {
-        throw std::runtime_error("[compute_pk2cc] St.Venant-Kirchhoff material model not valid for ustruct physics.");
-      }
-      
       double g1 = stM.C10;         // lambda
       double g2 = stM.C01 * 2.0;   // 2*mu
 
@@ -432,10 +424,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
 
     // modified St.Venant-Kirchhoff
     case ConstitutiveModelType::stIso_mStVK: {
-      if (ustruct) {
-        throw std::runtime_error("[compute_pk2cc] Modified St.Venant-Kirchhoff material model not valid for ustruct physics.");
-      }
-
       double g1 = stM.C10; // kappa
       double g2 = stM.C01;  // mu
 
