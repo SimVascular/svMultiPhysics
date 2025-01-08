@@ -753,6 +753,30 @@ class OutputParameters : public ParameterLists
     std::vector<Parameter<std::string>> alias_list;
 };
 
+/// @brief The PrecomputedSolutionParameters class stores parameters for the
+/// 'Precomputed_solution' XML element used to read in the data from a precomputed solution 
+/// for the simulation state
+/// \code {.xml}
+/// <Precomputed_solution>
+///   <Project_from_face> lumen_wall </Project_from_face>
+/// </Precomputed_solution>
+/// \endcode
+
+class PrecomputedSolutionParameters: public ParameterLists
+{
+  public:
+    PrecomputedSolutionParameters();
+
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    static const std::string xml_element_name_;
+
+    Parameter<std::string> field_name;
+    Parameter<std::string> file_path;
+    Parameter<double> time_step;
+    Parameter<bool> use_precomputed_solution;
+};
+
 /// @brief The ProjectionParameters class stores parameters for the
 /// 'Add_projection' XML element used for fluid-structure interaction 
 /// simulations.
@@ -1304,11 +1328,9 @@ class GeneralSimulationParameters : public ParameterLists
     Parameter<bool> start_averaging_from_zero;
     Parameter<bool> verbose;
     Parameter<bool> warning;
-    Parameter<bool> use_precomputed_solution;
 
     Parameter<double> spectral_radius_of_infinite_time_step;
     Parameter<double> time_step_size;
-    Parameter<double> precomputed_time_step_size;
 
     Parameter<int> increment_in_saving_restart_files;
     Parameter<int> increment_in_saving_vtk_files;
@@ -1323,8 +1345,8 @@ class GeneralSimulationParameters : public ParameterLists
     Parameter<std::string> searched_file_name_to_trigger_stop; 
     Parameter<std::string> save_results_in_folder; 
     Parameter<std::string> simulation_initialization_file_path;
-    Parameter<std::string> precomputed_solution_file_path;
-    Parameter<std::string> precomputed_solution_field_name;
+
+    PrecomputedSolutionParameters precomputed_solution_parameters;
 };
 
 /// @brief The FaceParameters class is used to store parameters for the

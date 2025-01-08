@@ -2019,12 +2019,8 @@ GeneralSimulationParameters::GeneralSimulationParameters()
   set_parameter("Starting time step", 0, !required, starting_time_step);
 
   set_parameter("Time_step_size", 0.0, required, time_step_size);
-  set_parameter("Precomputed_time_step_size", 0.0, !required, precomputed_time_step_size);
   set_parameter("Verbose", false, !required, verbose);
   set_parameter("Warning", false, !required, warning);
-  set_parameter("Use_precomputed_solution", false, !required, use_precomputed_solution);
-  set_parameter("Precomputed_solution_file_path", "", !required, precomputed_solution_file_path);
-  set_parameter("Precomputed_solution_field_name", "", !required, precomputed_solution_field_name);
 }
 
 void GeneralSimulationParameters::print_parameters()
@@ -2053,10 +2049,14 @@ void GeneralSimulationParameters::set_values(tinyxml2::XMLElement* xml_element)
   while (item != nullptr) {
     std::string name = std::string(item->Value());
     auto value = item->GetText();
-    try {
-      set_parameter_value(name, value);
-    } catch (const std::bad_function_call& exception) {
-      throw std::runtime_error("Unknown XML GeneralSimulationParameters element '" + name + ".");
+    if (name == "Precomputed_solution") {
+      precomputed_solution_parameters.set_values(item);
+    } else {
+      try {
+        set_parameter_value(name, value);
+      } catch (const std::bad_function_call& exception) {
+        throw std::runtime_error("Unknown XML GeneralSimulationParameters element '" + name + ".");
+      }
     }
     item = item->NextSiblingElement();
   }
@@ -2314,6 +2314,40 @@ void MeshParameters::set_values(tinyxml2::XMLElement* mesh_elem)
 
     item = item->NextSiblingElement();
   }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//        P r e c o m p u t e d S o l u t i o n P a r a m e t e r s       //
+/////////////////////////////////////////////////////////////////////////////
+
+// The PrecomputedSolutionParameters class stores parameters for the
+// 'Precomputed_solution' XML element used to read in the data from a 
+// precomputed solution for the simulation state.
+
+const std::string PrecomputedSolutionParameters::xml_element_name_ = "Precomputed_solution";
+
+PrecomputedSolutionParameters::PrecomputedSolutionParameters()
+{
+  // A parameter that must be defined.
+  bool required = true;
+
+  set_parameter("Field_name", "", required, field_name);
+  set_parameter("File_path", "", required, file_path);
+  set_parameter("Time_step", 0.0, !required, time_step);
+  set_parameter("Use_precomputed_solution", true, !required, use_precomputed_solution);
+}
+
+void PrecomputedSolutionParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  using namespace tinyxml2;
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind( &PrecomputedSolutionParameters::set_parameter_value, *this, _1, _2);
+
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
 }
 
 //////////////////////////////////////////////////////////
