@@ -1345,8 +1345,6 @@ class GeneralSimulationParameters : public ParameterLists
     Parameter<std::string> searched_file_name_to_trigger_stop; 
     Parameter<std::string> save_results_in_folder; 
     Parameter<std::string> simulation_initialization_file_path;
-
-    PrecomputedSolutionParameters precomputed_solution_parameters;
 };
 
 /// @brief The FaceParameters class is used to store parameters for the
@@ -1450,6 +1448,7 @@ class Parameters {
     void set_contact_values(tinyxml2::XMLElement* root_element);
     void set_equation_values(tinyxml2::XMLElement* root_element);
     void set_mesh_values(tinyxml2::XMLElement* root_element);
+    void set_precomputed_solution_values(tinyxml2::XMLElement* root_element);
     void set_projection_values(tinyxml2::XMLElement* root_element);
 
     // Objects representing each parameter section of XML file.
@@ -1458,6 +1457,7 @@ class Parameters {
     std::vector<MeshParameters*> mesh_parameters;
     std::vector<EquationParameters*> equation_parameters;
     std::vector<ProjectionParameters*> projection_parameters;
+    PrecomputedSolutionParameters precomputed_solution_parameters;
 };
 
 #endif

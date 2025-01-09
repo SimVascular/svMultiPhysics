@@ -166,6 +166,9 @@ void Parameters::read_xml(std::string file_name)
   // Set Add_mesh values.
   set_mesh_values(root_element);
 
+  // Set Precomputed_solution values.
+  set_precomputed_solution_values(root_element);
+
   // Set mesh projection parameters.
   set_projection_values(root_element);
 
@@ -216,6 +219,16 @@ void Parameters::set_mesh_values(tinyxml2::XMLElement* root_element)
 
     add_mesh_item = add_mesh_item->NextSiblingElement(MeshParameters::xml_element_name_.c_str());
   }
+}
+
+void Parameters::set_precomputed_solution_values(tinyxml2::XMLElement* root_element)
+{
+  auto add_pre_sol_item = root_element->FirstChildElement(PrecomputedSolutionParameters::xml_element_name_.c_str());
+  if (add_pre_sol_item == nullptr) { 
+    return;
+  }
+
+  precomputed_solution_parameters.set_values(add_pre_sol_item);
 }
 
 void Parameters::set_projection_values(tinyxml2::XMLElement* root_element)
@@ -2049,14 +2062,10 @@ void GeneralSimulationParameters::set_values(tinyxml2::XMLElement* xml_element)
   while (item != nullptr) {
     std::string name = std::string(item->Value());
     auto value = item->GetText();
-    if (name == "Precomputed_solution") {
-      precomputed_solution_parameters.set_values(item);
-    } else {
-      try {
-        set_parameter_value(name, value);
-      } catch (const std::bad_function_call& exception) {
-        throw std::runtime_error("Unknown XML GeneralSimulationParameters element '" + name + ".");
-      }
+    try {
+      set_parameter_value(name, value);
+    } catch (const std::bad_function_call& exception) {
+      throw std::runtime_error("Unknown XML GeneralSimulationParameters element '" + name + ".");
     }
     item = item->NextSiblingElement();
   }
@@ -2334,7 +2343,7 @@ PrecomputedSolutionParameters::PrecomputedSolutionParameters()
   set_parameter("Field_name", "", required, field_name);
   set_parameter("File_path", "", required, file_path);
   set_parameter("Time_step", 0.0, !required, time_step);
-  set_parameter("Use_precomputed_solution", true, !required, use_precomputed_solution);
+  set_parameter("Use_precomputed_solution", false, !required, use_precomputed_solution);
 }
 
 void PrecomputedSolutionParameters::set_values(tinyxml2::XMLElement* xml_elem)
