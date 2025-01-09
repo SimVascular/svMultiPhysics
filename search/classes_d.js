@@ -9,5 +9,6 @@ var searchData=
   ['parameters_6',['Parameters',['../class_parameters.html',1,'']]],
   ['petscimpl_7',['PetscImpl',['../class_petsc_linear_algebra_1_1_petsc_impl.html',1,'PetscLinearAlgebra']]],
   ['petsclinearalgebra_8',['PetscLinearAlgebra',['../class_petsc_linear_algebra.html',1,'']]],
-  ['projectionparameters_9',['ProjectionParameters',['../class_projection_parameters.html',1,'']]]
+  ['precomputedsolutionparameters_9',['PrecomputedSolutionParameters',['../class_precomputed_solution_parameters.html',1,'']]],
+  ['projectionparameters_10',['ProjectionParameters',['../class_projection_parameters.html',1,'']]]
 ];

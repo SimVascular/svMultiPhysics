@@ -6,8 +6,8 @@ digraph "Graphical Class Hierarchy"
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
   Node0 [id="Node000000",label="VtkData",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_vtk_data.html",tooltip=" "];
-  Node0 -> Node1 [id="edge41_Node000000_Node000001",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node0 -> Node1 [id="edge42_Node000000_Node000001",dir="back",color="steelblue1",style="solid",tooltip=" "];
   Node1 [id="Node000001",label="VtkVtpData",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_vtk_vtp_data.html",tooltip=" "];
-  Node0 -> Node2 [id="edge42_Node000000_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node0 -> Node2 [id="edge43_Node000000_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
   Node2 [id="Node000002",label="VtkVtuData",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_vtk_vtu_data.html",tooltip=" "];
 }

@@ -19,9 +19,10 @@ var searchData=
   ['precompdt_16',['precompDt',['../class_com_mod.html#abe181c74acd266e321951a90182a9758',1,'ComMod']]],
   ['precompfieldname_17',['precompFieldName',['../class_com_mod.html#a7e1a59c4ebba44640b4d4bc7b55cd82b',1,'ComMod']]],
   ['precompfilename_18',['precompFileName',['../class_com_mod.html#a5703dd4af9a8701876de31e2e4ae0a61',1,'ComMod']]],
-  ['print_5fparameter_5flist_19',['print_parameter_list',['../class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4',1,'ParameterLists']]],
-  ['projectionparameters_20',['ProjectionParameters',['../class_projection_parameters.html',1,'']]],
-  ['ps0_21',['pS0',['../class_com_mod.html#af6037b9453a02db9505b7af5bc403cae',1,'ComMod']]],
-  ['pseudo_5fecg_22',['pseudo_ECG',['../classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a',1,'ecgLeadsType']]],
-  ['psteq_23',['pstEq',['../class_com_mod.html#a87707963de89cffba1c523da18569cd8',1,'ComMod']]]
+  ['precomputedsolutionparameters_19',['PrecomputedSolutionParameters',['../class_precomputed_solution_parameters.html',1,'']]],
+  ['print_5fparameter_5flist_20',['print_parameter_list',['../class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4',1,'ParameterLists']]],
+  ['projectionparameters_21',['ProjectionParameters',['../class_projection_parameters.html',1,'']]],
+  ['ps0_22',['pS0',['../class_com_mod.html#af6037b9453a02db9505b7af5bc403cae',1,'ComMod']]],
+  ['pseudo_5fecg_23',['pseudo_ECG',['../classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a',1,'ecgLeadsType']]],
+  ['psteq_24',['pstEq',['../class_com_mod.html#a87707963de89cffba1c523da18569cd8',1,'ComMod']]]
 ];
