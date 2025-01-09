@@ -100,10 +100,12 @@ void Simulation::set_module_parameters()
   com_mod.stFileIncr = general.increment_in_saving_restart_files.value();
   com_mod.rmsh.isReqd = general.simulation_requires_remeshing.value();
 
-  com_mod.usePrecomp = general.use_precomputed_solution.value();
-  com_mod.precompFileName = general.precomputed_solution_file_path.value();
-  com_mod.precompFieldName = general.precomputed_solution_field_name.value();
-  com_mod.precompDt = general.precomputed_time_step_size.value();
+  auto& precomp_sol = parameters.precomputed_solution_parameters;
+  com_mod.usePrecomp = precomp_sol.use_precomputed_solution.value();
+  com_mod.precompFileName = precomp_sol.file_path.value();
+  com_mod.precompFieldName = precomp_sol.field_name.value();
+  com_mod.precompDt = precomp_sol.time_step.value();
+
   if ((com_mod.precompDt == 0.0) && (com_mod.usePrecomp)) {
     std::cout << "Precomputed time step size is zero. Setting to simulation time step size." << std::endl;
     com_mod.precompDt = com_mod.dt;
