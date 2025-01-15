@@ -416,6 +416,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     int iFa = lBc.iFa;
 
     read_spatial_values(com_mod, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], file_name, lBc);
+  } else {
+    throw std::runtime_error("[read_bc] Unknown spatial profile type '" + ctmp + "'.");
   }
 
   // Weak Dirichlet BC for fluid/FSI equations
