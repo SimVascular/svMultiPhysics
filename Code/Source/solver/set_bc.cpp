@@ -84,8 +84,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
   // if (ALL(cplBC.fa.bGrp .EQ. cplBC_Dir)) RETURN
 
   // Determine current physics
-  auto& cDmn = com_mod.cDmn;
-  auto cPhys = eq.dmn[cDmn].phys;
+  auto cPhys = eq.phys;
 
   // Mechanical configuration in which to compute flowrate
   auto cfg_o = MechanicalConfigurationType::reference;
@@ -686,8 +685,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
   auto& eq = com_mod.eq[iEq];
 
   // Determine current physics
-  auto& cDmn = com_mod.cDmn;
-  auto cPhys = eq.dmn[cDmn].phys;
+  auto cPhys = eq.phys;
 
   // Configuration in which to compute flowrate
   auto cfg_o = MechanicalConfigurationType::reference;

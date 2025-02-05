@@ -26,3 +26,8 @@ def test_pipe_3d_trilinos_ml(n_proc):
     test_folder = "pipe_3d_trilinos_ml"
     t_max = 5
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
+
+def test_pipe_RCR_3d(n_proc):
+    test_folder = "pipe_RCR_3d"
+    t_max = 5
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
