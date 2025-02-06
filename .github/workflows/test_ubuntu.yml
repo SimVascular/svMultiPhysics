@@ -63,12 +63,12 @@ jobs:
             cd build/svMultiPhysics-build
             make coverage
         - name: Save coverage report
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v3
           with:
             name: coverage_report
             path: build/svMultiPhysics-build/coverage
         - name: Upload coverage reports to Codecov
-          uses: codecov/codecov-action@v4
+          uses: codecov/codecov-action@v5
           env:
             CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
