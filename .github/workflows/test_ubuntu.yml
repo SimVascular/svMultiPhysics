@@ -15,7 +15,7 @@ jobs:
       runs-on: ${{ matrix.version }}
       container: simvascular/libraries:${{ matrix.image }}
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Build svZeroDSolver
           shell: bash
           run: |
@@ -59,16 +59,19 @@ jobs:
             cd build/svMultiPhysics-build/Source/solver
             ctest --verbose
         - name: Generate code coverage
+          if: ${{ matrix.version == 'ubuntu-22.04' }}
           run: |
             cd build/svMultiPhysics-build
             make coverage
         - name: Save coverage report
-          uses: actions/upload-artifact@v3
+          if: ${{ matrix.version == 'ubuntu-22.04' }}
+          uses: actions/upload-artifact@v4
           with:
             name: coverage_report
             path: build/svMultiPhysics-build/coverage
         - name: Upload coverage reports to Codecov
-          uses: codecov/codecov-action@v3
+          if: ${{ matrix.version == 'ubuntu-22.04' }}
+          uses: codecov/codecov-action@v5
           env:
             CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
