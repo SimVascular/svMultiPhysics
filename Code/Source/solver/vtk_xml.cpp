@@ -570,7 +570,7 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   using namespace vtk_xml_parser;
 
   if (FILE *file = fopen(file_name.c_str(), "r")) {
-      fclose(file);
+    fclose(file);
   } else {
     throw std::runtime_error("The VTU mesh file '" + file_name + "' can't be read.");
   }
@@ -582,6 +582,9 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   auto vtk_data = VtkData::create_reader(file_name);
   int num_elems = vtk_data->num_elems(); 
   int np_elem = vtk_data->np_elem(); 
+  int elem_type = vtk_data->elem_type(); 
+  std::cout << "[read_vtu] np_elem: " << np_elem << std::endl;
+  std::cout << "[read_vtu] elem_type: " << elem_type << std::endl;
 
   // Set mesh data.
   mesh.nEl = num_elems;

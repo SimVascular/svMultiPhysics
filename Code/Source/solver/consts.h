@@ -272,6 +272,7 @@ enum class ElementType
 };
 
 extern const std::map<ElementType,int> element_type_to_elem_nonb;
+extern const std::set<ElementType> volume_elements;
 
 // Template for printing ElementType.
 /*

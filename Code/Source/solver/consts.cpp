@@ -53,6 +53,18 @@ const std::map<ElementType,int> element_type_to_elem_nonb =
   {ElementType::WDG,   3 }
 };
 
+/// @brief Set identifying volume elements. 
+///
+const std::set<ElementType> volume_elements = 
+{
+  ElementType::HEX8, 
+  ElementType::HEX20,
+  ElementType::HEX27,
+  ElementType::TET4,  
+  ElementType::TET10,
+  ElementType::WDG
+};
+
 /// @brief Map for constitutive_model string to ConstitutiveModelType. 
 ///
 /// Type of constitutive model (isochoric) for structure equation:
