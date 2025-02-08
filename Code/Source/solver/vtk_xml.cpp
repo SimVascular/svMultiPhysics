@@ -560,6 +560,7 @@ void read_vtp_pdata(const std::string& fName, const std::string& kwrd, const int
 //   mesh.eNoN - number of noders per element
 //   mesh.x - node coordinates
 //   mesh.gIEN - element connectivity
+//   mesh.eType - element type
 //
 // Replicates Fortran READVTU subroutine defined in VTKXML.f.
 //

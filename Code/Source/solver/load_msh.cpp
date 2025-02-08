@@ -184,16 +184,23 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
         dmsg << "Mesh name: " << mesh_name;
         dmsg << "Mesh path: " << mesh_path;
 #endif
-
         // Read in volume mesh.
         vtk_xml::read_vtu(mesh_path, mesh);
 
-        if (consts::volume_elements.count(mesh.eType) != 0) {
-          int nsd = simulation->com_mod.nsd;
-          if (nsd != 3) {
-            throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
-                ") is not consistent with the mesh '" + mesh.name + "' which contains volume elements.");
-          }
+        // Check that the input number of spatial dimensions is consistent 
+        // with the types of elements defined for the simulation mesh.
+        //
+        int nsd = simulation->com_mod.nsd;
+        int elem_dim = consts::element_dimension.at(mesh.eType);
+        auto elem_type = consts::element_type_to_string.at(mesh.eType);
+
+        if (mesh.lShl && (nsd == 1)) {
+          throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
+              ") is not consistent with the mesh '" + mesh.name + "' which contains shell elements.");
+
+        } else if (elem_dim != nsd) {
+          throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
+              ") is not consistent with the mesh '" + mesh.name + "' which contains " + elem_type + " elements.");
         }
 
         // Set mesh element properites for the input element type.

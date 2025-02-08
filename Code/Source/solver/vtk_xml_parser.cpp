@@ -804,6 +804,7 @@ void load_vtp(const std::string& file_name, mshType& mesh)
 ///   mesh.gnEl - number of elements
 ///   mesh.eNoN - number of noders per element
 ///   mesh.gIEN - element connectivity (num_nodes_per_elem, num_elems)
+///   mesh.eType - element type
 ///
 /// Replicates 'subroutine loadVTK(vtk,fName,istat)' defined in vtkXMLParser.f90.
 //
@@ -882,6 +883,14 @@ void load_vtu(const std::string& file_name, faceType& face)
   auto cell = vtkGenericCell::New();
   vtk_ugrid->GetCell(0, cell);
   int np_elem = cell->GetNumberOfPoints();
+  int elem_type = cell->GetCellType();
+
+  // Set the mesh element type from the vtk cell type.
+  try {
+    face.eType = vtk_cell_to_elem_type[elem_type];
+  } catch (const std::bad_function_call& exception) {
+    throw std::runtime_error("[load_vtu] The VTK cell type " + std::to_string(elem_type) + " is not supported.");
+  }
 
   #ifdef debug_load_vtu 
   std::cout << "[load_vtu] Number of nodes: " << num_nodes << std::endl;
