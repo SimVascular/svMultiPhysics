@@ -7,7 +7,7 @@ var searchData=
   ['bctype_4',['bcType',['../classbc_type.html',1,'']]],
   ['bdryvec_5',['bdryVec',['../struct_trilinos.html#a72013afe23e55e4cbb53e22c6fe54d8e',1,'Trilinos']]],
   ['beta_6',['beta',['../classeq_type.html#af8b6728acf22adfdf385b3a29c6fed39',1,'eqType']]],
-  ['bf_7',['bf',['../class_com_mod.html#af3c9f64171f5a55a88e5b2c094c8b30c',1,'ComMod::Bf'],['../classeq_type.html#aa38fe7bb149cec558ca09eacef052ac6',1,'eqType::bf']]],
+  ['bf_7',['bf',['../classeq_type.html#aa38fe7bb149cec558ca09eacef052ac6',1,'eqType::bf'],['../class_com_mod.html#af3c9f64171f5a55a88e5b2c094c8b30c',1,'ComMod::Bf']]],
   ['bftype_8',['bfType',['../classbf_type.html',1,'']]],
   ['bin2vtk_9',['bin2VTK',['../class_com_mod.html#a71096696d480232eb3b82b2e15a050f4',1,'ComMod']]],
   ['binpath_10',['binPath',['../classcpl_b_c_type.html#a8cd85265d73d2e9ebdb21c097d24cf70',1,'cplBCType']]],
