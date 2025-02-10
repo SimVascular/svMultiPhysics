@@ -30,6 +30,7 @@
 
 // --------------------------------------------------------------
 // To run the tests in test.cpp
+// 0.  Make sure svMultiPhysics was built with unit tests enabled, using cmake -DENABLE_UNIT_TEST=ON ..
 // 1.  Navigate to <svMultiPhysics_root_directory>/build/svMultiPhysics-build/Source/solver
 // 2.  Run `make` to build the tests
 // 3.  Run `ctest --verbose` to run the tests

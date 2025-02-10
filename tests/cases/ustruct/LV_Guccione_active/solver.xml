@@ -5,7 +5,7 @@
   <Continue_previous_simulation> 0 </Continue_previous_simulation>
   <Number_of_spatial_dimensions> 3 </Number_of_spatial_dimensions> 
   <Number_of_time_steps> 1 </Number_of_time_steps> 
-  <Time_step_size> 1e-4 </Time_step_size> 
+  <Time_step_size> 1e-3 </Time_step_size> 
   <Spectral_radius_of_infinite_time_step> 0.50 </Spectral_radius_of_infinite_time_step> 
   <Searched_file_name_to_trigger_stop> STOP_SIM </Searched_file_name_to_trigger_stop> 
   <Save_results_to_VTK_format> true </Save_results_to_VTK_format> 
@@ -34,6 +34,8 @@
   <Fiber_direction_file_path> mesh/P1/fibersLong.vtu </Fiber_direction_file_path> 
   <Fiber_direction_file_path> mesh/P1/fibersSheet.vtu </Fiber_direction_file_path> 
 
+  <!-- Mesh is in mm -->
+
 </Add_mesh>
 
 <Add_equation type="ustruct" > 
@@ -43,24 +45,25 @@
    <Tolerance> 1e-12 </Tolerance> 
    <Use_taylor_hood_type_basis> false </Use_taylor_hood_type_basis>
 
-    <Density> 1e-3 </Density> 
+    <Density> 1e-3 </Density> <!-- g/mm^3 -->
     <Elasticity_modulus> 2.0e5 </Elasticity_modulus> 
     <Poisson_ratio> 0.5 </Poisson_ratio> 
    
     <Constitutive_model type="Guccione" > 
-       <c> 2.0e3 </c>  
-       <bf> 8.0 </bf>  
+       <c> 2.0e3 </c>  <!-- g/mm/s^2 or Pa -->
+       <bf> 8.0 </bf>  <!-- no units -->
        <bt> 2.0 </bt> 
        <bfs> 4.0 </bfs>
     </Constitutive_model> 
 
+   <!-- Fiber stress ramp from 0 to 60 kPa in 1s -->
    <Fiber_reinforcement_stress type="Unsteady" > 
       <Temporal_values_file_path> fib_stress.dat </Temporal_values_file_path> 
       <Ramp_function> true </Ramp_function> 
    </Fiber_reinforcement_stress> 
 
-   <Momentum_stabilization_coefficient> 1e-1 </Momentum_stabilization_coefficient> 
-   <Continuity_stabilization_coefficient> 1e-1 </Continuity_stabilization_coefficient> 
+   <Momentum_stabilization_coefficient> 1e-3 </Momentum_stabilization_coefficient> 
+   <Continuity_stabilization_coefficient> 1e-3 </Continuity_stabilization_coefficient> 
 
    <Output type="Spatial" >
      <Pressure> true </Pressure>
@@ -89,6 +92,7 @@
       <Impose_on_state_variable_integral> true </Impose_on_state_variable_integral>
    </Add_BC> 
 
+   <!-- Endocardial pressure load ramp from 0 to 15 kPa in 1s-->
    <Add_BC name="endo" > 
       <Type> Neu </Type> 
       <Time_dependence> Unsteady </Time_dependence>
