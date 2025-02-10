@@ -198,7 +198,7 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
           throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
               ") is not consistent with the mesh '" + mesh.name + "' which contains shell elements.");
 
-        } else if (elem_dim != nsd) {
+        } else if (!mesh.lFib && (elem_dim != nsd)) {
           throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
               ") is not consistent with the mesh '" + mesh.name + "' which contains " + elem_type + " elements.");
         }
