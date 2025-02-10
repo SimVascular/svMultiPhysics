@@ -183,6 +183,7 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
         dmsg.banner();
         dmsg << "Mesh name: " << mesh_name;
         dmsg << "Mesh path: " << mesh_path;
+        dmsg << "mesh.lShl: " << mesh.lShl;
 #endif
         // Read in volume mesh.
         vtk_xml::read_vtu(mesh_path, mesh);
@@ -194,13 +195,17 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
         int elem_dim = consts::element_dimension.at(mesh.eType);
         auto elem_type = consts::element_type_to_string.at(mesh.eType);
 
-        if (mesh.lShl && (nsd == 1)) {
-          throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
-              ") is not consistent with the mesh '" + mesh.name + "' which contains shell elements.");
+        if (mesh.lShl) { 
+          if (nsd == 1) {
+            throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
+                ") is not consistent with the mesh '" + mesh.name + "' which contains shell elements.");
+          }
 
-        } else if (!mesh.lFib && (elem_dim != nsd)) {
-          throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
+        } else if (!mesh.lFib) { 
+          if (elem_dim != nsd) {
+            throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
               ") is not consistent with the mesh '" + mesh.name + "' which contains " + elem_type + " elements.");
+          }
         }
 
         // Set mesh element properites for the input element type.

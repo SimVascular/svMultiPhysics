@@ -730,6 +730,17 @@ void load_vtp(const std::string& file_name, faceType& face)
   }
 
   vtkIdType num_elems = vtk_polydata->GetNumberOfCells();
+  auto cell = vtkGenericCell::New();
+  vtk_polydata->GetCell(0, cell);
+  int np_elem = cell->GetNumberOfPoints();
+  int elem_type = cell->GetCellType();
+
+  // Set the mesh element type from the vtk cell type.
+  try {
+    face.eType = vtk_cell_to_elem_type[elem_type];
+  } catch (const std::bad_function_call& exception) {
+    throw std::runtime_error("[load_vtp] The VTK cell type " + std::to_string(elem_type) + " is not supported.");
+  }
   #ifdef debug_load_vtp 
   std::cout << "[load_vtp] Number of nodes: " << num_nodes << std::endl;
   std::cout << "[load_vtp] Number of elements: " << num_elems << std::endl;
@@ -757,7 +768,7 @@ void load_vtp(const std::string& file_name, faceType& face)
 //
 void load_vtp(const std::string& file_name, mshType& mesh) 
 {
-  #ifdef debug_load_vtp 
+  #ifdef n_debug_load_vtp 
   std::cout << "[load_vtp] " << std::endl;
   std::cout << "[load_vtp] ===== vtk_xml_parser.cpp::load_vtp ===== " << std::endl;
   #endif
@@ -772,6 +783,18 @@ void load_vtp(const std::string& file_name, mshType& mesh)
   }
 
   vtkIdType num_elems = vtk_polydata->GetNumberOfCells();
+  auto cell = vtkGenericCell::New();
+  vtk_polydata->GetCell(0, cell);
+  int np_elem = cell->GetNumberOfPoints();
+  int elem_type = cell->GetCellType();
+
+  // Set the mesh element type from the vtk cell type.
+  try {
+    mesh.eType = vtk_cell_to_elem_type[elem_type];
+  } catch (const std::bad_function_call& exception) {
+    throw std::runtime_error("[load_vtp] The VTK cell type " + std::to_string(elem_type) + " is not supported.");
+  }
+
   #ifdef debug_load_vtp 
   std::cout << "[load_vtp] Number of nodes: " << num_nodes << std::endl;
   std::cout << "[load_vtp] Number of elements: " << num_elems << std::endl;

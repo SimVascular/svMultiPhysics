@@ -440,7 +440,7 @@ void read_vtp(const std::string& file_name, faceType& face)
   using namespace vtk_xml_parser;
 
   if (FILE *file = fopen(file_name.c_str(), "r")) {
-      fclose(file);
+    fclose(file);
   } else {
     throw std::runtime_error("The VTK face file '" + file_name + "' can't be read.");
   }
@@ -584,8 +584,6 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   int num_elems = vtk_data->num_elems(); 
   int np_elem = vtk_data->np_elem(); 
   int elem_type = vtk_data->elem_type(); 
-  std::cout << "[read_vtu] np_elem: " << np_elem << std::endl;
-  std::cout << "[read_vtu] elem_type: " << elem_type << std::endl;
 
   // Set mesh data.
   mesh.nEl = num_elems;
@@ -605,7 +603,6 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   }
   #endif
 }
-
 
 //----------
 // read_precomputed_solution_vtu

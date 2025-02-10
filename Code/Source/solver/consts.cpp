@@ -56,6 +56,7 @@ const std::map<ElementType,int> element_type_to_elem_nonb =
 ///
 const std::map<ElementType,std::string> element_type_to_string = 
 {
+  {ElementType::NA,    "unknown" },
   {ElementType::PNT,   "point" },
   {ElementType::LIN1,  "line1" },
   {ElementType::LIN2,  "line2" },
