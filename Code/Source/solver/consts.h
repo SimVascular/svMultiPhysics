@@ -271,7 +271,9 @@ enum class ElementType
   NRB = 115
 };
 
+extern const std::map<ElementType,std::string> element_type_to_string;
 extern const std::map<ElementType,int> element_type_to_elem_nonb;
+extern const std::map<ElementType,int> element_dimension;
 
 // Template for printing ElementType.
 /*

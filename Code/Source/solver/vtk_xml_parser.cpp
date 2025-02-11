@@ -80,6 +80,22 @@ std::map<unsigned char,int> vtk_cell_to_elem {
   {VTK_TRIQUADRATIC_HEXAHEDRON, 27}
 };
 
+/// Map used to convert VTK cell types to consts::ElementType. 
+std::map<unsigned char,consts::ElementType> vtk_cell_to_elem_type {
+  {VTK_HEXAHEDRON, consts::ElementType::HEX8}, 
+  {VTK_LINE, consts::ElementType::LIN1},
+  {VTK_QUAD, consts::ElementType::QUD4},
+  {VTK_TETRA, consts::ElementType::TET4},
+  {VTK_TRIANGLE, consts::ElementType::TRI3},
+  {VTK_WEDGE, consts::ElementType::WDG}, 
+  {VTK_QUADRATIC_TRIANGLE, consts::ElementType::TRI6},
+  {VTK_QUADRATIC_QUAD, consts::ElementType::QUD8},
+  {VTK_BIQUADRATIC_QUAD, consts::ElementType::QUD9}, 
+  {VTK_QUADRATIC_TETRA, consts::ElementType::TET10},
+  {VTK_QUADRATIC_HEXAHEDRON, consts::ElementType::HEX20},
+  {VTK_TRIQUADRATIC_HEXAHEDRON, consts::ElementType::HEX27}
+};
+
 std::map<unsigned char, std::vector<std::vector<int>>> vtk_cell_ordering {
   {VTK_HEXAHEDRON, {{0,3,2,1},
                     {4,5,6,7},
@@ -714,6 +730,17 @@ void load_vtp(const std::string& file_name, faceType& face)
   }
 
   vtkIdType num_elems = vtk_polydata->GetNumberOfCells();
+  auto cell = vtkGenericCell::New();
+  vtk_polydata->GetCell(0, cell);
+  int np_elem = cell->GetNumberOfPoints();
+  int elem_type = cell->GetCellType();
+
+  // Set the mesh element type from the vtk cell type.
+  try {
+    face.eType = vtk_cell_to_elem_type[elem_type];
+  } catch (const std::bad_function_call& exception) {
+    throw std::runtime_error("[load_vtp] The VTK cell type " + std::to_string(elem_type) + " is not supported.");
+  }
   #ifdef debug_load_vtp 
   std::cout << "[load_vtp] Number of nodes: " << num_nodes << std::endl;
   std::cout << "[load_vtp] Number of elements: " << num_elems << std::endl;
@@ -741,7 +768,7 @@ void load_vtp(const std::string& file_name, faceType& face)
 //
 void load_vtp(const std::string& file_name, mshType& mesh) 
 {
-  #ifdef debug_load_vtp 
+  #ifdef n_debug_load_vtp 
   std::cout << "[load_vtp] " << std::endl;
   std::cout << "[load_vtp] ===== vtk_xml_parser.cpp::load_vtp ===== " << std::endl;
   #endif
@@ -756,6 +783,18 @@ void load_vtp(const std::string& file_name, mshType& mesh)
   }
 
   vtkIdType num_elems = vtk_polydata->GetNumberOfCells();
+  auto cell = vtkGenericCell::New();
+  vtk_polydata->GetCell(0, cell);
+  int np_elem = cell->GetNumberOfPoints();
+  int elem_type = cell->GetCellType();
+
+  // Set the mesh element type from the vtk cell type.
+  try {
+    mesh.eType = vtk_cell_to_elem_type[elem_type];
+  } catch (const std::bad_function_call& exception) {
+    throw std::runtime_error("[load_vtp] The VTK cell type " + std::to_string(elem_type) + " is not supported.");
+  }
+
   #ifdef debug_load_vtp 
   std::cout << "[load_vtp] Number of nodes: " << num_nodes << std::endl;
   std::cout << "[load_vtp] Number of elements: " << num_elems << std::endl;
@@ -788,6 +827,7 @@ void load_vtp(const std::string& file_name, mshType& mesh)
 ///   mesh.gnEl - number of elements
 ///   mesh.eNoN - number of noders per element
 ///   mesh.gIEN - element connectivity (num_nodes_per_elem, num_elems)
+///   mesh.eType - element type
 ///
 /// Replicates 'subroutine loadVTK(vtk,fName,istat)' defined in vtkXMLParser.f90.
 //
@@ -814,11 +854,20 @@ void load_vtu(const std::string& file_name, mshType& mesh)
   auto cell = vtkGenericCell::New();
   vtk_ugrid->GetCell(0, cell);
   int np_elem = cell->GetNumberOfPoints();
+  int elem_type = cell->GetCellType();
+
+  // Set the mesh element type from the vtk cell type.
+  try {
+    mesh.eType = vtk_cell_to_elem_type[elem_type];
+  } catch (const std::bad_function_call& exception) {
+    throw std::runtime_error("[load_vtu] The VTK cell type " + std::to_string(elem_type) + " is not supported.");
+  }
 
   #ifdef debug_load_vtu 
   std::cout << "[load_vtu] Number of nodes: " << num_nodes << std::endl;
   std::cout << "[load_vtu] Number of elements: " << num_elems << std::endl;
   std::cout << "[load_vtu] Number of nodes per element: " << np_elem << std::endl;
+  std::cout << "[load_vtu] Element type: " << elem_type << std::endl;
   #endif
 
   // Store nodal coordinates.
@@ -857,6 +906,14 @@ void load_vtu(const std::string& file_name, faceType& face)
   auto cell = vtkGenericCell::New();
   vtk_ugrid->GetCell(0, cell);
   int np_elem = cell->GetNumberOfPoints();
+  int elem_type = cell->GetCellType();
+
+  // Set the mesh element type from the vtk cell type.
+  try {
+    face.eType = vtk_cell_to_elem_type[elem_type];
+  } catch (const std::bad_function_call& exception) {
+    throw std::runtime_error("[load_vtu] The VTK cell type " + std::to_string(elem_type) + " is not supported.");
+  }
 
   #ifdef debug_load_vtu 
   std::cout << "[load_vtu] Number of nodes: " << num_nodes << std::endl;

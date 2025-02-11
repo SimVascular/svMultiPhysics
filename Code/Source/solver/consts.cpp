@@ -32,7 +32,6 @@
 
 namespace consts {
 
-
 /// @brief Reproduces the 'SELECT CASE (lM%eType)' statements in the
 /// Fortran 'PARTMSH' subroutine. 
 //
@@ -50,6 +49,47 @@ const std::map<ElementType,int> element_type_to_elem_nonb =
   {ElementType::HEX8,  4 },
   {ElementType::HEX20, 8 },
   {ElementType::HEX27, 9 },
+  {ElementType::WDG,   3 }
+};
+
+/// @brief Map containing the element type as a string. 
+///
+const std::map<ElementType,std::string> element_type_to_string = 
+{
+  {ElementType::NA,    "unknown" },
+  {ElementType::PNT,   "point" },
+  {ElementType::LIN1,  "line1" },
+  {ElementType::LIN2,  "line2" },
+  {ElementType::TRI3,  "tri3" },
+  {ElementType::TRI6,  "tri6" },
+  {ElementType::QUD4,  "quad4" },
+  {ElementType::QUD8,  "quad8" },
+  {ElementType::QUD9,  "qud9" },
+  {ElementType::TET4,  "tet4" },
+  {ElementType::TET10, "tet10" },
+  {ElementType::HEX8,  "hex8" },
+  {ElementType::HEX20, "hex20" },
+  {ElementType::HEX27, "hex27" },
+  {ElementType::WDG,   "wedge" }
+};
+
+/// @brief Map containing the dimension for each element type. 
+///
+const std::map<ElementType,int> element_dimension = 
+{
+  {ElementType::PNT,   0 },
+  {ElementType::LIN1,  1 },
+  {ElementType::LIN2,  1 },
+  {ElementType::TRI3,  2 },
+  {ElementType::TRI6,  2 },
+  {ElementType::QUD4,  2 },
+  {ElementType::QUD8,  2 },
+  {ElementType::QUD9,  2 },
+  {ElementType::TET4,  3 },
+  {ElementType::TET10, 3 },
+  {ElementType::HEX8,  3 },
+  {ElementType::HEX20, 3 },
+  {ElementType::HEX27, 3 },
   {ElementType::WDG,   3 }
 };
 
