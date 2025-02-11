@@ -66,6 +66,7 @@ class VtkVtpData::VtkVtpDataImpl {
     void write(const std::string& file_name);
 
     vtkSmartPointer<vtkPolyData> vtk_polydata;
+    int elem_type;
     int num_elems;
     int np_elem;
     int num_points;
@@ -92,6 +93,7 @@ void VtkVtpData::VtkVtpDataImpl::read_file(const std::string& file_name)
   auto cell = vtkGenericCell::New();
   vtk_polydata->GetCell(0, cell);
   np_elem = cell->GetNumberOfPoints();
+  elem_type = cell->GetCellType();
 }
 
 void VtkVtpData::VtkVtpDataImpl::set_connectivity(const int nsd, const Array<int>& conn, const int pid)
@@ -272,6 +274,7 @@ class VtkVtuData::VtkVtuDataImpl {
     };
 
     vtkSmartPointer<vtkUnstructuredGrid> vtk_ugrid;
+    int elem_type;
     int num_elems;
     int np_elem;
     int num_points;
@@ -298,6 +301,7 @@ void VtkVtuData::VtkVtuDataImpl::read_file(const std::string& file_name)
   auto cell = vtkGenericCell::New();
   vtk_ugrid->GetCell(0, cell);
   np_elem = cell->GetNumberOfPoints();
+  elem_type = cell->GetCellType();
 }
 
 void VtkVtuData::VtkVtuDataImpl::set_connectivity(const int nsd, const Array<int>& conn, const int pid)
@@ -745,6 +749,11 @@ bool VtkVtpData::has_point_data(const std::string& data_name)
   return false;
 }
 
+int VtkVtpData::elem_type() 
+{ 
+  return impl->elem_type; 
+}
+
 int VtkVtpData::num_elems() 
 { 
   return impl->num_elems; 
@@ -1005,6 +1014,11 @@ Array<double> VtkVtuData::get_points()
   }
 
   return points_array;
+}
+
+int VtkVtuData::elem_type() 
+{ 
+  return impl->elem_type; 
 }
 
 int VtkVtuData::num_elems() 

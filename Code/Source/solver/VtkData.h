@@ -44,6 +44,7 @@ class VtkData {
     virtual Array<int> get_connectivity() = 0;
     virtual Array<double> get_points() = 0;
     virtual int num_elems() = 0;
+    virtual int elem_type() = 0;
     virtual int np_elem() = 0;
     virtual int num_points() = 0;
     virtual void read_file(const std::string& file_name) = 0;
@@ -79,6 +80,7 @@ class VtkVtpData : public VtkData {
 
     virtual Array<int> get_connectivity();
     virtual Array<double> get_points();
+    virtual int elem_type();
     virtual int num_elems();
     virtual int np_elem();
     virtual int num_points();
@@ -115,6 +117,7 @@ class VtkVtuData : public VtkData {
     ~VtkVtuData();
 
     virtual Array<int> get_connectivity();
+    virtual int elem_type();
     virtual int num_elems();
     virtual int np_elem();
     virtual int num_points();

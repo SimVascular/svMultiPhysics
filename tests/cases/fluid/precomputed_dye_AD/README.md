@@ -7,10 +7,12 @@ Simulate dye transport in a cylinder govered by a given velocity field. The dye 
 The advection-diffusion equation that governs dye transport uses a known velocity field read in from a VTK-format file named **precomputed_velocity.vtu** containing a *PointData DataArray* named **Velocity**.
 
 ```
-<Use_precomputed_solution> true </Use_precomputed_solution>
-<Precomputed_solution_file_path> precomputed_velocity.vtu </Precomputed_solution_file_path>
-<Precomputed_solution_field_name> Velocity </Precomputed_solution_field_name>
- ```
+<Precomputed_solution>
+  <Use_precomputed_solution> true </Use_precomputed_solution>
+  <File_path> precomputed_velocity.vtu </File_path>
+  <Field_name> Velocity </Field_name>
+</Precomputed_solution>
+```
 
 ## Inflow boundary condition
 The inflow boundary condition for a constant release of dye at the **lumen_inlet** inlet face.

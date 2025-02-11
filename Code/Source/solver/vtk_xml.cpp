@@ -440,7 +440,7 @@ void read_vtp(const std::string& file_name, faceType& face)
   using namespace vtk_xml_parser;
 
   if (FILE *file = fopen(file_name.c_str(), "r")) {
-      fclose(file);
+    fclose(file);
   } else {
     throw std::runtime_error("The VTK face file '" + file_name + "' can't be read.");
   }
@@ -560,6 +560,7 @@ void read_vtp_pdata(const std::string& fName, const std::string& kwrd, const int
 //   mesh.eNoN - number of noders per element
 //   mesh.x - node coordinates
 //   mesh.gIEN - element connectivity
+//   mesh.eType - element type
 //
 // Replicates Fortran READVTU subroutine defined in VTKXML.f.
 //
@@ -570,7 +571,7 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   using namespace vtk_xml_parser;
 
   if (FILE *file = fopen(file_name.c_str(), "r")) {
-      fclose(file);
+    fclose(file);
   } else {
     throw std::runtime_error("The VTU mesh file '" + file_name + "' can't be read.");
   }
@@ -582,6 +583,7 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   auto vtk_data = VtkData::create_reader(file_name);
   int num_elems = vtk_data->num_elems(); 
   int np_elem = vtk_data->np_elem(); 
+  int elem_type = vtk_data->elem_type(); 
 
   // Set mesh data.
   mesh.nEl = num_elems;
@@ -601,7 +603,6 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   }
   #endif
 }
-
 
 //----------
 // read_precomputed_solution_vtu

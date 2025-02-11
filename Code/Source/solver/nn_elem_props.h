@@ -38,15 +38,6 @@ using SetElementPropsMapType = std::map<int, std::function<void(int, mshType&)>>
 //
 SetElementPropsMapType set_3d_element_props = {
 
-  {2, [](int insd, mshType& mesh) -> void { 
-    mesh.eType = ElementType::LIN1; 
-    mesh.nG = 2; 
-    mesh.vtkType = 3; 
-    mesh.nEf = 2; 
-    mesh.lShpF = true; 
-    }
-  },
-
   {4, [](int insd, mshType& mesh) -> void { 
     mesh.eType = ElementType::TET4; 
     mesh.nG = 4; 

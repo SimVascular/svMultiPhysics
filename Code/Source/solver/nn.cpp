@@ -942,7 +942,7 @@ void gn_nxx(const int l, const int eNoN, const int nsd, const int insd, Array<do
 //
 void select_ele(const ComMod& com_mod, mshType& mesh)
 {
-  // Set integration dimension.
+  // Set integration dimension: shell, fiber or solid (2d or 3d)
   int insd;
   if (mesh.lShl) {
     insd = com_mod.nsd - 1;
@@ -950,9 +950,6 @@ void select_ele(const ComMod& com_mod, mshType& mesh)
     insd = 1;
   } else {
     insd = com_mod.nsd;
-  }
-
-  if (mesh.eType == ElementType::NRB) {
   }
 
   // Set element properties based on integration dimension 

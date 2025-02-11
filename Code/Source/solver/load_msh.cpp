@@ -183,10 +183,30 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
         dmsg.banner();
         dmsg << "Mesh name: " << mesh_name;
         dmsg << "Mesh path: " << mesh_path;
+        dmsg << "mesh.lShl: " << mesh.lShl;
 #endif
-
         // Read in volume mesh.
         vtk_xml::read_vtu(mesh_path, mesh);
+
+        // Check that the input number of spatial dimensions is consistent 
+        // with the types of elements defined for the simulation mesh.
+        //
+        int nsd = simulation->com_mod.nsd;
+        int elem_dim = consts::element_dimension.at(mesh.eType);
+        auto elem_type = consts::element_type_to_string.at(mesh.eType);
+
+        if (mesh.lShl) { 
+          if (nsd == 1) {
+            throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
+                ") is not consistent with the mesh '" + mesh.name + "' which contains shell elements.");
+          }
+
+        } else if (!mesh.lFib) { 
+          if (elem_dim != nsd) {
+            throw std::runtime_error("The number of spatial dimensions (" + std::to_string(nsd) + 
+              ") is not consistent with the mesh '" + mesh.name + "' which contains " + elem_type + " elements.");
+          }
+        }
 
         // Set mesh element properites for the input element type.
         nn::select_ele(simulation->com_mod, mesh);
@@ -226,6 +246,9 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
             if (face.qmTRI3 < (1.0 / 3.0) || face.qmTRI3 > 1.0) {
                 throw std::runtime_error("Quadrature_modifier_TRI3 must be in the range [1/3, 1].");
             }
+#ifdef dbg_read_sv
+            dmsg << "face.qmTRI3: " << face.qmTRI3;
+#endif
 
             if (mesh.lFib) {
                 auto face_path = face_param->end_nodes_face_file_path();
@@ -258,42 +281,46 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
             }
         }
         if (!mesh.lFib) {
-            // Create a hash map for nodes and elements.
-            MeshHashMaps mesh_hash_maps;
-            auto mesh_node_map = mesh_hash_maps.createNodeHashMap(mesh, com_mod.nsd);
-            auto mesh_element_set = mesh_hash_maps.createElementHashMap(mesh);
+          // Create a hash map for nodes and elements.
+          MeshHashMaps mesh_hash_maps;
+          auto mesh_node_map = mesh_hash_maps.createNodeHashMap(mesh, com_mod.nsd);
+          auto mesh_element_set = mesh_hash_maps.createElementHashMap(mesh);
 
-        for (int i = 0; i < mesh.nFa; i++) {
+          for (int i = 0; i < mesh.nFa; i++) {
             auto &face = mesh.fa[i];
             if (!mesh.lFib) {
-                // Set face global node IDs
-                for (int a = 0; a < face.nNo; a++) {
-                    std::ostringstream key;
-                    key << std::scientific << std::setprecision(16);
-                    for (int j = 0; j < com_mod.nsd; j++) {
-                        key << face.x(j, a) << ",";
-                    }
-                    face.gN(a) = mesh_node_map[key.str()];
+              // Set face global node IDs
+              for (int a = 0; a < face.nNo; a++) {
+                std::ostringstream key;
+                key << std::scientific << std::setprecision(16);
+                for (int j = 0; j < com_mod.nsd; j++) {
+                  key << face.x(j, a) << ",";
                 }
-                // Set face element IDs
-                for (int e = 0; e < face.nEl; e++) {
-                    std::vector<int> element_nodes;
-                    for (int a = 0; a < face.eNoN; a++) {
-                        int Ac = face.IEN(a, e);
-                        Ac = face.gN(Ac);
-                        face.IEN(a, e) = Ac;
-                        element_nodes.push_back(Ac);
-                    }
-                    std::string key = "";
-                    std::sort(element_nodes.begin(), element_nodes.end());
-                    for (int a = 0; a < face.eNoN; a++) {
-                        key += std::to_string(element_nodes[a]) + ",";
-                    }
-                    face.gE(e) = mesh_element_set[key];
+                face.gN(a) = mesh_node_map[key.str()];
+              }
+
+              // Set face element IDs
+              for (int e = 0; e < face.nEl; e++) {
+                std::vector<int> element_nodes;
+                for (int a = 0; a < face.eNoN; a++) {
+                  int Ac = face.IEN(a, e);
+                  Ac = face.gN(Ac);
+                  face.IEN(a, e) = Ac;
+                  element_nodes.push_back(Ac);
                 }
+
+                std::string key = "";
+                std::sort(element_nodes.begin(), element_nodes.end());
+                for (int a = 0; a < face.eNoN; a++) {
+                  key += std::to_string(element_nodes[a]) + ",";
+                }
+
+                face.gE(e) = mesh_element_set[key];
+              }
             }
+          }
         }
-        }
+
         for (int i = 0; i<mesh.nFa; i++){
             auto &face = mesh.fa[i];
             nn::select_eleb(simulation, mesh, face);
