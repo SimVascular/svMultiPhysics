@@ -28,6 +28,12 @@ def test_pipe_RCR_3d_trilinos_bj(n_proc):
     test_folder = "pipe_RCR_3d_trilinos_bj"
     t_max = 2
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
+
+def test_pipe_RCR_weak_dir_3d(n_proc):
+    test_folder = "pipe_RCR_weak_dir_3d"
+    t_max = 2
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
+
 def test_pipe_RCR_genBC(n_proc):
     test_folder = "pipe_RCR_genBC"
     t_max = 2

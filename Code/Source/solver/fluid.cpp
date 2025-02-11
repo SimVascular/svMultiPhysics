@@ -324,7 +324,8 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
     u(2) = u(2) + Nw(a)*yl(2,a);
 
     ux(0,0) = ux(0,0) + Nwx(0,a)*yl(0,a);
-    ux(1,0) = ux(1,1) + Nwx(1,a)*yl(0,a);
+    // ux(1,0) = ux(1,1) + Nwx(1,a)*yl(0,a);
+    ux(1,0) = ux(1,0) + Nwx(1,a)*yl(0,a);
     ux(2,0) = ux(2,0) + Nwx(2,a)*yl(0,a);
     ux(0,1) = ux(0,1) + Nwx(0,a)*yl(1,a);
     ux(1,1) = ux(1,1) + Nwx(1,a)*yl(1,a);
@@ -370,8 +371,9 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
   es(2,0) = es(0,2);
 
   // Shear-rate := (2*e_ij*e_ij)^.5
-  double gam = es(0,0)*es(0,0) + es(1,0)*es(1,0) + 
-               es(0,1)*es(0,1) + es(1,1)*es(1,1);
+  double gam = es(0,0)*es(0,0) + es(1,0)*es(1,0) + es(2,0)*es(2,0) + 
+               es(0,1)*es(0,1) + es(1,1)*es(1,1) + es(2,1)*es(2,1) + 
+               es(0,2)*es(0,2) + es(1,2)*es(1,2) + es(2,2)*es(2,2);
   gam = sqrt(0.50*gam);
 
   // Compute viscosity based on shear-rate and chosen viscosity model
@@ -380,30 +382,43 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
   get_viscosity(com_mod, dmn, gam, mu, mu_s, mu_g);
 
   // sigma.n (deviatoric)
-  Vector<double> sgmn(2);
-  sgmn(0) = mu*(es(0,0)*nV(0) + es(1,0)*nV(1));
-  sgmn(1) = mu*(es(0,1)*nV(0) + es(1,1)*nV(1));
+  Vector<double> sgmn(3);
+  sgmn(0) = mu*(es(0,0)*nV(0) + es(1,0)*nV(1) + es(2,0)*nV(2));
+  sgmn(1) = mu*(es(0,1)*nV(0) + es(1,1)*nV(1) + es(2,1)*nV(2));
+  sgmn(2) = mu*(es(0,2)*nV(0) + es(1,2)*nV(1) + es(2,2)*nV(2));
 
-  Vector<double> rV(2);
+  Vector<double> rV(3);
   rV(0) = p*nV(0) - sgmn(0) + (tauT + rho*un)*u(0) + (tauN-tauT)*ubn*nV(0);
   rV(1) = p*nV(1) - sgmn(1) + (tauT + rho*un)*u(1) + (tauN-tauT)*ubn*nV(1);
+  rV(2) = p*nV(2) - sgmn(2) + (tauT + rho*un)*u(2) + (tauN-tauT)*ubn*nV(2);
 
-  Array<double> rM(2,2);
+  Array<double> rM(3,3);
   rM(0,0) = -mu*( u(0)*nV(0) + u(0)*nV(0) );
   rM(1,0) = -mu*( u(0)*nV(1) + u(1)*nV(0) );
+  rM(2,0) = -mu*( u(0)*nV(2) + u(2)*nV(0) );
+
   rM(0,1) = -mu*( u(1)*nV(0) + u(0)*nV(1) );
   rM(1,1) = -mu*( u(1)*nV(1) + u(1)*nV(1) );
+  rM(2,1) = -mu*( u(1)*nV(2) + u(2)*nV(1) );
+
+  rM(0,2) = -mu*( u(2)*nV(0) + u(0)*nV(2) );
+  rM(1,2) = -mu*( u(2)*nV(1) + u(1)*nV(2) );
+  rM(2,2) = -mu*( u(2)*nV(2) + u(2)*nV(2) );
 
   // Local residual (momentum)
   //
   for (int a = 0; a < eNoNw; a++) {
-    lR(0,a) = lR(0,a) + w*(Nw(a)*rV(0) + Nwx(0,a)*rM(0,0) + Nwx(1,a)*rM(1,0));
-    lR(1,a) = lR(1,a) + w*(Nw(a)*rV(1) + Nwx(0,a)*rM(0,1) + Nwx(1,a)*rM(1,1));
+    lR(0,a) = lR(0,a) + w*(Nw(a)*rV(0) + Nwx(0,a)*rM(0,0) + Nwx(1,a)*rM(1,0) + Nwx(2,a)*rM(2,0));
+    lR(1,a) = lR(1,a) + w*(Nw(a)*rV(1) + Nwx(0,a)*rM(0,1) + Nwx(1,a)*rM(1,1) + Nwx(2,a)*rM(2,1));
+    lR(2,a) = lR(2,a) + w*(Nw(a)*rV(2) + Nwx(0,a)*rM(0,2) + Nwx(1,a)*rM(1,2) + Nwx(2,a)*rM(2,2));
   }
 
   // Local residual (continuity)
+  // for (int a = 0; a < eNoNq; a++) {
+  //   lR(2,a) = lR(2,a) - w*Nq(a)*ubn;
+  // }
   for (int a = 0; a < eNoNq; a++) {
-    lR(2,a) = lR(2,a) - w*Nq(a)*ubn;
+    lR(3,a) = lR(3,a) - w*Nq(a)*ubn;
   }
 
   // Tangent (stiffness) matrices
@@ -422,13 +437,33 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
       T2 = (tauN - tauT)*T3*nV(0)*nV(1) - mu*(Nw(a)*Nwx(0,b)*nV(1) + Nw(b)*Nwx(1,a)*nV(0));
       lK(1,a,b) = lK(1,a,b) + wl*T2;
 
+      // dRm_a1/du_b3
+      T2 = (tauN - tauT)*T3*nV(0)*nV(2) - mu*(Nw(a)*Nwx(0,b)*nV(2) + Nw(b)*Nwx(2,a)*nV(0));
+      lK(2,a,b) = lK(2,a,b) + wl*T2;
+
       // dRm_a2/du_b1
       T2 = (tauN - tauT)*T3*nV(1)*nV(0) - mu*(Nw(a)*Nwx(1,b)*nV(0) + Nw(b)*Nwx(0,a)*nV(1));
-      lK(3,a,b) = lK(3,a,b) + wl*T2;
+      lK(4,a,b) = lK(4,a,b) + wl*T2;
 
       // dRm_a2/du_b2
       T2 = (tauN - tauT)*T3*nV(1)*nV(1) - mu*(Nw(a)*Nwx(1,b)*nV(1) + Nw(b)*Nwx(1,a)*nV(1));
-      lK(4,a,b) = lK(4,a,b)  + wl*(T2 + T1);
+      lK(5,a,b) = lK(5,a,b)  + wl*(T2 + T1);
+
+      // dRm_a2/du_b3
+      T2 = (tauN - tauT)*T3*nV(1)*nV(2) - mu*(Nw(a)*Nwx(1,b)*nV(2) + Nw(b)*Nwx(2,a)*nV(1));
+      lK(6,a,b) = lK(6,a,b)  + wl*T2;
+
+      // dRm_a3/du_b1
+      T2 = (tauN - tauT)*T3*nV(2)*nV(0) - mu*(Nw(a)*Nwx(2,b)*nV(0) + Nw(b)*Nwx(0,a)*nV(2));
+      lK(8,a,b) = lK(8,a,b) + wl*T2;
+
+      // dRm_a3/du_b2
+      T2 = (tauN - tauT)*T3*nV(2)*nV(1) - mu*(Nw(a)*Nwx(2,b)*nV(1) + Nw(b)*Nwx(1,a)*nV(2));
+      lK(9,a,b) = lK(9,a,b)  + wl*T2;
+
+      // dRm_a3/du_b3
+      T2 = (tauN - tauT)*T3*nV(2)*nV(2) - mu*(Nw(a)*Nwx(2,b)*nV(2) + Nw(b)*Nwx(2,a)*nV(2));
+      lK(10,a,b) = lK(10,a,b)  + wl*(T2 + T1);
     }
   }
 
@@ -437,10 +472,13 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
       double T1 = wl*Nw(a)*Nq(b);
 
       // dRm_a1/dp_b
-      lK(2,a,b)  = lK(2,a,b)  + T1*nV(0);
+      lK(3,a,b)  = lK(3,a,b)  + T1*nV(0);
 
       // dRm_a2/dp_b
-      lK(5,a,b) = lK(5,a,b)  + T1*nV(1);
+      lK(7,a,b) = lK(7,a,b)  + T1*nV(1);
+
+      // dRm_a3/dp_b
+      lK(11,a,b) = lK(11,a,b)  + T1*nV(2);
     }
   }
 
@@ -449,10 +487,13 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
       double T1 = wl*Nq(a)*Nw(b);
 
       // dRc_a/du_b1
-      lK(6,a,b) = lK(6,a,b) - T1*nV(0);
+      lK(12,a,b) = lK(13,a,b) - T1*nV(0);
 
       // dRc_a/du_b2
-      lK(7,a,b) = lK(7,a,b) - T1*nV(1);
+      lK(13,a,b) = lK(14,a,b) - T1*nV(1);
+
+      // dRc_a/du_b3
+      lK(14,a,b) = lK(15,a,b) - T1*nV(2);
     }
   }
 }
