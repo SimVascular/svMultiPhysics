@@ -1249,7 +1249,8 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
         ubl(i,a) = ubg(i,Ac);
 
         if (com_mod.mvMsh) {
-          xbl(i,a) = xbl(i,a) + Dg(i+nsd,Ac);
+          // xbl(i,a) = xbl(i,a) + Dg(i+nsd,Ac);
+          xbl(i,a) = xbl(i,a) + Dg(i+nsd+1,Ac);
         }
       }
     }

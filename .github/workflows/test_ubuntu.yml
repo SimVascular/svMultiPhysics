@@ -1,79 +1,66 @@
-name: test Ubuntu
+name: ubuntu-latest
 on: [push, pull_request]
 jobs:
-    test:
-      strategy:
-        matrix:
-          name: [Ubuntu-20.04, Ubuntu-22.04]
-          include:
-            - name: Ubuntu-20.04
-              version: ubuntu-20.04
-              image: ubuntu20
-            - name: Ubuntu-22.04
-              version: ubuntu-22.04
-              image: ubuntu22
-      runs-on: ${{ matrix.version }}
-      container: simvascular/libraries:${{ matrix.image }}
-      steps:
-        - uses: actions/checkout@v4
-        - name: Build svZeroDSolver
-          shell: bash
-          run: |
-            conda init
-            source /conda/etc/profile.d/conda.sh
-            conda activate svmultiphysics
-            git clone https://github.com/SimVascular/svZeroDSolver.git
-            cd svZeroDSolver
-            mkdir build
-            cd build
-            cmake ..
-            make -j2
-        - name: Build svMultiPhysics
-          run: |
-            if [ -d "build" ]; then
-            rm -rf "build"
-            fi
-            mkdir build
-            cd build
-            cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON -DSV_USE_TRILINOS:BOOL=ON ..
-            make -j2
-            cd ..
-        - name: Build svMultiPhysics (PETSc)
-          run: |
-            if [ -d "build-petsc" ]; then
-            rm -rf "build-petsc"
-            fi
-            mkdir build-petsc
-            cd build-petsc
-            cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON -DSV_PETSC_DIR:STRING=/petsc ..
-            make -j2
-            cd ..
-        - name: Run integration tests
-          run: |
-            git config --global --add safe.directory /__w/svMultiPhysics/svMultiPhysics
-            git lfs pull
-            cd tests
-            conda run -n svmultiphysics pytest -rPv --durations=0
-        - name: Run unit tests
-          run: |  
-            cd build/svMultiPhysics-build/Source/solver
-            ctest --verbose
-        - name: Generate code coverage
-          if: ${{ matrix.version == 'ubuntu-22.04' }}
-          run: |
-            cd build/svMultiPhysics-build
-            make coverage
-        - name: Save coverage report
-          if: ${{ matrix.version == 'ubuntu-22.04' }}
-          uses: actions/upload-artifact@v4
-          with:
-            name: coverage_report
-            path: build/svMultiPhysics-build/coverage
-        - name: Upload coverage reports to Codecov
-          if: ${{ matrix.version == 'ubuntu-22.04' }}
-          uses: codecov/codecov-action@v5
-          env:
-            CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  test:
+    runs-on: ubuntu-latest
+    container: simvascular/libraries:ubuntu22
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build svZeroDSolver
+        shell: bash
+        run: |
+          conda init
+          source /conda/etc/profile.d/conda.sh
+          conda activate svmultiphysics
+          git clone https://github.com/SimVascular/svZeroDSolver.git
+          cd svZeroDSolver
+          mkdir build
+          cd build
+          cmake ..
+          make -j2
+      - name: Build svMultiPhysics
+        run: |
+          if [ -d "build" ]; then
+          rm -rf "build"
+          fi
+          mkdir build
+          cd build
+          cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON -DSV_USE_TRILINOS:BOOL=ON ..
+          make -j2
+          cd ..
+      - name: Build svMultiPhysics (PETSc)
+        run: |
+          if [ -d "build-petsc" ]; then
+          rm -rf "build-petsc"
+          fi
+          mkdir build-petsc
+          cd build-petsc
+          cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON -DSV_PETSC_DIR:STRING=/petsc ..
+          make -j2
+          cd ..
+      - name: Run integration tests
+        run: |
+          git config --global --add safe.directory /__w/svMultiPhysics/svMultiPhysics
+          git lfs pull
+          cd tests
+          conda run -n svmultiphysics pytest -rPv --durations=0
+      - name: Run unit tests
+        run: |  
+          cd build/svMultiPhysics-build/Source/solver
+          ctest --verbose
+      - name: Generate code coverage
+        run: |
+          cd build/svMultiPhysics-build
+          make coverage
+      - name: Save coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage_report
+          path: build/svMultiPhysics-build/coverage
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   
   
