@@ -517,7 +517,7 @@ void iterate_solution(Simulation* simulation)
       // Note that this step is done only first iteration. Residual
       // will be 0 for subsequent iterations
       //
-      // Modifies com_mod.Rd.
+      // Modifies com_mod.R.
       //
       #ifdef debug_iterate_solution
       dmsg << "com_mod.sstEq: " << com_mod.sstEq;
