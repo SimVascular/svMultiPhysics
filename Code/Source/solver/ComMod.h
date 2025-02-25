@@ -154,6 +154,9 @@ class bcType
     // Robin: apply only in normal direction
     bool rbnN = false;
 
+    // Strong/Weak application of Dirichlet BC
+    int clsFlgRis = 0;
+
     // Pre/Res/Flat/Para... boundary types
     //
     // This stores differnt BCs as bitwise values. 
@@ -907,6 +910,15 @@ class mshType
     /// @brief IB: Mesh size parameter
     double dx = 0.0;
 
+    /// @brief RIS resistance value
+    double res = 0.0;
+
+    /// @brief RIS projection tolerance 
+    double tol = 0.0;
+
+    /// @brief The volume of this mesh
+    double v = 0.0;
+
     /// @breif ordering: node ordering for boundaries
     std::vector<std::vector<int>> ordering;
 
@@ -1006,6 +1018,13 @@ class mshType
 
     /// @brief IB: tracers
     traceType trc;
+
+    /// @brief RIS: flags of whether elemets are adjacent to RIS projections
+    // std::vector<bool> eRIS;
+    Vector<int> eRIS;
+
+    /// @brief RIS: processor ids to change element partitions to
+    Vector<int> partRIS;
 
     /// @brief TET4 quadrature modifier
     double qmTET4 = (5.0+3.0*sqrt(5.0))/20.0;
@@ -1346,6 +1365,39 @@ class ibType
     ibCommType cm;
 };
 
+/// @brief Data type for Resistive Immersed Surface
+//
+class risFaceType 
+{
+  public:
+
+    /// @brief Number of RIS surface
+    int nbrRIS = 0;
+
+    /// @brief Count time steps where no check is needed
+    Vector<int> nbrIter;
+
+    /// @brief List of meshes, and faces connected. The first face is the 
+    // proximal pressure's face, while the second is the distal one
+    Array3<int> lst;
+
+    /// @brief Resistance value 
+    Vector<double> Res;
+
+    /// @brief Flag closed surface active, the valve is considerd open initially 
+    std::vector<bool> clsFlg;
+
+    /// @brief Mean distal and proximal pressure (1: distal, 2: proximal)
+    Array<double> meanP;
+
+    /// @brief Mean flux on the RIS surface 
+    Vector<double> meanFl;
+
+    /// @brief Status RIS interface
+    std::vector<bool> status;
+};
+
+
 /// @brief The ComMod class duplicates the data structures in the Fortran COMMOD module
 /// defined in MOD.f. 
 ///
@@ -1416,9 +1468,11 @@ class ComMod {
     /// @brief Postprocess step - convert bin to vtk
     bool bin2VTK = false;
 
+    /// @brief Whether any RIS surface is considered 
+    bool risFlag = false;
+
     /// @brief Whether to use precomputed state-variable solutions
     bool usePrecomp = false;
-    
     //----- int members -----//
 
     /// @brief Current domain
@@ -1478,7 +1532,7 @@ class ComMod {
     /// @brief Total number of degrees of freedom per node
     int tDof = 0;
 
-    /// @brief Total number of nodes (total number of nodes on current processor across
+    /// @brief Total number of nodes (number of nodes on current proc across
     /// all meshes)
     int tnNo = 0;
 
@@ -1487,6 +1541,9 @@ class ComMod {
 
     /// @brief Number of stress values to be stored
     int nsymd = 0;
+
+    /// @brief Nbr of iterations 
+    int RisnbrIter = 0;
 
 
     //----- double members -----//
@@ -1546,6 +1603,18 @@ class ComMod {
 
     /// @brief IB: iblank used for immersed boundaries (1 => solid, 0 => fluid)
     Vector<int> iblank;
+
+    /// @brief TODO: for now, better to organize these within a class      
+    struct Array2D {
+        // std::vector<std::vector<int>> map;
+        Array<int> map;
+    };
+
+    /// @brief RIS mapping array, with local (mesh) enumeration
+     std::vector<Array2D> risMapList;
+
+    /// @brief RIS mapping array, with global (total) enumeration
+     std::vector<Array2D> grisMapList;
 
     /// @brief Old time derivative of variables (acceleration); known result at current time step
     Array<double>  Ao;
@@ -1637,6 +1706,9 @@ class ComMod {
 
     /// @brief IB: Immersed boundary data structure
     ibType ib;
+
+    /// @brief risFace object
+    risFaceType ris;
 
     bool debug_active = false;
 

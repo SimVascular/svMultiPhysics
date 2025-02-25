@@ -53,6 +53,7 @@
 #include "txt.h"
 #include "ustruct.h"
 #include "vtk_xml.h"
+#include "ris.h"
 
 #include <stdlib.h>
 #include <iomanip>
@@ -488,6 +489,10 @@ void iterate_solution(Simulation* simulation)
 
       set_bc::set_bc_dir_w(com_mod, Yg, Dg);
 
+      if (com_mod.risFlag) {
+        ris::ris_resbc(com_mod, Yg, Dg);
+      }
+
       // Apply contact model and add its contribution to residual
       //
       if (com_mod.iCntct) {
@@ -744,6 +749,31 @@ void iterate_solution(Simulation* simulation)
       //CALL IB_OUTCPUT()
     }
 
+    if (com_mod.risFlag) {
+      ris::ris_meanq(com_mod, cm_mod);
+      ris::ris_status(com_mod, cm_mod);
+      if (cm.mas(cm_mod)) {
+        std::cout << "Iteration: " << com_mod.cTS << std::endl;
+        for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
+          std::cout << "Status for RIS projection: " << iProj << std::endl;
+          std::cout << "            RIS iteration: " << com_mod.ris.nbrIter(iProj) << std::endl;
+          std::cout << "       Is the valve close? " << com_mod.ris.clsFlg[iProj] << std::endl;
+          std::cout << "            The status is: " << com_mod.ris.status[iProj] << std::endl;
+        }
+      }
+
+      if (!std::all_of(com_mod.ris.status.begin(), com_mod.ris.status.end(), [](bool s) { return s; })) {
+        if (std::any_of(com_mod.ris.nbrIter.begin(), com_mod.ris.nbrIter.end(), [](int iter) { return iter <= 1; })) {
+          if (cm.mas(cm_mod)) {
+            std::cout << "Valve status just changed. Do not update" << std::endl;
+          }
+        } else {
+            ris::ris_updater(com_mod, cm_mod);
+        }
+        // goto label_11;
+      }
+    }
+
     // Exiting outer loop if l1
     if (l1) {
       break;
@@ -882,4 +912,3 @@ int main(int argc, char *argv[])
 
   MPI_Finalize();
 }
-

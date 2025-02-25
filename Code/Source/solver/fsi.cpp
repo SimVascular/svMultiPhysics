@@ -38,6 +38,7 @@
 #include "nn.h"
 #include "sv_struct.h"
 #include "utils.h"
+#include "ris.h"
 
 #include <array>
 #include <iomanip>
@@ -322,6 +323,11 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
 
     eq.linear_algebra->assemble(com_mod, eNoN, ptr, lK, lR);
 
+    if (com_mod.risFlag) {
+      if (!std::all_of(com_mod.ris.clsFlg.begin(), com_mod.ris.clsFlg.end(), [](bool v) { return v; })) {
+        ris::doassem_ris(com_mod, eNoN, ptr, lK, lR);
+      }
+    }
   } // e: loop
 
   #ifdef debug_construct_fsi

@@ -44,6 +44,7 @@
 //   - MeshParameters - Mesh parameter section
 //   - EquationParameters - Equation parameter section
 //   - ProjectionParameters  - Projection parameter section
+//   - RISProjectionParameters  - RIS Projection parameter section
 //
 // These section objects may also contain objects representing the sub-sections 
 // defined for each section. 
@@ -174,6 +175,9 @@ void Parameters::read_xml(std::string file_name)
 
   // Set Add_equation values.
   set_equation_values(root_element);
+
+  // Set RIS projection values.
+  set_RIS_projection_values(root_element);
 }
 
 void Parameters::set_contact_values(tinyxml2::XMLElement* root_element)
@@ -245,6 +249,23 @@ void Parameters::set_projection_values(tinyxml2::XMLElement* root_element)
     projection_parameters.push_back(proj_params);
 
     add_proj_item = add_proj_item->NextSiblingElement(ProjectionParameters::xml_element_name_.c_str());
+  }
+}
+
+void Parameters::set_RIS_projection_values(tinyxml2::XMLElement* root_element)
+{
+  auto add_RIS_proj_item = root_element->FirstChildElement(RISProjectionParameters::xml_element_name_.c_str());
+
+  while (add_RIS_proj_item) {
+    const char* RIS_proj_name;
+    auto result = add_RIS_proj_item->QueryStringAttribute("name", &RIS_proj_name);
+
+    RISProjectionParameters* RIS_proj_params = new RISProjectionParameters();
+    RIS_proj_params->name.set(std::string(RIS_proj_name));
+    RIS_proj_params->set_values(add_RIS_proj_item);
+    RIS_projection_parameters.push_back(RIS_proj_params);
+
+    add_RIS_proj_item = add_RIS_proj_item->NextSiblingElement(RISProjectionParameters::xml_element_name_.c_str());
   }
 }
 
@@ -2358,6 +2379,48 @@ void PrecomputedSolutionParameters::set_values(tinyxml2::XMLElement* xml_elem)
 
   xml_util_set_parameters(ftpr, xml_elem, error_msg);
 }
+
+//////////////////////////////////////////////////////////
+//        RISProjectionParameters       //
+//////////////////////////////////////////////////////////
+
+/// @brief Define the XML element name for mesh parameters.
+const std::string RISProjectionParameters::xml_element_name_ = "Add_RIS_projection";
+
+RISProjectionParameters::RISProjectionParameters()
+{
+  // A parameter that must be defined.
+  bool required = true;
+
+  name = Parameter<std::string>("name", "", required);
+
+  set_parameter("Project_from_face", "", required, project_from_face);
+  set_parameter("Resistance", 1.e6, !required, resistance);
+  set_parameter("Projection_tolerance", 0.0, !required, projection_tolerance);
+}
+
+void RISProjectionParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  using namespace tinyxml2;
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  // Get the 'type' from the <Add_RIS_projection name=NAME> element.
+  const char* sname;
+  auto result = xml_elem->QueryStringAttribute("name", &sname);
+  if (sname == nullptr) {
+    throw std::runtime_error("No TYPE given in the XML <Add_projection name=NAME> element.");
+  }
+  name.set(std::string(sname));
+
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind( &RISProjectionParameters::set_parameter_value, *this, _1, _2);
+
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+}
+
 
 //////////////////////////////////////////////////////////
 //        P r o j e c t i o n P a r a m e t e r s       //

@@ -36,6 +36,7 @@
 #include "lhsa.h"
 #include "nn.h"
 #include "utils.h"
+#include "ris.h"
 
 #include <array>
 #include <iomanip>
@@ -739,6 +740,11 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const Array<double>& Ag
     } // g: loop
 
     eq.linear_algebra->assemble(com_mod, eNoN, ptr, lK, lR);
+    if (com_mod.risFlag) {
+      if (!std::all_of(com_mod.ris.clsFlg.begin(), com_mod.ris.clsFlg.end(), [](bool v) { return v; })) {
+        ris::doassem_ris(com_mod, eNoN, ptr, lK, lR);
+      }
+    }
 
   } // e: loop
 

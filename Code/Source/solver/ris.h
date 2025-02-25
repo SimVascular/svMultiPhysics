@@ -28,32 +28,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Simulation.h"
+#ifndef RIS_H 
+#define RIS_H
 
-#ifndef DISTRIBUTE_H
-#define DISTRIBUTE_H
+#include "ComMod.h"
 
-void distribute(Simulation* simulation);
+namespace ris {
 
-void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc, const std::vector<mshType>& tMs,
-             const Vector<int>& gmtl);
+void ris_meanq(ComMod& com_mod, CmMod& cm_mod);
+void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
+void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, 
+    const Array<double>& Yg, const Array<double>& Dg);
 
-void dist_bf(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bfType& lBf);
+void ris_updater(ComMod& com_mod, CmMod& cm_mod);
+void ris_status(ComMod& com_mod, CmMod& cm_mod);
 
-void dist_ris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm);
+void doassem_ris(ComMod& com_mod, const int d, const Vector<int>& eqN, 
+    const Array3<double>& lK, const Array<double>& lR); 
 
-void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::vector<mshType>& tMs,
-             const Vector<int>& gmtl, CepMod& cep_mod, eqType& lEq);
+void doassem_velris(ComMod& com_mod, const int d, const Array<int>& eqN, 
+    const Array3<double>& lK, const Array<double>& lR);
 
-void dist_mat_consts(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, stModelType& lStM);
+void clean_r_ris(ComMod& com_mod);
+void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD);
 
-void dist_fluid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, fluidViscModelType& lVis);
+// TODO: RIS 0D code
+// void ris0d_bc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
+// void ris0d_status(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
 
-void dist_solid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, solidViscModelType& lVis);
-
-void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa, Vector<int>& gmtl);
-
-void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& mtl, int nP, Vector<float>& wgt);
+};
 
 #endif
 

@@ -399,4 +399,18 @@ void swap(int& value1, int& value2)
   std::swap(value1, value2);
 }
 
+/// @brief Reproduces 'FINDLOC' in Fortran for 2D arrays.
+void find_loc(const Array<int>& array, int value, std::array<int, 2>& ind) 
+{
+  ind = {-1, -1};
+  for (size_t i = 0; i < array.nrows(); ++i) {
+    for (size_t j = 0; j < array.ncols(); ++j) {
+      if (array(i,j) == value) {
+          ind = {static_cast<int>(i), static_cast<int>(j)};
+          return; // Exit the function after finding the first occurrence
+      }
+    }
+  }
+}
+
 };

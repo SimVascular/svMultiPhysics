@@ -207,6 +207,7 @@ set(CSRCS
   ustruct.h ustruct.cpp
   vtk_xml.h vtk_xml.cpp
   vtk_xml_parser.h vtk_xml_parser.cpp
+  ris.h ris.cpp
 
   CepMod.h CepMod.cpp
   CepModAp.h CepModAp.cpp

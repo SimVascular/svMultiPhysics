@@ -95,6 +95,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   bool sstEq = com_mod.sstEq;
   bool pstEq = com_mod.pstEq;
   bool cepEq = cep_mod.cepEq;
+  bool risFlag = com_mod.risFlag;
 
   com_mod.timeP[0] = timeP[0];
   com_mod.timeP[1] = timeP[1];
@@ -146,6 +147,10 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
           bin_file.read((char*)Ad.data(), Ad.msize());
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          bin_file.read((char*)Ad.data(), Ad.msize());
+          // [HZ] [TODO] How to read std::vector<bool> from file?
+          // bin_file.read((char*)com_mod.RIS.clsFlg.data(), com_mod.RIS.clsFlg.msize());
         } else {
           bin_file.read((char*)Ad.data(), Ad.msize());
         }
@@ -156,6 +161,9 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
         } else if (cepEq) {
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          // [HZ] [TODO] How to read std::vector<bool> from file?
+          // bin_file.read((char*)com_mod.RIS.clsFlg.data(), com_mod.RIS.clsFlg.msize());
         } else {
           //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do
         }
@@ -166,6 +174,9 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
     } else {
       if (cepEq) {
         bin_file.read((char*)Xion.data(), Xion.msize());
+      } else if (risFlag) {
+          // [HZ] [TODO] How to read std::vector<bool> from file?
+          // bin_file.read((char*)com_mod.RIS.clsFlg.data(), com_mod.RIS.clsFlg.msize());
       } else {
         //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao
       }
@@ -509,6 +520,9 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     i = i + cep_mod.nXion;
     if (cep_mod.cem.cpld) i = i + 1;
   }
+  if (com_mod.risFlag) {
+    i = i + com_mod.ris.nbrRIS;
+  }
 
   i = sizeof(int)*(1+com_mod.stamp.size()) + sizeof(double)*(2 + com_mod.nEq + com_mod.cplBC.nX + i*com_mod.tnNo);
 
@@ -543,6 +557,27 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       }
     }
   }
+
+  if (com_mod.risFlag) {
+    if (cm.mas(cm_mod)) {
+      std::cout << "Finally the map is: " << std::endl;
+      for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
+        std::cout << " -p " << cm.idcm() << " -pj " << iProj << " RIS node: " << std::endl;
+        Vector<int> map0 = com_mod.grisMapList[iProj].map.row(0);
+        for (int mapi = 0; mapi < map0.size(); mapi++) {
+          std::cout << map0[mapi] << "\t";
+        }
+        std::cout <<  " " << std::endl;
+        std::cout << " -p " << cm.idcm() << " -pj " << iProj << " RIS node: " << std::endl;
+        Vector<int> map1 = com_mod.grisMapList[iProj].map.row(1);
+        for (int mapi = 0; mapi < map1.size(); mapi++) {
+          std::cout << map1[mapi] << "\t";
+        }
+        std::cout <<  " " << std::endl;
+      }
+    }
+  }
+
 
   // Initialize tensor operations
   //
