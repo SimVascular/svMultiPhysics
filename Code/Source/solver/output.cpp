@@ -223,6 +223,7 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
   const bool sstEq = com_mod.sstEq; 
   const bool pstEq = com_mod.pstEq;
   const bool cepEq = cep_mod.cepEq;
+  const bool risFlag = com_mod.risFlag;
   const auto& stFileName = com_mod.stFileName;
 
   auto& cplBC = com_mod.cplBC;
@@ -309,6 +310,12 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
           restart_file.write((char*)Ad.data(), Ad.msize());
           restart_file.write((char*)Xion.data(), Xion.msize());
           restart_file.write((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          restart_file.write((char*)Ad.data(), Ad.msize());
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
+          restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
         } else {
           restart_file.write((char*)Ad.data(), Ad.msize());
         }
@@ -319,6 +326,11 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
         } else if (cepEq) {
           restart_file.write((char*)Xion.data(), Xion.msize());
           restart_file.write((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
+          restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
         } else {
           restart_file.write((char*)Dn.data(), Dn.msize());
         }
@@ -327,6 +339,11 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
     } else {
       if (cepEq) {
         restart_file.write((char*)Xion.data(), Xion.msize());
+      } else if (risFlag) {
+        std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+        for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+          clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
+        restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
       } else {
         //WRITE(fid, REC=myID) stamp, cTS, time, CPUT()-timeP(1), eq%iNorm, cplBC%xn, Yn, An
       }
