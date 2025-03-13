@@ -54,6 +54,7 @@
 #include "ustruct.h"
 #include "vtk_xml.h"
 #include "ris.h"
+#include "uris.h"
 
 #include <stdlib.h>
 #include <iomanip>
@@ -360,6 +361,8 @@ void iterate_solution(Simulation* simulation)
 
     set_bc::set_bc_dir(com_mod, An, Yn, Dn);
 
+    if (com_mod.urisFlag) {uris::uris_calc_sdf(com_mod);}
+
     iterate_precomputed_time(simulation);
 
     // Inner loop for Newton iteration
@@ -615,7 +618,7 @@ void iterate_solution(Simulation* simulation)
         #endif
         break;
       } 
-
+      
       output::output_result(simulation, com_mod.timeP, 2, iEqOld);
 
       inner_count += 1;
@@ -638,6 +641,31 @@ void iterate_solution(Simulation* simulation)
       }
     }
     */
+
+    if (com_mod.risFlag) {
+      ris::ris_meanq(com_mod, cm_mod);
+      ris::ris_status(com_mod, cm_mod);
+      if (cm.mas(cm_mod)) {
+        std::cout << "Iteration: " << com_mod.cTS << std::endl;
+        for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
+          std::cout << "Status for RIS projection: " << iProj << std::endl;
+          std::cout << "            RIS iteration: " << com_mod.ris.nbrIter(iProj) << std::endl;
+          std::cout << "       Is the valve close? " << com_mod.ris.clsFlg[iProj] << std::endl;
+          std::cout << "            The status is: " << com_mod.ris.status[iProj] << std::endl;
+        }
+      }
+
+      if (!std::all_of(com_mod.ris.status.begin(), com_mod.ris.status.end(), [](bool s) { return s; })) {
+        if (std::any_of(com_mod.ris.nbrIter.begin(), com_mod.ris.nbrIter.end(), [](int iter) { return iter <= 1; })) {
+          if (cm.mas(cm_mod)) {
+            std::cout << "Valve status just changed. Do not update" << std::endl;
+          }
+        } else {
+            ris::ris_updater(com_mod, cm_mod);
+        }
+        // goto label_11;
+      }
+    }
 
     // Saving the TXT files containing average and fluxes (or ECGs)
     #ifdef debug_iterate_solution
@@ -749,30 +777,35 @@ void iterate_solution(Simulation* simulation)
       //CALL IB_OUTCPUT()
     }
 
-    if (com_mod.risFlag) {
-      ris::ris_meanq(com_mod, cm_mod);
-      ris::ris_status(com_mod, cm_mod);
-      if (cm.mas(cm_mod)) {
-        std::cout << "Iteration: " << com_mod.cTS << std::endl;
-        for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
-          std::cout << "Status for RIS projection: " << iProj << std::endl;
-          std::cout << "            RIS iteration: " << com_mod.ris.nbrIter(iProj) << std::endl;
-          std::cout << "       Is the valve close? " << com_mod.ris.clsFlg[iProj] << std::endl;
-          std::cout << "            The status is: " << com_mod.ris.status[iProj] << std::endl;
+    // [HZ] Part related to RIS0D
+
+    // [HZ] Part related to unfitted RIS
+    // If the valve is active, look at the pressure difference 
+    if (com_mod.urisFlag) {
+      for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+        com_mod.uris[iUris].cnt++;
+        if (com_mod.uris[iUris].clsFlg) {
+          // std::cout << "Running meanP ... " << std::endl;
+          uris::uris_meanp(com_mod, cm_mod, iUris);
+          // if (com_mod.uris[iUris].cnt == 1) {
+          //   // GOTO 11 // The GOTO Statement in the Fortran code
+          // }
+        } else {
+          // std::cout << "Running meanV ..." << std::endl;
+          uris::uris_meanv(com_mod, cm_mod, iUris);
         }
       }
 
-      if (!std::all_of(com_mod.ris.status.begin(), com_mod.ris.status.end(), [](bool s) { return s; })) {
-        if (std::any_of(com_mod.ris.nbrIter.begin(), com_mod.ris.nbrIter.end(), [](int iter) { return iter <= 1; })) {
-          if (cm.mas(cm_mod)) {
-            std::cout << "Valve status just changed. Do not update" << std::endl;
-          }
-        } else {
-            ris::ris_updater(com_mod, cm_mod);
-        }
-        // goto label_11;
+      if (com_mod.mvMsh) {
+        // std::cout << "Running uris_update_disp ..." << std::endl;
+        uris::uris_update_disp(com_mod, cm_mod);
+      }
+
+      if (cm.mas(cm_mod)) {
+        uris::uris_write_vtus(com_mod);
       }
     }
+    // end RIS/URIS stuff 
 
     // Exiting outer loop if l1
     if (l1) {
@@ -853,8 +886,7 @@ int main(int argc, char *argv[])
     dmsg << "Read files " << " ... ";
     #endif
     read_files(simulation, file_name);
-
-
+    
     // Distribute data to processors.
     #ifdef debug_main
     dmsg << "Distribute data to processors " << " ... ";

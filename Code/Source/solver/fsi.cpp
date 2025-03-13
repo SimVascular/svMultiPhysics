@@ -104,6 +104,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
   //
   double struct_3d_time = 0.0;
   double fluid_3d_time = 0.0;
+  double DDir = 0.0;
 
   for (int e = 0; e < lM.nEl; e++) {
     // setting globals
@@ -211,6 +212,33 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
 
       double w = fs_1[0].w(g) * Jac;
 
+      // Plot the coordinates of the quad point in the current configuration
+      if (com_mod.urisFlag) {
+        Vector<double> distSrf(com_mod.nUris);
+        distSrf = 0.0;
+        for (int a = 0; a < eNoN; a++) {
+          int Ac = lM.IEN(a,e);
+          for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+            distSrf(iUris) += fs_1[0].N(a,g) * std::fabs(com_mod.uris[iUris].sdf(Ac));
+          }
+        }
+
+        DDir = 0.0;
+        double DDirTmp = 0.0;
+        for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+          if (distSrf(iUris) <= com_mod.uris[iUris].sdf_deps) {
+            DDirTmp = (1 + cos(pi*distSrf(iUris)/com_mod.uris[iUris].sdf_deps))/
+                      (2*com_mod.uris[iUris].sdf_deps*com_mod.uris[iUris].sdf_deps);
+            if (DDirTmp > DDir) {DDir = DDirTmp;}
+          }
+        }
+
+        if (!com_mod.urisActFlag) {DDir = 0.0;}
+
+        // std::cout << "===== DDir: " << DDir << std::endl;
+      }
+
+
       if (nsd == 3) {
         switch (cPhys) {
           case Equation_fluid: {
@@ -218,7 +246,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
             auto N1 = fs_1[1].N.col(g);
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            // fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, DDir);
+
           } break;
 
           case Equation_struct: {
@@ -294,7 +324,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
             auto N1 = fs_2[1].N.col(g);
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            //fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, DDir);
           } break;
 
           case Equation_ustruct:

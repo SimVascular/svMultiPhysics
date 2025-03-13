@@ -43,6 +43,8 @@
 #include "vtk_xml.h"
 #include "vtk_xml_parser.h"
 
+#include "uris.h"
+
 #include <functional> 
 #include <limits> 
 #include <math.h> 
@@ -1262,6 +1264,8 @@ void read_msh(Simulation* simulation)
   // Reseting gtnNo and recounting nodes that are not duplicated
   set_ris_projector(simulation);
 
+  set_uris_meshes(simulation);
+
   // Examining the existance of projection faces and setting %gN.
   // Reseting gtnNo and recounting nodes that are not duplicated
   //
@@ -2030,6 +2034,21 @@ void match_nodes(const ComMod& com_mod, const faceType& lFa, const faceType& pFa
         std::cout << map(1,i) << "    " << "\t";
     }
   std::cout << std::endl;
+}
+
+void set_uris_meshes(Simulation* simulation)
+{
+  #define n_debug_set_uris_meshes 
+  #ifdef debug_set_uris_meshes
+  DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
+
+  int nUris = simulation->parameters.URIS_mesh_parameters.size();
+
+  if (nUris > 0) {
+    uris::uris_read_msh(simulation);
+  }
 }
 
 /// @brief Read domain from a dat file

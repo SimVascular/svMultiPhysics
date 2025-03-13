@@ -224,6 +224,7 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
   const bool pstEq = com_mod.pstEq;
   const bool cepEq = cep_mod.cepEq;
   const bool risFlag = com_mod.risFlag;
+  const bool urisFlag = com_mod.urisFlag;
   const auto& stFileName = com_mod.stFileName;
 
   auto& cplBC = com_mod.cplBC;
@@ -316,6 +317,15 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
           for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
             clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
           restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+        } else if (urisFlag) {
+          restart_file.write((char*)Ad.data(), Ad.msize());
+          Vector<int> urisCnt(com_mod.nUris);
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          for (int i = 0; i < com_mod.nUris; i++) {
+            urisCnt(i) = com_mod.uris[i].cnt;
+            urisClsFlagChar[i] = com_mod.uris[i].clsFlg ? 1 : 0;}
+          restart_file.write((char*)urisCnt.data(), urisCnt.msize());
+          restart_file.write(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
         } else {
           restart_file.write((char*)Ad.data(), Ad.msize());
         }
@@ -331,6 +341,14 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
           for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
             clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
           restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+        } else if (urisFlag) {
+          Vector<int> urisCnt(com_mod.nUris);
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          for (int i = 0; i < com_mod.nUris; i++) {
+            urisCnt(i) = com_mod.uris[i].cnt;
+            urisClsFlagChar[i] = com_mod.uris[i].clsFlg ? 1 : 0;}
+          restart_file.write((char*)urisCnt.data(), urisCnt.msize());
+          restart_file.write(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
         } else {
           restart_file.write((char*)Dn.data(), Dn.msize());
         }
@@ -344,6 +362,14 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
         for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
           clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
         restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+      } else if (urisFlag) {
+        Vector<int> urisCnt(com_mod.nUris);
+        std::vector<char> urisClsFlagChar(com_mod.nUris);
+        for (int i = 0; i < com_mod.nUris; i++) {
+          urisCnt(i) = com_mod.uris[i].cnt;
+          urisClsFlagChar[i] = com_mod.uris[i].clsFlg ? 1 : 0;}
+        restart_file.write((char*)urisCnt.data(), urisCnt.msize());
+        restart_file.write(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
       } else {
         //WRITE(fid, REC=myID) stamp, cTS, time, CPUT()-timeP(1), eq%iNorm, cplBC%xn, Yn, An
       }

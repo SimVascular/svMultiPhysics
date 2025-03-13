@@ -56,6 +56,8 @@ namespace all_fun {
 
   Array<double> global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Array<double>& U);
 
+  double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s);
+
   double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u, 
       bool pFlag=false);
 
