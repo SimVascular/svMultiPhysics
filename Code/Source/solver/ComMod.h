@@ -190,6 +190,9 @@ class bcType
     // Robin: damping
     double c = 0.0;
 
+    // RIS0D: resistance
+    double resistance = 0.0;
+
     // Penalty parameters for weakly applied Dir BC
     Vector<double> tauB{0.0, 0.0};
     //double tauB[2];
@@ -1547,6 +1550,9 @@ class ComMod {
 
     /// @brief Whether any RIS surface is considered 
     bool risFlag = false;
+
+    /// @brief Whether any one-sided RIS surface with 0D coupling is considered 
+    bool ris0DFlag = false;
 
     /// @brief Whether any URIS surface is considered
     bool urisFlag = false;

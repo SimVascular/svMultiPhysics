@@ -53,8 +53,8 @@ void clean_r_ris(ComMod& com_mod);
 void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD);
 
 // TODO: RIS 0D code
-// void ris0d_bc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
-// void ris0d_status(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg);
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod); //, const Array<double>& Yg, const Array<double>& Dg);
 
 };
 

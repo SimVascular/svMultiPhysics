@@ -46,7 +46,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
   #ifdef debug_ris_meanq
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "risFlag: " << risFlag;
+  dmsg << "risFlag: " << com_mod.risFlag;
   #endif
 
   using namespace consts;
@@ -122,7 +122,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
   #ifdef debug_ris_resbc
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "risFlag: " << risFlag;
+  dmsg << "risFlag: " << com_mod.risFlag;
   #endif
 
   // auto& eq = com_mod.eq[cEq];
@@ -187,7 +187,7 @@ void ris_updater(ComMod& com_mod, CmMod& cm_mod)
   #ifdef debug_ris_updater
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "risFlag: " << risFlag;
+  dmsg << "risFlag: " << com_mod.risFlag;
   #endif
 
   // auto& eq = com_mod.eq[cEq];
@@ -240,7 +240,7 @@ void ris_status(ComMod& com_mod, CmMod& cm_mod)
   #ifdef debug_ris_status
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "risFlag: " << risFlag;
+  dmsg << "risFlag: " << com_mod.risFlag;
   #endif
 
   // auto& eq = com_mod.eq[cEq];
@@ -288,7 +288,7 @@ void doassem_ris(ComMod& com_mod, const int d, const Vector<int>& eqN,
   #ifdef debug_doassem_ris
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "risFlag: " << risFlag;
+  dmsg << "risFlag: " << com_mod.risFlag;
   #endif
 
   auto& cm = com_mod.cm;
@@ -377,6 +377,194 @@ void clean_r_ris(ComMod& com_mod)
 void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD)
 {
   // [HZ] looks not needed in the current implementation
+}
+
+/// RIS0D code
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg) 
+{
+  using namespace consts;
+
+  #define n_debug_ris0d_bc
+  #ifdef debug_ris0d_bc
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  dmsg << "ris0DFlag: " << com_mod.ris0DFlag;
+  #endif
+
+  auto& cm = com_mod.cm;
+  auto& eq = com_mod.eq;
+  auto& msh = com_mod.msh;
+
+  const int nsd = com_mod.nsd;
+  const int cEq = com_mod.cEq;
+
+  bcType lBc;
+  
+  for (int iBc = 0; iBc < eq[cEq].nBc; iBc++) {
+    int iFa = eq[cEq].bc[iBc].iFa;
+    int iM = eq[cEq].bc[iBc].iM;
+
+    if (!utils::btest(eq[cEq].bc[iBc].bType, iBC_Ris0D)) {continue;}
+
+    if (eq[cEq].bc[iBc].clsFlgRis == 1) {
+      // Weak Dirichlet BC for fluid/FSI equations
+      lBc.weakDir = true;
+      lBc.tauB = eq[cEq].bc[iBc].resistance;
+      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_std));
+      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_flat));
+
+      lBc.eDrn.resize(nsd);
+      lBc.eDrn = 0;
+
+      // Apply bc Dir 
+      lBc.gx.resize(msh[iM].fa[iFa].nNo);
+      lBc.gx = 1.0;
+      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg);
+      lBc.gx.clear();
+      lBc.eDrn.clear();
+    } else {
+      // Apply Neu bc 
+      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg);
+    }
+
+  }
+
+}
+
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod)//, const Array<double>& Yg, const Array<double>& Dg) 
+{
+  using namespace consts;
+
+  #define n_debug_status
+  #ifdef debug_status
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  dmsg << "ris0DFlag: " << com_mod.ris0DFlag;
+  #endif
+
+  auto& cm = com_mod.cm;
+  auto& eq = com_mod.eq;
+  auto& msh = com_mod.msh;
+
+  const int nsd = com_mod.nsd;
+  const int cEq = com_mod.cEq;
+
+  auto& An = com_mod.An;
+  auto& Ad = com_mod.Ad;
+  auto& Dn = com_mod.Dn;
+  auto& Yn = com_mod.Yn;
+
+  bcType lBc;
+  faceType lFa;
+
+  double meanP = 0.0;
+  double meanFl = 0.0;
+  double tmp, tmp_new;
+  Vector<double> sA;
+  Array<double> tmpV;
+
+  for (int iBc = 0; iBc < eq[cEq].nBc; iBc++) {
+    int iFa = eq[cEq].bc[iBc].iFa;
+    int iM = eq[cEq].bc[iBc].iM;
+
+    if (!utils::btest(eq[cEq].bc[iBc].bType, iBC_Ris0D)) {continue;}
+
+    tmpV.resize(maxNSD, com_mod.tnNo);
+    tmpV = 0.0;
+
+    // Compute mean Q and pressure difference 
+    int m = 1;
+    int s = eq[cEq].s + nsd;
+    // int e = s + m - 1;
+  
+    for (int j = 0; j < Yn.ncols(); j++) {
+        tmpV(0,j) = Yn(s,j);
+    }
+
+    tmp = msh[iM].fa[iFa].area;
+    sA.resize(com_mod.tnNo);
+    sA = 1.0;
+    lFa = msh[iM].fa[iFa];
+    // such update may be not correct
+    tmp_new = all_fun::integ(com_mod, cm_mod, lFa, sA);
+    meanP = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1)/tmp_new;
+
+    // For the velocity
+    m = nsd;
+    s = eq[cEq].s;
+    // e = s + m - 1;
+    tmpV.resize(maxNSD,com_mod.tnNo);
+    tmpV = 0.0;
+
+    for (int i = 0; i < m; i++) {
+      for (int j = 0; j < Yn.ncols(); j++) {
+        tmpV(i,j) = Yn(s+i,j);
+      }
+    }
+
+    meanFl = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1);
+
+    std::cout << "The average pressure is: " << meanP << std::endl;
+    std::cout << "The pressure from 0D is: " << eq[cEq].bc[iBc].g << std::endl;
+    std::cout << "The average flow is: " << meanFl << std::endl;
+
+    com_mod.RisnbrIter = com_mod.RisnbrIter + 1;
+
+    if (com_mod.RisnbrIter < 25 && com_mod.cTS > 0) {
+      if (!cm.seq()) {cm.bcast(cm_mod, &com_mod.RisnbrIter);}
+      return ;
+    }
+
+    // Update RES
+    // Update the resistance - determine the configuration 
+    // The valve is closed check if it should open
+    if (eq[cEq].bc[iBc].clsFlgRis == 1) {
+      // OPENING CONDITION: Check condition on the pressure difference 
+      if (eq[cEq].bc[iBc].g < meanP) {
+        eq[cEq].bc[iBc].clsFlgRis = 0;
+        if (!cm.seq()) {
+          cm.bcast(cm_mod, &eq[cEq].bc[iBc].clsFlgRis);
+        }
+        std::cout << "!!! -- Going from close to open " << std::endl;
+        com_mod.RisnbrIter = 0;
+      }
+    } else {
+      // The valve is open, check if it should close. 
+      // CLOSING CONDITION: Check existence of a backflow
+      if (meanFl < 0.) {
+        eq[cEq].bc[iBc].clsFlgRis = 1;
+        if (!cm.seq()) {
+          cm.bcast(cm_mod, &eq[cEq].bc[iBc].clsFlgRis);
+        }
+        std::cout << "!!! -- Going from open to close " << std::endl;
+        com_mod.RisnbrIter = 0;
+      }
+    }
+
+    // Check for the status
+    // If the valve is closed, check the pressure difference, 
+    // if the pressure difference is negative the valve should be open
+    // -> the status is then not admissible
+    if (eq[cEq].bc[iBc].clsFlgRis == 1) {
+      if (eq[cEq].bc[iBc].g < meanP) {
+        std::cout << "** Not admissible, should be open **" << std::endl;
+      }
+    } else {
+      // If the valve is open, chech the flow, 
+      // if the flow is negative the valve should be closed
+      // -> the status is then not admissible
+      if (meanFl < 0.) {
+        std::cout << "** Not admissible, should be closed **" << std::endl;
+      }
+    }
+
+  }
+
+  if (!cm.seq()) {
+    cm.bcast(cm_mod, &com_mod.RisnbrIter);
+  }
+
 }
 
 }

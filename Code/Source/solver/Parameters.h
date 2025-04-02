@@ -723,6 +723,8 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<double> value;
     Parameter<bool> weakly_applied;
     Parameter<bool> zero_out_perimeter;
+
+    Parameter<double> resistance;
 };
 
 /// @brief The OutputParameters class stores parameters for the

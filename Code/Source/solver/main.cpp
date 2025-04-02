@@ -496,6 +496,10 @@ void iterate_solution(Simulation* simulation)
         ris::ris_resbc(com_mod, Yg, Dg);
       }
 
+      if (com_mod.ris0DFlag) {
+        ris::ris0d_bc(com_mod, cm_mod, Yg, Dg);
+      }
+
       // Apply contact model and add its contribution to residual
       //
       if (com_mod.iCntct) {
@@ -618,7 +622,6 @@ void iterate_solution(Simulation* simulation)
         #endif
         break;
       } 
-      
       output::output_result(simulation, com_mod.timeP, 2, iEqOld);
 
       inner_count += 1;
@@ -778,6 +781,9 @@ void iterate_solution(Simulation* simulation)
     }
 
     // [HZ] Part related to RIS0D
+    if (cEq == 0 && com_mod.ris0DFlag) {
+      ris::ris0d_status(com_mod, cm_mod);
+    }
 
     // [HZ] Part related to unfitted RIS
     // If the valve is active, look at the pressure difference 

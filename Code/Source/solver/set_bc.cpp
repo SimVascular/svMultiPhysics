@@ -1335,6 +1335,8 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
     dmsg << "----- iBc " << iBc+1;
     #endif
 
+    if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
+
     if (utils::btest(bc.bType, iBC_Neu)) {
       #ifdef debug_set_bc_neu
       dmsg << "iM: " << iM+1;

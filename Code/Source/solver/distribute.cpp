@@ -366,6 +366,7 @@ void distribute(Simulation* simulation)
 
     cm.bcast(cm_mod, &simulation->cep_mod.cepEq);
     cm.bcast(cm_mod, &com_mod.risFlag);
+    cm.bcast(cm_mod, &com_mod.ris0DFlag);
     cm.bcast(cm_mod, &com_mod.urisFlag);
     cm.bcast(cm_mod, &com_mod.urisActFlag);
     cm.bcast(cm_mod, &com_mod.urisRes);

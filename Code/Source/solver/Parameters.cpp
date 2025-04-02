@@ -456,6 +456,8 @@ BoundaryConditionParameters::BoundaryConditionParameters()
 
   set_parameter("Weakly_applied", false, !required, weakly_applied);
   set_parameter("Zero_out_perimeter", false, !required, zero_out_perimeter);
+
+  set_parameter("Resistance", 1.e5, !required, resistance);
 }
 
 void BoundaryConditionParameters::print_parameters()
