@@ -403,7 +403,7 @@ void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
     for (int jM = 0; jM < com_mod.nMsh && !found; jM++) {
       auto& mesh = com_mod.msh[jM];
       xl.resize(nsd, mesh.eNoN);
-      for (int iEln = 0; iEln < mesh.eNoN && !found; iEln++) {
+      for (int iEln = 0; iEln < mesh.nEl && !found; iEln++) {
         for (int a = 0; a < mesh.eNoN; a++) {
           int Ac = mesh.IEN(a, iEln);
           for(int i = 0; i < nsd; i++) {
@@ -958,10 +958,21 @@ void uris_calc_sdf(ComMod& com_mod) {
     // double dxopen_sum = sum_3d(uris_obj.DxOpen);
     // std::cout << "----------- dxopen_sum: " << dxopen_sum << std::endl;
 
-    if (uris_obj.sdf.allocated() && cnt < uris_obj.cnt) {continue;}
+
+    // if (uris_obj.sdf.allocated() && cnt < uris_obj.cnt) {continue;}
+    if (uris_obj.sdf.size() > 0 && cnt < uris_obj.cnt) {continue;}
+
+    int max_eNoN = 0;
+    for (int iM = 0; iM < uris_obj.nFa; iM++) {
+      auto& mesh = uris_obj.msh[iM];
+      if (mesh.eNoN > max_eNoN) {
+        max_eNoN = mesh.eNoN;
+      }
+    }
 
     Array<double> lX(nsd, uris_obj.msh[1].eNoN);
-    if (!uris_obj.sdf.allocated()) {
+    // if (!uris_obj.sdf.allocated()) {
+    if (uris_obj.sdf.size() <= 0) {
       uris_obj.sdf.resize(com_mod.tnNo);
       uris_obj.sdf = 0.0;
     }
