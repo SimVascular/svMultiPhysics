@@ -99,7 +99,7 @@ struct Trilinos
   static Epetra_Vector *X;
   static Epetra_Vector *ghostX;
   static Epetra_Import *Importer;
-  static Epetra_FEVector *bdryVec;
+  static std::vector<Epetra_FEVector*> bdryVec_list;
   static Epetra_MpiComm *comm;
   static Epetra_FECrsGraph *K_graph;
 };
@@ -189,7 +189,7 @@ public:
   void trilinos_lhs_create_(int& numGlobalNodes, int& numLocalNodes,
           int& numGhostAndLocalNodes, int& nnz, const int *ltgSorted,
           const int *ltgUnsorted, const int *rowPtr, const int *colInd,
-          int &dof, int& cpp_index, int& proc_id);
+          int &dof, int& cpp_index, int& proc_id, int& numCoupledNeumannBC);
 /*
   void trilinos_lhs_create_(unsigned &numGlobalNodes, unsigned &numLocalNodes,
           unsigned &numGhostAndLocalNodes, unsigned &nnz, const int *ltgSorted,

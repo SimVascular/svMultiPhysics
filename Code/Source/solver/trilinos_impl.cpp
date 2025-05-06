@@ -63,8 +63,8 @@ Epetra_Vector *Trilinos::ghostX;
 /// Import ghostMap into blockMap to create ghost map
 Epetra_Import *Trilinos::Importer;
 
-/// Contribution from coupled neumann boundary conditions
-Epetra_FEVector *Trilinos::bdryVec;
+/// Contribution from coupled neumann boundary conditions. One vector for each coupled Neumann boundary
+std::vector<Epetra_FEVector*> Trilinos::bdryVec_list;
 
 Epetra_FECrsGraph *Trilinos::K_graph;
 
@@ -116,16 +116,19 @@ int TrilinosMatVec::Apply(const Epetra_MultiVector &x,
   Trilinos::K->Apply(x, y); //K*x
   if (coupledBC)
   {
-    //now need to add on bdry term v*(v'*x)
+    //now need to add on bdry term v1*(v1'*x) + v2*(v2'*x) + ...
     double *dot = new double[1]; //only 1 multivector to store result in it
 
-    //compute dot product (v'*x)
-    Trilinos::bdryVec->Dot(x,dot);
+    for (auto bdryVec : Trilinos::bdryVec_list)
+    {
+      //compute dot product (v'*x)
+      bdryVec->Dot(x, dot);
 
-    //Y = 1*Y + dot*v daxpy operation
-    y.Update(*dot, //scalar for v
-             *Trilinos::bdryVec, //FE_Vector
-             1.0); ///scalar for Y
+      //Y = 1*Y + dot*v daxpy operation
+      y.Update(*dot, //scalar for v
+              *bdryVec, //FE_Vector v
+              1.0); ///scalar for Y
+    }
 
     delete[] dot;
   }
@@ -149,13 +152,15 @@ int TrilinosMatVec::Apply(const Epetra_MultiVector &x,
  * \param rowPtr         CSR row ptr of size numLocalNodes + 1 to block rows
  * \param colInd         CSR column indices ptr (size nnz points) to block rows
  * \param Dof            size of each block element to give dim of each block
+ * 
+ * \param numCoupledNeumannBC number of coupled Neumann BCs
 
  */
 
 void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
         int &numGhostAndLocalNodes, int &nnz, const int *ltgSorted,
         const int *ltgUnsorted, const int *rowPtr, const int *colInd, int &Dof,
-        int& cpp_index, int& proc_id)
+        int& cpp_index, int& proc_id, int& numCoupledNeumannBC)
 {
 
   #ifdef debug_trilinos_lhs_create
@@ -302,7 +307,12 @@ void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
   Trilinos::K = new Epetra_FEVbrMatrix(Copy, *Trilinos::K_graph);
   //construct RHS force vector F topology
   Trilinos::F = new Epetra_FEVector(*Trilinos::blockMap);
-  Trilinos::bdryVec = new Epetra_FEVector(*Trilinos::blockMap);
+  // Construct a boundary vector for each coupled Neumann boundary condition
+  Trilinos::bdryVec_list.clear();
+  for (int i = 0; i < numCoupledNeumannBC; ++i)
+  {
+    Trilinos::bdryVec_list.push_back(new Epetra_FEVector(*Trilinos::blockMap));
+  }
 
   // Initialize solution vector which is unique and does not include the ghost
   // indices using the unique map
@@ -670,7 +680,11 @@ void trilinos_solve_(double *x, const double *dirW, double &resNorm,
   //set to 0 for the next time iteration
   Trilinos::K->PutScalar(0.0);
   Trilinos::F->PutScalar(0.0);
-  if (coupledBC) Trilinos::bdryVec->PutScalar(0.0);
+  if (coupledBC) {
+    for (auto bdryVec : Trilinos::bdryVec_list)
+      bdryVec->PutScalar(0.0);
+
+  }
   //0 out initial guess for iteration
   Trilinos::X->PutScalar(0.0);
   // Free memory if MLPrec is invoked
@@ -920,8 +934,10 @@ void constructJacobiScaling(const double *dirW, Epetra_Vector &diagonal)
   Trilinos::K->RightScale(diagonal);
 
   //Need to multiply v in vv' by diagonal
-  if (coupledBC)
-      Trilinos::bdryVec->Multiply(1.0, *Trilinos::bdryVec, diagonal, 0.0);
+  if (coupledBC) {
+    for (auto bdryVec : Trilinos::bdryVec_list)
+      bdryVec->Multiply(1.0, *bdryVec, diagonal, 0.0);
+  }
 } // void constructJacobiScaling()
 
 // ----------------------------------------------------------------------------
@@ -929,7 +945,7 @@ void constructJacobiScaling(const double *dirW, Epetra_Vector &diagonal)
  * \param  v            coupled boundary vector
  * \param  isCoupledBC  determines if coupled resistance BC is turned on
  */
-void trilinos_bc_create_(const double *v, bool &isCoupledBC)
+void trilinos_bc_create_(const std::vector v_list, bool &isCoupledBC)
 {
   //store as global to determine which matvec multiply to use in solver
   coupledBC = isCoupledBC;
@@ -943,14 +959,23 @@ void trilinos_bc_create_(const double *v, bool &isCoupledBC)
     {
       //sum values into v fe case
       int num_global_rows = 1; //number of global block rows put in 1 at a time
-      error = Trilinos::bdryVec->ReplaceGlobalValues (num_global_rows,
-               &localToGlobalSorted[i],  //global idx id-inputting sorted array
-               &dof, //dof values per id pointer to dof
-               &v[i*dof]); //values of size dof
-      if (error != 0)
+
+      // Loop over all the coupled Neumann BCs
+      for (int k = 0; k < v_list.size(); ++k)
       {
-        std::cout << "ERROR: Setting boundary vector values!" << std::endl;
-        exit(1);
+        auto v = v_list[k];
+        auto bdryVec = Trilinos::bdryVec_list[k];
+        //set the coupled boundary vector
+        error = bdryVec->ReplaceGlobalValues(
+                num_global_rows,
+                &localToGlobalSorted[i], //global idx id-inputting sorted array
+                &dof, //dof values per id pointer to dof
+                &v[i*dof]); //values of size dof
+        if (error != 0)
+        {
+          std::cout << "ERROR: Setting boundary vector values!" << std::endl;
+          exit(1);
+        }
       }
     }
   }
@@ -991,9 +1016,11 @@ void trilinos_lhs_free_()
       delete Trilinos::Importer;
       Trilinos::Importer = NULL;
   }
-  if (Trilinos::bdryVec) {
-      delete Trilinos::bdryVec;
-      Trilinos::bdryVec = NULL;
+  if (Trilinos::bdryVec_list.size() > 0)
+  {
+    for (auto bdryVec : Trilinos::bdryVec_list)
+      delete bdryVec;
+      Trilinos::bdryVec_list.clear();
   }
   if (Trilinos::K_graph) {
       delete Trilinos::K_graph;
@@ -1140,7 +1167,7 @@ void TrilinosLinearAlgebra::TrilinosImpl::alloc(ComMod& com_mod, eqType& lEq)
   int task_id = com_mod.cm.idcm();
 
   trilinos_lhs_create_(gtnNo, lhs.mynNo, tnNo, lhs.nnz, ltg_.data(), com_mod.ltg.data(), com_mod.rowPtr.data(), 
-      com_mod.colPtr.data(), dof, cpp_index, task_id);
+      com_mod.colPtr.data(), dof, cpp_index, task_id, com_mod.lhs.nFaces);
 
 }
 
@@ -1208,6 +1235,7 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
     }
   }
 
+  
   Array<double> v(dof,tnNo);
   bool isCoupledBC = false;
 
@@ -1224,9 +1252,10 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
         }
       }
     }
+    trilinos_bc_create_(v.data(), isCoupledBC);
   }
 
-  trilinos_bc_create_(v.data(), isCoupledBC);
+  
 }
 
 /// @brief Initialze an array used for something.
@@ -1324,4 +1353,12 @@ void TrilinosLinearAlgebra::TrilinosImpl::solve_assembled(ComMod& com_mod, eqTyp
   }
 
 }
+
+
+v1 = [
+  0 0 0 0 0 0 0 0 .. r*a r*b r*c ... 0 0 0 0 0 
+]
+
+v2 = [ 0 0 0 ... r2*a r2*b r2*c ... 0 0 0 0 0 ]
+
 
