@@ -951,7 +951,7 @@ void constructJacobiScaling(const double *dirW, Epetra_Vector &diagonal)
  * \param  v            coupled boundary vector
  * \param  isCoupledBC  determines if coupled resistance BC is turned on
  */
-void trilinos_bc_create_(const std::vector<Array<double>> v_list, bool &isCoupledBC)
+void trilinos_bc_create_(const std::vector<Array<double>> &v_list, bool &isCoupledBC)
 {
   //store as global to determine which matvec multiply to use in solver
   coupledBC = isCoupledBC;
@@ -1246,11 +1246,13 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
   bool isCoupledBC = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto& face = lhs.face[faIn];
+    auto& face = lhs.face[faIn]; // Extract face
+    v = 0.0; // Initialize v to zero for each face
     if (face.coupledFlag) {
       isCoupledBC = true;
       int faDof = std::min(face.dof,dof);
 
+      // Compute the coupled Neumann BC vector
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
@@ -1258,6 +1260,9 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
         }
       }
     }
+
+    // Add the coupled Neumann BC vector to the list
+    v_list.push_back(v);
   }
 
   // Add the v vectors to global bdryVec_list
