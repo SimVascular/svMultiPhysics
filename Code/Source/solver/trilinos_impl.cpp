@@ -100,11 +100,14 @@ bool coupledBC;
 
 // ----------------------------------------------------------------------------
 /**
- * Define the matrix vector multiplication operation to do at each iteration
- * (K + v*v') *x = K*x + v*(v'*x), v = bdryVec
+ * Define the matrix vector multiplication operation to do at each iteration of
+ * an iterative linear solver. This function is called by the AztecOO
+ * (K + v1*v1' + v2*v2' + ...) *x = K*x + v1*(v1'*x) + v2*(v2'*x), 
+ * where [v1, v2, ...] = bdryVec_list
  *
- * uses efficient vectorized operation rather than explicitly forming
- * the rank 1 outer product matrix
+ * For coupled Neumann boundary terms (v1*v1', v2*v2'), we use efficient an vectorized 
+ * operation rather than explicitly forming the rank 1 outer product matrix and 
+ * adding it to the global stiffness matrix K.
  *
  * \param x vector to be applied on the operator
  * \param y result of sprase matrix vector multiplication
@@ -112,22 +115,25 @@ bool coupledBC;
 int TrilinosMatVec::Apply(const Epetra_MultiVector &x,
         Epetra_MultiVector &y) const
 {
-  //store initial matrix vector product result in Y
+  // Store initial matrix vector product result in y (y = K*x)
   Trilinos::K->Apply(x, y); //K*x
+
+  // Now add on the coupled Neumann boundary contribution y += v1*(v1'*x) + v2*(v2'*x) + ...
   if (coupledBC)
   {
-    //now need to add on bdry term v1*(v1'*x) + v2*(v2'*x) + ...
-    double *dot = new double[1]; //only 1 multivector to store result in it
+    // Declare dot product v_i'*x
+    double *dot = new double[1];
 
+    // Loop over all coupled Neumann boundary vectors
     for (auto bdryVec : Trilinos::bdryVec_list)
     {
-      //compute dot product (v'*x)
+      // Compute dot product dot = v_i'*x
       bdryVec->Dot(x, dot);
 
-      //Y = 1*Y + dot*v daxpy operation
-      y.Update(*dot, //scalar for v
-              *bdryVec, //FE_Vector v
-              1.0); ///scalar for Y
+      // y = 1*y + dot*v_i
+      y.Update(*dot,
+              *bdryVec,
+              1.0);
     }
 
     delete[] dot;
@@ -596,8 +602,8 @@ void trilinos_solve_(double *x, const double *dirW, double &resNorm,
   // problem with
   Trilinos::F->Norm2(&initNorm); //pass preconditioned norm W*F
 
-  // Define Epetra_Operator which is global stiffness with coupled boundary
-  // conditions included
+  // Define Epetra_Operator which is global stiffness with coupled Neumann BC
+  // contributions included
   TrilinosMatVec K_bdry;
 
   // Define linear problem if v is 0 does standard matvec product with K
