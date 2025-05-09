@@ -1359,12 +1359,3 @@ void TrilinosLinearAlgebra::TrilinosImpl::solve_assembled(ComMod& com_mod, eqTyp
   }
 
 }
-
-
-v1 = [
-  0 0 0 0 0 0 0 0 .. r*a r*b r*c ... 0 0 0 0 0 
-]
-
-v2 = [ 0 0 0 ... r2*a r2*b r2*c ... 0 0 0 0 0 ]
-
-
