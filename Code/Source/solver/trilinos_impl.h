@@ -201,7 +201,7 @@ public:
    * \param v           coeff in the scalar product
    * \param isCoupledBC determines if coupled resistance BC is turned on
    */
-  void trilinos_bc_create_(const std::vector v_list, bool &isCoupledBC);
+  void trilinos_bc_create_(const std::vector<Array<double>> v_list, bool &isCoupledBC);
 
   void trilinos_doassem_(int &numNodesPerElement, const int *eqN,
           const double *lK, double *lR);
