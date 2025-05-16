@@ -26,7 +26,7 @@
 
 
 #-----------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.3.0)
+cmake_minimum_required(VERSION 3.20)
 
 if (POLICY CMP0040)
   cmake_policy(SET CMP0040 OLD)
