@@ -791,19 +791,16 @@ void iterate_solution(Simulation* simulation)
       for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
         com_mod.uris[iUris].cnt++;
         if (com_mod.uris[iUris].clsFlg) {
-          // std::cout << "Running meanP ... " << std::endl;
           uris::uris_meanp(com_mod, cm_mod, iUris);
           // if (com_mod.uris[iUris].cnt == 1) {
           //   // GOTO 11 // The GOTO Statement in the Fortran code
           // }
         } else {
-          // std::cout << "Running meanV ..." << std::endl;
           uris::uris_meanv(com_mod, cm_mod, iUris);
         }
       }
 
       if (com_mod.mvMsh) {
-        // std::cout << "Running uris_update_disp ..." << std::endl;
         uris::uris_update_disp(com_mod, cm_mod);
       }
 

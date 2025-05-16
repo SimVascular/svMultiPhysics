@@ -62,9 +62,6 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   auto& msh = com_mod.msh;
   auto& uris_obj = uris[iUris];
 
-  // double sdf_sum = sum_1d(uris[iUris].sdf);
-  // std::cout << "----------- sdf sum: " << sdf_sum << std::endl;
-
   const int nsd = com_mod.nsd;
   // const int cEq = com_mod.cEq;
 
@@ -89,24 +86,25 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
 
   sUPS = 0.0;
   for (size_t j = 0; j < sUPS.size(); j++) {
-    if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
+    // if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
+    // Reserve the sdf distance for aortic valve
+    if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) { 
         sUPS(0,j) = 1.0;
     }
   }
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    // std::cout << "Running integ M ... " << std::endl;
     volU += all_fun::integ(com_mod, cm_mod, iM, sUPS);
-    // std::cout << "Finished Running integ M ... " << std::endl;
   }
 
-  // std::cout << "----------- sups_sum: " << sum_2d(sUPS) << std::endl;
 
   // Let's compute right side
   Array<double> sDST(1,com_mod.tnNo);
   sDST = 0.0;
   for (size_t j = 0; j < sDST.size(); j++) {
-    if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) {
+    // if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) {
+    // Reserve the sdf distance for aortic valve
+    if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
         sDST(0,j) = 1.0;
     }
   } 
@@ -115,11 +113,11 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
     volD += all_fun::integ(com_mod, cm_mod, iM, sDST);
   }
 
-  // std::cout << "----------- sdst_sum: " << sum_2d(sDST) << std::endl;
-
   // Print volume messages.
-  std::cout << "volume upstream " << volU << " for: " << uris_obj.name << std::endl;
-  std::cout << "volume downstream " << volD << " for: " << uris_obj.name << std::endl;
+  if (cm.mas(cm_mod)) {
+    std::cout << "volume upstream " << volU << " for: " << uris_obj.name << std::endl;
+    std::cout << "volume downstream " << volD << " for: " << uris_obj.name << std::endl;
+  }
 
   double meanPU = 0.0;
   double meanPD = 0.0;
@@ -151,10 +149,12 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   uris_obj.meanPD = uris_obj.relax_factor * meanPD +
                        (1.0 - uris_obj.relax_factor) * uris_obj.meanPD;
 
-  std::cout << "mean P upstream " << meanPU << " " << uris_obj.meanPU
-            << " for: " << uris_obj.name << std::endl;
-  std::cout << "mean P downstream " << meanPD << " " << uris_obj.meanPD
-            << " for: " << uris_obj.name << std::endl;
+  if (cm.mas(cm_mod)) {
+    std::cout << "mean P upstream " << meanPU << " " << uris_obj.meanPU
+              << " for: " << uris_obj.name << std::endl;
+    std::cout << "mean P downstream " << meanPD << " " << uris_obj.meanPD
+              << " for: " << uris_obj.name << std::endl;
+  }
 
   //  If the uris has passed the closing state
   if (uris_obj.cnt > uris_obj.DxClose.nrows()) {
@@ -162,8 +162,10 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
       uris_obj.cnt = 1;
       uris_obj.clsFlg = false;
       com_mod.urisActFlag = true;
-      std::cout << "Set urisOpenFlag to TRUE for: "
-                << uris_obj.name << std::endl;
+      if (cm.mas(cm_mod)) {
+        std::cout << "** Set urisCloseFlag to FALSE for: "
+                  << uris_obj.name << std::endl;
+      }
     }
   }
   
@@ -205,7 +207,9 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   double volI = 0.0;
 
   for (int i = 0; i < com_mod.tnNo; i++) {
-    if (uris_obj.sdf(i) <= -Deps) {
+    // if (uris_obj.sdf(i) <= -Deps) {
+    // Reserve the sdf distance for aortic valve
+    if (uris_obj.sdf(i) >= Deps) {
       sImm(0,i) = 1.0;
     }
   }
@@ -213,8 +217,10 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
     volI += all_fun::integ(com_mod, cm_mod, iM, sImm);
   }
-  std::cout << "volume inside " << volI << " for: " << uris_obj.name << std::endl;
-
+  if (cm.mas(cm_mod)) {
+    std::cout << "volume inside " << volI << " for: " << uris_obj.name << std::endl;
+  }
+  
   int m = nsd;
   int s = eq[iEq].s;
   // int e = s + m - 1;
@@ -225,10 +231,6 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
       tmpV(i,j) = Yn(s+i,j)*sImm(0,j);
     }
   }
-
-  // std::cout << " ------ s: " << s << std::endl;
-  // std::cout << " ------ tmpV sum: " << sum_2d(tmpV) << std::endl;
-  // std::cout << " ------ sum of sImm: " << sum_2d(sImm) << std::endl;
 
   Array<double> tmpVNrm(1, com_mod.tnNo);
   for (int i = 0; i < com_mod.tnNo; i++) {
@@ -241,7 +243,10 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
     meanV += all_fun::integ(com_mod, cm_mod, iM, tmpVNrm)/volI;
   }
-  std::cout << "mean velocity: " << meanV << " for: " << uris_obj.name << std::endl;
+  
+  if (cm.mas(cm_mod)) {
+    std::cout << "mean velocity: " << meanV << " for: " << uris_obj.name << std::endl;
+  }
 
   // If the uris has passed the open state
   if (uris_obj.cnt > uris_obj.DxOpen.nrows()) {
@@ -249,12 +254,16 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
       uris_obj.cnt = 1;
       uris_obj.clsFlg = true;
       com_mod.urisActFlag = true;
-      std::cout << "Set urisCloseFlag to TRUE for: "
-                << uris_obj.name << std::endl;
+      if (cm.mas(cm_mod)) {
+        std::cout << "** Set urisCloseFlag to TRUE for: " 
+                  << uris_obj.name << std::endl;
+      }
     }
   }
-  std::cout << "urisCloseFlag is: " << uris_obj.clsFlg << " for: "
-            << uris_obj.name << std::endl;
+  if (cm.mas(cm_mod)) {
+    std::cout << "urisCloseFlag is: " << uris_obj.clsFlg << " for: "
+              << uris_obj.name << std::endl;
+  }
 
 }
 
@@ -316,7 +325,9 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod) {
       // Localize p inside the parent element
       nn::get_xi(nsd, mesh.eType, mesh.eNoN, xl, xp, xi, fl);
       if (!fl) {
-        std::cout << "[WARNING] URIS get_xi not converging!" << std::endl;
+        if (cm.mas(cm_mod)) {
+          std::cout << "[WARNING] URIS get_xi not converging!" << std::endl;
+        }
       }
       // evaluate N at xi 
       nn::get_gnn(nsd, mesh.eType, mesh.eNoN, xi, N, Nxi);
@@ -490,14 +501,14 @@ void uris_read_msh(Simulation* simulation) {
   int nUris = simulation->parameters.URIS_mesh_parameters.size();
   com_mod.nUris = nUris;
 
-  std::cout << " Number of immersed surfaces for uris: " << nUris << std::endl;
+  std::cout << "Number of immersed surfaces for uris: " << nUris << std::endl;
   uris.resize(nUris);
 
   for (int iUris = 0; iUris < nUris; iUris++) {
     auto param = simulation->parameters.URIS_mesh_parameters[iUris];
     auto& uris_obj = uris[iUris];
     uris_obj.name = param->name();
-    std::cout << "Reading URIS mesh: " << uris_obj.name << std::endl;
+    std::cout << "** Reading URIS mesh: " << uris_obj.name << std::endl;
 
     uris_obj.scF = param->mesh_scale_factor();
     uris_obj.nFa = param->URIS_face_parameters.size();
@@ -519,13 +530,11 @@ void uris_read_msh(Simulation* simulation) {
     }
     for (int i = 0; i < nsd; i++) {
       file_stream >> uris_obj.nrm(i);
-      std::cout << "nrm: " << uris_obj.nrm(i) << std::endl;
     }
     file_stream.close();
 
     uris_obj.sdf_deps = param->thickness();
     uris_obj.clsFlg = param->valve_starts_as_closed();
-    std::cout << "std:: clsFlg: " << uris_obj.clsFlg << std::endl;
 
     // uris_obj.tnNo = 0;
     for (int iM = 0; iM < uris_obj.nFa; iM++) {
@@ -534,7 +543,7 @@ void uris_read_msh(Simulation* simulation) {
       auto& mesh = uris_obj.msh[iM];
       mesh.lShl = true;
       mesh.name = mesh_param->name();
-      std::cout << "Reading URIS face: " << mesh.name << std::endl;
+      std::cout << "-- Reading URIS face: " << mesh.name << std::endl;
 
       // Read mesh nodal coordinates and element connectivity.
       uris_read_sv(simulation, mesh, mesh_param);
@@ -553,8 +562,8 @@ void uris_read_msh(Simulation* simulation) {
       //     err = " Failed to identify format of the uris mesh"
       // END IF
 
-      std::cout << " Number of uris nodes: " << mesh.gnNo << std::endl;
-      std::cout << " Number of uris elements: " << mesh.gnEl << std::endl;
+      std::cout << "Number of uris nodes: " << mesh.gnNo << std::endl;
+      std::cout << "Number of uris elements: " << mesh.gnEl << std::endl;
 
       // Read valve motion: note that this motion is defined on the 
       // reference configuration 
@@ -567,8 +576,8 @@ void uris_read_msh(Simulation* simulation) {
       }
       int dispNtOpen, dispNnOpen;
       file_stream >> dispNtOpen >> dispNnOpen;
-      std::cout << "dispNtOpen: " << dispNtOpen << std::endl;
-      std::cout << "dispNnOpen: " << dispNnOpen << std::endl;
+      // std::cout << "dispNtOpen: " << dispNtOpen << std::endl;
+      // std::cout << "dispNnOpen: " << dispNnOpen << std::endl;
 
       if (dispNnOpen != mesh.gnNo) {
         throw std::runtime_error("Mismatch in node numbers between URIS mesh and displacements.");
@@ -594,8 +603,8 @@ void uris_read_msh(Simulation* simulation) {
       }
       int dispNtClose, dispNnClose;
       file_stream >> dispNtClose >> dispNnClose;
-      std::cout << "dispNtClose: " << dispNtClose << std::endl;
-      std::cout << "dispNnClose: " << dispNnClose << std::endl;
+      // std::cout << "dispNtClose: " << dispNtClose << std::endl;
+      // std::cout << "dispNnClose: " << dispNnClose << std::endl;
 
       if (dispNnClose != mesh.gnNo) {
         throw std::runtime_error("Mismatch in node numbers between URIS mesh and displacements.");
@@ -614,9 +623,9 @@ void uris_read_msh(Simulation* simulation) {
 
       // To scale the mesh, while attaching x to gX
       int a = uris_obj.tnNo + mesh.gnNo;
-      std::cout << "uris obj tnNo: " << uris_obj.tnNo << std::endl;
-      std::cout << "mesh gnNo: " << mesh.gnNo << std::endl;
-      std::cout << "mesh x size: " << mesh.x.nrows() << ", " << mesh.x.ncols() << std::endl;
+      // std::cout << "uris obj tnNo: " << uris_obj.tnNo << std::endl;
+      // std::cout << "mesh gnNo: " << mesh.gnNo << std::endl;
+      // std::cout << "mesh x size: " << mesh.x.nrows() << ", " << mesh.x.ncols() << std::endl;
 
       if (iM == 0) {
         gX.resize(nsd, a);
@@ -721,39 +730,17 @@ void uris_read_msh(Simulation* simulation) {
     }
 
     if (uris_obj.nFa > 0) {
-      std::string msg = " Total number of uris nodes: " + std::to_string(uris_obj.tnNo);
+      std::string msg = "Total number of uris nodes: " + std::to_string(uris_obj.tnNo);
       std::cout << msg << std::endl;
       int total_nel = 0;
       for (int iM = 0; iM < uris_obj.nFa; iM++) {
           total_nel += uris_obj.msh[iM].nEl;
       }
-      msg = " Total number of uris elements: " + std::to_string(total_nel);
+      msg = "Total number of uris elements: " + std::to_string(total_nel);
       std::cout << msg << std::endl;
     }
   }
   std::cout << "URIS mesh data imported successfully." << std::endl;
-
-  // for (int iUris = 0; iUris < nUris; iUris++) {
-  //   // We need to check if the valve needs to move 
-  //   auto& uris_obj = uris[iUris];
-  //   std::cout << "DxOpen sum: " << sum_3d(uris_obj.DxOpen) << std::endl;
-  //   std::cout << "DxClose sum: " << sum_3d(uris_obj.DxClose) << std::endl;
-  //   for (int i = 0; i < uris_obj.DxOpen.nrows(); i++) {
-  //     for (int j = 0; j < uris_obj.DxOpen.ncols(); j++) {
-  //       for (int k = 0; k < uris_obj.DxOpen.nslices(); k++) {
-  //         std::cout << "Open -> i: " << i+1 << ", j: " << j+1 << ", k: " << k+1 << ", val: " << uris_obj.DxOpen(i,j,k) << std::endl;
-  //       }
-  //     }
-  //   }
-
-  //   for (int i = 0; i < uris_obj.DxClose.nrows(); i++) {
-  //     for (int j = 0; j < uris_obj.DxClose.ncols(); j++) {
-  //       for (int k = 0; k < uris_obj.DxClose.nslices(); k++) {
-  //         std::cout << "Close -> i: " << i+1 << ", j: " << j+1 << ", k: " << k+1 << ", val: " << uris_obj.DxClose(i,j,k) << std::endl;
-  //       }
-  //     }
-  //   }
-  // }
 
 }
 
@@ -922,6 +909,7 @@ void uris_calc_sdf(ComMod& com_mod) {
   dmsg.banner();
   #endif
 
+  auto& cm = com_mod.cm;
   auto& uris = com_mod.uris;
   const int nsd = com_mod.nsd;
   const int nUris = com_mod.nUris;
@@ -947,18 +935,7 @@ void uris_calc_sdf(ComMod& com_mod) {
         }
       }
     }
-    // std::cout << "clsFlg: " << uris_obj.clsFlg << std::endl;
-    // std::cout << "uris_obj.cnt: " << uris_obj.cnt << std::endl;
-    // std::cout << "Open row: " << uris_obj.DxOpen.nrows() << std::endl;
-    // std::cout << "close row: " << uris_obj.DxClose.nrows() << std::endl;
-    // std::cout << "    **** uris x sum: " << sum_2d(uris_obj.x) << std::endl;
-
-    // double dxclose_sum = sum_3d(uris_obj.DxClose);
-    // std::cout << "----------- dxclose_sum: " << dxclose_sum << std::endl;
-    // double dxopen_sum = sum_3d(uris_obj.DxOpen);
-    // std::cout << "----------- dxopen_sum: " << dxopen_sum << std::endl;
-
-
+    
     // if (uris_obj.sdf.allocated() && cnt < uris_obj.cnt) {continue;}
     if (uris_obj.sdf.size() > 0 && cnt < uris_obj.cnt) {continue;}
 
@@ -977,7 +954,9 @@ void uris_calc_sdf(ComMod& com_mod) {
       uris_obj.sdf = 0.0;
     }
 
-    std::cout << "Recomputing SDF for " << uris_obj.name << std::endl;
+    if (cm.idcm() == 0) {
+      std::cout << "Recomputing SDF for " << uris_obj.name << std::endl;
+    }
     uris_obj.sdf = uris_obj.sdf_default;
 
     // Each time when the URIS moves (open/close), we need to 
@@ -1056,9 +1035,6 @@ void uris_calc_sdf(ComMod& com_mod) {
           }
         }
 
-        // std::cout << "jM: " << jM << std::endl;
-        // std::cout << "Ec: " << Ec << std::endl;
-
         // We also need to compute the sign (above or below the valve).
         // Compute the element normal
         auto& mesh = uris_obj.msh[jM];
@@ -1097,8 +1073,6 @@ void uris_calc_sdf(ComMod& com_mod) {
         uris_obj.sdf[ca] = dotP * minS;
       }
     }
-
-    // std::cout << "    **** sdf sum: " << sum_1d(uris_obj.sdf) << " for " << uris_obj.name << std::endl;
   }
 }
 
@@ -1156,17 +1130,6 @@ void uris_read_sv(Simulation* simulation, mshType& mesh, const URISFaceParameter
   if (com_mod.ichckIEN) {
       read_msh_ns::check_ien(simulation, mesh);
   }
-
-  // std::cout << "use pre comp solution:" << simulation->com_mod.usePrecomp << std::endl;
-  // std::cout << "com_mod ichckIEN:" << simulation->com_mod.ichckIEN << std::endl;
-  // std::cout << "precompFileName:" << simulation->com_mod.precompFileName << std::endl;
-  // std::cout << "precompFieldName:" << simulation->com_mod.precompFieldName << std::endl;
-
-  // std::cout << "uris face name: " << mesh_name << mesh.nFa << std::endl;
-  // std::cout << "uris face lFib: " << mesh.lFib << std::endl;
-  // std::cout << "uris face lShl: " << mesh.lShl << std::endl;
-  // std::cout << "uris face eType: " << mesh.lShl << std::endl;
-
 }
 
 
@@ -1240,8 +1203,9 @@ int same_side(Vector<double>& v1, Vector<double>& v2, Vector<double>& v3,
   double dotV4 = utils::norm(N, v41);
   double dotP = utils::norm(N, vp1);
   // check if P and P4 are from the same side
-  int sn = utils::sign(dotP);
-  if (sn == 1) {
+  // int sn = utils::sign(dotP);
+  // if (sn == 1) {
+  if ((dotP >= 0 && dotV4 >= 0) || (dotP < 0 && dotV4 < 0)) {
     sameside = 1;
   }
 
