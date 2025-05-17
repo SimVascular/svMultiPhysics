@@ -29,11 +29,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Set  the minimum  required version  of cmake  for a  project.
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 project(TINYXML)
 
 # source files for tinyxml
-SET(SRCS tinyxml2) 
+SET(SRCS tinyxml2.cpp) 
 SET(HDRS tinyxml2.h)
 
 set(lib ${SV_LIB_THIRDPARTY_TINYXML_NAME})
