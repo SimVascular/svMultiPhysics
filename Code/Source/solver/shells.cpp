@@ -67,7 +67,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const Array<double>& Ag
   const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
-  auto cDmn = com_mod.cDmn;
+  auto& cDmn = com_mod.cDmn;
 
   int eNoN = lM.eNoN;
 
@@ -93,7 +93,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const Array<double>& Ag
   // Loop over all elements of mesh
   //
   for (int e = 0; e < lM.nEl; e++) {
-    // Update domain and proceed if domain phys and eqn phys match
+    // Change the current domain which will be used in later function calls.
     cDmn = all_fun::domain(com_mod, lM, cEq, e);
     auto cPhys = eq.dmn[cDmn].phys;
     if (cPhys != EquationType::phys_shell) {
@@ -208,7 +208,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
-  auto cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
@@ -582,7 +582,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
 
   int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
-  auto cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
 
   // Define parameters
@@ -1136,7 +1136,7 @@ void shell_bf(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
-  auto cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
@@ -1216,7 +1216,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
-  auto cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
