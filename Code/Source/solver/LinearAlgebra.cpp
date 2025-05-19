@@ -59,7 +59,7 @@ void LinearAlgebra::check_equation_compatibility(const consts::EquationType eq_p
   if (eq_physics == EquationType::phys_ustruct) {
     if ((lin_alg_type == LinearAlgebraType::trilinos) &&
         (assembly_type != LinearAlgebraType::fsils)) {
-      throw std::runtime_error("[svFSIplus] Equations with ustruct physics must use fsils for assembly.");
+      throw std::runtime_error("[svMultiPhysics] Equations with ustruct physics must use fsils for assembly.");
     }
   }
 }
