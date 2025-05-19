@@ -62,7 +62,7 @@ std::set<consts::LinearAlgebraType> PetscLinearAlgebra::valid_assemblers = {
 PetscLinearAlgebra::PetscLinearAlgebra()
 {
   #ifndef USE_PETSC
-  throw std::runtime_error("[PetscLinearAlgebra] svFSIplus hase not been built with the PETSc package.");
+  throw std::runtime_error("[PetscLinearAlgebra] svMultiPhysics hase not been built with the PETSc package.");
   #else
   impl = new PetscLinearAlgebra::PetscImpl();
   interface_type = consts::LinearAlgebraType::petsc; 
@@ -107,7 +107,7 @@ void PetscLinearAlgebra::check_options(const consts::PreconditionerType prec_con
   }
 
   if (error_msg != "") {
-    throw std::runtime_error("[svFSIplus] ERROR: " + error_msg);
+    throw std::runtime_error("[svMultiPhysics] ERROR: " + error_msg);
   }
 }
 

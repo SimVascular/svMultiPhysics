@@ -606,7 +606,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
     }
 
     if (!found_node) {
-      throw std::runtime_error("[svFSIplus::gnnb] The '" + lFa.name + "' face node " + std::to_string(Ac) + 
+      throw std::runtime_error("[svMultiPhysics::gnnb] ERROR: The '" + lFa.name + "' face node " + std::to_string(Ac) + 
           " could not be matched to a node in the '" + msh.name + "' volume mesh.");
     }
 

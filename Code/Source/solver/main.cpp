@@ -32,7 +32,7 @@
 //
 // Usage:
 //
-//   svFSIplus XML_FILE_NAME
+//   svMultiPhysics XML_FILE_NAME
 //
 #include "Simulation.h"
 
@@ -93,8 +93,8 @@ void read_files(Simulation* simulation, const std::string& file_name)
     read_files_ns::read_files(simulation, file_name);
 
   } catch (const std::exception& exception) {
-    std::cout << "[svFSIplus] ERROR The svFSIplus program has failed." << std::endl;
-    std::cout << "[svFSIplus] ERROR " << exception.what() << std::endl;
+    std::cout << "[svMultiPhysics] ERROR: The svMultiPhysics program has failed." << std::endl;
+    std::cout << "[svMultiPhysics] ERROR: " << exception.what() << std::endl;
     exit(1);
   }
 */
@@ -783,7 +783,7 @@ void run_simulation(Simulation* simulation)
 int main(int argc, char *argv[])
 {
   if (argc != 2) {
-    std::cout << "[svFSIplus:ERROR] The svFSIplus program requires the solver input XML file name as an argument." << std::endl;
+    std::cout << "[svMultiPhysics] ERROR: The svMultiPhysics program requires the solver input XML file name as an argument." << std::endl;
     exit(1);
   }
 

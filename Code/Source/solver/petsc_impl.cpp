@@ -448,7 +448,7 @@ PetscErrorCode petsc_create_lhs(const PetscInt nNo, const PetscInt mynNo, const 
     plhs.mynNo   = mynNo;
     plhs.created = PETSC_TRUE;
 
-    /* Fortran index to C index (NOT apply for svFSIplus) */ 
+    /* Fortran index to C index (NOT apply for svMultiPhysics) */ 
     PetscCall(PetscMalloc2(nNo, &local2global, nNo, &local2local));
     for (i = 0; i < nNo; i++) {
         // local2global[i] = svFSI_ltg[i] - 1;
