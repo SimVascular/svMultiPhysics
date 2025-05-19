@@ -2048,7 +2048,7 @@ void read_ls(Simulation* simulation, EquationParameters* eq_params, consts::Solv
   #endif
 
   if (!linear_algebra.defined()) {
-    throw std::runtime_error("[svFSIplus] No <Linear_algebra> section has been defined for equation '" + 
+    throw std::runtime_error("[svMultiPhysics] ERROR: No <Linear_algebra> section has been defined for equation '" + 
         eq_params->type() + ".");
   }
 
