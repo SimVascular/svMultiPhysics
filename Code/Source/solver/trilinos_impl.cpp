@@ -122,21 +122,19 @@ int TrilinosMatVec::Apply(const Epetra_MultiVector &x,
   if (coupledBC)
   {
     // Declare dot product v_i'*x
-    double *dot = new double[1];
+    double dot = 0.0;
 
     // Loop over all coupled Neumann boundary vectors
     for (auto bdryVec : Trilinos::bdryVec_list)
     {
       // Compute dot product dot = v_i'*x
-      bdryVec->Dot(x, dot);
+      bdryVec->Dot(x, &dot);
 
       // y = 1*y + dot*v_i
-      y.Update(*dot,
+      y.Update(dot,
               *bdryVec,
               1.0);
     }
-
-    delete[] dot;
   }
   return 0;
 }
@@ -979,8 +977,7 @@ void trilinos_bc_create_(const std::vector<Array<double>> &v_list, bool &isCoupl
                 &v[i*dof]); //values of size dof
         if (error != 0)
         {
-          std::cout << "ERROR: Setting boundary vector values!" << std::endl;
-          exit(1);
+          throw std::runtime_error("Setting boundary vector values failed");
         }
       }
     }
@@ -1242,17 +1239,21 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
   }
 
   std::vector<Array<double>> v_list;
-  Array<double> v(dof,tnNo);
   bool isCoupledBC = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto& face = lhs.face[faIn]; // Extract face
-    v = 0.0; // Initialize v to zero for each face
+    // Extract face
+    auto& face = lhs.face[faIn]; 
+
+    // Create a new array for each face and add it to the list
+    v_list.push_back(Array<double>(dof,tnNo));
+    auto& v = v_list.back();
+    
     if (face.coupledFlag) {
       isCoupledBC = true;
       int faDof = std::min(face.dof,dof);
 
-      // Compute the coupled Neumann BC vector
+      // Compute the coupled Neumann BC vector and store it in v
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
@@ -1260,9 +1261,6 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
         }
       }
     }
-
-    // Add the coupled Neumann BC vector to the list
-    v_list.push_back(v);
   }
 
   // Add the v vectors to global bdryVec_list
