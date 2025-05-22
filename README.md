@@ -69,7 +69,7 @@ These software packages are installed using a package-management system
 Installing VTK on a high-performance computing (HPC) cluster is typically not supported and may require building it from source. See [Building Visualization Toolkit (VTK) Libraries](#building_vtk).
 
 
-## Building svMultiPhysics
+## Build Process
 
 svMultiPhysics is built using the following steps
 
