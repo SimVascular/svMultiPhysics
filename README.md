@@ -104,7 +104,7 @@ To rebuild the program after making code changes
 
 <h2 id="building_vtk"> Building Visualization Toolkit (VTK) Libraries </h2>
 
-svMultiPhysics uses VTK to read finite element mesh data (created by the SimVascular mesh generation software), fiber geometry, initial conditions and write simulation results. Building the complete VTK library requires certain graphics libraries to be installed (e.g. OpenGL, X11) which make it difficult to build on an HPC cluster. 
+svMultiPhysics uses VTK to read finite element mesh data (created by the SimVascular mesh generation software), fiber geometry, initial conditions and write simulation results. Building the complete VTK library requires certain graphics libraries to be installed (e.g. OpenGL, X11) which makes it difficult to build on an HPC cluster. 
 
 However, a subset of the complete VTK library can be built to just include reading/writing functionality without graphics.
 
