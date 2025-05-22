@@ -37,11 +37,7 @@ The [svMultiPhysics Developer Gude Documentation](https://simvascular.github.io/
 
 <h1 id="building"> Building the svMultiPhysics Program from Source </h1>
 
-The svMultiPhysics source code can be downloaded from this GitHub repository by anyone who wants to inspect, modify, and enhance the code. The svMultiPhysics program is built using the [CMake](https://cmake.org) build system. It can be built for Unix-like systems and MacOS. Buliding on Windows is currently not supported.
-
-The code 
-
-The svMultiPhysics program can be compiled and linked from the GitHub source using a CMake build process. The build process creates a binary executable file named <b>svmultiphysics</b>.
+The svMultiPhysics source code can be downloaded from this GitHub repository by anyone who wants to inspect, modify, and enhance the code. The svMultiPhysics program is built using the [CMake](https://cmake.org) build system. 
 
 ## Supported Platforms
 
@@ -64,11 +60,10 @@ The following software packages are required to be installed in order to build s
 - [LAPACK](https://www.netlib.org/lapack/) - Used for solving systems of simultaneous linear equations (optional but may be needed for external linear algebra packages)
 
 
-
 These software packages are installed using a package-management system
 - Ubuntu - [apt](https://en.wikipedia.org/wiki/APT_(software))
 - MacOS - [homebrew](https://en.wikipedia.org/wiki/Homebrew_(package_manager))
-- high-performance computing (HPC) cluster - [module system](https://hpc-wiki.info/hpc/Modules#:~:text=From%20HPC%20Wiki,average%20user%20will%20ever%20use)
+- High-performance computing (HPC) cluster - [module system](https://hpc-wiki.info/hpc/Modules#:~:text=From%20HPC%20Wiki,average%20user%20will%20ever%20use)
 
 
 Installing VTK on a high-performance computing (HPC) cluster is typically not supported and may require building it from source. See [Building Visualization Toolkit (VTK) Libraries](#building_vtk).
@@ -102,6 +97,10 @@ svMultiPhysics is built using the following steps
    build/svMultiPhysics-build/bin/svmultiphysics
    ```
 
+To rebuild the program after making code changes
+
+1) cd `build/svMultiPhysics-build/`
+2) `make`
 
 <h2 id="building_vtk"> Building Visualization Toolkit (VTK) Libraries </h2>
 
