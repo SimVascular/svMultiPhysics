@@ -585,6 +585,36 @@ class CoupleGenBCParameters : public ParameterLists
     bool value_set = false;
 };
 
+//----------------------------------
+// svZeroDSolverInterfaceParameters
+//----------------------------------
+//
+class svZeroDSolverInterfaceParameters : public ParameterLists
+{
+  public:
+    svZeroDSolverInterfaceParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    // attributes.
+    Parameter<std::string> name;
+
+    VectorParameter<std::string> block_to_surface_map;
+
+    Parameter<std::string> configuration_file;
+    Parameter<std::string> coupling_type;
+
+    Parameter<double> initial_flows;
+    Parameter<double> initial_pressures;
+
+    Parameter<std::string> shared_library;
+
+    bool value_set = false;
+};
+
 //-----------------------
 // CoupleSvZeroDParameters
 //-----------------------
@@ -1265,6 +1295,8 @@ class EquationParameters : public ParameterLists
     CoupleGenBCParameters couple_to_genBC;
     CoupleSvZeroDParameters couple_to_svZeroD;
 
+    svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
+
     DomainParameters* default_domain = nullptr;
 
     std::vector<DomainParameters*> domains;
@@ -1450,6 +1482,7 @@ class Parameters {
     void set_mesh_values(tinyxml2::XMLElement* root_element);
     void set_precomputed_solution_values(tinyxml2::XMLElement* root_element);
     void set_projection_values(tinyxml2::XMLElement* root_element);
+    void set_szsolver_interface_values(tinyxml2::XMLElement* root_element);
 
     // Objects representing each parameter section of XML file.
     ContactParameters contact_parameters;

@@ -205,3 +205,57 @@ rmshType::rmshType()
 }
 
 
+/////////////////////////////////////////////////////////
+// s v Z e r o D S o l v e r I n t e r f a c e T y p e //
+/////////////////////////////////////////////////////////
+
+void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters& params)
+{
+  if (!params.defined()) {
+    return;
+  }
+
+  configuration_file= params.configuration_file();
+
+  coupling_type = params.coupling_type();
+
+  solver_library = params.shared_library();
+
+  if (params.initial_flows.defined()) { 
+    have_initial_flows = true;
+    initial_flows = params.initial_flows();
+  }
+
+  if (params.initial_pressures.defined()) { 
+    have_initial_pressures = true;
+    initial_pressures = params.initial_pressures();
+  }
+
+  // Add Block_to_surface_map block name / surface IDs stored
+  // sequentially in a vector to a map.
+  //
+  auto block_id_pairs = params.block_to_surface_map();
+  int n = 0;
+
+  while (n != block_id_pairs.size()) {
+    auto name = block_id_pairs[n];
+    int id = 0;
+    std::string str_id;
+
+    try {
+      str_id = block_id_pairs[n+1];
+      block_surface_map[name] = std::stoi(str_id);
+
+    } catch (const std::invalid_argument& ia) {
+      std::cerr << "Invalid argument: " << ia.what() << std::endl;
+      throw std::runtime_error("The svZeroDSolver_interface parameter Block_to_surface_map surface ID '" +
+          str_id+"' for block name '" + name + "' is not an integer."); 
+   }
+
+    n += 2;
+  }
+
+  has_data = true;
+}
+
+

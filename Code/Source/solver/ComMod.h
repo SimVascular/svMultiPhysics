@@ -42,6 +42,7 @@
 #include "CepMod.h"
 #include "ChnlMod.h"
 #include "CmMod.h"
+#include "Parameters.h"
 #include "Timer.h"
 #include "Vector.h"
 
@@ -770,6 +771,32 @@ class cplFaceType
     rcrType RCR;
 };
 
+//----------------------------
+// svZeroDSolverInterfaceType
+//----------------------------
+// This class stores information used to interface to
+// the svZeroDSolver.
+//
+class svZeroDSolverInterfaceType
+{
+  public:
+    std::string solver_library;
+    std::map<std::string,int> block_surface_map;
+
+    std::string configuration_file;
+    std::string coupling_type;
+
+    bool have_initial_flows = false;
+    double initial_flows;
+
+    bool have_initial_pressures = false;
+    double initial_pressures;
+
+    bool has_data = false;
+
+    void set_data(const svZeroDSolverInterfaceParameters& params);
+};
+
 /// @brief For coupled 0D-3D problems
 //
 class cplBCType
@@ -807,6 +834,8 @@ class cplBCType
     /// @brief File name for communication between 0D and 3D
     std::string commuName;
     //std::string commuName = ".CPLBC_0D_3D.tmp";
+
+    svZeroDSolverInterfaceType svzerod_solver_interface;
 
     /// @brief The name of history file containing "X"
     std::string saveName;

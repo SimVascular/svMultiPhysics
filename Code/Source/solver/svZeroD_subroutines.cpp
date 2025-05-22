@@ -220,8 +220,20 @@ void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[])
   }
 }
 
-void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) {
+//--------------
+// init_svZeroD
+//--------------
+//
+void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) 
+{
+  #define debug_init_svZeroD
+  #ifdef debug_init_svZeroD
+  DebugMsg dmsg(__func__, com_mod.cm.idcm()); 
+  dmsg.banner();
+  #endif
+
   auto& cplBC = com_mod.cplBC;
+  auto& solver_interface = cplBC.svzerod_solver_interface;
   auto& cm = com_mod.cm;
   double dt = com_mod.dt;
 
@@ -249,6 +261,15 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) {
     }
   }
 
+  #ifdef debug_init_svZeroD
+  dmsg << "nDir: " << nDir;
+  dmsg << "nNeu: " << nNeu;
+  dmsg << "numCoupledSrfs: " << numCoupledSrfs;
+  for (int surf_id : nsrflistCoupled) {
+    dmsg << "surface id: " << surf_id;
+  }
+  #endif
+
   std::string svzerod_library;
   std::string svzerod_file;
   std::string buffer;
@@ -259,6 +280,33 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) {
   double init_flow, init_press, in_out;
   
   if (cm.mas(cm_mod)) {
+
+    if (solver_interface.has_data) { 
+      #ifdef debug_init_svZeroD
+      dmsg << "#### Use XML data #### " << " ";
+      #endif
+
+      svzerod_library = solver_interface.solver_library;
+      svzerod_file = solver_interface.configuration_file;
+
+      int i = 0;
+      for (const auto& pair : solver_interface.block_surface_map) {
+        dmsg << "block_surface_map: '" + pair.first << "'";
+        svzd_blk_names_unsrtd[i] = pair.first;
+        svzd_blk_ids[i] = pair.second;
+        //svzd_blk_names_unsrtd.push_back(pair.first);
+        //svzd_blk_ids.push_back(pair.second);
+        i += 1;
+      }
+
+      init_flow_flag = solver_interface.have_initial_flows;
+      init_flow = solver_interface.initial_flows;
+
+      init_press_flag = solver_interface.have_initial_pressures;
+      init_press = solver_interface.initial_pressures;
+
+    } else {
+
     // Open the interface file
     std::ifstream interfaceFile(cplBC.commuName);
     if (!interfaceFile) {
@@ -269,44 +317,76 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) {
     getline(interfaceFile, buffer);
     getline(interfaceFile, svzerod_library);
     getline(interfaceFile, buffer);
+
     // Read svZeroD input config file name
     getline(interfaceFile, buffer);
     getline(interfaceFile, svzerod_file);
     getline(interfaceFile, buffer);
+
     // Read svZeroD blocks names and surface IDs
     getline(interfaceFile, buffer);
+
+    #ifdef debug_init_svZeroD
+    dmsg << "Process coupled surfaces " << "...";
+    #endif
     for (int s = 0; s < numCoupledSrfs; ++s) {
       interfaceFile >> svzd_blk_names_unsrtd[s];
       interfaceFile >> svzd_blk_ids[s];
+      #ifdef debug_init_svZeroD
+      dmsg << "  >>> s: " << s;
+      dmsg << "  svzd_blk_names_unsrtd[s]: '" << svzd_blk_names_unsrtd[s];
+      dmsg << "  svzd_blk_ids[s]: " << svzd_blk_ids[s];
+      #endif
     }
+
     // Read init_flow_flag
     getline(interfaceFile, buffer);
     interfaceFile >> init_flow_flag;
     getline(interfaceFile, buffer);
+
     // Read init_flow
     getline(interfaceFile, buffer);
     interfaceFile >> init_flow;
     getline(interfaceFile, buffer);
+
     // Read init_press_flag
     getline(interfaceFile, buffer);
     interfaceFile >> init_press_flag;
     getline(interfaceFile, buffer);
+
     // Read init_press
     getline(interfaceFile, buffer);
     interfaceFile >> init_press;
     interfaceFile.close();
+    }
 
     // Arrange svzd_blk_names in the same order as surface IDs in nsrflistCoupled
+    #ifdef debug_init_svZeroD
+    dmsg << "Arrange svzd_blk_names ... " << " ";
+    #endif
+
     for (int s = 0; s < numCoupledSrfs; ++s) {
       int found = 0;
+      #ifdef debug_init_svZeroD
+      dmsg << ">>> s " << s;
+      dmsg << "  nsrflistCoupled[s]: " << nsrflistCoupled[s];
+      #endif
+
       for (int t = 0; t < numCoupledSrfs; ++t) {
+        #ifdef debug_init_svZeroD
+        dmsg << "  >>> t " << t;
+        dmsg << "    svzd_blk_ids[t]: " << svzd_blk_ids[t];
+        #endif
         if (svzd_blk_ids[t] == nsrflistCoupled[s]) {
+          dmsg << "    Found  " << " " ;
+          dmsg << "    svzd_blk_names_unsrtd[t]: '" << svzd_blk_names_unsrtd[t];
           found = 1;
           svzd_blk_names.push_back(svzd_blk_names_unsrtd[t]);
           svzd_blk_name_len.push_back(svzd_blk_names_unsrtd[t].length());
           break;
         }
       }
+
       if (found == 0) {
         throw std::runtime_error("ERROR: Did not find block name for surface ID: " + nsrflistCoupled[s]);
       }
