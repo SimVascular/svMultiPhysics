@@ -1,6 +1,7 @@
 name: macos-latest
 on:
-  [pull_request]:
+  push:
+  pull_request:
     paths-ignore:
       - '**/.md'
 jobs:
