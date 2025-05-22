@@ -30,119 +30,6 @@ The [SimVascular svMultiPhysics Documentation](https://simvascular.github.io/doc
 
 The [svMultiPhysics Internal Code Documentation](https://simvascular.github.io/multi_physics/index.html) provides documentation of the svMultiPhysics source code. It is automatically generated using [Doxygen](https://www.doxygen.nl).
 
-<!--- =================================================================================== -->
-<!---                             Docker container                                        -->
-<!--- =================================================================================== -->
-
-<h1 id="docker_container">  Docker </h1>
-The preferred way to use svMultiPhysics on an HPC system, is to take advantage of the provided Docker container, which include the latest version of svMultiPhysics pre-compiled. To use this option, Docker must be installed first. Please refer to [Docker webpage](https://www.docker.com/products/docker-desktop/) to know more about Docker and how to install it on your machine. The following steps describe how to build a Docker image or pull an existent one from DockerHub, and how to run a Docker container. The last section is a brief guide to perform the same steps but in Singularity, since HPC systems usually use Singularity to handle containers.
-
-## Docker image
-A Docker image is a read-only template that may contain dependencies, libraries, and everything needed to run a program. It is like a snapshot of a particular environment. 
-A Docker image can be created directly from a [dockerfile](https://docs.docker.com/reference/dockerfile/#:~:text=A%20Dockerfile%20is%20a%20text,can%20use%20in%20a%20Dockerfile.) or an existent image can be pulled from [DockerHub](https://hub.docker.com). For this repository, both options are available.
-The latest version of svMultiPhysics program is pre-compiled in a Docker image, built from a dockerfile provided in Docker/solver. The Docker image includes two different type of builds, one where the solver is compiled with Trilinos and the other one where the solver is compiled with PETSc. 
-This Docker image can be downloaded (pulled) from the dockerhub simvascular repository [simvascular/solver](https://registry.hub.docker.com/u/simvascular). To pull an image, run the command:
-```
-docker pull simvascular/solver:latest
-```
-Note that this image was built for AMD64 (x86) architecture, and it will not work on other architectures such as ARM64 (AArch64, also note that the Apple M-series processors are based on ARM-type architectures). In this case, the image has to be built from the provided dockerfile. Please refer to the README inside Docker/ folder for more information on how to build images from the provided dockerfiles. 
-
-## Docker container
-A Docker container is a running instance of a Docker image. It is a lightweight, isolated, and executable unit. 
-Once the image is created, it can be run interactively by running the following command:
-```
-docker run -it -v FolderToUpload:/NameOfFolder solver:latest
-```
-In this command:
-- -it: means run interactively Docker image
-- -v: mounts a directory 'FolderToUpload' from the host machine in the container where the directory has the name '/NameOfFolder'. For example the folder containing the mesh and the input file necessary to run a simulation should be mounted. Once inside the container we can move into the folder jsut mounted and run the simulation, for example with the following command:
-```
-mpirun -n 4 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
-```
-The previous command will run the solver on 4 processors using the input file solver.xml and the mesh in the folder 'FolderToUpload' mounted inside the container.
-As an example if we want to run the test case in tests/cases/fluid/pipe_RCR_3d we can proceed as follows:
-```
-docker run -it -v ~/full_path_to/tests/cases/fluid/pipe_RCR_3d:/case solver:latest 
-```
-Now we are inside the container and we run the simulation:
-```
-cd /case
-mpirun -n 4 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
-```
-once it finishes we can exit the container and the results will be saved inside the tests/cases/fluid/pipe_RCR_3d folder. 
-If you encounter permission problems while running mpirun, try this:
-```
-mpirun --allow-run-as-root -n 4 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
-```
-
-## Containers on HPC: Singularity
-Most of the HPC systems (if not all) are based on AMD64 architecture and the solver image can be directly pulled from [simvascular/solver](https://hub.docker.com/r/simvascular/solver). First of all, make sure the singularity module is loaded on the HPC system. Then, pull the solver image (it is recommended to run the following command on the compute node for example through an interactive job):
-```
-singularity pull docker://simvascular/solver:latest
-``` 
-After the pull is complete, you should have a file with extension .sif (solver image). This image contains the two executables of the svMultiPhysics program build with PETSc and Trilinos support, respectively. 
-In the following, we provide two example of job submission's scripts that can be used as a reference to run a simulation using the svMultiPhysics solver on an HPC cluster. 
-1) single-node job script:
-```
-#!/bin/bash
-#SBATCH --job-name
-#SBATCH --output
-#SBATCH --partition
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=
-#SBATCH --mem=0 
-#SBATCH -t 48:00:00
-
-NTASKS = # number of tasks
-FOLDER_TO_BIND1 = # path to folder to bind to the container (it will be accessible to the container)
-FOLDER_TO_BIND2 = # path to folder to bind to the container (it will be accessible to the container)
-PATH_TO_IMAGE = # full path to image, including the image name (*.sif file)
-
-# For single node, no modules should be loaded to avoid incongruences between HPC and containers environments
-module purge
-
-singularity run --bind $FOLDER_TO_BIND1, $FOLDER_TO_BIND2, # and so on \
-$PATH_TO_IMAGE \
-mpirun -n $NTASKS /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
-```
-
-2) multi-node job script
-```
-#!/bin/bash
-#SBATCH --job-name
-#SBATCH --output
-#SBATCH --partition
-#SBATCH --nodes
-#SBATCH --ntasks-per-node
-#SBATCH --mem
-#SBATCH -t 00:00:00
-
-# The following 'export' may not work on all the HPC systems
-export UCX_TLS=ib
-export PMIX_MCA_gds=hash
-export OMPI_MCA_btl_tcp_if_include=ib0
-
-NTASKS = # number of tasks
-FOLDER_TO_BIND1 = # path to folder to bind to the container (it will be accessible to the container)
-FOLDER_TO_BIND2 = # path to folder to bind to the container (it will be accessible to the container)
-PATH_TO_IMAGE = # full path to image, including the image name (*.sif file)
-
-module purge
-# Load here all the modules necessary to use the HPC MPI, for example: module load openmpi
-
-mpirun -n $NTASKS singularity run --bind $FOLDER_TO_BIND1, $FOLDER_TO_BIND2, # and so on \
-$PATH_TO_IMAGE \
-/build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
-```
-Since the multi-node relies on both MPI, the one on the HPC and the one inside the container, there may be some problems. In the following, we give a solution (workaround) for two common problems:
-- if the HPC OpenMPI was built with cuda support, then it may happen that it is expecting that OpenMPI inside the container to be built with cuda support too, which is not the case. Possible solution is to add --mca mpi_cuda_support 0:
-```
-mpirun --mca mpi_cuda_support 0 -n #TotalNumberOfTasks ... 
-```
-- if for some reason, it is complaining about not finding 'munge' then add --mca psec ^munge:
-```
-mpirun --mca psec ^munge -n #TotalNumberOfTasks ... 
-```
 
 <!--- =================================================================================== -->
 <!---                       Building the svMultiPhysics                                        -->
@@ -389,3 +276,117 @@ A simulation can be run in parallel on four processors using
 mpiexec -np 4 svmultiphysics fluid3.xml
 ```
 In this case a directory named `4-procs` containing the simulation results output will be created. Results from different processors will be combined into a single file for a given time step.
+
+<!--- =================================================================================== -->
+<!---                             Docker container                                        -->
+<!--- =================================================================================== -->
+
+<h1 id="docker_container">  Docker </h1>
+The preferred way to use svMultiPhysics on an HPC system, is to take advantage of the provided Docker container, which include the latest version of svMultiPhysics pre-compiled. To use this option, Docker must be installed first. Please refer to [Docker webpage](https://www.docker.com/products/docker-desktop/) to know more about Docker and how to install it on your machine. The following steps describe how to build a Docker image or pull an existent one from DockerHub, and how to run a Docker container. The last section is a brief guide to perform the same steps but in Singularity, since HPC systems usually use Singularity to handle containers.
+
+## Docker image
+A Docker image is a read-only template that may contain dependencies, libraries, and everything needed to run a program. It is like a snapshot of a particular environment. 
+A Docker image can be created directly from a [dockerfile](https://docs.docker.com/reference/dockerfile/#:~:text=A%20Dockerfile%20is%20a%20text,can%20use%20in%20a%20Dockerfile.) or an existent image can be pulled from [DockerHub](https://hub.docker.com). For this repository, both options are available.
+The latest version of svMultiPhysics program is pre-compiled in a Docker image, built from a dockerfile provided in Docker/solver. The Docker image includes two different type of builds, one where the solver is compiled with Trilinos and the other one where the solver is compiled with PETSc. 
+This Docker image can be downloaded (pulled) from the dockerhub simvascular repository [simvascular/solver](https://registry.hub.docker.com/u/simvascular). To pull an image, run the command:
+```
+docker pull simvascular/solver:latest
+```
+Note that this image was built for AMD64 (x86) architecture, and it will not work on other architectures such as ARM64 (AArch64, also note that the Apple M-series processors are based on ARM-type architectures). In this case, the image has to be built from the provided dockerfile. Please refer to the README inside Docker/ folder for more information on how to build images from the provided dockerfiles. 
+
+## Docker container
+A Docker container is a running instance of a Docker image. It is a lightweight, isolated, and executable unit. 
+Once the image is created, it can be run interactively by running the following command:
+```
+docker run -it -v FolderToUpload:/NameOfFolder solver:latest
+```
+In this command:
+- -it: means run interactively Docker image
+- -v: mounts a directory 'FolderToUpload' from the host machine in the container where the directory has the name '/NameOfFolder'. For example the folder containing the mesh and the input file necessary to run a simulation should be mounted. Once inside the container we can move into the folder jsut mounted and run the simulation, for example with the following command:
+```
+mpirun -n 4 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
+```
+The previous command will run the solver on 4 processors using the input file solver.xml and the mesh in the folder 'FolderToUpload' mounted inside the container.
+As an example if we want to run the test case in tests/cases/fluid/pipe_RCR_3d we can proceed as follows:
+```
+docker run -it -v ~/full_path_to/tests/cases/fluid/pipe_RCR_3d:/case solver:latest 
+```
+Now we are inside the container and we run the simulation:
+```
+cd /case
+mpirun -n 4 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
+```
+once it finishes we can exit the container and the results will be saved inside the tests/cases/fluid/pipe_RCR_3d folder. 
+If you encounter permission problems while running mpirun, try this:
+```
+mpirun --allow-run-as-root -n 4 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
+```
+
+## Containers on HPC: Singularity
+Most of the HPC systems (if not all) are based on AMD64 architecture and the solver image can be directly pulled from [simvascular/solver](https://hub.docker.com/r/simvascular/solver). First of all, make sure the singularity module is loaded on the HPC system. Then, pull the solver image (it is recommended to run the following command on the compute node for example through an interactive job):
+```
+singularity pull docker://simvascular/solver:latest
+``` 
+After the pull is complete, you should have a file with extension .sif (solver image). This image contains the two executables of the svMultiPhysics program build with PETSc and Trilinos support, respectively. 
+In the following, we provide two example of job submission's scripts that can be used as a reference to run a simulation using the svMultiPhysics solver on an HPC cluster. 
+1) single-node job script:
+```
+#!/bin/bash
+#SBATCH --job-name
+#SBATCH --output
+#SBATCH --partition
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=
+#SBATCH --mem=0 
+#SBATCH -t 48:00:00
+
+NTASKS = # number of tasks
+FOLDER_TO_BIND1 = # path to folder to bind to the container (it will be accessible to the container)
+FOLDER_TO_BIND2 = # path to folder to bind to the container (it will be accessible to the container)
+PATH_TO_IMAGE = # full path to image, including the image name (*.sif file)
+
+# For single node, no modules should be loaded to avoid incongruences between HPC and containers environments
+module purge
+
+singularity run --bind $FOLDER_TO_BIND1, $FOLDER_TO_BIND2, # and so on \
+$PATH_TO_IMAGE \
+mpirun -n $NTASKS /build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
+```
+
+2) multi-node job script
+```
+#!/bin/bash
+#SBATCH --job-name
+#SBATCH --output
+#SBATCH --partition
+#SBATCH --nodes
+#SBATCH --ntasks-per-node
+#SBATCH --mem
+#SBATCH -t 00:00:00
+
+# The following 'export' may not work on all the HPC systems
+export UCX_TLS=ib
+export PMIX_MCA_gds=hash
+export OMPI_MCA_btl_tcp_if_include=ib0
+
+NTASKS = # number of tasks
+FOLDER_TO_BIND1 = # path to folder to bind to the container (it will be accessible to the container)
+FOLDER_TO_BIND2 = # path to folder to bind to the container (it will be accessible to the container)
+PATH_TO_IMAGE = # full path to image, including the image name (*.sif file)
+
+module purge
+# Load here all the modules necessary to use the HPC MPI, for example: module load openmpi
+
+mpirun -n $NTASKS singularity run --bind $FOLDER_TO_BIND1, $FOLDER_TO_BIND2, # and so on \
+$PATH_TO_IMAGE \
+/build-trilinos/svMultiPhysics-build/bin/svmultiphysics solver.xml
+```
+Since the multi-node relies on both MPI, the one on the HPC and the one inside the container, there may be some problems. In the following, we give a solution (workaround) for two common problems:
+- if the HPC OpenMPI was built with cuda support, then it may happen that it is expecting that OpenMPI inside the container to be built with cuda support too, which is not the case. Possible solution is to add --mca mpi_cuda_support 0:
+```
+mpirun --mca mpi_cuda_support 0 -n #TotalNumberOfTasks ... 
+```
+- if for some reason, it is complaining about not finding 'munge' then add --mca psec ^munge:
+```
+mpirun --mca psec ^munge -n #TotalNumberOfTasks ... 
+```
