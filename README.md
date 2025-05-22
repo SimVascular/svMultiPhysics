@@ -28,11 +28,11 @@ svMultiPhysics is a C++ implementation of the Fortran [svFSI](https://github.com
 
 The [SimVascular svMultiPhysics Documentation](https://simvascular.github.io/documentation/multi_physics.html) provides documentation describing how to use the svMultiPhysics solver. It also has developer guide describing the code organization and some implementation details. 
 
-The [svMultiPhysics Internal Code Documentation](https://simvascular.github.io/multi_physics/index.html) provides documentation of the svMultiPhysics source code. It is automatically generated using [Doxygen](https://www.doxygen.nl).
+The [svMultiPhysics Developer Gude Documentation](https://simvascular.github.io/documentation/multi_physics.html#developer-guide) describe some of the implementation details of the svMultiPhysics code.
 
 
 <!--- =================================================================================== -->
-<!---                       Building the svMultiPhysics                                        -->
+<!---                       Building the svMultiPhysics                                   -->
 <!--- =================================================================================== -->
 
 <h1 id="building"> Building the svMultiPhysics Program from Source </h1>
