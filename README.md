@@ -36,6 +36,11 @@ The [svMultiPhysics Developer Gude Documentation](https://simvascular.github.io/
 <!--- =================================================================================== -->
 
 <h1 id="building"> Building the svMultiPhysics Program from Source </h1>
+
+The svMultiPhysics source code can be downloaded from this GitHub repository by anyone who wants to inspect, modify, and enhance the code. The svMultiPhysics program is built using the [CMake](https://cmake.org) build system. It can be built for Unix-like systems and MacOS. Buliding on Windows is currently not supported.
+
+The code 
+
 The svMultiPhysics program can be compiled and linked from the GitHub source using a CMake build process. The build process creates a binary executable file named <b>svmultiphysics</b>.
 
 ## Supported Platforms
