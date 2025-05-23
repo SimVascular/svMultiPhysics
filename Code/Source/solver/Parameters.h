@@ -1223,6 +1223,7 @@ class EquationParameters : public ParameterLists
 
     void print_parameters();
     void set_values(tinyxml2::XMLElement* xml_elem);
+    void set_section_values(DomainParameters* default_domain, tinyxml2::XMLElement* eq_elem);
 
     Parameter<double> backflow_stabilization_coefficient;
 
@@ -1251,6 +1252,9 @@ class EquationParameters : public ParameterLists
 
     Parameter<std::string> type;
     Parameter<bool> use_taylor_hood_type_basis;
+
+    Parameter<std::string> include_xml;
+    void process_include_xml(const std::string& file_name, DomainParameters* default_domain);
     
     // Inverse of Darcy permeability. Default value of 0.0 for Navier-Stokes and non-zero for Navier-Stokes-Brinkman
     Parameter<double> inverse_darcy_permeability;
@@ -1282,6 +1286,7 @@ class EquationParameters : public ParameterLists
     SolidViscosityParameters solid_viscosity;
 
     ECGLeadsParameters ecg_leads;
+
 };
 
 /// @brief The GeneralSimulationParameters class stores paramaters for the

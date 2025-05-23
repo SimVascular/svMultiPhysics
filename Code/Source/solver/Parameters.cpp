@@ -1836,6 +1836,8 @@ EquationParameters::EquationParameters()
 
   set_parameter("Tolerance", 0.5, !required, tolerance);
   set_parameter("Use_taylor_hood_type_basis", false, !required, use_taylor_hood_type_basis);
+
+  set_parameter("Include_xml", "", !required, include_xml);
 }
 
 void EquationParameters::print_parameters()
@@ -1884,6 +1886,22 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
 {
   using namespace tinyxml2;
   default_domain = new DomainParameters();
+  set_section_values( default_domain, eq_elem);
+}
+
+void EquationParameters::set_section_values(DomainParameters* default_domain, tinyxml2::XMLElement* eq_elem)
+  {
+  static std::set<std::string> viscosity_names {
+      FluidViscosityParameters::xml_element_name_, 
+      SolidViscosityParameters::xml_element_name_
+  };
+
+  static std::set<consts::EquationType> fluid_eqs {
+      consts::EquationType::phys_fluid,
+      consts::EquationType::phys_CMM,
+      consts::EquationType::phys_stokes 
+   };
+
   auto item = eq_elem->FirstChildElement();
 
   // Parse XML sub-elements.
@@ -1892,6 +1910,7 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
   //
   while (item != nullptr) {
     auto name = std::string(item->Value());
+    std::cout << "[EquationParameters::set_values] name: " << name << std::endl;
 
     if (name == BodyForceParameters::xml_element_name_) {
       auto bf_params = new BodyForceParameters();
@@ -1938,9 +1957,10 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
     } else if (name == StimulusParameters::xml_element_name_) {
       default_domain->stimulus.set_values(item);
 
-    } else if (name == FluidViscosityParameters::xml_element_name_ || name == SolidViscosityParameters::xml_element_name_) {
+    } else if (viscosity_names.count(name)) { 
       auto eq_type = consts::equation_name_to_type.at(type.value());
-      if (eq_type == consts::EquationType::phys_fluid || eq_type == consts::EquationType::phys_CMM || eq_type == consts::EquationType::phys_stokes) {
+
+      if (fluid_eqs.count(eq_type)) {
         default_domain->fluid_viscosity.set_values(item);
       } else if (eq_type == consts::EquationType::phys_struct || eq_type == consts::EquationType::phys_ustruct) {
         default_domain->solid_viscosity.set_values(item);
@@ -1953,6 +1973,13 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
 
     } else if (name == VariableWallPropsParameters::xml_element_name_) {
       variable_wall_properties.set_values(item);
+
+    } else if (name == include_xml.name()) { 
+      auto value = item->GetText();
+      std::string s(value);
+      s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+      std::cout << "[EquationParameters::set_values] s: '" << s << "'" << std::endl;
+      process_include_xml(s, default_domain);
 
     } else if (item->GetText() != nullptr) {
       auto value = item->GetText();
@@ -1970,8 +1997,9 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
         }
       }
 
+
     } else {
-      throw std::runtime_error("Unknown " + xml_element_name_ + " XML element '" + name + ".");
+      throw std::runtime_error("[Equation] Unknown " + xml_element_name_ + " XML element '" + name + ".");
     }
 
     item = item->NextSiblingElement();
@@ -1984,6 +2012,39 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
     domains.push_back(domain_params);
   }
   */
+}
+
+void EquationParameters::process_include_xml(const std::string& file_name, DomainParameters* default_domain)
+{
+  std::cout << "[process_include_xml] ========== process_include_xml ==========" << std::endl;
+  std::cout << "[process_include_xml] file_name: " << file_name << std::endl;
+  tinyxml2::XMLDocument doc;
+  auto error = doc.LoadFile(file_name.c_str());
+     
+  auto root_element = doc.FirstChildElement("svMultiPhysicsFile");
+  if (root_element == nullptr) {
+    throw std::runtime_error("The following error occured while reading the XML file '" + file_name + "'.\n" +
+        "[process_include_xml] ERROR " + std::string(doc.ErrorStr()));
+  }
+
+  //auto item = root_element->FirstChildElement();
+  set_section_values(default_domain, root_element);
+
+/*
+  while (item != nullptr) {
+    std::string name = std::string(item->Value());
+    std::cout << "[process_include_xml] name: " << name << std::endl;
+    auto value = item->GetText();
+
+    if (name == LinearSolverParameters::xml_element_name_) {
+      linear_solver.set_values(item);
+    }
+
+    item = item->NextSiblingElement();
+  }
+*/
+
+
 }
 
 //////////////////////////////////////////////////////////

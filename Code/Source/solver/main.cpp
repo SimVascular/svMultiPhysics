@@ -782,9 +782,21 @@ void run_simulation(Simulation* simulation)
 //
 int main(int argc, char *argv[])
 {
-  if (argc != 2) {
+  if (argc < 2) {
     std::cout << "[svMultiPhysics] ERROR: The svMultiPhysics program requires the solver input XML file name as an argument." << std::endl;
     exit(1);
+  }
+
+  // Process extra arguments for XML parameter substitution.
+  std::cout << "[main] argc: " << argc << std::endl;
+  for (int i = 2; i < argc; i++) {
+    std::cout << "[main] arg: " << argv[i] << std::endl;
+    std::string str(argv[i]);
+    int pos = str.find("=");
+    auto name = str.substr(0,pos);
+    auto value = str.substr(pos+1,str.size());
+    std::cout << "[main]   name: " << name << std::endl;
+    std::cout << "[main]   value: " << value << std::endl;
   }
 
   std::cout << std::scientific << std::setprecision(16);
