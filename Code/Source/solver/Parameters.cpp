@@ -414,6 +414,8 @@ BoundaryConditionParameters::BoundaryConditionParameters()
 
   set_parameter("Weakly_applied", false, !required, weakly_applied);
   set_parameter("Zero_out_perimeter", false, !required, zero_out_perimeter);
+
+  set_parameter("Capping_face", "", !required, capping_face);
 }
 
 void BoundaryConditionParameters::print_parameters()
@@ -2094,6 +2096,7 @@ FaceParameters::FaceParameters()
 
   set_parameter("End_nodes_face_file_path", "", !required, end_nodes_face_file_path);
   set_parameter("Face_file_path", "", !required, face_file_path);
+  set_parameter("Virtual", false, !required, virtual_face);
 
   set_parameter("Quadrature_modifier_TRI3", (2.0/3.0), !required, quadrature_modifier_TRI3);
 }

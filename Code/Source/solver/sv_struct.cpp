@@ -312,7 +312,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
-
+    
     for (int g = 0; g < lM.nG; g++) {
       if (g == 0 || !lM.lShpF) {
         auto Nx_g = lM.Nx.slice(g);
@@ -327,7 +327,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       if (nsd == 3) {
         struct_3d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fN, pS0l, pSl, ya_l, lR, lK);
-
+        
 #if 0
         if (e == 0 && g == 0) {
           Array3<double>::write_enabled = true;
@@ -352,7 +352,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
           }
         }
       }
-    } 
+    }
 
     eq.linear_algebra->assemble(com_mod, eNoN, ptr, lK, lR);
   } 
@@ -445,7 +445,7 @@ void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, 
   Array<double> S(2,2), Dm(3,3);
   double Ja;
   mat_models::compute_pk2cc(com_mod, cep_mod, dmn, F, nFn, fN, ya_g, S, Dm, Ja);
-
+ 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
   Array<double> Svis(2,2);
   Array3<double> Kvis_u(4, eNoN, eNoN);

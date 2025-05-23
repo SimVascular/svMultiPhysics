@@ -1,0 +1,165 @@
+#
+# Copyright (c) Stanford University, The Regents of the University of
+#               California, and others.
+#
+# All Rights Reserved.
+#
+# See Copyright-SimVascular.txt for additional details.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject
+# to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#--------------------------------------------------------------------
+#
+#	This is the definitions for building process.
+#
+#--------------------------------------------------------------------
+
+
+.SUFFIXES: .f .o
+
+OS:= $(shell uname)
+
+AR      = ar rv
+RANLIB  = ar -ts
+
+CFLAGS   = -O3 -DAdd_
+CXXFLAGS = -O3 -std=c++11
+FFLAGS   = -O3 -cpp 
+FCFLAGS  = -lstdc++ -cpp 
+#FCFLAGS = -lc++ -cpp    ## This may work if lstdc++ is not found
+OBJ_DIR = obj
+SRC_DIR = src
+
+MAKE_GUI = 0
+
+debug = 0
+ifeq ($(debug),1)
+   CFLAGS   = -O0 -DAdd_
+   CXXFLAGS = -O0 -std=c++11
+   FFLAGS   = -O0 -cpp
+endif
+
+seq = 0
+ifeq ($(seq),1)
+   CC      = gcc
+   CXX     = g++
+   FORTRAN = gfortran
+   CFLAGS += -DSEQ
+else
+   CC      = mpicc
+   CXX     = mpicxx
+   FORTRAN = mpif90
+endif
+
+# ----------------------------------------------------------------
+# Normally you would not need to change any line beyond this point
+# ----------------------------------------------------------------
+
+# Here I am finding the compiler group
+ifeq ($(seq),1)
+   F_COMP = $(FORTRAN)
+else
+   F_COMP = $(firstword $(shell $(FORTRAN) -show))
+endif
+ifeq ($(F_COMP),gfortran)
+   COMP_GRP = gnu
+endif
+ifeq ($(F_COMP),gcc)
+   COMP_GRP = gnu
+endif
+ifeq ($(F_COMP),g77)
+   COMP_GRP = gnu
+endif
+ifeq ($(F_COMP),f95)
+   COMP_GRP = gnu
+endif
+ifeq ($(F_COMP),ifort)
+   COMP_GRP = intel
+endif
+ifeq ($(F_COMP),pgf90)
+   COMP_GRP = pgi
+endif
+ifeq ($(F_COMP),pgf77)
+   COMP_GRP = pgi
+endif
+
+ifeq ($(OS),Darwin)
+   COMP_GRP = gnu
+endif
+
+# If profiling is requested
+prof = 0
+ifeq ($(prof),1)
+   FFLAGS += -pg -g
+endif
+
+# If debuging is requested
+ifeq ($(debug),1)
+   ifeq ($(COMP_GRP),gnu)
+      FFLAGS += -g -Wall -Wconversion -Wline-truncation -pedantic -fimplicit-none -fbacktrace -fbounds-check -p -fcheck=all #-ffpe-trap=invalid,zero,overflow,underflow
+      CXXFLAGS += -g -Wall -pedantic -fbounds-check
+      CFLAGS += -g -Wall -pedantic -fbounds-check
+   endif
+   ifeq ($(COMP_GRP),intel)
+      FFLAGS += -g -traceback -check all -check bounds -check uninit -ftrapuv -debug all -fpe0
+      CFLAGS += -g -traceback -check-uninit -fpe0
+      CXXFLAGS += -g -traceback -check-uninit -fpe0
+   endif
+   ifeq ($(COMP_GRP),pgi)
+      FFLAGS += # You need to add debuging flag for pgi compiler here
+   endif
+   OBJ_DIR = dbg
+endif
+
+# If openMP parallelization is requested
+mp = 0
+ifeq ($(mp),1)
+   ifeq ($(COMP_GRP),gnu)
+      FFLAGS += -fopenmp
+   endif
+   ifeq ($(COMP_GRP),intel)
+      FFLAGS += -openmp
+   endif
+   ifeq ($(COMP_GRP),pgi)
+      FFLAGS += -mp
+   endif
+endif
+
+# To make directories a bit cleaner with intel compiler
+ifeq ($(COMP_GRP),intel)
+   FFLAGS += -module $(OBJ_DIR)
+endif
+ifeq ($(COMP_GRP),gnu)
+   FFLAGS += -J $(OBJ_DIR)
+   CFLAGS += -J $(OBJ_DIR)
+   CXXFLAGS += -J $(OBJ_DIR)
+endif
+
+#LAPACK Library
+ifeq ($(COMP_GRP),gnu)
+   LAPACK_INC       =
+   LAPACK_LIB       =
+   LAPACK_LFLAGS    = -llapack
+endif
+

@@ -466,7 +466,7 @@ void store_element_conn(vtkSmartPointer<vtkUnstructuredGrid> vtk_ugrid, mshType&
 void store_element_ids(vtkSmartPointer<vtkUnstructuredGrid> vtk_ugrid, mshType& mesh)
 {
   auto elem_ids = vtkIntArray::SafeDownCast(vtk_ugrid->GetCellData()->GetArray(ELEMENT_IDS_NAME.c_str()));
-  if (elem_ids == nullptr) { 
+  if (elem_ids == nullptr && !mesh.vrtual) { 
     throw std::runtime_error("No '" + ELEMENT_IDS_NAME + "' data of type Int32 found in VTK mesh.");
   }
   int num_elem_ids = elem_ids->GetNumberOfTuples();
@@ -482,19 +482,28 @@ void store_element_ids(vtkSmartPointer<vtkUnstructuredGrid> vtk_ugrid, mshType& 
 void store_element_ids(vtkSmartPointer<vtkPolyData> vtk_polydata, faceType& face)
 {
   auto elem_ids = vtkIntArray::SafeDownCast(vtk_polydata->GetCellData()->GetArray(ELEMENT_IDS_NAME.c_str()));
-  if (elem_ids == nullptr) {
+  if (elem_ids == nullptr && !face.vrtual) {
     throw std::runtime_error("No '" + ELEMENT_IDS_NAME + "' data of type Int32 found in VTK mesh.");
     return;
   }
   #ifdef debug_store_element_ids
   std::cout << "[store_element_ids] Allocate face.gE ... " <<  std::endl;
   #endif
-  int num_elem_ids = elem_ids->GetNumberOfTuples();
-  face.gE = Vector<int>(num_elem_ids);
-  // [NOTE] It is not clear how these IDs are used but if they
-  // index into arrays or vectors then they need to be offset by -1.
-  for (int i = 0; i < num_elem_ids; i++) {
-    face.gE(i) = elem_ids->GetValue(i) - 1;
+  if (face.vrtual) {
+    int num_elem_ids = face.nEl;
+    face.gE = Vector<int>(num_elem_ids);
+    for (int i = 0; i < num_elem_ids; i++) {
+      face.gE(i) = 0; // Global element ID is 0 for virtual faces.
+    }
+    return;
+  } else {
+    int num_elem_ids = elem_ids->GetNumberOfTuples();
+    face.gE = Vector<int>(num_elem_ids);
+    // [NOTE] It is not clear how these IDs are used but if they
+    // index into arrays or vectors then they need to be offset by -1.
+    for (int i = 0; i < num_elem_ids; i++) {
+      face.gE(i) = elem_ids->GetValue(i) - 1;
+    }
   }
 }
 
@@ -506,19 +515,28 @@ void store_element_ids(vtkSmartPointer<vtkPolyData> vtk_polydata, faceType& face
 void store_element_ids(vtkSmartPointer<vtkUnstructuredGrid> vtk_ugrid, faceType& face)
 {
   auto elem_ids = vtkIntArray::SafeDownCast(vtk_ugrid->GetCellData()->GetArray(ELEMENT_IDS_NAME.c_str()));
-  if (elem_ids == nullptr) {
+  if (elem_ids == nullptr && !face.vrtual) {
     throw std::runtime_error("No '" + ELEMENT_IDS_NAME + "' data of type Int32 found in VTK mesh.");
     return;
   }
   #ifdef debug_store_element_ids
   std::cout << "[store_element_ids] Allocate face.gE ... " <<  std::endl;
   #endif
-  int num_elem_ids = elem_ids->GetNumberOfTuples();
-  face.gE = Vector<int>(num_elem_ids);
-  // [NOTE] It is not clear how these IDs are used but if they
-  // index into arrays or vectors then they need to be offset by -1.
-  for (int i = 0; i < num_elem_ids; i++) {
-    face.gE(i) = elem_ids->GetValue(i) - 1;
+  if (face.vrtual) {
+    int num_elem_ids = face.nEl;
+    face.gE = Vector<int>(num_elem_ids);
+    for (int i = 0; i < num_elem_ids; i++) {
+      face.gE(i) = 0; // Global element ID is 0 for virtual faces.
+    }
+    return;
+  } else {
+    int num_elem_ids = elem_ids->GetNumberOfTuples();
+    face.gE = Vector<int>(num_elem_ids);
+    // [NOTE] It is not clear how these IDs are used but if they
+    // index into arrays or vectors then they need to be offset by -1.
+    for (int i = 0; i < num_elem_ids; i++) {
+      face.gE(i) = elem_ids->GetValue(i) - 1;
+    }
   }
 }
 
@@ -932,7 +950,9 @@ void load_vtu(const std::string& file_name, faceType& face)
   store_element_conn(vtk_ugrid, face);
 
   // Store element IDs.
-  store_element_ids(vtk_ugrid, face);
+  //if (!face.vrtual) {
+    store_element_ids(vtk_ugrid, face);
+  //}
 }
 
 
