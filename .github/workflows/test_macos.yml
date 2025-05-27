@@ -1,5 +1,9 @@
 name: macos-latest
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+    paths-ignore:
+      - '**/.md'
 jobs:
   test:
     runs-on: macos-latest

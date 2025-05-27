@@ -1,7 +1,7 @@
 # THIS FILE WAS EDITED BY Jameson Merkow (jmerkow@eng.ucsd.edu) to include install support  - March 25 2011
 
 # Set  the minimum  required version  of cmake  for a  project.
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.20)
 project(TETGEN)
 # message(STATUS "TETGEN_INSTALL_DIR: ${TETGEN_INSTALL_DIR}")
 # Add an executable to the project using the specified source files.

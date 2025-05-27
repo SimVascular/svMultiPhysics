@@ -57,7 +57,7 @@ void cmm_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<double
 
   int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
-  int cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
@@ -450,7 +450,7 @@ void cmm_mass(ComMod& com_mod, const double w, const Vector<double>& N, const Ar
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
   const double dt = com_mod.dt;
-  const int cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   #ifdef debug_cmm_mass
   dmsg << "nsd: " << nsd;
   dmsg << "dof: " << dof;
@@ -523,7 +523,7 @@ void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
   const double dt = com_mod.dt;
-  const int cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
 
   double nu = eq.dmn[cDmn].prop.at(PhysicalProperyType::poisson_ratio);
   double ht, elM; 
@@ -797,7 +797,7 @@ void construct_cmm(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, 
   const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
-  auto cDmn = com_mod.cDmn;
+  auto& cDmn = com_mod.cDmn;
   const int nsymd = com_mod.nsymd;
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
@@ -827,7 +827,7 @@ void construct_cmm(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, 
 
 
   for (int e = 0; e < lM.nEl; e++) {
-    // Update domain and proceed if domain phys and eqn phys match
+    // Change the current domain which will be used in later function calls.
     cDmn = all_fun::domain(com_mod, lM, cEq, e);
     auto cPhys = eq.dmn[cDmn].phys;
     if (cPhys != EquationType::phys_CMM) {

@@ -96,7 +96,7 @@ void FsilsLinearAlgebra::check_options(const consts::PreconditionerType prec_con
   }
 
   if (error_msg != "") { 
-    throw std::runtime_error("[svFSIplus] ERROR: " + error_msg);
+    throw std::runtime_error("[svMultiPhysics] ERROR: " + error_msg);
   }
 }
 

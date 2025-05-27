@@ -1578,6 +1578,7 @@ void read_fiber_temporal_values_file(FiberReinforcementStressParameters& fiber_p
   std::string line;
 
   while (std::getline(temporal_values_file, line)) { 
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }
@@ -1866,6 +1867,7 @@ void read_fourier_coeff_values_file(const std::string& file_name, bcType& lBc)
   int n = 0;
 
   while (std::getline(temporal_values_file, line)) { 
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }
@@ -1891,6 +1893,7 @@ void read_fourier_coeff_values_file(const std::string& file_name, bcType& lBc)
   int j = 0;
 
   while (std::getline(temporal_values_file, line)) { 
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }
@@ -1933,6 +1936,7 @@ void read_fourier_coeff_values_file(const std::string& file_name, bfType& lBf)
   int n = 0;
 
   while (std::getline(temporal_values_file, line)) { 
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }
@@ -1958,6 +1962,7 @@ void read_fourier_coeff_values_file(const std::string& file_name, bfType& lBf)
   int j = 0;
 
   while (std::getline(temporal_values_file, line)) { 
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }
@@ -2050,7 +2055,7 @@ void read_ls(Simulation* simulation, EquationParameters* eq_params, consts::Solv
   #endif
 
   if (!linear_algebra.defined()) {
-    throw std::runtime_error("[svFSIplus] No <Linear_algebra> section has been defined for equation '" + 
+    throw std::runtime_error("[svMultiPhysics] ERROR: No <Linear_algebra> section has been defined for equation '" + 
         eq_params->type() + ".");
   }
 
@@ -2607,6 +2612,7 @@ void read_temporal_values(const std::string& file_name, bcType& lBc)
   std::string line;
 
   while (std::getline(temporal_values_file, line)) { 
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }
@@ -2615,14 +2621,15 @@ void read_temporal_values(const std::string& file_name, bcType& lBc)
 
     while (!line_input.eof()) {
       line_input >> value;
+
       if (line_input.fail()) { 
-        throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line '" + line + "'.");
+        throw std::runtime_error("1: Error reading values for the temporal values file '" + file_name + "' for line '" + line + "'.");
       }
       values.push_back(value);
     }
 
     if (values.size() != 2) { 
-      throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line '" + line + "'.");
+      throw std::runtime_error("2: Error reading values for the temporal values file '" + file_name + "' for line '" + line + "'.");
     }
 
     temporal_values.push_back(values);
@@ -2664,6 +2671,7 @@ void read_temporal_values(const std::string& file_name, bfType& lBf)
   std::string line;
 
   while (std::getline(temporal_values_file, line)) { 
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }

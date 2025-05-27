@@ -29,7 +29,7 @@
  */
 
 //
-// The class methods defined here are used to process svFSIplus simulation parameters 
+// The class methods defined here are used to process svMultiPhysics simulation parameters 
 // read in from an XML-format file. 
 //
 // XML files are parsed using tinyxml2 (https://github.com/leethomason/tinyxml2).

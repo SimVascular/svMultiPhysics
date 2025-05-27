@@ -75,7 +75,7 @@ void construct_l_elas(ComMod& com_mod, const mshType& lM, const Array<double>& A
   const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
-  auto cDmn = com_mod.cDmn;
+  auto& cDmn = com_mod.cDmn;
   const int nsymd = com_mod.nsymd;
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
@@ -91,7 +91,7 @@ void construct_l_elas(ComMod& com_mod, const mshType& lM, const Array<double>& A
   Array3<double> lK(dof*dof,eNoN,eNoN);
 
   for (int e = 0; e < lM.nEl; e++) {
-    // Update domain and proceed if domain phys and eqn phys match
+    // Change the current domain which will be used in later function calls. 
     cDmn = all_fun::domain(com_mod, lM, cEq, e);
     auto cPhys = eq.dmn[cDmn].phys;
     if (cPhys != EquationType::phys_lElas) {
@@ -179,7 +179,7 @@ void l_elas_2d(ComMod& com_mod, const int eNoN, const double w, const Vector<dou
   const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
-  auto& cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
 
   #define n_debug_l_elas_2d 
@@ -280,7 +280,7 @@ void l_elas_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<dou
   const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
-  auto& cDmn = com_mod.cDmn;
+  const auto cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
 
   #define n_debug_l_elas_3d 
