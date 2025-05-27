@@ -161,12 +161,11 @@ int TrilinosMatVec::Apply(const Epetra_MultiVector &x,
 
  */
 
-void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
-        int &numGhostAndLocalNodes, int &nnz, const int *ltgSorted,
-        const int *ltgUnsorted, const int *rowPtr, const int *colInd, int &Dof,
-        int& cpp_index, int& proc_id, int& numCoupledNeumannBC)
+void trilinos_lhs_create(const int numGlobalNodes, const int numLocalNodes,
+        const int numGhostAndLocalNodes, const int nnz, const Vector<int>& ltgSorted,
+        const Vector<int>& ltgUnsorted, const Vector<int>& rowPtr, const Vector<int>& colInd,
+        const int Dof, const int cpp_index, const int proc_id, const int numCoupledNeumannBC)
 {
-
   #ifdef debug_trilinos_lhs_create
   std::string msg_prefix;
   msg_prefix = std::string("[trilinos_lhs_create:") + std::to_string(proc_id) + "] ";
@@ -235,7 +234,7 @@ void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
   // solution vector at the end
   //
   int inc_ghost = -1; // since including ghost nodes sum will not equal total
-  Epetra_BlockMap ghostMap(inc_ghost, numGhostAndLocalNodes,  ltgSorted, dof,
+  Epetra_BlockMap ghostMap(inc_ghost, numGhostAndLocalNodes, ltgSorted.data(), dof,
           indexBase, comm);
 
   // Calculate nnzPerRow to pass into graph constructor
@@ -260,7 +259,6 @@ void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
     for (unsigned i = 0; i < nnz; ++i) {
       // Convert to global indexing subtract 1 for fortran vs C array indexing
       globalColInd.emplace_back(ltgUnsorted[colInd[i] - indexBase]);
-      //globalColInd.emplace_back(ltgUnsorted[colInd[i] - 1]);
     }
   } 
 
@@ -1169,8 +1167,8 @@ void TrilinosLinearAlgebra::TrilinosImpl::alloc(ComMod& com_mod, eqType& lEq)
   int cpp_index = 1;
   int task_id = com_mod.cm.idcm();
 
-  trilinos_lhs_create_(gtnNo, lhs.mynNo, tnNo, lhs.nnz, ltg_.data(), com_mod.ltg.data(), com_mod.rowPtr.data(), 
-      com_mod.colPtr.data(), dof, cpp_index, task_id, com_mod.lhs.nFaces);
+  trilinos_lhs_create(gtnNo, lhs.mynNo, tnNo, lhs.nnz, ltg_, com_mod.ltg, com_mod.rowPtr, 
+      com_mod.colPtr, dof, cpp_index, task_id, com_mod.lhs.nFaces);
 
 }
 

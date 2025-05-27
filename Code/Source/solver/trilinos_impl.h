@@ -186,10 +186,10 @@ public:
   {
 #endif
   /// Give function definitions which will be called through fortran
-  void trilinos_lhs_create_(int& numGlobalNodes, int& numLocalNodes,
-          int& numGhostAndLocalNodes, int& nnz, const int *ltgSorted,
-          const int *ltgUnsorted, const int *rowPtr, const int *colInd,
-          int &dof, int& cpp_index, int& proc_id, int& numCoupledNeumannBC);
+  void trilinos_lhs_create(const int numGlobalNodes, const int numLocalNodes,
+          const int numGhostAndLocalNodes, const int nnz, const Vector<int>& ltgSorted,
+          const Vector<int>& ltgUnsorted, const Vector<int>& rowPtr, const Vector<int>& colInd,
+          const int dof, const int cpp_index, const int proc_id, const int numCoupledNeumannBC);
 /*
   void trilinos_lhs_create_(unsigned &numGlobalNodes, unsigned &numLocalNodes,
           unsigned &numGhostAndLocalNodes, unsigned &nnz, const int *ltgSorted,
