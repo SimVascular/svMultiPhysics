@@ -154,8 +154,8 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>Define the matrix vector multiplication operation to do at each iteration (K + v*v') <em>x = K*x + v</em>(v'*x), v = bdryVec</p>
-<p>uses efficient vectorized operation rather than explicitly forming the rank 1 outer product matrix</p>
+<p>Define the matrix vector multiplication operation to do at each iteration of an iterative linear solver. This function is called by the AztecOO (K + v1*v1' + v2*v2' + ...) <em>x = K*x + v1</em>(v1'<em>x) + v2</em>(v2'*x), where [v1, v2, ...] = bdryVec_list</p>
+<p>For coupled Neumann boundary terms (v1*v1', v2*v2'), we use efficient an vectorized operation rather than explicitly forming the rank 1 outer product matrix and adding it to the global stiffness matrix K.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">x</td><td>vector to be applied on the operator </td></tr>
@@ -163,7 +163,6 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>scalar for Y</p>
 
 </div>
 </div>

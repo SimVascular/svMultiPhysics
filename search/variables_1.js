@@ -2,7 +2,7 @@ var searchData=
 [
   ['bc_0',['bc',['../classeq_type.html#acafb8fd4435f61104f3d9a478702d689',1,'eqType']]],
   ['bcib_1',['bcIB',['../classeq_type.html#ad0dc4339c1c8d79c2a01361d2df63cc0',1,'eqType']]],
-  ['bdryvec_2',['bdryVec',['../struct_trilinos.html#a72013afe23e55e4cbb53e22c6fe54d8e',1,'Trilinos']]],
+  ['bdryvec_5flist_2',['bdryVec_list',['../struct_trilinos.html#ade4f250c447e6bd6a3fca07c590ea1b3',1,'Trilinos']]],
   ['beta_3',['beta',['../classeq_type.html#af8b6728acf22adfdf385b3a29c6fed39',1,'eqType']]],
   ['bf_4',['bf',['../class_com_mod.html#af3c9f64171f5a55a88e5b2c094c8b30c',1,'ComMod::Bf'],['../classeq_type.html#aa38fe7bb149cec558ca09eacef052ac6',1,'eqType::bf']]],
   ['bin2vtk_5',['bin2VTK',['../class_com_mod.html#a71096696d480232eb3b82b2e15a050f4',1,'ComMod']]],

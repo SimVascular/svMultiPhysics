@@ -102,9 +102,9 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a3b53f58986eb184ebb6e0f41f645dd14" id="r_a3b53f58986eb184ebb6e0f41f645dd14"><td class="memItemLeft" align="right" valign="top">static Epetra_Import *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#a3b53f58986eb184ebb6e0f41f645dd14">Importer</a></td></tr>
 <tr class="memdesc:a3b53f58986eb184ebb6e0f41f645dd14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Import ghostMap into blockMap to create ghost map.  <br /></td></tr>
 <tr class="separator:a3b53f58986eb184ebb6e0f41f645dd14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72013afe23e55e4cbb53e22c6fe54d8e" id="r_a72013afe23e55e4cbb53e22c6fe54d8e"><td class="memItemLeft" align="right" valign="top">static Epetra_FEVector *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#a72013afe23e55e4cbb53e22c6fe54d8e">bdryVec</a></td></tr>
-<tr class="memdesc:a72013afe23e55e4cbb53e22c6fe54d8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contribution from coupled neumann boundary conditions.  <br /></td></tr>
-<tr class="separator:a72013afe23e55e4cbb53e22c6fe54d8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade4f250c447e6bd6a3fca07c590ea1b3" id="r_ade4f250c447e6bd6a3fca07c590ea1b3"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; Epetra_FEVector * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#ade4f250c447e6bd6a3fca07c590ea1b3">bdryVec_list</a></td></tr>
+<tr class="memdesc:ade4f250c447e6bd6a3fca07c590ea1b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contribution from coupled neumann boundary conditions. One vector for each coupled Neumann boundary.  <br /></td></tr>
+<tr class="separator:ade4f250c447e6bd6a3fca07c590ea1b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3781fc68a4109f680311f9f782619b01" id="r_a3781fc68a4109f680311f9f782619b01"><td class="memItemLeft" align="right" valign="top"><a id="a3781fc68a4109f680311f9f782619b01" name="a3781fc68a4109f680311f9f782619b01"></a>
 static Epetra_MpiComm *&#160;</td><td class="memItemRight" valign="bottom"><b>comm</b></td></tr>
 <tr class="separator:a3781fc68a4109f680311f9f782619b01"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,8 +115,8 @@ static Epetra_FECrsGraph *&#160;</td><td class="memItemRight" valign="bottom"><b
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Initialize all Epetra types we need separate from Fortran. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="a72013afe23e55e4cbb53e22c6fe54d8e" name="a72013afe23e55e4cbb53e22c6fe54d8e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72013afe23e55e4cbb53e22c6fe54d8e">&#9670;&#160;</a></span>bdryVec</h2>
+<a id="ade4f250c447e6bd6a3fca07c590ea1b3" name="ade4f250c447e6bd6a3fca07c590ea1b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade4f250c447e6bd6a3fca07c590ea1b3">&#9670;&#160;</a></span>bdryVec_list</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -125,7 +125,7 @@ static Epetra_FECrsGraph *&#160;</td><td class="memItemRight" valign="bottom"><b
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Epetra_FEVector * Trilinos::bdryVec</td>
+          <td class="memname">std::vector&lt; Epetra_FEVector * &gt; Trilinos::bdryVec_list</td>
         </tr>
       </table>
   </td>
@@ -135,7 +135,7 @@ static Epetra_FECrsGraph *&#160;</td><td class="memItemRight" valign="bottom"><b
 </table>
 </div><div class="memdoc">
 
-<p>Contribution from coupled neumann boundary conditions. </p>
+<p>Contribution from coupled neumann boundary conditions. One vector for each coupled Neumann boundary. </p>
 
 </div>
 </div>
