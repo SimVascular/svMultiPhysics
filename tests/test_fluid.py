@@ -99,6 +99,9 @@ def test_iliac_artery(n_proc):
     test_folder = "iliac_artery"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_iliac_artery_trilinos_gmres_ilut(n_proc):
+    test_folder = "iliac_artery_trilinos_gmres_ilut"
+    run_with_reference(base_folder, test_folder, fields, n_proc)
 
 def test_quadratic_tet10(n_proc):
     test_folder = "quadratic_tet10"
