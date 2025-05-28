@@ -63,8 +63,8 @@ Epetra_Vector *Trilinos::ghostX;
 /// Import ghostMap into blockMap to create ghost map
 Epetra_Import *Trilinos::Importer;
 
-/// Contribution from coupled neumann boundary conditions
-Epetra_FEVector *Trilinos::bdryVec;
+/// Contribution from coupled neumann boundary conditions. One vector for each coupled Neumann boundary
+std::vector<Epetra_FEVector*> Trilinos::bdryVec_list;
 
 Epetra_FECrsGraph *Trilinos::K_graph;
 
@@ -100,11 +100,14 @@ bool coupledBC;
 
 // ----------------------------------------------------------------------------
 /**
- * Define the matrix vector multiplication operation to do at each iteration
- * (K + v*v') *x = K*x + v*(v'*x), v = bdryVec
+ * Define the matrix vector multiplication operation to do at each iteration of
+ * an iterative linear solver. This function is called by the AztecOO
+ * (K + v1*v1' + v2*v2' + ...) *x = K*x + v1*(v1'*x) + v2*(v2'*x), 
+ * where [v1, v2, ...] = bdryVec_list
  *
- * uses efficient vectorized operation rather than explicitly forming
- * the rank 1 outer product matrix
+ * For coupled Neumann boundary terms (v1*v1', v2*v2'), we use efficient an vectorized 
+ * operation rather than explicitly forming the rank 1 outer product matrix and 
+ * adding it to the global stiffness matrix K.
  *
  * \param x vector to be applied on the operator
  * \param y result of sprase matrix vector multiplication
@@ -112,22 +115,26 @@ bool coupledBC;
 int TrilinosMatVec::Apply(const Epetra_MultiVector &x,
         Epetra_MultiVector &y) const
 {
-  //store initial matrix vector product result in Y
+  // Store initial matrix vector product result in y (y = K*x)
   Trilinos::K->Apply(x, y); //K*x
+
+  // Now add on the coupled Neumann boundary contribution y += v1*(v1'*x) + v2*(v2'*x) + ...
   if (coupledBC)
   {
-    //now need to add on bdry term v*(v'*x)
-    double *dot = new double[1]; //only 1 multivector to store result in it
+    // Declare dot product v_i'*x
+    double dot = 0.0;
 
-    //compute dot product (v'*x)
-    Trilinos::bdryVec->Dot(x,dot);
+    // Loop over all coupled Neumann boundary vectors
+    for (auto bdryVec : Trilinos::bdryVec_list)
+    {
+      // Compute dot product dot = v_i'*x
+      bdryVec->Dot(x, &dot);
 
-    //Y = 1*Y + dot*v daxpy operation
-    y.Update(*dot, //scalar for v
-             *Trilinos::bdryVec, //FE_Vector
-             1.0); ///scalar for Y
-
-    delete[] dot;
+      // y = 1*y + dot*v_i
+      y.Update(dot,
+              *bdryVec,
+              1.0);
+    }
   }
   return 0;
 }
@@ -149,15 +156,16 @@ int TrilinosMatVec::Apply(const Epetra_MultiVector &x,
  * \param rowPtr         CSR row ptr of size numLocalNodes + 1 to block rows
  * \param colInd         CSR column indices ptr (size nnz points) to block rows
  * \param Dof            size of each block element to give dim of each block
+ * 
+ * \param numCoupledNeumannBC number of coupled Neumann BCs
 
  */
 
-void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
-        int &numGhostAndLocalNodes, int &nnz, const int *ltgSorted,
-        const int *ltgUnsorted, const int *rowPtr, const int *colInd, int &Dof,
-        int& cpp_index, int& proc_id)
+void trilinos_lhs_create(const int numGlobalNodes, const int numLocalNodes,
+        const int numGhostAndLocalNodes, const int nnz, const Vector<int>& ltgSorted,
+        const Vector<int>& ltgUnsorted, const Vector<int>& rowPtr, const Vector<int>& colInd,
+        const int Dof, const int cpp_index, const int proc_id, const int numCoupledNeumannBC)
 {
-
   #ifdef debug_trilinos_lhs_create
   std::string msg_prefix;
   msg_prefix = std::string("[trilinos_lhs_create:") + std::to_string(proc_id) + "] ";
@@ -226,7 +234,7 @@ void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
   // solution vector at the end
   //
   int inc_ghost = -1; // since including ghost nodes sum will not equal total
-  Epetra_BlockMap ghostMap(inc_ghost, numGhostAndLocalNodes,  ltgSorted, dof,
+  Epetra_BlockMap ghostMap(inc_ghost, numGhostAndLocalNodes, ltgSorted.data(), dof,
           indexBase, comm);
 
   // Calculate nnzPerRow to pass into graph constructor
@@ -251,7 +259,6 @@ void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
     for (unsigned i = 0; i < nnz; ++i) {
       // Convert to global indexing subtract 1 for fortran vs C array indexing
       globalColInd.emplace_back(ltgUnsorted[colInd[i] - indexBase]);
-      //globalColInd.emplace_back(ltgUnsorted[colInd[i] - 1]);
     }
   } 
 
@@ -302,7 +309,12 @@ void trilinos_lhs_create_(int &numGlobalNodes, int &numLocalNodes,
   Trilinos::K = new Epetra_FEVbrMatrix(Copy, *Trilinos::K_graph);
   //construct RHS force vector F topology
   Trilinos::F = new Epetra_FEVector(*Trilinos::blockMap);
-  Trilinos::bdryVec = new Epetra_FEVector(*Trilinos::blockMap);
+  // Construct a boundary vector for each coupled Neumann boundary condition
+  Trilinos::bdryVec_list.clear();
+  for (int i = 0; i < numCoupledNeumannBC; ++i)
+  {
+    Trilinos::bdryVec_list.push_back(new Epetra_FEVector(*Trilinos::blockMap));
+  }
 
   // Initialize solution vector which is unique and does not include the ghost
   // indices using the unique map
@@ -586,8 +598,8 @@ void trilinos_solve_(double *x, const double *dirW, double &resNorm,
   // problem with
   Trilinos::F->Norm2(&initNorm); //pass preconditioned norm W*F
 
-  // Define Epetra_Operator which is global stiffness with coupled boundary
-  // conditions included
+  // Define Epetra_Operator which is global stiffness with coupled Neumann BC
+  // contributions included
   TrilinosMatVec K_bdry;
 
   // Define linear problem if v is 0 does standard matvec product with K
@@ -670,7 +682,11 @@ void trilinos_solve_(double *x, const double *dirW, double &resNorm,
   //set to 0 for the next time iteration
   Trilinos::K->PutScalar(0.0);
   Trilinos::F->PutScalar(0.0);
-  if (coupledBC) Trilinos::bdryVec->PutScalar(0.0);
+  if (coupledBC) {
+    for (auto bdryVec : Trilinos::bdryVec_list)
+      bdryVec->PutScalar(0.0);
+
+  }
   //0 out initial guess for iteration
   Trilinos::X->PutScalar(0.0);
   // Free memory if MLPrec is invoked
@@ -920,8 +936,10 @@ void constructJacobiScaling(const double *dirW, Epetra_Vector &diagonal)
   Trilinos::K->RightScale(diagonal);
 
   //Need to multiply v in vv' by diagonal
-  if (coupledBC)
-      Trilinos::bdryVec->Multiply(1.0, *Trilinos::bdryVec, diagonal, 0.0);
+  if (coupledBC) {
+    for (auto bdryVec : Trilinos::bdryVec_list)
+      bdryVec->Multiply(1.0, *bdryVec, diagonal, 0.0);
+  }
 } // void constructJacobiScaling()
 
 // ----------------------------------------------------------------------------
@@ -929,7 +947,7 @@ void constructJacobiScaling(const double *dirW, Epetra_Vector &diagonal)
  * \param  v            coupled boundary vector
  * \param  isCoupledBC  determines if coupled resistance BC is turned on
  */
-void trilinos_bc_create_(const double *v, bool &isCoupledBC)
+void trilinos_bc_create_(const std::vector<Array<double>> &v_list, bool &isCoupledBC)
 {
   //store as global to determine which matvec multiply to use in solver
   coupledBC = isCoupledBC;
@@ -943,14 +961,22 @@ void trilinos_bc_create_(const double *v, bool &isCoupledBC)
     {
       //sum values into v fe case
       int num_global_rows = 1; //number of global block rows put in 1 at a time
-      error = Trilinos::bdryVec->ReplaceGlobalValues (num_global_rows,
-               &localToGlobalSorted[i],  //global idx id-inputting sorted array
-               &dof, //dof values per id pointer to dof
-               &v[i*dof]); //values of size dof
-      if (error != 0)
+
+      // Loop over all the coupled Neumann BCs
+      for (int k = 0; k < v_list.size(); ++k)
       {
-        std::cout << "ERROR: Setting boundary vector values!" << std::endl;
-        exit(1);
+        auto v = v_list[k].data();
+        auto bdryVec = Trilinos::bdryVec_list[k];
+        //set the coupled boundary vector
+        error = bdryVec->ReplaceGlobalValues(
+                num_global_rows,
+                &localToGlobalSorted[i], //global idx id-inputting sorted array
+                &dof, //dof values per id pointer to dof
+                &v[i*dof]); //values of size dof
+        if (error != 0)
+        {
+          throw std::runtime_error("Setting boundary vector values failed");
+        }
       }
     }
   }
@@ -991,9 +1017,11 @@ void trilinos_lhs_free_()
       delete Trilinos::Importer;
       Trilinos::Importer = NULL;
   }
-  if (Trilinos::bdryVec) {
-      delete Trilinos::bdryVec;
-      Trilinos::bdryVec = NULL;
+  if (Trilinos::bdryVec_list.size() > 0)
+  {
+    for (auto bdryVec : Trilinos::bdryVec_list)
+      delete bdryVec;
+      Trilinos::bdryVec_list.clear();
   }
   if (Trilinos::K_graph) {
       delete Trilinos::K_graph;
@@ -1139,8 +1167,8 @@ void TrilinosLinearAlgebra::TrilinosImpl::alloc(ComMod& com_mod, eqType& lEq)
   int cpp_index = 1;
   int task_id = com_mod.cm.idcm();
 
-  trilinos_lhs_create_(gtnNo, lhs.mynNo, tnNo, lhs.nnz, ltg_.data(), com_mod.ltg.data(), com_mod.rowPtr.data(), 
-      com_mod.colPtr.data(), dof, cpp_index, task_id);
+  trilinos_lhs_create(gtnNo, lhs.mynNo, tnNo, lhs.nnz, ltg_, com_mod.ltg, com_mod.rowPtr, 
+      com_mod.colPtr, dof, cpp_index, task_id, com_mod.lhs.nFaces);
 
 }
 
@@ -1208,15 +1236,22 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
     }
   }
 
-  Array<double> v(dof,tnNo);
+  std::vector<Array<double>> v_list;
   bool isCoupledBC = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto& face = lhs.face[faIn];
+    // Extract face
+    auto& face = lhs.face[faIn]; 
+
+    // Create a new array for each face and add it to the list
+    v_list.push_back(Array<double>(dof,tnNo));
+    auto& v = v_list.back();
+    
     if (face.coupledFlag) {
       isCoupledBC = true;
       int faDof = std::min(face.dof,dof);
 
+      // Compute the coupled Neumann BC vector and store it in v
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
@@ -1226,7 +1261,10 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
     }
   }
 
-  trilinos_bc_create_(v.data(), isCoupledBC);
+  // Add the v vectors to global bdryVec_list
+  trilinos_bc_create_(v_list, isCoupledBC);
+
+  
 }
 
 /// @brief Initialze an array used for something.
@@ -1324,4 +1362,3 @@ void TrilinosLinearAlgebra::TrilinosImpl::solve_assembled(ComMod& com_mod, eqTyp
   }
 
 }
-
