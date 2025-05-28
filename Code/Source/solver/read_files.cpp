@@ -2603,29 +2603,36 @@ void read_temporal_values(const std::string& file_name, bcType& lBc)
   std::vector<std::vector<double>> temporal_values;
   double time, value;
   std::string line;
+  int line_number = 1;
+  int num_values_per_line = lBc.gt.d + 1;
 
   while (std::getline(temporal_values_file, line)) { 
     line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line == "") {
       continue;
     }
-    std::istringstream line_input(line);
+    // Remove leading and trailing spaces.
+    auto cleaned_line = std::regex_replace(line, std::regex("^ +| +$|( ) +"), "$1");
+    std::istringstream line_input(cleaned_line);
     std::vector<double> values;
 
     while (!line_input.eof()) {
       line_input >> value;
 
       if (line_input.fail()) { 
-        throw std::runtime_error("1: Error reading values for the temporal values file '" + file_name + "' for line '" + line + "'.");
+        throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line " +
+            std::to_string(line_number) + ": '" + line + "'; value number " + std::to_string(values.size()+1) + " is not a double.");
       }
       values.push_back(value);
     }
 
-    if (values.size() != 2) { 
-      throw std::runtime_error("2: Error reading values for the temporal values file '" + file_name + "' for line '" + line + "'.");
+    if (values.size() != num_values_per_line) { 
+      throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line " +
+          std::to_string(line_number) + ": '" + line + "'; expected " + std::to_string(num_values_per_line) + " values per line.");
     }
 
     temporal_values.push_back(values);
+    line_number += 1;
   }
 
   if (lBc.gt.lrmp) {
