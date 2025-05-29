@@ -54,6 +54,10 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
 {
   Vector<double> coef(lhs.nFaces); 
   Array<double> v(dof,lhs.nNo);
+  Array<double> vcap(dof,lhs.nNo);
+
+  //Setting coef depending on adding resistance to stiffness or
+  //computing preconditioner
 
   if (op_Type == BcopType::BCOP_TYPE_ADD) {
     for (int i = 0; i < lhs.nFaces; i++) {
@@ -70,6 +74,25 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
     auto& face = lhs.face[faIn];
+    //If the face is virtual, don't add anything to tangent matrix.
+    if (face.vrtual) {
+      continue;
+    }
+
+    //In the following calculations, we are computing the product of the
+    //coupled BC tangent contribution with the vector X (refer to Moghadam
+    //et al. 2013 eq. 27). This is computed by first constructing the vector
+    //v, which one of the integrals found in the expression, int{N_A * n_i} dGamma.
+    //Then, v is dotted with X to yield a quantity S. Then S is multiplied by
+    //by v again, and also multiplied by the appropriate coefficients in
+    //the expression.
+    //The calculations are complicated somewhat if there is a capping surface,
+    //but these complications are explained below.
+
+
+    //Calculating S, which is the inner product of the right integral (v) and
+    //the vector to be multiplied (X).
+
     int nsd = std::min(face.dof, dof);
 
     if (face.coupledFlag) {
@@ -85,7 +108,34 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
         }
         // Computing S = coef * v^T * X
         double S = coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, v, X);
+        
+        //If a virtual face caps this face, add its contribution to S
+        //
+        //Explanation: If the coupled surface is virtually capped to
+        //Compute flow rate then the right integral should  be over the
+        //capped surface + capping surface while the left integral should
+        //be over the uncapped surfce (because we do not apply a pressure
+        //to the capping surface). We can achieve this by adding the cappping
+        //surface's contribution to S.
+        if (face.faInCap != -1) {
+          int faInCap = face.faInCap;
+          auto& faceCap = lhs.face[faInCap];
 
+          if (!faceCap.coupledFlag) {
+            std::cerr << "ADDBCMUL(): Cap face is not coupled. Probably cap face has zero resistance." << std::endl;
+            throw std::runtime_error("FSILS: FATAL ERROR");
+          }
+          vcap = 0.0;
+          for (int a = 0; a < faceCap.nNo; a++) {
+            int Ac = faceCap.glob(a);
+            for (int i = 0; i < nsd; i++) {
+              vcap(i,Ac) = faceCap.valM(i,a);  
+            }
+          }
+          // Add cap contribution to S
+          S = S + coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, vcap, X);
+        }
+        
         // Computing Y = Y + v * S
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);
@@ -93,7 +143,6 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
             Y(i,Ac) = Y(i,Ac) + v(i,Ac)*S;
           }
         }
-
       } 
       // If face is not shared across procs
       else  {
@@ -105,8 +154,29 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
             S = S + face.valM(i,a)*X(i,Ac);
           }
         }
-        S = coef(faIn) * S;
         
+        // If a virtual face caps this face, add its contribution to S
+        if (face.faInCap != -1) {
+          int faInCap = face.faInCap;
+          auto& faceCap = lhs.face[faInCap];
+
+          if (!faceCap.coupledFlag) {
+            std::cerr << "ADDBCMUL(): Cap face is not coupled. Probably cap face has zero resistance." << std::endl;
+            throw std::runtime_error("FSILS: FATAL ERROR");
+          }
+
+          for (int a = 0; a < faceCap.nNo; a++) {
+            int Ac = faceCap.glob(a);
+            for (int i = 0; i < nsd; i++) {
+              S = S + faceCap.valM(i,a)*X(i,Ac);
+            }
+          }
+        }
+
+        // Multiply S by the resistance or related quantity if
+        // preconditioning
+        S = coef(faIn) * S;
+
         // Computing Y = Y + v * S
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);

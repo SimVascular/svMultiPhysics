@@ -55,13 +55,13 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod);
 
 void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD);
 void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array<double>& lA, Array<double>& lY, int lDof);
-void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
-void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg);
+void set_bc_dir_w(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg);
+void set_bc_dir_wl(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg);
 
 void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg);
 void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg);
 
-void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const double cs, const bool isN, 
+void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const double ks, const double cs, const bool isN, 
   const Array<double>& Yg, const Array<double>& Dg);
 
 void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa);

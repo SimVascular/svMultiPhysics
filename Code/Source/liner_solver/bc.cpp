@@ -43,7 +43,7 @@ namespace fsi_linear_solver {
 ///  lhs.face[faIn].valM
 //
 void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_type, const Vector<int>& gNodes, 
-    const Array<double>& Val)
+    const Array<double>& Val, bool vrtual)
 {
   using namespace consts;
 
@@ -60,6 +60,7 @@ void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_t
   dmsg << "Val.size(): " << Val.size();
   dmsg << "Val.nrows: " << Val.nrows_;
   dmsg << "Val.ncols: " << Val.ncols_;
+  dmsg << "vrtual: " << vrtual;
   #endif
 
   if (faIn >= lhs.nFaces) {
@@ -71,9 +72,12 @@ void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_t
     throw std::runtime_error("FSILS: faIn is smaller than zero");
   }
 
+  lhs.face[faIn].foC = true;
   lhs.face[faIn].nNo = nNo;
   lhs.face[faIn].dof = dof;
   lhs.face[faIn].bGrp = BC_type;
+  // Set virtual flag for face
+  lhs.face[faIn].vrtual = vrtual;
 
   lhs.face[faIn].glob.resize(nNo); 
   lhs.face[faIn].val.resize(dof,nNo);   
@@ -109,14 +113,13 @@ void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_t
     if (Ac > 1) {
       lhs.face[faIn].sharedFlag = true;
       Array<double> v(dof,lhs.nNo);
-
+      v = 0.0;
       for (int a = 0; a < nNo; a++) {
         int Ac = lhs.face[faIn].glob(a);
         for (int i = 0; i < dof; i++) {
           v(i,Ac) = lhs.face[faIn].val(i,a);
         }
       }
-
       fsils_commuv(lhs, dof, v); 
 
       for (int a = 0; a < nNo; a++) {
@@ -184,7 +187,7 @@ void fsils_bc_update(FSILS_lhsType& lhs, int faIn, int nNo, int dof, const Array
   }
 
   // Communicate update among procs
-  if (lhs.face[faIn].sharedFlag){
+  if (lhs.face[faIn].sharedFlag && !lhs.face[faIn].vrtual) {
     Array<double> v(dof,lhs.nNo);
     v = 0.0;
 

@@ -23,7 +23,6 @@ def test_LV_Guccione_passive(n_proc):
     test_folder = "LV_Guccione_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
-
 def test_LV_HolzapfelOgden_passive(n_proc):
     test_folder = "LV_HolzapfelOgden_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
@@ -65,6 +64,11 @@ def test_LV_NeoHookean_passive_genBC(n_proc):
 
 def test_LV_NeoHookean_passive_sv0D(n_proc):
     test_folder = "LV_NeoHookean_passive_sv0D"
+
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
+
+def test_LV_NeoHookean_passive_sv0D_capped(n_proc):
+    test_folder = "LV_NeoHookean_passive_sv0D_capped"
 
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
 

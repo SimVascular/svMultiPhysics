@@ -722,6 +722,8 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<double> value;
     Parameter<bool> weakly_applied;
     Parameter<bool> zero_out_perimeter;
+
+    Parameter<std::string> capping_face;
 };
 
 /// @brief The OutputParameters class stores parameters for the
@@ -1362,6 +1364,7 @@ class FaceParameters : public ParameterLists
     Parameter<std::string> end_nodes_face_file_path;
     Parameter<std::string> face_file_path;
     Parameter<std::string> name;
+    Parameter<bool> virtual_face;
 
     Parameter<double> quadrature_modifier_TRI3;
 };

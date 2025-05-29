@@ -486,7 +486,7 @@ void iterate_solution(Simulation* simulation)
       dmsg << "Apply weakly applied Dirichlet BCs ... " << std::endl;
       #endif
 
-      set_bc::set_bc_dir_w(com_mod, Yg, Dg);
+      set_bc::set_bc_dir_w(com_mod, cm_mod, Yg, Dg);
 
       // Apply contact model and add its contribution to residual
       //
