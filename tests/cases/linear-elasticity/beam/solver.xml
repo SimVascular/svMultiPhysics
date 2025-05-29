@@ -56,8 +56,8 @@
 
    <Coupled> true </Coupled>
    <Min_iterations> 1 </Min_iterations>  
-   <Max_iterations> 10 </Max_iterations> 
-   <Tolerance> 1e-3 </Tolerance> 
+   <Max_iterations> 20 </Max_iterations> 
+   <Tolerance> 1e-5 </Tolerance> 
 
    <Density> 1e-3 </Density> 
    <Elasticity_modulus> 2.1e11 </Elasticity_modulus> 
@@ -69,13 +69,12 @@
      <Jacobian> true </Jacobian>
    </Output>
 
-   <LS type="GMRES" >
+   <LS type="BICG" >
       <Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner>
       </Linear_algebra>
-      <Tolerance> 1e-3 </Tolerance>
-      <Max_iterations> 100 </Max_iterations> 
-      <Krylov_space_dimension> 50 </Krylov_space_dimension>
+      <Tolerance> 1e-5 </Tolerance>
+      <Max_iterations> 1000 </Max_iterations>
    </LS>
 
    <Add_BC name="left" > 
