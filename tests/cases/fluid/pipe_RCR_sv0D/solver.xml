@@ -77,10 +77,10 @@
    </LS>
 
    <svZeroDSolver_interface name="svzerod-interface"> 
-     <Coupling_type> SI </Coupling_type>
-     <!--Coupling_type> semi-implicit </Coupling_type-->
+     <Coupling_type> semi-implicit </Coupling_type>
      <Configuration_file> svzerod_3Dcoupling.json </Configuration_file>
-     <Shared_library> ../../../../svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library>  
+     <Shared_library> /usr/local/sv/svZeroDSolver/2024-09-26/lib/libsvzero_interface.dylib </Shared_library>  
+     <!--Shared_library> ../../../../svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library-->  
      <Block_to_surface_map> 
         RCR_coupling 0
      </Block_to_surface_map>

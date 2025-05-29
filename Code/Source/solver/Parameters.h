@@ -615,26 +615,6 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
     bool value_set = false;
 };
 
-//-----------------------
-// CoupleSvZeroDParameters
-//-----------------------
-// Coupling to svZeroD.
-//
-class CoupleSvZeroDParameters : public ParameterLists
-{
-  public:
-    CoupleSvZeroDParameters();
-
-    static const std::string xml_element_name_;
-
-    bool defined() const { return value_set; };
-    void set_values(tinyxml2::XMLElement* xml_elem);
-
-    // attributes.
-    Parameter<std::string> type;
-
-    bool value_set = false;
-};
 /// @brief Body force over a mesh using the "Add_BF" command.
 ///
 /// \code {.xml}
@@ -1293,7 +1273,6 @@ class EquationParameters : public ParameterLists
 
     CoupleCplBCParameters couple_to_cplBC;
     CoupleGenBCParameters couple_to_genBC;
-    CoupleSvZeroDParameters couple_to_svZeroD;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
 

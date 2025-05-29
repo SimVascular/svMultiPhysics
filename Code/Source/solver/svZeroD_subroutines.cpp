@@ -226,7 +226,7 @@ void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[])
 //
 void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) 
 {
-  #define debug_init_svZeroD
+  #define n_debug_init_svZeroD
   #ifdef debug_init_svZeroD
   DebugMsg dmsg(__func__, com_mod.cm.idcm()); 
   dmsg.banner();
@@ -291,11 +291,11 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 
       int i = 0;
       for (const auto& pair : solver_interface.block_surface_map) {
+        #ifdef debug_init_svZeroD
         dmsg << "block_surface_map: '" + pair.first << "'";
+        #endif
         svzd_blk_names_unsrtd[i] = pair.first;
         svzd_blk_ids[i] = pair.second;
-        //svzd_blk_names_unsrtd.push_back(pair.first);
-        //svzd_blk_ids.push_back(pair.second);
         i += 1;
       }
 
@@ -305,60 +305,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       init_press_flag = solver_interface.have_initial_pressures;
       init_press = solver_interface.initial_pressures;
 
-    } else {
-
-    // Open the interface file
-    std::ifstream interfaceFile(cplBC.commuName);
-    if (!interfaceFile) {
-      throw std::runtime_error("ERROR: " + cplBC.commuName + " not found");
-    }
-
-    // Read the svZeroD library location
-    getline(interfaceFile, buffer);
-    getline(interfaceFile, svzerod_library);
-    getline(interfaceFile, buffer);
-
-    // Read svZeroD input config file name
-    getline(interfaceFile, buffer);
-    getline(interfaceFile, svzerod_file);
-    getline(interfaceFile, buffer);
-
-    // Read svZeroD blocks names and surface IDs
-    getline(interfaceFile, buffer);
-
-    #ifdef debug_init_svZeroD
-    dmsg << "Process coupled surfaces " << "...";
-    #endif
-    for (int s = 0; s < numCoupledSrfs; ++s) {
-      interfaceFile >> svzd_blk_names_unsrtd[s];
-      interfaceFile >> svzd_blk_ids[s];
-      #ifdef debug_init_svZeroD
-      dmsg << "  >>> s: " << s;
-      dmsg << "  svzd_blk_names_unsrtd[s]: '" << svzd_blk_names_unsrtd[s];
-      dmsg << "  svzd_blk_ids[s]: " << svzd_blk_ids[s];
-      #endif
-    }
-
-    // Read init_flow_flag
-    getline(interfaceFile, buffer);
-    interfaceFile >> init_flow_flag;
-    getline(interfaceFile, buffer);
-
-    // Read init_flow
-    getline(interfaceFile, buffer);
-    interfaceFile >> init_flow;
-    getline(interfaceFile, buffer);
-
-    // Read init_press_flag
-    getline(interfaceFile, buffer);
-    interfaceFile >> init_press_flag;
-    getline(interfaceFile, buffer);
-
-    // Read init_press
-    getline(interfaceFile, buffer);
-    interfaceFile >> init_press;
-    interfaceFile.close();
-    }
+    } 
 
     // Arrange svzd_blk_names in the same order as surface IDs in nsrflistCoupled
     #ifdef debug_init_svZeroD
@@ -378,8 +325,10 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
         dmsg << "    svzd_blk_ids[t]: " << svzd_blk_ids[t];
         #endif
         if (svzd_blk_ids[t] == nsrflistCoupled[s]) {
+          #ifdef debug_init_svZeroD
           dmsg << "    Found  " << " " ;
           dmsg << "    svzd_blk_names_unsrtd[t]: '" << svzd_blk_names_unsrtd[t];
+          #endif
           found = 1;
           svzd_blk_names.push_back(svzd_blk_names_unsrtd[t]);
           svzd_blk_name_len.push_back(svzd_blk_names_unsrtd[t].length());

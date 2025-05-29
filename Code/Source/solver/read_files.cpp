@@ -1371,7 +1371,6 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
 
   if (cplBC.xo.size() == 0) {
     std::string cplbc_type_str;
-    bool couple_to_svZeroD = false;
 
     if (eq_params->couple_to_genBC.defined()) {
       cplBC.useGenBC = true;
@@ -1380,21 +1379,13 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     } else if (eq_params->svzerodsolver_interface_parameters.defined()) {
       cplBC.useSvZeroD = true;
       cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
-      std::cout << "[read_eq] #### Set svzerodsolver_interface_parameters " << std::endl;
-      std::cout << "[read_eq]      cplbc_type_str: " << cplbc_type_str << std::endl;
       cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
-      couple_to_svZeroD = true;
-
-    } else if (eq_params->couple_to_svZeroD.defined()) {
-      cplBC.useSvZeroD = true;
-      cplbc_type_str = eq_params->couple_to_svZeroD.type.value();
-      couple_to_svZeroD = true;
 
     } else if (eq_params->couple_to_cplBC.defined()) {
       cplbc_type_str = eq_params->couple_to_cplBC.type.value();
     }
 
-    if (eq_params->couple_to_genBC.defined() || couple_to_svZeroD) { 
+    if (cplBC.useGenBC || cplBC.useSvZeroD) { 
       try {
         cplBC.schm = consts::cplbc_name_to_type.at(cplbc_type_str);
       } catch (const std::out_of_range& exception) {
@@ -1412,7 +1403,6 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
         cplBC.xp.resize(cplBC.nX);
 
       } else if (cplBC.useSvZeroD) {
-        cplBC.commuName = "svZeroD_interface.dat";
         cplBC.nX = 0;
 
       } else {
