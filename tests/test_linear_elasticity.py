@@ -9,6 +9,8 @@ base_folder = "linear-elasticity"
 fields = [
     "Displacement",
     "Jacobian",
+    "Strain",
+    "Stress", 
     "VonMises_stress",
 ]
 

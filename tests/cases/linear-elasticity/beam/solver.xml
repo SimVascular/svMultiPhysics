@@ -65,8 +65,10 @@
 
    <Output type="Spatial" >
      <Displacement> true </Displacement>
-     <VonMises_stress> true </VonMises_stress>
      <Jacobian> true </Jacobian>
+     <Strain> true </Strain>
+     <Stress> true </Stress>
+     <VonMises_stress> true </VonMises_stress>
    </Output>
 
    <LS type="BICG" >
