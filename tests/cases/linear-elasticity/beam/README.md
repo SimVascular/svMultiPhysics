@@ -1,3 +1,3 @@
 
-Solve a Eulear-Bernoulli beam problem with a traction boundary condition.
+Solve for a solid beam subject to a transverse load at the tip.
 
