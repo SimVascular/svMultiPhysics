@@ -294,8 +294,20 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
         #ifdef debug_init_svZeroD
         dmsg << "block_surface_map: '" + pair.first << "'";
         #endif
+        svzd_blk_ids[i] = -1;
         svzd_blk_names_unsrtd[i] = pair.first;
-        svzd_blk_ids[i] = pair.second;
+        for (int j = 0; j < cplBC.nFa; j++) {
+          auto& fa = cplBC.fa[j];
+          if (fa.name == pair.second) { 
+            svzd_blk_ids[i] = j;
+          }
+        }
+
+        if (svzd_blk_ids[i] == -1) { 
+          throw std::runtime_error("ERROR: Did not find a coupled boundary condition for block '" + 
+              pair.first + "' and surface '" + pair.second + "'; check th Block_to_surface_map solver XML parameter.");
+        }
+ 
         i += 1;
       }
 

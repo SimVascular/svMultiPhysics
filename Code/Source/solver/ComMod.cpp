@@ -239,19 +239,7 @@ void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters
 
   while (n != block_id_pairs.size()) {
     auto name = block_id_pairs[n];
-    int id = 0;
-    std::string str_id;
-
-    try {
-      str_id = block_id_pairs[n+1];
-      block_surface_map[name] = std::stoi(str_id);
-
-    } catch (const std::invalid_argument& ia) {
-      std::cerr << "Invalid argument: " << ia.what() << std::endl;
-      throw std::runtime_error("The svZeroDSolver_interface parameter Block_to_surface_map surface ID '" +
-          str_id+"' for block name '" + name + "' is not an integer."); 
-   }
-
+    block_surface_map[name] = block_id_pairs[n+1];
     n += 2;
   }
 

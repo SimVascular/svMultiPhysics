@@ -781,7 +781,7 @@ class svZeroDSolverInterfaceType
 {
   public:
     std::string solver_library;
-    std::map<std::string,int> block_surface_map;
+    std::map<std::string,std::string> block_surface_map;
 
     std::string configuration_file;
     std::string coupling_type;
