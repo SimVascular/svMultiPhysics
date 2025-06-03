@@ -1,13 +1,12 @@
 
 # **Problem Description**
 
-Solve the same problem as in [fluid/pipe_RCR_3d](../pipe_RCR_3D). Instead of using the RCR within the `svFSIplus` solver, this example demonstrates how to set up RCR boundary condition in a more generalized framework using sv0DSolver.
+Solve the same problem as in [fluid/pipe_RCR_3d](../pipe_RCR_3D) replacing the RCR boundary condition with a resistance computed 
+using the SimVascular [svZeroDSolver](https://simvascular.github.io/documentation/rom_simulation.html#0d-solver). 
 
 ## Introduction
 
-Both sv0DSolver and genBC (see [pipe_RCR_genBC](../pipe_RCR_genBC)) provide a framework to programmatically define custom inflow and outflow boundary conditions for a CFD simulation. The framework allows users to create an arbitrary lumped parameter network (LPN, or 0D model) layout suitable for their application. Some common examples include a lumped parameter heart model that models contraction of the heart chambers to use as an inlet boundary condition, sophisticated models of the downstream circulation for various areas of the body such as the legs and upper body, or a closed-loop formulation where all outflow of the SimVascular model returns back to the inflow after passing through the veins, heart, and pulmonary arteries.
-
-**Essentially, sv0D and genBC are two different implementations of the same functionality, and sv0D is the preferred choice.**  genBC is a legacy code developed for [svSolver](https://github.com/SimVascular/svSolver) and requires direct input of a system of equations. sv0DSolver has pre-defined blocks with associated equations and is more user-friendly. Still, `svFSIplus` provides backward compatibility for genBC so that svSolver users can migrate to the new solver easily. 
+The svZeroDSolver simulates bulk cardiovascular flow rates and pressures using an arbitrary zero-dimensional (0D) lumped parameter model (LPM) of a discrete network of components analogous to electrical circuits. It provides an Application Programming Interface (API) that allows it to communicate and interact with external software applications directly using function calls to programmatically define custom inflow and outflow boundary conditions for a CFD simulation. The svMultiPhysics solver can directly access the svZeroDSolver API by loading the svZeroDSolver as a shared (dynamic) library available after installing the svZeroDSolver.
 
 
 ### Build svZeroDSolver
@@ -17,7 +16,7 @@ Importantly, to automatically run test cases with `pytest` (see below), you need
 ``` 
 in the repository root.
 
-To do so, you can run the following in the svFSIplus repository root:
+To do so, you can run the following in the svMultiPhysics repository root:
 ```
 git clone https://github.com/SimVascular/svZeroDSolver.git
 cd svZeroDSolver
@@ -113,10 +112,10 @@ The RCR boundary condition block sets up the RCR element with the desired resist
 
 ### svZeroD_interface.dat
 
-This file sets up the interface between svFSIplus and sv0DSolver. It requires the path of the dynamic library for svZeroDSolver and the input file (svzerod_3Dcoupling.json) discussed above.
+This file sets up the interface between svMultiPhysics and sv0DSolver. It requires the path of the dynamic library for svZeroDSolver and the input file (svzerod_3Dcoupling.json) discussed above.
 
-This file also matches the external coupling blocks in the 0D model to the coupled surfaces in svFSIplus:
-The first element in each line should be the name of the block from the json file and the second element should be the index of the coupled surface in svFSIplus. In this case, there is only one coupled surface with index 0.
+This file also matches the external coupling blocks in the 0D model to the coupled surfaces in svMultiPhysics:
+The first element in each line should be the name of the block from the json file and the second element should be the index of the coupled surface in svMultiPhysics. In this case, there is only one coupled surface with index 0.
 
 ```
 svZeroD external coupling block names to surface IDs (where surface IDs are from *.svpre file):
