@@ -599,11 +599,6 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
     bool defined() const { return value_set; };
     void set_values(tinyxml2::XMLElement* xml_elem);
 
-    // attributes.
-    Parameter<std::string> name;
-
-    VectorParameter<std::string> block_to_surface_map;
-
     Parameter<std::string> configuration_file;
     Parameter<std::string> coupling_type;
 
@@ -720,6 +715,7 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<std::string> spatial_profile_file_path;
     Parameter<std::string> spatial_values_file_path;
     Parameter<double> stiffness;
+    Parameter<std::string> svzerod_solver_block;
 
     Parameter<std::string> temporal_and_spatial_values_file_path;
     Parameter<std::string> temporal_values_file_path;

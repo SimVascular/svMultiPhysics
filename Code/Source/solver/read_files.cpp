@@ -254,12 +254,40 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       read_fourier_coeff_values_file(file_name, lBc);
     }
 
+  // There are currently two coupling methods: GenBC and svZeroDSolver.
+  //
+  // A coupling method is defined if com_mod.cplBC.schm is set.
+  //
   } else if (ctmp == "Coupled") { 
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl)); 
     com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
     lBc.cplBCptr = com_mod.cplBC.nFa - 1;
-    if (com_mod.cplBC.schm == CplBCType::cplBC_NA) {
-      throw std::runtime_error("[read_bc] Couple to cplBC' must be specified before using Coupled BC.");
+    auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
+
+    // The svZeroDSolver_interface parameter is defined.
+    //
+    if (com_mod.cplBC.svzerod_solver_interface.has_data) { 
+      if (!bc_params->svzerod_solver_block.defined()) {
+        std::string error_msg = std::string("The svZeroDSolver_block parameter must be defined for the 'Coupled' ") + 
+            std::string(" boundary condition for the face '") + face_name + "'.";
+        throw std::runtime_error(error_msg);
+      }
+      auto block_name = bc_params->svzerod_solver_block();
+      com_mod.cplBC.svzerod_solver_interface.add_block_face(block_name, face_name);
+
+    // Assume coupling with GenBC.
+    //
+    } else if (com_mod.cplBC.schm != CplBCType::cplBC_NA) {
+      if (bc_params->svzerod_solver_block.defined()) {
+        std::string error_msg = std::string("The svZeroDSolver_block parameter cannot be defined for the 'Coupled' ") + 
+            std::string(" boundary condition for the face '") + face_name + "' when Couple_to_genBC parameters is used.";
+        throw std::runtime_error(error_msg);
+      }
+
+    } else { 
+      std::string error_msg = std::string("A coupling method must be defined for the 'Coupled' ") + 
+            std::string(" boundary condition parameter for face '") + face_name + "'.";
+      throw std::runtime_error(error_msg);
     }
 
   } else if (ctmp == "Resistance") { 

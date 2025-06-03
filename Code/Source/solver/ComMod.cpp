@@ -231,19 +231,18 @@ void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters
     initial_pressures = params.initial_pressures();
   }
 
-  // Add Block_to_surface_map block name / surface IDs stored
-  // sequentially in a vector to a map.
-  //
-  auto block_id_pairs = params.block_to_surface_map();
-  int n = 0;
-
-  while (n != block_id_pairs.size()) {
-    auto name = block_id_pairs[n];
-    block_surface_map[name] = block_id_pairs[n+1];
-    n += 2;
-  }
-
   has_data = true;
+}
+
+//----------------
+// add_block_face
+//----------------
+// Add a block name / face name pair representing the coupling of a 
+// 0D block with a 3D face.
+//
+void svZeroDSolverInterfaceType::add_block_face(const std::string& block_name, const std::string& face_name)
+{
+  block_surface_map[block_name] = face_name;
 }
 
 

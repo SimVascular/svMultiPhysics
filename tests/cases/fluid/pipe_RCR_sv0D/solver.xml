@@ -76,14 +76,10 @@
       <Krylov_space_dimension> 50 </Krylov_space_dimension>
    </LS>
 
-   <svZeroDSolver_interface name="svzerod-interface"> 
+   <svZeroDSolver_interface> 
      <Coupling_type> semi-implicit </Coupling_type>
      <Configuration_file> svzerod_3Dcoupling.json </Configuration_file>
-     <Shared_library> /usr/local/sv/svZeroDSolver/2024-09-26/lib/libsvzero_interface.dylib </Shared_library>  
-     <!--Shared_library> ../../../../svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library-->  
-     <Block_to_surface_map> 
-        RCR_coupling lumen_outlet
-     </Block_to_surface_map>
+     <Shared_library> ../../../../svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library>  
      <Initial_flows> 0.0 </Initial_flows>
      <Initial_pressures> 0.0 </Initial_pressures>
    </svZeroDSolver_interface> 
@@ -99,6 +95,7 @@
    <Add_BC name="lumen_outlet" > 
       <Type> Neu </Type> 
       <Time_dependence> Coupled </Time_dependence> 
+      <svZeroDSolver_block> RCR_coupling </svZeroDSolver_block>  
    </Add_BC> 
 
    <Add_BC name="lumen_wall" > 

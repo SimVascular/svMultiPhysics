@@ -401,6 +401,7 @@ BoundaryConditionParameters::BoundaryConditionParameters()
   set_parameter("Spatial_profile_file_path", "", !required, spatial_profile_file_path);
   set_parameter("Spatial_values_file_path", "", !required, spatial_values_file_path);
   set_parameter("Stiffness", 1.0, !required, stiffness);
+  set_parameter("svZeroDSolver_block", "", !required, svzerod_solver_block);
 
   set_parameter("Temporal_and_spatial_values_file_path", "", !required, temporal_and_spatial_values_file_path);
   set_parameter("Temporal_values_file_path", "", !required, temporal_values_file_path);
@@ -941,8 +942,6 @@ svZeroDSolverInterfaceParameters::svZeroDSolverInterfaceParameters()
   // A parameter that must be defined.
   bool required = true;
 
-  name = Parameter<std::string>("name", "", required);
-
   set_parameter("Coupling_type", "", required, coupling_type);
 
   set_parameter("Initial_flows", 0.0, !required, initial_flows);
@@ -952,20 +951,11 @@ svZeroDSolverInterfaceParameters::svZeroDSolverInterfaceParameters()
 
   set_parameter("Shared_library", "", required, shared_library);
 
-  set_parameter("Block_to_surface_map", {}, required, block_to_surface_map);
 };
 
 void svZeroDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
   std::string error_msg = "Unknown svZeroDSolver_interface XML element '";
-
-  // Get the 'name' from the <svZeroDSolver_interface name=NAME> element.
-  const char* sname;
-  auto result = xml_elem->QueryStringAttribute("name", &sname);
-  if (sname == nullptr) {
-    throw std::runtime_error("No TYPE given in the XML <svZeroDSolver_interface name=NAME> element.");
-  }
-  name.set(std::string(sname));
 
   // Process child elements.
   //
@@ -976,11 +966,6 @@ void svZeroDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem
   std::function<void(const std::string&, const std::string&)> ftpr =
       std::bind( &svZeroDSolverInterfaceParameters::set_parameter_value, *this, _1, _2);
   xml_util_set_parameters(ftpr, xml_elem, error_msg);
-
-  auto values = block_to_surface_map.value();
-  if ((values.size() % 2) != 0) {
-    throw std::runtime_error("The Block_to_surface_map parameter should contain one or more block name / surface ID pairs.");
-  }
 
   value_set = true;
 }
