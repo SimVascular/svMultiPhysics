@@ -10,7 +10,7 @@ The svZeroDSolver simulates bulk cardiovascular flow rates and pressures using a
 
 # Enable using the svZeroDSolver
 
-The svMultiPhysics solver XML `svZeroDSolver_interface` keyword under `Add_equation` enables using the svZeroDSolver. The following `svZeroDSolver_interface` parameters are used for this test 
+The svMultiPhysics solver XML `svZeroDSolver_interface` subsection under `Add_equation` enables using the svZeroDSolver. The following `svZeroDSolver_interface` parameters are used for this test 
 ```
 <svZeroDSolver_interface> 
   <Coupling_type> semi-implicit </Coupling_type>
@@ -27,13 +27,13 @@ For more detailed documentation see the [Solver Parameter Input File](https://si
 The svZeroDSolver application is built from source as part of the continuous integration (CI) testing. The shared library **libsvzero_interface.dylib** is created as part of the build. 
 
 ## Configuration file
-The `svzerod_3Dcoupling.json` file is used to configure a svZeroDSolver simulation. It contains information describing the blocks (elements) of the LPM used to create the values for the resistance boundary condition communicated to the svMultiPhysics solver.
+The **svzerod_3Dcoupling.json** file is used to configure a svZeroDSolver simulation. It contains information describing the blocks (elements) of the LPM used to create the values for the resistance boundary condition communicated to the svMultiPhysics solver.
 
 The `external_solver_coupling_blocks` section of the `svzerod_3Dcoupling.json` file identifies the names of the blocks (`name:` field) used in the svMultiPhysics solver XML file `Add_BC` keyword for boundary conditions coupled to the svZeroDSolver. A single blocka named **RCR_coupling** is used for this test. 
 
 # Interfacing to the svZeroDSolver
 
-An RCR boundary condition is defined for the **lumen_outlet** outlet face using the `Add_BC` keyword.
+An RCR boundary condition is defined for the **lumen_outlet** outlet face using the `Add_BC` keyword
 
 ```
 <Add_BC name="lumen_outlet" > 
