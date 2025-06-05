@@ -1457,7 +1457,7 @@ class Parameters {
     void set_mesh_values(tinyxml2::XMLElement* root_element);
     void set_precomputed_solution_values(tinyxml2::XMLElement* root_element);
     void set_projection_values(tinyxml2::XMLElement* root_element);
-    void set_szsolver_interface_values(tinyxml2::XMLElement* root_element);
+    void set_svzerodsolver_interface_values(tinyxml2::XMLElement* root_element);
 
     // Objects representing each parameter section of XML file.
     ContactParameters contact_parameters;
