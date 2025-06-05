@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['x_0',['x',['../classmsh_type.html#a331cab384a6956d3b74ec98cc8eef418',1,'mshType::x'],['../classib_type.html#a03f02ca68575c1961f6b3662f185575b',1,'ibType::x'],['../class_com_mod.html#a1f6e06247d04da6550fb03731ef3a024',1,'ComMod::x'],['../struct_trilinos.html#a75ba6c5cf01f3d3297591f9ab28ff435',1,'Trilinos::X']]],
+  ['x_0',['x',['../classib_type.html#a03f02ca68575c1961f6b3662f185575b',1,'ibType::x'],['../class_com_mod.html#a1f6e06247d04da6550fb03731ef3a024',1,'ComMod::x'],['../struct_trilinos.html#a75ba6c5cf01f3d3297591f9ab28ff435',1,'Trilinos::X'],['../classmsh_type.html#a331cab384a6956d3b74ec98cc8eef418',1,'mshType::x']]],
   ['x_5fcoords_1',['x_coords',['../classecg_leads_type.html#a536e03afd275147af4e3e6b9431da08b',1,'ecgLeadsType']]],
   ['xi_2',['xi',['../classmsh_type.html#a938df71cbca95a3e41c8cace5be5ea52',1,'mshType']]],
   ['xi_5ft_3',['xi_t',['../class_cep_mod_ap.html#a033c891287f7c12e2a54b67ca18b5ffc',1,'CepModAp::xi_T'],['../class_cep_mod_bo.html#a88fdd69a548514b82f1ff693a9668906',1,'CepModBo::xi_T'],['../class_cep_mod_ttp.html#a5598d5c4ad37ac0ade2d80a249b56ca7',1,'CepModTtp::xi_T']]],

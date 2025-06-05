@@ -17,7 +17,6 @@ var searchData=
   ['contactparameters_14',['ContactParameters',['../class_contact_parameters.html',1,'']]],
   ['couplecplbcparameters_15',['CoupleCplBCParameters',['../class_couple_cpl_b_c_parameters.html',1,'']]],
   ['couplegenbcparameters_16',['CoupleGenBCParameters',['../class_couple_gen_b_c_parameters.html',1,'']]],
-  ['couplesvzerodparameters_17',['CoupleSvZeroDParameters',['../class_couple_sv_zero_d_parameters.html',1,'']]],
-  ['cplbctype_18',['cplBCType',['../classcpl_b_c_type.html',1,'']]],
-  ['cplfacetype_19',['cplFaceType',['../classcpl_face_type.html',1,'']]]
+  ['cplbctype_17',['cplBCType',['../classcpl_b_c_type.html',1,'']]],
+  ['cplfacetype_18',['cplFaceType',['../classcpl_face_type.html',1,'']]]
 ];

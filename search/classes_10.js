@@ -10,5 +10,7 @@ var searchData=
   ['stimtype_7',['stimType',['../classstim_type.html',1,'']]],
   ['stimulusparameters_8',['StimulusParameters',['../class_stimulus_parameters.html',1,'']]],
   ['stmodeltype_9',['stModelType',['../classst_model_type.html',1,'']]],
-  ['stvenantkirchhoffparameters_10',['StVenantKirchhoffParameters',['../class_st_venant_kirchhoff_parameters.html',1,'']]]
+  ['stvenantkirchhoffparameters_10',['StVenantKirchhoffParameters',['../class_st_venant_kirchhoff_parameters.html',1,'']]],
+  ['svzerodsolverinterfaceparameters_11',['svZeroDSolverInterfaceParameters',['../classsv_zero_d_solver_interface_parameters.html',1,'']]],
+  ['svzerodsolverinterfacetype_12',['svZeroDSolverInterfaceType',['../classsv_zero_d_solver_interface_type.html',1,'']]]
 ];

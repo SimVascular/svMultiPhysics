@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="VectorParameter\< double \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_vector_parameter.html",tooltip=" "];
+  Node0 [id="Node000000",label="Vector\< T \>::Iterator",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_vector_1_1_iterator.html",tooltip="This class provides an interface to access Vector like STL containers."];
 }
