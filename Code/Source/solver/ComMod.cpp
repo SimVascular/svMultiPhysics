@@ -205,3 +205,44 @@ rmshType::rmshType()
 }
 
 
+/////////////////////////////////////////////////////////
+// s v Z e r o D S o l v e r I n t e r f a c e T y p e //
+/////////////////////////////////////////////////////////
+
+void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters& params)
+{
+  if (!params.defined()) {
+    return;
+  }
+
+  configuration_file= params.configuration_file();
+
+  coupling_type = params.coupling_type();
+
+  solver_library = params.shared_library();
+
+  if (params.initial_flows.defined()) { 
+    have_initial_flows = true;
+    initial_flows = params.initial_flows();
+  }
+
+  if (params.initial_pressures.defined()) { 
+    have_initial_pressures = true;
+    initial_pressures = params.initial_pressures();
+  }
+
+  has_data = true;
+}
+
+//----------------
+// add_block_face
+//----------------
+// Add a block name / face name pair representing the coupling of a 
+// 0D block with a 3D face.
+//
+void svZeroDSolverInterfaceType::add_block_face(const std::string& block_name, const std::string& face_name)
+{
+  block_surface_map[block_name] = face_name;
+}
+
+

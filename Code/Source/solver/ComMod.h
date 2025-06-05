@@ -42,6 +42,7 @@
 #include "CepMod.h"
 #include "ChnlMod.h"
 #include "CmMod.h"
+#include "Parameters.h"
 #include "Timer.h"
 #include "Vector.h"
 
@@ -770,6 +771,45 @@ class cplFaceType
     rcrType RCR;
 };
 
+//----------------------------
+// svZeroDSolverInterfaceType
+//----------------------------
+// This class stores information used to interface to
+// the svZeroDSolver.
+//
+class svZeroDSolverInterfaceType
+{
+  public:
+
+    // The path/name of the 0D solver shared library.
+    std::string solver_library;
+
+    // Maps a 0D block name with a 3D face name representing the 
+    // coupling of a 0D block with a 3D face.
+    std::map<std::string,std::string> block_surface_map;
+
+    // The path/name of the 0D solver JSON file.
+    std::string configuration_file;
+
+    // How often the 0D contribution to solver tangent matrix is added.
+    std::string coupling_type;
+
+    // Initialize the 0D flows.
+    bool have_initial_flows = false;
+    double initial_flows;
+
+    // Initialize the 0D pressures.
+    bool have_initial_pressures = false;
+    double initial_pressures;
+
+    // If the data has been set for the interface. This is only true if 
+    // the svZeroDSolver_interface XML parameter has been defined.
+    bool has_data = false;
+
+    void set_data(const svZeroDSolverInterfaceParameters& params);
+    void add_block_face(const std::string& block_name, const std::string& face_name);
+};
+
 /// @brief For coupled 0D-3D problems
 //
 class cplBCType
@@ -807,6 +847,8 @@ class cplBCType
     /// @brief File name for communication between 0D and 3D
     std::string commuName;
     //std::string commuName = ".CPLBC_0D_3D.tmp";
+
+    svZeroDSolverInterfaceType svzerod_solver_interface;
 
     /// @brief The name of history file containing "X"
     std::string saveName;
