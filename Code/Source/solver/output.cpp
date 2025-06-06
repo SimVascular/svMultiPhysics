@@ -319,8 +319,6 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
         } else if (cepEq) {
           restart_file.write((char*)Xion.data(), Xion.msize());
           restart_file.write((char*)cem.Ya.data(), cem.Ya.msize());
-        } else {
-          restart_file.write((char*)Dn.data(), Dn.msize());
         }
       }
 

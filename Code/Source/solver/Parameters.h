@@ -585,26 +585,31 @@ class CoupleGenBCParameters : public ParameterLists
     bool value_set = false;
 };
 
-//-----------------------
-// CoupleSvZeroDParameters
-//-----------------------
-// Coupling to svZeroD.
+//----------------------------------
+// svZeroDSolverInterfaceParameters
+//----------------------------------
 //
-class CoupleSvZeroDParameters : public ParameterLists
+class svZeroDSolverInterfaceParameters : public ParameterLists
 {
   public:
-    CoupleSvZeroDParameters();
+    svZeroDSolverInterfaceParameters();
 
     static const std::string xml_element_name_;
 
     bool defined() const { return value_set; };
     void set_values(tinyxml2::XMLElement* xml_elem);
 
-    // attributes.
-    Parameter<std::string> type;
+    Parameter<std::string> configuration_file;
+    Parameter<std::string> coupling_type;
+
+    Parameter<double> initial_flows;
+    Parameter<double> initial_pressures;
+
+    Parameter<std::string> shared_library;
 
     bool value_set = false;
 };
+
 /// @brief Body force over a mesh using the "Add_BF" command.
 ///
 /// \code {.xml}
@@ -710,6 +715,7 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<std::string> spatial_profile_file_path;
     Parameter<std::string> spatial_values_file_path;
     Parameter<double> stiffness;
+    Parameter<std::string> svzerod_solver_block;
 
     Parameter<std::string> temporal_and_spatial_values_file_path;
     Parameter<std::string> temporal_values_file_path;
@@ -1263,7 +1269,8 @@ class EquationParameters : public ParameterLists
 
     CoupleCplBCParameters couple_to_cplBC;
     CoupleGenBCParameters couple_to_genBC;
-    CoupleSvZeroDParameters couple_to_svZeroD;
+
+    svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
 
     DomainParameters* default_domain = nullptr;
 
@@ -1450,6 +1457,7 @@ class Parameters {
     void set_mesh_values(tinyxml2::XMLElement* root_element);
     void set_precomputed_solution_values(tinyxml2::XMLElement* root_element);
     void set_projection_values(tinyxml2::XMLElement* root_element);
+    void set_svzerodsolver_interface_values(tinyxml2::XMLElement* root_element);
 
     // Objects representing each parameter section of XML file.
     ContactParameters contact_parameters;

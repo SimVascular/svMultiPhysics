@@ -401,6 +401,7 @@ BoundaryConditionParameters::BoundaryConditionParameters()
   set_parameter("Spatial_profile_file_path", "", !required, spatial_profile_file_path);
   set_parameter("Spatial_values_file_path", "", !required, spatial_values_file_path);
   set_parameter("Stiffness", 1.0, !required, stiffness);
+  set_parameter("svZeroDSolver_block", "", !required, svzerod_solver_block);
 
   set_parameter("Temporal_and_spatial_values_file_path", "", !required, temporal_and_spatial_values_file_path);
   set_parameter("Temporal_values_file_path", "", !required, temporal_values_file_path);
@@ -926,47 +927,48 @@ void CoupleGenBCParameters::set_values(tinyxml2::XMLElement* xml_elem)
   value_set = true;
 }
 
-
 //////////////////////////////////////////////////////////
-//                  CoupleSvZeroDParameters               //
+//             svZeroDSolverInterfaceParameters         //
 //////////////////////////////////////////////////////////
 
-// Coupling to svZeroD.
+// The svZeroDSolverInterfaceParameters class stores parameters sued to
+// interface to the svZeroDSolver.
 
-// Define the XML element name for equation Couple_to_svZeroD parameters.
-const std::string CoupleSvZeroDParameters::xml_element_name_ = "Couple_to_svZeroD";
+// Define the XML element name for the svZeroDSolver_interface parameters.
+const std::string svZeroDSolverInterfaceParameters::xml_element_name_ = "svZeroDSolver_interface";
 
-CoupleSvZeroDParameters::CoupleSvZeroDParameters()
+svZeroDSolverInterfaceParameters::svZeroDSolverInterfaceParameters()
 {
   // A parameter that must be defined.
   bool required = true;
 
-  type = Parameter<std::string>("type", "", required);
+  set_parameter("Coupling_type", "", required, coupling_type);
+
+  set_parameter("Initial_flows", 0.0, !required, initial_flows);
+  set_parameter("Initial_pressures", 0.0, !required, initial_pressures);
+
+  set_parameter("Configuration_file", "", required, configuration_file);
+
+  set_parameter("Shared_library", "", required, shared_library);
+
 };
 
-void CoupleSvZeroDParameters::set_values(tinyxml2::XMLElement* xml_elem)
+void svZeroDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
-  std::string error_msg = "Unknown Couple_to_svZeroD type=TYPE XML element '";
-  
-  // Get the 'type' from the <Couple_to_genBC type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    throw std::runtime_error("No TYPE given in the XML <Couple_to_svZeroD type=TYPE> element.");
-  }
-  type.set(std::string(stype));
+  std::string error_msg = "Unknown svZeroDSolver_interface XML element '";
+
+  // Process child elements.
+  //
   auto item = xml_elem->FirstChildElement();
-  
+
   using std::placeholders::_1;
   using std::placeholders::_2;
-  std::function<void(const std::string&, const std::string&)> ftpr = 
-      std::bind( &CoupleSvZeroDParameters::set_parameter_value, *this, _1, _2);
-  
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind( &svZeroDSolverInterfaceParameters::set_parameter_value, *this, _1, _2);
   xml_util_set_parameters(ftpr, xml_elem, error_msg);
-  
+
   value_set = true;
 }
-
 
 //////////////////////////////////////////////////////////
 //                  OutputParameters                    //
@@ -1913,8 +1915,8 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem)
     } else if (name == CoupleGenBCParameters::xml_element_name_) {
       couple_to_genBC.set_values(item);
 
-    } else if (name == CoupleSvZeroDParameters::xml_element_name_) {
-      couple_to_svZeroD.set_values(item);
+    } else if (name == svZeroDSolverInterfaceParameters::xml_element_name_) {
+      svzerodsolver_interface_parameters.set_values(item);
 
     } else if (name == DomainParameters::xml_element_name_) {
       auto domain_params = new DomainParameters();
