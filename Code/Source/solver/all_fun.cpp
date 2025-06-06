@@ -44,6 +44,148 @@ namespace all_fun {
   using namespace consts;
 
 //--------------
+// GatherMasterV
+//--------------
+// This routine gathers a vector quantity (e.g. position) for node Ac from
+// local arrays across all procs. Then sets a local vector snode on the master
+// proc to the vector quantity, and sets the local vector snode on all
+// follower procs to zero.
+//
+// In IntegV, a integral over a virtual face is performed by master
+// alone, which must gather virtual face nodal values from other
+// procs if master does not own the desired node. This function gathers
+// all nodal values to master by performing the MPI communication
+// among procs.
+//
+// Args:
+//  com_mod: The communication module
+//  s(nsd, tnNo): a 2D aray of values at each node. E.g. position vector at each node
+//  Ac: Index of node belonging to this proc. If Ac = 0, then the desired
+//      node does not belong to this proc
+//  snode(nsd): The vector value at the desired node
+//
+// At the end of this routine, snode is the vector value at the desired node
+// on the master, and zero on all slaves.
+
+void GatherMasterV(const ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s, const int Ac, Vector<double>& snode)
+{
+
+  // Get rank and size of the communicator
+  int rank, size, ierr;
+  MPI_Comm_rank(com_mod.cm.com(), &rank);
+  MPI_Comm_size(com_mod.cm.com(), &size);
+
+  int sz = snode.size(); // Size of snode (usually nsd or nsd+1)
+  int np = com_mod.cm.np(); // Number of procs
+
+  // If Ac = 0, then the desired node does not belong to this proc
+  if (Ac == -1) { // This proc doesn't own this node.
+    snode = 0.0;
+  } else { // This proc does own this node.
+    snode = s.col(Ac); // Get nodal function value to use.
+  }
+  // Communicate the true snode value among all procs. We use the
+  // gather operation to get snode from all procs onto master.
+  // First, allocate space for snode values. The size of sgather
+  // vector is the number of procs being used (sz, cm.np).
+
+  //Allocate sgather of size (sz, cm.np)
+  Array<double> sgather(sz, np);
+  sgather = 0.0;
+  ierr = MPI_Gather(snode.data(), sz, MPI_DOUBLE, sgather.data(), sz, MPI_DOUBLE, 0, com_mod.cm.com());
+
+  // If this is the master, go through sgather and search for first
+  // non-zero value.
+  if (com_mod.cm.mas(cm_mod)) {
+    for (int p=0 ; p < np; p++) {
+      bool anyNonZero = false;
+      for (int i = 0; i < sgather.nrows(); ++i) { // Checks if sgather(i,p) is non-zero for any i
+          if (sgather(i, p) != 0.0) {
+              anyNonZero = true;
+              break;
+          }
+      }
+      if (anyNonZero) {
+        for (int i = 0; i < sz; i++) {
+          snode(i) = sgather(i,p);
+        }
+        break;
+      }
+    }
+  }
+  else { // If not master, set snode to 0 so they don't contribute to integral
+    snode = 0.0;
+  }
+
+  // Deallocate sgather
+  sgather.clear();
+}
+
+//--------------
+// GatherMasterS
+//--------------
+// This routine gathers a scalar quanity for node Ac from
+// local arrays across all procs. Then sets a local scalar snode on the master
+// proc to the scalar quantity, and sets the local scalar snode on all
+// follower procs to zero.
+//
+// In IntegS, a integral over a virtual face is performed by master
+// alone, which must gather virtual face nodal values from other
+// procs if master does not own the desired node. This function gathers
+// all nodal values to master by performing the MPI communication
+// among procs.
+//
+// Args:
+//  com_mod: The communication module
+//  s(tnNo): a 1D aray of values at each node. E.g. scalar value at each node
+//  Ac: Index of node belonging to this proc. If Ac = 0, then the desired
+//      node does not belong to this proc
+//  snode: The scalar value at the desired node
+//
+// At the end of this routine,
+// snode is the scalar value at the desired node on the master, and zero on all slaves.
+void GatherMasterS(const ComMod& com_mod, const CmMod& cm_mod, const Vector<double>& s, const int Ac, double& snode)
+{
+  // Get rank and size of the communicator
+  int rank, size, ierr;
+  MPI_Comm_rank(com_mod.cm.com(), &rank);
+  MPI_Comm_size(com_mod.cm.com(), &size);
+  int np = com_mod.cm.np(); // Number of procs
+
+  // If Ac = 0, then the desired node does not belong to this proc
+  if (Ac == -1) { // This proc doesn't own this node.
+    snode = 0.0;
+  } else { // This proc does own this node.
+    snode = s(Ac); // Get nodal function value to use.
+  }
+
+  // Communicate the true snode value among all procs. We use the
+  // gather operation to get snode from all procs onto master.
+  // First, allocate space for snode values. The size of sgather
+  // vector is the number of procs being used (1, cm.np).
+  Vector<double> sgather(np);
+  sgather = 0.0;
+  ierr = MPI_Gather(&snode, 1, MPI_DOUBLE, sgather.data(), 1, MPI_DOUBLE, 0, com_mod.cm.com());
+
+  // If this is the master, go through sgather and search for first
+  // non-zero value.
+  if (com_mod.cm.mas(cm_mod)) {
+    for (int p=0 ; p < np; p++) {
+      if (sgather(p) != 0.0) {
+        snode = sgather(p);
+        break;
+      }
+    }
+  }
+  else { // If not master, set snode to 0 so they don't contribute to integral
+    snode = 0.0;
+  }
+
+  // Deallocate sgather
+  sgather.clear();
+}
+
+//--------------
 // aspect_ratio
 //--------------
 //
@@ -295,7 +437,7 @@ global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Arra
   return result;
 }
 
-/// @brief This routine integrated a scalar field over a particular domain.
+/// @brief This routine integrates a scalar field over a particular domain.
 ///
 /// Note that 'l' and 'u' should be 0-based and are used to index into 's'.
 /// @param dId domain id
@@ -319,9 +461,10 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
   dmsg << "pFlag: " << pFlag;
   #endif
 
-  int nNo = s.ncols();
-  int tnNo = com_mod.tnNo;
-  bool ibFlag = com_mod.ibFlag;
+  auto& cm = com_mod.cm;
+  int nNo = s.ncols(); // Number of nodes in the mesh
+  int tnNo = com_mod.tnNo; // Total number of nodes on a processor
+  bool ibFlag = com_mod.ibFlag; // Flag for immersed boundary
 
   if (nNo != tnNo) {
     if (ibFlag) {
@@ -472,19 +615,20 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
           if (utils::is_zero(Jac)) {
             throw std::runtime_error("Jac < 0 for element: " + std::to_string(e) + ")");
           }
+          // Calculating the function value
           double sHat = 0.0;
-
           for (int a = 0; a < eNoN; a++) {
+            // Get local node number on proc. Ac in [1, tnNo]
             int Ac = msh.IEN(a,e);
             sHat = sHat + sl(a)*fs.N(a,g);
           }
-          result += fs.w(g) * Jac * sHat;
-        }
+          result += fs.w(g) * Jac * sHat;  
+        } 
       }
     }
+  
 
   } else { 
-
     for (int iM = 0; iM < ib.nMsh; iM++) {
       int eNoN = ib.msh[iM].eNoN;
       int insd = nsd;
@@ -533,7 +677,8 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
 
           for (int a = 0; a < eNoN; a++) {
             int Ac = ib.msh[iM].IEN(a,e);
-            sHat = sHat + sl(a)*ib.msh[iM].N(a,g);
+            double snode = sl(Ac);
+            sHat += sl(a)*ib.msh[iM].N(a,g);
           }
           result += ib.msh[iM].w(g)*Jac*sHat;
         }
@@ -683,20 +828,31 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
       if (!isIB) {
         // Get normal vector in cfg configuration
         auto Nx = fs.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, insd, fs.eNoN, Nx, n, cfg);
+        nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, insd, fs.eNoN, Nx, n, cfg);
       }
 
       // Calculating the Jacobian (encodes area of face element)
       double Jac = sqrt(utils::norm(n));
 
-      // Calculating the function value at Gauss point
+      // Calculating the function value at the Gauss point
       double sHat = 0.0;
       for (int a = 0; a < fs.eNoN; a++) {
+        double snode = 0.0;
+        if (!lFa.vrtual) {
+        // Get local node number on proc.
         int Ac = lFa.IEN(a,e);
-        sHat = sHat + s(Ac)*fs.N(a,g);
+        // Get nodal function value to use
+        snode = s(Ac);
+        }
+        else { // If virtual face, then master may need to get value from another proc
+          int Ac = lFa.IEN(a,e);
+          // Gather face node (a,e) value to master snode. On follower procs, snode=0
+          GatherMasterS(com_mod, cm_mod, s, Ac, snode);
+        }
+        sHat = sHat + snode*fs.N(a,g);
       }
 
-      // Now integrating
+      // Now integrating. Add product of Gauss weight and dot product at Gauss point
       result = result + Jac*fs.w(g)*sHat;
      }
   }
@@ -803,7 +959,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
       if (!isIB) {
         // Get normal vector in cfg configuration
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg);
+        nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg);
         //CALL GNNB(lFa, e, g, nsd-1, lFa.eNoN, lFa.Nx(:,:,g), n)
       } else {
         //CALL GNNIB(lFa, e, g, n)
@@ -813,10 +969,23 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
       double sHat = 0.0;
 
       for (int a = 0; a < lFa.eNoN; a++) {
-        int Ac = lFa.IEN(a,e);
-        // Compute s dot n
+        Vector<double> snode(nsd);
+        snode = 0.0;
+        if (!lFa.vrtual) {
+          // Get local node number on proc.
+          int Ac = lFa.IEN(a,e);
+          // Get nodal function value to use
+          for (int i = 0; i < nsd; i++) {
+            snode(i) = s(i,Ac);
+          }
+        }
+        else { // If virtual face, then master may need to get value from another proc
+          int Ac = lFa.IEN(a,e);
+          // Gather face node (a,e) value to master snode. On follower procs, snode=0
+          GatherMasterV(com_mod, cm_mod, s, Ac, snode);
+        }
         for (int i = 0; i < nsd; i++) {
-          sHat = sHat + lFa.N(a,g) * s(i,Ac) * n(i);
+          sHat = sHat + lFa.N(a,g) * snode(i) * n(i);
           //dmsg << "s(i,Ac): " << s(i,Ac);
         }
       }
