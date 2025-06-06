@@ -1,9 +1,15 @@
 name: ubuntu-latest
 on: 
   push: 
+    paths:
+      - 'Code/**'
+      - 'tests/**'
+      - '.github/**'
   pull_request:
-    paths-ignore:
-      - '**.md'
+    paths:
+      - 'Code/**'
+      - 'tests/**'
+      - '.github/**'
 jobs:
   test:
     runs-on: ubuntu-latest
