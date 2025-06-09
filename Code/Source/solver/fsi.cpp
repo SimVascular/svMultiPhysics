@@ -224,11 +224,23 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
         }
 
         DDir = 0.0;
+        double sdf_deps_temp = 0;
         double DDirTmp = 0.0;
         for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
-          if (distSrf(iUris) <= com_mod.uris[iUris].sdf_deps) {
-            DDirTmp = (1 + cos(pi*distSrf(iUris)/com_mod.uris[iUris].sdf_deps))/
-                      (2*com_mod.uris[iUris].sdf_deps*com_mod.uris[iUris].sdf_deps);
+          // if (distSrf(iUris) <= com_mod.uris[iUris].sdf_deps) {
+          //   DDirTmp = (1 + cos(pi*distSrf(iUris)/com_mod.uris[iUris].sdf_deps))/
+          //             (2*com_mod.uris[iUris].sdf_deps*com_mod.uris[iUris].sdf_deps);
+          //   if (DDirTmp > DDir) {DDir = DDirTmp;}
+          // }
+
+          if (com_mod.uris[iUris].clsFlg) {
+            sdf_deps_temp = com_mod.uris[iUris].sdf_deps_close;
+          } else {
+            sdf_deps_temp = com_mod.uris[iUris].sdf_deps;
+          }
+          if (distSrf(iUris) <= sdf_deps_temp) {
+            DDirTmp = (1 + cos(pi*distSrf(iUris)/sdf_deps_temp))/
+                      (2*sdf_deps_temp*sdf_deps_temp);
             if (DDirTmp > DDir) {DDir = DDirTmp;}
           }
         }

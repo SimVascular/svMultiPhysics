@@ -86,9 +86,10 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
 
   sUPS = 0.0;
   for (size_t j = 0; j < sUPS.size(); j++) {
-    // if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
-    // Reserve the sdf distance for aortic valve
-    if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) { 
+    if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
+    // Reverse the sdf distance for aortic valve
+    // [HZ] Adjust this value to be more flexible about the box
+    // if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) { 
         sUPS(0,j) = 1.0;
     }
   }
@@ -102,9 +103,9 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   Array<double> sDST(1,com_mod.tnNo);
   sDST = 0.0;
   for (size_t j = 0; j < sDST.size(); j++) {
-    // if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) {
-    // Reserve the sdf distance for aortic valve
-    if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
+    if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) {
+    // Reverse the sdf distance for aortic valve
+    // if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
         sDST(0,j) = 1.0;
     }
   } 
@@ -168,6 +169,10 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
       }
     }
   }
+  if (cm.mas(cm_mod)) {
+    std::cout << "urisCloseFlag is: " << uris_obj.clsFlg << " for: "
+              << uris_obj.name << std::endl;
+  }
   
 }
 
@@ -207,9 +212,9 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   double volI = 0.0;
 
   for (int i = 0; i < com_mod.tnNo; i++) {
-    // if (uris_obj.sdf(i) <= -Deps) {
-    // Reserve the sdf distance for aortic valve
-    if (uris_obj.sdf(i) >= Deps) {
+    if (uris_obj.sdf(i) <= -Deps) {
+    // Reverse the sdf distance for aortic valve
+    // if (uris_obj.sdf(i) >= Deps) {
       sImm(0,i) = 1.0;
     }
   }
@@ -497,7 +502,12 @@ void uris_read_msh(Simulation* simulation) {
 
   com_mod.urisFlag = true;
   com_mod.urisActFlag = true;
-  
+
+  auto param = simulation->parameters.URIS_mesh_parameters[0];
+  com_mod.urisRes = param->resistance();
+
+  std::cout << "URIS resistance: " << com_mod.urisRes << std::endl;
+
   int nUris = simulation->parameters.URIS_mesh_parameters.size();
   com_mod.nUris = nUris;
 
@@ -534,6 +544,7 @@ void uris_read_msh(Simulation* simulation) {
     file_stream.close();
 
     uris_obj.sdf_deps = param->thickness();
+    uris_obj.sdf_deps_close = param->close_thickness();
     uris_obj.clsFlg = param->valve_starts_as_closed();
 
     // uris_obj.tnNo = 0;
@@ -824,8 +835,6 @@ void uris_write_vtus(ComMod& com_mod) {
       nEl += mesh.nEl;
     }
 
-    // std::cout << "**** write vtu step 1 " << std::endl;
-
     // Writing to vtu file (master only)
     char fName_num[100];
     if (com_mod.cTS >= 1000) {
@@ -834,8 +843,6 @@ void uris_write_vtus(ComMod& com_mod) {
       sprintf(fName_num, "%03d", com_mod.cTS);
     }
     std::string fName = com_mod.saveName + "_uris_" + uris_obj.name + "_" + fName_num + ".vtu";
-
-    // std::cout << "**** write vtu step 2 " << std::endl;
 
     auto vtk_writer = VtkData::create_writer(fName);
     // Writing the position data
@@ -855,8 +862,6 @@ void uris_write_vtus(ComMod& com_mod) {
     }
     vtk_writer->set_points(tmpV);
 
-    // std::cout << "**** write vtu step 3 " << std::endl;
-
     // Writing the connectivity data
     Array<int> tmpI;
     for (int iM = 0; iM < uris_obj.nFa; iM++) {
@@ -866,11 +871,8 @@ void uris_write_vtus(ComMod& com_mod) {
           tmpI(i,e) = d[iM].IEN(i,e);
         }
       }
-      // std::cout << "**** write vtu step 3.5 " << std::endl;
       vtk_writer->set_connectivity(nsd, tmpI);
     }
-
-    // std::cout << "**** write vtu step 4 " << std::endl;
 
     // Writing all solutions
     for (int iOut = 0; iOut < nOut; iOut++) {
@@ -890,8 +892,6 @@ void uris_write_vtus(ComMod& com_mod) {
       }
       vtk_writer->set_point_data(outNames[iOut], tmpV);
     }
-
-    // std::cout << "**** write vtu step 5 " << std::endl;
 
     vtk_writer->write();
 
@@ -972,6 +972,7 @@ void uris_calc_sdf(ComMod& com_mod) {
     }
 
     // For each coordinate dimension, find the minimum and maximum in uris_obj.x.
+    double extra_val = 0.05; // [HZ] The BBox is 10% larger than the actual valve, default is 0.1
     for (int i = 0; i < nsd; i++) {
       for (int j = 0; j < uris_obj.x.ncols(); j++) {
         double val = uris_obj.x(i,j);
@@ -980,7 +981,7 @@ void uris_calc_sdf(ComMod& com_mod) {
         if (val > maxb(i))
             maxb(i) = val;
       }
-      extra(i) = (maxb(i) - minb(i)) * 0.1;
+      extra(i) = (maxb(i) - minb(i)) * extra_val;
     }
 
     // The SDF is computed on the reference configuration, which
@@ -1065,11 +1066,28 @@ void uris_calc_sdf(ComMod& com_mod) {
         nV = nV / Jac;
         auto dotP = utils::norm(xp-xb, nV);
 
-        if (dotP < 0.0) {
-          dotP = -1.0;
+        // if (dotP < 0.0) {
+        //   dotP = -1.0;
+        // } else {
+        //   dotP = 1.0;
+        // }
+
+        // [HZ] Improved implementation for SDF sign
+        if (uris_obj.clsFlg) {
+          auto dot_nrm = utils::norm(xp-xb, uris_obj.nrm);
+          if (dot_nrm < 0.0 && dotP < 0.0) {
+            dotP = -1.0;
+          } else {
+            dotP = 1.0;
+          }
         } else {
-          dotP = 1.0;
+          if (dotP < 0.0) {
+            dotP = -1.0;
+          } else {
+            dotP = 1.0;
+          }
         }
+
         uris_obj.sdf[ca] = dotP * minS;
       }
     }

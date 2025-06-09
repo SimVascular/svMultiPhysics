@@ -798,6 +798,9 @@ void iterate_solution(Simulation* simulation)
         } else {
           uris::uris_meanv(com_mod, cm_mod, iUris);
         }
+        if (cm.mas(cm_mod)) {
+          std::cout << " URIS surface: " << com_mod.uris[iUris].name << ", count: " << com_mod.uris[iUris].cnt << std::endl;
+        }
       }
 
       if (com_mod.mvMsh) {

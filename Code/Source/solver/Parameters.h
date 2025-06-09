@@ -1494,6 +1494,7 @@ class URISFaceParameters : public ParameterLists
 ///   </Add_uris_face>
 ///   <Mesh_scale_factor> 1.0 </Mesh_scale_factor>
 ///   <Thickness> 0.25 </Thickness>
+///   <Resistance> 1.0e5 </Resistance>
 ///   <Positive_flow_normal_file> meshes/normal.dat </Positive_flow_normal_file>
 /// </Add_uris_mesh>
 /// \endcode
@@ -1518,6 +1519,8 @@ class URISMeshParameters : public ParameterLists
     //
     Parameter<double> mesh_scale_factor;
     Parameter<double> thickness;
+    Parameter<double> close_thickness;
+    Parameter<double> resistance;
     Parameter<bool> valve_starts_as_closed;
     Parameter<std::string> positive_flow_normal_file_path;
 
