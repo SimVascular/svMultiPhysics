@@ -99,7 +99,7 @@ struct Trilinos
   static Epetra_Vector *X;
   static Epetra_Vector *ghostX;
   static Epetra_Import *Importer;
-  static Epetra_FEVector *bdryVec;
+  static std::vector<Epetra_FEVector*> bdryVec_list;
   static Epetra_MpiComm *comm;
   static Epetra_FECrsGraph *K_graph;
 };
@@ -186,10 +186,10 @@ public:
   {
 #endif
   /// Give function definitions which will be called through fortran
-  void trilinos_lhs_create_(int& numGlobalNodes, int& numLocalNodes,
-          int& numGhostAndLocalNodes, int& nnz, const int *ltgSorted,
-          const int *ltgUnsorted, const int *rowPtr, const int *colInd,
-          int &dof, int& cpp_index, int& proc_id);
+  void trilinos_lhs_create(const int numGlobalNodes, const int numLocalNodes,
+          const int numGhostAndLocalNodes, const int nnz, const Vector<int>& ltgSorted,
+          const Vector<int>& ltgUnsorted, const Vector<int>& rowPtr, const Vector<int>& colInd,
+          const int dof, const int cpp_index, const int proc_id, const int numCoupledNeumannBC);
 /*
   void trilinos_lhs_create_(unsigned &numGlobalNodes, unsigned &numLocalNodes,
           unsigned &numGhostAndLocalNodes, unsigned &nnz, const int *ltgSorted,
@@ -201,7 +201,7 @@ public:
    * \param v           coeff in the scalar product
    * \param isCoupledBC determines if coupled resistance BC is turned on
    */
-  void trilinos_bc_create_(const double *v, bool &isCoupledBC);
+  void trilinos_bc_create_(const std::vector<Array<double>> &v_list, bool &isCoupledBC);
 
   void trilinos_doassem_(int &numNodesPerElement, const int *eqN,
           const double *lK, double *lR);
