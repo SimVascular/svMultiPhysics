@@ -66,7 +66,7 @@ std::set<consts::LinearAlgebraType> TrilinosLinearAlgebra::valid_assemblers = {
 TrilinosLinearAlgebra::TrilinosLinearAlgebra()
 {
   #ifndef WITH_TRILINOS
-  throw std::runtime_error("[TrilinosLinearAlgebra] svFSIplus has not been built with Trilinos.");
+  throw std::runtime_error("[TrilinosLinearAlgebra] svMultiPhysics has not been built with Trilinos.");
   #else
   impl = new TrilinosLinearAlgebra::TrilinosImpl();
   interface_type = consts::LinearAlgebraType::trilinos; 
@@ -130,7 +130,7 @@ void TrilinosLinearAlgebra::check_options(const consts::PreconditionerType prec_
   }
 
   if (error_msg != "") {
-    throw std::runtime_error("[svFSIplus] ERROR: " + error_msg);
+    throw std::runtime_error("[svMultiPhysics] ERROR: " + error_msg);
   }
 }
 
