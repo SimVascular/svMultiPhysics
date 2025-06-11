@@ -39,7 +39,7 @@
 namespace fsi_linear_solver {
 
 void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_type, const Vector<int>& gNodes,
-    const Array<double>& Val);
+    const Array<double>& Val, bool vrtual = false);
 
 void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_type, const Vector<int>& gNodes);
 

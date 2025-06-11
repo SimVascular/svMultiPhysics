@@ -788,7 +788,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   // Modifes
   //  com_mod.Ao - Old time derivative of variables (acceleration)
   //  com_mod.Yo - Old variables (velocity)
-  //  com_mod.Do - Old integrated variables (dissplacement)
+  //  com_mod.Do - Old integrated variables (displacement)
   //
   set_bc::set_bc_dir(com_mod, com_mod.Ao, com_mod.Yo, com_mod.Do);
 

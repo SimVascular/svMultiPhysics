@@ -287,7 +287,7 @@ void cmm_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<double
 }
 
 
-void cmm_b(ComMod& com_mod, const faceType& lFa, const int e, const Array<double>& al, const Array<double>& dl, 
+void cmm_b(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const int e, const Array<double>& al, const Array<double>& dl, 
     const Array<double>& xl, const Array<double>& bfl, const Vector<double>& pS0l, const Vector<double>& vwp, 
     const Vector<int>& ptr) 
 {
@@ -309,7 +309,7 @@ void cmm_b(ComMod& com_mod, const faceType& lFa, const int e, const Array<double
   for (int g = 0; g < lFa.nG; g++) {
     Vector<double> nV(nsd);
     auto Nx = lFa.Nx.slice(g);
-    nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, 3, Nx, nV);
+    nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, 3, Nx, nV);
     double Jac = sqrt(utils::norm(nV));
     nV = nV / Jac;
     double w = lFa.w(g)*Jac;
