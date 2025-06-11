@@ -156,13 +156,6 @@ void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLs
 
     if (l == 0) {
       eps = err[0];
-
-      if (eps <= ls.absTol) {
-        ls.callD = std::numeric_limits<double>::epsilon();
-        ls.dB = 0.0;
-        return; 
-      }
-
       ls.iNorm = eps;
       ls.fNorm = eps;
       eps = std::max(ls.absTol, ls.relTol*eps);
