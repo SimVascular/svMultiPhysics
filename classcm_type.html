@@ -107,8 +107,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a506112cbbd42096210ec3304e1eb8f21"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast int  <br /></td></tr>
 <tr class="separator:a506112cbbd42096210ec3304e1eb8f21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abed8108f0396e57e2bf83e68640a335e" id="r_abed8108f0396e57e2bf83e68640a335e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#abed8108f0396e57e2bf83e68640a335e">bcast</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;data) const</td></tr>
-<tr class="memdesc:abed8108f0396e57e2bf83e68640a335e"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast int array  <br /></td></tr>
+<tr class="memdesc:abed8108f0396e57e2bf83e68640a335e"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
 <tr class="separator:abed8108f0396e57e2bf83e68640a335e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12048bb7d8f2c321c6a4b57ad74cb590" id="r_a12048bb7d8f2c321c6a4b57ad74cb590"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a12048bb7d8f2c321c6a4b57ad74cb590">bcast</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, Array&lt; int &gt; &amp;data, const std::string &amp;name=&quot;&quot;) const</td></tr>
+<tr class="memdesc:a12048bb7d8f2c321c6a4b57ad74cb590"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast int array  <br /></td></tr>
+<tr class="separator:a12048bb7d8f2c321c6a4b57ad74cb590"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4b565b82d81e46898913a5bc6b14e6f" id="r_af4b565b82d81e46898913a5bc6b14e6f"><td class="memTemplParams" colspan="2"><a id="af4b565b82d81e46898913a5bc6b14e6f" name="af4b565b82d81e46898913a5bc6b14e6f"></a>
 template&lt;typename T &gt; </td></tr>
 <tr class="memitem:af4b565b82d81e46898913a5bc6b14e6f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bcast_enum</b> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, T *data) const</td></tr>
@@ -175,7 +178,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 <div class="textblock"><p>The <a class="el" href="classcm_type.html" title="The cmType class stores data and defines methods used for mpi communication.">cmType</a> class stores data and defines methods used for mpi communication. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a505393a87120d03fcd68e462f5d6254e" name="a505393a87120d03fcd68e462f5d6254e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a505393a87120d03fcd68e462f5d6254e">&#9670;&#160;</a></span>bcast() <span class="overload">[1/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a505393a87120d03fcd68e462f5d6254e">&#9670;&#160;</a></span>bcast() <span class="overload">[1/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -210,8 +213,44 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 
 </div>
 </div>
+<a id="a12048bb7d8f2c321c6a4b57ad74cb590" name="a12048bb7d8f2c321c6a4b57ad74cb590"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12048bb7d8f2c321c6a4b57ad74cb590">&#9670;&#160;</a></span>bcast() <span class="overload">[2/9]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::bcast </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Array&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em> = <code>&quot;&quot;</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>bcast int array </p>
+
+</div>
+</div>
 <a id="a70d53a96477e38c9bf9c2a76f5395016" name="a70d53a96477e38c9bf9c2a76f5395016"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70d53a96477e38c9bf9c2a76f5395016">&#9670;&#160;</a></span>bcast() <span class="overload">[2/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a70d53a96477e38c9bf9c2a76f5395016">&#9670;&#160;</a></span>bcast() <span class="overload">[3/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -241,7 +280,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a47609099169d1b124ac6f3783ba3ad19" name="a47609099169d1b124ac6f3783ba3ad19"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a47609099169d1b124ac6f3783ba3ad19">&#9670;&#160;</a></span>bcast() <span class="overload">[3/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a47609099169d1b124ac6f3783ba3ad19">&#9670;&#160;</a></span>bcast() <span class="overload">[4/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -271,7 +310,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a506112cbbd42096210ec3304e1eb8f21" name="a506112cbbd42096210ec3304e1eb8f21"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a506112cbbd42096210ec3304e1eb8f21">&#9670;&#160;</a></span>bcast() <span class="overload">[4/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a506112cbbd42096210ec3304e1eb8f21">&#9670;&#160;</a></span>bcast() <span class="overload">[5/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -301,7 +340,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a89d67b06f822df72e6544e15b2f04e1f" name="a89d67b06f822df72e6544e15b2f04e1f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a89d67b06f822df72e6544e15b2f04e1f">&#9670;&#160;</a></span>bcast() <span class="overload">[5/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a89d67b06f822df72e6544e15b2f04e1f">&#9670;&#160;</a></span>bcast() <span class="overload">[6/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -331,7 +370,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="ab7d99899daee9ef6f07557256eed9f14" name="ab7d99899daee9ef6f07557256eed9f14"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab7d99899daee9ef6f07557256eed9f14">&#9670;&#160;</a></span>bcast() <span class="overload">[6/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7d99899daee9ef6f07557256eed9f14">&#9670;&#160;</a></span>bcast() <span class="overload">[7/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -361,7 +400,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a0239d3b3b83d3f3d1bb3fe56bba37356" name="a0239d3b3b83d3f3d1bb3fe56bba37356"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0239d3b3b83d3f3d1bb3fe56bba37356">&#9670;&#160;</a></span>bcast() <span class="overload">[7/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0239d3b3b83d3f3d1bb3fe56bba37356">&#9670;&#160;</a></span>bcast() <span class="overload">[8/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -397,7 +436,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="abed8108f0396e57e2bf83e68640a335e" name="abed8108f0396e57e2bf83e68640a335e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abed8108f0396e57e2bf83e68640a335e">&#9670;&#160;</a></span>bcast() <span class="overload">[8/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#abed8108f0396e57e2bf83e68640a335e">&#9670;&#160;</a></span>bcast() <span class="overload">[9/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -422,7 +461,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
       </table>
 </div><div class="memdoc">
 
-<p>bcast int array </p>
+<p>bcast int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
 
 </div>
 </div>

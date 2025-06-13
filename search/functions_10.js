@@ -1,11 +1,12 @@
 var searchData=
 [
-  ['update_5fg_0',['update_g',['../class_cep_mod_ttp.html#ac5389e251be36f47ede09007f8cfd272',1,'CepModTtp']]],
-  ['usetranspose_1',['UseTranspose',['../class_trilinos_mat_vec.html#adb4ad630200bf6fb6fa554055222657b',1,'TrilinosMatVec']]],
-  ['ustruct_5f2d_5fc_2',['ustruct_2d_c',['../ustruct_8cpp.html#a1932a6e82fe23a81987cfc209b92f394',1,'ustruct']]],
-  ['ustruct_5f2d_5fm_3',['ustruct_2d_m',['../ustruct_8cpp.html#a80e8da99aee39c727871f006d2548d07',1,'ustruct']]],
-  ['ustruct_5f3d_5fc_4',['ustruct_3d_c',['../ustruct_8cpp.html#addd531ce2343b1ad531413660c82977b',1,'ustruct']]],
-  ['ustruct_5f3d_5fm_5',['ustruct_3d_m',['../ustruct_8cpp.html#afdc61ab87ebb13a84f2137adf3da5bed',1,'ustruct']]],
-  ['ustruct_5fdo_5fassem_6',['ustruct_do_assem',['../ustruct_8cpp.html#acd5866866247ec4b4a9f4a8a4c29bed2',1,'ustruct']]],
-  ['ustruct_5fr_7',['ustruct_r',['../ustruct_8cpp.html#a4a00d1f660ad074592c086e76d82aaab',1,'ustruct']]]
+  ['ten_5fasym_5fprod12_0',['ten_asym_prod12',['../namespacemat__fun.html#af3367681f82e87222e557415681edd4a',1,'mat_fun']]],
+  ['ten_5fddot_1',['ten_ddot',['../namespacemat__fun.html#a9359f973f503f358d24a8db8c5630846',1,'mat_fun']]],
+  ['ten_5fddot_5f2412_2',['ten_ddot_2412',['../namespacemat__fun.html#ae77741e0486f9d35108bc57ffbc3bdb4',1,'mat_fun']]],
+  ['ten_5fdyad_5fprod_3',['ten_dyad_prod',['../namespacemat__fun.html#a998c0fc509c870bc57677032ef09034e',1,'mat_fun']]],
+  ['ten_5fids_4',['ten_ids',['../namespacemat__fun.html#a6f90a43cf65bdb492935c0fb0f0a6bf7',1,'mat_fun']]],
+  ['ten_5finit_5',['ten_init',['../namespacemat__fun.html#a31191bf7be4deec4c4ce4dd1a238e7e5',1,'mat_fun']]],
+  ['ten_5fmddot_6',['ten_mddot',['../namespacemat__fun.html#a537a2b432aceb0959b8b0522410f12a8',1,'mat_fun']]],
+  ['ten_5fsymm_5fprod_7',['ten_symm_prod',['../namespacemat__fun.html#a36539d086d29370c7c0649df4a132645',1,'mat_fun']]],
+  ['transpose_8',['transpose',['../namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1',1,'mat_fun::transpose(const Array&lt; double &gt; &amp;A)'],['../namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91',1,'mat_fun::transpose(const Tensor&lt; nsd &gt; &amp;A)']]]
 ];

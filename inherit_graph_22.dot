@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="DebugMsg",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_debug_msg.html",tooltip="The DebugMsg is class is used to print debugging messages."];
+  Node0 [id="Node000000",label="cplFaceType",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classcpl_face_type.html",tooltip=" "];
 }
