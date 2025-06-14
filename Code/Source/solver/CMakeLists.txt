@@ -217,7 +217,8 @@ set(CSRCS
   CmMod.h CmMod.cpp
   ComMod.h ComMod.cpp
   Timer.h
-
+  ArtificialNeuralNetMaterial.h ArtificialNeuralNetMaterial.cpp
+  
   SPLIT.c
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp

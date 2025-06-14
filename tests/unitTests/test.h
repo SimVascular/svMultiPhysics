@@ -647,6 +647,99 @@ public:
     }
 
     /**
+     * @brief Computes the PK2 stress tensor S(F) from the strain energy density Psi(F) using finite differences and checks the order of convergence using a reference S_ref for exact solution.
+     * Using this to compare CANN PK2 stress against other models.
+     * @param[in] delta_min Minimum perturbation scaling factor.
+     * @param[in] delta_max Maximum perturbation scaling factor.
+     * @param[in] order Order of the finite difference scheme (1 for first order, 2 for second order, etc.).
+     * @param[in] convergence_order_tol Tolerance for comparing convergence order with expected value
+     * @param[in] verbose Show values error and order of convergence if true.
+     **/
+    
+    void testPK2StressConvergenceOrderAgainstReference(Array<double>& F, const Array<double>& S_ref, const double delta_max, const double delta_min, const int order, const double convergence_order_tol, const bool verbose = false) {
+        // Check delta_max > delta_min
+        if (delta_max <= delta_min) {
+            std::cerr << "Error: delta_max must be greater than delta_min." << std::endl;
+            return;
+        }
+        // Check order is 1 or 2
+        if (order != 1 && order != 2) {
+            std::cerr << "Error: order must be 1 or 2." << std::endl;
+            return;
+        }
+        // Create list of deltas for convergence test (delta = delta_max, delta_max/2, delta_max/4, ...)
+        std::vector<double> deltas;
+        double delta = delta_max;
+        while (delta >= delta_min) {
+            deltas.push_back(delta);
+            delta /= 2.0;
+        }
+        // Compute finite difference S for each delta and store error in list
+        std::vector<double> errors;
+        Array<double> S_fd;
+        for (int i = 0; i < deltas.size(); i++) {
+            calcPK2StressFiniteDifference(F, deltas[i], order, S_fd);
+
+            // Compute Frobenius norm of error between S and S_fd
+            double error = 0.0;
+            for (int I = 0; I < 3; I++) {
+                for (int J = 0; J < 3; J++) {
+                    error += pow(S_ref(I,J) - S_fd(I,J), 2);
+                }
+            }
+
+            error = sqrt(error);
+
+            // Store error in list
+            errors.push_back(error);
+        }
+
+        // Compute order of convergence by fitting a line to log(delta) vs log(error)
+        std::vector<double> log_deltas, log_errors;
+        for (int i = 0; i < deltas.size(); i++) {
+            log_deltas.push_back(log(deltas[i]));
+            log_errors.push_back(log(errors[i]));
+        }
+
+        // Fit a line to log(delta) vs log(error)
+        // m is the slope (order of convergence), b is the intercept
+        auto [m, b] = computeLinearRegression(log_deltas, log_errors);
+
+        // Check that order of convergence is > order - convergence_order_tol
+        EXPECT_GT(m, order - convergence_order_tol);
+
+        // Print results if verbose
+        if (verbose) {
+            std::cout << "Slope (order of convergence): " << m << std::endl;
+            std::cout << "Intercept: " << b << std::endl;
+            std::cout << "Errors: ";
+            for (int i = 0; i < errors.size(); i++) {
+                std::cout << errors[i] << " ";
+            }
+            std::cout << std::endl;
+            std::cout << std::endl;
+
+            // std::cout << "F = " << std::endl;
+            // for (int i = 0; i < 3; i++) {
+            //     for (int J = 0; J < 3; J++) {
+            //         std::cout << F[i][J] << " ";
+            //     }
+            //     std::cout << std::endl;
+            // }
+
+            // std::cout << "S = " << std::endl;
+            // for (int i = 0; i < 3; i++) {
+            //     for (int J = 0; J < 3; J++) {
+            //         std::cout << S[i][J] << " ";
+            //     }
+            //     std::cout << std::endl;
+            // }
+
+            std::cout << std::endl;
+        }
+    }
+
+    /**
      * @brief Compute perturbation in strain energy density (dPsi) given perturbation in the deformation gradient (dF).
      * 
      * @param F Deformation gradient
@@ -1317,6 +1410,163 @@ public:
     }
 
     /**
+     * @brief Tests the order of convergence of the consistency between CC:dE and dS using finite differences, with CCdE and dS as INPUTS. Used to compare CANN with other models
+     * 
+     * Analytically, we should have CC:dE = dS. This function determines the order of convergence of CC:dE = dS, where dE and dS are computed using finite differences in F.
+     *
+     * Pseudocode:
+     * - For each component-wise perturbation dF
+     *     - For decreasing delta
+     *       - Compute dS
+     *       - Compute CC:dE 
+     *       - Compute error CC:dE - dS
+     * - Compute order of convergence by fitting a line to log(delta) vs log(error)
+     * 
+     * Note that the order of convergence should be order + 1, because we are comparing differences (dS and CC:dE)
+     * instead of derivatives (e.g. dS/dF and CC:dE/dF).
+     * @param[in] F Deformation gradient.
+     * @param[in] dS Change in pk2 due to perturbation dF in F
+     * @param[in] CCdE CC:dE
+     * @param[in] deltas scaling factors for perturbations
+     * @param[in] order Order of the finite difference scheme (1 for first order, 2 for second order, etc.).
+     * @param[in] convergence_order_tol Tolerance for comparing convergence order with expected value
+     * @param[in] verbose Show values of errors and order of convergence if true.
+     */
+    void testMaterialElasticityConsistencyConvergenceOrderBetweenMaterialModels(Array<double>& F, Array<double>& dS, Array<double>& CCdE, std::vector<double> deltas, int order, const double convergence_order_tol, bool verbose = false) {
+
+        // Loop over perturbations to each component of F, dF
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                std::vector<double> errors;
+                // Compute Frobenius norm of error between dS and CC:dE
+                for (int i = 0; i < deltas.size(); i++) {
+                    double error = 0.0;
+                    for (int i = 0; i < 3; i++) {
+                        for (int j = 0; j < 3; j++) {
+                            error += pow(dS(i,j) - CCdE(i,j), 2);
+                        }
+                    }
+                    error = sqrt(error);
+
+                    // Store error in list
+                    errors.push_back(error);
+                }
+
+                // Compute order of convergence by fitting a line to log(delta) vs log(error)
+                std::vector<double> log_deltas, log_errors;
+                for (int i = 0; i < deltas.size(); i++) {
+                    log_deltas.push_back(log(deltas[i]));
+                    log_errors.push_back(log(errors[i]));
+                }
+
+                // Fit a line to log(delta) vs log(error)
+                // m is the slope (order of convergence), b is the intercept
+                auto [m, b] = computeLinearRegression(log_deltas, log_errors);
+                if (std::isnan(m)) {
+                    std::ostringstream oss;
+                    oss << "Error: m value nan. "
+                        << ", F = [";
+
+                    // Append each element of F to the string stream
+                    for (int i = 0; i < 3; ++i) {
+                        for (int j = 0; j < 3; ++j) {
+                            oss << F(i,j);
+                            if (j < 3 - 1) oss << ", ";
+                        }
+                        if (i < 3 - 1) oss << "; ";
+                    }
+                    oss << "]";
+                    throw std::runtime_error(oss.str());
+                }
+                // Check that order of convergence is > (order + 1) - convergence_order_tol
+                EXPECT_GT(m, order + 1 - convergence_order_tol);
+
+                // Print results if verbose
+                if (verbose) {
+                    std::cout << "Iteration " << i << ":" << std::endl;
+                    std::cout << "Slope (order of convergence): " << m << std::endl;
+                    std::cout << "Intercept: " << b << std::endl;
+                    std::cout << "Errors: ";
+                    for (int i = 0; i < errors.size(); i++) {
+                        std::cout << errors[i] << " ";
+                    }
+
+                    std::cout << std::endl;
+
+                    std::cout << "F = " << std::endl;
+                    for (int i = 0; i < 3; i++) {
+                        for (int J = 0; J < 3; J++) {
+                            std::cout << F(i,J) << " ";
+                        }
+                        std::cout << std::endl;
+                    }
+                }
+
+            }
+        }
+    }
+
+
+    /**
+     * @brief Generate perturbation dF in F
+     * 
+     * @param[in] F Deformation gradient.
+     * @param[in] dF Perturbation in deformation gradient.
+     * @param[in] delta_max Maximum perturbation scaling factor.
+     * @param[in] delta_min Minimum perturbation scaling factor.
+     * @param[in] deltas scaling factors for perturbations
+     * @param[in] order Order of the finite difference scheme (1 for first order, 2 for second order, etc.).
+     * @param[in] verbose Show values of errors and order of convergence if true.
+     */
+    void generatePerturbationdF(Array<double>& F, Array<double>& dF, double delta_max, double delta_min, std::vector<double> deltas, int order, bool verbose=false) {
+        // Check that delta_max > delta_min
+        if (delta_max <= delta_min) {
+            std::cerr << "Error: delta_max must be greater than delta_min." << std::endl;
+            return;
+        }
+
+        // Check that order is 1 or 2
+        if (order != 1 && order != 2) {
+            std::cerr << "Error: order must be 1 or 2." << std::endl;
+            return;
+        }
+        // Create list of deltas for convergence test (delta = delta_max, delta_max/2, delta_max/4, ...)
+        double delta = delta_max;
+        while (delta >= delta_min) {
+            deltas.push_back(delta);
+            delta /= 2.0;
+        }
+        // Loop over perturbations to each component of F, dF
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                // Generate dF with 1.0 in (i,j) component
+                dF(i,j) = 1.0;
+
+                // Print results if verbose
+                if (verbose) {
+                    std::cout << "F = " << std::endl;
+                    for (int i = 0; i < 3; i++) {
+                        for (int J = 0; J < 3; J++) {
+                            std::cout << F(i,J) << " ";
+                        }
+                        std::cout << std::endl;
+                    }
+
+                    std::cout << "dF = " << std::endl;
+                    for (int i = 0; i < 3; i++) {
+                        for (int J = 0; J < 3; J++) {
+                            std::cout << dF(i,J) << " ";
+                        }
+                        std::cout << std::endl;
+                    }
+                    std::cout << std::endl;
+                }
+                
+            }
+        }
+    }
+
+    /**
      * @brief Compares the PK2 stress tensor S(F) with a reference solution.
      *
      * This function computes the PK2 stress tensor S(F) from the deformation gradient F using compute_pk2cc() 
@@ -1444,6 +1694,58 @@ public:
                 for (int j = 0; j < N; j++) {
                     for (int k = 0; k < N; k++) {
                         for (int l = 0; l < N; l++) {
+                            std::cout << CC_ref(i,j,k,l) << " ";
+                        }
+                        std::cout << std::endl;
+                    }
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    /**
+     * @brief Calculate the reference material elasticity tensor CC(F) for comparison with Neo-Hookean.
+     *
+     * This function computes the material elasticity tensor CC(F) from the deformation gradient F using compute_pk2cc() 
+     *
+     * @param[in] F Deformation gradient.
+     * @param[in] CC_ref Reference solution for material elasticity tensor.
+     * @param[in] verbose Show values of F, CC, and CC_ref if true.
+     * @return None.
+     */
+    void calcMaterialElasticityReference(const Array<double> &F, Tensor4<double> &CC_ref, bool verbose = false) {
+        int N = F.ncols();
+        assert(F.nrows() == N);
+
+        // Compute CC(F) from compute_pk2cc()
+        Array<double> S(N, N), Dm(2*N, 2*N);
+        compute_pk2cc(F, S, Dm);
+
+        // Calculate CC_ref from Dm
+        Tensor4<double> CC(N, N, N, N);
+        mat_models::voigt_to_cc(N, Dm, CC_ref);
+
+        // mat_fun_carray::print("CC_ref from calc function",CC_ref);
+
+        // Print results if verbose
+        if (verbose) {
+            printMaterialParameters();
+
+            std::cout << "F =" << std::endl;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    std::cout << F(i,j) << " ";
+                }
+                std::cout << std::endl;
+            }
+
+            std::cout << "CC_ref =" << std::endl;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    for (int k = 0; k < 3; k++) {
+                        for (int l = 0; l < 3; l++) {
                             std::cout << CC_ref(i,j,k,l) << " ";
                         }
                         std::cout << std::endl;
@@ -1605,6 +1907,60 @@ public:
         }
     }
 };
+
+// Class to contain CANN model with Neo-Hookean material parameters
+class CANN_NH_Params : public MatParams {
+public:
+    std::vector<CANNRow> Table;
+
+    // Default constructor
+    CANN_NH_Params() {
+
+        // Resize Table to ensure there's at least 1 element
+        Table.resize(1);  // Ensure there's space for at least one row
+
+        Table[0].invariant_index.value_ = 1;
+        Table[0].activation_functions.value_ = {1,1,1};
+        Table[0].weights.value_ = {1.0,1.0,40.0943265e6};
+      };
+
+    // Constructor with parameters
+    CANN_NH_Params(std::vector<CANNRow> TableValues) {
+        for (int i = 0; i < 1; i++){
+            this -> Table[i].invariant_index = TableValues[i].invariant_index;
+            this -> Table[i].activation_functions = TableValues[i].activation_functions;
+            this -> Table[i].weights = TableValues[i].weights;
+        }     
+    };
+
+};
+
+// Class to contain CANN model withHolzapfel-Ogden material parameters
+class CANN_HO_Params : public MatParams {
+public:
+    std::vector<CANNRow> Table;
+    // Define fiber directions
+    double f[3];    // Fiber direction
+    double s[3];    // Sheet direction
+
+    // Default constructor
+    CANN_HO_Params() {
+
+        // Resize Table to ensure there's at least 4 elements
+        Table.resize(4);  // Ensure there's space for 4 rows
+      };
+
+    // Constructor with parameters
+    CANN_HO_Params(std::vector<CANNRow> TableValues) {
+        for (int i = 0; i < 4; i++){
+            this -> Table[i].invariant_index = TableValues[i].invariant_index;
+            this -> Table[i].activation_functions = TableValues[i].activation_functions;
+            this -> Table[i].weights = TableValues[i].weights;
+        }     
+    };
+
+};
+
 
 // Class to contain volumetric penalty parameters (just the penalty parameter)
 class VolumetricPenaltyParams : public MatParams {
@@ -1999,6 +2355,225 @@ public:
 
         return Psi;
 
+    }
+};
+
+/**
+ * @brief Class for testing the CANN model with Neo-Hookean material model parameters.
+ *
+ * This class provides methods to set up and test the Neo-Hookean material model, including 
+ * computing the strain energy and printing material parameters.
+ */
+class TestCANN_NH : public TestMaterialModel {
+public:
+
+    /**
+     * @brief Parameters for the CANN material model.
+     */
+    CANN_NH_Params params;
+
+    /**
+     * @brief Constructor for the TestCANN_NH class.
+     *
+     * Initializes the CANN - NeoHooke material parameters.
+     *
+     * @param[in] params_ Parameters for the CANN Neo-Hookean material model.
+     */
+    TestCANN_NH(const CANN_NH_Params &params_) : TestMaterialModel( consts::ConstitutiveModelType::stArtificialNeuralNet, consts::ConstitutiveModelType::stVol_ST91),
+        params(params_) 
+        {
+        // Set Neo-Hookean material parameters
+        auto &dmn = com_mod.mockEq.mockDmn;
+        int nrows = 1;
+
+        dmn.stM.paramTable.num_rows = nrows;
+        
+        // Resize Arrays and Vectors to ensure there is enough space
+        dmn.stM.paramTable.invariant_indices.resize(dmn.stM.paramTable.num_rows);
+        dmn.stM.paramTable.activation_functions.resize(dmn.stM.paramTable.num_rows,3);
+        dmn.stM.paramTable.weights.resize(dmn.stM.paramTable.num_rows,3);
+
+        // Populate components of the table in stM
+        for (size_t i = 0; i < dmn.stM.paramTable.num_rows; i++)
+        {
+            // Store invariant index
+            dmn.stM.paramTable.invariant_indices[i] = params.Table[i].invariant_index.value_;
+
+            // Store activation function values
+            dmn.stM.paramTable.activation_functions(i,0) = params.Table[i].activation_functions.value_[0];
+            dmn.stM.paramTable.activation_functions(i,1) = params.Table[i].activation_functions.value_[1];
+            dmn.stM.paramTable.activation_functions(i,2) = params.Table[i].activation_functions.value_[2];
+
+            // Store weight values
+            dmn.stM.paramTable.weights(i,0) = params.Table[i].weights.value_[0];
+            dmn.stM.paramTable.weights(i,1) = params.Table[i].weights.value_[1];
+            dmn.stM.paramTable.weights(i,2) = params.Table[i].weights.value_[2];
+
+        }
+
+        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
+    }
+
+/**
+     * @brief Prints the CANN Neo-Hookean material parameters.
+     */
+    void printMaterialParameters() {
+        int nrows = 1;
+        for (int i = 0; i < nrows; i++){
+            std::cout << "ROW: " << i+1 << std::endl;
+            std::cout << "Invariant number: " << params.Table[i].invariant_index << std::endl;
+            std::cout << "Activation function 0: " << params.Table[i].activation_functions.value()[0] << std::endl;
+            std::cout << "Activation function 1: " << params.Table[i].activation_functions.value()[1] << std::endl;
+            std::cout << "Activation function 2: " << params.Table[i].activation_functions.value()[2] << std::endl;
+            std::cout << "Weight 0: " << params.Table[i].weights[0] << std::endl;
+            std::cout << "Weight 1: " << params.Table[i].weights[1] << std::endl;
+            std::cout << "Weight 2: " << params.Table[i].weights[2] << std::endl;
+        }
+    }
+
+    /**
+     * @brief Computes the strain energy for the Neo-Hookean material model.
+     *
+     * @param[in] F Deformation gradient.
+     * @return Strain energy density for the Neo-Hookean material model.
+     */
+    double computeStrainEnergy(const Array<double> &F) {
+        // Compute solid mechanics terms
+        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
+
+        // Strain energy density for Neo-Hookean material model
+        // Psi_iso = C10 * (Ib1 - 3)
+        double Psi_iso = params.Table[0].weights[2] * (smTerms.Ib1 - 3.); //w[0][6] = C10
+
+        return Psi_iso;
+    }
+};
+
+/**
+ * @brief Class for testing the CANN model with Holzapfel-Ogden material model parameters.
+ *
+ * This class provides methods to set up and test the Neo-Hookean material model, including 
+ * computing the strain energy and printing material parameters.
+ */
+class TestCANN_HO : public TestMaterialModel {
+public:
+
+    /**
+     * @brief Parameters for the CANN material model.
+     */
+    CANN_HO_Params params;
+
+    /**
+     * @brief Constructor for the TestCANN_HO class.
+     *
+     * Initializes the CANN - HO material parameters
+     *
+     * @param[in] params_ Parameters for the CANN HO material model.
+     */
+    TestCANN_HO(const CANN_HO_Params &params_) : TestMaterialModel( consts::ConstitutiveModelType::stArtificialNeuralNet, consts::ConstitutiveModelType::stVol_ST91),
+        params(params_) 
+        {
+        // Set HO material parameters for svFSIplus
+        auto &dmn = com_mod.mockEq.mockDmn;
+        int nrows = 4;
+
+        dmn.stM.paramTable.num_rows = nrows;
+
+        // Resize Arrays and Vectors to ensure there is enough space
+        dmn.stM.paramTable.invariant_indices.resize(dmn.stM.paramTable.num_rows);
+        dmn.stM.paramTable.activation_functions.resize(dmn.stM.paramTable.num_rows,3);
+        dmn.stM.paramTable.weights.resize(dmn.stM.paramTable.num_rows,3);
+        
+        // Populate components of the table in stM
+        for (size_t i = 0; i < dmn.stM.paramTable.num_rows; i++)
+        {
+            // Store invariant index
+            dmn.stM.paramTable.invariant_indices[i] = params.Table[i].invariant_index.value_;
+
+            // Store activation function values
+            dmn.stM.paramTable.activation_functions(i,0) = params.Table[i].activation_functions.value_[0];
+            dmn.stM.paramTable.activation_functions(i,1) = params.Table[i].activation_functions.value_[1];
+            dmn.stM.paramTable.activation_functions(i,2) = params.Table[i].activation_functions.value_[2];
+
+            // Store weight values
+            dmn.stM.paramTable.weights(i,0) = params.Table[i].weights.value_[0];
+            dmn.stM.paramTable.weights(i,1) = params.Table[i].weights.value_[1];
+            dmn.stM.paramTable.weights(i,2) = params.Table[i].weights.value_[2];
+
+        }
+       
+        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
+
+        // Set number of fiber directions and fiber directions
+        nFn = 2;
+        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
+        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
+        fN.set_col(0, f);
+        fN.set_col(1, s);
+    }
+
+/**
+     * @brief Prints the CANN HO material parameters.
+     */
+    void printMaterialParameters() {
+        int nrows = 4;
+        for (int i = 0; i < nrows; i++){
+            std::cout << "ROW: " << i+1 << std::endl;
+            std::cout << "Invariant number: " << params.Table[i].invariant_index << std::endl;
+            std::cout << "Activation function 0: " << params.Table[i].activation_functions.value()[0] << std::endl;
+            std::cout << "Activation function 1: " << params.Table[i].activation_functions.value()[1] << std::endl;
+            std::cout << "Activation function 2: " << params.Table[i].activation_functions.value()[2] << std::endl;
+            std::cout << "Weight 0: " << params.Table[i].weights[0] << std::endl;
+            std::cout << "Weight 1: " << params.Table[i].weights[1] << std::endl;
+            std::cout << "Weight 2: " << params.Table[i].weights[2] << std::endl;
+        }
+    }
+
+    /**
+     * @brief Computes the strain energy for the Holzapfel-Ogden material model.
+     *
+     * @param[in] F Deformation gradient.
+     * @return Strain energy density for the Neo-Hookean material model.
+     */
+    double computeStrainEnergy(const Array<double> &F) {
+        // Compute solid mechanics terms
+        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
+
+        // Fiber and sheet directions
+        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
+        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
+
+        // Strain energy density for Holzapfel-Ogden material model
+
+        // Formulation with fully decoupled isochoric-volumetric split
+        // Uses I1_bar, I4_bar_f, I4_bar_s, I8_bar_fs (bar = isochoric)
+        // Psi = a/2b * exp{b(I1_bar - 3)} 
+        //       + a_f/2b_f * chi(I4_bar_f) * (exp{b_f(I4_bar_f - 1)^2} - 1
+        //       + a_s/2b_s * chi(I4_bar_s) * (exp{b_s(I4_bar_s - 1)^2} - 1
+        //       + a_fs/2b_fs * (exp{b_fs*I8_bar_fs^2} - 1)
+        // We set k = 0 which leads to chi = 1/2 for all terms.
+        
+        // Invariants
+        double I1_bar = smTerms.Ib1;
+        // I4_bar_f = f . C_bar . f
+        auto C_bar_f = mat_fun::mat_mul(smTerms.C_bar, f);
+        double I4_bar_f = f.dot(C_bar_f);
+        // I4_bar_s = s . C_bar . s
+        auto C_bar_s = mat_fun::mat_mul(smTerms.C_bar, s);
+        double I4_bar_s = s.dot(C_bar_s);
+        // I8_bar_fs = f . C_bar . s
+        double I8_bar_fs = f.dot(C_bar_s);
+
+        // Strain energy density for Holzapfel-Ogden material model with modified anisotropic invariants (bar quantities)
+        double Psi = 0.0;
+        int nterms = 4;
+        Psi += params.Table[0].weights[2] * exp(params.Table[0].weights[1] * (I1_bar - 3.0)); // isotropic term
+        Psi += params.Table[1].weights[2] * (exp(params.Table[1].weights[1] * pow(I4_bar_f - 1.0, 2)) - 1.0);   // Fiber term; 0.5 included in params
+        Psi += params.Table[2].weights[2] * (exp(params.Table[2].weights[1] * pow(I4_bar_s - 1.0, 2)) - 1.0);   // Sheet term
+        Psi += params.Table[3].weights[2] * (exp(params.Table[3].weights[1] * pow(I8_bar_fs, 2)) - 1.0);                   // Cross-fiber term
+
+
+        return Psi;
     }
 };
 

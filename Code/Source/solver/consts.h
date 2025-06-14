@@ -211,7 +211,8 @@ enum class ConstitutiveModelType
   stVol_NA = 650,
   stVol_Quad = 651, 
   stVol_ST91 = 652, 
-  stVol_M94 = 653
+  stVol_M94 = 653,
+  stArtificialNeuralNet = 654
 };
 
 /// @brief Map for constitutive_model string to ConstitutiveModelType. 
