@@ -28,12 +28,20 @@ def test_LV_HolzapfelOgden_passive(n_proc):
     test_folder = "LV_HolzapfelOgden_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_LV_HolzapfelOgden_passive_CANN(n_proc):
+    test_folder = "LV_HolzapfelOgden_passive_CANN"
+    run_with_reference(base_folder, test_folder, fields, n_proc)
+
 def test_LV_HolzapfelOgdenModifiedAnisotropy_passive(n_proc):
     test_folder = "LV_HolzapfelOgdenModifiedAnisotropy_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
 def test_block_compression(n_proc):
     test_folder = "block_compression"
+    run_with_reference(base_folder, test_folder, fields, n_proc)
+
+def test_block_compression_CANN(n_proc):
+    test_folder = "block_compression_CANN"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
 def test_robin(n_proc):

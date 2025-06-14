@@ -110,6 +110,8 @@ class cmType {
     void bcast(const CmMod& cm_mod, int* data) const;
     void bcast(const CmMod& cm_mod, Vector<int>& data) const;
 
+    void bcast(const CmMod& cm_mod, Array<int>& data, const std::string& name="") const;
+
     //------------
     // bcast_enum
     //------------
