@@ -47,9 +47,16 @@ void ArtificialNeuralNetMaterial::uCANN_h0(const double x, const int kf, double 
         df = 1;
         ddf = 0;
     } else if (kf == 2) {
-        f = (std::abs(x) + x) / 2;
-        df = 0.5 * (std::abs(x) / x + 1);
-        ddf = 0;
+        if (x == 0) {
+            f = (std::abs(x) + x) / 2;
+            df = 0;
+            ddf = 0;
+        }
+        else {
+            f = (std::abs(x) + x) / 2;
+            df = 0.5 * (std::abs(x) / x + 1);
+            ddf = 0;
+        }
     } else if (kf == 3) {
         f = std::abs(x);
         df = std::abs(x) / x;

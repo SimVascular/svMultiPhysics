@@ -1241,21 +1241,7 @@ void dist_mat_consts(const ComMod& com_mod, const CmMod& cm_mod, const cmType& c
       cm.bcast(cm_mod, lStM.paramTable.weights, "paramTable.weights");
     }
 }
-  // cm.bcast(cm_mod, &lStM.paramTable.num_rows);
-
-  // if (lStM.paramTable.num_rows > 0) {
-  //     if (cm.slv(cm_mod))
-  //   {
-  //     lStM.paramTable.invariant_indices.resize(lStM.paramTable.num_rows);
-  //     lStM.paramTable.activation_functions.resize(lStM.paramTable.num_rows,3);
-  //     lStM.paramTable.weights.resize(lStM.paramTable.num_rows,3);
-  //   }
-    
-  //   cm.bcast(cm_mod, lStM.paramTable.invariant_indices);
-  //   cm.bcast(cm_mod, lStM.paramTable.activation_functions, "paramTable.act_func");
-  //   cm.bcast(cm_mod, lStM.paramTable.weights, "paramTable.weights");
-  // }
-
+  
 }
 
 
