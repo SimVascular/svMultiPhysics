@@ -319,6 +319,8 @@ if(ENABLE_UNIT_TEST)
   set(TEST_SOURCES 
     "../../../tests/unitTests/test_material_neohookean.cpp"
     "../../../tests/unitTests/test_material_mooney_rivlin.cpp"
+    "../../../tests/unitTests/test_material_holzapfel_ogden.cpp"
+    "../../../tests/unitTests/test_material_holzapfel_ogden_MA.cpp"
   )
   
   list(REMOVE_ITEM CSRCS "main.cpp")
