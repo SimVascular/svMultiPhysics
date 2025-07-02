@@ -321,6 +321,8 @@ if(ENABLE_UNIT_TEST)
     "../../../tests/unitTests/test_material_mooney_rivlin.cpp"
     "../../../tests/unitTests/test_material_holzapfel_ogden.cpp"
     "../../../tests/unitTests/test_material_holzapfel_ogden_MA.cpp"
+    "../../../tests/unitTests/test_material_CANN_neohookean.cpp"
+    "../../../tests/unitTests/test_material_CANN_holzapfel_ogden.cpp"
   )
   
   list(REMOVE_ITEM CSRCS "main.cpp")
