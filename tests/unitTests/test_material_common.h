@@ -14,7 +14,7 @@
  * @param[out] F The deformation gradient tensor to be set to the identity matrix.
  * @return The deformation gradient tensor F set to the identity matrix.
  */
-Array<double> create_identity_F(const int N) {
+inline Array<double> create_identity_F(const int N) {
     Array<double> F(N, N);
     for (int i = 0; i < N; i++) {
         for (int J = 0; J < N; J++) {
@@ -28,7 +28,7 @@ Array<double> create_identity_F(const int N) {
  * @brief Create a ones matrix.
  * 
  */
-Array<double> create_ones_matrix(const int N) {
+inline Array<double> create_ones_matrix(const int N) {
     Array<double> A(N, N);
     for (int i = 0; i < N; i++) {
         for (int J = 0; J < N; J++) {
@@ -47,7 +47,7 @@ Array<double> create_ones_matrix(const int N) {
  * @param[in] max The maximum value of the range.
  * @return A random double value between min and max.
  */
-inline double getRandomDouble(double min, double max) {
+inline double getRandomDouble(const double min, const double max) {
     // Uncomment to use a random seed
     //unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
     unsigned int seed = 42;
@@ -65,7 +65,7 @@ inline double getRandomDouble(double min, double max) {
  * @param[in] max The maximum value for the elements of the deformation gradient tensor (default is 10.0).
  * @return A random deformation gradient tensor F.
  */
-Array<double> create_random_F(const int N, double min=0.1, double max=10.0) {
+inline Array<double> create_random_F(const int N, const double min=0.1, const double max=10.0) {
     // Create a random deformation gradient with values between min and max, 
     // and det(F) > 0
     Array<double> F(N, N);
@@ -91,7 +91,7 @@ Array<double> create_random_F(const int N, double min=0.1, double max=10.0) {
  * @param[in] max_deviation The maximum deviation from the identity matrix elements.
  * @return A random deformation gradient tensor F.
  */
-Array<double> create_random_perturbed_identity_F(const int N, double max_deviation) {
+inline Array<double> create_random_perturbed_identity_F(const int N, const double max_deviation) {
     // Create a random deformation gradient with values perturbed from the identity matrix, 
     // and det(F) > 0
     Array<double> F(N, N);
@@ -119,7 +119,7 @@ Array<double> create_random_perturbed_identity_F(const int N, double max_deviati
  * @param[in] N The size of the deformation gradient tensor (NxN).
  * @return None.
  */
-Array<double> perturb_random_F(const Array<double> &F, const double delta) {
+inline Array<double> perturb_random_F(const Array<double> &F, const double delta) {
 
     int N = F.nrows(); // Size of the deformation gradient tensor
     assert (N == F.ncols()); // Check that F is square
@@ -148,7 +148,7 @@ Array<double> perturb_random_F(const Array<double> &F, const double delta) {
  * @param[out] E The computed Green-Lagrange strain tensor.
  * @return None.
  */
-void calc_JCE(const Array<double> &F, double &J, Array<double> &C, Array<double> &E) {
+inline void calc_JCE(const Array<double> &F, double &J, Array<double> &C, Array<double> &E) {
 
     int N = F.nrows(); // Size of the deformation gradient tensor
     assert (N == F.ncols()); // Check that F is square
@@ -192,7 +192,7 @@ struct solidMechanicsTerms {
  * @param[in] F The deformation gradient tensor.
  * @return A structure containing the computed solid mechanics terms.
  */
-solidMechanicsTerms calcSolidMechanicsTerms(const Array<double> &F) {
+inline solidMechanicsTerms calcSolidMechanicsTerms(const Array<double> &F) {
 
     int N = F.nrows(); // Size of the deformation gradient tensor
     assert (N == F.ncols()); // Check that F is square
@@ -247,7 +247,7 @@ solidMechanicsTerms calcSolidMechanicsTerms(const Array<double> &F) {
  * @param y y data points.
  * @return std::pair<double, double> A pair containing the slope (m) and the y-intercept (b).
  */
-std::pair<double, double> computeLinearRegression(const std::vector<double>& x, const std::vector<double>& y) {
+inline std::pair<double, double> computeLinearRegression(const std::vector<double>& x, const std::vector<double>& y) {
     int n = x.size();
     double sum_x = std::accumulate(x.begin(), x.end(), 0.0);
     double sum_y = std::accumulate(y.begin(), y.end(), 0.0);
