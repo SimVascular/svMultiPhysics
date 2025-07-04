@@ -808,7 +808,9 @@ void iterate_solution(Simulation* simulation)
       }
 
       if (cm.mas(cm_mod)) {
-        uris::uris_write_vtus(com_mod);
+        if (l2 && l3) {
+          uris::uris_write_vtus(com_mod);
+        }
       }
     }
     // end RIS/URIS stuff 
