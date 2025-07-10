@@ -315,18 +315,16 @@ if(ENABLE_UNIT_TEST)
 
   # add test.cpp for unit test
 
-  # Add the test files and remove the main.cpp
-  set(TEST_SOURCES 
-    "../../../tests/unitTests/test_material_neohookean.cpp"
-    "../../../tests/unitTests/test_material_mooney_rivlin.cpp"
-    "../../../tests/unitTests/test_material_holzapfel_ogden.cpp"
-    "../../../tests/unitTests/test_material_holzapfel_ogden_MA.cpp"
-    "../../../tests/unitTests/test_material_CANN_neohookean.cpp"
-    "../../../tests/unitTests/test_material_CANN_holzapfel_ogden.cpp"
-    "../../../tests/unitTests/test_material_quadratic_volumetric_penalty.cpp"
-    "../../../tests/unitTests/test_material_simo_taylor_91_volumetric_penalty.cpp"
-    "../../../tests/unitTests/test_material_miehe_94_volumetric_penalty.cpp"
+  # Automatically find all test files under unitTests directory
+  file(GLOB_RECURSE TEST_SOURCES 
+    "../../../tests/unitTests/*.cpp"
   )
+  list(LENGTH TEST_SOURCES TEST_SOURCES_COUNT)
+  message(STATUS "Found ${TEST_SOURCES_COUNT} test files")
+  foreach(TEST_SOURCE ${TEST_SOURCES})
+    # Print the file being copied for debugging
+    message(STATUS "TEST_SOURCE: ${TEST_SOURCE}")
+  endforeach()  
   
   list(REMOVE_ITEM CSRCS "main.cpp")
   list(APPEND CSRCS ${TEST_SOURCES})

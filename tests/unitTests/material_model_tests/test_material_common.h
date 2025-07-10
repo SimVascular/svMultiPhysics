@@ -1,7 +1,7 @@
 #ifndef TEST_MATERIAL_COMMON_H
 #define TEST_MATERIAL_COMMON_H
 
-#include "test_common.h"
+#include "../test_common.h"
 #include "mat_models.h"
 
 // --------------------------------------------------------------
