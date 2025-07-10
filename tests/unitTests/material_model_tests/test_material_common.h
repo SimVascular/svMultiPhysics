@@ -1775,7 +1775,6 @@ protected:
 
     // Function to convert C array to std::array
     Array3x3 convertToStdArray(const Array<double> &F) {
-
         int N = F.ncols();
         assert(F.nrows() == N);
         assert(N == 3);
@@ -1791,7 +1790,6 @@ protected:
 
     // Function to convert std::array to Array
     void convertToArray(Array3x3 stdArray, Array<double> F) {
-
         int N = F.ncols();
         assert(F.nrows() == N);
         assert(N == 3);
