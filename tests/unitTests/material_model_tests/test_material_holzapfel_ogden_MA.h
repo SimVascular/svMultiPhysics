@@ -34,7 +34,7 @@
 #include "test_material_common.h"
 
 
-// Class to contain Holzapfel-Ogden (Modified Anisortopy) material parameters
+// Class to contain Holzapfel-Ogden (Modified Anisotropy) material parameters
 class HolzapfelOgdenMAParams : public MatParams {
 public:
     double a;    
