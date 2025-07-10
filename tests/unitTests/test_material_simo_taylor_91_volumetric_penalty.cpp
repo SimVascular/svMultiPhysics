@@ -1,0 +1,204 @@
+#include "test_material_simo_taylor_91_volumetric_penalty.h"
+
+// ----------------------------------------------------------------------------
+// --------------------------- Simo-Taylor 91 Volumetric Penalty --------------
+// ----------------------------------------------------------------------------
+
+
+/**
+ * @brief Test fixture class for the Simo-Taylor91 Volumetric penalty model.
+ * 
+ * This class sets up the necessary parameters and objects for testing the Simo-Taylor91 Volumetric penalty model.
+ */
+class SimoTaylor91VolumetricPenaltyTest : public MaterialTestFixture {
+    protected:
+        // Material parameters object
+        SimoTaylor91VolumetricPenaltyParams params;
+    
+        // Add the test object
+        TestSimoTaylor91VolumetricPenalty* TestST91;
+    
+        // Setup method to initialize variables before each test
+        void SetUp() override {
+    
+            MaterialTestFixture::SetUp();
+    
+            // Set random values for the Simo-Taylor91 penalty parameters between 1000 and 10000
+            params.kappa = getRandomDouble(1000.0, 10000.0);
+    
+            // Initialize the test object
+            TestST91 = new TestSimoTaylor91VolumetricPenalty(params);
+        }
+    
+        // TearDown method to clean up after each test, if needed
+        void TearDown() override {
+            // Clean up the test object
+            delete TestST91;
+            TestST91 = nullptr;
+        }
+    };
+    
+    /**
+     * @brief Test fixture class for STRUCT Simo-Taylor91 penalty model.
+     */
+    class STRUCT_SimoTaylor91VolumetricPenaltyTest : public SimoTaylor91VolumetricPenaltyTest {
+    protected:
+        void SetUp() override {
+            SimoTaylor91VolumetricPenaltyTest::SetUp();
+    
+            // Use struct
+            //TestST91->ustruct = false;
+        }
+    };
+    
+    /**
+     * @brief Test fixture class for USTRUCT Simo-Taylor91 penalty model.
+     */
+    class USTRUCT_SimoTaylor91VolumetricPenaltyTest : public SimoTaylor91VolumetricPenaltyTest {
+    protected:
+        void SetUp() override {
+            SimoTaylor91VolumetricPenaltyTest::SetUp();
+    
+            // Use ustruct
+            //TestST91->ustruct = true;
+        }
+    };
+
+// ------------------------------ STRUCT Tests --------------------------------
+
+
+// Test PK2 stress zero for F = I
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressIdentityF) {
+    //verbose = true; // Show values of S and S_ref
+
+    // Check identity F produces zero PK2 stress
+    Array<double> F = {{1.0, 0.0, 0.0},
+                        {0.0, 1.0, 0.0},
+                        {0.0, 0.0, 1.0}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
+    TestST91->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+}
+
+// Test PK2 stress zero for prescribed isochoric deformation
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressPrescribedIsochoricDeformation) {
+    //verbose = true; // Show values of S and S_ref
+
+    // Check isochoric deformation produces zero PK2 stress
+    Array<double> F = {{1.1, 0.0, 0.0},
+                        {0.0, 1.2, 0.0},
+                        {0.0, 0.0, 1.0/(1.1*1.2)}};
+    Array<double> S_ref(3, 3); // PK2 stress initialized to zero
+    TestST91->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+}
+
+
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFSmall) {
+    //verbose = true; // Show order of convergence, errors, F, S
+
+    // Loop over F in F_small_list
+    for (auto F_std : F_small_list) {
+        // Convert to Array
+        convertToArray(F_std, F);
+
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
+        TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+    }
+}
+
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (medium)
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFMedium) {
+    //verbose = true; // Show order of convergence, errors, F, S
+
+    // Loop over F in F_medium_list
+    for (auto F_std : F_medium_list) {
+        // Convert to Array
+        convertToArray(F_std, F);
+
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
+        TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+    }
+}
+
+// Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (large)
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFLarge) {
+    //verbose = true; // Show order of convergence, errors, F, S
+
+    // Loop over F in F_large_list
+    for (auto F_std : F_large_list) {
+        // Convert to Array
+        convertToArray(F_std, F);
+
+        // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
+        TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+    }
+}
+
+// Test order of convergence of consistency of material elasticity for random F (small)
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsistencyConvergenceOrderRandomFSmall) {
+    //verbose = true; // Show order of convergence, errors, F, S
+
+    // Loop over F in F_small_list
+    for (auto F_std : F_small_list) {
+        // Convert to Array
+        convertToArray(F_std, F);
+
+        // Check order of convergence of consistency of material elasticity
+        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+    }
+}
+
+// Test order of convergence of consistency of material elasticity for random F (medium)
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsistencyConvergenceOrderRandomFMedium) {
+    //verbose = true; // Show order of convergence, errors, F, S
+
+    // Loop over F in F_medium_list
+    for (auto F_std : F_medium_list) {
+        // Convert to Array
+        convertToArray(F_std, F);
+
+        // Check order of convergence of consistency of material elasticity
+        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+    }
+}
+
+// Test order of convergence of consistency of material elasticity for random F (large)
+TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsistencyConvergenceOrderRandomFLarge) {
+    //verbose = true; // Show order of convergence, errors, F, S
+
+    // Loop over F in F_large_list
+    for (auto F_std : F_large_list) {
+        // Convert to Array
+        convertToArray(F_std, F);
+
+        // Check order of convergence of consistency of material elasticity
+        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+    }
+}
+
+// ------------------------------ USTRUCT Tests --------------------------------
+
+// Test rho and beta values for random p
+TEST_F(USTRUCT_SimoTaylor91VolumetricPenaltyTest, TestRhoBeta) {
+    //verbose = true; // Show values of rho, beta and rho_ref
+
+    // Generate random pressure p between 100 and 1000
+    double p = getRandomDouble(100.0, 1000.0);
+
+    // Other parameters
+    double rho0 = 1000.0; // Reference density
+    double kappa = TestST91->params.kappa; // Volumetric penalty parameter
+
+    // Compute reference values for rho, beta, drho/dp and dbeta/dp
+    // See ustruct paper (https://doi.org/10.1016/j.cma.2018.03.045) Section 2.4
+    double rho_ref = rho0 / kappa * (sqrt(p*p + kappa*kappa) + p);
+    double beta_ref = 1.0 / sqrt(p*p + kappa*kappa);
+    double drhodp_ref = rho0 / kappa * (1.0/2.0 * (1.0/sqrt(p*p + kappa*kappa)) * 2.0*p + 1.0); // Derivative of rho with respect to p
+    double dbetadp_ref = -1.0/2.0 * 1.0/pow(p*p + kappa*kappa, 3.0/2.0) * 2.0*p; // Derivative of beta with respect to p
+
+    // Check rho, beta, drho/dp and dbeta/dp against reference values
+    TestST91->testRhoBetaAgainstReference(p, rho0, rho_ref, beta_ref, drhodp_ref, dbetadp_ref, rel_tol, abs_tol, verbose);
+}
+
+
+
