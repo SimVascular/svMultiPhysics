@@ -153,9 +153,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressTriaxialStretch) {
 TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceRandomFSmall) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
         convertToArray(F_std, F);
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
@@ -169,9 +167,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceR
 TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceRandomFMedium) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
         convertToArray(F_std, F);
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
@@ -185,11 +181,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceR
 TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceRandomFLarge) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    // Use struct
-    //TestQVP->ustruct = false;
-    // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to C array
         convertToArray(F_std, F);
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
@@ -203,9 +195,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceR
 TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderAgainstNHRandomFSmall) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    // Loop over F in F_small_list
     for (auto F_std : F_small_list) {
-        // Convert to C array
         convertToArray(F_std, F);
         // Generating perturbation
         Array<double> dF(3,3);
@@ -227,9 +217,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOr
 TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderAgainstNHRandomFMedium) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    // Loop over F in F_medium_list
     for (auto F_std : F_medium_list) {
-        // Convert to C array
         convertToArray(F_std, F);
         // Generating perturbation
         Array<double> dF(3,3);
@@ -251,9 +239,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOr
 TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderAgainstNHRandomFLarge) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    // Loop over F in F_large_list
     for (auto F_std : F_large_list) {
-        // Convert to array
         convertToArray(F_std, F);
         // Generating perturbation
         Array<double> dF(3,3);
