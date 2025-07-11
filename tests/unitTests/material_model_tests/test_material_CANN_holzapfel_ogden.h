@@ -39,23 +39,29 @@ class CANN_HO_Params : public MatParams {
 public:
     std::vector<CANNRow> Table;
     // Define fiber directions
-    double f[3];    // Fiber direction
-    double s[3];    // Sheet direction
+    Vector<double> f;    // Fiber direction
+    Vector<double> s;    // Sheet direction
 
     // Default constructor
     CANN_HO_Params() {
 
         // Resize Table to ensure there's at least 4 elements
         Table.resize(4);  // Ensure there's space for 4 rows
+
+        f.resize(3);
+        s.resize(3);
       };
 
     // Constructor with parameters
-    CANN_HO_Params(std::vector<CANNRow> TableValues) {
+    CANN_HO_Params(std::vector<CANNRow> TableValues, Vector<double> f, Vector<double> s) {
         for (int i = 0; i < 4; i++){
             this -> Table[i].invariant_index = TableValues[i].invariant_index;
             this -> Table[i].activation_functions = TableValues[i].activation_functions;
             this -> Table[i].weights = TableValues[i].weights;
-        }     
+        }
+
+        this -> f = f;
+        this -> s = s;
     };
 
 };
@@ -118,10 +124,8 @@ public:
 
         // Set number of fiber directions and fiber directions
         nFn = 2;
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-        fN.set_col(0, f);
-        fN.set_col(1, s);
+        fN.set_col(0, params.f);
+        fN.set_col(1, params.s);
     }
 
 /**
@@ -152,8 +156,8 @@ public:
         solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
 
         // Fiber and sheet directions
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
+        Vector<double> f = params.f;
+        Vector<double> s = params.s;
 
         // Strain energy density for Holzapfel-Ogden material model
 

@@ -71,8 +71,8 @@ protected:
         params.f[0] = getRandomDouble(0.0, 1.0);
         params.f[1] = getRandomDouble(0.0, 1.0);
         params.f[2] = getRandomDouble(0.0, 1.0);
-        double norm_f = sqrt(params.f[0]*params.f[0] + params.f[1]*params.f[1] + params.f[2]*params.f[2]);
-        params.f[0] /= norm_f; params.f[1] /= norm_f; params.f[2] /= norm_f;
+        double norm_f = sqrt(params.f.dot(params.f));
+        params.f = params.f / norm_f;
 
         // Create s orthogonal to f
         if (fabs(params.f[0]) < 0.9) { // Check if f[0] is not the dominant component
@@ -86,11 +86,11 @@ protected:
         }
 
         // Normalize s
-        double norm_s = sqrt(params.s[0]*params.s[0] + params.s[1]*params.s[1] + params.s[2]*params.s[2]);
-        params.s[0] /= norm_s; params.s[1] /= norm_s; params.s[2] /= norm_s;
+        double norm_s = sqrt(params.s.dot(params.s));
+        params.s = params.s / norm_s;
 
         // Check f.s = 0
-        double dot_fs = params.f[0]*params.s[0] + params.f[1]*params.s[1] + params.f[2]*params.s[2];
+        double dot_fs = params.f.dot(params.s);
         if (fabs(dot_fs) > 1e-6) {
             std::cout << "f.s = " << dot_fs << std::endl;
             std::cout << "f = [" << params.f[0] << ", " << params.f[1] << ", " << params.f[2] << "]" << std::endl;

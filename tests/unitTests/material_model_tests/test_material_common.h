@@ -1789,14 +1789,14 @@ protected:
     }
 
     // Function to convert std::array to Array
-    void convertToArray(Array3x3 stdArray, Array<double> F) {
-        int N = F.ncols();
-        assert(F.nrows() == N);
+    void convertToArray(const Array3x3 &stdArray, Array<double> array) {
+        int N = array.ncols();
+        assert(array.nrows() == N);
         assert(N == 3);
 
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                F(i,j) = stdArray[i][j];
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                array(i,j) = stdArray[i][j];
             }
         }
     }

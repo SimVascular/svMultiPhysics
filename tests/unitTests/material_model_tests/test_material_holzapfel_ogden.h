@@ -44,25 +44,19 @@ public:
     double b_s;
     double a_fs;
     double b_fs;
-    double f[3];    // Fiber direction
-    double s[3];    // Sheet direction
+    Vector<double> f;    // Fiber direction
+    Vector<double> s;    // Sheet direction
 
     double k; // Smoothed Heaviside function parameter
 
     // Default constructor
     HolzapfelOgdenParams() : a(0.0), b(0.0), a_f(0.0), b_f(0.0), a_s(0.0), b_s(0.0), a_fs(0.0), b_fs(0.0), k(0.0) {
-        for (int i = 0; i < 3; i++) {
-            f[i] = 0.0;
-            s[i] = 0.0;
-        }
+        f.resize(3);
+        s.resize(3);
     }
 
     // Constructor with parameters
-    HolzapfelOgdenParams(double a, double b, double a_f, double b_f, double a_s, double b_s, double a_fs, double b_fs, double k, double f[3], double s[3]) : a(a), b(b), a_f(a_f), b_f(b_f), a_s(a_s), b_s(b_s), a_fs(a_fs), b_fs(b_fs), k(k) {
-        for (int i = 0; i < 3; i++) {
-            this->f[i] = f[i];
-            this->s[i] = s[i];
-        }
+    HolzapfelOgdenParams(double a, double b, double a_f, double b_f, double a_s, double b_s, double a_fs, double b_fs, double k, Vector<double> f, Vector<double> s) : a(a), b(b), a_f(a_f), b_f(b_f), a_s(a_s), b_s(b_s), a_fs(a_fs), b_fs(b_fs), k(k), f(f), s(s) {
     }
 };
 
@@ -105,10 +99,8 @@ public:
 
         // Set number of fiber directions and fiber directions
         nFn = 2;
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-        fN.set_col(0, f);
-        fN.set_col(1, s);
+        fN.set_col(0, params.f);
+        fN.set_col(1, params.s);
     }
 
     /**
@@ -163,8 +155,8 @@ public:
         double k = params.k;
 
         // Fiber and sheet directions
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
+        Vector<double> f = params.f;
+        Vector<double> s = params.s;
 
         // Strain energy density for Holzapfel-Ogden material model
 
