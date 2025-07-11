@@ -153,8 +153,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressTriaxialStretch) {
 TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceRandomFSmall) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_small_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         Array<double> S_ref(3,3), Dm(6,6);
@@ -167,8 +166,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceR
 TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceRandomFMedium) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_medium_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_medium_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         Array<double> S_ref(3,3), Dm(6,6);
@@ -181,8 +179,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceR
 TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceRandomFLarge) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_large_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         Array<double> S_ref(3,3), Dm(6,6);
@@ -195,8 +192,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestPK2StressConvergenceOrderAgainstReferenceR
 TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderAgainstNHRandomFSmall) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_small_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_small_list) {
         // Generating perturbation
         Array<double> dF(3,3);
         std::vector<double> deltas;
@@ -217,8 +213,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOr
 TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderAgainstNHRandomFMedium) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_medium_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_medium_list) {
         // Generating perturbation
         Array<double> dF(3,3);
         std::vector<double> deltas;
@@ -239,8 +234,7 @@ TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOr
 TEST_F(STRUCT_CANNNeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderAgainstNHRandomFLarge) {
     verbose = false; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_large_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_large_list) {
         // Generating perturbation
         Array<double> dF(3,3);
         std::vector<double> deltas;

@@ -582,7 +582,7 @@ public:
      * @param[in] verbose Show values error and order of convergence if true.
      **/
     
-    void testPK2StressConvergenceOrderAgainstReference(Array<double>& F, const Array<double>& S_ref, const double delta_max, const double delta_min, const int order, const double convergence_order_tol, const bool verbose = false) {
+    void testPK2StressConvergenceOrderAgainstReference(const Array<double>& F, const Array<double>& S_ref, const double delta_max, const double delta_min, const int order, const double convergence_order_tol, const bool verbose = false) {
         // Check delta_max > delta_min
         if (delta_max <= delta_min) {
             std::cerr << "Error: delta_max must be greater than delta_min." << std::endl;
@@ -1358,7 +1358,7 @@ public:
      * @param[in] convergence_order_tol Tolerance for comparing convergence order with expected value
      * @param[in] verbose Show values of errors and order of convergence if true.
      */
-    void testMaterialElasticityConsistencyConvergenceOrderBetweenMaterialModels(Array<double>& F, Array<double>& dS, Array<double>& CCdE, std::vector<double> deltas, int order, const double convergence_order_tol, bool verbose = false) {
+    void testMaterialElasticityConsistencyConvergenceOrderBetweenMaterialModels(const Array<double>& F, Array<double>& dS, Array<double>& CCdE, std::vector<double> deltas, int order, const double convergence_order_tol, bool verbose = false) {
 
         // Loop over perturbations to each component of F, dF
         for (int i = 0; i < 3; i++) {
@@ -1444,7 +1444,7 @@ public:
      * @param[in] order Order of the finite difference scheme (1 for first order, 2 for second order, etc.).
      * @param[in] verbose Show values of errors and order of convergence if true.
      */
-    void generatePerturbationdF(Array<double>& F, Array<double>& dF, double delta_max, double delta_min, std::vector<double> deltas, int order, bool verbose=false) {
+    void generatePerturbationdF(const Array<double>& F, Array<double>& dF, double delta_max, double delta_min, std::vector<double> deltas, int order, bool verbose=false) {
         // Check that delta_max > delta_min
         if (delta_max <= delta_min) {
             std::cerr << "Error: delta_max must be greater than delta_min." << std::endl;
@@ -1751,7 +1751,6 @@ public:
 class MaterialTestFixture : public ::testing::Test {
 protected:
     // Variables common across tests
-    Array<double> F; // Deformation gradient
     double deformation_perturbation_small = 0.003; // Small perturbation factor
     double deformation_perturbation_medium = 0.03; // Medium perturbation factor
     double deformation_perturbation_large = 0.3; // Large perturbation factor
@@ -1765,61 +1764,26 @@ protected:
     double convergence_order_tol = 0.02; // Tolerance for comparing convergence order with expected value
     bool verbose = false; // Show values of S, dE, SdE and dPsi
 
-    // Type alias for a 3x3 std::array
-    using Array3x3 = std::array<std::array<double, 3>, 3>;
-
-    // Vectors to store the 3x3 arrays
-    std::vector<Array3x3> F_small_list;
-    std::vector<Array3x3> F_medium_list;
-    std::vector<Array3x3> F_large_list;
-
-    // Function to convert C array to std::array
-    Array3x3 convertToStdArray(const Array<double> &F) {
-        int N = F.ncols();
-        assert(F.nrows() == N);
-        assert(N == 3);
-
-        Array3x3 stdArray;
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                stdArray[i][j] = F(i,j);
-            }
-        }
-        return stdArray;
-    }
-
-    // Function to convert std::array to Array
-    void convertToArray(const Array3x3 &stdArray, Array<double> array) {
-        int N = array.ncols();
-        assert(array.nrows() == N);
-        assert(N == 3);
-
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-                array(i,j) = stdArray[i][j];
-            }
-        }
-    }
+    // Vectors to store the Array<double> deformation gradients
+    std::vector<Array<double>> F_small_list;
+    std::vector<Array<double>> F_medium_list;
+    std::vector<Array<double>> F_large_list;
 
     void SetUp() override {
-        F.resize(3,3); // Deformation gradient
 
         // Create random deformation gradients for small perturbations
         for (int i = 0; i < n_F; i++) {
-            F = create_random_perturbed_identity_F(3, deformation_perturbation_small);
-            F_small_list.push_back(convertToStdArray(F));
+            F_small_list.push_back(create_random_perturbed_identity_F(3, deformation_perturbation_small));
         }
 
         // Create random deformation gradients for medium perturbations
         for (int i = 0; i < n_F; i++) {
-            F = create_random_perturbed_identity_F(3, deformation_perturbation_medium);
-            F_medium_list.push_back(convertToStdArray(F));
+            F_medium_list.push_back(create_random_perturbed_identity_F(3, deformation_perturbation_medium));
         }
 
         // Create random deformation gradients for large perturbations
         for (int i = 0; i < n_F; i++) {
-            F = create_random_perturbed_identity_F(3, deformation_perturbation_large);
-            F_large_list.push_back(convertToStdArray(F));
+            F_large_list.push_back(create_random_perturbed_identity_F(3, deformation_perturbation_large));
         }
     }
 

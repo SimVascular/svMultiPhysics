@@ -123,8 +123,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressPrescribedIsochoricDe
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_small_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -135,8 +134,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRando
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_medium_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_medium_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -147,8 +145,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRando
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_large_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
         TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -159,8 +156,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRando
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyConvergenceOrderRandomFSmall) {
     //verbose = true; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_small_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_small_list) {
 
         // Check order of convergence of consistency of material elasticity
         TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -171,8 +167,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyConvergenceOrderRandomFMedium) {
     //verbose = true; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_medium_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_medium_list) {
 
         // Check order of convergence of consistency of material elasticity
         TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
@@ -183,8 +178,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
 TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyConvergenceOrderRandomFLarge) {
     //verbose = true; // Show order of convergence, errors, F, S
 
-    for (auto F_std : F_large_list) {
-        convertToArray(F_std, F);
+    for (const auto& F : F_large_list) {
 
         // Check order of convergence of consistency of material elasticity
         TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
