@@ -29,6 +29,7 @@
  */
 
 #include "test_material_holzapfel_ogden_MA.h"
+#include <limits>
 
 // ----------------------------------------------------------------------------
 // ------------- Holzapfel-Ogden (Modified Anisotropy) Material  --------------
@@ -87,7 +88,7 @@ protected:
 
         // Check f.s = 0
         double dot_fs = params.f.dot(params.s);
-        if (fabs(dot_fs) > 1e-6) {
+        if (fabs(dot_fs) > std::numeric_limits<double>::epsilon()) {
             std::cout << "f.s = " << dot_fs << std::endl;
             std::cout << "f = [" << params.f[0] << ", " << params.f[1] << ", " << params.f[2] << "]" << std::endl;
             std::cout << "s = [" << params.s[0] << ", " << params.s[1] << ", " << params.s[2] << "]" << std::endl;
