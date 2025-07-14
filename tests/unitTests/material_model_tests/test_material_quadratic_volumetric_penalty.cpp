@@ -103,7 +103,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressIdentityF) {
                         {0.0, 1.0, 0.0},
                         {0.0, 0.0, 1.0}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestQVP->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestQVP->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 // Test PK2 stress zero for prescribed isochoric deformation
@@ -115,7 +115,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressPrescribedIsochoricDe
                         {0.0, 1.2, 0.0},
                         {0.0, 0.0, 1.0/(1.1*1.2)}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestQVP->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestQVP->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 
@@ -126,7 +126,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRando
     for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestQVP->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -137,7 +137,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRando
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestQVP->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -148,7 +148,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestPK2StressConvergenceOrderRando
     for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestQVP->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestQVP->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -159,7 +159,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
     for (const auto& F : F_small_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -170,7 +170,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -181,7 +181,7 @@ TEST_F(STRUCT_QuadraticVolumetricPenaltyTest, TestMaterialElasticityConsistencyC
     for (const auto& F : F_large_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestQVP->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -207,5 +207,5 @@ TEST_F(USTRUCT_QuadraticVolumetricPenaltyTest, TestRhoBeta) {
     double dbetadp_ref = -1.0 / pow(kappa - p, 2) * (-1.0); // Derivative of beta with respect to p
 
     // Check rho, beta, drho/dp and dbeta/dp against reference values
-    TestQVP->testRhoBetaAgainstReference(p, rho0, rho_ref, beta_ref, drhodp_ref, dbetadp_ref, rel_tol, abs_tol, verbose);
+    TestQVP->testRhoBetaAgainstReference(p, rho0, rho_ref, beta_ref, drhodp_ref, dbetadp_ref, REL_TOL, ABS_TOL, verbose);
 }

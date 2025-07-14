@@ -105,7 +105,7 @@ TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressIdentityF) {
                         {0.0, 1.0, 0.0},
                         {0.0, 0.0, 1.0}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestMR->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestMR->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 // Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
@@ -115,7 +115,7 @@ TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFSmall) {
     for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -126,7 +126,7 @@ TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFMedium) {
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -137,7 +137,7 @@ TEST_F(STRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFLarge) {
     for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -148,7 +148,7 @@ TEST_F(STRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrde
     for (const auto& F : F_small_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -159,7 +159,7 @@ TEST_F(STRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrde
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -170,7 +170,7 @@ TEST_F(STRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrde
     for (const auto& F : F_large_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -186,7 +186,7 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressIdentityF) {
                         {0.0, 1.0, 0.0},
                         {0.0, 0.0, 1.0}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestMR->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestMR->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 // Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
@@ -196,7 +196,7 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFSmall) {
     for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -207,7 +207,7 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFMedium) {
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -218,7 +218,7 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestPK2StressConvergenceOrderRandomFLarge) {
     for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestMR->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -229,7 +229,7 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrd
     for (const auto& F : F_small_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -240,7 +240,7 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrd
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -251,6 +251,6 @@ TEST_F(USTRUCT_MooneyRivlinTest, TestMaterialElasticityConsistencyConvergenceOrd
     for (const auto& F : F_large_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestMR->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }

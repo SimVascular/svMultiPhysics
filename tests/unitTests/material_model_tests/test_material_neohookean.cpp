@@ -104,7 +104,7 @@ TEST_F(STRUCT_NeoHookeanTest, TestPK2StressIdentityF) {
                         {0.0, 1.0, 0.0},
                         {0.0, 0.0, 1.0}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestNH->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestNH->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 // Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
@@ -114,7 +114,7 @@ TEST_F(STRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFSmall) {
     for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -125,7 +125,7 @@ TEST_F(STRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFMedium) {
     for (const auto& F : F_medium_list) { 
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -136,7 +136,7 @@ TEST_F(STRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFLarge) {
     for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -147,7 +147,7 @@ TEST_F(STRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderR
     for (const auto& F : F_small_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -158,7 +158,7 @@ TEST_F(STRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderR
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -169,7 +169,7 @@ TEST_F(STRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrderR
     for (const auto& F : F_large_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -184,7 +184,7 @@ TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressIdentityF) {
                         {0.0, 1.0, 0.0},
                         {0.0, 0.0, 1.0}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestNH->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestNH->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 // Test order of convergence between finite difference PK2 stress and compute_pk2cc() PK2 stress for random F (small)
@@ -194,7 +194,7 @@ TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFSmall) {
     for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -205,7 +205,7 @@ TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFMedium) {
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -216,7 +216,7 @@ TEST_F(USTRUCT_NeoHookeanTest, TestPK2StressConvergenceOrderRandomFLarge) {
     for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestNH->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -227,7 +227,7 @@ TEST_F(USTRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrder
     for (const auto& F : F_small_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -238,7 +238,7 @@ TEST_F(USTRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrder
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -249,6 +249,6 @@ TEST_F(USTRUCT_NeoHookeanTest, TestMaterialElasticityConsistencyConvergenceOrder
     for (const auto& F : F_large_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestNH->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }

@@ -106,7 +106,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressIdentityF) {
                         {0.0, 1.0, 0.0},
                         {0.0, 0.0, 1.0}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestST91->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestST91->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 // Test PK2 stress zero for prescribed isochoric deformation
@@ -118,7 +118,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressPrescribedIsochori
                         {0.0, 1.2, 0.0},
                         {0.0, 0.0, 1.0/(1.1*1.2)}};
     Array<double> S_ref(3, 3); // PK2 stress initialized to zero
-    TestST91->testPK2StressAgainstReference(F, S_ref, rel_tol, abs_tol, verbose);
+    TestST91->testPK2StressAgainstReference(F, S_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 
@@ -129,7 +129,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRa
     for (const auto& F : F_small_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestST91->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -140,7 +140,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRa
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestST91->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -151,7 +151,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestPK2StressConvergenceOrderRa
     for (const auto& F : F_large_list) {
 
         // Check order of convergence between finite difference and compute_pk2cc() PK2 stress
-        TestST91->testPK2StressConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestST91->testPK2StressConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -162,7 +162,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsisten
     for (const auto& F : F_small_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -173,7 +173,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsisten
     for (const auto& F : F_medium_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -184,7 +184,7 @@ TEST_F(STRUCT_SimoTaylor91VolumetricPenaltyTest, TestMaterialElasticityConsisten
     for (const auto& F : F_large_list) {
 
         // Check order of convergence of consistency of material elasticity
-        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, delta_max, delta_min, order, convergence_order_tol, verbose);
+        TestST91->testMaterialElasticityConsistencyConvergenceOrder(F, DELTA_MAX, DELTA_MIN, ORDER, CONVERGENCE_ORDER_TOL, verbose);
     }
 }
 
@@ -209,7 +209,7 @@ TEST_F(USTRUCT_SimoTaylor91VolumetricPenaltyTest, TestRhoBeta) {
     double dbetadp_ref = -1.0/2.0 * 1.0/pow(p*p + kappa*kappa, 3.0/2.0) * 2.0*p; // Derivative of beta with respect to p
 
     // Check rho, beta, drho/dp and dbeta/dp against reference values
-    TestST91->testRhoBetaAgainstReference(p, rho0, rho_ref, beta_ref, drhodp_ref, dbetadp_ref, rel_tol, abs_tol, verbose);
+    TestST91->testRhoBetaAgainstReference(p, rho0, rho_ref, beta_ref, drhodp_ref, dbetadp_ref, REL_TOL, ABS_TOL, verbose);
 }
 
 

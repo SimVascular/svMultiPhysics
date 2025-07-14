@@ -1751,17 +1751,18 @@ public:
 class MaterialTestFixture : public ::testing::Test {
 protected:
     // Variables common across tests
-    double deformation_perturbation_small = 0.003; // Small perturbation factor
-    double deformation_perturbation_medium = 0.03; // Medium perturbation factor
-    double deformation_perturbation_large = 0.3; // Large perturbation factor
-    int n_F = 50; // Number of deformation gradients F to test for each small, medium, and large perturbation
-    double rel_tol = 1e-3; // relative tolerance for comparing values
-    double abs_tol = 1e-11; // absolute tolerance for comparing values
+    static constexpr double DEFORMATION_PERTURBATION_SMALL = 0.003; // Small perturbation factor
+    static constexpr double DEFORMATION_PERTURBATION_MEDIUM = 0.03; // Medium perturbation factor
+    static constexpr double DEFORMATION_PERTURBATION_LARGE = 0.3; // Large perturbation factor
+    static constexpr int n_F = 50; // Number of deformation gradients F to test for each small, medium, and large perturbation
+    static constexpr double REL_TOL = 1e-3; // relative tolerance for comparing values
+    static constexpr double ABS_TOL = 1e-11; // absolute tolerance for comparing values
     //double delta = 1e-7; // perturbation scaling factor
-    double delta_max = 1e-4; // maximum perturbation scaling factor
-    double delta_min = 1e-6; // minimum perturbation scaling factor
-    int order = 1; // Order of finite difference method
-    double convergence_order_tol = 0.02; // Tolerance for comparing convergence order with expected value
+    static constexpr double DELTA_MAX = 1e-4; // maximum perturbation scaling factor
+    static constexpr double DELTA_MIN = 1e-6; // minimum perturbation scaling factor
+    static constexpr int ORDER = 1; // Order of finite difference method
+    static constexpr double CONVERGENCE_ORDER_TOL = 0.02; // Tolerance for comparing convergence order with expected value
+    
     bool verbose = false; // Show values of S, dE, SdE and dPsi
 
     // Vectors to store the Array<double> deformation gradients
@@ -1773,17 +1774,17 @@ protected:
 
         // Create random deformation gradients for small perturbations
         for (int i = 0; i < n_F; i++) {
-            F_small_list.push_back(create_random_perturbed_identity_F(3, deformation_perturbation_small));
+            F_small_list.push_back(create_random_perturbed_identity_F(3, DEFORMATION_PERTURBATION_SMALL));
         }
 
         // Create random deformation gradients for medium perturbations
         for (int i = 0; i < n_F; i++) {
-            F_medium_list.push_back(create_random_perturbed_identity_F(3, deformation_perturbation_medium));
+            F_medium_list.push_back(create_random_perturbed_identity_F(3, DEFORMATION_PERTURBATION_MEDIUM));
         }
 
         // Create random deformation gradients for large perturbations
         for (int i = 0; i < n_F; i++) {
-            F_large_list.push_back(create_random_perturbed_identity_F(3, deformation_perturbation_large));
+            F_large_list.push_back(create_random_perturbed_identity_F(3, DEFORMATION_PERTURBATION_LARGE));
         }
     }
 
