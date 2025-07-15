@@ -64,7 +64,6 @@ class SimoTaylor91VolumetricPenaltyTest : public MaterialTestFixture {
         void TearDown() override {
             // Clean up the test object
             delete TestST91;
-            TestST91 = nullptr;
         }
     };
     

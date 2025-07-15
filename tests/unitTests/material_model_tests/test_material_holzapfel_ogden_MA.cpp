@@ -104,7 +104,6 @@ protected:
     void TearDown() override {
         // Clean up the test object
         delete TestHO_ma;
-        TestHO_ma = nullptr;
     }
 };
 

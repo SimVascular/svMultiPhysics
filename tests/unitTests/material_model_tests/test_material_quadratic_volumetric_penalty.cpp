@@ -62,7 +62,6 @@ class QuadraticVolumetricPenaltyTest : public MaterialTestFixture {
         void TearDown() override {
             // Clean up the test object
             delete TestQVP;
-            TestQVP = nullptr;
         }
     };
     

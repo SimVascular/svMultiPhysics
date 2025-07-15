@@ -73,9 +73,7 @@ protected:
     void TearDown() override {
         // Clean up the test objects
         delete TestNH;
-        TestNH = nullptr;
         delete TestCANNNH;
-        TestCANNNH = nullptr;
     }
 };
 

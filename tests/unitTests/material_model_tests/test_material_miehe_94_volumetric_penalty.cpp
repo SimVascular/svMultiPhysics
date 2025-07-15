@@ -63,7 +63,6 @@ class Miehe94VolumetricPenaltyTest : public MaterialTestFixture {
         void TearDown() override {
             // Clean up the test object
             delete TestM94;
-            TestM94 = nullptr;
         }
     };
     
