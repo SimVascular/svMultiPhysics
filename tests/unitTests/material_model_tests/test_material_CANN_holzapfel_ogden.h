@@ -42,11 +42,13 @@ public:
     Vector<double> f;    // Fiber direction
     Vector<double> s;    // Sheet direction
 
+    const int nrows = 4;
+
     // Default constructor
     CANN_HO_Params() {
 
         // Resize Table to ensure there's at least 4 elements
-        Table.resize(4);  // Ensure there's space for 4 rows
+        Table.resize(nrows);  // Ensure there's space for 4 rows
 
         f.resize(3);
         s.resize(3);
@@ -54,11 +56,7 @@ public:
 
     // Constructor with parameters
     CANN_HO_Params(std::vector<CANNRow> TableValues, Vector<double> f, Vector<double> s) {
-        for (int i = 0; i < 4; i++){
-            this -> Table[i].invariant_index = TableValues[i].invariant_index;
-            this -> Table[i].activation_functions = TableValues[i].activation_functions;
-            this -> Table[i].weights = TableValues[i].weights;
-        }
+        Table = TableValues;
 
         this -> f = f;
         this -> s = s;
@@ -93,9 +91,9 @@ public:
         {
         // Set HO material parameters for svFSIplus
         auto &dmn = com_mod.mockEq.mockDmn;
-        int nrows = 4;
 
-        dmn.stM.paramTable.num_rows = nrows;
+        // Set number of rows in the table
+        dmn.stM.paramTable.num_rows = params.nrows;
 
         // Resize Arrays and Vectors to ensure there is enough space
         dmn.stM.paramTable.invariant_indices.resize(dmn.stM.paramTable.num_rows);
@@ -132,8 +130,7 @@ public:
      * @brief Prints the CANN HO material parameters.
      */
     void printMaterialParameters() {
-        int nrows = 4;
-        for (int i = 0; i < nrows; i++){
+        for (int i = 0; i < params.nrows; i++){
             std::cout << "ROW: " << i+1 << std::endl;
             std::cout << "Invariant number: " << params.Table[i].invariant_index << std::endl;
             std::cout << "Activation function 0: " << params.Table[i].activation_functions.value()[0] << std::endl;
@@ -182,7 +179,7 @@ public:
 
         // Strain energy density for Holzapfel-Ogden material model with modified anisotropic invariants (bar quantities)
         double Psi = 0.0;
-        int nterms = 4;
+        int nterms = params.nrows;
         Psi += params.Table[0].weights[2] * exp(params.Table[0].weights[1] * (I1_bar - 3.0)); // isotropic term
         Psi += params.Table[1].weights[2] * (exp(params.Table[1].weights[1] * pow(I4_bar_f - 1.0, 2)) - 1.0);   // Fiber term; 0.5 included in params
         Psi += params.Table[2].weights[2] * (exp(params.Table[2].weights[1] * pow(I4_bar_s - 1.0, 2)) - 1.0);   // Sheet term

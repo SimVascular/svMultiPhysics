@@ -39,11 +39,13 @@ class CANN_NH_Params : public MatParams {
 public:
     std::vector<CANNRow> Table;
 
+    const int nrows = 1;
+
     // Default constructor
     CANN_NH_Params() {
 
         // Resize Table to ensure there's at least 1 element
-        Table.resize(1);  // Ensure there's space for at least one row
+        Table.resize(nrows);  // Ensure there's space for at least one row
 
         Table[0].invariant_index.value_ = 1;
         Table[0].activation_functions.value_ = {1,1,1};
@@ -52,11 +54,7 @@ public:
 
     // Constructor with parameters
     CANN_NH_Params(std::vector<CANNRow> TableValues) {
-        for (int i = 0; i < 1; i++){
-            this -> Table[i].invariant_index = TableValues[i].invariant_index;
-            this -> Table[i].activation_functions = TableValues[i].activation_functions;
-            this -> Table[i].weights = TableValues[i].weights;
-        }     
+        Table = TableValues;
     };
 
 };
@@ -87,9 +85,8 @@ public:
         {
         // Set Neo-Hookean material parameters
         auto &dmn = com_mod.mockEq.mockDmn;
-        int nrows = 1;
 
-        dmn.stM.paramTable.num_rows = nrows;
+        dmn.stM.paramTable.num_rows = params.nrows;
         
         // Resize Arrays and Vectors to ensure there is enough space
         dmn.stM.paramTable.invariant_indices.resize(dmn.stM.paramTable.num_rows);
@@ -121,8 +118,7 @@ public:
      * @brief Prints the CANN Neo-Hookean material parameters.
      */
     void printMaterialParameters() {
-        int nrows = 1;
-        for (int i = 0; i < nrows; i++){
+        for (int i = 0; i < params.nrows; i++){
             std::cout << "ROW: " << i+1 << std::endl;
             std::cout << "Invariant number: " << params.Table[i].invariant_index << std::endl;
             std::cout << "Activation function 0: " << params.Table[i].activation_functions.value()[0] << std::endl;

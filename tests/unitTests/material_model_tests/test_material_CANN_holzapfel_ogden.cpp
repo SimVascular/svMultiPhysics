@@ -124,13 +124,6 @@ protected:
         // Initialize the test objects
         TestHO = new TestHolzapfelOgden(params_HO);
         TestCANNHO = new TestCANN_HO(params_CANN_HO);
-
-        if (TestCANNHO == nullptr) {
-            throw std::runtime_error("TestCANNHO is not properly initialized");
-        }
-        if (TestHO == nullptr) {
-            throw std::runtime_error("TestHO is not properly initialized");
-        }
     }
 
     // TearDown method to clean up after each test, if needed

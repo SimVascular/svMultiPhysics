@@ -67,13 +67,6 @@ protected:
         // Initialize the test objects
         TestNH = new TestNeoHookean(params_NH);
         TestCANNNH = new TestCANN_NH(params_CANN_NH);
-
-        if (TestCANNNH == nullptr) {
-            throw std::runtime_error("TestCANNNH is not properly initialized");
-        }
-        if (TestNH == nullptr) {
-            throw std::runtime_error("TestNH is not properly initialized");
-        }
     }
 
     // TearDown method to clean up after each test, if needed
