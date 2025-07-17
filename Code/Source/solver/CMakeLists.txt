@@ -315,8 +315,17 @@ if(ENABLE_UNIT_TEST)
 
   # add test.cpp for unit test
 
-  # remove the main.cpp and add test.cpp
-  set(TEST_SOURCES "../../../tests/unitTests/test.cpp")
+  # Automatically find all test files under unitTests directory
+  file(GLOB_RECURSE TEST_SOURCES 
+    "../../../tests/unitTests/*.cpp"
+  )
+  list(LENGTH TEST_SOURCES TEST_SOURCES_COUNT)
+  message(STATUS "Found ${TEST_SOURCES_COUNT} test files")
+  foreach(TEST_SOURCE ${TEST_SOURCES})
+    # Print the file being copied for debugging
+    message(STATUS "TEST_SOURCE: ${TEST_SOURCE}")
+  endforeach()  
+  
   list(REMOVE_ITEM CSRCS "main.cpp")
   list(APPEND CSRCS ${TEST_SOURCES})
 

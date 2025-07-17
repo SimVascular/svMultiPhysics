@@ -28,36 +28,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// --------------------------------------------------------------
-// To run the tests in test.cpp
-// 0.  Make sure svMultiPhysics was built with unit tests enabled, using cmake -DENABLE_UNIT_TEST=ON ..
-// 1.  Navigate to <svMultiPhysics_root_directory>/build/svMultiPhysics-build/Source/solver
-// 2.  Run `make` to build the tests
-// 3.  Run `ctest --verbose` to run the tests
+#ifndef TEST_MATERIAL_COMMON_H
+#define TEST_MATERIAL_COMMON_H
 
-
-// --------------------------------------------------------------
-// To add a new material model to test:
-// In test.h:
-// 1. Create a new material parameters class derived from MatParams (e.g. NeoHookeanParams)
-// 2. Create a new material model test class derived from TestMaterialModel (e.g. TestNeoHookean)
-// 3. Implement required functions in the material model test class:
-//    - Constructor: Sets the material model type and parameters for svMultiPhysics (e.g. TestNeoHookean())
-//    - printMaterialParameters(): Prints the material parameters
-//    - computeStrainEnergy(): Computes the strain energy density function
-// In test.cpp:
-// 4. Create a new text fixture class derived from ::testing::Test (e.g. NeoHookeanTest)
-//    - In this you set the values of the material parameters for testing
-// 5. Add tests for your new material model (e.g. TEST_F(NeoHookeanTest, TestPK2StressIdentityF))
-// --------------------------------------------------------------
-
-
-#include <stdlib.h>
-#include <iostream>
-#include <random>
-#include <chrono>
-#include "gtest/gtest.h"   // include GoogleTest
-#include "mat_fun.h"
+#include "../test_common.h"
 #include "mat_models.h"
 
 // --------------------------------------------------------------
@@ -70,7 +44,7 @@
  * @param[out] F The deformation gradient tensor to be set to the identity matrix.
  * @return The deformation gradient tensor F set to the identity matrix.
  */
-Array<double> create_identity_F(const int N) {
+inline Array<double> create_identity_F(const int N) {
     Array<double> F(N, N);
     for (int i = 0; i < N; i++) {
         for (int J = 0; J < N; J++) {
@@ -84,7 +58,7 @@ Array<double> create_identity_F(const int N) {
  * @brief Create a ones matrix.
  * 
  */
-Array<double> create_ones_matrix(const int N) {
+inline Array<double> create_ones_matrix(const int N) {
     Array<double> A(N, N);
     for (int i = 0; i < N; i++) {
         for (int J = 0; J < N; J++) {
@@ -103,7 +77,7 @@ Array<double> create_ones_matrix(const int N) {
  * @param[in] max The maximum value of the range.
  * @return A random double value between min and max.
  */
-inline double getRandomDouble(double min, double max) {
+inline double getRandomDouble(const double min, const double max) {
     // Uncomment to use a random seed
     //unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
     unsigned int seed = 42;
@@ -121,7 +95,7 @@ inline double getRandomDouble(double min, double max) {
  * @param[in] max The maximum value for the elements of the deformation gradient tensor (default is 10.0).
  * @return A random deformation gradient tensor F.
  */
-Array<double> create_random_F(const int N, double min=0.1, double max=10.0) {
+inline Array<double> create_random_F(const int N, const double min=0.1, const double max=10.0) {
     // Create a random deformation gradient with values between min and max, 
     // and det(F) > 0
     Array<double> F(N, N);
@@ -147,7 +121,7 @@ Array<double> create_random_F(const int N, double min=0.1, double max=10.0) {
  * @param[in] max_deviation The maximum deviation from the identity matrix elements.
  * @return A random deformation gradient tensor F.
  */
-Array<double> create_random_perturbed_identity_F(const int N, double max_deviation) {
+inline Array<double> create_random_perturbed_identity_F(const int N, const double max_deviation) {
     // Create a random deformation gradient with values perturbed from the identity matrix, 
     // and det(F) > 0
     Array<double> F(N, N);
@@ -175,7 +149,7 @@ Array<double> create_random_perturbed_identity_F(const int N, double max_deviati
  * @param[in] N The size of the deformation gradient tensor (NxN).
  * @return None.
  */
-Array<double> perturb_random_F(const Array<double> &F, const double delta) {
+inline Array<double> perturb_random_F(const Array<double> &F, const double delta) {
 
     int N = F.nrows(); // Size of the deformation gradient tensor
     assert (N == F.ncols()); // Check that F is square
@@ -204,7 +178,7 @@ Array<double> perturb_random_F(const Array<double> &F, const double delta) {
  * @param[out] E The computed Green-Lagrange strain tensor.
  * @return None.
  */
-void calc_JCE(const Array<double> &F, double &J, Array<double> &C, Array<double> &E) {
+inline void calc_JCE(const Array<double> &F, double &J, Array<double> &C, Array<double> &E) {
 
     int N = F.nrows(); // Size of the deformation gradient tensor
     assert (N == F.ncols()); // Check that F is square
@@ -248,7 +222,7 @@ struct solidMechanicsTerms {
  * @param[in] F The deformation gradient tensor.
  * @return A structure containing the computed solid mechanics terms.
  */
-solidMechanicsTerms calcSolidMechanicsTerms(const Array<double> &F) {
+inline solidMechanicsTerms calcSolidMechanicsTerms(const Array<double> &F) {
 
     int N = F.nrows(); // Size of the deformation gradient tensor
     assert (N == F.ncols()); // Check that F is square
@@ -303,7 +277,7 @@ solidMechanicsTerms calcSolidMechanicsTerms(const Array<double> &F) {
  * @param y y data points.
  * @return std::pair<double, double> A pair containing the slope (m) and the y-intercept (b).
  */
-std::pair<double, double> computeLinearRegression(const std::vector<double>& x, const std::vector<double>& y) {
+inline std::pair<double, double> computeLinearRegression(const std::vector<double>& x, const std::vector<double>& y) {
     int n = x.size();
     double sum_x = std::accumulate(x.begin(), x.end(), 0.0);
     double sum_y = std::accumulate(y.begin(), y.end(), 0.0);
@@ -316,62 +290,14 @@ std::pair<double, double> computeLinearRegression(const std::vector<double>& x, 
     return std::make_pair(m, b);
 }
 
-// --------------------------------------------------------------
-// -------------------- Mock svMultiPhysics object -------------------
-// --------------------------------------------------------------
-
-
-class MockCepMod : public CepMod {
-public:
-    MockCepMod() {
-        // initialize if needed 
-    }
-    // Mock methods if needed
-};
-class MockdmnType : public dmnType {
-public:
-    MockdmnType() {
-        // initialize if needed 
-    }
-    // MockstModelType mockStM;
-    // Mock methods if needed
-};
-class MockmshType : public mshType {
-public:
-    MockmshType() {
-        // initialize if needed 
-    }
-    // Mock methods if needed
-};
-class MockeqType : public eqType {
-public:
-    MockeqType() {
-        // initialize if needed 
-    }
-    MockdmnType mockDmn;
-    // Mock methods if needed
-};
-class MockComMod : public ComMod {
-public:
-    MockComMod() {
-        // initialize if needed 
-        nsd = 3;
-    }
-    MockeqType mockEq;
-    MockmshType mockMsh;
-    // Mock methods if needed
-};
-
 
 // --------------------------------------------------------------
-// ------------------ Test Material Model Classes ---------------
+// ------------------ Base Material Model Testing Class ---------
 // --------------------------------------------------------------
 
 // Class for testing material models in svMultiPhysics
-class TestMaterialModel {
+class TestMaterialModel : public TestBase {
 public:
-    MockComMod com_mod;
-    MockCepMod cep_mod;
     int nFn;
     Array<double> fN;
     double ya_g;
@@ -656,7 +582,7 @@ public:
      * @param[in] verbose Show values error and order of convergence if true.
      **/
     
-    void testPK2StressConvergenceOrderAgainstReference(Array<double>& F, const Array<double>& S_ref, const double delta_max, const double delta_min, const int order, const double convergence_order_tol, const bool verbose = false) {
+    void testPK2StressConvergenceOrderAgainstReference(const Array<double>& F, const Array<double>& S_ref, const double delta_max, const double delta_min, const int order, const double convergence_order_tol, const bool verbose = false) {
         // Check delta_max > delta_min
         if (delta_max <= delta_min) {
             std::cerr << "Error: delta_max must be greater than delta_min." << std::endl;
@@ -1432,7 +1358,7 @@ public:
      * @param[in] convergence_order_tol Tolerance for comparing convergence order with expected value
      * @param[in] verbose Show values of errors and order of convergence if true.
      */
-    void testMaterialElasticityConsistencyConvergenceOrderBetweenMaterialModels(Array<double>& F, Array<double>& dS, Array<double>& CCdE, std::vector<double> deltas, int order, const double convergence_order_tol, bool verbose = false) {
+    void testMaterialElasticityConsistencyConvergenceOrderBetweenMaterialModels(const Array<double>& F, Array<double>& dS, Array<double>& CCdE, std::vector<double> deltas, int order, const double convergence_order_tol, bool verbose = false) {
 
         // Loop over perturbations to each component of F, dF
         for (int i = 0; i < 3; i++) {
@@ -1518,7 +1444,7 @@ public:
      * @param[in] order Order of the finite difference scheme (1 for first order, 2 for second order, etc.).
      * @param[in] verbose Show values of errors and order of convergence if true.
      */
-    void generatePerturbationdF(Array<double>& F, Array<double>& dF, double delta_max, double delta_min, std::vector<double> deltas, int order, bool verbose=false) {
+    void generatePerturbationdF(const Array<double>& F, Array<double>& dF, double delta_max, double delta_min, std::vector<double> deltas, int order, bool verbose=false) {
         // Check that delta_max > delta_min
         if (delta_max <= delta_min) {
             std::cerr << "Error: delta_max must be greater than delta_min." << std::endl;
@@ -1804,9 +1730,8 @@ public:
 };
 
 
-
 // --------------------------------------------------------------
-// --------------------- Material Parameters Classes ------------
+// ------------------ Base Material Parameters Class ------------
 // --------------------------------------------------------------
 
 // Class to contain material parameters
@@ -1815,942 +1740,56 @@ public:
     virtual ~MatParams() {} // Virtual destructor for proper cleanup
 };
 
-// Class to contain Neo-Hookean material parameters
-class NeoHookeanParams : public MatParams {
-public:
-    double C10;
-
-    // Default constructor
-    NeoHookeanParams() : C10(0.0) {}
-
-    // Constructor with parameters
-    NeoHookeanParams(double c10) : C10(c10) {}
-
-};
-
-// Class to contain Mooney-Rivlin material parameters
-class MooneyRivlinParams : public MatParams {
-public:
-    double C01;
-    double C10;
-
-    // Default constructor
-    MooneyRivlinParams() : C01(0.0), C10(0.0) {}
-
-    // Constructor with parameters
-    MooneyRivlinParams(double c01, double c10) : C01(c01), C10(c10) {}
-
-};
-
-// Class to contain Holzapfel-Ogden material parameters
-class HolzapfelOgdenParams : public MatParams {
-public:
-    double a;    
-    double b;
-    double a_f;
-    double b_f;
-    double a_s;
-    double b_s;
-    double a_fs;
-    double b_fs;
-    double f[3];    // Fiber direction
-    double s[3];    // Sheet direction
-
-    double k; // Smoothed Heaviside function parameter
-
-    // Default constructor
-    HolzapfelOgdenParams() : a(0.0), b(0.0), a_f(0.0), b_f(0.0), a_s(0.0), b_s(0.0), a_fs(0.0), b_fs(0.0), k(0.0) {
-        for (int i = 0; i < 3; i++) {
-            f[i] = 0.0;
-            s[i] = 0.0;
-        }
-    }
-
-    // Constructor with parameters
-    HolzapfelOgdenParams(double a, double b, double a_f, double b_f, double a_s, double b_s, double a_fs, double b_fs, double k, double f[3], double s[3]) : a(a), b(b), a_f(a_f), b_f(b_f), a_s(a_s), b_s(b_s), a_fs(a_fs), b_fs(b_fs), k(k) {
-        for (int i = 0; i < 3; i++) {
-            this->f[i] = f[i];
-            this->s[i] = s[i];
-        }
-    }
-};
-
-// Class to contain Holzapfel-Ogden (Modified Anisortopy) material parameters
-class HolzapfelOgdenMAParams : public MatParams {
-public:
-    double a;    
-    double b;
-    double a_f;
-    double b_f;
-    double a_s;
-    double b_s;
-    double a_fs;
-    double b_fs;
-    double f[3];    // Fiber direction
-    double s[3];    // Sheet direction
-
-    double k; // Smoothed Heaviside function parameter
-
-    // Default constructor
-    HolzapfelOgdenMAParams() : a(0.0), b(0.0), a_f(0.0), b_f(0.0), a_s(0.0), b_s(0.0), a_fs(0.0), b_fs(0.0), k(0.0) {
-        for (int i = 0; i < 3; i++) {
-            f[i] = 0.0;
-            s[i] = 0.0;
-        }
-    }
-
-    // Constructor with parameters
-    HolzapfelOgdenMAParams(double a, double b, double a_f, double b_f, double a_s, double b_s, double a_fs, double b_fs, double k, double f[3], double s[3]) : a(a), b(b), a_f(a_f), b_f(b_f), a_s(a_s), b_s(b_s), a_fs(a_fs), b_fs(b_fs), k(k) {
-        for (int i = 0; i < 3; i++) {
-            this->f[i] = f[i];
-            this->s[i] = s[i];
-        }
-    }
-};
-
-// Class to contain CANN model with Neo-Hookean material parameters
-class CANN_NH_Params : public MatParams {
-public:
-    std::vector<CANNRow> Table;
-
-    // Default constructor
-    CANN_NH_Params() {
-
-        // Resize Table to ensure there's at least 1 element
-        Table.resize(1);  // Ensure there's space for at least one row
-
-        Table[0].invariant_index.value_ = 1;
-        Table[0].activation_functions.value_ = {1,1,1};
-        Table[0].weights.value_ = {1.0,1.0,40.0943265e6};
-      };
-
-    // Constructor with parameters
-    CANN_NH_Params(std::vector<CANNRow> TableValues) {
-        for (int i = 0; i < 1; i++){
-            this -> Table[i].invariant_index = TableValues[i].invariant_index;
-            this -> Table[i].activation_functions = TableValues[i].activation_functions;
-            this -> Table[i].weights = TableValues[i].weights;
-        }     
-    };
-
-};
-
-// Class to contain CANN model withHolzapfel-Ogden material parameters
-class CANN_HO_Params : public MatParams {
-public:
-    std::vector<CANNRow> Table;
-    // Define fiber directions
-    double f[3];    // Fiber direction
-    double s[3];    // Sheet direction
-
-    // Default constructor
-    CANN_HO_Params() {
-
-        // Resize Table to ensure there's at least 4 elements
-        Table.resize(4);  // Ensure there's space for 4 rows
-      };
-
-    // Constructor with parameters
-    CANN_HO_Params(std::vector<CANNRow> TableValues) {
-        for (int i = 0; i < 4; i++){
-            this -> Table[i].invariant_index = TableValues[i].invariant_index;
-            this -> Table[i].activation_functions = TableValues[i].activation_functions;
-            this -> Table[i].weights = TableValues[i].weights;
-        }     
-    };
-
-};
-
-
-// Class to contain volumetric penalty parameters (just the penalty parameter)
-class VolumetricPenaltyParams : public MatParams {
-public:
-    double kappa;
-
-    // Default constructor
-    VolumetricPenaltyParams() : kappa(0.0) {}
-
-    // Constructor with parameters
-    VolumetricPenaltyParams(double kappa) : kappa(kappa) {}
-};
-
-
 // --------------------------------------------------------------
-// --------------------- Material Model Classes -----------------
+// ------------------ Material Test Fixture Class ---------------
 // --------------------------------------------------------------
 
 /**
- * @brief Class for testing the Neo-Hookean material model.
- *
- * This class provides methods to set up and test the Neo-Hookean material model, including 
- * computing the strain energy and printing material parameters.
- */
-class TestNeoHookean : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the Neo-Hookean material model.
-     */
-    NeoHookeanParams params;
-
-    /**
-     * @brief Constructor for the TestNeoHookean class.
-     *
-     * Initializes the Neo-Hookean material parameters for svMultiPhysics.
-     *
-     * @param[in] params_ Parameters for the Neo-Hookean material model.
-     */
-    TestNeoHookean(const NeoHookeanParams &params_) : TestMaterialModel( consts::ConstitutiveModelType::stIso_nHook, consts::ConstitutiveModelType::stVol_ST91),
-        params(params_) 
-        {
-        // Set Neo-Hookean material parameters for svMultiPhysics
-        auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.stM.C10 = params.C10;
-        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
-    }
-
-    /**
-     * @brief Prints the Neo-Hookean material parameters.
-     */
-    void printMaterialParameters() {
-        std::cout << "C10 = " << params.C10 << std::endl;
-    }
-
-    /**
-     * @brief Computes the strain energy for the Neo-Hookean material model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Neo-Hookean material model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-        // Compute solid mechanics terms
-        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-
-        // Strain energy density for Neo-Hookean material model
-        // Psi_iso = C10 * (Ib1 - 3)
-        double Psi_iso = params.C10 * (smTerms.Ib1 - 3.);
-
-        return Psi_iso;
-    }
-};
-
-/**
- * @brief Class for testing the Mooney-Rivlin material model.
- *
- * This class provides methods to set up and test the Mooney-Rivlin material model, including 
- * computing the strain energy and printing material parameters.
- */
-class TestMooneyRivlin : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the Mooney-Rivlin material model.
-     */
-    MooneyRivlinParams params;
-
-    /**
-     * @brief Constructor for the TestMooneyRivlin class.
-     *
-     * Initializes the Mooney-Rivlin material parameters for svMultiPhysics.
-     *
-     * @param[in] params_ Parameters for the Mooney-Rivlin material model.
-     */
-    TestMooneyRivlin(const MooneyRivlinParams &params_) : TestMaterialModel( consts::ConstitutiveModelType::stIso_MR, consts::ConstitutiveModelType::stVol_ST91),
-        params(params_) 
-        {
-        // Set Mooney-Rivlin material parameters for svMultiPhysics
-        auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.stM.C01 = params.C01;
-        dmn.stM.C10 = params.C10;
-        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
-    }
-
-    /**
-     * @brief Prints the Mooney-Rivlin material parameters.
-     */
-    void printMaterialParameters() {
-        std::cout << "C01 = " << params.C01 << ", C10 = " << params.C10 << std::endl;
-    }
-
-    /**
-     * @brief Computes the strain energy for the Mooney-Rivlin material model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Mooney-Rivlin material model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-        // Compute solid mechanics terms
-        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-
-        // Strain energy density for Mooney-Rivlin material model
-        // Psi_iso = C10 * (Ib1 - 3) + C01 * (Ib2 - 3)
-        double Psi_iso = params.C10 * (smTerms.Ib1 - 3.) + params.C01 * (smTerms.Ib2 - 3.);
-
-        return Psi_iso;
-    }
-};
-
-
-/**
- * @brief Class for testing the Holzapfel-Ogden material model. 
+ * @brief Test fixture class containing common setup for all material model test
  * 
- * This class provides methods to set up and test the Holzapfel-Ogden material 
- * model, including computing the strain energy and printing material parameters.
  */
-class TestHolzapfelOgden : public TestMaterialModel {
-public:
+class MaterialTestFixture : public ::testing::Test {
+protected:
+    // Variables common across tests
+    static constexpr double DEFORMATION_PERTURBATION_SMALL = 0.003; // Small perturbation factor
+    static constexpr double DEFORMATION_PERTURBATION_MEDIUM = 0.03; // Medium perturbation factor
+    static constexpr double DEFORMATION_PERTURBATION_LARGE = 0.3; // Large perturbation factor
+    static constexpr int n_F = 50; // Number of deformation gradients F to test for each small, medium, and large perturbation
+    static constexpr double REL_TOL = 1e-3; // relative tolerance for comparing values
+    static constexpr double ABS_TOL = 1e-11; // absolute tolerance for comparing values
+    //double delta = 1e-7; // perturbation scaling factor
+    static constexpr double DELTA_MAX = 1e-4; // maximum perturbation scaling factor
+    static constexpr double DELTA_MIN = 1e-6; // minimum perturbation scaling factor
+    static constexpr int ORDER = 1; // Order of finite difference method
+    static constexpr double CONVERGENCE_ORDER_TOL = 0.02; // Tolerance for comparing convergence order with expected value
+    
+    bool verbose = false; // Show values of S, dE, SdE and dPsi
 
-    /**
-     * @brief Parameters for the Holzapfel-Ogden material model.
-     */
-    HolzapfelOgdenParams params;
+    // Vectors to store the Array<double> deformation gradients
+    std::vector<Array<double>> F_small_list;
+    std::vector<Array<double>> F_medium_list;
+    std::vector<Array<double>> F_large_list;
 
-    /**
-     * @brief Constructor for the TestHolzapfelOgden class.
-     *
-     * Initializes the Holzapfel-Ogden material parameters for svMultiPhysics.
-     *
-     * @param[in] params_ Parameters for the Holzapfel-Ogden material model.
-     */
-    TestHolzapfelOgden(const HolzapfelOgdenParams &params_) : TestMaterialModel( consts::ConstitutiveModelType::stIso_HO, consts::ConstitutiveModelType::stVol_ST91),
-        params(params_) 
-        {
-        // Set Holzapfel-Ogden material parameters for svMultiPhysics
-        auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.stM.a = params.a;
-        dmn.stM.b = params.b;
-        dmn.stM.aff = params.a_f;
-        dmn.stM.bff = params.b_f;
-        dmn.stM.ass = params.a_s;
-        dmn.stM.bss = params.b_s;
-        dmn.stM.afs = params.a_fs;
-        dmn.stM.bfs = params.b_fs;
-        dmn.stM.khs = params.k;     // Smoothed Heaviside function parameter
-        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
+    void SetUp() override {
 
-        // Set number of fiber directions and fiber directions
-        nFn = 2;
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-        fN.set_col(0, f);
-        fN.set_col(1, s);
-    }
-
-    /**
-     * @brief Prints the Holzapfel-Ogden material parameters.
-     */
-    void printMaterialParameters() {
-        std::cout << "a = " << params.a << std::endl;
-        std::cout << "b = " << params.b << std::endl;
-        std::cout << "a_f = " << params.a_f << std::endl;
-        std::cout << "b_f = " << params.b_f << std::endl;
-        std::cout << "a_s = " << params.a_s << std::endl;
-        std::cout << "b_s = " << params.b_s << std::endl;
-        std::cout << "a_fs = " << params.a_fs << std::endl;
-        std::cout << "b_fs = " << params.b_fs << std::endl;
-        std::cout << "k = " << params.k << std::endl;
-        std::cout << "f = " << "[" << params.f[0] << " " << params.f[1] << " " << params.f[2] << "]" << std::endl;
-        std::cout << "s = " << "[" << params.s[0] << " " << params.s[1] << " " << params.s[2] << "]" << std::endl;
-    }
-
-    /**
-     * @brief Smoothed Heaviside function centered at x = 1.
-     * 
-     * @param[in] x Input value.
-     * @param[in] k Smoothing parameter.
-     * @return Smoothed Heaviside function.
-     */
-    double chi(const double x, const double k=100) const {
-        return 1. / (1. + exp(-k * (x - 1.)));
-    }
-
-    /**
-     * @brief Computes the strain energy for the Holzapfel-Ogden material model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Holzapfel-Ogden material model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-        // Compute solid mechanics terms
-        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-
-        // Material parameters
-        double a = params.a;
-        double b = params.b;
-        double a_f = params.a_f;
-        double b_f = params.b_f;
-        double a_s = params.a_s;
-        double b_s = params.b_s;
-        double a_fs = params.a_fs;
-        double b_fs = params.b_fs;
-
-        // Smoothed Heaviside parameter
-        double k = params.k;
-
-        // Fiber and sheet directions
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-
-        // Strain energy density for Holzapfel-Ogden material model
-
-        // Formulation with fully decoupled isochoric-volumetric split
-        // Uses I1_bar, I4_bar_f, I4_bar_s, I8_bar_fs (bar = isochoric)
-        // Psi = a/2b * exp{b(I1_bar - 3)} 
-        //       + a_f/2b_f * chi(I4_bar_f) * (exp{b_f(I4_bar_f - 1)^2} - 1
-        //       + a_s/2b_s * chi(I4_bar_s) * (exp{b_s(I4_bar_s - 1)^2} - 1
-        //       + a_fs/2b_fs * (exp{b_fs*I8_bar_fs^2} - 1)
-        // This corresponds to the HO implementation in svMultiPhysics
-
-        // Invariants
-        double I1_bar = smTerms.Ib1;
-        // I4_bar_f = f . C_bar . f
-        auto C_bar_f = mat_fun::mat_mul(smTerms.C_bar, f);
-        double I4_bar_f = f.dot(C_bar_f);
-        // I4_bar_s = s . C_bar . s
-        auto C_bar_s = mat_fun::mat_mul(smTerms.C_bar, s);
-        double I4_bar_s = s.dot(C_bar_s);
-        // I8_bar_fs = f . C_bar . s
-        double I8_bar_fs = f.dot(C_bar_s);
-
-        // Strain energy density for Holzapfel-Ogden material model with modified anisotropic invariants (bar quantities)
-        double Psi = 0.0;
-        Psi += a / (2.0 * b) * exp(b * (I1_bar - 3.0));                             // Isotropic term
-        Psi += a_f / (2.0 * b_f) * chi(I4_bar_f, k) * (exp(b_f * pow(I4_bar_f - 1.0, 2)) - 1.0);   // Fiber term
-        Psi += a_s / (2.0 * b_s) * chi(I4_bar_s, k) * (exp(b_s * pow(I4_bar_s - 1.0, 2)) - 1.0);   // Sheet term
-        Psi += a_fs / (2.0 * b_fs) * (exp(b_fs * pow(I8_bar_fs, 2)) - 1.0);                   // Cross-fiber term
-
-        return Psi;
-    }
-};
-
-
-/**
- * @brief Class for testing the Holzapfel-Ogden (Modified Anisotropy) material model. 
- * 
- * This class provides methods to set up and test the Holzapfel-Ogden-ma material 
- * model, including computing the strain energy and printing material parameters.
- *
- */
-class TestHolzapfelOgdenMA : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the Holzapfel-Ogden ma material model.
-     */
-    HolzapfelOgdenMAParams params;
-
-    /**
-     * @brief Constructor for the TestHolzapfelOgdenMA class.
-     *
-     * Initializes the Holzapfel-Ogden material parameters for svMultiPhysics.
-     *
-     * @param[in] params_ Parameters for the Holzapfel-Ogden ma material model.
-     */
-    TestHolzapfelOgdenMA(const HolzapfelOgdenMAParams &params_) : TestMaterialModel( consts::ConstitutiveModelType::stIso_HO_ma, consts::ConstitutiveModelType::stVol_ST91),
-        params(params_) 
-        {
-        // Set Holzapfel-Ogden material parameters for svMultiPhysics
-        auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.stM.a = params.a;
-        dmn.stM.b = params.b;
-        dmn.stM.aff = params.a_f;
-        dmn.stM.bff = params.b_f;
-        dmn.stM.ass = params.a_s;
-        dmn.stM.bss = params.b_s;
-        dmn.stM.afs = params.a_fs;
-        dmn.stM.bfs = params.b_fs;
-        dmn.stM.khs = params.k;     // Smoothed Heaviside function parameter
-        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
-
-        // Set number of fiber directions and fiber directions
-        nFn = 2;
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-        fN.set_col(0, f);
-        fN.set_col(1, s);
-    }
-
-    /**
-     * @brief Prints the Holzapfel-Ogden material parameters.
-     */
-    void printMaterialParameters() {
-        std::cout << "a = " << params.a << std::endl;
-        std::cout << "b = " << params.b << std::endl;
-        std::cout << "a_f = " << params.a_f << std::endl;
-        std::cout << "b_f = " << params.b_f << std::endl;
-        std::cout << "a_s = " << params.a_s << std::endl;
-        std::cout << "b_s = " << params.b_s << std::endl;
-        std::cout << "a_fs = " << params.a_fs << std::endl;
-        std::cout << "b_fs = " << params.b_fs << std::endl;
-        std::cout << "k = " << params.k << std::endl;
-        std::cout << "f = " << "[" << params.f[0] << " " << params.f[1] << " " << params.f[2] << "]" << std::endl;
-        std::cout << "s = " << "[" << params.s[0] << " " << params.s[1] << " " << params.s[2] << "]" << std::endl;
-    }
-
-    /**
-     * @brief Smoothed Heaviside function centered at x = 1.
-     * 
-     * @param[in] x Input value.
-     * @param[in] k Smoothing parameter.
-     * @return Smoothed Heaviside function.
-     */
-    double chi(const double x, const double k=100) const {
-        return 1. / (1. + exp(-k * (x - 1.)));
-    }
-
-    /**
-     * @brief Computes the strain energy for the Holzapfel-Ogden material model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Holzapfel-Ogden material model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-        // Compute solid mechanics terms
-        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-
-        // Material parameters
-        double a = params.a;
-        double b = params.b;
-        double a_f = params.a_f;
-        double b_f = params.b_f;
-        double a_s = params.a_s;
-        double b_s = params.b_s;
-        double a_fs = params.a_fs;
-        double b_fs = params.b_fs;
-
-        // Smoothed Heaviside parameter
-        double k = params.k;
-
-        // Fiber and sheet directions
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-
-        // Strain energy density for Holzapfel-Ogden material model
-
-        // Formulation used by cardiac mechanics benchmark paper (Arostica et al., 2024)
-        // Uses I1_bar (bar = isochoric), but I4_f, I4_s, I8_fs (not bar)
-        // Psi = a/2b * exp{b(I1_bar - 3)} 
-        //       + a_f/2b_f * chi(I4_f) * (exp{b_f(I4_f - 1)^2} - 1
-        //       + a_s/2b_s * chi(I4_s) * (exp{b_s(I4_s - 1)^2} - 1
-        //       + a_fs/2b_fs * (exp{b_fs*I8_fs^2} - 1)
-        // This corresponds to the HO-ma (modified anisotropy) implementation in svMultiPhysics
-
-        // Invariants
-        double I1_bar = smTerms.Ib1;
-        // I4_f = f . C . f
-        auto C_f = mat_fun::mat_mul(smTerms.C, f);
-        double I4_f = f.dot(C_f);
-        // I4_s = s . C . s
-        auto C_s = mat_fun::mat_mul(smTerms.C, s);
-        double I4_s = s.dot(C_s);
-        // I8_fs = f . C . s
-        double I8_fs = f.dot(C_s);
-
-        // Strain energy density for Holzapfel-Ogden material model with full anisotropic invariants
-        double Psi = 0.0;
-        Psi += a / (2.0 * b) * exp(b * (I1_bar - 3.0));                             // Isotropic term
-        Psi += a_f / (2.0 * b_f) * chi(I4_f, k) * (exp(b_f * pow(I4_f - 1.0, 2)) - 1.0);   // Fiber term
-        Psi += a_s / (2.0 * b_s) * chi(I4_s, k) * (exp(b_s * pow(I4_s - 1.0, 2)) - 1.0);   // Sheet term
-        Psi += a_fs / (2.0 * b_fs) * (exp(b_fs * pow(I8_fs, 2)) - 1.0);                   // Cross-fiber term
-
-        return Psi;
-
-    }
-};
-
-/**
- * @brief Class for testing the CANN model with Neo-Hookean material model parameters.
- *
- * This class provides methods to set up and test the Neo-Hookean material model, including 
- * computing the strain energy and printing material parameters.
- */
-class TestCANN_NH : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the CANN material model.
-     */
-    CANN_NH_Params params;
-
-    /**
-     * @brief Constructor for the TestCANN_NH class.
-     *
-     * Initializes the CANN - NeoHooke material parameters.
-     *
-     * @param[in] params_ Parameters for the CANN Neo-Hookean material model.
-     */
-    TestCANN_NH(const CANN_NH_Params &params_) : TestMaterialModel( consts::ConstitutiveModelType::stArtificialNeuralNet, consts::ConstitutiveModelType::stVol_ST91),
-        params(params_) 
-        {
-        // Set Neo-Hookean material parameters
-        auto &dmn = com_mod.mockEq.mockDmn;
-        int nrows = 1;
-
-        dmn.stM.paramTable.num_rows = nrows;
-        
-        // Resize Arrays and Vectors to ensure there is enough space
-        dmn.stM.paramTable.invariant_indices.resize(dmn.stM.paramTable.num_rows);
-        dmn.stM.paramTable.activation_functions.resize(dmn.stM.paramTable.num_rows,3);
-        dmn.stM.paramTable.weights.resize(dmn.stM.paramTable.num_rows,3);
-
-        // Populate components of the table in stM
-        for (size_t i = 0; i < dmn.stM.paramTable.num_rows; i++)
-        {
-            // Store invariant index
-            dmn.stM.paramTable.invariant_indices[i] = params.Table[i].invariant_index.value_;
-
-            // Store activation function values
-            dmn.stM.paramTable.activation_functions(i,0) = params.Table[i].activation_functions.value_[0];
-            dmn.stM.paramTable.activation_functions(i,1) = params.Table[i].activation_functions.value_[1];
-            dmn.stM.paramTable.activation_functions(i,2) = params.Table[i].activation_functions.value_[2];
-
-            // Store weight values
-            dmn.stM.paramTable.weights(i,0) = params.Table[i].weights.value_[0];
-            dmn.stM.paramTable.weights(i,1) = params.Table[i].weights.value_[1];
-            dmn.stM.paramTable.weights(i,2) = params.Table[i].weights.value_[2];
-
+        // Create random deformation gradients for small perturbations
+        for (int i = 0; i < n_F; i++) {
+            F_small_list.push_back(create_random_perturbed_identity_F(3, DEFORMATION_PERTURBATION_SMALL));
         }
 
-        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
-    }
+        // Create random deformation gradients for medium perturbations
+        for (int i = 0; i < n_F; i++) {
+            F_medium_list.push_back(create_random_perturbed_identity_F(3, DEFORMATION_PERTURBATION_MEDIUM));
+        }
 
-/**
-     * @brief Prints the CANN Neo-Hookean material parameters.
-     */
-    void printMaterialParameters() {
-        int nrows = 1;
-        for (int i = 0; i < nrows; i++){
-            std::cout << "ROW: " << i+1 << std::endl;
-            std::cout << "Invariant number: " << params.Table[i].invariant_index << std::endl;
-            std::cout << "Activation function 0: " << params.Table[i].activation_functions.value()[0] << std::endl;
-            std::cout << "Activation function 1: " << params.Table[i].activation_functions.value()[1] << std::endl;
-            std::cout << "Activation function 2: " << params.Table[i].activation_functions.value()[2] << std::endl;
-            std::cout << "Weight 0: " << params.Table[i].weights[0] << std::endl;
-            std::cout << "Weight 1: " << params.Table[i].weights[1] << std::endl;
-            std::cout << "Weight 2: " << params.Table[i].weights[2] << std::endl;
+        // Create random deformation gradients for large perturbations
+        for (int i = 0; i < n_F; i++) {
+            F_large_list.push_back(create_random_perturbed_identity_F(3, DEFORMATION_PERTURBATION_LARGE));
         }
     }
 
-    /**
-     * @brief Computes the strain energy for the Neo-Hookean material model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Neo-Hookean material model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-        // Compute solid mechanics terms
-        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-
-        // Strain energy density for Neo-Hookean material model
-        // Psi_iso = C10 * (Ib1 - 3)
-        double Psi_iso = params.Table[0].weights[2] * (smTerms.Ib1 - 3.); //w[0][6] = C10
-
-        return Psi_iso;
-    }
-};
-
-/**
- * @brief Class for testing the CANN model with Holzapfel-Ogden material model parameters.
- *
- * This class provides methods to set up and test the Neo-Hookean material model, including 
- * computing the strain energy and printing material parameters.
- */
-class TestCANN_HO : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the CANN material model.
-     */
-    CANN_HO_Params params;
-
-    /**
-     * @brief Constructor for the TestCANN_HO class.
-     *
-     * Initializes the CANN - HO material parameters
-     *
-     * @param[in] params_ Parameters for the CANN HO material model.
-     */
-    TestCANN_HO(const CANN_HO_Params &params_) : TestMaterialModel( consts::ConstitutiveModelType::stArtificialNeuralNet, consts::ConstitutiveModelType::stVol_ST91),
-        params(params_) 
-        {
-        // Set HO material parameters for svFSIplus
-        auto &dmn = com_mod.mockEq.mockDmn;
-        int nrows = 4;
-
-        dmn.stM.paramTable.num_rows = nrows;
-
-        // Resize Arrays and Vectors to ensure there is enough space
-        dmn.stM.paramTable.invariant_indices.resize(dmn.stM.paramTable.num_rows);
-        dmn.stM.paramTable.activation_functions.resize(dmn.stM.paramTable.num_rows,3);
-        dmn.stM.paramTable.weights.resize(dmn.stM.paramTable.num_rows,3);
-        
-        // Populate components of the table in stM
-        for (size_t i = 0; i < dmn.stM.paramTable.num_rows; i++)
-        {
-            // Store invariant index
-            dmn.stM.paramTable.invariant_indices[i] = params.Table[i].invariant_index.value_;
-
-            // Store activation function values
-            dmn.stM.paramTable.activation_functions(i,0) = params.Table[i].activation_functions.value_[0];
-            dmn.stM.paramTable.activation_functions(i,1) = params.Table[i].activation_functions.value_[1];
-            dmn.stM.paramTable.activation_functions(i,2) = params.Table[i].activation_functions.value_[2];
-
-            // Store weight values
-            dmn.stM.paramTable.weights(i,0) = params.Table[i].weights.value_[0];
-            dmn.stM.paramTable.weights(i,1) = params.Table[i].weights.value_[1];
-            dmn.stM.paramTable.weights(i,2) = params.Table[i].weights.value_[2];
-
-        }
-       
-        dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
-
-        // Set number of fiber directions and fiber directions
-        nFn = 2;
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-        fN.set_col(0, f);
-        fN.set_col(1, s);
-    }
-
-/**
-     * @brief Prints the CANN HO material parameters.
-     */
-    void printMaterialParameters() {
-        int nrows = 4;
-        for (int i = 0; i < nrows; i++){
-            std::cout << "ROW: " << i+1 << std::endl;
-            std::cout << "Invariant number: " << params.Table[i].invariant_index << std::endl;
-            std::cout << "Activation function 0: " << params.Table[i].activation_functions.value()[0] << std::endl;
-            std::cout << "Activation function 1: " << params.Table[i].activation_functions.value()[1] << std::endl;
-            std::cout << "Activation function 2: " << params.Table[i].activation_functions.value()[2] << std::endl;
-            std::cout << "Weight 0: " << params.Table[i].weights[0] << std::endl;
-            std::cout << "Weight 1: " << params.Table[i].weights[1] << std::endl;
-            std::cout << "Weight 2: " << params.Table[i].weights[2] << std::endl;
-        }
-    }
-
-    /**
-     * @brief Computes the strain energy for the Holzapfel-Ogden material model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Neo-Hookean material model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-        // Compute solid mechanics terms
-        solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-
-        // Fiber and sheet directions
-        Vector<double> f = {params.f[0], params.f[1], params.f[2]};
-        Vector<double> s = {params.s[0], params.s[1], params.s[2]};
-
-        // Strain energy density for Holzapfel-Ogden material model
-
-        // Formulation with fully decoupled isochoric-volumetric split
-        // Uses I1_bar, I4_bar_f, I4_bar_s, I8_bar_fs (bar = isochoric)
-        // Psi = a/2b * exp{b(I1_bar - 3)} 
-        //       + a_f/2b_f * chi(I4_bar_f) * (exp{b_f(I4_bar_f - 1)^2} - 1
-        //       + a_s/2b_s * chi(I4_bar_s) * (exp{b_s(I4_bar_s - 1)^2} - 1
-        //       + a_fs/2b_fs * (exp{b_fs*I8_bar_fs^2} - 1)
-        // We set k = 0 which leads to chi = 1/2 for all terms.
-        
-        // Invariants
-        double I1_bar = smTerms.Ib1;
-        // I4_bar_f = f . C_bar . f
-        auto C_bar_f = mat_fun::mat_mul(smTerms.C_bar, f);
-        double I4_bar_f = f.dot(C_bar_f);
-        // I4_bar_s = s . C_bar . s
-        auto C_bar_s = mat_fun::mat_mul(smTerms.C_bar, s);
-        double I4_bar_s = s.dot(C_bar_s);
-        // I8_bar_fs = f . C_bar . s
-        double I8_bar_fs = f.dot(C_bar_s);
-
-        // Strain energy density for Holzapfel-Ogden material model with modified anisotropic invariants (bar quantities)
-        double Psi = 0.0;
-        int nterms = 4;
-        Psi += params.Table[0].weights[2] * exp(params.Table[0].weights[1] * (I1_bar - 3.0)); // isotropic term
-        Psi += params.Table[1].weights[2] * (exp(params.Table[1].weights[1] * pow(I4_bar_f - 1.0, 2)) - 1.0);   // Fiber term; 0.5 included in params
-        Psi += params.Table[2].weights[2] * (exp(params.Table[2].weights[1] * pow(I4_bar_s - 1.0, 2)) - 1.0);   // Sheet term
-        Psi += params.Table[3].weights[2] * (exp(params.Table[3].weights[1] * pow(I8_bar_fs, 2)) - 1.0);                   // Cross-fiber term
-
-
-        return Psi;
-    }
+    void TearDown() override {}
 };
 
 
-/**
- * @brief Class for testing the quadratic volumetric penalty model.
- *
- * This class provides methods to set up and test the quadratic volumetric penalty model, including 
- * computing the strain energy and printing material parameters.
- */
-class TestQuadraticVolumetricPenalty : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the volumetric penalty model.
-     */
-    VolumetricPenaltyParams params;
-
-    /**
-     * @brief Constructor for the TestQuadraticVolumetricPenalty class.
-     *
-     * Initializes the volumetric penalty parameters for svMultiPhysics.
-     *
-     * @param[in] params_ Parameters for the volumetric penalty model.
-     */
-    TestQuadraticVolumetricPenalty(const VolumetricPenaltyParams &params_) : TestMaterialModel( consts::ConstitutiveModelType::stIso_nHook, consts::ConstitutiveModelType::stVol_Quad),
-        params(params_) 
-        {
-
-        // Set volumetric penalty parameter for svMultiPhysics
-        auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.stM.Kpen = params.kappa;         // Volumetric penalty parameter
-
-        // Note: Use Neo-Hookean material model for isochoric part, but set parameters to zero
-        dmn.stM.C10 = 0.0;         // Zero Neo-Hookean parameter
-    }
-
-    /**
-     * @brief Prints the volumetric penalty parameters.
-     */
-    void printMaterialParameters() {
-        std::cout << "kappa = " << params.kappa << std::endl;
-    }
-
-    /**
-     * @brief Computes the strain energy for the quadratic volumetric penalty model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the quadratic volumetric penalty model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-            
-            // Compute solid mechanics terms
-            solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-    
-            // Strain energy density for quadratic volumetric penalty model
-            // Psi = kappa/2 * (J - 1)^2  
-            double Psi = params.kappa/2.0 * pow(smTerms.J - 1.0, 2);
-    
-            return Psi;
-    }
-};
-
-/**
- * @brief Class for testing the Simo-Taylor91 volumetric penalty model.
- *
- * This class provides methods to set up and test the Simo-Taylor91 volumetric penalty model, including 
- * computing the strain energy and printing material parameters.
- */
-class TestSimoTaylor91VolumetricPenalty : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the volumetric penalty model.
-     */
-    VolumetricPenaltyParams params;
-
-    /**
-     * @brief Constructor for the TestSimoTaylor91VolumetricPenalty class.
-     *
-     * Initializes the volumetric penalty parameters for svMultiPhysics.
-     *
-     * @param[in] params_ Parameters for the volumetric penalty model.
-     */
-    TestSimoTaylor91VolumetricPenalty(const VolumetricPenaltyParams &params_) : TestMaterialModel( consts::ConstitutiveModelType::stIso_nHook, consts::ConstitutiveModelType::stVol_ST91),
-        params(params_) 
-        {
-
-        // Set volumetric penalty parameter for svMultiPhysics
-        auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.stM.Kpen = params.kappa;         // Volumetric penalty parameter
-
-        // Note: Use Neo-Hookean material model for isochoric part, but set parameters to zero
-        dmn.stM.C10 = 0.0;         // Zero Neo-Hookean parameter
-    }
-
-    /**
-     * @brief Prints the volumetric penalty parameters.
-     */
-    void printMaterialParameters() {
-        std::cout << "kappa = " << params.kappa << std::endl;
-    }
-
-    /**
-     * @brief Computes the strain energy for the Simo-Taylor91 volumetric penalty model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Simo-Taylor91 volumetric penalty model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-            
-            // Compute solid mechanics terms
-            solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-    
-            // Strain energy density for Simo-Taylor91 volumetric penalty model
-            // Psi = kappa/4 * (J^2 - 1 - 2*ln(J))
-            double Psi = params.kappa/4.0 * (pow(smTerms.J, 2) - 1.0 - 2.0 * log(smTerms.J));
-    
-            return Psi;
-    }
-};
-
-/**
- * @brief Class for testing the Miehe94 volumetric penalty model.
- *
- * This class provides methods to set up and test the Miehe94 volumetric penalty model, including 
- * computing the strain energy and printing material parameters.
- */
-class TestMiehe94VolumetricPenalty : public TestMaterialModel {
-public:
-
-    /**
-     * @brief Parameters for the volumetric penalty model.
-     */
-    VolumetricPenaltyParams params;
-
-    /**
-     * @brief Constructor for the TestMiehe94VolumetricPenalty class.
-     *
-     * Initializes the volumetric penalty parameters for svMultiPhysics.
-     *
-     * @param[in] params_ Parameters for the volumetric penalty model.
-     */
-    TestMiehe94VolumetricPenalty(const VolumetricPenaltyParams &params_) : TestMaterialModel( consts::ConstitutiveModelType::stIso_nHook, consts::ConstitutiveModelType::stVol_M94),
-        params(params_) 
-        {
-
-        // Set volumetric penalty parameter for svMultiPhysics
-        auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.stM.Kpen = params.kappa;         // Volumetric penalty parameter
-
-        // Note: Use Neo-Hookean material model for isochoric part, but set parameters to zero
-        dmn.stM.C10 = 0.0;         // Zero Neo-Hookean parameter
-    }
-
-    /**
-     * @brief Prints the volumetric penalty parameters.
-     */
-    void printMaterialParameters() {
-        std::cout << "kappa = " << params.kappa << std::endl;
-    }
-
-    /**
-     * @brief Computes the strain energy for the Miehe94 volumetric penalty model.
-     *
-     * @param[in] F Deformation gradient.
-     * @return Strain energy density for the Miehe94 volumetric penalty model.
-     */
-    double computeStrainEnergy(const Array<double> &F) {
-            
-            // Compute solid mechanics terms
-            solidMechanicsTerms smTerms = calcSolidMechanicsTerms(F);
-    
-            // Strain energy density for Miehe94 volumetric penalty model
-            // Psi = kappa * (J - ln(J) - 1)
-            double Psi = params.kappa * (smTerms.J - log(smTerms.J) - 1.0);
-    
-            return Psi;
-    }
-};
+#endif
