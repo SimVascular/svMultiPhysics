@@ -1,5 +1,15 @@
 name: ubuntu-latest
-on: [push, pull_request]
+on: 
+  push: 
+    paths:
+      - 'Code/**'
+      - 'tests/**'
+      - '.github/**'
+  pull_request:
+    paths:
+      - 'Code/**'
+      - 'tests/**'
+      - '.github/**'
 jobs:
   test:
     runs-on: ubuntu-latest

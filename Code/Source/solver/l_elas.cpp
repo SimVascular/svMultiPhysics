@@ -64,7 +64,7 @@ void construct_l_elas(ComMod& com_mod, const mshType& lM, const Array<double>& A
 {
   using namespace consts;
 
-  #define debug_construct_l_elas 
+  #define n_debug_construct_l_elas 
   #ifdef debug_construct_l_elas 
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();

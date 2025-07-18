@@ -401,6 +401,7 @@ BoundaryConditionParameters::BoundaryConditionParameters()
   set_parameter("Spatial_profile_file_path", "", !required, spatial_profile_file_path);
   set_parameter("Spatial_values_file_path", "", !required, spatial_values_file_path);
   set_parameter("Stiffness", 1.0, !required, stiffness);
+  set_parameter("svZeroDSolver_block", "", !required, svzerod_solver_block);
 
   set_parameter("Temporal_and_spatial_values_file_path", "", !required, temporal_and_spatial_values_file_path);
   set_parameter("Temporal_values_file_path", "", !required, temporal_values_file_path);
@@ -486,6 +487,7 @@ const std::string ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MA_MODEL = "Holza
 const std::string ConstitutiveModelParameters::LEE_SACKS = "Lee-Sacks";
 const std::string ConstitutiveModelParameters::NEOHOOKEAN_MODEL = "neoHookean";
 const std::string ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL = "stVenantKirchhoff";
+const std::string ConstitutiveModelParameters::CANN_MODEL = "CANN";
 
 /// @brief Supported constitutive model types and their aliases.
 const std::map<std::string, std::string> ConstitutiveModelParameters::constitutive_model_types = {
@@ -505,6 +507,9 @@ const std::map<std::string, std::string> ConstitutiveModelParameters::constituti
 
   {ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL, ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL},
   {"stVK",                                                ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL},
+
+  {ConstitutiveModelParameters::CANN_MODEL, ConstitutiveModelParameters::CANN_MODEL},
+  {"CANN", ConstitutiveModelParameters::CANN_MODEL},
 }; 
 
 /// @brief Define a map to set the parameters for each constitutive model.
@@ -520,6 +525,7 @@ SetConstitutiveModelParamMapType SetConstitutiveModelParamMap = {
   {ConstitutiveModelParameters::LEE_SACKS, [](CmpType cp, CmpXmlType params) -> void {cp->lee_sacks.set_values(params);}},
   {ConstitutiveModelParameters::NEOHOOKEAN_MODEL, [](CmpType cp, CmpXmlType params) -> void {cp->neo_hookean.set_values(params);}},
   {ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL, [](CmpType cp, CmpXmlType params) -> void {cp->stvenant_kirchhoff.set_values(params);}},
+  {ConstitutiveModelParameters::CANN_MODEL, [](CmpType cp, CmpXmlType params) -> void {cp->cann.set_values(params);}}
 };
 
 /// @brief Define a map to print parameters for each constitutive model.
@@ -533,6 +539,7 @@ PrintConstitutiveModelParamMapType PrintConstitutiveModelParamMap = {
   {ConstitutiveModelParameters::LEE_SACKS, [](CmpType cp) -> void {cp->lee_sacks.print_parameters();}},
   {ConstitutiveModelParameters::NEOHOOKEAN_MODEL, [](CmpType cp) -> void {cp->neo_hookean.print_parameters();}},
   {ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL, [](CmpType cp) -> void {cp->stvenant_kirchhoff.print_parameters();}},
+  {ConstitutiveModelParameters::CANN_MODEL, [](CmpType cp) -> void {cp->cann.print_parameters();}}
 };
 
 
@@ -749,6 +756,135 @@ void StVenantKirchhoffParameters::print_parameters()
 {
 }
 
+/// @brief  Process parameters for the "Add_row" xml element
+///
+/// Define the xml element name for CANN row parameters
+const std::string CANNRowParameters::xml_element_name_ = "Add_row";
+CANNRowParameters::CANNRowParameters()
+{
+  set_xml_element_name(xml_element_name_);
+
+  // A parameter that must be defined.
+  bool required = true;
+
+  set_parameter("row_name", "", required, row_name);
+
+  // Initialize row parameters and add it to params map
+  int invariant = 1;
+  std::initializer_list<int> activation_func = {1,1,1}; 
+  std::initializer_list<double> weights_vec = {1.0,1.0,1.0};
+
+  set_parameter("Invariant_num", invariant ,required, row.invariant_index);
+  set_parameter("Activation_functions", activation_func,required, row.activation_functions);
+  set_parameter("Weights", weights_vec,required,row.weights);
+}
+
+void CANNRowParameters::print_parameters()
+{
+  std::cout << std::endl;
+  std::cout << "---------------" << std::endl;
+  std::cout << "CANN Row Parameters" << std::endl;
+  std::cout << "---------------" << std::endl;
+  std::cout << "Invariant number: " << row.invariant_index << std::endl;
+  std::cout << "Activation function 0: " << row.activation_functions[0] << std::endl;
+  std::cout << "Activation function 1: " << row.activation_functions[1] << std::endl;
+  std::cout << "Activation function 2: " << row.activation_functions[2] << std::endl;
+  std::cout << "Weight 0: " << row.weights[0] << std::endl;
+  std::cout << "Weight 1: " << row.weights[1] << std::endl;
+  std::cout << "Weight 2: " << row.weights[2] << std::endl;
+}
+
+void CANNRowParameters::set_values(tinyxml2::XMLElement* row_elem)
+{
+  if (!row_elem) {
+    throw std::runtime_error("CANNRowParameters::set_values: Received null XML element.");
+  }
+
+  using namespace tinyxml2;
+
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
+
+  // Set row_name for current row element
+  const char* row_name_input;
+  auto result = row_elem->QueryStringAttribute("row_name", &row_name_input);
+  row_name.set(std::string(row_name_input));
+
+  auto item = row_elem->FirstChildElement();
+
+  // Iterate over all child elements for this row
+  while(item != nullptr) {
+    auto name = std::string(item->Value());
+    auto value = item->GetText();
+
+    if (value == nullptr) { 
+      throw std::runtime_error(error_msg + name + "'.");
+    }
+
+    try {
+      set_parameter_value_CANN(name, value);
+    } catch (const std::bad_function_call& exception) {
+      throw std::runtime_error(error_msg + name + "'.");
+    }
+
+    item = item->NextSiblingElement();
+  }
+}
+
+/// @brief Constructor for CANNParameters class. Initializes parameter table
+CANNParameters::CANNParameters()
+{
+  // A parameter that must be defined.
+  bool required = true;
+
+  set_xml_element_name("Constitutive_model type=CANN");
+
+  // No need to initialize rows.
+}
+
+/// @brief Destructor for CANNParameters class. Deletes memory dynamically allocated
+/// to the rows of the table.
+CANNParameters::~CANNParameters()
+{
+    for (auto row : rows) {
+        delete row;  // Free allocated memory
+    }
+    rows.clear();
+}
+
+void CANNParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{ 
+  using namespace tinyxml2;
+  std::string error_msg = "Unknown Constitutive_model type=CANN XML element '";
+
+  auto row_elem = xml_elem->FirstChildElement("Add_row"); // initializes pointer to first row name
+
+  while (row_elem != nullptr) {
+    CANNRowParameters* row = new CANNRowParameters();
+    row->set_values(row_elem); // Populate row parameters
+    rows.push_back(row); // store the pointer to row in vector
+
+    row_elem = row_elem->NextSiblingElement("Add_row");
+  }
+
+  if (rows.empty()) {
+    throw std::runtime_error(error_msg + "Add_row'. No rows found.");
+  }
+
+  value_set = true;
+}
+
+void CANNParameters::print_parameters()
+{
+  std::cout << std::endl;
+  std::cout << "---------------" << std::endl;
+  std::cout << "CANN Parameters" << std::endl;
+  std::cout << "---------------" << std::endl;
+
+  for (auto& row : rows) {
+    row->print_parameters();
+  }
+}
+
 ConstitutiveModelParameters::ConstitutiveModelParameters()
 {
   // A parameter that must be defined.
@@ -926,47 +1062,48 @@ void CoupleGenBCParameters::set_values(tinyxml2::XMLElement* xml_elem)
   value_set = true;
 }
 
-
 //////////////////////////////////////////////////////////
-//                  CoupleSvZeroDParameters               //
+//             svZeroDSolverInterfaceParameters         //
 //////////////////////////////////////////////////////////
 
-// Coupling to svZeroD.
+// The svZeroDSolverInterfaceParameters class stores parameters sued to
+// interface to the svZeroDSolver.
 
-// Define the XML element name for equation Couple_to_svZeroD parameters.
-const std::string CoupleSvZeroDParameters::xml_element_name_ = "Couple_to_svZeroD";
+// Define the XML element name for the svZeroDSolver_interface parameters.
+const std::string svZeroDSolverInterfaceParameters::xml_element_name_ = "svZeroDSolver_interface";
 
-CoupleSvZeroDParameters::CoupleSvZeroDParameters()
+svZeroDSolverInterfaceParameters::svZeroDSolverInterfaceParameters()
 {
   // A parameter that must be defined.
   bool required = true;
 
-  type = Parameter<std::string>("type", "", required);
+  set_parameter("Coupling_type", "", required, coupling_type);
+
+  set_parameter("Initial_flows", 0.0, !required, initial_flows);
+  set_parameter("Initial_pressures", 0.0, !required, initial_pressures);
+
+  set_parameter("Configuration_file", "", required, configuration_file);
+
+  set_parameter("Shared_library", "", required, shared_library);
+
 };
 
-void CoupleSvZeroDParameters::set_values(tinyxml2::XMLElement* xml_elem)
+void svZeroDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
-  std::string error_msg = "Unknown Couple_to_svZeroD type=TYPE XML element '";
-  
-  // Get the 'type' from the <Couple_to_genBC type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    throw std::runtime_error("No TYPE given in the XML <Couple_to_svZeroD type=TYPE> element.");
-  }
-  type.set(std::string(stype));
+  std::string error_msg = "Unknown svZeroDSolver_interface XML element '";
+
+  // Process child elements.
+  //
   auto item = xml_elem->FirstChildElement();
-  
+
   using std::placeholders::_1;
   using std::placeholders::_2;
-  std::function<void(const std::string&, const std::string&)> ftpr = 
-      std::bind( &CoupleSvZeroDParameters::set_parameter_value, *this, _1, _2);
-  
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind( &svZeroDSolverInterfaceParameters::set_parameter_value, *this, _1, _2);
   xml_util_set_parameters(ftpr, xml_elem, error_msg);
-  
+
   value_set = true;
 }
-
 
 //////////////////////////////////////////////////////////
 //                  OutputParameters                    //
@@ -1932,8 +2069,8 @@ void EquationParameters::set_section_values(DomainParameters* default_domain, ti
     } else if (name == CoupleGenBCParameters::xml_element_name_) {
       couple_to_genBC.set_values(item);
 
-    } else if (name == CoupleSvZeroDParameters::xml_element_name_) {
-      couple_to_svZeroD.set_values(item);
+    } else if (name == svZeroDSolverInterfaceParameters::xml_element_name_) {
+      svzerodsolver_interface_parameters.set_values(item);
 
     } else if (name == DomainParameters::xml_element_name_) {
       auto domain_params = new DomainParameters();

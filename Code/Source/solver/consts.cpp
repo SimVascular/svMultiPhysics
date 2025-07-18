@@ -142,6 +142,8 @@ const std::map<std::string,ConstitutiveModelType> constitutive_model_name_to_typ
   {"M94", ConstitutiveModelType::stVol_M94},
   {"Miehe94", ConstitutiveModelType::stVol_M94},
 
+  {"CANN", ConstitutiveModelType::stArtificialNeuralNet},
+  {"AnisoHyper", ConstitutiveModelType::stArtificialNeuralNet},
 };
 
 /// @brief Map for contact model string name to ContacteModelType
@@ -210,8 +212,11 @@ static const std::map<int,ElementType> num_nodes_to_type = {
 
 const std::map<std::string,CplBCType> cplbc_name_to_type = {
     {"E", CplBCType::cplBC_E},
+    {"explicit", CplBCType::cplBC_E},
     {"I", CplBCType::cplBC_I},
-    {"SI", CplBCType::cplBC_SI}
+    {"implicit", CplBCType::cplBC_I},
+    {"SI", CplBCType::cplBC_SI},
+    {"semi-implicit", CplBCType::cplBC_SI}
   };
 
 /// @brief Map equation name to a type
