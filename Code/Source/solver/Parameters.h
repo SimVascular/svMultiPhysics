@@ -442,6 +442,20 @@ class ParameterLists
     std::string xml_element_name = "";
 };
 
+//----------------------
+// IncludeParameterFile
+//----------------------
+// The IncludeParameterFile class is used to read and set parameters read in from an external XML file.
+//
+class IncludeParametersFile 
+{
+  public:
+    IncludeParametersFile(const char* file_name);
+    tinyxml2::XMLDocument document;
+    tinyxml2::XMLElement* root_element = nullptr;
+    static std::string NAME;
+};
+
 //////////////////////////////////////////////////////////
 //            ConstitutiveModelParameters               //
 //////////////////////////////////////////////////////////
@@ -1173,7 +1187,7 @@ class DomainParameters : public ParameterLists
     static const std::string xml_element_name_;
 
     void print_parameters();
-    void set_values(tinyxml2::XMLElement* xml_elem);
+    void set_values(tinyxml2::XMLElement* xml_elem, bool from_external_xml = false);
 
     // Parameters for sub-elements under the Domain element.
     ConstitutiveModelParameters constitutive_model;
@@ -1206,6 +1220,7 @@ class DomainParameters : public ParameterLists
     Parameter<double> force_y;
     Parameter<double> force_z;
 
+    Parameter<std::string> include_xml;
     Parameter<double> isotropic_conductivity;
 
     Parameter<double> mass_damping;
@@ -1318,8 +1333,8 @@ class EquationParameters : public ParameterLists
     static const std::string xml_element_name_;
 
     void print_parameters();
-    void set_values(tinyxml2::XMLElement* xml_elem);
-    void set_section_values(DomainParameters* default_domain, tinyxml2::XMLElement* eq_elem);
+    void set_values(tinyxml2::XMLElement* xml_elem, DomainParameters* default_domain=nullptr);
+    //void set_section_values(DomainParameters* default_domain, tinyxml2::XMLElement* eq_elem);
 
     Parameter<double> backflow_stabilization_coefficient;
 
@@ -1332,6 +1347,7 @@ class EquationParameters : public ParameterLists
 
     Parameter<double> elasticity_modulus;
 
+    Parameter<std::string> include_xml;
     Parameter<std::string> initialize;
     Parameter<bool> initialize_rcr_from_flow;
 
@@ -1349,9 +1365,6 @@ class EquationParameters : public ParameterLists
     Parameter<std::string> type;
     Parameter<bool> use_taylor_hood_type_basis;
 
-    Parameter<std::string> include_xml;
-    void process_include_xml(const std::string& file_name, DomainParameters* default_domain);
-    
     // Inverse of Darcy permeability. Default value of 0.0 for Navier-Stokes and non-zero for Navier-Stokes-Brinkman
     Parameter<double> inverse_darcy_permeability;
 
