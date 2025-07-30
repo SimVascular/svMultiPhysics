@@ -11,7 +11,7 @@
 
   <Save_results_to_VTK_format> 1 </Save_results_to_VTK_format> 
   <Name_prefix_of_saved_VTK_files> result </Name_prefix_of_saved_VTK_files> 
-  <!-- <Save_results_in_folder> results </Save_results_in_folder> -->
+  <!-- <Save_results_in_folder> results </Save_results_in_folder>  -->
   <Increment_in_saving_VTK_files> 1 </Increment_in_saving_VTK_files> 
   <Start_saving_after_time_step> 1 </Start_saving_after_time_step> 
 
@@ -51,7 +51,7 @@
 <Add_equation type="struct" > 
 
    <Coupled> true </Coupled>
-   <Min_iterations> 6 </Min_iterations>  
+   <Min_iterations> 3 </Min_iterations>  
    <Max_iterations> 10 </Max_iterations> 
    <Tolerance> 1e-9 </Tolerance> 
 
@@ -77,10 +77,7 @@
 
    <Dilational_penalty_model> ST91 </Dilational_penalty_model>
    <Penalty_parameter> 1e6 </Penalty_parameter> <!-- Pa -->
-   
-   <Momentum_stabilization_coefficient> 1e-5 </Momentum_stabilization_coefficient>
-   <Continuity_stabilization_coefficient> 1e-5 </Continuity_stabilization_coefficient>
-   
+
    <Fiber_reinforcement_stress type="Unsteady" >
       <Temporal_values_file_path> LV_stress.dat </Temporal_values_file_path> 
       <Ramp_function> false </Ramp_function>
@@ -101,9 +98,10 @@
       <Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       </Linear_algebra>
-      <Tolerance> 1e-9 </Tolerance>
+      <Tolerance> 1e-12 </Tolerance>
+      <Absolute_tolerance> 1e-12 </Absolute_tolerance>
       <Max_iterations> 1000 </Max_iterations> 
-      <Krylov_space_dimension> 50 </Krylov_space_dimension>
+      <Krylov_space_dimension> 100 </Krylov_space_dimension>
    </LS>
 
    <Add_BC name="epi" >
