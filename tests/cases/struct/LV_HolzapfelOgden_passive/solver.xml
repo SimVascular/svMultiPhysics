@@ -27,22 +27,22 @@
 
 <Add_mesh name="msh" > 
 
-  <Mesh_file_path> P1_h0.005/mesh-complete.mesh.vtu </Mesh_file_path>
+  <Mesh_file_path> mesh/mesh-complete.mesh.vtu </Mesh_file_path>
 
   <Add_face name="endo">
-      <Face_file_path> P1_h0.005/mesh-surfaces/endo.vtp </Face_file_path>
+      <Face_file_path> mesh/mesh-surfaces/endo.vtp </Face_file_path>
   </Add_face>
 
   <Add_face name="epi">
-      <Face_file_path> P1_h0.005/mesh-surfaces/epi.vtp </Face_file_path>
+      <Face_file_path> mesh/mesh-surfaces/epi.vtp </Face_file_path>
   </Add_face>
 
   <Add_face name="top">
-      <Face_file_path> P1_h0.005/mesh-surfaces/top.vtp </Face_file_path>
+      <Face_file_path> mesh/mesh-surfaces/top.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction_file_path> P1_h0.005/fibersLongCells.vtu </Fiber_direction_file_path>
-  <Fiber_direction_file_path> P1_h0.005/fibersSheetCells.vtu </Fiber_direction_file_path>
+  <Fiber_direction_file_path> mesh/fibersLongCells.vtu </Fiber_direction_file_path>
+  <Fiber_direction_file_path> mesh/fibersSheetCells.vtu </Fiber_direction_file_path>
 
   <Mesh_scale_factor> 100.0 </Mesh_scale_factor> <!-- Convert from m to cm -->
 </Add_mesh>
