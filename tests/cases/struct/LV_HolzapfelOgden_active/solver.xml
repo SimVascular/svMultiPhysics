@@ -11,7 +11,6 @@
 
   <Save_results_to_VTK_format> 1 </Save_results_to_VTK_format> 
   <Name_prefix_of_saved_VTK_files> result </Name_prefix_of_saved_VTK_files> 
-  <!-- <Save_results_in_folder> results </Save_results_in_folder>  -->
   <Increment_in_saving_VTK_files> 1 </Increment_in_saving_VTK_files> 
   <Start_saving_after_time_step> 1 </Start_saving_after_time_step> 
 
@@ -44,7 +43,6 @@
   <Fiber_direction_file_path> mesh/fibersLong.vtu </Fiber_direction_file_path>
   <Fiber_direction_file_path> mesh/fibersSheet.vtu </Fiber_direction_file_path>
 
-  <Mesh_scale_factor> 1.0 </Mesh_scale_factor>
 </Add_mesh>
 
 
