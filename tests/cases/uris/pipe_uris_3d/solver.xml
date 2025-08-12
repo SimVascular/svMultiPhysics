@@ -121,19 +121,13 @@
     <Absolute_velocity> true </Absolute_velocity>
   </Output>
 
-  <!-- <Couple_to_genBC type="I" > 
-    <ZeroD_code_file_path> genBC_regazzoni2022/genBC.exe </ZeroD_code_file_path> 
-  </Couple_to_genBC>  -->
-
   <Add_BC name="left_inlet" > 
     <Type> Neu </Type> 
-    <!-- <Time_dependence> Coupled </Time_dependence> -->
     <Time_dependence> Steady </Time_dependence>
   </Add_BC> 
 
   <Add_BC name="left_outlet" > 
     <Type> Neu </Type> 
-    <!-- <Time_dependence> Coupled </Time_dependence> -->
     <Time_dependence> Steady </Time_dependence>
   </Add_BC> 
 
