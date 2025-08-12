@@ -175,6 +175,39 @@ SeMaterialPropertiesMapType set_material_props = {
   lDmn.stM.khs = params.k.value();
 } },
 
+//--------------------------------------------//
+//       stArtificialNeuralNet    //
+//--------------------------------------------//
+//
+{consts::ConstitutiveModelType::stArtificialNeuralNet, [](DomainParameters* domain_params, double mu, double kap, double lam,
+    dmnType& lDmn) -> void
+{
+  lDmn.stM.isoType = consts::ConstitutiveModelType::stArtificialNeuralNet;
+  auto& params = domain_params->constitutive_model.cann;
+
+  lDmn.stM.paramTable.num_rows = params.rows.size();
+
+  lDmn.stM.paramTable.invariant_indices.resize(lDmn.stM.paramTable.num_rows);
+  lDmn.stM.paramTable.activation_functions.resize(lDmn.stM.paramTable.num_rows,3);
+  lDmn.stM.paramTable.weights.resize(lDmn.stM.paramTable.num_rows,3);
+
+  // Populate components of the table in stM
+  for (size_t i = 0; i < lDmn.stM.paramTable.num_rows; i++)
+  {
+    // Store invariant index
+    lDmn.stM.paramTable.invariant_indices[i] = params.rows[i]->row.invariant_index.value_; 
+
+    // Store activation function and weight values
+    for (size_t j = 0; j < 3; j++)
+    {
+      lDmn.stM.paramTable.activation_functions(i,j) = params.rows[i]->row.activation_functions.value_[j];
+      lDmn.stM.paramTable.weights(i,j) = params.rows[i]->row.weights.value_[j];
+    }
+
+  }
+  
+} },
+
 //---------------------------//
 //       stIso_LS            //
 //---------------------------//

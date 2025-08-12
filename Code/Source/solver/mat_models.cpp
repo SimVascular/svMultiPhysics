@@ -35,6 +35,7 @@
 #include "fft.h"
 #include "mat_fun.h"
 #include "utils.h"
+#include "ArtificialNeuralNetMaterial.h"
 
 #include <math.h>
 #include <utility> // std::pair
@@ -747,6 +748,40 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g2 = g2 + (0.5*ddc4s/stM.bss)*(rexp - 1.0);
       g2   = 4.0*stM.ass*g2;
       CC += g2*dyadic_product<nsd>(Hss, Hss);
+    } break;
+
+    // Universal Material Subroutine - CANN Model
+    
+    case ConstitutiveModelType::stArtificialNeuralNet: {
+      
+      // Reading parameter table
+      auto &CANNModel = stM.paramTable;
+
+      double psi,dpsi[9],ddpsi[9];
+      double Inv[9] = {0,0,0,0,0,0,0,0,0};
+      std::array<Matrix<nsd>, 9> dInv;
+      std::array<Tensor<nsd>,9> ddInv;
+      Matrix<nsd> N1;
+
+      // Compute and store invariants and derivatives wrt C in array of matrices/tensors
+      CANNModel.computeInvariantsAndDerivatives<nsd>(C, fl, nfd, J2d, J4d, Ci, Idm, Tfa, N1, psi, Inv, dInv, ddInv);
+
+      // Strain energy function and derivatives
+      CANNModel.evaluate(Inv, psi, dpsi, ddpsi);
+
+      for (int i = 0; i < 9; i++) {
+        S += 2*dInv[i]*dpsi[i];
+      }
+
+      // Fiber reinforcement/active stress
+      S += Tfa*N1;
+      
+      // Stiffness Tensor
+      for(int x = 0; x < 9; x++){
+        CC += 4*dpsi[x]*ddInv[x];
+        CC += 4*ddpsi[x]*dyadic_product<nsd>(dInv[x],dInv[x]);
+      }
+
     } break;
 
 

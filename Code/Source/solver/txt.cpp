@@ -497,11 +497,10 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
         fprintf(fp, " %.10e ", tmp);
       }
     }
-
-    if (com_mod.cm.mas(cm_mod)) {
-      fprintf(fp, "\n");
-      fclose(fp);
-    }
+  }
+  if (com_mod.cm.mas(cm_mod)) {
+    fprintf(fp, "\n");
+    fclose(fp);
   }
 }
 
