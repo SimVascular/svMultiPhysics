@@ -690,11 +690,6 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const Array<double>& Ag
         double DDirTmp = 0.0;
         double sdf_deps_temp = 0.0;
         for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
-          // if (distSrf(iUris) <= com_mod.uris[iUris].sdf_deps) {
-          //   DDirTmp = (1 + cos(pi*distSrf(iUris)/com_mod.uris[iUris].sdf_deps))/
-          //             (2*com_mod.uris[iUris].sdf_deps*com_mod.uris[iUris].sdf_deps);
-          //   if (DDirTmp > DDir) {DDir = DDirTmp;}
-          // }
           if (com_mod.uris[iUris].clsFlg) {
             sdf_deps_temp = com_mod.uris[iUris].sdf_deps_close;
           } else {
@@ -1504,7 +1499,7 @@ void fluid_3d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
     Res = 0.0;
   } else {
     Res = com_mod.urisRes;
-    if (com_mod.uris[0].clsFlg) {Res = 1.0e5;}
+    if (com_mod.uris[0].clsFlg) {Res = com_mod.urisResClose;}
   }
 
   double rho = dmn.prop[PhysicalProperyType::fluid_density];
@@ -1834,7 +1829,7 @@ void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
     Res = 0.0;
   } else {
     Res = com_mod.urisRes;
-    if (com_mod.uris[0].clsFlg) {Res = 1.0e5;}
+    if (com_mod.uris[0].clsFlg) {Res = com_mod.urisResClose;}
   }
 
   double ctM  = 1.0;

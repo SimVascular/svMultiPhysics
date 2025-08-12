@@ -505,8 +505,10 @@ void uris_read_msh(Simulation* simulation) {
 
   auto param = simulation->parameters.URIS_mesh_parameters[0];
   com_mod.urisRes = param->resistance();
+  com_mod.urisResClose = param->resistance_close();
 
   std::cout << "URIS resistance: " << com_mod.urisRes << std::endl;
+  std::cout << "URIS resistance when the valve is closed: " << com_mod.urisResClose << std::endl;
 
   int nUris = simulation->parameters.URIS_mesh_parameters.size();
   com_mod.nUris = nUris;
@@ -972,7 +974,7 @@ void uris_calc_sdf(ComMod& com_mod) {
     }
 
     // For each coordinate dimension, find the minimum and maximum in uris_obj.x.
-    double extra_val = 0.05; // [HZ] The BBox is 10% larger than the actual valve, default is 0.1
+    double extra_val = 0.1;  // [HZ] The BBox is 10% larger than the actual valve, default is 0.1
     for (int i = 0; i < nsd; i++) {
       for (int j = 0; j < uris_obj.x.ncols(); j++) {
         double val = uris_obj.x(i,j);

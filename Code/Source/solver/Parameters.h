@@ -1481,11 +1481,11 @@ class URISFaceParameters : public ParameterLists
 
     static const std::string xml_element_name_;
 
-    Parameter<std::string> name;
+    Parameter<std::string> name; // Name of the valve surface
 
-    Parameter<std::string> face_file_path;
-    Parameter<std::string> open_motion_file_path;
-    Parameter<std::string> close_motion_file_path;
+    Parameter<std::string> face_file_path; // File path for the valve surface
+    Parameter<std::string> open_motion_file_path; // File path for the open motion of the valve
+    Parameter<std::string> close_motion_file_path; // File path for the close motion of the valve
 
 };
 
@@ -1519,17 +1519,17 @@ class URISMeshParameters : public ParameterLists
 
     std::vector<URISFaceParameters*> URIS_face_parameters;
 
-    // Add_mesh name= 
-    Parameter<std::string> name;
+    // Add_mesh name
+    Parameter<std::string> name; // Name of the valve mesh
 
     // Parameters under Add_URIS_mesh 
-    //
-    Parameter<double> mesh_scale_factor;
-    Parameter<double> thickness;
-    Parameter<double> close_thickness;
-    Parameter<double> resistance;
-    Parameter<bool> valve_starts_as_closed;
-    Parameter<std::string> positive_flow_normal_file_path;
+    Parameter<double> mesh_scale_factor; // Scale factor for the mesh
+    Parameter<double> thickness; // Thickness of the valve
+    Parameter<double> close_thickness; // Thickness of the valve when it is closed
+    Parameter<double> resistance; // Resistance of the valve
+    Parameter<double> resistance_close; // Resistance of the valve when it is closed
+    Parameter<bool> valve_starts_as_closed; // Whether the valve starts as closed
+    Parameter<std::string> positive_flow_normal_file_path; // File path for the positive flow normal
 
 };
 

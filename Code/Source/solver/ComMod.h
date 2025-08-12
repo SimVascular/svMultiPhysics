@@ -1611,6 +1611,9 @@ class ComMod {
     /// @brief URIS resistance
     double urisRes;
 
+    /// @brief URIS resistance when the valve is closed
+    double urisResClose;
+
     /// @brief Whether to use precomputed state-variable solutions
     bool usePrecomp = false;
     //----- int members -----//
