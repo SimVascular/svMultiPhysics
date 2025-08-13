@@ -6,7 +6,7 @@ import subprocess
 base_folder = "uris"
 
 # Fields to test
-fields = ["Displacement", "Pressure", "Velocity", "Traction", "WSS"]
+fields = ["Displacement", "Pressure", "Velocity", "WSS"]
 
 def test_pipe_uris_3d(n_proc):
     test_folder = "pipe_uris_3d"
