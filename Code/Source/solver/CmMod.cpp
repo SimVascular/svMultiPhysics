@@ -164,9 +164,3 @@ void cmType::bcast(const CmMod& cm_mod, Vector<int>& data) const
 {
   MPI_Bcast(data.data(), data.size(), cm_mod::mpint, cm_mod.master, com());
 }
-
-/// @brief bcast int array
-void cmType::bcast(const CmMod& cm_mod, Array<int>& data, const std::string& name) const
-{
-  MPI_Bcast(data.data(), data.size(), cm_mod::mpint, cm_mod.master, com());
-}
