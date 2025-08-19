@@ -141,7 +141,7 @@ void cmType::bcast(const CmMod& cm_mod, Array<double>& data, const std::string& 
 /// @brief bcast int array
 void cmType::bcast(const CmMod& cm_mod, Array<int>& data, const std::string& name) const
 {
-  MPI_Bcast(data.data(), data.size(), cm_mod::mpreal, cm_mod.master, com());
+  MPI_Bcast(data.data(), data.size(), cm_mod::mpint, cm_mod.master, com());
 }
 
 /// @brief bcast double Vector 
