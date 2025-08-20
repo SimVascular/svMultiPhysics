@@ -24,14 +24,13 @@ def load_dataset_from_pickle(filename: str | Path) -> dict[str, np.ndarray]:
 
 
 def get_array_at_point(mesh, point, array_name):
-    """Get array value at a specific point on the mesh."""
-    # Find the closest point on the mesh
-    closest_point = mesh.points[mesh.find_closest_point(point)]
-    point_id = mesh.find_closest_point(point)
-    
-    # Get the array value at that point
-    if array_name in mesh.point_data:
-        return mesh.point_data[array_name][point_id]
+    """Interpolate array value at an arbitrary point using PyVista's sample method."""
+    # Create a PolyData object for the query point
+    point_poly = pv.PolyData(np.array([point]))
+    # Interpolate the array at the point
+    sampled = point_poly.sample(mesh)
+    if array_name in sampled.point_data:
+        return sampled.point_data[array_name][0]
     else:
         raise ValueError(f"Array '{array_name}' not found in mesh")
 
@@ -367,12 +366,20 @@ def compute_plot_displacement_monoventricular(
 
     for data, lbl, color in zip(teams_datasets, labels_names, colors):
         for i, u_type in zip([0, 1, 2], ["ux", "uy", "uz"]):
-            axs[i, 0].plot(
-                data["time"], data["displacement"]["p0"][u_type], label=lbl, color=color
-            )
-            axs[i, 1].plot(
-                data["time"], data["displacement"]["p1"][u_type], label=lbl, color=color
-            )
+            if lbl == "svMultiPhysics":
+                axs[i, 0].plot(
+                    data["time"], data["displacement"]["p0"][u_type], label=lbl, color="k", linestyle="--"
+                )
+                axs[i, 1].plot(
+                    data["time"], data["displacement"]["p1"][u_type], label=lbl, color="k", linestyle="--"
+                )
+            else:
+                axs[i, 0].plot(
+                    data["time"], data["displacement"]["p0"][u_type], label=lbl, color=color
+                )
+                axs[i, 1].plot(
+                    data["time"], data["displacement"]["p1"][u_type], label=lbl, color=color
+                )
 
     plt.legend(loc="best", fancybox=True, shadow=True)
     fig.tight_layout()
