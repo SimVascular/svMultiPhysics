@@ -9,6 +9,8 @@ Aditionally, we present a pressure-volume loop for the idealized left ventricle.
 
 ![P-V loop](p-v_loop.png)
 
+These plots can be generated in figures.py by dowloading the benchmark dataset from https://zenodo.org/records/14260459 and running solver.xml with 1000 time steps to obtain the svMultiphysics results for the entire cycle.
+
 [1]: Reidmen Aróstica, David Nolte, Aaron Brown, Amadeus Gebauer, Elias Karabelas, Javiera Jilberto, Matteo Salvador, Michele Bucelli, Roberto Piersanti, Kasra Osouli, Christoph Augustin, Henrik Finsberg, Lei Shi, Marc Hirschvogel, Martin Pfaller, Pasquale Claudio Africa, Matthias Gsell, Alison Marsden, David Nordsletten, Francesco Regazzoni, Gernot Plank, Joakim Sundnes, Luca Dede’, Mathias Peirlinck, Vijay Vedula, Wolfgang Wall, Cristóbal Bertoglio,
 A software benchmark for cardiac elastodynamics,
 Computer Methods in Applied Mechanics and Engineering,

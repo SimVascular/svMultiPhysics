@@ -1,3 +1,12 @@
+"""
+This script plots the displacement and pressure-volume loop for the LV_HolzapfelOgden_active case 
+and compares results to those found in the benchmark paper by Aróstica et al. (2025).
+
+The resulting plots are included in this directory. If the user wishes to generate the plots,
+they can do so by downloading the benchmark dataset from https://zenodo.org/records/14260459
+and running solver.xml with 1000 time steps to obtain the svMultiPhysics results.
+"""
+
 import pickle
 from pathlib import Path
 import numpy as np
@@ -10,6 +19,17 @@ from scipy.interpolate import interp1d
 sns.set_theme()
 
 DATA_PATH = Path(__file__).parent / "data"
+
+# if DATA_PATH doesn't exist, print error messsage and exit
+if not DATA_PATH.exists():
+    print(f"Error: Benchmark path {DATA_PATH} does not exist. Benchmark results can be found at https://zenodo.org/records/14260459")
+    exit(1)
+
+# Path to svMultiPhysics results
+results_path = 'results'
+if not Path(results_path).exists():
+    print(f"Error: svMultiPhysics results path {results_path} does not exist. Run solver.xml with 1000 time steps to generate results.")
+    exit(1)
 
 
 def load_dataset_from_pickle(filename: str | Path) -> dict[str, np.ndarray]:
