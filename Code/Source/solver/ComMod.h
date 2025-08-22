@@ -52,10 +52,16 @@
 
 #include "fils_struct.hpp"
 
+#include "Parameters.h"
+
+#include "ArtificialNeuralNetMaterial.h"
+
 #include <array>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 class LinearAlgebra;
 
@@ -392,7 +398,13 @@ class stModelType
 
     // Fiber reinforcement stress
     fibStrsType Tf;
+
+    // CANN Model/UAnisoHyper_inv
+    ArtificialNeuralNetMaterial paramTable;
+  
+    stModelType();
 };
+
 
 /// @brief Fluid viscosity model type
 //
