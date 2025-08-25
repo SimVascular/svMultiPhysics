@@ -1265,7 +1265,130 @@ void dist_solid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmT
   cm.bcast(cm_mod, &lVis.mu);
 }
 
+// This routine partitions a virtual face. Since a virtual face is
+// not part of a mesh entity, it will be treated separately.
+// It replicates the subroutine 'PARTFACEV' in the Fortran code.
 
+void part_faceV(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa, Vector<int>& gmtl) 
+{
+  #ifdef debug_part_face
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  dmsg << "lFa.name: " << lFa.name;
+  #endif
+
+  auto& cm_mod = simulation->cm_mod;
+  auto& com_mod = simulation->com_mod;
+  auto& chnl_mod = simulation->chnl_mod;
+  auto& cm = com_mod.cm;
+
+  // Define some useful variables
+  int eNoNb = gFa.eNoN; // number of nodes per element
+  int iM = gFa.iM; // mesh index of this face
+
+  int i = gFa.nEl*eNoNb + gFa.nNo;
+  Vector<int> part(i);
+
+  if (cm.mas(cm_mod)) {
+    for (int e = 0; e < gFa.nEl; e++) {
+        int j = e * eNoNb;
+        for (int k = 0; k < eNoNb; k++) {
+            part[j + k] = gFa.IEN(k, e);
+        }
+    }
+    for (int a = 0; a < gFa.nNo; a++) {
+        int j = gFa.nEl * eNoNb + a;
+        part[j] = gFa.gN[a];
+    }
+  }
+  
+  // Broadcast array to all processors
+  cm.bcast(cm_mod, part);
+    if (cm.slv(cm_mod)) {
+        gFa.gE.resize(gFa.nEl);
+        for (int e = 0; e < gFa.nEl; e++) {
+            int j = e * eNoNb;
+            for (int k = 0; k < eNoNb; k++) {
+                gFa.IEN(k, e) = part[j + k];
+            }
+        }
+        
+        for (int a = 0; a < gFa.nNo; a++) {
+            int j = gFa.nEl * eNoNb + a;
+            gFa.gN[a] = part[j];
+        }
+    }
+    
+
+    // At this point, gFa is the same across all procs, and contains all
+    // the face information
+
+    // If face is virtual, then we can't partition the face according
+    // to the element partition of the mesh, since the element of the
+    // virtual face do not lie on the mesh. In this case, set lFa%nEl
+    // equal to gFa%nEl for all procs.
+
+    // time to form the local "face" structure in each processor
+    lFa.nEl = gFa.nEl;
+
+    // Allocate local face global element list and IEN array
+    lFa.gE.resize(lFa.nEl);
+    lFa.IEN.resize(eNoNb, lFa.nEl);
+
+    // Set Lfa.gE = 0 for a virtual face
+    for (int e = 0; e < lFa.nEl; e++) {
+        lFa.gE[e] = 0;
+    }
+    
+    // Compute the number of nodes on face that belong to this proc
+    lFa.nNo = 0;
+    for (int a = 0; a < gFa.nNo; a++) {
+        int Ac = gmtl[gFa.gN[a]];
+        if (Ac != -1) {
+            lFa.nNo++;
+        }
+    }
+    
+    // Allocate local face global node list
+    lFa.gN.resize(lFa.nNo);
+    
+    // Note that some values of lFa.IEN can be 0 if the node does not
+    // belong to this processor
+    for (int e = 0; e < lFa.nEl; e++) {
+        for (int a = 0; a < eNoNb; a++) {
+            lFa.IEN(a, e) = gmtl[gFa.IEN(a, e)];
+        }
+    }
+
+    // Analogously copying the nodes which belong to this processor
+    int j = 0;
+    for (int a = 0; a < gFa.nNo; a++) {
+        int Ac = gmtl[gFa.gN[a]];
+        if (Ac != -1) {
+          lFa.gN[j] = Ac;
+          j++;
+        }
+    }
+    
+    lFa.gnEl = gFa.gnEl;
+
+    if (com_mod.rmsh.isReqd) {
+        if (cm.mas(cm_mod)) {
+            lFa.gebc.resize(1 + eNoNb, lFa.gnEl);
+            for (int e = 0; e < gFa.gnEl; e++) {
+                lFa.gebc(0, e) = gFa.gebc(0, e);
+                for (int i = 0; i < eNoNb; i++) {
+                    lFa.gebc(i+1, e) = gFa.gebc(i, e);
+                }
+            }
+        } else {
+            lFa.gebc.clear();
+        }
+    }
+}
+
+// This function partitions the face based on the already partitioned mesh.
+// It replicates the subroutine PARTFACE in the fortran code.
 void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa, Vector<int>& gmtl)
 {
   #ifdef debug_part_face
@@ -1290,6 +1413,8 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
     gFa.gnEl = lFa.gnEl;
     gFa.nNo = lFa.nNo;
     gFa.qmTRI3 = lFa.qmTRI3;
+    gFa.vrtual = lFa.vrtual;
+    gFa.capID = lFa.capID;
 
     if (com_mod.rmsh.isReqd) {
       gFa.gebc.resize(1+gFa.eNoN, gFa.gnEl);
@@ -1308,6 +1433,8 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
   cm.bcast(cm_mod, &gFa.gnEl);
   cm.bcast(cm_mod, &gFa.nNo);
   cm.bcast(cm_mod, &gFa.qmTRI3);
+  cm.bcast(cm_mod, &gFa.vrtual);
+  cm.bcast(cm_mod, &gFa.capID);
 
   #ifdef debug_part_face
   dmsg << "gFa.d: " << gFa.d;
@@ -1346,6 +1473,15 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
 
   nn::select_eleb(simulation, lM, lFa);
   lFa.iM = iM;
+  lFa.vrtual = gFa.vrtual;
+  lFa.capID = gFa.capID;
+
+  // A virtual face cannot be partitioned as it is not part of the
+  // parent mesh entity. Treat this separately and return.
+  if (lFa.vrtual) {
+    part_faceV(simulation, lM, lFa, gFa, gmtl);
+    return;
+  }
 
   // Be careful with 'i', it seems to be the number of something 
   // and not a counter.
@@ -1619,6 +1755,8 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
     #endif
   }
 
+  // Count elements assigned to each proc and allocate space for part
+  // The part array maps an element to the proc it belongs to
   int nEl = lM.eDist(cm.id() + 1) - lM.eDist(cm.id());
   int idisp = lM.eDist(cm.id()) * sizeof(nEl);
   #ifdef dbg_part_msh
@@ -1630,7 +1768,8 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   #endif
 
   Vector<int> part(nEl);
-
+  
+  // Read domain partition from file if desired (if remesh is used)
   std::string fTmp = chnl_mod.appPath + "partitioning_" + lM.name + ".bin";
   bool flag = false;
   FILE *fp = nullptr; 
@@ -2089,4 +2228,3 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
     tmpYs.clear();
   }
 }
-
