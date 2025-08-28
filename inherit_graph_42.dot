@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="LSCtx",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$struct_l_s_ctx.html",tooltip=" "];
+  Node0 [id="Node000000",label="load_msh::MeshHashMaps",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classload__msh_1_1_mesh_hash_maps.html",tooltip="Generate hash maps for mesh nodes and elements."];
 }

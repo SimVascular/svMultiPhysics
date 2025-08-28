@@ -19,5 +19,6 @@ var searchData=
   ['output_16',['output',['../classeq_type.html#ae6f3019943067b01b306086d24af0783',1,'eqType']]],
   ['outputoptions_17',['OutputOptions',['../struct_output_options.html',1,'']]],
   ['outputparameters_18',['OutputParameters',['../class_output_parameters.html',1,'']]],
-  ['outputtype_19',['outputType',['../classoutput_type.html',1,'']]]
+  ['outputtype_19',['outputType',['../classoutput_type.html',1,'']]],
+  ['outuris_20',['outURIS',['../classeq_type.html#a7b64d6dd21156fde4abb359b4af5609d',1,'eqType']]]
 ];

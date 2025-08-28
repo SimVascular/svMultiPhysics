@@ -6,5 +6,6 @@ var searchData=
   ['otnien_3',['otnIEN',['../classmsh_type.html#a4eae34247ad01296d1a2a5bce7cf243f',1,'mshType']]],
   ['out_5ffiles_4',['out_files',['../classecg_leads_type.html#af77b84a8b3e4444955a642447c278a34',1,'ecgLeadsType']]],
   ['outib_5',['outIB',['../classeq_type.html#a6986408c1ffc78110922fefa5506d792',1,'eqType']]],
-  ['output_6',['output',['../classeq_type.html#ae6f3019943067b01b306086d24af0783',1,'eqType']]]
+  ['output_6',['output',['../classeq_type.html#ae6f3019943067b01b306086d24af0783',1,'eqType']]],
+  ['outuris_7',['outURIS',['../classeq_type.html#a7b64d6dd21156fde4abb359b4af5609d',1,'eqType']]]
 ];

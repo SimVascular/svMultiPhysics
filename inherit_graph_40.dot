@@ -5,5 +5,11 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="load_msh::MeshHashMaps",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classload__msh_1_1_mesh_hash_maps.html",tooltip="Generate hash maps for mesh nodes and elements."];
+  Node0 [id="Node000000",label="LinearAlgebra",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_linear_algebra.html",tooltip="The LinearAlgebra class provides an abstract interface to linear algebra frameworks: FSILS,..."];
+  Node0 -> Node1 [id="edge2_Node000000_Node000001",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 [id="Node000001",label="FsilsLinearAlgebra",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_fsils_linear_algebra.html",tooltip="The FsilsLinearAlgebra class implements the LinearAlgebra interface for the FSILS numerical linear al..."];
+  Node0 -> Node2 [id="edge3_Node000000_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="PetscLinearAlgebra",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_petsc_linear_algebra.html",tooltip="The PetscLinearAlgebra class implements the LinearAlgebra interface for the PETSc numerical linear al..."];
+  Node0 -> Node3 [id="edge4_Node000000_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="TrilinosLinearAlgebra",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_trilinos_linear_algebra.html",tooltip="The TrilinosLinearAlgebra class implements the LinearAlgebra interface for the Trilinos numerical lin..."];
 }

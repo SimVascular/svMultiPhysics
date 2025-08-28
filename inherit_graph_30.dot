@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="fcType",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfc_type.html",tooltip="Fourier coefficients that are used to specify unsteady BCs."];
+  Node0 [id="Node000000",label="eqType",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classeq_type.html",tooltip="Equation type."];
 }

@@ -11,6 +11,7 @@ var searchData=
   ['ls_5ftype_8',['LS_type',['../classls_type.html#a9c92c64f63ef347ecc83562a9658841f',1,'lsType']]],
   ['lshl_9',['lShl',['../classmsh_type.html#ab5c360a0f6b904224c2b0da1ae11c3e1',1,'mshType']]],
   ['lshpf_10',['lShpF',['../classmsh_type.html#a498a012d76c38cb45be3eb436b7b34ac',1,'mshType']]],
-  ['ltg_11',['ltg',['../class_com_mod.html#ae4275feec215caee592255a7764235e1',1,'ComMod']]],
-  ['ltg_5f_12',['ltg_',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#acbdea154b9747a7620069cf3ed235f15',1,'TrilinosLinearAlgebra::TrilinosImpl']]]
+  ['lst_11',['lst',['../classris_face_type.html#a412631fc9ea09c82e1608b25835c3929',1,'risFaceType']]],
+  ['ltg_12',['ltg',['../class_com_mod.html#ae4275feec215caee592255a7764235e1',1,'ComMod']]],
+  ['ltg_5f_13',['ltg_',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#acbdea154b9747a7620069cf3ed235f15',1,'TrilinosLinearAlgebra::TrilinosImpl']]]
 ];
