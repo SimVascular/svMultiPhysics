@@ -53,7 +53,7 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const Array<double>& Ag
 void fluid_2d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
     const Array<double>& Nwxx, const Array<double>& al, const Array<double>& yl, const Array<double>& bfl, 
-    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability);
+    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeabilityx);
 
 void fluid_2d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
@@ -63,12 +63,12 @@ void fluid_2d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
 void fluid_3d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
     const Array<double>& Nwxx, const Array<double>& al, const Array<double>& yl, const Array<double>& bfl, 
-    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability);
+    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability, double DDir=0.0);
 
 void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
     const Array<double>& Nwxx, const Array<double>& al, const Array<double>& yl, const Array<double>& bfl, 
-    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability);
+    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability, double DDir=0.0);
 
 void get_viscosity(const ComMod& com_mod, const dmnType& lDmn, double& gamma, double& mu, double& mu_s, double& mu_x);
 

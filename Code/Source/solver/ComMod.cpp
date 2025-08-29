@@ -61,6 +61,7 @@ ComMod::ComMod()
   pstEq        = false;
   sstEq        = false;
   ibFlag       = false;
+  risFlag      = false;
 
 }
 

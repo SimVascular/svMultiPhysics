@@ -157,6 +157,13 @@ if(APPLE)
   # Assuming use mac os if APPLE
   set(SV_PLATFORM_DIR "mac_osx" CACHE STRING "The distribution platform being used.")
 
+  # Safely fetch CURRENT_OSX_VERSION if undefined
+  if(NOT DEFINED CURRENT_OSX_VERSION OR CURRENT_OSX_VERSION STREQUAL "")
+    execute_process(COMMAND sw_vers -productVersion
+                    OUTPUT_VARIABLE CURRENT_OSX_VERSION
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif()
+  
   # Get just major minor version of osx
   simvascular_get_major_minor_version(${CURRENT_OSX_VERSION} SV_OSX_MAJOR_VERSION SV_OSX_MINOR_VERSION)
 

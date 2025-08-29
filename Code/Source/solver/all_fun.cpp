@@ -295,6 +295,153 @@ global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Arra
   return result;
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// Convert the vIntegM function from svFSI to c++.
+/// @brief This routine integrated a scalar field over a particular domain.
+///
+/// @param iM mesh index
+/// @param s an array containing a scalar value for each node in the mesh
+/// Replicates 'FUNCTION vIntegM(dId, s, l, u, pFlag)' defined in ALLFUN.f.
+//
+double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s)
+{
+  using namespace consts;
+
+  #define n_debug_integ_v
+  #ifdef debug_integ_v
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  dmsg << "vIntegM " << " ";
+  dmsg << "iM: " << iM;
+  #endif
+
+  int nNo = s.ncols();
+  int tnNo = com_mod.tnNo;
+  bool ibFlag = com_mod.ibFlag;
+
+  if (nNo != tnNo) {
+    std::string msg = "Incompatible vector size in vIntegM in domain: ";
+    msg += std::to_string(iM);
+    throw std::runtime_error(msg);
+  }
+
+  double result = 0.0; 
+  int nsd = com_mod.nsd;
+  fsType fs;
+
+  auto& msh = com_mod.msh[iM];
+  int insd = nsd;
+  if (msh.lShl) insd = nsd-1;
+  if (msh.lFib) insd = 1;
+
+  // Update pressure function space for Taylor-Hood type element
+  if (com_mod.msh[iM].nFs == 2) {
+    fs.nG    = msh.fs[1].nG;
+    fs.eType = msh.fs[1].eType;
+    fs.lShpF = msh.fs[1].lShpF;
+    fs.eNoN  = msh.fs[1].eNoN;
+
+    fs.w.resize(fs.nG); 
+    fs.N.resize(fs.eNoN,fs.nG); 
+    fs.Nx.resize(nsd,fs.eNoN,fs.nG);
+
+    if (fs.eType != ElementType::NRB) {
+      fs.w  = msh.fs[1].w;
+      fs.N  = msh.fs[1].N;
+      fs.Nx = msh.fs[1].Nx;
+    }
+
+  } else { 
+    fs.nG    = msh.fs[0].nG;
+    fs.eType = msh.fs[0].eType;
+    fs.lShpF = msh.fs[0].lShpF;
+    fs.eNoN  = msh.fs[0].eNoN;
+
+    fs.w.resize(fs.nG); 
+    fs.N.resize(fs.eNoN,fs.nG); 
+    fs.Nx.resize(nsd,fs.eNoN,fs.nG);
+
+    if (fs.eType != ElementType::NRB) {
+      fs.w  = msh.fs[0].w;
+      fs.N  = msh.fs[0].N;
+      fs.Nx = msh.fs[0].Nx;
+    }
+  }
+  int eNoN = fs.eNoN;
+
+  Array<double> xl(nsd,eNoN); 
+  Array<double> Nxi(insd,eNoN); 
+  Array<double> Nx(insd,eNoN); 
+  Vector<double> sl(eNoN); 
+  Array<double> tmps(nsd,insd);
+  Array<double> tmp(nsd,nsd);
+
+  for (int e = 0; e < msh.nEl; e++) {
+    // Updating the shape functions, if this is a NURB
+    //
+    // [TODO:DaveP] not implemented. 
+    //
+    if (msh.eType == ElementType::NRB) {
+      //CALL NRBNNX(msh(iM), e)
+      fs.w  = msh.w;
+      fs.N  = msh.N;
+      fs.Nx = msh.Nx;
+    }
+
+    int ibl = 0;
+    for (int a = 0; a < eNoN; a++) { 
+      int Ac = msh.IEN(a,e);
+      xl.set_col(a, com_mod.x.col(Ac));
+
+      if (com_mod.mvMsh) {
+        for (int i = 0; i < nsd; i++) { 
+          xl(i,a) += com_mod.Do(i+nsd+1,Ac);
+        }
+      }
+      sl(a) = s(0,Ac);
+      ibl = ibl + com_mod.iblank(Ac);
+    }
+
+    if (ibl == eNoN) {
+      continue;
+    }
+
+    double Jac = 0.0;
+
+    for (int g = 0; g < fs.nG; g++) {
+      Nxi = fs.Nx.slice(g);
+
+      if (g == 0 || !fs.lShpF) {
+        if (msh.lShl) {
+          Vector<double> nV(nsd);
+          nn::gnns(nsd, eNoN, Nxi, xl, nV, tmps, tmps);
+          Jac  = sqrt(utils::norm(nV));
+        } else { 
+          nn::gnn(eNoN, nsd, insd, Nxi, xl, Nx, Jac, tmp);
+        }
+      }
+
+      if (utils::is_zero(Jac)) {
+        throw std::runtime_error("Jac < 0 for element: " + std::to_string(e) + ")");
+      }
+      double sHat = 0.0;
+
+      for (int a = 0; a < eNoN; a++) {
+        int Ac = msh.IEN(a,e);
+        sHat = sHat + sl(a)*fs.N(a,g);
+      }
+      result += fs.w(g) * Jac * sHat;
+    }
+  }
+
+  if (com_mod.cm.seq()) {
+    return result;
+  }
+  result = com_mod.cm.reduce(cm_mod, result);
+  return result;
+}
+///////////////////////////////////////////////////////////////////////////
+
 /// @brief This routine integrated a scalar field over a particular domain.
 ///
 /// Note that 'l' and 'u' should be 0-based and are used to index into 's'.

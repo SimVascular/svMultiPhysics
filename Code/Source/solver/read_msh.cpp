@@ -43,6 +43,8 @@
 #include "vtk_xml.h"
 #include "vtk_xml_parser.h"
 
+#include "uris.h"
+
 #include <functional> 
 #include <limits> 
 #include <math.h> 
@@ -1256,10 +1258,17 @@ void read_msh(Simulation* simulation)
     }
   } 
 
+  com_mod.gtnNo = 0;
+
+  // Examining the existance of a RIS surface and setting risMap.
+  // Reseting gtnNo and recounting nodes that are not duplicated
+  set_ris_projector(simulation);
+
+  set_uris_meshes(simulation);
+
   // Examining the existance of projection faces and setting %gN.
   // Reseting gtnNo and recounting nodes that are not duplicated
   //
-  com_mod.gtnNo = 0;
   utils::stackType avNds;
 
   set_projector(simulation, avNds);
@@ -1686,6 +1695,362 @@ void read_msh(Simulation* simulation)
   }
 }
 
+
+void set_ris_projector(Simulation* simulation) 
+{
+  #define n_debug_set_ris_projector 
+  #ifdef debug_set_ris_projector
+  DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
+
+  auto& com_mod = simulation->get_com_mod();
+  auto& RIS = com_mod.ris;
+  int nPrj = simulation->parameters.RIS_projection_parameters.size();
+
+  if (nPrj > 0) {
+    com_mod.risFlag = true;
+    RIS.nbrRIS = nPrj;
+    RIS.lst.resize(2,2,nPrj);
+    RIS.lst = 0;
+    RIS.nbrIter.resize(nPrj);
+    RIS.nbrIter = 0;
+    RIS.Res.resize(nPrj);
+    RIS.Res = 0.0;
+    RIS.clsFlg.resize(nPrj, false);
+    RIS.meanP.resize(nPrj, 2);
+    RIS.meanP = 0.0;
+    RIS.meanFl.resize(nPrj);
+    RIS.meanFl = 0.0;
+    RIS.status.resize(nPrj, false);
+
+    for (int iM = 0; iM < com_mod.nMsh; iM++) {
+      com_mod.msh[iM].eRIS.resize(com_mod.msh[iM].gnEl);
+      com_mod.msh[iM].eRIS = 0; // Allocate and initialize to false (0)
+      com_mod.msh[iM].partRIS.resize(com_mod.msh[iM].gnEl);  
+      com_mod.msh[iM].partRIS = -1; // Allocate and initialize to -1
+    }
+  }
+
+  if (!com_mod.risFlag) return;
+  com_mod.risMapList.resize(nPrj);
+  com_mod.grisMapList.resize(nPrj);
+
+  // Calculate an upper limit for the number required stacks
+  //
+  int nStk = 0;
+  for (auto& params : simulation->parameters.RIS_projection_parameters) { 
+    auto ctmpi = params->name();
+    int iM, iFa;
+    all_fun::find_face(com_mod.msh, ctmpi, iM, iFa);
+    nStk = nStk + com_mod.msh[iM].fa[iFa].nNo;
+  }
+  std::vector<utils::stackType> stk(nStk);
+  utils::stackType lPrj;
+  #ifdef debug_set_ris_projector
+  dmsg << "nStk: " << nStk;
+  #endif
+
+  // Match the nodal coordinates for each projection face.
+  int iProj = 0;
+  for (auto& params : simulation->parameters.RIS_projection_parameters) { 
+    int iM, iFa;
+    auto ctmpi = params->name();
+    all_fun::find_face(com_mod.msh, ctmpi, iM, iFa);
+    // auto& face1 = com_mod.msh[iM].fa[iFa];
+    #ifdef debug_set_ris_projector
+    dmsg << "iM: " << iM;
+    dmsg << "iFa: " << iFa;
+    dmsg << "face1.name: " << face1.name;
+    #endif
+    com_mod.risMapList[iProj].map.resize(2,nStk);
+    com_mod.grisMapList[iProj].map.resize(2,nStk);
+    com_mod.risMapList[iProj].map = 0;
+    com_mod.grisMapList[iProj].map = 0;
+
+    int jM, jFa;
+    auto ctmpj = params->project_from_face();
+    all_fun::find_face(com_mod.msh, ctmpj, jM, jFa);
+    // auto& face2 = com_mod.msh[jM].fa[jFa];
+    #ifdef debug_set_ris_projector
+    dmsg << "jM: " << jM;
+    dmsg << "jFa: " << jFa;
+    dmsg << "face2.name: " << face2.name;
+    #endif
+
+    double tol = params->projection_tolerance();
+    com_mod.msh[jM].tol = tol;
+    double res = params->resistance();
+    com_mod.msh[jM].res = res;
+    RIS.Res(iProj) = res;
+
+    match_nodes(com_mod, com_mod.msh[iM].fa[iFa], com_mod.msh[jM].fa[jFa],
+                com_mod.msh[jM].tol, nStk, com_mod.risMapList[iProj].map);
+
+    RIS.lst(0,0,iProj) = iM;
+    RIS.lst(1,0,iProj) = jM;
+    RIS.lst(0,1,iProj) = iFa;
+    RIS.lst(1,1,iProj) = jFa;
+
+    // std::cout << "** Need to match face: " << jFa << " of " << std::endl;
+    // std::cout << " mesh " << jM << " into face " << iFa << " of mesh " << iM << std::endl;
+    // std::cout << "** The nbr of nodes to proj is " << nStk << std::endl;
+    // std::cout << " ** The res is " << com_mod.msh[jM].res << std::endl;
+
+    for (int a = 0; a < com_mod.msh[iM].gnNo; a++) {
+      if (com_mod.msh[iM].gN[a] == -1) {
+        com_mod.msh[iM].gN[a] = com_mod.gtnNo;
+        com_mod.gtnNo = com_mod.gtnNo + 1;
+      }
+    }
+    for (int a = 0; a < com_mod.msh[jM].gnNo; a++) {
+      if (com_mod.msh[jM].gN[a] == -1) {
+        com_mod.msh[jM].gN[a] = com_mod.gtnNo;
+        com_mod.gtnNo = com_mod.gtnNo + 1;
+      }
+    }
+    iProj++;
+  }
+
+  // Building the ris map between corresponding node with total enumeration
+  for (int iProj = 0; iProj < nPrj; iProj++) {
+    for (int i = 0; i < 2; i++) {
+      // std::cout << "iProj: " << iProj << " mesh: " << i << std::endl;
+      for (int j = 0; j < nStk; j++) {
+        if (com_mod.risMapList[iProj].map(i,j) != -1) {
+          com_mod.grisMapList[iProj].map(i,j) = 
+            com_mod.msh[RIS.lst(i,0,iProj)].gN[com_mod.risMapList[iProj].map(i,j)];
+          // std::cout << "local node " << com_mod.risMapList[iProj].map(i,j) 
+          //   << " global " << com_mod.grisMapList[iProj].map(i,j) << std::endl;
+        }
+      }
+    }
+  }
+
+  // Mark elements of mesh that are connected to the RIS surface
+  for (int iProj = 0; iProj < RIS.nbrRIS; iProj++) {
+    for (int j = 0; j < 2; j++) {
+      int iM = RIS.lst(j,0,iProj);
+      for (int e = 0; e < com_mod.msh[iM].gnEl; e++) {
+        for (int a = 0; a < com_mod.msh[iM].eNoN; a++) {
+          int Ac = com_mod.msh[iM].gIEN(a,e);
+          Ac = com_mod.msh[iM].gN[Ac];
+          std::array<int, 2> mapIdx;
+          utils::find_loc(com_mod.grisMapList[iProj].map, Ac, mapIdx);
+          if (mapIdx[0] != -1) {
+            com_mod.msh[iM].eRIS(e) = 1;
+          }
+        }
+      }
+    }
+  }
+}
+
+void match_nodes(const ComMod& com_mod, const faceType& lFa, const faceType& pFa, 
+                 const double ptol, const int nNds, Array<int>& map) 
+{
+  #define n_debug_match_nodes
+  #ifdef debug_match_nodes
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  dmsg << "lFa.name: " << lFa.name;
+  dmsg << "pFa.name: " << pFa.name;
+  #endif
+
+  int iM = lFa.iM;
+  int iSh = 0;
+  for (int i = 0; i < iM; i++) {
+    iSh = iSh + com_mod.msh[i].gnNo;
+  }
+
+  int jM = pFa.iM;
+  int jSh = 0;
+  for (int j = 0; j < jM; j++) {
+    jSh = jSh + com_mod.msh[j].gnNo;
+  }
+  #ifdef debug_match_nodes
+  dmsg << "iM: " << iM;
+  dmsg << "iSh: " << iSh;
+  dmsg << "jM: " << jM;
+  dmsg << "jSh: " << jSh;
+  #endif
+
+  // std::cout << " mesh iM " << iM << " nbr nodes " << com_mod.msh[iM].gnNo << std::endl;
+  // std::cout << " mesh iM " << iM << " nodes start at tot nbr " << iSh << std::endl;
+  // std::cout << " mesh jM " << jM << " nbr nodes " << com_mod.msh[jM].gnNo << std::endl;
+  // std::cout << " mesh jM " << jM << " nodes start at tot nbr " << jSh << std::endl;
+
+  double tol;
+  double eps = std::numeric_limits<double>::epsilon();
+
+  if (utils::is_zero(ptol)) {
+    tol = 1.e3 * eps;
+  } else { 
+    tol = ptol;
+  }
+
+  // We want to have approximately 1000 nodes in each block. So we
+  // calculate nBkd, which is the number of separate blockes in each
+  // direction, based on that.
+  //
+  int a = pFa.nNo;
+  int nBkd = static_cast<int>( pow(a/1000.0, 0.333) + 0.5) ;
+  if (nBkd == 0) {
+    nBkd = 1;
+  }
+  int nsd = com_mod.nsd;
+  int nBk = pow(nBkd, nsd);
+  #ifdef debug_match_faces
+  dmsg << "a: " << a;
+  dmsg << "nBkd: " << nBkd;
+  dmsg << "nBk: " << nBk;
+  #endif
+
+  Vector<int> nodeBlk(a); 
+  std::vector<blkType> blk(nBk);
+
+  // Find the extents of the domain and size of each block.
+  //
+  auto lfa_nodes = lFa.gN + iSh;
+  auto pfa_nodes = pFa.gN + jSh;
+  Vector<double> xMin(com_mod.nsd), xMax(com_mod.nsd);
+
+  for (int i = 0; i < nsd; i++) {
+    auto lfa_coords = com_mod.x.rows(i, lfa_nodes);
+    auto pfa_coords = com_mod.x.rows(i, pfa_nodes);
+    xMin[i] = std::min(lfa_coords.min(), pfa_coords.min());
+    xMax[i] = std::max(lfa_coords.max(), pfa_coords.max());
+
+    if (xMin[i] < 0.0) {
+      xMin[i] = xMin[i]*(1.0+eps);
+    } else { 
+      xMin[i] = xMin[i]*(1.0-eps);
+    } 
+
+    if (xMax[i] < 0.0) { 
+      xMax[i] = xMax[i]*(1.0-eps);
+    } else { 
+      xMax[i] = xMax[i]*(1.0+eps);
+    } 
+  }
+
+  auto dx = (xMax - xMin) / static_cast<double>(nBkd);
+  std::vector<bool> nFlt(nsd);
+
+  for (int i = 0; i < nsd; i++) {
+    if (utils::is_zero(dx[i])) {
+      nFlt[i] = false;
+    } else {
+      nFlt[i] = true;
+    } 
+  }
+
+  // std::cout << " xMax " << xMax << std::endl;
+  // std::cout << " xMin " << xMin << std::endl;
+  // std::cout << " dx " << dx << std::endl;
+
+  // Find an estimation for size of each block
+  //
+  for (int a = 0; a < pFa.nNo; a++) {
+    int Ac  = pFa.gN[a] + jSh;
+    auto coord = com_mod.x.col(Ac);
+    int iBk = find_blk(nsd, nBkd, nFlt, xMin, dx, coord);
+    nodeBlk[a] = iBk;
+    blk[iBk].n = blk[iBk].n + 1;
+  }
+
+  for (int iBk = 0; iBk < nBk; iBk++) {
+    blk[iBk].gN = Vector<int>(blk[iBk].n);
+    blk[iBk].n = 0;
+  }
+
+  for (int a = 0; a < pFa.nNo; a++) {
+    int Ac = pFa.gN[a];
+    int iBk = nodeBlk[a];
+    blk[iBk].gN(blk[iBk].n) = Ac;
+    blk[iBk].n = blk[iBk].n + 1;
+  } 
+
+  // Doing the calculation for every single node on this face.
+  //
+  int cnt  = 0;
+
+  for (int a = 0; a < lFa.nNo; a++) {
+    int Ac  = lFa.gN[a];
+    auto coord = com_mod.x.col(Ac+iSh);
+    int iBk = find_blk(nsd, nBkd, nFlt, xMin, dx, coord);
+
+    // Check all nodes on the other face.
+    auto minS = std::numeric_limits<double>::max();
+    int i;
+    for (int b = 0; b < blk[iBk].n; b++) {
+      int Bc = blk[iBk].gN[b];
+      if ((iM == jM) && (Ac == Bc)) {
+        continue;
+      }
+
+      auto diff = com_mod.x.col(Bc+jSh) - com_mod.x.col(Ac+iSh);
+      double ds = sqrt(diff*diff); 
+
+      if (ds < minS) { 
+        minS = ds;
+        i = Bc;
+      }
+    }
+
+    int Bc = i;
+
+    if (tol < 0.0) {
+      // std::cout << "adding connection (/Ac,Bc/)) = (" << Ac << ", " << Bc << ")" << std::endl;
+      map(0,cnt) = Ac;
+      map(1,cnt) = Bc;
+      cnt = cnt + 1;
+    } else if (minS < tol) {
+      // std::cout << "adding connection (/Ac,Bc/)) = (" << Ac << ", " << Bc << ")" << std::endl;
+      map(0,cnt) = Ac;
+      map(1,cnt) = Bc;
+      cnt = cnt + 1;
+    }
+  }
+
+  #ifdef debug_match_faces
+  dmsg << "cnt: " << cnt;
+  dmsg << "lFa.nNo: " << lFa.nNo;
+  #endif
+
+  if (cnt != lFa.nNo) {
+    throw std::runtime_error("Failed to find matching nodes between faces " + lFa.name + " and " + pFa.name + ".");
+  }
+
+  std::cout << " Finally the map0 is: " << std::endl;
+  Vector<int> map0 = map.row(0);
+  for (int i = 0; i < map0.size(); i++) {
+        std::cout << map(0,i) << "    " << "\t";
+    }
+  std::cout << std::endl;
+  std::cout << " Finally the map1 is: " << std::endl;
+  Vector<int> map1 = map.row(1);
+  for (int i = 0; i < map1.size(); i++) {
+        std::cout << map(1,i) << "    " << "\t";
+    }
+  std::cout << std::endl;
+}
+
+void set_uris_meshes(Simulation* simulation)
+{
+  #define n_debug_set_uris_meshes 
+  #ifdef debug_set_uris_meshes
+  DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
+
+  int nUris = simulation->parameters.URIS_mesh_parameters.size();
+
+  if (nUris > 0) {
+    uris::uris_read_msh(simulation);
+  }
+}
+
 /// @brief Read domain from a dat file
 ///
 /// Reproduces the Fortran 'SETDMNIDFF' subroutine.
@@ -1895,4 +2260,3 @@ void set_projector(Simulation* simulation, utils::stackType& avNds)
 }
 
 };
-
