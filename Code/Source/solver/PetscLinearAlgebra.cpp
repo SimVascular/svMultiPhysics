@@ -117,6 +117,11 @@ void PetscLinearAlgebra::initialize(ComMod& com_mod, eqType& lEq)
   impl->initialize(com_mod, lEq);
 }
 
+void PetscLinearAlgebra::finalize()
+{
+  // No need to finalize PETSc.
+}
+
 /// @brief Initialize an FsilsLinearAlgebra object used for assembly.
 void PetscLinearAlgebra::initialize_fsils(ComMod& com_mod, eqType& lEq)
 {

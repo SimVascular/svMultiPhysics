@@ -78,6 +78,11 @@ void add_eq_linear_algebra(ComMod& com_mod, eqType& lEq)
   }
 }
 
+void finalize_linear_algebra(eqType& lEq)
+{
+  lEq.linear_algebra->finalize();
+}
+
 /// @brief Read in a solver XML file and all mesh and BC data.  
 //
 void read_files(Simulation* simulation, const std::string& file_name)
@@ -947,8 +952,12 @@ int main(int argc, char *argv[])
     } else {
       break;
     }
-
   }
+
+   for (int iEq = 0; iEq < simulation->com_mod.nEq; iEq++) {
+      auto& eq = simulation->com_mod.eq[iEq];
+      finalize_linear_algebra(eq);
+    }
 
   MPI_Finalize();
 }

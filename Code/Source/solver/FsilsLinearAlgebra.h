@@ -50,6 +50,7 @@ class FsilsLinearAlgebra : public virtual LinearAlgebra {
     virtual void solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res);
     virtual void set_assembly(consts::LinearAlgebraType atype);
     virtual void set_preconditioner(consts::PreconditionerType prec_type);
+    virtual void finalize();
 
   private:
     /// @brief A list of linear algebra interfaces that can be used for assembly.

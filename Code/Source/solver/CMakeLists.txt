@@ -334,6 +334,14 @@ if(ENABLE_UNIT_TEST)
   # include source files (same as what svMultiPhysics does except for main.cpp)
   add_executable(run_all_unit_tests ${CSRCS})
   
+  # Add unit test specific compilation flags for debugging and coverage
+  target_compile_options(run_all_unit_tests PRIVATE 
+    -O0           # No optimization for better debugging
+    -g            # Include debug symbols
+    -fprofile-arcs  # Generate profiling information
+    -ftest-coverage # Generate coverage data
+  )
+
   if(USE_TRILINOS)
     target_link_libraries(run_all_unit_tests ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
   endif()
