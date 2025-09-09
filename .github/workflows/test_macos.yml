@@ -18,7 +18,7 @@ jobs:
       - name: Install MacOS dependencies
         run: |
           brew reinstall -v gcc
-          brew install -v cmake vtk openblas lapack mesa open-mpi qt
+          brew install -v vtk openblas lapack mesa open-mpi qt
           brew install lcov
           sudo ln -s /usr/local/opt/qt5/mkspecs /usr/local/mkspecs
           sudo ln -s /usr/local/opt/qt5/plugins /usr/local/plugins
