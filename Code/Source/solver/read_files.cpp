@@ -205,6 +205,13 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   } else if (std::set<std::string>{"Coupled Momentum","CMM"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_CMM)); 
 
+  } else if (std::set<std::string>{"RIS0D", "RIS0D"}.count(bc_type)) {
+    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Ris0D));
+    auto& com_mod = simulation->com_mod;
+    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Neu));
+    com_mod.ris0DFlag = true;
+    lBc.resistance = bc_params->resistance.value();
+
   } else {
     throw std::runtime_error("[read_bc] Unknown boundary condition type '" + bc_type + "'.");
   }

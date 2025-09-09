@@ -161,6 +161,9 @@ class bcType
     // Robin: apply only in normal direction
     bool rbnN = false;
 
+    // Strong/Weak application of Dirichlet BC
+    int clsFlgRis = 0;
+
     // Pre/Res/Flat/Para... boundary types
     //
     // This stores differnt BCs as bitwise values. 
@@ -193,6 +196,9 @@ class bcType
 
     // Robin: damping
     double c = 0.0;
+
+    // RIS0D: resistance
+    double resistance = 0.0;
 
     // Penalty parameters for weakly applied Dir BC
     Vector<double> tauB{0.0, 0.0};
@@ -961,6 +967,15 @@ class mshType
     /// @brief IB: Mesh size parameter
     double dx = 0.0;
 
+    /// @brief RIS resistance value
+    double res = 0.0;
+
+    /// @brief RIS projection tolerance 
+    double tol = 0.0;
+
+    /// @brief The volume of this mesh
+    double v = 0.0;
+
     /// @breif ordering: node ordering for boundaries
     std::vector<std::vector<int>> ordering;
 
@@ -1061,6 +1076,13 @@ class mshType
     /// @brief IB: tracers
     traceType trc;
 
+    /// @brief RIS: flags of whether elemets are adjacent to RIS projections
+    // std::vector<bool> eRIS;
+    Vector<int> eRIS;
+
+    /// @brief RIS: processor ids to change element partitions to
+    Vector<int> partRIS;
+
     /// @brief TET4 quadrature modifier
     double qmTET4 = (5.0+3.0*sqrt(5.0))/20.0;
 
@@ -1114,6 +1136,9 @@ class eqType
 
     /// @brief IB: Number of possible outputs
     int nOutIB = 0;
+
+    /// @brief URIS: Number of possible outputs
+    int nOutURIS = 0;
 
     /// @brief Number of domains
     int nDmn = 0;
@@ -1202,6 +1227,9 @@ class eqType
 
     /// @brief IB: Outputs
     std::vector<outputType> outIB;
+
+    /// @brief URIS: Outputs
+    std::vector<outputType> outURIS;
 
     /// @brief Body force associated with this equation
     std::vector<bfType> bf;
@@ -1400,6 +1428,113 @@ class ibType
     ibCommType cm;
 };
 
+/// @brief Data type for Resistive Immersed Surface
+//
+class risFaceType 
+{
+  public:
+
+    /// @brief Number of RIS surface
+    int nbrRIS = 0;
+
+    /// @brief Count time steps where no check is needed
+    Vector<int> nbrIter;
+
+    /// @brief List of meshes, and faces connected. The first face is the 
+    // proximal pressure's face, while the second is the distal one
+    Array3<int> lst;
+
+    /// @brief Resistance value 
+    Vector<double> Res;
+
+    /// @brief Flag closed surface active, the valve is considerd open initially 
+    std::vector<bool> clsFlg;
+
+    /// @brief Mean distal and proximal pressure (1: distal, 2: proximal)
+    Array<double> meanP;
+
+    /// @brief Mean flux on the RIS surface 
+    Vector<double> meanFl;
+
+    /// @brief Status RIS interface
+    std::vector<bool> status;
+};
+
+/// @brief Unfitted Resistive Immersed surface data type
+//
+class urisType 
+{
+  public:
+
+    // Name of the URIS instance.
+    std::string name;
+
+    // Whether any file has been saved.
+    bool savedOnce = false;
+
+    // Total number of IB nodes.
+    int tnNo = 0;
+
+    // Number of IB meshes.
+    int nFa = 0;
+
+    // Position coordinates (2D array: rows x columns).
+    Array<double> x;
+
+    // Displacement (new) (2D array).
+    Array<double> Yd;
+
+    // Default signed distance value away from the valve.
+    double sdf_default = 10.0;
+
+    // Default distance value of the valve boundary (valve thickness).
+    double sdf_deps = 0.04;
+
+    // Default distance value of the valve boundary when the valve is closed.
+    double sdf_deps_close = 0.25;
+
+    // Displacements of the valve when it opens (3D array).
+    Array3<double> DxOpen;
+
+    // Displacements of the valve when it closes (3D array).
+    Array3<double> DxClose;
+
+    // Normal vector pointing in the positive flow direction (1D array).
+    Vector<double> nrm;
+
+    // Close flag.
+    bool clsFlg = true;
+
+    // Iteration count.
+    int cnt = 1000000;
+
+    // URIS: signed distance function of each node to the uris (1D array).
+    Vector<double> sdf;
+
+    // Mesh scale factor.
+    double scF = 1.0;
+
+    // Mean pressure upstream.
+    double meanPU = 0.0;
+
+    // Mean pressure downstream.
+    double meanPD = 0.0;
+
+    // Relaxation factor to compute weighted averages of pressure values.
+    double relax_factor = 0.5;
+
+    // Array to store the fluid mesh elements that the uris node is in (2D array).
+    Array<int> elemId;
+
+    // Array to count how many times a uris node is found in the fluid mesh of a processor (1D array).
+    Vector<int> elemCounter;
+
+    // Derived type variables
+    // IB meshes
+    std::vector<mshType> msh;
+
+};
+
 /// @brief The ComMod class duplicates the data structures in the Fortran COMMOD module
 /// defined in MOD.f. 
 ///
@@ -1470,9 +1605,29 @@ class ComMod {
     /// @brief Postprocess step - convert bin to vtk
     bool bin2VTK = false;
 
+    /// @brief Whether any RIS surface is considered 
+    bool risFlag = false;
+
+    /// @brief Whether any one-sided RIS surface with 0D coupling is considered 
+    bool ris0DFlag = false;
+
+    /// @brief Whether any URIS surface is considered
+    bool urisFlag = false;
+
+    /// @brief Whether the URIS surface is active
+    bool urisActFlag = false;
+
+    /// @brief Number of URIS surfaces (uninitialized, to be set later)
+    int nUris;
+
+    /// @brief URIS resistance
+    double urisRes;
+
+    /// @brief URIS resistance when the valve is closed
+    double urisResClose;
+
     /// @brief Whether to use precomputed state-variable solutions
     bool usePrecomp = false;
-    
     //----- int members -----//
 
     /// @brief Current domain
@@ -1532,7 +1687,7 @@ class ComMod {
     /// @brief Total number of degrees of freedom per node
     int tDof = 0;
 
-    /// @brief Total number of nodes (total number of nodes on current processor across
+    /// @brief Total number of nodes (number of nodes on current proc across
     /// all meshes)
     int tnNo = 0;
 
@@ -1541,6 +1696,9 @@ class ComMod {
 
     /// @brief Number of stress values to be stored
     int nsymd = 0;
+
+    /// @brief Nbr of iterations 
+    int RisnbrIter = 0;
 
 
     //----- double members -----//
@@ -1600,6 +1758,18 @@ class ComMod {
 
     /// @brief IB: iblank used for immersed boundaries (1 => solid, 0 => fluid)
     Vector<int> iblank;
+
+    /// @brief TODO: for now, better to organize these within a class      
+    struct Array2D {
+        // std::vector<std::vector<int>> map;
+        Array<int> map;
+    };
+
+    /// @brief RIS mapping array, with local (mesh) enumeration
+     std::vector<Array2D> risMapList;
+
+    /// @brief RIS mapping array, with global (total) enumeration
+     std::vector<Array2D> grisMapList;
 
     /// @brief Old time derivative of variables (acceleration); known result at current time step
     Array<double>  Ao;
@@ -1691,6 +1861,12 @@ class ComMod {
 
     /// @brief IB: Immersed boundary data structure
     ibType ib;
+
+    /// @brief risFace object
+    risFaceType ris;
+
+    /// @brief unfitted RIS object
+    std::vector<urisType> uris;
 
     bool debug_active = false;
 

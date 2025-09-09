@@ -177,6 +177,7 @@ void lhsa(Simulation* simulation, int& nnz)
   Array<int> uInd(mnnzeic, tnNo);
   uInd = -1;
   int nMsh = com_mod.nMsh;
+  bool risFlag = com_mod.risFlag;
 
   for (int iM = 0; iM < nMsh; iM++) {
     auto& msh = com_mod.msh[iM];
@@ -189,6 +190,33 @@ void lhsa(Simulation* simulation, int& nnz)
         for (int b = 0; b < msh.eNoN; b++) {
           int colN = msh.IEN(b,e);
           add_col(tnNo, rowN, colN, mnnzeic, uInd);
+        }
+
+        // Add extra connections for cooresponding nodes in case of RIS
+        int jMRIS = 0;
+        if (risFlag) {
+          auto& RIS = com_mod.ris;
+          // If rowN is in the list of ris nodes
+          // Loop through all projections and find the one associated with the current mesh
+          for (int iProj = 0; iProj < RIS.nbrRIS; iProj++) {
+            if (RIS.lst(0,0,iProj) == iM) {
+              jMRIS = 1;
+            } else if (RIS.lst(1,0,iProj) == iM) {
+              jMRIS = 0;
+            } else {
+              continue; // Skip to the next iteration
+            }
+            std::array<int, 2> mapIdx;
+            utils::find_loc(com_mod.grisMapList[iProj].map, rowN, mapIdx);
+            if (mapIdx[0] != -1) {
+              int rowNR = com_mod.grisMapList[iProj].map(jMRIS,mapIdx[1]);
+              if (rowNR == -1) continue;
+              for (int b = 0; b < msh.eNoN; b++) {
+                int colN = msh.IEN(b,e);
+                add_col(tnNo, rowNR, colN, mnnzeic, uInd);
+              }
+            }
+          }
         }
       }
     }

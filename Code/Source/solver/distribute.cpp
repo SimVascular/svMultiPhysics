@@ -172,6 +172,21 @@ void distribute(Simulation* simulation)
   dmsg << "wgt: " << wgt;
   #endif
 
+  // Need the ris flag here
+  cm.bcast(cm_mod, &com_mod.risFlag);
+  // Communicating RIS info
+  if (com_mod.risFlag) {
+    dist_ris(com_mod, cm_mod, cm);
+  }
+  // Need the uris flag here
+  cm.bcast(cm_mod, &com_mod.urisFlag);
+  if (com_mod.urisFlag) {
+    dist_uris(com_mod, cm_mod, cm);
+  }
+
+
+  int risProc = -1;
+  int jM = 0;
   for (int iM = 0; iM < nMsh; iM++) {
     #ifdef debug_distribute
     dmsg << "          " << " ";
@@ -184,6 +199,34 @@ void distribute(Simulation* simulation)
     #ifdef debug_distribute
     dmsg << "iWgt: " << iWgt;
     #endif
+    
+    if (com_mod.risFlag) {
+      for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
+        // Find the adjacent mesh
+        if (com_mod.ris.lst(0,0,iProj) == iM) {
+          jM = com_mod.ris.lst(1,0,iProj);
+        } else if (com_mod.ris.lst(1,0,iProj) == iM) {
+          jM = com_mod.ris.lst(0,0,iProj);
+        } else {
+          continue;
+        }
+        // Right now just assign all nodes to the same proc
+        risProc = -1;
+        for (int e = 0; e < com_mod.msh[jM].gnEl; e++) {
+          if (com_mod.msh[jM].eRIS(e)) {
+            risProc = com_mod.msh[jM].partRIS(e);
+            break;
+          }
+        }
+        if (risProc != -1) {
+          for (int e = 0; e < com_mod.msh[iM].gnEl; e++) {
+            if (com_mod.msh[iM].eRIS(e)) {
+              com_mod.msh[iM].partRIS(e) = risProc;
+            }
+          }
+        }
+      }
+    }
     part_msh(simulation, iM, com_mod.msh[iM], gmtl, num_proc, iWgt);
   }
 
@@ -288,6 +331,7 @@ void distribute(Simulation* simulation)
   dmsg << "Sending data read by master to slaves " << " ...";
   #endif
 
+
   if (!com_mod.resetSim) {
     cm.bcast(cm_mod, &com_mod.nsymd);
     cm.bcast(cm_mod, com_mod.stopTrigName);
@@ -321,7 +365,12 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.sstEq);
 
     cm.bcast(cm_mod, &simulation->cep_mod.cepEq);
-
+    cm.bcast(cm_mod, &com_mod.risFlag);
+    cm.bcast(cm_mod, &com_mod.ris0DFlag);
+    cm.bcast(cm_mod, &com_mod.urisFlag);
+    cm.bcast(cm_mod, &com_mod.urisActFlag);
+    cm.bcast(cm_mod, &com_mod.urisRes);
+    cm.bcast(cm_mod, &com_mod.urisResClose);
     cm.bcast(cm_mod, &com_mod.usePrecomp);
     if (com_mod.rmsh.isReqd) {
       auto& rmsh = com_mod.rmsh;
@@ -551,6 +600,22 @@ void distribute(Simulation* simulation)
   }
 
   cm.bcast(cm_mod, &cplBC.initRCR);
+
+  if (com_mod.risFlag) {
+    for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
+      for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < com_mod.risMapList[iProj].map.ncols(); j++) {
+          int tmp = gmtl(com_mod.grisMapList[iProj].map(i,j));
+          if (tmp != -1) {
+            com_mod.risMapList[iProj].map(i,j) = com_mod.msh[i].lN(tmp);
+          } else {
+            com_mod.risMapList[iProj].map(i,j) = -1;
+          }
+          com_mod.grisMapList[iProj].map(i,j) = tmp;
+        }
+      }
+    }
+  }
 }
 
 
@@ -569,6 +634,7 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   bool is_slave = cm.slv(cm_mod);
   cm.bcast(cm_mod, &lBc.cplBCptr);
   cm.bcast(cm_mod, &lBc.bType);
+  cm.bcast(cm_mod, &lBc.clsFlgRis);
 
   int nsd = com_mod.nsd;
   #ifdef debug_dist_bc
@@ -800,6 +866,7 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   }
 }
 
+
 //---------
 // dist_bf
 //---------
@@ -935,6 +1002,466 @@ void dist_bf(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bfType& lBf
       }
     }
   }
+}
+
+//---------
+// dist_ris
+//---------
+/// @brief This rountine distributes data structures for RIS
+void dist_ris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm)
+{
+  using namespace consts;
+
+  #define n_debug_dist_ris
+  #ifdef debug_dist_ris
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
+  int task_id = cm.idcm();
+  auto& RIS = com_mod.ris;
+
+  #ifdef debug_dist_ris
+  dmsg << "risFlag: " << com_mod.risFlag;
+  #endif
+
+  Vector<int> dims(3);
+  int lst_size = 0;
+  int maplist_size = 0;
+  Vector<int> nStks;
+  int nProj = 0;
+
+  // First find the RIS nodes between mesh pairs on the current processor
+  if (cm.mas(cm_mod)) {
+    nProj = RIS.nbrRIS;
+    dims(0) = RIS.lst.nrows();
+    dims(1) = RIS.lst.ncols();
+    dims(2) = RIS.lst.nslices();
+    lst_size = RIS.lst.size();
+    nStks.resize(nProj);
+    for (int iProj = 0; iProj < nProj; iProj++) {
+      nStks(iProj) = com_mod.risMapList[iProj].map.ncols();
+      maplist_size += 2*nStks(iProj);
+    }
+  }
+
+  cm.bcast(cm_mod, &nProj);
+  cm.bcast(cm_mod, dims);
+  cm.bcast(cm_mod, &lst_size);
+  if (cm.slv(cm_mod)) {nStks.resize(nProj);}
+  cm.bcast(cm_mod, nStks);
+  cm.bcast(cm_mod, &maplist_size);
+
+  if (cm.slv(cm_mod)) {
+    com_mod.risMapList.resize(nProj);
+    com_mod.grisMapList.resize(nProj);
+    for (int iProj = 0; iProj < nProj; iProj++) {
+      com_mod.risMapList[iProj].map.resize(2, nStks(iProj));
+      com_mod.grisMapList[iProj].map.resize(2, nStks(iProj));
+    }
+    RIS.nbrIter.resize(nProj);
+    RIS.Res.resize(nProj);
+    RIS.clsFlg.resize(nProj);
+    RIS.meanP.resize(nProj,2);
+    RIS.meanFl.resize(nProj);
+    RIS.status.resize(nProj);
+    RIS.lst.resize(dims(0),dims(1),dims(2));
+  }
+  dims.clear();
+
+  Vector<int> flat_lst;
+  Vector<int> flat_maplist;
+  Vector<int> flat_gmaplist;
+
+  if (cm.mas(cm_mod)) {
+    flat_lst.resize(lst_size);
+    int n = 0;
+    for (int i = 0; i < RIS.lst.nrows(); i++) {
+      for (int j = 0; j < RIS.lst.ncols(); j++) {
+        for (int k = 0; k < RIS.lst.nslices(); k++) {
+          flat_lst(n) = RIS.lst(i,j,k);
+          n += 1;
+        }
+      }
+    }
+    n = 0;
+    flat_maplist.resize(maplist_size);
+    flat_gmaplist.resize(maplist_size);
+    for (int iProj = 0; iProj < nProj; iProj++) {
+      for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < nStks(iProj); j++) {
+          flat_maplist(n) = com_mod.risMapList[iProj].map(i,j);
+          flat_gmaplist(n) = com_mod.grisMapList[iProj].map(i,j);
+          n += 1;
+        }
+      }
+    }
+  } else {
+    flat_lst.resize(lst_size);
+    flat_maplist.resize(maplist_size);
+    flat_gmaplist.resize(maplist_size);
+  }
+
+  cm.bcast(cm_mod, flat_lst);
+  cm.bcast(cm_mod, flat_maplist);
+  cm.bcast(cm_mod, flat_gmaplist);
+  cm.bcast(cm_mod, RIS.clsFlg);
+  cm.bcast(cm_mod, RIS.nbrIter);
+  cm.bcast(cm_mod, RIS.Res);
+  cm.bcast(cm_mod, &RIS.nbrRIS);
+  cm.bcast(cm_mod, RIS.meanP);
+  cm.bcast(cm_mod, RIS.meanFl);
+  cm.bcast(cm_mod, RIS.status);
+
+  // Reshape the 1D array back to 3D after broadcasting
+  if (cm.slv(cm_mod)) {
+    int n = 0;
+    for (int i = 0; i < RIS.lst.nrows(); i++) {
+      for (int j = 0; j < RIS.lst.ncols(); j++) {
+        for (int k = 0; k < RIS.lst.nslices(); k++) {
+          RIS.lst(i,j,k) = flat_lst(n);
+          n += 1;
+        }
+      }
+    }
+    n = 0;
+    for (int iProj = 0; iProj < nProj; iProj++) {
+      for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < nStks(iProj); j++) {
+          com_mod.risMapList[iProj].map(i,j) = flat_maplist(n);
+          com_mod.grisMapList[iProj].map(i,j) = flat_gmaplist(n);
+          n += 1;
+        }
+      }
+    }
+  }
+  flat_lst.clear();
+  flat_maplist.clear();
+  flat_gmaplist.clear();
+
+  // // [HZ] broadcasting nestd vector causes a problem in parallel
+  // for (int iProj = 0; iProj < nProj; iProj++) {
+  //   cm.bcast(cm_mod, com_mod.risMapList[iProj].map);
+  //   cm.bcast(cm_mod, com_mod.grisMapList[iProj].map);
+  // }
+
+  for (int iM = 0; iM < com_mod.nMsh; iM++) {
+    cm.bcast(cm_mod, &com_mod.msh[iM].gnEl);
+    if (cm.slv(cm_mod)) {
+      com_mod.msh[iM].eRIS.resize(com_mod.msh[iM].gnEl);
+      com_mod.msh[iM].partRIS.resize(com_mod.msh[iM].gnEl);
+    }
+    cm.bcast(cm_mod, com_mod.msh[iM].eRIS);
+    cm.bcast(cm_mod, com_mod.msh[iM].partRIS);
+  }
+  nStks.clear();
+}
+
+
+//---------
+// dist_uris
+//---------
+/// @brief This routine distributes data structures for URIS
+void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm) {
+  using namespace consts;
+
+  #define n_debug_dist_uris
+  #ifdef debug_dist_uris
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
+
+  auto& uris = com_mod.uris;
+
+  // We will copy the URIS valves to all processors 
+  cm.bcast(cm_mod, &com_mod.nUris);
+  if (cm.slv(cm_mod)) {
+    uris.resize(com_mod.nUris);
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      uris[iUris].nrm.resize(com_mod.nsd);
+    }
+  }
+
+  for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+    cm.bcast(cm_mod, uris[iUris].name);
+    cm.bcast(cm_mod, &uris[iUris].tnNo);
+    cm.bcast(cm_mod, &uris[iUris].nFa);
+    cm.bcast(cm_mod, &uris[iUris].sdf_default);
+    cm.bcast(cm_mod, &uris[iUris].sdf_deps);
+    cm.bcast(cm_mod, &uris[iUris].sdf_deps_close);
+    cm.bcast(cm_mod, &uris[iUris].clsFlg);
+    cm.bcast(cm_mod, &uris[iUris].cnt);
+    cm.bcast(cm_mod, &uris[iUris].scF);
+    cm.bcast(cm_mod, uris[iUris].nrm);
+  }
+
+  std::vector<Vector<int>> lM_gN_flat(com_mod.nUris);
+  std::vector<Vector<int>> lM_lN_flat(com_mod.nUris);
+  std::vector<Vector<int>> lM_IEN_flat(com_mod.nUris);
+  Vector<int> lM_gN_flat_size(com_mod.nUris);
+  lM_gN_flat_size = 0;
+  Vector<int> lM_lN_flat_size(com_mod.nUris);
+  lM_lN_flat_size = 0;
+  Vector<int> lM_IEN_flat_size(com_mod.nUris);
+  lM_IEN_flat_size = 0;
+  int n0, n1, n2;
+
+  if (cm.mas(cm_mod)) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      for (int iM = 0; iM < uris[iUris].nFa; iM++) {
+        auto& lM = uris[iUris].msh[iM];
+        lM_gN_flat_size(iUris) += lM.gnNo;
+        lM_lN_flat_size(iUris) += uris[iUris].tnNo;
+        lM_IEN_flat_size(iUris) += lM.eNoN*lM.gnEl;
+      }
+      // std::cout << "lM_gN_flat_size: " << lM_gN_flat_size(iUris) << " for uris: " << iUris << std::endl;
+      // std::cout << "lM_lN_flat_size: " << lM_lN_flat_size(iUris) << " for uris: " << iUris << std::endl;
+      // std::cout << "lM_IEN_flat_size: " << lM_IEN_flat_size(iUris) << " for uris: " << iUris << std::endl;
+    }
+  }
+
+  cm.bcast(cm_mod, lM_gN_flat_size);
+  cm.bcast(cm_mod, lM_lN_flat_size);
+  cm.bcast(cm_mod, lM_IEN_flat_size);
+
+  for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+    lM_gN_flat[iUris].resize(lM_gN_flat_size(iUris));
+    lM_lN_flat[iUris].resize(lM_lN_flat_size(iUris));
+    lM_IEN_flat[iUris].resize(lM_IEN_flat_size(iUris));
+  }
+
+  if (cm.mas(cm_mod)) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      n0 = 0;
+      n1 = 0;
+      n2 = 0;
+      for (int iM = 0; iM < uris[iUris].nFa; iM++) {
+        auto& lM = uris[iUris].msh[iM];
+
+        for (int i = 0; i < lM.gnNo; i++) {
+          lM_gN_flat[iUris](n0) = lM.gN(i);
+          n0 += 1;
+        }
+
+        for (int i = 0; i < uris[iUris].tnNo; i++) {
+          lM_lN_flat[iUris](n1) = lM.lN(i);
+          n1 += 1;
+        }
+
+        for (int i = 0; i < lM.eNoN; i++) {
+          for (int j = 0; j < lM.gnEl; j++) {
+            lM_IEN_flat[iUris](n2) = lM.IEN(i,j);
+            n2 += 1;
+          }
+        }
+
+      }
+    }
+  }
+
+  for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+    cm.bcast(cm_mod, lM_gN_flat[iUris]);
+    cm.bcast(cm_mod, lM_lN_flat[iUris]);
+    cm.bcast(cm_mod, lM_IEN_flat[iUris]);
+  }
+
+  for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+    if (cm.slv(cm_mod)) {
+      uris[iUris].msh.resize(uris[iUris].nFa);
+    }
+    for (int iM = 0; iM < uris[iUris].nFa; iM++) {
+      dist_uris_msh(com_mod, cm_mod, cm, uris[iUris].msh[iM], iUris);
+    }
+  }
+
+  if (cm.slv(cm_mod)) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      n0 = 0;
+      n1 = 0;
+      n2 = 0;
+      for (int iM = 0; iM < uris[iUris].nFa; iM++) {
+        auto& lM = uris[iUris].msh[iM];
+
+        for (int i = 0; i < lM.gnNo; i++) {
+          lM.gN(i) = lM_gN_flat[iUris](n0);
+          n0 += 1;
+        }
+
+        for (int i = 0; i < uris[iUris].tnNo; i++) {
+          lM.lN(i) = lM_lN_flat[iUris](n1);
+          n1 += 1;
+        }
+
+        for (int i = 0; i < lM.eNoN; i++) {
+          for (int j = 0; j < lM.gnEl; j++) {
+            lM.IEN(i,j) = lM_IEN_flat[iUris](n2);
+            n2 += 1;
+          }
+        }
+      }
+    }
+  }
+
+  Vector<int> OpenN(com_mod.nUris);
+  Vector<int> CloseN(com_mod.nUris);
+  std::vector<Vector<double>> DxOpenFlat(com_mod.nUris);
+  std::vector<Vector<double>> DxCloseFlat(com_mod.nUris);
+  Vector <int> DxOpenFlatSize(com_mod.nUris);
+  Vector <int> DxCloseFlatSize(com_mod.nUris);
+  int n;
+  if (cm.mas(cm_mod)) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      OpenN(iUris) = uris[iUris].DxOpen.nrows();
+      CloseN(iUris) = uris[iUris].DxClose.nrows();
+      DxOpenFlatSize(iUris) = uris[iUris].DxOpen.size();
+      DxCloseFlatSize(iUris) = uris[iUris].DxClose.size();
+      DxOpenFlat[iUris].resize(DxOpenFlatSize(iUris));
+      DxCloseFlat[iUris].resize(DxCloseFlatSize(iUris));
+      n = 0;
+      for (int i = 0; i < uris[iUris].DxOpen.nrows(); i++) {
+        for (int j = 0; j < uris[iUris].DxOpen.ncols(); j++) {
+          for (int k = 0; k < uris[iUris].DxOpen.nslices(); k++) {
+            DxOpenFlat[iUris](n) = uris[iUris].DxOpen(i,j,k);
+            n += 1;
+          }
+        }
+      }
+      n = 0;
+      for (int i = 0; i < uris[iUris].DxClose.nrows(); i++) {
+        for (int j = 0; j < uris[iUris].DxClose.ncols(); j++) {
+          for (int k = 0; k < uris[iUris].DxClose.nslices(); k++) {
+            DxCloseFlat[iUris](n) = uris[iUris].DxClose(i,j,k);
+            n += 1;
+          }
+        }
+      }
+    }
+  }
+
+  cm.bcast(cm_mod, OpenN);
+  cm.bcast(cm_mod, CloseN);
+  cm.bcast(cm_mod, DxOpenFlatSize);
+  cm.bcast(cm_mod, DxCloseFlatSize);
+
+  if (cm.slv(cm_mod)) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      uris[iUris].DxOpen.resize(OpenN(iUris), com_mod.nsd, uris[iUris].tnNo);
+      uris[iUris].DxClose.resize(CloseN(iUris), com_mod.nsd, uris[iUris].tnNo);
+      uris[iUris].x.resize(com_mod.nsd, uris[iUris].tnNo);
+      uris[iUris].Yd.resize(com_mod.nsd, uris[iUris].tnNo);
+      DxOpenFlat[iUris].resize(DxOpenFlatSize(iUris));
+      DxCloseFlat[iUris].resize(DxCloseFlatSize(iUris));
+    }
+  }
+
+  for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+    cm.bcast(cm_mod, uris[iUris].x);
+    cm.bcast(cm_mod, uris[iUris].Yd);
+    cm.bcast(cm_mod, DxOpenFlat[iUris]);
+    cm.bcast(cm_mod, DxCloseFlat[iUris]);
+  }
+
+  if (cm.slv(cm_mod)) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      n = 0;
+      for (int i = 0; i < uris[iUris].DxOpen.nrows(); i++) {
+        for (int j = 0; j < uris[iUris].DxOpen.ncols(); j++) {
+          for (int k = 0; k < uris[iUris].DxOpen.nslices(); k++) {
+            uris[iUris].DxOpen(i,j,k) = DxOpenFlat[iUris](n);
+            n += 1;
+          }
+        }
+      }
+      n = 0;
+      for (int i = 0; i < uris[iUris].DxClose.nrows(); i++) {
+        for (int j = 0; j < uris[iUris].DxClose.ncols(); j++) {
+          for (int k = 0; k < uris[iUris].DxClose.nslices(); k++) {
+            uris[iUris].DxClose(i,j,k) = DxCloseFlat[iUris](n);
+            n += 1;
+          }
+        }
+      }
+    }
+  }
+
+}
+
+
+/// @brief This rountine distributes data structures for URIS mesh
+void dist_uris_msh(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, mshType& lM, const int iUris)
+{
+  using namespace consts;
+
+  #define n_debug_dist_uris_msh
+  #ifdef debug_dist_uris_msh
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
+
+  cm.bcast(cm_mod, lM.name);
+  cm.bcast(cm_mod, &lM.lShpF);
+  cm.bcast(cm_mod, &lM.lShl);
+  cm.bcast(cm_mod, &lM.lFib);
+  cm.bcast_enum(cm_mod, &lM.eType);
+  cm.bcast(cm_mod, &lM.eNoN);
+  cm.bcast(cm_mod, &lM.gnEl);
+  cm.bcast(cm_mod, &lM.gnNo);
+  cm.bcast(cm_mod, &lM.nFa);
+  cm.bcast(cm_mod, &lM.nFs);
+  cm.bcast(cm_mod, &lM.nFn);
+  cm.bcast(cm_mod, &lM.nG);
+  cm.bcast(cm_mod, &lM.vtkType);
+  cm.bcast(cm_mod, &lM.scF);
+  cm.bcast(cm_mod, &lM.dx);
+  // cm.bcast(cm_mod, &lM.fib.nFn);
+  // cm.bcast(cm_mod, &lM.fib.locNd);
+  // cm.bcast(cm_mod, &lM.fib.locEl);
+  // cm.bcast(cm_mod, &lM.fib.locGP);
+
+  if (cm.slv(cm_mod)) { 
+    lM.nNo = lM.gnNo;
+    lM.nEl = lM.gnEl;
+    lM.gN.resize(lM.nNo);
+    lM.lN.resize(com_mod.uris[iUris].tnNo);
+    lM.IEN.resize(lM.eNoN, lM.nEl);
+    lM.fa.resize(lM.nFa);
+    nn::select_ele(com_mod, lM);
+    // if (lM.fib.locNd) {lM.fib.fN.resize(nsd*lM.fib.nFn, 1, lM.nNo);}
+    // if (lM.fib.locEl) {lM.fib.fN.resize(nsd*lM.fib.nFn, 1, lM.nEl);}
+    // if (lM.fib.locGP) {lM.fib.fN.resize(nsd*lM.fib.nFn, lM.nG, lM.nEl);}
+  }
+  
+  // // [HZ] Broadcasting here causes problem, similar reason to the RIS map list
+  // cm.bcast(cm_mod, lM.gN);
+  // cm.bcast(cm_mod, lM.lN);
+  // cm.bcast(cm_mod, lM.IEN);
+
+  // if (lM.fib.locNd || lM.fib.locEl || lM.fib.locGP) {
+  //   cm.bcast(com_mod, &lM.fib.fN)
+  // }
+
+  if (lM.eType == ElementType::NRB) {
+    cm.bcast(cm_mod, &lM.nSl);
+    int insd = com_mod.nsd;
+    if (lM.lShl) {insd = com_mod.nsd - 1;}
+    if (cm.slv(cm_mod)) {
+      lM.nW.resize(lM.gnNo);
+      lM.INN.resize(insd, lM.gnEl);
+      lM.bs.resize(insd);
+    }
+    cm.bcast(cm_mod, lM.nW);
+    cm.bcast(cm_mod, lM.INN);
+    for (int i = 0; i < insd; i++) {
+      cm.bcast(cm_mod, &lM.bs[i].n);
+      cm.bcast(cm_mod, &lM.bs[i].nG);
+      cm.bcast(cm_mod, &lM.bs[i].nEl);
+      cm.bcast(cm_mod, &lM.bs[i].nSl);
+      cm.bcast(cm_mod, &lM.bs[i].p);
+      if (cm.slv(cm_mod)) {lM.bs[i].xi.resize(lM.bs[i].n);}
+      cm.bcast(cm_mod, lM.bs[i].xi);
+      lM.bs[i].nNo = lM.bs[i].n - lM.bs[i].p - 1;
+    }
+  }
+
 }
 
 void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::vector<mshType>& tMs,
@@ -1652,6 +2179,7 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   if (fp) fclose(fp);
   #endif
 
+
   if (lM.eType == consts::ElementType::NRB) {
     part = cm.id();
 
@@ -1687,13 +2215,13 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
     #endif
     lM.IEN.resize(eNoN, nEl);
 
+
     // Send lM.gIEN array to all processor's lM.IEN[] array of siize nEl*eNoN.
     //
     #ifdef dbg_part_msh
     dmsg << "sCount: " << sCount;
     dmsg << "disp: " << disp;
     #endif
-
     MPI_Scatterv(lM.gIEN.data(), sCount.data(), disp.data(), cm_mod::mpint, lM.IEN.data(), 
         nEl*eNoN, cm_mod::mpint, cm_mod.master, cm.com());
 
@@ -1703,6 +2231,7 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
     dmsg << "eNoNb: " << eNoNb;
     dmsg << "lM.IEN.size(): " << lM.IEN.size();
     #endif
+
 
     // The output of this process is "part" array which part(i) says
     // which processor element "i" belongs to
@@ -1781,10 +2310,35 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   dmsg << " " << " ";
   dmsg << "Making the lM%IEN array " << " ...";
   #endif
- 
+
   if (cm.mas(cm_mod)) {
     sCount = 0;
+    int eRisProc = -1;
     for (int e = 0; e < lM.gnEl; e++) {
+      if (com_mod.risFlag) {
+        // If we found that this element needs to be shared
+        // since elements on the other mesh had been assigned 
+        // a processor, then we change the gPart id
+        if (lM.partRIS(e) != -1) {
+          gPart[e] = lM.partRIS(e);
+        } else if (lM.eRIS(e)) {
+          // If this element is on a ris projection,
+          // we record the processor id so that next mesh
+          // will know that this element needs to be shared.
+          // Ideally, we might want to handle the case where
+          // elements next to the same projection are sent
+          // to different processors. Yet, this doesn't often
+          // happen and for simplicity, we
+          // force the processor id to be the same for all 
+          // elements next to the same projection.
+          if (eRisProc == -1) {
+            eRisProc = gPart[e];
+          } else {
+            gPart[e] = eRisProc;
+          }
+          lM.partRIS(e) = eRisProc;
+        }
+      }
       sCount[gPart[e]] = sCount[gPart[e]] + 1;
     }
 
@@ -1853,6 +2407,9 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   cm.bcast(cm_mod, &flag);
   cm.bcast(cm_mod, &fnFlag);
   cm.bcast(cm_mod, lM.eDist);
+  if (com_mod.risFlag) {
+    cm.bcast(cm_mod, lM.partRIS);
+  }
 
   nEl = lM.eDist[cm.id()+1] - lM.eDist[cm.id()];
   #ifdef dbg_part_msh
@@ -2089,4 +2646,3 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
     tmpYs.clear();
   }
 }
-
