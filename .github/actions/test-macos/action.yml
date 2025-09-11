@@ -4,9 +4,6 @@ description: 'Run tests on macOS with all dependencies'
 runs:
   using: 'composite'
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
     - name: Install macOS dependencies
       shell: bash
       run: |

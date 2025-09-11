@@ -4,9 +4,6 @@ description: 'Run tests on Ubuntu with coverage reporting'
 runs:
   using: 'composite'
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
     - name: Build svZeroDSolver
       shell: bash
       run: |

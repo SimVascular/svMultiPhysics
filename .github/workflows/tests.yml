@@ -43,6 +43,8 @@ jobs:
     needs: check-for-changes
     if: ${{ needs.check-for-changes.outputs.run_full_tests == 'true' }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Run Ubuntu tests
         uses: ./.github/actions/test-ubuntu
 
@@ -53,6 +55,8 @@ jobs:
     needs: check-for-changes
     if: ${{ needs.check-for-changes.outputs.run_full_tests == 'true' }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Run macOS tests
         uses: ./.github/actions/test-macos
 
