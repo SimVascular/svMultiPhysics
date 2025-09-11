@@ -1,15 +1,7 @@
-name: ubuntu-latest
-on: 
-  push: 
-    paths:
-      - 'Code/**'
-      - 'tests/**'
-      - '.github/**'
-  pull_request:
-    paths:
-      - 'Code/**'
-      - 'tests/**'
-      - '.github/**'
+name: test-ubuntu
+
+on:
+  workflow_call:
 jobs:
   test:
     runs-on: ubuntu-latest

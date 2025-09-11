@@ -1,15 +1,7 @@
-name: macos-latest
+name: test-ubuntu
+
 on:
-  push: 
-    paths:
-      - 'Code/**'
-      - 'tests/**'
-      - '.github/**'
-  pull_request:
-    paths:
-      - 'Code/**'
-      - 'tests/**'
-      - '.github/**'
+  workflow_call:
 jobs:
   test:
     runs-on: macos-latest
