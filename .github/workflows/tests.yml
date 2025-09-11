@@ -47,6 +47,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Run Ubuntu tests
         uses: ./.github/actions/test-ubuntu
+        with:
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   # Run macOS tests when relevant changes detected
   test-macos:

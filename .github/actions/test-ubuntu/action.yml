@@ -1,6 +1,12 @@
 name: 'Test Ubuntu'
 description: 'Run tests on Ubuntu with coverage reporting'
 
+inputs:
+  codecov-token:
+    description: 'Codecov token for uploading coverage reports'
+    required: false
+    default: ''
+
 runs:
   using: 'composite'
   steps:
@@ -70,4 +76,4 @@ runs:
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        CODECOV_TOKEN: ${{ inputs.codecov-token }}
