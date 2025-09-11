@@ -43,13 +43,13 @@ jobs:
       - name: No relevant changes
         run: echo "✅ Docs-only change, skipping tests."
 
-  # Call Ubuntu reusable workflow
+  # Call Ubuntu testing workflow
   test-ubuntu:
     needs: check_for_changes
     if: ${{ needs.check_for_changes.outputs.run_full_tests == 'true' }}
     uses: ./.github/workflows/test_ubuntu.yml
 
-  # Call macOS reusable workflow
+  # Call macOS testing workflow
   test-macos:
     needs: check_for_changes
     if: ${{ needs.check_for_changes.outputs.run_full_tests == 'true' }}
