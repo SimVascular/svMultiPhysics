@@ -14,6 +14,11 @@ def test_pipe_RCR_3d(n_proc):
     t_max = 2
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
 
+def test_pipe_RCR_3d_fourier_coeff(n_proc):
+    test_folder = "pipe_RCR_3d_fourier_coeff"
+    t_max = 2
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
+
 def test_pipe_RCR_3d_petsc(n_proc):
     test_folder = "pipe_RCR_3d_petsc"
     t_max = 2
