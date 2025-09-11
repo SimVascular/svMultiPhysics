@@ -20,7 +20,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          base: HEAD~1 # Compare against the previous commit
+          base: ${{ github.event.pull_request.base.sha || github.event.before }} # Compare against base branch or previous commit
           filters: |
             relevant:
               - 'Code/**'
