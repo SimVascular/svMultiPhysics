@@ -1,0 +1,10 @@
+name: skip-tests
+
+on:
+  workflow_call:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: No relevant changes
+        run: echo "✅ No relevant changes, skipping tests."

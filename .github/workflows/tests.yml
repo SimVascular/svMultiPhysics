@@ -1,4 +1,4 @@
-name: test_controller
+name: Tests
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ jobs:
   # - .github/**
   # If there are any changes, the job will set the run_full_tests output to true.
   # If there are no changes, the job will set the run_full_tests output to false.
-  check_for_changes:
+  check-for-changes-in-important-files:
     runs-on: ubuntu-latest
     outputs:
       run_full_tests: ${{ steps.set-outputs.outputs.run_full_tests }}
@@ -35,22 +35,19 @@ jobs:
           fi
 
   # Dummy job that always passes when no code/tests changed
-  test:
-    needs: check_for_changes
-    if: ${{ needs.check_for_changes.outputs.run_full_tests == 'false' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: No relevant changes
-        run: echo "✅ Docs-only change, skipping tests."
+  skip_tests:
+    needs: check-for-changes-in-important-files
+    if: ${{ needs.check-for-changes-in-important-files.outputs.run_full_tests == 'false' }}
+    uses: ./.github/workflows/test_workflows/skip_tests.yml
 
   # Call Ubuntu testing workflow
-  test-ubuntu:
-    needs: check_for_changes
-    if: ${{ needs.check_for_changes.outputs.run_full_tests == 'true' }}
-    uses: ./.github/workflows/test_ubuntu.yml
+  test_ubuntu:
+    needs: check-for-changes-in-important-files
+    if: ${{ needs.check-for-changes-in-important-files.outputs.run_full_tests == 'true' }}
+    uses: ./.github/workflows/test_workflows/test_ubuntu.yml
 
   # Call macOS testing workflow
-  test-macos:
-    needs: check_for_changes
-    if: ${{ needs.check_for_changes.outputs.run_full_tests == 'true' }}
-    uses: ./.github/workflows/test_macos.yml
+  test_macos:
+    needs: check-for-changes-in-important-files
+    if: ${{ needs.check-for-changes-in-important-files.outputs.run_full_tests == 'true' }}
+    uses: ./.github/workflows/test_workflows/test_macos.yml

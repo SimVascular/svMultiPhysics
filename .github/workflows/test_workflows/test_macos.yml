@@ -1,4 +1,4 @@
-name: test-ubuntu
+name: test-macos
 
 on:
   workflow_call:
