@@ -35,19 +35,19 @@ jobs:
           fi
 
   # Dummy job that always passes when no code/tests changed
-  skip_tests:
+  skip-tests:
     needs: check-for-changes-in-important-files
     if: ${{ needs.check-for-changes-in-important-files.outputs.run_full_tests == 'false' }}
-    uses: ./.github/workflows/test_workflows/skip_tests.yml
+    uses: ./.github/workflows/skip_tests.yml
 
   # Call Ubuntu testing workflow
-  test_ubuntu:
+  test-ubuntu:
     needs: check-for-changes-in-important-files
     if: ${{ needs.check-for-changes-in-important-files.outputs.run_full_tests == 'true' }}
-    uses: ./.github/workflows/test_workflows/test_ubuntu.yml
+    uses: ./.github/workflows/test_ubuntu.yml
 
   # Call macOS testing workflow
-  test_macos:
+  test-macos:
     needs: check-for-changes-in-important-files
     if: ${{ needs.check-for-changes-in-important-files.outputs.run_full_tests == 'true' }}
-    uses: ./.github/workflows/test_workflows/test_macos.yml
+    uses: ./.github/workflows/test_macos.yml
