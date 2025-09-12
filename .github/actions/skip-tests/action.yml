@@ -1,9 +1,0 @@
-name: 'Skip Tests'
-description: 'Skip tests when no relevant changes are detected'
-
-runs:
-  using: 'composite'
-  steps:
-    - name: No relevant changes detected
-      shell: bash
-      run: echo "✅ No relevant changes detected in Code/, tests/, or .github/ directories. Skipping tests."
