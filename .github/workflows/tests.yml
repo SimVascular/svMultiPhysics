@@ -1,4 +1,4 @@
-name: Test
+name: Tests
 
 on:
   pull_request:
@@ -67,8 +67,8 @@ jobs:
   # 1. Tests are skipped (no relevant changes) OR
   # 2. All tests pass (both Ubuntu and macOS)
   # This job fails only if tests actually fail
-  test:
-    name: Test
+  all-tests:
+    name: All Tests
     runs-on: ubuntu-latest
     needs: [check-for-changes, test-ubuntu, test-macos]
     if: always()
