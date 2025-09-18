@@ -43,6 +43,7 @@
 #include "ChnlMod.h"
 #include "CmMod.h"
 #include "Parameters.h"
+#include "VariableRobinBCData.h"
 #include "Timer.h"
 #include "Vector.h"
 
@@ -230,6 +231,9 @@ class bcType
 
     // Neu: RCR
     rcrType RCR;
+
+    // Robin: Spatially variable stiffness and damping data
+    VariableRobinBCData variable_robin_data;
 };
 
 /// @brief Class storing data for B-Splines.

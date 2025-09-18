@@ -4,31 +4,37 @@
 #include "Array.h"
 #include "Vector.h"
 #include "VtkData.h"
-#include "ComMod.h"
 #include <string>
 #include <memory>
+#include <map>
+
+// Forward declarations
+class faceType;
 
 
 /// @brief Class to handle Robin boundary condition data with per-node stiffness and damping
 /// 
 /// This class reads stiffness and damping arrays from a VTP file and provides
 /// efficient access to per-node values during boundary condition assembly.
-class RobinBCData {
+class VariableRobinBCData {
 public:
+    /// @brief Default constructor - initializes to empty state
+    VariableRobinBCData() : num_nodes_(0), from_vtp_(false) {}
+
     /// @brief Constructor - reads data from VTP file
     /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
     /// @param face Reference to the face for validation
     /// @throws std::runtime_error if file cannot be read or arrays are missing
-    RobinBCData(const std::string& vtp_file_path, const faceType& face);
+    VariableRobinBCData(const std::string& vtp_file_path, const faceType& face);
     
-    /// @brief Default constructor for uniform values
+    /// @brief Constructor for uniform values
     /// @param uniform_stiffness Uniform stiffness value for all nodes
     /// @param uniform_damping Uniform damping value for all nodes
     /// @param num_nodes Number of nodes on the face
-    RobinBCData(double uniform_stiffness, double uniform_damping, int num_nodes);
+    VariableRobinBCData(double uniform_stiffness, double uniform_damping, int num_nodes);
     
     /// @brief Destructor
-    ~RobinBCData() = default;
+    ~VariableRobinBCData() = default;
     
     /// @brief Get stiffness value for a specific node
     /// @param node_id Node index on the face

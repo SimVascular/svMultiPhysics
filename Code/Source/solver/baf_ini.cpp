@@ -261,7 +261,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   int nsd = com_mod.nsd;
   int tnNo = com_mod.tnNo;
  
-  #define n_debug_bc_ini
+  #define debug_bc_ini
   #ifdef debug_bc_ini
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
@@ -274,8 +274,28 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
     return;
   }
 
-  if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin)) && not com_mod.dFlag) {
-    throw std::runtime_error("Robin BC can be set for a displacement-based eqn only");
+  if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) {
+    if (!com_mod.dFlag) {
+      throw std::runtime_error("Robin BC can be set for a displacement-based eqn only");
+    }
+
+    #ifdef debug_bc_ini
+      dmsg << "Initializing Robin BC data" << std::endl;
+      #endif
+
+      // Initialize VariableRobinBCData object
+      if (!lBc.robin_vtp_file.empty()) {
+        #ifdef debug_bc_ini
+        dmsg << "Creating VariableRobinBCData object from VTP file: " << lBc.robin_vtp_file << std::endl;
+        dmsg << "Face name: " << lFa.name << ", nNo: " << lFa.nNo << std::endl;
+      #endif
+      lBc.variable_robin_data = VariableRobinBCData(lBc.robin_vtp_file, lFa);
+    } else {
+      #ifdef debug_bc_ini
+      dmsg << "Creating RobinBCData object with uniform values";
+      #endif
+      lBc.variable_robin_data = VariableRobinBCData(lBc.k, lBc.c, lFa.nNo);
+    }
   }
 
   int iM = lFa.iM;

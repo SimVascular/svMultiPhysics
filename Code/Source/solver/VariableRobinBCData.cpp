@@ -1,16 +1,17 @@
-#include "RobinBCData.h"
+#include "VariableRobinBCData.h"
 #include "ComMod.h"
 #include "DebugMsg.h"
 #include <stdexcept>
 #include <iostream>
+#include <cstdio>
 
-RobinBCData::RobinBCData(const std::string& vtp_file_path, const faceType& face)
+VariableRobinBCData::VariableRobinBCData(const std::string& vtp_file_path, const faceType& face)
 {
-    #define n_debug_robin_bc_data
+    #define debug_robin_bc_data
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, 0);
-    dmsg << "[RobinBCData] Constructor with VTP file path";
-    dmsg << "[RobinBCData] Loading Robin BC from VTP file: " << vtp_file_path;
+    dmsg << "Constructor with VTP file path" << std::endl;
+    dmsg << "Loading Robin BC from VTP file: " << vtp_file_path << std::endl;
     #endif
 
     num_nodes_ = face.nNo;
@@ -19,12 +20,12 @@ RobinBCData::RobinBCData(const std::string& vtp_file_path, const faceType& face)
     load_from_vtp(vtp_file_path, face);
 }
 
-RobinBCData::RobinBCData(double uniform_stiffness, double uniform_damping, int num_nodes)
+VariableRobinBCData::VariableRobinBCData(double uniform_stiffness, double uniform_damping, int num_nodes)
 {
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, 0);
-    dmsg << "[RobinBCData] Constructor with uniform values";
-    dmsg << "[RobinBCData] Initializing uniform Robin BC values";
+    dmsg << "Constructor with uniform values" << std::endl;
+    dmsg << "Initializing uniform Robin BC values" << std::endl;
     #endif
 
     num_nodes_ = num_nodes;
@@ -33,18 +34,18 @@ RobinBCData::RobinBCData(double uniform_stiffness, double uniform_damping, int n
     initialize_uniform(uniform_stiffness, uniform_damping, num_nodes);
 }
 
-void RobinBCData::load_from_vtp(const std::string& vtp_file_path, const faceType& face)
+void VariableRobinBCData::load_from_vtp(const std::string& vtp_file_path, const faceType& face)
 {
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, 0);
-    dmsg << "[load_from_vtp] Loading Robin BC from VTP file: " << vtp_file_path;
+    dmsg << "Loading Robin BC from VTP file: " << vtp_file_path << std::endl;
     #endif
 
     // Check if file exists
     if (FILE *file = fopen(vtp_file_path.c_str(), "r")) {
         fclose(file);
         #ifdef debug_robin_bc_data
-        dmsg << "[load_from_vtp] File exists and is readable";
+        dmsg << "File exists and is readable" << std::endl;
         #endif
     } else {
         throw std::runtime_error("Robin BC VTP file '" + vtp_file_path + "' cannot be read.");
@@ -52,11 +53,11 @@ void RobinBCData::load_from_vtp(const std::string& vtp_file_path, const faceType
     
     // Read the VTP file
     #ifdef debug_robin_bc_data
-    dmsg << "[load_from_vtp] About to create VtkVtpData object";
+    dmsg << "About to create VtkVtpData object" << std::endl;
     #endif
     VtkVtpData vtp_data(vtp_file_path, true);
     #ifdef debug_robin_bc_data
-    dmsg << "[load_from_vtp] VtkVtpData object created successfully";
+    dmsg << "VtkVtpData object created successfully" << std::endl;
     #endif
     
     // Validate the VTP data matches the face geometry
@@ -113,7 +114,7 @@ void RobinBCData::load_from_vtp(const std::string& vtp_file_path, const faceType
     }
 }
 
-void RobinBCData::initialize_uniform(double stiffness, double damping, int num_nodes)
+void VariableRobinBCData::initialize_uniform(double stiffness, double damping, int num_nodes)
 {
     if (stiffness < 0.0) {
         throw std::runtime_error("Uniform stiffness value cannot be negative.");
@@ -137,11 +138,11 @@ void RobinBCData::initialize_uniform(double stiffness, double damping, int num_n
     }
 }
 
-void RobinBCData::validate_vtp_data(const VtkVtpData& vtp_data, const faceType& face)
+void VariableRobinBCData::validate_vtp_data(const VtkVtpData& vtp_data, const faceType& face)
 {
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, 0);
-    dmsg << "[validate_vtp_data] Validating VTP data";
+    dmsg << "Validating VTP data" << std::endl;
     #endif
     int vtp_num_points = vtp_data.num_points();
     if (vtp_num_points != face.nNo) {
@@ -186,7 +187,7 @@ void RobinBCData::validate_vtp_data(const VtkVtpData& vtp_data, const faceType& 
     }
 }
 
-double RobinBCData::get_stiffness(int node_id) const
+double VariableRobinBCData::get_stiffness(int node_id) const
 {
     if (node_id < 0 || node_id >= num_nodes_) {
         throw std::runtime_error("Node ID " + std::to_string(node_id) + 
@@ -195,7 +196,7 @@ double RobinBCData::get_stiffness(int node_id) const
     return stiffness_array_(node_id);
 }
 
-double RobinBCData::get_damping(int node_id) const
+double VariableRobinBCData::get_damping(int node_id) const
 {
     if (node_id < 0 || node_id >= num_nodes_) {
         throw std::runtime_error("Node ID " + std::to_string(node_id) + 
@@ -204,7 +205,7 @@ double RobinBCData::get_damping(int node_id) const
     return damping_array_(node_id);
 }
 
-int RobinBCData::get_local_index(int global_node_id) const
+int VariableRobinBCData::get_local_index(int global_node_id) const
 {
     auto it = global_to_local_map_.find(global_node_id);
     if (it == global_to_local_map_.end()) {
