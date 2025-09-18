@@ -1496,6 +1496,12 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBCData& robin_
 {
   using namespace consts;
 
+  #define n_debug_set_bc_rbnl_l
+  #ifdef debug_set_bc_rbnl_l
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
+
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
   const double dt = com_mod.dt;
@@ -1558,18 +1564,24 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBCData& robin_
       auto nDn = mat_fun::mat_id(nsd);
       Vector<double> h;
       
-      //std::cout << "[set_bc_rbnl_l] Calculating weighted average of stiffness and damping for this integration point" << std::endl;
+      #ifdef debug_set_bc_rbnl_l
+      dmsg << "[set_bc_rbnl_l] Calculating weighted average of stiffness and damping for this integration point";
+      #endif
       // Calculate weighted average of stiffness and damping for this integration point
       double ks_avg = 0.0;
       double cs_avg = 0.0;
       for (int a = 0; a < eNoN; a++) {
-        //std::cout << "[set_bc_rbnl_l] e: " << e << std::endl;
-        //std::cout << "[set_bc_rbnl_l] a: " << a << std::endl;
+        #ifdef debug_set_bc_rbnl_l
+        dmsg << "[set_bc_rbnl_l] e: " << e;
+        dmsg << "[set_bc_rbnl_l] a: " << a;
+        #endif
         int Ac = lFa.IEN(a,e);
-        //std::cout << "[set_bc_rbnl_l] Global Node ID: " << Ac << std::endl;
-        //std::cout << "[set_bc_rbnl_l] Local Node ID: " <<  robin_data.get_local_index(Ac) << std::endl;
-        //std::cout << "[set_bc_rbnl_l] Stiffness: " << robin_data.get_stiffness(robin_data.get_local_index(Ac)) << std::endl;
-        //std::cout << "[set_bc_rbnl_l] Damping: " << robin_data.get_damping(robin_data.get_local_index(Ac)) << std::endl;
+        #ifdef debug_set_bc_rbnl_l
+        dmsg << "[set_bc_rbnl_l] Global Node ID: " << Ac;
+        dmsg << "[set_bc_rbnl_l] Local Node ID: " << robin_data.get_local_index(Ac);
+        dmsg << "[set_bc_rbnl_l] Stiffness: " << robin_data.get_stiffness(robin_data.get_local_index(Ac));
+        dmsg << "[set_bc_rbnl_l] Damping: " << robin_data.get_damping(robin_data.get_local_index(Ac));
+        #endif
         ks_avg += N(a) * robin_data.get_stiffness(robin_data.get_local_index(Ac));
         cs_avg += N(a) * robin_data.get_damping(robin_data.get_local_index(Ac));
       }

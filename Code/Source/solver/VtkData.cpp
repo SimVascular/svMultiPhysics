@@ -30,6 +30,7 @@
 
 #include "VtkData.h"
 #include "Array.h"
+#include "DebugMsg.h"
 
 #include <vtkDoubleArray.h>
 #include "vtkCellArray.h"
@@ -98,14 +99,21 @@ void VtkVtpData::VtkVtpDataImpl::read_file(const std::string& file_name)
 
 void VtkVtpData::VtkVtpDataImpl::set_connectivity(const int nsd, const Array<int>& conn, const int pid)
 {
-  //std::cout << "[VtkVtpData.set_connectivity] " << std::endl;
-  //std::cout << "[VtkVtpData.set_connectivity] vtk_polydata: " << vtk_polydata << std::endl;
-  //std::cout << "[VtkVtpData.set_connectivity] nsd: " << nsd << std::endl;
+  #define n_debug_vtk_data
+  #ifdef debug_vtk_data
+  DebugMsg dmsg(__func__, 0);
+  dmsg << "[VtkVtpData.set_connectivity] vtk_polydata: " << vtk_polydata;
+  dmsg << "[VtkVtpData.set_connectivity] nsd: " << nsd;
+  #endif
+
   int num_elems = conn.ncols();
   int np_elem = conn.nrows();
   unsigned char vtk_cell_type;
-  //std::cout << "[VtkVtpData.set_connectivity] num_elems: " << num_elems << std::endl;
-  //std::cout << "[VtkVtpData.set_connectivity] np_elem: " << np_elem << std::endl;
+
+  #ifdef debug_vtk_data
+  dmsg << "[VtkVtpData.set_connectivity] num_elems: " << num_elems;
+  dmsg << "[VtkVtpData.set_connectivity] np_elem: " << np_elem;
+  #endif
 
   if (nsd == 2) {
     if (np_elem == 4) {
@@ -130,7 +138,9 @@ void VtkVtpData::VtkVtpDataImpl::set_connectivity(const int nsd, const Array<int
     }
     else if (np_elem == 3) {
       vtk_cell_type = VTK_TRIANGLE;
-      //std::cout << "[VtkVtpData.set_connectivity] vtk_cell_type = VTK_TRIANGLE " << std::endl;
+      #ifdef debug_vtk_data
+      dmsg << "[VtkVtpData.set_connectivity] vtk_cell_type = VTK_TRIANGLE";
+      #endif
     }
     else if (np_elem == 6) {
         vtk_cell_type = VTK_QUADRATIC_TRIANGLE;
@@ -167,10 +177,14 @@ void VtkVtpData::VtkVtpDataImpl::set_connectivity(const int nsd, const Array<int
   vtkSmartPointer<vtkCellArray> element_cells = vtkSmartPointer<vtkCellArray>::New();
 
   for (int i = 0; i < num_elems; i++) {
-    //std::cout << "[VtkVtpData.set_connectivity] ---------- i " << i << std::endl;
+    #ifdef debug_vtk_data
+    dmsg << "[VtkVtpData.set_connectivity] ---------- i " << i;
+    #endif
     for (int j = 0; j < np_elem; j++) {
-      //std::cout << "[VtkVtpData.set_connectivity] ----- j " << j << std::endl;
-      //std::cout << "[VtkVtpData.set_connectivity] conn(j,i): " << conn(j,i) << std::endl;
+      #ifdef debug_vtk_data
+      dmsg << "[VtkVtpData.set_connectivity] ----- j " << j;
+      dmsg << "[VtkVtpData.set_connectivity] conn(j,i): " << conn(j,i);
+      #endif
       elem_nodes->SetId(j, conn(j,i));
     }
     element_cells->InsertNextCell(elem_nodes);
@@ -201,12 +215,19 @@ void VtkVtpData::VtkVtpDataImpl::set_point_data(const std::string& data_name, co
 //
 void VtkVtpData::VtkVtpDataImpl::set_points(const Array<double>& points)
 {
-  //std::cout << "[VtkVtpData.set_points] vtk_polydata: " << vtk_polydata << std::endl;
+  #ifdef debug_vtk_data
+  DebugMsg dmsg(__func__, 0);
+  dmsg << "[VtkVtpData.set_points] vtk_polydata: " << vtk_polydata;
+  #endif
+
   int num_coords = points.ncols();
   if (num_coords == 0) { 
     throw std::runtime_error("Error in VTK VTP set_points: the number of points is zero.");
   }
-  //std::cout << "[VtkVtpData.set_points] num_coords: " << num_coords << std::endl;
+
+  #ifdef debug_vtk_data
+  dmsg << "[VtkVtpData.set_points] num_coords: " << num_coords;
+  #endif
 
   auto node_coords = vtkSmartPointer<vtkPoints>::New();
   node_coords->Allocate(num_coords, 1000);
@@ -229,7 +250,10 @@ void VtkVtpData::VtkVtpDataImpl::set_points(const Array<double>& points)
 
 void VtkVtpData::VtkVtpDataImpl::write(const std::string& file_name)
 {
-  //std::cout << "[VtkVtpData.write] file_name: " << file_name << std::endl;
+  #ifdef debug_vtk_data
+  DebugMsg dmsg(__func__, 0);
+  dmsg << "[VtkVtpData.write] file_name: " << file_name;
+  #endif
   auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   writer->SetInputDataObject(vtk_polydata);
   writer->SetFileName(file_name.c_str());

@@ -1,45 +1,63 @@
 #include "RobinBCData.h"
 #include "ComMod.h"
+#include "DebugMsg.h"
 #include <stdexcept>
 #include <iostream>
 
 RobinBCData::RobinBCData(const std::string& vtp_file_path, const faceType& face)
 {
-    std::cerr << "[RobinBCData] Constructor with VTP file path" << std::endl;
+    #define n_debug_robin_bc_data
+    #ifdef debug_robin_bc_data
+    DebugMsg dmsg(__func__, 0);
+    dmsg << "[RobinBCData] Constructor with VTP file path";
+    dmsg << "[RobinBCData] Loading Robin BC from VTP file: " << vtp_file_path;
+    #endif
+
     num_nodes_ = face.nNo;
     from_vtp_ = true;
     vtp_file_path_ = vtp_file_path;
-
-    //std::cout << "[RobinBCData] Loading Robin BC from VTP file: " << vtp_file_path << std::endl;
     load_from_vtp(vtp_file_path, face);
 }
 
 RobinBCData::RobinBCData(double uniform_stiffness, double uniform_damping, int num_nodes)
 {
-    std::cout << "[RobinBCData] Constructor with uniform values" << std::endl;
+    #ifdef debug_robin_bc_data
+    DebugMsg dmsg(__func__, 0);
+    dmsg << "[RobinBCData] Constructor with uniform values";
+    dmsg << "[RobinBCData] Initializing uniform Robin BC values";
+    #endif
+
     num_nodes_ = num_nodes;
     from_vtp_ = false;
     vtp_file_path_ = "";
-
-    std::cout << "[RobinBCData] Initializing uniform Robin BC values" << std::endl;
     initialize_uniform(uniform_stiffness, uniform_damping, num_nodes);
 }
 
 void RobinBCData::load_from_vtp(const std::string& vtp_file_path, const faceType& face)
 {
-    //std::cout << "[load_from_vtp] Loading Robin BC from VTP file: " << vtp_file_path << std::endl;
+    #ifdef debug_robin_bc_data
+    DebugMsg dmsg(__func__, 0);
+    dmsg << "[load_from_vtp] Loading Robin BC from VTP file: " << vtp_file_path;
+    #endif
+
     // Check if file exists
     if (FILE *file = fopen(vtp_file_path.c_str(), "r")) {
         fclose(file);
-        //std::cout << "[load_from_vtp] File exists and is readable" << std::endl;
+        #ifdef debug_robin_bc_data
+        dmsg << "[load_from_vtp] File exists and is readable";
+        #endif
     } else {
         throw std::runtime_error("Robin BC VTP file '" + vtp_file_path + "' cannot be read.");
     }
     
     // Read the VTP file
-    //std::cout << "[load_from_vtp] About to create VtkVtpData object" << std::endl;
+    #ifdef debug_robin_bc_data
+    dmsg << "[load_from_vtp] About to create VtkVtpData object";
+    #endif
     VtkVtpData vtp_data(vtp_file_path, true);
-    //std::cout << "[load_from_vtp] VtkVtpData object created successfully" << std::endl;
+    #ifdef debug_robin_bc_data
+    dmsg << "[load_from_vtp] VtkVtpData object created successfully";
+    #endif
     
     // Validate the VTP data matches the face geometry
     validate_vtp_data(vtp_data, face);
@@ -121,7 +139,10 @@ void RobinBCData::initialize_uniform(double stiffness, double damping, int num_n
 
 void RobinBCData::validate_vtp_data(const VtkVtpData& vtp_data, const faceType& face)
 {
-    //std::cout << "[validate_vtp_data] Validating VTP data" << std::endl;
+    #ifdef debug_robin_bc_data
+    DebugMsg dmsg(__func__, 0);
+    dmsg << "[validate_vtp_data] Validating VTP data";
+    #endif
     int vtp_num_points = vtp_data.num_points();
     if (vtp_num_points != face.nNo) {
         throw std::runtime_error("Number of points in VTP file (" + std::to_string(vtp_num_points) + 
