@@ -572,7 +572,7 @@ VtkVtpData::~VtkVtpData()
   delete impl;
 }
 
-Array<int> VtkVtpData::get_connectivity()
+Array<int> VtkVtpData::get_connectivity() const
 {
   int num_elems = impl->num_elems; 
   int np_elem = impl->np_elem; 
@@ -719,7 +719,7 @@ std::vector<std::string> VtkVtpData::get_point_data_names()
 
 /// @brief Get an array of point data from an unstructured grid.
 //
-Array<double> VtkVtpData::get_points()
+Array<double> VtkVtpData::get_points() const 
 {
   auto vtk_points = impl->vtk_polydata->GetPoints();
   auto num_points = vtk_points->GetNumberOfPoints();
@@ -749,22 +749,22 @@ bool VtkVtpData::has_point_data(const std::string& data_name)
   return false;
 }
 
-int VtkVtpData::elem_type() 
+int VtkVtpData::elem_type() const
 { 
   return impl->elem_type; 
 }
 
-int VtkVtpData::num_elems() 
+int VtkVtpData::num_elems() const
 { 
   return impl->num_elems; 
 }
 
-int VtkVtpData::np_elem() 
+int VtkVtpData::np_elem() const
 { 
   return impl->np_elem; 
 }
 
-int VtkVtpData::num_points() 
+int VtkVtpData::num_points() const
 { 
   return impl->num_points; 
 }
@@ -840,7 +840,7 @@ VtkVtuData::~VtkVtuData()
   delete impl;
 }
 
-Array<int> VtkVtuData::get_connectivity()
+Array<int> VtkVtuData::get_connectivity() const
 {
   int num_elems = impl->num_elems; 
   int np_elem = impl->np_elem; 
@@ -999,7 +999,7 @@ Array<double> VtkVtuData::get_point_data(const std::string& data_name)
   return data;
 }
 
-Array<double> VtkVtuData::get_points()
+Array<double> VtkVtuData::get_points() const
 {
   auto vtk_points = impl->vtk_ugrid->GetPoints();
   auto num_points = vtk_points->GetNumberOfPoints();
@@ -1016,22 +1016,22 @@ Array<double> VtkVtuData::get_points()
   return points_array;
 }
 
-int VtkVtuData::elem_type() 
+int VtkVtuData::elem_type() const
 { 
   return impl->elem_type; 
 }
 
-int VtkVtuData::num_elems() 
+int VtkVtuData::num_elems() const
 { 
   return impl->num_elems; 
 }
 
-int VtkVtuData::np_elem() 
+int VtkVtuData::np_elem() const
 { 
   return impl->np_elem; 
 }
 
-int VtkVtuData::num_points() 
+int VtkVtuData::num_points() const
 { 
   return impl->num_points; 
 }

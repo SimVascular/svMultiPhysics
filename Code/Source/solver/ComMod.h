@@ -197,6 +197,9 @@ class bcType
     // Robin: damping
     double c = 0.0;
 
+    // Robin: VTP file path for per-node stiffness and damping
+    std::string robin_vtp_file = "";
+
     // RIS0D: resistance
     double resistance = 0.0;
 

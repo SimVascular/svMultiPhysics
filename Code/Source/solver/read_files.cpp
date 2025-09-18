@@ -395,6 +395,13 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     lBc.k = bc_params->stiffness.value();
     lBc.c = bc_params->damping.value();
     lBc.rbnN = bc_params->apply_along_normal_direction.value();
+    
+    // Read VTP file path for per-node stiffness and damping (optional)
+    if (bc_params->robin_vtp_file_path.defined()) {
+      lBc.robin_vtp_file = bc_params->robin_vtp_file_path.value();
+    } else {
+      lBc.robin_vtp_file = "";  // Use uniform values
+    }
   }
 
   // To impose value or flux

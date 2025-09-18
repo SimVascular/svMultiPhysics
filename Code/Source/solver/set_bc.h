@@ -33,6 +33,7 @@
 
 #include "Simulation.h"
 #include "consts.h"
+#include "RobinBCData.h"
 
 #include <string>
 
@@ -61,7 +62,7 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
 void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg);
 void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg);
 
-void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const double cs, const bool isN, 
+void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBCData& robin_data, const bool isN, 
   const Array<double>& Yg, const Array<double>& Dg);
 
 void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa);

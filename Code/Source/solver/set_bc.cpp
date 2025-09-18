@@ -31,6 +31,7 @@
 #include "set_bc.h"
 
 #include "all_fun.h"
+#include "RobinBCData.h"
 #include "baf_ini.h"
 #include "cmm.h"
 #include "consts.h"
@@ -1472,13 +1473,25 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // Now treat Robin BC (stiffness and damping) here
   //
   if (utils::btest(lBc.bType,iBC_Robin)) {
-    set_bc_rbnl(com_mod, lFa, lBc.k, lBc.c, lBc.rbnN, Yg, Dg);
+    // Check if VTP file is provided for per-node values
+    if (!lBc.robin_vtp_file.empty()) {
+      //std::cerr << "[set_bc_neu_l] Setting Robin BC from VTP file: " << lBc.robin_vtp_file << std::endl;
+      //std::cerr << "[set_bc_neu_l] Face name: " << lFa.name << ", nNo: " << lFa.nNo << std::endl;
+      //std::cerr << "[set_bc_neu_l] About to create RobinBCData object" << std::endl;
+      auto robin_data = RobinBCData(lBc.robin_vtp_file, lFa);
+      set_bc_rbnl(com_mod, lFa, robin_data, lBc.rbnN, Yg, Dg);
+    } else {
+      // Use uniform values from lBc.k and lBc.c
+      //std::cout << "[set_bc_neu_l] Setting Robin BC from uniform values" << std::endl;
+      auto robin_data = RobinBCData(lBc.k, lBc.c, lFa.nNo);
+      set_bc_rbnl(com_mod, lFa, robin_data, lBc.rbnN, Yg, Dg);
+    }
   }
 }
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
-void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const double cs, const bool isN, 
+void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBCData& robin_data, const bool isN, 
   const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
@@ -1544,7 +1557,24 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const do
 
       auto nDn = mat_fun::mat_id(nsd);
       Vector<double> h;
-      h = ks*u + cs*ud;
+      
+      //std::cout << "[set_bc_rbnl_l] Calculating weighted average of stiffness and damping for this integration point" << std::endl;
+      // Calculate weighted average of stiffness and damping for this integration point
+      double ks_avg = 0.0;
+      double cs_avg = 0.0;
+      for (int a = 0; a < eNoN; a++) {
+        //std::cout << "[set_bc_rbnl_l] e: " << e << std::endl;
+        //std::cout << "[set_bc_rbnl_l] a: " << a << std::endl;
+        int Ac = lFa.IEN(a,e);
+        //std::cout << "[set_bc_rbnl_l] Global Node ID: " << Ac << std::endl;
+        //std::cout << "[set_bc_rbnl_l] Local Node ID: " <<  robin_data.get_local_index(Ac) << std::endl;
+        //std::cout << "[set_bc_rbnl_l] Stiffness: " << robin_data.get_stiffness(robin_data.get_local_index(Ac)) << std::endl;
+        //std::cout << "[set_bc_rbnl_l] Damping: " << robin_data.get_damping(robin_data.get_local_index(Ac)) << std::endl;
+        ks_avg += N(a) * robin_data.get_stiffness(robin_data.get_local_index(Ac));
+        cs_avg += N(a) * robin_data.get_damping(robin_data.get_local_index(Ac));
+      }
+      
+      h = ks_avg*u + cs_avg*ud;
 
       if (isN) {
         h = utils::norm(h, nV) * nV;
@@ -1568,8 +1598,11 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const do
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {
               double T1 = wl*N(a)*N(b);
-              double T2 = (afm*ks + cs)*T1;
-              T1 = T1*ks;
+              int Bc = lFa.IEN(b,e);
+              double ks_b = robin_data.get_stiffness(robin_data.get_local_index(Bc));
+              double cs_b = robin_data.get_damping(robin_data.get_local_index(Bc));
+              double T2 = (afm*ks_b + cs_b)*T1;
+              T1 = T1*ks_b;
 
               // dM_1/dV_1 + af/am*dM_1/dU_1
               lKd(0,a,b) = lKd(0,a,b) + T1*nDn(0,0);
@@ -1612,7 +1645,8 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const do
         // cPhys != EquationType::phys_ustruct
         //
         } else {
-          double wl = w * (ks*afu + cs*afv);
+          // Use average stiffness and damping for this integration point
+          double wl = w * (ks_avg*afu + cs_avg*afv);
 
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {
@@ -1644,8 +1678,11 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const do
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {
               double T1 = wl*N(a)*N(b);
-              double T2 = (afm*ks + cs)*T1;
-              T1 = T1*ks;
+              int Bc = lFa.IEN(b,e);
+              double ks_b = robin_data.get_stiffness(robin_data.get_local_index(Bc));
+              double cs_b = robin_data.get_damping(robin_data.get_local_index(Bc));
+              double T2 = (afm*ks_b + cs_b)*T1;
+              T1 = T1*ks_b;
 
               // dM_1/dV_1 + af/am*dM_1/dU_1
               lKd(0,a,b) = lKd(0,a,b) + T1*nDn(0,0);
@@ -1666,7 +1703,8 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const double ks, const do
           }
 
         } else {
-          double wl = w * (ks*afu + cs*afv);
+          // Use average stiffness and damping for this integration point
+          double wl = w * (ks_avg*afu + cs_avg*afv);
 
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {
