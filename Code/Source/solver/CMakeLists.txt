@@ -225,7 +225,7 @@ set(CSRCS
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp
 
-  VariableRobinBCData.h VariableRobinBCData.cpp
+  RobinBC.h RobinBC.cpp
 )
 
   # Set PETSc interace code.

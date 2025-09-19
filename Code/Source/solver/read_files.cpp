@@ -398,9 +398,9 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     
     // Read VTP file path for per-node stiffness and damping (optional)
     if (bc_params->robin_vtp_file_path.defined()) {
-      lBc.robin_vtp_file = bc_params->robin_vtp_file_path.value();
+      lBc.robin_bc = RobinBC(bc_params->robin_vtp_file_path.value(), com_mod.msh[lBc.iM].fa[lBc.iFa]);
     } else {
-      lBc.robin_vtp_file = "";  // Use uniform values
+      lBc.robin_bc = RobinBC(lBc.k, lBc.c, com_mod.msh[lBc.iM].fa[lBc.iFa].nNo);
     }
   }
 

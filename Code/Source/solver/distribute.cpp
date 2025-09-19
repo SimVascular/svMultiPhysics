@@ -802,6 +802,12 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
     }
   }
 
+  // Communicating variable Robin BC data
+  //
+  if (lBc.robin_bc.is_from_vtp()) {
+    lBc.robin_bc.distribute(cm_mod, cm, tMs[lBc.iM].fa[lBc.iFa], gmtl);
+  }
+
   // Communicating and reordering master node data for 
   // undeforming Neumann BC faces.
   //

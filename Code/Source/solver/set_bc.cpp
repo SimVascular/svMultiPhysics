@@ -1471,13 +1471,13 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   }
   // Now treat Robin BC (stiffness and damping) here
   if (utils::btest(lBc.bType,iBC_Robin)) {
-      set_bc_rbnl(com_mod, lFa, lBc.variable_robin_data, lBc.rbnN, Yg, Dg);
+    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, lBc.rbnN, Yg, Dg);
   }
 }
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
-void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const VariableRobinBCData& variable_robin_data, const bool isN, 
+void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBC& robin_bc, const bool isN, 
   const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
@@ -1564,12 +1564,12 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const VariableRobinBCData
         int Ac = lFa.IEN(a,e);
         #ifdef debug_set_bc_rbnl_l
         dmsg << "Global Node ID: " << Ac;
-        dmsg << "Local Node ID: " << variable_robin_data.get_local_index(Ac);
-        dmsg << "Stiffness: " << variable_robin_data.get_stiffness(variable_robin_data.get_local_index(Ac));
-        dmsg << "Damping: " << variable_robin_data.get_damping(variable_robin_data.get_local_index(Ac));
+        dmsg << "Local Node ID: " << robin_bc.get_local_index(Ac);
+        dmsg << "Stiffness: " << robin_bc.get_stiffness(robin_bc.get_local_index(Ac));
+        dmsg << "Damping: " << robin_bc.get_damping(robin_bc.get_local_index(Ac));
         #endif
-        ks_avg += N(a) * variable_robin_data.get_stiffness(variable_robin_data.get_local_index(Ac));
-        cs_avg += N(a) * variable_robin_data.get_damping(variable_robin_data.get_local_index(Ac));
+        ks_avg += N(a) * robin_bc.get_stiffness(robin_bc.get_local_index(Ac));
+        cs_avg += N(a) * robin_bc.get_damping(robin_bc.get_local_index(Ac));
       }
       
       h = ks_avg*u + cs_avg*ud;
@@ -1597,8 +1597,8 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const VariableRobinBCData
             for (int b = 0; b < eNoN; b++) {
               double T1 = wl*N(a)*N(b);
               int Bc = lFa.IEN(b,e);
-              double ks_b = variable_robin_data.get_stiffness(variable_robin_data.get_local_index(Bc));
-              double cs_b = variable_robin_data.get_damping(variable_robin_data.get_local_index(Bc));
+              double ks_b = robin_bc.get_stiffness(robin_bc.get_local_index(Bc));
+              double cs_b = robin_bc.get_damping(robin_bc.get_local_index(Bc));
               double T2 = (afm*ks_b + cs_b)*T1;
               T1 = T1*ks_b;
 
@@ -1677,8 +1677,8 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const VariableRobinBCData
             for (int b = 0; b < eNoN; b++) {
               double T1 = wl*N(a)*N(b);
               int Bc = lFa.IEN(b,e);
-              double ks_b = variable_robin_data.get_stiffness(variable_robin_data.get_local_index(Bc));
-              double cs_b = variable_robin_data.get_damping(variable_robin_data.get_local_index(Bc));
+              double ks_b = robin_bc.get_stiffness(robin_bc.get_local_index(Bc));
+              double cs_b = robin_bc.get_damping(robin_bc.get_local_index(Bc));
               double T2 = (afm*ks_b + cs_b)*T1;
               T1 = T1*ks_b;
 
