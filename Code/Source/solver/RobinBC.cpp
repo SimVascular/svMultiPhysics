@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RobinBCData.h"
+#include "RobinBC.h"
 #include "ComMod.h"
 #include "DebugMsg.h"
 #include <stdexcept>
@@ -36,6 +36,7 @@
 #include <cstdio>
 
 RobinBC::RobinBC(const std::string& vtp_file_path, const faceType& face)
+    : face_(face), global_num_nodes_(0), local_num_nodes_(0), spatially_variable(true), vtp_file_path_(vtp_file_path)
 {
     #define debug_robin_bc_data
     #ifdef debug_robin_bc_data
@@ -44,23 +45,21 @@ RobinBC::RobinBC(const std::string& vtp_file_path, const faceType& face)
     dmsg << "Loading Robin BC from VTP file: " << vtp_file_path << std::endl;
     #endif
 
-    global_num_nodes_ = 0;
-    local_num_nodes_ = 0;
-    from_vtp_ = true;
-    vtp_file_path_ = vtp_file_path;
-    global_to_local_map_.clear();
-    vtp_point_map_.clear();
+    // Clear all containers before initialization
+    global_node_map_.clear();
+    local_stiffness_.clear();
+    local_damping_.clear();
+    global_stiffness_.clear();
+    global_damping_.clear();
+
+    // initialize_from_vtp will properly size and populate the vectors
     initialize_from_vtp(vtp_file_path, face);
 }
 
 RobinBC::RobinBC(double uniform_stiffness, double uniform_damping, const faceType& face)
+    : face_(face), global_num_nodes_(face.nNo), local_num_nodes_(0), spatially_variable(false), vtp_file_path_("")
 {
-    #ifdef debug_robin_bc_data
-    DebugMsg dmsg(__func__, 0);
-    dmsg << "Constructor with uniform values" << std::endl;
-    dmsg << "Initializing uniform Robin BC values" << std::endl;
-    #endif
-
+    // Validate input parameters first
     if (uniform_stiffness < 0.0) {
         throw std::runtime_error("Uniform stiffness value cannot be negative.");
     }
@@ -68,21 +67,27 @@ RobinBC::RobinBC(double uniform_stiffness, double uniform_damping, const faceTyp
         throw std::runtime_error("Uniform damping value cannot be negative.");
     }
 
-    global_num_nodes_ = face.nNo;
-    local_num_nodes_ = 0;
-    from_vtp_ = false;
-    vtp_file_path_ = "";
-    global_to_local_map_.clear();
-    vtp_point_map_.clear();
+    #ifdef debug_robin_bc_data
+    DebugMsg dmsg(__func__, 0);
+    dmsg << "Constructor with uniform values" << std::endl;
+    dmsg << "Initializing uniform Robin BC values" << std::endl;
+    #endif
 
-    global_stiffness_.resize(1);
-    global_damping_.resize(1);
-    global_stiffness_(0) = uniform_stiffness;
-    global_damping_(0) = uniform_damping;
+    // Clear all maps
+    global_node_map_.clear();
 
+    // Clear global arrays (not used in uniform case)
+    global_stiffness_.clear();
+    global_damping_.clear();
+
+    // Initialize localarrays with uniform values
+    local_stiffness_.resize(1);
+    local_damping_.resize(1);
+    local_stiffness_(0) = uniform_stiffness;
+    local_damping_(0) = uniform_damping;
 }
 
-void RobinBC::initialize_from_vtp(const std::string& vtp_file_path, const faceType& face)
+void RobinBC::initialize_from_vtp(const std::string& vtp_file_path)
 {
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, 0);
@@ -103,28 +108,28 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path, const faceTy
     #ifdef debug_robin_bc_data
     dmsg << "About to create VtkVtpData object" << std::endl;
     #endif
-    VtkVtpData vtp_data(vtp_file_path, true);
+    vtp_data_ = VtkVtpData(vtp_file_path, true);
     #ifdef debug_robin_bc_data
     dmsg << "VtkVtpData object created successfully" << std::endl;
     #endif
     
     // Check for required point arrays
-    if (!vtp_data.has_point_data("Stiffness")) {
+    if (!vtp_data_.has_point_data("Stiffness")) {
         throw std::runtime_error("VTP file '" + vtp_file_path + "' does not contain 'Stiffness' point array.");
     }
     
-    if (!vtp_data.has_point_data("Damping")) {
+    if (!vtp_data_.has_point_data("Damping")) {
         throw std::runtime_error("VTP file '" + vtp_file_path + "' does not contain 'Damping' point array.");
     }
     
     // Load global stiffness and damping arrays
-    auto stiffness_data = vtp_data.get_point_data("Stiffness");
-    auto damping_data = vtp_data.get_point_data("Damping");
+    auto stiffness_data = vtp_data_.get_point_data("Stiffness");
+    auto damping_data = vtp_data_.get_point_data("Damping");
     
     // Store the total number of points in the VTP file
-    global_num_nodes_ = vtp_data.num_points();
-    if (global_num_nodes_ != face.nNo) {
-        throw std::runtime_error("Number of nodes in VTP file '" + vtp_file_path + "' does not match number of nodes on face '" + face.name + "'.");
+    global_num_nodes_ = vtp_data_.num_points();
+    if (global_num_nodes_ != face_.nNo) {
+        throw std::runtime_error("Number of nodes in VTP file '" + vtp_file_path + "' does not match number of nodes on face '" + face_.name + "'.");
     }
     
     if (stiffness_data.nrows() != global_num_nodes_ || stiffness_data.ncols() != 1) {
@@ -160,9 +165,9 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path, const faceTy
                                     " in VTP file '" + vtp_file_path + "'.");
         }
     }
-    
-    // Build point map from VTP to face nodes for this processor's portion
-    vtp_point_map_ = build_point_map(vtp_data, face);
+
+    // Master process: build mapping from mesh global node IDs from face to VTP indices
+    global_node_map_ = build_global_node_map(vtp_data_);
     
     
     #ifdef debug_robin_bc_data
@@ -170,101 +175,89 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path, const faceTy
     #endif
 }
 
-std::map<int, int> RobinBC::build_point_map(const VtkVtpData& vtp_data, const faceType& face) const
-{
-    #ifdef debug_robin_bc_data
-    DebugMsg dmsg(__func__, 0);
-    dmsg << "Building point map" << std::endl;
-    dmsg << "VTP file has " << vtp_data.num_points() << " points" << std::endl;
-    dmsg << "Face '" << face.name << "' has " << face.nNo << " nodes on this processor" << std::endl;
-    dmsg << "Face '" << face.name << "' has global node IDs: " << face.gN << std::endl;
-    dmsg << "face.x '" << face.name << "' has shape (" << face.x.nrows() << ", " << face.x.ncols() << ")" << std::endl;
-    #endif
-
-    // Get points from VTP file, (3,N) array
-    Array<double> vtp_points = vtp_data.get_points();
-    
-    // Build map from VTP point index to face node index by matching coordinates
-    const double tolerance = 1e-12;  // Small tolerance for floating point comparison
-    std::map<int, int> vtp_to_face_map;  // Maps VTP point index to face node index
-
-    #ifdef debug_robin_bc_data
-    dmsg << "Building point map" << std::endl;
-    #endif
-    
-    for (int i = 0; i < face.nNo; i++) {
-        #ifdef debug_robin_bc_data
-        dmsg << "Processing face node " << i << std::endl;
-        #endif
-        double face_x = face.x(0,i);
-        double face_y = face.x(1,i);
-        double face_z = face.x(2,i);
-        #ifdef debug_robin_bc_data
-        dmsg << "Face node " << i << " has coordinates (" << face_x << ", " << face_y << ", " << face_z << ")" << std::endl;
-        #endif
-        bool found_match = false;
-        for (int j = 0; j < vtp_data.num_points(); j++) {
-            double vtp_x = vtp_points(0,j);
-            double vtp_y = vtp_points(1,j);
-            double vtp_z = vtp_points(2,j);
-            double dx = std::abs(vtp_x - face_x);
-            double dy = std::abs(vtp_y - face_y);
-            double dz = std::abs(vtp_z - face_z);
-            
-            if (dx <= tolerance && dy <= tolerance && dz <= tolerance) {
-                vtp_to_face_map[j] = i;
-                found_match = true;
-                #ifdef debug_robin_bc_data
-                dmsg << "Found matching VTP point " << j << " for face node " << i << std::endl;
-                #endif
-                break;
-            }
-        }
-
-        if (!found_match) {
-            throw std::runtime_error("Could not find matching point in VTP file for node " + 
-                                   std::to_string(i) + " in face '" + face.name + "' at position (" +
-                                   std::to_string(face_x) + ", " + std::to_string(face_y) + ", " +
-                                   std::to_string(face_z) + ")");
-        }
-    }
-
-    #ifdef debug_robin_bc_data
-    dmsg << "Found matching VTP points for all " << face.nNo << " face nodes" << std::endl;
-    #endif
-
-    return vtp_to_face_map;
-}
-
 double RobinBC::get_stiffness(int node_id) const
 {
-    if (node_id < 0 || node_id >= global_num_nodes_) {
-        throw std::runtime_error("Node ID " + std::to_string(node_id) + 
-                                " is out of range [0, " + std::to_string(global_num_nodes_ - 1) + "].");
+    if (spatially_variable) {
+        if (node_id < 0 || node_id >= global_num_nodes_) {
+            throw std::runtime_error("Node ID " + std::to_string(node_id) + 
+                                        " is out of range [0, " + std::to_string(global_num_nodes_ - 1) + "].");
+            }
+            return local_stiffness_(node_id);
+    } else {
+        return local_stiffness_(0);
     }
-    return local_stiffness_(node_id);
 }
 
 double RobinBC::get_damping(int node_id) const
 {
+    if (spatially_variable) {
     if (node_id < 0 || node_id >= global_num_nodes_) {
         throw std::runtime_error("Node ID " + std::to_string(node_id) + 
                                 " is out of range [0, " + std::to_string(global_num_nodes_ - 1) + "].");
     }
-    return local_damping_(node_id);
+        return local_damping_(node_id);
+    } else {
+        return local_damping_(0);
+    }
 }
 
 int RobinBC::get_local_index(int global_node_id) const
 {
-    auto it = global_to_local_map_.find(global_node_id);
-    if (it == global_to_local_map_.end()) {
+    auto it = global_node_map_.find(global_node_id);
+    if (it == global_node_map_.end()) {
         throw std::runtime_error("Global node ID " + std::to_string(global_node_id) + 
                                " not found in global-to-local map.");
     }
     return it->second;
 }
 
-void RobinBC::distribute(const CmMod& cm_mod, const cmType& cm, const faceType& face, const Vector<int>& gmtl)
+std::map<int, int> RobinBC::build_global_node_map(const VtkVtpData& vtp_data) const
+{
+    #ifdef debug_robin_bc_data
+    DebugMsg dmsg(__func__, 0);
+    dmsg << "Building global node map" << std::endl;
+    #endif
+
+    // Get points from VTP file
+    Array<double> vtp_points = vtp_data.get_points();
+    
+    // Build map from mesh global node IDs to VTP point indices
+    const double tolerance = 1e-12;
+    std::map<int, int> global_node_to_vtp_idx;
+
+    for (int i = 0; i < face_.nNo; i++) {
+        double face_x = face_.x(0,i);
+        double face_y = face_.x(1,i);
+        double face_z = face_.x(2,i);
+        
+        bool found_match = false;
+        for (int j = 0; j < vtp_data.num_points(); j++) {
+            double vtp_x = vtp_points(0,j);
+            double vtp_y = vtp_points(1,j);
+            double vtp_z = vtp_points(2,j);
+            
+            if (std::abs(vtp_x - face_x) <= tolerance && 
+                std::abs(vtp_y - face_y) <= tolerance && 
+                std::abs(vtp_z - face_z) <= tolerance) {
+                global_node_to_vtp_idx[face_.gN(i)] = j;
+                found_match = true;
+                break;
+            }
+        }
+
+        if (!found_match) {
+            throw std::runtime_error("Could not find matching point in VTP file for node " + 
+                                   std::to_string(i) + " (global ID " + std::to_string(face_.gN(i)) + 
+                                   ") in face '" + face_.name + "' at position (" +
+                                   std::to_string(face_x) + ", " + std::to_string(face_y) + ", " +
+                                   std::to_string(face_z) + ")");
+        }
+    }
+
+    return global_node_to_vtp_idx;
+}
+
+void RobinBC::distribute(const CmMod& cm_mod, const cmType& cm)
 {
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, cm.idcm());
@@ -273,73 +266,83 @@ void RobinBC::distribute(const CmMod& cm_mod, const cmType& cm, const faceType& 
 
     bool is_slave = cm.slv(cm_mod);
 
-    // First communicate whether data is from VTP
+    // First communicate whether data is spatially variable
     #ifdef debug_robin_bc_data
-    dmsg << "Distributing whether data is from VTP" << std::endl;
+    dmsg << "Distributing whether data is spatially variable" << std::endl;
     #endif
-    cm.bcast(cm_mod, &from_vtp_);
+    cm.bcast(cm_mod, &spatially_variable);
 
-    // Communicate VTP file path if data is from VTP
-    if (from_vtp_) {
+    // Communicate VTP file path if data is spatially variable
+    if (spatially_variable) {
         #ifdef debug_robin_bc_data
         dmsg << "Distributing VTP file path" << std::endl;
         #endif
         cm.bcast(cm_mod, vtp_file_path_);
     }
 
-    // Communicate total number of nodes in VTP file
+    // Communicate global number of nodes
     #ifdef debug_robin_bc_data
     dmsg << "Distributing total number of nodes" << std::endl;
     #endif
     cm.bcast(cm_mod, &global_num_nodes_);
 
-    if (from_vtp_) {
-        // Broadcast global arrays from master to all processes
-        if (is_slave) {
-            global_stiffness_.resize(global_num_nodes_);
-            global_damping_.resize(global_num_nodes_);
+    if (spatially_variable) {
+        // Initialize local storage
+        local_num_nodes_ = face.nNo;
+        local_stiffness_.resize(local_num_nodes_);
+        local_damping_.resize(local_num_nodes_);
+
+        // Each process collects its global node IDs
+        Vector<int> local_global_ids(local_num_nodes_);
+        for (int i = 0; i < local_num_nodes_; i++) {
+            local_global_ids(i) = face_.gN(i);
         }
 
-        #ifdef debug_robin_bc_data
-        dmsg << "Broadcasting global stiffness and damping arrays" << std::endl;
-        #endif
-        cm.bcast(cm_mod, global_stiffness_);
-        cm.bcast(cm_mod, global_damping_);
+        // Gather number of nodes from each process to master
+        Vector<int> proc_num_nodes(cm.np());
+        cm.gather(cm_mod, &local_num_nodes_, 1, proc_num_nodes.data(), 1, 0);
 
-        // Each process needs to build its own point map based on its portion of the face
-        #ifdef debug_robin_bc_data
-        dmsg << "Reading VTP file on each process to build point map" << std::endl;
-        #endif
-        VtkVtpData vtp_data(vtp_file_path_, true);
-        vtp_point_map_ = build_point_map(vtp_data, face);
-
-        // Initialize local arrays based on this processor's portion of the face
-        #ifdef debug_robin_bc_data
-        dmsg << "Initializing local arrays for this processor's portion" << std::endl;
-        #endif
-        local_stiffness_.resize(face.nNo);
-        local_damping_.resize(face.nNo);
-        global_to_local_map_.clear();
-
-        // Map global data to local arrays for this processor's portion
-        for (const auto& pair : vtp_point_map_) {
-            int vtp_idx = pair.first;   // Index in VTP file
-            int face_idx = pair.second;  // Local index in face
-
-            local_stiffness_(face_idx) = global_stiffness_(vtp_idx);
-            local_damping_(face_idx) = global_damping_(vtp_idx);
-
-            // Store mapping from global node ID to local index
-            global_to_local_map_[face.gN(face_idx)] = face_idx;
+        // Calculate displacements for gatherv/scatterv
+        Vector<int> displs(cm.np());
+        int total_num_nodes = 0;
+        for (int i = 0; i < cm.np(); i++) {
+            displs(i) = total_num_nodes;
+            total_num_nodes += proc_num_nodes(i);
         }
 
-        // Clear global arrays on slave processes to save memory
-        if (is_slave) {
+        // Master process: gather all global IDs and prepare data to scatter back to all processes
+        Vector<int> all_global_ids;
+        Vector<double> all_stiffness, all_damping;
+        if (!is_slave) {
+            // Resize receive buffers based on total number of nodes
+            all_global_ids.resize(total_num_nodes);
+            all_stiffness.resize(total_num_nodes);
+            all_damping.resize(total_num_nodes);
+
+            // Gather all global IDs to master using gatherv
+            cm.gatherv(cm_mod, local_global_ids, all_global_ids, proc_num_nodes, displs, 0);
+
+            // Look up data for all nodes
+            for (int i = 0; i < total_num_nodes; i++) {
+                int vtp_idx = global_node_map_[all_global_ids(i)];
+                all_stiffness(i) = global_stiffness_(vtp_idx);
+                all_damping(i) = global_damping_(vtp_idx);
+            }
+
+            // Clear global arrays to save memory
             global_stiffness_.clear();
             global_damping_.clear();
+        } else {
+            // Slave processes: send global IDs to master
+            cm.gatherv(cm_mod, local_global_ids, all_global_ids, proc_num_nodes, displs, 0);
         }
+
+        // Scatter data back to all processes using scatterv
+        cm.scatterv(cm_mod, all_stiffness, proc_num_nodes, displs, local_stiffness_, 0);
+        cm.scatterv(cm_mod, all_damping, proc_num_nodes, displs, local_damping_, 0);
+
     } else {
-        // For uniform values, just broadcast the first value from master's arrays
+        // For uniform values, just broadcast the single values
         double uniform_stiffness = 0.0;
         double uniform_damping = 0.0;
         
@@ -352,11 +355,15 @@ void RobinBC::distribute(const CmMod& cm_mod, const cmType& cm, const faceType& 
         cm.bcast(cm_mod, &uniform_damping);
 
         // Initialize uniform values on each process
-        initialize_uniform(uniform_stiffness, uniform_damping, face.nNo);
+        local_num_nodes_ = face_.nNo;
+        local_stiffness_.resize(1);
+        local_damping_.resize(1);
+        local_stiffness_(0) = uniform_stiffness;
+        local_damping_(0) = uniform_damping;
     }
 
     #ifdef debug_robin_bc_data
     dmsg << "Finished distributing Robin BC data" << std::endl;
-    dmsg << "Number of nodes on this processor: " << face.nNo << std::endl;
+    dmsg << "Number of nodes on this processor: " << local_num_nodes_ << std::endl;
     #endif
 }

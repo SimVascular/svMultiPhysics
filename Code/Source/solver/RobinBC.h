@@ -43,25 +43,25 @@
 class faceType;
 
 
-/// @brief Class to handle Robin boundary condition data with per-node stiffness and damping
+/// @brief Class to handle Robin boundary condition with potentially spatially variable stiffness and damping
 /// 
-/// This class reads stiffness and damping arrays from a VTP file and provides
+/// This class can read stiffness and damping arrays from a VTP file, distribute them to all processes, and provides
 /// efficient access to per-node values during boundary condition assembly.
 class RobinBC {
 public:
-    /// @brief Default constructor - initializes to empty state
-    RobinBC() : global_num_nodes_(0), local_num_nodes_(0), from_vtp_(false), global_to_local_map_(), vtp_point_map_() {}
+    /// @brief Default constructor deleted - RobinBC must be constructed with a face
+    RobinBC() = delete;
 
     /// @brief Constructor - reads data from VTP file
     /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
-    /// @param face Reference to the face for validation
+    /// @param face Face associated with the Robin BC
     /// @throws std::runtime_error if file cannot be read or arrays are missing
     RobinBC(const std::string& vtp_file_path, const faceType& face);
     
     /// @brief Constructor for uniform values
     /// @param uniform_stiffness Uniform stiffness value for all nodes
     /// @param uniform_damping Uniform damping value for all nodes
-    /// @param face Reference to the face for validation
+    /// @param face Face associated with the Robin BC
     RobinBC(double uniform_stiffness, double uniform_damping, const faceType& face);
     
     /// @brief Destructor
@@ -93,7 +93,7 @@ public:
     
     /// @brief Check if data is loaded from VTP file
     /// @return true if loaded from VTP, false if using uniform values
-    bool is_from_vtp() const { return from_vtp_; }
+    bool is_from_vtp() const { return spatially_variable; }
     
     /// @brief Get the VTP file path (empty if using uniform values)
     /// @return VTP file path
@@ -102,39 +102,37 @@ public:
     /// @brief Distribute Robin BC data from the master process to the slave processes. This is called by the distribute function. Follows distribution of face.
     /// @param cm_mod Reference to CmMod object for MPI communication
     /// @param cm Reference to cmType object for MPI communication
-    /// @param face Reference to face containing node data
-    /// @param gmtl Global mapping table for node indices
-    void distribute(const CmMod& cm_mod, const cmType& cm, const faceType& face, const Vector<int>& gmtl);
+    void distribute(const CmMod& cm_mod, const cmType& cm);
 
 private:
     /// @brief Initialize stiffness and damping arrays from VTP file. This is called by the constructor. Should only be called by the  master process.
     /// @param vtp_file_path Path to VTP file
-    /// @param face Reference to face for validation
-    void initialize_from_vtp(const std::string& vtp_file_path, const faceType& face);
+    /// @param face Face associated with the Robin BC
+    void initialize_from_vtp(const std::string& vtp_file_path);
     
     /// @brief Initialize uniform values. This is called by the constructor.
     /// @param stiffness Uniform stiffness value
     /// @param damping Uniform damping value
     /// @param num_nodes Number of nodes
     void initialize_uniform(double stiffness, double damping, int num_nodes);
-    
-    /// @brief Build map from VTP point indices to face node indices by matching coordinates
+
+    /// @brief Build map from mesh global node IDs to indices in the global arrays
     /// @param vtp_data VTP data object containing point coordinates
-    /// @param face Reference to face containing node coordinates
-    /// @return Map from VTP point indices to face node indices
+    /// @return Map from mesh global node IDs to indices in global arrays
     /// @throws std::runtime_error if a matching point cannot be found for any face node
-    std::map<int, int> build_point_map(const VtkVtpData& vtp_data, const faceType& face) const;
+    std::map<int, int> build_global_node_map(const VtkVtpData& vtp_data) const;
     
+    const faceType& face_;             ///< Face associated with the Robin BC (reference cannot be null)
     int global_num_nodes_;             ///< Global number of nodes on the face
     int local_num_nodes_;              ///< Local number of nodes on this processor
     Vector<double> local_stiffness_;   ///< Local stiffness values for each node on this processor
     Vector<double> local_damping_;     ///< Local damping values for each node on this processor
     Vector<double> global_stiffness_;  ///< Global stiffness values (only populated on master)
     Vector<double> global_damping_;    ///< Global damping values (only populated on master)
-    bool from_vtp_;                    ///< Flag indicating if data is from VTP file
+    bool spatially_variable;                    ///< Flag indicating if data is from VTP file
     std::string vtp_file_path_;        ///< Path to VTP file (empty if uniform)
-    std::map<int, int> global_to_local_map_; ///< Maps global node IDs to local array indices
-    std::map<int, int> vtp_point_map_;      ///< Maps VTP point indices to face node indices
+    std::map<int, int> global_node_map_; ///< Maps global node IDs to VTP point indices
+    VtkVtpData vtp_data_;                 ///< VTP data object
 };
 
 #endif // ROBIN_BC_DATA_H

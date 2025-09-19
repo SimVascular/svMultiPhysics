@@ -33,6 +33,7 @@
 #include "distribute.h"
 
 #include "all_fun.h"
+#include "ComMod.h"
 #include "consts.h"
 #include "nn.h"
 #include "utils.h"
@@ -802,11 +803,15 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
     }
   }
 
-  // Communicating variable Robin BC data
+  // Communicating Robin BC
   //
-  if (lBc.robin_bc.is_from_vtp()) {
-    lBc.robin_bc.distribute(cm_mod, cm, tMs[lBc.iM].fa[lBc.iFa], gmtl);
+  bool has_robin_bc = (lBc.robin_bc != nullptr);
+  cm.bcast(cm_mod, &has_robin_bc);
+
+  if (has_robin_bc) {
+    lBc.robin_bc->distribute(cm_mod, cm);
   }
+
 
   // Communicating and reordering master node data for 
   // undeforming Neumann BC faces.

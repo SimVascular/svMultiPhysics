@@ -1470,8 +1470,8 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
     }
   }
   // Now treat Robin BC (stiffness and damping) here
-  if (utils::btest(lBc.bType,iBC_Robin)) {
-    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, lBc.rbnN, Yg, Dg);
+  if (utils::btest(lBc.bType,iBC_Robin) && lBc.robin_bc != nullptr) {
+    set_bc_rbnl(com_mod, lFa, *lBc.robin_bc, lBc.rbnN, Yg, Dg);
   }
 }
 
