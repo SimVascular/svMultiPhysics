@@ -42,6 +42,8 @@
 // Forward declarations
 class faceType;
 
+class ComMod;
+
 
 /// @brief Class to handle Robin boundary condition with potentially spatially variable stiffness and damping
 /// 
@@ -49,14 +51,26 @@ class faceType;
 /// efficient access to per-node values during boundary condition assembly.
 class RobinBC {
 public:
-    /// @brief Default constructor deleted - RobinBC must be constructed with a face
-    RobinBC() = delete;
+    /// @brief Default constructor - creates an empty RobinBC
+    RobinBC() : face_(nullptr), global_num_nodes_(0), local_num_nodes_(0), spatially_variable(false), defined_(false) {}
 
     /// @brief Constructor - reads data from VTP file
     /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
     /// @param face Face associated with the Robin BC
     /// @throws std::runtime_error if file cannot be read or arrays are missing
     RobinBC(const std::string& vtp_file_path, const faceType& face);
+
+    /// @brief Initialize from VTP file
+    /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
+    /// @param face Face associated with the Robin BC
+    /// @throws std::runtime_error if file cannot be read or arrays are missing
+    void init_from_vtp(const std::string& vtp_file_path, const faceType& face);
+
+    /// @brief Initialize with uniform values
+    /// @param uniform_stiffness Uniform stiffness value for all nodes
+    /// @param uniform_damping Uniform damping value for all nodes
+    /// @param face Face associated with the Robin BC
+    void init_uniform(double uniform_stiffness, double uniform_damping, const faceType& face);
     
     /// @brief Constructor for uniform values
     /// @param uniform_stiffness Uniform stiffness value for all nodes
@@ -64,6 +78,18 @@ public:
     /// @param face Face associated with the Robin BC
     RobinBC(double uniform_stiffness, double uniform_damping, const faceType& face);
     
+    /// @brief Copy constructor
+    RobinBC(const RobinBC& other);
+
+    /// @brief Copy assignment operator
+    RobinBC& operator=(const RobinBC& other);
+
+    /// @brief Move constructor
+    RobinBC(RobinBC&& other) noexcept;
+
+    /// @brief Move assignment operator
+    RobinBC& operator=(RobinBC&& other) noexcept;
+
     /// @brief Destructor
     ~RobinBC() = default;
     
@@ -99,30 +125,34 @@ public:
     /// @return VTP file path
     const std::string& get_vtp_path() const { return vtp_file_path_; }
 
+    /// @brief Check if this RobinBC is properly defined (either with VTP data or uniform values)
+    /// @return true if RobinBC has been initialized with either VTP data or uniform values
+    bool is_defined() const { return defined_; }
+
     /// @brief Distribute Robin BC data from the master process to the slave processes. This is called by the distribute function. Follows distribution of face.
+    /// @param com_mod Reference to ComMod object for global coordinates
     /// @param cm_mod Reference to CmMod object for MPI communication
     /// @param cm Reference to cmType object for MPI communication
-    void distribute(const CmMod& cm_mod, const cmType& cm);
+    /// @param face Face associated with the Robin BC
+    void distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face);
 
 private:
     /// @brief Initialize stiffness and damping arrays from VTP file. This is called by the constructor. Should only be called by the  master process.
     /// @param vtp_file_path Path to VTP file
     /// @param face Face associated with the Robin BC
     void initialize_from_vtp(const std::string& vtp_file_path);
-    
-    /// @brief Initialize uniform values. This is called by the constructor.
-    /// @param stiffness Uniform stiffness value
-    /// @param damping Uniform damping value
-    /// @param num_nodes Number of nodes
-    void initialize_uniform(double stiffness, double damping, int num_nodes);
 
-    /// @brief Build map from mesh global node IDs to indices in the global arrays
-    /// @param vtp_data VTP data object containing point coordinates
-    /// @return Map from mesh global node IDs to indices in global arrays
-    /// @throws std::runtime_error if a matching point cannot be found for any face node
-    std::map<int, int> build_global_node_map(const VtkVtpData& vtp_data) const;
+    /// @brief Find index of a point in the VTP points array using binary search
+    /// @param x X coordinate
+    /// @param y Y coordinate
+    /// @param z Z coordinate
+    /// @param vtp_points VTP points array
+    /// @return Index of the matching point in the VTP array
+    /// @throws std::runtime_error if no matching point is found
+    int find_vtp_point_index(double x, double y, double z,
+                            const Array<double>& vtp_points) const;
     
-    const faceType& face_;             ///< Face associated with the Robin BC (reference cannot be null)
+    const faceType* face_;             ///< Face associated with the Robin BC (can be null)
     int global_num_nodes_;             ///< Global number of nodes on the face
     int local_num_nodes_;              ///< Local number of nodes on this processor
     Vector<double> local_stiffness_;   ///< Local stiffness values for each node on this processor
@@ -131,8 +161,9 @@ private:
     Vector<double> global_damping_;    ///< Global damping values (only populated on master)
     bool spatially_variable;                    ///< Flag indicating if data is from VTP file
     std::string vtp_file_path_;        ///< Path to VTP file (empty if uniform)
-    std::map<int, int> global_node_map_; ///< Maps global node IDs to VTP point indices
-    VtkVtpData vtp_data_;                 ///< VTP data object
+    std::map<int, int> global_node_map_; ///< Maps global node IDs to local array indices
+    std::unique_ptr<VtkVtpData> vtp_data_;  ///< VTP data object
+    bool defined_;                        ///< Whether this RobinBC has been properly initialized
 };
 
 #endif // ROBIN_BC_DATA_H

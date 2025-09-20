@@ -60,6 +60,8 @@
 class VtkVtpData::VtkVtpDataImpl {
   public:
     VtkVtpDataImpl(); 
+    VtkVtpDataImpl(const VtkVtpDataImpl& other);
+    VtkVtpDataImpl& operator=(const VtkVtpDataImpl& other);
     void read_file(const std::string& file_name);
     void set_connectivity(const int nsd, const Array<int>& conn, const int pid);
     void set_point_data(const std::string& data_name, const Vector<int>& data);
@@ -76,6 +78,29 @@ class VtkVtpData::VtkVtpDataImpl {
 VtkVtpData::VtkVtpDataImpl::VtkVtpDataImpl()
 {
   vtk_polydata = vtkSmartPointer<vtkPolyData>::New();
+}
+
+VtkVtpData::VtkVtpDataImpl::VtkVtpDataImpl(const VtkVtpDataImpl& other)
+  : elem_type(other.elem_type)
+  , num_elems(other.num_elems)
+  , np_elem(other.np_elem)
+  , num_points(other.num_points)
+{
+  vtk_polydata = vtkSmartPointer<vtkPolyData>::New();
+  vtk_polydata->DeepCopy(other.vtk_polydata);
+}
+
+VtkVtpData::VtkVtpDataImpl& VtkVtpData::VtkVtpDataImpl::operator=(const VtkVtpDataImpl& other)
+{
+  if (this != &other) {
+    elem_type = other.elem_type;
+    num_elems = other.num_elems;
+    np_elem = other.np_elem;
+    num_points = other.num_points;
+    vtk_polydata = vtkSmartPointer<vtkPolyData>::New();
+    vtk_polydata->DeepCopy(other.vtk_polydata);
+  }
+  return *this;
 }
 
 void VtkVtpData::VtkVtpDataImpl::read_file(const std::string& file_name)
@@ -594,6 +619,22 @@ VtkVtpData::VtkVtpData(const std::string& file_name, bool reader)
 VtkVtpData::~VtkVtpData()
 {
   delete impl;
+}
+
+VtkVtpData::VtkVtpData(const VtkVtpData& other)
+{
+  impl = new VtkVtpDataImpl(*other.impl);
+  file_name = other.file_name;
+}
+
+VtkVtpData& VtkVtpData::operator=(const VtkVtpData& other)
+{
+  if (this != &other) {
+    delete impl;
+    impl = new VtkVtpDataImpl(*other.impl);
+    file_name = other.file_name;
+  }
+  return *this;
 }
 
 Array<int> VtkVtpData::get_connectivity() const

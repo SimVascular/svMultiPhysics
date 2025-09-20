@@ -1470,8 +1470,8 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
     }
   }
   // Now treat Robin BC (stiffness and damping) here
-  if (utils::btest(lBc.bType,iBC_Robin) && lBc.robin_bc != nullptr) {
-    set_bc_rbnl(com_mod, lFa, *lBc.robin_bc, lBc.rbnN, Yg, Dg);
+  if (lBc.robin_bc.is_defined()) {
+    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, lBc.rbnN, Yg, Dg);
   }
 }
 
@@ -1557,20 +1557,18 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBC& robin_bc, 
       double ks_avg = 0.0;
       double cs_avg = 0.0;
       for (int a = 0; a < eNoN; a++) {
-        #ifdef debug_set_bc_rbnl_l
-        dmsg << "e: " << e;
-        dmsg << "a: " << a;
-        #endif
         int Ac = lFa.IEN(a,e);
         #ifdef debug_set_bc_rbnl_l
-        dmsg << "Global Node ID: " << Ac;
-        dmsg << "Local Node ID: " << robin_bc.get_local_index(Ac);
-        dmsg << "Stiffness: " << robin_bc.get_stiffness(robin_bc.get_local_index(Ac));
-        dmsg << "Damping: " << robin_bc.get_damping(robin_bc.get_local_index(Ac));
+        dmsg << "e: " << e << std::endl;
+        dmsg << "a: " << a << std::endl;
+        dmsg << "Local position: " << com_mod.x.col(Ac) << std::endl;
+        dmsg << "Stiffness: " << robin_bc.get_stiffness(robin_bc.get_local_index(Ac)) << std::endl;
         #endif
         ks_avg += N(a) * robin_bc.get_stiffness(robin_bc.get_local_index(Ac));
         cs_avg += N(a) * robin_bc.get_damping(robin_bc.get_local_index(Ac));
       }
+
+      
       
       h = ks_avg*u + cs_avg*ud;
 

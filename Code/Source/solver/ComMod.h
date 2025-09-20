@@ -152,12 +152,6 @@ class rcrType
 class bcType
 {
   public:
-    bcType() = default;
-    bcType(const bcType&) = delete;
-    bcType& operator=(const bcType&) = delete;
-    bcType(bcType&&) = default;
-    bcType& operator=(bcType&&) = default;
-
     // Strong/Weak application of Dirichlet BC
     bool weakDir = false;
 
@@ -238,8 +232,8 @@ class bcType
     // Neu: RCR
     rcrType RCR;
 
-    // Robin BC class - optional since it requires a face for initialization
-    std::unique_ptr<RobinBC> robin_bc;
+    // Robin BC class
+    RobinBC robin_bc;
 };
 
 /// @brief Class storing data for B-Splines.

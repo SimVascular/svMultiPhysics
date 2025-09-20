@@ -805,11 +805,11 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
 
   // Communicating Robin BC
   //
-  bool has_robin_bc = (lBc.robin_bc != nullptr);
+  bool has_robin_bc = lBc.robin_bc.is_defined();
   cm.bcast(cm_mod, &has_robin_bc);
 
   if (has_robin_bc) {
-    lBc.robin_bc->distribute(cm_mod, cm);
+    lBc.robin_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
   }
 
 
@@ -1806,8 +1806,9 @@ void dist_solid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmT
 
 void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa, Vector<int>& gmtl)
 {
+  #define n_debug_part_face
   #ifdef debug_part_face
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "lFa.name: " << lFa.name;
   #endif
@@ -1891,6 +1892,7 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
   int i = gFa.nEl*(2+eNoNb) + gFa.nNo;
   Vector<int> part(i);
 
+  // Broadcast data in gFa from master to all processes
   if (cm.mas(cm_mod)) {
     for (int e = 0; e < gFa.nEl; e++) {
       int Ec = gFa.gE[e];

@@ -78,6 +78,11 @@ class VtkVtpData : public VtkData {
     VtkVtpData(const std::string& file_name, bool reader=true);
     ~VtkVtpData();
 
+    // Copy constructor
+    VtkVtpData(const VtkVtpData& other);
+    // Copy assignment operator
+    VtkVtpData& operator=(const VtkVtpData& other);
+
     virtual Array<int> get_connectivity() const override;
     virtual Array<double> get_points() const override;
     virtual int elem_type() const override;
