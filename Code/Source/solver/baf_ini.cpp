@@ -261,7 +261,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   int nsd = com_mod.nsd;
   int tnNo = com_mod.tnNo;
  
-  #define debug_bc_ini
+  #define n_debug_bc_ini
   #ifdef debug_bc_ini
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
