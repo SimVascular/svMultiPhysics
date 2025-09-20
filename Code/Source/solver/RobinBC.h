@@ -137,10 +137,15 @@ public:
     void distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face);
 
 private:
-    /// @brief Initialize stiffness and damping arrays from VTP file. This is called by the constructor. Should only be called by the  master process.
+    /// @brief Type alias for map of array names to array data
+    using StringArrayMap = std::map<std::string, Array<double>>;
+
+    /// @brief Initialize arrays from VTP file. This is called by the constructor. Should only be called by the master process.
     /// @param vtp_file_path Path to VTP file
-    /// @param face Face associated with the Robin BC
-    void read_data_from_vtp_file(const std::string& vtp_file_path);
+    /// @param array_names Vector of array names to read from the VTP file
+    /// @return Map of array names to array data
+    /// @throws std::runtime_error if file cannot be read or arrays are missing
+    StringArrayMap read_data_from_vtp_file(const std::string& vtp_file_path, const std::vector<std::string>& array_names);
 
     /// @brief Find index of a point in the VTP points array using binary search
     /// @param x X coordinate
