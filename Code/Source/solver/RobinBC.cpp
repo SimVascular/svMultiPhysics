@@ -191,14 +191,28 @@ void RobinBC::init_from_vtp(const std::string& vtp_file_path, const faceType& fa
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, 0);
     dmsg << "Constructor with VTP file path" << std::endl;
-    dmsg << "Loading Robin BC from VTP file: " << vtp_file_path << std::endl;
     #endif
 
-    // initialize_from_vtp will properly size and populate the vectors
-    initialize_from_vtp(vtp_file_path);
+    // read_data_from_vtp_file will properly size and populate the vectors
+    read_data_from_vtp_file(vtp_file_path);
+
+     // In case we are running sequentially, we need to fill the local arrays 
+    // and the global node map as well, because distribute is not called in sequential mode.
+    local_stiffness_.resize(global_num_nodes_);
+    local_damping_.resize(global_num_nodes_);
+    for (int i = 0; i < global_num_nodes_; i++) {
+        local_stiffness_(i) = global_stiffness_(i);
+        local_damping_(i) = global_damping_(i);
+    }
+
+    // Initialize global node map, in case we are running sequentially
+    global_node_map_.clear();
+    for (int i = 0; i < global_num_nodes_; i++) {
+        global_node_map_[face_->gN(i)] = i;
+    }
 }
 
-void RobinBC::initialize_from_vtp(const std::string& vtp_file_path)
+void RobinBC::read_data_from_vtp_file(const std::string& vtp_file_path)
 {
     #ifdef debug_robin_bc_data
     DebugMsg dmsg(__func__, 0);
@@ -216,10 +230,8 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path)
     }
     
     // Read the VTP file
-    #ifdef debug_robin_bc_data
-    dmsg << "About to create VtkVtpData object" << std::endl;
-    #endif
     vtp_data_ = std::make_unique<VtkVtpData>(vtp_file_path, true);
+
     #ifdef debug_robin_bc_data
     dmsg << "VtkVtpData object created successfully" << std::endl;
     #endif
@@ -234,11 +246,9 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path)
     }
     
     // Load global stiffness and damping arrays
-    #ifdef debug_robin_bc_data
-    dmsg << "Loading stiffness and damping data" << std::endl;
-    #endif
     auto stiffness_data = vtp_data_->get_point_data("Stiffness");
     auto damping_data = vtp_data_->get_point_data("Damping");
+
     #ifdef debug_robin_bc_data
     dmsg << "Successfully loaded stiffness and damping data" << std::endl;
     dmsg << "Stiffness data size: " << stiffness_data.nrows() << " x " << stiffness_data.ncols() << std::endl;
@@ -250,10 +260,6 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path)
     if (global_num_nodes_ != face_->nNo) {
         throw std::runtime_error("Number of nodes in VTP file '" + vtp_file_path + "' does not match number of nodes on face '" + face_->name + "'.");
     }
-    #ifdef debug_robin_bc_data
-    dmsg << "Number of nodes in VTP file: " << global_num_nodes_ << std::endl;
-    dmsg << "Number of nodes on face: " << face_->nNo << std::endl;
-    #endif
 
     if (stiffness_data.nrows() != global_num_nodes_ || stiffness_data.ncols() != 1) {
         throw std::runtime_error("'Stiffness' array in VTP file '" + vtp_file_path + 
@@ -270,9 +276,6 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path)
     }
     
     // Store global data (master process only)
-    #ifdef debug_robin_bc_data
-    dmsg << "Sizing global data arrays to " << global_num_nodes_ << std::endl;
-    #endif
     global_stiffness_.resize(global_num_nodes_);
     global_damping_.resize(global_num_nodes_);
     
@@ -302,21 +305,6 @@ void RobinBC::initialize_from_vtp(const std::string& vtp_file_path)
     #ifdef debug_robin_bc_data
     dmsg << "Finished loading Robin BC data" << std::endl;
     #endif
-
-    // In case we are running sequentially, we need to fill the local arrays 
-    // and the global node map as well, because distribute is not called in sequential mode.
-    local_stiffness_.resize(global_num_nodes_);
-    local_damping_.resize(global_num_nodes_);
-    for (int i = 0; i < global_num_nodes_; i++) {
-        local_stiffness_(i) = global_stiffness_(i);
-        local_damping_(i) = global_damping_(i);
-    }
-
-    // Initialize global node map, in case we are running sequentially
-    global_node_map_.clear();
-    for (int i = 0; i < global_num_nodes_; i++) {
-        global_node_map_[face_->gN(i)] = i;
-    }
 }
 
 double RobinBC::get_stiffness(int node_id) const
@@ -363,11 +351,6 @@ int RobinBC::get_local_index(int global_node_id) const
 int RobinBC::find_vtp_point_index(double x, double y, double z,
                                  const Array<double>& vtp_points) const
 {
-    #ifdef debug_robin_bc_data
-    DebugMsg dmsg(__func__, 0);
-    dmsg << "Finding VTP point index for node at position (" << x << ", " << y << ", " << z << ")" << std::endl;
-    #endif
-    
     const double tolerance = 1e-12;
     const int num_points = vtp_points.ncols();
     
@@ -377,6 +360,14 @@ int RobinBC::find_vtp_point_index(double x, double y, double z,
         if (std::abs(vtp_points(0,i) - x) <= tolerance &&
             std::abs(vtp_points(1,i) - y) <= tolerance &&
             std::abs(vtp_points(2,i) - z) <= tolerance) {
+
+            #define n_debug_robin_bc_data_find_vtp_point_index
+            #ifdef debug_robin_bc_data_find_vtp_point_index
+            DebugMsg dmsg(__func__, 0);
+            dmsg << "Found VTP point index for node at position (" << x << ", " << y << ", " << z << ")" << std::endl;
+            dmsg << "VTP point index: " << i << std::endl;
+            #endif
+
             return i;  // Found match
         }
     }
@@ -389,53 +380,50 @@ int RobinBC::find_vtp_point_index(double x, double y, double z,
 
 void RobinBC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
 {
-    #define debug_robin_bc_data_distribute
+    #define n_debug_robin_bc_data_distribute
     #ifdef debug_robin_bc_data_distribute
     DebugMsg dmsg(__func__, cm.idcm());
     dmsg << "Distributing Robin BC data" << std::endl;
     #endif
 
-    // Update face pointer. This face is the portion of the global face that is owned by this process.
+    // Before this point, only the master process had a face_ pointer, which contained
+    // the entire (global) face. Within the distribute::distribute() function,
+    // the global face was partitioned and distributed among all processes. Each
+    // local face contains only a portion of the global face, corresponding to 
+    // the portion of the volume mesh owned by this process. Here, we update the
+    // face_ pointer to the local face.
     face_ = &face;
+
+    // Number of nodes on the face on this processor
+    local_num_nodes_ = face_->nNo;
 
     bool is_slave = cm.slv(cm_mod);
 
     // First communicate whether data is spatially variable
     cm.bcast(cm_mod, &spatially_variable);
 
-    // Communicate VTP file path if data is spatially variable
+    // Communicate VTP file path if data is spatially variable 
+    // (not necessary, but we do it for consistency)
     if (spatially_variable) {
         cm.bcast(cm_mod, vtp_file_path_);
     }
 
     // Communicate global number of nodes
+    // (not necessary, but we do it for consistency)
     cm.bcast(cm_mod, &global_num_nodes_);
 
-    // Initialize local storage
+    // Communicate stiffness and damping values needed by each process
     if (spatially_variable) {
 
+        // Setup
         if (face_ == nullptr) {
             throw std::runtime_error("face_ is nullptr during distribute");
         }
-
-        // Number of nodes on the face on this processor
-        local_num_nodes_ = face_->nNo;
-
-        #ifdef debug_robin_bc_data_distribute
-        dmsg << "Resizing local arrays to " << local_num_nodes_ << std::endl;
-        #endif
         local_stiffness_.resize(local_num_nodes_);
         local_damping_.resize(local_num_nodes_);
 
-        // Each processor collects the nodal positions and global node IDs of its associated face portion
-        #ifdef debug_robin_bc_data_distribute
-        dmsg << "Collecting local nodal positions" << std::endl;
-        dmsg << "face_->name: " << face_->name;
-        dmsg << "face_->nNo: " << face_->nNo;
-        dmsg << "face_->gN: " << face_->gN;
-        dmsg << "face_->x: " << face_->x;
-        #endif
-    
+        // Each processor collects the global node IDs and nodal positions of its 
+        // associated face portion
         Vector<int> local_global_ids = face_->gN;
         Array<double> local_positions(3, local_num_nodes_);
         for (int i = 0; i < local_num_nodes_; i++) {
@@ -443,21 +431,17 @@ void RobinBC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmTyp
         }
 
         #ifdef debug_robin_bc_data_distribute
+        dmsg << "Number of face nodes on this processor: " << local_num_nodes_ << std::endl;
         dmsg << "Local global IDs: " << local_global_ids << std::endl;
         dmsg << "Local positions: " << local_positions << std::endl;
         #endif
 
-        // Gather number of nodes from each processor to master
-        #ifdef debug_robin_bc_data_distribute
-        dmsg << "Gathering number of nodes from each process to master" << std::endl;
-        #endif
+        // Gather number of face nodes from each processor to master
         Vector<int> proc_num_nodes(cm.np());
         cm.gather(cm_mod, &local_num_nodes_, 1, proc_num_nodes.data(), 1, 0);
 
         // Calculate displacements for gatherv/scatterv and compute total number of nodes
-        #ifdef debug_robin_bc_data_distribute
-        dmsg << "Calculating displacements for gatherv/scatterv and computing total number of nodes" << std::endl;
-        #endif
+        // total_num_nodes is the total number of face nodes across all processors.
         Vector<int> displs(cm.np());
         int total_num_nodes = 0;
         for (int i = 0; i < cm.np(); i++) {
@@ -465,22 +449,19 @@ void RobinBC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmTyp
             total_num_nodes += proc_num_nodes(i);
         }
 
-        // Master process: gather all positions and prepare data to scatter back
+        // Master process: gather the nodal positions of face nodes from all processors,
+        // get the corresponding stiffness and damping values by matching the positions to the VTP points,
+        // and scatter the data back to all processors.
         Array<double> all_positions;
         Vector<double> all_stiffness, all_damping;
         if (!is_slave) {
+
             // Resize receive buffers based on total number of nodes
-            #ifdef debug_robin_bc_data_distribute
-            dmsg << "Resizing receive buffers based on total number of nodes" << std::endl;
-            #endif
             all_positions.resize(3, total_num_nodes);
             all_stiffness.resize(total_num_nodes);
             all_damping.resize(total_num_nodes);
 
             // Gather all positions to master using gatherv
-            #ifdef debug_robin_bc_data_distribute
-            dmsg << "Gathering all positions to master using gatherv" << std::endl;
-            #endif
             for (int d = 0; d < 3; d++) {
                 Vector<double> local_pos_d(local_num_nodes_);
                 Vector<double> all_pos_d(total_num_nodes);
@@ -494,20 +475,15 @@ void RobinBC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmTyp
             }
 
             // Get VTP points for position matching
-            #ifdef debug_robin_bc_data_distribute
-            dmsg << "Getting VTP points for position matching" << std::endl;
-            #endif
             Array<double> vtp_points = vtp_data_->get_points();
             
             // Look up data for all nodes using point matching
-            #ifdef debug_robin_bc_data_distribute
-            dmsg << "Looking up data for all nodes using point matching" << std::endl;
-            #endif
             for (int i = 0; i < total_num_nodes; i++) {
                 int vtp_idx = find_vtp_point_index(all_positions(0,i), all_positions(1,i), all_positions(2,i),
                                                 vtp_points);
                 all_stiffness(i) = global_stiffness_(vtp_idx);
                 all_damping(i) = global_damping_(vtp_idx);
+
                 #ifdef debug_robin_bc_data_distribute
                 dmsg << "Global stiffness value at node " << i << ": " << all_stiffness(i) << std::endl;
                 dmsg << "Global damping value at node " << i << ": " << all_damping(i) << std::endl;
@@ -534,16 +510,9 @@ void RobinBC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmTyp
         cm.scatterv(cm_mod, all_stiffness, proc_num_nodes, displs, local_stiffness_, 0);
         cm.scatterv(cm_mod, all_damping, proc_num_nodes, displs, local_damping_, 0);
 
-        #ifdef debug_robin_bc_data_distribute
-        dmsg << "Local stiffness: " << local_stiffness_ << std::endl;
-        dmsg << "Local damping: " << local_damping_ << std::endl;
-        #endif
 
         // Build mapping from face global node IDs to local array indices so we can
         // get data from a global node ID
-        #ifdef debug_robin_bc_data_distribute   
-        dmsg << "Building global node map from local global IDs" << std::endl;
-        #endif
         global_node_map_.clear();
         for (int i = 0; i < local_num_nodes_; i++) {
             global_node_map_[local_global_ids(i)] = i;
@@ -575,7 +544,6 @@ void RobinBC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmTyp
         cm.bcast(cm_mod, &uniform_damping);
 
         // Initialize uniform values on each process
-        local_num_nodes_ = face_->nNo;
         local_stiffness_.resize(1);
         local_damping_.resize(1);
         local_stiffness_(0) = uniform_stiffness;
@@ -587,6 +555,6 @@ void RobinBC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmTyp
 
     #ifdef debug_robin_bc_data_distribute
     dmsg << "Finished distributing Robin BC data" << std::endl;
-    dmsg << "Number of nodes on this processor: " << local_num_nodes_ << std::endl;
+    dmsg << "Number of face nodes on this processor: " << local_num_nodes_ << std::endl;
     #endif
 }

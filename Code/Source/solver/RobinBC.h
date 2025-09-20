@@ -140,7 +140,7 @@ private:
     /// @brief Initialize stiffness and damping arrays from VTP file. This is called by the constructor. Should only be called by the  master process.
     /// @param vtp_file_path Path to VTP file
     /// @param face Face associated with the Robin BC
-    void initialize_from_vtp(const std::string& vtp_file_path);
+    void read_data_from_vtp_file(const std::string& vtp_file_path);
 
     /// @brief Find index of a point in the VTP points array using binary search
     /// @param x X coordinate
