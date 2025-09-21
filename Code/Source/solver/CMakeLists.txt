@@ -225,6 +225,7 @@ set(CSRCS
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp
 
+  BC.h BC.cpp
   RobinBC.h RobinBC.cpp
 )
 
