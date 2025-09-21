@@ -61,7 +61,7 @@
 </Add_mesh>
 
 
-<Add_equation type="struct" > 
+<Add_equation type="ustruct" > 
    <Min_iterations> 1 </Min_iterations>  
    <Max_iterations> 4 </Max_iterations> 
    <Tolerance> 1e-6 </Tolerance> 
@@ -80,6 +80,8 @@
    <Dilational_penalty_model> ST91 </Dilational_penalty_model>
 
    <Output type="Spatial" >
+     <Divergence> true </Divergence>
+     <Pressure> true </Pressure>
      <Displacement> true </Displacement>
      <Velocity> true </Velocity>
      <Jacobian> true </Jacobian>

@@ -1,4 +1,4 @@
-This test case simulates a spatially variable Robin boundary condition on a slab of material described by the Guccione material model. This case is identical to `ustruct/spatially_variable_robin`, except it uses `struct` physics.
+This test case simulates a spatially variable Robin boundary condition on a slab of material described by the Guccione material model. This case is identical to `struct/spatially_variable_robin`, except it uses `ustruct` physics.
 
 - Primary fibers run along the length of the slab (z-direction) and secondary fibers run across the width of the slab
 (x-direction).
@@ -22,4 +22,5 @@ in the x and z directions.
 ![Deformation](animation.gif)
 The black outline shows the initial configuration. As you can see, the displacement of the slab is greatest at z = 0, where the Robin BC stiffness is zero. At the far end of the slab, the displacement is very little, where the stiffness is greatest. The oscillations are due to the absence of any damping in the Robin BC.
 
-- Note, the deformation is fairly different from `ustruct/spatially_variable_robin`, like due to the different underlying physics formulation and the coarse mesh. Therefore, the `result_002.vtu` files are not identical.
+- Note, the deformation is fairly different from `struct/spatially_variable_robin`, like due to the different underlying physics formulation and the coarse mesh. Therefore, the `result_002.vtu` files are not identical.
+
