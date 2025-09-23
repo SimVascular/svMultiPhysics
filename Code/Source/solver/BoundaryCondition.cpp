@@ -145,7 +145,6 @@ BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition&& other) noexc
     return *this;
 }
 
-
 BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(const std::string& vtp_file_path, const std::vector<std::string>& array_names)
 {
     #ifdef debug_bc
@@ -182,10 +181,10 @@ BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(con
         auto array_data = vtp_data_->get_point_data(array_name);
 
         if (array_data.nrows() != global_num_nodes_ || array_data.ncols() != 1) {
-            throw std::runtime_error("'" + array_name + "' array in VTP file '" + vtp_file_path + 
-                                   "' has incorrect dimensions. Expected " + std::to_string(global_num_nodes_) + 
-                                   " x 1, got " + std::to_string(array_data.nrows()) + " x " + 
-                                   std::to_string(array_data.ncols()) + ".");
+            throw std::runtime_error("'" + array_name + "' array in VTP file '" + vtp_file_path +
+                                       "' has incorrect dimensions. Expected " + std::to_string(global_num_nodes_) +
+                                       " x 1, got " + std::to_string(array_data.nrows()) + " x " +
+                                       std::to_string(array_data.ncols()) + ".");
         }
 
         // Store array in result map
@@ -208,8 +207,8 @@ double BoundaryCondition::get_value(const std::string& array_name, int node_id) 
     }
 
     if (node_id < 0 || node_id >= global_num_nodes_) {
-        throw std::runtime_error("Node ID " + std::to_string(node_id) + 
-                                " is out of range [0, " + std::to_string(global_num_nodes_ - 1) + "].");
+        throw std::runtime_error("Node ID " + std::to_string(node_id) +
+                                       " is out of range [0, " + std::to_string(global_num_nodes_ - 1) + "].");
     }
 
     // Return value
@@ -225,42 +224,13 @@ int BoundaryCondition::get_local_index(int global_node_id) const
     if (spatially_variable) {
         auto it = global_node_map_.find(global_node_id);
         if (it == global_node_map_.end()) {
-            throw std::runtime_error("Global node ID " + std::to_string(global_node_id) + 
-                                   " not found in global-to-local map.");
+            throw std::runtime_error("Global node ID " + std::to_string(global_node_id) +
+                                       " not found in global-to-local map.");
         }
         return it->second;
     } else {
         return 0;
     }
-}
-
-int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
-                                const Array<double>& vtp_points) const
-{
-    const int num_points = vtp_points.ncols();
-    Vector<double> target_point{x, y, z};
-    
-    // Simple linear search through all points in the VTP file
-    for (int i = 0; i < num_points; i++) {
-        auto vtp_point = vtp_points.col(i);
-        auto diff = vtp_point - target_point;
-        double distance = sqrt(diff.dot(diff));
-        
-        if (distance <= POINT_MATCH_TOLERANCE) {
-            #define n_debug_bc_find_vtp_point_index
-            #ifdef debug_bc_find_vtp_point_index
-            DebugMsg dmsg(__func__, 0);
-            dmsg << "Found VTP point index for node at position (" << x << ", " << y << ", " << z << ")" << std::endl;
-            dmsg << "VTP point index: " << i << std::endl;
-            #endif
-
-            return i;
-        }
-    }
-    
-    throw std::runtime_error("Could not find matching point in VTP file for node at position (" +
-                          std::to_string(x) + ", " + std::to_string(y) + ", " +
-                          std::to_string(z) + ")");
 }
 
 void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
@@ -284,17 +254,14 @@ void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, c
 
     bool is_slave = cm.slv(cm_mod);
 
-    // First communicate whether data is spatially variable
     cm.bcast(cm_mod, &spatially_variable);
 
-    // Communicate VTP file path if data is spatially variable 
-    // (not necessary, but we do it for consistency)
+    // Not necessary, but we do it for consistency
     if (spatially_variable) {
         cm.bcast(cm_mod, vtp_file_path_);
     }
 
-    // Communicate global number of nodes
-    // (not necessary, but we do it for consistency)
+    // Not necessary, but we do it for consistency
     cm.bcast(cm_mod, &global_num_nodes_);
 
     // Communicate array names
@@ -413,7 +380,6 @@ void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, c
             global_node_map_[local_global_ids(i)] = i;
         }
 
-        // Check if local arrays and node positions are consistent
         #ifdef debug_bc_distribute
         dmsg << "Checking if local arrays and node positions are consistent" << std::endl;
         for (int i = 0; i < local_num_nodes_; i++) {
@@ -451,4 +417,34 @@ void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, c
     dmsg << "Finished distributing BC data" << std::endl;
     dmsg << "Number of face nodes on this processor: " << local_num_nodes_ << std::endl;
     #endif
+}
+
+
+int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
+                                const Array<double>& vtp_points) const
+{
+    const int num_points = vtp_points.ncols();
+    Vector<double> target_point{x, y, z};
+
+    // Simple linear search through all points in the VTP file
+    for (int i = 0; i < num_points; i++) {
+        auto vtp_point = vtp_points.col(i);
+        auto diff = vtp_point - target_point;
+        double distance = sqrt(diff.dot(diff));
+
+        if (distance <= POINT_MATCH_TOLERANCE) {
+            #define n_debug_bc_find_vtp_point_index
+            #ifdef debug_bc_find_vtp_point_index
+            DebugMsg dmsg(__func__, 0);
+            dmsg << "Found VTP point index for node at position (" << x << ", " << y << ", " << z << ")" << std::endl;
+            dmsg << "VTP point index: " << i << std::endl;
+            #endif
+
+            return i;
+        }
+    }
+
+    throw std::runtime_error("Could not find matching point in VTP file for node at position (" +
+                                       std::to_string(x) + ", " + std::to_string(y) + ", " +
+                                       std::to_string(z) + ")");
 }

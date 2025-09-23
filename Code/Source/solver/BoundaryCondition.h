@@ -41,6 +41,23 @@ class ComMod;
 /// };
 /// ```
 class BoundaryCondition {
+protected:
+    /// @brief Type alias for map of array names to array data
+    using StringArrayMap = std::map<std::string, Array<double>>;
+
+    /// @brief Data members for BC
+    const faceType* face_;                   ///< Face associated with the BC (can be null)
+    int global_num_nodes_;                   ///< Global number of nodes on the face
+    int local_num_nodes_;                    ///< Local number of nodes on this processor
+    std::vector<std::string> array_names_;   ///< Names of arrays to read from VTP file
+    StringArrayMap local_data_;              ///< Local array values for each node on this processor
+    StringArrayMap global_data_;             ///< Global array values (only populated on master)
+    bool spatially_variable;                 ///< Flag indicating if data is from VTP file
+    std::string vtp_file_path_;              ///< Path to VTP file (empty if uniform)
+    std::map<int, int> global_node_map_;     ///< Maps global node IDs to local array indices
+    std::unique_ptr<VtkVtpData> vtp_data_;   ///< VTP data object
+    bool defined_;                           ///< Whether this BC has been properly initialized
+
 public:
     /// @brief Tolerance for point matching in VTP files
     static constexpr double POINT_MATCH_TOLERANCE = 1e-12;
@@ -84,11 +101,15 @@ public:
 
     /// @brief Get global number of nodes
     /// @return Global number of nodes on the face
-    int get_global_num_nodes() const { return global_num_nodes_; }
+    int get_global_num_nodes() const {
+        return global_num_nodes_;
+    }
 
     /// @brief Get local number of nodes
     /// @return Local number of nodes on the face on this processor
-    int get_local_num_nodes() const { return local_num_nodes_; }
+    int get_local_num_nodes() const {
+        return local_num_nodes_;
+    }
 
     /// @brief Get local array index for a global node ID
     /// @param global_node_id The global node ID defined on the face
@@ -98,15 +119,21 @@ public:
 
     /// @brief Check if data is loaded from VTP file
     /// @return true if loaded from VTP, false if using uniform values
-    bool is_from_vtp() const { return spatially_variable; }
+    bool is_from_vtp() const {
+        return spatially_variable;
+    }
 
     /// @brief Get the VTP file path (empty if using uniform values)
     /// @return VTP file path
-    const std::string& get_vtp_path() const { return vtp_file_path_; }
+    const std::string& get_vtp_path() const {
+        return vtp_file_path_;
+    }
 
     /// @brief Check if this BC is properly defined
     /// @return true if BC has been initialized with either VTP data or uniform values
-    bool is_defined() const { return defined_; }
+    bool is_defined() const {
+        return defined_;
+    }
 
     /// @brief Distribute BC data from the master process to the slave processes
     /// @param com_mod Reference to ComMod object for global coordinates
@@ -116,22 +143,6 @@ public:
     void distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face);
 
 protected:
-    /// @brief Type alias for map of array names to array data
-    using StringArrayMap = std::map<std::string, Array<double>>;
-
-    /// @brief Data members for BC
-    const faceType* face_;             ///< Face associated with the BC (can be null)
-    int global_num_nodes_;             ///< Global number of nodes on the face
-    int local_num_nodes_;              ///< Local number of nodes on this processor
-    std::vector<std::string> array_names_; ///< Names of arrays to read from VTP file
-    StringArrayMap local_data_;        ///< Local array values for each node on this processor
-    StringArrayMap global_data_;       ///< Global array values (only populated on master)
-    bool spatially_variable;           ///< Flag indicating if data is from VTP file
-    std::string vtp_file_path_;        ///< Path to VTP file (empty if uniform)
-    std::map<int, int> global_node_map_; ///< Maps global node IDs to local array indices
-    std::unique_ptr<VtkVtpData> vtp_data_;  ///< VTP data object
-    bool defined_;                     ///< Whether this BC has been properly initialized
-
     /// @brief Read data from VTP file
     /// @param vtp_file_path Path to VTP file
     /// @param array_names Names of arrays to read
@@ -176,7 +187,7 @@ class BoundaryConditionFileException : public BoundaryConditionBaseException {
 public:
     /// @brief Constructor
     /// @param file Path to VTP file
-    explicit BoundaryConditionFileException(const std::string& file) 
+    explicit BoundaryConditionFileException(const std::string& file)
         : BoundaryConditionBaseException("Failed to open or read the VTP file '" + file + "'") {}
 };
 
@@ -186,9 +197,9 @@ public:
     /// @brief Constructor
     /// @param vtp_file VTP file path
     /// @param face_name Face name
-    explicit BoundaryConditionNodeCountException(const std::string& vtp_file, const std::string& face_name) 
-        : BoundaryConditionBaseException("Number of nodes in VTP file '" + vtp_file + 
-                         "' does not match number of nodes on face '" + face_name + "'") {}
+    explicit BoundaryConditionNodeCountException(const std::string& vtp_file, const std::string& face_name)
+        : BoundaryConditionBaseException("Number of nodes in VTP file '" + vtp_file +
+                                       "' does not match number of nodes on face '" + face_name + "'") {}
 };
 
 /// @brief Exception thrown when array validation fails
@@ -197,9 +208,9 @@ public:
     /// @brief Constructor
     /// @param array_name Name of array that failed validation
     /// @param value Value that failed validation
-    explicit BoundaryConditionValidationException(const std::string& array_name, double value) 
-        : BoundaryConditionBaseException("Invalid value " + std::to_string(value) + 
-                         " for array '" + array_name + "'") {}
+    explicit BoundaryConditionValidationException(const std::string& array_name, double value)
+        : BoundaryConditionBaseException("Invalid value " + std::to_string(value) +
+                                       " for array '" + array_name + "'") {}
 };
 
 #endif // BOUNDARY_CONDITION_H

@@ -40,7 +40,7 @@ public:
     /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
     /// @param face Face associated with the Robin BC
     /// @throws std::runtime_error if file cannot be read or arrays are missing
-    RobinBoundaryCondition(const std::string& vtp_file_path, const faceType& face) 
+    RobinBoundaryCondition(const std::string& vtp_file_path, const faceType& face)
         : BoundaryCondition(vtp_file_path, std::vector<std::string>{"Stiffness", "Damping"}, face) {}
 
     /// @brief Constructor for uniform values
@@ -53,12 +53,16 @@ public:
     /// @brief Get stiffness value for a specific node (convenience method)
     /// @param node_id Node index on the face
     /// @return Stiffness value for the node
-    double get_stiffness(int node_id) const { return get_value("Stiffness", node_id); }
+    double get_stiffness(int node_id) const {
+        return get_value("Stiffness", node_id);
+    }
     
     /// @brief Get damping value for a specific node (convenience method)
     /// @param node_id Node index on the face
     /// @return Damping value for the node
-    double get_damping(int node_id) const { return get_value("Damping", node_id); }
+    double get_damping(int node_id) const {
+        return get_value("Damping", node_id);
+    }
 
     /// @brief Assemble the Robin BC into the global residual vector and stiffness matrix
     /// Currently not implemented
