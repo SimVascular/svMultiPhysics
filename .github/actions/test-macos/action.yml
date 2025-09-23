@@ -1,0 +1,58 @@
+name: 'Test macOS'
+description: 'Run tests on macOS with all dependencies'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install macOS dependencies
+      shell: bash
+      run: |
+        brew reinstall -v gcc
+        brew install -v vtk openblas lapack mesa open-mpi qt
+        brew install lcov
+        sudo ln -s /usr/local/opt/qt5/mkspecs /usr/local/mkspecs
+        sudo ln -s /usr/local/opt/qt5/plugins /usr/local/plugins
+        
+    - name: Install Miniconda
+      shell: bash
+      run: |
+        curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+        bash Miniconda3-latest-MacOSX-x86_64.sh -b -p $HOME/miniconda
+        echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+        
+    - name: Build svZeroDSolver
+      shell: bash
+      run: |
+        git clone https://github.com/SimVascular/svZeroDSolver.git
+        cd svZeroDSolver
+        mkdir build
+        cd build
+        cmake ..
+        make -j2
+        
+    - name: Build svMultiPhysics
+      shell: bash
+      run: |
+        mkdir build
+        cd build
+        cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON ..
+        make -j2
+        
+    - name: Install test dependencies
+      shell: bash
+      run: |
+        conda create -n svmultiphysics python=3.9
+        conda run -n svmultiphysics pip install pytest pytest-cov pytest-mock numpy meshio pandas
+        
+    - name: Run integration tests
+      shell: bash
+      run: |
+        git lfs pull
+        cd tests
+        conda run -n svmultiphysics pytest -rPv --durations=0
+        
+    - name: Run unit tests
+      shell: bash
+      run: |
+        cd build/svMultiPhysics-build/Source/solver
+        ctest --verbose
