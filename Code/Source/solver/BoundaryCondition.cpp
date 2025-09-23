@@ -249,8 +249,8 @@ int BoundaryCondition::get_local_index(int global_node_id) const
 
 void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
 {
-    #define n_debug_bc_distribute
-    #ifdef debug_bc_distribute
+    #define n_debug_distribute
+    #ifdef debug_distribute
     DebugMsg dmsg(__func__, cm.idcm());
     dmsg << "Distributing BC data" << std::endl;
     #endif
@@ -265,9 +265,24 @@ void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, c
 
     // Number of nodes on the face on this processor
     local_num_nodes_ = face_->nNo;
+    const bool is_slave = cm.slv(cm_mod);
+    distribute_metadata(cm_mod, cm, is_slave);
+    if (spatially_variable) {
+        distribute_spatially_variable(com_mod, cm_mod, cm, is_slave);
+    } else {
+        distribute_uniform(cm_mod, cm, is_slave);
+    }
+    distribute_flags(cm_mod, cm, is_slave);
+    defined_ = true;
 
-    bool is_slave = cm.slv(cm_mod);
+    #ifdef debug_distribute
+    dmsg << "Finished distributing BC data" << std::endl;
+    dmsg << "Number of face nodes on this processor: " << local_num_nodes_ << std::endl;
+    #endif
+}
 
+void BoundaryCondition::distribute_metadata(const CmMod& cm_mod, const cmType& cm, bool is_slave)
+{
     cm.bcast(cm_mod, &spatially_variable);
 
     // Not necessary, but we do it for consistency
@@ -294,172 +309,166 @@ void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, c
             array_names_[i] = array_name;
         }
     }
+}
 
-    // Communicate array values needed by each process
-    if (spatially_variable) {
-        // Setup
-        if (face_ == nullptr) {
-            throw std::runtime_error("face_ is nullptr during distribute");
-        }
+void BoundaryCondition::distribute_spatially_variable(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bool is_slave)
+{
+    #define n_debug_distribute_spatially_variable
+    #ifdef debug_distribute_spatially_variable
+    DebugMsg dmsg(__func__, 0);
+    #endif
 
-        // Each processor collects the global node IDs and nodal positions of its 
-        // associated face portion
-        Vector<int> local_global_ids = face_->gN;
-        Array<double> local_positions(3, local_num_nodes_);
-        for (int i = 0; i < local_num_nodes_; i++) {
-            local_positions.set_col(i, com_mod.x.col(face_->gN(i)));
-        }
-
-        #ifdef debug_bc_distribute
-        dmsg << "Number of face nodes on this processor: " << local_num_nodes_ << std::endl;
-        dmsg << "Local global IDs: " << local_global_ids << std::endl;
-        dmsg << "Local positions: " << local_positions << std::endl;
-        #endif
-
-        // Gather number of face nodes from each processor to master
-        Vector<int> proc_num_nodes(cm.np());
-        cm.gather(cm_mod, &local_num_nodes_, 1, proc_num_nodes.data(), 1, 0);
-
-        // Calculate displacements for gatherv/scatterv and compute total number of nodes
-        // total_num_nodes is the total number of face nodes across all processors.
-        Vector<int> displs(cm.np());
-        int total_num_nodes = 0;
-        for (int i = 0; i < cm.np(); i++) {
-            displs(i) = total_num_nodes;
-            total_num_nodes += proc_num_nodes(i);
-        }
-
-        // Master process: gather the nodal positions of face nodes from all processors,
-        // get the corresponding array values by matching the positions to the VTP points,
-        // and scatter the data back to all processors.
-        Array<double> all_positions;
-        std::map<std::string, Vector<double>> all_values;
-        if (!is_slave) {
-            // Resize receive buffers based on total number of nodes
-            all_positions.resize(3, total_num_nodes);
-
-            // Gather all positions to master using gatherv
-            for (int d = 0; d < 3; d++) {
-                Vector<double> local_pos_d(local_num_nodes_);
-                Vector<double> all_pos_d(total_num_nodes);
-                for (int i = 0; i < local_num_nodes_; i++) {
-                    local_pos_d(i) = local_positions(d,i);
-                }
-                cm.gatherv(cm_mod, local_pos_d, all_pos_d, proc_num_nodes, displs, 0);
-                for (int i = 0; i < total_num_nodes; i++) {
-                    all_positions(d,i) = all_pos_d(i);
-                }
-            }
-
-            // Get VTP points for position matching
-            Array<double> vtp_points = vtp_data_->get_points();
-            
-            // Look up data for all nodes using point matching
-            for (const auto& array_name : array_names_) {
-                all_values[array_name].resize(total_num_nodes);
-                for (int i = 0; i < total_num_nodes; i++) {
-                    int vtp_idx = find_vtp_point_index(all_positions(0,i), all_positions(1,i), all_positions(2,i), vtp_points);
-                    all_values[array_name](i) = global_data_[array_name](vtp_idx, 0);
-                }
-            }
-
-            // Clear global data to save memory
-            global_data_.clear();
-
-        } else {
-            // Slave processes: send positions to master
-            for (int d = 0; d < 3; d++) {
-                Vector<double> local_pos_d(local_num_nodes_);
-                for (int i = 0; i < local_num_nodes_; i++) {
-                    local_pos_d(i) = local_positions(d,i);
-                }
-                Vector<double> dummy_recv(total_num_nodes);
-                cm.gatherv(cm_mod, local_pos_d, dummy_recv, proc_num_nodes, displs, 0);
-            }
-        }
-
-        // Scatter data back to all processes using scatterv
-        local_data_.clear();
-        for (const auto& array_name : array_names_) {
-            Vector<double> local_values(local_num_nodes_);
-            cm.scatterv(cm_mod, all_values[array_name], proc_num_nodes, displs, local_values, 0);
-            local_data_[array_name] = Array<double>(local_num_nodes_, 1);
-            local_data_[array_name].set_col(0, local_values);
-        }
-
-        // Build mapping from face global node IDs to local array indices so we can
-        // get data from a global node ID
-        global_node_map_.clear();
-        for (int i = 0; i < local_num_nodes_; i++) {
-            global_node_map_[local_global_ids(i)] = i;
-        }
-
-        #ifdef debug_bc_distribute
-        dmsg << "Checking if local arrays and node positions are consistent" << std::endl;
-        for (int i = 0; i < local_num_nodes_; i++) {
-            dmsg << "Local global ID: " << local_global_ids(i) << std::endl;
-            dmsg << "Local index: " << get_local_index(local_global_ids(i)) << std::endl;
-            dmsg << "Local position: " << com_mod.x.col(local_global_ids(i)) << std::endl;
-            for (const auto& array_name : array_names_) {
-                dmsg << "Local " << array_name << ": " << local_data_[array_name](i, 0) << std::endl;
-            }
-        }
-        #endif
-
-    } else {
-        // For uniform values, just broadcast the single values
-        if (!is_slave) {
-            for (const auto& array_name : array_names_) {
-                double uniform_value = local_data_[array_name](0, 0);
-                cm.bcast(cm_mod, &uniform_value);
-            }
-        } else {
-            local_data_.clear();
-            for (const auto& array_name : array_names_) {
-                double uniform_value;
-                cm.bcast(cm_mod, &uniform_value);
-                local_data_[array_name] = Array<double>(1, 1);
-                local_data_[array_name](0, 0) = uniform_value;
-            }
-        }
+    if (face_ == nullptr) {
+        throw std::runtime_error("face_ is nullptr during distribute");
+    }
+    // Each processor collects the global node IDs and nodal positions of its 
+    // associated face portion
+    Vector<int> local_global_ids = face_->gN;
+    Array<double> local_positions(3, local_num_nodes_);
+    for (int i = 0; i < local_num_nodes_; i++) {
+        local_positions.set_col(i, com_mod.x.col(face_->gN(i)));
     }
 
-    // Broadcast boolean flags map
-    if (!cm.seq()) {
-        int num_flags = 0;
-        if (!is_slave) {
-            num_flags = static_cast<int>(flags_.size());
-        }
-        cm.bcast(cm_mod, &num_flags);
-        if (is_slave) {
-            flags_.clear();
-        }
-        for (int i = 0; i < num_flags; i++) {
-            std::string key;
-            bool val = false;
-            if (!is_slave) {
-                auto it = std::next(flags_.begin(), i);
-                key = it->first;
-                val = it->second;
-                cm.bcast(cm_mod, key);
-                cm.bcast(cm_mod, &val);
-            } else {
-                cm.bcast(cm_mod, key);
-                cm.bcast(cm_mod, &val);
-                flags_[key] = val;
-            }
-        }
-    }
-
-    // Mark as defined
-    defined_ = true;
-
-    #ifdef debug_bc_distribute
-    dmsg << "Finished distributing BC data" << std::endl;
+    #ifdef debug_distribute_spatially_variable
     dmsg << "Number of face nodes on this processor: " << local_num_nodes_ << std::endl;
+    dmsg << "Local global IDs: " << local_global_ids << std::endl;
+    dmsg << "Local positions: " << local_positions << std::endl;
+    #endif
+    // Gather number of face nodes from each processor to master
+    Vector<int> proc_num_nodes(cm.np());
+    cm.gather(cm_mod, &local_num_nodes_, 1, proc_num_nodes.data(), 1, 0);
+    
+    // Calculate displacements for gatherv/scatterv and compute total number of nodes
+    // total_num_nodes is the total number of face nodes across all processors.
+    Vector<int> displs(cm.np());
+    int total_num_nodes = 0;
+    for (int i = 0; i < cm.np(); i++) {
+        displs(i) = total_num_nodes;
+        total_num_nodes += proc_num_nodes(i);
+    }
+    
+    // Master process: gather the nodal positions of face nodes from all processors,
+    // get the corresponding array values by matching the positions to the VTP points,
+    // and scatter the data back to all processors.
+    Array<double> all_positions;
+    std::map<std::string, Vector<double>> all_values;
+    if (!is_slave) {
+        // Resize receive buffers based on total number of nodes
+        all_positions.resize(3, total_num_nodes);
+        
+        // Gather all positions to master using gatherv
+        for (int d = 0; d < 3; d++) {
+            Vector<double> local_pos_d(local_num_nodes_);
+            Vector<double> all_pos_d(total_num_nodes);
+            for (int i = 0; i < local_num_nodes_; i++) {
+                local_pos_d(i) = local_positions(d,i);
+            }
+            cm.gatherv(cm_mod, local_pos_d, all_pos_d, proc_num_nodes, displs, 0);
+            for (int i = 0; i < total_num_nodes; i++) {
+                all_positions(d,i) = all_pos_d(i);
+            }
+        }
+        
+        // Get VTP points for position matching
+        Array<double> vtp_points = vtp_data_->get_points();
+        
+         // Look up data for all nodes using point matching
+        for (const auto& array_name : array_names_) {
+            all_values[array_name].resize(total_num_nodes);
+            for (int i = 0; i < total_num_nodes; i++) {
+                int vtp_idx = find_vtp_point_index(all_positions(0,i), all_positions(1,i), all_positions(2,i), vtp_points);
+                all_values[array_name](i) = global_data_[array_name](vtp_idx, 0);
+            }
+        }
+        
+        // Clear global data to save memory
+        global_data_.clear();
+    } else {
+        // Slave processes: send node positions to master
+        for (int d = 0; d < 3; d++) {
+            Vector<double> local_pos_d(local_num_nodes_);
+            for (int i = 0; i < local_num_nodes_; i++) {
+                local_pos_d(i) = local_positions(d,i);
+            }
+            Vector<double> dummy_recv(total_num_nodes);
+            cm.gatherv(cm_mod, local_pos_d, dummy_recv, proc_num_nodes, displs, 0);
+        }
+    }
+    
+    // Scatter data back to all processes using scatterv
+    local_data_.clear();
+    for (const auto& array_name : array_names_) {
+        Vector<double> local_values(local_num_nodes_);
+        cm.scatterv(cm_mod, all_values[array_name], proc_num_nodes, displs, local_values, 0);
+        local_data_[array_name] = Array<double>(local_num_nodes_, 1);
+        local_data_[array_name].set_col(0, local_values);
+    }
+    
+    // Build mapping from face global node IDs to local array indices so we can
+    // get data from a global node ID
+    global_node_map_.clear();
+    for (int i = 0; i < local_num_nodes_; i++) {
+        global_node_map_[local_global_ids(i)] = i;
+    }
+
+    #ifdef debug_distribute_spatially_variable
+    dmsg << "Checking if local arrays and node positions are consistent" << std::endl;
+    for (int i = 0; i < local_num_nodes_; i++) {
+        dmsg << "Local global ID: " << local_global_ids(i) << std::endl;
+        dmsg << "Local index: " << get_local_index(local_global_ids(i)) << std::endl;
+        dmsg << "Local position: " << com_mod.x.col(local_global_ids(i)) << std::endl;
+        for (const auto& array_name : array_names_) {
+            dmsg << "Local " << array_name << ": " << local_data_[array_name](i, 0) << std::endl;
+        }
+    }
     #endif
 }
 
+void BoundaryCondition::distribute_uniform(const CmMod& cm_mod, const cmType& cm, bool is_slave)
+{
+    if (!is_slave) {
+        for (const auto& array_name : array_names_) {
+            double uniform_value = local_data_[array_name](0, 0);
+            cm.bcast(cm_mod, &uniform_value);
+        }
+    } else {
+        local_data_.clear();
+        for (const auto& array_name : array_names_) {
+            double uniform_value;
+            cm.bcast(cm_mod, &uniform_value);
+            local_data_[array_name] = Array<double>(1, 1);
+            local_data_[array_name](0, 0) = uniform_value;
+        }
+    }
+}
+
+void BoundaryCondition::distribute_flags(const CmMod& cm_mod, const cmType& cm, bool is_slave)
+{
+    if (cm.seq()) return;
+    int num_flags = 0;
+    if (!is_slave) {
+        num_flags = static_cast<int>(flags_.size());
+    }
+    cm.bcast(cm_mod, &num_flags);
+    if (is_slave) {
+        flags_.clear();
+    }
+    for (int i = 0; i < num_flags; i++) {
+        std::string key;
+        bool val = false;
+        if (!is_slave) {
+            auto it = std::next(flags_.begin(), i);
+            key = it->first;
+            val = it->second;
+            cm.bcast(cm_mod, key);
+            cm.bcast(cm_mod, &val);
+        } else {
+            cm.bcast(cm_mod, key);
+            cm.bcast(cm_mod, &val);
+            flags_[key] = val;
+        }
+    }
+}
 
 int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
                                 const Array<double>& vtp_points) const

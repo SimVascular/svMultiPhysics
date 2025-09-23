@@ -176,6 +176,13 @@ protected:
     /// @param value Value to validate
     /// @throws std::runtime_error if validation fails
     virtual void validate_array_value(const std::string& array_name, double value) const {}
+
+     // ---- distribute helpers ----
+     void distribute_metadata(const CmMod& cm_mod, const cmType& cm, bool is_slave);
+     void distribute_spatially_variable(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bool is_slave);
+     void distribute_uniform(const CmMod& cm_mod, const cmType& cm, bool is_slave);
+     void distribute_flags(const CmMod& cm_mod, const cmType& cm, bool is_slave);
+ 
 };
 
 /// @brief Base exception class for BC errors
