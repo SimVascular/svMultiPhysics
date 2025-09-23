@@ -686,14 +686,14 @@ void uris_read_msh(Simulation* simulation) {
       for (int k = 0; k < dispNtOpen; k++) {
         for (int i = 0; i < nsd; i++) {
           for (int j = uris_obj.tnNo; j < a; j++) {
-            uris_obj.DxOpen(k,i,j) = dispOpen(k,i,j-uris_obj.tnNo);
+            uris_obj.DxOpen(k,i,j) = dispOpen(k,i,j-uris_obj.tnNo) * uris_obj.scF;
           }
         }
       }
       for (int k = 0; k < dispNtClose; k++) {
         for (int i = 0; i < nsd; i++) {
           for (int j = uris_obj.tnNo; j < a; j++) {
-            uris_obj.DxClose(k,i,j) = dispClose(k,i,j-uris_obj.tnNo);
+            uris_obj.DxClose(k,i,j) = dispClose(k,i,j-uris_obj.tnNo) * uris_obj.scF;
           }
         }
       }
@@ -949,7 +949,7 @@ void uris_calc_sdf(ComMod& com_mod) {
       }
     }
 
-    Array<double> lX(nsd, uris_obj.msh[1].eNoN);
+    Array<double> lX(nsd, max_eNoN);
     // if (!uris_obj.sdf.allocated()) {
     if (uris_obj.sdf.size() <= 0) {
       uris_obj.sdf.resize(com_mod.tnNo);
