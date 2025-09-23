@@ -159,9 +159,6 @@ class bcType
     // (Neu - struct/ustruct only)
     bool flwP = false;
 
-    // Robin: apply only in normal direction
-    bool rbnN = false;
-
     // Strong/Weak application of Dirichlet BC
     int clsFlgRis = 0;
 
@@ -191,12 +188,6 @@ class bcType
 
     // Neu: defined resistance
     double r = 0.0;
-
-    // Robin: stiffness
-    double k = 0.0;
-
-    // Robin: damping
-    double c = 0.0;
 
     // Robin: VTP file path for per-node stiffness and damping
     std::string robin_vtp_file = "";

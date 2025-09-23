@@ -44,6 +44,8 @@ class BoundaryCondition {
 protected:
     /// @brief Type alias for map of array names to array data
     using StringArrayMap = std::map<std::string, Array<double>>;
+    using StringBoolMap = std::map<std::string, bool>;
+    using StringDoubleMap = std::map<std::string, double>;
 
     /// @brief Data members for BC
     const faceType* face_;                   ///< Face associated with the BC (can be null)
@@ -52,6 +54,7 @@ protected:
     std::vector<std::string> array_names_;   ///< Names of arrays to read from VTP file
     StringArrayMap local_data_;              ///< Local array values for each node on this processor
     StringArrayMap global_data_;             ///< Global array values (only populated on master)
+    StringBoolMap flags_;                    ///< Named boolean flags for BC behavior
     bool spatially_variable;                 ///< Flag indicating if data is from VTP file
     std::string vtp_file_path_;              ///< Path to VTP file (empty if uniform)
     std::map<int, int> global_node_map_;     ///< Maps global node IDs to local array indices
@@ -70,12 +73,12 @@ public:
     /// @param array_names Names of arrays to read from VTP file
     /// @param face Face associated with the BC
     /// @throws std::runtime_error if file cannot be read or arrays are missing
-    BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face);
+    BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face);
 
     /// @brief Constructor for uniform values
     /// @param uniform_values Map of array names to uniform values
     /// @param face Face associated with the BC
-    BoundaryCondition(const std::map<std::string, double>& uniform_values, const faceType& face);
+    BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face);
 
     /// @brief Copy constructor
     BoundaryCondition(const BoundaryCondition& other);
@@ -98,6 +101,16 @@ public:
     /// @param node_id Node index on the face
     /// @return Value for the array at the specified node
     double get_value(const std::string& array_name, int node_id) const;
+
+    /// @brief Get a boolean flag by name
+    /// @param name Name of the flag
+    /// @return Value of the flag
+    /// @throws std::runtime_error if flag is not found
+    bool get_flag(const std::string& name) const;
+
+    /// @brief Get a string representation of the flags
+    /// @return String representation of the flags
+    std::string flags_to_string() const;
 
     /// @brief Get global number of nodes
     /// @return Global number of nodes on the face
@@ -208,9 +221,16 @@ public:
     /// @brief Constructor
     /// @param array_name Name of array that failed validation
     /// @param value Value that failed validation
-    explicit BoundaryConditionValidationException(const std::string& array_name, double value)
-        : BoundaryConditionBaseException("Invalid value " + std::to_string(value) +
+    explicit BoundaryConditionValidationException(const std::string& array_name, double value) 
+        : BoundaryConditionBaseException("Invalid value " + std::to_string(value) + 
                                        " for array '" + array_name + "'") {}
+};
+
+/// @brief Exception thrown when a requested flag is not defined
+class BoundaryConditionFlagException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionFlagException(const std::string& flag_name)
+        : BoundaryConditionBaseException("BoundaryCondition flag not found: '" + flag_name + "'") {}
 };
 
 #endif // BOUNDARY_CONDITION_H

@@ -7,18 +7,20 @@
 #include <cstdio>
 #include <vector>
 
-#define debug_bc
+#define n_debug_bc
 
-BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
+BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face)
     : face_(&face)
     , global_num_nodes_(face.nNo)
     , local_num_nodes_(0)
     , array_names_(array_names)
     , spatially_variable(true)
     , vtp_file_path_(vtp_file_path)
+    , flags_(flags)
     , defined_(true)
 {
     global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
+
 
     // Validate values
     for (const auto& [name, data] : global_data_) {
@@ -37,27 +39,22 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     }
 }
 
-BoundaryCondition::BoundaryCondition(const std::map<std::string, double>& uniform_values, const faceType& face)
+BoundaryCondition::BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face)
     : face_(&face)
     , global_num_nodes_(face.nNo)
     , local_num_nodes_(0)
     , spatially_variable(false)
     , vtp_file_path_("")
+    , flags_(flags)
     , defined_(true)
 {
-    // Store array names and validate values
+    // Store array names, validate and store values
     array_names_.clear();
     for (const auto& [name, value] : uniform_values) {
         array_names_.push_back(name);
         validate_array_value(name, value);
-    }
-
-    // Initialize local data with uniform values
-    for (const auto& [name, value] : uniform_values) {
-        Vector<double> uniform_array(1);
-        uniform_array(0) = value;
         local_data_[name] = Array<double>(1, 1);
-        local_data_[name].set_col(0, uniform_array);
+        local_data_[name](0, 0) = value;
     }
 }
 
@@ -70,6 +67,7 @@ BoundaryCondition::BoundaryCondition(const BoundaryCondition& other)
     , global_data_(other.global_data_)
     , spatially_variable(other.spatially_variable)
     , vtp_file_path_(other.vtp_file_path_)
+    , flags_(other.flags_)
     , global_node_map_(other.global_node_map_)
     , defined_(other.defined_)
 {
@@ -89,6 +87,7 @@ BoundaryCondition& BoundaryCondition::operator=(const BoundaryCondition& other)
         global_data_ = other.global_data_;
         spatially_variable = other.spatially_variable;
         vtp_file_path_ = other.vtp_file_path_;
+        flags_ = other.flags_;
         global_node_map_ = other.global_node_map_;
         defined_ = other.defined_;
 
@@ -110,6 +109,7 @@ BoundaryCondition::BoundaryCondition(BoundaryCondition&& other) noexcept
     , global_data_(std::move(other.global_data_))
     , spatially_variable(other.spatially_variable)
     , vtp_file_path_(std::move(other.vtp_file_path_))
+    , flags_(std::move(other.flags_))
     , global_node_map_(std::move(other.global_node_map_))
     , vtp_data_(std::move(other.vtp_data_))
     , defined_(other.defined_)
@@ -132,6 +132,7 @@ BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition&& other) noexc
         global_data_ = std::move(other.global_data_);
         spatially_variable = other.spatially_variable;
         vtp_file_path_ = std::move(other.vtp_file_path_);
+        flags_ = std::move(other.flags_);
         global_node_map_ = std::move(other.global_node_map_);
         vtp_data_ = std::move(other.vtp_data_);
         defined_ = other.defined_;
@@ -217,6 +218,19 @@ double BoundaryCondition::get_value(const std::string& array_name, int node_id) 
     } else {
         return it->second(0, 0);
     }
+}
+
+bool BoundaryCondition::get_flag(const std::string& name) const
+{
+    auto it = flags_.find(name);
+    if (it == flags_.end()) {
+        #ifdef debug_bc
+        DebugMsg dmsg(__func__, 0);
+        dmsg << "Flag '" << name << "' not found. Available flags: " << flags_to_string() << std::endl;
+        #endif
+        throw BoundaryConditionFlagException(name);
+    }
+    return it->second;
 }
 
 int BoundaryCondition::get_local_index(int global_node_id) const
@@ -410,6 +424,33 @@ void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, c
         }
     }
 
+    // Broadcast boolean flags map
+    if (!cm.seq()) {
+        int num_flags = 0;
+        if (!is_slave) {
+            num_flags = static_cast<int>(flags_.size());
+        }
+        cm.bcast(cm_mod, &num_flags);
+        if (is_slave) {
+            flags_.clear();
+        }
+        for (int i = 0; i < num_flags; i++) {
+            std::string key;
+            bool val = false;
+            if (!is_slave) {
+                auto it = std::next(flags_.begin(), i);
+                key = it->first;
+                val = it->second;
+                cm.bcast(cm_mod, key);
+                cm.bcast(cm_mod, &val);
+            } else {
+                cm.bcast(cm_mod, key);
+                cm.bcast(cm_mod, &val);
+                flags_[key] = val;
+            }
+        }
+    }
+
     // Mark as defined
     defined_ = true;
 
@@ -447,4 +488,12 @@ int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
     throw std::runtime_error("Could not find matching point in VTP file for node at position (" +
                                        std::to_string(x) + ", " + std::to_string(y) + ", " +
                                        std::to_string(z) + ")");
+}
+
+std::string BoundaryCondition::flags_to_string() const {
+    std::string result;
+    for (const auto& [name, value] : flags_) {
+        result += name + ": " + (value ? "true" : "false") + ", ";
+    }
+    return result;
 }

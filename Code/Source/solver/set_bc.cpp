@@ -1471,13 +1471,13 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   }
   // Now treat Robin BC (stiffness and damping) here
   if (lBc.robin_bc.is_defined()) {
-    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, lBc.rbnN, Yg, Dg);
+    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, Yg, Dg);
   }
 }
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
-void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc, const bool isN, 
+void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
   const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
@@ -1572,7 +1572,7 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
       
       h = ks_avg*u + cs_avg*ud;
 
-      if (isN) {
+      if (robin_bc.normal_direction_only()) {
         h = utils::norm(h, nV) * nV;
         for (int a = 0; a < nsd; a++) {
           for (int b = 0; b < nsd; b++) {
