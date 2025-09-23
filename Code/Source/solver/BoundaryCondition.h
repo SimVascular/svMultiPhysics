@@ -75,17 +75,6 @@ public:
     /// @brief Virtual destructor
     virtual ~BoundaryCondition() = default;
 
-    /// @brief Initialize from VTP file
-    /// @param vtp_file_path Path to VTP file containing arrays
-    /// @param array_names Names of arrays to read from VTP file
-    /// @param face Face associated with the BC
-    /// @throws std::runtime_error if file cannot be read or arrays are missing
-    void init_from_vtp(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face);
-
-    /// @brief Initialize with uniform values
-    /// @param uniform_values Map of array names to uniform values
-    /// @param face Face associated with the BC
-    void init_uniform(const std::map<std::string, double>& uniform_values, const faceType& face);
 
     /// @brief Get value for a specific array and node
     /// @param array_name Name of the array

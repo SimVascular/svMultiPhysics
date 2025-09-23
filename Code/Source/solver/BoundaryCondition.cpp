@@ -10,13 +10,57 @@
 #define debug_bc
 
 BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
+    : face_(&face)
+    , global_num_nodes_(face.nNo)
+    , local_num_nodes_(0)
+    , array_names_(array_names)
+    , spatially_variable(true)
+    , vtp_file_path_(vtp_file_path)
+    , defined_(true)
 {
-    init_from_vtp(vtp_file_path, array_names, face);
+    // Read data from VTP file
+    global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
+
+    // Validate values
+    for (const auto& [name, data] : global_data_) {
+        for (int i = 0; i < global_num_nodes_; i++) {
+            validate_array_value(name, data(i, 0));
+        }
+    }
+
+    // In case we are running sequentially, we need to fill the local arrays 
+    // and the global node map as well, because distribute is not called in sequential mode.
+    local_data_ = global_data_;
+
+    // Initialize global node map, in case we are running sequentially
+    global_node_map_.clear();
+    for (int i = 0; i < global_num_nodes_; i++) {
+        global_node_map_[face_->gN(i)] = i;
+    }
 }
 
 BoundaryCondition::BoundaryCondition(const std::map<std::string, double>& uniform_values, const faceType& face)
+    : face_(&face)
+    , global_num_nodes_(face.nNo)
+    , local_num_nodes_(0)
+    , spatially_variable(false)
+    , vtp_file_path_("")
+    , defined_(true)
 {
-    init_uniform(uniform_values, face);
+    // Store array names and validate values
+    array_names_.clear();
+    for (const auto& [name, value] : uniform_values) {
+        array_names_.push_back(name);
+        validate_array_value(name, value);
+    }
+
+    // Initialize local data with uniform values
+    for (const auto& [name, value] : uniform_values) {
+        Vector<double> uniform_array(1);
+        uniform_array(0) = value;
+        local_data_[name] = Array<double>(1, 1);
+        local_data_[name].set_col(0, uniform_array);
+    }
 }
 
 BoundaryCondition::BoundaryCondition(const BoundaryCondition& other)
@@ -103,95 +147,6 @@ BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition&& other) noexc
     return *this;
 }
 
-void BoundaryCondition::init_uniform(const std::map<std::string, double>& uniform_values, const faceType& face)
-{
-    face_ = &face;
-    global_num_nodes_ = face_->nNo;
-    local_num_nodes_ = 0;
-    spatially_variable = false;
-    vtp_file_path_ = "";
-    defined_ = true;
-
-    // Store array names
-    array_names_.clear();
-    for (const auto& [name, value] : uniform_values) {
-        array_names_.push_back(name);
-        
-        // Validate value
-        validate_array_value(name, value);
-    }
-
-    #ifdef debug_bc
-    DebugMsg dmsg(__func__, 0);
-    dmsg << "Constructor with uniform values" << std::endl;
-    dmsg << "Initializing uniform BC values" << std::endl;
-    #endif
-
-    // Initialize local data with uniform values
-    for (const auto& [name, value] : uniform_values) {
-        Vector<double> uniform_array(1);
-        uniform_array(0) = value;
-        local_data_[name] = Array<double>(1, 1);
-        local_data_[name].set_col(0, uniform_array);
-    }
-}
-
-void BoundaryCondition::init_from_vtp(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
-{
-    // Note that this function is only called by the master process
-
-    #ifdef debug_bc
-    DebugMsg dmsg(__func__, 0);
-    dmsg << "Initializing BC from VTP file" << std::endl;
-    dmsg << "VTP file path: " << vtp_file_path << std::endl;
-    dmsg << "Face name: " << face.name << std::endl;
-    dmsg << "Face nNo: " << face.nNo << std::endl;
-    #endif
-
-    #ifdef debug_bc
-    dmsg << "Setting face pointer" << std::endl;
-    #endif
-    face_ = &face;
-    if (!face_) {
-        throw std::runtime_error("Face pointer is null after assignment");
-    }
-    #ifdef debug_bc
-    dmsg << "Getting number of nodes from face" << std::endl;
-    #endif
-    global_num_nodes_ = face_->nNo;
-    local_num_nodes_ = 0;
-    spatially_variable = true;
-    vtp_file_path_ = vtp_file_path;
-    array_names_ = array_names;
-    defined_ = true;
-
-    #ifdef debug_bc
-    dmsg << "Constructor with VTP file path" << std::endl;
-    dmsg << "VTP file path: " << vtp_file_path << std::endl;
-    dmsg << "Face name: " << face.name << std::endl;
-    dmsg << "Array names: " << array_names[0] << " and " << array_names[1] << std::endl;
-    #endif
-
-    // Read data from VTP file
-    global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
-
-    // Validate values
-    for (const auto& [name, data] : global_data_) {
-        for (int i = 0; i < global_num_nodes_; i++) {
-            validate_array_value(name, data(i, 0));
-        }
-    }
-
-    // In case we are running sequentially, we need to fill the local arrays 
-    // and the global node map as well, because distribute is not called in sequential mode.
-    local_data_ = global_data_;
-
-    // Initialize global node map, in case we are running sequentially
-    global_node_map_.clear();
-    for (int i = 0; i < global_num_nodes_; i++) {
-        global_node_map_[face_->gN(i)] = i;
-    }
-}
 
 BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(const std::string& vtp_file_path, const std::vector<std::string>& array_names)
 {

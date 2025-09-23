@@ -36,50 +36,19 @@ public:
     /// @brief Default constructor - creates an empty RobinBoundaryCondition
     RobinBoundaryCondition() : BoundaryCondition() {}
 
-    /// @brief Constructor - reads data from VTP file
-    /// @param vtp_file_path Path to VTP file containing arrays
-    /// @param array_names Names of arrays to read from VTP file
-    /// @param face Face associated with the Robin BC
-    /// @throws std::runtime_error if file cannot be read or arrays are missing
-    RobinBoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
-        : BoundaryCondition(vtp_file_path, array_names, face) {}
-
-    /// @brief Legacy constructor - reads stiffness and damping from VTP file
+    /// @brief Constructor - reads stiffness and damping from VTP file
     /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
     /// @param face Face associated with the Robin BC
     /// @throws std::runtime_error if file cannot be read or arrays are missing
     RobinBoundaryCondition(const std::string& vtp_file_path, const faceType& face) 
-        : RobinBoundaryCondition(vtp_file_path, std::vector<std::string>{"Stiffness", "Damping"}, face) {}
+        : BoundaryCondition(vtp_file_path, std::vector<std::string>{"Stiffness", "Damping"}, face) {}
 
     /// @brief Constructor for uniform values
-    /// @param uniform_values Map of array names to uniform values
-    /// @param face Face associated with the Robin BC
-    RobinBoundaryCondition(const std::map<std::string, double>& uniform_values, const faceType& face)
-        : BoundaryCondition(uniform_values, face) {}
-
-    /// @brief Legacy constructor for uniform values
     /// @param uniform_stiffness Uniform stiffness value for all nodes
     /// @param uniform_damping Uniform damping value for all nodes
     /// @param face Face associated with the Robin BC
-    RobinBoundaryCondition(double uniform_stiffness, double uniform_damping, const faceType& face) {
-        std::map<std::string, double> uniform_values = {
-            {"Stiffness", uniform_stiffness},
-            {"Damping", uniform_damping}
-        };
-        BoundaryCondition::init_uniform(uniform_values, face);
-    }
-
-    /// @brief Initialize from VTP file
-    /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
-    /// @param face Face associated with the BC
-    /// @throws std::runtime_error if file cannot be read or arrays are missing
-    void init_from_vtp(const std::string& vtp_file_path, const faceType& face);
-
-    /// @brief Initialize with uniform values
-    /// @param uniform_stiffness Uniform stiffness value for all nodes
-    /// @param uniform_damping Uniform damping value for all nodes
-    /// @param face Face associated with the BC
-    void init_uniform(double uniform_stiffness, double uniform_damping, const faceType& face);
+    RobinBoundaryCondition(double uniform_stiffness, double uniform_damping, const faceType& face)
+        : BoundaryCondition({{"Stiffness", uniform_stiffness}, {"Damping", uniform_damping}}, face) {}
 
     /// @brief Get stiffness value for a specific node (convenience method)
     /// @param node_id Node index on the face
