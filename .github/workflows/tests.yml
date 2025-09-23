@@ -1,0 +1,95 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  # Check if there are any changes to important code files
+  check-for-changes:
+    name: Check for relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      run_full_tests: ${{ steps.set-outputs.outputs.run_full_tests }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Check for relevant file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          base: ${{ github.event.pull_request.base.sha || github.event.before }}
+          filters: |
+            relevant:
+              - 'Code/**'
+              - 'tests/**'
+              - '.github/**'
+              
+      - name: Set test execution flag
+        id: set-outputs
+        run: |
+          if [ "${{ steps.filter.outputs.relevant }}" = "true" ]; then
+            echo "run_full_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_full_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Run Ubuntu tests when relevant changes detected
+  test-ubuntu:
+    name: Test Ubuntu
+    runs-on: ubuntu-latest
+    container: simvascular/libraries:ubuntu22
+    needs: check-for-changes
+    if: ${{ needs.check-for-changes.outputs.run_full_tests == 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run Ubuntu tests
+        uses: ./.github/actions/test-ubuntu
+        with:
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Run macOS tests when relevant changes detected
+  test-macos:
+    name: Test macOS
+    runs-on: macos-latest
+    needs: check-for-changes
+    if: ${{ needs.check-for-changes.outputs.run_full_tests == 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run macOS tests
+        uses: ./.github/actions/test-macos
+
+  # Single coordinating job for branch protection rules
+  # This job succeeds if:
+  # 1. Tests are skipped (no relevant changes) OR
+  # 2. All tests pass (both Ubuntu and macOS)
+  # This job fails only if tests actually fail
+  all-tests:
+    name: All Tests
+    runs-on: ubuntu-latest
+    needs: [check-for-changes, test-ubuntu, test-macos]
+    if: always()
+    steps:
+      - name: Determine results of tests
+        run: |
+          # If tests were skipped, the job should succeed
+          if [ "${{ needs.check-for-changes.outputs.run_full_tests }}" = "false" ]; then
+            echo "✅ Tests were skipped - no relevant changes detected"
+            exit 0
+          fi
+          
+          # If tests were supposed to run, check if they passed
+          if [ "${{ needs.check-for-changes.outputs.run_full_tests }}" = "true" ]; then
+            if [ "${{ needs.test-ubuntu.result }}" = "success" ] && [ "${{ needs.test-macos.result }}" = "success" ]; then
+              echo "✅ All tests passed successfully"
+              exit 0
+            else
+              echo "❌ One or more tests failed"
+              echo "Ubuntu test result: ${{ needs.test-ubuntu.result }}"
+              echo "macOS test result: ${{ needs.test-macos.result }}"
+              exit 1
+            fi
+          fi
