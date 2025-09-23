@@ -1,34 +1,4 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-#include "BC.h"
+#include "BoundaryCondition.h"
 #include "ComMod.h"
 #include "DebugMsg.h"
 #include "Vector.h"
@@ -39,17 +9,17 @@
 
 #define debug_bc
 
-BC::BC(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
+BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
 {
     init_from_vtp(vtp_file_path, array_names, face);
 }
 
-BC::BC(const std::map<std::string, double>& uniform_values, const faceType& face)
+BoundaryCondition::BoundaryCondition(const std::map<std::string, double>& uniform_values, const faceType& face)
 {
     init_uniform(uniform_values, face);
 }
 
-BC::BC(const BC& other)
+BoundaryCondition::BoundaryCondition(const BoundaryCondition& other)
     : face_(other.face_)
     , global_num_nodes_(other.global_num_nodes_)
     , local_num_nodes_(other.local_num_nodes_)
@@ -66,7 +36,7 @@ BC::BC(const BC& other)
     }
 }
 
-BC& BC::operator=(const BC& other)
+BoundaryCondition& BoundaryCondition::operator=(const BoundaryCondition& other)
 {
     if (this != &other) {
         face_ = other.face_;
@@ -89,7 +59,7 @@ BC& BC::operator=(const BC& other)
     return *this;
 }
 
-BC::BC(BC&& other) noexcept
+BoundaryCondition::BoundaryCondition(BoundaryCondition&& other) noexcept
     : face_(other.face_)
     , global_num_nodes_(other.global_num_nodes_)
     , local_num_nodes_(other.local_num_nodes_)
@@ -109,7 +79,7 @@ BC::BC(BC&& other) noexcept
     other.defined_ = false;
 }
 
-BC& BC::operator=(BC&& other) noexcept
+BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition&& other) noexcept
 {
     if (this != &other) {
         face_ = other.face_;
@@ -133,7 +103,7 @@ BC& BC::operator=(BC&& other) noexcept
     return *this;
 }
 
-void BC::init_uniform(const std::map<std::string, double>& uniform_values, const faceType& face)
+void BoundaryCondition::init_uniform(const std::map<std::string, double>& uniform_values, const faceType& face)
 {
     face_ = &face;
     global_num_nodes_ = face_->nNo;
@@ -166,7 +136,7 @@ void BC::init_uniform(const std::map<std::string, double>& uniform_values, const
     }
 }
 
-void BC::init_from_vtp(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
+void BoundaryCondition::init_from_vtp(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
 {
     // Note that this function is only called by the master process
 
@@ -223,7 +193,7 @@ void BC::init_from_vtp(const std::string& vtp_file_path, const std::vector<std::
     }
 }
 
-BC::StringArrayMap BC::read_data_from_vtp_file(const std::string& vtp_file_path, const std::vector<std::string>& array_names)
+BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(const std::string& vtp_file_path, const std::vector<std::string>& array_names)
 {
     #ifdef debug_bc
     DebugMsg dmsg(__func__, 0);
@@ -241,7 +211,7 @@ BC::StringArrayMap BC::read_data_from_vtp_file(const std::string& vtp_file_path,
         dmsg << "File exists and is readable" << std::endl;
         #endif
     } else {
-        throw BCFileException(vtp_file_path);
+        throw BoundaryConditionFileException(vtp_file_path);
     }
     
     // Read the VTP file
@@ -254,12 +224,12 @@ BC::StringArrayMap BC::read_data_from_vtp_file(const std::string& vtp_file_path,
         dmsg << "VtkVtpData object created successfully" << std::endl;
         #endif
     } catch (const std::exception& e) {
-        throw BCFileException(vtp_file_path);
+        throw BoundaryConditionFileException(vtp_file_path);
     }
     
     // Check if the number of nodes in the VTP file matches the number of nodes on the face
     if (global_num_nodes_ != face_->nNo) {
-        throw BCNodeCountException(vtp_file_path, face_->name);
+        throw BoundaryConditionNodeCountException(vtp_file_path, face_->name);
     }
 
     // Create map to store results
@@ -299,7 +269,7 @@ BC::StringArrayMap BC::read_data_from_vtp_file(const std::string& vtp_file_path,
     return result;
 }
 
-double BC::get_value(const std::string& array_name, int node_id) const
+double BoundaryCondition::get_value(const std::string& array_name, int node_id) const
 {
     // Check if array exists
     auto it = local_data_.find(array_name);
@@ -321,7 +291,7 @@ double BC::get_value(const std::string& array_name, int node_id) const
     }
 }
 
-int BC::get_local_index(int global_node_id) const
+int BoundaryCondition::get_local_index(int global_node_id) const
 {
     if (spatially_variable) {
         auto it = global_node_map_.find(global_node_id);
@@ -335,7 +305,7 @@ int BC::get_local_index(int global_node_id) const
     }
 }
 
-int BC::find_vtp_point_index(double x, double y, double z,
+int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
                                 const Array<double>& vtp_points) const
 {
     const int num_points = vtp_points.ncols();
@@ -367,7 +337,7 @@ int BC::find_vtp_point_index(double x, double y, double z,
                           std::to_string(z) + ")");
 }
 
-void BC::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
+void BoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
 {
     #define n_debug_bc_distribute
     #ifdef debug_bc_distribute

@@ -1,35 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-#ifndef BC_H
-#define BC_H
+#ifndef BOUNDARY_CONDITION_H
+#define BOUNDARY_CONDITION_H
 
 #include "Array.h"
 #include "Vector.h"
@@ -59,51 +29,51 @@ class ComMod;
 ///
 /// Example usage:
 /// ```cpp
-/// class MyBC : public BC {
+/// class MyBoundaryCondition : public BoundaryCondition {
 /// public:
-///     MyBC(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
-///         : BC(vtp_file_path, array_names, face) {}
+///     MyBoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face)
+///         : BoundaryCondition(vtp_file_path, array_names, face) {}
 ///
-///     MyBC(const std::map<std::string, double>& uniform_values, const faceType& face)
-///         : BC(uniform_values, face) {}
+///     MyBoundaryCondition(const std::map<std::string, double>& uniform_values, const faceType& face)
+///         : BoundaryCondition(uniform_values, face) {}
 ///
 ///     // Add BC-specific functionality here
 /// };
 /// ```
-class BC {
+class BoundaryCondition {
 public:
     /// @brief Tolerance for point matching in VTP files
     static constexpr double POINT_MATCH_TOLERANCE = 1e-12;
 
     /// @brief Default constructor - creates an empty BC
-    BC() : face_(nullptr), global_num_nodes_(0), local_num_nodes_(0), spatially_variable(false), defined_(false) {}
+    BoundaryCondition() : face_(nullptr), global_num_nodes_(0), local_num_nodes_(0), spatially_variable(false), defined_(false) {}
 
     /// @brief Constructor - reads data from VTP file
     /// @param vtp_file_path Path to VTP file containing arrays
     /// @param array_names Names of arrays to read from VTP file
     /// @param face Face associated with the BC
     /// @throws std::runtime_error if file cannot be read or arrays are missing
-    BC(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face);
+    BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const faceType& face);
 
     /// @brief Constructor for uniform values
     /// @param uniform_values Map of array names to uniform values
     /// @param face Face associated with the BC
-    BC(const std::map<std::string, double>& uniform_values, const faceType& face);
+    BoundaryCondition(const std::map<std::string, double>& uniform_values, const faceType& face);
 
     /// @brief Copy constructor
-    BC(const BC& other);
+    BoundaryCondition(const BoundaryCondition& other);
 
     /// @brief Copy assignment operator
-    BC& operator=(const BC& other);
+    BoundaryCondition& operator=(const BoundaryCondition& other);
 
     /// @brief Move constructor
-    BC(BC&& other) noexcept;
+    BoundaryCondition(BoundaryCondition&& other) noexcept;
 
     /// @brief Move assignment operator
-    BC& operator=(BC&& other) noexcept;
+    BoundaryCondition& operator=(BoundaryCondition&& other) noexcept;
 
     /// @brief Virtual destructor
-    virtual ~BC() = default;
+    virtual ~BoundaryCondition() = default;
 
     /// @brief Initialize from VTP file
     /// @param vtp_file_path Path to VTP file containing arrays
@@ -196,11 +166,11 @@ protected:
 };
 
 /// @brief Base exception class for BC errors
-class BCBaseException : public std::exception {
+class BoundaryConditionBaseException : public std::exception {
 public:
     /// @brief Constructor
     /// @param msg Error message
-    explicit BCBaseException(const std::string& msg) : message_(msg) {}
+    explicit BoundaryConditionBaseException(const std::string& msg) : message_(msg) {}
 
     /// @brief Get error message
     /// @return Error message
@@ -213,34 +183,34 @@ private:
 };
 
 /// @brief Exception thrown when VTP file cannot be read or is invalid
-class BCFileException : public BCBaseException {
+class BoundaryConditionFileException : public BoundaryConditionBaseException {
 public:
     /// @brief Constructor
     /// @param file Path to VTP file
-    explicit BCFileException(const std::string& file) 
-        : BCBaseException("Failed to open or read the VTP file '" + file + "'") {}
+    explicit BoundaryConditionFileException(const std::string& file) 
+        : BoundaryConditionBaseException("Failed to open or read the VTP file '" + file + "'") {}
 };
 
 /// @brief Exception thrown when node count mismatch between VTP and face
-class BCNodeCountException : public BCBaseException {
+class BoundaryConditionNodeCountException : public BoundaryConditionBaseException {
 public:
     /// @brief Constructor
     /// @param vtp_file VTP file path
     /// @param face_name Face name
-    explicit BCNodeCountException(const std::string& vtp_file, const std::string& face_name) 
-        : BCBaseException("Number of nodes in VTP file '" + vtp_file + 
+    explicit BoundaryConditionNodeCountException(const std::string& vtp_file, const std::string& face_name) 
+        : BoundaryConditionBaseException("Number of nodes in VTP file '" + vtp_file + 
                          "' does not match number of nodes on face '" + face_name + "'") {}
 };
 
 /// @brief Exception thrown when array validation fails
-class BCValidationException : public BCBaseException {
+class BoundaryConditionValidationException : public BoundaryConditionBaseException {
 public:
     /// @brief Constructor
     /// @param array_name Name of array that failed validation
     /// @param value Value that failed validation
-    explicit BCValidationException(const std::string& array_name, double value) 
-        : BCBaseException("Invalid value " + std::to_string(value) + 
+    explicit BoundaryConditionValidationException(const std::string& array_name, double value) 
+        : BoundaryConditionBaseException("Invalid value " + std::to_string(value) + 
                          " for array '" + array_name + "'") {}
 };
 
-#endif // BC_H
+#endif // BOUNDARY_CONDITION_H

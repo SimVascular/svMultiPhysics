@@ -43,7 +43,7 @@
 #include "ChnlMod.h"
 #include "CmMod.h"
 #include "Parameters.h"
-#include "RobinBC.h"
+#include "RobinBoundaryCondition.h"
 #include "Timer.h"
 #include "Vector.h"
 
@@ -233,7 +233,7 @@ class bcType
     rcrType RCR;
 
     // Robin BC class
-    RobinBC robin_bc;
+    RobinBoundaryCondition robin_bc;
 };
 
 /// @brief Class storing data for B-Splines.

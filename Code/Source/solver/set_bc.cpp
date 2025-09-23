@@ -1477,7 +1477,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
-void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBC& robin_bc, const bool isN, 
+void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc, const bool isN, 
   const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
