@@ -106,6 +106,12 @@ void FsilsLinearAlgebra::initialize(ComMod& com_mod, eqType& lEq)
   // Nothing is needed to initialize FSILS.
 }
 
+/// @brief Finalize framework.
+void FsilsLinearAlgebra::finalize()
+{
+  // Nothing is needed to finalize FSILS.
+}
+
 /// @brief Set the linear algebra package for assmbly.
 void FsilsLinearAlgebra::set_assembly(consts::LinearAlgebraType atype)
 {

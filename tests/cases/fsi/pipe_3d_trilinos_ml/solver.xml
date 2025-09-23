@@ -132,7 +132,7 @@
 
    <LS type="CG" >
       <Linear_algebra type="trilinos" >
-         <Preconditioner> trilinos-ml </Preconditioner>
+         <Preconditioner> trilinos-diagonal </Preconditioner>
       </Linear_algebra>
       <Tolerance> 1e-12 </Tolerance>
    </LS>

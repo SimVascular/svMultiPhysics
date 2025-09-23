@@ -282,8 +282,8 @@ const std::set<PreconditionerType> trilinos_preconditioners = {
   PreconditionerType::PREC_TRILINOS_BLOCK_JACOBI,
   PreconditionerType::PREC_TRILINOS_ILU,
   PreconditionerType::PREC_TRILINOS_ILUT,
-  PreconditionerType::PREC_TRILINOS_IC,
-  PreconditionerType::PREC_TRILINOS_ICT,
+  PreconditionerType::PREC_TRILINOS_RILUK0,
+  PreconditionerType::PREC_TRILINOS_RILUK1,
   PreconditionerType::PREC_TRILINOS_ML
 };
 
@@ -313,8 +313,8 @@ const std::map<std::string,PreconditionerType> preconditioner_name_to_type =
   {"trilinos-blockjacobi", PreconditionerType::PREC_TRILINOS_BLOCK_JACOBI},
   {"trilinos-ilu", PreconditionerType::PREC_TRILINOS_ILU},
   {"trilinos-ilut", PreconditionerType::PREC_TRILINOS_ILUT},
-  {"trilinos-ic", PreconditionerType::PREC_TRILINOS_IC},
-  {"trilinos-ict", PreconditionerType::PREC_TRILINOS_ICT},
+  {"trilinos-riluk0", PreconditionerType::PREC_TRILINOS_RILUK0},
+  {"trilinos-riluk1", PreconditionerType::PREC_TRILINOS_RILUK1},
   {"trilinos-ml", PreconditionerType::PREC_TRILINOS_ML},
 
   {"petsc-jacobi", PreconditionerType::PREC_PETSC_JACOBI},
@@ -331,8 +331,8 @@ const std::map<PreconditionerType, std::string> preconditioner_type_to_name {
   {PreconditionerType::PREC_TRILINOS_BLOCK_JACOBI, "trilinos-blockjacobi"}, 
   {PreconditionerType::PREC_TRILINOS_ILU, "trilinos-ilu"}, 
   {PreconditionerType::PREC_TRILINOS_ILUT, "trilinos-ilut"}, 
-  {PreconditionerType::PREC_TRILINOS_IC, "trilinos-ic"}, 
-  {PreconditionerType::PREC_TRILINOS_IC, "trilinos-ict"}, 
+  {PreconditionerType::PREC_TRILINOS_RILUK0, "trilinos-riluk0"}, 
+  {PreconditionerType::PREC_TRILINOS_RILUK1, "trilinos-riluk1"}, 
   {PreconditionerType::PREC_TRILINOS_ML, "trilinos-ml"},
   {PreconditionerType::PREC_PETSC_JACOBI, "petsc-jacobi"},
   {PreconditionerType::PREC_PETSC_RCS, "petsc-rcs"}

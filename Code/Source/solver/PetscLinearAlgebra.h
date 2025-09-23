@@ -49,6 +49,7 @@ class PetscLinearAlgebra : public virtual LinearAlgebra {
     virtual void solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res);
     virtual void set_assembly(consts::LinearAlgebraType assembly_type);
     virtual void set_preconditioner(consts::PreconditionerType prec_type);
+    virtual void finalize();
 
   private:
     static std::set<consts::LinearAlgebraType> valid_assemblers;

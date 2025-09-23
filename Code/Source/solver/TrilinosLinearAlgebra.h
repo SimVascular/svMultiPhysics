@@ -50,6 +50,7 @@ class TrilinosLinearAlgebra : public virtual LinearAlgebra {
     virtual void set_assembly(consts::LinearAlgebraType atype);
     virtual void set_preconditioner(consts::PreconditionerType prec_type);
     virtual void solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res);
+    virtual void finalize();
 
   private:
     static std::set<consts::LinearAlgebraType> valid_assemblers;

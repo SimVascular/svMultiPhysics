@@ -54,7 +54,8 @@ class LinearAlgebra {
     virtual void set_assembly(consts::LinearAlgebraType assembly_type) = 0;
     virtual void set_preconditioner(consts::PreconditionerType prec_type) = 0;
     virtual void solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res) = 0;
-
+    virtual void finalize() = 0;
+    
     virtual consts::LinearAlgebraType get_interface_type() { return interface_type; }
 
     consts::LinearAlgebraType interface_type = consts::LinearAlgebraType::none;

@@ -84,7 +84,7 @@
          <Preconditioner> trilinos-blockjacobi </Preconditioner>
       </Linear_algebra>
       <Tolerance> 1e-12 </Tolerance>
-      <Max_iterations> 100 </Max_iterations> 
+      <Max_iterations> 2000 </Max_iterations> 
       <Krylov_space_dimension> 50 </Krylov_space_dimension>
    </LS>
 

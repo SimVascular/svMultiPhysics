@@ -70,8 +70,8 @@
       <Linear_algebra type="trilinos" >
          <Preconditioner> trilinos-ilut </Preconditioner>
       </Linear_algebra>
-      <Max_iterations> 100 </Max_iterations>
-      <Tolerance> 1e-12 </Tolerance>
+      <Max_iterations> 2000 </Max_iterations>
+      <Tolerance> 1e-3 </Tolerance>
    </LS>
 
    <Add_BC name="aorta_inlet" > 

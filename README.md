@@ -218,21 +218,19 @@ BLAS
 HDF5
 HYPRE
 LAPACK
-MUMPS
 ```
 and the following Trilinos packages
 ```
-mesos
-AztecOO
-Epetra
-EpetraEXT
-Ifpack
-ML
-MueLU
+MueLu
 ROL
 Sacado
 Teuchos
-Zoltan
+Tpetra
+Belos
+Ifpack2
+Amesos2
+Zoltan2
+Kokkos
 ```
 
 ## Building PETSc

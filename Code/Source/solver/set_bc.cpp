@@ -335,7 +335,7 @@ void genBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const std::string& genF
   auto& cplBC = com_mod.cplBC;
   auto& cm = com_mod.cm;
 
-  int len = cplBC.binPath.size() + cplBC.commuName.size() + 1;
+  int len = cplBC.binPath.size() + 1 + cplBC.commuName.size() + 1;
   char command[len];
   strcpy(command, cplBC.binPath.c_str());
   strcat(command, " ");
