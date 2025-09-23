@@ -18,7 +18,6 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     , vtp_file_path_(vtp_file_path)
     , defined_(true)
 {
-    // Read data from VTP file
     global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
 
     // Validate values
@@ -32,7 +31,6 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     // and the global node map as well, because distribute is not called in sequential mode.
     local_data_ = global_data_;
 
-    // Initialize global node map, in case we are running sequentially
     global_node_map_.clear();
     for (int i = 0; i < global_num_nodes_; i++) {
         global_node_map_[face_->gN(i)] = i;
@@ -157,50 +155,32 @@ BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(con
     #endif
 
     // Check if file exists
-    #ifdef debug_bc
-    dmsg << "Checking if file exists: " << vtp_file_path << std::endl;
-    #endif
     if (FILE *file = fopen(vtp_file_path.c_str(), "r")) {
         fclose(file);
-        #ifdef debug_bc
-        dmsg << "File exists and is readable" << std::endl;
-        #endif
     } else {
         throw BoundaryConditionFileException(vtp_file_path);
     }
     
     // Read the VTP file
-    #ifdef debug_bc
-    dmsg << "Creating VtkVtpData object" << std::endl;
-    #endif
     try {
         vtp_data_ = std::make_unique<VtkVtpData>(vtp_file_path, true);
-        #ifdef debug_bc
-        dmsg << "VtkVtpData object created successfully" << std::endl;
-        #endif
     } catch (const std::exception& e) {
         throw BoundaryConditionFileException(vtp_file_path);
     }
     
-    // Check if the number of nodes in the VTP file matches the number of nodes on the face
     if (global_num_nodes_ != face_->nNo) {
         throw BoundaryConditionNodeCountException(vtp_file_path, face_->name);
     }
 
-    // Create map to store results
+    // Read in the data from the VTP file
     StringArrayMap result;
-
-    // Check for and load each requested array
     for (const auto& array_name : array_names) {
-        // Check if array exists
         if (!vtp_data_->has_point_data(array_name)) {
             throw std::runtime_error("VTP file '" + vtp_file_path + "' does not contain '" + array_name + "' point array.");
         }
 
-        // Load array data
         auto array_data = vtp_data_->get_point_data(array_name);
 
-        // Validate dimensions
         if (array_data.nrows() != global_num_nodes_ || array_data.ncols() != 1) {
             throw std::runtime_error("'" + array_name + "' array in VTP file '" + vtp_file_path + 
                                    "' has incorrect dimensions. Expected " + std::to_string(global_num_nodes_) + 
@@ -217,22 +197,16 @@ BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(con
         #endif
     }
 
-    #ifdef debug_bc
-    dmsg << "Finished loading VTP data" << std::endl;
-    #endif
-
     return result;
 }
 
 double BoundaryCondition::get_value(const std::string& array_name, int node_id) const
 {
-    // Check if array exists
     auto it = local_data_.find(array_name);
     if (it == local_data_.end()) {
         throw std::runtime_error("Array '" + array_name + "' not found.");
     }
 
-    // Check node ID range
     if (node_id < 0 || node_id >= global_num_nodes_) {
         throw std::runtime_error("Node ID " + std::to_string(node_id) + 
                                 " is out of range [0, " + std::to_string(global_num_nodes_ - 1) + "].");
@@ -270,12 +244,9 @@ int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
     for (int i = 0; i < num_points; i++) {
         auto vtp_point = vtp_points.col(i);
         auto diff = vtp_point - target_point;
+        double distance = sqrt(diff.dot(diff));
         
-        // Compute distance as sqrt of dot product of diff with itself
-        double dist = sqrt(diff.dot(diff));
-        
-        // Compare squared distance with squared tolerance to avoid sqrt
-        if (dist <= POINT_MATCH_TOLERANCE) {
+        if (distance <= POINT_MATCH_TOLERANCE) {
             #define n_debug_bc_find_vtp_point_index
             #ifdef debug_bc_find_vtp_point_index
             DebugMsg dmsg(__func__, 0);
@@ -283,7 +254,7 @@ int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
             dmsg << "VTP point index: " << i << std::endl;
             #endif
 
-            return i;  // Found match
+            return i;
         }
     }
     
