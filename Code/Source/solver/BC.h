@@ -39,6 +39,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <stdexcept>
 
 // Forward declarations. These are needed because including ComMod.h causes a 
 // circular header dependency.
@@ -71,8 +72,8 @@ class ComMod;
 /// ```
 class BC {
 public:
-    /// @brief Type alias for map of array names to array data
-    using StringArrayMap = std::map<std::string, Array<double>>;
+    /// @brief Tolerance for point matching in VTP files
+    static constexpr double POINT_MATCH_TOLERANCE = 1e-12;
 
     /// @brief Default constructor - creates an empty BC
     BC() : face_(nullptr), global_num_nodes_(0), local_num_nodes_(0), spatially_variable(false), defined_(false) {}
@@ -156,6 +157,9 @@ public:
     void distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face);
 
 protected:
+    /// @brief Type alias for map of array names to array data
+    using StringArrayMap = std::map<std::string, Array<double>>;
+
     /// @brief Data members for BC
     const faceType* face_;             ///< Face associated with the BC (can be null)
     int global_num_nodes_;             ///< Global number of nodes on the face
@@ -189,6 +193,54 @@ protected:
     /// @param value Value to validate
     /// @throws std::runtime_error if validation fails
     virtual void validate_array_value(const std::string& array_name, double value) const {}
+};
+
+/// @brief Base exception class for BC errors
+class BCBaseException : public std::exception {
+public:
+    /// @brief Constructor
+    /// @param msg Error message
+    explicit BCBaseException(const std::string& msg) : message_(msg) {}
+
+    /// @brief Get error message
+    /// @return Error message
+    const char* what() const noexcept override {
+        return message_.c_str();
+    }
+
+private:
+    std::string message_;
+};
+
+/// @brief Exception thrown when VTP file cannot be read or is invalid
+class BCFileException : public BCBaseException {
+public:
+    /// @brief Constructor
+    /// @param file Path to VTP file
+    explicit BCFileException(const std::string& file) 
+        : BCBaseException("Failed to open or read the VTP file '" + file + "'") {}
+};
+
+/// @brief Exception thrown when node count mismatch between VTP and face
+class BCNodeCountException : public BCBaseException {
+public:
+    /// @brief Constructor
+    /// @param vtp_file VTP file path
+    /// @param face_name Face name
+    explicit BCNodeCountException(const std::string& vtp_file, const std::string& face_name) 
+        : BCBaseException("Number of nodes in VTP file '" + vtp_file + 
+                         "' does not match number of nodes on face '" + face_name + "'") {}
+};
+
+/// @brief Exception thrown when array validation fails
+class BCValidationException : public BCBaseException {
+public:
+    /// @brief Constructor
+    /// @param array_name Name of array that failed validation
+    /// @param value Value that failed validation
+    explicit BCValidationException(const std::string& array_name, double value) 
+        : BCBaseException("Invalid value " + std::to_string(value) + 
+                         " for array '" + array_name + "'") {}
 };
 
 #endif // BC_H

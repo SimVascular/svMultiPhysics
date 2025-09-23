@@ -133,7 +133,7 @@ protected:
     /// @throws std::runtime_error if validation fails
     void validate_array_value(const std::string& array_name, double value) const override {
         if (value < 0.0) {
-            throw std::runtime_error("Negative value for array '" + array_name + "'");
+            throw BCValidationException(array_name, value);
         }
     }
 };

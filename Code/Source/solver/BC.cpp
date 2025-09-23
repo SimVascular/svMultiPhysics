@@ -157,11 +157,6 @@ void BC::init_uniform(const std::map<std::string, double>& uniform_values, const
     dmsg << "Initializing uniform BC values" << std::endl;
     #endif
 
-    // Clear all maps
-    global_node_map_.clear();
-    global_data_.clear();
-    local_data_.clear();
-
     // Initialize local data with uniform values
     for (const auto& [name, value] : uniform_values) {
         Vector<double> uniform_array(1);
@@ -199,11 +194,6 @@ void BC::init_from_vtp(const std::string& vtp_file_path, const std::vector<std::
     vtp_file_path_ = vtp_file_path;
     array_names_ = array_names;
     defined_ = true;
-
-    // Clear all containers before initialization
-    global_node_map_.clear();
-    local_data_.clear();
-    global_data_.clear();
 
     #ifdef debug_bc
     dmsg << "Constructor with VTP file path" << std::endl;
@@ -251,22 +241,25 @@ BC::StringArrayMap BC::read_data_from_vtp_file(const std::string& vtp_file_path,
         dmsg << "File exists and is readable" << std::endl;
         #endif
     } else {
-        throw std::runtime_error("VTP file '" + vtp_file_path + "' cannot be read.");
+        throw BCFileException(vtp_file_path);
     }
     
     // Read the VTP file
     #ifdef debug_bc
     dmsg << "Creating VtkVtpData object" << std::endl;
     #endif
-    vtp_data_ = std::make_unique<VtkVtpData>(vtp_file_path, true);
-
-    #ifdef debug_bc
-    dmsg << "VtkVtpData object created successfully" << std::endl;
-    #endif
+    try {
+        vtp_data_ = std::make_unique<VtkVtpData>(vtp_file_path, true);
+        #ifdef debug_bc
+        dmsg << "VtkVtpData object created successfully" << std::endl;
+        #endif
+    } catch (const std::exception& e) {
+        throw BCFileException(vtp_file_path);
+    }
     
     // Check if the number of nodes in the VTP file matches the number of nodes on the face
     if (global_num_nodes_ != face_->nNo) {
-        throw std::runtime_error("Number of nodes in VTP file '" + vtp_file_path + "' does not match number of nodes on face '" + face_->name + "'.");
+        throw BCNodeCountException(vtp_file_path, face_->name);
     }
 
     // Create map to store results
@@ -345,16 +338,19 @@ int BC::get_local_index(int global_node_id) const
 int BC::find_vtp_point_index(double x, double y, double z,
                                 const Array<double>& vtp_points) const
 {
-    const double tolerance = 1e-12;
     const int num_points = vtp_points.ncols();
+    Vector<double> target_point{x, y, z};
     
-    // Simple linear search through all points
+    // Simple linear search through all points in the VTP file
     for (int i = 0; i < num_points; i++) {
-        // Compare coordinates with tolerance
-        if (std::abs(vtp_points(0,i) - x) <= tolerance &&
-            std::abs(vtp_points(1,i) - y) <= tolerance &&
-            std::abs(vtp_points(2,i) - z) <= tolerance) {
-
+        auto vtp_point = vtp_points.col(i);
+        auto diff = vtp_point - target_point;
+        
+        // Compute distance as sqrt of dot product of diff with itself
+        double dist = sqrt(diff.dot(diff));
+        
+        // Compare squared distance with squared tolerance to avoid sqrt
+        if (dist <= POINT_MATCH_TOLERANCE) {
             #define n_debug_bc_find_vtp_point_index
             #ifdef debug_bc_find_vtp_point_index
             DebugMsg dmsg(__func__, 0);
