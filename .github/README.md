@@ -19,8 +19,8 @@ This directory contains GitHub Actions workflows that run various actions (tests
 
 **Jobs**:
 1. `check-for-changes`: Determines if full test suite should run based on file changes in important directories. Uses `dorny/paths-filter@v3` to filter directories. 
-2. `test-ubuntu`: Runs tests in Ubuntu environment through `actions/test-ubuntu/action.yml`. Triggered only if `check-for-changes` returns `run_full_tests = false`
-3. `test-macos`: Runs tests on macOS through `actions/test-macos/action.yml`. Triggered only if `check-for-changes` returns `run_full_tests = false`
+2. `test-ubuntu`: Runs tests in Ubuntu environment through `actions/test-ubuntu/action.yml`. Triggered only if `check-for-changes` returns `run_full_tests = true`
+3. `test-macos`: Runs tests on macOS through `actions/test-macos/action.yml`. Triggered only if `check-for-changes` returns `run_full_tests = true`
 4. `all-tests`: Coordinates test results for branch protection rules. If `test-ubuntu` and `test-macos` run, returns success status only if both `test-ubuntu` and `test-macos` return success. If `test-ubuntu` and `test-macos` are skipped, always returns success. This test is must pass for a pull request to be merged, as set by branch protection rules.
 
 ### 2. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
