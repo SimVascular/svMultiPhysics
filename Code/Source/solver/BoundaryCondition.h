@@ -79,25 +79,25 @@ protected:
     using StringDoubleMap = std::map<std::string, double>;
 
     /// @brief Data members for BC
-    const faceType* face_;                   ///< Face associated with the BC (can be null)
-    int global_num_nodes_;                   ///< Global number of nodes on the face
-    int local_num_nodes_;                    ///< Local number of nodes on this processor
+    const faceType* face_ = nullptr;         ///< Face associated with the BC (can be null)
+    int global_num_nodes_ = 0;               ///< Global number of nodes on the face
+    int local_num_nodes_ = 0;                ///< Local number of nodes on this processor
     std::vector<std::string> array_names_;   ///< Names of arrays to read from VTP file
     StringArrayMap local_data_;              ///< Local array values for each node on this processor
     StringArrayMap global_data_;             ///< Global array values (only populated on master)
     StringBoolMap flags_;                    ///< Named boolean flags for BC behavior
-    bool spatially_variable;                 ///< Flag indicating if data is from VTP file
+    bool spatially_variable = false;         ///< Flag indicating if data is from VTP file
     std::string vtp_file_path_;              ///< Path to VTP file (empty if uniform)
     std::map<int, int> global_node_map_;     ///< Maps global node IDs to local array indices
     std::unique_ptr<VtkVtpData> vtp_data_;   ///< VTP data object
-    bool defined_;                           ///< Whether this BC has been properly initialized
+    bool defined_ = false;                           ///< Whether this BC has been properly initialized
 
 public:
     /// @brief Tolerance for point matching in VTP files
     static constexpr double POINT_MATCH_TOLERANCE = 1e-12;
 
     /// @brief Default constructor - creates an empty BC
-    BoundaryCondition() : face_(nullptr), global_num_nodes_(0), local_num_nodes_(0), spatially_variable(false), defined_(false) {}
+    BoundaryCondition() = default;
 
     /// @brief Constructor - reads data from VTP file
     /// @param vtp_file_path Path to VTP file containing arrays
@@ -218,6 +218,9 @@ protected:
 };
 
 /// @brief Base exception class for BC errors
+/// 
+/// These exceptions indicate fatal errors that should terminate the solver.
+/// They should not be caught and handled gracefully - the solver should exit.
 class BoundaryConditionBaseException : public std::exception {
 public:
     /// @brief Constructor
