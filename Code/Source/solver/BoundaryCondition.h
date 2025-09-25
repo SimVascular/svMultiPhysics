@@ -40,6 +40,7 @@
 #include <map>
 #include <vector>
 #include <stdexcept>
+#include <utility>
 
 // Forward declarations. These are needed because including ComMod.h causes a 
 // circular header dependency.
@@ -113,23 +114,24 @@ public:
     /// @brief Copy constructor
     BoundaryCondition(const BoundaryCondition& other);
 
-    /// @brief Copy assignment operator
-    BoundaryCondition& operator=(const BoundaryCondition& other);
+    /// @brief Unified assignment operator (handles both copy and move)
+    BoundaryCondition& operator=(BoundaryCondition other);
 
     /// @brief Move constructor
     BoundaryCondition(BoundaryCondition&& other) noexcept;
 
-    /// @brief Move assignment operator
-    BoundaryCondition& operator=(BoundaryCondition&& other) noexcept;
-
     /// @brief Virtual destructor
-    virtual ~BoundaryCondition() = default;
+    virtual ~BoundaryCondition() noexcept = default;
+
+    /// @brief Swap function for copy-and-swap idiom (friend function)
+    friend void swap(BoundaryCondition& lhs, BoundaryCondition& rhs) noexcept;
 
 
     /// @brief Get value for a specific array and node
     /// @param array_name Name of the array
     /// @param node_id Node index on the face
     /// @return Value for the array at the specified node
+    /// @throws std::runtime_error if array_name is not found
     double get_value(const std::string& array_name, int node_id) const;
 
     /// @brief Get a boolean flag by name
@@ -144,13 +146,13 @@ public:
 
     /// @brief Get global number of nodes
     /// @return Global number of nodes on the face
-    int get_global_num_nodes() const {
+    int get_global_num_nodes() const noexcept {
         return global_num_nodes_;
     }
 
     /// @brief Get local number of nodes
     /// @return Local number of nodes on the face on this processor
-    int get_local_num_nodes() const {
+    int get_local_num_nodes() const noexcept {
         return local_num_nodes_;
     }
 
@@ -162,19 +164,19 @@ public:
 
     /// @brief Check if data is loaded from VTP file
     /// @return true if loaded from VTP, false if using uniform values
-    bool is_from_vtp() const {
+    bool is_from_vtp() const noexcept {
         return spatially_variable;
     }
 
     /// @brief Get the VTP file path (empty if using uniform values)
     /// @return VTP file path
-    const std::string& get_vtp_path() const {
+    const std::string& get_vtp_path() const noexcept {
         return vtp_file_path_;
     }
 
     /// @brief Check if this BC is properly defined
     /// @return true if BC has been initialized with either VTP data or uniform values
-    bool is_defined() const {
+    bool is_defined() const noexcept {
         return defined_;
     }
 

@@ -36,6 +36,7 @@
 #include <iostream>
 #include <cstdio>
 #include <vector>
+#include <utility>
 
 #define n_debug_bc
 
@@ -106,27 +107,24 @@ BoundaryCondition::BoundaryCondition(const BoundaryCondition& other)
     }
 }
 
-BoundaryCondition& BoundaryCondition::operator=(const BoundaryCondition& other)
-{
-    if (this != &other) {
-        face_ = other.face_;
-        global_num_nodes_ = other.global_num_nodes_;
-        local_num_nodes_ = other.local_num_nodes_;
-        array_names_ = other.array_names_;
-        local_data_ = other.local_data_;
-        global_data_ = other.global_data_;
-        spatially_variable = other.spatially_variable;
-        vtp_file_path_ = other.vtp_file_path_;
-        flags_ = other.flags_;
-        global_node_map_ = other.global_node_map_;
-        defined_ = other.defined_;
+void swap(BoundaryCondition& lhs, BoundaryCondition& rhs) noexcept {
+    using std::swap;
+    swap(lhs.face_, rhs.face_);
+    swap(lhs.global_num_nodes_, rhs.global_num_nodes_);
+    swap(lhs.local_num_nodes_, rhs.local_num_nodes_);
+    swap(lhs.array_names_, rhs.array_names_);
+    swap(lhs.local_data_, rhs.local_data_);
+    swap(lhs.global_data_, rhs.global_data_);
+    swap(lhs.spatially_variable, rhs.spatially_variable);
+    swap(lhs.vtp_file_path_, rhs.vtp_file_path_);
+    swap(lhs.flags_, rhs.flags_);
+    swap(lhs.global_node_map_, rhs.global_node_map_);
+    swap(lhs.vtp_data_, rhs.vtp_data_);
+    swap(lhs.defined_, rhs.defined_);
+}
 
-        if (other.vtp_data_) {
-            vtp_data_ = std::make_unique<VtkVtpData>(*other.vtp_data_);
-        } else {
-            vtp_data_.reset();
-        }
-    }
+BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition other) {
+    swap(*this, other);
     return *this;
 }
 
@@ -151,30 +149,6 @@ BoundaryCondition::BoundaryCondition(BoundaryCondition&& other) noexcept
     other.defined_ = false;
 }
 
-BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition&& other) noexcept
-{
-    if (this != &other) {
-        face_ = other.face_;
-        global_num_nodes_ = other.global_num_nodes_;
-        local_num_nodes_ = other.local_num_nodes_;
-        array_names_ = std::move(other.array_names_);
-        local_data_ = std::move(other.local_data_);
-        global_data_ = std::move(other.global_data_);
-        spatially_variable = other.spatially_variable;
-        vtp_file_path_ = std::move(other.vtp_file_path_);
-        flags_ = std::move(other.flags_);
-        global_node_map_ = std::move(other.global_node_map_);
-        vtp_data_ = std::move(other.vtp_data_);
-        defined_ = other.defined_;
-
-        other.face_ = nullptr;
-        other.global_num_nodes_ = 0;
-        other.local_num_nodes_ = 0;
-        other.spatially_variable = false;
-        other.defined_ = false;
-    }
-    return *this;
-}
 
 BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(const std::string& vtp_file_path, const std::vector<std::string>& array_names)
 {
