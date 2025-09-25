@@ -5,11 +5,11 @@ This test case simulates a spatially variable Robin boundary condition on a slab
 
 - The slab is loaded on the +Y surface with a uniform pressure load. The load profile is a ramp to 10 dynes/cm^2 over 0.5 seconds, then held there until
 2 seconds. The load is defined in `load.dat`, which can be generated with
-`generate_load.py`. The load tends to push the slab downward. 
+`utilities/generate_boundary_condition_data/generate_load.py`. The load tends to push the slab downward. 
 
 ![Load Profile](load.png)
 
-- This is resisted by a spatially varying Robin boundary condition on the -Y surface. The stiffness is 0 at z = 0, and 50 at the far end.
+- This is resisted by a spatially varying Robin boundary condition on the -Y surface. The stiffness is 0 at z = 0, and 50 at the far end. This is provided in `Y0_spatially_varying_robin.vtp`, which can be generated with `utilities/generate_boundary_condition_data/generate_spatially_variable_robin.py`.
 
 ![Spatially varying Robin BC](Y0_spatially_varying_robin.png)
 
