@@ -48,25 +48,32 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     , spatially_variable(true)
     , vtp_file_path_(vtp_file_path)
     , flags_(flags)
-    , defined_(true)
+    , defined_(false)  // Start as undefined, set to true only if successful
 {
-    global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
+    try {
+        global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
 
-
-    // Validate values
-    for (const auto& [name, data] : global_data_) {
-        for (int i = 0; i < global_num_nodes_; i++) {
-            validate_array_value(name, data(i, 0));
+        // Validate values
+        for (const auto& [name, data] : global_data_) {
+            for (int i = 0; i < global_num_nodes_; i++) {
+                validate_array_value(name, data(i, 0));
+            }
         }
-    }
 
-    // In case we are running sequentially, we need to fill the local arrays 
-    // and the global node map as well, because distribute is not called in sequential mode.
-    local_data_ = global_data_;
+        // In case we are running sequentially, we need to fill the local arrays 
+        // and the global node map as well, because distribute is not called in sequential mode.
+        local_data_ = global_data_;
 
-    global_node_map_.clear();
-    for (int i = 0; i < global_num_nodes_; i++) {
-        global_node_map_[face_->gN(i)] = i;
+        global_node_map_.clear();
+        for (int i = 0; i < global_num_nodes_; i++) {
+            global_node_map_[face_->gN(i)] = i;
+        }
+        
+        defined_ = true;  // Mark as successfully defined
+    } catch (const std::exception& e) {
+        // Constructor failed - object remains in undefined state
+        // defined_ remains false, resources are automatically cleaned up
+        throw;  // Re-throw the exception
     }
 }
 
@@ -77,15 +84,23 @@ BoundaryCondition::BoundaryCondition(const StringDoubleMap& uniform_values, cons
     , spatially_variable(false)
     , vtp_file_path_("")
     , flags_(flags)
-    , defined_(true)
+    , defined_(false)  // Start as undefined, set to true only if successful
 {
-    // Store array names, validate and store values
-    array_names_.clear();
-    for (const auto& [name, value] : uniform_values) {
-        array_names_.push_back(name);
-        validate_array_value(name, value);
-        local_data_[name] = Array<double>(1, 1);
-        local_data_[name](0, 0) = value;
+    try {
+        // Store array names, validate and store values
+        array_names_.clear();
+        for (const auto& [name, value] : uniform_values) {
+            array_names_.push_back(name);
+            validate_array_value(name, value);
+            local_data_[name] = Array<double>(1, 1);
+            local_data_[name](0, 0) = value;
+        }
+        
+        defined_ = true;  // Mark as successfully defined
+    } catch (const std::exception& e) {
+        // Constructor failed - object remains in undefined state
+        // defined_ remains false, resources are automatically cleaned up
+        throw;  // Re-throw the exception
     }
 }
 
