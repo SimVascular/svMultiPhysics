@@ -545,8 +545,9 @@ void uris_read_msh(Simulation* simulation) {
     }
     file_stream.close();
 
-    uris_obj.sdf_deps = param->thickness();
-    uris_obj.sdf_deps_close = param->close_thickness();
+    uris_obj.sdf_default = uris_obj.sdf_default * uris_obj.scF;
+    uris_obj.sdf_deps = param->thickness() * uris_obj.scF;
+    uris_obj.sdf_deps_close = param->close_thickness() * uris_obj.scF;
     uris_obj.clsFlg = param->valve_starts_as_closed();
 
     // uris_obj.tnNo = 0;
@@ -806,7 +807,7 @@ void uris_write_vtus(ComMod& com_mod) {
       for (int a = 0; a < mesh.nNo; a++) {
         int Ac = mesh.gN(a);
         for (int i = 0; i < nsd; i++) {
-          d[iM].x(i,a) = uris_obj.x(i,Ac);
+          d[iM].x(i,a) = uris_obj.x(i,Ac) / uris_obj.scF;
         }
       }
       for (int e = 0; e < mesh.nEl; e++) {
@@ -829,7 +830,7 @@ void uris_write_vtus(ComMod& com_mod) {
       for (int a = 0; a < mesh.nNo; a++) {
         int Ac = mesh.gN(a);
         for (int i = 0; i < nsd; i++) {
-          d[iM].x(is+i,a) = uris_obj.Yd(s+i,Ac); // [HZ] Need to check this
+          d[iM].x(is+i,a) = uris_obj.Yd(s+i,Ac) / uris_obj.scF; // [HZ] Need to check this
         }
       }
 
