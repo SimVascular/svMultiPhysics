@@ -1470,7 +1470,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
     }
   }
   // Now treat Robin BC (stiffness and damping) here
-  if (lBc.robin_bc.is_defined()) {
+  if (lBc.robin_bc.is_initialized()) {
     set_bc_rbnl(com_mod, lFa, lBc.robin_bc, Yg, Dg);
   }
 }

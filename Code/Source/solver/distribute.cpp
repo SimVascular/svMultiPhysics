@@ -802,8 +802,8 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
 
   // Communicating Robin BC
   //
-  bool has_robin_bc = lBc.robin_bc.is_defined();
-  cm.bcast(cm_mod, &has_robin_bc);
+  bool has_robin_bc = lBc.robin_bc.is_initialized();
+  cm.bcast(cm_mod, &has_robin_bc); // Master process broadcasts the flag to all processes
 
   if (has_robin_bc) {
     lBc.robin_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);

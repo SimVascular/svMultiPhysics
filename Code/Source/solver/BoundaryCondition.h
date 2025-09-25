@@ -90,7 +90,6 @@ protected:
     std::string vtp_file_path_;              ///< Path to VTP file (empty if uniform)
     std::map<int, int> global_node_map_;     ///< Maps global node IDs to local array indices
     std::unique_ptr<VtkVtpData> vtp_data_;   ///< VTP data object
-    bool defined_ = false;                           ///< Whether this BC has been properly initialized
 
 public:
     /// @brief Tolerance for point matching in VTP files
@@ -174,10 +173,10 @@ public:
         return vtp_file_path_;
     }
 
-    /// @brief Check if this BC is properly defined
-    /// @return true if BC has been initialized with either VTP data or uniform values
-    bool is_defined() const noexcept {
-        return defined_;
+    /// @brief Check if this BC has been properly initialized with data
+    /// @return true if BC has data (either global or local arrays are populated)
+    bool is_initialized() const noexcept {
+        return !global_data_.empty() || !local_data_.empty();
     }
 
     /// @brief Distribute BC data from the master process to the slave processes
@@ -273,6 +272,69 @@ class BoundaryConditionFlagException : public BoundaryConditionBaseException {
 public:
     explicit BoundaryConditionFlagException(const std::string& flag_name)
         : BoundaryConditionBaseException("BoundaryCondition flag not found: '" + flag_name + "'") {}
+};
+
+/// @brief Exception thrown when a requested array is not found
+class BoundaryConditionArrayException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionArrayException(const std::string& array_name)
+        : BoundaryConditionBaseException("BoundaryCondition array not found: '" + array_name + "'") {}
+};
+
+/// @brief Exception thrown when BoundaryCondition is not properly initialized
+class BoundaryConditionNotInitializedException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionNotInitializedException()
+        : BoundaryConditionBaseException("BoundaryCondition not properly initialized - no data available") {}
+};
+
+/// @brief Exception thrown when a node ID is out of range
+class BoundaryConditionNodeIdException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionNodeIdException(int node_id, int max_node_id)
+        : BoundaryConditionBaseException("Node ID " + std::to_string(node_id) + 
+                                       " is out of range [0, " + std::to_string(max_node_id - 1) + "]") {}
+};
+
+/// @brief Exception thrown when a global node ID is not found in the global-to-local map
+class BoundaryConditionGlobalNodeIdException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionGlobalNodeIdException(int global_node_id)
+        : BoundaryConditionBaseException("Global node ID " + std::to_string(global_node_id) + 
+                                       " not found in global-to-local map") {}
+};
+
+/// @brief Exception thrown when a VTP file doesn't contain a required array
+class BoundaryConditionVtpArrayException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionVtpArrayException(const std::string& vtp_file, const std::string& array_name)
+        : BoundaryConditionBaseException("VTP file '" + vtp_file + "' does not contain '" + array_name + "' point array") {}
+};
+
+/// @brief Exception thrown when a VTP array has incorrect dimensions
+class BoundaryConditionVtpArrayDimensionException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionVtpArrayDimensionException(const std::string& vtp_file, const std::string& array_name, 
+                                                       int expected_rows, int expected_cols, int actual_rows, int actual_cols)
+        : BoundaryConditionBaseException("'" + array_name + "' array in VTP file '" + vtp_file +
+                                       "' has incorrect dimensions. Expected " + std::to_string(expected_rows) +
+                                       " x " + std::to_string(expected_cols) + ", got " + std::to_string(actual_rows) +
+                                       " x " + std::to_string(actual_cols)) {}
+};
+
+/// @brief Exception thrown when face_ is nullptr during distribute
+class BoundaryConditionNullFaceException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionNullFaceException()
+        : BoundaryConditionBaseException("face_ is nullptr during distribute") {}
+};
+
+/// @brief Exception thrown when a point cannot be found in VTP file
+class BoundaryConditionPointNotFoundException : public BoundaryConditionBaseException {
+public:
+    explicit BoundaryConditionPointNotFoundException(double x, double y, double z)
+        : BoundaryConditionBaseException("Could not find matching point in VTP file for node at position (" +
+                                       std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")") {}
 };
 
 #endif // BOUNDARY_CONDITION_H
