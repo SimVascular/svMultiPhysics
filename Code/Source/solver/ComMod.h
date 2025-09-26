@@ -43,6 +43,7 @@
 #include "ChnlMod.h"
 #include "CmMod.h"
 #include "Parameters.h"
+#include "RobinBoundaryCondition.h"
 #include "Timer.h"
 #include "Vector.h"
 
@@ -58,6 +59,7 @@
 
 #include <array>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -150,16 +152,12 @@ class rcrType
 class bcType
 {
   public:
-
     // Strong/Weak application of Dirichlet BC
     bool weakDir = false;
 
     // Whether load vector changes with deformation
     // (Neu - struct/ustruct only)
     bool flwP = false;
-
-    // Robin: apply only in normal direction
-    bool rbnN = false;
 
     // Strong/Weak application of Dirichlet BC
     int clsFlgRis = 0;
@@ -191,11 +189,8 @@ class bcType
     // Neu: defined resistance
     double r = 0.0;
 
-    // Robin: stiffness
-    double k = 0.0;
-
-    // Robin: damping
-    double c = 0.0;
+    // Robin: VTP file path for per-node stiffness and damping
+    std::string robin_vtp_file = "";
 
     // RIS0D: resistance
     double resistance = 0.0;
@@ -227,6 +222,9 @@ class bcType
 
     // Neu: RCR
     rcrType RCR;
+
+    // Robin BC class
+    RobinBoundaryCondition robin_bc;
 };
 
 /// @brief Class storing data for B-Splines.

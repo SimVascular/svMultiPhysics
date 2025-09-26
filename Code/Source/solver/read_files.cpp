@@ -392,9 +392,18 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
   // Stiffness and damping parameters for Robin BC
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) { 
-    lBc.k = bc_params->stiffness.value();
-    lBc.c = bc_params->damping.value();
-    lBc.rbnN = bc_params->apply_along_normal_direction.value();
+    
+    // Read VTP file path for per-node stiffness and damping (optional)
+    if (bc_params->robin_vtp_file_path.defined()) {
+      lBc.robin_bc = RobinBoundaryCondition(bc_params->robin_vtp_file_path.value(), 
+                                            bc_params->apply_along_normal_direction.value(),
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa]);
+    } else {
+      lBc.robin_bc = RobinBoundaryCondition(bc_params->stiffness.value(), 
+                                            bc_params->damping.value(),
+                                            bc_params->apply_along_normal_direction.value(),
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa]);
+    }
   }
 
   // To impose value or flux
