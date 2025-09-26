@@ -274,8 +274,10 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
     return;
   }
 
-  if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin)) && not com_mod.dFlag) {
-    throw std::runtime_error("Robin BC can be set for a displacement-based eqn only");
+  if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) {
+    if (!com_mod.dFlag) {
+      throw std::runtime_error("Robin BC can be set for a displacement-based eqn only");
+    }
   }
 
   int iM = lFa.iM;
