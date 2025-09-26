@@ -681,27 +681,31 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
       int Ac = lM.IEN(a,e);
       for (int i = 0; i < nsd; i++) {
         xl(i,a) = com_mod.x(i,Ac);
+      }
+      for (int i = 0; i < tDof; i++) {
         dl(i,a) = lD(i,Ac);
       }
     }
 
     for (int iFn = 0; iFn < lM.nFn; iFn++) {
       for (int i = 0; i < nsd; i++) {
-        fN(i,iFn) = lM.fN(iFn*nsd,e);
+        fN(i,iFn) = lM.fN(i+iFn*nsd,e);
       }
     }
 
-    Array<double> F;
+    Array<double> F(nsd,nsd);
+    Array<double> Nx(nsd,eNoN);
+    double Jac = 0.0;
 
     for (int g = 0; g < lM.nG; g++) {
-      double Jac = 0.0;
       if (g == 0 || !lM.lShpF) {
-        auto Nx = lM.Nx.slice(g);
-        nn::gnn(eNoN, nsd, nsd, Nx, xl, Nx, Jac, F);
+        auto Nxi = lM.Nx.slice(g);
+        nn::gnn(eNoN, nsd, nsd, Nxi, xl, Nx, Jac, F);
       }
 
       double w = lM.w(g) * Jac;
-      auto F = mat_fun::mat_id(nsd); 
+      N = lM.N.col(g);
+      F = mat_fun::mat_id(nsd); 
 
       for (int a = 0; a < eNoN; a++) {
         if (nsd == 3) {
@@ -749,11 +753,12 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
   for (int a = 0; a < lM.nNo; a++) {
     int Ac = lM.gN(a);
     if (!utils::is_zero(sA(Ac))) {
-      for (int i = 0; i < nsd; i++) {
+      for (int i = 0; i < nFn*nsd; i++) {
         res(i,a) = res(i,a) + sF(i,Ac) / sA(Ac);
-       }
+      }
     } 
   }
+
 }
 
 /// @brief Compute fiber stretch based on 4th invariant: I_{4,f}

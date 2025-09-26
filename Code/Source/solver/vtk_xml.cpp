@@ -86,8 +86,6 @@ void do_test()
     }
   }
 
-  std::cout << "Num dupe: " << num_dupe << std::endl;
-
   vtkSmartPointer<vtkUnstructuredGrid> mesh;
 
   std::string fileName = "mesh-complete/mesh-complete.mesh.vtu";
@@ -98,8 +96,6 @@ void do_test()
 
   vtkIdType m_NumPoints = mesh->GetNumberOfPoints();
   vtkIdType m_NumCells = mesh->GetNumberOfCells();
-  std::cout << "  Number of points: " << m_NumPoints << std::endl;
-  std::cout << "  Number of cells: " << m_NumCells << std::endl;
 
   auto numPoints = mesh->GetNumberOfPoints();
   auto points = mesh->GetPoints();
@@ -138,10 +134,6 @@ void do_test()
     }
   }
 
-  std::cout << "num_found_1: " << num_found_1 << std::endl;
-  std::cout << "num_found_2: " << num_found_2 << std::endl;
-
-  //exit(0);
 }
 
 /// @brief This routine prepares data array of a regular mesh
@@ -1171,11 +1163,11 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
               post::fib_dir_post(simulation, msh, nFn, tmpV, lD, iEq);
             }
             for (int iFn = 0; iFn < nFn; iFn++) {
+              cOut = cOut + 1;
               is = outS[cOut];
               ie = is + l - 1;
               outS[cOut+1] = ie + 1;
-              outNames[cOut] = eq.output[iOut].name + std::to_string(iFn);
-              cOut = cOut + 1;
+              outNames[cOut] = eq.output[iOut].name + std::to_string(iFn+1);
 
               for (int a = 0; a < msh.nNo; a++) {
                 for (int i = 0; i < l; i++) {
@@ -1414,8 +1406,6 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
     nSh = nSh + d[iM].nNo;
   }
 
-  // std::cout << "nOut: " << nOut << std::endl;
-
   // Writing all solutions
   //
   for (int iOut = 1; iOut < nOut; iOut++) {
@@ -1435,9 +1425,6 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
 
       nSh = nSh + d[iM].nNo;
     }
-
-    // std::cout << "iOut: " << iOut << std::endl;
-    // std::cout << "outName: " << outNames[iOut] << std::endl;
 
     vtk_writer->set_point_data(outNames[iOut], tmpV);
   }
