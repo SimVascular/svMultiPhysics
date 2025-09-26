@@ -443,6 +443,7 @@ BoundaryConditionParameters::BoundaryConditionParameters()
   set_parameter("Spatial_profile_file_path", "", !required, spatial_profile_file_path);
   set_parameter("Spatial_values_file_path", "", !required, spatial_values_file_path);
   set_parameter("Stiffness", 1.0, !required, stiffness);
+  set_parameter("Robin_vtp_file_path", "", !required, robin_vtp_file_path);
   set_parameter("svZeroDSolver_block", "", !required, svzerod_solver_block);
 
   set_parameter("Temporal_and_spatial_values_file_path", "", !required, temporal_and_spatial_values_file_path);

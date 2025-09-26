@@ -33,6 +33,7 @@
 #include "distribute.h"
 
 #include "all_fun.h"
+#include "ComMod.h"
 #include "consts.h"
 #include "nn.h"
 #include "utils.h"
@@ -654,13 +655,10 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   cm.bcast(cm_mod, &lBc.iM);
   cm.bcast(cm_mod, &lBc.r);
   cm.bcast(cm_mod, &lBc.g);
-  cm.bcast(cm_mod, &lBc.k);
-  cm.bcast(cm_mod, &lBc.c);
   cm.bcast(cm_mod, lBc.h);
   cm.bcast(cm_mod, &lBc.weakDir);
   cm.bcast(cm_mod, lBc.tauB);
   cm.bcast(cm_mod, &lBc.flwP);
-  cm.bcast(cm_mod, &lBc.rbnN);
 
 
   if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_RCR))) {
@@ -801,6 +799,16 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
       }
     }
   }
+
+  // Communicating Robin BC
+  //
+  bool has_robin_bc = lBc.robin_bc.is_initialized();
+  cm.bcast(cm_mod, &has_robin_bc); // Master process broadcasts the flag to all processes
+
+  if (has_robin_bc) {
+    lBc.robin_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
+  }
+
 
   // Communicating and reordering master node data for 
   // undeforming Neumann BC faces.
@@ -1795,8 +1803,9 @@ void dist_solid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmT
 
 void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa, Vector<int>& gmtl)
 {
+  #define n_debug_part_face
   #ifdef debug_part_face
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "lFa.name: " << lFa.name;
   #endif
@@ -1880,6 +1889,7 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
   int i = gFa.nEl*(2+eNoNb) + gFa.nNo;
   Vector<int> part(i);
 
+  // Broadcast data in gFa from master to all processes
   if (cm.mas(cm_mod)) {
     for (int e = 0; e < gFa.nEl; e++) {
       int Ec = gFa.gE[e];
