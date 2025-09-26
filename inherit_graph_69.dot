@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="Tensor4\< T \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_tensor4.html",tooltip="The Tensor4 template class implements a simple interface to 4th order tensors."];
+  Node0 [id="Node000000",label="stModelType",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classst_model_type.html",tooltip="Structural domain type."];
 }

@@ -112,6 +112,42 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a12048bb7d8f2c321c6a4b57ad74cb590" id="r_a12048bb7d8f2c321c6a4b57ad74cb590"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a12048bb7d8f2c321c6a4b57ad74cb590">bcast</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, Array&lt; int &gt; &amp;data, const std::string &amp;name=&quot;&quot;) const</td></tr>
 <tr class="memdesc:a12048bb7d8f2c321c6a4b57ad74cb590"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast int array  <br /></td></tr>
 <tr class="separator:a12048bb7d8f2c321c6a4b57ad74cb590"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a982276c0bc3033f7a9f99a4be18f478a" id="r_a982276c0bc3033f7a9f99a4be18f478a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a982276c0bc3033f7a9f99a4be18f478a">gather</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const int *send_data, int send_count, int *recv_data, int recv_count, int root) const</td></tr>
+<tr class="memdesc:a982276c0bc3033f7a9f99a4be18f478a"><td class="mdescLeft">&#160;</td><td class="mdescRight">gather int array  <br /></td></tr>
+<tr class="separator:a982276c0bc3033f7a9f99a4be18f478a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae97567e294b10ed76689d71f8e6064d2" id="r_ae97567e294b10ed76689d71f8e6064d2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#ae97567e294b10ed76689d71f8e6064d2">gather</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const double *send_data, int send_count, double *recv_data, int recv_count, int root) const</td></tr>
+<tr class="memdesc:ae97567e294b10ed76689d71f8e6064d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">gather double array  <br /></td></tr>
+<tr class="separator:ae97567e294b10ed76689d71f8e6064d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90f444ef17118de3fe07ea841d8b6ab4" id="r_a90f444ef17118de3fe07ea841d8b6ab4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a90f444ef17118de3fe07ea841d8b6ab4">gather</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;send_data, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;recv_data, int root) const</td></tr>
+<tr class="memdesc:a90f444ef17118de3fe07ea841d8b6ab4"><td class="mdescLeft">&#160;</td><td class="mdescRight">gather int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:a90f444ef17118de3fe07ea841d8b6ab4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c207feb44cc8b1ff6a74c62ac60d50e" id="r_a8c207feb44cc8b1ff6a74c62ac60d50e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a8c207feb44cc8b1ff6a74c62ac60d50e">gather</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;send_data, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;recv_data, int root) const</td></tr>
+<tr class="memdesc:a8c207feb44cc8b1ff6a74c62ac60d50e"><td class="mdescLeft">&#160;</td><td class="mdescRight">gather double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:a8c207feb44cc8b1ff6a74c62ac60d50e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e0e8c123f55c5be3acce45504b5ea71" id="r_a4e0e8c123f55c5be3acce45504b5ea71"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a4e0e8c123f55c5be3acce45504b5ea71">gatherv</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;send_data, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;recv_data, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;recv_counts, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;displs, int root) const</td></tr>
+<tr class="memdesc:a4e0e8c123f55c5be3acce45504b5ea71"><td class="mdescLeft">&#160;</td><td class="mdescRight">gatherv int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:a4e0e8c123f55c5be3acce45504b5ea71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19d171eae19b9e8d03b2a149c91135a8" id="r_a19d171eae19b9e8d03b2a149c91135a8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a19d171eae19b9e8d03b2a149c91135a8">gatherv</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;send_data, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;recv_data, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;recv_counts, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;displs, int root) const</td></tr>
+<tr class="memdesc:a19d171eae19b9e8d03b2a149c91135a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">gatherv double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:a19d171eae19b9e8d03b2a149c91135a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5faeaa793d615d608c012b7b6d44b0e3" id="r_a5faeaa793d615d608c012b7b6d44b0e3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a5faeaa793d615d608c012b7b6d44b0e3">scatterv</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;send_data, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;send_counts, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;displs, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;recv_data, int root) const</td></tr>
+<tr class="memdesc:a5faeaa793d615d608c012b7b6d44b0e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">scatterv int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:a5faeaa793d615d608c012b7b6d44b0e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49b68d553410216a44c9f49e3af60dc0" id="r_a49b68d553410216a44c9f49e3af60dc0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a49b68d553410216a44c9f49e3af60dc0">scatterv</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;send_data, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;send_counts, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;displs, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;recv_data, int root) const</td></tr>
+<tr class="memdesc:a49b68d553410216a44c9f49e3af60dc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">scatterv double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:a49b68d553410216a44c9f49e3af60dc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7cb6798a3b71c62a7937e21e2fb6925" id="r_ac7cb6798a3b71c62a7937e21e2fb6925"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#ac7cb6798a3b71c62a7937e21e2fb6925">scatter</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const int *send_data, int send_count, int *recv_data, int recv_count, int root) const</td></tr>
+<tr class="memdesc:ac7cb6798a3b71c62a7937e21e2fb6925"><td class="mdescLeft">&#160;</td><td class="mdescRight">scatter int array  <br /></td></tr>
+<tr class="separator:ac7cb6798a3b71c62a7937e21e2fb6925"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7ed7e3b02193b4de384558cf96c7e79" id="r_aa7ed7e3b02193b4de384558cf96c7e79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#aa7ed7e3b02193b4de384558cf96c7e79">scatter</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const double *send_data, int send_count, double *recv_data, int recv_count, int root) const</td></tr>
+<tr class="memdesc:aa7ed7e3b02193b4de384558cf96c7e79"><td class="mdescLeft">&#160;</td><td class="mdescRight">scatter double array  <br /></td></tr>
+<tr class="separator:aa7ed7e3b02193b4de384558cf96c7e79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad08ead9f464f5cd90429732d0e9f3ee9" id="r_ad08ead9f464f5cd90429732d0e9f3ee9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#ad08ead9f464f5cd90429732d0e9f3ee9">scatter</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;send_data, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;recv_data, int root) const</td></tr>
+<tr class="memdesc:ad08ead9f464f5cd90429732d0e9f3ee9"><td class="mdescLeft">&#160;</td><td class="mdescRight">scatter int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:ad08ead9f464f5cd90429732d0e9f3ee9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa44722b91661bf955fbf8249358a80fc" id="r_aa44722b91661bf955fbf8249358a80fc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#aa44722b91661bf955fbf8249358a80fc">scatter</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;send_data, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;recv_data, int root) const</td></tr>
+<tr class="memdesc:aa44722b91661bf955fbf8249358a80fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">scatter double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>  <br /></td></tr>
+<tr class="separator:aa44722b91661bf955fbf8249358a80fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4b565b82d81e46898913a5bc6b14e6f" id="r_af4b565b82d81e46898913a5bc6b14e6f"><td class="memTemplParams" colspan="2"><a id="af4b565b82d81e46898913a5bc6b14e6f" name="af4b565b82d81e46898913a5bc6b14e6f"></a>
 template&lt;typename T &gt; </td></tr>
 <tr class="memitem:af4b565b82d81e46898913a5bc6b14e6f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bcast_enum</b> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, T *data) const</td></tr>
@@ -481,6 +517,606 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div><div class="memdoc">
 
 <p>Returns commu handle. </p>
+
+</div>
+</div>
+<a id="ae97567e294b10ed76689d71f8e6064d2" name="ae97567e294b10ed76689d71f8e6064d2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae97567e294b10ed76689d71f8e6064d2">&#9670;&#160;</a></span>gather() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::gather </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double *&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>send_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>recv_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>gather double array </p>
+
+</div>
+</div>
+<a id="a982276c0bc3033f7a9f99a4be18f478a" name="a982276c0bc3033f7a9f99a4be18f478a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a982276c0bc3033f7a9f99a4be18f478a">&#9670;&#160;</a></span>gather() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::gather </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int *&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>send_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>recv_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>gather int array </p>
+
+</div>
+</div>
+<a id="a8c207feb44cc8b1ff6a74c62ac60d50e" name="a8c207feb44cc8b1ff6a74c62ac60d50e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8c207feb44cc8b1ff6a74c62ac60d50e">&#9670;&#160;</a></span>gather() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::gather </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>gather double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
+
+</div>
+</div>
+<a id="a90f444ef17118de3fe07ea841d8b6ab4" name="a90f444ef17118de3fe07ea841d8b6ab4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a90f444ef17118de3fe07ea841d8b6ab4">&#9670;&#160;</a></span>gather() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::gather </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>gather int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
+
+</div>
+</div>
+<a id="a19d171eae19b9e8d03b2a149c91135a8" name="a19d171eae19b9e8d03b2a149c91135a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19d171eae19b9e8d03b2a149c91135a8">&#9670;&#160;</a></span>gatherv() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::gatherv </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_counts</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>displs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>gatherv double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
+
+</div>
+</div>
+<a id="a4e0e8c123f55c5be3acce45504b5ea71" name="a4e0e8c123f55c5be3acce45504b5ea71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e0e8c123f55c5be3acce45504b5ea71">&#9670;&#160;</a></span>gatherv() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::gatherv </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_counts</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>displs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>gatherv int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
+
+</div>
+</div>
+<a id="aa7ed7e3b02193b4de384558cf96c7e79" name="aa7ed7e3b02193b4de384558cf96c7e79"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa7ed7e3b02193b4de384558cf96c7e79">&#9670;&#160;</a></span>scatter() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::scatter </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double *&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>send_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>recv_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scatter double array </p>
+
+</div>
+</div>
+<a id="ac7cb6798a3b71c62a7937e21e2fb6925" name="ac7cb6798a3b71c62a7937e21e2fb6925"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7cb6798a3b71c62a7937e21e2fb6925">&#9670;&#160;</a></span>scatter() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::scatter </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int *&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>send_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>recv_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scatter int array </p>
+
+</div>
+</div>
+<a id="aa44722b91661bf955fbf8249358a80fc" name="aa44722b91661bf955fbf8249358a80fc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa44722b91661bf955fbf8249358a80fc">&#9670;&#160;</a></span>scatter() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::scatter </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scatter double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
+
+</div>
+</div>
+<a id="ad08ead9f464f5cd90429732d0e9f3ee9" name="ad08ead9f464f5cd90429732d0e9f3ee9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad08ead9f464f5cd90429732d0e9f3ee9">&#9670;&#160;</a></span>scatter() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::scatter </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scatter int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
+
+</div>
+</div>
+<a id="a49b68d553410216a44c9f49e3af60dc0" name="a49b68d553410216a44c9f49e3af60dc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49b68d553410216a44c9f49e3af60dc0">&#9670;&#160;</a></span>scatterv() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::scatterv </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_counts</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>displs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scatterv double <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
+
+</div>
+</div>
+<a id="a5faeaa793d615d608c012b7b6d44b0e3" name="a5faeaa793d615d608c012b7b6d44b0e3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5faeaa793d615d608c012b7b6d44b0e3">&#9670;&#160;</a></span>scatterv() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cmType::scatterv </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>send_counts</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>displs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>recv_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>root</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scatterv int <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a> </p>
 
 </div>
 </div>

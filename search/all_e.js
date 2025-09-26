@@ -17,13 +17,14 @@ var searchData=
   ['phys_14',['phys',['../classeq_type.html#ae11f68cd2d856517f7be3e1a184dcafa',1,'eqType']]],
   ['pinit_15',['Pinit',['../class_com_mod.html#adfb9bfa59f893953d5f8f26852c5b543',1,'ComMod']]],
   ['pnorm_16',['pNorm',['../classeq_type.html#aa4f553772b195bbbc7be3d9b281cb4c7',1,'eqType']]],
-  ['precompdt_17',['precompDt',['../class_com_mod.html#abe181c74acd266e321951a90182a9758',1,'ComMod']]],
-  ['precompfieldname_18',['precompFieldName',['../class_com_mod.html#a7e1a59c4ebba44640b4d4bc7b55cd82b',1,'ComMod']]],
-  ['precompfilename_19',['precompFileName',['../class_com_mod.html#a5703dd4af9a8701876de31e2e4ae0a61',1,'ComMod']]],
-  ['precomputedsolutionparameters_20',['PrecomputedSolutionParameters',['../class_precomputed_solution_parameters.html',1,'']]],
-  ['print_5fparameter_5flist_21',['print_parameter_list',['../class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4',1,'ParameterLists']]],
-  ['projectionparameters_22',['ProjectionParameters',['../class_projection_parameters.html',1,'']]],
-  ['ps0_23',['pS0',['../class_com_mod.html#af6037b9453a02db9505b7af5bc403cae',1,'ComMod']]],
-  ['pseudo_5fecg_24',['pseudo_ECG',['../classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a',1,'ecgLeadsType']]],
-  ['psteq_25',['pstEq',['../class_com_mod.html#a87707963de89cffba1c523da18569cd8',1,'ComMod']]]
+  ['point_5fmatch_5ftolerance_17',['POINT_MATCH_TOLERANCE',['../class_boundary_condition.html#a7e0109e23a36b1319e23561005400db4',1,'BoundaryCondition']]],
+  ['precompdt_18',['precompDt',['../class_com_mod.html#abe181c74acd266e321951a90182a9758',1,'ComMod']]],
+  ['precompfieldname_19',['precompFieldName',['../class_com_mod.html#a7e1a59c4ebba44640b4d4bc7b55cd82b',1,'ComMod']]],
+  ['precompfilename_20',['precompFileName',['../class_com_mod.html#a5703dd4af9a8701876de31e2e4ae0a61',1,'ComMod']]],
+  ['precomputedsolutionparameters_21',['PrecomputedSolutionParameters',['../class_precomputed_solution_parameters.html',1,'']]],
+  ['print_5fparameter_5flist_22',['print_parameter_list',['../class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4',1,'ParameterLists']]],
+  ['projectionparameters_23',['ProjectionParameters',['../class_projection_parameters.html',1,'']]],
+  ['ps0_24',['pS0',['../class_com_mod.html#af6037b9453a02db9505b7af5bc403cae',1,'ComMod']]],
+  ['pseudo_5fecg_25',['pseudo_ECG',['../classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a',1,'ecgLeadsType']]],
+  ['psteq_26',['pstEq',['../class_com_mod.html#a87707963de89cffba1c523da18569cd8',1,'ComMod']]]
 ];
