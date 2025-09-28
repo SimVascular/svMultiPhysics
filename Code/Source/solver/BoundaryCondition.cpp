@@ -375,11 +375,20 @@ void BoundaryCondition::distribute_spatially_variable(const ComMod& com_mod, con
         // Get VTP points for position matching
         Array<double> vtp_points = vtp_data_->get_points();
         
-         // Look up data for all nodes using point matching
+        // Get mesh scale factor from the face's mesh
+        double mesh_scale_factor = 1.0; // Default scale factor
+        if (face_ != nullptr) {
+            mesh_scale_factor = com_mod.msh[face_->iM].scF;
+            #ifdef debug_distribute_spatially_variable
+            dmsg << "Mesh scale factor: " << mesh_scale_factor << std::endl;
+            #endif
+        }
+        
+        // Look up data for all nodes using point matching
         for (const auto& array_name : array_names_) {
             all_values[array_name].resize(total_num_nodes);
             for (int i = 0; i < total_num_nodes; i++) {
-                int vtp_idx = find_vtp_point_index(all_positions(0,i), all_positions(1,i), all_positions(2,i), vtp_points);
+                int vtp_idx = find_vtp_point_index(all_positions(0,i), all_positions(1,i), all_positions(2,i), vtp_points, mesh_scale_factor);
                 all_values[array_name](i) = global_data_[array_name](vtp_idx, 0);
             }
         }
@@ -474,10 +483,13 @@ void BoundaryCondition::distribute_flags(const CmMod& cm_mod, const cmType& cm, 
 }
 
 int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
-                                const Array<double>& vtp_points) const
+                                const Array<double>& vtp_points, double mesh_scale_factor) const
 {
     const int num_points = vtp_points.ncols();
-    Vector<double> target_point{x, y, z};
+    
+    // Scale down the target coordinates to match the unscaled VTP coordinates
+    // The simulation coordinates are scaled by mesh_scale_factor, but VTP coordinates are not
+    Vector<double> target_point{x / mesh_scale_factor, y / mesh_scale_factor, z / mesh_scale_factor};
 
     // Simple linear search through all points in the VTP file
     for (int i = 0; i < num_points; i++) {
@@ -490,6 +502,7 @@ int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
             #ifdef debug_bc_find_vtp_point_index
             DebugMsg dmsg(__func__, 0);
             dmsg << "Found VTP point index for node at position (" << x << ", " << y << ", " << z << ")" << std::endl;
+            dmsg << "Scaled target position (" << target_point(0) << ", " << target_point(1) << ", " << target_point(2) << ")" << std::endl;
             dmsg << "VTP point index: " << i << std::endl;
             #endif
 
