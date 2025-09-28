@@ -83,8 +83,7 @@ public:
     /// @param normal_only Flag to apply only along normal direction
     /// @param face Face associated with the Robin BC
     /// @throws BoundaryConditionValidationException if values are invalid
-    RobinBoundaryCondition(double uniform_stiffness, double uniform_damping, bool normal_only, const faceType& face)
-        : BoundaryCondition({{"Stiffness", uniform_stiffness}, {"Damping", uniform_damping}}, StringBoolMap{{"normal_direction_only", normal_only}}, face) {}
+    RobinBoundaryCondition(double uniform_stiffness, double uniform_damping, bool normal_only, const faceType& face);
  
     /// @brief Apply only along normal direction (getter)
     /// @return true if BC should be applied only along normal direction

@@ -394,8 +394,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) { 
     
     // Read VTP file path for per-node stiffness and damping (optional)
-    if (bc_params->robin_vtp_file_path.defined()) {
-      lBc.robin_bc = RobinBoundaryCondition(bc_params->robin_vtp_file_path.value(), 
+    if (bc_params->spatial_values_file_path.defined()) {
+      lBc.robin_bc = RobinBoundaryCondition(bc_params->spatial_values_file_path.value(), 
                                             bc_params->apply_along_normal_direction.value(),
                                             com_mod.msh[lBc.iM].fa[lBc.iFa]);
     } else {

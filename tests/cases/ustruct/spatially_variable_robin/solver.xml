@@ -134,7 +134,7 @@
 
    <Add_BC name="Y0" > 
       <Type> Robin </Type> 
-      <Robin_vtp_file_path> Y0_spatially_varying_robin.vtp </Robin_vtp_file_path> 
+      <Spatial_values_file_path> Y0_spatially_varying_robin.vtp </Spatial_values_file_path> 
    </Add_BC> 
 
    <Add_BC name="Y1" > 
