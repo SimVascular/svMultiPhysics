@@ -89,6 +89,8 @@ int sign(double value);
 
 void swap(int& value1, int& value2);
 
+void find_loc(const Array<int>& array, int value, std::array<int, 2>& ind);
+
 };
 
 #endif

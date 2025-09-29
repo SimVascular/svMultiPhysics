@@ -1370,11 +1370,8 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
     dmsg << "----- iBc " << iBc+1;
     #endif
 
-    // Skip if the face is virtual
-    if (com_mod.msh[iM].fa[iFa].vrtual && utils::btest(bc.bType, iBC_res) && bc.flwP) {
-      eq_assem::fsi_ls_upd(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]);
-      continue;
-    }
+    if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
+
     if (utils::btest(bc.bType, iBC_Neu)) {
       #ifdef debug_set_bc_neu
       dmsg << "iM: " << iM+1;
@@ -1499,18 +1496,23 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
     }
   }
   // Now treat Robin BC (stiffness and damping) here
-  //
-  if (utils::btest(lBc.bType,iBC_Robin)) {
-    set_bc_rbnl(com_mod, cm_mod, lFa, lBc.k, lBc.c, lBc.rbnN, Yg, Dg);
+  if (lBc.robin_bc.is_initialized()) {
+    set_bc_rbnl(com_mod, cm_mod, lFa, lBc.robin_bc, Yg, Dg);
   }
 }
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
-void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const double ks, const double cs, const bool isN, 
+void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
   const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
+
+  #define n_debug_set_bc_rbnl_l
+  #ifdef debug_set_bc_rbnl_l
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  #endif
 
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
@@ -1573,9 +1575,30 @@ void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, cons
 
       auto nDn = mat_fun::mat_id(nsd);
       Vector<double> h;
-      h = ks*u + cs*ud;
+      
+      #ifdef debug_set_bc_rbnl_l
+      dmsg << "Calculating weighted average of stiffness and damping for this integration point";
+      #endif
+      // Calculate weighted average of stiffness and damping for this integration point
+      double ks_avg = 0.0;
+      double cs_avg = 0.0;
+      for (int a = 0; a < eNoN; a++) {
+        int Ac = lFa.IEN(a,e);
+        #ifdef debug_set_bc_rbnl_l
+        dmsg << "e: " << e << std::endl;
+        dmsg << "a: " << a << std::endl;
+        dmsg << "Local position: " << com_mod.x.col(Ac) << std::endl;
+        dmsg << "Stiffness: " << robin_bc.get_stiffness(robin_bc.get_local_index(Ac)) << std::endl;
+        #endif
+        ks_avg += N(a) * robin_bc.get_stiffness(robin_bc.get_local_index(Ac));
+        cs_avg += N(a) * robin_bc.get_damping(robin_bc.get_local_index(Ac));
+      }
 
-      if (isN) {
+      
+      
+      h = ks_avg*u + cs_avg*ud;
+
+      if (robin_bc.normal_direction_only()) {
         h = utils::norm(h, nV) * nV;
         for (int a = 0; a < nsd; a++) {
           for (int b = 0; b < nsd; b++) {
@@ -1597,8 +1620,11 @@ void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, cons
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {
               double T1 = wl*N(a)*N(b);
-              double T2 = (afm*ks + cs)*T1;
-              T1 = T1*ks;
+              int Bc = lFa.IEN(b,e);
+              double ks_b = robin_bc.get_stiffness(robin_bc.get_local_index(Bc));
+              double cs_b = robin_bc.get_damping(robin_bc.get_local_index(Bc));
+              double T2 = (afm*ks_b + cs_b)*T1;
+              T1 = T1*ks_b;
 
               // dM_1/dV_1 + af/am*dM_1/dU_1
               lKd(0,a,b) = lKd(0,a,b) + T1*nDn(0,0);
@@ -1641,7 +1667,8 @@ void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, cons
         // cPhys != EquationType::phys_ustruct
         //
         } else {
-          double wl = w * (ks*afu + cs*afv);
+          // Use average stiffness and damping for this integration point
+          double wl = w * (ks_avg*afu + cs_avg*afv);
 
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {
@@ -1673,8 +1700,11 @@ void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, cons
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {
               double T1 = wl*N(a)*N(b);
-              double T2 = (afm*ks + cs)*T1;
-              T1 = T1*ks;
+              int Bc = lFa.IEN(b,e);
+              double ks_b = robin_bc.get_stiffness(robin_bc.get_local_index(Bc));
+              double cs_b = robin_bc.get_damping(robin_bc.get_local_index(Bc));
+              double T2 = (afm*ks_b + cs_b)*T1;
+              T1 = T1*ks_b;
 
               // dM_1/dV_1 + af/am*dM_1/dU_1
               lKd(0,a,b) = lKd(0,a,b) + T1*nDn(0,0);
@@ -1695,7 +1725,8 @@ void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, cons
           }
 
         } else {
-          double wl = w * (ks*afu + cs*afv);
+          // Use average stiffness and damping for this integration point
+          double wl = w * (ks_avg*afu + cs_avg*afv);
 
           for (int a = 0; a < eNoN; a++) {
             for (int b = 0; b < eNoN; b++) {

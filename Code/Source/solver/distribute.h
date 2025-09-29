@@ -40,6 +40,12 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
 
 void dist_bf(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bfType& lBf);
 
+void dist_ris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm);
+
+void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm);
+
+void dist_uris_msh(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, mshType& lM, const int iUris);
+
 void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::vector<mshType>& tMs,
              const Vector<int>& gmtl, CepMod& cep_mod, eqType& lEq);
 

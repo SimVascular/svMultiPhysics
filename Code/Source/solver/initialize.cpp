@@ -95,6 +95,8 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   bool sstEq = com_mod.sstEq;
   bool pstEq = com_mod.pstEq;
   bool cepEq = cep_mod.cepEq;
+  bool risFlag = com_mod.risFlag;
+  bool urisFlag = com_mod.urisFlag;
 
   com_mod.timeP[0] = timeP[0];
   com_mod.timeP[1] = timeP[1];
@@ -146,6 +148,21 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
           bin_file.read((char*)Ad.data(), Ad.msize());
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          bin_file.read((char*)Ad.data(), Ad.msize());
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+        } else if (urisFlag) {
+          bin_file.read((char*)Ad.data(), Ad.msize());
+          Vector<int> urisCnt(com_mod.nUris);
+          bin_file.read((char*)urisCnt.data(), urisCnt.msize());
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.nUris; i++) {
+            com_mod.uris[i].cnt = urisCnt(i);
+            com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
         } else {
           bin_file.read((char*)Ad.data(), Ad.msize());
         }
@@ -156,6 +173,19 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
         } else if (cepEq) {
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+        } else if (urisFlag) {
+          Vector<int> urisCnt(com_mod.nUris);
+          bin_file.read((char*)urisCnt.data(), urisCnt.msize());
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.nUris; i++) {
+            com_mod.uris[i].cnt = urisCnt(i);
+            com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
         } else {
           //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do
         }
@@ -166,6 +196,19 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
     } else {
       if (cepEq) {
         bin_file.read((char*)Xion.data(), Xion.msize());
+      } else if (risFlag) {
+        std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+        bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+        for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+          com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+      } else if (urisFlag) {
+        Vector<int> urisCnt(com_mod.nUris);
+        bin_file.read((char*)urisCnt.data(), urisCnt.msize());
+        std::vector<char> urisClsFlagChar(com_mod.nUris);
+        bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+        for (int i = 0; i < com_mod.nUris; i++) {
+          com_mod.uris[i].cnt = urisCnt(i);
+          com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
       } else {
         //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao
       }
@@ -509,6 +552,12 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     i = i + cep_mod.nXion;
     if (cep_mod.cem.cpld) i = i + 1;
   }
+  if (com_mod.risFlag) {
+    i = i + com_mod.ris.nbrRIS;
+  }
+  if (com_mod.urisFlag) {
+    i = i + com_mod.nUris * 2;
+  }
 
   i = sizeof(int)*(1+com_mod.stamp.size()) + sizeof(double)*(2 + com_mod.nEq + com_mod.cplBC.nX + i*com_mod.tnNo);
 
@@ -527,7 +576,25 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // [TODO:DaveP] this is not implemented.
   //
-  if (com_mod.shlEq) {
+  // if (com_mod.shlEq) {
+  //   for (int iM = 0; iM < com_mod.nMsh; iM++) { 
+  //     auto& msh = com_mod.msh[iM];
+  //     if (msh.lShl) {
+  //       if (msh.eType == ElementType::NRB) {
+  //         msh.sbc.resize(msh.eNoN, msh.nEl);
+  //         //ALLOCATE(msh(iM)%eIEN(0,0))
+  //         //ALLOCATE(msh(iM)%sbc(msh(iM)%eNoN,msh(iM)%nEl))
+  //         msh.sbc = 0;
+  //       } else if (msh.eType == ElementType::TRI3) {
+  //         baf_ini_ns::set_shl_xien(simulation, msh);
+  //         //CALL SETSHLXIEN(msh(iM))
+  //       }
+  //     }
+  //   }
+  // }
+  
+
+  if (com_mod.shlEq or com_mod.urisActFlag) {
     for (int iM = 0; iM < com_mod.nMsh; iM++) { 
       auto& msh = com_mod.msh[iM];
       if (msh.lShl) {
@@ -543,6 +610,27 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       }
     }
   }
+
+  if (com_mod.risFlag) {
+    if (cm.mas(cm_mod)) {
+      std::cout << "Finally the map is: " << std::endl;
+      for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
+        std::cout << " -p " << cm.idcm() << " -pj " << iProj << " RIS node: " << std::endl;
+        Vector<int> map0 = com_mod.grisMapList[iProj].map.row(0);
+        for (int mapi = 0; mapi < map0.size(); mapi++) {
+          std::cout << map0[mapi] << "\t";
+        }
+        std::cout <<  " " << std::endl;
+        std::cout << " -p " << cm.idcm() << " -pj " << iProj << " RIS node: " << std::endl;
+        Vector<int> map1 = com_mod.grisMapList[iProj].map.row(1);
+        for (int mapi = 0; mapi < map1.size(); mapi++) {
+          std::cout << map1[mapi] << "\t";
+        }
+        std::cout <<  " " << std::endl;
+      }
+    }
+  }
+
 
   // Initialize tensor operations
   //

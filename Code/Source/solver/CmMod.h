@@ -112,6 +112,26 @@ class cmType {
 
     void bcast(const CmMod& cm_mod, Array<int>& data, const std::string& name="") const;
 
+    // Gather operations
+    void gather(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const;
+    void gather(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const;
+    void gather(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const;
+    void gather(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const;
+
+    // Gatherv operations
+    void gatherv(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const;
+    void gatherv(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const;
+
+    // Scatterv operations
+    void scatterv(const CmMod& cm_mod, const Vector<int>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<int>& recv_data, int root) const;
+    void scatterv(const CmMod& cm_mod, const Vector<double>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<double>& recv_data, int root) const;
+
+    // Scatter operations
+    void scatter(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const;
+    void scatter(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const;
+    void scatter(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const;
+    void scatter(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const;
+
     //------------
     // bcast_enum
     //------------

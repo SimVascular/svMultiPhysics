@@ -207,6 +207,8 @@ set(CSRCS
   ustruct.h ustruct.cpp
   vtk_xml.h vtk_xml.cpp
   vtk_xml_parser.h vtk_xml_parser.cpp
+  ris.h ris.cpp
+  uris.h uris.cpp
 
   CepMod.h CepMod.cpp
   CepModAp.h CepModAp.cpp
@@ -222,6 +224,9 @@ set(CSRCS
   SPLIT.c
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp
+
+  BoundaryCondition.h BoundaryCondition.cpp
+  RobinBoundaryCondition.h RobinBoundaryCondition.cpp
 )
 
   # Set PETSc interace code.
