@@ -58,6 +58,8 @@ class SimulationLogger {
       file_name_ = file_name;
     }
 
+    bool is_initialized() const { return log_file_.is_open(); }
+
     ~SimulationLogger() 
     {
       log_file_.close();
@@ -78,6 +80,27 @@ class SimulationLogger {
     return *this;
   }
 
+  // Special handling for vector<string>
+  SimulationLogger& operator<< (const std::vector<std::string>& values)
+  {
+    if (file_name_ == "") { 
+      return *this;
+    }
+
+    bool first = true;
+    for (const auto& value : values) {
+      if (!first) {
+        log_file_ << ", ";
+        if (cout_write_) std::cout << ", ";
+      }
+      log_file_ << value;
+      if (cout_write_) std::cout << value;
+      first = false;
+    }
+
+    return *this;
+  }
+
   SimulationLogger& operator<<(std::ostream&(*value)(std::ostream& o))
   {
     if (file_name_ == "") { 
@@ -93,8 +116,21 @@ class SimulationLogger {
     return *this;
   };
 
+  /// @brief Log a message with automatic space separation
+  /// @param args Arguments to log
+  template<typename... Args>
+  SimulationLogger& log_message(const Args&... args) {
+    if (file_name_ == "") return *this;
+
+    bool first = true;
+    ((first ? (first = false, (*this << args)) : (*this << ' ' << args)), ...);
+    *this << std::endl;
+    return *this;
+  }
+
   private:
     bool cout_write_ = false;
+    bool initialized_ = false;
     std::string file_name_;
     std::ofstream log_file_;
 };

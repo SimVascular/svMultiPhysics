@@ -40,7 +40,7 @@
 
 #define n_debug_bc
 
-BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face)
+BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face, SimulationLogger& logger)
     : face_(&face)
     , global_num_nodes_(face.nNo)
     , local_num_nodes_(0)
@@ -48,6 +48,7 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     , spatially_variable(true)
     , vtp_file_path_(vtp_file_path)
     , flags_(flags)
+    , logger_(&logger)
 {
     try {
         global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
@@ -73,13 +74,14 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     }
 }
 
-BoundaryCondition::BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face)
+BoundaryCondition::BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face, SimulationLogger& logger)
     : face_(&face)
     , global_num_nodes_(face.nNo)
     , local_num_nodes_(0)
     , spatially_variable(false)
     , vtp_file_path_("")
     , flags_(flags)
+    , logger_(&logger)
 {
     try {
         // Store array names, validate and store values
@@ -107,6 +109,7 @@ BoundaryCondition::BoundaryCondition(const BoundaryCondition& other)
     , vtp_file_path_(other.vtp_file_path_)
     , flags_(other.flags_)
     , global_node_map_(other.global_node_map_)
+    , logger_(other.logger_)
 {
     if (other.vtp_data_) {
         vtp_data_ = std::make_unique<VtkVtpData>(*other.vtp_data_);
@@ -126,6 +129,7 @@ void swap(BoundaryCondition& lhs, BoundaryCondition& rhs) noexcept {
     swap(lhs.flags_, rhs.flags_);
     swap(lhs.global_node_map_, rhs.global_node_map_);
     swap(lhs.vtp_data_, rhs.vtp_data_);
+    swap(lhs.logger_, rhs.logger_);
 }
 
 BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition other) {
@@ -145,6 +149,7 @@ BoundaryCondition::BoundaryCondition(BoundaryCondition&& other) noexcept
     , flags_(std::move(other.flags_))
     , global_node_map_(std::move(other.global_node_map_))
     , vtp_data_(std::move(other.vtp_data_))
+    , logger_(other.logger_)
 {
     other.face_ = nullptr;
     other.global_num_nodes_ = 0;
@@ -202,6 +207,11 @@ BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(con
         dmsg << array_name << " data size: " << array_data.nrows() << " x " << array_data.ncols() << std::endl;
         #endif
     }
+
+    logger_ -> log_message("[BoundaryCondition] Loaded from VTP file");
+    logger_ -> log_message("\t File path:", vtp_file_path);
+    logger_ -> log_message("\t Arrays:", array_names);
+    logger_ -> log_message("\t Face:", face_->name);
 
     return result;
 }

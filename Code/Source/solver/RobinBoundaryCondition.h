@@ -70,11 +70,12 @@ public:
     /// @param vtp_file_path Path to VTP file containing Stiffness and Damping point arrays
     /// @param normal_only Flag to apply only along normal direction
     /// @param face Face associated with the Robin BC
+    /// @param logger Simulation logger used to write warnings
     /// @throws BoundaryConditionFileException if file cannot be read
     /// @throws BoundaryConditionVtpArrayException if arrays are missing
     /// @throws BoundaryConditionValidationException if values are invalid
-    RobinBoundaryCondition(const std::string& vtp_file_path, bool normal_only, const faceType& face)
-        : BoundaryCondition(vtp_file_path, std::vector<std::string>{"Stiffness", "Damping"}, StringBoolMap{{"normal_direction_only", normal_only}}, face) {}
+    RobinBoundaryCondition(const std::string& vtp_file_path, bool normal_only, const faceType& face, SimulationLogger& logger)
+        : BoundaryCondition(vtp_file_path, std::vector<std::string>{"Stiffness", "Damping"}, StringBoolMap{{"normal_direction_only", normal_only}}, face, logger) {}
 
 
     /// @brief Constructor for uniform values
@@ -82,8 +83,9 @@ public:
     /// @param uniform_damping Uniform damping value for all nodes
     /// @param normal_only Flag to apply only along normal direction
     /// @param face Face associated with the Robin BC
+    /// @param logger Simulation logger used to write warnings
     /// @throws BoundaryConditionValidationException if values are invalid
-    RobinBoundaryCondition(double uniform_stiffness, double uniform_damping, bool normal_only, const faceType& face);
+    RobinBoundaryCondition(double uniform_stiffness, double uniform_damping, bool normal_only, const faceType& face, SimulationLogger& logger);
  
     /// @brief Apply only along normal direction (getter)
     /// @return true if BC should be applied only along normal direction
