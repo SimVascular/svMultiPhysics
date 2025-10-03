@@ -109,10 +109,13 @@ void calc_elem_ar(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag
 
     for (int a = 0; a < lM.eNoN; a++) {
       int Ac = lM.IEN(a,e);
-      xl.set_col(a, com_mod.x.col(Ac));
-      if (com_mod.mvMsh) {
-        for (int i = 0; i < nsd; i++) {
-          dol(i,a) = com_mod.Do(i+nsd+1,Ac);
+      // Skip if Ac is -1 (node doesn't belong to this processor)
+      if (Ac != -1) {
+        xl.set_col(a, com_mod.x.col(Ac));
+        if (com_mod.mvMsh) {
+          for (int i = 0; i < nsd; i++) {
+            dol(i,a) = com_mod.Do(i+nsd+1,Ac);
+          }
         }
       }
     }
@@ -206,11 +209,14 @@ void calc_elem_jac(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rfla
 
     for (int a = 0; a < lM.eNoN; a++) {
       int Ac = lM.IEN(a,e);
-      xl.set_col(a, com_mod.x.col(Ac));
-      if (com_mod.mvMsh) {
-        for (int i = 0; i < nsd; i++) {
-          dol(i,a) = com_mod.Do(i+nsd+1,Ac);
-          //dol(i,a) = com_mod.Do(i+nsd,Ac);
+      // Skip if Ac is -1 (node doesn't belong to this processor)
+      if (Ac != -1) {
+        xl.set_col(a, com_mod.x.col(Ac));
+        if (com_mod.mvMsh) {
+          for (int i = 0; i < nsd; i++) {
+            dol(i,a) = com_mod.Do(i+nsd+1,Ac);
+            //dol(i,a) = com_mod.Do(i+nsd,Ac);
+          }
         }
       }
     }
@@ -323,10 +329,13 @@ void calc_elem_skew(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rfl
 
     for (int a = 0; a < lM.eNoN; a++) {
       int Ac = lM.IEN(a,e);
-      xl.set_col(a, com_mod.x.col(Ac));
-      if (com_mod.mvMsh) {
-        for (int i = 0; i < nsd; i++) {
-          dol(i,a) = com_mod.Do(i+nsd+1,Ac);
+      // Skip if Ac is -1 (node doesn't belong to this processor)
+      if (Ac != -1) {
+        xl.set_col(a, com_mod.x.col(Ac));
+        if (com_mod.mvMsh) {
+          for (int i = 0; i < nsd; i++) {
+            dol(i,a) = com_mod.Do(i+nsd+1,Ac);
+          }
         }
       }
     }

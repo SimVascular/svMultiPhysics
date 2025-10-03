@@ -3105,11 +3105,9 @@ void addCapBC(ComMod& com_mod, eqType& lEq, int iBc) {
 
   // Store old BCs in a temporary container
   std::vector<bcType> oldBCs(lEq.nBc);
-  // Output old BCs
   for (int jBc = 0; jBc < lEq.nBc; jBc++) {
-  }
-  for (int jBc = 0; jBc < lEq.nBc; jBc++) {
-    copyBC(com_mod, lEq.bc[jBc], oldBCs[jBc]); // Copy BC information
+    oldBCs[jBc] = lEq.bc[jBc]; // Copy BC information
+    //copyBC(com_mod, lEq.bc[jBc], oldBCs[jBc]); // Copy BC information
     // Destroy old BC
   }
 
@@ -3121,13 +3119,15 @@ void addCapBC(ComMod& com_mod, eqType& lEq, int iBc) {
 
   // Copy back old BCs
   for (int jBc = 0; jBc < lEq.nBc - 1; jBc++) {
-    copyBC(com_mod, oldBCs[jBc], lEq.bc[jBc]);
+    lEq.bc[jBc] = oldBCs[jBc];
+    //copyBC(com_mod, oldBCs[jBc], lEq.bc[jBc]);
   }
 
   // Add new BC for capping surface. Copy BC information from the
   // capped surface. This surface corresponds to index iBc - argument
   // passed as input to this function
-  copyBC(com_mod, lEq.bc[iBc], lEq.bc[lEq.nBc-1]);
+  lEq.bc[lEq.nBc-1] = lEq.bc[iBc];
+  //copyBC(com_mod, lEq.bc[iBc], lEq.bc[lEq.nBc-1]);
 
   // Correct some values in the new capping surface BC
   cplBC.nFa += 1;  // Increment coupled BC face count
@@ -3145,6 +3145,7 @@ void addCapBC(ComMod& com_mod, eqType& lEq, int iBc) {
 
   // Set a pointer to the capping surface BC in the capped surface BC
   lEq.bc[iBc].iCapBC = lEq.nBc-1;
+  lEq.bc[iBc].hasCapBC = true;
   //Print new BCs
   for (int jBc = 0; jBc < lEq.nBc; jBc++) {
     //std::cout << "New BC " << jBc << std::endl;
@@ -3155,6 +3156,7 @@ void addCapBC(ComMod& com_mod, eqType& lEq, int iBc) {
 //--------------------
 // Performs a deep copy of old BC (oBc) to new BC (nBc).
 //
+/*
 void copyBC(ComMod& com_mod, const bcType& oBc, bcType& nBc) {
   // Copy primitive (bool, int, double) values
   nBc.weakDir  = oBc.weakDir;
@@ -3235,7 +3237,9 @@ void copyBC(ComMod& com_mod, const bcType& oBc, bcType& nBc) {
   // Copy cap data fields
   nBc.capName = oBc.capName;
   nBc.iCapBC  = oBc.iCapBC;
+  nBc.hasCapBC = oBc.hasCapBC;
 }
+*/
 
 //--------------
 // set_cmm_bdry

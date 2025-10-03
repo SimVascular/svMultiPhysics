@@ -236,10 +236,9 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
         // Finite difference calculation of the resistance dP/dQ
         bc.r = (cplBC.fa[i].y - orgY[i]) / diff;
 
-        // Set resistance for capping BC if it exists for this BC.
-        // Set it to be the same resistance as the capped BC.
-        auto& iCapBC = bc.iCapBC;
-        if (iCapBC != -1) {
+        // Copy resistance to capping BC if one exists
+        if (bc.hasCapBC) {
+          auto& iCapBC = bc.iCapBC;
           eq.bc[iCapBC].r = bc.r;
         }
 
@@ -1369,6 +1368,12 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
     #ifdef debug_set_bc_neu
     dmsg << "----- iBc " << iBc+1;
     #endif
+
+    // Skip if the face is virtual
+    if (com_mod.msh[iM].fa[iFa].vrtual && utils::btest(bc.bType, iBC_res) && bc.flwP) {
+      eq_assem::fsi_ls_upd(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]);
+      continue;
+    }
 
     if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
 

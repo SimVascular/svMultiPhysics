@@ -493,7 +493,7 @@ void iterate_solution(Simulation* simulation)
       set_bc::set_bc_dir_w(com_mod, cm_mod, Yg, Dg);
 
       if (com_mod.risFlag) {
-        ris::ris_resbc(com_mod, Yg, Dg);
+        ris::ris_resbc(com_mod, cm_mod,Yg, Dg);
       }
 
       if (com_mod.ris0DFlag) {

@@ -359,6 +359,18 @@ void get_nnx(const int nsd, const consts::ElementType eType, const int eNoN, con
   bool l4 = (rt >= 0.9999) && (rt <= 1.0001);
 
   l1 = (l1 && l2 && l3 && l4);
+  if (!l1) {
+    std::cout << "l1: " << l1 << std::endl;
+    std::cout << "l2: " << l2 << std::endl;
+    std::cout << "l3: " << l3 << std::endl;
+    std::cout << "l4: " << l4 << std::endl;
+    std::cout << "xi: " << xi << std::endl;
+    std::cout << "N: " << N << std::endl;
+    std::cout << "Nx: " << Nx << std::endl;
+    std::cout << "Nb: " << Nb << std::endl;
+    std::cout << "xib: " << xib << std::endl;
+    std::cout << "xl: " << xl << std::endl;
+  }
 
   if (!l1) {
     throw std::runtime_error("Error in computing shape functions");
@@ -593,25 +605,25 @@ int ie = is + nsd - 1;
 for (int a = 0; a < eNoNb; a++) {
   // Collect node position onto Master. On slaves, set tmpX to zero.
   int Ac = lFa.IEN(a, e);
-  all_fun::GatherMasterV(com_mod, cm_mod, com_mod.x, Ac, tmpX);
+  all_fun::vector_to_master(com_mod, cm_mod, com_mod.x, Ac, tmpX);
   for (int i = 0; i < nsd; i++) {
     lX(i, a) = tmpX(i);
   }
   // Correct geometry if mesh is moving or if we want to integrate
   // in a different configuration.
   if (com_mod.mvMsh) {
-    all_fun::GatherMasterV(com_mod, cm_mod, com_mod.Do, Ac, tmpDo);
+    all_fun::vector_to_master(com_mod, cm_mod, com_mod.Do, Ac, tmpDo);
     for (int i = 0; i < nsd; i++) {
         lX(i, a) += tmpDo(i + nsd + 1);
     }
   } else {
     if (cfg == MechanicalConfigurationType::old_timestep) {
-        all_fun::GatherMasterV(com_mod, cm_mod, com_mod.Do, Ac, tmpDo);
+        all_fun::vector_to_master(com_mod, cm_mod, com_mod.Do, Ac, tmpDo);
         for (int i = 0; i < nsd; i++) {
             lX(i, a) += tmpDo(is + i);
         }
     } else if (cfg == MechanicalConfigurationType::new_timestep) {
-        all_fun::GatherMasterV(com_mod, cm_mod, com_mod.Dn, Ac, tmpDn);
+        all_fun::vector_to_master(com_mod, cm_mod, com_mod.Dn, Ac, tmpDn);
         for (int i = 0; i < nsd; i++) {
             lX(i, a) += tmpDn(is + i);
         }

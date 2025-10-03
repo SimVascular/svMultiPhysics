@@ -242,6 +242,13 @@ void baf_ini(Simulation* simulation)
         match_lhs_face(com_mod, iM, capID, faInCap);
         // Store capping relation in lhs.face[faIn]
         com_mod.lhs.face[faIn].faInCap = faInCap;
+        com_mod.lhs.face[faIn].isCapped = true;
+        
+        // Check that capping face is coupled
+        //if (!com_mod.lhs.face[faInCap].coupledFlag) {
+         // throw std::runtime_error("Capping face '" + com_mod.msh[iM].fa[capID].name + 
+         //                        "' is not coupled. Capping faces must have coupled boundary conditions.");
+        //}
       }
     }
   }
@@ -665,7 +672,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 
         for (int a = 0; a < fs.eNoN; a++) {
           int Ac = lFa.IEN(a,e);
-          if (Ac != 0) {
+          if (Ac != -1) {
             for (int j = 0; j < sV.nrows(); j++) {
               sV(j,Ac) = sV(j,Ac) + fs.w(g)*fs.N(a,g)*nV(j);
             }
@@ -697,7 +704,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
         int b = a - fs.eNoN;
         int Ac = lFa.IEN(a,e);
         int Bc = lFa.IEN(b,e);
-        if ((Ac != 0) && (Bc != 0)) {
+        if (Ac != -1 && Bc != -1) {
           for (int i = 0; i < sV.nrows(); i++) {
             nV(i) = sV(i,Bc);
           }
@@ -1044,7 +1051,9 @@ void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM)
 
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
-      xl.set_col(a, com_mod.x.col(Ac));
+      if (Ac != -1) {
+        xl.set_col(a, com_mod.x.col(Ac));
+      }
     }
 
     for (int g = 0; g < lM.nG; g++) {

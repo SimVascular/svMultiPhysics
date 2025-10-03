@@ -183,6 +183,9 @@ class bcType
     // Index of cap BC associated wtih this BC
     int iCapBC = -1;
 
+    // Flag indicating if this BC has a capping BC
+    bool hasCapBC = false;
+
     // Name of face that caps this surface
     std::string capName;
 

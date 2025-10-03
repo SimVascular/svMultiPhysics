@@ -166,6 +166,9 @@ class FSILS_faceType
 
     /// Index of face in lhs.face that caps this face
     int faInCap = -1;
+
+    /// Flag indicating if this face is capped by another face
+    bool isCapped = false;
 };
 
 /// @brief Modified in:

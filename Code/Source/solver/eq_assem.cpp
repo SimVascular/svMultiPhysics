@@ -262,7 +262,17 @@ void b_neu_folw_p(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
       }
 
       auto xi = xi0;
-      nn::get_nnx(nsd, msh.eType, eNoN, xl, msh.xib, msh.Nb, xp, xi, N, Nxi);
+      
+      try {
+        nn::get_nnx(nsd, msh.eType, eNoN, xl, msh.xib, msh.Nb, xp, xi, N, Nxi);
+      } catch (const std::runtime_error& error) {
+        // Skip this Gauss point if shape function computation fails
+        std::cout << "Warning: Shape function computation failed for face " << lFa.name 
+                  << ", element " << e << ", Gauss point " << g << ": " << error.what() << std::endl;
+        std::cout << "xp: " << xp << std::endl;
+        std::cout << "xl: " << xl << std::endl;
+        continue;
+      }
 
       if (g == 0 || !msh.lShpF) {
         Array<double> ksix(nsd,nsd);

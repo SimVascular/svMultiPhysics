@@ -1806,16 +1806,18 @@ void dist_solid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmT
 
 void part_faceV(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa, Vector<int>& gmtl) 
 {
+  auto& cm_mod = simulation->cm_mod;
+  auto& com_mod = simulation->com_mod;
+  auto& chnl_mod = simulation->chnl_mod;
+  auto& cm = com_mod.cm;
+
   #ifdef debug_part_face
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "lFa.name: " << lFa.name;
   #endif
 
-  auto& cm_mod = simulation->cm_mod;
-  auto& com_mod = simulation->com_mod;
-  auto& chnl_mod = simulation->chnl_mod;
-  auto& cm = com_mod.cm;
+
 
   // Define some useful variables
   int eNoNb = gFa.eNoN; // number of nodes per element
