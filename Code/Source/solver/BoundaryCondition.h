@@ -80,7 +80,7 @@ protected:
     using StringDoubleMap = std::map<std::string, double>;
 
     /// @brief Data members for BC
-    const faceType* face_ = nullptr;         ///< Face associated with the BC (can be null)
+    const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by BoundaryCondition)
     int global_num_nodes_ = 0;               ///< Global number of nodes on the face
     int local_num_nodes_ = 0;                ///< Local number of nodes on this processor
     std::vector<std::string> array_names_;   ///< Names of arrays to read from VTP file
@@ -91,7 +91,7 @@ protected:
     std::string vtp_file_path_;              ///< Path to VTP file (empty if uniform)
     std::map<int, int> global_node_map_;     ///< Maps global node IDs to local array indices
     std::unique_ptr<VtkVtpData> vtp_data_;   ///< VTP data object
-    SimulationLogger* logger_ = nullptr;     ///< Logger for warnings/info
+    const SimulationLogger* logger_ = nullptr;  ///< Logger for warnings/info (not owned by BoundaryCondition)
 
 public:
     /// @brief Tolerance for point matching in VTP files
