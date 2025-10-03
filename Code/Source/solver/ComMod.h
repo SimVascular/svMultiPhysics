@@ -73,7 +73,7 @@ class fcType
 {
   public:
 
-    bool defined() { return n != 0; };
+    bool defined() const { return n != 0; };
 
     // If this is a ramp function
     bool lrmp = false;
@@ -109,7 +109,7 @@ class MBType
 {
   public:
 
-    bool defined() { return dof != 0; };
+    bool defined() const { return dof != 0; };
 
     // Degrees of freedom of d(:,.,.)
     int dof = 0;
@@ -179,6 +179,15 @@ class bcType
 
     // Pointer to FSILS%bc
     int lsPtr = -1;
+
+    // Index of cap BC associated wtih this BC
+    int iCapBC = -1;
+
+    // Flag indicating if this BC has a capping BC
+    bool hasCapBC = false;
+
+    // Name of face that caps this surface
+    std::string capName;
 
     // Undeforming Neu BC master-slave node parameters.
     int masN = 0;
@@ -544,6 +553,9 @@ class faceType
 
     //faceType& operator=(const faceType& rhs);
 
+    // Flag for virtual face (i.e. face does not lie on volume mesh)
+    bool vrtual = false;
+
     // Parametric direction normal to this face (NURBS)
     int d = 0;
 
@@ -570,6 +582,9 @@ class faceType
 
     // Number of nodes
     int nNo = 0;
+
+    //ID number of (virtual) face that caps this face
+    int capID = -1;
 
     // Global element Ids
     Vector<int> gE;
@@ -918,6 +933,9 @@ class mshType
 
     /// @brief Whether the mesh is fibers (Purkinje)
     bool lFib = false;
+
+    /// @brief Whether the mesh is virtual
+    bool vrtual = false;
 
     /// @brief Element type
     consts::ElementType eType = consts::ElementType::NA;

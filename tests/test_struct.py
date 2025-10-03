@@ -87,6 +87,11 @@ def test_LV_NeoHookean_passive_sv0D(n_proc):
 
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
 
+def test_LV_NeoHookean_passive_sv0D_capped(n_proc):
+    test_folder = "LV_NeoHookean_passive_sv0D_capped"
+
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
+
 def test_tensile_adventitia_Guccione_active(n_proc):
     test_folder = "tensile_adventitia_Guccione_active"
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=2)

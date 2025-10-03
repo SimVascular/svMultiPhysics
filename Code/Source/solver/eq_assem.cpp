@@ -55,7 +55,7 @@
 
 namespace eq_assem {
 
-void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg) 
+void b_assem_neu_bc(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg) 
 {
   #define n_debug_b_assem_neu_bc
   #ifdef debug_b_assem_neu_bc
@@ -103,7 +103,7 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.rslice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
+      nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
       double Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g)*Jac;
@@ -183,7 +183,7 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 /// @param lFa 
 /// @param hg Pressure magnitude
 /// @param Dg 
-void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg) 
+void b_neu_folw_p(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg) 
 {
   using namespace consts;
   using namespace utils;
@@ -262,7 +262,17 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
       }
 
       auto xi = xi0;
-      nn::get_nnx(nsd, msh.eType, eNoN, xl, msh.xib, msh.Nb, xp, xi, N, Nxi);
+      
+      try {
+        nn::get_nnx(nsd, msh.eType, eNoN, xl, msh.xib, msh.Nb, xp, xi, N, Nxi);
+      } catch (const std::runtime_error& error) {
+        // Skip this Gauss point if shape function computation fails
+        std::cout << "Warning: Shape function computation failed for face " << lFa.name 
+                  << ", element " << e << ", Gauss point " << g << ": " << error.what() << std::endl;
+        std::cout << "xp: " << xp << std::endl;
+        std::cout << "xl: " << xl << std::endl;
+        continue;
+      }
 
       if (g == 0 || !msh.lShpF) {
         Array<double> ksix(nsd,nsd);
@@ -272,7 +282,7 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
       // Get surface normal vector
       Vector<double> nV(nsd);
       auto Nx_g = lFa.Nx.rslice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx_g, nV);
+      nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx_g, nV);
       Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g)*Jac;
@@ -300,6 +310,18 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
       eq.linear_algebra->assemble(com_mod, eNoN, ptr, lK, lR);
     }
   }
+
+  // Now update surface integrals involved in coupled/resistance BC
+  // contribution to the stiffness matrix to reflect deformed geometry
+  // The value of this integral is stored in lhs.face.val.
+  // Since we are using the deformed geometry to compute the
+  // contribution of the pressure load to the residual vector
+  // (i.e. follower pressure), we must also use the deformed geometry
+  // to compute the contribution of the resistance BC to the tangent
+  // matrix.
+  if (btest(lBc.bType, iBC_res)) {
+    fsi_ls_upd(com_mod, cm_mod, lBc, lFa);
+  }
 }
 
 /// @brief Update the surface integral involved in the coupled/resistance BC
@@ -313,7 +335,7 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 /// is eventually used in ADDBCMUL() in the linear solver to add the contribution
 /// from the resistance BC to the matrix-vector product of the tangent matrix and
 /// an arbitrary vector.
-void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
+void fsi_ls_upd(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa)
 {
   using namespace consts;
   using namespace utils;
@@ -349,12 +371,14 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
 
       auto cfg = MechanicalConfigurationType::new_timestep;
 
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg);
+      nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg);
       // 
       for (int a = 0; a < lFa.eNoN; a++) {
         int Ac = lFa.IEN(a,e);
-        for (int i = 0; i < nsd; i++) {
-          sV(i,Ac) = sV(i,Ac) + lFa.N(a,g)*lFa.w(g)*n(i);
+        if (Ac != -1) {
+          for (int i = 0; i < nsd; i++) {
+            sV(i,Ac) = sV(i,Ac) + lFa.N(a,g)*lFa.w(g)*n(i);
+          }
         }
       }
     }

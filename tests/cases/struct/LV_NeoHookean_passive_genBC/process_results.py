@@ -43,7 +43,7 @@ reference_volume = os.path.join(sim_folder, 'mesh/mesh-complete.mesh.vtu')
 
 # svFSI results folder, containing results.vtu
 #results_folder = os.path.join(sim_folder, 'results_svfsi/')
-results_folder = os.path.join(sim_folder, '4-procs/')
+results_folder = os.path.join(sim_folder, '6-procs/')
 
 # File containing genBC output
 #alldata_file = 'AllData_svfsi_vvedula22'

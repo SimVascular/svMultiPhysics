@@ -47,6 +47,27 @@
 #include <set>
 #include <math.h>
 
+// Reproduces MATCH_LHS_FACE subroutine in BAFINIT.f
+// Find lhs.face index faIn corresponding iM and iFa, which
+// index msh.fa and lhs.face respectively.
+void match_lhs_face(const ComMod& com_mod, int iM, int iFa, int& faIn) {
+
+  auto& lhs = com_mod.lhs;
+  // Loop over lhs.faces to find corresponding face
+  faIn = -1;
+  for (int i = 0; i < lhs.nFaces; i++) {
+      // If lhs.face matches mesh and face index
+      if ((lhs.face[i].iFa == iFa) && (lhs.face[i].iM == iM)) {
+          faIn = i;
+          break;
+      }
+  }
+  
+  if (faIn == -1) {
+      throw std::runtime_error("Cannot match LHS face and mesh indices.");
+  }
+}
+
 namespace baf_ini_ns {
 
 /// @brief This routine initializes required structure for boundaries,
@@ -189,8 +210,46 @@ void baf_ini(Simulation* simulation)
       auto& bc = eq.bc[iBc];
       int iFa = bc.iFa;
       int iM = bc.iM;
-      bc.lsPtr = 0;
+      bc.lsPtr = -1;
       fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr);
+      // Store mesh and face index in corresponding lhs.face[i]. This
+      // Explicitly maps mesh and face indices  between lhs object
+      // (used in the linear solver for coupled surface) and the
+      // msh object. Used in MATCHFACE below.
+      if (bc.lsPtr != -1) {
+        com_mod.lhs.face[bc.lsPtr].iM = iM;
+        com_mod.lhs.face[bc.lsPtr].iFa = iFa;
+      }
+    }
+  }
+
+  // If any face in msh.fa are capped, share information with
+  // lhs.face
+
+  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+    auto& eq = com_mod.eq[iEq];
+    for (int iBc = 0; iBc < eq.nBc; iBc++) {
+      auto& bc = eq.bc[iBc];
+      int iFa = bc.iFa;
+      int iM = bc.iM;
+      int capID = com_mod.msh[iM].fa[iFa].capID;
+      if (capID != -1) {
+        int faIn = -1;
+        // Find lhs.face[i] index of face being capped
+        match_lhs_face(com_mod, iM, iFa, faIn);
+        // Find lhs.face[i] index of capping face
+        int faInCap = -1;
+        match_lhs_face(com_mod, iM, capID, faInCap);
+        // Store capping relation in lhs.face[faIn]
+        com_mod.lhs.face[faIn].faInCap = faInCap;
+        com_mod.lhs.face[faIn].isCapped = true;
+        
+        // Check that capping face is coupled
+        //if (!com_mod.lhs.face[faInCap].coupledFlag) {
+         // throw std::runtime_error("Capping face '" + com_mod.msh[iM].fa[capID].name + 
+         //                        "' is not coupled. Capping faces must have coupled boundary conditions.");
+        //}
+      }
     }
   }
 
@@ -269,7 +328,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
 
   if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_gen))) {
     if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)) && lBc.gm.dof != 1) {
-      throw std::runtime_error("Only for (int F=1 is accepted for Neu general BCs");
+      throw std::runtime_error("Only DOF=1 is accepted for Neu general BCs");
     }
     return;
   }
@@ -505,13 +564,16 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 
       for (int g = 0; g < lFa.nG; g++) {
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV);
+        nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV);
 
         for (int a = 0; a < lFa.eNoN; a++) { 
           int Ac = lFa.IEN(a,e);
-          for (int i = 0; i < sV.nrows(); i++) { 
-            sV(i,Ac) = sV(i,Ac) + nV(i)*lFa.N(a,g)*lFa.w(g);
-          }
+          // Skip if virtual face, i.e. Ac == -1
+          if (Ac != -1) {
+            for (int i = 0; i < sV.nrows(); i++) { 
+              sV(i,Ac) = sV(i,Ac) + nV(i)*lFa.N(a,g)*lFa.w(g);
+            }
+          } 
         }
       }
     }
@@ -610,8 +672,10 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 
         for (int a = 0; a < fs.eNoN; a++) {
           int Ac = lFa.IEN(a,e);
-          for (int j = 0; j < sV.nrows(); j++) {
-            sV(j,Ac) = sV(j,Ac) + fs.w(g)*fs.N(a,g)*nV(j);
+          if (Ac != -1) {
+            for (int j = 0; j < sV.nrows(); j++) {
+              sV(j,Ac) = sV(j,Ac) + fs.w(g)*fs.N(a,g)*nV(j);
+            }
           }
         }
       }
@@ -640,26 +704,27 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
         int b = a - fs.eNoN;
         int Ac = lFa.IEN(a,e);
         int Bc = lFa.IEN(b,e);
+        if (Ac != -1 && Bc != -1) {
+          for (int i = 0; i < sV.nrows(); i++) {
+            nV(i) = sV(i,Bc);
+          }
 
-        for (int i = 0; i < sV.nrows(); i++) {
-          nV(i) = sV(i,Bc);
-        }
+          if (b == fs.eNoN-1) {
+            Bc = lFa.IEN(0,e);
+          } else {
+            Bc = lFa.IEN(b+1,e);
+          }
 
-        if (b == fs.eNoN-1) {
-          Bc = lFa.IEN(0,e);
-        } else {
-          Bc = lFa.IEN(b+1,e);
-        }
-
-        for (int i = 0; i < sV.nrows(); i++) {
-          sV(i,Ac) = (nV(i) + sV(i,Bc)) * 0.5;
+          for (int i = 0; i < sV.nrows(); i++) {
+            sV(i,Ac) = (nV(i) + sV(i,Bc)) * 0.5;
+          }
         }
       }
     }
   }
 
   all_fun::commu(com_mod, sV);
-  flag = true;
+  flag = false;
 
   for (int a = 0; a < lFa.nNo; a++) {
     int Ac = lFa.gN(a);
@@ -755,12 +820,15 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
         for (int g = 0; g < lFa.nG; g++) {
           Vector<double> n(nsd);
           auto Nx = lFa.Nx.slice(g);
-          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n);
+          nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n);
 
           for (int a = 0; a < lFa.eNoN; a++) {
             int Ac = lFa.IEN(a,e);
-            for (int i = 0; i < nsd; i++) {
-              sV(i,Ac) = sV(i,Ac) + lFa.N(a,g)*lFa.w(g)*n(i);
+            // For a virtual face, Ac can be -1
+            if (Ac != -1) {
+              for (int i = 0; i < nsd; i++) {
+                sV(i,Ac) = sV(i,Ac) + lFa.N(a,g)*lFa.w(g)*n(i);
+              }
             }
           }
         }
@@ -777,7 +845,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       lBc.lsPtr = lsPtr;
       
       // Fills lhs.face(i) variables, including val is sVl exists
-      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu, gNodes, sVl); 
+      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu, gNodes, sVl, lFa.vrtual);
     } else {
       lBc.lsPtr = -1;
     }
@@ -825,9 +893,9 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       }
     }
 
-    fsils_bc_create(com_mod.lhs, lsPtr, nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
+    fsils_bc_create(com_mod.lhs, lsPtr, nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl);
   } else {
-    throw std::runtime_error("Unxpected bType in FSILSINI");
+    throw std::runtime_error("Unexpected bType in FSILSINI");
   }
 }
 
@@ -983,7 +1051,9 @@ void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM)
 
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
-      xl.set_col(a, com_mod.x.col(Ac));
+      if (Ac != -1) {
+        xl.set_col(a, com_mod.x.col(Ac));
+      }
     }
 
     for (int g = 0; g < lM.nG; g++) {
@@ -1025,6 +1095,5 @@ void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM)
     lM.nV.set_col(a, sV.col(Ac) / Jac);
   }
 }
-
 };
 

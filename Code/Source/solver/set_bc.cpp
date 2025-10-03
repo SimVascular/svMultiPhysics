@@ -139,6 +139,14 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
         }
         cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1, false, cfg_o);
         cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yn, 0, nsd-1, false, cfg_n);
+
+        // Add velocity flux from cap if face is capped
+        auto& iFaCap = com_mod.msh[iM].fa[iFa].capID;
+        if (iFaCap != -1) {
+          cplBC.fa[ptr].Qo = cplBC.fa[ptr].Qo + all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFaCap], com_mod.Yo, 0, nsd-1, false, cfg_o);
+          cplBC.fa[ptr].Qn = cplBC.fa[ptr].Qn + all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFaCap], com_mod.Yn, 0, nsd-1, false, cfg_n);
+        }
+
         cplBC.fa[ptr].Po = 0.0;
         cplBC.fa[ptr].Pn = 0.0;
         #ifdef debug_calc_der_cpl_bc 
@@ -228,11 +236,17 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
         // Finite difference calculation of the resistance dP/dQ
         bc.r = (cplBC.fa[i].y - orgY[i]) / diff;
 
+        // Copy resistance to capping BC if one exists
+        if (bc.hasCapBC) {
+          auto& iCapBC = bc.iCapBC;
+          eq.bc[iCapBC].r = bc.r;
+        }
+
         // Restore the original pressures and flowrates
         for (size_t j = 0; j < cplBC.fa.size(); j++) {
           cplBC.fa[j].y = orgY[j];
           cplBC.fa[j].Qn = orgQ[j];
-}
+        }
      }
   }
 }
@@ -329,6 +343,7 @@ void genBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const std::string& genF
 {
   using namespace consts;
 
+  // Number of Dirichlet and Neumann coupled surfaces in the 3D domain
   int nDir = 0;
   int nNeu = 0;
   double dt = com_mod.dt;
@@ -409,7 +424,7 @@ void genBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const std::string& genF
     system(command);
 
     // Read outputs from genBC, which are in the same GenBC.int
-    std::ifstream genBC_reader(cplBC.commuName, std::ios::out | std::ios::binary);
+    std::ifstream genBC_reader(cplBC.commuName, std::ios::in | std::ios::binary);
     if (!genBC_reader.is_open()) {
       throw std::runtime_error("Failed to open the genBC interface file '" + cplBC.commuName + "' to read.");
     }
@@ -664,7 +679,7 @@ void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, con
     vwp = vwp / 3.0;
 
     // Add CMM BCs contributions to the LHS/RHS
-    cmm::cmm_b(com_mod, lFa, e, al, dl, xl, bfl, pSl, vwp, ptr);
+    cmm::cmm_b(com_mod, cm_mod, lFa, e, al, dl, xl, bfl, pSl, vwp, ptr);
   }
 
 }
@@ -695,7 +710,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
 
   // If coupling scheme is implicit, calculate updated pressure and flowrate 
   // from 0D, as well as resistance from 0D using finite difference.
-  if (cplBC.schm == CplBCType::cplBC_I) { 
+  if (cplBC.schm == CplBCType::cplBC_I) {
     calc_der_cpl_bc(com_mod, cm_mod);
 
   // If coupling scheme is semi-implicit or explicit, only calculated updated
@@ -749,6 +764,15 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
         
           cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, nsd-1, false, cfg_o);
           cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, nsd-1, false, cfg_n);
+
+          // Add velocity flux from cap if face is capped
+          int iFaCap = com_mod.msh[iM].fa[iFa].capID;
+          if (iFaCap != -1) {
+            cplBC.fa[ptr].Qo = cplBC.fa[ptr].Qo + 
+              all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFaCap], Yo, 0, nsd-1, false, cfg_o);
+            cplBC.fa[ptr].Qn = cplBC.fa[ptr].Qn +
+              all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFaCap], Yn, 0, nsd-1, false, cfg_n);
+          }
           cplBC.fa[ptr].Po = 0.0;
           cplBC.fa[ptr].Pn = 0.0;
         } 
@@ -845,6 +869,7 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
         }
       } // END bType_CMM
 
+      // Skip if not Dirichlet BC or weak Dirichlet BC
       if (!utils::btest(bc.bType, iBC_Dir)) {
         continue;
       }
@@ -1071,7 +1096,7 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
 
 /// @brief Weak treatment of Dirichlet boundary conditions
 //
-void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg)
+void set_bc_dir_w(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
 
@@ -1085,13 +1110,13 @@ void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>&
     if (!bc.weakDir) {
       continue;
     }
-    set_bc_dir_wl(com_mod, bc, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], Yg, Dg);
+    set_bc_dir_wl(com_mod, cm_mod, bc, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], Yg, Dg);
   }
 }
 
 /// @brief Reproduces Fortran 'SETBCDIRWL'.
 //
-void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg)
+void set_bc_dir_wl(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
 
@@ -1279,7 +1304,7 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV);
+      nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV);
       double Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g) * Jac;
@@ -1343,6 +1368,12 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
     #ifdef debug_set_bc_neu
     dmsg << "----- iBc " << iBc+1;
     #endif
+
+    // Skip if the face is virtual
+    if (com_mod.msh[iM].fa[iFa].vrtual && utils::btest(bc.bType, iBC_res) && bc.flwP) {
+      eq_assem::fsi_ls_upd(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]);
+      continue;
+    }
 
     if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
 
@@ -1453,10 +1484,10 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // Add Neumann BCs contribution to the residual (and tangent if flwP)
   //
   if (lBc.flwP) {
-    eq_assem::b_neu_folw_p(com_mod, lBc, lFa, hg, Dg);
+    eq_assem::b_neu_folw_p(com_mod, cm_mod, lBc, lFa, hg, Dg);
 
   } else {
-    eq_assem::b_assem_neu_bc(com_mod, lFa, hg, Yg);
+    eq_assem::b_assem_neu_bc(com_mod, cm_mod, lFa, hg, Yg);
   }
 
 
@@ -1466,18 +1497,18 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // a follower pressure load (struct/ustruct) or a moving mesh (FSI)
   if (utils::btest(lBc.bType, iBC_res)) {
     if (lBc.flwP || com_mod.mvMsh) {
-      eq_assem::fsi_ls_upd(com_mod, lBc, lFa);
+      eq_assem::fsi_ls_upd(com_mod, cm_mod, lBc, lFa);
     }
   }
   // Now treat Robin BC (stiffness and damping) here
   if (lBc.robin_bc.is_initialized()) {
-    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, Yg, Dg);
+    set_bc_rbnl(com_mod, cm_mod, lFa, lBc.robin_bc, Yg, Dg);
   }
 }
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
-void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
+void set_bc_rbnl(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
   const Array<double>& Yg, const Array<double>& Dg)
 {
   using namespace consts;
@@ -1533,7 +1564,7 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
+      nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
       double Jac = sqrt(utils::norm(nV));
       nV  = nV / Jac;
       double w = lFa.w(g) * Jac; 
@@ -1813,7 +1844,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
+      nn::gnnb(com_mod, cm_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
       double Jac = sqrt(utils::norm(nV));
       double w = lFa.w(g)*Jac;
       N = lFa.N.col(g);
