@@ -87,20 +87,67 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a98a7f72af24b83189070fcfddc94970b" id="r_a98a7f72af24b83189070fcfddc94970b"><td class="memItemLeft" align="right" valign="top"><a id="a98a7f72af24b83189070fcfddc94970b" name="a98a7f72af24b83189070fcfddc94970b"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>SimulationLogger</b> (const std::string &amp;file_name, bool cout_write=false)</td></tr>
 <tr class="separator:a98a7f72af24b83189070fcfddc94970b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed2daf2af74a8ff33785c058fc015234" id="r_aed2daf2af74a8ff33785c058fc015234"><td class="memItemLeft" align="right" valign="top"><a id="aed2daf2af74a8ff33785c058fc015234" name="aed2daf2af74a8ff33785c058fc015234"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize</b> (const std::string &amp;file_name, bool cout_write=false)</td></tr>
-<tr class="separator:aed2daf2af74a8ff33785c058fc015234"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4853331ec4a2fde9195a5c043455c997" id="r_a4853331ec4a2fde9195a5c043455c997"><td class="memTemplParams" colspan="2"><a id="a4853331ec4a2fde9195a5c043455c997" name="a4853331ec4a2fde9195a5c043455c997"></a>
+<tr class="memitem:a3213facfee6dcf9d79091e90b5ff0ae3" id="r_a3213facfee6dcf9d79091e90b5ff0ae3"><td class="memItemLeft" align="right" valign="top"><a id="a3213facfee6dcf9d79091e90b5ff0ae3" name="a3213facfee6dcf9d79091e90b5ff0ae3"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize</b> (const std::string &amp;file_name, bool cout_write=false) const</td></tr>
+<tr class="separator:a3213facfee6dcf9d79091e90b5ff0ae3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c648eb74d1f6b7f499a3926de1a93e6" id="r_a8c648eb74d1f6b7f499a3926de1a93e6"><td class="memItemLeft" align="right" valign="top"><a id="a8c648eb74d1f6b7f499a3926de1a93e6" name="a8c648eb74d1f6b7f499a3926de1a93e6"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_initialized</b> () const</td></tr>
+<tr class="separator:a8c648eb74d1f6b7f499a3926de1a93e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0fa89cd17a9c5b23e14d2a8a08df4307" id="r_a0fa89cd17a9c5b23e14d2a8a08df4307"><td class="memTemplParams" colspan="2"><a id="a0fa89cd17a9c5b23e14d2a8a08df4307" name="a0fa89cd17a9c5b23e14d2a8a08df4307"></a>
 template&lt;class T &gt; </td></tr>
-<tr class="memitem:a4853331ec4a2fde9195a5c043455c997"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (const T &amp;value)</td></tr>
-<tr class="separator:a4853331ec4a2fde9195a5c043455c997"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52677eb2bac141235ca241f63ae09429" id="r_a52677eb2bac141235ca241f63ae09429"><td class="memItemLeft" align="right" valign="top"><a id="a52677eb2bac141235ca241f63ae09429" name="a52677eb2bac141235ca241f63ae09429"></a>
-<a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::ostream &amp;(*value)(std::ostream &amp;o))</td></tr>
-<tr class="separator:a52677eb2bac141235ca241f63ae09429"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0fa89cd17a9c5b23e14d2a8a08df4307"><td class="memTemplItemLeft" align="right" valign="top">const <a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (const T &amp;value) const</td></tr>
+<tr class="separator:a0fa89cd17a9c5b23e14d2a8a08df4307"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a0b67ccda775ff31cebe666731b537d" id="r_a1a0b67ccda775ff31cebe666731b537d"><td class="memItemLeft" align="right" valign="top"><a id="a1a0b67ccda775ff31cebe666731b537d" name="a1a0b67ccda775ff31cebe666731b537d"></a>
+const <a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (const std::vector&lt; std::string &gt; &amp;values) const</td></tr>
+<tr class="separator:a1a0b67ccda775ff31cebe666731b537d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab219cc003420c89bbf0299603ea92ab6" id="r_ab219cc003420c89bbf0299603ea92ab6"><td class="memItemLeft" align="right" valign="top"><a id="ab219cc003420c89bbf0299603ea92ab6" name="ab219cc003420c89bbf0299603ea92ab6"></a>
+const <a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::ostream &amp;(*value)(std::ostream &amp;o)) const</td></tr>
+<tr class="separator:ab219cc003420c89bbf0299603ea92ab6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f88ca37b189442d6fe68eb5acbbe34c" id="r_a4f88ca37b189442d6fe68eb5acbbe34c"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
+<tr class="memitem:a4f88ca37b189442d6fe68eb5acbbe34c"><td class="memTemplItemLeft" align="right" valign="top">const <a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_simulation_logger.html#a4f88ca37b189442d6fe68eb5acbbe34c">log_message</a> (const Args &amp;... args) const</td></tr>
+<tr class="memdesc:a4f88ca37b189442d6fe68eb5acbbe34c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Log a message with automatic space separation.  <br /></td></tr>
+<tr class="separator:a4f88ca37b189442d6fe68eb5acbbe34c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The <a class="el" href="class_simulation_logger.html" title="The SimulationLogger class is used to write information to a text file and optionally to cout.">SimulationLogger</a> class is used to write information to a text file and optionally to cout. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a4f88ca37b189442d6fe68eb5acbbe34c" name="a4f88ca37b189442d6fe68eb5acbbe34c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4f88ca37b189442d6fe68eb5acbbe34c">&#9670;&#160;</a></span>log_message()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Args&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp; SimulationLogger::log_message </td>
+          <td>(</td>
+          <td class="paramtype">const Args &amp;...&#160;</td>
+          <td class="paramname"><em>args</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Log a message with automatic space separation. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">args</td><td>Arguments to log </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>solver/<a class="el" href="_simulation_logger_8h_source.html">SimulationLogger.h</a></li>
 </ul>
 </div><!-- contents -->

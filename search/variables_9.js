@@ -9,11 +9,12 @@ var searchData=
   ['ln_6',['lN',['../classmsh_type.html#a4d18ffccb3e4e381fb65f4de0a7b755a',1,'mshType']]],
   ['local_5fdata_5f_7',['local_data_',['../class_boundary_condition.html#abc2f59daf6b3667222ac6d0159c09d19',1,'BoundaryCondition']]],
   ['local_5fnum_5fnodes_5f_8',['local_num_nodes_',['../class_boundary_condition.html#a2300d50b328a278a86f93d8cc1abebb7',1,'BoundaryCondition']]],
-  ['ls_9',['ls',['../classeq_type.html#a36c82a16faab45c12dccd030dc6fb22a',1,'eqType']]],
-  ['ls_5ftype_10',['LS_type',['../classls_type.html#a9c92c64f63ef347ecc83562a9658841f',1,'lsType']]],
-  ['lshl_11',['lShl',['../classmsh_type.html#ab5c360a0f6b904224c2b0da1ae11c3e1',1,'mshType']]],
-  ['lshpf_12',['lShpF',['../classmsh_type.html#a498a012d76c38cb45be3eb436b7b34ac',1,'mshType']]],
-  ['lst_13',['lst',['../classris_face_type.html#a412631fc9ea09c82e1608b25835c3929',1,'risFaceType']]],
-  ['ltg_14',['ltg',['../class_com_mod.html#ae4275feec215caee592255a7764235e1',1,'ComMod']]],
-  ['ltg_5f_15',['ltg_',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#acbdea154b9747a7620069cf3ed235f15',1,'TrilinosLinearAlgebra::TrilinosImpl']]]
+  ['logger_5f_9',['logger_',['../class_boundary_condition.html#af2b4fba094c24876d47cc242c68abfe1',1,'BoundaryCondition']]],
+  ['ls_10',['ls',['../classeq_type.html#a36c82a16faab45c12dccd030dc6fb22a',1,'eqType']]],
+  ['ls_5ftype_11',['LS_type',['../classls_type.html#a9c92c64f63ef347ecc83562a9658841f',1,'lsType']]],
+  ['lshl_12',['lShl',['../classmsh_type.html#ab5c360a0f6b904224c2b0da1ae11c3e1',1,'mshType']]],
+  ['lshpf_13',['lShpF',['../classmsh_type.html#a498a012d76c38cb45be3eb436b7b34ac',1,'mshType']]],
+  ['lst_14',['lst',['../classris_face_type.html#a412631fc9ea09c82e1608b25835c3929',1,'risFaceType']]],
+  ['ltg_15',['ltg',['../class_com_mod.html#ae4275feec215caee592255a7764235e1',1,'ComMod']]],
+  ['ltg_5f_16',['ltg_',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#acbdea154b9747a7620069cf3ed235f15',1,'TrilinosLinearAlgebra::TrilinosImpl']]]
 ];

@@ -96,12 +96,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e0903a6b189a3914d02285d32a02096" id="r_a2e0903a6b189a3914d02285d32a02096"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a2e0903a6b189a3914d02285d32a02096">BoundaryCondition</a> ()=default</td></tr>
 <tr class="memdesc:a2e0903a6b189a3914d02285d32a02096"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor - creates an empty BC.  <br /></td></tr>
 <tr class="separator:a2e0903a6b189a3914d02285d32a02096"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04a0ccbf25e5e14759f6b306aff85a3f" id="r_a04a0ccbf25e5e14759f6b306aff85a3f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a04a0ccbf25e5e14759f6b306aff85a3f">BoundaryCondition</a> (const std::string &amp;vtp_file_path, const std::vector&lt; std::string &gt; &amp;array_names, const StringBoolMap &amp;flags, const <a class="el" href="classface_type.html">faceType</a> &amp;face)</td></tr>
-<tr class="memdesc:a04a0ccbf25e5e14759f6b306aff85a3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor - reads data from VTP file.  <br /></td></tr>
-<tr class="separator:a04a0ccbf25e5e14759f6b306aff85a3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a132bc494a70d86bef86cffe2b79515fe" id="r_a132bc494a70d86bef86cffe2b79515fe"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a132bc494a70d86bef86cffe2b79515fe">BoundaryCondition</a> (const StringDoubleMap &amp;uniform_values, const StringBoolMap &amp;flags, const <a class="el" href="classface_type.html">faceType</a> &amp;face)</td></tr>
-<tr class="memdesc:a132bc494a70d86bef86cffe2b79515fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor for uniform values.  <br /></td></tr>
-<tr class="separator:a132bc494a70d86bef86cffe2b79515fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac94dc294b229d48f091b69bc6d432ad8" id="r_ac94dc294b229d48f091b69bc6d432ad8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#ac94dc294b229d48f091b69bc6d432ad8">BoundaryCondition</a> (const std::string &amp;vtp_file_path, const std::vector&lt; std::string &gt; &amp;array_names, const StringBoolMap &amp;flags, const <a class="el" href="classface_type.html">faceType</a> &amp;face, <a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;logger)</td></tr>
+<tr class="memdesc:ac94dc294b229d48f091b69bc6d432ad8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor - reads data from VTP file.  <br /></td></tr>
+<tr class="separator:ac94dc294b229d48f091b69bc6d432ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a939dec4babbadc60114b4f3ece8464a3" id="r_a939dec4babbadc60114b4f3ece8464a3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a939dec4babbadc60114b4f3ece8464a3">BoundaryCondition</a> (const StringDoubleMap &amp;uniform_values, const StringBoolMap &amp;flags, const <a class="el" href="classface_type.html">faceType</a> &amp;face, <a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;logger)</td></tr>
+<tr class="memdesc:a939dec4babbadc60114b4f3ece8464a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor for uniform values.  <br /></td></tr>
+<tr class="separator:a939dec4babbadc60114b4f3ece8464a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add8cf0232591bb66dde6fdac0d11d9e6" id="r_add8cf0232591bb66dde6fdac0d11d9e6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#add8cf0232591bb66dde6fdac0d11d9e6">BoundaryCondition</a> (const <a class="el" href="class_boundary_condition.html">BoundaryCondition</a> &amp;other)</td></tr>
 <tr class="memdesc:add8cf0232591bb66dde6fdac0d11d9e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor.  <br /></td></tr>
 <tr class="separator:add8cf0232591bb66dde6fdac0d11d9e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -168,9 +168,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a5ac4e400620a7fba93f58d0f9a703136" id="r_a5ac4e400620a7fba93f58d0f9a703136"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_boundary_condition.html#af8f5e341a129a315054cb0a9141ad1f7">StringArrayMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a5ac4e400620a7fba93f58d0f9a703136">read_data_from_vtp_file</a> (const std::string &amp;vtp_file_path, const std::vector&lt; std::string &gt; &amp;array_names)</td></tr>
 <tr class="memdesc:a5ac4e400620a7fba93f58d0f9a703136"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read data from VTP file.  <br /></td></tr>
 <tr class="separator:a5ac4e400620a7fba93f58d0f9a703136"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3853eb6fc547d473606ee61ca841db60" id="r_a3853eb6fc547d473606ee61ca841db60"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a3853eb6fc547d473606ee61ca841db60">find_vtp_point_index</a> (double x, double y, double z, const Array&lt; double &gt; &amp;vtp_points) const</td></tr>
-<tr class="memdesc:a3853eb6fc547d473606ee61ca841db60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find index of a point in the VTP points array.  <br /></td></tr>
-<tr class="separator:a3853eb6fc547d473606ee61ca841db60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2fe6f7d38a0e4fbc5fd76d4c3d312a7" id="r_af2fe6f7d38a0e4fbc5fd76d4c3d312a7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#af2fe6f7d38a0e4fbc5fd76d4c3d312a7">find_vtp_point_index</a> (double x, double y, double z, const Array&lt; double &gt; &amp;vtp_points, double mesh_scale_factor) const</td></tr>
+<tr class="memdesc:af2fe6f7d38a0e4fbc5fd76d4c3d312a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find index of a point in the VTP points array.  <br /></td></tr>
+<tr class="separator:af2fe6f7d38a0e4fbc5fd76d4c3d312a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e8dacf0ae64116c1104160918f9e8c3" id="r_a7e8dacf0ae64116c1104160918f9e8c3"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a7e8dacf0ae64116c1104160918f9e8c3">validate_array_value</a> (const std::string &amp;array_name, double value) const</td></tr>
 <tr class="memdesc:a7e8dacf0ae64116c1104160918f9e8c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook for derived classes to validate array values.  <br /></td></tr>
 <tr class="separator:a7e8dacf0ae64116c1104160918f9e8c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -222,6 +222,9 @@ Protected Attributes</h2></td></tr>
 <tr class="memitem:a15dafd9983b07b69fead2ee878a79b58" id="r_a15dafd9983b07b69fead2ee878a79b58"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="class_vtk_vtp_data.html">VtkVtpData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#a15dafd9983b07b69fead2ee878a79b58">vtp_data_</a></td></tr>
 <tr class="memdesc:a15dafd9983b07b69fead2ee878a79b58"><td class="mdescLeft">&#160;</td><td class="mdescRight">VTP data object.  <br /></td></tr>
 <tr class="separator:a15dafd9983b07b69fead2ee878a79b58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2b4fba094c24876d47cc242c68abfe1" id="r_af2b4fba094c24876d47cc242c68abfe1"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="class_simulation_logger.html">SimulationLogger</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_boundary_condition.html#af2b4fba094c24876d47cc242c68abfe1">logger_</a> = nullptr</td></tr>
+<tr class="memdesc:af2b4fba094c24876d47cc242c68abfe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logger for warnings/info (not owned by <a class="el" href="class_boundary_condition.html" title="Base class for boundary conditions with spatially variable arrays.">BoundaryCondition</a>)  <br /></td></tr>
+<tr class="separator:af2b4fba094c24876d47cc242c68abfe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base class for boundary conditions with spatially variable arrays. </p>
@@ -238,7 +241,7 @@ Protected Attributes</h2></td></tr>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Add BC-specific functionality here</span></div>
 <div class="line">};</div>
-<div class="ttc" id="aclass_boundary_condition_html"><div class="ttname"><a href="class_boundary_condition.html">BoundaryCondition</a></div><div class="ttdoc">Base class for boundary conditions with spatially variable arrays.</div><div class="ttdef"><b>Definition</b> BoundaryCondition.h:74</div></div>
+<div class="ttc" id="aclass_boundary_condition_html"><div class="ttname"><a href="class_boundary_condition.html">BoundaryCondition</a></div><div class="ttdoc">Base class for boundary conditions with spatially variable arrays.</div><div class="ttdef"><b>Definition</b> BoundaryCondition.h:75</div></div>
 <div class="ttc" id="aclassface_type_html"><div class="ttname"><a href="classface_type.html">faceType</a></div><div class="ttdoc">The face type containing mesh at boundary.</div><div class="ttdef"><b>Definition</b> ComMod.h:538</div></div>
 </div><!-- fragment --> </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="af8f5e341a129a315054cb0a9141ad1f7" name="af8f5e341a129a315054cb0a9141ad1f7"></a>
@@ -293,8 +296,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a04a0ccbf25e5e14759f6b306aff85a3f" name="a04a0ccbf25e5e14759f6b306aff85a3f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04a0ccbf25e5e14759f6b306aff85a3f">&#9670;&#160;</a></span>BoundaryCondition() <span class="overload">[2/5]</span></h2>
+<a id="ac94dc294b229d48f091b69bc6d432ad8" name="ac94dc294b229d48f091b69bc6d432ad8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac94dc294b229d48f091b69bc6d432ad8">&#9670;&#160;</a></span>BoundaryCondition() <span class="overload">[2/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -321,7 +324,13 @@ Protected Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const <a class="el" href="classface_type.html">faceType</a> &amp;&#160;</td>
-          <td class="paramname"><em>face</em>&#160;</td>
+          <td class="paramname"><em>face</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td>
+          <td class="paramname"><em>logger</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -337,6 +346,7 @@ Protected Attributes</h2></td></tr>
     <tr><td class="paramname">vtp_file_path</td><td>Path to VTP file containing arrays </td></tr>
     <tr><td class="paramname">array_names</td><td>Names of arrays to read from VTP file </td></tr>
     <tr><td class="paramname">face</td><td>Face associated with the BC </td></tr>
+    <tr><td class="paramname">logger</td><td><a class="el" href="class_simulation.html">Simulation</a> logger used to write warnings </td></tr>
   </table>
   </dd>
 </dl>
@@ -349,8 +359,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a132bc494a70d86bef86cffe2b79515fe" name="a132bc494a70d86bef86cffe2b79515fe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a132bc494a70d86bef86cffe2b79515fe">&#9670;&#160;</a></span>BoundaryCondition() <span class="overload">[3/5]</span></h2>
+<a id="a939dec4babbadc60114b4f3ece8464a3" name="a939dec4babbadc60114b4f3ece8464a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a939dec4babbadc60114b4f3ece8464a3">&#9670;&#160;</a></span>BoundaryCondition() <span class="overload">[3/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -371,7 +381,13 @@ Protected Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const <a class="el" href="classface_type.html">faceType</a> &amp;&#160;</td>
-          <td class="paramname"><em>face</em>&#160;</td>
+          <td class="paramname"><em>face</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_simulation_logger.html">SimulationLogger</a> &amp;&#160;</td>
+          <td class="paramname"><em>logger</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -386,6 +402,7 @@ Protected Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">uniform_values</td><td>Map of array names to uniform values </td></tr>
     <tr><td class="paramname">face</td><td>Face associated with the BC </td></tr>
+    <tr><td class="paramname">logger</td><td><a class="el" href="class_simulation.html">Simulation</a> logger used to write warnings </td></tr>
   </table>
   </dd>
 </dl>
@@ -519,8 +536,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a3853eb6fc547d473606ee61ca841db60" name="a3853eb6fc547d473606ee61ca841db60"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3853eb6fc547d473606ee61ca841db60">&#9670;&#160;</a></span>find_vtp_point_index()</h2>
+<a id="af2fe6f7d38a0e4fbc5fd76d4c3d312a7" name="af2fe6f7d38a0e4fbc5fd76d4c3d312a7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af2fe6f7d38a0e4fbc5fd76d4c3d312a7">&#9670;&#160;</a></span>find_vtp_point_index()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -550,7 +567,13 @@ Protected Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>vtp_points</em>&#160;</td>
+          <td class="paramname"><em>vtp_points</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>mesh_scale_factor</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -572,6 +595,7 @@ Protected Attributes</h2></td></tr>
     <tr><td class="paramname">y</td><td>Y coordinate </td></tr>
     <tr><td class="paramname">z</td><td>Z coordinate </td></tr>
     <tr><td class="paramname">vtp_points</td><td>VTP points array </td></tr>
+    <tr><td class="paramname">mesh_scale_factor</td><td>Scale factor applied to mesh coordinates </td></tr>
   </table>
   </dd>
 </dl>
@@ -1020,7 +1044,7 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Data members for BC. </p>
-<p>Face associated with the BC (can be null) </p>
+<p>Face associated with the BC (not owned by <a class="el" href="class_boundary_condition.html" title="Base class for boundary conditions with spatially variable arrays.">BoundaryCondition</a>) </p>
 
 </div>
 </div>
@@ -1165,6 +1189,30 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Local number of nodes on this processor. </p>
+
+</div>
+</div>
+<a id="af2b4fba094c24876d47cc242c68abfe1" name="af2b4fba094c24876d47cc242c68abfe1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af2b4fba094c24876d47cc242c68abfe1">&#9670;&#160;</a></span>logger_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="class_simulation_logger.html">SimulationLogger</a>* BoundaryCondition::logger_ = nullptr</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Logger for warnings/info (not owned by <a class="el" href="class_boundary_condition.html" title="Base class for boundary conditions with spatially variable arrays.">BoundaryCondition</a>) </p>
 
 </div>
 </div>
