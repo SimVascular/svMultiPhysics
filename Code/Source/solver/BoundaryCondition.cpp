@@ -40,7 +40,7 @@
 
 #define n_debug_bc
 
-BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face)
+BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face, SimulationLogger& logger)
     : face_(&face)
     , global_num_nodes_(face.nNo)
     , local_num_nodes_(0)
@@ -48,6 +48,7 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     , spatially_variable(true)
     , vtp_file_path_(vtp_file_path)
     , flags_(flags)
+    , logger_(&logger)
 {
     try {
         global_data_ = read_data_from_vtp_file(vtp_file_path, array_names);
@@ -73,13 +74,14 @@ BoundaryCondition::BoundaryCondition(const std::string& vtp_file_path, const std
     }
 }
 
-BoundaryCondition::BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face)
+BoundaryCondition::BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face, SimulationLogger& logger)
     : face_(&face)
     , global_num_nodes_(face.nNo)
     , local_num_nodes_(0)
     , spatially_variable(false)
     , vtp_file_path_("")
     , flags_(flags)
+    , logger_(&logger)
 {
     try {
         // Store array names, validate and store values
@@ -107,6 +109,7 @@ BoundaryCondition::BoundaryCondition(const BoundaryCondition& other)
     , vtp_file_path_(other.vtp_file_path_)
     , flags_(other.flags_)
     , global_node_map_(other.global_node_map_)
+    , logger_(other.logger_)
 {
     if (other.vtp_data_) {
         vtp_data_ = std::make_unique<VtkVtpData>(*other.vtp_data_);
@@ -126,6 +129,7 @@ void swap(BoundaryCondition& lhs, BoundaryCondition& rhs) noexcept {
     swap(lhs.flags_, rhs.flags_);
     swap(lhs.global_node_map_, rhs.global_node_map_);
     swap(lhs.vtp_data_, rhs.vtp_data_);
+    swap(lhs.logger_, rhs.logger_);
 }
 
 BoundaryCondition& BoundaryCondition::operator=(BoundaryCondition other) {
@@ -145,6 +149,7 @@ BoundaryCondition::BoundaryCondition(BoundaryCondition&& other) noexcept
     , flags_(std::move(other.flags_))
     , global_node_map_(std::move(other.global_node_map_))
     , vtp_data_(std::move(other.vtp_data_))
+    , logger_(other.logger_)
 {
     other.face_ = nullptr;
     other.global_num_nodes_ = 0;
@@ -202,6 +207,11 @@ BoundaryCondition::StringArrayMap BoundaryCondition::read_data_from_vtp_file(con
         dmsg << array_name << " data size: " << array_data.nrows() << " x " << array_data.ncols() << std::endl;
         #endif
     }
+
+    logger_ -> log_message("[BoundaryCondition] Loaded from VTP file");
+    logger_ -> log_message("\t File path:", vtp_file_path);
+    logger_ -> log_message("\t Arrays:", array_names);
+    logger_ -> log_message("\t Face:", face_->name);
 
     return result;
 }
@@ -375,11 +385,20 @@ void BoundaryCondition::distribute_spatially_variable(const ComMod& com_mod, con
         // Get VTP points for position matching
         Array<double> vtp_points = vtp_data_->get_points();
         
-         // Look up data for all nodes using point matching
+        // Get mesh scale factor from the face's mesh
+        double mesh_scale_factor = 1.0; // Default scale factor
+        if (face_ != nullptr) {
+            mesh_scale_factor = com_mod.msh[face_->iM].scF;
+            #ifdef debug_distribute_spatially_variable
+            dmsg << "Mesh scale factor: " << mesh_scale_factor << std::endl;
+            #endif
+        }
+        
+        // Look up data for all nodes using point matching
         for (const auto& array_name : array_names_) {
             all_values[array_name].resize(total_num_nodes);
             for (int i = 0; i < total_num_nodes; i++) {
-                int vtp_idx = find_vtp_point_index(all_positions(0,i), all_positions(1,i), all_positions(2,i), vtp_points);
+                int vtp_idx = find_vtp_point_index(all_positions(0,i), all_positions(1,i), all_positions(2,i), vtp_points, mesh_scale_factor);
                 all_values[array_name](i) = global_data_[array_name](vtp_idx, 0);
             }
         }
@@ -474,10 +493,13 @@ void BoundaryCondition::distribute_flags(const CmMod& cm_mod, const cmType& cm, 
 }
 
 int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
-                                const Array<double>& vtp_points) const
+                                const Array<double>& vtp_points, double mesh_scale_factor) const
 {
     const int num_points = vtp_points.ncols();
-    Vector<double> target_point{x, y, z};
+    
+    // Scale down the target coordinates to match the unscaled VTP coordinates
+    // The simulation coordinates are scaled by mesh_scale_factor, but VTP coordinates are not
+    Vector<double> target_point{x / mesh_scale_factor, y / mesh_scale_factor, z / mesh_scale_factor};
 
     // Simple linear search through all points in the VTP file
     for (int i = 0; i < num_points; i++) {
@@ -490,6 +512,7 @@ int BoundaryCondition::find_vtp_point_index(double x, double y, double z,
             #ifdef debug_bc_find_vtp_point_index
             DebugMsg dmsg(__func__, 0);
             dmsg << "Found VTP point index for node at position (" << x << ", " << y << ", " << z << ")" << std::endl;
+            dmsg << "Scaled target position (" << target_point(0) << ", " << target_point(1) << ", " << target_point(2) << ")" << std::endl;
             dmsg << "VTP point index: " << i << std::endl;
             #endif
 
