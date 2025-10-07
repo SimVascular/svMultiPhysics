@@ -3109,6 +3109,7 @@ void addCapBC(ComMod& com_mod, eqType& lEq, int iBc) {
   std::vector<bcType> oldBCs(lEq.nBc);
   for (int jBc = 0; jBc < lEq.nBc; jBc++) {
     oldBCs[jBc] = lEq.bc[jBc];
+  }
 
   lEq.nBc += 1;
 
