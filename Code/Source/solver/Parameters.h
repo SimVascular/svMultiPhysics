@@ -824,6 +824,7 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<double> resistance;
 
     Parameter<std::string> capping_face;
+    Parameter<std::string> cap_svzerod_solver_block;
 };
 
 /// @brief The OutputParameters class stores parameters for the
@@ -1465,7 +1466,7 @@ class FaceParameters : public ParameterLists
     Parameter<std::string> end_nodes_face_file_path;
     Parameter<std::string> face_file_path;
     Parameter<std::string> name;
-    Parameter<bool> virtual_face;
+    Parameter<bool> cap_face;
 
     Parameter<double> quadrature_modifier_TRI3;
 };

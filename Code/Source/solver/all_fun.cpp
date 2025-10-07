@@ -51,8 +51,8 @@ namespace all_fun {
 // proc to the vector quantity, and sets the local vector snode on all
 // follower procs to zero.
 //
-// In IntegV, a integral over a virtual face is performed by master
-// alone, which must gather virtual face nodal values from other
+// In IntegV, a integral over a cap face is performed by master
+// alone, which must gather cap face nodal values from other
 // procs if master does not own the desired node. This function gathers
 // all nodal values to master by performing the MPI communication
 // among procs.
@@ -123,8 +123,8 @@ void vector_to_master(const ComMod& com_mod, const CmMod& cm_mod, const Array<do
 // proc to the scalar quantity, and sets the local scalar snode on all
 // follower procs to zero.
 //
-// In IntegS, a integral over a virtual face is performed by master
-// alone, which must gather virtual face nodal values from other
+// In IntegS, a integral over a cap face is performed by master
+// alone, which must gather cap face nodal values from other
 // procs if master does not own the desired node. This function gathers
 // all nodal values to master by performing the MPI communication
 // among procs.
@@ -976,11 +976,11 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
       double sHat = 0.0;
       for (int a = 0; a < fs.eNoN; a++) {
         double snode = 0.0;
-        if (!lFa.vrtual) {
+        if (!lFa.isCap) {
         int Ac = lFa.IEN(a,e);
         snode = s(Ac);
         }
-        else { // If virtual face, then master may need to get value from another proc
+        else { // If cap face, then master may need to get value from another proc
           int Ac = lFa.IEN(a,e);
           // Gather face node (a,e) value to master snode. On follower procs, snode=0
           scalar_to_master(com_mod, cm_mod, s, Ac, snode);
@@ -988,7 +988,6 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
         sHat = sHat + snode*fs.N(a,g);
       }
 
-      // Now integrating. Add product of Gauss weight and dot product at Gauss point
       result = result + Jac*fs.w(g)*sHat;
      }
   }
@@ -1107,7 +1106,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
       for (int a = 0; a < lFa.eNoN; a++) {
         Vector<double> snode(nsd);
         snode = 0.0;
-        if (!lFa.vrtual) {
+        if (!lFa.isCap) {
           // Get local node number on proc.
           int Ac = lFa.IEN(a,e);
           // Get nodal function value to use
@@ -1115,7 +1114,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
             snode(i) = s(i,Ac);
           }
         }
-        else { // If virtual face, then master may need to get value from another proc
+        else { // If cap face, then master may need to get value from another proc
           int Ac = lFa.IEN(a,e);
           // Gather face node (a,e) value to master snode. On follower procs, snode=0
           vector_to_master(com_mod, cm_mod, s, Ac, snode);

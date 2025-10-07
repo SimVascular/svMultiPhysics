@@ -554,11 +554,11 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
 }
 
 /// @brief This routine returns a surface normal vector at element "e" and Gauss point
-/// 'g' of a virtual face 'lFa' weighted by Jac, i.e.
+/// 'g' of a cap face 'lFa' weighted by Jac, i.e.
 /// Jac = SQRT(NORM(n)), the Jacobian of the mapping from parent surface element to
 /// reference/old/new configuration.
 ///
-/// Since virtual faces do not have an interior element, the direction of the normal vector
+/// Since cap faces do not have an interior element, the direction of the normal vector
 /// is assumed from the nodal ordering.
 ///
 /// cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1).
@@ -677,10 +677,10 @@ void gnnb(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const
   dmsg << "cfg: " << cfg;
   #endif
 
-  // Call GNNBv if face is virtual
-  if (lFa.vrtual) {
+  // Call gnnbv if face is cap
+  if (lFa.isCap) {
     #ifdef debug_gnnb
-    dmsg << "Virtual face detected. Calling gnnbv...";
+    dmsg << "Cap face detected. Calling gnnbv...";
     #endif
     gnnbv(com_mod, cm_mod, lFa, e, g, nsd, insd, eNoNb, Nx, n, cfg);
     return;

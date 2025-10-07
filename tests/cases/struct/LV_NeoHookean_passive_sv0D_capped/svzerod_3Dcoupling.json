@@ -1,7 +1,7 @@
 {
     "simulation_parameters": {
         "coupled_simulation": true,
-        "number_of_time_pts": 100,
+        "number_of_time_pts": 200,
         "output_all_cycles": true,
         "steady_initial": false
     },
@@ -18,6 +18,17 @@
     "external_solver_coupling_blocks": [
         {
             "name": "LV_IN",
+            "type": "FLOW",
+            "location": "outlet",
+            "connected_block": "branch0_seg0",
+            "periodic": false,
+            "values": {
+                "Q": [1.0, 1.0],
+                "t": [0.0, 1.0]
+            }
+        },
+        {
+            "name": "LV_CAP",
             "type": "FLOW",
             "location": "outlet",
             "connected_block": "branch0_seg0",

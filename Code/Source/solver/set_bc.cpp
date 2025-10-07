@@ -1369,8 +1369,8 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
     dmsg << "----- iBc " << iBc+1;
     #endif
 
-    // Skip if the face is virtual
-    if (com_mod.msh[iM].fa[iFa].vrtual && utils::btest(bc.bType, iBC_res) && bc.flwP) {
+    // Skip if the face is cap
+    if (com_mod.msh[iM].fa[iFa].isCap && utils::btest(bc.bType, iBC_res) && bc.flwP) {
       eq_assem::fsi_ls_upd(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]);
       continue;
     }

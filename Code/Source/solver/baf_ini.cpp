@@ -568,7 +568,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 
         for (int a = 0; a < lFa.eNoN; a++) { 
           int Ac = lFa.IEN(a,e);
-          // Skip if virtual face, i.e. Ac == -1
+          // Skip if cap face, i.e. Ac == -1
           if (Ac != -1) {
             for (int i = 0; i < sV.nrows(); i++) { 
               sV(i,Ac) = sV(i,Ac) + nV(i)*lFa.N(a,g)*lFa.w(g);
@@ -824,7 +824,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
 
           for (int a = 0; a < lFa.eNoN; a++) {
             int Ac = lFa.IEN(a,e);
-            // For a virtual face, Ac can be -1
+            // For a cap face, Ac can be -1
             if (Ac != -1) {
               for (int i = 0; i < nsd; i++) {
                 sV(i,Ac) = sV(i,Ac) + lFa.N(a,g)*lFa.w(g)*n(i);
@@ -845,7 +845,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       lBc.lsPtr = lsPtr;
       
       // Fills lhs.face(i) variables, including val is sVl exists
-      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu, gNodes, sVl, lFa.vrtual);
+      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu, gNodes, sVl, lFa.isCap);
     } else {
       lBc.lsPtr = -1;
     }

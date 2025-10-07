@@ -155,8 +155,8 @@ class FSILS_faceType
     /// Neu W*Sai                      (TMP)
     Array<double> valM;
 
-    /// Flag for virtual face          (USE)
-    bool vrtual = false;
+    /// Flag for cap face          (USE)
+    bool isCap = false;
 
     /// Index of mesh in msh associated with this face
     int iM = -1;

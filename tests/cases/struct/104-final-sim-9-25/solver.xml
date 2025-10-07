@@ -39,7 +39,7 @@
 
   <Add_face name="cap">
          <Face_file_path> P1_0.005_Exact/mesh-surfaces/cap.vtp </Face_file_path>
-         <Virtual> true </Virtual> <!-- Flag for virtual capping surface -->
+         <Cap> true </Cap> <!-- Flag for cap surface -->
    </Add_face>
 
   <Add_face name="base">

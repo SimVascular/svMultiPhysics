@@ -1800,7 +1800,7 @@ void dist_solid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmT
   cm.bcast(cm_mod, &lVis.mu);
 }
 
-// This routine partitions a virtual face. Since a virtual face is
+// This routine partitions a cap face. Since a cap face is
 // not part of a mesh entity, it will be treated separately.
 // It replicates the subroutine 'PARTFACEV' in the Fortran code.
 
@@ -1860,9 +1860,9 @@ void part_faceV(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gF
     // At this point, gFa is the same across all procs, and contains all
     // the face information
 
-    // If face is virtual, then we can't partition the face according
+    // If face is cap, then we can't partition the face according
     // to the element partition of the mesh, since the element of the
-    // virtual face do not lie on the mesh. In this case, set lFa%nEl
+    // cap face do not lie on the mesh. In this case, set lFa%nEl
     // equal to gFa%nEl for all procs.
 
     // time to form the local "face" structure in each processor
@@ -1872,7 +1872,7 @@ void part_faceV(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gF
     lFa.gE.resize(lFa.nEl);
     lFa.IEN.resize(eNoNb, lFa.nEl);
 
-    // Set Lfa.gE = 0 for a virtual face
+    // Set Lfa.gE = 0 for a cap face
     for (int e = 0; e < lFa.nEl; e++) {
         lFa.gE[e] = 0;
     }
@@ -1951,7 +1951,7 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
     gFa.gnEl = lFa.gnEl;
     gFa.nNo = lFa.nNo;
     gFa.qmTRI3 = lFa.qmTRI3;
-    gFa.vrtual = lFa.vrtual;
+    gFa.isCap = lFa.isCap;
     gFa.capID = lFa.capID;
 
     if (com_mod.rmsh.isReqd) {
@@ -1971,7 +1971,7 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
   cm.bcast(cm_mod, &gFa.gnEl);
   cm.bcast(cm_mod, &gFa.nNo);
   cm.bcast(cm_mod, &gFa.qmTRI3);
-  cm.bcast(cm_mod, &gFa.vrtual);
+  cm.bcast(cm_mod, &gFa.isCap);
   cm.bcast(cm_mod, &gFa.capID);
 
   #ifdef debug_part_face
@@ -2011,12 +2011,12 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
 
   nn::select_eleb(simulation, lM, lFa);
   lFa.iM = iM;
-  lFa.vrtual = gFa.vrtual;
+  lFa.isCap = gFa.isCap;
   lFa.capID = gFa.capID;
 
-  // A virtual face cannot be partitioned as it is not part of the
+  // A cap face cannot be partitioned as it is not part of the
   // parent mesh entity. Treat this separately and return.
-  if (lFa.vrtual) {
+  if (lFa.isCap) {
     part_faceV(simulation, lM, lFa, gFa, gmtl);
     return;
   }

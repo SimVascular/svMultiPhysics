@@ -43,7 +43,7 @@
 
    <Add_face name="cap">
          <Face_file_path> mesh/mesh-surfaces/endo_cap.vtp </Face_file_path>
-         <Virtual> true </Virtual> <!-- Flag for virtual capping surface -->
+         <Cap> true </Cap> <!-- Flag for cap surface -->
    </Add_face>
 
   <Mesh_scale_factor> 100.0 </Mesh_scale_factor>  <!-- Convert from m to cm -->
@@ -97,11 +97,6 @@
       <Damping> 0.0 </Damping>
       <Apply_along_normal_direction> 1 </Apply_along_normal_direction>
    </Add_BC>
-
-   <!-- Add_BC name="top" > 
-      <Type> Dirichlet </Type> 
-      <Value> 0.0 </Value>
-   </Add_BC -->
 
    <Add_BC name="endo" > 
       <Type> Neu </Type> 

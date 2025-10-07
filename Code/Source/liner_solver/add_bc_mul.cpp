@@ -73,8 +73,8 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
     auto& face = lhs.face[faIn];
-    // Virtual faces do not contribute to the tangent matrix
-    if (face.vrtual) {
+    // Cap faces do not contribute to the tangent matrix
+    if (face.isCap) {
       continue;
     }
 
@@ -108,8 +108,8 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
         // Computing S = coef * v^T * X
         double S = coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, v, X);
         
-        // Add virtual capping surface contribution to S
-        // Capping surfaces contribute to flow rate but not pressure
+        // Add cap surface contribution to S
+        // Cap surfaces contribute to flow rate but not pressure
         if (face.isCapped) {
           int faInCap = face.faInCap;
           auto& faceCap = lhs.face[faInCap];

@@ -463,7 +463,7 @@ void read_vtp(const std::string& file_name, faceType& face)
 
   // Create essential BC array.
   //
-  if (face.gE.size() == 0 && !face.vrtual) {
+  if (face.gE.size() == 0 && !face.isCap) {
     std::cout << "[WARNING] No element IDs found in the '" << file_name << "' face file.";
   } else {
     face.gnEl = face.nEl;

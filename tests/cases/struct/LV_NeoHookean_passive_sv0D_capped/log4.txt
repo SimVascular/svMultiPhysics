@@ -1,0 +1,21 @@
+[init_svZeroD:0] =============== init_svZeroD ===============
+[init_svZeroD:0] nDir: 0
+[init_svZeroD:0] nNeu: 2
+[init_svZeroD:0] numCoupledSrfs: 2
+[init_svZeroD:0] surface id: 0
+[init_svZeroD:0] surface id: 1
+[init_svZeroD:0] #### Use XML data ####  
+[init_svZeroD:0] block_surface_map: 'LV_IN'
+[init_svZeroD:0] Arrange svzd_blk_names ...  
+[init_svZeroD:0] >>> s 0
+[init_svZeroD:0]   nsrflistCoupled[s]: 0
+[init_svZeroD:0]   >>> t 0
+[init_svZeroD:0]     svzd_blk_ids[t]: 0
+[init_svZeroD:0]     Found   
+[init_svZeroD:0]     svzd_blk_names_unsrtd[t]: 'LV_IN
+[init_svZeroD:0] >>> s 1
+[init_svZeroD:0]   nsrflistCoupled[s]: 1
+[init_svZeroD:0]   >>> t 0
+[init_svZeroD:0]     svzd_blk_ids[t]: 0
+[init_svZeroD:0]   >>> t 1
+[init_svZeroD:0]     svzd_blk_ids[t]: 0

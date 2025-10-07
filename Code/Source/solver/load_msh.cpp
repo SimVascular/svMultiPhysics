@@ -238,10 +238,10 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
             auto face_param = mesh_param->face_parameters[i];
             auto &face = mesh.fa[i];
             face.name = face_param->name();
-            // Read virtual face flag. A face is virtual if it does not lie
+            // Read cap face flag. A face is cap if it does not lie
             // on the computational mesh (default value is false).
-            face.vrtual = face_param->virtual_face();
-            if (face.vrtual) {
+            face.isCap = face_param->cap_face();
+            if (face.isCap) {
               face.gnEl = face.nEl;
               face.gE.resize(face.nEl);
               face.gebc.resize(face.eNoN + 1, face.nEl);
@@ -315,7 +315,7 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
                     face.IEN(a, e) = Ac;
                     element_nodes.push_back(Ac);
                   }
-                  if (!face.vrtual) {
+                  if (!face.isCap) {
                     std::string key = "";
                     std::sort(element_nodes.begin(), element_nodes.end());
                     for (int a = 0; a < face.eNoN; a++) {
@@ -325,7 +325,7 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
                     face.gE(e) = mesh_element_set[key];
                 }
                 else {
-                  // GlobalElementID is not defined for a virtual face. Allocate
+                  // GlobalElementID is not defined for a cap face. Allocate
                   // face.gE and set it to zero.
                   face.gE(e) = 0;
                   face.gebc(0, e) = face.gE(e);  // First row = 0

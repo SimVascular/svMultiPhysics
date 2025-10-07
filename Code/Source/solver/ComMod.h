@@ -553,8 +553,8 @@ class faceType
 
     //faceType& operator=(const faceType& rhs);
 
-    // Flag for virtual face (i.e. face does not lie on volume mesh)
-    bool vrtual = false;
+    // Flag for cap face (i.e. face does not lie on volume mesh)
+    bool isCap = false;
 
     // Parametric direction normal to this face (NURBS)
     int d = 0;
@@ -583,7 +583,7 @@ class faceType
     // Number of nodes
     int nNo = 0;
 
-    //ID number of (virtual) face that caps this face
+    //ID number of cap face that caps this face
     int capID = -1;
 
     // Global element Ids
@@ -934,8 +934,8 @@ class mshType
     /// @brief Whether the mesh is fibers (Purkinje)
     bool lFib = false;
 
-    /// @brief Whether the mesh is virtual
-    bool vrtual = false;
+    /// @brief Whether the mesh is a cap
+    bool isCap = false;
 
     /// @brief Element type
     consts::ElementType eType = consts::ElementType::NA;
