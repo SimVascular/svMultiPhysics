@@ -1,10 +1,36 @@
-# This workflow checks that all .h/.cpp files have the copyright at the top
+# This workflow checks that all source files have SPDX license headers
 name: Copyright
 on: [push, pull_request]
 jobs:
-  check-license-lines:
+  check-spdx-headers:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Check License
-      uses: kt3k/license_checker@v1.0.6
+    - uses: actions/checkout@v4
+    - name: Check SPDX License Headers
+      run: |
+        echo "Checking for SPDX license headers in source files..."
+        MISSING_FILES=()
+
+        # Check C++ files
+        while IFS= read -r file; do
+          if ! grep -q "SPDX-License-Identifier: BSD-3-Clause" "$file"; then
+            MISSING_FILES+=("$file")
+          fi
+        done < <(find Code/Source -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.c" -o -name "*.hpp" \) -not -path "*/CMakeFiles/*")
+
+        # Check Python files
+        while IFS= read -r file; do
+          if ! grep -q "SPDX-License-Identifier: BSD-3-Clause" "$file"; then
+            MISSING_FILES+=("$file")
+          fi
+        done < <(find Code/Source -type f -name "*.py" -not -path "*/CMakeFiles/*")
+
+        # Report results
+        if [ ${#MISSING_FILES[@]} -eq 0 ]; then
+          echo "✓ All source files have SPDX license headers"
+          exit 0
+        else
+          echo "✗ The following files are missing SPDX license headers:"
+          printf '%s\n' "${MISSING_FILES[@]}"
+          exit 1
+        fi
