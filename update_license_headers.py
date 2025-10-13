@@ -22,9 +22,9 @@ SPDX_HEADER_FORTRAN_STYLE = """! SPDX-FileCopyrightText: Copyright (c) Stanford 
 ! SPDX-License-Identifier: BSD-3-Clause
 """
 
-# Pattern to match the old license header (C-style /* ... */)
+# Pattern to match the old license header (C-style /* ... */ or Javadoc /** ... */)
 OLD_LICENSE_PATTERN_C = re.compile(
-    r'^/\*\s*Copyright.*?SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE\.\s*\*/',
+    r'^/\*\*?\s*[\*\s]*Copyright.*?SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE\.\s*\*/',
     re.DOTALL | re.MULTILINE
 )
 
