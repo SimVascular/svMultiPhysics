@@ -137,3 +137,83 @@ void cmType::bcast(const CmMod& cm_mod, Vector<int>& data) const
 {
   MPI_Bcast(data.data(), data.size(), cm_mod::mpint, cm_mod.master, com());
 }
+
+/// @brief gather int array
+void cmType::gather(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const
+{
+  MPI_Gather(send_data, send_count, cm_mod::mpint, recv_data, recv_count, cm_mod::mpint, root, com());
+}
+
+/// @brief gather double array
+void cmType::gather(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const
+{
+  MPI_Gather(send_data, send_count, cm_mod::mpreal, recv_data, recv_count, cm_mod::mpreal, root, com());
+}
+
+/// @brief gather int Vector
+void cmType::gather(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const
+{
+  MPI_Gather(send_data.data(), send_data.size(), cm_mod::mpint, 
+             recv_data.data(), send_data.size(), cm_mod::mpint, root, com());
+}
+
+/// @brief gather double Vector
+void cmType::gather(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const
+{
+  MPI_Gather(send_data.data(), send_data.size(), cm_mod::mpreal, 
+             recv_data.data(), send_data.size(), cm_mod::mpreal, root, com());
+}
+
+/// @brief scatter int array
+void cmType::scatter(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const
+{
+  MPI_Scatter(send_data, send_count, cm_mod::mpint, recv_data, recv_count, cm_mod::mpint, root, com());
+}
+
+/// @brief scatter double array
+void cmType::scatter(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const
+{
+  MPI_Scatter(send_data, send_count, cm_mod::mpreal, recv_data, recv_count, cm_mod::mpreal, root, com());
+}
+
+/// @brief scatter int Vector
+void cmType::scatter(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const
+{
+  MPI_Scatter(send_data.data(), send_data.size() / nProcs, cm_mod::mpint, 
+              recv_data.data(), send_data.size() / nProcs, cm_mod::mpint, root, com());
+}
+
+/// @brief scatter double Vector
+void cmType::scatter(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const
+{
+  MPI_Scatter(send_data.data(), send_data.size() / nProcs, cm_mod::mpreal, 
+              recv_data.data(), send_data.size() / nProcs, cm_mod::mpreal, root, com());
+}
+
+/// @brief gatherv int Vector
+void cmType::gatherv(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const
+{
+  MPI_Gatherv(send_data.data(), send_data.size(), cm_mod::mpint,
+              recv_data.data(), recv_counts.data(), displs.data(), cm_mod::mpint, root, com());
+}
+
+/// @brief gatherv double Vector
+void cmType::gatherv(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const
+{
+  MPI_Gatherv(send_data.data(), send_data.size(), cm_mod::mpreal,
+              recv_data.data(), recv_counts.data(), displs.data(), cm_mod::mpreal, root, com());
+}
+
+/// @brief scatterv int Vector
+void cmType::scatterv(const CmMod& cm_mod, const Vector<int>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<int>& recv_data, int root) const
+{
+  MPI_Scatterv(send_data.data(), send_counts.data(), displs.data(), cm_mod::mpint,
+               recv_data.data(), recv_data.size(), cm_mod::mpint, root, com());
+}
+
+/// @brief scatterv double Vector
+void cmType::scatterv(const CmMod& cm_mod, const Vector<double>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<double>& recv_data, int root) const
+{
+  MPI_Scatterv(send_data.data(), send_counts.data(), displs.data(), cm_mod::mpreal,
+               recv_data.data(), recv_data.size(), cm_mod::mpreal, root, com());
+}

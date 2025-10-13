@@ -365,9 +365,20 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
   // Stiffness and damping parameters for Robin BC
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) { 
-    lBc.k = bc_params->stiffness.value();
-    lBc.c = bc_params->damping.value();
-    lBc.rbnN = bc_params->apply_along_normal_direction.value();
+    
+    // Read VTP file path for per-node stiffness and damping (optional)
+    if (bc_params->spatial_values_file_path.defined()) {
+      lBc.robin_bc = RobinBoundaryCondition(bc_params->spatial_values_file_path.value(), 
+                                            bc_params->apply_along_normal_direction.value(),
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            simulation->logger);
+    } else {
+      lBc.robin_bc = RobinBoundaryCondition(bc_params->stiffness.value(), 
+                                            bc_params->damping.value(),
+                                            bc_params->apply_along_normal_direction.value(),
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            simulation->logger);
+    }
   }
 
   // To impose value or flux
@@ -1667,7 +1678,23 @@ void read_files(Simulation* simulation, const std::string& file_name)
     com_mod.stFileFlag = gen_params.continue_previous_simulation.value();
   }
 
-  // Set simulatioin and module member data from XML parameters.
+  // Setup logging to history file.
+  if (!simulation->com_mod.cm.slv(simulation->cm_mod)) {
+    std::string hist_file_name;
+
+    if (chnl_mod.appPath != "") { 
+      auto mkdir_arg = std::string("mkdir -p ") + chnl_mod.appPath;
+      std::system(mkdir_arg.c_str());
+      hist_file_name = chnl_mod.appPath + "/" + simulation->history_file_name;
+    } else {
+      hist_file_name = simulation->history_file_name;
+    }
+
+    bool output_to_cout = true;
+    simulation->logger.initialize(hist_file_name, output_to_cout);
+  }
+
+  // Set simulation and module member data from XML parameters.
   simulation->set_module_parameters();
 
   // Read mesh and BCs data.

@@ -90,6 +90,7 @@
      <VonMises_stress> true </VonMises_stress>
      <Cauchy_stress> true </Cauchy_stress>
      <Def_grad> true </Def_grad>
+     <Fiber_direction> true </Fiber_direction>
    </Output>
 
    <LS type="GMRES" >
