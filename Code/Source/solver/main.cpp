@@ -369,6 +369,7 @@ void iterate_solution(Simulation* simulation)
     dmsg << "Starting Newton iteration via Integrator ..." << std::endl;
     #endif
 
+    int iEqOld = cEq;
     integrator.step();
 
     #ifdef debug_iterate_solution
