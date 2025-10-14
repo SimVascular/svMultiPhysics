@@ -35,3 +35,4 @@ Q_svZeroD
 P_svZeroD
 # local svZeroD build
 svZeroDSolver
+update_license_headers.py
