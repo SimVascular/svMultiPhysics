@@ -6,5 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Setup Deno
+      uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
     - name: Check License
-      uses: kt3k/license_checker@v3.3.1
+      run: deno run --allow-read jsr:@kt3k/license-checker@3.3.1
