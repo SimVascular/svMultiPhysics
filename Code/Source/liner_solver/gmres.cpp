@@ -45,6 +45,7 @@
 #include "spar_mul.h"
 
 #include "Array3.h"
+#include "DebugMsg.h"
 
 #include <math.h>
 
@@ -153,6 +154,9 @@ void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLs
     #ifdef debug_gmres
     dmsg << "err(1): " << err[0];
     #endif
+    if (err[0] == 0.0) { 
+      throw std::runtime_error("FSILS: A zero matrix norm has been computed. This is probably caused by ill-posed boundary conditions.");
+    }
 
     if (l == 0) {
       eps = err[0];
@@ -336,6 +340,10 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     u.set_col(0, R - u_col);
 
     err[0] = norm::fsi_ls_norms(mynNo, lhs.commu, u.col(0));
+    if (err[0] == 0.0) { 
+      throw std::runtime_error("FSILS: A zero matrix norm has been computed. This is probably caused by ill-posed boundary conditions.");
+    }
+
     u_col = u.col(0) / err[0];
     u.set_col(0, u_col);
     #ifdef debug_gmres_s
@@ -514,6 +522,10 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     }
 
     err[0] = norm::fsi_ls_normv(dof, mynNo, lhs.commu, u.rslice(0));
+    if (err[0] == 0.0) { 
+      throw std::runtime_error("FSILS: A zero matrix norm has been computed. This is probably caused by ill-posed boundary conditions.");
+    }
+
     u_slice = u.rslice(0) / err[0];
     #ifdef debug_gmres_v
     dmsg << "err(1): " << err[0];
