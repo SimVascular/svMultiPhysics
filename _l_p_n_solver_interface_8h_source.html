@@ -82,116 +82,89 @@ $(document).ready(function() { init_codefold(0); });
   <div class="headertitle"><div class="title">LPNSolverInterface.h</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/* Copyright (c) Stanford University, The Regents of the University of California, and others.</span></div>
-<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment"> * All Rights Reserved.</span></div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="comment"> * See Copyright-SimVascular.txt for additional details.</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="comment"> * Permission is hereby granted, free of charge, to any person obtaining</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="comment"> * a copy of this software and associated documentation files (the</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="comment"> * &quot;Software&quot;), to deal in the Software without restriction, including</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment"> * without limitation the rights to use, copy, modify, merge, publish,</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment"> * distribute, sublicense, and/or sell copies of the Software, and to</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment"> * permit persons to whom the Software is furnished to do so, subject</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment"> * to the following conditions:</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment"> * The above copyright notice and this permission notice shall be included</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> * in all copies or substantial portions of the Software.</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment"> * IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment"> * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment"> * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment"> * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"> * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment"> * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment"> * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">#include &lt;dlfcn.h&gt;</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#ifndef LPNSolverInterface_h</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#define LPNSolverInterface_h</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment">//--------------------</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="comment">// LPNSolverInterface</span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment">//--------------------</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="comment">//</span></div>
-<div class="foldopen" id="foldopen00044" data-start="{" data-end="};">
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="class_l_p_n_solver_interface.html">   44</a></span><span class="keyword">class </span><a class="code hl_class" href="class_l_p_n_solver_interface.html">LPNSolverInterface</a></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>{</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>  <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <a class="code hl_class" href="class_l_p_n_solver_interface.html">LPNSolverInterface</a>();</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <a class="code hl_class" href="class_l_p_n_solver_interface.html">~LPNSolverInterface</a>();</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordtype">void</span> load_library(<span class="keyword">const</span> std::string&amp; interface_lib);</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="keywordtype">void</span> initialize(std::string file_name);</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keywordtype">void</span> increment_time(<span class="keyword">const</span> <span class="keywordtype">double</span> time, std::vector&lt;double&gt;&amp; solution);</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordtype">void</span> run_simulation(<span class="keyword">const</span> <span class="keywordtype">double</span> time, std::vector&lt;double&gt;&amp; output_times, </div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                    std::vector&lt;double&gt;&amp; output_solutions, <span class="keywordtype">int</span>&amp; error_code);</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="keywordtype">void</span> update_block_params(std::string block_name, std::vector&lt;double&gt;&amp; new_params);</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordtype">void</span> read_block_params(std::string block_name, std::vector&lt;double&gt;&amp; block_params);</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordtype">void</span> get_block_node_IDs(std::string block_name, std::vector&lt;int&gt;&amp; IDs);</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keywordtype">void</span> update_state(std::vector&lt;double&gt; state_y, std::vector&lt;double&gt; state_ydot);</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">void</span> return_y(std::vector&lt;double&gt;&amp; y);</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordtype">void</span> return_ydot(std::vector&lt;double&gt;&amp; ydot);</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keywordtype">void</span> set_external_step_size(<span class="keywordtype">double</span> step_size);</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="comment">// Interface functions.</span></div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    std::string lpn_initialize_name_;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    void (*lpn_initialize_)(std::string, <span class="keywordtype">int</span>&amp;, <span class="keywordtype">int</span>&amp;, <span class="keywordtype">int</span>&amp;, <span class="keywordtype">int</span>&amp;, std::vector&lt;std::string&gt;&amp;, </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                        std::vector&lt;std::string&gt;&amp;);</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    std::string lpn_increment_time_name_;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    void (*lpn_increment_time_)(<span class="keyword">const</span> int, <span class="keyword">const</span> double, std::vector&lt;double&gt;&amp; solution);</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    std::string lpn_run_simulation_name_;</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    void (*lpn_run_simulation_)(<span class="keyword">const</span> int, <span class="keyword">const</span> double, std::vector&lt;double&gt;&amp; output_times, </div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                            std::vector&lt;double&gt;&amp; output_solutions, <span class="keywordtype">int</span>&amp; error_code);</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    std::string lpn_update_block_params_name_;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    void (*lpn_update_block_params_)(<span class="keyword">const</span> int, std::string, std::vector&lt;double&gt;&amp; new_params);</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    std::string lpn_read_block_params_name_;</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    void (*lpn_read_block_params_)(<span class="keyword">const</span> int, std::string, std::vector&lt;double&gt;&amp; block_params);</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    std::string lpn_get_block_node_IDs_name_;</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    void (*lpn_get_block_node_IDs_)(<span class="keyword">const</span> int, std::string, std::vector&lt;int&gt;&amp; block_params);</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    std::string lpn_update_state_name_;</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    void (*lpn_update_state_)(<span class="keyword">const</span> int, std::vector&lt;double&gt;, std::vector&lt;double&gt;);</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    std::string lpn_return_y_name_;</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    void (*lpn_return_y_)(<span class="keyword">const</span> int, std::vector&lt;double&gt;&amp;);</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    </div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    std::string lpn_return_ydot_name_;</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    void (*lpn_return_ydot_)(<span class="keyword">const</span> int, std::vector&lt;double&gt;&amp;);</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    std::string lpn_set_external_step_size_name_;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    void (*lpn_set_external_step_size_)(<span class="keyword">const</span> int, double);</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordtype">void</span>* library_handle_ = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordtype">int</span> problem_id_ = 0;</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="keywordtype">int</span> system_size_ = 0;</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="keywordtype">int</span> num_cycles_ = 0;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="keywordtype">int</span> pts_per_cycle_ = 0;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordtype">int</span> num_output_steps_ = 0;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    std::vector&lt;std::string&gt; block_names_;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    std::vector&lt;std::string&gt; variable_names_;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>};</div>
+<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// SPDX-License-Identifier: BSD-3-Clause</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;dlfcn.h&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#ifndef LPNSolverInterface_h</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#define LPNSolverInterface_h</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment">//--------------------</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment">// LPNSolverInterface</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment">//--------------------</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment">//</span></div>
+<div class="foldopen" id="foldopen00017" data-start="{" data-end="};">
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="class_l_p_n_solver_interface.html">   17</a></span><span class="keyword">class </span><a class="code hl_class" href="class_l_p_n_solver_interface.html">LPNSolverInterface</a></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <a class="code hl_class" href="class_l_p_n_solver_interface.html">LPNSolverInterface</a>();</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <a class="code hl_class" href="class_l_p_n_solver_interface.html">~LPNSolverInterface</a>();</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keywordtype">void</span> load_library(<span class="keyword">const</span> std::string&amp; interface_lib);</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keywordtype">void</span> initialize(std::string file_name);</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keywordtype">void</span> increment_time(<span class="keyword">const</span> <span class="keywordtype">double</span> time, std::vector&lt;double&gt;&amp; solution);</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keywordtype">void</span> run_simulation(<span class="keyword">const</span> <span class="keywordtype">double</span> time, std::vector&lt;double&gt;&amp; output_times, </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>                    std::vector&lt;double&gt;&amp; output_solutions, <span class="keywordtype">int</span>&amp; error_code);</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keywordtype">void</span> update_block_params(std::string block_name, std::vector&lt;double&gt;&amp; new_params);</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keywordtype">void</span> read_block_params(std::string block_name, std::vector&lt;double&gt;&amp; block_params);</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keywordtype">void</span> get_block_node_IDs(std::string block_name, std::vector&lt;int&gt;&amp; IDs);</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordtype">void</span> update_state(std::vector&lt;double&gt; state_y, std::vector&lt;double&gt; state_ydot);</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordtype">void</span> return_y(std::vector&lt;double&gt;&amp; y);</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">void</span> return_ydot(std::vector&lt;double&gt;&amp; ydot);</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordtype">void</span> set_external_step_size(<span class="keywordtype">double</span> step_size);</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="comment">// Interface functions.</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    std::string lpn_initialize_name_;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    void (*lpn_initialize_)(std::string, <span class="keywordtype">int</span>&amp;, <span class="keywordtype">int</span>&amp;, <span class="keywordtype">int</span>&amp;, <span class="keywordtype">int</span>&amp;, std::vector&lt;std::string&gt;&amp;, </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>                        std::vector&lt;std::string&gt;&amp;);</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    std::string lpn_increment_time_name_;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    void (*lpn_increment_time_)(<span class="keyword">const</span> int, <span class="keyword">const</span> double, std::vector&lt;double&gt;&amp; solution);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    std::string lpn_run_simulation_name_;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    void (*lpn_run_simulation_)(<span class="keyword">const</span> int, <span class="keyword">const</span> double, std::vector&lt;double&gt;&amp; output_times, </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                            std::vector&lt;double&gt;&amp; output_solutions, <span class="keywordtype">int</span>&amp; error_code);</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    std::string lpn_update_block_params_name_;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    void (*lpn_update_block_params_)(<span class="keyword">const</span> int, std::string, std::vector&lt;double&gt;&amp; new_params);</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    std::string lpn_read_block_params_name_;</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    void (*lpn_read_block_params_)(<span class="keyword">const</span> int, std::string, std::vector&lt;double&gt;&amp; block_params);</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    std::string lpn_get_block_node_IDs_name_;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    void (*lpn_get_block_node_IDs_)(<span class="keyword">const</span> int, std::string, std::vector&lt;int&gt;&amp; block_params);</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    </div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    std::string lpn_update_state_name_;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    void (*lpn_update_state_)(<span class="keyword">const</span> int, std::vector&lt;double&gt;, std::vector&lt;double&gt;);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    std::string lpn_return_y_name_;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    void (*lpn_return_y_)(<span class="keyword">const</span> int, std::vector&lt;double&gt;&amp;);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    std::string lpn_return_ydot_name_;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    void (*lpn_return_ydot_)(<span class="keyword">const</span> int, std::vector&lt;double&gt;&amp;);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    std::string lpn_set_external_step_size_name_;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    void (*lpn_set_external_step_size_)(<span class="keyword">const</span> int, double);</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keywordtype">void</span>* library_handle_ = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <span class="keywordtype">int</span> problem_id_ = 0;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    <span class="keywordtype">int</span> system_size_ = 0;</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordtype">int</span> num_cycles_ = 0;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keywordtype">int</span> pts_per_cycle_ = 0;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keywordtype">int</span> num_output_steps_ = 0;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    std::vector&lt;std::string&gt; block_names_;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    std::vector&lt;std::string&gt; variable_names_;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>};</div>
 </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="ttc" id="aclass_l_p_n_solver_interface_html"><div class="ttname"><a href="class_l_p_n_solver_interface.html">LPNSolverInterface</a></div><div class="ttdef"><b>Definition</b> LPNSolverInterface.h:45</div></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="ttc" id="aclass_l_p_n_solver_interface_html"><div class="ttname"><a href="class_l_p_n_solver_interface.html">LPNSolverInterface</a></div><div class="ttdef"><b>Definition</b> LPNSolverInterface.h:18</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

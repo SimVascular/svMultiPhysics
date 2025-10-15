@@ -82,92 +82,65 @@ $(document).ready(function() { init_codefold(0); });
   <div class="headertitle"><div class="title">set_output_props.h</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/* Copyright (c) Stanford University, The Regents of the University of California, and others.</span></div>
-<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment"> * All Rights Reserved.</span></div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="comment"> * See Copyright-SimVascular.txt for additional details.</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="comment"> * Permission is hereby granted, free of charge, to any person obtaining</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="comment"> * a copy of this software and associated documentation files (the</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="comment"> * &quot;Software&quot;), to deal in the Software without restriction, including</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment"> * without limitation the rights to use, copy, modify, merge, publish,</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment"> * distribute, sublicense, and/or sell copies of the Software, and to</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment"> * permit persons to whom the Software is furnished to do so, subject</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment"> * to the following conditions:</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment"> * The above copyright notice and this permission notice shall be included</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> * in all copies or substantial portions of the Software.</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment"> * IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment"> * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment"> * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment"> * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"> * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment"> * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment"> * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="comment">// The &#39;output_props_map&#39; map defined here sets equation </span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment">// output properties from the given OutputNameType.</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="comment">//</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#include &lt;tuple&gt;</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment"></span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment">/// @brief The &#39;OutputProps&#39; tuple stores data for the &#39;outputType&#39; object for</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment">///</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment">///   output.grp - The group that this belong to (one of outType_)</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment">///   output.o - Offset from the first index</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="comment">///   output.l - Length of the outputed variable </span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment">///   output.name - The name to be used for the output and also in input file</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="comment"></span><span class="comment">//</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="keyword">using </span>OutputProps = std::tuple&lt;consts::OutputNameType, int, int, std::string&gt;; </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="comment"></span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="comment">/// @brief Reproduces Fortran READOUTPUTS.</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="comment"></span><span class="comment">//</span></div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>std::map&lt;consts::OutputNameType, OutputProps&gt; output_props_map = </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>{</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>  <span class="comment">//                                             -----------------------------------------------------------------</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>  <span class="comment">//                                                    output group        o   l                    name</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  <span class="comment">//                                             -----------------------------------------------------------------</span></div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>  {OutputNameType::out_absVelocity,  std::make_tuple(OutputNameType::outGrp_absV,   0, nsd,           <span class="stringliteral">&quot;Absolute_velocity&quot;</span>) },</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>  {OutputNameType::out_acceleration, std::make_tuple(OutputNameType::outGrp_A,      0, nsd,           <span class="stringliteral">&quot;Acceleration&quot;</span>) },</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  {OutputNameType::out_cauchy,       std::make_tuple(OutputNameType::outGrp_cauchy, 0, com_mod.nsymd, <span class="stringliteral">&quot;Cauchy_stress&quot;</span>) },</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  {OutputNameType::out_CGInv1,       std::make_tuple(OutputNameType::out_CGInv1,   0,  1,             <span class="stringliteral">&quot;CG_Strain_Trace&quot;</span>) },</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  {OutputNameType::out_CGstrain,     std::make_tuple(OutputNameType::outGrp_C,     0,  com_mod.nsymd, <span class="stringliteral">&quot;CG_Strain&quot;</span>) },</div>
+<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// SPDX-License-Identifier: BSD-3-Clause</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment">// The &#39;output_props_map&#39; map defined here sets equation </span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="comment">// output properties from the given OutputNameType.</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="comment">//</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;tuple&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="comment"></span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment">/// @brief The &#39;OutputProps&#39; tuple stores data for the &#39;outputType&#39; object for</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment">///</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment">///   output.grp - The group that this belong to (one of outType_)</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment">///   output.o - Offset from the first index</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment">///   output.l - Length of the outputed variable </span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment">///   output.name - The name to be used for the output and also in input file</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"></span><span class="comment">//</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">using </span>OutputProps = std::tuple&lt;consts::OutputNameType, int, int, std::string&gt;; </div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment"></span> </div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment">/// @brief Reproduces Fortran READOUTPUTS.</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment"></span><span class="comment">//</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>std::map&lt;consts::OutputNameType, OutputProps&gt; output_props_map = </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>  <span class="comment">//                                             -----------------------------------------------------------------</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>  <span class="comment">//                                                    output group        o   l                    name</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>  <span class="comment">//                                             -----------------------------------------------------------------</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>  {OutputNameType::out_absVelocity,  std::make_tuple(OutputNameType::outGrp_absV,   0, nsd,           <span class="stringliteral">&quot;Absolute_velocity&quot;</span>) },</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>  {OutputNameType::out_acceleration, std::make_tuple(OutputNameType::outGrp_A,      0, nsd,           <span class="stringliteral">&quot;Acceleration&quot;</span>) },</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>  {OutputNameType::out_cauchy,       std::make_tuple(OutputNameType::outGrp_cauchy, 0, com_mod.nsymd, <span class="stringliteral">&quot;Cauchy_stress&quot;</span>) },</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>  {OutputNameType::out_CGInv1,       std::make_tuple(OutputNameType::out_CGInv1,   0,  1,             <span class="stringliteral">&quot;CG_Strain_Trace&quot;</span>) },</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>  {OutputNameType::out_CGstrain,     std::make_tuple(OutputNameType::outGrp_C,     0,  com_mod.nsymd, <span class="stringliteral">&quot;CG_Strain&quot;</span>) },</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>  {OutputNameType::out_defGrad,      std::make_tuple(OutputNameType::outGrp_F,      0, nsd*nsd,       <span class="stringliteral">&quot;Def_grad&quot;</span>) },</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>  {OutputNameType::out_displacement, std::make_tuple(OutputNameType::outGrp_D,      0, nsd,           <span class="stringliteral">&quot;Displacement&quot;</span>) },</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>  {OutputNameType::out_divergence,   std::make_tuple(OutputNameType::outGrp_divV,   0, 1,             <span class="stringliteral">&quot;Divergence&quot;</span>) },</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>  {OutputNameType::out_energyFlux,   std::make_tuple(OutputNameType::outGrp_eFlx,   0, nsd,           <span class="stringliteral">&quot;Energy_flux&quot;</span>) },</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  {OutputNameType::out_fibAlign,     std::make_tuple(OutputNameType::outGrp_fA,     0, 1,             <span class="stringliteral">&quot;Fiber_alignment&quot;</span>) },</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>  {OutputNameType::out_fibDir,       std::make_tuple(OutputNameType::outGrp_fN,     0, nsd,           <span class="stringliteral">&quot;Fiber_direction&quot;</span>) },</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  {OutputNameType::out_fibStrn,      std::make_tuple(OutputNameType::outGrp_fS,     0, 1,             <span class="stringliteral">&quot;Fiber_shortening&quot;</span>) },</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  {OutputNameType::out_heatFlux,     std::make_tuple(OutputNameType::outGrp_hFlx,   0, nsd,           <span class="stringliteral">&quot;Heat_flux&quot;</span>) },</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>  {OutputNameType::out_integ,        std::make_tuple(OutputNameType::outGrp_I,      0,   1, nsd == 2 ?  <span class="stringliteral">&quot;Area&quot;</span> : <span class="stringliteral">&quot;Volume&quot;</span>) },</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  {OutputNameType::out_jacobian,     std::make_tuple(OutputNameType::outGrp_J,      0,   1,             <span class="stringliteral">&quot;Jacobian&quot;</span>) },</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>  {OutputNameType::out_mises,        std::make_tuple(OutputNameType::outGrp_mises,  0,   1,             <span class="stringliteral">&quot;VonMises_stress&quot;</span>) },</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>  {OutputNameType::out_pressure,     std::make_tuple(OutputNameType::outGrp_Y,      nsd, 1,           <span class="stringliteral">&quot;Pressure&quot;</span>) },</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>  {OutputNameType::out_strain,       std::make_tuple(OutputNameType::outGrp_strain, 0, com_mod.nsymd, <span class="stringliteral">&quot;Strain&quot;</span>) },</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>  {OutputNameType::out_strainInv,    std::make_tuple(OutputNameType::outGrp_stInv,  0, nsd,           <span class="stringliteral">&quot;Strain_invariants&quot;</span>) },</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>  {OutputNameType::out_stress,       std::make_tuple(OutputNameType::outGrp_stress, 0, com_mod.nsymd, <span class="stringliteral">&quot;Stress&quot;</span>) },</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>  {OutputNameType::out_temperature,  std::make_tuple(OutputNameType::outGrp_Y,      0, 1,             <span class="stringliteral">&quot;Temperature&quot;</span>) },</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>  {OutputNameType::out_traction,     std::make_tuple(OutputNameType::outGrp_trac,   0, nsd,           <span class="stringliteral">&quot;Traction&quot;</span>) },</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  {OutputNameType::out_velocity,     std::make_tuple(OutputNameType::outGrp_Y,      0, nsd,           <span class="stringliteral">&quot;Velocity&quot;</span>) },</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>  {OutputNameType::out_viscosity,    std::make_tuple(OutputNameType::outGrp_Visc,   0, 1,             <span class="stringliteral">&quot;Viscosity&quot;</span>) },</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>  {OutputNameType::out_voltage,      std::make_tuple(OutputNameType::outGrp_Y,      0, 1,             <span class="stringliteral">&quot;Action_potential&quot;</span>) },</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  {OutputNameType::out_vortex,       std::make_tuple(OutputNameType::outGrp_vortex, 0, 1,             <span class="stringliteral">&quot;Vortex&quot;</span>) },</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  {OutputNameType::out_vorticity,    std::make_tuple(OutputNameType::outGrp_vort,   0, maxNSD,        <span class="stringliteral">&quot;Vorticity&quot;</span>) },</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  {OutputNameType::out_WSS,          std::make_tuple(OutputNameType::outGrp_WSS,    0, maxNSD,        <span class="stringliteral">&quot;WSS&quot;</span>) }</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>};</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>  {OutputNameType::out_defGrad,      std::make_tuple(OutputNameType::outGrp_F,      0, nsd*nsd,       <span class="stringliteral">&quot;Def_grad&quot;</span>) },</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  {OutputNameType::out_displacement, std::make_tuple(OutputNameType::outGrp_D,      0, nsd,           <span class="stringliteral">&quot;Displacement&quot;</span>) },</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  {OutputNameType::out_divergence,   std::make_tuple(OutputNameType::outGrp_divV,   0, 1,             <span class="stringliteral">&quot;Divergence&quot;</span>) },</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  {OutputNameType::out_energyFlux,   std::make_tuple(OutputNameType::outGrp_eFlx,   0, nsd,           <span class="stringliteral">&quot;Energy_flux&quot;</span>) },</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>  {OutputNameType::out_fibAlign,     std::make_tuple(OutputNameType::outGrp_fA,     0, 1,             <span class="stringliteral">&quot;Fiber_alignment&quot;</span>) },</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>  {OutputNameType::out_fibDir,       std::make_tuple(OutputNameType::outGrp_fN,     0, nsd,           <span class="stringliteral">&quot;Fiber_direction&quot;</span>) },</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>  {OutputNameType::out_fibStrn,      std::make_tuple(OutputNameType::outGrp_fS,     0, 1,             <span class="stringliteral">&quot;Fiber_shortening&quot;</span>) },</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>  {OutputNameType::out_heatFlux,     std::make_tuple(OutputNameType::outGrp_hFlx,   0, nsd,           <span class="stringliteral">&quot;Heat_flux&quot;</span>) },</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>  {OutputNameType::out_integ,        std::make_tuple(OutputNameType::outGrp_I,      0,   1, nsd == 2 ?  <span class="stringliteral">&quot;Area&quot;</span> : <span class="stringliteral">&quot;Volume&quot;</span>) },</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>  {OutputNameType::out_jacobian,     std::make_tuple(OutputNameType::outGrp_J,      0,   1,             <span class="stringliteral">&quot;Jacobian&quot;</span>) },</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>  {OutputNameType::out_mises,        std::make_tuple(OutputNameType::outGrp_mises,  0,   1,             <span class="stringliteral">&quot;VonMises_stress&quot;</span>) },</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  {OutputNameType::out_pressure,     std::make_tuple(OutputNameType::outGrp_Y,      nsd, 1,           <span class="stringliteral">&quot;Pressure&quot;</span>) },</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>  {OutputNameType::out_strain,       std::make_tuple(OutputNameType::outGrp_strain, 0, com_mod.nsymd, <span class="stringliteral">&quot;Strain&quot;</span>) },</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>  {OutputNameType::out_strainInv,    std::make_tuple(OutputNameType::outGrp_stInv,  0, nsd,           <span class="stringliteral">&quot;Strain_invariants&quot;</span>) },</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  {OutputNameType::out_stress,       std::make_tuple(OutputNameType::outGrp_stress, 0, com_mod.nsymd, <span class="stringliteral">&quot;Stress&quot;</span>) },</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  {OutputNameType::out_temperature,  std::make_tuple(OutputNameType::outGrp_Y,      0, 1,             <span class="stringliteral">&quot;Temperature&quot;</span>) },</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  {OutputNameType::out_traction,     std::make_tuple(OutputNameType::outGrp_trac,   0, nsd,           <span class="stringliteral">&quot;Traction&quot;</span>) },</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  {OutputNameType::out_velocity,     std::make_tuple(OutputNameType::outGrp_Y,      0, nsd,           <span class="stringliteral">&quot;Velocity&quot;</span>) },</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>  {OutputNameType::out_viscosity,    std::make_tuple(OutputNameType::outGrp_Visc,   0, 1,             <span class="stringliteral">&quot;Viscosity&quot;</span>) },</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  {OutputNameType::out_voltage,      std::make_tuple(OutputNameType::outGrp_Y,      0, 1,             <span class="stringliteral">&quot;Action_potential&quot;</span>) },</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>  {OutputNameType::out_vortex,       std::make_tuple(OutputNameType::outGrp_vortex, 0, 1,             <span class="stringliteral">&quot;Vortex&quot;</span>) },</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  {OutputNameType::out_vorticity,    std::make_tuple(OutputNameType::outGrp_vort,   0, maxNSD,        <span class="stringliteral">&quot;Vorticity&quot;</span>) },</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>  {OutputNameType::out_WSS,          std::make_tuple(OutputNameType::outGrp_WSS,    0, maxNSD,        <span class="stringliteral">&quot;WSS&quot;</span>) }</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>};</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
