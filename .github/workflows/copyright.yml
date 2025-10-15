@@ -1,4 +1,4 @@
-# This workflow checks that all .h/.cpp/.c files have the SPDX copyright header at the top
+# This workflow checks that all .h/.cpp files have the SPDX copyright header at the top
 name: Copyright
 on: [push, pull_request]
 jobs:
