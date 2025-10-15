@@ -36,6 +36,7 @@
 #include "CmMod.h"
 #include "VtkData.h"
 #include <string>
+#include "SimulationLogger.h"
 #include <memory>
 #include <map>
 #include <vector>
@@ -79,7 +80,7 @@ protected:
     using StringDoubleMap = std::map<std::string, double>;
 
     /// @brief Data members for BC
-    const faceType* face_ = nullptr;         ///< Face associated with the BC (can be null)
+    const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by BoundaryCondition)
     int global_num_nodes_ = 0;               ///< Global number of nodes on the face
     int local_num_nodes_ = 0;                ///< Local number of nodes on this processor
     std::vector<std::string> array_names_;   ///< Names of arrays to read from VTP file
@@ -90,6 +91,7 @@ protected:
     std::string vtp_file_path_;              ///< Path to VTP file (empty if uniform)
     std::map<int, int> global_node_map_;     ///< Maps global node IDs to local array indices
     std::unique_ptr<VtkVtpData> vtp_data_;   ///< VTP data object
+    const SimulationLogger* logger_ = nullptr;  ///< Logger for warnings/info (not owned by BoundaryCondition)
 
 public:
     /// @brief Tolerance for point matching in VTP files
@@ -102,13 +104,15 @@ public:
     /// @param vtp_file_path Path to VTP file containing arrays
     /// @param array_names Names of arrays to read from VTP file
     /// @param face Face associated with the BC
+    /// @param logger Simulation logger used to write warnings
     /// @throws std::runtime_error if file cannot be read or arrays are missing
-    BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face);
+    BoundaryCondition(const std::string& vtp_file_path, const std::vector<std::string>& array_names, const StringBoolMap& flags, const faceType& face, SimulationLogger& logger);
 
     /// @brief Constructor for uniform values
     /// @param uniform_values Map of array names to uniform values
     /// @param face Face associated with the BC
-    BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face);
+    /// @param logger Simulation logger used to write warnings
+    BoundaryCondition(const StringDoubleMap& uniform_values, const StringBoolMap& flags, const faceType& face, SimulationLogger& logger);
 
     /// @brief Copy constructor
     BoundaryCondition(const BoundaryCondition& other);
@@ -198,9 +202,10 @@ protected:
     /// @param y Y coordinate
     /// @param z Z coordinate
     /// @param vtp_points VTP points array
+    /// @param mesh_scale_factor Scale factor applied to mesh coordinates
     /// @return Index of the matching point in the VTP array
     /// @throws std::runtime_error if no matching point is found
-    int find_vtp_point_index(double x, double y, double z, const Array<double>& vtp_points) const;
+    int find_vtp_point_index(double x, double y, double z, const Array<double>& vtp_points, double mesh_scale_factor) const;
 
     /// @brief Hook for derived classes to validate array values
     /// @param array_name Name of the array being validated
