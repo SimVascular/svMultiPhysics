@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include "post.h"
 
@@ -681,27 +654,31 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
       int Ac = lM.IEN(a,e);
       for (int i = 0; i < nsd; i++) {
         xl(i,a) = com_mod.x(i,Ac);
+      }
+      for (int i = 0; i < tDof; i++) {
         dl(i,a) = lD(i,Ac);
       }
     }
 
     for (int iFn = 0; iFn < lM.nFn; iFn++) {
       for (int i = 0; i < nsd; i++) {
-        fN(i,iFn) = lM.fN(iFn*nsd,e);
+        fN(i,iFn) = lM.fN(i+iFn*nsd,e);
       }
     }
 
-    Array<double> F;
+    Array<double> F(nsd,nsd);
+    Array<double> Nx(nsd,eNoN);
+    double Jac = 0.0;
 
     for (int g = 0; g < lM.nG; g++) {
-      double Jac = 0.0;
       if (g == 0 || !lM.lShpF) {
-        auto Nx = lM.Nx.slice(g);
-        nn::gnn(eNoN, nsd, nsd, Nx, xl, Nx, Jac, F);
+        auto Nxi = lM.Nx.slice(g);
+        nn::gnn(eNoN, nsd, nsd, Nxi, xl, Nx, Jac, F);
       }
 
       double w = lM.w(g) * Jac;
-      auto F = mat_fun::mat_id(nsd); 
+      N = lM.N.col(g);
+      F = mat_fun::mat_id(nsd); 
 
       for (int a = 0; a < eNoN; a++) {
         if (nsd == 3) {
@@ -749,11 +726,12 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
   for (int a = 0; a < lM.nNo; a++) {
     int Ac = lM.gN(a);
     if (!utils::is_zero(sA(Ac))) {
-      for (int i = 0; i < nsd; i++) {
+      for (int i = 0; i < nFn*nsd; i++) {
         res(i,a) = res(i,a) + sF(i,Ac) / sA(Ac);
-       }
+      }
     } 
   }
+
 }
 
 /// @brief Compute fiber stretch based on 4th invariant: I_{4,f}

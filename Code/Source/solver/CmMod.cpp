@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include "ComMod.h"
 #include "CmMod.h"
@@ -163,4 +136,84 @@ void cmType::bcast(const CmMod& cm_mod, int* data) const
 void cmType::bcast(const CmMod& cm_mod, Vector<int>& data) const
 {
   MPI_Bcast(data.data(), data.size(), cm_mod::mpint, cm_mod.master, com());
+}
+
+/// @brief gather int array
+void cmType::gather(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const
+{
+  MPI_Gather(send_data, send_count, cm_mod::mpint, recv_data, recv_count, cm_mod::mpint, root, com());
+}
+
+/// @brief gather double array
+void cmType::gather(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const
+{
+  MPI_Gather(send_data, send_count, cm_mod::mpreal, recv_data, recv_count, cm_mod::mpreal, root, com());
+}
+
+/// @brief gather int Vector
+void cmType::gather(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const
+{
+  MPI_Gather(send_data.data(), send_data.size(), cm_mod::mpint, 
+             recv_data.data(), send_data.size(), cm_mod::mpint, root, com());
+}
+
+/// @brief gather double Vector
+void cmType::gather(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const
+{
+  MPI_Gather(send_data.data(), send_data.size(), cm_mod::mpreal, 
+             recv_data.data(), send_data.size(), cm_mod::mpreal, root, com());
+}
+
+/// @brief scatter int array
+void cmType::scatter(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const
+{
+  MPI_Scatter(send_data, send_count, cm_mod::mpint, recv_data, recv_count, cm_mod::mpint, root, com());
+}
+
+/// @brief scatter double array
+void cmType::scatter(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const
+{
+  MPI_Scatter(send_data, send_count, cm_mod::mpreal, recv_data, recv_count, cm_mod::mpreal, root, com());
+}
+
+/// @brief scatter int Vector
+void cmType::scatter(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const
+{
+  MPI_Scatter(send_data.data(), send_data.size() / nProcs, cm_mod::mpint, 
+              recv_data.data(), send_data.size() / nProcs, cm_mod::mpint, root, com());
+}
+
+/// @brief scatter double Vector
+void cmType::scatter(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const
+{
+  MPI_Scatter(send_data.data(), send_data.size() / nProcs, cm_mod::mpreal, 
+              recv_data.data(), send_data.size() / nProcs, cm_mod::mpreal, root, com());
+}
+
+/// @brief gatherv int Vector
+void cmType::gatherv(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const
+{
+  MPI_Gatherv(send_data.data(), send_data.size(), cm_mod::mpint,
+              recv_data.data(), recv_counts.data(), displs.data(), cm_mod::mpint, root, com());
+}
+
+/// @brief gatherv double Vector
+void cmType::gatherv(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const
+{
+  MPI_Gatherv(send_data.data(), send_data.size(), cm_mod::mpreal,
+              recv_data.data(), recv_counts.data(), displs.data(), cm_mod::mpreal, root, com());
+}
+
+/// @brief scatterv int Vector
+void cmType::scatterv(const CmMod& cm_mod, const Vector<int>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<int>& recv_data, int root) const
+{
+  MPI_Scatterv(send_data.data(), send_counts.data(), displs.data(), cm_mod::mpint,
+               recv_data.data(), recv_data.size(), cm_mod::mpint, root, com());
+}
+
+/// @brief scatterv double Vector
+void cmType::scatterv(const CmMod& cm_mod, const Vector<double>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<double>& recv_data, int root) const
+{
+  MPI_Scatterv(send_data.data(), send_counts.data(), displs.data(), cm_mod::mpreal,
+               recv_data.data(), recv_data.size(), cm_mod::mpreal, root, com());
 }

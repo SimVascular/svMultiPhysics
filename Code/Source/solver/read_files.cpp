@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 // The functions defined here replicate the Fortran functions defined in READFILES.f.
 
@@ -392,9 +365,20 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
   // Stiffness and damping parameters for Robin BC
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) { 
-    lBc.k = bc_params->stiffness.value();
-    lBc.c = bc_params->damping.value();
-    lBc.rbnN = bc_params->apply_along_normal_direction.value();
+    
+    // Read VTP file path for per-node stiffness and damping (optional)
+    if (bc_params->spatial_values_file_path.defined()) {
+      lBc.robin_bc = RobinBoundaryCondition(bc_params->spatial_values_file_path.value(), 
+                                            bc_params->apply_along_normal_direction.value(),
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            simulation->logger);
+    } else {
+      lBc.robin_bc = RobinBoundaryCondition(bc_params->stiffness.value(), 
+                                            bc_params->damping.value(),
+                                            bc_params->apply_along_normal_direction.value(),
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            simulation->logger);
+    }
   }
 
   // To impose value or flux
@@ -1694,7 +1678,23 @@ void read_files(Simulation* simulation, const std::string& file_name)
     com_mod.stFileFlag = gen_params.continue_previous_simulation.value();
   }
 
-  // Set simulatioin and module member data from XML parameters.
+  // Setup logging to history file.
+  if (!simulation->com_mod.cm.slv(simulation->cm_mod)) {
+    std::string hist_file_name;
+
+    if (chnl_mod.appPath != "") { 
+      auto mkdir_arg = std::string("mkdir -p ") + chnl_mod.appPath;
+      std::system(mkdir_arg.c_str());
+      hist_file_name = chnl_mod.appPath + "/" + simulation->history_file_name;
+    } else {
+      hist_file_name = simulation->history_file_name;
+    }
+
+    bool output_to_cout = true;
+    simulation->logger.initialize(hist_file_name, output_to_cout);
+  }
+
+  // Set simulation and module member data from XML parameters.
   simulation->set_module_parameters();
 
   // Read mesh and BCs data.

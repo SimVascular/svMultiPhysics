@@ -225,6 +225,9 @@ set(CSRCS
   SPLIT.c
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp
+
+  BoundaryCondition.h BoundaryCondition.cpp
+  RobinBoundaryCondition.h RobinBoundaryCondition.cpp
 )
 
   # Set PETSc interace code.

@@ -1,38 +1,12 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 // The code here replicates the Fortran code in DISTRIBUTE.f.
 
 #include "distribute.h"
 
 #include "all_fun.h"
+#include "ComMod.h"
 #include "consts.h"
 #include "nn.h"
 #include "utils.h"
@@ -654,13 +628,10 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   cm.bcast(cm_mod, &lBc.iM);
   cm.bcast(cm_mod, &lBc.r);
   cm.bcast(cm_mod, &lBc.g);
-  cm.bcast(cm_mod, &lBc.k);
-  cm.bcast(cm_mod, &lBc.c);
   cm.bcast(cm_mod, lBc.h);
   cm.bcast(cm_mod, &lBc.weakDir);
   cm.bcast(cm_mod, lBc.tauB);
   cm.bcast(cm_mod, &lBc.flwP);
-  cm.bcast(cm_mod, &lBc.rbnN);
 
 
   if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_RCR))) {
@@ -801,6 +772,16 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
       }
     }
   }
+
+  // Communicating Robin BC
+  //
+  bool has_robin_bc = lBc.robin_bc.is_initialized();
+  cm.bcast(cm_mod, &has_robin_bc); // Master process broadcasts the flag to all processes
+
+  if (has_robin_bc) {
+    lBc.robin_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
+  }
+
 
   // Communicating and reordering master node data for 
   // undeforming Neumann BC faces.
@@ -1795,8 +1776,9 @@ void dist_solid_visc_model(const ComMod& com_mod, const CmMod& cm_mod, const cmT
 
 void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa, Vector<int>& gmtl)
 {
+  #define n_debug_part_face
   #ifdef debug_part_face
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "lFa.name: " << lFa.name;
   #endif
@@ -1880,6 +1862,7 @@ void part_face(Simulation* simulation, mshType& lM, faceType& lFa, faceType& gFa
   int i = gFa.nEl*(2+eNoNb) + gFa.nNo;
   Vector<int> part(i);
 
+  // Broadcast data in gFa from master to all processes
   if (cm.mas(cm_mod)) {
     for (int e = 0; e < gFa.nEl; e++) {
       int Ec = gFa.gE[e];

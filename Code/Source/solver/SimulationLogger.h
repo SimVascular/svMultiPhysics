@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 #ifndef SIMULATION_LOGGER_H 
 #define SIMULATION_LOGGER_H 
@@ -47,7 +20,7 @@ class SimulationLogger {
       this->initialize(file_name, cout_write);
     }
 
-    void initialize(const std::string& file_name, bool cout_write=false) 
+    void initialize(const std::string& file_name, bool cout_write=false) const
     {
       log_file_.open(file_name);
       if (log_file_.fail()) {
@@ -58,12 +31,14 @@ class SimulationLogger {
       file_name_ = file_name;
     }
 
+    bool is_initialized() const { return log_file_.is_open(); }
+
     ~SimulationLogger() 
     {
       log_file_.close();
     }
 
-  template <class T> SimulationLogger& operator<< (const T& value)
+  template <class T> const SimulationLogger& operator<< (const T& value) const
   {
     if (file_name_ == "") { 
       return *this;
@@ -78,7 +53,28 @@ class SimulationLogger {
     return *this;
   }
 
-  SimulationLogger& operator<<(std::ostream&(*value)(std::ostream& o))
+  // Special handling for vector<string>
+  const SimulationLogger& operator<< (const std::vector<std::string>& values) const
+  {
+    if (file_name_ == "") { 
+      return *this;
+    }
+
+    bool first = true;
+    for (const auto& value : values) {
+      if (!first) {
+        log_file_ << ", ";
+        if (cout_write_) std::cout << ", ";
+      }
+      log_file_ << value;
+      if (cout_write_) std::cout << value;
+      first = false;
+    }
+
+    return *this;
+  }
+
+  const SimulationLogger& operator<<(std::ostream&(*value)(std::ostream& o)) const
   {
     if (file_name_ == "") { 
       return *this;
@@ -93,10 +89,27 @@ class SimulationLogger {
     return *this;
   };
 
+  /// @brief Log a message with automatic space separation
+  /// @param args Arguments to log
+  template<typename... Args>
+  const SimulationLogger& log_message(const Args&... args) const {
+    if (file_name_ == "") return *this;
+
+    bool first = true;
+    ((first ? (first = false, (*this << args)) : (*this << ' ' << args)), ...);
+    *this << std::endl;
+    return *this;
+  }
+
   private:
-    bool cout_write_ = false;
-    std::string file_name_;
-    std::ofstream log_file_;
+    // These members are marked mutable because they can be modified in const member functions.
+    // While logging writes to a file (modifying these members), it doesn't change the logical
+    // state of the logger - this is exactly what mutable is designed for: implementation
+    // details that need to change even when the object's public state remains constant.
+    mutable bool cout_write_ = false;
+    mutable bool initialized_ = false;
+    mutable std::string file_name_;
+    mutable std::ofstream log_file_;
 };
 
 #endif

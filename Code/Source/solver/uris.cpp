@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include "uris.h"
 
@@ -686,14 +659,14 @@ void uris_read_msh(Simulation* simulation) {
       for (int k = 0; k < dispNtOpen; k++) {
         for (int i = 0; i < nsd; i++) {
           for (int j = uris_obj.tnNo; j < a; j++) {
-            uris_obj.DxOpen(k,i,j) = dispOpen(k,i,j-uris_obj.tnNo);
+            uris_obj.DxOpen(k,i,j) = dispOpen(k,i,j-uris_obj.tnNo) * uris_obj.scF;
           }
         }
       }
       for (int k = 0; k < dispNtClose; k++) {
         for (int i = 0; i < nsd; i++) {
           for (int j = uris_obj.tnNo; j < a; j++) {
-            uris_obj.DxClose(k,i,j) = dispClose(k,i,j-uris_obj.tnNo);
+            uris_obj.DxClose(k,i,j) = dispClose(k,i,j-uris_obj.tnNo) * uris_obj.scF;
           }
         }
       }
@@ -949,7 +922,7 @@ void uris_calc_sdf(ComMod& com_mod) {
       }
     }
 
-    Array<double> lX(nsd, uris_obj.msh[1].eNoN);
+    Array<double> lX(nsd, max_eNoN);
     // if (!uris_obj.sdf.allocated()) {
     if (uris_obj.sdf.size() <= 0) {
       uris_obj.sdf.resize(com_mod.tnNo);

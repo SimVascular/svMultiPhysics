@@ -55,6 +55,10 @@ def test_robin(n_proc):
     test_folder = "robin"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_spatially_variable_robin(n_proc):
+    test_folder = "spatially_variable_robin"
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=2)
+
 def test_LV_NeoHookean_passive(n_proc):
     test_folder = "LV_NeoHookean_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=5)

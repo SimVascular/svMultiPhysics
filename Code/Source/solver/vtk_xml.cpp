@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 // The functions defined here replicate the Fortran functions defined in VTKXML.f.
 
@@ -86,8 +59,6 @@ void do_test()
     }
   }
 
-  std::cout << "Num dupe: " << num_dupe << std::endl;
-
   vtkSmartPointer<vtkUnstructuredGrid> mesh;
 
   std::string fileName = "mesh-complete/mesh-complete.mesh.vtu";
@@ -98,8 +69,6 @@ void do_test()
 
   vtkIdType m_NumPoints = mesh->GetNumberOfPoints();
   vtkIdType m_NumCells = mesh->GetNumberOfCells();
-  std::cout << "  Number of points: " << m_NumPoints << std::endl;
-  std::cout << "  Number of cells: " << m_NumCells << std::endl;
 
   auto numPoints = mesh->GetNumberOfPoints();
   auto points = mesh->GetPoints();
@@ -138,10 +107,6 @@ void do_test()
     }
   }
 
-  std::cout << "num_found_1: " << num_found_1 << std::endl;
-  std::cout << "num_found_2: " << num_found_2 << std::endl;
-
-  //exit(0);
 }
 
 /// @brief This routine prepares data array of a regular mesh
@@ -1171,11 +1136,11 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
               post::fib_dir_post(simulation, msh, nFn, tmpV, lD, iEq);
             }
             for (int iFn = 0; iFn < nFn; iFn++) {
+              cOut = cOut + 1;
               is = outS[cOut];
               ie = is + l - 1;
               outS[cOut+1] = ie + 1;
-              outNames[cOut] = eq.output[iOut].name + std::to_string(iFn);
-              cOut = cOut + 1;
+              outNames[cOut] = eq.output[iOut].name + std::to_string(iFn+1);
 
               for (int a = 0; a < msh.nNo; a++) {
                 for (int i = 0; i < l; i++) {
@@ -1414,8 +1379,6 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
     nSh = nSh + d[iM].nNo;
   }
 
-  // std::cout << "nOut: " << nOut << std::endl;
-
   // Writing all solutions
   //
   for (int iOut = 1; iOut < nOut; iOut++) {
@@ -1435,9 +1398,6 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
 
       nSh = nSh + d[iM].nNo;
     }
-
-    // std::cout << "iOut: " << iOut << std::endl;
-    // std::cout << "outName: " << outNames[iOut] << std::endl;
 
     vtk_writer->set_point_data(outNames[iOut], tmpV);
   }
