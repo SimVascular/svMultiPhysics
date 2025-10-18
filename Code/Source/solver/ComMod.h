@@ -1456,13 +1456,13 @@ class urisType
     Array<double> Yd;
 
     // Default signed distance value away from the valve.
-    double sdf_default = 10.0; // in cm
+    double sdf_default = 1000.0;
 
     // Default distance value of the valve boundary (valve thickness).
-    double sdf_deps = 0.04; // in cm
+    double sdf_deps = 0.25;
 
     // Default distance value of the valve boundary when the valve is closed.
-    double sdf_deps_close = 0.25; // in cm
+    double sdf_deps_close = 0.25;
 
     // Displacements of the valve when it opens (3D array).
     Array3<double> DxOpen;

@@ -780,6 +780,7 @@ void uris_write_vtus(ComMod& com_mod) {
       for (int a = 0; a < mesh.nNo; a++) {
         int Ac = mesh.gN(a);
         for (int i = 0; i < nsd; i++) {
+          // Scale the valve displacement to the unit of the mesh
           d[iM].x(i,a) = uris_obj.x(i,Ac) / uris_obj.scF;
         }
       }
