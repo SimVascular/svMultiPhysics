@@ -413,7 +413,7 @@ void div_post(Simulation* simulation, const mshType& lM, Array<double>& res, con
             vx(1,1) = vx(1,1) + Nx(1,a)*yl(1,a);
             vx(2,2) = vx(2,2) + Nx(2,a)*yl(2,a);
           }
-          double divV = vx(0,0) + vx(1,1) + vx(2,2);
+          divV = vx(0,0) + vx(1,1) + vx(2,2);
 
         } else { 
           for (int a = 0; a < eNoN; a++) {
