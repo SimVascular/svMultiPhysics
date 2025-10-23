@@ -89,7 +89,7 @@ bool Integrator::step() {
     dmsg << "com_mod.eq[cEq].sym: " << com_mod.eq[cEq].sym;
     #endif
 
-    auto istr = "_" + std::to_string(cTS) + "_" + std::to_string(inner_count_);
+    istr_ = "_" + std::to_string(cTS) + "_" + std::to_string(inner_count_);
     iEqOld = cEq;
     auto& eq = com_mod.eq[cEq];
 
@@ -106,10 +106,10 @@ bool Integrator::step() {
     dmsg << "Initiator step ..." << std::endl;
     #endif
     initiator_step();
-    Ag_.write("Ag_pic" + istr);
-    Yg_.write("Yg_pic" + istr);
-    Dg_.write("Dg_pic" + istr);
-    Yn.write("Yn_pic" + istr);
+    Ag_.write("Ag_pic" + istr_);
+    Yg_.write("Yg_pic" + istr_);
+    Dg_.write("Dg_pic" + istr_);
+    Yn.write("Yn_pic" + istr_);
 
     if (com_mod.Rd.size() != 0) {
       com_mod.Rd = 0.0;
@@ -121,32 +121,32 @@ bool Integrator::step() {
     dmsg << "Allocating the RHS and LHS" << std::endl;
     #endif
     allocate_linear_system(eq);
-    com_mod.Val.write("Val_alloc" + istr);
+    com_mod.Val.write("Val_alloc" + istr_);
 
     // Compute body forces
     #ifdef debug_integrator_step
     dmsg << "Set body forces ..." << std::endl;
     #endif
     set_body_forces();
-    com_mod.Val.write("Val_bf" + istr);
+    com_mod.Val.write("Val_bf" + istr_);
 
     // Assemble equations
     #ifdef debug_integrator_step
     dmsg << "Assembling equation: " << eq.sym;
     #endif
     assemble_equations();
-    com_mod.R.write("R_as" + istr);
-    com_mod.Val.write("Val_as" + istr);
+    com_mod.R.write("R_as" + istr_);
+    com_mod.Val.write("Val_as" + istr_);
 
     // Treatment of boundary conditions on faces
     #ifdef debug_integrator_step
     dmsg << "Apply boundary conditions ..." << std::endl;
     #endif
     apply_boundary_conditions();
-    com_mod.Val.write("Val_neu" + istr);
-    com_mod.R.write("R_neu" + istr);
-    Yg_.write("Yg_neu" + istr);
-    Dg_.write("Dg_neu" + istr);
+    com_mod.Val.write("Val_neu" + istr_);
+    com_mod.R.write("R_neu" + istr_);
+    Yg_.write("Yg_neu" + istr_);
+    Dg_.write("Dg_neu" + istr_);
 
     // Synchronize R across processes
     if (!eq.assmTLS) {
@@ -189,15 +189,15 @@ bool Integrator::step() {
     dmsg << "Solving equation: " << eq.sym;
     #endif
     solve_linear_system();
-    com_mod.Val.write("Val_solve" + istr);
-    com_mod.R.write("R_solve" + istr);
+    com_mod.Val.write("Val_solve" + istr_);
+    com_mod.R.write("R_solve" + istr_);
 
     // Solution is obtained, now updating (Corrector) and check for convergence
     #ifdef debug_integrator_step
     dmsg << "Update corrector ..." << std::endl;
     #endif
     bool all_converged = corrector_and_check_convergence();
-    com_mod.Yn.write("Yn_picc" + istr);
+    com_mod.Yn.write("Yn_picc" + istr_);
 
     // Check if all equations converged
     if (all_converged) {
@@ -255,8 +255,8 @@ void Integrator::apply_boundary_conditions() {
   auto& com_mod = simulation_->com_mod;
   auto& cm_mod = simulation_->cm_mod;
 
-  Yg_.write("Yg_vor_neu_" + std::to_string(com_mod.cTS) + "_" + std::to_string(inner_count_));
-  Dg_.write("Dg_vor_neu_" + std::to_string(com_mod.cTS) + "_" + std::to_string(inner_count_));
+  Yg_.write("Yg_vor_neu" + istr_);
+  Dg_.write("Dg_vor_neu" + istr_);
 
   // Apply Neumman or Traction boundary conditions
   set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_);

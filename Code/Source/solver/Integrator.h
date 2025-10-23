@@ -88,6 +88,9 @@ private:
   /** @brief Newton iteration counter for current time step */
   int inner_count_;
 
+  /** @brief Debug output suffix string combining time step and iteration number */
+  std::string istr_;
+
   /**
    * @brief Initialize solution arrays for Ag, Yg, Dg based on problem size
    */
