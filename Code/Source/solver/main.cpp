@@ -8,7 +8,7 @@
 //   svMultiPhysics XML_FILE_NAME
 //
 #include "Simulation.h"
-#include "integrator.h"
+#include "Integrator.h"
 
 #include "all_fun.h"
 #include "bf.h"

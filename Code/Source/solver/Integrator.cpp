@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "integrator.h"
+#include "Integrator.h"
 #include "all_fun.h"
 #include "bf.h"
 #include "contact.h"
