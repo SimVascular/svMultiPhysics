@@ -24,7 +24,7 @@ using namespace consts;
 // Integrator Constructor
 //------------------------
 Integrator::Integrator(Simulation* simulation)
-  : simulation_(simulation), inner_count_(0)
+  : simulation_(simulation), newton_count_(0)
 {
   initialize_arrays();
 }
@@ -76,20 +76,20 @@ bool Integrator::step() {
   dmsg.banner();
   #endif
 
-  // Inner loop for Newton iteration
-  inner_count_ = 1;
+  // Newton iteration loop
+  newton_count_ = 1;
   int reply;
   int iEqOld;
 
   // Looping over Newton iterations
   while (true) {
     #ifdef debug_integrator_step
-    dmsg << "---------- Inner Loop " + std::to_string(inner_count_) << " -----------" << std::endl;
+    dmsg << "---------- Newton Iteration " + std::to_string(newton_count_) << " -----------" << std::endl;
     dmsg << "cEq: " << cEq;
     dmsg << "com_mod.eq[cEq].sym: " << com_mod.eq[cEq].sym;
     #endif
 
-    istr_ = "_" + std::to_string(cTS) + "_" + std::to_string(inner_count_);
+    istr_ = "_" + std::to_string(cTS) + "_" + std::to_string(newton_count_);
     iEqOld = cEq;
     auto& eq = com_mod.eq[cEq];
 
@@ -194,8 +194,8 @@ bool Integrator::step() {
     }
 
     output::output_result(simulation_, com_mod.timeP, 2, iEqOld);
-    inner_count_ += 1;
-  } // End of inner loop
+    newton_count_ += 1;
+  } // End of Newton iteration loop
 
   return false;
 }

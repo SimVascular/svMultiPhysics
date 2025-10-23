@@ -86,7 +86,7 @@ private:
   Vector<int> incL_;
 
   /** @brief Newton iteration counter for current time step */
-  int inner_count_;
+  int newton_count_;
 
   /** @brief Debug output suffix string combining time step and iteration number */
   std::string istr_;
