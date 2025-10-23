@@ -106,10 +106,6 @@ bool Integrator::step() {
     dmsg << "Initiator step ..." << std::endl;
     #endif
     initiator_step();
-    Ag_.write("Ag_pic" + istr_);
-    Yg_.write("Yg_pic" + istr_);
-    Dg_.write("Dg_pic" + istr_);
-    Yn.write("Yn_pic" + istr_);
 
     if (com_mod.Rd.size() != 0) {
       com_mod.Rd = 0.0;
@@ -121,32 +117,24 @@ bool Integrator::step() {
     dmsg << "Allocating the RHS and LHS" << std::endl;
     #endif
     allocate_linear_system(eq);
-    com_mod.Val.write("Val_alloc" + istr_);
 
     // Compute body forces
     #ifdef debug_integrator_step
     dmsg << "Set body forces ..." << std::endl;
     #endif
     set_body_forces();
-    com_mod.Val.write("Val_bf" + istr_);
 
     // Assemble equations
     #ifdef debug_integrator_step
     dmsg << "Assembling equation: " << eq.sym;
     #endif
     assemble_equations();
-    com_mod.R.write("R_as" + istr_);
-    com_mod.Val.write("Val_as" + istr_);
 
     // Treatment of boundary conditions on faces
     #ifdef debug_integrator_step
     dmsg << "Apply boundary conditions ..." << std::endl;
     #endif
     apply_boundary_conditions();
-    com_mod.Val.write("Val_neu" + istr_);
-    com_mod.R.write("R_neu" + istr_);
-    Yg_.write("Yg_neu" + istr_);
-    Dg_.write("Dg_neu" + istr_);
 
     // Synchronize R across processes
     if (!eq.assmTLS) {
@@ -189,15 +177,12 @@ bool Integrator::step() {
     dmsg << "Solving equation: " << eq.sym;
     #endif
     solve_linear_system();
-    com_mod.Val.write("Val_solve" + istr_);
-    com_mod.R.write("R_solve" + istr_);
 
     // Solution is obtained, now updating (Corrector) and check for convergence
     #ifdef debug_integrator_step
     dmsg << "Update corrector ..." << std::endl;
     #endif
     bool all_converged = corrector_and_check_convergence();
-    com_mod.Yn.write("Yn_picc" + istr_);
 
     // Check if all equations converged
     if (all_converged) {
@@ -220,6 +205,12 @@ bool Integrator::step() {
 //------------------------
 void Integrator::initiator_step() {
   pic::pici(simulation_, Ag_, Yg_, Dg_);
+
+  // Debug output
+  Ag_.write("Ag_pic" + istr_);
+  Yg_.write("Yg_pic" + istr_);
+  Dg_.write("Dg_pic" + istr_);
+  simulation_->com_mod.Yn.write("Yn_pic" + istr_);
 }
 
 //------------------------
@@ -227,6 +218,9 @@ void Integrator::initiator_step() {
 //------------------------
 void Integrator::allocate_linear_system(eqType& eq) {
   ls_ns::ls_alloc(simulation_->com_mod, eq);
+
+  // Debug output
+  simulation_->com_mod.Val.write("Val_alloc" + istr_);
 }
 
 //------------------------
@@ -234,6 +228,9 @@ void Integrator::allocate_linear_system(eqType& eq) {
 //------------------------
 void Integrator::set_body_forces() {
   bf::set_bf(simulation_->com_mod, Dg_);
+
+  // Debug output
+  simulation_->com_mod.Val.write("Val_bf" + istr_);
 }
 
 //------------------------
@@ -246,6 +243,10 @@ void Integrator::assemble_equations() {
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
     eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_);
   }
+
+  // Debug output
+  com_mod.R.write("R_as" + istr_);
+  com_mod.Val.write("Val_as" + istr_);
 }
 
 //------------------------
@@ -281,6 +282,12 @@ void Integrator::apply_boundary_conditions() {
   if (com_mod.iCntct) {
     contact::construct_contact_pnlty(com_mod, cm_mod, Dg_);
   }
+
+  // Debug output
+  com_mod.Val.write("Val_neu" + istr_);
+  com_mod.R.write("R_neu" + istr_);
+  Yg_.write("Yg_neu" + istr_);
+  Dg_.write("Dg_neu" + istr_);
 }
 
 //------------------------
@@ -291,6 +298,10 @@ void Integrator::solve_linear_system() {
   auto& eq = com_mod.eq[com_mod.cEq];
 
   ls_ns::ls_solve(com_mod, eq, incL_, res_);
+
+  // Debug output
+  com_mod.Val.write("Val_solve" + istr_);
+  com_mod.R.write("R_solve" + istr_);
 }
 
 //------------------------
@@ -300,6 +311,9 @@ bool Integrator::corrector_and_check_convergence() {
   auto& com_mod = simulation_->com_mod;
 
   pic::picc(simulation_);
+
+  // Debug output
+  com_mod.Yn.write("Yn_picc" + istr_);
 
   // Check if all equations converged
   return std::count_if(com_mod.eq.begin(), com_mod.eq.end(),
