@@ -1,5 +1,27 @@
 build
 
+# CMake build artifacts
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+*-build/
+*-prefix/
+
+# Compiled binaries and libraries
+Code/bin/
+Code/lib/
+
+# Generated headers
+Code/Source/Include/simvascular_options.h
+Code/Source/Include/simvascular_version.h
+Code/ThirdParty/*/simvascular_*.h
+
+# Vim swap files
+*.swp
+*.swo
+*~
+
 # System files osx 
 **/.DS_Store
 
