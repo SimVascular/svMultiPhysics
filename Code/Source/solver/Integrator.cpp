@@ -102,9 +102,6 @@ bool Integrator::step() {
     }
 
     // Initiator step for Generalized α-Method (quantities at n+am, n+af).
-    #ifdef debug_integrator_step
-    dmsg << "Initiator step ..." << std::endl;
-    #endif
     initiator_step();
 
     if (com_mod.Rd.size() != 0) {
@@ -113,27 +110,15 @@ bool Integrator::step() {
     }
 
     // Allocate com_mod.R and com_mod.Val arrays
-    #ifdef debug_integrator_step
-    dmsg << "Allocating the RHS and LHS" << std::endl;
-    #endif
     allocate_linear_system(eq);
 
     // Compute body forces
-    #ifdef debug_integrator_step
-    dmsg << "Set body forces ..." << std::endl;
-    #endif
     set_body_forces();
 
     // Assemble equations
-    #ifdef debug_integrator_step
-    dmsg << "Assembling equation: " << eq.sym;
-    #endif
     assemble_equations();
 
     // Treatment of boundary conditions on faces
-    #ifdef debug_integrator_step
-    dmsg << "Apply boundary conditions ..." << std::endl;
-    #endif
     apply_boundary_conditions();
 
     // Synchronize R across processes
@@ -167,21 +152,12 @@ bool Integrator::step() {
     set_bc::set_bc_undef_neu(com_mod);
 
     // Update residual and increment arrays
-    #ifdef debug_integrator_step
-    dmsg << "Update res() and incL ..." << std::endl;
-    #endif
     update_residual_arrays(eq);
 
     // Solve equation
-    #ifdef debug_integrator_step
-    dmsg << "Solving equation: " << eq.sym;
-    #endif
     solve_linear_system();
 
     // Solution is obtained, now updating (Corrector) and check for convergence
-    #ifdef debug_integrator_step
-    dmsg << "Update corrector ..." << std::endl;
-    #endif
     bool all_converged = corrector_and_check_convergence();
 
     // Check if all equations converged
@@ -204,6 +180,12 @@ bool Integrator::step() {
 // initiator_step
 //------------------------
 void Integrator::initiator_step() {
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, simulation_->com_mod.cm.idcm());
+  dmsg << "Initiator step ..." << std::endl;
+  #endif
+
   pic::pici(simulation_, Ag_, Yg_, Dg_);
 
   // Debug output
@@ -217,6 +199,12 @@ void Integrator::initiator_step() {
 // allocate_linear_system
 //------------------------
 void Integrator::allocate_linear_system(eqType& eq) {
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, simulation_->com_mod.cm.idcm());
+  dmsg << "Allocating the RHS and LHS" << std::endl;
+  #endif
+
   ls_ns::ls_alloc(simulation_->com_mod, eq);
 
   // Debug output
@@ -227,6 +215,12 @@ void Integrator::allocate_linear_system(eqType& eq) {
 // set_body_forces
 //------------------------
 void Integrator::set_body_forces() {
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, simulation_->com_mod.cm.idcm());
+  dmsg << "Set body forces ..." << std::endl;
+  #endif
+
   bf::set_bf(simulation_->com_mod, Dg_);
 
   // Debug output
@@ -239,6 +233,12 @@ void Integrator::set_body_forces() {
 void Integrator::assemble_equations() {
   auto& com_mod = simulation_->com_mod;
   auto& cep_mod = simulation_->get_cep_mod();
+
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg << "Assembling equation: " << com_mod.eq[com_mod.cEq].sym;
+  #endif
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
     eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_);
@@ -255,6 +255,12 @@ void Integrator::assemble_equations() {
 void Integrator::apply_boundary_conditions() {
   auto& com_mod = simulation_->com_mod;
   auto& cm_mod = simulation_->cm_mod;
+
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg << "Apply boundary conditions ..." << std::endl;
+  #endif
 
   Yg_.write("Yg_vor_neu" + istr_);
   Dg_.write("Dg_vor_neu" + istr_);
@@ -297,6 +303,12 @@ void Integrator::solve_linear_system() {
   auto& com_mod = simulation_->com_mod;
   auto& eq = com_mod.eq[com_mod.cEq];
 
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg << "Solving equation: " << eq.sym;
+  #endif
+
   ls_ns::ls_solve(com_mod, eq, incL_, res_);
 
   // Debug output
@@ -309,6 +321,12 @@ void Integrator::solve_linear_system() {
 //------------------------
 bool Integrator::corrector_and_check_convergence() {
   auto& com_mod = simulation_->com_mod;
+
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg << "Update corrector ..." << std::endl;
+  #endif
 
   pic::picc(simulation_);
 
@@ -327,6 +345,12 @@ void Integrator::update_residual_arrays(eqType& eq) {
   auto& com_mod = simulation_->com_mod;
   int nFacesLS = com_mod.nFacesLS;
   double dt = com_mod.dt;
+
+  #define n_debug_integrator_step
+  #ifdef debug_integrator_step
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg << "Update res() and incL ..." << std::endl;
+  #endif
 
   incL_ = 0;
   if (eq.phys == Equation_mesh) {
