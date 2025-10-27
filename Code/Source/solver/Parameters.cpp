@@ -35,6 +35,14 @@
 // If a section does not contain any sub-sections then all parameters can be parsed automatically. 
 // See LinearSolverParameters::set_values() for an example. 
 //
+// Each section can read in parameters stored in an external XML file by adding an 'include_xml'
+// 'Parameter<std::string>' used to set the external XML file name. This is currently supported
+// for the following sections
+//   - GeneralSimulationParameters 
+//   - MeshParameters 
+//   - DomainParameters 
+//   - EquationParameters 
+//
 #include "Parameters.h"
 #include "consts.h"
 #include "LinearAlgebra.h"
@@ -79,6 +87,7 @@ void xml_util_set_parameters( std::function<void(const std::string&, const std::
 //-----------------------
 // IncludeParametersFile
 //-----------------------
+// Set the root element of external XML file.
 //
 std::string IncludeParametersFile::NAME = "Include_xml";
 
@@ -86,8 +95,6 @@ IncludeParametersFile::IncludeParametersFile(const char* cfile_name)
 {
   std::string file_name(cfile_name);
   file_name.erase(std::remove_if(file_name.begin(), file_name.end(), ::isspace), file_name.end());
-  std::cout << "[IncludeParametersFile::set_values] file_name: '" << file_name << "'" << std::endl;
-
   auto error = document.LoadFile(file_name.c_str());
   root_element = document.FirstChildElement(Parameters::FSI_FILE.c_str());
 
@@ -1670,15 +1677,14 @@ void DomainParameters::print_parameters()
 // Set the domain parameter values from the XML.
 //
 // If 'from_external_xml' is true then parameter values are read from an external xml file
-// using the 'Include_xml' parameter..
+// using the 'Include_xml' parameter.
 //
 void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_external_xml)
 {
   using namespace tinyxml2;
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
-  // If not reading from an external xml file then the
-  // get the <Domain id=ID> 'id' attrribute.
+  // If not reading from an external xml file then get the <Domain id=ID> 'id' attrribute.
   //
   if (!from_external_xml) {
     const char* sid;
@@ -2102,7 +2108,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
   //
   while (item != nullptr) {
     auto name = std::string(item->Value());
-    std::cout << "[EquationParameters::set_values] name: " << name << std::endl;
 
     if (name == BodyForceParameters::xml_element_name_) {
       auto bf_params = new BodyForceParameters();
@@ -2226,6 +2231,7 @@ GeneralSimulationParameters::GeneralSimulationParameters()
 
   set_parameter("Debug", false, !required, debug);
 
+  set_parameter("Include_xml", "", !required, include_xml);
   set_parameter("Increment_in_saving_restart_files", 0, !required, increment_in_saving_restart_files);
   set_parameter("Increment_in_saving_VTK_files", 0, !required, increment_in_saving_vtk_files);
 
@@ -2268,28 +2274,45 @@ void GeneralSimulationParameters::print_parameters()
 }
 
 /// @brief Set general parameters values from XML.
-void GeneralSimulationParameters::set_values(tinyxml2::XMLElement* xml_element)
+void GeneralSimulationParameters::set_values(tinyxml2::XMLElement* xml_element, bool from_external_xml)
 {
   using namespace tinyxml2;
+  tinyxml2::XMLElement* item;
 
   // Set parameter values from the XML elements.
   //
-  auto general_params = xml_element->FirstChildElement(xml_element_name.c_str());
-  auto item = general_params->FirstChildElement();
+  if (from_external_xml) {
+    item = xml_element->FirstChildElement();
+  } else {
+    auto general_params = xml_element->FirstChildElement(xml_element_name.c_str());
+    item = general_params->FirstChildElement();
+  }
 
   while (item != nullptr) {
     std::string name = std::string(item->Value());
     auto value = item->GetText();
-    try {
-      set_parameter_value(name, value);
-    } catch (const std::bad_function_call& exception) {
-      throw std::runtime_error("Unknown XML GeneralSimulationParameters element '" + name + ".");
+
+    if (name == include_xml.name()) {
+      auto value = item->GetText();
+      IncludeParametersFile include_parameters(value);
+      set_values(include_parameters.root_element, true);
+
+    } else {
+
+      try {
+        set_parameter_value(name, value);
+      } catch (const std::bad_function_call& exception) {
+        throw std::runtime_error("Unknown XML GeneralSimulationParameters element '" + name + ".");
+      }
     }
+
     item = item->NextSiblingElement();
   }
 
   // Check that required parameters have been set.
-  check_required();
+  if (!from_external_xml) {
+    check_required();
+  }
 }
 
 //////////////////////////////////////////////////////////
@@ -2471,6 +2494,7 @@ MeshParameters::MeshParameters()
   set_parameter("Mesh_scale_factor", 1.0, !required, mesh_scale_factor);
   set_parameter("Prestress_file_path", "", !required, prestress_file_path);
 
+  set_parameter("Include_xml", "", !required, include_xml);
   set_parameter("Initial_displacements_file_path", "", !required, initial_displacements_file_path);
   set_parameter("Initial_pressures_file_path", "", !required, initial_pressures_file_path);
   set_parameter("Initial_velocities_file_path", "", !required, initial_velocities_file_path);
@@ -2503,7 +2527,7 @@ void MeshParameters::print_parameters()
   }
 }
 
-void MeshParameters::set_values(tinyxml2::XMLElement* mesh_elem)
+void MeshParameters::set_values(tinyxml2::XMLElement* mesh_elem, bool from_external_xml)
 {
   using namespace tinyxml2;
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
@@ -2526,6 +2550,11 @@ void MeshParameters::set_values(tinyxml2::XMLElement* mesh_elem)
       VectorParameter<double> dir("Fiber_direction", {}, false, {});
       dir.set(value);
       fiber_directions.push_back(dir);
+
+    } else if (name == include_xml.name()) {
+      auto value = item->GetText();
+      IncludeParametersFile include_parameters(value);
+      set_values(include_parameters.root_element, true);
 
     // Just a simple element. 
     } else if (item->GetText() != nullptr) {

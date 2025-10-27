@@ -419,7 +419,8 @@ class ParameterLists
 //----------------------
 // IncludeParameterFile
 //----------------------
-// The IncludeParameterFile class is used to read and set parameters read in from an external XML file.
+// The IncludeParameterFile class is used to read and set the 
+// root element of external XML file.
 //
 class IncludeParametersFile 
 {
@@ -1310,7 +1311,6 @@ class EquationParameters : public ParameterLists
 
     void print_parameters();
     void set_values(tinyxml2::XMLElement* xml_elem, DomainParameters* default_domain=nullptr);
-    //void set_section_values(DomainParameters* default_domain, tinyxml2::XMLElement* eq_elem);
 
     Parameter<double> backflow_stabilization_coefficient;
 
@@ -1404,7 +1404,7 @@ class GeneralSimulationParameters : public ParameterLists
     GeneralSimulationParameters();
 
     void print_parameters();
-    void set_values(tinyxml2::XMLElement* xml_element);
+    void set_values(tinyxml2::XMLElement* xml_element, bool from_external_xml = false);
 
     std::string xml_element_name;
 
@@ -1423,6 +1423,7 @@ class GeneralSimulationParameters : public ParameterLists
     Parameter<double> spectral_radius_of_infinite_time_step;
     Parameter<double> time_step_size;
 
+    Parameter<std::string> include_xml;
     Parameter<int> increment_in_saving_restart_files;
     Parameter<int> increment_in_saving_vtk_files;
     Parameter<int> number_of_spatial_dimensions;
@@ -1488,7 +1489,7 @@ class MeshParameters : public ParameterLists
     static const std::string xml_element_name_;
 
     void print_parameters();
-    void set_values(tinyxml2::XMLElement* mesh_elem);
+    void set_values(tinyxml2::XMLElement* mesh_elem, bool from_external_xml = false);
     std::string get_name() const { return name.value(); };
     std::string get_path() const { return mesh_file_path.value(); };
 
@@ -1507,6 +1508,7 @@ class MeshParameters : public ParameterLists
     std::vector<VectorParameter<double>> fiber_directions;
     //VectorParameter<double> fiber_direction;
 
+    Parameter<std::string> include_xml;
     Parameter<std::string> initial_displacements_file_path;
     Parameter<std::string> initial_pressures_file_path;
     Parameter<bool> initialize_rcr_from_flow;
