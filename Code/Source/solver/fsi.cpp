@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include "fsi.h"
 
@@ -37,7 +10,9 @@
 #include "lhsa.h"
 #include "nn.h"
 #include "sv_struct.h"
+#include "ustruct.h"
 #include "utils.h"
+#include "ris.h"
 
 #include <array>
 #include <iomanip>
@@ -103,6 +78,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
   //
   double struct_3d_time = 0.0;
   double fluid_3d_time = 0.0;
+  double DDir = 0.0;
 
   for (int e = 0; e < lM.nEl; e++) {
     // setting globals
@@ -210,6 +186,45 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
 
       double w = fs_1[0].w(g) * Jac;
 
+      // Plot the coordinates of the quad point in the current configuration
+      if (com_mod.urisFlag) {
+        Vector<double> distSrf(com_mod.nUris);
+        distSrf = 0.0;
+        for (int a = 0; a < eNoN; a++) {
+          int Ac = lM.IEN(a,e);
+          for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+            distSrf(iUris) += fs_1[0].N(a,g) * std::fabs(com_mod.uris[iUris].sdf(Ac));
+          }
+        }
+
+        DDir = 0.0;
+        double sdf_deps_temp = 0;
+        double DDirTmp = 0.0;
+        for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+          // if (distSrf(iUris) <= com_mod.uris[iUris].sdf_deps) {
+          //   DDirTmp = (1 + cos(pi*distSrf(iUris)/com_mod.uris[iUris].sdf_deps))/
+          //             (2*com_mod.uris[iUris].sdf_deps*com_mod.uris[iUris].sdf_deps);
+          //   if (DDirTmp > DDir) {DDir = DDirTmp;}
+          // }
+
+          if (com_mod.uris[iUris].clsFlg) {
+            sdf_deps_temp = com_mod.uris[iUris].sdf_deps_close;
+          } else {
+            sdf_deps_temp = com_mod.uris[iUris].sdf_deps;
+          }
+          if (distSrf(iUris) <= sdf_deps_temp) {
+            DDirTmp = (1 + cos(pi*distSrf(iUris)/sdf_deps_temp))/
+                      (2*sdf_deps_temp*sdf_deps_temp);
+            if (DDirTmp > DDir) {DDir = DDirTmp;}
+          }
+        }
+
+        if (!com_mod.urisActFlag) {DDir = 0.0;}
+
+        // std::cout << "===== DDir: " << DDir << std::endl;
+      }
+
+
       if (nsd == 3) {
         switch (cPhys) {
           case Equation_fluid: {
@@ -217,7 +232,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
             auto N1 = fs_1[1].N.col(g);
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            // fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, DDir);
+
           } break;
 
           case Equation_struct: {
@@ -230,9 +247,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
           break;
 
           case Equation_ustruct:
-            throw std::runtime_error("[construct_fsi] USTRUCT3D_M not implemented");
-            //CALL USTRUCT3D_M(vmsStab, fs(1).eNoN, fs(2).eNoN, nFn, w, Jac, fs(1).N(:,g), fs(2).N(:,g), Nwx, al, yl, 
-            //                 dl, bfl, fN, ya_l, lR, lK, lKd)
+            auto N0 = fs_1[0].N.col(g);
+            auto N1 = fs_1[1].N.col(g);
+            ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l, lR, lK, lKd);
           break;
           }
 
@@ -293,12 +310,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
             auto N1 = fs_2[1].N.col(g);
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            //fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, DDir);
           } break;
 
           case Equation_ustruct:
-            throw std::runtime_error("[construct_fsi] USTRUCT3D_C not implemented");
-            //CALL USTRUCT3D_C(vmsStab, fs(1).eNoN, fs(2).eNoN, w, Jac, fs(1).N(:,g), fs(2).N(:,g), Nwx, Nqx, al, yl, dl, bfl, lR, lK, lKd)
+            auto N0 = fs_2[0].N.col(g);
+            auto N1 = fs_2[1].N.col(g);
+            ustruct::ustruct_3d_c(com_mod, cep_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, Jac, N0, N1, Nwx, Nqx, al, yl, dl, bfl, lR, lK, lKd);
           break;
         }
 
@@ -320,8 +339,20 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Ar
       }
     } // g: loop
 
-    eq.linear_algebra->assemble(com_mod, eNoN, ptr, lK, lR);
+    if (cPhys == Equation_ustruct) 
+    {
+      ustruct::ustruct_do_assem(com_mod, eNoN, ptr, lKd, lK, lR);
+    }
+    else 
+    {
+      eq.linear_algebra->assemble(com_mod, eNoN, ptr, lK, lR);
+    }
 
+    if (com_mod.risFlag) {
+      if (!std::all_of(com_mod.ris.clsFlg.begin(), com_mod.ris.clsFlg.end(), [](bool v) { return v; })) {
+        ris::doassem_ris(com_mod, eNoN, ptr, lK, lR);
+      }
+    }
   } // e: loop
 
   #ifdef debug_construct_fsi

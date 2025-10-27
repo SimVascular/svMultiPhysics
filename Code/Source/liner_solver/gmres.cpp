@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 //-------------------------------------------------------------------------
 // Graduate [sic] minimum residual algorithm is implemented here for vector
@@ -45,6 +18,7 @@
 #include "spar_mul.h"
 
 #include "Array3.h"
+#include "DebugMsg.h"
 
 #include <math.h>
 
@@ -153,6 +127,9 @@ void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLs
     #ifdef debug_gmres
     dmsg << "err(1): " << err[0];
     #endif
+    if (err[0] == 0.0) { 
+      throw std::runtime_error("FSILS: A zero matrix norm has been computed. This is probably caused by ill-posed boundary conditions.");
+    }
 
     if (l == 0) {
       eps = err[0];
@@ -336,6 +313,10 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     u.set_col(0, R - u_col);
 
     err[0] = norm::fsi_ls_norms(mynNo, lhs.commu, u.col(0));
+    if (err[0] == 0.0) { 
+      throw std::runtime_error("FSILS: A zero matrix norm has been computed. This is probably caused by ill-posed boundary conditions.");
+    }
+
     u_col = u.col(0) / err[0];
     u.set_col(0, u_col);
     #ifdef debug_gmres_s
@@ -514,6 +495,10 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     }
 
     err[0] = norm::fsi_ls_normv(dof, mynNo, lhs.commu, u.rslice(0));
+    if (err[0] == 0.0) { 
+      throw std::runtime_error("FSILS: A zero matrix norm has been computed. This is probably caused by ill-posed boundary conditions.");
+    }
+
     u_slice = u.rslice(0) / err[0];
     #ifdef debug_gmres_v
     dmsg << "err(1): " << err[0];

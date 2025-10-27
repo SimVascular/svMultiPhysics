@@ -1,10 +1,14 @@
-# This workflow checks that all .h/.cpp files have the copyright at the top
+# This workflow checks that all .h/.cpp files have the SPDX copyright header at the top
 name: Copyright
 on: [push, pull_request]
 jobs:
   check-license-lines:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v4
+    - name: Setup Deno
+      uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
     - name: Check License
-      uses: kt3k/license_checker@v1.0.6
+      run: deno run --allow-read jsr:@kt3k/license-checker@3.3.1

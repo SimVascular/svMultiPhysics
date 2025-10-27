@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 // This routine contains multiple functions that are generally
 // desined to interface with user.
@@ -223,6 +196,8 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
   const bool sstEq = com_mod.sstEq; 
   const bool pstEq = com_mod.pstEq;
   const bool cepEq = cep_mod.cepEq;
+  const bool risFlag = com_mod.risFlag;
+  const bool urisFlag = com_mod.urisFlag;
   const auto& stFileName = com_mod.stFileName;
 
   auto& cplBC = com_mod.cplBC;
@@ -309,6 +284,21 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
           restart_file.write((char*)Ad.data(), Ad.msize());
           restart_file.write((char*)Xion.data(), Xion.msize());
           restart_file.write((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          restart_file.write((char*)Ad.data(), Ad.msize());
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
+          restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+        } else if (urisFlag) {
+          restart_file.write((char*)Ad.data(), Ad.msize());
+          Vector<int> urisCnt(com_mod.nUris);
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          for (int i = 0; i < com_mod.nUris; i++) {
+            urisCnt(i) = com_mod.uris[i].cnt;
+            urisClsFlagChar[i] = com_mod.uris[i].clsFlg ? 1 : 0;}
+          restart_file.write((char*)urisCnt.data(), urisCnt.msize());
+          restart_file.write(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
         } else {
           restart_file.write((char*)Ad.data(), Ad.msize());
         }
@@ -319,12 +309,40 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
         } else if (cepEq) {
           restart_file.write((char*)Xion.data(), Xion.msize());
           restart_file.write((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
+          restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+        } else if (urisFlag) {
+          Vector<int> urisCnt(com_mod.nUris);
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          for (int i = 0; i < com_mod.nUris; i++) {
+            urisCnt(i) = com_mod.uris[i].cnt;
+            urisClsFlagChar[i] = com_mod.uris[i].clsFlg ? 1 : 0;}
+          restart_file.write((char*)urisCnt.data(), urisCnt.msize());
+          restart_file.write(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+        } else {
+          restart_file.write((char*)Dn.data(), Dn.msize());
         }
       }
 
     } else {
       if (cepEq) {
         restart_file.write((char*)Xion.data(), Xion.msize());
+      } else if (risFlag) {
+        std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+        for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+          clsFlagChar[i] = com_mod.ris.clsFlg[i] ? 1 : 0;}
+        restart_file.write(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+      } else if (urisFlag) {
+        Vector<int> urisCnt(com_mod.nUris);
+        std::vector<char> urisClsFlagChar(com_mod.nUris);
+        for (int i = 0; i < com_mod.nUris; i++) {
+          urisCnt(i) = com_mod.uris[i].cnt;
+          urisClsFlagChar[i] = com_mod.uris[i].clsFlg ? 1 : 0;}
+        restart_file.write((char*)urisCnt.data(), urisCnt.msize());
+        restart_file.write(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
       } else {
         //WRITE(fid, REC=myID) stamp, cTS, time, CPUT()-timeP(1), eq%iNorm, cplBC%xn, Yn, An
       }

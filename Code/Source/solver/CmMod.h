@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 // The classes defined here duplicate the data structures in the Fortran CMMOD module
 // defined in COMU.f. 
@@ -111,6 +84,26 @@ class cmType {
     void bcast(const CmMod& cm_mod, Vector<int>& data) const;
 
     void bcast(const CmMod& cm_mod, Array<int>& data, const std::string& name="") const;
+
+    // Gather operations
+    void gather(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const;
+    void gather(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const;
+    void gather(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const;
+    void gather(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const;
+
+    // Gatherv operations
+    void gatherv(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const;
+    void gatherv(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, const Vector<int>& recv_counts, const Vector<int>& displs, int root) const;
+
+    // Scatterv operations
+    void scatterv(const CmMod& cm_mod, const Vector<int>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<int>& recv_data, int root) const;
+    void scatterv(const CmMod& cm_mod, const Vector<double>& send_data, const Vector<int>& send_counts, const Vector<int>& displs, Vector<double>& recv_data, int root) const;
+
+    // Scatter operations
+    void scatter(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const;
+    void scatter(const CmMod& cm_mod, const double* send_data, int send_count, double* recv_data, int recv_count, int root) const;
+    void scatter(const CmMod& cm_mod, const Vector<int>& send_data, Vector<int>& recv_data, int root) const;
+    void scatter(const CmMod& cm_mod, const Vector<double>& send_data, Vector<double>& recv_data, int root) const;
 
     //------------
     // bcast_enum

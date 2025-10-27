@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 // The code here replicates the Fortran code in DISTRIBUTE.f.
 
@@ -95,6 +68,8 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   bool sstEq = com_mod.sstEq;
   bool pstEq = com_mod.pstEq;
   bool cepEq = cep_mod.cepEq;
+  bool risFlag = com_mod.risFlag;
+  bool urisFlag = com_mod.urisFlag;
 
   com_mod.timeP[0] = timeP[0];
   com_mod.timeP[1] = timeP[1];
@@ -146,6 +121,21 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
           bin_file.read((char*)Ad.data(), Ad.msize());
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          bin_file.read((char*)Ad.data(), Ad.msize());
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+        } else if (urisFlag) {
+          bin_file.read((char*)Ad.data(), Ad.msize());
+          Vector<int> urisCnt(com_mod.nUris);
+          bin_file.read((char*)urisCnt.data(), urisCnt.msize());
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.nUris; i++) {
+            com_mod.uris[i].cnt = urisCnt(i);
+            com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
         } else {
           bin_file.read((char*)Ad.data(), Ad.msize());
         }
@@ -156,6 +146,19 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
         } else if (cepEq) {
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+        } else if (risFlag) {
+          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+          bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+            com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+        } else if (urisFlag) {
+          Vector<int> urisCnt(com_mod.nUris);
+          bin_file.read((char*)urisCnt.data(), urisCnt.msize());
+          std::vector<char> urisClsFlagChar(com_mod.nUris);
+          bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+          for (int i = 0; i < com_mod.nUris; i++) {
+            com_mod.uris[i].cnt = urisCnt(i);
+            com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
         } else {
           //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do
         }
@@ -166,6 +169,19 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
     } else {
       if (cepEq) {
         bin_file.read((char*)Xion.data(), Xion.msize());
+      } else if (risFlag) {
+        std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+        bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+        for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+          com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+      } else if (urisFlag) {
+        Vector<int> urisCnt(com_mod.nUris);
+        bin_file.read((char*)urisCnt.data(), urisCnt.msize());
+        std::vector<char> urisClsFlagChar(com_mod.nUris);
+        bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+        for (int i = 0; i < com_mod.nUris; i++) {
+          com_mod.uris[i].cnt = urisCnt(i);
+          com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
       } else {
         //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao
       }
@@ -327,22 +343,6 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
-
-  // Setup logging to history file.
-  if (!simulation->com_mod.cm.slv(simulation->cm_mod)) {
-    std::string hist_file_name;
-
-    if (chnl_mod.appPath != "") { 
-      auto mkdir_arg = std::string("mkdir -p ") + chnl_mod.appPath;
-      std::system(mkdir_arg.c_str());
-      hist_file_name = chnl_mod.appPath + "/" + simulation->history_file_name;
-    } else {
-      hist_file_name = simulation->history_file_name;
-    }
-
-    bool output_to_cout = true;
-    simulation->logger.initialize(hist_file_name, output_to_cout);
-  }
 
   #ifdef debug_initialize
   dmsg << "Set time " << std::endl;
@@ -509,6 +509,12 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     i = i + cep_mod.nXion;
     if (cep_mod.cem.cpld) i = i + 1;
   }
+  if (com_mod.risFlag) {
+    i = i + com_mod.ris.nbrRIS;
+  }
+  if (com_mod.urisFlag) {
+    i = i + com_mod.nUris * 2;
+  }
 
   i = sizeof(int)*(1+com_mod.stamp.size()) + sizeof(double)*(2 + com_mod.nEq + com_mod.cplBC.nX + i*com_mod.tnNo);
 
@@ -527,7 +533,25 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // [TODO:DaveP] this is not implemented.
   //
-  if (com_mod.shlEq) {
+  // if (com_mod.shlEq) {
+  //   for (int iM = 0; iM < com_mod.nMsh; iM++) { 
+  //     auto& msh = com_mod.msh[iM];
+  //     if (msh.lShl) {
+  //       if (msh.eType == ElementType::NRB) {
+  //         msh.sbc.resize(msh.eNoN, msh.nEl);
+  //         //ALLOCATE(msh(iM)%eIEN(0,0))
+  //         //ALLOCATE(msh(iM)%sbc(msh(iM)%eNoN,msh(iM)%nEl))
+  //         msh.sbc = 0;
+  //       } else if (msh.eType == ElementType::TRI3) {
+  //         baf_ini_ns::set_shl_xien(simulation, msh);
+  //         //CALL SETSHLXIEN(msh(iM))
+  //       }
+  //     }
+  //   }
+  // }
+  
+
+  if (com_mod.shlEq or com_mod.urisActFlag) {
     for (int iM = 0; iM < com_mod.nMsh; iM++) { 
       auto& msh = com_mod.msh[iM];
       if (msh.lShl) {
@@ -543,6 +567,27 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       }
     }
   }
+
+  if (com_mod.risFlag) {
+    if (cm.mas(cm_mod)) {
+      std::cout << "Finally the map is: " << std::endl;
+      for (int iProj = 0; iProj < com_mod.ris.nbrRIS; iProj++) {
+        std::cout << " -p " << cm.idcm() << " -pj " << iProj << " RIS node: " << std::endl;
+        Vector<int> map0 = com_mod.grisMapList[iProj].map.row(0);
+        for (int mapi = 0; mapi < map0.size(); mapi++) {
+          std::cout << map0[mapi] << "\t";
+        }
+        std::cout <<  " " << std::endl;
+        std::cout << " -p " << cm.idcm() << " -pj " << iProj << " RIS node: " << std::endl;
+        Vector<int> map1 = com_mod.grisMapList[iProj].map.row(1);
+        for (int mapi = 0; mapi < map1.size(); mapi++) {
+          std::cout << map1[mapi] << "\t";
+        }
+        std::cout <<  " " << std::endl;
+      }
+    }
+  }
+
 
   // Initialize tensor operations
   //

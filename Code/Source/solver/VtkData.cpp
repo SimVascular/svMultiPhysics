@@ -1,35 +1,9 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include "VtkData.h"
 #include "Array.h"
+#include "DebugMsg.h"
 
 #include <vtkDoubleArray.h>
 #include "vtkCellArray.h"
@@ -59,6 +33,8 @@
 class VtkVtpData::VtkVtpDataImpl {
   public:
     VtkVtpDataImpl(); 
+    VtkVtpDataImpl(const VtkVtpDataImpl& other);
+    VtkVtpDataImpl& operator=(const VtkVtpDataImpl& other);
     void read_file(const std::string& file_name);
     void set_connectivity(const int nsd, const Array<int>& conn, const int pid);
     void set_point_data(const std::string& data_name, const Vector<int>& data);
@@ -75,6 +51,29 @@ class VtkVtpData::VtkVtpDataImpl {
 VtkVtpData::VtkVtpDataImpl::VtkVtpDataImpl()
 {
   vtk_polydata = vtkSmartPointer<vtkPolyData>::New();
+}
+
+VtkVtpData::VtkVtpDataImpl::VtkVtpDataImpl(const VtkVtpDataImpl& other)
+  : elem_type(other.elem_type)
+  , num_elems(other.num_elems)
+  , np_elem(other.np_elem)
+  , num_points(other.num_points)
+{
+  vtk_polydata = vtkSmartPointer<vtkPolyData>::New();
+  vtk_polydata->DeepCopy(other.vtk_polydata);
+}
+
+VtkVtpData::VtkVtpDataImpl& VtkVtpData::VtkVtpDataImpl::operator=(const VtkVtpDataImpl& other)
+{
+  if (this != &other) {
+    elem_type = other.elem_type;
+    num_elems = other.num_elems;
+    np_elem = other.np_elem;
+    num_points = other.num_points;
+    vtk_polydata = vtkSmartPointer<vtkPolyData>::New();
+    vtk_polydata->DeepCopy(other.vtk_polydata);
+  }
+  return *this;
 }
 
 void VtkVtpData::VtkVtpDataImpl::read_file(const std::string& file_name)
@@ -98,14 +97,21 @@ void VtkVtpData::VtkVtpDataImpl::read_file(const std::string& file_name)
 
 void VtkVtpData::VtkVtpDataImpl::set_connectivity(const int nsd, const Array<int>& conn, const int pid)
 {
-  //std::cout << "[VtkVtpData.set_connectivity] " << std::endl;
-  //std::cout << "[VtkVtpData.set_connectivity] vtk_polydata: " << vtk_polydata << std::endl;
-  //std::cout << "[VtkVtpData.set_connectivity] nsd: " << nsd << std::endl;
+  #define n_debug_vtk_data
+  #ifdef debug_vtk_data
+  DebugMsg dmsg(__func__, 0);
+  dmsg << "[VtkVtpData.set_connectivity] vtk_polydata: " << vtk_polydata;
+  dmsg << "[VtkVtpData.set_connectivity] nsd: " << nsd;
+  #endif
+
   int num_elems = conn.ncols();
   int np_elem = conn.nrows();
   unsigned char vtk_cell_type;
-  //std::cout << "[VtkVtpData.set_connectivity] num_elems: " << num_elems << std::endl;
-  //std::cout << "[VtkVtpData.set_connectivity] np_elem: " << np_elem << std::endl;
+
+  #ifdef debug_vtk_data
+  dmsg << "[VtkVtpData.set_connectivity] num_elems: " << num_elems;
+  dmsg << "[VtkVtpData.set_connectivity] np_elem: " << np_elem;
+  #endif
 
   if (nsd == 2) {
     if (np_elem == 4) {
@@ -130,7 +136,9 @@ void VtkVtpData::VtkVtpDataImpl::set_connectivity(const int nsd, const Array<int
     }
     else if (np_elem == 3) {
       vtk_cell_type = VTK_TRIANGLE;
-      //std::cout << "[VtkVtpData.set_connectivity] vtk_cell_type = VTK_TRIANGLE " << std::endl;
+      #ifdef debug_vtk_data
+      dmsg << "[VtkVtpData.set_connectivity] vtk_cell_type = VTK_TRIANGLE";
+      #endif
     }
     else if (np_elem == 6) {
         vtk_cell_type = VTK_QUADRATIC_TRIANGLE;
@@ -167,10 +175,14 @@ void VtkVtpData::VtkVtpDataImpl::set_connectivity(const int nsd, const Array<int
   vtkSmartPointer<vtkCellArray> element_cells = vtkSmartPointer<vtkCellArray>::New();
 
   for (int i = 0; i < num_elems; i++) {
-    //std::cout << "[VtkVtpData.set_connectivity] ---------- i " << i << std::endl;
+    #ifdef debug_vtk_data
+    dmsg << "[VtkVtpData.set_connectivity] ---------- i " << i;
+    #endif
     for (int j = 0; j < np_elem; j++) {
-      //std::cout << "[VtkVtpData.set_connectivity] ----- j " << j << std::endl;
-      //std::cout << "[VtkVtpData.set_connectivity] conn(j,i): " << conn(j,i) << std::endl;
+      #ifdef debug_vtk_data
+      dmsg << "[VtkVtpData.set_connectivity] ----- j " << j;
+      dmsg << "[VtkVtpData.set_connectivity] conn(j,i): " << conn(j,i);
+      #endif
       elem_nodes->SetId(j, conn(j,i));
     }
     element_cells->InsertNextCell(elem_nodes);
@@ -201,12 +213,19 @@ void VtkVtpData::VtkVtpDataImpl::set_point_data(const std::string& data_name, co
 //
 void VtkVtpData::VtkVtpDataImpl::set_points(const Array<double>& points)
 {
-  //std::cout << "[VtkVtpData.set_points] vtk_polydata: " << vtk_polydata << std::endl;
+  #ifdef debug_vtk_data
+  DebugMsg dmsg(__func__, 0);
+  dmsg << "[VtkVtpData.set_points] vtk_polydata: " << vtk_polydata;
+  #endif
+
   int num_coords = points.ncols();
   if (num_coords == 0) { 
     throw std::runtime_error("Error in VTK VTP set_points: the number of points is zero.");
   }
-  //std::cout << "[VtkVtpData.set_points] num_coords: " << num_coords << std::endl;
+
+  #ifdef debug_vtk_data
+  dmsg << "[VtkVtpData.set_points] num_coords: " << num_coords;
+  #endif
 
   auto node_coords = vtkSmartPointer<vtkPoints>::New();
   node_coords->Allocate(num_coords, 1000);
@@ -229,7 +248,10 @@ void VtkVtpData::VtkVtpDataImpl::set_points(const Array<double>& points)
 
 void VtkVtpData::VtkVtpDataImpl::write(const std::string& file_name)
 {
-  //std::cout << "[VtkVtpData.write] file_name: " << file_name << std::endl;
+  #ifdef debug_vtk_data
+  DebugMsg dmsg(__func__, 0);
+  dmsg << "[VtkVtpData.write] file_name: " << file_name;
+  #endif
   auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   writer->SetInputDataObject(vtk_polydata);
   writer->SetFileName(file_name.c_str());
@@ -572,7 +594,23 @@ VtkVtpData::~VtkVtpData()
   delete impl;
 }
 
-Array<int> VtkVtpData::get_connectivity()
+VtkVtpData::VtkVtpData(const VtkVtpData& other)
+{
+  impl = new VtkVtpDataImpl(*other.impl);
+  file_name = other.file_name;
+}
+
+VtkVtpData& VtkVtpData::operator=(const VtkVtpData& other)
+{
+  if (this != &other) {
+    delete impl;
+    impl = new VtkVtpDataImpl(*other.impl);
+    file_name = other.file_name;
+  }
+  return *this;
+}
+
+Array<int> VtkVtpData::get_connectivity() const
 {
   int num_elems = impl->num_elems; 
   int np_elem = impl->np_elem; 
@@ -719,7 +757,7 @@ std::vector<std::string> VtkVtpData::get_point_data_names()
 
 /// @brief Get an array of point data from an unstructured grid.
 //
-Array<double> VtkVtpData::get_points()
+Array<double> VtkVtpData::get_points() const 
 {
   auto vtk_points = impl->vtk_polydata->GetPoints();
   auto num_points = vtk_points->GetNumberOfPoints();
@@ -749,22 +787,22 @@ bool VtkVtpData::has_point_data(const std::string& data_name)
   return false;
 }
 
-int VtkVtpData::elem_type() 
+int VtkVtpData::elem_type() const
 { 
   return impl->elem_type; 
 }
 
-int VtkVtpData::num_elems() 
+int VtkVtpData::num_elems() const
 { 
   return impl->num_elems; 
 }
 
-int VtkVtpData::np_elem() 
+int VtkVtpData::np_elem() const
 { 
   return impl->np_elem; 
 }
 
-int VtkVtpData::num_points() 
+int VtkVtpData::num_points() const
 { 
   return impl->num_points; 
 }
@@ -840,7 +878,7 @@ VtkVtuData::~VtkVtuData()
   delete impl;
 }
 
-Array<int> VtkVtuData::get_connectivity()
+Array<int> VtkVtuData::get_connectivity() const
 {
   int num_elems = impl->num_elems; 
   int np_elem = impl->np_elem; 
@@ -999,7 +1037,7 @@ Array<double> VtkVtuData::get_point_data(const std::string& data_name)
   return data;
 }
 
-Array<double> VtkVtuData::get_points()
+Array<double> VtkVtuData::get_points() const
 {
   auto vtk_points = impl->vtk_ugrid->GetPoints();
   auto num_points = vtk_points->GetNumberOfPoints();
@@ -1016,22 +1054,22 @@ Array<double> VtkVtuData::get_points()
   return points_array;
 }
 
-int VtkVtuData::elem_type() 
+int VtkVtuData::elem_type() const
 { 
   return impl->elem_type; 
 }
 
-int VtkVtuData::num_elems() 
+int VtkVtuData::num_elems() const
 { 
   return impl->num_elems; 
 }
 
-int VtkVtuData::np_elem() 
+int VtkVtuData::np_elem() const
 { 
   return impl->np_elem; 
 }
 
-int VtkVtuData::num_points() 
+int VtkVtuData::num_points() const
 { 
   return impl->num_points; 
 }

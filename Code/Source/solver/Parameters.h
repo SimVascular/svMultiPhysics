@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 #ifndef PARAMETERS_H 
 #define PARAMETERS_H 
@@ -79,6 +52,7 @@ template<typename T>
 ///   2) Mesh        (MeshParameters)
 ///   3) Equation    (EquationParameters)
 ///   4) Projection  (ProjectionParameters)
+///   5) RIS Projection  (RIS ProjectionParameters)
 ///
 /// Each object contains methods to parse the XML file for the parameters defined for it.
 /// These section objects may also contain objects representing the sub-sections defined 
@@ -832,6 +806,8 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<double> value;
     Parameter<bool> weakly_applied;
     Parameter<bool> zero_out_perimeter;
+
+    Parameter<double> resistance;
 };
 
 /// @brief The OutputParameters class stores parameters for the
@@ -1546,6 +1522,100 @@ class MeshParameters : public ParameterLists
     Parameter<double> quadrature_modifier_TET4;
 };
 
+//////////////////////////////////////////////////////////
+//         Resistive immersed surfaces method           //
+//////////////////////////////////////////////////////////
+
+/// @brief The RISProjectionParameters class stores parameters for the
+/// 'Add_RIS_projection' XML element used for RIS valve simulations.
+/// \code {.xml}
+/// <Add_RIS_projection name="left_ris" >
+///   <Project_from_face> right_ris </Project_from_face>
+///   <Resistance> 1.e6 </Resistance>
+/// </Add_RIS_projection>
+/// \endcode
+class RISProjectionParameters : public ParameterLists
+{
+  public:
+    RISProjectionParameters();
+
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    static const std::string xml_element_name_;
+
+    Parameter<std::string> name;
+
+    Parameter<std::string> project_from_face;
+    Parameter<double> resistance;
+    Parameter<double> projection_tolerance;
+};
+
+/// @brief The URISFaceParameters class is used to store parameters for the
+/// 'Add_URIS_face' XML element.
+class URISFaceParameters : public ParameterLists
+{
+  public:
+    URISFaceParameters();
+
+    void print_parameters();
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    static const std::string xml_element_name_;
+
+    Parameter<std::string> name; // Name of the valve surface
+
+    Parameter<std::string> face_file_path; // File path for the valve surface
+    Parameter<std::string> open_motion_file_path; // File path for the open motion of the valve
+    Parameter<std::string> close_motion_file_path; // File path for the close motion of the valve
+
+};
+
+/// @brief The URISMeshParameters class is used to store paramaters for the
+/// 'Add_URIS_mesh' XML element.
+///
+/// \code {.xml}
+/// <Add_uris_mesh name="MV" > 
+///   <Add_uris_face name="LCC" > 
+///     <Face_file_path> meshes/uris_face.vtu </Face_file_path>
+///     <Open_motion_file_path> meshes/uris_facemotion_open.dat </Open_motion_file_path>
+///     <Close_motion_file_path> meshes/uris_facemotion_close.dat </Close_motion_file_path>
+///   </Add_uris_face>
+///   <Mesh_scale_factor> 1.0 </Mesh_scale_factor>
+///   <Thickness> 0.25 </Thickness>
+///   <Resistance> 1.0e5 </Resistance>
+///   <Positive_flow_normal_file> meshes/normal.dat </Positive_flow_normal_file>
+/// </Add_uris_mesh>
+/// \endcode
+class URISMeshParameters : public ParameterLists
+{
+  public:
+    URISMeshParameters();
+
+    static const std::string xml_element_name_;
+
+    void print_parameters();
+    void set_values(tinyxml2::XMLElement* mesh_elem);
+    std::string get_name() const { return name.value(); };
+    // std::string get_path() const { return mesh_file_path.value(); };
+
+    std::vector<URISFaceParameters*> URIS_face_parameters;
+
+    // Add_mesh name
+    Parameter<std::string> name; // Name of the valve mesh
+
+    // Parameters under Add_URIS_mesh 
+    Parameter<double> mesh_scale_factor; // Scale factor for the mesh
+    Parameter<double> thickness; // Thickness of the valve
+    Parameter<double> close_thickness; // Thickness of the valve when it is closed
+    Parameter<double> resistance; // Resistance of the valve
+    Parameter<double> resistance_close; // Resistance of the valve when it is closed
+    Parameter<bool> valve_starts_as_closed; // Whether the valve starts as closed
+    Parameter<std::string> positive_flow_normal_file_path; // File path for the positive flow normal
+
+};
+
+
+
 /// @brief The Parameters class stores parameter values read in from a solver input file.
 class Parameters {
 
@@ -1567,6 +1637,9 @@ class Parameters {
     void set_projection_values(tinyxml2::XMLElement* root_element);
     void set_svzerodsolver_interface_values(tinyxml2::XMLElement* root_element);
 
+    void set_RIS_projection_values(tinyxml2::XMLElement* root_element);
+    void set_URIS_mesh_values(tinyxml2::XMLElement* root_element);
+
     // Objects representing each parameter section of XML file.
     ContactParameters contact_parameters;
     GeneralSimulationParameters general_simulation_parameters;
@@ -1574,6 +1647,10 @@ class Parameters {
     std::vector<EquationParameters*> equation_parameters;
     std::vector<ProjectionParameters*> projection_parameters;
     PrecomputedSolutionParameters precomputed_solution_parameters;
+
+    std::vector<RISProjectionParameters*> RIS_projection_parameters;
+    std::vector<URISMeshParameters*> URIS_mesh_parameters;
+
 };
 
 #endif

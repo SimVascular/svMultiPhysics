@@ -1,32 +1,5 @@
-/* Copyright (c) Stanford University, The Regents of the University of California, and others.
- *
- * All Rights Reserved.
- *
- * See Copyright-SimVascular.txt for additional details.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
+// SPDX-License-Identifier: BSD-3-Clause
 
 // The functions defined here replicate the Fortran functions defined in LHSA.f.
 
@@ -177,6 +150,7 @@ void lhsa(Simulation* simulation, int& nnz)
   Array<int> uInd(mnnzeic, tnNo);
   uInd = -1;
   int nMsh = com_mod.nMsh;
+  bool risFlag = com_mod.risFlag;
 
   for (int iM = 0; iM < nMsh; iM++) {
     auto& msh = com_mod.msh[iM];
@@ -189,6 +163,33 @@ void lhsa(Simulation* simulation, int& nnz)
         for (int b = 0; b < msh.eNoN; b++) {
           int colN = msh.IEN(b,e);
           add_col(tnNo, rowN, colN, mnnzeic, uInd);
+        }
+
+        // Add extra connections for cooresponding nodes in case of RIS
+        int jMRIS = 0;
+        if (risFlag) {
+          auto& RIS = com_mod.ris;
+          // If rowN is in the list of ris nodes
+          // Loop through all projections and find the one associated with the current mesh
+          for (int iProj = 0; iProj < RIS.nbrRIS; iProj++) {
+            if (RIS.lst(0,0,iProj) == iM) {
+              jMRIS = 1;
+            } else if (RIS.lst(1,0,iProj) == iM) {
+              jMRIS = 0;
+            } else {
+              continue; // Skip to the next iteration
+            }
+            std::array<int, 2> mapIdx;
+            utils::find_loc(com_mod.grisMapList[iProj].map, rowN, mapIdx);
+            if (mapIdx[0] != -1) {
+              int rowNR = com_mod.grisMapList[iProj].map(jMRIS,mapIdx[1]);
+              if (rowNR == -1) continue;
+              for (int b = 0; b < msh.eNoN; b++) {
+                int colN = msh.IEN(b,e);
+                add_col(tnNo, rowNR, colN, mnnzeic, uInd);
+              }
+            }
+          }
         }
       }
     }
