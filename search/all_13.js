@@ -22,12 +22,11 @@ var searchData=
   ['usegenbc_19',['useGenBC',['../classcpl_b_c_type.html#a730f8b6f595d77b46516534f4687a5c4',1,'cplBCType']]],
   ['useprecomp_20',['usePrecomp',['../class_com_mod.html#a949caadf37a65de770358a86798b0060',1,'ComMod']]],
   ['usetls_21',['useTLS',['../classeq_type.html#a6e56218d0c32814aac1b24e011d48805',1,'eqType']]],
-  ['usetranspose_22',['UseTranspose',['../class_trilinos_mat_vec.html#adb4ad630200bf6fb6fa554055222657b',1,'TrilinosMatVec']]],
-  ['ustruct_2ecpp_23',['ustruct.cpp',['../ustruct_8cpp.html',1,'']]],
-  ['ustruct_5f2d_5fc_24',['ustruct_2d_c',['../ustruct_8cpp.html#a1932a6e82fe23a81987cfc209b92f394',1,'ustruct']]],
-  ['ustruct_5f2d_5fm_25',['ustruct_2d_m',['../ustruct_8cpp.html#a80e8da99aee39c727871f006d2548d07',1,'ustruct']]],
-  ['ustruct_5f3d_5fc_26',['ustruct_3d_c',['../ustruct_8cpp.html#addd531ce2343b1ad531413660c82977b',1,'ustruct']]],
-  ['ustruct_5f3d_5fm_27',['ustruct_3d_m',['../ustruct_8cpp.html#afdc61ab87ebb13a84f2137adf3da5bed',1,'ustruct']]],
-  ['ustruct_5fdo_5fassem_28',['ustruct_do_assem',['../ustruct_8cpp.html#acd5866866247ec4b4a9f4a8a4c29bed2',1,'ustruct']]],
-  ['ustruct_5fr_29',['ustruct_r',['../ustruct_8cpp.html#a4a00d1f660ad074592c086e76d82aaab',1,'ustruct']]]
+  ['ustruct_2ecpp_22',['ustruct.cpp',['../ustruct_8cpp.html',1,'']]],
+  ['ustruct_5f2d_5fc_23',['ustruct_2d_c',['../ustruct_8cpp.html#a1932a6e82fe23a81987cfc209b92f394',1,'ustruct']]],
+  ['ustruct_5f2d_5fm_24',['ustruct_2d_m',['../ustruct_8cpp.html#a80e8da99aee39c727871f006d2548d07',1,'ustruct']]],
+  ['ustruct_5f3d_5fc_25',['ustruct_3d_c',['../ustruct_8cpp.html#addd531ce2343b1ad531413660c82977b',1,'ustruct']]],
+  ['ustruct_5f3d_5fm_26',['ustruct_3d_m',['../ustruct_8cpp.html#afdc61ab87ebb13a84f2137adf3da5bed',1,'ustruct']]],
+  ['ustruct_5fdo_5fassem_27',['ustruct_do_assem',['../ustruct_8cpp.html#acd5866866247ec4b4a9f4a8a4c29bed2',1,'ustruct']]],
+  ['ustruct_5fr_28',['ustruct_r',['../ustruct_8cpp.html#a4a00d1f660ad074592c086e76d82aaab',1,'ustruct']]]
 ];

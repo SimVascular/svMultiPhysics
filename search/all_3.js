@@ -10,7 +10,7 @@ var searchData=
   ['distribute_7',['distribute',['../class_boundary_condition.html#a7859d5d785d1411542d6d3137c823c37',1,'BoundaryCondition']]],
   ['dmn_8',['dmn',['../classeq_type.html#a8444f77be8c6f85297aca3c3ce9eb1ec',1,'eqType']]],
   ['dmnib_9',['dmnIB',['../classeq_type.html#ac9596dcfa3a9f0e7505758df1783bcb0',1,'eqType']]],
-  ['dmnid_10',['dmnid',['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID'],['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId']]],
+  ['dmnid_10',['dmnid',['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId'],['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID']]],
   ['dmntype_11',['dmnType',['../classdmn_type.html',1,'']]],
   ['dn_12',['Dn',['../class_com_mod.html#a86fe135e9367ae9fa24bcca66c0c25ae',1,'ComMod']]],
   ['do_13',['Do',['../class_com_mod.html#abe59a1b34b4ad737800637b511c41fa7',1,'ComMod']]],

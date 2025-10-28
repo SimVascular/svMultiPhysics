@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['what_0',['what',['../class_boundary_condition_base_exception.html#a32c5778b38fef28785b310c9fe005a05',1,'BoundaryConditionBaseException']]]
+  ['_7eboundarycondition_0',['~BoundaryCondition',['../class_boundary_condition.html#a0ccfe84a790e5472773c5384d114e313',1,'BoundaryCondition']]],
+  ['_7ecannparameters_1',['~CANNParameters',['../class_c_a_n_n_parameters.html#abb79e64d90e9e6828dafd3afef4e6d65',1,'CANNParameters']]]
 ];

@@ -71,7 +71,7 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="struct_trilinos-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Trilinos Struct Reference</div></div>
 </div><!--header-->
@@ -82,210 +82,52 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="trilinos__impl_8h_source.html">trilinos_impl.h</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a7b3e7d4c10a25c881d08e3ac62ef456d" id="r_a7b3e7d4c10a25c881d08e3ac62ef456d"><td class="memItemLeft" align="right" valign="top">static Epetra_BlockMap *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#a7b3e7d4c10a25c881d08e3ac62ef456d">blockMap</a></td></tr>
-<tr class="memdesc:a7b3e7d4c10a25c881d08e3ac62ef456d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique block map consisting of nodes owned by each processor.  <br /></td></tr>
-<tr class="separator:a7b3e7d4c10a25c881d08e3ac62ef456d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8bdcec6101d9e559e7938ff45a761ea6" id="r_a8bdcec6101d9e559e7938ff45a761ea6"><td class="memItemLeft" align="right" valign="top">static Epetra_FEVector *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#a8bdcec6101d9e559e7938ff45a761ea6">F</a></td></tr>
-<tr class="memdesc:a8bdcec6101d9e559e7938ff45a761ea6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global block force vector.  <br /></td></tr>
-<tr class="separator:a8bdcec6101d9e559e7938ff45a761ea6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac293456fe99d0fa61b3e2e1ae44efa79" id="r_ac293456fe99d0fa61b3e2e1ae44efa79"><td class="memItemLeft" align="right" valign="top">static Epetra_FEVbrMatrix *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#ac293456fe99d0fa61b3e2e1ae44efa79">K</a></td></tr>
-<tr class="memdesc:ac293456fe99d0fa61b3e2e1ae44efa79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global block stiffness matrix.  <br /></td></tr>
-<tr class="separator:ac293456fe99d0fa61b3e2e1ae44efa79"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a75ba6c5cf01f3d3297591f9ab28ff435" id="r_a75ba6c5cf01f3d3297591f9ab28ff435"><td class="memItemLeft" align="right" valign="top">static Epetra_Vector *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#a75ba6c5cf01f3d3297591f9ab28ff435">X</a></td></tr>
-<tr class="memdesc:a75ba6c5cf01f3d3297591f9ab28ff435"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solution vector consisting of unique nodes owned by the processor.  <br /></td></tr>
-<tr class="separator:a75ba6c5cf01f3d3297591f9ab28ff435"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a35d680f2f8b0d8221984407ac3d09a57" id="r_a35d680f2f8b0d8221984407ac3d09a57"><td class="memItemLeft" align="right" valign="top">static Epetra_Vector *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#a35d680f2f8b0d8221984407ac3d09a57">ghostX</a></td></tr>
-<tr class="memdesc:a35d680f2f8b0d8221984407ac3d09a57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solution vector with nodes owned by processor followed by its ghost nodes.  <br /></td></tr>
-<tr class="separator:a35d680f2f8b0d8221984407ac3d09a57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3b53f58986eb184ebb6e0f41f645dd14" id="r_a3b53f58986eb184ebb6e0f41f645dd14"><td class="memItemLeft" align="right" valign="top">static Epetra_Import *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#a3b53f58986eb184ebb6e0f41f645dd14">Importer</a></td></tr>
-<tr class="memdesc:a3b53f58986eb184ebb6e0f41f645dd14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Import ghostMap into blockMap to create ghost map.  <br /></td></tr>
-<tr class="separator:a3b53f58986eb184ebb6e0f41f645dd14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade4f250c447e6bd6a3fca07c590ea1b3" id="r_ade4f250c447e6bd6a3fca07c590ea1b3"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; Epetra_FEVector * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_trilinos.html#ade4f250c447e6bd6a3fca07c590ea1b3">bdryVec_list</a></td></tr>
-<tr class="memdesc:ade4f250c447e6bd6a3fca07c590ea1b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contribution from coupled neumann boundary conditions. One vector for each coupled Neumann boundary.  <br /></td></tr>
-<tr class="separator:ade4f250c447e6bd6a3fca07c590ea1b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3781fc68a4109f680311f9f782619b01" id="r_a3781fc68a4109f680311f9f782619b01"><td class="memItemLeft" align="right" valign="top"><a id="a3781fc68a4109f680311f9f782619b01" name="a3781fc68a4109f680311f9f782619b01"></a>
-static Epetra_MpiComm *&#160;</td><td class="memItemRight" valign="bottom"><b>comm</b></td></tr>
-<tr class="separator:a3781fc68a4109f680311f9f782619b01"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32edad40e9274fd4ab11634d69f32f9b" id="r_a32edad40e9274fd4ab11634d69f32f9b"><td class="memItemLeft" align="right" valign="top"><a id="a32edad40e9274fd4ab11634d69f32f9b" name="a32edad40e9274fd4ab11634d69f32f9b"></a>
-static Epetra_FECrsGraph *&#160;</td><td class="memItemRight" valign="bottom"><b>K_graph</b></td></tr>
-<tr class="separator:a32edad40e9274fd4ab11634d69f32f9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a265c8bb2074525e92e71fc75a7d2de85" id="r_a265c8bb2074525e92e71fc75a7d2de85"><td class="memItemLeft" align="right" valign="top"><a id="a265c8bb2074525e92e71fc75a7d2de85" name="a265c8bb2074525e92e71fc75a7d2de85"></a>
+Teuchos::RCP&lt; const Tpetra_Map &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Map</b></td></tr>
+<tr class="separator:a265c8bb2074525e92e71fc75a7d2de85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae249fc2fb8fb147d881957b916a2afdd" id="r_ae249fc2fb8fb147d881957b916a2afdd"><td class="memItemLeft" align="right" valign="top"><a id="ae249fc2fb8fb147d881957b916a2afdd" name="ae249fc2fb8fb147d881957b916a2afdd"></a>
+Teuchos::RCP&lt; const Tpetra_Map &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ghostMap</b></td></tr>
+<tr class="separator:ae249fc2fb8fb147d881957b916a2afdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24d36c9ee2ec74cc2ec32abaf990bcdf" id="r_a24d36c9ee2ec74cc2ec32abaf990bcdf"><td class="memItemLeft" align="right" valign="top"><a id="a24d36c9ee2ec74cc2ec32abaf990bcdf" name="a24d36c9ee2ec74cc2ec32abaf990bcdf"></a>
+Teuchos::RCP&lt; Tpetra_MultiVector &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>F</b></td></tr>
+<tr class="separator:a24d36c9ee2ec74cc2ec32abaf990bcdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5c56d892f982aea802c8680f20bdea8" id="r_ad5c56d892f982aea802c8680f20bdea8"><td class="memItemLeft" align="right" valign="top"><a id="ad5c56d892f982aea802c8680f20bdea8" name="ad5c56d892f982aea802c8680f20bdea8"></a>
+Teuchos::RCP&lt; Tpetra_MultiVector &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ghostF</b></td></tr>
+<tr class="separator:ad5c56d892f982aea802c8680f20bdea8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dc6f5d81be03d370d11a6e68db6b46f" id="r_a9dc6f5d81be03d370d11a6e68db6b46f"><td class="memItemLeft" align="right" valign="top"><a id="a9dc6f5d81be03d370d11a6e68db6b46f" name="a9dc6f5d81be03d370d11a6e68db6b46f"></a>
+Teuchos::RCP&lt; Tpetra_CrsMatrix &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>K</b></td></tr>
+<tr class="separator:a9dc6f5d81be03d370d11a6e68db6b46f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6367b80bb3b411b6ec9883a214b8b7df" id="r_a6367b80bb3b411b6ec9883a214b8b7df"><td class="memItemLeft" align="right" valign="top"><a id="a6367b80bb3b411b6ec9883a214b8b7df" name="a6367b80bb3b411b6ec9883a214b8b7df"></a>
+Teuchos::RCP&lt; Tpetra_Vector &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>X</b></td></tr>
+<tr class="separator:a6367b80bb3b411b6ec9883a214b8b7df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad33e925af53a3f6c7192ce8a0bc0fb78" id="r_ad33e925af53a3f6c7192ce8a0bc0fb78"><td class="memItemLeft" align="right" valign="top"><a id="ad33e925af53a3f6c7192ce8a0bc0fb78" name="ad33e925af53a3f6c7192ce8a0bc0fb78"></a>
+Teuchos::RCP&lt; Tpetra_Vector &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ghostX</b></td></tr>
+<tr class="separator:ad33e925af53a3f6c7192ce8a0bc0fb78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab112198c9af96daac6408b7bcf5deb76" id="r_ab112198c9af96daac6408b7bcf5deb76"><td class="memItemLeft" align="right" valign="top"><a id="ab112198c9af96daac6408b7bcf5deb76" name="ab112198c9af96daac6408b7bcf5deb76"></a>
+Teuchos::RCP&lt; Tpetra_Import &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Importer</b></td></tr>
+<tr class="separator:ab112198c9af96daac6408b7bcf5deb76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafaed6c628de8a00a13b3ba425af62f6" id="r_aafaed6c628de8a00a13b3ba425af62f6"><td class="memItemLeft" align="right" valign="top"><a id="aafaed6c628de8a00a13b3ba425af62f6" name="aafaed6c628de8a00a13b3ba425af62f6"></a>
+std::vector&lt; Teuchos::RCP&lt; Tpetra_MultiVector &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>bdryVec_list</b></td></tr>
+<tr class="separator:aafaed6c628de8a00a13b3ba425af62f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf7226d8bd4138e6bbfcddb555e64e5d" id="r_acf7226d8bd4138e6bbfcddb555e64e5d"><td class="memItemLeft" align="right" valign="top"><a id="acf7226d8bd4138e6bbfcddb555e64e5d" name="acf7226d8bd4138e6bbfcddb555e64e5d"></a>
+Teuchos::RCP&lt; const Teuchos::Comm&lt; int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>comm</b></td></tr>
+<tr class="separator:acf7226d8bd4138e6bbfcddb555e64e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae58a7a49001e1473fe51b9775d2bf6de" id="r_ae58a7a49001e1473fe51b9775d2bf6de"><td class="memItemLeft" align="right" valign="top"><a id="ae58a7a49001e1473fe51b9775d2bf6de" name="ae58a7a49001e1473fe51b9775d2bf6de"></a>
+Teuchos::RCP&lt; Tpetra_CrsGraph &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>K_graph</b></td></tr>
+<tr class="separator:ae58a7a49001e1473fe51b9775d2bf6de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae981bdc43ed9b6378a51422e79b325d2" id="r_ae981bdc43ed9b6378a51422e79b325d2"><td class="memItemLeft" align="right" valign="top"><a id="ae981bdc43ed9b6378a51422e79b325d2" name="ae981bdc43ed9b6378a51422e79b325d2"></a>
+Teuchos::RCP&lt; Tpetra_Operator &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>MueluPrec</b></td></tr>
+<tr class="separator:ae981bdc43ed9b6378a51422e79b325d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f67fda34c7101ba1bc9cc9e15a50d2e" id="r_a9f67fda34c7101ba1bc9cc9e15a50d2e"><td class="memItemLeft" align="right" valign="top"><a id="a9f67fda34c7101ba1bc9cc9e15a50d2e" name="a9f67fda34c7101ba1bc9cc9e15a50d2e"></a>
+Teuchos::RCP&lt; Ifpack2_Preconditioner &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ifpackPrec</b></td></tr>
+<tr class="separator:a9f67fda34c7101ba1bc9cc9e15a50d2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Initialize all Epetra types we need separate from Fortran. </p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="ade4f250c447e6bd6a3fca07c590ea1b3" name="ade4f250c447e6bd6a3fca07c590ea1b3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade4f250c447e6bd6a3fca07c590ea1b3">&#9670;&#160;</a></span>bdryVec_list</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; Epetra_FEVector * &gt; Trilinos::bdryVec_list</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Contribution from coupled neumann boundary conditions. One vector for each coupled Neumann boundary. </p>
-
-</div>
-</div>
-<a id="a7b3e7d4c10a25c881d08e3ac62ef456d" name="a7b3e7d4c10a25c881d08e3ac62ef456d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7b3e7d4c10a25c881d08e3ac62ef456d">&#9670;&#160;</a></span>blockMap</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Epetra_BlockMap * Trilinos::blockMap</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Unique block map consisting of nodes owned by each processor. </p>
-
-</div>
-</div>
-<a id="a8bdcec6101d9e559e7938ff45a761ea6" name="a8bdcec6101d9e559e7938ff45a761ea6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8bdcec6101d9e559e7938ff45a761ea6">&#9670;&#160;</a></span>F</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Epetra_FEVector * Trilinos::F</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Global block force vector. </p>
-
-</div>
-</div>
-<a id="a35d680f2f8b0d8221984407ac3d09a57" name="a35d680f2f8b0d8221984407ac3d09a57"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a35d680f2f8b0d8221984407ac3d09a57">&#9670;&#160;</a></span>ghostX</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Epetra_Vector * Trilinos::ghostX</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Solution vector with nodes owned by processor followed by its ghost nodes. </p>
-
-</div>
-</div>
-<a id="a3b53f58986eb184ebb6e0f41f645dd14" name="a3b53f58986eb184ebb6e0f41f645dd14"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3b53f58986eb184ebb6e0f41f645dd14">&#9670;&#160;</a></span>Importer</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Epetra_Import * Trilinos::Importer</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Import ghostMap into blockMap to create ghost map. </p>
-
-</div>
-</div>
-<a id="ac293456fe99d0fa61b3e2e1ae44efa79" name="ac293456fe99d0fa61b3e2e1ae44efa79"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac293456fe99d0fa61b3e2e1ae44efa79">&#9670;&#160;</a></span>K</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Epetra_FEVbrMatrix * Trilinos::K</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Global block stiffness matrix. </p>
-
-</div>
-</div>
-<a id="a75ba6c5cf01f3d3297591f9ab28ff435" name="a75ba6c5cf01f3d3297591f9ab28ff435"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a75ba6c5cf01f3d3297591f9ab28ff435">&#9670;&#160;</a></span>X</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Epetra_Vector * Trilinos::X</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Solution vector consisting of unique nodes owned by the processor. </p>
-
-</div>
-</div>
-<hr/>The documentation for this struct was generated from the following files:<ul>
+</div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>solver/<a class="el" href="trilinos__impl_8h_source.html">trilinos_impl.h</a></li>
-<li>solver/<b>trilinos_impl.cpp</b></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

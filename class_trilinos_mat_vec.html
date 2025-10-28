@@ -77,7 +77,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>This class implements the pure virtual class Epetra_Operator for the AztecOO iterative solve which only uses the <a class="el" href="class_trilinos_mat_vec.html#a42c868f18bbb63f2437f5eddea692ce0">Apply()</a> method to compute the matrix vector product.  
+<p>This class implements the pure virtual class Epetra_Operator for the AztecOO iterative solve which only uses the Apply() method to compute the matrix vector product.  
  <a href="class_trilinos_mat_vec.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="trilinos__impl_8h_source.html">trilinos_impl.h</a>&gt;</code></p>
@@ -89,55 +89,93 @@ Inheritance diagram for TrilinosMatVec:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a42c868f18bbb63f2437f5eddea692ce0" id="r_a42c868f18bbb63f2437f5eddea692ce0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#a42c868f18bbb63f2437f5eddea692ce0">Apply</a> (const Epetra_MultiVector &amp;x, Epetra_MultiVector &amp;y) const</td></tr>
-<tr class="separator:a42c868f18bbb63f2437f5eddea692ce0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acdf993a55c6b83653499f5ca7156b1a6" id="r_acdf993a55c6b83653499f5ca7156b1a6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#acdf993a55c6b83653499f5ca7156b1a6">SetUseTranspose</a> (bool use_transpose)</td></tr>
-<tr class="separator:acdf993a55c6b83653499f5ca7156b1a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10755df8b910a6803997bc6a1f7ef8ba" id="r_a10755df8b910a6803997bc6a1f7ef8ba"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#a10755df8b910a6803997bc6a1f7ef8ba">ApplyInverse</a> (const Epetra_MultiVector &amp;X, Epetra_MultiVector &amp;Y) const</td></tr>
-<tr class="memdesc:a10755df8b910a6803997bc6a1f7ef8ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes A_inv*x.  <br /></td></tr>
-<tr class="separator:a10755df8b910a6803997bc6a1f7ef8ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaeb8d74adb80f30a43a9e60f33dcc6a4" id="r_aaeb8d74adb80f30a43a9e60f33dcc6a4"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#aaeb8d74adb80f30a43a9e60f33dcc6a4">NormInf</a> () const</td></tr>
-<tr class="memdesc:aaeb8d74adb80f30a43a9e60f33dcc6a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Infinity norm for global stiffness does not add in the boundary term.  <br /></td></tr>
-<tr class="separator:aaeb8d74adb80f30a43a9e60f33dcc6a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60d16cabf05745902c8fe08762a5886a" id="r_a60d16cabf05745902c8fe08762a5886a"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#a60d16cabf05745902c8fe08762a5886a">Label</a> () const</td></tr>
-<tr class="memdesc:a60d16cabf05745902c8fe08762a5886a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a character string describing the operator.  <br /></td></tr>
-<tr class="separator:a60d16cabf05745902c8fe08762a5886a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb4ad630200bf6fb6fa554055222657b" id="r_adb4ad630200bf6fb6fa554055222657b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#adb4ad630200bf6fb6fa554055222657b">UseTranspose</a> () const</td></tr>
-<tr class="memdesc:adb4ad630200bf6fb6fa554055222657b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns current UseTranspose setting.  <br /></td></tr>
-<tr class="separator:adb4ad630200bf6fb6fa554055222657b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d207777b61c0eb5941ce7a5b00723dd" id="r_a7d207777b61c0eb5941ce7a5b00723dd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#a7d207777b61c0eb5941ce7a5b00723dd">HasNormInf</a> () const</td></tr>
-<tr class="memdesc:a7d207777b61c0eb5941ce7a5b00723dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this object can provide an approx Inf-norm false otherwise.  <br /></td></tr>
-<tr class="separator:a7d207777b61c0eb5941ce7a5b00723dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5b283ca73ac7fb95842dcac965b982a8" id="r_a5b283ca73ac7fb95842dcac965b982a8"><td class="memItemLeft" align="right" valign="top">const Epetra_Comm &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#a5b283ca73ac7fb95842dcac965b982a8">Comm</a> () const</td></tr>
-<tr class="memdesc:a5b283ca73ac7fb95842dcac965b982a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns pointer to Epetra_Comm communicator associated with this operator.  <br /></td></tr>
-<tr class="separator:a5b283ca73ac7fb95842dcac965b982a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae3255e2978adff1875dcf79c57d17295" id="r_ae3255e2978adff1875dcf79c57d17295"><td class="memItemLeft" align="right" valign="top">const Epetra_Map &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#ae3255e2978adff1875dcf79c57d17295">OperatorDomainMap</a> () const</td></tr>
-<tr class="memdesc:ae3255e2978adff1875dcf79c57d17295"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns Epetra_Map object assoicated with domain of this operator.  <br /></td></tr>
-<tr class="separator:ae3255e2978adff1875dcf79c57d17295"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a35066afcf68e589c037af9c6f7249b5a" id="r_a35066afcf68e589c037af9c6f7249b5a"><td class="memItemLeft" align="right" valign="top">const Epetra_Map &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#a35066afcf68e589c037af9c6f7249b5a">OperatorRangeMap</a> () const</td></tr>
-<tr class="memdesc:a35066afcf68e589c037af9c6f7249b5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the Epetra_Map object associated with teh range of this operator.  <br /></td></tr>
-<tr class="separator:a35066afcf68e589c037af9c6f7249b5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a58fed912d0450689f95885c36684db" id="r_a6a58fed912d0450689f95885c36684db"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#a6a58fed912d0450689f95885c36684db">TrilinosMatVec</a> (const Teuchos::RCP&lt; <a class="el" href="struct_trilinos.html">Trilinos</a> &gt; &amp;trilinos)</td></tr>
+<tr class="separator:a6a58fed912d0450689f95885c36684db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab30c05abed8c81e5b21014dec64a0f73" id="r_ab30c05abed8c81e5b21014dec64a0f73"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_trilinos_mat_vec.html#ab30c05abed8c81e5b21014dec64a0f73">apply</a> (const Tpetra_MultiVector &amp;X, Tpetra_MultiVector &amp;Y, Teuchos::ETransp mode=Teuchos::NO_TRANS, Scalar_d alpha=Teuchos::ScalarTraits&lt; Scalar_d &gt;::one(), Scalar_d beta=Teuchos::ScalarTraits&lt; Scalar_d &gt;::zero()) const override</td></tr>
+<tr class="separator:ab30c05abed8c81e5b21014dec64a0f73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a518bf5feddf0600b0829e4c7c97ba7c9" id="r_a518bf5feddf0600b0829e4c7c97ba7c9"><td class="memItemLeft" align="right" valign="top"><a id="a518bf5feddf0600b0829e4c7c97ba7c9" name="a518bf5feddf0600b0829e4c7c97ba7c9"></a>
+Teuchos::RCP&lt; const Tpetra_Map &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getDomainMap</b> () const override</td></tr>
+<tr class="separator:a518bf5feddf0600b0829e4c7c97ba7c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0efe012ff28e22ca150f16254a629a64" id="r_a0efe012ff28e22ca150f16254a629a64"><td class="memItemLeft" align="right" valign="top"><a id="a0efe012ff28e22ca150f16254a629a64" name="a0efe012ff28e22ca150f16254a629a64"></a>
+Teuchos::RCP&lt; const Tpetra_Map &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getRangeMap</b> () const override</td></tr>
+<tr class="separator:a0efe012ff28e22ca150f16254a629a64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>This class implements the pure virtual class Epetra_Operator for the AztecOO iterative solve which only uses the <a class="el" href="class_trilinos_mat_vec.html#a42c868f18bbb63f2437f5eddea692ce0">Apply()</a> method to compute the matrix vector product. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a42c868f18bbb63f2437f5eddea692ce0" name="a42c868f18bbb63f2437f5eddea692ce0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a42c868f18bbb63f2437f5eddea692ce0">&#9670;&#160;</a></span>Apply()</h2>
+<div class="textblock"><p>This class implements the pure virtual class Epetra_Operator for the AztecOO iterative solve which only uses the Apply() method to compute the matrix vector product. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a6a58fed912d0450689f95885c36684db" name="a6a58fed912d0450689f95885c36684db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a58fed912d0450689f95885c36684db">&#9670;&#160;</a></span>TrilinosMatVec()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int TrilinosMatVec::Apply </td>
+          <td class="memname">TrilinosMatVec::TrilinosMatVec </td>
           <td>(</td>
-          <td class="paramtype">const Epetra_MultiVector &amp;&#160;</td>
+          <td class="paramtype">const Teuchos::RCP&lt; <a class="el" href="struct_trilinos.html">Trilinos</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>trilinos</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Define matrix vector operation at each iteration of the linear solver adds on the coupled neuman boundary contribution to the matrix</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">x</td><td>vector to be applied on the operator </td></tr>
+    <tr><td class="paramname">y</td><td>result of sparse matrix vector multiplication </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab30c05abed8c81e5b21014dec64a0f73" name="ab30c05abed8c81e5b21014dec64a0f73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab30c05abed8c81e5b21014dec64a0f73">&#9670;&#160;</a></span>apply()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TrilinosMatVec::apply </td>
+          <td>(</td>
+          <td class="paramtype">const Tpetra_MultiVector &amp;&#160;</td>
           <td class="paramname"><em>x</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Epetra_MultiVector &amp;&#160;</td>
-          <td class="paramname"><em>y</em>&#160;</td>
+          <td class="paramtype">Tpetra_MultiVector &amp;&#160;</td>
+          <td class="paramname"><em>y</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Teuchos::ETransp&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>Teuchos::NO_TRANS</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Scalar_d&#160;</td>
+          <td class="paramname"><em>alpha</em> = <code>Teuchos::ScalarTraits&lt;&#160;Scalar_d&#160;&gt;::one()</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Scalar_d&#160;</td>
+          <td class="paramname"><em>beta</em> = <code>Teuchos::ScalarTraits&lt;Scalar_d&gt;::zero()</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -145,15 +183,12 @@ Public Member Functions</h2></td></tr>
           <td></td><td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<p>Define matrix vector operation at each iteration of the linear solver adds on the coupled neuman boundary contribution to the matrix</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>vector to be applied on the operator </td></tr>
-    <tr><td class="paramname">y</td><td>result of sprase matrix vector multiplication</td></tr>
-  </table>
-  </dd>
-</dl>
 <p>Define the matrix vector multiplication operation to do at each iteration of an iterative linear solver. This function is called by the AztecOO (K + v1*v1' + v2*v2' + ...) <em>x = K*x + v1</em>(v1'<em>x) + v2</em>(v2'*x), where [v1, v2, ...] = bdryVec_list</p>
 <p>For coupled Neumann boundary terms (v1*v1', v2*v2'), we use efficient an vectorized operation rather than explicitly forming the rank 1 outer product matrix and adding it to the global stiffness matrix K.</p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -163,260 +198,6 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a id="a10755df8b910a6803997bc6a1f7ef8ba" name="a10755df8b910a6803997bc6a1f7ef8ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a10755df8b910a6803997bc6a1f7ef8ba">&#9670;&#160;</a></span>ApplyInverse()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">int TrilinosMatVec::ApplyInverse </td>
-          <td>(</td>
-          <td class="paramtype">const Epetra_MultiVector &amp;&#160;</td>
-          <td class="paramname"><em>X</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Epetra_MultiVector &amp;&#160;</td>
-          <td class="paramname"><em>Y</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Computes A_inv*x. </p>
-
-</div>
-</div>
-<a id="a5b283ca73ac7fb95842dcac965b982a8" name="a5b283ca73ac7fb95842dcac965b982a8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5b283ca73ac7fb95842dcac965b982a8">&#9670;&#160;</a></span>Comm()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const Epetra_Comm &amp; TrilinosMatVec::Comm </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns pointer to Epetra_Comm communicator associated with this operator. </p>
-
-</div>
-</div>
-<a id="a7d207777b61c0eb5941ce7a5b00723dd" name="a7d207777b61c0eb5941ce7a5b00723dd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7d207777b61c0eb5941ce7a5b00723dd">&#9670;&#160;</a></span>HasNormInf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool TrilinosMatVec::HasNormInf </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns true if this object can provide an approx Inf-norm false otherwise. </p>
-
-</div>
-</div>
-<a id="a60d16cabf05745902c8fe08762a5886a" name="a60d16cabf05745902c8fe08762a5886a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a60d16cabf05745902c8fe08762a5886a">&#9670;&#160;</a></span>Label()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const char * TrilinosMatVec::Label </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns a character string describing the operator. </p>
-
-</div>
-</div>
-<a id="aaeb8d74adb80f30a43a9e60f33dcc6a4" name="aaeb8d74adb80f30a43a9e60f33dcc6a4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaeb8d74adb80f30a43a9e60f33dcc6a4">&#9670;&#160;</a></span>NormInf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">double TrilinosMatVec::NormInf </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Infinity norm for global stiffness does not add in the boundary term. </p>
-
-</div>
-</div>
-<a id="ae3255e2978adff1875dcf79c57d17295" name="ae3255e2978adff1875dcf79c57d17295"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae3255e2978adff1875dcf79c57d17295">&#9670;&#160;</a></span>OperatorDomainMap()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const Epetra_Map &amp; TrilinosMatVec::OperatorDomainMap </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns Epetra_Map object assoicated with domain of this operator. </p>
-
-</div>
-</div>
-<a id="a35066afcf68e589c037af9c6f7249b5a" name="a35066afcf68e589c037af9c6f7249b5a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a35066afcf68e589c037af9c6f7249b5a">&#9670;&#160;</a></span>OperatorRangeMap()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const Epetra_Map &amp; TrilinosMatVec::OperatorRangeMap </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the Epetra_Map object associated with teh range of this operator. </p>
-
-</div>
-</div>
-<a id="acdf993a55c6b83653499f5ca7156b1a6" name="acdf993a55c6b83653499f5ca7156b1a6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acdf993a55c6b83653499f5ca7156b1a6">&#9670;&#160;</a></span>SetUseTranspose()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">int TrilinosMatVec::SetUseTranspose </td>
-          <td>(</td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>use_transpose</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Tells whether to use the transpose of the matrix in each matrix vector product </p>
-
-</div>
-</div>
-<a id="adb4ad630200bf6fb6fa554055222657b" name="adb4ad630200bf6fb6fa554055222657b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adb4ad630200bf6fb6fa554055222657b">&#9670;&#160;</a></span>UseTranspose()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool TrilinosMatVec::UseTranspose </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns current UseTranspose setting. </p>
 
 </div>
 </div>
