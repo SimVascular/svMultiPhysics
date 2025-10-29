@@ -1404,7 +1404,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       cplbc_type_str = eq_params->couple_to_cplBC.type.value();
     }
 
-    if (cplBC.useGenBC || cplBC.useSvZeroD) { 
+    if ((cplBC.useGenBC || cplBC.useSvZeroD) && !cplbc_type_str.empty()) {
       try {
         cplBC.schm = consts::cplbc_name_to_type.at(cplbc_type_str);
       } catch (const std::out_of_range& exception) {
