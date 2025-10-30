@@ -795,6 +795,12 @@ class svZeroDSolverInterfaceType
     // the svZeroDSolver_interface XML parameter has been defined.
     bool has_data = false;
 
+    // Unit conversion factors between 3D (svMultiPhysics) and 0D (svZeroD)
+    // When sending values to 0D, multiply by these; when receiving from 0D,
+    // divide by these. Defaults are 1.0 (no conversion).
+    double pressure_conversion = 1.0;
+    double flowrate_conversion = 1.0;
+
     void set_data(const svZeroDSolverInterfaceParameters& params);
     void add_block_face(const std::string& block_name, const std::string& face_name);
 };

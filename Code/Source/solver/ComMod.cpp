@@ -213,6 +213,14 @@ void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters
     initial_pressures = params.initial_pressures();
   }
 
+  // Copy unit conversion factors if provided
+  if (params.pressure_conversion_factor.defined()) {
+    pressure_conversion = params.pressure_conversion_factor();
+  }
+  if (params.flowrate_conversion_factor.defined()) {
+    flowrate_conversion = params.flowrate_conversion_factor();
+  }
+
   has_data = true;
 }
 

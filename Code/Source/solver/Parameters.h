@@ -671,6 +671,13 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
 
     Parameter<std::string> shared_library;
 
+    // Unit conversion factors between 3D and 0D models
+    // Pressure and flowrate values will be multiplied by these factors before 
+    // being sent to the 0D model, and the inverse factors will be applied to 
+    // 0D outputs before returning to 3D.
+    Parameter<double> pressure_conversion_factor;
+    Parameter<double> flowrate_conversion_factor;
+    
     bool value_set = false;
 };
 
