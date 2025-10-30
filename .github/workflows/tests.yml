@@ -39,7 +39,7 @@ jobs:
   test-ubuntu:
     name: Test Ubuntu
     runs-on: ubuntu-latest
-    container: simvascular/libraries:ubuntu22
+    container: simvascular/libraries:latest
     needs: check-for-changes
     if: ${{ needs.check-for-changes.outputs.run_full_tests == 'true' }}
     steps:
