@@ -11,4 +11,4 @@ The `svZeroDSolver_interface` specifies conversion factors so that values are co
 - `Flowrate_conversion_factor = 1.0` (cm^3/s -> mL/s)
 
 Mesh and inflow files are referenced from the original test directory `pipe_RCR_sv0D/` to avoid duplication.
-Also, the reference result `result_002.vtu` in `pipe_RCR_sv0D/` is used for comparison
+Also, the reference result `result_002.vtu` in `pipe_RCR_sv0D/` is used for comparison.
