@@ -352,11 +352,13 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
     interface->return_ydot(last_state_ydot);
     for (int s = 0; s < numCoupledSrfs; ++s) {
       if (init_flow_flag == 1) {
-        lpn_state_y[sol_IDs[2 * s]] = init_flow;
+        // Apply flowrate conversion when initializing state
+        lpn_state_y[sol_IDs[2 * s]] = init_flow * solver_interface.flowrate_conversion;
         cplBC.fa[s].y = lpn_state_y[sol_IDs[2 * s]];
       }
       if (init_press_flag == 1) {
-        lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
+        // Apply pressure conversion when initializing state
+        lpn_state_y[sol_IDs[2 * s + 1]] = init_press * solver_interface.pressure_conversion;
         cplBC.fa[s].y = lpn_state_y[sol_IDs[2 * s + 1]];
       }
     }
@@ -434,14 +436,14 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
 
       total_flow = 0.0;
 
-      // Update pressure and flow in the zeroD model
+      // Update pressure and flow in the zeroD model (apply unit conversions)
       for (int i = 0; i < numCoupledSrfs; ++i) {
         if (i < nDir) {
-          params[0] = PCoupled[i];
-          params[1] = PnCoupled[i];
+          params[0] = PCoupled[i] * cplBC.svzerod_solver_interface.pressure_conversion;
+          params[1] = PnCoupled[i] * cplBC.svzerod_solver_interface.pressure_conversion;
         } else {
-          params[0] = in_out_sign[i] * QCoupled[i];
-          params[1] = in_out_sign[i] * QnCoupled[i];
+          params[0] = in_out_sign[i] * QCoupled[i] * cplBC.svzerod_solver_interface.flowrate_conversion;
+          params[1] = in_out_sign[i] * QnCoupled[i] * cplBC.svzerod_solver_interface.flowrate_conversion;
           total_flow += QCoupled[i];
         }
         update_svZeroD_block_params(svzd_blk_names[i], times, params);
@@ -455,10 +457,12 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
       
       for (int i = 0; i < numCoupledSrfs; ++i) {
         if (i < nDir) {
-          QCoupled[i] = in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]];
+          // Convert 0D flow back to 3D units
+          QCoupled[i] = (in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]]) / cplBC.svzerod_solver_interface.flowrate_conversion;
           cplBC.fa[i].y = QCoupled[i];
         } else {
-          PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
+          // Convert 0D pressure back to 3D units
+          PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]] / cplBC.svzerod_solver_interface.pressure_conversion;
           cplBC.fa[i].y = PCoupled[i];
         }
       }

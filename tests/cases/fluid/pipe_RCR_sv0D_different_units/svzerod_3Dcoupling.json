@@ -10,10 +10,10 @@
             "bc_name": "RCR",
             "bc_type": "RCR",
             "bc_values": {
-                "_comment": "cgs units. R: (dyn/cm^2).s/cm^3, C: cm^3/(dyn/cm^2), Pd: (dyn/cm^2)",
-                "Rp": 121.0,
-                "Rd": 1212.0,
-                "C": 1.5e-4,
+                "_comment": "Clinical units. R: mmHg.s/mL, C: mL/mmHg, Pd: mmHg",
+                "Rp": 0.09075745067,
+                "Rd": 0.90907462992,
+                "C": 0.19998358112,
                 "Pd": 0.0
             }
         }

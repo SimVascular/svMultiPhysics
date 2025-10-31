@@ -1103,6 +1103,10 @@ svZeroDSolverInterfaceParameters::svZeroDSolverInterfaceParameters()
 
   set_parameter("Shared_library", "", required, shared_library);
 
+  // Unit conversion factors (default 1.0 means no scaling).
+  set_parameter("Pressure_conversion_factor", 1.0, !required, pressure_conversion_factor);
+  set_parameter("Flowrate_conversion_factor", 1.0, !required, flowrate_conversion_factor);
+
 };
 
 void svZeroDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
