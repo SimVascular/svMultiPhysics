@@ -7,6 +7,8 @@ Running a test case requires
 - Install Git LFS used to download test data
 - Build svZeroDSolver (only required from certain tests)
 
+All the integration testing steps described below are automatically performed upon pull requests to the main branch, as explained in [WORKFLOW.md](../.github/WORKFLOW.md).
+
 # Build svMultiPhysics
 svMultiPhysics can be built following these [instructions](../README.md).
 
