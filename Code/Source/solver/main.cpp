@@ -19,7 +19,6 @@
 #include "initialize.h"
 #include "ls.h"
 #include "output.h"
-#include "pic.h"
 #include "read_files.h"
 #include "read_msh.h"
 #include "remesh.h"
@@ -316,7 +315,7 @@ void iterate_solution(Simulation* simulation)
     #ifdef debug_iterate_solution
     dmsg << "Predictor step ... " << std::endl;
     #endif
-    pic::picp(simulation);
+    integrator.predictor();
 
     // Apply Dirichlet BCs strongly
     //

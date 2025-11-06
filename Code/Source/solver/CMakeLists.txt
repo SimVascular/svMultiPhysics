@@ -192,7 +192,6 @@ set(CSRCS
   nn.h nn.cpp
   output.h output.cpp
   load_msh.h load_msh.cpp
-  pic.h pic.cpp
   post.h post.cpp
   read_files.h read_files.cpp
   read_msh.h read_msh.cpp

@@ -46,6 +46,15 @@ public:
   bool step();
 
   /**
+   * @brief Perform predictor step for next time step
+   *
+   * Performs predictor step using generalized-alpha method to estimate
+   * solution at n+1 time level based on current solution at n time level.
+   * This should be called once per time step before the Newton iteration loop.
+   */
+  void predictor();
+
+  /**
    * @brief Get reference to solution variable Ag (time derivative of variables)
    *
    * @return Reference to Ag array (acceleration in structural mechanics)
@@ -143,6 +152,35 @@ private:
    * @param eq Reference to the equation being solved
    */
   void update_residual_arrays(eqType& eq);
+
+  /**
+   * @brief Initiator function for generalized-alpha method (pici)
+   *
+   * Computes solution variables at intermediate time levels using
+   * generalized-alpha parameters (am, af) for time integration.
+   * Updates Ag, Yg, Dg based on An, Ao, Yn, Yo, Dn, Do.
+   *
+   * @param Ag Time derivative array at generalized-alpha level
+   * @param Yg Solution variable array at generalized-alpha level
+   * @param Dg Integrated variable array at generalized-alpha level
+   */
+  void pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg);
+
+  /**
+   * @brief Corrector function with convergence check (picc)
+   *
+   * Updates solution at n+1 time level and checks convergence of Newton
+   * iterations. Also handles equation switching for coupled problems.
+   */
+  void picc();
+
+  /**
+   * @brief Pressure correction for Taylor-Hood elements (pic_eth)
+   *
+   * Interpolates pressure at edge nodes using reduced basis applied
+   * on element vertices for Taylor-Hood type elements.
+   */
+  void pic_eth();
 };
 
 #endif // INTEGRATOR_H
