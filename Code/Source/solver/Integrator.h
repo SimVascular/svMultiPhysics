@@ -75,6 +75,27 @@ public:
    */
   Array<double>& get_Dg() { return Dg_; }
 
+  /**
+   * @brief Get reference to An (new time derivative of variables at n+1)
+   *
+   * @return Reference to An array (acceleration at next time step)
+   */
+  Array<double>& get_An() { return An_; }
+
+  /**
+   * @brief Get reference to Dn (new integrated variables at n+1)
+   *
+   * @return Reference to Dn array (displacement at next time step)
+   */
+  Array<double>& get_Dn() { return Dn_; }
+
+  /**
+   * @brief Get reference to Yn (new variables at n+1)
+   *
+   * @return Reference to Yn array (velocity at next time step)
+   */
+  Array<double>& get_Yn() { return Yn_; }
+
 private:
   /** @brief Pointer to the simulation object */
   Simulation* simulation_;
@@ -87,6 +108,15 @@ private:
 
   /** @brief Integrated variables (displacement in structural mechanics) */
   Array<double> Dg_;
+
+  /** @brief New time derivative of variables at n+1 (acceleration at next time step) */
+  Array<double> An_;
+
+  /** @brief New integrated variables at n+1 (displacement at next time step) */
+  Array<double> Dn_;
+
+  /** @brief New variables at n+1 (velocity at next time step) */
+  Array<double> Yn_;
 
   /** @brief Residual vector for face-based quantities */
   Vector<double> res_;

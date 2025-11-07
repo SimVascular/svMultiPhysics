@@ -80,7 +80,7 @@ void read_files(Simulation* simulation, const std::string& file_name)
 
 /// @brief Iterate the precomputed state-variables in time using linear interpolation to the current time step size
 //
-void iterate_precomputed_time(Simulation* simulation) {
+void iterate_precomputed_time(Simulation* simulation, Array<double>& An, Array<double>& Yn) {
   using namespace consts;
 
   auto& com_mod = simulation->com_mod;
@@ -103,9 +103,7 @@ void iterate_precomputed_time(Simulation* simulation) {
   auto& Yo = com_mod.Yo;      // Old variables (velocity)
   auto& Do = com_mod.Do;      // Old integrated variables (dissplacement)
 
-  auto& An = com_mod.An;      // New time derivative of variables
-  auto& Yn = com_mod.Yn;      // New variables (velocity)
-  auto& Dn = com_mod.Dn;      // New integrated variables
+  // An is now passed as a parameter (from integrator.get_An())
 
   int& cTS = com_mod.cTS;
   int& nITs = com_mod.nITs;
@@ -239,9 +237,9 @@ void iterate_solution(Simulation* simulation)
   auto& Yo = com_mod.Yo;      // Old variables (velocity)
   auto& Do = com_mod.Do;      // Old integrated variables (displacement)
 
-  auto& An = com_mod.An;      // New time derivative of variables (acceleration)
-  auto& Yn = com_mod.Yn;      // New variables (velocity)
-  auto& Dn = com_mod.Dn;      // New integrated variables (displacement)
+  auto& An = integrator.get_An();  // New time derivative of variables (acceleration)
+  auto& Yn = integrator.get_Yn();  // New variables (velocity)
+  auto& Dn = integrator.get_Dn();  // New integrated variables (displacement)
 
   bool l1 = false;
   bool l2 = false;
@@ -333,7 +331,7 @@ void iterate_solution(Simulation* simulation)
 
     if (com_mod.urisFlag) {uris::uris_calc_sdf(com_mod);}
 
-    iterate_precomputed_time(simulation);
+    iterate_precomputed_time(simulation, integrator.get_An(), integrator.get_Yn());
 
     // Inner loop for Newton iteration - now encapsulated in Integrator class
     //
@@ -363,7 +361,7 @@ void iterate_solution(Simulation* simulation)
     */
 
     if (com_mod.risFlag) {
-      ris::ris_meanq(com_mod, cm_mod);
+      ris::ris_meanq(com_mod, cm_mod, An, Dn, Yn);
       ris::ris_status(com_mod, cm_mod);
       if (cm.mas(cm_mod)) {
         std::cout << "Iteration: " << com_mod.cTS << std::endl;
@@ -381,7 +379,7 @@ void iterate_solution(Simulation* simulation)
             std::cout << "Valve status just changed. Do not update" << std::endl;
           }
         } else {
-            ris::ris_updater(com_mod, cm_mod);
+            ris::ris_updater(com_mod, cm_mod, An, Dn, Yn);
         }
         // goto label_11;
       }
@@ -393,7 +391,7 @@ void iterate_solution(Simulation* simulation)
     dmsg << "Saving the TXT files containing ECGs ..." << std::endl;
     #endif
 
-    txt_ns::txt(simulation, false);
+    txt_ns::txt(simulation, false, An, Dn, Yn);
 
     // If remeshing is required then save current solution.
     //
@@ -457,7 +455,7 @@ void iterate_solution(Simulation* simulation)
 
     // Saving the result to restart bin file
     if (l1 || l2) {
-       output::write_restart(simulation, com_mod.timeP);
+       output::write_restart(simulation, com_mod.timeP, An, Dn, Yn);
     }
 
     // Writing results into the disk with VTU format
@@ -499,7 +497,7 @@ void iterate_solution(Simulation* simulation)
 
     // [HZ] Part related to RIS0D
     if (cEq == 0 && com_mod.ris0DFlag) {
-      ris::ris0d_status(com_mod, cm_mod);
+      ris::ris0d_status(com_mod, cm_mod, An, Dn, Yn);
     }
 
     // [HZ] Part related to unfitted RIS
@@ -508,12 +506,12 @@ void iterate_solution(Simulation* simulation)
       for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
         com_mod.uris[iUris].cnt++;
         if (com_mod.uris[iUris].clsFlg) {
-          uris::uris_meanp(com_mod, cm_mod, iUris);
+          uris::uris_meanp(com_mod, cm_mod, iUris, Yn);
           // if (com_mod.uris[iUris].cnt == 1) {
           //   // GOTO 11 // The GOTO Statement in the Fortran code
           // }
         } else {
-          uris::uris_meanv(com_mod, cm_mod, iUris);
+          uris::uris_meanv(com_mod, cm_mod, iUris, Yn);
         }
         if (cm.mas(cm_mod)) {
           std::cout << " URIS surface: " << com_mod.uris[iUris].name << ", count: " << com_mod.uris[iUris].cnt << std::endl;

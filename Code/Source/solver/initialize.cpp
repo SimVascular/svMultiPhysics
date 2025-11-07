@@ -621,13 +621,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       com_mod.ltg, com_mod.rowPtr, com_mod.colPtr, nFacesLS);
 
   // Variable allocation and initialization
-  int tnNo = com_mod.tnNo; 
-  com_mod.Ao.resize(tDof,tnNo); 
-  com_mod.An.resize(tDof,tnNo); 
-  com_mod.Yo.resize(tDof,tnNo); 
-  com_mod.Yn.resize(tDof,tnNo); 
-  com_mod.Do.resize(tDof,tnNo); 
-  com_mod.Dn.resize(tDof,tnNo); 
+  int tnNo = com_mod.tnNo;
+  com_mod.Ao.resize(tDof,tnNo);
+  // An moved to Integrator class
+  com_mod.Yo.resize(tDof,tnNo);
+  // Yn moved to Integrator class
+  com_mod.Do.resize(tDof,tnNo);
+  // Dn moved to Integrator class
   com_mod.Bf.resize(nsd,tnNo);
 
   // [TODO] DaveP not implemented?
@@ -756,10 +756,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   } // resetSim
 
   // Initialize new variables
-  //
-  com_mod.An = com_mod.Ao;
-  com_mod.Yn = com_mod.Yo;
-  com_mod.Dn = com_mod.Do;
+  // An, Yn, Dn moved to Integrator class (initialized there from Ao, Yo, Do)
 
   for (int iM = 0; iM < nMsh; iM++) { 
     if (cm.mas(cm_mod)) {
@@ -837,8 +834,8 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   //
   set_bc::set_bc_dir(com_mod, com_mod.Ao, com_mod.Yo, com_mod.Do);
 
-  // Preparing TXT files
-  txt_ns::txt(simulation, true);
+  // Preparing TXT files (pass Ao, Do, and Yo since An, Dn, and Yn haven't been created in Integrator yet)
+  txt_ns::txt(simulation, true, com_mod.Ao, com_mod.Do, com_mod.Yo);
 
   // Printing the first line and initializing timeP
   int co = 1;

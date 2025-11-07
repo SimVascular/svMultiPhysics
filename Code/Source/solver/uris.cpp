@@ -19,7 +19,7 @@ namespace uris {
 
 /// @brief This subroutine computes the mean pressure and flux on the 
 /// immersed surface 
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& Yn) {
   #define n_debug_uris_meanp
   #ifdef debug_uris_meanp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -41,7 +41,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   // auto& An = com_mod.An;
   // auto& Ad = com_mod.Ad;
   // auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
+  // Yn is now passed as a parameter
 
   // Let's conpute the mean pressure in the two regions of the fluid mesh 
   // For the moment let's define a flag IdSubDmn(size the number of elements)
@@ -151,7 +151,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
 
 /// @brief This subroutine computes the mean velocity in the fluid elements 
 /// near the immersed surface  
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& Yn) {
   #define n_debug_uris_meanv
   #ifdef debug_uris_meanv
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -173,7 +173,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   // auto& An = com_mod.An;
   // auto& Ad = com_mod.Ad;
   // auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
+  // Yn is now passed as a parameter
 
   // Let's compute the neighboring region below the valve normal. When
   // the valve is open, this region should roughly be valve oriface.

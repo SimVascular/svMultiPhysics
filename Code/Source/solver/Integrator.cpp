@@ -50,8 +50,18 @@ void Integrator::initialize_arrays() {
   Ag_.resize(tDof, tnNo);
   Yg_.resize(tDof, tnNo);
   Dg_.resize(tDof, tnNo);
+  An_.resize(tDof, tnNo);
+  Dn_.resize(tDof, tnNo);
+  Yn_.resize(tDof, tnNo);
   res_.resize(nFacesLS);
   incL_.resize(nFacesLS);
+
+  // Initialize An_ = Ao (same as what was done in initialize.cpp:760)
+  An_ = com_mod.Ao;
+  // Initialize Dn_ = Do (same as what was done in initialize.cpp:761)
+  Dn_ = com_mod.Do;
+  // Initialize Yn_ = Yo (same as what was done in initialize.cpp:760)
+  Yn_ = com_mod.Yo;
 }
 
 //------------------------
@@ -65,9 +75,9 @@ bool Integrator::step() {
   auto& cm_mod = simulation_->cm_mod;
   auto& cep_mod = simulation_->get_cep_mod();
 
-  auto& An = com_mod.An;
-  auto& Yn = com_mod.Yn;
-  auto& Dn = com_mod.Dn;
+  auto& An = An_;  // Use member variable
+  auto& Yn = Yn_;
+  auto& Dn = Dn_;
 
   int& cTS = com_mod.cTS;
   int& cEq = com_mod.cEq;
@@ -99,7 +109,7 @@ bool Integrator::step() {
       #ifdef debug_integrator_step
       dmsg << "Set coupled BCs " << std::endl;
       #endif
-      set_bc::set_bc_cpl(com_mod, cm_mod);
+      set_bc::set_bc_cpl(com_mod, cm_mod, Yn);
       set_bc::set_bc_dir(com_mod, An, Yn, Dn);
     }
 
@@ -212,7 +222,7 @@ void Integrator::initiator_step() {
   Ag_.write("Ag_pic" + istr_);
   Yg_.write("Yg_pic" + istr_);
   Dg_.write("Dg_pic" + istr_);
-  simulation_->com_mod.Yn.write("Yn_pic" + istr_);
+  Yn_.write("Yn_pic" + istr_);
 }
 
 //------------------------
@@ -258,11 +268,13 @@ void Integrator::apply_boundary_conditions() {
   auto& com_mod = simulation_->com_mod;
   auto& cm_mod = simulation_->cm_mod;
 
+  auto& Yn = Yn_;
+
   Yg_.write("Yg_vor_neu" + istr_);
   Dg_.write("Dg_vor_neu" + istr_);
 
   // Apply Neumman or Traction boundary conditions
-  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_);
+  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, Yn);
 
   // Apply CMM BC conditions
   if (!com_mod.cmmInit) {
@@ -277,7 +289,7 @@ void Integrator::apply_boundary_conditions() {
   }
 
   if (com_mod.ris0DFlag) {
-    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_);
+    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, Yn);
   }
 
   // Apply contact model and add its contribution to residual
@@ -315,7 +327,7 @@ bool Integrator::corrector_and_check_convergence() {
   picc();
 
   // Debug output
-  com_mod.Yn.write("Yn_picc" + istr_);
+  Yn_.write("Yn_picc" + istr_);
 
   // Check if all equations converged
   return std::count_if(com_mod.eq.begin(), com_mod.eq.end(),
@@ -385,11 +397,11 @@ void Integrator::predictor()
   auto& Ad = com_mod.Ad;
 
   auto& Ao = com_mod.Ao;
-  auto& An = com_mod.An;
+  auto& An = An_;  // Use member variable
   auto& Yo = com_mod.Yo;
-  auto& Yn = com_mod.Yn;
+  auto& Yn = Yn_;
   auto& Do = com_mod.Do;
-  auto& Dn = com_mod.Dn;
+  auto& Dn = Dn_;
 
   // Prestress initialization
   if (com_mod.pstEq) {
@@ -536,11 +548,11 @@ void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
   #endif
 
   const auto& Ao = com_mod.Ao;
-  const auto& An = com_mod.An;
+  const auto& An = An_;  // Use member variable
   const auto& Do = com_mod.Do;
-  const auto& Dn = com_mod.Dn;
+  const auto& Dn = Dn_;
   const auto& Yo = com_mod.Yo;
-  const auto& Yn = com_mod.Yn;
+  const auto& Yn = Yn_;
 
   for (int i = 0; i < com_mod.nEq; i++) {
     auto& eq = com_mod.eq[i];
@@ -606,7 +618,7 @@ void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
 /// Modifies:
 /// \code {.cpp}
 ///   com_mod.Ad
-///   com_mod.An
+///   An_ (member variable)
 ///   com_mod.Dn
 ///   com_mod.Yn
 ///   cep_mod.Xion
@@ -642,10 +654,10 @@ void Integrator::picc()
   auto& cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
 
-  auto& An = com_mod.An;
+  auto& An = An_;  // Use member variable
   auto& Ad = com_mod.Ad;
-  auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
+  auto& Dn = Dn_;
+  auto& Yn = Yn_;
 
   auto& pS0 = com_mod.pS0;
   auto& pSa = com_mod.pSa;
@@ -887,7 +899,7 @@ void Integrator::picc()
 /// (i.e., corner nodes). For e.g., for a P2 element, pressure is
 /// interpolated at the edge nodes using P1 vertices.
 ///
-/// Modifies: com_mod.Yn
+/// Modifies: Yn_
 ///
 void Integrator::pic_eth()
 {
@@ -903,7 +915,7 @@ void Integrator::pic_eth()
   const auto& eq = com_mod.eq[cEq];
 
   auto& cDmn = com_mod.cDmn;
-  auto& Yn = com_mod.Yn;
+  auto& Yn = Yn_;
 
   // Check for something ...
   //

@@ -12,8 +12,8 @@
 
 namespace ris {
 
-/// @brief This subroutine computes the mean pressure and flux on the ris surface 
-void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
+/// @brief This subroutine computes the mean pressure and flux on the ris surface
+void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn)
 {
   #define n_debug_ris_meanq
   #ifdef debug_ris_meanq
@@ -32,10 +32,8 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
   const int nsd = com_mod.nsd;
   const int cEq = com_mod.cEq;
 
-  auto& An = com_mod.An;
+  // An, Dn, and Yn are now passed as parameters
   auto& Ad = com_mod.Ad;
-  auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
 
   Array<double> tmpV(maxNSD, com_mod.tnNo);
 
@@ -152,9 +150,9 @@ void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const face
 }
 
 
-/// @brief  This subroutine updates the resistance and activation flag for the 
-/// closed and open configurations of the RIS surfaces 
-void ris_updater(ComMod& com_mod, CmMod& cm_mod)
+/// @brief  This subroutine updates the resistance and activation flag for the
+/// closed and open configurations of the RIS surfaces
+void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn)
 {
   #define n_debug_ris_updater
   #ifdef debug_ris_updater
@@ -184,9 +182,9 @@ void ris_updater(ComMod& com_mod, CmMod& cm_mod)
         // goes from close to open to prevent the valve goes back
         // to close at the next iteration. This is needed only for
         // close to open and cannot be used for open to close.
-        com_mod.Ao = com_mod.An;
-        com_mod.Yo = com_mod.Yn;
-        if (com_mod.dFlag) {com_mod.Do = com_mod.Dn;}
+        com_mod.Ao = An;
+        com_mod.Yo = Yn;
+        if (com_mod.dFlag) {com_mod.Do = Dn;}
         com_mod.cplBC.xo = com_mod.cplBC.xn;
       } 
     } else {
@@ -353,7 +351,7 @@ void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<d
 }
 
 /// RIS0D code
-void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg) 
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn) 
 {
   using namespace consts;
 
@@ -397,15 +395,15 @@ void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Arr
       lBc.gx.clear();
       lBc.eDrn.clear();
     } else {
-      // Apply Neu bc 
-      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg);
+      // Apply Neu bc
+      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, Yn);
     }
 
   }
 
 }
 
-void ris0d_status(ComMod& com_mod, CmMod& cm_mod)//, const Array<double>& Yg, const Array<double>& Dg) 
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn) 
 {
   using namespace consts;
 
@@ -423,10 +421,8 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod)//, const Array<double>& Yg, co
   const int nsd = com_mod.nsd;
   const int cEq = com_mod.cEq;
 
-  auto& An = com_mod.An;
+  // An, Dn, and Yn are now passed as parameters
   auto& Ad = com_mod.Ad;
-  auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
 
   bcType lBc;
   faceType lFa;

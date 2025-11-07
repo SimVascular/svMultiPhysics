@@ -145,7 +145,7 @@ void baf_ini(Simulation* simulation)
     }
 
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
-      set_bc::calc_der_cpl_bc(com_mod, cm_mod);
+      set_bc::calc_der_cpl_bc(com_mod, cm_mod, com_mod.Yo);
     }
   }
 

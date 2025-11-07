@@ -27,7 +27,7 @@ namespace set_bc {
 /// matrix M ~ dP/dQ stored in eq.bc[iBc].r.
 /// @param com_mod 
 /// @param cm_mod 
-void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
+void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, Array<double>& Yn)
 {
   using namespace consts;
 
@@ -111,7 +111,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
           throw std::runtime_error("[calc_der_cpl_bc]  Invalid physics type for 0D coupling");
         }
         cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1, false, cfg_o);
-        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yn, 0, nsd-1, false, cfg_n);
+        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, Yn, 0, nsd-1, false, cfg_n);
         cplBC.fa[ptr].Po = 0.0;
         cplBC.fa[ptr].Pn = 0.0;
         #ifdef debug_calc_der_cpl_bc 
@@ -125,7 +125,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
         cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, nsd) / area;
-        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yn, nsd) / area;
+        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, nsd) / area;
         cplBC.fa[ptr].Qo = 0.0;
         cplBC.fa[ptr].Qn = 0.0;
         #ifdef debug_calc_der_cpl_bc 
@@ -645,7 +645,7 @@ void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, con
 /// @brief Coupled BC quantities are computed here.
 /// Reproduces the Fortran 'SETBCCPL()' subrotutine.
 //
-void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
+void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, Array<double>& Yn)
 {
   static double absTol = 1.E-8, relTol = 1.E-5;
 
@@ -655,7 +655,6 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
   const int tnNo = com_mod.tnNo;
   auto& cplBC = com_mod.cplBC;
   auto& Yo = com_mod.Yo;
-  auto& Yn = com_mod.Yn;
   const int iEq = 0;
   auto& eq = com_mod.eq[iEq];
 
@@ -668,8 +667,8 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
 
   // If coupling scheme is implicit, calculate updated pressure and flowrate 
   // from 0D, as well as resistance from 0D using finite difference.
-  if (cplBC.schm == CplBCType::cplBC_I) { 
-    calc_der_cpl_bc(com_mod, cm_mod);
+  if (cplBC.schm == CplBCType::cplBC_I) {
+    calc_der_cpl_bc(com_mod, cm_mod, Yn);
 
   // If coupling scheme is semi-implicit or explicit, only calculated updated
   // pressure and flowrate from 0D
@@ -1293,7 +1292,7 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
 
 /// @brief Set outlet BCs.
 //
-void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg)
+void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn)
 {
   using namespace consts;
 
@@ -1325,7 +1324,7 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
       dmsg << "iFa: " << iFa+1;
       dmsg << "name: " << com_mod.msh[iM].fa[iFa].name;
       #endif
-      set_bc_neu_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], Yg, Dg);
+      set_bc_neu_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], Yg, Dg, Yn);
 
     } else if (utils::btest(bc.bType,iBC_trac)) { 
       set_bc_trac_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]); 
@@ -1335,7 +1334,7 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
 
 /// @brief Set Neumann BC
 //
-void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg) 
+void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn) 
 {
   using namespace consts;
 
@@ -1349,7 +1348,6 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   auto& eq = com_mod.eq[cEq];
   int tnNo = com_mod.tnNo;
   int nsd = com_mod.nsd;
-  auto& Yn = com_mod.Yn;
 
   int nNo = lFa.nNo;
   Vector<double> h(1), rtmp(1);

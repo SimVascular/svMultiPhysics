@@ -1889,13 +1889,11 @@ void remesh_restart(Simulation* simulation)
   com_mod.cmmBdry.clear();
   com_mod.iblank.clear();
   com_mod.Ao.clear();
-  com_mod.An.clear();
+  // An, Dn, and Yn moved to Integrator class
   com_mod.Do.clear();
-  com_mod.Dn.clear();
   com_mod.R.clear();
   com_mod.Val.clear();
   com_mod.Yo.clear();
-  com_mod.Yn.clear();
   com_mod.Bf.clear();
 
   cplBC.nFa = 0;

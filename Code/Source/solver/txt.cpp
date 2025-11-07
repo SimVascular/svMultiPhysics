@@ -140,7 +140,7 @@ void create_volume_integral_file(const ComMod& com_mod, CmMod& cm_mod, const eqT
 // init_write - if true then this is the start of the simulation and 
 //   so create a new file to initialize output.
 //
-void txt(Simulation* simulation, const bool init_write) 
+void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array<double>& Dn, Array<double>& Yn) 
 {
   using namespace consts;
   using namespace utils;
@@ -269,7 +269,7 @@ void txt(Simulation* simulation, const bool init_write)
         case OutputNameType::outGrp_A:
           for (int j = 0; j < tnNo; j++) {
             for (int i = 0; i < l; i++) {
-              tmpV(i,j) = com_mod.An(i+s,j);
+              tmpV(i,j) = An(i+s,j);
             }
           }
         break;
@@ -277,7 +277,7 @@ void txt(Simulation* simulation, const bool init_write)
         case OutputNameType::outGrp_Y:
           for (int j = 0; j < tnNo; j++) {
             for (int i = 0; i < l; i++) {
-              tmpV(i,j) = com_mod.Yn(i+s,j);
+              tmpV(i,j) = Yn(i+s,j);
             }
           }
 
@@ -289,7 +289,7 @@ void txt(Simulation* simulation, const bool init_write)
         case OutputNameType::outGrp_D:
           for (int j = 0; j < tnNo; j++) {
             for (int i = 0; i < l; i++) {
-              tmpV(i,j) = com_mod.Dn(i+s,j);
+              tmpV(i,j) = Dn(i+s,j);
             }
           }
         break;
@@ -297,7 +297,7 @@ void txt(Simulation* simulation, const bool init_write)
         case OutputNameType::outGrp_WSS: 
         case OutputNameType::outGrp_vort: 
         case OutputNameType::outGrp_trac:
-          post::all_post(simulation, tmpV, com_mod.Yn, com_mod.Dn, oGrp, iEq);
+          post::all_post(simulation, tmpV, Yn, Dn, oGrp, iEq);
           for (int a = 0; a < tnNo; a++) {
             auto vec = tmpV.col(a, {0,nsd-1});
             tmpV(0,a) = sqrt(norm(vec));
@@ -310,13 +310,13 @@ void txt(Simulation* simulation, const bool init_write)
         case OutputNameType::outGrp_divV: 
         case OutputNameType::outGrp_J: 
         case OutputNameType::outGrp_mises:
-          post::all_post(simulation, tmpV, com_mod.Yn, com_mod.Dn, oGrp, iEq);
+          post::all_post(simulation, tmpV, Yn, Dn, oGrp, iEq);
         break;
 
         case OutputNameType::outGrp_absV:
           for (int a = 0; a < tnNo; a++) {
             for (int i = 0; i < l; i++) {
-              tmpV(i,a) = com_mod.Yn(i,a) - com_mod.Yn(i+nsd+1,a);
+              tmpV(i,a) = Yn(i,a) - Yn(i+nsd+1,a);
             }
           }
         break;
