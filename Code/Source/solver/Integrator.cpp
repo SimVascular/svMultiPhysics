@@ -25,8 +25,8 @@ using namespace consts;
 //------------------------
 // Integrator Constructor
 //------------------------
-Integrator::Integrator(Simulation* simulation)
-  : simulation_(simulation), newton_count_(0)
+Integrator::Integrator(Simulation* simulation, Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo)
+  : simulation_(simulation), newton_count_(0), Ao_(std::move(Ao)), Do_(std::move(Do)), Yo_(std::move(Yo))
 {
   initialize_arrays();
 }
@@ -56,12 +56,11 @@ void Integrator::initialize_arrays() {
   res_.resize(nFacesLS);
   incL_.resize(nFacesLS);
 
-  // Initialize An_ = Ao (same as what was done in initialize.cpp:760)
-  An_ = com_mod.Ao;
-  // Initialize Dn_ = Do (same as what was done in initialize.cpp:761)
-  Dn_ = com_mod.Do;
-  // Initialize Yn_ = Yo (same as what was done in initialize.cpp:760)
-  Yn_ = com_mod.Yo;
+  // Ao_, Do_, Yo_ already initialized via move in constructor
+  // Initialize new variables from old variables
+  An_ = Ao_;
+  Dn_ = Do_;
+  Yn_ = Yo_;
 }
 
 //------------------------
@@ -109,8 +108,8 @@ bool Integrator::step() {
       #ifdef debug_integrator_step
       dmsg << "Set coupled BCs " << std::endl;
       #endif
-      set_bc::set_bc_cpl(com_mod, cm_mod, Yn);
-      set_bc::set_bc_dir(com_mod, An, Yn, Dn);
+      set_bc::set_bc_cpl(com_mod, cm_mod, Yn_, Yo_, Ao_, Do_);
+      set_bc::set_bc_dir(com_mod, An_, Yn_, Dn_, Yo_, Ao_, Do_);
     }
 
     // Initiator step for Generalized α-Method (quantities at n+am, n+af).
@@ -253,7 +252,7 @@ void Integrator::assemble_equations() {
   auto& cep_mod = simulation_->get_cep_mod();
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_);
+    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, Do_);
   }
 
   // Debug output
@@ -396,12 +395,12 @@ void Integrator::predictor()
   // time derivative of displacement
   auto& Ad = com_mod.Ad;
 
-  auto& Ao = com_mod.Ao;
+  auto& Ao = Ao_;  // Use member variable
   auto& An = An_;  // Use member variable
-  auto& Yo = com_mod.Yo;
-  auto& Yn = Yn_;
-  auto& Do = com_mod.Do;
-  auto& Dn = Dn_;
+  auto& Yo = Yo_;  // Use member variable
+  auto& Yn = Yn_;  // Use member variable
+  auto& Do = Do_;  // Use member variable
+  auto& Dn = Dn_;  // Use member variable
 
   // Prestress initialization
   if (com_mod.pstEq) {
@@ -469,7 +468,7 @@ void Integrator::predictor()
 
     // electrophysiology
     if (eq.phys == Equation_CEP) {
-      cep_ion::cep_integ(simulation_, iEq, e, Do);
+      cep_ion::cep_integ(simulation_, iEq, e, Do, Yo_);
     }
 
     // eqn 86 of Bazilevs 2007
@@ -547,12 +546,12 @@ void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
   dmsg << "com_mod.pstEq: " << com_mod.pstEq;
   #endif
 
-  const auto& Ao = com_mod.Ao;
+  const auto& Ao = Ao_;  // Use member variable
   const auto& An = An_;  // Use member variable
-  const auto& Do = com_mod.Do;
-  const auto& Dn = Dn_;
-  const auto& Yo = com_mod.Yo;
-  const auto& Yn = Yn_;
+  const auto& Do = Do_;  // Use member variable
+  const auto& Dn = Dn_;  // Use member variable
+  const auto& Yo = Yo_;  // Use member variable
+  const auto& Yn = Yn_;  // Use member variable
 
   for (int i = 0; i < com_mod.nEq; i++) {
     auto& eq = com_mod.eq[i];

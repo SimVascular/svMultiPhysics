@@ -39,7 +39,7 @@ namespace baf_ini_ns {
 ///
 /// Replicates 'SUBROUTINE BAFINI()' defined in BAFINIT.f
 //
-void baf_ini(Simulation* simulation)
+void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo)
 {
   using namespace consts;
   using namespace fsi_linear_solver;
@@ -67,7 +67,7 @@ void baf_ini(Simulation* simulation)
         continue;
       }
       auto& face = msh.fa[iFa]; 
-      face_ini(simulation, msh, face);
+      face_ini(simulation, msh, face, Do);
     }
     if (msh.lShl) {
       shl_ini(com_mod, cm_mod, com_mod.msh[iM]);
@@ -133,7 +133,7 @@ void baf_ini(Simulation* simulation)
     }
 
     if (!com_mod.stFileFlag) {
-      set_bc::rcr_init(com_mod, cm_mod);
+      set_bc::rcr_init(com_mod, cm_mod, Yo);
     }
 
     if (com_mod.cplBC.useGenBC) {
@@ -145,7 +145,7 @@ void baf_ini(Simulation* simulation)
     }
 
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
-      set_bc::calc_der_cpl_bc(com_mod, cm_mod, com_mod.Yo);
+      set_bc::calc_der_cpl_bc(com_mod, cm_mod, Yo, Yo);
     }
   }
 
@@ -413,7 +413,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
 // face_ini
 //----------
 //
-void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
+void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, Array<double>& Do)
 {
   using namespace consts;
   auto& com_mod = simulation->com_mod;
@@ -549,7 +549,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 
         if (com_mod.mvMsh) {
           for (int i = 0; i < nsd; i++) {
-            xl(i,a) = xl(i,a) + com_mod.Do(i+nsd+1,Ac);
+            xl(i,a) = xl(i,a) + Do(i+nsd+1,Ac);
           }
         }
       }

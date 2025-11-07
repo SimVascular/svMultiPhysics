@@ -523,7 +523,7 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
 /// Reproduce Fortran 'GNNB'.
 //
 void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, const int nsd, const int insd,
-    const int eNoNb, const Array<double>& Nx, Vector<double>& n, MechanicalConfigurationType cfg, const Array<double>* Dn)
+    const int eNoNb, const Array<double>& Nx, Vector<double>& n, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
 {
   auto& cm = com_mod.cm;
 
@@ -606,9 +606,12 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
       lX(i,a) = com_mod.x(i,Ac);
     }
     if (com_mod.mvMsh) {
+      if (!Do) {
+        throw std::runtime_error("gnnb: Do parameter required for moving mesh but not provided");
+      }
       for (int i = 0; i < lX.nrows(); i++) {
         // Add mesh displacement
-        lX(i,a) = lX(i,a) + com_mod.Do(i+nsd+1,Ac);
+        lX(i,a) = lX(i,a) + (*Do)(i+nsd+1,Ac);
       }
     }
     else {
@@ -617,9 +620,12 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
           // Do nothing
           break;
         case MechanicalConfigurationType::old_timestep:
+          if (!Do) {
+            throw std::runtime_error("gnnb: Do parameter required for old_timestep configuration but not provided");
+          }
           for (int i = 0; i < lX.nrows(); i++) {
             // Add displacement at timestep n
-            lX(i,a) = lX(i,a) + com_mod.Do(i,Ac);
+            lX(i,a) = lX(i,a) + (*Do)(i,Ac);
           }
           break;
         case MechanicalConfigurationType::new_timestep:
@@ -627,8 +633,10 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
             // Add displacement at timestep n+1
             if (Dn != nullptr) {
               lX(i,a) = lX(i,a) + (*Dn)(i,Ac);
+            } else if (Do != nullptr) {
+              lX(i,a) = lX(i,a) + (*Do)(i,Ac);  // Fallback to Do if Dn not provided
             } else {
-              lX(i,a) = lX(i,a) + com_mod.Do(i,Ac);  // Fallback to Do if Dn not provided
+              throw std::runtime_error("gnnb: Either Dn or Do parameter required for new_timestep configuration but neither provided");
             }
           }
           break;

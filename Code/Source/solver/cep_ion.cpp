@@ -141,7 +141,7 @@ void cep_init_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doubl
 //-----------
 // State variable integration.
 //
-void cep_integ(Simulation* simulation, const int iEq, const int iDof, const Array<double>& Dg)
+void cep_integ(Simulation* simulation, const int iEq, const int iDof, const Array<double>& Dg, Array<double>& Yo)
 {
   static bool IPASS = true;
 
@@ -164,7 +164,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, const Arra
   auto& cem = cep_mod.cem;
   auto& eq = com_mod.eq[iEq];
 
-  auto& Yo = com_mod.Yo;
+  // Yo is now passed as parameter
   auto& Xion = cep_mod.Xion;
   int nXion = cep_mod.nXion;
 

@@ -27,8 +27,11 @@ public:
    * @brief Construct a new Integrator object
    *
    * @param simulation Pointer to the Simulation object containing problem data
+   * @param Ao Old acceleration array (takes ownership via move)
+   * @param Do Old displacement array (takes ownership via move)
+   * @param Yo Old velocity array (takes ownership via move)
    */
-  Integrator(Simulation* simulation);
+  Integrator(Simulation* simulation, Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo);
 
   /**
    * @brief Destroy the Integrator object
@@ -96,6 +99,27 @@ public:
    */
   Array<double>& get_Yn() { return Yn_; }
 
+  /**
+   * @brief Get reference to Ao (old time derivative of variables at n)
+   *
+   * @return Reference to Ao array (acceleration at current time step)
+   */
+  Array<double>& get_Ao() { return Ao_; }
+
+  /**
+   * @brief Get reference to Do (old integrated variables at n)
+   *
+   * @return Reference to Do array (displacement at current time step)
+   */
+  Array<double>& get_Do() { return Do_; }
+
+  /**
+   * @brief Get reference to Yo (old variables at n)
+   *
+   * @return Reference to Yo array (velocity at current time step)
+   */
+  Array<double>& get_Yo() { return Yo_; }
+
 private:
   /** @brief Pointer to the simulation object */
   Simulation* simulation_;
@@ -117,6 +141,15 @@ private:
 
   /** @brief New variables at n+1 (velocity at next time step) */
   Array<double> Yn_;
+
+  /** @brief Old time derivative of variables at n (acceleration at current time step) */
+  Array<double> Ao_;
+
+  /** @brief Old integrated variables at n (displacement at current time step) */
+  Array<double> Do_;
+
+  /** @brief Old variables at n (velocity at current time step) */
+  Array<double> Yo_;
 
   /** @brief Residual vector for face-based quantities */
   Vector<double> res_;

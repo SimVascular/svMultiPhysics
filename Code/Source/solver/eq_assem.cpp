@@ -347,8 +347,8 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
 ///
 /// Ag(tDof,tnNo), Yg(tDof,tnNo), Dg(tDof,tnNo)
 //
-void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, 
-    const Array<double>& Yg, const Array<double>& Dg)
+void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag,
+    const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do)
 {
   #define n_debug_global_eq_assem
   #ifdef debug_global_eq_assem
@@ -407,7 +407,7 @@ void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const 
     break;
 
     case EquationType::phys_mesh:
-      mesh::construct_mesh(com_mod, cep_mod, lM, Ag, Dg);
+      mesh::construct_mesh(com_mod, cep_mod, lM, Ag, Dg, Do);
     break;
 
     case EquationType::phys_CEP:

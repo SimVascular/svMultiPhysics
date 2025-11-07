@@ -25,9 +25,9 @@ namespace set_bc {
 /// as well as the resistance matrix M ~ dP/dQ from 0D using finite difference.
 /// Updates the pressure or flowrates stored in cplBC.fa[i].y and the resistance
 /// matrix M ~ dP/dQ stored in eq.bc[iBc].r.
-/// @param com_mod 
-/// @param cm_mod 
-void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, Array<double>& Yn)
+/// @param com_mod
+/// @param cm_mod
+void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, Array<double>& Yn, const Array<double>& Yo)
 {
   using namespace consts;
 
@@ -110,21 +110,21 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, Array<double>& Yn)
         else {
           throw std::runtime_error("[calc_der_cpl_bc]  Invalid physics type for 0D coupling");
         }
-        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1, false, cfg_o);
+        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, nsd-1, false, cfg_o);
         cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, Yn, 0, nsd-1, false, cfg_n);
         cplBC.fa[ptr].Po = 0.0;
         cplBC.fa[ptr].Pn = 0.0;
-        #ifdef debug_calc_der_cpl_bc 
+        #ifdef debug_calc_der_cpl_bc
         dmsg << "iBC_Neu ";
         dmsg << "cplBC.fa[ptr].Qo: " << cplBC.fa[ptr].Qo;
         dmsg << "cplBC.fa[ptr].Qn: " << cplBC.fa[ptr].Qn;
         #endif
 
       }
-      // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1 
+      // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
-        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, nsd) / area;
+        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd) / area;
         cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, nsd) / area;
         cplBC.fa[ptr].Qo = 0.0;
         cplBC.fa[ptr].Qn = 0.0;
@@ -525,7 +525,7 @@ void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat)
 ///
 /// Replaces 'SUBROUTINE RCRINIT()'
 //
-void rcr_init(ComMod& com_mod, const CmMod& cm_mod)
+void rcr_init(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yo)
 {
   using namespace consts;
 
@@ -541,15 +541,15 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod)
     int ptr = bc.cplBCptr;
 
     if (!utils::btest(bc.bType, iBC_RCR)) {
-      continue; 
+      continue;
     }
 
     if (ptr != -1) {
       if (cplBC.initRCR) {
         auto& fa = com_mod.msh[iM].fa[iFa];
         double area = fa.area;
-        double Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1);
-        double Po = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, nsd)  / area;
+        double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, nsd-1);
+        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd)  / area;
         cplBC.xo[ptr] = Po - (Qo * cplBC.fa[ptr].RCR.Rp);
       } else { 
         cplBC.xo[ptr] = cplBC.fa[ptr].RCR.Xo;
@@ -645,7 +645,7 @@ void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, con
 /// @brief Coupled BC quantities are computed here.
 /// Reproduces the Fortran 'SETBCCPL()' subrotutine.
 //
-void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, Array<double>& Yn)
+void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, Array<double>& Yn, const Array<double>& Yo, const Array<double>& Ao, const Array<double>& Do)
 {
   static double absTol = 1.E-8, relTol = 1.E-5;
 
@@ -654,7 +654,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, Array<double>& Yn)
   const int nsd = com_mod.nsd;
   const int tnNo = com_mod.tnNo;
   auto& cplBC = com_mod.cplBC;
-  auto& Yo = com_mod.Yo;
+  // Yo, Ao, Do now passed as parameters
   const int iEq = 0;
   auto& eq = com_mod.eq[iEq];
 
@@ -665,10 +665,10 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, Array<double>& Yn)
   auto cfg_o = MechanicalConfigurationType::reference;
   auto cfg_n = MechanicalConfigurationType::reference;
 
-  // If coupling scheme is implicit, calculate updated pressure and flowrate 
+  // If coupling scheme is implicit, calculate updated pressure and flowrate
   // from 0D, as well as resistance from 0D using finite difference.
   if (cplBC.schm == CplBCType::cplBC_I) {
-    calc_der_cpl_bc(com_mod, cm_mod, Yn);
+    calc_der_cpl_bc(com_mod, cm_mod, Yn, Yo);
 
   // If coupling scheme is semi-implicit or explicit, only calculated updated
   // pressure and flowrate from 0D
@@ -770,7 +770,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, Array<double>& Yn)
 ///
 /// Reproduces 'SUBROUTINE SETBCDIR(lA, lY, lD)'
 //
-void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD)
+void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD, const Array<double>& Yo, const Array<double>& Ao, const Array<double>& Do)
 {
   using namespace consts;
 
@@ -931,8 +931,8 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
               for (int i = 0; i < nsd; i++) {
                 if (eDir[i]) {
                   int j = s + i;
-                  lA(j,Ac) = c1i*(lY(j,Ac) - com_mod.Yo(j,Ac) + c2*com_mod.Ao(j,Ac));
-                  com_mod.Ad(i,Ac) = c1i*(lD(j,Ac) - com_mod.Do(j,Ac) + c2*com_mod.Ad(i,Ac));
+                  lA(j,Ac) = c1i*(lY(j,Ac) - Yo(j,Ac) + c2*Ao(j,Ac));
+                  com_mod.Ad(i,Ac) = c1i*(lD(j,Ac) - Do(j,Ac) + c2*com_mod.Ad(i,Ac));
                 }
               }
             }
@@ -942,7 +942,7 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
               for (int i = 0; i < nsd; i++) {
                 if (eDir[i]) {
                   int j = s + i;
-                  lD(j,Ac) = c1*lY(j,Ac) - c2*com_mod.Ad(i,Ac) + com_mod.Do(j,Ac);
+                  lD(j,Ac) = c1*lY(j,Ac) - c2*com_mod.Ad(i,Ac) + Do(j,Ac);
                   com_mod.Ad(i,Ac) = lY(j,Ac);
                 }
               }
@@ -954,8 +954,8 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
             for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
               int Ac = com_mod.msh[iM].fa[iFa].gN(a);
               for (int i = 0; i < com_mod.Ad.nrows(); i++) {
-                lA(i+s,Ac) = c1i*(lY(i+s,Ac) - com_mod.Yo(i+s,Ac) + c2*com_mod.Ao(i+s,Ac));
-                com_mod.Ad(i,Ac) = c1i*(lD(i+s,Ac) - com_mod.Do(i+s,Ac) + c2*com_mod.Ad(i,Ac));
+                lA(i+s,Ac) = c1i*(lY(i+s,Ac) - Yo(i+s,Ac) + c2*Ao(i+s,Ac));
+                com_mod.Ad(i,Ac) = c1i*(lD(i+s,Ac) - Do(i+s,Ac) + c2*com_mod.Ad(i,Ac));
               }
             }
 
@@ -963,7 +963,7 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
             for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
               int Ac = com_mod.msh[iM].fa[iFa].gN(a);
               for (int i = 0; i < com_mod.Ad.nrows(); i++) {
-                lD(i+s,Ac) = c1*lY(i+s,Ac) - c2*com_mod.Ad(i,Ac) + com_mod.Do(i+s,Ac);
+                lD(i+s,Ac) = c1*lY(i+s,Ac) - c2*com_mod.Ad(i,Ac) + Do(i+s,Ac);
                 com_mod.Ad(i,Ac) = lY(i+s,Ac);
               }
             }

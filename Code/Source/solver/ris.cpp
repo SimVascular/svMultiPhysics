@@ -152,7 +152,7 @@ void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const face
 
 /// @brief  This subroutine updates the resistance and activation flag for the
 /// closed and open configurations of the RIS surfaces
-void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn)
+void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
 {
   #define n_debug_ris_updater
   #ifdef debug_ris_updater
@@ -178,13 +178,13 @@ void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double
           std::cout << "RIS Proj " << iProj << ": Going from close to open." << std::endl;
         }
         RIS.nbrIter(iProj) = 0;
-        // I needed to update the state variables when the valve 
+        // I needed to update the state variables when the valve
         // goes from close to open to prevent the valve goes back
         // to close at the next iteration. This is needed only for
         // close to open and cannot be used for open to close.
-        com_mod.Ao = An;
-        com_mod.Yo = Yn;
-        if (com_mod.dFlag) {com_mod.Do = Dn;}
+        Ao = An;
+        Yo = Yn;
+        if (com_mod.dFlag) {Do = Dn;}
         com_mod.cplBC.xo = com_mod.cplBC.xn;
       } 
     } else {

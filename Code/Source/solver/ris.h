@@ -13,7 +13,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
 void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, 
     const Array<double>& Yg, const Array<double>& Dg);
 
-void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn);
+void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, Array<double>& Ao, Array<double>& Do, Array<double>& Yo);
 void ris_status(ComMod& com_mod, CmMod& cm_mod);
 
 void doassem_ris(ComMod& com_mod, const int d, const Vector<int>& eqN, 

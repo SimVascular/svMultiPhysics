@@ -247,8 +247,8 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
 
 /// @brief  This subroutine computes the displacement of the immersed 
 /// surface with fem projection
-void uris_update_disp(ComMod& com_mod, CmMod& cm_mod) {
-  #define n_debug_uris_update_disp 
+void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Do) {
+  #define n_debug_uris_update_disp
   #ifdef debug_uris_update_disp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
@@ -313,10 +313,10 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod) {
       d = 0.0;
       for (int a = 0; a < mesh.eNoN; a++) {
         int Ac = mesh.IEN(a, iEln);
-        //We have to use Do because Dn contains the result coming from the solid 
-        d(0) += N(a)*com_mod.Do(nsd+1, Ac);
-        d(1) += N(a)*com_mod.Do(nsd+2, Ac);
-        d(2) += N(a)*com_mod.Do(nsd+3, Ac);
+        //We have to use Do because Dn contains the result coming from the solid
+        d(0) += N(a)*Do(nsd+1, Ac);
+        d(1) += N(a)*Do(nsd+2, Ac);
+        d(2) += N(a)*Do(nsd+3, Ac);
       }
       // update uris disp  
       localYd.set_col(nd, d);

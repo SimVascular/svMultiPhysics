@@ -276,7 +276,7 @@ global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Arra
 /// @param s an array containing a scalar value for each node in the mesh
 /// Replicates 'FUNCTION vIntegM(dId, s, l, u, pFlag)' defined in ALLFUN.f.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s, const Array<double>* Do)
 {
   using namespace consts;
 
@@ -367,8 +367,11 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
       xl.set_col(a, com_mod.x.col(Ac));
 
       if (com_mod.mvMsh) {
-        for (int i = 0; i < nsd; i++) { 
-          xl(i,a) += com_mod.Do(i+nsd+1,Ac);
+        if (!Do) {
+          throw std::runtime_error("integ: Do parameter required for moving mesh but not provided");
+        }
+        for (int i = 0; i < nsd; i++) {
+          xl(i,a) += (*Do)(i+nsd+1,Ac);
         }
       }
       sl(a) = s(0,Ac);
@@ -425,7 +428,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
 /// @param pFlag flag for using Taylor-Hood function space for pressure
 /// Replicates 'FUNCTION vInteg(dId, s, l, u, pFlag)' defined in ALLFUN.f.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u, bool pFlag)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u, bool pFlag, const Array<double>* Do)
 {
   using namespace consts;
 
@@ -556,8 +559,11 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
           xl.set_col(a, com_mod.x.col(Ac));
 
           if (com_mod.mvMsh) {
-            for (int i = 0; i < nsd; i++) { 
-              xl(i,a) += com_mod.Do(i+nsd+1,Ac);
+            if (!Do) {
+              throw std::runtime_error("integ: Do parameter required for moving mesh but not provided");
+            }
+            for (int i = 0; i < nsd; i++) {
+              xl(i,a) += (*Do)(i+nsd+1,Ac);
             }
           }
 

@@ -48,12 +48,13 @@ void finalize(Simulation* simulation)
 ///
 /// Reprodices 'SUBROUTINE INITFROMBIN(fName, timeP)' defined in INITIALIZE.f.
 //
-void init_from_bin(Simulation* simulation, const std::string& fName, std::array<double,3>& timeP)
+void init_from_bin(Simulation* simulation, const std::string& fName, std::array<double,3>& timeP,
+                   Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
 {
   auto& com_mod = simulation->com_mod;
   auto& cm = com_mod.cm;
   int task_id = cm.idcm();
-  #ifdef debug_init_from_bin 
+  #ifdef debug_init_from_bin
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
@@ -75,12 +76,12 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   com_mod.timeP[1] = timeP[1];
   com_mod.timeP[2] = timeP[2];
 
-  #ifdef debug_init_from_bin 
+  #ifdef debug_init_from_bin
   dmsg << "dFlag: " << dFlag;
   dmsg << "sstEq: " << sstEq;
   dmsg << "pstEq: " << pstEq;
   dmsg << "cepEq: " << cepEq;
-  dmsg << "cm.tF(): " << cm.tF(cm_mod); 
+  dmsg << "cm.tF(): " << cm.tF(cm_mod);
   #endif
 
   // Open file and position at the location in the file
@@ -95,11 +96,9 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   std::array<int,7> tStamp;
   auto& cplBC = com_mod.cplBC;
   auto& Ad = com_mod.Ad;
-  auto& Ao = com_mod.Ao;
-  auto& Do = com_mod.Do;
+  // Ao, Do, Yo now passed as parameters
   auto& pS0 = com_mod.pS0;
   auto& Xion = cep_mod.Xion;
-  auto& Yo = com_mod.Yo;
 
   output::read_restart_header(com_mod, tStamp, timeP[0], bin_file);
   bin_file.read((char*)cplBC.xo.data(), cplBC.xo.msize());
@@ -260,7 +259,8 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 ///
 /// Reproduces the Fortran 'INITFROMVTU' subroutine.
 //
-void init_from_vtu(Simulation* simulation, const std::string& fName, std::array<double,3>& timeP)
+void init_from_vtu(Simulation* simulation, const std::string& fName, std::array<double,3>& timeP,
+                   Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
 {
   auto& com_mod = simulation->com_mod;
   auto& cm_mod = simulation->cm_mod;
@@ -285,17 +285,17 @@ void init_from_vtu(Simulation* simulation, const std::string& fName, std::array<
   Array<double> tmpA, tmpY, tmpD;
 
   if (cm.mas(cm_mod)) {
-    tmpA.resize(tDof,gtnNo); 
-    tmpY.resize(tDof,gtnNo); 
+    tmpA.resize(tDof,gtnNo);
+    tmpY.resize(tDof,gtnNo);
     tmpD.resize(tDof,gtnNo);
     vtk_xml::read_vtus(simulation, tmpA, tmpY, tmpD, fName);
-  } else { 
+  } else {
     //ALLOCATE(tmpA(0,0), tmpY(0,0), tmpD(0,0))
-  } 
+  }
 
-  com_mod.Ao = all_fun::local(com_mod, cm_mod, cm, tmpA);
-  com_mod.Yo = all_fun::local(com_mod, cm_mod, cm, tmpY);
-  com_mod.Do = all_fun::local(com_mod, cm_mod, cm, tmpD);
+  Ao = all_fun::local(com_mod, cm_mod, cm, tmpA);
+  Yo = all_fun::local(com_mod, cm_mod, cm, tmpY);
+  Do = all_fun::local(com_mod, cm_mod, cm, tmpD);
 }
 
 /// @brief Initialize or finalize svFSI variables/structures.
@@ -622,12 +622,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // Variable allocation and initialization
   int tnNo = com_mod.tnNo;
-  com_mod.Ao.resize(tDof,tnNo);
-  // An moved to Integrator class
-  com_mod.Yo.resize(tDof,tnNo);
-  // Yn moved to Integrator class
-  com_mod.Do.resize(tDof,tnNo);
-  // Dn moved to Integrator class
+
+  // Ao, Do, Yo are local variables that will be moved to Integrator at end
+  Array<double> Ao(tDof, tnNo);
+  Array<double> Yo(tDof, tnNo);
+  Array<double> Do(tDof, tnNo);
+  // An, Yn, Dn moved to Integrator class
+
   com_mod.Bf.resize(nsd,tnNo);
 
   // [TODO] DaveP not implemented?
@@ -688,14 +689,14 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       flag = false;
     }
 
-    if (flag) { 
+    if (flag) {
       auto& iniFilePath = com_mod.iniFilePath;
       auto& timeP = com_mod.timeP;
 
-      if (iniFilePath.find(".bin") != std::string::npos) { 
-        init_from_bin(simulation, iniFilePath, timeP);
+      if (iniFilePath.find(".bin") != std::string::npos) {
+        init_from_bin(simulation, iniFilePath, timeP, Ao, Do, Yo);
       } else {
-        init_from_vtu(simulation, iniFilePath, timeP);
+        init_from_vtu(simulation, iniFilePath, timeP, Ao, Do, Yo);
      }
 
     } else {
@@ -705,13 +706,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
         if (FILE *file = fopen(fTmp.c_str(), "r")) {
           fclose(file);
           auto& timeP = com_mod.timeP;
-          init_from_bin(simulation, fTmp, timeP);
+          init_from_bin(simulation, fTmp, timeP, Ao, Do, Yo);
         } else {
           if (cm.mas(cm_mod)) {
             std::cout << "WARNING: No '" + fTmp + "' file to restart simulation from; Resetting restart flag to false";
           }
           com_mod.stFileFlag = false;
-          zero_init(simulation);
+          zero_init(simulation, Ao, Do, Yo);
         }
 
         if (rmsh.isReqd) {
@@ -722,13 +723,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
           for (int i = 0; i < rmsh.iNorm.size(); i++) {
             rmsh.iNorm(i) = com_mod.eq[i].iNorm;
           }
-          rmsh.A0 = com_mod.Ao;
-          rmsh.Y0 = com_mod.Yo;
-          rmsh.D0 = com_mod.Do;
+          rmsh.A0 = Ao;
+          rmsh.Y0 = Yo;
+          rmsh.D0 = Do;
         }
 
       } else {
-        zero_init(simulation);
+        zero_init(simulation, Ao, Do, Yo);
       } 
     }
 
@@ -741,18 +742,18 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       com_mod.eq[i].iNorm = rmsh.iNorm[i];
     }
 
-    com_mod.Ao = all_fun::local(com_mod, cm_mod, cm, rmsh.A0);
-    com_mod.Yo = all_fun::local(com_mod, cm_mod, cm, rmsh.Y0);
-    com_mod.Do = all_fun::local(com_mod, cm_mod, cm, rmsh.D0);
+    Ao = all_fun::local(com_mod, cm_mod, cm, rmsh.A0);
+    Yo = all_fun::local(com_mod, cm_mod, cm, rmsh.Y0);
+    Do = all_fun::local(com_mod, cm_mod, cm, rmsh.D0);
 
-    rmsh.A0.resize(tDof,tnNo); 
-    rmsh.A0 = com_mod.Ao;
+    rmsh.A0.resize(tDof,tnNo);
+    rmsh.A0 = Ao;
 
-    rmsh.Y0.resize(tDof,tnNo); 
-    rmsh.Y0 = com_mod.Yo;
+    rmsh.Y0.resize(tDof,tnNo);
+    rmsh.Y0 = Yo;
 
-    rmsh.D0.resize(tDof,tnNo); 
-    rmsh.D0 = com_mod.Do;
+    rmsh.D0.resize(tDof,tnNo);
+    rmsh.D0 = Do;
   } // resetSim
 
   // Initialize new variables
@@ -815,7 +816,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // Preparing faces and BCs
   //
-  baf_ini_ns::baf_ini(simulation);
+  baf_ini_ns::baf_ini(simulation, Do, Yo);
 
   // As all the arrays are allocated, call BIN to VTK for conversion
   //
@@ -827,15 +828,12 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // Making sure the old solution satisfies BCs
   //
-  // Modifes
-  //  com_mod.Ao - Old time derivative of variables (acceleration)
-  //  com_mod.Yo - Old variables (velocity)
-  //  com_mod.Do - Old integrated variables (dissplacement)
+  // Modifies Ao, Yo, Do (local variables)
   //
-  set_bc::set_bc_dir(com_mod, com_mod.Ao, com_mod.Yo, com_mod.Do);
+  set_bc::set_bc_dir(com_mod, Ao, Yo, Do, Yo, Ao, Do);
 
-  // Preparing TXT files (pass Ao, Do, and Yo since An, Dn, and Yn haven't been created in Integrator yet)
-  txt_ns::txt(simulation, true, com_mod.Ao, com_mod.Do, com_mod.Yo);
+  // Preparing TXT files (pass local Ao, Do, and Yo since An, Dn, and Yn haven't been created in Integrator yet)
+  txt_ns::txt(simulation, true, Ao, Do, Yo);
 
   // Printing the first line and initializing timeP
   int co = 1;
@@ -844,6 +842,10 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   std::fill(com_mod.rmsh.flag.begin(), com_mod.rmsh.flag.end(), false);
   com_mod.resetSim = false;
+
+  // Create Integrator now that Ao, Do, Yo are fully initialized
+  // The Integrator takes ownership of Ao, Do, Yo via move semantics
+  simulation->initialize_integrator(std::move(Ao), std::move(Do), std::move(Yo));
 }
 
 //-----------
@@ -851,7 +853,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 //-----------
 // Initialize state variables Yo, Ao and Do.
 //
-void zero_init(Simulation* simulation)
+void zero_init(Simulation* simulation, Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
 {
   auto& com_mod = simulation->com_mod;
   auto& cm = com_mod.cm;
@@ -872,7 +874,7 @@ void zero_init(Simulation* simulation)
       for (int a = 0; a < com_mod.tnNo; a++) {
         // In the future this should depend on the equation type.
         for (int i = 0; i < nsd; i++) {
-          com_mod.Yo(i,a) = msh.Ys(i,a,0);
+          Yo(i,a) = msh.Ys(i,a,0);
         }
       }
     }
@@ -886,7 +888,7 @@ void zero_init(Simulation* simulation)
      #endif
      for (int a = 0; a < com_mod.tnNo; a++) {
        for (int i = 0; i < nsd; i++) {
-         com_mod.Yo(i,a) = com_mod.Vinit(i,a);
+         Yo(i,a) = com_mod.Vinit(i,a);
        }
      }
   }
@@ -897,7 +899,7 @@ void zero_init(Simulation* simulation)
      #endif
      for (int a = 0; a < com_mod.tnNo; a++) {
        for (int i = 0; i < nsd; i++) {
-         com_mod.Yo(nsd,a) = com_mod.Pinit(a);
+         Yo(nsd,a) = com_mod.Pinit(a);
        }
      }
   }
@@ -908,7 +910,7 @@ void zero_init(Simulation* simulation)
      #endif
      for (int a = 0; a < com_mod.tnNo; a++) {
        for (int i = 0; i < nsd; i++) {
-         com_mod.Do(i,a) = com_mod.Dinit(i,a);
+         Do(i,a) = com_mod.Dinit(i,a);
        }
      }
   }

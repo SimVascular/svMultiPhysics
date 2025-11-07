@@ -1742,11 +1742,7 @@ class ComMod {
     /// @brief RIS mapping array, with global (total) enumeration
      std::vector<Array2D> grisMapList;
 
-    /// @brief Old time derivative of variables (acceleration); known result at current time step
-    Array<double>  Ao;
-
-    /// @brief Old integrated variables (displacement)
-    Array<double>  Do;
+    /// @brief Ao, Do, Yo moved to Integrator class (complete ownership transfer)
 
     /// @brief Residual vector
     Array<double>  R;
@@ -1756,9 +1752,6 @@ class ComMod {
 
     /// @brief Position vector of mesh nodes (in ref config)
     Array<double>  x;
-
-    /// @brief Old variables (velocity); known result at current time step
-    Array<double>  Yo;
 
     /// @brief Body force
     Array<double>  Bf;

@@ -9,11 +9,11 @@
 
 namespace baf_ini_ns {
 
-void baf_ini(Simulation* simulation);
+void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo);
 
 void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa);
 
-void face_ini(Simulation* simulation, mshType& lm, faceType& la);
+void face_ini(Simulation* simulation, mshType& lm, faceType& la, Array<double>& Do);
 
 void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr);
 

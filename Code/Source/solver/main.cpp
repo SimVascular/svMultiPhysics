@@ -80,7 +80,7 @@ void read_files(Simulation* simulation, const std::string& file_name)
 
 /// @brief Iterate the precomputed state-variables in time using linear interpolation to the current time step size
 //
-void iterate_precomputed_time(Simulation* simulation, Array<double>& An, Array<double>& Yn) {
+void iterate_precomputed_time(Simulation* simulation, Array<double>& An, Array<double>& Yn, Array<double>& Ao, Array<double>& Yo, Array<double>& Do) {
   using namespace consts;
 
   auto& com_mod = simulation->com_mod;
@@ -99,11 +99,7 @@ void iterate_precomputed_time(Simulation* simulation, Array<double>& An, Array<d
   auto& Rd = com_mod.Rd;      // Residual of the displacement equation
   auto& Kd = com_mod.Kd;      // LHS matrix for displacement equation
 
-  auto& Ao = com_mod.Ao;      // Old time derivative of variables (acceleration)
-  auto& Yo = com_mod.Yo;      // Old variables (velocity)
-  auto& Do = com_mod.Do;      // Old integrated variables (dissplacement)
-
-  // An is now passed as a parameter (from integrator.get_An())
+  // Ao, Yo, Do, An, Yn are now passed as parameters (from integrator)
 
   int& cTS = com_mod.cTS;
   int& nITs = com_mod.nITs;
@@ -204,8 +200,8 @@ void iterate_solution(Simulation* simulation)
   dmsg << "cmmInit: " << com_mod.cmmInit;
   #endif
 
-  // Create Integrator object to handle Newton iterations
-  Integrator integrator(simulation);
+  // Get Integrator object (created at end of initialize())
+  auto& integrator = simulation->get_integrator();
 
   // current time step
   int& cTS = com_mod.cTS;
@@ -233,9 +229,9 @@ void iterate_solution(Simulation* simulation)
   auto& Rd = com_mod.Rd;      // Residual of the displacement equation
   auto& Kd = com_mod.Kd;      // LHS matrix for displacement equation
 
-  auto& Ao = com_mod.Ao;      // Old time derivative of variables (acceleration)
-  auto& Yo = com_mod.Yo;      // Old variables (velocity)
-  auto& Do = com_mod.Do;      // Old integrated variables (displacement)
+  auto& Ao = integrator.get_Ao();  // Old time derivative of variables (acceleration)
+  auto& Yo = integrator.get_Yo();  // Old variables (velocity)
+  auto& Do = integrator.get_Do();  // Old integrated variables (displacement)
 
   auto& An = integrator.get_An();  // New time derivative of variables (acceleration)
   auto& Yn = integrator.get_Yn();  // New variables (velocity)
@@ -299,7 +295,7 @@ void iterate_solution(Simulation* simulation)
     // Compute mesh properties to check if remeshing is required
     //
     if (com_mod.mvMsh && com_mod.rmsh.isReqd) {
-      read_msh_ns::calc_mesh_props(com_mod, cm_mod, com_mod.nMsh, com_mod.msh);
+      read_msh_ns::calc_mesh_props(com_mod, cm_mod, com_mod.nMsh, com_mod.msh, integrator.get_Do());
       if (com_mod.resetSim) {
         #ifdef debug_iterate_solution
         dmsg << "#### resetSim is true " << std::endl;
@@ -327,11 +323,11 @@ void iterate_solution(Simulation* simulation)
     dmsg << "Apply Dirichlet BCs strongly ..." << std::endl;
     #endif
 
-    set_bc::set_bc_dir(com_mod, An, Yn, Dn);
+    set_bc::set_bc_dir(com_mod, An, Yn, Dn, Yo, Ao, Do);
 
     if (com_mod.urisFlag) {uris::uris_calc_sdf(com_mod);}
 
-    iterate_precomputed_time(simulation, integrator.get_An(), integrator.get_Yn());
+    iterate_precomputed_time(simulation, integrator.get_An(), integrator.get_Yn(), integrator.get_Ao(), integrator.get_Yo(), integrator.get_Do());
 
     // Inner loop for Newton iteration - now encapsulated in Integrator class
     //
@@ -379,7 +375,7 @@ void iterate_solution(Simulation* simulation)
             std::cout << "Valve status just changed. Do not update" << std::endl;
           }
         } else {
-            ris::ris_updater(com_mod, cm_mod, An, Dn, Yn);
+            ris::ris_updater(com_mod, cm_mod, An, Dn, Yn, Ao, Do, Yo);
         }
         // goto label_11;
       }
@@ -407,9 +403,9 @@ void iterate_solution(Simulation* simulation)
           com_mod.rmsh.iNorm(i) = com_mod.eq[i].iNorm;
         }
 
-        com_mod.rmsh.A0 = com_mod.Ao;
-        com_mod.rmsh.Y0 = com_mod.Yo;
-        com_mod.rmsh.D0 = com_mod.Do;
+        com_mod.rmsh.A0 = Ao;
+        com_mod.rmsh.Y0 = Yo;
+        com_mod.rmsh.D0 = Do;
       }
     }
 
@@ -519,7 +515,7 @@ void iterate_solution(Simulation* simulation)
       }
 
       if (com_mod.mvMsh) {
-        uris::uris_update_disp(com_mod, cm_mod);
+        uris::uris_update_disp(com_mod, cm_mod, Do);
       }
 
       if (cm.mas(cm_mod)) {
