@@ -96,9 +96,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa962f3f16aa5273cc07bdb13d954a70d" id="r_aa962f3f16aa5273cc07bdb13d954a70d"><td class="memItemLeft" align="right" valign="top"><a id="aa962f3f16aa5273cc07bdb13d954a70d" name="aa962f3f16aa5273cc07bdb13d954a70d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>print_parameters</b> ()</td></tr>
 <tr class="separator:aa962f3f16aa5273cc07bdb13d954a70d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5ca4a2da0e1277afff486c12a95fa20" id="r_ab5ca4a2da0e1277afff486c12a95fa20"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_general_simulation_parameters.html#ab5ca4a2da0e1277afff486c12a95fa20">set_values</a> (tinyxml2::XMLElement *xml_element)</td></tr>
-<tr class="memdesc:ab5ca4a2da0e1277afff486c12a95fa20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set general parameters values from XML.  <br /></td></tr>
-<tr class="separator:ab5ca4a2da0e1277afff486c12a95fa20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57f3dd89adab9d8fcc5f719f6dad70a6" id="r_a57f3dd89adab9d8fcc5f719f6dad70a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_general_simulation_parameters.html#a57f3dd89adab9d8fcc5f719f6dad70a6">set_values</a> (tinyxml2::XMLElement *xml_element, bool from_external_xml=false)</td></tr>
+<tr class="memdesc:a57f3dd89adab9d8fcc5f719f6dad70a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set general parameters values from XML.  <br /></td></tr>
+<tr class="separator:a57f3dd89adab9d8fcc5f719f6dad70a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_parameter_lists"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_parameter_lists')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_parameter_lists.html">ParameterLists</a></td></tr>
 <tr class="memitem:a6d6b1f24d88e33ab3e752a31c2203f6d inherit pub_methods_class_parameter_lists" id="r_a6d6b1f24d88e33ab3e752a31c2203f6d"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>set_xml_element_name</b> (const std::string &amp;name)</td></tr>
@@ -184,6 +184,9 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 <tr class="memitem:a4e48ba123a5801f7b0b605836a44f2ac" id="r_a4e48ba123a5801f7b0b605836a44f2ac"><td class="memItemLeft" align="right" valign="top"><a id="a4e48ba123a5801f7b0b605836a44f2ac" name="a4e48ba123a5801f7b0b605836a44f2ac"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>time_step_size</b></td></tr>
 <tr class="separator:a4e48ba123a5801f7b0b605836a44f2ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ada9f51d2f744b46a406dc37227a93a" id="r_a3ada9f51d2f744b46a406dc37227a93a"><td class="memItemLeft" align="right" valign="top"><a id="a3ada9f51d2f744b46a406dc37227a93a" name="a3ada9f51d2f744b46a406dc37227a93a"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>include_xml</b></td></tr>
+<tr class="separator:a3ada9f51d2f744b46a406dc37227a93a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac70657232484aa28b4d0d0837ceae2bb" id="r_ac70657232484aa28b4d0d0837ceae2bb"><td class="memItemLeft" align="right" valign="top"><a id="ac70657232484aa28b4d0d0837ceae2bb" name="ac70657232484aa28b4d0d0837ceae2bb"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>increment_in_saving_restart_files</b></td></tr>
 <tr class="separator:ac70657232484aa28b4d0d0837ceae2bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -269,8 +272,8 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ab5ca4a2da0e1277afff486c12a95fa20" name="ab5ca4a2da0e1277afff486c12a95fa20"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab5ca4a2da0e1277afff486c12a95fa20">&#9670;&#160;</a></span>set_values()</h2>
+<a id="a57f3dd89adab9d8fcc5f719f6dad70a6" name="a57f3dd89adab9d8fcc5f719f6dad70a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a57f3dd89adab9d8fcc5f719f6dad70a6">&#9670;&#160;</a></span>set_values()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -279,8 +282,18 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
           <td class="memname">void GeneralSimulationParameters::set_values </td>
           <td>(</td>
           <td class="paramtype">tinyxml2::XMLElement *&#160;</td>
-          <td class="paramname"><em>xml_element</em></td><td>)</td>
+          <td class="paramname"><em>xml_element</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>from_external_xml</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">

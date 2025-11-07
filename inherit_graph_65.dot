@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="solidViscModelType",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classsolid_visc_model_type.html",tooltip="Fluid viscosity model type."];
+  Node0 [id="Node000000",label="SimulationLogger",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$class_simulation_logger.html",tooltip="The SimulationLogger class is used to write information to a text file and optionally to cout."];
 }
