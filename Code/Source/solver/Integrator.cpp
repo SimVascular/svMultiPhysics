@@ -108,7 +108,7 @@ bool Integrator::step() {
       #ifdef debug_integrator_step
       dmsg << "Set coupled BCs " << std::endl;
       #endif
-      set_bc::set_bc_cpl(com_mod, cm_mod, Yn_, Yo_, Ao_, Do_);
+      set_bc::set_bc_cpl(com_mod, cm_mod, An_, Yn_, Dn_, Yo_, Ao_, Do_);
       set_bc::set_bc_dir(com_mod, An_, Yn_, Dn_, Yo_, Ao_, Do_);
     }
 
@@ -279,22 +279,22 @@ void Integrator::apply_boundary_conditions() {
   Dg_.write("Dg_vor_neu" + istr_);
 
   // Apply Neumman or Traction boundary conditions
-  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, Yn);
+  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, Yn, Do_);
 
   // Apply CMM BC conditions
   if (!com_mod.cmmInit) {
-    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_);
+    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, Do_);
   }
 
   // Apply weakly applied Dirichlet BCs
-  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_);
+  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, Do_);
 
   if (com_mod.risFlag) {
-    ris::ris_resbc(com_mod, Yg_, Dg_);
+    ris::ris_resbc(com_mod, Yg_, Dg_, Do_);
   }
 
   if (com_mod.ris0DFlag) {
-    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, Yn);
+    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, Yn, Do_);
   }
 
   // Apply contact model and add its contribution to residual

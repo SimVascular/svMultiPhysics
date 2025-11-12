@@ -357,7 +357,7 @@ void iterate_solution(Simulation* simulation)
     */
 
     if (com_mod.risFlag) {
-      ris::ris_meanq(com_mod, cm_mod, An, Dn, Yn);
+      ris::ris_meanq(com_mod, cm_mod, An, Dn, Yn, Do);
       ris::ris_status(com_mod, cm_mod);
       if (cm.mas(cm_mod)) {
         std::cout << "Iteration: " << com_mod.cTS << std::endl;
@@ -493,7 +493,7 @@ void iterate_solution(Simulation* simulation)
 
     // [HZ] Part related to RIS0D
     if (cEq == 0 && com_mod.ris0DFlag) {
-      ris::ris0d_status(com_mod, cm_mod, An, Dn, Yn);
+      ris::ris0d_status(com_mod, cm_mod, An, Dn, Yn, Do);
     }
 
     // [HZ] Part related to unfitted RIS
@@ -502,12 +502,12 @@ void iterate_solution(Simulation* simulation)
       for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
         com_mod.uris[iUris].cnt++;
         if (com_mod.uris[iUris].clsFlg) {
-          uris::uris_meanp(com_mod, cm_mod, iUris, Yn);
+          uris::uris_meanp(com_mod, cm_mod, iUris, Dn, Yn, Do);
           // if (com_mod.uris[iUris].cnt == 1) {
           //   // GOTO 11 // The GOTO Statement in the Fortran code
           // }
         } else {
-          uris::uris_meanv(com_mod, cm_mod, iUris, Yn);
+          uris::uris_meanv(com_mod, cm_mod, iUris, Dn, Yn, Do);
         }
         if (cm.mas(cm_mod)) {
           std::cout << " URIS surface: " << com_mod.uris[iUris].name << ", count: " << com_mod.uris[iUris].cnt << std::endl;

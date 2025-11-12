@@ -607,7 +607,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
     }
     if (com_mod.mvMsh) {
       if (!Do) {
-        throw std::runtime_error("gnnb: Do parameter required for moving mesh but not provided");
+        throw std::runtime_error("gnnb: Do parameter required for moving mesh but not provided. Face: '" + lFa.name + "', Mesh: '" + msh.name + "', Element: " + std::to_string(e));
       }
       for (int i = 0; i < lX.nrows(); i++) {
         // Add mesh displacement

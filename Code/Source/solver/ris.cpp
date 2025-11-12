@@ -13,7 +13,7 @@
 namespace ris {
 
 /// @brief This subroutine computes the mean pressure and flux on the ris surface
-void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn)
+void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do)
 {
   #define n_debug_ris_meanq
   #ifdef debug_ris_meanq
@@ -56,17 +56,17 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>&
       int iM = RIS.lst(i,0,iProj);
       int iFa = RIS.lst(i,1,iProj);
       double tmp = msh[iM].fa[iFa].area;
-      RIS.meanP(iProj,i) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0)/tmp;
+      RIS.meanP(iProj,i) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, std::nullopt, false, consts::MechanicalConfigurationType::reference, nullptr, &Do)/tmp;
     }
   }
 
   // For the velocity
-  m = nsd; 
+  m = nsd;
   s = eq[iEq].s;
   e = s + m - 1;
 
   for (int iProj = 0; iProj < nPrj; iProj++) {
-    // tmpV[0:m,:] = Yn[s:e,:]; 
+    // tmpV[0:m,:] = Yn[s:e,:];
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < Yn.ncols(); j++) {
           tmpV(i,j) = Yn(s+i,j);
@@ -74,11 +74,11 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>&
     }
     int iM = RIS.lst(0,0,iProj);
     int iFa = RIS.lst(0,1,iProj);
-    RIS.meanFl(iProj) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1);
+    RIS.meanFl(iProj) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
 
     if (cm.mas(cm_mod)) {
       std::cout << "For RIS projection: " << iProj << std::endl;
-      std::cout << "    The average pressure is: " << RIS.meanP(iProj,0) << ", " 
+      std::cout << "    The average pressure is: " << RIS.meanP(iProj,0) << ", "
                 << RIS.meanP(iProj,1) << std::endl;
       std::cout << "    The average flow is: " << RIS.meanFl(iProj) << std::endl;
     }
@@ -86,7 +86,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>&
 }
 
 /// @brief  Weak treatment of RIS resistance boundary conditions
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg) 
+void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do) 
 {
   using namespace consts;
   #define n_debug_ris_resbc
@@ -134,7 +134,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
       
       if (cPhys == EquationType::phys_fluid) {
         // Build the correct BC
-        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg);
+        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, Do);
       }
       lBc.gx.clear();
     }
@@ -143,8 +143,8 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
 }
 
 
-void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, 
-               const Array<double>& Yg, const Array<double>& Dg)
+void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
+               const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do)
 {
   // [HZ] looks not needed in the current implementation
 }
@@ -351,7 +351,7 @@ void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<d
 }
 
 /// RIS0D code
-void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn) 
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn, const Array<double>& Do) 
 {
   using namespace consts;
 
@@ -388,22 +388,22 @@ void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Arr
       lBc.eDrn.resize(nsd);
       lBc.eDrn = 0;
 
-      // Apply bc Dir 
+      // Apply bc Dir
       lBc.gx.resize(msh[iM].fa[iFa].nNo);
       lBc.gx = 1.0;
-      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg);
+      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, Do);
       lBc.gx.clear();
       lBc.eDrn.clear();
     } else {
       // Apply Neu bc
-      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, Yn);
+      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, Yn, Do);
     }
 
   }
 
 }
 
-void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn) 
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do)
 {
   using namespace consts;
 
@@ -456,8 +456,8 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<doubl
     sA = 1.0;
     lFa = msh[iM].fa[iFa];
     // such update may be not correct
-    tmp_new = all_fun::integ(com_mod, cm_mod, lFa, sA);
-    meanP = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1)/tmp_new;
+    tmp_new = all_fun::integ(com_mod, cm_mod, lFa, sA, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
+    meanP = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, nullptr, &Do)/tmp_new;
 
     // For the velocity
     m = nsd;
@@ -472,7 +472,7 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<doubl
       }
     }
 
-    meanFl = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1);
+    meanFl = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
 
     std::cout << "The average pressure is: " << meanP << std::endl;
     std::cout << "The pressure from 0D is: " << eq[cEq].bc[iBc].g << std::endl;

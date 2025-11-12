@@ -806,7 +806,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
     for (int iDmn = 0; iDmn < eq.nDmn; iDmn++) {
       int i = eq.dmn[iDmn].Id;
-      eq.dmn[iDmn].v = all_fun::integ(com_mod, cm_mod, i, s, 0, 0);
+      eq.dmn[iDmn].v = all_fun::integ(com_mod, cm_mod, i, s, 0, 0, false, &Do);
       if (!com_mod.shlEq && !com_mod.cmmInit) {
         //std = "    Volume of domain <"//STR(i)//"> is "// 2            STR(eq(iEq)%dmn(iDmn)%v)
         //IF (ISZERO(eq(iEq)%dmn(iDmn)%v)) wrn = "<< Volume of "// "domain "//iDmn//" of equation "//iEq//" is zero >>"
@@ -816,7 +816,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // Preparing faces and BCs
   //
-  baf_ini_ns::baf_ini(simulation, Do, Yo);
+  baf_ini_ns::baf_ini(simulation, Ao, Do, Yo);
 
   // As all the arrays are allocated, call BIN to VTK for conversion
   //

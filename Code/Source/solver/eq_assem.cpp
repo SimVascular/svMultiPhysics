@@ -28,7 +28,7 @@
 
 namespace eq_assem {
 
-void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg) 
+void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg, const Array<double>& Do)
 {
   #define n_debug_b_assem_neu_bc
   #ifdef debug_b_assem_neu_bc
@@ -54,9 +54,9 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
     cDmn = all_fun::domain(com_mod, msh, cEq, Ec);
     auto cPhys = eq.dmn[cDmn].phys;
 
-    Vector<int> ptr(eNoN); 
-    Vector<double> N(eNoN), hl(eNoN); 
-    Array<double> yl(tDof,eNoN), lR(dof,eNoN); 
+    Vector<int> ptr(eNoN);
+    Vector<double> N(eNoN), hl(eNoN);
+    Array<double> yl(tDof,eNoN), lR(dof,eNoN);
     Array3<double> lK(dof*dof,eNoN,eNoN);
 
     for (int a = 0; a < eNoN; a++) {
@@ -76,7 +76,7 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.rslice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, consts::MechanicalConfigurationType::reference, nullptr, &Do);
       double Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g)*Jac;
@@ -156,13 +156,13 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 /// @param lFa 
 /// @param hg Pressure magnitude
 /// @param Dg 
-void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg) 
+void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg, const Array<double>& Do)
 {
   using namespace consts;
   using namespace utils;
 
   #define n_debug_b_neu_folw_p
-  #ifdef debug_b_neu_folw_p 
+  #ifdef debug_b_neu_folw_p
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "lFa.name: " << lFa.name;
@@ -181,7 +181,7 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
   auto& eq = com_mod.eq[cEq];
   auto& cDmn = com_mod.cDmn;
 
-  #ifdef debug_b_neu_folw_p 
+  #ifdef debug_b_neu_folw_p
   dmsg << "nsd: " << nsd;
   dmsg << "eNoN: " << nsd;
   #endif
@@ -191,13 +191,13 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
     cDmn = all_fun::domain(com_mod, msh, cEq, Ec);  // Changes global
     auto cPhys = eq.dmn[cDmn].phys;
 
-    Vector<int> ptr(eNoN); 
-    Vector<double> hl(eNoN); 
-    Array<double> xl(nsd,eNoN); 
+    Vector<int> ptr(eNoN);
+    Vector<double> hl(eNoN);
+    Array<double> xl(nsd,eNoN);
     Array<double> dl(tDof,eNoN);
-    Vector<double> N(eNoN); 
-    Array<double> Nxi(nsd,eNoN); 
-    Array<double> Nx(nsd,eNoN); 
+    Vector<double> N(eNoN);
+    Array<double> Nxi(nsd,eNoN);
+    Array<double> Nx(nsd,eNoN);
     Array<double> lR(dof,eNoN);
     Array3<double> lK(dof*dof,eNoN,eNoN);
     Array3<double> lKd;
@@ -245,7 +245,7 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
       // Get surface normal vector
       Vector<double> nV(nsd);
       auto Nx_g = lFa.Nx.rslice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx_g, nV);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx_g, nV, consts::MechanicalConfigurationType::reference, nullptr, &Do);
       Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g)*Jac;
@@ -286,7 +286,7 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 /// is eventually used in ADDBCMUL() in the linear solver to add the contribution
 /// from the resistance BC to the matrix-vector product of the tangent matrix and
 /// an arbitrary vector.
-void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
+void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Dn, const Array<double>& Do)
 {
   using namespace consts;
   using namespace utils;
@@ -306,8 +306,8 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
   int iM = lFa.iM;
   int nNo = lFa.nNo;
 
-  Array<double> sVl(nsd,nNo); 
-  Array<double> sV(nsd,tnNo); 
+  Array<double> sVl(nsd,nNo);
+  Array<double> sV(nsd,tnNo);
 
   // Updating the value of the surface integral of the normal vector
   // using the deformed configuration ('n' = new = timestep n+1)
@@ -322,7 +322,7 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
 
       auto cfg = MechanicalConfigurationType::new_timestep;
 
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg, &Dn, &Do);
       // 
       for (int a = 0; a < lFa.eNoN; a++) {
         int Ac = lFa.IEN(a,e);

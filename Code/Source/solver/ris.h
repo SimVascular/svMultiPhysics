@@ -8,10 +8,10 @@
 
 namespace ris {
 
-void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn);
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
-void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, 
-    const Array<double>& Yg, const Array<double>& Dg);
+void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do);
+void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do);
+void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
+    const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do);
 
 void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, Array<double>& Ao, Array<double>& Do, Array<double>& Yo);
 void ris_status(ComMod& com_mod, CmMod& cm_mod);
@@ -26,8 +26,8 @@ void clean_r_ris(ComMod& com_mod);
 void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD);
 
 // TODO: RIS 0D code
-void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn);
-void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn);
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn, const Array<double>& Do);
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do);
 
 };
 

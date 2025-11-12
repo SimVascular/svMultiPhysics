@@ -19,7 +19,7 @@ namespace uris {
 
 /// @brief This subroutine computes the mean pressure and flux on the 
 /// immersed surface 
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& Yn) {
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<double>& Dn, Array<double>& Yn, const Array<double>& Do) {
   #define n_debug_uris_meanp
   #ifdef debug_uris_meanp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -68,7 +68,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
   }
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volU += all_fun::integ(com_mod, cm_mod, iM, sUPS);
+    volU += all_fun::integ(com_mod, cm_mod, iM, sUPS, &Do);
   }
 
 
@@ -84,7 +84,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
   } 
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volD += all_fun::integ(com_mod, cm_mod, iM, sDST);
+    volD += all_fun::integ(com_mod, cm_mod, iM, sDST, &Do);
   }
 
   // Print volume messages.
@@ -106,7 +106,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
     tmpV(0,j) = Yn(s,j)*sUPS(j);
   }
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanPU += all_fun::integ(com_mod, cm_mod, iM, tmpV);
+    meanPU += all_fun::integ(com_mod, cm_mod, iM, tmpV, &Do);
   }
   meanPU = meanPU / volU;
 
@@ -114,7 +114,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
     tmpV(0,j) = Yn(s,j)*sDST(j);
   }
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanPD += all_fun::integ(com_mod, cm_mod,iM, tmpV);
+    meanPD += all_fun::integ(com_mod, cm_mod,iM, tmpV, &Do);
   }
   meanPD = meanPD / volD;
 
@@ -151,7 +151,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
 
 /// @brief This subroutine computes the mean velocity in the fluid elements 
 /// near the immersed surface  
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& Yn) {
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<double>& Dn, Array<double>& Yn, const Array<double>& Do) {
   #define n_debug_uris_meanv
   #ifdef debug_uris_meanv
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -193,7 +193,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
   }
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volI += all_fun::integ(com_mod, cm_mod, iM, sImm);
+    volI += all_fun::integ(com_mod, cm_mod, iM, sImm, &Do);
   }
   if (cm.mas(cm_mod)) {
     std::cout << "volume inside " << volI << " for: " << uris_obj.name << std::endl;
@@ -219,7 +219,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, Array<double>& 
 
   double meanV = 0.0;
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanV += all_fun::integ(com_mod, cm_mod, iM, tmpVNrm)/volI;
+    meanV += all_fun::integ(com_mod, cm_mod, iM, tmpVNrm, &Do)/volI;
   }
   
   if (cm.mas(cm_mod)) {

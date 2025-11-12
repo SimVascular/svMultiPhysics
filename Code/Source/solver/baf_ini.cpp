@@ -39,7 +39,7 @@ namespace baf_ini_ns {
 ///
 /// Replicates 'SUBROUTINE BAFINI()' defined in BAFINIT.f
 //
-void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo)
+void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
 {
   using namespace consts;
   using namespace fsi_linear_solver;
@@ -82,10 +82,10 @@ void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo)
       auto& bc = eq.bc[iBc];
       int iFa = bc.iFa;
       int iM = bc.iM;
-      bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]);
+      bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], Do);
 
       if (com_mod.msh[iM].lShl) {
-        shl_bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], com_mod.msh[iM]);
+        shl_bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], com_mod.msh[iM], Do);
       }
     }
   }
@@ -133,7 +133,7 @@ void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo)
     }
 
     if (!com_mod.stFileFlag) {
-      set_bc::rcr_init(com_mod, cm_mod, Yo);
+      set_bc::rcr_init(com_mod, cm_mod, Ao, Do, Yo);
     }
 
     if (com_mod.cplBC.useGenBC) {
@@ -145,7 +145,7 @@ void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo)
     }
 
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
-      set_bc::calc_der_cpl_bc(com_mod, cm_mod, Yo, Yo);
+      set_bc::calc_der_cpl_bc(com_mod, cm_mod, Yo, Yo, Do, Yo, Ao, Do);
     }
   }
 
@@ -163,7 +163,7 @@ void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo)
       int iFa = bc.iFa;
       int iM = bc.iM;
       bc.lsPtr = 0;
-      fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr);
+      fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr, Do);
     }
   }
 
@@ -225,7 +225,7 @@ void baf_ini(Simulation* simulation, Array<double>& Do, Array<double>& Yo)
 // bc_ini
 //---------
 //
-void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa)
+void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, const Array<double>& Do)
 {
   using namespace consts;
   using namespace utils;
@@ -233,7 +233,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   auto& cm = com_mod.cm;
   int nsd = com_mod.nsd;
   int tnNo = com_mod.tnNo;
- 
+
   #define n_debug_bc_ini
   #ifdef debug_bc_ini
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -272,7 +272,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   Vector<int> disp(cm.np());
 
   // Just a constant value for Flat profile
-  if (btest(lBc.bType, iBC_flat)) { 
+  if (btest(lBc.bType, iBC_flat)) {
     for (int a = 0; a < lFa.nNo; a++) {
       int Ac = lFa.gN(a);
       s(Ac) = 1.0;
@@ -284,10 +284,10 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   // 3- maximize ew(i).e where e is the unit vector from current
   // point to the center 4- Use the point i as the diam here
   //
-  } else if (btest(lBc.bType, iBC_para)) { 
+  } else if (btest(lBc.bType, iBC_para)) {
     Vector<double> center(3);
     for (int i = 0; i < nsd; i++) {
-      center(i) = all_fun::integ(com_mod, cm_mod, lFa, com_mod.x, i) / lFa.area;
+      center(i) = all_fun::integ(com_mod, cm_mod, lFa, com_mod.x, i, std::nullopt, false, consts::MechanicalConfigurationType::reference, nullptr, &Do) / lFa.area;
     }
 
     // gNodes is one if a node located on the boundary (beside iFa)
@@ -395,8 +395,8 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   // Normalizing the profile for flux
   //
   double tmp = 1.0;
-  if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_flx))) { 
-    tmp = all_fun::integ(com_mod, cm_mod, lFa, s);
+  if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_flx))) {
+    tmp = all_fun::integ(com_mod, cm_mod, lFa, s, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
     if (is_zero(tmp)) {
       tmp = 1.0;
       throw std::runtime_error("Face '" + lFa.name + "' used for a BC has no non-zero node.");
@@ -436,7 +436,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, Array<double>&
   //
   Vector<double> sA(com_mod.tnNo);
   sA = 1.0;
-  double area = all_fun::integ(com_mod, cm_mod, lFa, sA);
+  double area = all_fun::integ(com_mod, cm_mod, lFa, sA, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
   #ifdef debug_face_ini
   dmsg << "Face '" << lFa.name << "' area: " << area;
   #endif
@@ -478,7 +478,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, Array<double>&
 
       for (int g = 0; g < lFa.nG; g++) {
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV);
+        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV, consts::MechanicalConfigurationType::reference, nullptr, &Do);
 
         for (int a = 0; a < lFa.eNoN; a++) { 
           int Ac = lFa.IEN(a,e);
@@ -661,7 +661,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, Array<double>&
 //
 // Replicates 'SUBROUTINE FSILSINI'.
 //
-void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr)
+void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, const Array<double>& Do)
 {
   using namespace consts;
   using namespace utils;
@@ -728,7 +728,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
         for (int g = 0; g < lFa.nG; g++) {
           Vector<double> n(nsd);
           auto Nx = lFa.Nx.slice(g);
-          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n);
+          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, consts::MechanicalConfigurationType::reference, nullptr, &Do);
 
           for (int a = 0; a < lFa.eNoN; a++) {
             int Ac = lFa.IEN(a,e);
@@ -868,7 +868,7 @@ void set_shl_xien(Simulation* simulation, mshType& lM)
 //
 // Reproduces 'SUBROUTINE SHLBCINI(lBc, lFa, lM)'.
 //
-void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM)
+void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, const Array<double>& Do)
 {
   using namespace consts;
   using namespace utils;

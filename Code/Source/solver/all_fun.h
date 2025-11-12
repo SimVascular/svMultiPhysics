@@ -34,13 +34,13 @@ namespace all_fun {
   double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u,
       bool pFlag=false, const Array<double>* Do=nullptr);
 
-  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s, 
-      bool pFlag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
+  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s,
+      bool pFlag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference, const Array<double>* Dn=nullptr, const Array<double>* Do=nullptr);
 
-  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& s, 
-      const int l, std::optional<int> uo=std::nullopt, bool THflag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
+  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& s,
+      const int l, std::optional<int> uo=std::nullopt, bool THflag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference, const Array<double>* Dn=nullptr, const Array<double>* Do=nullptr);
 
-  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& s, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
+  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& s, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference, const Array<double>* Dn=nullptr, const Array<double>* Do=nullptr);
 
   bool is_domain(const ComMod& com_mod, const eqType& eq, const int node, const consts::EquationType phys);
 
