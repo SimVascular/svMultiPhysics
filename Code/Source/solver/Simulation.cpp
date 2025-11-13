@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "Simulation.h"
+#include "Integrator.h"
 
 #include "all_fun.h"
 #include "load_msh.h"
@@ -9,6 +10,7 @@
 #include "mpi.h"
 
 #include <iostream>
+#include <stdexcept>
 
 Simulation::Simulation() 
 {
@@ -87,4 +89,28 @@ void Simulation::set_module_parameters()
   nTs = general.number_of_time_steps.value();
   fTmp = general.simulation_initialization_file_path.value();
   roInf = general.spectral_radius_of_infinite_time_step.value();
+}
+
+/// @brief Initialize the Integrator object after simulation setup is complete
+///
+/// This should be called at the end of initialize() after Ao, Do, Yo have been
+/// fully initialized. The Integrator takes ownership of these arrays.
+///
+/// @param Ao Old acceleration array (moved into Integrator)
+/// @param Do Old displacement array (moved into Integrator)
+/// @param Yo Old velocity array (moved into Integrator)
+void Simulation::initialize_integrator(Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo)
+{
+  integrator_ = std::make_unique<Integrator>(this, std::move(Ao), std::move(Do), std::move(Yo));
+}
+
+/// @brief Get reference to the Integrator object
+///
+/// @return Reference to the Integrator
+Integrator& Simulation::get_integrator()
+{
+  if (!integrator_) {
+    throw std::runtime_error("Integrator not initialized. Call initialize_integrator() first.");
+  }
+  return *integrator_;
 }
