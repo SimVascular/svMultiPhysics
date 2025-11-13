@@ -833,7 +833,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   set_bc::set_bc_dir(com_mod, Ao, Yo, Do, Yo, Ao, Do);
 
   // Preparing TXT files (pass local Ao, Do, and Yo since An, Dn, and Yn haven't been created in Integrator yet)
-  txt_ns::txt(simulation, true, Ao, Do, Yo);
+  txt_ns::txt(simulation, true, Ao, Do, Yo, Do);
 
   // Printing the first line and initializing timeP
   int co = 1;

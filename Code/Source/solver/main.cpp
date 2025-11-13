@@ -387,7 +387,7 @@ void iterate_solution(Simulation* simulation)
     dmsg << "Saving the TXT files containing ECGs ..." << std::endl;
     #endif
 
-    txt_ns::txt(simulation, false, An, Dn, Yn);
+    txt_ns::txt(simulation, false, An, Dn, Yn, Do);
 
     // If remeshing is required then save current solution.
     //

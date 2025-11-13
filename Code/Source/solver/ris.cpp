@@ -56,7 +56,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>&
       int iM = RIS.lst(i,0,iProj);
       int iFa = RIS.lst(i,1,iProj);
       double tmp = msh[iM].fa[iFa].area;
-      RIS.meanP(iProj,i) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, std::nullopt, false, consts::MechanicalConfigurationType::reference, nullptr, &Do)/tmp;
+      RIS.meanP(iProj,i) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, std::nullopt, false, consts::MechanicalConfigurationType::reference, &Dn, &Do)/tmp;
     }
   }
 
@@ -74,7 +74,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>&
     }
     int iM = RIS.lst(0,0,iProj);
     int iFa = RIS.lst(0,1,iProj);
-    RIS.meanFl(iProj) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
+    RIS.meanFl(iProj) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, &Dn, &Do);
 
     if (cm.mas(cm_mod)) {
       std::cout << "For RIS projection: " << iProj << std::endl;
@@ -456,8 +456,8 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<doubl
     sA = 1.0;
     lFa = msh[iM].fa[iFa];
     // such update may be not correct
-    tmp_new = all_fun::integ(com_mod, cm_mod, lFa, sA, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
-    meanP = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, nullptr, &Do)/tmp_new;
+    tmp_new = all_fun::integ(com_mod, cm_mod, lFa, sA, false, consts::MechanicalConfigurationType::reference, &Dn, &Do);
+    meanP = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, &Dn, &Do)/tmp_new;
 
     // For the velocity
     m = nsd;
@@ -472,7 +472,7 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<doubl
       }
     }
 
-    meanFl = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, nullptr, &Do);
+    meanFl = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, &Dn, &Do);
 
     std::cout << "The average pressure is: " << meanP << std::endl;
     std::cout << "The pressure from 0D is: " << eq[cEq].bc[iBc].g << std::endl;

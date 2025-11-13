@@ -140,7 +140,7 @@ void create_volume_integral_file(const ComMod& com_mod, CmMod& cm_mod, const eqT
 // init_write - if true then this is the start of the simulation and 
 //   so create a new file to initialize output.
 //
-void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array<double>& Dn, Array<double>& Yn) 
+void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do)
 {
   using namespace consts;
   using namespace utils;
@@ -367,10 +367,10 @@ void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array
 
       } else {
         if (output_options.boundary_integral) {
-          write_boundary_integral_data(com_mod, cm_mod, eq, l, boundary_file_name, tmpV, div, pflag);
+          write_boundary_integral_data(com_mod, cm_mod, eq, l, boundary_file_name, tmpV, div, pflag, Do);
         }
         if (output_options.volume_integral) {
-          write_volume_integral_data(com_mod, cm_mod, eq, l, volume_file_name, tmpV, div, pflag);
+          write_volume_integral_data(com_mod, cm_mod, eq, l, volume_file_name, tmpV, div, pflag, Do);
         }
       }
     }
@@ -407,8 +407,8 @@ void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array
 ///
 /// NOTE: Be carefu of a potential indexing problem here because 'm' is a length and not an index.
 //
-void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m, 
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag)
+void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const Array<double>& Do)
 {
   #define n_debug_write_boundary_integral_data
   #ifdef debug_write_boundary_integral_data
@@ -451,17 +451,17 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
       if (m == 1) {
         if (div) {
           tmp = fa.area;
-          tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0) / tmp;
+          tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, std::nullopt, false, consts::MechanicalConfigurationType::reference, &Do, &Do) / tmp;
         } else {
           if (pFlag && lTH) {
-            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, true);
+            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, std::nullopt, true, consts::MechanicalConfigurationType::reference, &Do, &Do);
           } else {
-            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0);
+            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, std::nullopt, false, consts::MechanicalConfigurationType::reference, &Do, &Do);
           }
         }
 
       } else if (m == nsd) {
-        tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, m-1);
+        tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, m-1, false, consts::MechanicalConfigurationType::reference, &Do, &Do);
       } else {
         throw std::runtime_error("WTXT only accepts 1 and nsd");
       }
@@ -482,8 +482,8 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
 ///
 /// NOTE: Be carefu of a potential indexing problem here because 'm' is a length and not an index.
 //
-void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m, 
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag)
+void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const Array<double>& Do)
 {
   #define n_debug_write_volume_integral_data
   #ifdef debug_write_volume_integral_data
@@ -517,9 +517,9 @@ void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqTy
 
     if (div) {
       tmp = dmn.v;
-      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1) / tmp;
+      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1, pFlag, &Do) / tmp;
     } else {
-      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1, pFlag);
+      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1, pFlag, &Do);
     }
 
     if (com_mod.cm.mas(cm_mod)) {
