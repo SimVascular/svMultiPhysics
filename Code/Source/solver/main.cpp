@@ -51,6 +51,11 @@ void add_eq_linear_algebra(ComMod& com_mod, eqType& lEq)
   }
 }
 
+void finalize_linear_algebra(eqType& lEq)
+{
+  lEq.linear_algebra->finalize();
+}
+
 /// @brief Read in a solver XML file and all mesh and BC data.  
 //
 void read_files(Simulation* simulation, const std::string& file_name)
@@ -564,9 +569,17 @@ void run_simulation(Simulation* simulation)
 //
 int main(int argc, char *argv[])
 {
-  if (argc != 2) {
+  if (argc < 2) {
     std::cout << "[svMultiPhysics] ERROR: The svMultiPhysics program requires the solver input XML file name as an argument." << std::endl;
     exit(1);
+  }
+
+  // Process extra arguments for XML parameter substitution.
+  for (int i = 2; i < argc; i++) {
+    std::string str(argv[i]);
+    int pos = str.find("=");
+    auto name = str.substr(0,pos);
+    auto value = str.substr(pos+1,str.size());
   }
 
   std::cout << std::scientific << std::setprecision(16);
@@ -658,8 +671,12 @@ int main(int argc, char *argv[])
     } else {
       break;
     }
-
   }
+
+   for (int iEq = 0; iEq < simulation->com_mod.nEq; iEq++) {
+      auto& eq = simulation->com_mod.eq[iEq];
+      finalize_linear_algebra(eq);
+    }
 
   MPI_Finalize();
 }

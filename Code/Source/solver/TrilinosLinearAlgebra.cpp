@@ -22,6 +22,7 @@ class TrilinosLinearAlgebra::TrilinosImpl {
     void set_preconditioner(consts::PreconditionerType prec_type) {};
     void solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res) {};
     void solve_assembled(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res) {};
+    void finalize(){};
 };
 #endif
 
@@ -111,6 +112,12 @@ void TrilinosLinearAlgebra::check_options(const consts::PreconditionerType prec_
 void TrilinosLinearAlgebra::initialize(ComMod& com_mod, eqType& lEq)
 {
   impl->initialize(com_mod);
+}
+
+/// @brief Finalize Trilinos.
+void TrilinosLinearAlgebra::finalize()
+{
+  impl->finalize();
 }
 
 /// @brief Create an fsils linear algebra interface for assembly.
