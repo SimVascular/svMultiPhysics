@@ -132,7 +132,7 @@ void read_ndnlff(const std::string& file_name, faceType& face)
   face.nNo = node_ids.size();
   face.gN = Vector<int>(face.nNo);
   for (int i = 0; i < face.nNo; i++) { 
-    face.gN[i] = node_ids[i] - 1; 
+    face.gN[i] = node_ids[i]; 
     //std::cout << "[read_ndnlff] a Ac: " << i+1 << " " << node_ids[i] << std::endl;
   }
 
