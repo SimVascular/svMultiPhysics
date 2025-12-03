@@ -276,7 +276,7 @@ global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Arra
 /// @param s an array containing a scalar value for each node in the mesh
 /// Replicates 'FUNCTION vIntegM(dId, s, l, u, pFlag)' defined in ALLFUN.f.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s, const Array<double>* Do)
 {
   using namespace consts;
 
@@ -367,8 +367,11 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
       xl.set_col(a, com_mod.x.col(Ac));
 
       if (com_mod.mvMsh) {
-        for (int i = 0; i < nsd; i++) { 
-          xl(i,a) += com_mod.Do(i+nsd+1,Ac);
+        if (!Do) {
+          throw std::runtime_error("integ: Do parameter required for moving mesh but not provided. Mesh ID: " + std::to_string(iM));
+        }
+        for (int i = 0; i < nsd; i++) {
+          xl(i,a) += (*Do)(i+nsd+1,Ac);
         }
       }
       sl(a) = s(0,Ac);
@@ -425,7 +428,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
 /// @param pFlag flag for using Taylor-Hood function space for pressure
 /// Replicates 'FUNCTION vInteg(dId, s, l, u, pFlag)' defined in ALLFUN.f.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u, bool pFlag)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u, bool pFlag, const Array<double>* Do)
 {
   using namespace consts;
 
@@ -556,8 +559,11 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
           xl.set_col(a, com_mod.x.col(Ac));
 
           if (com_mod.mvMsh) {
-            for (int i = 0; i < nsd; i++) { 
-              xl(i,a) += com_mod.Do(i+nsd+1,Ac);
+            if (!Do) {
+              throw std::runtime_error("integ: Do parameter required for moving mesh but not provided. Volume integral, dId: " + std::to_string(dId));
+            }
+            for (int i = 0; i < nsd; i++) {
+              xl(i,a) += (*Do)(i+nsd+1,Ac);
             }
           }
 
@@ -678,7 +684,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
 /// @param pFlag flag for using Taylor-Hood function space for pressure
 /// @param cfg denotes which mechanical configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s, bool pFlag, MechanicalConfigurationType cfg)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s, bool pFlag, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
 {
   using namespace consts;
   #define n_debug_integ_s
@@ -803,7 +809,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
       if (!isIB) {
         // Get normal vector in cfg configuration
         auto Nx = fs.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, insd, fs.eNoN, Nx, n, cfg);
+        nn::gnnb(com_mod, lFa, e, g, nsd, insd, fs.eNoN, Nx, n, cfg, Dn, Do);
       }
 
       // Calculating the Jacobian (encodes area of face element)
@@ -841,8 +847,8 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
 /// @param pFlag flag for using Taylor-Hood function space for pressure
 /// @param cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, 
-            const Array<double>& s, MechanicalConfigurationType cfg)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
+            const Array<double>& s, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
 {
   using namespace consts;
 
@@ -923,7 +929,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
       if (!isIB) {
         // Get normal vector in cfg configuration
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg);
+        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, cfg, Dn, Do);
         //CALL GNNB(lFa, e, g, nsd-1, lFa.eNoN, lFa.Nx(:,:,g), n)
       } else {
         //CALL GNNIB(lFa, e, g, n)
@@ -975,8 +981,8 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
 /// @param cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
 ///
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, 
-    const Array<double>& s, const int l, std::optional<int> uo, bool THflag, MechanicalConfigurationType cfg)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
+    const Array<double>& s, const int l, std::optional<int> uo, bool THflag, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
 {
   using namespace consts;
 
@@ -1025,21 +1031,21 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
   double result = 0.0; 
   
   // If s vector, integrate as vector (dot with surface normal)
-  if (u-l+1 == nsd) { 
+  if (u-l+1 == nsd) {
      Array<double> vec(nsd,nNo);
      for (int a = 0; a < nNo; a++) {
        for (int i = l, n = 0; i <= u; i++, n++) {
-         vec(n,a) = s(i,a);                 
+         vec(n,a) = s(i,a);
        }
      }
-     result = integ(com_mod, cm_mod, lFa, vec, cfg);
+     result = integ(com_mod, cm_mod, lFa, vec, cfg, Dn, Do);
   // If s scalar, integrate as scalar
   } else if (l == u) {
      Vector<double> sclr(nNo);
      for (int a = 0; a < nNo; a++) {
         sclr(a) = s(l,a);
      }
-     result = integ(com_mod, cm_mod, lFa, sclr, flag, cfg);
+     result = integ(com_mod, cm_mod, lFa, sclr, flag, cfg, Dn, Do);
   } else {
     throw std::runtime_error("Unexpected dof in integ");
   }
