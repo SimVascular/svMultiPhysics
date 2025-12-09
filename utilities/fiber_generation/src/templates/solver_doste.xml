@@ -77,7 +77,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
     	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -121,7 +121,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -165,7 +165,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -208,7 +208,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -251,7 +251,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -294,7 +294,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -336,7 +336,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -378,7 +378,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -423,7 +423,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
@@ -468,7 +468,7 @@
 		<Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner> 
       	</Linear_algebra>
-		<Max_iterations> 500 </Max_iterations>
+		<Max_iterations> 2000 </Max_iterations>
 		<Tolerance>      1e-6 </Tolerance>
 	</LS>
 
