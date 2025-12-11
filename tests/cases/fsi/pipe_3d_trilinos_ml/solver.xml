@@ -131,8 +131,8 @@
    <Poisson_ratio> 0.3 </Poisson_ratio> 
 
    <LS type="CG" >
-      <Linear_algebra type="trilinos" >
-         <Preconditioner> trilinos-ml </Preconditioner>
+      <Linear_algebra type="fsils" >
+         <Preconditioner> fsils </Preconditioner>
       </Linear_algebra>
       <Tolerance> 1e-12 </Tolerance>
    </LS>

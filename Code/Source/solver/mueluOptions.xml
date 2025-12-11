@@ -1,0 +1,37 @@
+<ParameterList name="MueLu">
+  <Parameter name="verbosity" type="string" value="none"/>
+  <Parameter name="max levels" type="int" value="6"/>
+  <Parameter name="cycle type" type="string" value="V"/>
+  <Parameter name="fuse prolongation and update" type="bool" value="true"/>
+
+  <!-- Problem type -->
+  <Parameter name="problem: type" type="string" value="unknown"/>
+  <Parameter name="number of equations" type="int" value="4"/>
+
+  <!-- Aggregation -->
+  <Parameter name="aggregation: type" type="string" value="coupled"/>
+  <Parameter name="aggregation: min agg size" type="int" value="2"/>
+  <Parameter name="aggregation: max agg size" type="int" value="8"/>
+  <Parameter name="aggregation: ordering" type="string" value="natural"/>
+  <Parameter name="aggregation: drop scheme" type="string" value="classical"/>
+  <Parameter name="aggregation: strength-of-connection: measure" type="string" value="smoothed aggregation"/>
+  <Parameter name="aggregation: number of random vectors" type="int" value="5"/>
+  <Parameter name="aggregation: number of times to pre or post smooth" type="int" value="3"/>
+
+  <!-- Smoothed Aggregation -->
+  <Parameter name="sa: damping factor" type="double" value="1.0"/>
+  <Parameter name="sa: use filtered matrix" type="bool" value="false"/>
+
+  <!-- Smoother -->
+  <Parameter name="smoother: type" type="string" value="RELAXATION"/>
+  <Parameter name="smoother: pre or post" type="string" value="both"/>
+  <Parameter name="smoother: overlap" type="int" value="0"/>
+  <ParameterList name="smoother: params">
+    <Parameter name="relaxation: type" type="string" value="Gauss-Seidel"/>
+    <Parameter name="relaxation: sweeps" type="int" value="2"/>
+  </ParameterList>
+
+  <!-- Coarse solver -->
+  <Parameter name="coarse: type" type="string" value="KLU"/>
+  <Parameter name="coarse: max size" type="int" value="2000"/>
+</ParameterList>

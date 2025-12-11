@@ -1,5 +1,5 @@
 # Use the pre-configured image from Docker Hub as the base
-FROM simvascular/libraries:ubuntu22 AS builder
+FROM simvascular/libraries:latest AS builder
 
 # Get latest svMultiPhysics solver from GitHub repository
 RUN git clone https://github.com/SimVascular/svMultiPhysics.git
@@ -16,7 +16,7 @@ RUN cmake -DSV_PETSC_DIR:STRING=/petsc .. &&\
 
 
 # FINAL IMAGE with solver executable
-FROM simvascular/libraries:ubuntu22 AS final 
+FROM simvascular/libraries:latest AS final 
 
 COPY --from=builder /svMultiPhysics/build-petsc /build-petsc
 COPY --from=builder /svMultiPhysics/build-trilinos /build-trilinos
