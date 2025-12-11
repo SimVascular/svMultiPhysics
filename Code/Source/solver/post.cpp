@@ -1985,7 +1985,7 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
             for (int l = 0; l < nsd; l++) {
               sigma(l,l) = sigma(l,l) - trS;
             }
-            double vmises = sqrt(mat_ddot(sigma, sigma, nsd));
+            double vmises = sqrt(1.5 * mat_ddot(sigma, sigma, nsd));
             resl(0) = vmises;
             sE(e) = sE(e) + w*vmises;
           }
