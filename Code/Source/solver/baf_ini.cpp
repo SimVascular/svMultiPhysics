@@ -126,6 +126,21 @@ void baf_ini(Simulation* simulation)
           com_mod.cplBC.fa[i].RCR.Rd = bc.RCR.Rd;
           com_mod.cplBC.fa[i].RCR.Pd = bc.RCR.Pd;
           com_mod.cplBC.fa[i].RCR.Xo = bc.RCR.Xo;
+        } else if (utils::btest(bc.bType, iBC_Neu0D)) {   // Not sure what is happening here
+          com_mod.cplBC.fa[i].bGrp = CplBCType::cplBC_Neu0D;
+          // <<[dev_cap]>> Why is this needed?
+          // For implicit or semi-implicit (not explicit) Neumann 0D coupling scheme, 
+          // set bType to resistance
+          if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
+            bc.bType= utils::ibset(bc.bType, iBC_res);
+          }
+
+          // Copy RCR structure from bc() to cplBC()
+          com_mod.cplBC.fa[i].RCR.Rp = bc.RCR.Rp;
+          com_mod.cplBC.fa[i].RCR.C  = bc.RCR.C;
+          com_mod.cplBC.fa[i].RCR.Rd = bc.RCR.Rd;
+          com_mod.cplBC.fa[i].RCR.Pd = bc.RCR.Pd;
+          com_mod.cplBC.fa[i].RCR.Xo = bc.RCR.Xo;
         } else { 
           throw std::runtime_error("Not a compatible cplBC_type");
         }
@@ -751,6 +766,45 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       
       // Fills lhs.face(i) variables, including val is sVl exists
       fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu, gNodes, sVl); 
+    } else {
+      lBc.lsPtr = -1;
+    }
+
+  } else if (btest(lBc.bType, iBC_Neu0D)) {
+    // <<dev_cap>>TODO use class/cap
+    // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
+    if (btest(lBc.bType, iBC_res)) {
+      sV = 0.0;
+      for (int e = 0; e < lFa.nEl; e++) {
+        if (lFa.eType == ElementType::NRB) {
+          // CALL NRBNNXB(msh(iM),lFa,e)
+        }
+        for (int g = 0; g < lFa.nG; g++) {
+          Vector<double> n(nsd);
+          auto Nx = lFa.Nx.slice(g);
+          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n);
+
+          for (int a = 0; a < lFa.eNoN; a++) {
+            int Ac = lFa.IEN(a,e);
+            for (int i = 0; i < nsd; i++) {
+              sV(i,Ac) = sV(i,Ac) + lFa.N(a,g)*lFa.w(g)*n(i);
+            }
+          }
+        }
+      }
+
+      if (sVl.size() != 0) { 
+        for (int a = 0; a < lFa.nNo; a++) {
+          int Ac = lFa.gN(a);
+          sVl.set_col(a, sV.col(Ac));
+        }
+      }
+
+      lsPtr = lsPtr + 1;
+      lBc.lsPtr = lsPtr;
+      
+      // Fills lhs.face(i) variables, including val is sVl exists
+      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu0D, gNodes, sVl); 
     } else {
       lBc.lsPtr = -1;
     }

@@ -17,6 +17,7 @@
 #include "CmMod.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
+#include "ZeroDBoundaryCondition.h" //<<dev_cap>>
 #include "Timer.h"
 #include "Vector.h"
 
@@ -198,6 +199,9 @@ class bcType
 
     // Robin BC class
     RobinBoundaryCondition robin_bc;
+
+    // ZeroD BC class <<dev_class>>
+    ZeroDBoundaryCondition zerod_bc;
 };
 
 /// @brief Class storing data for B-Splines.

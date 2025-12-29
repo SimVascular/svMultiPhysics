@@ -156,6 +156,17 @@ void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], dou
       ind = ind + 1;
     }
   }
+  for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
+    auto& fa = cplBC.fa[iFa];
+    // <<[dev_cap]>> Maybe this need to change?
+    if (fa.bGrp == consts::CplBCType::cplBC_Neu0D) {
+      QCoupled[ind] = fa.Qo;
+      QnCoupled[ind] = fa.Qn;
+      PCoupled[ind] = fa.Po;
+      PnCoupled[ind] = fa.Pn;
+      ind = ind + 1;
+    }
+  }
 }
 
 void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[]) {
@@ -213,6 +224,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   numCoupledSrfs = cplBC.nFa;
   int nDir = 0;
   int nNeu = 0;
+  int nNeu0D = 0;
   
   // If this process is the master process on the communicator
   if (cm.mas(cm_mod)) {
@@ -230,6 +242,14 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       if (fa.bGrp == consts::CplBCType::cplBC_Neu) {
         nsrflistCoupled.push_back(iFa);
         nNeu = nNeu + 1;
+      }
+    }
+    for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
+      auto& fa = cplBC.fa[iFa];
+
+      if (fa.bGrp == consts::CplBCType::cplBC_Neu0D) {
+        nsrflistCoupled.push_back(iFa);
+        nNeu0D = nNeu0D + 1;
       }
     }
   }
@@ -392,6 +412,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
   int nDir = 0;
   int nNeu = 0;
+  int nNeu0D = 0;
   double dt = com_mod.dt;
   auto& cplBC = com_mod.cplBC;
   auto& cm = com_mod.cm;
@@ -405,6 +426,8 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
         nDir = nDir + 1;
       } else if (fa.bGrp == consts::CplBCType::cplBC_Neu) {
         nNeu = nNeu + 1;
+      } else if (fa.bGrp == consts::CplBCType::cplBC_Neu0D) {
+        nNeu0D = nNeu0D + 1;
       }
     }
 

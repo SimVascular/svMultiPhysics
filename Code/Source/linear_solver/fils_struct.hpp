@@ -31,7 +31,8 @@ namespace fsi_linear_solver {
 enum class BcType
 {
   BC_TYPE_Dir = 0,
-  BC_TYPE_Neu = 1
+  BC_TYPE_Neu = 1,
+  BC_TYPE_Neu0D = 2   // <<[dev_cap]>>
 };
 
 enum class BcopType

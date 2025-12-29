@@ -795,6 +795,7 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<std::string> spatial_values_file_path;
     Parameter<double> stiffness;
     Parameter<std::string> svzerod_solver_block;
+    Parameter<std::string> svzerod_solver_cap;
 
     Parameter<std::string> temporal_and_spatial_values_file_path;
     Parameter<std::string> temporal_values_file_path;

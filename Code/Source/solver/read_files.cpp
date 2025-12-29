@@ -136,6 +136,9 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
     }
 
+  } else if (std::set<std::string>{"Neumann0D", "Neu0D"}.count(bc_type)) {  // <<dev_cap>>
+    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D)); 
+
   } else if (std::set<std::string>{"Traction", "Trac"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_trac)); 
 
@@ -381,6 +384,27 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     }
   }
 
+  
+  // Coupled Neumann 0D BC <<dev_cap>>
+  if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D))) { 
+    // Check that svZeroDSolver_interface has been defined
+    if (!com_mod.cplBC.svzerod_solver_interface.has_data) {
+      throw std::runtime_error("[read_bc] svZeroDSolver_interface must be defined for Neumann0D BC.");
+    }
+
+    if (bc_params->svzerod_solver_cap.defined()) {
+      lBc.zerod_bc = ZeroDBoundaryCondition(bc_params->svzerod_solver_cap.value(),
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            simulation->logger);
+    } else {
+      lBc.zerod_bc = ZeroDBoundaryCondition(com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            simulation->logger);
+                              
+    }
+  }
+
+
+
   // To impose value or flux
   bool ltmp = bc_params->impose_flux.value();
   if (ltmp) {
@@ -488,9 +512,9 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   }
 
   //  For Neumann BC, is load vector changing with deformation (follower pressure)
-  //
+  //  <<dev_cap>>
   lBc.flwP = false;
-  if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) {
+  if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)) || utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D))) {
     if (lEq.phys == Equation_struct || lEq.phys == Equation_ustruct) {
       lBc.flwP = bc_params->follower_pressure_load.value();
     }
@@ -500,7 +524,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   //
   lBc.masN = 0;
 
-  if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) {
+  if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)) || utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D))) {
     ltmp = false;
     lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_undefNeu));
     ltmp = bc_params->undeforming_neu_face.value();

@@ -92,6 +92,41 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       // Compute flowrates at 3D Neumann boundaries at timesteps n and n+1
       if (utils::btest(bc.bType, iBC_Neu)) {
         // If struct or ustruct, use old and new configurations to compute flowrate integral
+        std::cout << "[calc_der_cpl_bc] Processing iBC_Neu at iBc: " << iBc << std::endl;
+        if ((cPhys == EquationType::phys_struct) || (cPhys == EquationType::phys_ustruct)) {
+
+          // Must use follower pressure load for 0D coupling with struct/ustruct
+          if (!bc.flwP) { 
+            throw std::runtime_error("[calc_der_cpl_bc]  Follower pressure load must be used for 0D coupling with struct/ustruct");
+          }
+          cfg_o = MechanicalConfigurationType::old_timestep;
+          cfg_n = MechanicalConfigurationType::new_timestep;
+        }
+        // If fluid, FSI, or CMM, use reference configuration to compute flowrate integral
+        // Note that for FSI, mvMsh will modify geometry in gnnb()
+        else if ((cPhys == EquationType::phys_fluid) || (cPhys == EquationType::phys_FSI) || (cPhys == EquationType::phys_CMM)) {
+          cfg_o = MechanicalConfigurationType::reference;
+          cfg_n = MechanicalConfigurationType::reference;
+        }
+        else {
+          throw std::runtime_error("[calc_der_cpl_bc]  Invalid physics type for 0D coupling");
+        }
+        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1, false, cfg_o);
+        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yn, 0, nsd-1, false, cfg_n);
+        cplBC.fa[ptr].Po = 0.0;
+        cplBC.fa[ptr].Pn = 0.0;
+        #ifdef debug_calc_der_cpl_bc 
+        dmsg << "iBC_Neu ";
+        dmsg << "cplBC.fa[ptr].Qo: " << cplBC.fa[ptr].Qo;
+        dmsg << "cplBC.fa[ptr].Qn: " << cplBC.fa[ptr].Qn;
+        #endif
+
+      } 
+      // Compute flowrates at 3D Neumann boundaries at timesteps n and n+1 <<dev_cap>>
+      if (utils::btest(bc.bType, iBC_Neu0D)) {
+        // <<[dev_cap]>> 
+        std::cout << "[calc_der_cpl_bc] Processing iBC_Neu0D at iBc: " << iBc << std::endl;
+        // If struct or ustruct, use old and new configurations to compute flowrate integral
         if ((cPhys == EquationType::phys_struct) || (cPhys == EquationType::phys_ustruct)) {
 
           // Must use follower pressure load for 0D coupling with struct/ustruct
@@ -158,7 +193,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
     int i = bc.cplBCptr;
-    if (i != -1 && utils::btest(bc.bType, iBC_Neu)) {
+    if (i != -1 && (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Neu0D))) {
       diff = diff + (cplBC.fa[i].Qn * cplBC.fa[i].Qn);
       j = j + 1;
     }
@@ -184,7 +219,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     auto& bc = eq.bc[iBc];
     int i = bc.cplBCptr;
 
-    if (i != -1 && utils::btest(bc.bType, iBC_Neu)) {
+    if (i != -1 && (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Neu0D))) {
 
         // Finite difference perturbation in flowrate
         cplBC.fa[i].Qn = orgQ[i] + diff;
@@ -725,6 +760,33 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
           cplBC.fa[ptr].Po = 0.0;
           cplBC.fa[ptr].Pn = 0.0;
         } 
+        // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1
+        if (utils::btest(bc.bType, iBC_Neu0D)) {
+          // If struct or ustruct, use old and new configurations to compute flowrate integral
+          if ((cPhys == EquationType::phys_struct) || (cPhys == EquationType::phys_ustruct)) {
+
+            // Must use follower pressure load for 0D coupling with struct/ustruct
+            if (!bc.flwP) { 
+              throw std::runtime_error("[set_bc_cpl]  Follower pressure load must be used for 0D coupling with struct/ustruct");
+            }
+            cfg_o = MechanicalConfigurationType::old_timestep;
+            cfg_n = MechanicalConfigurationType::new_timestep;
+          }
+          // If fluid, FSI, or CMM, use reference configuration to compute flowrate integral
+          // Note that for FSI, mvMsh will modify geometry in gnnb()
+          else if ((cPhys == EquationType::phys_fluid) || (cPhys == EquationType::phys_FSI) || (cPhys == EquationType::phys_CMM)) {
+            cfg_o = MechanicalConfigurationType::reference;
+            cfg_n = MechanicalConfigurationType::reference;
+          }
+          else {
+            throw std::runtime_error("[set_bc_cpl]  Invalid physics type for 0D coupling");
+          }
+        
+          cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, nsd-1, false, cfg_o);
+          cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, nsd-1, false, cfg_n);
+          cplBC.fa[ptr].Po = 0.0;
+          cplBC.fa[ptr].Pn = 0.0;
+        }
         // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
         else if (utils::btest(bc.bType,iBC_Dir)) {
           cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, nsd) / area;
@@ -1319,7 +1381,7 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
 
     if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
 
-    if (utils::btest(bc.bType, iBC_Neu)) {
+    if (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Neu0D)) {
       #ifdef debug_set_bc_neu
       dmsg << "iM: " << iM+1;
       dmsg << "iFa: " << iFa+1;

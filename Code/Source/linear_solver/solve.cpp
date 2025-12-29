@@ -60,7 +60,7 @@ void fsils_solve(FSILS_lhsType& lhs, FSILS_lsType& ls, const int dof, Array<doub
 
     bool flag = false;
     for (auto& face : lhs.face) { 
-      if (face.bGrp == BcType::BC_TYPE_Neu) {
+      if (face.bGrp == BcType::BC_TYPE_Neu || face.bGrp == BcType::BC_TYPE_Neu0D) {   // <<[dev_cap]>> 
         flag = true;
         break;
       }
@@ -76,7 +76,7 @@ void fsils_solve(FSILS_lhsType& lhs, FSILS_lsType& ls, const int dof, Array<doub
       if (!face.incFlag) {
         continue;
       }
-      bool flag = (face.bGrp == BcType::BC_TYPE_Neu);
+      bool flag = (face.bGrp == BcType::BC_TYPE_Neu || face.bGrp == BcType::BC_TYPE_Neu0D);   // <<[dev_cap]>>
       if (flag && res(faIn) != 0.0) {
         face.res = res(faIn);
         face.coupledFlag = true;
