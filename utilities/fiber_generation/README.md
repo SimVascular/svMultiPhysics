@@ -1,5 +1,5 @@
 # SV-fibergen
-Python + SVmultiphysics codes for fiber generation. Two methods are implemented:
+Python + svMultiPhysics codes for fiber generation. Two methods are implemented:
 * Bayer et al. (2012). [link](https://doi.org/10.1007/s10439-012-0593-5)
 * Doste et al. (2018). [link](https://doi.org/10.1002/cnm.3185)
 

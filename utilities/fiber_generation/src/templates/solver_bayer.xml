@@ -12,7 +12,7 @@
 <Save_results_to_VTK_format> 1 </Save_results_to_VTK_format>
 <Name_prefix_of_saved_VTK_files> result </Name_prefix_of_saved_VTK_files>
 <Increment_in_saving_VTK_files> 1 </Increment_in_saving_VTK_files>
-<Save_results_in_folder> /Users/jjv/Research/CEPCRTProject/ct_1010/heat/fibers </Save_results_in_folder>
+<Save_results_in_folder> PATH_TO_OUTPUT_FLDR </Save_results_in_folder>
 <Start_saving_after_time_step> 1 </Start_saving_after_time_step>
 
 <Increment_in_saving_restart_files> 1 </Increment_in_saving_restart_files>
@@ -25,21 +25,21 @@
 </GeneralSimulationParameters>
 
 <Add_mesh name="msh" >
-	<Mesh_file_path> /Users/jjv/Research/CEPCRTProject/ct_1010/VOLUME.vtu </Mesh_file_path>
+	<Mesh_file_path> VOLUME.vtu </Mesh_file_path>
 	<Add_face name="epi" >
-		<Face_file_path> /Users/jjv/Research/CEPCRTProject/ct_1010/mesh-surfaces/EPI.vtp </Face_file_path>
+		<Face_file_path> EPI.vtp </Face_file_path>
 	</Add_face>
 	<Add_face name="epi_top" >
-		<Face_file_path> /Users/jjv/Research/CEPCRTProject/ct_1010/mesh-surfaces/BASE.vtp </Face_file_path>
+		<Face_file_path> BASE.vtp </Face_file_path>
 	</Add_face>
 	<Add_face name="epi_apex" >
-		<Face_file_path> /Users/jjv/Research/CEPCRTProject/ct_1010/mesh-surfaces/EPI_APEX.vtp </Face_file_path>
+		<Face_file_path> EPI_APEX.vtp </Face_file_path>
 	</Add_face>
 	<Add_face name="endo_lv" >
-		<Face_file_path> /Users/jjv/Research/CEPCRTProject/ct_1010/mesh-surfaces/LV.vtp </Face_file_path>
+		<Face_file_path> LV.vtp </Face_file_path>
 	</Add_face>
 	<Add_face name="endo_rv" >
-		<Face_file_path> /Users/jjv/Research/CEPCRTProject/ct_1010/mesh-surfaces/RV.vtp </Face_file_path>
+		<Face_file_path> RV.vtp </Face_file_path>
 	</Add_face>
 </Add_mesh>
 
