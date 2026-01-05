@@ -49,7 +49,7 @@
 
 <Add_projection name = "fc_efib">
    <Project_from_face> endo </Project_from_face>
-   <Projection_tolerance> -1.0 </Projection_tolerance> 
+   <Projection_tolerance> -1.0 </Projection_tolerance>  <!-- a negative value means using the nearest neighbor, no matter how far it is -->
 </Add_projection>
 
 

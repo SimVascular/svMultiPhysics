@@ -3,7 +3,7 @@
 
 Simulate the propagation of an electric signal in a cylinder coupled with a network of Purkinje fibers using the ten-Tusscher-Panfilov cell activation model.
 
-Note: Conductivities in the myocardium were selected so that the propagation occurs in the myocardium (if too slow, due to the coarseness of the mesh, it does not propagation beyond the coupled nodes).
+Note: Conductivities in the myocardium were selected so that the propagation occurs in the myocardium (if too slow, due to the coarseness of the mesh, the action potential does not propagate beyond the coupled nodes).
 
 <p align="center">
    <img src="./activation_10fps.gif" width="600">
