@@ -74,10 +74,6 @@ bool Integrator::step() {
   auto& cm_mod = simulation_->cm_mod;
   auto& cep_mod = simulation_->get_cep_mod();
 
-  auto& An = An_;  // Use member variable
-  auto& Yn = Yn_;
-  auto& Dn = Dn_;
-
   int& cTS = com_mod.cTS;
   int& cEq = com_mod.cEq;
 
@@ -197,7 +193,7 @@ void Integrator::initiator_step() {
   dmsg << "Initiator step ..." << std::endl;
   #endif
 
-  pici(Ag_, Yg_, Dg_);
+  initiator(Ag_, Yg_, Dg_);
 
   // Debug output
   Ag_.write("Ag_pic" + istr_);
@@ -273,13 +269,11 @@ void Integrator::apply_boundary_conditions() {
   dmsg << "Apply boundary conditions ..." << std::endl;
   #endif
 
-  auto& Yn = Yn_;
-
   Yg_.write("Yg_vor_neu" + istr_);
   Dg_.write("Dg_vor_neu" + istr_);
 
   // Apply Neumman or Traction boundary conditions
-  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, Yn, Do_);
+  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, Yn_, Do_);
 
   // Apply CMM BC conditions
   if (!com_mod.cmmInit) {
@@ -294,7 +288,7 @@ void Integrator::apply_boundary_conditions() {
   }
 
   if (com_mod.ris0DFlag) {
-    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, Yn, Do_);
+    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, Yn_, Do_);
   }
 
   // Apply contact model and add its contribution to residual
@@ -341,10 +335,10 @@ bool Integrator::corrector_and_check_convergence() {
   dmsg << "Update corrector ..." << std::endl;
   #endif
 
-  picc();
+  corrector();
 
   // Debug output
-  Yn_.write("Yn_picc" + istr_);
+  Yn_.write("Yn_corrector" + istr_);
 
   // Check if all equations converged
   return std::count_if(com_mod.eq.begin(), com_mod.eq.end(),
@@ -526,7 +520,7 @@ void Integrator::predictor()
 }
 
 //------------------------
-// pici
+// initiator
 //------------------------
 /// @brief Initiator for Generalized α-Method
 ///
@@ -542,14 +536,14 @@ void Integrator::predictor()
 ///   Yg - velocity
 ///   Dg - displacement
 ///
-void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
+void Integrator::initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
 {
   using namespace consts;
 
   auto& com_mod = simulation_->com_mod;
 
-  #define n_debug_pici
-  #ifdef debug_pici
+  #define n_debug_initiator
+  #ifdef debug_initiator
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
@@ -562,7 +556,7 @@ void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
 
   // [NOTE] Setting gobal variable 'dof'.
   dof = eq.dof;
-  #ifdef debug_pici
+  #ifdef debug_initiator
   dmsg << "cEq: " << cEq;
   dmsg << "eq.itr: " << eq.itr;
   dmsg << "dof: " << dof;
@@ -586,7 +580,7 @@ void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
     coef(1) = eq.am;
     coef(2) = 1.0 - eq.af;
     coef(3) = eq.af;
-    #ifdef debug_pici
+    #ifdef debug_initiator
     dmsg << "s: " << s;
     dmsg << "e: " << e;
     dmsg << "coef: " << coef[0] << " " << coef[1] << " " << coef[2] << " " << coef[3];
@@ -632,7 +626,7 @@ void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
   }
 }
 //------------------------
-// picc
+// corrector
 //------------------------
 /// @brief Corrector with convergence check
 ///
@@ -654,15 +648,15 @@ void Integrator::pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
 ///   eq.pNorm
 /// \endcode
 //
-void Integrator::picc()
+void Integrator::corrector()
 {
   using namespace consts;
 
   auto& com_mod = simulation_->com_mod;
   auto& cep_mod = simulation_->get_cep_mod();
 
-  #define n_debug_picc
-  #ifdef debug_picc
+  #define n_debug_corrector
+  #ifdef debug_corrector
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
@@ -696,7 +690,7 @@ void Integrator::picc()
   coef[2] = 1.0 / eq.am;
   coef[3] = eq.af*coef[0]*coef[2];
 
-  #ifdef debug_picc
+  #ifdef debug_corrector
   dmsg << "cEq: " << cEq;
   dmsg << "s: " << s;
   dmsg << "e: " << e;
@@ -750,13 +744,13 @@ void Integrator::picc()
   }
 
   if (std::set<EquationType>{Equation_stokes, Equation_fluid, Equation_ustruct, Equation_FSI}.count(eq.phys) != 0) {
-    pic_eth();
+    corrector_taylor_hood();
   }
 
   if (eq.phys == Equation_FSI) {
     int s = com_mod.eq[1].s;
     int e = com_mod.eq[1].e;
-    #ifdef debug_picc
+    #ifdef debug_corrector
     dmsg << "eq.phys == Equation_FSI ";
     dmsg << "com_mod.eq[1].sym: " << com_mod.eq[1].sym;
     dmsg << "s: " << s;
@@ -813,9 +807,6 @@ void Integrator::picc()
     }
   }
 
-  // IB treatment
-  //if (ibFlag) CALL IB_PICC()
-
   // Computes norms and check for convergence of Newton iterations
   double eps = std::numeric_limits<double>::epsilon();
 
@@ -825,14 +816,14 @@ void Integrator::picc()
 
   if (utils::is_zero(eq.iNorm)) {
     eq.iNorm = eq.FSILS.RI.iNorm;
-    #ifdef debug_picc
+    #ifdef debug_corrector
     dmsg << "eq.iNorm: " << eq.iNorm;
     #endif
   }
 
   if (eq.itr == 1) {
      eq.pNorm = eq.FSILS.RI.iNorm / eq.iNorm;
-    #ifdef debug_picc
+    #ifdef debug_corrector
     dmsg << "eq.itr: " << eq.itr;
     dmsg << "eq.pNorm: " << eq.pNorm;
     #endif
@@ -844,7 +835,7 @@ void Integrator::picc()
   bool l3 = (r1 <= eq.tol*eq.pNorm);
   bool l4 = (eq.itr >= eq.minItr);
 
-  #ifdef debug_picc
+  #ifdef debug_corrector
   dmsg << "eq.itr: " << eq.itr;
   dmsg << "eq.minItr: " << eq.minItr;
   dmsg << "r1: " << r1;
@@ -856,7 +847,7 @@ void Integrator::picc()
 
   if (l1 || ((l2 || l3) && l4)) {
     eq.ok = true;
-    #ifdef debug_picc
+    #ifdef debug_corrector
     dmsg << "eq.ok: " << eq.ok;
     dmsg << "com_mod.eq[0].ok: " << com_mod.eq[0].ok;
     dmsg << "com_mod.eq[1].ok: " << com_mod.eq[1].ok;
@@ -865,7 +856,7 @@ void Integrator::picc()
 
   auto& eqs = com_mod.eq;
   if (std::count_if(eqs.begin(),eqs.end(),[](eqType& eq){return eq.ok;}) == eqs.size()) {
-    #ifdef debug_picc
+    #ifdef debug_corrector
     dmsg << "all ok";
     #endif
     return;
@@ -874,7 +865,7 @@ void Integrator::picc()
 
   if (eq.coupled) {
     cEq = cEq + 1;
-    #ifdef debug_picc
+    #ifdef debug_corrector
     dmsg << "eq " << " coupled ";
     dmsg << "1st update cEq: " << cEq;
     #endif
@@ -906,14 +897,14 @@ void Integrator::picc()
       cEq = cEq + 1;
     }
   }
- #ifdef debug_picc
+ #ifdef debug_corrector
  dmsg << "eq " << " coupled ";
  dmsg << "2nd update cEq: " << cEq;
  #endif
 }
 
 //------------------------
-// pic_eth
+// corrector_taylor_hood
 //------------------------
 /// @brief Pressure correction at edge nodes for Taylor-Hood type element
 ///
@@ -924,7 +915,7 @@ void Integrator::picc()
 ///
 /// Modifies: Yn_
 ///
-void Integrator::pic_eth()
+void Integrator::corrector_taylor_hood()
 {
   using namespace consts;
 
@@ -1014,7 +1005,7 @@ void Integrator::pic_eth()
           nn::gnn(eNoNq, nsd, nsd, Nx, xql, Nqx, Jac, ksix);
 
           if (utils::is_zero(Jac)) {
-            throw std::runtime_error("[pic_eth] Jacobian for element " + std::to_string(e) + " is < 0.");
+            throw std::runtime_error("[corrector_taylor_hood] Jacobian for element " + std::to_string(e) + " is < 0.");
           }
         }
 

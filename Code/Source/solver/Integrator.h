@@ -217,7 +217,7 @@ private:
   void update_residual_arrays(eqType& eq);
 
   /**
-   * @brief Initiator function for generalized-alpha method (pici)
+   * @brief Initiator function for generalized-alpha method (initiator)
    *
    * Computes solution variables at intermediate time levels using
    * generalized-alpha parameters (am, af) for time integration.
@@ -227,23 +227,23 @@ private:
    * @param Yg Solution variable array at generalized-alpha level
    * @param Dg Integrated variable array at generalized-alpha level
    */
-  void pici(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg);
+  void initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg);
 
   /**
-   * @brief Corrector function with convergence check (picc)
+   * @brief Corrector function with convergence check (corrector)
    *
    * Updates solution at n+1 time level and checks convergence of Newton
    * iterations. Also handles equation switching for coupled problems.
    */
-  void picc();
+  void corrector();
 
   /**
-   * @brief Pressure correction for Taylor-Hood elements (pic_eth)
+   * @brief Pressure correction for Taylor-Hood elements (corrector_taylor_hood)
    *
    * Interpolates pressure at edge nodes using reduced basis applied
    * on element vertices for Taylor-Hood type elements.
    */
-  void pic_eth();
+  void corrector_taylor_hood();
 };
 
 #endif // INTEGRATOR_H

@@ -334,7 +334,7 @@ void iterate_solution(Simulation* simulation)
 
     iterate_precomputed_time(simulation, integrator.get_An(), integrator.get_Yn(), integrator.get_Ao(), integrator.get_Yo(), integrator.get_Do());
 
-    // Inner loop for Newton iteration - now encapsulated in Integrator class
+    // Inner loop for Newton iteration 
     //
     #ifdef debug_iterate_solution
     dmsg << "Starting Newton iteration via Integrator ..." << std::endl;

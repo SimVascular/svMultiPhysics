@@ -633,10 +633,8 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
             // Add displacement at timestep n+1
             if (Dn != nullptr) {
               lX(i,a) = lX(i,a) + (*Dn)(i,Ac);
-            } else if (Do != nullptr) {
-              lX(i,a) = lX(i,a) + (*Do)(i,Ac);  // Fallback to Do if Dn not provided
             } else {
-              throw std::runtime_error("gnnb: Either Dn or Do parameter required for new_timestep configuration but neither provided");
+              throw std::runtime_error("gnnb: Dn required for new_timestep configuration but neither provided");
             }
           }
           break;

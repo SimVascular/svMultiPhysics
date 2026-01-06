@@ -1742,8 +1742,6 @@ class ComMod {
     /// @brief RIS mapping array, with global (total) enumeration
      std::vector<Array2D> grisMapList;
 
-    /// @brief Ao, Do, Yo moved to Integrator class (complete ownership transfer)
-
     /// @brief Residual vector
     Array<double>  R;
 
