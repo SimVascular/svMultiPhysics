@@ -6,27 +6,53 @@
 
 #include <string>
 #include <vector>
+#include "consts.h"
+#include "Array.h"
+#include "Vector.h"
 
-// Forward declaration to avoid heavy includes
+// Forward declarations to avoid heavy includes
 class LPNSolverInterface;
 class faceType;
 class ComMod;
+class CmMod;
+class SimulationLogger;
 
-/// @brief Skeleton for a 0D-coupled boundary condition on a cap face
+/// @brief Object-oriented 0D-coupled boundary condition on a cap face
 ///
 /// This class provides an interface for:
 ///  - loading a cap face VTP,
-///  - computing per-face quantities required for coupling, and
-///  - communicating with a 0D (lumped parameter) solver interface.
+///  - computing flowrates on the face for coupling, and
+///  - getting/setting pressure values from/to a 0D solver.
 ///
-/// Implementation is intentionally omitted here; this header only declares the API.
+/// The class manages its own coupling data. svZeroD_subroutines accesses
+/// Neu0D boundary conditions by iterating through com_mod.eq[].bc[].
 class ZeroDBoundaryCondition {
 protected:
-
     /// @brief Data members for BC
     const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by ZeroDBoundaryCondition)
-    std::string cap_face_vtp_file_;              ///< Path to VTP file (empty if no cap)
+    std::string cap_face_vtp_file_;          ///< Path to VTP file (empty if no cap)
     const SimulationLogger* logger_ = nullptr;  ///< Logger for warnings/info (not owned by ZeroDBoundaryCondition)
+
+    /// @brief svZeroD coupling data
+    std::string block_name_;                 ///< Block name in svZeroDSolver configuration
+    std::string face_name_;                  ///< Face name from the mesh
+    
+    /// @brief Flowrate data
+    double Qo_ = 0.0;                        ///< Flowrate at old timestep (t_n)
+    double Qn_ = 0.0;                        ///< Flowrate at new timestep (t_{n+1})
+    
+    /// @brief Pressure data  
+    double Po_ = 0.0;                        ///< Pressure at old timestep (for completeness)
+    double Pn_ = 0.0;                        ///< Pressure at new timestep (for completeness)
+    double pressure_ = 0.0;                  ///< Current pressure value from 0D solver (result)
+    
+    /// @brief svZeroD solution IDs
+    int flow_sol_id_ = -1;                   ///< ID in svZeroD solution vector for flow
+    int pressure_sol_id_ = -1;               ///< ID in svZeroD solution vector for pressure
+    double in_out_sign_ = 1.0;               ///< Sign for inlet/outlet (+1 inlet to LPN, -1 outlet)
+    
+    /// @brief Configuration for flowrate computation
+    bool follower_pressure_load_ = false;   ///< Whether to use follower pressure load (for struct/ustruct)
 
 public:
     /// @brief Default constructor - creates an uninitialized object
@@ -45,50 +71,97 @@ public:
 
     /// @brief Load the cap face VTP file and associate it with this boundary condition
     /// @param vtp_file_path Path to the cap face VTP file
-    /// @note This only declares the API; implementation is provided elsewhere.
     void load_cap_face_vtp(const std::string& vtp_file_path);
 
-//     /// @brief Compute geometric/physical quantities on the cap face needed for coupling
-//     /// Typical quantities may include:
-//     ///  - face area or lumped areas per node,
-//     ///  - outward normal integration factors,
-//     ///  - centroid(s), and
-//     ///  - mappings between global/local node IDs and VTP arrays.
-//     /// @note This only declares the API; implementation is provided elsewhere.
-//     void compute_face_quantities();
+    // =========================================================================
+    // svZeroD block configuration
+    // =========================================================================
+    
+    /// @brief Set the svZeroD block name
+    /// @param block_name Block name in svZeroDSolver configuration
+    void set_block_name(const std::string& block_name);
+    
+    /// @brief Get the svZeroD block name
+    /// @return Block name
+    const std::string& get_block_name() const;
+    
+    /// @brief Set the face name
+    /// @param face_name Face name from the mesh
+    void set_face_name(const std::string& face_name);
+    
+    /// @brief Get the face name
+    /// @return Face name
+    const std::string& get_face_name() const;
+    
+    /// @brief Set the svZeroD solution IDs for flow and pressure
+    /// @param flow_id Flow solution ID
+    /// @param pressure_id Pressure solution ID
+    /// @param in_out_sign Sign for inlet/outlet
+    void set_solution_ids(int flow_id, int pressure_id, double in_out_sign);
+    
+    /// @brief Get the flow solution ID
+    int get_flow_sol_id() const;
+    
+    /// @brief Get the pressure solution ID
+    int get_pressure_sol_id() const;
+    
+    /// @brief Get the inlet/outlet sign
+    double get_in_out_sign() const;
 
-//     /// @brief Set the interface to the external 0D solver
-//     /// @param interface Pointer to an already-initialized 0D solver interface
-//     /// @note The class does not take ownership of the pointer.
-//     void set_solver_interface(LPNSolverInterface* interface) noexcept;
+    // =========================================================================
+    // Flowrate computation and access
+    // =========================================================================
 
-//     /// @brief Send 3D-side boundary data (e.g., flow) to the 0D solver
-//     /// @param time Current simulation time
-//     /// @note This only declares the API; implementation is provided elsewhere.
-//     void send_to_zerod(double time);
+    /// @brief Set the follower pressure load flag
+    /// @param flwP Whether to use follower pressure load
+    void set_follower_pressure_load(bool flwP);
+    
+    /// @brief Get the follower pressure load flag
+    /// @return Whether to use follower pressure load
+    bool get_follower_pressure_load() const;
 
-//     /// @brief Receive 0D-side boundary data (e.g., pressure) from the 0D solver
-//     /// @param time Current simulation time
-//     /// @note This only declares the API; implementation is provided elsewhere.
-//     void receive_from_zerod(double time);
+    /// @brief Compute flowrates at the boundary face at old and new timesteps
+    /// @param com_mod ComMod reference containing simulation data
+    /// @param cm_mod CmMod reference for communication
+    /// @param phys Current physics type (struct, ustruct, fluid, etc.)
+    void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys);
 
-//     /// @brief Convenience method to perform a full exchange with the 0D solver
-//     /// @param time Current simulation time
-//     /// @note This only declares the API; implementation is provided elsewhere.
-//     void exchange_with_zerod(double time);
+    /// @brief Get the flowrate at old timestep
+    /// @return Flowrate at t_n
+    double get_Qo() const;
+    
+    /// @brief Get the flowrate at new timestep
+    /// @return Flowrate at t_{n+1}
+    double get_Qn() const;
+    
+    /// @brief Set the flowrates directly
+    /// @param Qo Flowrate at old timestep
+    /// @param Qn Flowrate at new timestep
+    void set_flowrates(double Qo, double Qn);
 
-// protected:
-//     /// @brief No specific array validation required for 0D coupling template
-//     void validate_array_value(const std::string&, double) const override {}
+    // =========================================================================
+    // Pressure access (result from 0D solver)
+    // =========================================================================
 
-// private:
-//     /// @brief Optional path to the cap face VTP used for geometric data
-//     std::string cap_vtp_file_path_;
+    /// @brief Set the pressure value from 0D solver
+    /// @param pressure Pressure value to be applied as Neumann BC
+    void set_pressure(double pressure);
+    
+    /// @brief Get the current pressure value
+    /// @return Current pressure value from 0D solver
+    double get_pressure() const;
 
-//     /// @brief External 0D solver interface (not owned)
-//     LPNSolverInterface* solver_interface_ = nullptr;
+    // =========================================================================
+    // Utility methods
+    // =========================================================================
+
+    /// @brief Get the associated face
+    /// @return Pointer to the associated face (may be nullptr if not set)
+    const faceType* get_face() const;
+    
+    /// @brief Check if the BC is properly initialized
+    /// @return true if face is set, false otherwise
+    bool is_initialized() const;
 };
 
 #endif // ZEROD_BOUNDARY_CONDITION_H
-
-

@@ -243,20 +243,32 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   //
   } else if (ctmp == "Coupled") { 
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl)); 
-    com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
-    lBc.cplBCptr = com_mod.cplBC.nFa - 1;
     auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
+    
+    // For Neu0D BCs, we use the ZeroDBoundaryCondition registry instead of cplBC.fa
+    // So we don't add to cplBC.nFa or store cplBCptr
+    bool is_Neu0D = utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D));
+    
+    if (!is_Neu0D) {
+      // For Dir and Neu BCs, add to cplBC.fa
+      com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
+      lBc.cplBCptr = com_mod.cplBC.nFa - 1;
+    }
 
     // The svZeroDSolver_interface parameter is defined.
     //
     if (com_mod.cplBC.svzerod_solver_interface.has_data) { 
-      if (!bc_params->svzerod_solver_block.defined()) {
-        std::string error_msg = std::string("The svZeroDSolver_block parameter must be defined for the 'Coupled' ") + 
-            std::string(" boundary condition for the face '") + face_name + "'.";
-        throw std::runtime_error(error_msg);
+      // For Neu0D, svZeroDSolver_block is required but we don't add to block_surface_map
+      // (the block_surface_map is for Dir and Neu BCs only)
+      if (!is_Neu0D) {
+        if (!bc_params->svzerod_solver_block.defined()) {
+          std::string error_msg = std::string("The svZeroDSolver_block parameter must be defined for the 'Coupled' ") + 
+              std::string(" boundary condition for the face '") + face_name + "'.";
+          throw std::runtime_error(error_msg);
+        }
+        auto block_name = bc_params->svzerod_solver_block();
+        com_mod.cplBC.svzerod_solver_interface.add_block_face(block_name, face_name);
       }
-      auto block_name = bc_params->svzerod_solver_block();
-      com_mod.cplBC.svzerod_solver_interface.add_block_face(block_name, face_name);
 
     // Assume coupling with GenBC.
     //
@@ -387,11 +399,24 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   
   // Coupled Neumann 0D BC <<dev_cap>>
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D))) { 
+
     // Check that svZeroDSolver_interface has been defined
     if (!com_mod.cplBC.svzerod_solver_interface.has_data) {
       throw std::runtime_error("[read_bc] svZeroDSolver_interface must be defined for Neumann0D BC.");
     }
 
+    // Check that Time_dependence is Coupled (which sets up cplBCptr)
+    if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_cpl))) {
+      throw std::runtime_error("[read_bc] Neumann0D BC requires Time_dependence to be 'Coupled'.");
+    }
+    
+    // Check that svZeroDSolver_block is defined
+    if (!bc_params->svzerod_solver_block.defined()) {
+      auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
+      throw std::runtime_error("[read_bc] svZeroDSolver_block must be defined for Neumann0D BC on face '" + face_name + "'.");
+    }
+
+    // Create the ZeroDBoundaryCondition object
     if (bc_params->svzerod_solver_cap.defined()) {
       lBc.zerod_bc = ZeroDBoundaryCondition(bc_params->svzerod_solver_cap.value(),
                                             com_mod.msh[lBc.iM].fa[lBc.iFa],
@@ -399,8 +424,11 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     } else {
       lBc.zerod_bc = ZeroDBoundaryCondition(com_mod.msh[lBc.iM].fa[lBc.iFa],
                                             simulation->logger);
-                              
     }
+    
+    // Set the block name and face name for svZeroD coupling
+    lBc.zerod_bc.set_block_name(bc_params->svzerod_solver_block.value());
+    lBc.zerod_bc.set_face_name(com_mod.msh[lBc.iM].fa[lBc.iFa].name);
   }
 
 
@@ -517,6 +545,12 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)) || utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D))) {
     if (lEq.phys == Equation_struct || lEq.phys == Equation_ustruct) {
       lBc.flwP = bc_params->follower_pressure_load.value();
+    }
+  }
+
+  if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu0D))) {
+    if (lEq.phys == Equation_struct || lEq.phys == Equation_ustruct) {
+      lBc.zerod_bc.set_follower_pressure_load(bc_params->follower_pressure_load.value());
     }
   }
 

@@ -104,7 +104,16 @@ void baf_ini(Simulation* simulation)
       int iFa = bc.iFa;
       int iM  = bc.iM;
 
-      if (utils::btest(bc.bType,iBC_cpl) || utils::btest(bc.bType,iBC_RCR)) {
+      // For Neu0D BCs, we don't use cplBC.fa - they are handled by ZeroDBoundaryCondition
+      if (utils::btest(bc.bType, iBC_Neu0D)) {
+        // For implicit or semi-implicit (not explicit) Neumann 0D coupling scheme, 
+        // set bType to resistance
+        if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
+          bc.bType = utils::ibset(bc.bType, iBC_res);
+        }
+      }
+      // For Dir and Neu coupled BCs, use cplBC.fa
+      else if (utils::btest(bc.bType, iBC_cpl) || utils::btest(bc.bType, iBC_RCR)) {
         int i = bc.cplBCptr;
         com_mod.cplBC.fa[i].name = com_mod.msh[iM].fa[iFa].name;
         com_mod.cplBC.fa[i].y = 0.0;
@@ -114,21 +123,6 @@ void baf_ini(Simulation* simulation)
 
         } else if (utils::btest(bc.bType, iBC_Neu)) {
           com_mod.cplBC.fa[i].bGrp = CplBCType::cplBC_Neu;
-          // For implicit or semi-implicit (not explicit) Neumann 0D coupling scheme, 
-          // set bType to resistance
-          if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
-            bc.bType= utils::ibset(bc.bType, iBC_res);
-          }
-
-          // Copy RCR structure from bc() to cplBC()
-          com_mod.cplBC.fa[i].RCR.Rp = bc.RCR.Rp;
-          com_mod.cplBC.fa[i].RCR.C  = bc.RCR.C;
-          com_mod.cplBC.fa[i].RCR.Rd = bc.RCR.Rd;
-          com_mod.cplBC.fa[i].RCR.Pd = bc.RCR.Pd;
-          com_mod.cplBC.fa[i].RCR.Xo = bc.RCR.Xo;
-        } else if (utils::btest(bc.bType, iBC_Neu0D)) {   // Not sure what is happening here
-          com_mod.cplBC.fa[i].bGrp = CplBCType::cplBC_Neu0D;
-          // <<[dev_cap]>> Why is this needed?
           // For implicit or semi-implicit (not explicit) Neumann 0D coupling scheme, 
           // set bType to resistance
           if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
@@ -771,7 +765,6 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
     }
 
   } else if (btest(lBc.bType, iBC_Neu0D)) {
-    // <<dev_cap>>TODO use class/cap
     // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
     if (btest(lBc.bType, iBC_res)) {
       sV = 0.0;

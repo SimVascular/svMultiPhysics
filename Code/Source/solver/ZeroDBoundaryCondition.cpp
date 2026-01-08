@@ -4,6 +4,8 @@
 #include "ComMod.h"
 #include "SimulationLogger.h"
 #include "ZeroDBoundaryCondition.h"
+#include "all_fun.h"
+#include "consts.h"
 
 #define n_debug_zerod_bc
 
@@ -18,49 +20,187 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(const std::string& cap_face_vtp_f
     , face_(&face)
     , logger_(&logger)
 {
+    #ifdef debug_zerod_bc
     std::cout << "ZeroDBoundaryCondition: Cap face VTP file set to '" << cap_face_vtp_file_ << "'" << std::endl;
+    #endif
 }
 
 void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
 {
     cap_face_vtp_file_ = vtp_file_path;
-    std::cout << "ZeroDBoundaryCondition: No cap '" << "'" << std::endl;
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition: Loading cap VTP file '" << vtp_file_path << "'" << std::endl;
+    #endif
     // TODO: Load VTP file and extract geometric data
     // This would typically use VtkVtpData to read the file
 }
 
-// void ZeroDBoundaryCondition::compute_face_quantities()
-// {
-//     // TODO: Compute geometric/physical quantities on the cap face
-//     // Typical quantities include:
-//     //  - face area or lumped areas per node
-//     //  - outward normal integration factors
-//     //  - centroid(s)
-//     //  - mappings between global/local node IDs and VTP arrays
-// }
+// =========================================================================
+// svZeroD block configuration
+// =========================================================================
 
-// void ZeroDBoundaryCondition::set_solver_interface(LPNSolverInterface* interface) noexcept
-// {
-//     solver_interface_ = interface;
-// }
+void ZeroDBoundaryCondition::set_block_name(const std::string& block_name)
+{
+    block_name_ = block_name;
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition: Block name set to '" << block_name_ << "'" << std::endl;
+    #endif
+}
 
-// void ZeroDBoundaryCondition::send_to_zerod(double time)
-// {
-//     // TODO: Send 3D-side boundary data (e.g., flow) to the 0D solver
-//     // This would communicate with solver_interface_
-//     (void)time; // Suppress unused parameter warning
-// }
+const std::string& ZeroDBoundaryCondition::get_block_name() const
+{
+    return block_name_;
+}
 
-// void ZeroDBoundaryCondition::receive_from_zerod(double time)
-// {
-//     // TODO: Receive 0D-side boundary data (e.g., pressure) from the 0D solver
-//     // This would communicate with solver_interface_
-//     (void)time; // Suppress unused parameter warning
-// }
+void ZeroDBoundaryCondition::set_face_name(const std::string& face_name)
+{
+    face_name_ = face_name;
+}
 
-// void ZeroDBoundaryCondition::exchange_with_zerod(double time)
-// {
-//     send_to_zerod(time);
-//     receive_from_zerod(time);
-// }
+const std::string& ZeroDBoundaryCondition::get_face_name() const
+{
+    return face_name_;
+}
 
+void ZeroDBoundaryCondition::set_solution_ids(int flow_id, int pressure_id, double in_out_sign)
+{
+    flow_sol_id_ = flow_id;
+    pressure_sol_id_ = pressure_id;
+    in_out_sign_ = in_out_sign;
+    
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition: Solution IDs set - flow: " << flow_sol_id_ 
+              << ", pressure: " << pressure_sol_id_ << ", sign: " << in_out_sign_ << std::endl;
+    #endif
+}
+
+int ZeroDBoundaryCondition::get_flow_sol_id() const
+{
+    return flow_sol_id_;
+}
+
+int ZeroDBoundaryCondition::get_pressure_sol_id() const
+{
+    return pressure_sol_id_;
+}
+
+double ZeroDBoundaryCondition::get_in_out_sign() const
+{
+    return in_out_sign_;
+}
+
+// =========================================================================
+// Flowrate computation and access
+// =========================================================================
+
+void ZeroDBoundaryCondition::set_follower_pressure_load(bool flwP)
+{
+    follower_pressure_load_ = flwP;
+}
+
+bool ZeroDBoundaryCondition::get_follower_pressure_load() const
+{
+    return follower_pressure_load_;
+}
+
+/// @brief Compute flowrates at the boundary face at old and new timesteps
+///
+/// This replicates the flowrate computation done in set_bc::calc_der_cpl_bc and
+/// set_bc::set_bc_cpl for coupled Neumann boundary conditions.
+///
+/// The flowrate is computed as the integral of velocity dotted with the face normal.
+/// For struct/ustruct physics, the integral is computed on the deformed configuration.
+/// For fluid/FSI/CMM physics, the integral is computed on the reference configuration.
+void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys)
+{
+    using namespace consts;
+    
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition::compute_flowrates called" << std::endl;
+    #endif
+    
+    if (face_ == nullptr) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Face is not set.");
+    }
+    
+    int nsd = com_mod.nsd;
+    
+    // Determine mechanical configuration based on physics type
+    MechanicalConfigurationType cfg_o = MechanicalConfigurationType::reference;
+    MechanicalConfigurationType cfg_n = MechanicalConfigurationType::reference;
+    
+    // For struct or ustruct, use old and new configurations to compute flowrate integral
+    if ((phys == EquationType::phys_struct) || (phys == EquationType::phys_ustruct)) {
+        // Must use follower pressure load for 0D coupling with struct/ustruct
+        if (!follower_pressure_load_) {
+            throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Follower pressure load must be used for 0D coupling with struct/ustruct");
+        }
+        cfg_o = MechanicalConfigurationType::old_timestep;
+        cfg_n = MechanicalConfigurationType::new_timestep;
+    }
+    // For fluid, FSI, or CMM, use reference configuration to compute flowrate integral
+    else if ((phys == EquationType::phys_fluid) || (phys == EquationType::phys_FSI) || (phys == EquationType::phys_CMM)) {
+        cfg_o = MechanicalConfigurationType::reference;
+        cfg_n = MechanicalConfigurationType::reference;
+    }
+    else {
+        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Invalid physics type for 0D coupling");
+    }
+    
+    // Compute flowrates by integrating velocity over face
+    // The all_fun::integ function with indices 0 to nsd-1 integrates the velocity vector
+    // dotted with the face normal, giving the volumetric flowrate
+    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, cfg_o);
+    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, cfg_n);
+    
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition::compute_flowrates - Qo: " << Qo_ << ", Qn: " << Qn_ << std::endl;
+    #endif
+}
+
+double ZeroDBoundaryCondition::get_Qo() const
+{
+    return Qo_;
+}
+
+double ZeroDBoundaryCondition::get_Qn() const
+{
+    return Qn_;
+}
+
+void ZeroDBoundaryCondition::set_flowrates(double Qo, double Qn)
+{
+    Qo_ = Qo;
+    Qn_ = Qn;
+}
+
+// =========================================================================
+// Pressure access
+// =========================================================================
+
+void ZeroDBoundaryCondition::set_pressure(double pressure)
+{
+    pressure_ = pressure;
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition::set_pressure - pressure: " << pressure_ << std::endl;
+    #endif
+}
+
+double ZeroDBoundaryCondition::get_pressure() const
+{
+    return pressure_;
+}
+
+// =========================================================================
+// Utility methods
+// =========================================================================
+
+const faceType* ZeroDBoundaryCondition::get_face() const
+{
+    return face_;
+}
+
+bool ZeroDBoundaryCondition::is_initialized() const
+{
+    return (face_ != nullptr);
+}

@@ -11,6 +11,8 @@
 #include "cmm.h"
 #include "consts.h"
 #include "svZeroD_interface/LPNSolverInterface.h"
+#include "ComMod.h"
+#include "utils.h"
 
 #include <map>
 #include <algorithm>
@@ -134,8 +136,12 @@ void write_svZeroD_solution(const double* lpn_time, std::vector<double>& lpn_sol
 }
 
 void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], double QnCoupled[], double PCoupled[], double PnCoupled[]){
+  using namespace consts;
+  
   auto& cplBC = com_mod.cplBC;
   int ind = 0;
+  
+  // Get Q/P from cplBC.fa for Dir BCs
   for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
     auto& fa = cplBC.fa[iFa];
     if (fa.bGrp == consts::CplBCType::cplBC_Dir) {
@@ -146,6 +152,8 @@ void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], dou
       ind = ind + 1;
     }
   }
+  
+  // Get Q/P from cplBC.fa for standard Neu BCs
   for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
     auto& fa = cplBC.fa[iFa];
     if (fa.bGrp == consts::CplBCType::cplBC_Neu) {
@@ -156,15 +164,20 @@ void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], dou
       ind = ind + 1;
     }
   }
-  for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
-    auto& fa = cplBC.fa[iFa];
-    // <<[dev_cap]>> Maybe this need to change?
-    if (fa.bGrp == consts::CplBCType::cplBC_Neu0D) {
-      QCoupled[ind] = fa.Qo;
-      QnCoupled[ind] = fa.Qn;
-      PCoupled[ind] = fa.Po;
-      PnCoupled[ind] = fa.Pn;
-      ind = ind + 1;
+  
+  // Get Q/P from ZeroDBoundaryCondition for Neu0D BCs by iterating through eq.bc[]
+  int iBC_Neu0D = static_cast<int>(BoundaryConditionType::bType_Neu0D);
+  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+    auto& eq = com_mod.eq[iEq];
+    for (int iBc = 0; iBc < eq.nBc; iBc++) {
+      auto& bc = eq.bc[iBc];
+      if (utils::btest(bc.bType, iBC_Neu0D)) {
+        QCoupled[ind] = bc.zerod_bc.get_Qo();
+        QnCoupled[ind] = bc.zerod_bc.get_Qn();
+        PCoupled[ind] = 0.0;  // Pressure not used for Neumann BC input
+        PnCoupled[ind] = 0.0;
+        ind = ind + 1;
+      }
     }
   }
 }
@@ -210,6 +223,8 @@ void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[])
 //
 void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) 
 {
+  using namespace consts;
+  
   #define n_debug_init_svZeroD
   #ifdef debug_init_svZeroD
   DebugMsg dmsg(__func__, com_mod.cm.idcm()); 
@@ -221,13 +236,29 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   auto& cm = com_mod.cm;
   double dt = com_mod.dt;
 
-  numCoupledSrfs = cplBC.nFa;
+  // Count Neu0D BCs by iterating through eq.bc[]
+  int iBC_Neu0D = static_cast<int>(BoundaryConditionType::bType_Neu0D);
+  int nNeu0D_count = 0;
+  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+    auto& eq = com_mod.eq[iEq];
+    for (int iBc = 0; iBc < eq.nBc; iBc++) {
+      auto& bc = eq.bc[iBc];
+      if (utils::btest(bc.bType, iBC_Neu0D)) {
+        nNeu0D_count++;
+      }
+    }
+  }
+  
+  // Total coupled surfaces = cplBC.nFa (Dir + Neu) + Neu0D BCs
+  numCoupledSrfs = cplBC.nFa + nNeu0D_count;
+  
   int nDir = 0;
   int nNeu = 0;
   int nNeu0D = 0;
   
   // If this process is the master process on the communicator
   if (cm.mas(cm_mod)) {
+    // Count Dir BCs from cplBC
     for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
       auto& fa = cplBC.fa[iFa];
 
@@ -236,6 +267,8 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
         nDir = nDir + 1;
       }
     }
+    
+    // Count Neu BCs from cplBC
     for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
       auto& fa = cplBC.fa[iFa];
 
@@ -244,12 +277,17 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
         nNeu = nNeu + 1;
       }
     }
-    for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
-      auto& fa = cplBC.fa[iFa];
-
-      if (fa.bGrp == consts::CplBCType::cplBC_Neu0D) {
-        nsrflistCoupled.push_back(iFa);
-        nNeu0D = nNeu0D + 1;
+    
+    // Count Neu0D BCs by iterating through eq.bc[]
+    // Use a special offset for Neu0D surface IDs to distinguish from cplBC indices
+    for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+      auto& eq = com_mod.eq[iEq];
+      for (int iBc = 0; iBc < eq.nBc; iBc++) {
+        auto& bc = eq.bc[iBc];
+        if (utils::btest(bc.bType, iBC_Neu0D)) {
+          nsrflistCoupled.push_back(cplBC.nFa + nNeu0D);
+          nNeu0D = nNeu0D + 1;
+        }
       }
     }
   }
@@ -267,8 +305,11 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   std::string svzerod_file;
   std::string buffer;
   int ids[2];
-  std::vector<std::string> svzd_blk_names_unsrtd(numCoupledSrfs);
-  std::vector<int> svzd_blk_ids(numCoupledSrfs);
+  
+  // For Dir and Neu BCs (from cplBC)
+  int nCplBCFaces = cplBC.nFa;
+  std::vector<std::string> svzd_blk_names_unsrtd(nCplBCFaces);
+  std::vector<int> svzd_blk_ids(nCplBCFaces);
   int init_flow_flag, init_press_flag;
   double init_flow, init_press, in_out;
   
@@ -282,11 +323,33 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       svzerod_library = solver_interface.solver_library;
       svzerod_file = solver_interface.configuration_file;
 
+      // Process block_surface_map for Dir and Neu BCs (not Neu0D)
       int i = 0;
       for (const auto& pair : solver_interface.block_surface_map) {
         #ifdef debug_init_svZeroD
         dmsg << "block_surface_map: '" + pair.first << "'";
         #endif
+        
+        // Skip if this block is handled by a Neu0D BC (check by iterating through eq.bc[])
+        bool is_neu0d = false;
+        for (int iEq = 0; iEq < com_mod.nEq && !is_neu0d; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc && !is_neu0d; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D) && bc.zerod_bc.get_block_name() == pair.first) {
+              is_neu0d = true;
+            }
+          }
+        }
+        
+        if (is_neu0d) {
+          continue;  // Skip - this block is handled by ZeroDBoundaryCondition
+        }
+        
+        if (i >= nCplBCFaces) {
+          break;  // No more space in cplBC arrays
+        }
+        
         svzd_blk_ids[i] = -1;
         svzd_blk_names_unsrtd[i] = pair.first;
         for (int j = 0; j < cplBC.nFa; j++) {
@@ -298,7 +361,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 
         if (svzd_blk_ids[i] == -1) { 
           throw std::runtime_error("ERROR: Did not find a coupled boundary condition for block '" + 
-              pair.first + "' and surface '" + pair.second + "'; check th Block_to_surface_map solver XML parameter.");
+              pair.first + "' and surface '" + pair.second + "'; check the Block_to_surface_map solver XML parameter.");
         }
  
         i += 1;
@@ -319,30 +382,58 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 
     for (int s = 0; s < numCoupledSrfs; ++s) {
       int found = 0;
+      int surf_id = nsrflistCoupled[s];
+      
       #ifdef debug_init_svZeroD
       dmsg << ">>> s " << s;
-      dmsg << "  nsrflistCoupled[s]: " << nsrflistCoupled[s];
+      dmsg << "  nsrflistCoupled[s]: " << surf_id;
       #endif
 
-      for (int t = 0; t < numCoupledSrfs; ++t) {
-        #ifdef debug_init_svZeroD
-        dmsg << "  >>> t " << t;
-        dmsg << "    svzd_blk_ids[t]: " << svzd_blk_ids[t];
-        #endif
-        if (svzd_blk_ids[t] == nsrflistCoupled[s]) {
+      // Check if this is a Neu0D BC (surface ID >= cplBC.nFa)
+      if (surf_id >= cplBC.nFa) {
+        // This is a Neu0D BC - find it by iterating through eq.bc[]
+        int neu0d_idx = surf_id - cplBC.nFa;
+        int current_idx = 0;
+        for (int iEq = 0; iEq < com_mod.nEq && !found; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc && !found; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D)) {
+              if (current_idx == neu0d_idx) {
+                std::string blk_name = bc.zerod_bc.get_block_name();
+                svzd_blk_names.push_back(blk_name);
+                svzd_blk_name_len.push_back(blk_name.length());
+                found = 1;
+                #ifdef debug_init_svZeroD
+                dmsg << "    Found Neu0D block: '" << blk_name << "'";
+                #endif
+              }
+              current_idx++;
+            }
+          }
+        }
+      } else {
+        // This is a Dir or Neu BC - search in svzd_blk_ids
+        for (int t = 0; t < nCplBCFaces; ++t) {
           #ifdef debug_init_svZeroD
-          dmsg << "    Found  " << " " ;
-          dmsg << "    svzd_blk_names_unsrtd[t]: '" << svzd_blk_names_unsrtd[t];
+          dmsg << "  >>> t " << t;
+          dmsg << "    svzd_blk_ids[t]: " << svzd_blk_ids[t];
           #endif
-          found = 1;
-          svzd_blk_names.push_back(svzd_blk_names_unsrtd[t]);
-          svzd_blk_name_len.push_back(svzd_blk_names_unsrtd[t].length());
-          break;
+          if (svzd_blk_ids[t] == surf_id) {
+            #ifdef debug_init_svZeroD
+            dmsg << "    Found  " << " " ;
+            dmsg << "    svzd_blk_names_unsrtd[t]: '" << svzd_blk_names_unsrtd[t];
+            #endif
+            found = 1;
+            svzd_blk_names.push_back(svzd_blk_names_unsrtd[t]);
+            svzd_blk_name_len.push_back(svzd_blk_names_unsrtd[t].length());
+            break;
+          }
         }
       }
 
       if (found == 0) {
-        throw std::runtime_error("ERROR: Did not find block name for surface ID: " + nsrflistCoupled[s]);
+        throw std::runtime_error("ERROR: Did not find block name for surface ID: " + std::to_string(surf_id));
       }
     }
 
@@ -359,6 +450,25 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       sol_IDs[2 * s] = ids[0];
       sol_IDs[2 * s + 1] = ids[1];
       in_out_sign.push_back(in_out);
+      
+      // For Neu0D BCs, store the solution IDs in ZeroDBoundaryCondition
+      int surf_id = nsrflistCoupled[s];
+      if (surf_id >= cplBC.nFa) {
+        int neu0d_idx = surf_id - cplBC.nFa;
+        int current_idx = 0;
+        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D)) {
+              if (current_idx == neu0d_idx) {
+                bc.zerod_bc.set_solution_ids(ids[0], ids[1], in_out);
+              }
+              current_idx++;
+            }
+          }
+        }
+      }
     }
 
     // Initialize lpn_state variables corresponding to external coupling blocks
@@ -370,14 +480,42 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 
     interface->return_y(lpn_state_y);
     interface->return_ydot(last_state_ydot);
+    
     for (int s = 0; s < numCoupledSrfs; ++s) {
-      if (init_flow_flag == 1) {
-        lpn_state_y[sol_IDs[2 * s]] = init_flow;
-        cplBC.fa[s].y = lpn_state_y[sol_IDs[2 * s]];
-      }
-      if (init_press_flag == 1) {
-        lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
-        cplBC.fa[s].y = lpn_state_y[sol_IDs[2 * s + 1]];
+      int surf_id = nsrflistCoupled[s];
+      
+      if (surf_id >= cplBC.nFa) {
+        // Neu0D BC - initialize by iterating through eq.bc[]
+        int neu0d_idx = surf_id - cplBC.nFa;
+        int current_idx = 0;
+        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D)) {
+              if (current_idx == neu0d_idx) {
+                if (init_flow_flag == 1) {
+                  lpn_state_y[sol_IDs[2 * s]] = init_flow;
+                }
+                if (init_press_flag == 1) {
+                  lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
+                  bc.zerod_bc.set_pressure(lpn_state_y[sol_IDs[2 * s + 1]]);
+                }
+              }
+              current_idx++;
+            }
+          }
+        }
+      } else {
+        // Dir or Neu BC - use cplBC.fa
+        if (init_flow_flag == 1) {
+          lpn_state_y[sol_IDs[2 * s]] = init_flow;
+          cplBC.fa[surf_id].y = lpn_state_y[sol_IDs[2 * s]];
+        }
+        if (init_press_flag == 1) {
+          lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
+          cplBC.fa[surf_id].y = lpn_state_y[sol_IDs[2 * s + 1]];
+        }
       }
     }
     std::copy(lpn_state_y.begin(), lpn_state_y.end(), last_state_y.begin());
@@ -389,7 +527,9 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
     }
   }
 
+  // Broadcast initial values to follower processes
   if (!cm.seq()) {
+    // For cplBC.fa (Dir and Neu BCs)
     Vector<double> y(cplBC.nFa);
 
     if (cm.mas(cm_mod)) {
@@ -405,20 +545,70 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
         cplBC.fa[i].y = y(i);
       }
     }
+    
+    // For Neu0D BCs - broadcast pressure values
+    if (nNeu0D_count > 0) {
+      Vector<double> p(nNeu0D_count);
+      
+      if (cm.mas(cm_mod)) {
+        int idx = 0;
+        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D)) {
+              p(idx) = bc.zerod_bc.get_pressure();
+              idx++;
+            }
+          }
+        }
+      }
+      
+      cm.bcast(cm_mod, p);
+      
+      if (cm.slv(cm_mod)) {
+        int idx = 0;
+        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D)) {
+              bc.zerod_bc.set_pressure(p(idx));
+              idx++;
+            }
+          }
+        }
+      }
+    }
   }
 }
 
 
 void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
+  using namespace consts;
+  
   int nDir = 0;
   int nNeu = 0;
-  int nNeu0D = 0;
   double dt = com_mod.dt;
   auto& cplBC = com_mod.cplBC;
   auto& cm = com_mod.cm;
+  
+  // Count Neu0D BCs by iterating through eq.bc[]
+  int iBC_Neu0D = static_cast<int>(BoundaryConditionType::bType_Neu0D);
+  int nNeu0D = 0;
+  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+    auto& eq = com_mod.eq[iEq];
+    for (int iBc = 0; iBc < eq.nBc; iBc++) {
+      auto& bc = eq.bc[iBc];
+      if (utils::btest(bc.bType, iBC_Neu0D)) {
+        nNeu0D++;
+      }
+    }
+  }
 
   // If this process is the master process on the communicator
   if (cm.mas(cm_mod)) {
+    // Count Dir and Neu BCs from cplBC
     for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
       auto& fa = cplBC.fa[iFa];
 
@@ -426,8 +616,6 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
         nDir = nDir + 1;
       } else if (fa.bGrp == consts::CplBCType::cplBC_Neu) {
         nNeu = nNeu + 1;
-      } else if (fa.bGrp == consts::CplBCType::cplBC_Neu0D) {
-        nNeu0D = nNeu0D + 1;
       }
     }
 
@@ -477,12 +665,33 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
       std::copy(lpn_solutions.begin() + (num_output_steps-1)*system_size, lpn_solutions.end(), lpn_state_y.begin());
       
       for (int i = 0; i < numCoupledSrfs; ++i) {
+        int surf_id = nsrflistCoupled[i];
+        
         if (i < nDir) {
+          // Dirichlet BC - get flow from 0D
           QCoupled[i] = in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]];
-          cplBC.fa[i].y = QCoupled[i];
+          cplBC.fa[surf_id].y = QCoupled[i];
+        } else if (surf_id >= cplBC.nFa) {
+          // Neu0D BC - set pressure by iterating through eq.bc[]
+          int neu0d_idx = surf_id - cplBC.nFa;
+          int current_idx = 0;
+          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+            auto& eq = com_mod.eq[iEq];
+            for (int iBc = 0; iBc < eq.nBc; iBc++) {
+              auto& bc = eq.bc[iBc];
+              if (utils::btest(bc.bType, iBC_Neu0D)) {
+                if (current_idx == neu0d_idx) {
+                  PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
+                  bc.zerod_bc.set_pressure(PCoupled[i]);
+                }
+                current_idx++;
+              }
+            }
+          }
         } else {
+          // Standard Neu BC - use cplBC.fa
           PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
-          cplBC.fa[i].y = PCoupled[i];
+          cplBC.fa[surf_id].y = PCoupled[i];
         }
       }
 
@@ -505,6 +714,7 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
 
   // If there are multiple procs (not sequential), broadcast outputs to follower procs
   if (!cm.seq()) {
+    // Broadcast cplBC.fa values (Dir and standard Neu BCs)
     Vector<double> y(cplBC.nFa);
 
     if (cm.mas(cm_mod)) {
@@ -518,6 +728,41 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
     if (cm.slv(cm_mod)) {
       for (int i = 0; i < cplBC.nFa; i++) {
         cplBC.fa[i].y = y(i);
+      }
+    }
+    
+    // Broadcast Neu0D BC pressure values
+    if (nNeu0D > 0) {
+      Vector<double> p(nNeu0D);
+      
+      if (cm.mas(cm_mod)) {
+        int idx = 0;
+        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D)) {
+              p(idx) = bc.zerod_bc.get_pressure();
+              idx++;
+            }
+          }
+        }
+      }
+      
+      cm.bcast(cm_mod, p);
+      
+      if (cm.slv(cm_mod)) {
+        int idx = 0;
+        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+          auto& eq = com_mod.eq[iEq];
+          for (int iBc = 0; iBc < eq.nBc; iBc++) {
+            auto& bc = eq.bc[iBc];
+            if (utils::btest(bc.bType, iBC_Neu0D)) {
+              bc.zerod_bc.set_pressure(p(idx));
+              idx++;
+            }
+          }
+        }
       }
     }
   }

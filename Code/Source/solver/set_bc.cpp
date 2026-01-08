@@ -16,6 +16,7 @@
 #include "nn.h"
 #include "ustruct.h"
 #include "utils.h"
+#include <map>
 #include <math.h>
 #include "svZeroD_subroutines.h"
 
@@ -47,9 +48,19 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
   auto& eq = com_mod.eq[iEq];
   auto& cplBC = com_mod.cplBC;
 
-  // If coupling is all with Dirichlet faces, no derivative calculation is needed
+  // If coupling is all with Dirichlet faces (and no Neu0D BCs), no derivative calculation is needed
   // (see Moghadam et al. 2013 Section 2.2.2)
-  if (std::count_if(cplBC.fa.begin(),cplBC.fa.end(),[](cplFaceType& fa){return fa.bGrp == CplBCType::cplBC_Dir;}) == cplBC.fa.size()) { 
+  // Also check for Neu0D BCs which are not in cplBC.fa
+  bool has_Neu0D = false;
+  int iBC_Neu0D_local = static_cast<int>(BoundaryConditionType::bType_Neu0D);
+  for (int iBc = 0; iBc < eq.nBc; iBc++) {
+    if (utils::btest(eq.bc[iBc].bType, iBC_Neu0D_local)) {
+      has_Neu0D = true;
+      break;
+    }
+  }
+  
+  if (!has_Neu0D && std::count_if(cplBC.fa.begin(),cplBC.fa.end(),[](cplFaceType& fa){return fa.bGrp == CplBCType::cplBC_Dir;}) == cplBC.fa.size()) { 
     #ifdef debug_calc_der_cpl_bc 
     dmsg << "all cplBC_Dir " << std::endl;
     #endif
@@ -87,12 +98,23 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       }
     }
 
+    // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 <<dev_cap>>
+    // Uses the ZeroDBoundaryCondition class to compute and store flowrates
+    // Note: Neu0D BCs don't use cplBCptr, so we handle them separately
+    if (utils::btest(bc.bType, iBC_Neu0D)) {
+      bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
+      #ifdef debug_calc_der_cpl_bc 
+      dmsg << "iBC_Neu0D ";
+      dmsg << "zerod_bc.Qo: " << bc.zerod_bc.get_Qo();
+      dmsg << "zerod_bc.Qn: " << bc.zerod_bc.get_Qn();
+      #endif
+    }
+    
     if (ptr != -1) {
       auto& fa = com_mod.msh[iM].fa[iFa];
       // Compute flowrates at 3D Neumann boundaries at timesteps n and n+1
       if (utils::btest(bc.bType, iBC_Neu)) {
         // If struct or ustruct, use old and new configurations to compute flowrate integral
-        std::cout << "[calc_der_cpl_bc] Processing iBC_Neu at iBc: " << iBc << std::endl;
         if ((cPhys == EquationType::phys_struct) || (cPhys == EquationType::phys_ustruct)) {
 
           // Must use follower pressure load for 0D coupling with struct/ustruct
@@ -122,40 +144,6 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
         #endif
 
       } 
-      // Compute flowrates at 3D Neumann boundaries at timesteps n and n+1 <<dev_cap>>
-      if (utils::btest(bc.bType, iBC_Neu0D)) {
-        // <<[dev_cap]>> 
-        std::cout << "[calc_der_cpl_bc] Processing iBC_Neu0D at iBc: " << iBc << std::endl;
-        // If struct or ustruct, use old and new configurations to compute flowrate integral
-        if ((cPhys == EquationType::phys_struct) || (cPhys == EquationType::phys_ustruct)) {
-
-          // Must use follower pressure load for 0D coupling with struct/ustruct
-          if (!bc.flwP) { 
-            throw std::runtime_error("[calc_der_cpl_bc]  Follower pressure load must be used for 0D coupling with struct/ustruct");
-          }
-          cfg_o = MechanicalConfigurationType::old_timestep;
-          cfg_n = MechanicalConfigurationType::new_timestep;
-        }
-        // If fluid, FSI, or CMM, use reference configuration to compute flowrate integral
-        // Note that for FSI, mvMsh will modify geometry in gnnb()
-        else if ((cPhys == EquationType::phys_fluid) || (cPhys == EquationType::phys_FSI) || (cPhys == EquationType::phys_CMM)) {
-          cfg_o = MechanicalConfigurationType::reference;
-          cfg_n = MechanicalConfigurationType::reference;
-        }
-        else {
-          throw std::runtime_error("[calc_der_cpl_bc]  Invalid physics type for 0D coupling");
-        }
-        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1, false, cfg_o);
-        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yn, 0, nsd-1, false, cfg_n);
-        cplBC.fa[ptr].Po = 0.0;
-        cplBC.fa[ptr].Pn = 0.0;
-        #ifdef debug_calc_der_cpl_bc 
-        dmsg << "iBC_Neu ";
-        dmsg << "cplBC.fa[ptr].Qo: " << cplBC.fa[ptr].Qo;
-        dmsg << "cplBC.fa[ptr].Qn: " << cplBC.fa[ptr].Qn;
-        #endif
-
-      }
       // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1 
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
@@ -190,11 +178,22 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
   int j = 0;
   double diff = 0.0;
 
+  // Calculate diff for standard Neu BCs (from cplBC)
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
     int i = bc.cplBCptr;
-    if (i != -1 && (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Neu0D))) {
+    if (i != -1 && utils::btest(bc.bType, iBC_Neu)) {
       diff = diff + (cplBC.fa[i].Qn * cplBC.fa[i].Qn);
+      j = j + 1;
+    }
+  }
+  
+  // Calculate diff for Neu0D BCs (from ZeroDBoundaryCondition)
+  for (int iBc = 0; iBc < eq.nBc; iBc++) {
+    auto& bc = eq.bc[iBc];
+    if (utils::btest(bc.bType, iBC_Neu0D)) {
+      double Qn = bc.zerod_bc.get_Qn();
+      diff = diff + (Qn * Qn);
       j = j + 1;
     }
   }
@@ -206,7 +205,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
      diff = diff*relTol;
   }
 
-  // Store the original pressures and flowrates
+  // Store the original pressures and flowrates for cplBC
   std::vector<double> orgY(cplBC.fa.size());
   std::vector<double> orgQ(cplBC.fa.size());
 
@@ -214,13 +213,22 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     orgY[i] = cplBC.fa[i].y;
     orgQ[i] = cplBC.fa[i].Qn;
   }
+  
+  // Store original values for Neu0D BCs
+  std::map<int, std::pair<double, double>> orgNeu0D;  // iBc -> (Qn, pressure)
+  for (int iBc = 0; iBc < eq.nBc; iBc++) {
+    auto& bc = eq.bc[iBc];
+    if (utils::btest(bc.bType, iBC_Neu0D)) {
+      orgNeu0D[iBc] = std::make_pair(bc.zerod_bc.get_Qn(), bc.zerod_bc.get_pressure());
+    }
+  }
 
+  // Compute derivative for standard Neu BCs
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
     int i = bc.cplBCptr;
 
-    if (i != -1 && (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Neu0D))) {
-
+    if (i != -1 && utils::btest(bc.bType, iBC_Neu)) {
         // Finite difference perturbation in flowrate
         cplBC.fa[i].Qn = orgQ[i] + diff;
 
@@ -237,11 +245,40 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
         bc.r = (cplBC.fa[i].y - orgY[i]) / diff;
 
         // Restore the original pressures and flowrates
-        for (size_t j = 0; j < cplBC.fa.size(); j++) {
-          cplBC.fa[j].y = orgY[j];
-          cplBC.fa[j].Qn = orgQ[j];
-}
-     }
+        for (size_t jj = 0; jj < cplBC.fa.size(); jj++) {
+          cplBC.fa[jj].y = orgY[jj];
+          cplBC.fa[jj].Qn = orgQ[jj];
+        }
+    }
+  }
+  
+  // Compute derivative for Neu0D BCs
+  for (int iBc = 0; iBc < eq.nBc; iBc++) {
+    auto& bc = eq.bc[iBc];
+    
+    if (utils::btest(bc.bType, iBC_Neu0D)) {
+        // Finite difference perturbation in flowrate
+        double orgQn = orgNeu0D[iBc].first;
+        double orgP = orgNeu0D[iBc].second;
+        bc.zerod_bc.set_flowrates(bc.zerod_bc.get_Qo(), orgQn + diff);
+
+        // Call svZeroD with perturbed flowrate
+        svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+
+        // Finite difference calculation of the resistance dP/dQ
+        bc.r = (bc.zerod_bc.get_pressure() - orgP) / diff;
+
+        // Restore the original flowrates and pressures for all Neu0D BCs
+        for (auto& kv : orgNeu0D) {
+          eq.bc[kv.first].zerod_bc.set_flowrates(eq.bc[kv.first].zerod_bc.get_Qo(), kv.second.first);
+          eq.bc[kv.first].zerod_bc.set_pressure(kv.second.second);
+        }
+        // Also restore cplBC values
+        for (size_t jj = 0; jj < cplBC.fa.size(); jj++) {
+          cplBC.fa[jj].y = orgY[jj];
+          cplBC.fa[jj].Qn = orgQ[jj];
+        }
+    }
   }
 }
 
@@ -732,6 +769,13 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
       }
 
 
+      // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1
+      // Uses the ZeroDBoundaryCondition class to compute and store flowrates
+      // Note: Neu0D BCs don't use cplBCptr, so we handle them separately
+      if (utils::btest(bc.bType, iBC_Neu0D)) {
+        bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
+      }
+      
       if (ptr != -1) {
         // Compute flowrates at 3D Neumann boundaries at timesteps n and n+1
         if (utils::btest(bc.bType,iBC_Neu)) {
@@ -760,33 +804,6 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
           cplBC.fa[ptr].Po = 0.0;
           cplBC.fa[ptr].Pn = 0.0;
         } 
-        // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1
-        if (utils::btest(bc.bType, iBC_Neu0D)) {
-          // If struct or ustruct, use old and new configurations to compute flowrate integral
-          if ((cPhys == EquationType::phys_struct) || (cPhys == EquationType::phys_ustruct)) {
-
-            // Must use follower pressure load for 0D coupling with struct/ustruct
-            if (!bc.flwP) { 
-              throw std::runtime_error("[set_bc_cpl]  Follower pressure load must be used for 0D coupling with struct/ustruct");
-            }
-            cfg_o = MechanicalConfigurationType::old_timestep;
-            cfg_n = MechanicalConfigurationType::new_timestep;
-          }
-          // If fluid, FSI, or CMM, use reference configuration to compute flowrate integral
-          // Note that for FSI, mvMsh will modify geometry in gnnb()
-          else if ((cPhys == EquationType::phys_fluid) || (cPhys == EquationType::phys_FSI) || (cPhys == EquationType::phys_CMM)) {
-            cfg_o = MechanicalConfigurationType::reference;
-            cfg_n = MechanicalConfigurationType::reference;
-          }
-          else {
-            throw std::runtime_error("[set_bc_cpl]  Invalid physics type for 0D coupling");
-          }
-        
-          cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, nsd-1, false, cfg_o);
-          cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, nsd-1, false, cfg_n);
-          cplBC.fa[ptr].Po = 0.0;
-          cplBC.fa[ptr].Pn = 0.0;
-        }
         // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
         else if (utils::btest(bc.bType,iBC_Dir)) {
           cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, nsd) / area;
@@ -811,9 +828,17 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
     int iFa = bc.iFa;
-    int ptr = bc.cplBCptr;
-    if (ptr != -1) {
-      bc.g = cplBC.fa[ptr].y;
+    
+    // For Neu0D BC, get pressure from ZeroDBoundaryCondition (set by svZeroD_subroutines)
+    if (utils::btest(bc.bType, iBC_Neu0D)) {
+      bc.g = bc.zerod_bc.get_pressure();
+    }
+    // For other coupled BCs (Dir, Neu), get from cplBC.fa
+    else {
+      int ptr = bc.cplBCptr;
+      if (ptr != -1) {
+        bc.g = cplBC.fa[ptr].y;
+      }
     }
   }
 }
@@ -1353,6 +1378,14 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
   }
 }
 
+
+// // @brief Set ZeroD BC
+// void set_bc_0d(ComMod& com_mod, const faceType& lFa, const ZeroDBoundaryCondition& zerod_bc,
+//   const Array<double>& Yg, const Array<double>& Dg)
+// {
+
+// }
+
 /// @brief Set outlet BCs.
 //
 void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg)
@@ -1422,8 +1455,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   if (utils::btest(lBc.bType,iBC_cpl) || utils::btest(lBc.bType,iBC_RCR)) {
     h(0) = lBc.g;
 
-  } else {
-    
+  } else {    
     if (utils::btest(lBc.bType,iBC_gen)) {
        // [NOTE] The Fortran code was passing a vector to 'igbc' 
        // which treats is as an array dY(gm%dof,SIZE(gm%d,2).
