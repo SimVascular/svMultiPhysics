@@ -606,9 +606,6 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
       lX(i,a) = com_mod.x(i,Ac);
     }
     if (com_mod.mvMsh) {
-      if (!Do) {
-        throw std::runtime_error("gnnb: Do parameter required for moving mesh but not provided. Face: '" + lFa.name + "', Mesh: '" + msh.name + "', Element: " + std::to_string(e));
-      }
       for (int i = 0; i < lX.nrows(); i++) {
         // Add mesh displacement
         lX(i,a) = lX(i,a) + (*Do)(i+nsd+1,Ac);
@@ -620,9 +617,6 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
           // Do nothing
           break;
         case MechanicalConfigurationType::old_timestep:
-          if (!Do) {
-            throw std::runtime_error("gnnb: Do parameter required for old_timestep configuration but not provided");
-          }
           for (int i = 0; i < lX.nrows(); i++) {
             // Add displacement at timestep n
             lX(i,a) = lX(i,a) + (*Do)(i,Ac);

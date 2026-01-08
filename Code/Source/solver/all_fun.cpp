@@ -367,9 +367,6 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
       xl.set_col(a, com_mod.x.col(Ac));
 
       if (com_mod.mvMsh) {
-        if (!Do) {
-          throw std::runtime_error("integ: Do parameter required for moving mesh but not provided. Mesh ID: " + std::to_string(iM));
-        }
         for (int i = 0; i < nsd; i++) {
           xl(i,a) += (*Do)(i+nsd+1,Ac);
         }
@@ -559,9 +556,6 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
           xl.set_col(a, com_mod.x.col(Ac));
 
           if (com_mod.mvMsh) {
-            if (!Do) {
-              throw std::runtime_error("integ: Do parameter required for moving mesh but not provided. Volume integral, dId: " + std::to_string(dId));
-            }
             for (int i = 0; i < nsd; i++) {
               xl(i,a) += (*Do)(i+nsd+1,Ac);
             }

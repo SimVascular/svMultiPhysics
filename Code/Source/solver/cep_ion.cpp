@@ -164,7 +164,6 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, const Arra
   auto& cem = cep_mod.cem;
   auto& eq = com_mod.eq[iEq];
 
-  // Yo is now passed as parameter
   auto& Xion = cep_mod.Xion;
   int nXion = cep_mod.nXion;
 

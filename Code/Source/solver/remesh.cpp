@@ -1888,8 +1888,6 @@ void remesh_restart(Simulation* simulation)
   com_mod.idMap.clear();
   com_mod.cmmBdry.clear();
   com_mod.iblank.clear();
-  // Ao, Do, Yo moved to Integrator class (no longer in ComMod)
-  // An, Dn, and Yn moved to Integrator class
   com_mod.R.clear();
   com_mod.Val.clear();
   com_mod.Bf.clear();

@@ -31,8 +31,6 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>&
 
   const int nsd = com_mod.nsd;
   const int cEq = com_mod.cEq;
-
-  // An, Dn, and Yn are now passed as parameters
   auto& Ad = com_mod.Ad;
 
   Array<double> tmpV(maxNSD, com_mod.tnNo);
@@ -420,8 +418,6 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<doubl
 
   const int nsd = com_mod.nsd;
   const int cEq = com_mod.cEq;
-
-  // An, Dn, and Yn are now passed as parameters
   auto& Ad = com_mod.Ad;
 
   bcType lBc;

@@ -202,7 +202,6 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, Array<do
 
   auto& cplBC = com_mod.cplBC;
   auto& Ad = com_mod.Ad;
-  // An, Dn, and Yn are now passed as parameters (from integrator getters)
   auto& pS0 = com_mod.pS0;
   auto& Xion = cep_mod.Xion;
   auto& cem = cep_mod.cem;
