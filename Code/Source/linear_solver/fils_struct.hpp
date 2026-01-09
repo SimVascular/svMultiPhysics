@@ -32,7 +32,7 @@ enum class BcType
 {
   BC_TYPE_Dir = 0,
   BC_TYPE_Neu = 1,
-  BC_TYPE_Neu0D = 2   // <<[dev_cap]>>
+  BC_TYPE_ZeroD = 2
 };
 
 enum class BcopType

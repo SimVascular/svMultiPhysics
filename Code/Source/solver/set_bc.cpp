@@ -98,9 +98,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       }
     }
 
-    // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 <<dev_cap>>
-    // Uses the ZeroDBoundaryCondition class to compute and store flowrates
-    // Note: ZeroD BCs don't use cplBCptr, so we handle them separately
+    // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for ZeroD BCs
     if (utils::btest(bc.bType, iBC_ZeroD)) {
       bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
       #ifdef debug_calc_der_cpl_bc 
@@ -187,16 +185,6 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       j = j + 1;
     }
   }
-  
-  // Calculate diff for ZeroD BCs (from ZeroDBoundaryCondition)
-  for (int iBc = 0; iBc < eq.nBc; iBc++) {
-    auto& bc = eq.bc[iBc];
-    if (utils::btest(bc.bType, iBC_ZeroD)) {
-      double Qn = bc.zerod_bc.get_Qn();
-      diff = diff + (Qn * Qn);
-      j = j + 1;
-    }
-  }
 
   diff = sqrt(diff / static_cast<double>(j));
   if (diff*relTol < absTol) {
@@ -204,7 +192,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
    } else {
      diff = diff*relTol;
   }
-
+  
   // Store the original pressures and flowrates for cplBC
   std::vector<double> orgY(cplBC.fa.size());
   std::vector<double> orgQ(cplBC.fa.size());
@@ -212,15 +200,6 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
   for (size_t i = 0; i < cplBC.fa.size(); i++) {
     orgY[i] = cplBC.fa[i].y;
     orgQ[i] = cplBC.fa[i].Qn;
-  }
-  
-  // Store original values for ZeroD BCs
-  std::map<int, std::pair<double, double>> orgZeroD;  // iBc -> (Qn, pressure)
-  for (int iBc = 0; iBc < eq.nBc; iBc++) {
-    auto& bc = eq.bc[iBc];
-    if (utils::btest(bc.bType, iBC_ZeroD)) {
-      orgZeroD[iBc] = std::make_pair(bc.zerod_bc.get_Qn(), bc.zerod_bc.get_pressure());
-    }
   }
 
   // Compute derivative for standard Neu BCs
@@ -252,32 +231,46 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     }
   }
   
-  // Compute derivative for ZeroD BCs
+  // Compute derivative for ZeroD BCs using ZeroDBoundaryCondition state management
+  j = 0;
+  diff = 0.0;
+  
+  // Collect ZeroD BCs and calculate perturbation size
+  std::vector<std::pair<int, ZeroDBoundaryCondition::State>> zerod_states;
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
-    
     if (utils::btest(bc.bType, iBC_ZeroD)) {
-        // Finite difference perturbation in flowrate
-        double orgQn = orgZeroD[iBc].first;
-        double orgP = orgZeroD[iBc].second;
-        bc.zerod_bc.set_flowrates(bc.zerod_bc.get_Qo(), orgQn + diff);
-
-        // Call svZeroD with perturbed flowrate
-        svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
-
-        // Finite difference calculation of the resistance dP/dQ
-        bc.r = (bc.zerod_bc.get_pressure() - orgP) / diff;
-
-        // Restore the original flowrates and pressures for all ZeroD BCs
-        for (auto& kv : orgZeroD) {
-          eq.bc[kv.first].zerod_bc.set_flowrates(eq.bc[kv.first].zerod_bc.get_Qo(), kv.second.first);
-          eq.bc[kv.first].zerod_bc.set_pressure(kv.second.second);
-        }
-        // Also restore cplBC values
-        for (size_t jj = 0; jj < cplBC.fa.size(); jj++) {
-          cplBC.fa[jj].y = orgY[jj];
-          cplBC.fa[jj].Qn = orgQ[jj];
-        }
+      zerod_states.emplace_back(iBc, bc.zerod_bc.save_state());
+      double Qn = bc.zerod_bc.get_Qn();
+      diff += Qn * Qn;
+      j++;
+    }
+  }
+  
+  if (j > 0) {
+    diff = sqrt(diff / static_cast<double>(j));
+    diff = (diff * relTol < absTol) ? absTol : diff * relTol;
+    
+    // Compute derivative for each ZeroD BC
+    for (auto& [iBc, orig_state] : zerod_states) {
+      auto& bc = eq.bc[iBc];
+      
+      // Perturb flowrate and compute new pressure
+      bc.zerod_bc.perturb_flowrate(diff);
+      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      
+      // Finite difference: dP/dQ
+      bc.r = (bc.zerod_bc.get_pressure() - orig_state.pressure) / diff;
+      
+      // Restore all ZeroD BCs
+      for (auto& [jBc, saved_state] : zerod_states) {
+        eq.bc[jBc].zerod_bc.restore_state(saved_state);
+      }
+      // Restore cplBC values
+      for (size_t jj = 0; jj < cplBC.fa.size(); jj++) {
+        cplBC.fa[jj].y = orgY[jj];
+        cplBC.fa[jj].Qn = orgQ[jj];
+      }
     }
   }
 }
@@ -769,9 +762,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
       }
 
 
-      // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1
-      // Uses the ZeroDBoundaryCondition class to compute and store flowrates
-      // Note: ZeroD BCs don't use cplBCptr, so we handle them separately
+      // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for ZeroD BCs
       if (utils::btest(bc.bType, iBC_ZeroD)) {
         bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
       }

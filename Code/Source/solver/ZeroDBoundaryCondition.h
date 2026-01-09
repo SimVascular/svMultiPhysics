@@ -138,6 +138,10 @@ public:
     /// @param Qo Flowrate at old timestep
     /// @param Qn Flowrate at new timestep
     void set_flowrates(double Qo, double Qn);
+    
+    /// @brief Perturb the new timestep flowrate by a given amount
+    /// @param diff Perturbation to add to Qn
+    void perturb_flowrate(double diff);
 
     // =========================================================================
     // Pressure access (result from 0D solver)
@@ -150,6 +154,24 @@ public:
     /// @brief Get the current pressure value
     /// @return Current pressure value from 0D solver
     double get_pressure() const;
+    
+    // =========================================================================
+    // State management for derivative computation
+    // =========================================================================
+    
+    /// @brief State struct for saving/restoring Qn and pressure
+    struct State {
+        double Qn = 0.0;
+        double pressure = 0.0;
+    };
+    
+    /// @brief Save current state (Qn and pressure)
+    /// @return Current state
+    State save_state() const;
+    
+    /// @brief Restore state from a saved state
+    /// @param state State to restore
+    void restore_state(const State& state);
 
     // =========================================================================
     // Utility methods

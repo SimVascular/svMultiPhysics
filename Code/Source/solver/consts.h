@@ -103,7 +103,7 @@ enum class BoundaryConditionType
   bType_undefNeu = 21, // undeforming Neu
   bType_RCR = 22,      // RCR-Neu
   bType_Ris0D = 23,    // RIS 0D
-  bType_ZeroD = 24,    // Neumann 0D coupled <<dev_cap>>
+  bType_ZeroD = 24,    // Neumann 0D coupled
 };
 
 // Define constants using smaller name and integer value (needed for bitwise operations).
@@ -226,7 +226,7 @@ enum class CplBCType
   cplBC_I = 401,       // implicit
   cplBC_Neu = 66113,   // Neumann type coupling
   cplBC_SI = 402,      // semi-implicit
-  cplBC_ZeroD = 66114,   // Neumann 0D type coupling <<dev_cap>>
+  cplBC_ZeroD = 66114,   // Neumann 0D type coupling
 };
 
 /// @brief Map for cplBC type to CplBCType. 

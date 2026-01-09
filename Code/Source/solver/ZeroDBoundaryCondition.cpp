@@ -174,6 +174,11 @@ void ZeroDBoundaryCondition::set_flowrates(double Qo, double Qn)
     Qn_ = Qn;
 }
 
+void ZeroDBoundaryCondition::perturb_flowrate(double diff)
+{
+    Qn_ += diff;
+}
+
 // =========================================================================
 // Pressure access
 // =========================================================================
@@ -189,6 +194,21 @@ void ZeroDBoundaryCondition::set_pressure(double pressure)
 double ZeroDBoundaryCondition::get_pressure() const
 {
     return pressure_;
+}
+
+// =========================================================================
+// State management
+// =========================================================================
+
+ZeroDBoundaryCondition::State ZeroDBoundaryCondition::save_state() const
+{
+    return State{Qn_, pressure_};
+}
+
+void ZeroDBoundaryCondition::restore_state(const State& state)
+{
+    Qn_ = state.Qn;
+    pressure_ = state.pressure;
 }
 
 // =========================================================================
