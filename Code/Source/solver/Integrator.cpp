@@ -26,8 +26,11 @@ using namespace consts;
 // Integrator Constructor
 //------------------------
 Integrator::Integrator(Simulation* simulation, Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo)
-  : simulation_(simulation), newton_count_(0), Ao_(std::move(Ao)), Do_(std::move(Do)), Yo_(std::move(Yo))
+  : simulation_(simulation), newton_count_(0)
 {
+  solu_state_vars_.Ao = std::move(Ao);
+  solu_state_vars_.Do = std::move(Do);
+  solu_state_vars_.Yo = std::move(Yo);
   initialize_arrays();
 }
 
@@ -50,17 +53,17 @@ void Integrator::initialize_arrays() {
   Ag_.resize(tDof, tnNo);
   Yg_.resize(tDof, tnNo);
   Dg_.resize(tDof, tnNo);
-  An_.resize(tDof, tnNo);
-  Dn_.resize(tDof, tnNo);
-  Yn_.resize(tDof, tnNo);
+  solu_state_vars_.An.resize(tDof, tnNo);
+  solu_state_vars_.Dn.resize(tDof, tnNo);
+  solu_state_vars_.Yn.resize(tDof, tnNo);
   res_.resize(nFacesLS);
   incL_.resize(nFacesLS);
 
-  // Ao_, Do_, Yo_ already initialized via move in constructor
+  // Ao, Do, Yo already initialized via move in constructor
   // Initialize new variables from old variables
-  An_ = Ao_;
-  Dn_ = Do_;
-  Yn_ = Yo_;
+  solu_state_vars_.An = solu_state_vars_.Ao;
+  solu_state_vars_.Dn = solu_state_vars_.Do;
+  solu_state_vars_.Yn = solu_state_vars_.Yo;
 }
 
 //------------------------
@@ -104,8 +107,8 @@ bool Integrator::step() {
       #ifdef debug_integrator_step
       dmsg << "Set coupled BCs " << std::endl;
       #endif
-      set_bc::set_bc_cpl(com_mod, cm_mod, An_, Yn_, Dn_, Yo_, Ao_, Do_);
-      set_bc::set_bc_dir(com_mod, An_, Yn_, Dn_, Yo_, Ao_, Do_);
+      set_bc::set_bc_cpl(com_mod, cm_mod, solu_state_vars_.An, solu_state_vars_.Yn, solu_state_vars_.Dn, solu_state_vars_.Yo, solu_state_vars_.Ao, solu_state_vars_.Do);
+      set_bc::set_bc_dir(com_mod, solu_state_vars_.An, solu_state_vars_.Yn, solu_state_vars_.Dn, solu_state_vars_.Yo, solu_state_vars_.Ao, solu_state_vars_.Do);
     }
 
     // Initiator step for Generalized α-Method (quantities at n+am, n+af).
@@ -199,7 +202,7 @@ void Integrator::initiator_step() {
   Ag_.write("Ag_pic" + istr_);
   Yg_.write("Yg_pic" + istr_);
   Dg_.write("Dg_pic" + istr_);
-  Yn_.write("Yn_pic" + istr_);
+  solu_state_vars_.Yn.write("solu_state_vars_.Ynpic" + istr_);
 }
 
 //------------------------
@@ -248,7 +251,7 @@ void Integrator::assemble_equations() {
   #endif
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, Do_);
+    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, solu_state_vars_.Do);
   }
 
   // Debug output
@@ -273,22 +276,22 @@ void Integrator::apply_boundary_conditions() {
   Dg_.write("Dg_vor_neu" + istr_);
 
   // Apply Neumman or Traction boundary conditions
-  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, Yn_, Do_);
+  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, solu_state_vars_.Yn, solu_state_vars_.Do);
 
   // Apply CMM BC conditions
   if (!com_mod.cmmInit) {
-    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, Do_);
+    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, solu_state_vars_.Do);
   }
 
   // Apply weakly applied Dirichlet BCs
-  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, Do_);
+  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, solu_state_vars_.Do);
 
   if (com_mod.risFlag) {
-    ris::ris_resbc(com_mod, Yg_, Dg_, Do_);
+    ris::ris_resbc(com_mod, Yg_, Dg_, solu_state_vars_.Do);
   }
 
   if (com_mod.ris0DFlag) {
-    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, Yn_, Do_);
+    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, solu_state_vars_.Yn, solu_state_vars_.Do);
   }
 
   // Apply contact model and add its contribution to residual
@@ -338,7 +341,7 @@ bool Integrator::corrector_and_check_convergence() {
   corrector();
 
   // Debug output
-  Yn_.write("Yn_corrector" + istr_);
+  solu_state_vars_.Yn.write("solu_state_vars_.Yncorrector" + istr_);
 
   // Check if all equations converged
   return std::count_if(com_mod.eq.begin(), com_mod.eq.end(),
@@ -413,12 +416,12 @@ void Integrator::predictor()
   // time derivative of displacement
   auto& Ad = com_mod.Ad;
 
-  auto& Ao = Ao_;  // Use member variable
-  auto& An = An_;  // Use member variable
-  auto& Yo = Yo_;  // Use member variable
-  auto& Yn = Yn_;  // Use member variable
-  auto& Do = Do_;  // Use member variable
-  auto& Dn = Dn_;  // Use member variable
+  auto& Ao = solu_state_vars_.Ao;  // Use member variable
+  auto& An = solu_state_vars_.An;  // Use member variable
+  auto& Yo = solu_state_vars_.Yo;  // Use member variable
+  auto& Yn = solu_state_vars_.Yn;  // Use member variable
+  auto& Do = solu_state_vars_.Do;  // Use member variable
+  auto& Dn = solu_state_vars_.Dn;  // Use member variable
 
   // Prestress initialization
   if (com_mod.pstEq) {
@@ -486,7 +489,7 @@ void Integrator::predictor()
 
     // electrophysiology
     if (eq.phys == Equation_CEP) {
-      cep_ion::cep_integ(simulation_, iEq, e, Do, Yo_);
+      cep_ion::cep_integ(simulation_, iEq, e, Do, solu_state_vars_.Yo);
     }
 
     // eqn 86 of Bazilevs 2007
@@ -564,12 +567,12 @@ void Integrator::initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& 
   dmsg << "com_mod.pstEq: " << com_mod.pstEq;
   #endif
 
-  const auto& Ao = Ao_;  // Use member variable
-  const auto& An = An_;  // Use member variable
-  const auto& Do = Do_;  // Use member variable
-  const auto& Dn = Dn_;  // Use member variable
-  const auto& Yo = Yo_;  // Use member variable
-  const auto& Yn = Yn_;  // Use member variable
+  const auto& Ao = solu_state_vars_.Ao;  // Use member variable
+  const auto& An = solu_state_vars_.An;  // Use member variable
+  const auto& Do = solu_state_vars_.Do;  // Use member variable
+  const auto& Dn = solu_state_vars_.Dn;  // Use member variable
+  const auto& Yo = solu_state_vars_.Yo;  // Use member variable
+  const auto& Yn = solu_state_vars_.Yn;  // Use member variable
 
   for (int i = 0; i < com_mod.nEq; i++) {
     auto& eq = com_mod.eq[i];
@@ -635,7 +638,7 @@ void Integrator::initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& 
 /// Modifies:
 /// \code {.cpp}
 ///   com_mod.Ad
-///   An_ (member variable)
+///   solu_state_vars_.An (member variable)
 ///   com_mod.Dn
 ///   com_mod.Yn
 ///   cep_mod.Xion
@@ -671,10 +674,10 @@ void Integrator::corrector()
   auto& cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
 
-  auto& An = An_;  // Use member variable
+  auto& An = solu_state_vars_.An;  // Use member variable
   auto& Ad = com_mod.Ad;
-  auto& Dn = Dn_;
-  auto& Yn = Yn_;
+  auto& Dn = solu_state_vars_.Dn;
+  auto& Yn = solu_state_vars_.Yn;
 
   auto& pS0 = com_mod.pS0;
   auto& pSa = com_mod.pSa;
@@ -913,7 +916,7 @@ void Integrator::corrector()
 /// (i.e., corner nodes). For e.g., for a P2 element, pressure is
 /// interpolated at the edge nodes using P1 vertices.
 ///
-/// Modifies: Yn_
+/// Modifies: solu_state_vars_.Yn
 ///
 void Integrator::corrector_taylor_hood()
 {
@@ -929,7 +932,7 @@ void Integrator::corrector_taylor_hood()
   const auto& eq = com_mod.eq[cEq];
 
   auto& cDmn = com_mod.cDmn;
-  auto& Yn = Yn_;
+  auto& Yn = solu_state_vars_.Yn;
 
   // Check for something ...
   //
