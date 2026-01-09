@@ -396,7 +396,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   }
 
   
-  // Coupled Neumann 0D BC
+  // Coupled 0D BC
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_ZeroD))) { 
 
     // Check that svZeroDSolver_interface has been defined

@@ -103,7 +103,7 @@ enum class BoundaryConditionType
   bType_undefNeu = 21, // undeforming Neu
   bType_RCR = 22,      // RCR-Neu
   bType_Ris0D = 23,    // RIS 0D
-  bType_ZeroD = 24,    // Neumann 0D coupled
+  bType_ZeroD = 24,    // 0D coupled
 };
 
 // Define constants using smaller name and integer value (needed for bitwise operations).
@@ -138,7 +138,7 @@ constexpr auto iBC_impD = static_cast<int>(BoundaryConditionType::bType_impD);
 constexpr auto BC_Neu = BoundaryConditionType::bType_Neu;
 constexpr auto iBC_Neu = static_cast<int>(BoundaryConditionType::bType_Neu);
 
-constexpr auto BC_ZeroD = BoundaryConditionType::bType_ZeroD; //<<dev_cap>>
+constexpr auto BC_ZeroD = BoundaryConditionType::bType_ZeroD;
 constexpr auto iBC_ZeroD = static_cast<int>(BoundaryConditionType::bType_ZeroD);
 
 constexpr auto BC_para = BoundaryConditionType::bType_para;
@@ -226,7 +226,7 @@ enum class CplBCType
   cplBC_I = 401,       // implicit
   cplBC_Neu = 66113,   // Neumann type coupling
   cplBC_SI = 402,      // semi-implicit
-  cplBC_ZeroD = 66114,   // Neumann 0D type coupling
+  cplBC_ZeroD = 66114,   // 0D type coupling
 };
 
 /// @brief Map for cplBC type to CplBCType. 
