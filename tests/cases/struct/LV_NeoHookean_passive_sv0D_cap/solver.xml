@@ -84,7 +84,7 @@
    <svZeroDSolver_interface>
      <Coupling_type> semi-implicit </Coupling_type>
      <Configuration_file> svzerod_3Dcoupling.json </Configuration_file>
-     <Shared_library> /Users/jjv/software/svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library>
+     <Shared_library> /home/javiera/software/svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library>
      <Initial_flows> 0.0 </Initial_flows>
      <Initial_pressures> 0.0 </Initial_pressures>
    </svZeroDSolver_interface>

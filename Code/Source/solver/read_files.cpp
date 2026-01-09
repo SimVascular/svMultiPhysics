@@ -136,7 +136,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
     }
 
-  } else if (std::set<std::string>{"Neumann0D", "ZeroD"}.count(bc_type)) {  // <<dev_cap>>
+  } else if (std::set<std::string>{"ZeroD", "0D"}.count(bc_type)) {  // <<dev_cap>>
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_ZeroD)); 
 
   } else if (std::set<std::string>{"Traction", "Trac"}.count(bc_type)) {

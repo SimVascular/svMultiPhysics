@@ -331,18 +331,18 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
         #endif
         
         // Skip if this block is handled by a ZeroD BC (check by iterating through eq.bc[])
-        bool is_neu0d = false;
-        for (int iEq = 0; iEq < com_mod.nEq && !is_neu0d; iEq++) {
+        bool is_zerod = false;
+        for (int iEq = 0; iEq < com_mod.nEq && !is_zerod; iEq++) {
           auto& eq = com_mod.eq[iEq];
-          for (int iBc = 0; iBc < eq.nBc && !is_neu0d; iBc++) {
+          for (int iBc = 0; iBc < eq.nBc && !is_zerod; iBc++) {
             auto& bc = eq.bc[iBc];
             if (utils::btest(bc.bType, iBC_ZeroD) && bc.zerod_bc.get_block_name() == pair.first) {
-              is_neu0d = true;
+              is_zerod = true;
             }
           }
         }
         
-        if (is_neu0d) {
+        if (is_zerod) {
           continue;  // Skip - this block is handled by ZeroDBoundaryCondition
         }
         
@@ -392,14 +392,14 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       // Check if this is a ZeroD BC (surface ID >= cplBC.nFa)
       if (surf_id >= cplBC.nFa) {
         // This is a ZeroD BC - find it by iterating through eq.bc[]
-        int neu0d_idx = surf_id - cplBC.nFa;
+        int zerod_idx = surf_id - cplBC.nFa;
         int current_idx = 0;
         for (int iEq = 0; iEq < com_mod.nEq && !found; iEq++) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc && !found; iBc++) {
             auto& bc = eq.bc[iBc];
             if (utils::btest(bc.bType, iBC_ZeroD)) {
-              if (current_idx == neu0d_idx) {
+              if (current_idx == zerod_idx) {
                 std::string blk_name = bc.zerod_bc.get_block_name();
                 svzd_blk_names.push_back(blk_name);
                 svzd_blk_name_len.push_back(blk_name.length());
@@ -454,14 +454,14 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       // For ZeroD BCs, store the solution IDs in ZeroDBoundaryCondition
       int surf_id = nsrflistCoupled[s];
       if (surf_id >= cplBC.nFa) {
-        int neu0d_idx = surf_id - cplBC.nFa;
+        int zerod_idx = surf_id - cplBC.nFa;
         int current_idx = 0;
         for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
             if (utils::btest(bc.bType, iBC_ZeroD)) {
-              if (current_idx == neu0d_idx) {
+              if (current_idx == zerod_idx) {
                 bc.zerod_bc.set_solution_ids(ids[0], ids[1], in_out);
               }
               current_idx++;
@@ -486,14 +486,14 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       
       if (surf_id >= cplBC.nFa) {
         // ZeroD BC - initialize by iterating through eq.bc[]
-        int neu0d_idx = surf_id - cplBC.nFa;
+        int zerod_idx = surf_id - cplBC.nFa;
         int current_idx = 0;
         for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
             if (utils::btest(bc.bType, iBC_ZeroD)) {
-              if (current_idx == neu0d_idx) {
+              if (current_idx == zerod_idx) {
                 if (init_flow_flag == 1) {
                   lpn_state_y[sol_IDs[2 * s]] = init_flow;
                 }
@@ -673,14 +673,14 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
           cplBC.fa[surf_id].y = QCoupled[i];
         } else if (surf_id >= cplBC.nFa) {
           // ZeroD BC - set pressure by iterating through eq.bc[]
-          int neu0d_idx = surf_id - cplBC.nFa;
+          int zerod_idx = surf_id - cplBC.nFa;
           int current_idx = 0;
           for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
             auto& eq = com_mod.eq[iEq];
             for (int iBc = 0; iBc < eq.nBc; iBc++) {
               auto& bc = eq.bc[iBc];
               if (utils::btest(bc.bType, iBC_ZeroD)) {
-                if (current_idx == neu0d_idx) {
+                if (current_idx == zerod_idx) {
                   PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
                   bc.zerod_bc.set_pressure(PCoupled[i]);
                 }
