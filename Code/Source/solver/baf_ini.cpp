@@ -104,15 +104,15 @@ void baf_ini(Simulation* simulation)
       int iFa = bc.iFa;
       int iM  = bc.iM;
 
-      // For Neu0D BCs, we don't use cplBC.fa - they are handled by ZeroDBoundaryCondition
-      if (utils::btest(bc.bType, iBC_Neu0D)) {
+      // For ZeroD BCs, we don't use cplBC.fa - they are handled by ZeroDBoundaryCondition
+      if (utils::btest(bc.bType, iBC_ZeroD)) {
         // For implicit or semi-implicit (not explicit) Neumann 0D coupling scheme, 
         // set bType to resistance
         if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
           bc.bType = utils::ibset(bc.bType, iBC_res);
         }
       }
-      // For Dir and Neu coupled BCs, use cplBC.fa
+      // For Fluid Dir and Neu coupled BCs, use cplBC.fa
       else if (utils::btest(bc.bType, iBC_cpl) || utils::btest(bc.bType, iBC_RCR)) {
         int i = bc.cplBCptr;
         com_mod.cplBC.fa[i].name = com_mod.msh[iM].fa[iFa].name;
@@ -764,7 +764,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       lBc.lsPtr = -1;
     }
 
-  } else if (btest(lBc.bType, iBC_Neu0D)) {
+  } else if (btest(lBc.bType, iBC_ZeroD)) {
     // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
     if (btest(lBc.bType, iBC_res)) {
       sV = 0.0;
@@ -797,7 +797,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       lBc.lsPtr = lsPtr;
       
       // Fills lhs.face(i) variables, including val is sVl exists
-      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu0D, gNodes, sVl); 
+      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_ZeroD, gNodes, sVl); 
     } else {
       lBc.lsPtr = -1;
     }

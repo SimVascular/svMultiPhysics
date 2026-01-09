@@ -25,7 +25,7 @@ class SimulationLogger;
 ///  - getting/setting pressure values from/to a 0D solver.
 ///
 /// The class manages its own coupling data. svZeroD_subroutines accesses
-/// Neu0D boundary conditions by iterating through com_mod.eq[].bc[].
+/// ZeroD boundary conditions by iterating through com_mod.eq[].bc[].
 class ZeroDBoundaryCondition {
 protected:
     /// @brief Data members for BC

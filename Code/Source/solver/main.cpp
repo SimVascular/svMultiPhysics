@@ -447,7 +447,6 @@ void iterate_solution(Simulation* simulation)
       Dg.write("Dg_vor_neu"+ istr);
 
       set_bc::set_bc_neu(com_mod, cm_mod, Yg, Dg);
-      // set_bc::set_bc_0d(com_mod, cm_mod, Yg, Dg);   // <<dev_cap>>
 
       com_mod.Val.write("Val_neu"+ istr);
       com_mod.R.write("R_neu"+ istr);

@@ -48,19 +48,19 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
   auto& eq = com_mod.eq[iEq];
   auto& cplBC = com_mod.cplBC;
 
-  // If coupling is all with Dirichlet faces (and no Neu0D BCs), no derivative calculation is needed
+  // If coupling is all with Dirichlet faces (and no ZeroD BCs), no derivative calculation is needed
   // (see Moghadam et al. 2013 Section 2.2.2)
-  // Also check for Neu0D BCs which are not in cplBC.fa
-  bool has_Neu0D = false;
-  int iBC_Neu0D_local = static_cast<int>(BoundaryConditionType::bType_Neu0D);
+  // Also check for ZeroD BCs which are not in cplBC.fa
+  bool has_ZeroD = false;
+  int iBC_ZeroD_local = static_cast<int>(BoundaryConditionType::bType_ZeroD);
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
-    if (utils::btest(eq.bc[iBc].bType, iBC_Neu0D_local)) {
-      has_Neu0D = true;
+    if (utils::btest(eq.bc[iBc].bType, iBC_ZeroD_local)) {
+      has_ZeroD = true;
       break;
     }
   }
   
-  if (!has_Neu0D && std::count_if(cplBC.fa.begin(),cplBC.fa.end(),[](cplFaceType& fa){return fa.bGrp == CplBCType::cplBC_Dir;}) == cplBC.fa.size()) { 
+  if (!has_ZeroD && std::count_if(cplBC.fa.begin(),cplBC.fa.end(),[](cplFaceType& fa){return fa.bGrp == CplBCType::cplBC_Dir;}) == cplBC.fa.size()) { 
     #ifdef debug_calc_der_cpl_bc 
     dmsg << "all cplBC_Dir " << std::endl;
     #endif
@@ -100,11 +100,11 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
 
     // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 <<dev_cap>>
     // Uses the ZeroDBoundaryCondition class to compute and store flowrates
-    // Note: Neu0D BCs don't use cplBCptr, so we handle them separately
-    if (utils::btest(bc.bType, iBC_Neu0D)) {
+    // Note: ZeroD BCs don't use cplBCptr, so we handle them separately
+    if (utils::btest(bc.bType, iBC_ZeroD)) {
       bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
       #ifdef debug_calc_der_cpl_bc 
-      dmsg << "iBC_Neu0D ";
+      dmsg << "iBC_ZeroD ";
       dmsg << "zerod_bc.Qo: " << bc.zerod_bc.get_Qo();
       dmsg << "zerod_bc.Qn: " << bc.zerod_bc.get_Qn();
       #endif
@@ -188,10 +188,10 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     }
   }
   
-  // Calculate diff for Neu0D BCs (from ZeroDBoundaryCondition)
+  // Calculate diff for ZeroD BCs (from ZeroDBoundaryCondition)
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
-    if (utils::btest(bc.bType, iBC_Neu0D)) {
+    if (utils::btest(bc.bType, iBC_ZeroD)) {
       double Qn = bc.zerod_bc.get_Qn();
       diff = diff + (Qn * Qn);
       j = j + 1;
@@ -214,12 +214,12 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     orgQ[i] = cplBC.fa[i].Qn;
   }
   
-  // Store original values for Neu0D BCs
-  std::map<int, std::pair<double, double>> orgNeu0D;  // iBc -> (Qn, pressure)
+  // Store original values for ZeroD BCs
+  std::map<int, std::pair<double, double>> orgZeroD;  // iBc -> (Qn, pressure)
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
-    if (utils::btest(bc.bType, iBC_Neu0D)) {
-      orgNeu0D[iBc] = std::make_pair(bc.zerod_bc.get_Qn(), bc.zerod_bc.get_pressure());
+    if (utils::btest(bc.bType, iBC_ZeroD)) {
+      orgZeroD[iBc] = std::make_pair(bc.zerod_bc.get_Qn(), bc.zerod_bc.get_pressure());
     }
   }
 
@@ -252,14 +252,14 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     }
   }
   
-  // Compute derivative for Neu0D BCs
+  // Compute derivative for ZeroD BCs
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
     
-    if (utils::btest(bc.bType, iBC_Neu0D)) {
+    if (utils::btest(bc.bType, iBC_ZeroD)) {
         // Finite difference perturbation in flowrate
-        double orgQn = orgNeu0D[iBc].first;
-        double orgP = orgNeu0D[iBc].second;
+        double orgQn = orgZeroD[iBc].first;
+        double orgP = orgZeroD[iBc].second;
         bc.zerod_bc.set_flowrates(bc.zerod_bc.get_Qo(), orgQn + diff);
 
         // Call svZeroD with perturbed flowrate
@@ -268,8 +268,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
         // Finite difference calculation of the resistance dP/dQ
         bc.r = (bc.zerod_bc.get_pressure() - orgP) / diff;
 
-        // Restore the original flowrates and pressures for all Neu0D BCs
-        for (auto& kv : orgNeu0D) {
+        // Restore the original flowrates and pressures for all ZeroD BCs
+        for (auto& kv : orgZeroD) {
           eq.bc[kv.first].zerod_bc.set_flowrates(eq.bc[kv.first].zerod_bc.get_Qo(), kv.second.first);
           eq.bc[kv.first].zerod_bc.set_pressure(kv.second.second);
         }
@@ -771,8 +771,8 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
 
       // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1
       // Uses the ZeroDBoundaryCondition class to compute and store flowrates
-      // Note: Neu0D BCs don't use cplBCptr, so we handle them separately
-      if (utils::btest(bc.bType, iBC_Neu0D)) {
+      // Note: ZeroD BCs don't use cplBCptr, so we handle them separately
+      if (utils::btest(bc.bType, iBC_ZeroD)) {
         bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
       }
       
@@ -829,8 +829,8 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
     auto& bc = eq.bc[iBc];
     int iFa = bc.iFa;
     
-    // For Neu0D BC, get pressure from ZeroDBoundaryCondition (set by svZeroD_subroutines)
-    if (utils::btest(bc.bType, iBC_Neu0D)) {
+    // For ZeroD BC, get pressure from ZeroDBoundaryCondition (set by svZeroD_subroutines)
+    if (utils::btest(bc.bType, iBC_ZeroD)) {
       bc.g = bc.zerod_bc.get_pressure();
     }
     // For other coupled BCs (Dir, Neu), get from cplBC.fa
@@ -1379,13 +1379,6 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
 }
 
 
-// // @brief Set ZeroD BC
-// void set_bc_0d(ComMod& com_mod, const faceType& lFa, const ZeroDBoundaryCondition& zerod_bc,
-//   const Array<double>& Yg, const Array<double>& Dg)
-// {
-
-// }
-
 /// @brief Set outlet BCs.
 //
 void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg)
@@ -1414,7 +1407,7 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
 
     if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
 
-    if (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Neu0D)) {
+    if (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_ZeroD)) {
       #ifdef debug_set_bc_neu
       dmsg << "iM: " << iM+1;
       dmsg << "iFa: " << iFa+1;

@@ -165,13 +165,13 @@ void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], dou
     }
   }
   
-  // Get Q/P from ZeroDBoundaryCondition for Neu0D BCs by iterating through eq.bc[]
-  int iBC_Neu0D = static_cast<int>(BoundaryConditionType::bType_Neu0D);
+  // Get Q/P from ZeroDBoundaryCondition for ZeroD BCs by iterating through eq.bc[]
+  int iBC_ZeroD = static_cast<int>(BoundaryConditionType::bType_ZeroD);
   for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
     auto& eq = com_mod.eq[iEq];
     for (int iBc = 0; iBc < eq.nBc; iBc++) {
       auto& bc = eq.bc[iBc];
-      if (utils::btest(bc.bType, iBC_Neu0D)) {
+      if (utils::btest(bc.bType, iBC_ZeroD)) {
         QCoupled[ind] = bc.zerod_bc.get_Qo();
         QnCoupled[ind] = bc.zerod_bc.get_Qn();
         PCoupled[ind] = 0.0;  // Pressure not used for Neumann BC input
@@ -236,25 +236,25 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   auto& cm = com_mod.cm;
   double dt = com_mod.dt;
 
-  // Count Neu0D BCs by iterating through eq.bc[]
-  int iBC_Neu0D = static_cast<int>(BoundaryConditionType::bType_Neu0D);
-  int nNeu0D_count = 0;
+  // Count ZeroD BCs by iterating through eq.bc[]
+  int iBC_ZeroD = static_cast<int>(BoundaryConditionType::bType_ZeroD);
+  int nZeroD_count = 0;
   for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
     auto& eq = com_mod.eq[iEq];
     for (int iBc = 0; iBc < eq.nBc; iBc++) {
       auto& bc = eq.bc[iBc];
-      if (utils::btest(bc.bType, iBC_Neu0D)) {
-        nNeu0D_count++;
+      if (utils::btest(bc.bType, iBC_ZeroD)) {
+        nZeroD_count++;
       }
     }
   }
   
-  // Total coupled surfaces = cplBC.nFa (Dir + Neu) + Neu0D BCs
-  numCoupledSrfs = cplBC.nFa + nNeu0D_count;
+  // Total coupled surfaces = cplBC.nFa (Dir + Neu) + ZeroD BCs
+  numCoupledSrfs = cplBC.nFa + nZeroD_count;
   
   int nDir = 0;
   int nNeu = 0;
-  int nNeu0D = 0;
+  int nZeroD = 0;
   
   // If this process is the master process on the communicator
   if (cm.mas(cm_mod)) {
@@ -278,15 +278,15 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       }
     }
     
-    // Count Neu0D BCs by iterating through eq.bc[]
-    // Use a special offset for Neu0D surface IDs to distinguish from cplBC indices
+    // Count ZeroD BCs by iterating through eq.bc[]
+    // Use a special offset for ZeroD surface IDs to distinguish from cplBC indices
     for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
       auto& eq = com_mod.eq[iEq];
       for (int iBc = 0; iBc < eq.nBc; iBc++) {
         auto& bc = eq.bc[iBc];
-        if (utils::btest(bc.bType, iBC_Neu0D)) {
-          nsrflistCoupled.push_back(cplBC.nFa + nNeu0D);
-          nNeu0D = nNeu0D + 1;
+        if (utils::btest(bc.bType, iBC_ZeroD)) {
+          nsrflistCoupled.push_back(cplBC.nFa + nZeroD);
+          nZeroD = nZeroD + 1;
         }
       }
     }
@@ -323,20 +323,20 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       svzerod_library = solver_interface.solver_library;
       svzerod_file = solver_interface.configuration_file;
 
-      // Process block_surface_map for Dir and Neu BCs (not Neu0D)
+      // Process block_surface_map for Dir and Neu BCs (not ZeroD)
       int i = 0;
       for (const auto& pair : solver_interface.block_surface_map) {
         #ifdef debug_init_svZeroD
         dmsg << "block_surface_map: '" + pair.first << "'";
         #endif
         
-        // Skip if this block is handled by a Neu0D BC (check by iterating through eq.bc[])
+        // Skip if this block is handled by a ZeroD BC (check by iterating through eq.bc[])
         bool is_neu0d = false;
         for (int iEq = 0; iEq < com_mod.nEq && !is_neu0d; iEq++) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc && !is_neu0d; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D) && bc.zerod_bc.get_block_name() == pair.first) {
+            if (utils::btest(bc.bType, iBC_ZeroD) && bc.zerod_bc.get_block_name() == pair.first) {
               is_neu0d = true;
             }
           }
@@ -389,23 +389,23 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       dmsg << "  nsrflistCoupled[s]: " << surf_id;
       #endif
 
-      // Check if this is a Neu0D BC (surface ID >= cplBC.nFa)
+      // Check if this is a ZeroD BC (surface ID >= cplBC.nFa)
       if (surf_id >= cplBC.nFa) {
-        // This is a Neu0D BC - find it by iterating through eq.bc[]
+        // This is a ZeroD BC - find it by iterating through eq.bc[]
         int neu0d_idx = surf_id - cplBC.nFa;
         int current_idx = 0;
         for (int iEq = 0; iEq < com_mod.nEq && !found; iEq++) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc && !found; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D)) {
+            if (utils::btest(bc.bType, iBC_ZeroD)) {
               if (current_idx == neu0d_idx) {
                 std::string blk_name = bc.zerod_bc.get_block_name();
                 svzd_blk_names.push_back(blk_name);
                 svzd_blk_name_len.push_back(blk_name.length());
                 found = 1;
                 #ifdef debug_init_svZeroD
-                dmsg << "    Found Neu0D block: '" << blk_name << "'";
+                dmsg << "    Found ZeroD block: '" << blk_name << "'";
                 #endif
               }
               current_idx++;
@@ -451,7 +451,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       sol_IDs[2 * s + 1] = ids[1];
       in_out_sign.push_back(in_out);
       
-      // For Neu0D BCs, store the solution IDs in ZeroDBoundaryCondition
+      // For ZeroD BCs, store the solution IDs in ZeroDBoundaryCondition
       int surf_id = nsrflistCoupled[s];
       if (surf_id >= cplBC.nFa) {
         int neu0d_idx = surf_id - cplBC.nFa;
@@ -460,7 +460,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D)) {
+            if (utils::btest(bc.bType, iBC_ZeroD)) {
               if (current_idx == neu0d_idx) {
                 bc.zerod_bc.set_solution_ids(ids[0], ids[1], in_out);
               }
@@ -485,14 +485,14 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       int surf_id = nsrflistCoupled[s];
       
       if (surf_id >= cplBC.nFa) {
-        // Neu0D BC - initialize by iterating through eq.bc[]
+        // ZeroD BC - initialize by iterating through eq.bc[]
         int neu0d_idx = surf_id - cplBC.nFa;
         int current_idx = 0;
         for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D)) {
+            if (utils::btest(bc.bType, iBC_ZeroD)) {
               if (current_idx == neu0d_idx) {
                 if (init_flow_flag == 1) {
                   lpn_state_y[sol_IDs[2 * s]] = init_flow;
@@ -546,9 +546,9 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       }
     }
     
-    // For Neu0D BCs - broadcast pressure values
-    if (nNeu0D_count > 0) {
-      Vector<double> p(nNeu0D_count);
+    // For ZeroD BCs - broadcast pressure values
+    if (nZeroD_count > 0) {
+      Vector<double> p(nZeroD_count);
       
       if (cm.mas(cm_mod)) {
         int idx = 0;
@@ -556,7 +556,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D)) {
+            if (utils::btest(bc.bType, iBC_ZeroD)) {
               p(idx) = bc.zerod_bc.get_pressure();
               idx++;
             }
@@ -572,7 +572,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D)) {
+            if (utils::btest(bc.bType, iBC_ZeroD)) {
               bc.zerod_bc.set_pressure(p(idx));
               idx++;
             }
@@ -593,15 +593,15 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
   auto& cplBC = com_mod.cplBC;
   auto& cm = com_mod.cm;
   
-  // Count Neu0D BCs by iterating through eq.bc[]
-  int iBC_Neu0D = static_cast<int>(BoundaryConditionType::bType_Neu0D);
-  int nNeu0D = 0;
+  // Count ZeroD BCs by iterating through eq.bc[]
+  int iBC_ZeroD = static_cast<int>(BoundaryConditionType::bType_ZeroD);
+  int nZeroD = 0;
   for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
     auto& eq = com_mod.eq[iEq];
     for (int iBc = 0; iBc < eq.nBc; iBc++) {
       auto& bc = eq.bc[iBc];
-      if (utils::btest(bc.bType, iBC_Neu0D)) {
-        nNeu0D++;
+      if (utils::btest(bc.bType, iBC_ZeroD)) {
+        nZeroD++;
       }
     }
   }
@@ -672,14 +672,14 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
           QCoupled[i] = in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]];
           cplBC.fa[surf_id].y = QCoupled[i];
         } else if (surf_id >= cplBC.nFa) {
-          // Neu0D BC - set pressure by iterating through eq.bc[]
+          // ZeroD BC - set pressure by iterating through eq.bc[]
           int neu0d_idx = surf_id - cplBC.nFa;
           int current_idx = 0;
           for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
             auto& eq = com_mod.eq[iEq];
             for (int iBc = 0; iBc < eq.nBc; iBc++) {
               auto& bc = eq.bc[iBc];
-              if (utils::btest(bc.bType, iBC_Neu0D)) {
+              if (utils::btest(bc.bType, iBC_ZeroD)) {
                 if (current_idx == neu0d_idx) {
                   PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
                   bc.zerod_bc.set_pressure(PCoupled[i]);
@@ -731,9 +731,9 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
       }
     }
     
-    // Broadcast Neu0D BC pressure values
-    if (nNeu0D > 0) {
-      Vector<double> p(nNeu0D);
+    // Broadcast ZeroD BC pressure values
+    if (nZeroD > 0) {
+      Vector<double> p(nZeroD);
       
       if (cm.mas(cm_mod)) {
         int idx = 0;
@@ -741,7 +741,7 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D)) {
+            if (utils::btest(bc.bType, iBC_ZeroD)) {
               p(idx) = bc.zerod_bc.get_pressure();
               idx++;
             }
@@ -757,7 +757,7 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
           auto& eq = com_mod.eq[iEq];
           for (int iBc = 0; iBc < eq.nBc; iBc++) {
             auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_Neu0D)) {
+            if (utils::btest(bc.bType, iBC_ZeroD)) {
               bc.zerod_bc.set_pressure(p(idx));
               idx++;
             }
