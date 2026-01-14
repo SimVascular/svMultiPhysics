@@ -9,13 +9,27 @@
 #include "Simulation.h"
 
 /**
- * @brief Solution state variables container
+ * @brief Represents solution variables at a single time level
  *
- * Contains solution arrays at two time levels (n and n+1) for time integration
+ * Contains the three primary solution arrays used in time integration:
+ * A (time derivative), D (integrated variable), and Y (variable)
  */
-struct soluStateVars {
-  Array<double> An, Dn, Yn;  // New (n+1): acceleration, displacement, velocity at next time step
-  Array<double> Ao, Do, Yo;  // Old (n): acceleration, displacement, velocity at current time step
+struct Solution {
+  Array<double> A;  ///< Time derivative (acceleration in structural mechanics)
+  Array<double> D;  ///< Integrated variable (displacement in structural mechanics)
+  Array<double> Y;  ///< Variable (velocity in structural mechanics)
+};
+
+/**
+ * @brief Holds solution state at old and current time levels
+ *
+ * Contains solution arrays at two time levels for time integration:
+ * - old: Previous converged solution at time n
+ * - current: Current solution being computed at time n+1
+ */
+struct SolutionStates {
+  Solution old;      ///< Previous converged solution at time n (Ao, Do, Yo)
+  Solution current;  ///< Current solution being computed at time n+1 (An, Dn, Yn)
 };
 
 /**
@@ -93,49 +107,49 @@ public:
    *
    * @return Reference to An array (acceleration at next time step)
    */
-  Array<double>& get_An() { return solu_state_vars_.An; }
+  Array<double>& get_An() { return solutions_.current.A; }
 
   /**
    * @brief Get reference to Dn (new integrated variables at n+1)
    *
    * @return Reference to Dn array (displacement at next time step)
    */
-  Array<double>& get_Dn() { return solu_state_vars_.Dn; }
+  Array<double>& get_Dn() { return solutions_.current.D; }
 
   /**
    * @brief Get reference to Yn (new variables at n+1)
    *
    * @return Reference to Yn array (velocity at next time step)
    */
-  Array<double>& get_Yn() { return solu_state_vars_.Yn; }
+  Array<double>& get_Yn() { return solutions_.current.Y; }
 
   /**
    * @brief Get reference to Ao (old time derivative of variables at n)
    *
    * @return Reference to Ao array (acceleration at current time step)
    */
-  Array<double>& get_Ao() { return solu_state_vars_.Ao; }
+  Array<double>& get_Ao() { return solutions_.old.A; }
 
   /**
    * @brief Get reference to Do (old integrated variables at n)
    *
    * @return Reference to Do array (displacement at current time step)
    */
-  Array<double>& get_Do() { return solu_state_vars_.Do; }
+  Array<double>& get_Do() { return solutions_.old.D; }
 
   /**
    * @brief Get reference to Yo (old variables at n)
    *
    * @return Reference to Yo array (velocity at current time step)
    */
-  Array<double>& get_Yo() { return solu_state_vars_.Yo; }
+  Array<double>& get_Yo() { return solutions_.old.Y; }
 
   /**
-   * @brief Get reference to solution state variables struct
+   * @brief Get reference to solution states struct
    *
-   * @return Reference to soluStateVars struct containing all solution arrays
+   * @return Reference to SolutionStates struct containing all solution arrays
    */
-  soluStateVars& get_solu_state_vars() { return solu_state_vars_; }
+  SolutionStates& get_solutions() { return solutions_; }
 
 private:
   /** @brief Pointer to the simulation object */
@@ -150,8 +164,8 @@ private:
   /** @brief Integrated variables (displacement in structural mechanics) */
   Array<double> Dg_;
 
-  /** @brief Solution state variables (An, Dn, Yn, Ao, Do, Yo) */
-  soluStateVars solu_state_vars_;
+  /** @brief Solution states at old and current time levels */
+  SolutionStates solutions_;
 
   /** @brief Residual vector for face-based quantities */
   Vector<double> res_;
