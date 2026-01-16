@@ -33,6 +33,9 @@ protected:
     std::string cap_face_vtp_file_;          ///< Path to VTP file (empty if no cap)
     const SimulationLogger* logger_ = nullptr;  ///< Logger for warnings/info (not owned by ZeroDBoundaryCondition)
 
+    /// @brief 3D boundary condition type (Dirichlet or Neumann) for this 0D-coupled BC.
+    consts::BoundaryConditionType bc_type_ = consts::BoundaryConditionType::bType_Neu;
+
     /// @brief svZeroD coupling data
     std::string block_name_;                 ///< Block name in svZeroDSolver configuration
     std::string face_name_;                  ///< Face name from the mesh
@@ -59,15 +62,20 @@ public:
     ZeroDBoundaryCondition() = default;
 
     /// @brief Construct with a face association (no VTP data loaded)
+    /// @param bc_type The 3D boundary condition type (must be bType_Dir or bType_Neu)
     /// @param face Face associated with this BC
     /// @param logger Simulation logger used to write warnings
-    ZeroDBoundaryCondition(const faceType& face, SimulationLogger& logger);
+    ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, SimulationLogger& logger);
 
     /// @brief Construct and optionally point to a cap face VTP file
+    /// @param bc_type The 3D boundary condition type (must be bType_Dir or bType_Neu)
     /// @param cap_face_vtp_file Path to the cap face VTP file
     /// @param face Face associated with this BC
     /// @param logger Simulation logger used to write warnings
-    ZeroDBoundaryCondition(const std::string& cap_face_vtp_file, const faceType& face, SimulationLogger& logger);
+    ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const std::string& cap_face_vtp_file, const faceType& face, SimulationLogger& logger);
+
+    /// @brief Get the 3D BC type for this 0D-coupled boundary condition.
+    consts::BoundaryConditionType get_bc_type() const { return bc_type_; }
 
     /// @brief Load the cap face VTP file and associate it with this boundary condition
     /// @param vtp_file_path Path to the cap face VTP file

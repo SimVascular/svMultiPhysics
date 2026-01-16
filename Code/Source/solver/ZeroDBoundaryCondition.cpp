@@ -9,19 +9,42 @@
 
 #define n_debug_zerod_bc
 
-ZeroDBoundaryCondition::ZeroDBoundaryCondition(const faceType& face, SimulationLogger& logger)
-    : face_(&face)
-    , logger_(&logger)
+static std::string bc_type_to_string(consts::BoundaryConditionType type)
 {
+    switch (type) {
+        case consts::BoundaryConditionType::bType_Dir: return "Dirichlet";
+        case consts::BoundaryConditionType::bType_Neu: return "Neumann";
+        default: return "Unsupported";
+    }
 }
 
-ZeroDBoundaryCondition::ZeroDBoundaryCondition(const std::string& cap_face_vtp_file, const faceType& face, SimulationLogger& logger)
+ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, SimulationLogger& logger)
+    : face_(&face)
+    , logger_(&logger)
+    , bc_type_(bc_type)
+{
+    if (bc_type_ != consts::BoundaryConditionType::bType_Dir &&
+        bc_type_ != consts::BoundaryConditionType::bType_Neu) {
+        throw std::runtime_error("[ZeroDBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
+    }
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition: BC type set to '" << bc_type_to_string(bc_type_) << "'" << std::endl;
+    #endif
+}
+
+ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const std::string& cap_face_vtp_file, const faceType& face, SimulationLogger& logger)
     : cap_face_vtp_file_(cap_face_vtp_file)
     , face_(&face)
     , logger_(&logger)
+    , bc_type_(bc_type)
 {
+    if (bc_type_ != consts::BoundaryConditionType::bType_Dir &&
+        bc_type_ != consts::BoundaryConditionType::bType_Neu) {
+        throw std::runtime_error("[ZeroDBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
+    }
     #ifdef debug_zerod_bc
     std::cout << "ZeroDBoundaryCondition: Cap face VTP file set to '" << cap_face_vtp_file_ << "'" << std::endl;
+    std::cout << "ZeroDBoundaryCondition: BC type set to '" << bc_type_to_string(bc_type_) << "'" << std::endl;
     #endif
 }
 

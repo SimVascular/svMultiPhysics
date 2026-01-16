@@ -126,18 +126,18 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 {
   using namespace consts;
   auto bc_type = bc_params->type.value();
+  BoundaryConditionType zerod_bc_type = BoundaryConditionType::bType_Neu;
 
   if (std::set<std::string>{"Dirichlet", "Dir"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir)); 
+    zerod_bc_type = BoundaryConditionType::bType_Dir;
 
   } else if (std::set<std::string>{"Neumann", "Neu"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)); 
+    zerod_bc_type = BoundaryConditionType::bType_Neu;
     if ((lEq.phys == EquationType::phys_fluid) || (lEq.phys == EquationType::phys_FSI)) {
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
     }
-
-  } else if (std::set<std::string>{"ZeroD", "0D"}.count(bc_type)) {
-    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_ZeroD)); 
 
   } else if (std::set<std::string>{"Traction", "Trac"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_trac)); 
@@ -241,7 +241,34 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   //
   // A coupling method is defined if com_mod.cplBC.schm is set.
   //
-  } else if (ctmp == "Coupled") { 
+  } else if (ctmp == "Coupled" || ctmp == "ZeroD_Coupled") { 
+    // New syntax for ZeroDBoundaryCondition:
+    //   <Type> Dir/Neu/... </Type>
+    //   <Time_dependence> ZeroD_Coupled </Time_dependence>
+    //
+    // This boundary condition is treated as a special 0D-coupled (Neumann-like)
+    // BC managed by ZeroDBoundaryCondition (i.e. not a Dirichlet/Neumann BC in
+    // the usual sense).
+    if (ctmp == "ZeroD_Coupled") {
+      // Enforce valid BC kind for ZeroDBoundaryCondition
+      if ((lEq.phys == EquationType::phys_struct) || (lEq.phys == EquationType::phys_ustruct)) {
+        if (zerod_bc_type != BoundaryConditionType::bType_Neu) {
+          throw std::runtime_error("[read_bc] ZeroD_Coupled BC for struct/ustruct must use <Type> Neu </Type>.");
+        }
+      } else if ((lEq.phys == EquationType::phys_fluid) || (lEq.phys == EquationType::phys_FSI) || (lEq.phys == EquationType::phys_CMM)) {
+        // Fluid/FSI/CMM can use either Dirichlet or Neumann for 0D coupling.
+      } else {
+        throw std::runtime_error("[read_bc] ZeroD_Coupled BC used with unsupported physics type.");
+      }
+
+      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_ZeroD));
+
+      // Clear any "regular" BC type bits so downstream logic doesn't treat this
+      // as a standard Dirichlet/Neumann boundary.
+      lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+      lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Neu));
+      lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
+    }
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl)); 
     auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
     
@@ -401,27 +428,27 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
     // Check that svZeroDSolver_interface has been defined
     if (!com_mod.cplBC.svzerod_solver_interface.has_data) {
-      throw std::runtime_error("[read_bc] svZeroDSolver_interface must be defined for Neumann0D BC.");
+      throw std::runtime_error("[read_bc] svZeroDSolver_interface must be defined for ZeroD BC.");
     }
 
-    // Check that Time_dependence is Coupled (which sets up cplBCptr)
+    // Check that Time_dependence is ZeroD_Coupled (which sets up bType_cpl)
     if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_cpl))) {
-      throw std::runtime_error("[read_bc] Neumann0D BC requires Time_dependence to be 'Coupled'.");
+      throw std::runtime_error("[read_bc] ZeroD BC requires Time_dependence to be 'ZeroD_Coupled'.");
     }
     
     // Check that svZeroDSolver_block is defined
     if (!bc_params->svzerod_solver_block.defined()) {
       auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
-      throw std::runtime_error("[read_bc] svZeroDSolver_block must be defined for Neumann0D BC on face '" + face_name + "'.");
+      throw std::runtime_error("[read_bc] svZeroDSolver_block must be defined for ZeroD BC on face '" + face_name + "'.");
     }
 
     // Create the ZeroDBoundaryCondition object
     if (bc_params->svzerod_solver_cap.defined()) {
-      lBc.zerod_bc = ZeroDBoundaryCondition(bc_params->svzerod_solver_cap.value(),
+      lBc.zerod_bc = ZeroDBoundaryCondition(zerod_bc_type, bc_params->svzerod_solver_cap.value(),
                                             com_mod.msh[lBc.iM].fa[lBc.iFa],
                                             simulation->logger);
     } else {
-      lBc.zerod_bc = ZeroDBoundaryCondition(com_mod.msh[lBc.iM].fa[lBc.iFa],
+      lBc.zerod_bc = ZeroDBoundaryCondition(zerod_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
                                             simulation->logger);
     }
     
