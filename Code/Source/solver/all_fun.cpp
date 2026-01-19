@@ -425,7 +425,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
 /// @param pFlag flag for using Taylor-Hood function space for pressure
 /// Replicates 'FUNCTION vInteg(dId, s, l, u, pFlag)' defined in ALLFUN.f.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u, bool pFlag, const Array<double>* Do)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u, const Array<double>* Do, bool pFlag)
 {
   using namespace consts;
 
@@ -678,7 +678,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
 /// @param pFlag flag for using Taylor-Hood function space for pressure
 /// @param cfg denotes which mechanical configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s, bool pFlag, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s, const Array<double>* Dn, const Array<double>* Do, bool pFlag, MechanicalConfigurationType cfg)
 {
   using namespace consts;
   #define n_debug_integ_s
@@ -842,7 +842,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
 /// @param cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
 //
 double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
-            const Array<double>& s, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
+            const Array<double>& s, const Array<double>* Dn, const Array<double>* Do, MechanicalConfigurationType cfg)
 {
   using namespace consts;
 
@@ -976,7 +976,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
 ///
 //
 double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
-    const Array<double>& s, const int l, std::optional<int> uo, bool THflag, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
+    const Array<double>& s, const int l, const Array<double>* Dn, const Array<double>* Do, std::optional<int> uo, bool THflag, MechanicalConfigurationType cfg)
 {
   using namespace consts;
 
@@ -1032,14 +1032,14 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
          vec(n,a) = s(i,a);
        }
      }
-     result = integ(com_mod, cm_mod, lFa, vec, cfg, Dn, Do);
+     result = integ(com_mod, cm_mod, lFa, vec, Dn, Do, cfg);
   // If s scalar, integrate as scalar
   } else if (l == u) {
      Vector<double> sclr(nNo);
      for (int a = 0; a < nNo; a++) {
         sclr(a) = s(l,a);
      }
-     result = integ(com_mod, cm_mod, lFa, sclr, flag, cfg, Dn, Do);
+     result = integ(com_mod, cm_mod, lFa, sclr, Dn, Do, flag, cfg);
   } else {
     throw std::runtime_error("Unexpected dof in integ");
   }

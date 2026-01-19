@@ -104,8 +104,6 @@ void iterate_precomputed_time(Simulation* simulation, Array<double>& An, Array<d
   auto& Rd = com_mod.Rd;      // Residual of the displacement equation
   auto& Kd = com_mod.Kd;      // LHS matrix for displacement equation
 
-  // Ao, Yo, Do, An, Yn are now passed as parameters (from integrator)
-
   int& cTS = com_mod.cTS;
   int& nITs = com_mod.nITs;
   double& dt = com_mod.dt;
