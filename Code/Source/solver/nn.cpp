@@ -523,7 +523,7 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
 /// Reproduce Fortran 'GNNB'.
 //
 void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, const int nsd, const int insd,
-    const int eNoNb, const Array<double>& Nx, Vector<double>& n, MechanicalConfigurationType cfg, const Array<double>* Dn, const Array<double>* Do)
+    const int eNoNb, const Array<double>& Nx, Vector<double>& n, const Array<double>* Dn, const Array<double>* Do, MechanicalConfigurationType cfg)
 {
   auto& cm = com_mod.cm;
 

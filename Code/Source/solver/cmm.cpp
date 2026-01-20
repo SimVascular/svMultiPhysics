@@ -282,7 +282,7 @@ void cmm_b(ComMod& com_mod, const faceType& lFa, const int e, const Array<double
   for (int g = 0; g < lFa.nG; g++) {
     Vector<double> nV(nsd);
     auto Nx = lFa.Nx.slice(g);
-    nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, 3, Nx, nV, consts::MechanicalConfigurationType::reference, nullptr, &Do);
+    nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, 3, Nx, nV, nullptr, &Do, consts::MechanicalConfigurationType::reference);
     double Jac = sqrt(utils::norm(nV));
     nV = nV / Jac;
     double w = lFa.w(g)*Jac;
