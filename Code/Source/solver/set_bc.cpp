@@ -759,9 +759,9 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
 /// @brief Apply Dirichlet BCs strongly.
 ///
 /// Parameters
-///   lA - New time derivative of variables (An)
-///   lY - New variables (Yn)
-///   lD - New integrated variables (Dn)
+///   lA - Time derivative of variables
+///   lY - Variables
+///   lD - Integrated variables
 ///
 /// Modfies:
 ///   lA(tDof, tnNo)
