@@ -25,12 +25,9 @@ using namespace consts;
 //------------------------
 // Integrator Constructor
 //------------------------
-Integrator::Integrator(Simulation* simulation, Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo)
-  : simulation_(simulation), newton_count_(0)
+Integrator::Integrator(Simulation* simulation, SolutionStates&& solutions)
+  : simulation_(simulation), solutions_(std::move(solutions)), newton_count_(0)
 {
-  solutions_.old.A = std::move(Ao);
-  solutions_.old.D = std::move(Do);
-  solutions_.old.Y = std::move(Yo);
   initialize_arrays();
 }
 
@@ -53,17 +50,17 @@ void Integrator::initialize_arrays() {
   Ag_.resize(tDof, tnNo);
   Yg_.resize(tDof, tnNo);
   Dg_.resize(tDof, tnNo);
-  solutions_.current.A.resize(tDof, tnNo);
-  solutions_.current.D.resize(tDof, tnNo);
-  solutions_.current.Y.resize(tDof, tnNo);
+  solutions_.current.get_acceleration().resize(tDof, tnNo);
+  solutions_.current.get_displacement().resize(tDof, tnNo);
+  solutions_.current.get_velocity().resize(tDof, tnNo);
   res_.resize(nFacesLS);
   incL_.resize(nFacesLS);
 
   // old solution already initialized via move in constructor
   // Initialize current solution from old solution
-  solutions_.current.A = solutions_.old.A;
-  solutions_.current.D = solutions_.old.D;
-  solutions_.current.Y = solutions_.old.Y;
+  solutions_.current.get_acceleration() = solutions_.old.get_acceleration();
+  solutions_.current.get_displacement() = solutions_.old.get_displacement();
+  solutions_.current.get_velocity() = solutions_.old.get_velocity();
 }
 
 //------------------------
@@ -107,8 +104,12 @@ bool Integrator::step() {
       #ifdef debug_integrator_step
       dmsg << "Set coupled BCs " << std::endl;
       #endif
-      set_bc::set_bc_cpl(com_mod, cm_mod, solutions_.current.A, solutions_.current.Y, solutions_.current.D, solutions_.old.Y, solutions_.old.A, solutions_.old.D);
-      set_bc::set_bc_dir(com_mod, solutions_.current.A, solutions_.current.Y, solutions_.current.D, solutions_.old.Y, solutions_.old.A, solutions_.old.D);
+      set_bc::set_bc_cpl(com_mod, cm_mod, solutions_.current.get_acceleration(), solutions_.current.get_velocity(),
+                         solutions_.current.get_displacement(), solutions_.old.get_velocity(),
+                         solutions_.old.get_acceleration(), solutions_.old.get_displacement());
+      set_bc::set_bc_dir(com_mod, solutions_.current.get_acceleration(), solutions_.current.get_velocity(),
+                         solutions_.current.get_displacement(), solutions_.old.get_velocity(),
+                         solutions_.old.get_acceleration(), solutions_.old.get_displacement());
     }
 
     // Initiator step for Generalized α-Method (quantities at n+am, n+af).
@@ -202,7 +203,7 @@ void Integrator::initiator_step() {
   Ag_.write("Ag_pic" + istr_);
   Yg_.write("Yg_pic" + istr_);
   Dg_.write("Dg_pic" + istr_);
-  solutions_.current.Y.write("solutions_.current.Ypic" + istr_);
+  solutions_.current.get_velocity().write("solutions_.current.Ypic" + istr_);
 }
 
 //------------------------
@@ -251,7 +252,7 @@ void Integrator::assemble_equations() {
   #endif
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, solutions_.old.D);
+    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, solutions_.old.get_displacement());
   }
 
   // Debug output
@@ -276,22 +277,22 @@ void Integrator::apply_boundary_conditions() {
   Dg_.write("Dg_vor_neu" + istr_);
 
   // Apply Neumman or Traction boundary conditions
-  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, solutions_.current.Y, solutions_.old.D);
+  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, solutions_.current.get_velocity(), solutions_.old.get_displacement());
 
   // Apply CMM BC conditions
   if (!com_mod.cmmInit) {
-    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, solutions_.old.D);
+    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, solutions_.old.get_displacement());
   }
 
   // Apply weakly applied Dirichlet BCs
-  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, solutions_.old.D);
+  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, solutions_.old.get_displacement());
 
   if (com_mod.risFlag) {
-    ris::ris_resbc(com_mod, Yg_, Dg_, solutions_.old.D);
+    ris::ris_resbc(com_mod, Yg_, Dg_, solutions_.old.get_displacement());
   }
 
   if (com_mod.ris0DFlag) {
-    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, solutions_.current.Y, solutions_.old.D);
+    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, solutions_.current.get_velocity(), solutions_.old.get_displacement());
   }
 
   // Apply contact model and add its contribution to residual
@@ -341,7 +342,7 @@ bool Integrator::corrector_and_check_convergence() {
   corrector();
 
   // Debug output
-  solutions_.current.Y.write("solutions_.current.Ycorrector" + istr_);
+  solutions_.current.get_velocity().write("solutions_.current.Ycorrector" + istr_);
 
   // Check if all equations converged
   return std::count_if(com_mod.eq.begin(), com_mod.eq.end(),
@@ -416,12 +417,12 @@ void Integrator::predictor()
   // time derivative of displacement
   auto& Ad = com_mod.Ad;
 
-  auto& Ao = solutions_.old.A;  // Use member variable
-  auto& An = solutions_.current.A;  // Use member variable
-  auto& Yo = solutions_.old.Y;  // Use member variable
-  auto& Yn = solutions_.current.Y;  // Use member variable
-  auto& Do = solutions_.old.D;  // Use member variable
-  auto& Dn = solutions_.current.D;  // Use member variable
+  auto& Ao = solutions_.old.get_acceleration();
+  auto& An = solutions_.current.get_acceleration();
+  auto& Yo = solutions_.old.get_velocity();
+  auto& Yn = solutions_.current.get_velocity();
+  auto& Do = solutions_.old.get_displacement();
+  auto& Dn = solutions_.current.get_displacement();
 
   // Prestress initialization
   if (com_mod.pstEq) {
@@ -489,7 +490,7 @@ void Integrator::predictor()
 
     // electrophysiology
     if (eq.phys == Equation_CEP) {
-      cep_ion::cep_integ(simulation_, iEq, e, Do, solutions_.old.Y);
+      cep_ion::cep_integ(simulation_, iEq, e, Do, solutions_.old.get_velocity());
     }
 
     // eqn 86 of Bazilevs 2007
@@ -567,12 +568,12 @@ void Integrator::initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& 
   dmsg << "com_mod.pstEq: " << com_mod.pstEq;
   #endif
 
-  const auto& Ao = solutions_.old.A;  // Use member variable
-  const auto& An = solutions_.current.A;  // Use member variable
-  const auto& Do = solutions_.old.D;  // Use member variable
-  const auto& Dn = solutions_.current.D;  // Use member variable
-  const auto& Yo = solutions_.old.Y;  // Use member variable
-  const auto& Yn = solutions_.current.Y;  // Use member variable
+  const auto& Ao = solutions_.old.get_acceleration();
+  const auto& An = solutions_.current.get_acceleration();
+  const auto& Do = solutions_.old.get_displacement();
+  const auto& Dn = solutions_.current.get_displacement();
+  const auto& Yo = solutions_.old.get_velocity();
+  const auto& Yn = solutions_.current.get_velocity();
 
   for (int i = 0; i < com_mod.nEq; i++) {
     auto& eq = com_mod.eq[i];
@@ -674,10 +675,10 @@ void Integrator::corrector()
   auto& cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
 
-  auto& An = solutions_.current.A;  // Use member variable
+  auto& An = solutions_.current.get_acceleration();
   auto& Ad = com_mod.Ad;
-  auto& Dn = solutions_.current.D;
-  auto& Yn = solutions_.current.Y;
+  auto& Dn = solutions_.current.get_displacement();
+  auto& Yn = solutions_.current.get_velocity();
 
   auto& pS0 = com_mod.pS0;
   auto& pSa = com_mod.pSa;
@@ -932,7 +933,7 @@ void Integrator::corrector_taylor_hood()
   const auto& eq = com_mod.eq[cEq];
 
   auto& cDmn = com_mod.cDmn;
-  auto& Yn = solutions_.current.Y;
+  auto& Yn = solutions_.current.get_velocity();
 
   // Check for something ...
   //

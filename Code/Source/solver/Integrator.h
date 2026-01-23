@@ -8,29 +8,8 @@
 #include "Vector.h"
 #include "Simulation.h"
 
-/**
- * @brief Represents solution variables at a single time level
- *
- * Contains the three primary solution arrays used in time integration:
- * A (time derivative), D (integrated variable), and Y (variable)
- */
-struct Solution {
-  Array<double> A;  ///< Time derivative (acceleration in structural mechanics)
-  Array<double> D;  ///< Integrated variable (displacement in structural mechanics)
-  Array<double> Y;  ///< Variable (velocity in structural mechanics)
-};
-
-/**
- * @brief Holds solution state at old and current time levels
- *
- * Contains solution arrays at two time levels for time integration:
- * - old: Previous converged solution at time n
- * - current: Current solution being computed at time n+1
- */
-struct SolutionStates {
-  Solution old;      ///< Previous converged solution at time n (Ao, Do, Yo)
-  Solution current;  ///< Current solution being computed at time n+1 (An, Dn, Yn)
-};
+// Note: Solution and SolutionStates structs are defined in ComMod.h
+// and available via Simulation.h include chain
 
 /**
  * @brief Integrator class encapsulates the Newton iteration loop for time integration
@@ -51,11 +30,9 @@ public:
    * @brief Construct a new Integrator object
    *
    * @param simulation Pointer to the Simulation object containing problem data
-   * @param Ao Old acceleration array (takes ownership via move)
-   * @param Do Old displacement array (takes ownership via move)
-   * @param Yo Old velocity array (takes ownership via move)
+   * @param solutions Solution states containing old time level arrays (takes ownership via move)
    */
-  Integrator(Simulation* simulation, Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo);
+  Integrator(Simulation* simulation, SolutionStates&& solutions);
 
   /**
    * @brief Destroy the Integrator object
@@ -103,49 +80,13 @@ public:
   Array<double>& get_Dg() { return Dg_; }
 
   /**
-   * @brief Get reference to An (new time derivative of variables at n+1)
-   *
-   * @return Reference to An array (acceleration at next time step)
-   */
-  Array<double>& get_An() { return solutions_.current.A; }
-
-  /**
-   * @brief Get reference to Dn (new integrated variables at n+1)
-   *
-   * @return Reference to Dn array (displacement at next time step)
-   */
-  Array<double>& get_Dn() { return solutions_.current.D; }
-
-  /**
-   * @brief Get reference to Yn (new variables at n+1)
-   *
-   * @return Reference to Yn array (velocity at next time step)
-   */
-  Array<double>& get_Yn() { return solutions_.current.Y; }
-
-  /**
-   * @brief Get reference to Ao (old time derivative of variables at n)
-   *
-   * @return Reference to Ao array (acceleration at current time step)
-   */
-  Array<double>& get_Ao() { return solutions_.old.A; }
-
-  /**
-   * @brief Get reference to Do (old integrated variables at n)
-   *
-   * @return Reference to Do array (displacement at current time step)
-   */
-  Array<double>& get_Do() { return solutions_.old.D; }
-
-  /**
-   * @brief Get reference to Yo (old variables at n)
-   *
-   * @return Reference to Yo array (velocity at current time step)
-   */
-  Array<double>& get_Yo() { return solutions_.old.Y; }
-
-  /**
    * @brief Get reference to solution states struct
+   *
+   * Provides access to all solution arrays at old (n) and current (n+1) time levels.
+   * Use this to access An, Dn, Yn (current) and Ao, Do, Yo (old) via:
+   *   auto& solutions = integrator.get_solutions();
+   *   auto& An = solutions.current.get_acceleration();
+   *   auto& Do = solutions.old.get_displacement();
    *
    * @return Reference to SolutionStates struct containing all solution arrays
    */
