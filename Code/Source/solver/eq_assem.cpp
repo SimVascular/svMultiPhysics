@@ -28,8 +28,11 @@
 
 namespace eq_assem {
 
-void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg, const Array<double>& Do)
+void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   #define n_debug_b_assem_neu_bc
   #ifdef debug_b_assem_neu_bc
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -156,8 +159,11 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 /// @param lFa 
 /// @param hg Pressure magnitude
 /// @param Dg 
-void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg, const Array<double>& Do)
+void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
 
@@ -286,8 +292,12 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 /// is eventually used in ADDBCMUL() in the linear solver to add the contribution
 /// from the resistance BC to the matrix-vector product of the tangent matrix and
 /// an arbitrary vector.
-void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Dn, const Array<double>& Do)
+void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, SolutionStates& solutions)
 {
+  // Local aliases for displacement arrays
+  const auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
   using namespace fsi_linear_solver;
@@ -348,8 +358,11 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const A
 /// Ag(tDof,tnNo), Yg(tDof,tnNo), Dg(tDof,tnNo)
 //
 void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag,
-    const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do)
+    const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   #define n_debug_global_eq_assem
   #ifdef debug_global_eq_assem
   DebugMsg dmsg(__func__, com_mod.cm.idcm());

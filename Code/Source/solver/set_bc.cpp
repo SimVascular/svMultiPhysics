@@ -1473,10 +1473,10 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // Add Neumann BCs contribution to the residual (and tangent if flwP)
   //
   if (lBc.flwP) {
-    eq_assem::b_neu_folw_p(com_mod, lBc, lFa, hg, Dg, Do);
+    eq_assem::b_neu_folw_p(com_mod, lBc, lFa, hg, Dg, solutions);
 
   } else {
-    eq_assem::b_assem_neu_bc(com_mod, lFa, hg, Yg, Do);
+    eq_assem::b_assem_neu_bc(com_mod, lFa, hg, Yg, solutions);
   }
 
 
@@ -1486,7 +1486,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // a follower pressure load (struct/ustruct) or a moving mesh (FSI)
   if (utils::btest(lBc.bType, iBC_res)) {
     if (lBc.flwP || com_mod.mvMsh) {
-      eq_assem::fsi_ls_upd(com_mod, lBc, lFa, Dg, Do);
+      eq_assem::fsi_ls_upd(com_mod, lBc, lFa, solutions);
     }
   }
   // Now treat Robin BC (stiffness and damping) here

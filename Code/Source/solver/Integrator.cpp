@@ -248,7 +248,7 @@ void Integrator::assemble_equations() {
   #endif
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, solutions_.old.get_displacement());
+    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, solutions_);
   }
 
   // Debug output
