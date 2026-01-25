@@ -172,8 +172,13 @@ void read_restart_header(ComMod& com_mod, std::array<int,7>& tStamp, double& tim
 
 /// @brief Reproduces the Fortran 'WRITERESTART' subroutine.
 //
-void write_restart(Simulation* simulation, std::array<double,3>& timeP, Array<double>& An, Array<double>& Dn, Array<double>& Yn)
+void write_restart(Simulation* simulation, std::array<double,3>& timeP, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+
   auto& com_mod = simulation->com_mod;
   #define n_debug_write_restart
   #ifdef debug_write_restart
@@ -392,11 +397,14 @@ void write_restart_header(ComMod& com_mod, std::array<double,3>& timeP, std::ofs
 ///
 /// Reproduces: WRITE(fid, REC=myID) stamp, cTS, time,CPUT()-timeP(1), eq.iNorm, cplBC.xn, Yn, An, Dn
 //
-void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq, Array<double>& An, Array<double>& Dn, Array<double>& Yn)
+void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq, SolutionStates& solutions)
 {
-  int cTS = com_mod.cTS;
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
 
-  // An, Dn, and Yn are now passed as parameters (from integrator getters)
+  int cTS = com_mod.cTS;
 
   auto& stamp = com_mod.stamp;
 

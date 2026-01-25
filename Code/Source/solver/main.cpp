@@ -458,7 +458,7 @@ void iterate_solution(Simulation* simulation)
 
     // Saving the result to restart bin file
     if (l1 || l2) {
-       output::write_restart(simulation, com_mod.timeP, An, Dn, Yn);
+       output::write_restart(simulation, com_mod.timeP, solutions);
     }
 
     // Writing results into the disk with VTU format
