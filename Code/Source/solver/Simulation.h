@@ -29,8 +29,8 @@ class Simulation {
     Integrator& get_integrator();
 
     // Initialize the Integrator object after simulation setup is complete
-    // Takes ownership of Ao, Do, Yo arrays via move semantics
-    void initialize_integrator(Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo);
+    // Takes ownership of solution states via move semantics
+    void initialize_integrator(SolutionStates&& solutions);
 
     // Read a solver paramerer input XML file.
     void read_parameters(const std::string& fileName);

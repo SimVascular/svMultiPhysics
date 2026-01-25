@@ -133,7 +133,12 @@ void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do,
     }
 
     if (!com_mod.stFileFlag) {
-      set_bc::rcr_init(com_mod, cm_mod, Ao, Do, Yo);
+      // Create temporary SolutionStates for set_bc calls
+      SolutionStates temp_solutions;
+      temp_solutions.old.A = Ao;
+      temp_solutions.old.D = Do;
+      temp_solutions.old.Y = Yo;
+      set_bc::rcr_init(com_mod, cm_mod, temp_solutions);
     }
 
     if (com_mod.cplBC.useGenBC) {
@@ -145,7 +150,15 @@ void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do,
     }
 
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
-      set_bc::calc_der_cpl_bc(com_mod, cm_mod, Yo, Yo, Do, Yo, Ao, Do);
+      // Create temporary SolutionStates for set_bc calls
+      SolutionStates temp_solutions;
+      temp_solutions.old.A = Ao;
+      temp_solutions.old.D = Do;
+      temp_solutions.old.Y = Yo;
+      temp_solutions.current.A = Yo;
+      temp_solutions.current.Y = Yo;
+      temp_solutions.current.D = Do;
+      set_bc::calc_der_cpl_bc(com_mod, cm_mod, temp_solutions);
     }
   }
 

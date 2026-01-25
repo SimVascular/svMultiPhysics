@@ -830,7 +830,18 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   //
   // Modifies Ao, Yo, Do (local variables)
   //
-  set_bc::set_bc_dir(com_mod, Ao, Yo, Do, Yo, Ao, Do);
+  SolutionStates temp_solutions;
+  temp_solutions.old.A = Ao;
+  temp_solutions.old.Y = Yo;
+  temp_solutions.old.D = Do;
+  temp_solutions.current.A = Ao;
+  temp_solutions.current.Y = Yo;
+  temp_solutions.current.D = Do;
+  set_bc::set_bc_dir(com_mod, temp_solutions);
+  // Copy back modified values
+  Ao = temp_solutions.current.A;
+  Yo = temp_solutions.current.Y;
+  Do = temp_solutions.current.D;
 
   // Preparing TXT files (pass local Ao, Do, and Yo since An, Dn, and Yn haven't been created in Integrator yet)
   txt_ns::txt(simulation, true, Ao, Do, Yo, Do);
@@ -845,7 +856,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // Create Integrator now that Ao, Do, Yo are fully initialized
   // The Integrator takes ownership of Ao, Do, Yo via move semantics
-  simulation->initialize_integrator(std::move(Ao), std::move(Do), std::move(Yo));
+  // Create SolutionStates and move arrays into it
+  SolutionStates initial_solutions;
+  initial_solutions.old.A = std::move(Ao);
+  initial_solutions.old.D = std::move(Do);
+  initial_solutions.old.Y = std::move(Yo);
+
+  simulation->initialize_integrator(std::move(initial_solutions));
 }
 
 //-----------

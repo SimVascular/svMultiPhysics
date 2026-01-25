@@ -93,15 +93,13 @@ void Simulation::set_module_parameters()
 
 /// @brief Initialize the Integrator object after simulation setup is complete
 ///
-/// This should be called at the end of initialize() after Ao, Do, Yo have been
-/// fully initialized. The Integrator takes ownership of these arrays.
+/// This should be called at the end of initialize() after solution states have been
+/// fully initialized. The Integrator takes ownership of these solution states.
 ///
-/// @param Ao Old acceleration array (moved into Integrator)
-/// @param Do Old displacement array (moved into Integrator)
-/// @param Yo Old velocity array (moved into Integrator)
-void Simulation::initialize_integrator(Array<double>&& Ao, Array<double>&& Do, Array<double>&& Yo)
+/// @param solutions Solution states containing old acceleration, displacement, and velocity
+void Simulation::initialize_integrator(SolutionStates&& solutions)
 {
-  integrator_ = std::make_unique<Integrator>(this, std::move(Ao), std::move(Do), std::move(Yo));
+  integrator_ = std::make_unique<Integrator>(this, std::move(solutions));
 }
 
 /// @brief Get reference to the Integrator object

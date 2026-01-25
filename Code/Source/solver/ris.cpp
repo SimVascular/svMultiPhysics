@@ -132,7 +132,9 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
       
       if (cPhys == EquationType::phys_fluid) {
         // Build the correct BC
-        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, Do);
+        SolutionStates temp_solutions;
+        temp_solutions.old.D = Do;
+        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, temp_solutions);
       }
       lBc.gx.clear();
     }
@@ -389,12 +391,18 @@ void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Arr
       // Apply bc Dir
       lBc.gx.resize(msh[iM].fa[iFa].nNo);
       lBc.gx = 1.0;
-      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, Do);
+      SolutionStates temp_solutions;
+      temp_solutions.old.D = Do;
+      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, temp_solutions);
       lBc.gx.clear();
       lBc.eDrn.clear();
     } else {
       // Apply Neu bc
-      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, Yn, Do);
+      SolutionStates temp_solutions;
+      temp_solutions.current.Y = Yn;
+      temp_solutions.old.D = Do;
+      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, temp_solutions);
+      Yn = temp_solutions.current.Y;
     }
 
   }

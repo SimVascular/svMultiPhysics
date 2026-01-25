@@ -104,12 +104,8 @@ bool Integrator::step() {
       #ifdef debug_integrator_step
       dmsg << "Set coupled BCs " << std::endl;
       #endif
-      set_bc::set_bc_cpl(com_mod, cm_mod, solutions_.current.get_acceleration(), solutions_.current.get_velocity(),
-                         solutions_.current.get_displacement(), solutions_.old.get_velocity(),
-                         solutions_.old.get_acceleration(), solutions_.old.get_displacement());
-      set_bc::set_bc_dir(com_mod, solutions_.current.get_acceleration(), solutions_.current.get_velocity(),
-                         solutions_.current.get_displacement(), solutions_.old.get_velocity(),
-                         solutions_.old.get_acceleration(), solutions_.old.get_displacement());
+      set_bc::set_bc_cpl(com_mod, cm_mod, solutions_);
+      set_bc::set_bc_dir(com_mod, solutions_);
     }
 
     // Initiator step for Generalized α-Method (quantities at n+am, n+af).
@@ -277,15 +273,15 @@ void Integrator::apply_boundary_conditions() {
   Dg_.write("Dg_vor_neu" + istr_);
 
   // Apply Neumman or Traction boundary conditions
-  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, solutions_.current.get_velocity(), solutions_.old.get_displacement());
+  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, solutions_);
 
   // Apply CMM BC conditions
   if (!com_mod.cmmInit) {
-    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, solutions_.old.get_displacement());
+    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, solutions_);
   }
 
   // Apply weakly applied Dirichlet BCs
-  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, solutions_.old.get_displacement());
+  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, solutions_);
 
   if (com_mod.risFlag) {
     ris::ris_resbc(com_mod, Yg_, Dg_, solutions_.old.get_displacement());

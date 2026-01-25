@@ -232,13 +232,17 @@ void iterate_solution(Simulation* simulation)
   auto& Rd = com_mod.Rd;      // Residual of the displacement equation
   auto& Kd = com_mod.Kd;      // LHS matrix for displacement equation
 
-  auto& Ao = integrator.get_Ao();  // Old time derivative of variables (acceleration)
-  auto& Yo = integrator.get_Yo();  // Old variables (velocity)
-  auto& Do = integrator.get_Do();  // Old integrated variables (displacement)
+  // Get reference to solution states from integrator
+  auto& solutions = integrator.get_solutions();
 
-  auto& An = integrator.get_An();  // New time derivative of variables (acceleration)
-  auto& Yn = integrator.get_Yn();  // New variables (velocity)
-  auto& Dn = integrator.get_Dn();  // New integrated variables (displacement)
+  // Local aliases for convenience
+  auto& Ao = solutions.old.get_acceleration();    // Old time derivative of variables (acceleration)
+  auto& Yo = solutions.old.get_velocity();        // Old variables (velocity)
+  auto& Do = solutions.old.get_displacement();    // Old integrated variables (displacement)
+
+  auto& An = solutions.current.get_acceleration(); // New time derivative of variables (acceleration)
+  auto& Yn = solutions.current.get_velocity();     // New variables (velocity)
+  auto& Dn = solutions.current.get_displacement(); // New integrated variables (displacement)
 
   bool l1 = false;
   bool l2 = false;
@@ -298,7 +302,7 @@ void iterate_solution(Simulation* simulation)
     // Compute mesh properties to check if remeshing is required
     //
     if (com_mod.mvMsh && com_mod.rmsh.isReqd) {
-      read_msh_ns::calc_mesh_props(com_mod, cm_mod, com_mod.nMsh, com_mod.msh, integrator.get_Do());
+      read_msh_ns::calc_mesh_props(com_mod, cm_mod, com_mod.nMsh, com_mod.msh, Do);
       if (com_mod.resetSim) {
         #ifdef debug_iterate_solution
         dmsg << "#### resetSim is true " << std::endl;
@@ -326,11 +330,11 @@ void iterate_solution(Simulation* simulation)
     dmsg << "Apply Dirichlet BCs strongly ..." << std::endl;
     #endif
 
-    set_bc::set_bc_dir(com_mod, An, Yn, Dn, Yo, Ao, Do);
+    set_bc::set_bc_dir(com_mod, solutions);
 
     if (com_mod.urisFlag) {uris::uris_calc_sdf(com_mod);}
 
-    iterate_precomputed_time(simulation, integrator.get_An(), integrator.get_Yn(), integrator.get_Ao(), integrator.get_Yo(), integrator.get_Do());
+    iterate_precomputed_time(simulation, An, Yn, Ao, Yo, Do);
 
     // Inner loop for Newton iteration 
     //
