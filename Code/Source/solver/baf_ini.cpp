@@ -39,8 +39,13 @@ namespace baf_ini_ns {
 ///
 /// Replicates 'SUBROUTINE BAFINI()' defined in BAFINIT.f
 //
-void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
+void baf_ini(Simulation* simulation, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  const auto& Ao = solutions.old.get_acceleration();
+  auto& Do = solutions.old.get_displacement();
+  auto& Yo = solutions.old.get_velocity();
+
   using namespace consts;
   using namespace fsi_linear_solver;
 
@@ -67,7 +72,7 @@ void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do,
         continue;
       }
       auto& face = msh.fa[iFa]; 
-      face_ini(simulation, msh, face, Do);
+      face_ini(simulation, msh, face, solutions);
     }
     if (msh.lShl) {
       shl_ini(com_mod, cm_mod, com_mod.msh[iM]);
@@ -82,10 +87,10 @@ void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do,
       auto& bc = eq.bc[iBc];
       int iFa = bc.iFa;
       int iM = bc.iM;
-      bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], Do);
+      bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], solutions);
 
       if (com_mod.msh[iM].lShl) {
-        shl_bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], com_mod.msh[iM], Do);
+        shl_bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], com_mod.msh[iM], solutions);
       }
     }
   }
@@ -176,7 +181,7 @@ void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do,
       int iFa = bc.iFa;
       int iM = bc.iM;
       bc.lsPtr = 0;
-      fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr, Do);
+      fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr, solutions);
     }
   }
 
@@ -238,8 +243,11 @@ void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do,
 // bc_ini
 //---------
 //
-void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, const Array<double>& Do)
+void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
 
@@ -426,8 +434,11 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
 // face_ini
 //----------
 //
-void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, Array<double>& Do)
+void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   auto& com_mod = simulation->com_mod;
   auto& cm = com_mod.cm;
@@ -674,8 +685,11 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, Array<double>&
 //
 // Replicates 'SUBROUTINE FSILSINI'.
 //
-void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, const Array<double>& Do)
+void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
   using namespace fsi_linear_solver;
@@ -881,8 +895,11 @@ void set_shl_xien(Simulation* simulation, mshType& lM)
 //
 // Reproduces 'SUBROUTINE SHLBCINI(lBc, lFa, lM)'.
 //
-void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, const Array<double>& Do)
+void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
 

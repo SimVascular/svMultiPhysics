@@ -49,8 +49,13 @@ void finalize(Simulation* simulation)
 /// Reprodices 'SUBROUTINE INITFROMBIN(fName, timeP)' defined in INITIALIZE.f.
 //
 void init_from_bin(Simulation* simulation, const std::string& fName, std::array<double,3>& timeP,
-                   Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
+                   SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& Ao = solutions.old.get_acceleration();
+  auto& Do = solutions.old.get_displacement();
+  auto& Yo = solutions.old.get_velocity();
+
   auto& com_mod = simulation->com_mod;
   auto& cm = com_mod.cm;
   int task_id = cm.idcm();
@@ -260,8 +265,13 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 /// Reproduces the Fortran 'INITFROMVTU' subroutine.
 //
 void init_from_vtu(Simulation* simulation, const std::string& fName, std::array<double,3>& timeP,
-                   Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
+                   SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& Ao = solutions.old.get_acceleration();
+  auto& Do = solutions.old.get_displacement();
+  auto& Yo = solutions.old.get_velocity();
+
   auto& com_mod = simulation->com_mod;
   auto& cm_mod = simulation->cm_mod;
   auto& cm = com_mod.cm;
@@ -623,11 +633,17 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   // Variable allocation and initialization
   int tnNo = com_mod.tnNo;
 
-  // Ao, Do, Yo are local variables that will be moved to Integrator at end
-  Array<double> Ao(tDof, tnNo);
-  Array<double> Yo(tDof, tnNo);
-  Array<double> Do(tDof, tnNo);
-  // An, Yn, Dn moved to Integrator class
+  // Create SolutionStates that will be moved to Integrator at end
+  SolutionStates initial_solutions;
+  initial_solutions.old.A.resize(tDof, tnNo);
+  initial_solutions.old.Y.resize(tDof, tnNo);
+  initial_solutions.old.D.resize(tDof, tnNo);
+  // An, Yn, Dn will be created in Integrator class
+
+  // Local aliases for convenience (these reference initial_solutions members)
+  auto& Ao = initial_solutions.old.get_acceleration();
+  auto& Yo = initial_solutions.old.get_velocity();
+  auto& Do = initial_solutions.old.get_displacement();
 
   com_mod.Bf.resize(nsd,tnNo);
 
@@ -694,9 +710,9 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       auto& timeP = com_mod.timeP;
 
       if (iniFilePath.find(".bin") != std::string::npos) {
-        init_from_bin(simulation, iniFilePath, timeP, Ao, Do, Yo);
+        init_from_bin(simulation, iniFilePath, timeP, initial_solutions);
       } else {
-        init_from_vtu(simulation, iniFilePath, timeP, Ao, Do, Yo);
+        init_from_vtu(simulation, iniFilePath, timeP, initial_solutions);
      }
 
     } else {
@@ -706,13 +722,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
         if (FILE *file = fopen(fTmp.c_str(), "r")) {
           fclose(file);
           auto& timeP = com_mod.timeP;
-          init_from_bin(simulation, fTmp, timeP, Ao, Do, Yo);
+          init_from_bin(simulation, fTmp, timeP, initial_solutions);
         } else {
           if (cm.mas(cm_mod)) {
             std::cout << "WARNING: No '" + fTmp + "' file to restart simulation from; Resetting restart flag to false";
           }
           com_mod.stFileFlag = false;
-          zero_init(simulation, Ao, Do, Yo);
+          zero_init(simulation, initial_solutions);
         }
 
         if (rmsh.isReqd) {
@@ -729,7 +745,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
         }
 
       } else {
-        zero_init(simulation, Ao, Do, Yo);
+        zero_init(simulation, initial_solutions);
       } 
     }
 
@@ -816,7 +832,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // Preparing faces and BCs
   //
-  baf_ini_ns::baf_ini(simulation, Ao, Do, Yo);
+  baf_ini_ns::baf_ini(simulation, initial_solutions);
 
   // As all the arrays are allocated, call BIN to VTK for conversion
   //
@@ -859,14 +875,8 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   std::fill(com_mod.rmsh.flag.begin(), com_mod.rmsh.flag.end(), false);
   com_mod.resetSim = false;
 
-  // Create Integrator now that Ao, Do, Yo are fully initialized
-  // The Integrator takes ownership of Ao, Do, Yo via move semantics
-  // Create SolutionStates and move arrays into it
-  SolutionStates initial_solutions;
-  initial_solutions.old.A = std::move(Ao);
-  initial_solutions.old.D = std::move(Do);
-  initial_solutions.old.Y = std::move(Yo);
-
+  // Create Integrator now that initial_solutions (Ao, Do, Yo) are fully initialized
+  // The Integrator takes ownership via move semantics
   simulation->initialize_integrator(std::move(initial_solutions));
 }
 
@@ -875,8 +885,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 //-----------
 // Initialize state variables Yo, Ao and Do.
 //
-void zero_init(Simulation* simulation, Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
+void zero_init(Simulation* simulation, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& Ao = solutions.old.get_acceleration();
+  auto& Do = solutions.old.get_displacement();
+  auto& Yo = solutions.old.get_velocity();
+
   auto& com_mod = simulation->com_mod;
   auto& cm = com_mod.cm;
   const int nsd = com_mod.nsd;

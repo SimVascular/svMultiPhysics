@@ -9,17 +9,17 @@
 
 namespace baf_ini_ns {
 
-void baf_ini(Simulation* simulation, const Array<double>& Ao, Array<double>& Do, Array<double>& Yo);
+void baf_ini(Simulation* simulation, SolutionStates& solutions);
 
-void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, const Array<double>& Do);
+void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, SolutionStates& solutions);
 
-void face_ini(Simulation* simulation, mshType& lm, faceType& la, Array<double>& Do);
+void face_ini(Simulation* simulation, mshType& lm, faceType& la, SolutionStates& solutions);
 
-void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, const Array<double>& Do);
+void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, SolutionStates& solutions);
 
 void set_shl_xien(Simulation* simulation, mshType& mesh);
 
-void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, const Array<double>& Do);
+void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, SolutionStates& solutions);
 
 void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM); 
 
