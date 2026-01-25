@@ -364,7 +364,7 @@ void iterate_solution(Simulation* simulation)
     */
 
     if (com_mod.risFlag) {
-      ris::ris_meanq(com_mod, cm_mod, An, Dn, Yn, Do);
+      ris::ris_meanq(com_mod, cm_mod, solutions);
       ris::ris_status(com_mod, cm_mod);
       if (cm.mas(cm_mod)) {
         std::cout << "Iteration: " << com_mod.cTS << std::endl;
@@ -382,7 +382,7 @@ void iterate_solution(Simulation* simulation)
             std::cout << "Valve status just changed. Do not update" << std::endl;
           }
         } else {
-            ris::ris_updater(com_mod, cm_mod, An, Dn, Yn, Ao, Do, Yo);
+            ris::ris_updater(com_mod, cm_mod, solutions);
         }
         // goto label_11;
       }
@@ -500,7 +500,7 @@ void iterate_solution(Simulation* simulation)
 
     // [HZ] Part related to RIS0D
     if (cEq == 0 && com_mod.ris0DFlag) {
-      ris::ris0d_status(com_mod, cm_mod, An, Dn, Yn, Do);
+      ris::ris0d_status(com_mod, cm_mod, solutions);
     }
 
     // [HZ] Part related to unfitted RIS

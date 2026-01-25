@@ -13,8 +13,14 @@
 namespace ris {
 
 /// @brief This subroutine computes the mean pressure and flux on the ris surface
-void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do)
+void ris_meanq(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
+
   #define n_debug_ris_meanq
   #ifdef debug_ris_meanq
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -84,8 +90,11 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>&
 }
 
 /// @brief  Weak treatment of RIS resistance boundary conditions
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do) 
+void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   #define n_debug_ris_resbc
   #ifdef debug_ris_resbc
@@ -132,9 +141,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
       
       if (cPhys == EquationType::phys_fluid) {
         // Build the correct BC
-        SolutionStates temp_solutions;
-        temp_solutions.old.D = Do;
-        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, temp_solutions);
+        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, solutions);
       }
       lBc.gx.clear();
     }
@@ -144,7 +151,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
 
 
 void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
-               const Array<double>& Yg, const Array<double>& Dg, const Array<double>& Do)
+               const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
   // [HZ] looks not needed in the current implementation
 }
@@ -152,8 +159,16 @@ void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const face
 
 /// @brief  This subroutine updates the resistance and activation flag for the
 /// closed and open configurations of the RIS surfaces
-void ris_updater(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, Array<double>& Ao, Array<double>& Do, Array<double>& Yo)
+void ris_updater(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  auto& Ao = solutions.old.get_acceleration();
+  auto& Yo = solutions.old.get_velocity();
+  auto& Do = solutions.old.get_displacement();
+
   #define n_debug_ris_updater
   #ifdef debug_ris_updater
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -345,14 +360,18 @@ void clean_r_ris(ComMod& com_mod)
   // [HZ] looks not needed in the current implementation
 }
 
-void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD)
+void setbcdir_ris(ComMod& com_mod, SolutionStates& solutions)
 {
   // [HZ] looks not needed in the current implementation
 }
 
 /// RIS0D code
-void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, Array<double>& Yn, const Array<double>& Do) 
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& Yn = solutions.current.get_velocity();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_ris0d_bc
@@ -391,26 +410,26 @@ void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Arr
       // Apply bc Dir
       lBc.gx.resize(msh[iM].fa[iFa].nNo);
       lBc.gx = 1.0;
-      SolutionStates temp_solutions;
-      temp_solutions.old.D = Do;
-      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, temp_solutions);
+      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, solutions);
       lBc.gx.clear();
       lBc.eDrn.clear();
     } else {
       // Apply Neu bc
-      SolutionStates temp_solutions;
-      temp_solutions.current.Y = Yn;
-      temp_solutions.old.D = Do;
-      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, temp_solutions);
-      Yn = temp_solutions.current.Y;
+      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, solutions);
     }
 
   }
 
 }
 
-void ris0d_status(ComMod& com_mod, CmMod& cm_mod, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do)
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_status

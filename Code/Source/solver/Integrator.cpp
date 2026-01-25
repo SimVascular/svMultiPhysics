@@ -284,11 +284,11 @@ void Integrator::apply_boundary_conditions() {
   set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, solutions_);
 
   if (com_mod.risFlag) {
-    ris::ris_resbc(com_mod, Yg_, Dg_, solutions_.old.get_displacement());
+    ris::ris_resbc(com_mod, Yg_, Dg_, solutions_);
   }
 
   if (com_mod.ris0DFlag) {
-    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, solutions_.current.get_velocity(), solutions_.old.get_displacement());
+    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, solutions_);
   }
 
   // Apply contact model and add its contribution to residual
