@@ -17,9 +17,12 @@
 
 namespace uris { 
 
-/// @brief This subroutine computes the mean pressure and flux on the 
-/// immersed surface 
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<double>& Dn, Array<double>& Yn, const Array<double>& Do) {
+/// @brief This subroutine computes the mean pressure and flux on the
+/// immersed surface
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates& solutions) {
+  // Local aliases for solution arrays
+  auto& Yn = solutions.current.get_velocity();
+  auto& Do = solutions.old.get_displacement();
   #define n_debug_uris_meanp
   #ifdef debug_uris_meanp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -67,7 +70,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<dou
   }
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volU += all_fun::integ(com_mod, cm_mod, iM, sUPS, &Do);
+    volU += all_fun::integ(com_mod, cm_mod, iM, sUPS, solutions);
   }
 
 
@@ -83,7 +86,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<dou
   } 
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volD += all_fun::integ(com_mod, cm_mod, iM, sDST, &Do);
+    volD += all_fun::integ(com_mod, cm_mod, iM, sDST, solutions);
   }
 
   // Print volume messages.
@@ -105,7 +108,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<dou
     tmpV(0,j) = Yn(s,j)*sUPS(j);
   }
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanPU += all_fun::integ(com_mod, cm_mod, iM, tmpV, &Do);
+    meanPU += all_fun::integ(com_mod, cm_mod, iM, tmpV, solutions);
   }
   meanPU = meanPU / volU;
 
@@ -148,9 +151,12 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<dou
   
 }
 
-/// @brief This subroutine computes the mean velocity in the fluid elements 
-/// near the immersed surface  
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<double>& Dn, Array<double>& Yn, const Array<double>& Do) {
+/// @brief This subroutine computes the mean velocity in the fluid elements
+/// near the immersed surface
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates& solutions) {
+  // Local aliases for solution arrays
+  auto& Yn = solutions.current.get_velocity();
+  auto& Do = solutions.old.get_displacement();
   #define n_debug_uris_meanv
   #ifdef debug_uris_meanv
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -191,7 +197,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<dou
   }
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volI += all_fun::integ(com_mod, cm_mod, iM, sImm, &Do);
+    volI += all_fun::integ(com_mod, cm_mod, iM, sImm, solutions);
   }
   if (cm.mas(cm_mod)) {
     std::cout << "volume inside " << volI << " for: " << uris_obj.name << std::endl;
@@ -217,7 +223,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<dou
 
   double meanV = 0.0;
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanV += all_fun::integ(com_mod, cm_mod, iM, tmpVNrm, &Do)/volI;
+    meanV += all_fun::integ(com_mod, cm_mod, iM, tmpVNrm, solutions)/volI;
   }
   
   if (cm.mas(cm_mod)) {
@@ -243,9 +249,11 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const Array<dou
 
 }
 
-/// @brief  This subroutine computes the displacement of the immersed 
+/// @brief  This subroutine computes the displacement of the immersed
 /// surface with fem projection
-void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Do) {
+void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions) {
+  // Local alias for solution array
+  const auto& Do = solutions.old.get_displacement();
   #define n_debug_uris_update_disp
   #ifdef debug_uris_update_disp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());

@@ -509,12 +509,12 @@ void iterate_solution(Simulation* simulation)
       for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
         com_mod.uris[iUris].cnt++;
         if (com_mod.uris[iUris].clsFlg) {
-          uris::uris_meanp(com_mod, cm_mod, iUris, Dn, Yn, Do);
+          uris::uris_meanp(com_mod, cm_mod, iUris, solutions);
           // if (com_mod.uris[iUris].cnt == 1) {
           //   // GOTO 11 // The GOTO Statement in the Fortran code
           // }
         } else {
-          uris::uris_meanv(com_mod, cm_mod, iUris, Dn, Yn, Do);
+          uris::uris_meanv(com_mod, cm_mod, iUris, solutions);
         }
         if (cm.mas(cm_mod)) {
           std::cout << " URIS surface: " << com_mod.uris[iUris].name << ", count: " << com_mod.uris[iUris].cnt << std::endl;
@@ -522,7 +522,7 @@ void iterate_solution(Simulation* simulation)
       }
 
       if (com_mod.mvMsh) {
-        uris::uris_update_disp(com_mod, cm_mod, Do);
+        uris::uris_update_disp(com_mod, cm_mod, solutions);
       }
 
       if (cm.mas(cm_mod)) {

@@ -308,7 +308,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   } else if (btest(lBc.bType, iBC_para)) {
     Vector<double> center(3);
     for (int i = 0; i < nsd; i++) {
-      center(i) = all_fun::integ(com_mod, cm_mod, lFa, com_mod.x, i, &Do, &Do, std::nullopt, false, consts::MechanicalConfigurationType::reference) / lFa.area;
+      center(i) = all_fun::integ(com_mod, cm_mod, lFa, com_mod.x, i, solutions, std::nullopt, false, consts::MechanicalConfigurationType::reference) / lFa.area;
     }
 
     // gNodes is one if a node located on the boundary (beside iFa)
@@ -417,7 +417,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   //
   double tmp = 1.0;
   if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_flx))) {
-    tmp = all_fun::integ(com_mod, cm_mod, lFa, s, &Do, &Do, false, consts::MechanicalConfigurationType::reference);
+    tmp = all_fun::integ(com_mod, cm_mod, lFa, s, solutions, false, consts::MechanicalConfigurationType::reference);
     if (is_zero(tmp)) {
       tmp = 1.0;
       throw std::runtime_error("Face '" + lFa.name + "' used for a BC has no non-zero node.");
@@ -460,7 +460,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, SolutionStates
   //
   Vector<double> sA(com_mod.tnNo);
   sA = 1.0;
-  double area = all_fun::integ(com_mod, cm_mod, lFa, sA, &Do, &Do, false, consts::MechanicalConfigurationType::reference);
+  double area = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false, consts::MechanicalConfigurationType::reference);
   #ifdef debug_face_ini
   dmsg << "Face '" << lFa.name << "' area: " << area;
   #endif
