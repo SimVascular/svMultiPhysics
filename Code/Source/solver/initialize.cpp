@@ -843,8 +843,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   Yo = temp_solutions.current.Y;
   Do = temp_solutions.current.D;
 
-  // Preparing TXT files (pass local Ao, Do, and Yo since An, Dn, and Yn haven't been created in Integrator yet)
-  txt_ns::txt(simulation, true, Ao, Do, Yo, Do);
+  // Preparing TXT files (pass solution states for initial output)
+  SolutionStates init_txt_solutions;
+  init_txt_solutions.current.A = Ao;
+  init_txt_solutions.current.Y = Yo;
+  init_txt_solutions.current.D = Do;
+  init_txt_solutions.old.D = Do;
+  txt_ns::txt(simulation, true, init_txt_solutions);
 
   // Printing the first line and initializing timeP
   int co = 1;

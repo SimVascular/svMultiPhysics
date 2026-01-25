@@ -140,8 +140,14 @@ void create_volume_integral_file(const ComMod& com_mod, CmMod& cm_mod, const eqT
 // init_write - if true then this is the start of the simulation and 
 //   so create a new file to initialize output.
 //
-void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array<double>& Dn, Array<double>& Yn, const Array<double>& Do)
+void txt(Simulation* simulation, const bool init_write, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
 
@@ -367,10 +373,10 @@ void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array
 
       } else {
         if (output_options.boundary_integral) {
-          write_boundary_integral_data(com_mod, cm_mod, eq, l, boundary_file_name, tmpV, div, pflag, Do);
+          write_boundary_integral_data(com_mod, cm_mod, eq, l, boundary_file_name, tmpV, div, pflag, solutions);
         }
         if (output_options.volume_integral) {
-          write_volume_integral_data(com_mod, cm_mod, eq, l, volume_file_name, tmpV, div, pflag, Do);
+          write_volume_integral_data(com_mod, cm_mod, eq, l, volume_file_name, tmpV, div, pflag, solutions);
         }
       }
     }
@@ -408,8 +414,11 @@ void txt(Simulation* simulation, const bool init_write, Array<double>& An, Array
 /// NOTE: Be carefu of a potential indexing problem here because 'm' is a length and not an index.
 //
 void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const Array<double>& Do)
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   #define n_debug_write_boundary_integral_data
   #ifdef debug_write_boundary_integral_data
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -483,8 +492,11 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
 /// NOTE: Be carefu of a potential indexing problem here because 'm' is a length and not an index.
 //
 void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const Array<double>& Do)
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   #define n_debug_write_volume_integral_data
   #ifdef debug_write_volume_integral_data
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
