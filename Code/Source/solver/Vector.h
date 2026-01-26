@@ -14,6 +14,12 @@ std::string build_file_prefix(const std::string& label);
 
 #ifdef ENABLE_ARRAY_INDEX_CHECKING
 #define Vector_check_enabled
+
+// Global flag to show index checking warning only once across all array types
+inline bool& index_check_message_shown() {
+  static bool shown = false;
+  return shown;
+}
 #endif
 
 /// @brief The Vector template class is used for storing int and double data.
@@ -28,7 +34,6 @@ class Vector
     static double memory_in_use;
     static double memory_returned;
     static bool write_enabled;
-    static bool show_index_check_message;
     static void memory(const std::string& prefix="");
     static void stats(const std::string& prefix="");
 
@@ -574,11 +579,9 @@ class Vector
 
     void check_index(const int i) const
     {
-      if (show_index_check_message) {
-        std::cout << "[Vector] **********************************" << std::endl;
-        std::cout << "[Vector] WARNING: Index checking is enabled " << std::endl;
-        std::cout << "[Vector] **********************************" << std::endl;
-        show_index_check_message = false;
+      if (!index_check_message_shown()) {
+        std::cout << "[Vector] WARNING: Index checking is enabled" << std::endl;
+        index_check_message_shown() = true;
       }
 
       if (data_ == nullptr) {

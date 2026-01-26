@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef TENSOR4_H 
-#define TENSOR4_H 
+#ifndef TENSOR4_H
+#define TENSOR4_H
 
 #include <cstring>
 #include <iostream>
+
+#include "Vector.h"
 
 #ifdef ENABLE_ARRAY_INDEX_CHECKING
 #define Tensor4_check_enabled
@@ -14,10 +16,8 @@
 /// @brief The Tensor4 template class implements a simple interface to 4th order tensors.
 //
 template<typename T>
-class Tensor4 
+class Tensor4
 {
-  static bool show_index_check_message;
-
   public:
     std::string name_ = "";
     int ni_ = 0;
@@ -175,11 +175,9 @@ class Tensor4
     //
     void check_index(const int i, const int j, const int k, const int l) const
     {
-      if (show_index_check_message) {
-        std::cout << "[Tensor4] **********************************" << std::endl;
-        std::cout << "[Tensor4] WARNING: Index checking is enabled " << std::endl;
-        std::cout << "[Tensor4] **********************************" << std::endl;
-        show_index_check_message = false;
+      if (!index_check_message_shown()) {
+        std::cout << "[Tensor4] WARNING: Index checking is enabled" << std::endl;
+        index_check_message_shown() = true;
       }
 
      if (data_ == nullptr) {

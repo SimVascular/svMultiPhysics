@@ -5,9 +5,6 @@
 #include "utils.h"
 
 template<>
-bool Array3<double>::show_index_check_message = true;
-
-template<>
 double Array3<double>::memory_in_use = 0;
 
 template<>
@@ -37,9 +34,6 @@ void Array3<double>::stats(const std::string& prefix)
 //--------------------------//
 //          int             //
 //--------------------------//
-
-template<>
-bool Array3<int>::show_index_check_message = true;
 
 template<>
 double Array3<int>::memory_in_use = 0;
