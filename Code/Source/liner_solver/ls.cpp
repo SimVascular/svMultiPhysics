@@ -34,18 +34,20 @@ void fsils_ls_create(FSILS_lsType& ls, LinearSolverType LS_type, double relTol, 
 
     case LinearSolverType::LS_TYPE_GMRES:
       ls.RI.relTol = 0.1;
-      ls.RI.mItr   = 4;
+      ls.RI.mItr   = 1000;
       ls.RI.sD     = 250;
     break;
 
     case LinearSolverType::LS_TYPE_CG:
       ls.RI.relTol = 1.E-2;
       ls.RI.mItr   = 1000;
+      ls.RI.sD     = 250;
     break;
 
     case LinearSolverType::LS_TYPE_BICGS:
       ls.RI.relTol = 1.E-2;
-      ls.RI.mItr   = 500;
+      ls.RI.mItr   = 1000;
+      ls.RI.sD     = 250;
     break;
 
     default:

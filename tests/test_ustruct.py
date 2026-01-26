@@ -46,6 +46,10 @@ def test_LV_HolzapfelOgdenModifiedAnisotropy_passive(n_proc):
     test_folder = "LV_HolzapfelOgdenModifiedAnisotropy_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_LV_HolzapfelOgdenModifiedAnisotropy_passive_trilinos(n_proc):
+    test_folder = "LV_HolzapfelOgdenModifiedAnisotropy_passive_trilinos"
+    run_with_reference(base_folder, test_folder, fields, n_proc)
+
 def test_LV_NeoHookean_passive_genBC(n_proc):
     test_folder = "LV_NeoHookean_passive_genBC"
 

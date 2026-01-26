@@ -159,6 +159,9 @@ void trilinos_lhs_create(const Teuchos::RCP<Trilinos> &trilinos_, const int numG
   globalDofGIDs.reserve(numGhostAndLocalNodes * dof);
   globalGhostDofGIDs.reserve(numGhostAndLocalNodes * dof); 
 
+  nnzPerRow.clear (); // for fsils assembly
+  nnzPerRow.reserve(numGhostAndLocalNodes);
+
   // Define localtoglobal to be used for unqiue partition map
   //only take ltgSorted(1:numLocalNodes) since those are owned by the processor
   //
@@ -179,6 +182,7 @@ void trilinos_lhs_create(const Teuchos::RCP<Trilinos> &trilinos_, const int numG
     {
       globalGhostDofGIDs.emplace_back(ltgSorted[i] * dof + d);
     }
+    nnzPerRow.emplace_back(rowPtr[i+1] - rowPtr[i]);
   }
 
   /*
