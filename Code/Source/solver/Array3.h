@@ -104,9 +104,8 @@ class Array3
 
     void check_index(const int i, const int j, const int k) const
     {
-      if (!index_check_message_shown() && is_rank_zero()) {
+      if (show_index_check_warning()) {
         std::cout << "[Array3] WARNING: Index checking is enabled" << std::endl;
-        index_check_message_shown() = true;
       }
 
       if (data_ == nullptr) {

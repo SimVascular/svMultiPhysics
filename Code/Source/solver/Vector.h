@@ -13,26 +13,27 @@
 
 std::string build_file_prefix(const std::string& label);
 
-#ifdef ENABLE_ARRAY_INDEX_CHECKING
-#define Vector_check_enabled
-
-// Global flag to show index checking warning only once across all array types
-inline bool& index_check_message_shown() {
+// Check if index checking warning should be shown (only once, only on rank 0)
+inline bool show_index_check_warning() {
   static bool shown = false;
-  return shown;
-}
-
-// Check if current process is rank 0 (or MPI not initialized)
-inline bool is_rank_zero() {
+  if (shown) {
+    return false;
+  }
   int initialized = 0;
   MPI_Initialized(&initialized);
-  if (!initialized) {
-    return true;
+  if (initialized) {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank != 0) {
+      return false;
+    }
   }
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  return rank == 0;
+  shown = true;
+  return true;
 }
+
+#ifdef ENABLE_ARRAY_INDEX_CHECKING
+#define Vector_check_enabled
 #endif
 
 /// @brief The Vector template class is used for storing int and double data.
@@ -592,9 +593,8 @@ class Vector
 
     void check_index(const int i) const
     {
-      if (!index_check_message_shown() && is_rank_zero()) {
+      if (show_index_check_warning()) {
         std::cout << "[Vector] WARNING: Index checking is enabled" << std::endl;
-        index_check_message_shown() = true;
       }
 
       if (data_ == nullptr) {
