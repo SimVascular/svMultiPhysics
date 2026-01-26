@@ -945,7 +945,7 @@ class Array
 
     void check_index(const int row, const int col) const
     {
-      if (!index_check_message_shown()) {
+      if (!index_check_message_shown() && is_rank_zero()) {
         std::cout << "[Array] WARNING: Index checking is enabled" << std::endl;
         index_check_message_shown() = true;
       }

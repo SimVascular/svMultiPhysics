@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "mpi.h"
 
 std::string build_file_prefix(const std::string& label);
 
@@ -19,6 +20,18 @@ std::string build_file_prefix(const std::string& label);
 inline bool& index_check_message_shown() {
   static bool shown = false;
   return shown;
+}
+
+// Check if current process is rank 0 (or MPI not initialized)
+inline bool is_rank_zero() {
+  int initialized = 0;
+  MPI_Initialized(&initialized);
+  if (!initialized) {
+    return true;
+  }
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  return rank == 0;
 }
 #endif
 
@@ -579,7 +592,7 @@ class Vector
 
     void check_index(const int i) const
     {
-      if (!index_check_message_shown()) {
+      if (!index_check_message_shown() && is_rank_zero()) {
         std::cout << "[Vector] WARNING: Index checking is enabled" << std::endl;
         index_check_message_shown() = true;
       }

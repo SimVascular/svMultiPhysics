@@ -175,7 +175,7 @@ class Tensor4
     //
     void check_index(const int i, const int j, const int k, const int l) const
     {
-      if (!index_check_message_shown()) {
+      if (!index_check_message_shown() && is_rank_zero()) {
         std::cout << "[Tensor4] WARNING: Index checking is enabled" << std::endl;
         index_check_message_shown() = true;
       }
