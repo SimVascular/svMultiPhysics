@@ -4,25 +4,6 @@
 #include "Array.h"
 #include "utils.h"
 
-// Check if index checking warning should be shown (only once, only on rank 0)
-bool show_index_check_warning() {
-  static bool shown = false;
-  if (shown) {
-    return false;
-  }
-  int initialized = 0;
-  MPI_Initialized(&initialized);
-  if (initialized) {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank != 0) {
-      return false;
-    }
-  }
-  shown = true;
-  return true;
-}
-
 template<>
 double Vector<double>::memory_in_use = 0;
 

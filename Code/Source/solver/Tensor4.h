@@ -175,11 +175,7 @@ class Tensor4
     //
     void check_index(const int i, const int j, const int k, const int l) const
     {
-      if (show_index_check_warning()) {
-        std::cout << "[Tensor4] WARNING: Index checking is enabled" << std::endl << std::flush;
-      }
-
-     if (data_ == nullptr) {
+      if (data_ == nullptr) {
         throw std::runtime_error(name_+"Accessing null data in Tensor4.");
       } 
       if ((i < 0) || (i >= ni_) || (j < 0) || (j >= nj_) || (k < 0) || (k >= nk_) || (l < 0) || (l >= nl_)) {

@@ -945,10 +945,6 @@ class Array
 
     void check_index(const int row, const int col) const
     {
-      if (show_index_check_warning()) {
-        std::cout << "[Array] WARNING: Index checking is enabled" << std::endl << std::flush;
-      }
-
       if (data_ == nullptr) { 
         //throw std::runtime_error(+"Accessing null data in Array.");
         return;

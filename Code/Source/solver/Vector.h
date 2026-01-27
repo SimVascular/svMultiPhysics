@@ -9,12 +9,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "mpi.h"
 
 std::string build_file_prefix(const std::string& label);
-
-// Check if index checking warning should be shown (only once, only on rank 0)
-bool show_index_check_warning();
 
 #ifdef ENABLE_ARRAY_INDEX_CHECKING
 #define Vector_check_enabled
@@ -577,10 +573,6 @@ class Vector
 
     void check_index(const int i) const
     {
-      if (show_index_check_warning()) {
-        std::cout << "[Vector] WARNING: Index checking is enabled" << std::endl << std::flush;
-      }
-
       if (data_ == nullptr) {
         std::cout << "[Vector] WARNING: Accessing null data in Vector at " << i << std::endl;
         return;
