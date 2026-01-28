@@ -460,17 +460,17 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
       if (m == 1) {
         if (div) {
           tmp = fa.area;
-          tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, &Do, &Do, std::nullopt, false, consts::MechanicalConfigurationType::reference) / tmp;
+          tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, std::nullopt, false, consts::MechanicalConfigurationType::reference) / tmp;
         } else {
           if (pFlag && lTH) {
-            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, &Do, &Do, std::nullopt, true, consts::MechanicalConfigurationType::reference);
+            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, std::nullopt, true, consts::MechanicalConfigurationType::reference);
           } else {
-            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, &Do, &Do, std::nullopt, false, consts::MechanicalConfigurationType::reference);
+            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, std::nullopt, false, consts::MechanicalConfigurationType::reference);
           }
         }
 
       } else if (m == nsd) {
-        tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, &Do, &Do, m-1, false, consts::MechanicalConfigurationType::reference);
+        tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, m-1, false, consts::MechanicalConfigurationType::reference);
       } else {
         throw std::runtime_error("WTXT only accepts 1 and nsd");
       }
@@ -529,9 +529,9 @@ void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqTy
 
     if (div) {
       tmp = dmn.v;
-      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1, &Do, pFlag) / tmp;
+      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1, solutions, pFlag) / tmp;
     } else {
-      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1, &Do, pFlag);
+      tmp = all_fun::integ(com_mod, cm_mod, dmn.Id, tmpV, 0, m-1, solutions, pFlag);
     }
 
     if (com_mod.cm.mas(cm_mod)) {

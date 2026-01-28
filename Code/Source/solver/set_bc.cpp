@@ -118,8 +118,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, SolutionStates& solut
         else {
           throw std::runtime_error("[calc_der_cpl_bc]  Invalid physics type for 0D coupling");
         }
-        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, &Do, &Do, nsd-1, false, cfg_o);
-        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, Yn, 0, &Dn, &Do, nsd-1, false, cfg_n);
+        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions, nsd-1, false, cfg_o);
+        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, Yn, 0, solutions, nsd-1, false, cfg_n);
         cplBC.fa[ptr].Po = 0.0;
         cplBC.fa[ptr].Pn = 0.0;
         #ifdef debug_calc_der_cpl_bc
@@ -132,8 +132,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, SolutionStates& solut
       // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
-        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, &Do, &Do, std::nullopt, false, MechanicalConfigurationType::reference) / area;
-        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, nsd, &Dn, &Do, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
         cplBC.fa[ptr].Qo = 0.0;
         cplBC.fa[ptr].Qn = 0.0;
         #ifdef debug_calc_der_cpl_bc 
@@ -561,8 +561,8 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, SolutionStates& solutions)
       if (cplBC.initRCR) {
         auto& fa = com_mod.msh[iM].fa[iFa];
         double area = fa.area;
-        double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, &Do, &Do, nsd-1, false, MechanicalConfigurationType::reference);
-        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, &Do, &Do, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+        double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions, nsd-1, false, MechanicalConfigurationType::reference);
+        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
         cplBC.xo[ptr] = Po - (Qo * cplBC.fa[ptr].RCR.Rp);
       } else { 
         cplBC.xo[ptr] = cplBC.fa[ptr].RCR.Xo;
@@ -711,8 +711,8 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
       faceType& lFa = com_mod.msh[iM].fa[iFa];
       Vector<double> sA(com_mod.tnNo);
       sA = 1.0;
-      double area = all_fun::integ(com_mod, cm_mod, lFa, sA, &Do, &Do, false, consts::MechanicalConfigurationType::reference);
-      baf_ini_ns::bc_ini(com_mod, cm_mod, eq.bc[iBc], lFa, Do);
+      double area = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false, consts::MechanicalConfigurationType::reference);
+      baf_ini_ns::bc_ini(com_mod, cm_mod, eq.bc[iBc], lFa, solutions);
 
       int ptr = bc.cplBCptr;
 
@@ -746,15 +746,15 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
             throw std::runtime_error("[set_bc_cpl]  Invalid physics type for 0D coupling");
           }
         
-          cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, &Do, &Do, nsd-1, false, cfg_o);
-          cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, &Dn, &Do, nsd-1, false, cfg_n);
+          cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, solutions, nsd-1, false, cfg_o);
+          cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, solutions, nsd-1, false, cfg_n);
           cplBC.fa[ptr].Po = 0.0;
           cplBC.fa[ptr].Pn = 0.0;
         } 
         // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
         else if (utils::btest(bc.bType,iBC_Dir)) {
-          cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, nsd, &Do, &Do, std::nullopt, false, MechanicalConfigurationType::reference) / area;
-          cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, nsd, &Do, &Do, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+          cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+          cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
           cplBC.fa[ptr].Qo = 0.0;
           cplBC.fa[ptr].Qn = 0.0;
         }
@@ -1432,7 +1432,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        }
 
      } else if (utils::btest(lBc.bType,iBC_res)) {
-       h(0) = lBc.r * all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, &Do, &Do, eq.s+nsd-1, false, consts::MechanicalConfigurationType::reference);
+       h(0) = lBc.r * all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions, eq.s+nsd-1, false, consts::MechanicalConfigurationType::reference);
 
      } else if (utils::btest(lBc.bType,iBC_std)) {
        h(0) = lBc.g;
