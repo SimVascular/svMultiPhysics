@@ -2,7 +2,3 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "Tensor4.h"
-
-template<>
-bool Tensor4<double>::show_index_check_message = true;
-

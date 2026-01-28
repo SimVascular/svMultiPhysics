@@ -31,7 +31,6 @@ class Array
     static int id;
     static int num_allocated;
     static int active;
-    static bool show_index_check_message;
     static double memory_in_use;
     static double memory_returned;
     static void memory(const std::string& prefix="");
@@ -945,14 +944,7 @@ class Array
     }
 
     void check_index(const int row, const int col) const
-    { 
-      if (show_index_check_message) {
-        std::cout << "[Array] **********************************" << std::endl;
-        std::cout << "[Array] WARNING: Index checking is enabled " << std::endl;
-        std::cout << "[Array] **********************************" << std::endl;
-        show_index_check_message = false;
-      }
-
+    {
       if (data_ == nullptr) { 
         //throw std::runtime_error(+"Accessing null data in Array.");
         return;
