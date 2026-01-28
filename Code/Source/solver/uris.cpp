@@ -116,7 +116,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates&
     tmpV(0,j) = Yn(s,j)*sDST(j);
   }
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanPD += all_fun::integ(com_mod, cm_mod,iM, tmpV, &Do);
+    meanPD += all_fun::integ(com_mod, cm_mod,iM, tmpV, solutions);
   }
   meanPD = meanPD / volD;
 
