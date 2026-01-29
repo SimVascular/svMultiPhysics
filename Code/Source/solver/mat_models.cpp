@@ -276,6 +276,38 @@ std::pair<Matrix<nsd>, Tensor<nsd>> bar_to_iso(
 
 
 /**
+ * @brief Compute normalized sheet-normal direction from fiber and sheet directions.
+ *
+ * Computes the cross product of fiber and sheet directions and normalizes it.
+ * Validates that the directions are not parallel and that the operation is valid in 3D.
+ *
+ * @tparam nsd Number of spatial dimensions.
+ * @param[in] fl Fiber directions matrix (nsd x nfd), where col(0) is fiber, col(1) is sheet.
+ * @return Normalized sheet-normal direction vector.
+ * @throws std::runtime_error if directions are parallel or if called in 2D.
+ */
+template<size_t nsd>
+Eigen::Matrix<double, nsd, 1> compute_sheet_normal(const Eigen::Matrix<double, nsd, Eigen::Dynamic>& fl)
+{
+  using namespace mat_fun;
+  
+  if constexpr (nsd == 2) {
+    throw std::runtime_error("Sheet-normal active stress (eta_n > 0) is not defined in 2D.");
+    
+  } else {  // nsd == 3
+    auto n_normal = cross_product<nsd>(fl.col(0), fl.col(1));
+    double norm_n = sqrt(n_normal.dot(n_normal));
+    
+    if (norm_n < 1.0e-10) {
+      throw std::runtime_error("Fiber and sheet directions are parallel; sheet-normal direction is undefined.");
+    }
+
+    return n_normal / norm_n;
+  }
+}
+
+
+/**
  * @brief Compute 2nd Piola-Kirchhoff stress and material stiffness tensors
  * including both dilational and isochoric components.
  *
@@ -323,10 +355,27 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
   double nd = static_cast<double>(nsd);
   double Kp = stM.Kpen;
 
-  // Fiber-reinforced stress
-  double Tfa = 0.0;
-  compute_fib_stress(com_mod, cep_mod, stM.Tf, Tfa);
-  double Tsa = Tfa*stM.Tf.eta_s;
+  // Fiber-reinforced stress - compute total active stress
+  double Ta = 0.0;
+  compute_fib_stress(com_mod, cep_mod, stM.Tf, Ta);
+
+  // Distribute total active stress among fiber directions
+  double Tfa = stM.Tf.eta_f * Ta;  // Fiber direction
+  double Tsa = stM.Tf.eta_s * Ta;  // Sheet direction
+  double Tna = stM.Tf.eta_n * Ta;  // Sheet-normal direction
+
+  // Validate directional distribution is supported for this constitutive model
+  // Only Guccione, HO, and HO-ma models support sheet and sheet-normal stress contributions
+  bool supports_directional_distribution = (stM.isoType == ConstitutiveModelType::stIso_Gucci || 
+                                            stM.isoType == ConstitutiveModelType::stIso_HO ||
+                                            stM.isoType == ConstitutiveModelType::stIso_HO_ma);
+  
+  if (!supports_directional_distribution && (stM.Tf.eta_s > 0.0 || stM.Tf.eta_n > 0.0)) {
+    throw std::runtime_error("Directional distribution of active stress (eta_s > 0 or eta_n > 0) "
+      "is only supported for Guccione, Holzapfel-Ogden (HO), and Holzapfel-Ogden Modified Anisotropy (HO-ma) models. "
+      "Current model does not support sheet or sheet-normal stress contributions. "
+      "Set Fiber_direction=1.0, Sheet_direction=0.0, Sheet_normal_direction=0.0.");
+  }
 
   // Electromechanics coupling - active stress
   if (cep_mod.cem.aStress) {
@@ -538,8 +587,14 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
                       dyadic_product<nsd>(RmRm_20, RmRm_20));
       CC_bar = r2 * CC_bar;
 
-      // Add fiber reinforcement/active stress
-      S_bar += Tfa * (fl.col(0) * fl.col(0).transpose());
+      // Add fiber reinforcement/active stress in all three orthogonal directions
+      S_bar += Tfa * (fl.col(0) * fl.col(0).transpose());               // Fiber direction
+      S_bar += Tsa * (fl.col(1) * fl.col(1).transpose());               // Sheet direction
+      // Sheet-normal direction 
+      if (Tna > 0.0) {
+        auto n_normal = compute_sheet_normal<nsd>(fl);
+        S_bar += Tna * (n_normal * n_normal.transpose());
+      }
 
       // Compute and add isochoric stress and elasticity tensor
       auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
@@ -620,6 +675,12 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g2 = g2 + (0.5*ddc4s/stM.bss)*(rexp - 1.0);
       g2 = 4.0 * J4d * stM.ass * g2;
       CC_bar += g2*dyadic_product<nsd>(Hss, Hss);
+
+      // 4.S) Add sheet-normal active stress (Tna)
+      if (Tna > 0.0) {
+        auto n_normal = compute_sheet_normal<nsd>(fl);
+        S_bar += Tna * (n_normal * n_normal.transpose());
+      }
 
 
       // Compute and add isochoric stress and elasticity tensor
@@ -721,6 +782,12 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g2 = g2 + (0.5*ddc4s/stM.bss)*(rexp - 1.0);
       g2   = 4.0*stM.ass*g2;
       CC += g2*dyadic_product<nsd>(Hss, Hss);
+
+      // 4.S) Add sheet-normal active stress (Tna)
+      if (Tna > 0.0) {
+        auto n_normal = compute_sheet_normal<nsd>(fl);
+        S += Tna * (n_normal * n_normal.transpose());
+      }
     } break;
 
     // Universal Material Subroutine - CANN Model

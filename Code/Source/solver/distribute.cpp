@@ -1732,7 +1732,11 @@ void dist_mat_consts(const ComMod& com_mod, const CmMod& cm_mod, const cmType& c
    cm.bcast(cm_mod, lStM.Tf.gt.r, "lStM.Tf.gt.r");
    cm.bcast(cm_mod, lStM.Tf.gt.i, "lStM.Tf.gt.i");
   }
+  
+  // Broadcast directional stress distribution parameters
+  cm.bcast(cm_mod, &lStM.Tf.eta_f);
   cm.bcast(cm_mod, &lStM.Tf.eta_s);
+  cm.bcast(cm_mod, &lStM.Tf.eta_n);
 
   // Distribute CANN parameter table
   if (lStM.isoType == ConstitutiveModelType::stArtificialNeuralNet) {
