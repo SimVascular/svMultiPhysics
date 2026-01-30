@@ -23,37 +23,37 @@ class SurfaceName(Enum):
         TRICUSPID_VALVE: Tricuspid valve surface
         PULMONARY_VALVE: Pulmonary valve surface
     """
-    EPICARDIUM = "epi"
+    EPICARDIUM = "epicardium"
     BASE = "base"
     EPICARDIUM_APEX = "epi_apex"
-    ENDOCARDIUM_LV = "endo_lv"
-    ENDOCARDIUM_RV = "endo_rv"
-    MITRAL_VALVE = "mv"
-    AORTIC_VALVE = "av"
-    TRICUSPID_VALVE = "tv"
-    PULMONARY_VALVE = "pv"
+    ENDOCARDIUM_LV = "lv_endocardium"
+    ENDOCARDIUM_RV = "rv_endocardium"
+    MITRAL_VALVE = "mitral_valve"
+    AORTIC_VALVE = "aortic_valve"
+    TRICUSPID_VALVE = "tricuspid_valve"
+    PULMONARY_VALVE = "pulmonary_valve"
     
     @classmethod
     def from_xml_face_name(cls, xml_name):
         """Convert XML face name to SurfaceName enum.
         
         Args:
-            xml_name: XML face name (e.g., 'epi_top').
+            xml_name: XML face name (e.g., 'epicardium').
             
         Returns:
             SurfaceName: Corresponding enum value.
         """
         # Map XML face names to enum values
         xml_to_enum = {
-            'epi': cls.EPICARDIUM,
-            'epi_top': cls.BASE,
+            'epicardium': cls.EPICARDIUM,
+            'base': cls.BASE,
             'epi_apex': cls.EPICARDIUM_APEX,
-            'endo_lv': cls.ENDOCARDIUM_LV,
-            'endo_rv': cls.ENDOCARDIUM_RV,
-            'mv': cls.MITRAL_VALVE,
-            'av': cls.AORTIC_VALVE,
-            'tv': cls.TRICUSPID_VALVE,
-            'pv': cls.PULMONARY_VALVE,
+            'lv_endocardium': cls.ENDOCARDIUM_LV,
+            'rv_endocardium': cls.ENDOCARDIUM_RV,
+            'mitral_valve': cls.MITRAL_VALVE,
+            'aortic_valve': cls.AORTIC_VALVE,
+            'tricuspid_valve': cls.TRICUSPID_VALVE,
+            'pulmonary_valve': cls.PULMONARY_VALVE,
         }
         return xml_to_enum.get(xml_name, None)
     

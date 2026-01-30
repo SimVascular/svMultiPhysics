@@ -33,9 +33,9 @@ class LaplaceSolver:
         >>> solver = LaplaceSolver(
         ...     mesh_path="/path/to/mesh.vtu",
         ...     surface_paths={
-        ...         SurfaceName.EPICARDIUM: '/path/to/epi.vtp',
-        ...         SurfaceName.ENDOCARDIUM_LV: '/path/to/lv.vtp',
-        ...         SurfaceName.ENDOCARDIUM_RV: '/path/to/rv.vtp',
+        ...         SurfaceName.EPICARDIUM: '/path/to/epicardium.vtp',
+        ...         SurfaceName.ENDOCARDIUM_LV: '/path/to/lv_endocardium.vtp',
+        ...         SurfaceName.ENDOCARDIUM_RV: '/path/to/rv_endocardium.vtp',
         ...         SurfaceName.BASE: '/path/to/base.vtp',
         ...         SurfaceName.EPICARDIUM_APEX: '/path/to/apex.vtp',
         ...     },
@@ -220,27 +220,27 @@ class LaplaceSolver:
             list: List of (alias, boundary_conditions) tuples.
         """
         return [
-            # Trans_EPI: Transmural field (epi=1, endo=0)
+            # Trans_EPI: Transmural field (epicardium=1, endo=0)
             ("Trans_EPI", [
-                ("epi", 1.0),
-                ("endo_lv", 0.0),
-                ("endo_rv", 0.0),
+                ("epicardium", 1.0),
+                ("lv_endocardium", 0.0),
+                ("rv_endocardium", 0.0),
             ]),
             # Trans_LV: LV field (lv_endo=1, others=0)
             ("Trans_LV", [
-                ("endo_lv", 1.0),
-                ("endo_rv", 0.0),
-                ("epi", 0.0),
+                ("lv_endocardium", 1.0),
+                ("rv_endocardium", 0.0),
+                ("epicardium", 0.0),
             ]),
             # Trans_RV: RV field (rv_endo=1, others=0)
             ("Trans_RV", [
-                ("endo_rv", 1.0),
-                ("endo_lv", 0.0),
-                ("epi", 0.0),
+                ("rv_endocardium", 1.0),
+                ("lv_endocardium", 0.0),
+                ("epicardium", 0.0),
             ]),
             # Long_AB: Apex-to-base field (base=1, apex=0)
             ("Long_AB", [
-                ("epi_top", 1.0),
+                ("base", 1.0),
                 ("epi_apex", 0.0),
             ]),
         ]
@@ -254,56 +254,56 @@ class LaplaceSolver:
         return [
             # Trans_BiV: Ventricular transmural (LV=1, RV=0)
             ("Trans_BiV", [
-                ("endo_lv", 1.0),
-                ("endo_rv", 0.0),
+                ("lv_endocardium", 1.0),
+                ("rv_endocardium", 0.0),
             ]),
-            # Long_AV: LV longitudinal from AV (apex=1, av=0)
+            # Long_AV: LV longitudinal from AV (apex=1, aortic_valve=0)
             ("Long_AV", [
                 ("epi_apex", 1.0),
-                ("av", 0.0),
+                ("aortic_valve", 0.0),
             ]),
-            # Long_MV: LV longitudinal from MV (apex=1, mv=0)
+            # Long_MV: LV longitudinal from MV (apex=1, mitral_valve=0)
             ("Long_MV", [
                 ("epi_apex", 1.0),
-                ("mv", 0.0),
+                ("mitral_valve", 0.0),
             ]),
-            # Long_PV: RV longitudinal from PV (apex=1, pv=0)
+            # Long_PV: RV longitudinal from PV (apex=1, pulmonary_valve=0)
             ("Long_PV", [
                 ("epi_apex", 1.0),
-                ("pv", 0.0),
+                ("pulmonary_valve", 0.0),
             ]),
-            # Long_TV: RV longitudinal from TV (apex=1, tv=0)
+            # Long_TV: RV longitudinal from TV (apex=1, tricuspid_valve=0)
             ("Long_TV", [
                 ("epi_apex", 1.0),
-                ("tv", 0.0),
+                ("tricuspid_valve", 0.0),
             ]),
-            # Weight_LV: LV valve weights (mv=1, av=0)
+            # Weight_LV: LV valve weights (mitral_valve=1, aortic_valve=0)
             ("Weight_LV", [
-                ("av", 0.0),
-                ("mv", 1.0),
+                ("aortic_valve", 0.0),
+                ("mitral_valve", 1.0),
             ]),
-            # Weight_RV: RV valve weights (tv=1, pv=0)
+            # Weight_RV: RV valve weights (tricuspid_valve=1, pulmonary_valve=0)
             ("Weight_RV", [
-                ("pv", 0.0),
-                ("tv", 1.0),
+                ("pulmonary_valve", 0.0),
+                ("tricuspid_valve", 1.0),
             ]),
-            # Trans_EPI: Epicardial transmural (epi=1, endo=0)
+            # Trans_EPI: Epicardial transmural (epicardium=1, endo=0)
             ("Trans_EPI", [
-                ("epi", 1.0),
-                ("endo_lv", 0.0),
-                ("endo_rv", 0.0),
+                ("epicardium", 1.0),
+                ("lv_endocardium", 0.0),
+                ("rv_endocardium", 0.0),
             ]),
             # Trans_LV: LV transmural (lv_endo=1, others=0)
             ("Trans_LV", [
-                ("epi", 0.0),
-                ("endo_rv", 0.0),
-                ("endo_lv", 1.0),
+                ("epicardium", 0.0),
+                ("rv_endocardium", 0.0),
+                ("lv_endocardium", 1.0),
             ]),
             # Trans_RV: RV transmural (rv_endo=1, others=0)
             ("Trans_RV", [
-                ("epi", 0.0),
-                ("endo_lv", 0.0),
-                ("endo_rv", 1.0),
+                ("epicardium", 0.0),
+                ("lv_endocardium", 0.0),
+                ("rv_endocardium", 1.0),
             ]),
         ]
     
@@ -317,9 +317,9 @@ class LaplaceSolver:
             list: List of face names.
         """
         if method == "bayer":
-            return ["epi", "epi_top", "epi_apex", "endo_lv", "endo_rv"]
+            return ["epicardium", "base", "epi_apex", "lv_endocardium", "rv_endocardium"]
         elif method == "doste":
-            return ["epi", "mv", "av", "tv", "pv", "epi_apex", "endo_lv", "endo_rv"]
+            return ["epicardium", "mitral_valve", "aortic_valve", "tricuspid_valve", "pulmonary_valve", "epi_apex", "lv_endocardium", "rv_endocardium"]
         else:
             raise ValueError(f"Unknown method: {method}. Use 'bayer' or 'doste'.")
     
