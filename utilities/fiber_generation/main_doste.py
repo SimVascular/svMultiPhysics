@@ -1,85 +1,142 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-'''
-Created on 2025/11/21 20:38:14
+"""Main script for generating biventricular fibers using the Doste method.
 
-@author: Javiera Jilberto Vallejos 
-'''
+This module implements fiber generation for biventricular heart models using
+the Laplace-Dirichlet rule-based method described in:
+Doste et al. 2019, "A rule-based method to model myocardial fiber orientation
+in cardiac biventricular geometries with outflow tracts"
+https://doi.org/10.1002/cnm.3185
+
+The script supports command-line arguments for customization of mesh paths,
+output directories, and solver executables.
+"""
 
 import os
-import src.FibGen as fg
+import argparse
+import pyvista as pv
+from src.LaplaceSolver import LaplaceSolver
+from src.FibGen import FibGenDoste
+from src.SurfaceNames import SurfaceName
+from src.surface_utils import generate_epi_apex
 from time import time
 
-###########################################################
-############  USER INPUTS  ################################
-###########################################################
 
-run_flag = True
-method = 'doste'
-svfsi_exec = "svmultiphysics "
+if __name__ == "__main__":
+    ###########################################################
+    ############  USER INPUTS  ################################
+    ###########################################################
 
-mesh_path = "example/ot/mesh-complete.mesh.vtu"
-surfaces_dir = f"example/ot/mesh-surfaces"
-outdir = "example/ot/output_d"
+    run_flag = True
+    svfsi_exec = "svmultiphysics "
 
-surface_names = {'epi': 'epi.vtp',
-                 'epi_apex': 'epi_apex.vtp',    # New surface
-                 'av': 'av.vtp',
-                 'mv': 'mv.vtp',
-                 'tv': 'tv.vtp',
-                 'pv': 'pv.vtp',
-                 'base': 'top.vtp',             # This is all the valves together, it is used to find the apex.
-                 'endo_lv': 'endo_lv.vtp',
-                 'endo_rv': 'endo_rv.vtp'}
-
-# Parameters from the Doste paper https://doi.org/10.1002/cnm.3185
-params = {
-    # A = alpha angle
-    'AENDORV' : 90,
-    'AEPIRV' : -25,
-    'AENDOLV' : 60,
-    'AEPILV' : -60,
-
-    'AOTENDOLV' : 90, 
-    'AOTENDORV' : 90,
-    'AOTEPILV' : 0,
-    'AOTEPIRV' : 0,
-
-    # B = beta angle (this have an opposite sign to the Doste paper, 
-    # but it's because the longitudinal direction is opposite)
-    'BENDORV' : 20,
-    'BEPIRV' : -20,
-    'BENDOLV' : 20,
-    'BEPILV' : -20,
-}
+    mesh_path = "example/ot/mesh-complete.mesh.vtu"
+    outdir = "example/ot/output_doste"
+    surfaces_dir = 'example/ot/mesh-surfaces'
 
 
-###########################################################
-############  FIBER GENERATION  ###########################
-###########################################################
+    # Parameters from the Doste paper https://doi.org/10.1002/cnm.3185
+    params = {
+        # A = alpha angle
+        'AENDORV': 90,
+        'AEPIRV': -25,
+        'AENDOLV': 60,
+        'AEPILV': -60,
 
-# Make sure the paths are full paths
-mesh_path = os.path.abspath(mesh_path)
-surfaces_dir = os.path.abspath(surfaces_dir)
-outdir = os.path.abspath(outdir)
+        'AOTENDOLV': 90, 
+        'AOTENDORV': 90,
+        'AOTEPILV': 0,
+        'AOTEPIRV': 0,
 
-# Generate the apex surface
-start = time()
+        # B = beta angle (this have an opposite sign to the Doste paper, 
+        # but it's because the longitudinal direction is opposite)
+        'BENDORV': 20,
+        'BEPIRV': -20,
+        'BENDOLV': 20,
+        'BEPILV': -20,
+    }
 
-start = time()
-fg.generate_epi_apex(mesh_path, surfaces_dir, surface_names)
 
-# Run the Laplace solver
-if run_flag:
-    template_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "templates", "solver_doste.xml")
-    laplace_results_file = fg.runLaplaceSolver(mesh_path, surfaces_dir, mesh_path, svfsi_exec, template_file, outdir, surface_names)
-laplace_results_file = outdir + '/result_001.vtu'
+    ###########################################################
+    ############  FIBER GENERATION  ###########################
+    ###########################################################
 
-# Generate the fiber directions
-result_mesh = fg.generate_fibers_BiV_Doste_cells(outdir, laplace_results_file, params, return_angles=True, return_intermediate=False)
+    # Optional CLI overrides
+    parser = argparse.ArgumentParser(description="Generate fibers using the Bayer method.")
+    parser.add_argument("--svfsi-exec", default=svfsi_exec, help="svMultiPhysics executable/command (default: %(default)s)")
+    parser.add_argument("--mesh-path", default=mesh_path, help="Path to the volumetric mesh .vtu (default: %(default)s)")
+    parser.add_argument(
+        "--surfaces-dir",
+        default=surfaces_dir,
+        help="Directory containing mesh surfaces; default: <parent of mesh_path>/mesh-surfaces",
+    )
+    parser.add_argument("--outdir", default=outdir, help="Output directory (default: %(default)s)")
+    args = parser.parse_args()
 
-print(f"generate fibers (Doste method) elapsed time: {time() - start:.3f} s")
+    svfsi_exec = args.svfsi_exec
+    if not svfsi_exec.endswith(" "):
+        svfsi_exec = svfsi_exec + " "
 
-# Optional, save the result mesh with intermediate field and angles for checking
-result_mesh_path = os.path.join(outdir, "results_doste.vtu")
-result_mesh.save(result_mesh_path)
+    mesh_path = args.mesh_path
+    outdir = args.outdir
+
+    if args.surfaces_dir is None:
+        surfaces_dir = os.path.join(os.path.dirname(mesh_path), "mesh-surfaces")
+    else:
+        surfaces_dir = os.path.abspath(args.surfaces_dir)
+
+    # Make sure the paths are full paths
+    mesh_path = os.path.abspath(mesh_path)
+    outdir = os.path.abspath(outdir)
+    surfaces_dir = os.path.abspath(surfaces_dir)
+
+    # Define surface paths
+    surface_paths = {
+        SurfaceName.EPICARDIUM: f'{surfaces_dir}/epi.vtp',
+        SurfaceName.EPICARDIUM_APEX: f'{surfaces_dir}/epi_apex.vtp',
+        SurfaceName.AORTIC_VALVE: f'{surfaces_dir}/av.vtp',
+        SurfaceName.MITRAL_VALVE: f'{surfaces_dir}/mv.vtp',
+        SurfaceName.TRICUSPID_VALVE: f'{surfaces_dir}/tv.vtp',
+        SurfaceName.PULMONARY_VALVE: f'{surfaces_dir}/pv.vtp',
+        SurfaceName.ENDOCARDIUM_LV: f'{surfaces_dir}/endo_lv.vtp',
+        SurfaceName.ENDOCARDIUM_RV: f'{surfaces_dir}/endo_rv.vtp',
+        SurfaceName.BASE: f'{surfaces_dir}/top.vtp'
+    }
+
+    # Create output directory if needed
+    os.makedirs(outdir, exist_ok=True)
+
+    # Check if the EPICARDIUM_APEX surface exists; if not create it
+    start = time()
+    if not os.path.exists(surface_paths[SurfaceName.EPICARDIUM_APEX]):
+        print("Generating EPICARDIUM_APEX surface...")
+        generate_epi_apex(surface_paths)
+
+    # Initialize Laplace solver
+    solver = LaplaceSolver(mesh_path, surface_paths, svfsi_exec)
+
+    # Run the Laplace solver
+    if run_flag:
+        print("Running Laplace solver...")
+        laplace_results_file = solver.run("doste", outdir)
+    else:
+        laplace_results_file = os.path.join(outdir, 'result_001.vtu')
+
+    # Initialize fiber generator
+    print("\nGenerating fibers using Doste method...")
+    fib_gen = FibGenDoste()
+
+    # Load Laplace results
+    fib_gen.load_laplace_results(laplace_results_file)
+
+    # Generate fiber directions
+    F, S, T = fib_gen.generate_fibers(params)
+    print(f"generate fibers (Doste method) elapsed time: {time() - start:.3f} s")
+
+    # Write fibers to output directory
+    fib_gen.write_fibers(outdir)
+
+    # Save the result mesh
+    result_mesh_path = os.path.join(outdir, "results_doste.vtu")
+    fib_gen.mesh.save(result_mesh_path)
+    print(f"\nResults saved to: {result_mesh_path}")
