@@ -6,6 +6,7 @@
 #include "ZeroDBoundaryCondition.h"
 #include "all_fun.h"
 #include "consts.h"
+#include "utils.h"
 
 #define n_debug_zerod_bc
 
@@ -181,6 +182,42 @@ void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_
     #endif
 }
 
+/// @brief Compute average pressures at the boundary face at old and new timesteps
+///
+/// This replicates the pressure computation done in set_bc::calc_der_cpl_bc and
+/// set_bc::set_bc_cpl for coupled Dirichlet boundary conditions.
+///
+/// The pressure is computed as the average pressure over the face by integrating
+/// pressure (at index nsd in the solution vector) and dividing by the face area.
+void ZeroDBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod)
+{
+    using namespace consts;
+    
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition::compute_pressures called" << std::endl;
+    #endif
+    
+    if (face_ == nullptr) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::compute_pressures] Face is not set.");
+    }
+    
+    int nsd = com_mod.nsd;
+    double area = face_->area;
+    
+    if (utils::is_zero(area)) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::compute_pressures] Face area is zero.");
+    }
+    
+    // Compute average pressures by integrating pressure over face and dividing by area
+    // The all_fun::integ function with index nsd integrates the pressure scalar
+    Po_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, nsd) / area;
+    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, nsd) / area;
+    
+    #ifdef debug_zerod_bc
+    std::cout << "ZeroDBoundaryCondition::compute_pressures - Po: " << Po_ << ", Pn: " << Pn_ << std::endl;
+    #endif
+}
+
 double ZeroDBoundaryCondition::get_Qo() const
 {
     return Qo_;
@@ -217,6 +254,16 @@ void ZeroDBoundaryCondition::set_pressure(double pressure)
 double ZeroDBoundaryCondition::get_pressure() const
 {
     return pressure_;
+}
+
+double ZeroDBoundaryCondition::get_Po() const
+{
+    return Po_;
+}
+
+double ZeroDBoundaryCondition::get_Pn() const
+{
+    return Pn_;
 }
 
 // =========================================================================

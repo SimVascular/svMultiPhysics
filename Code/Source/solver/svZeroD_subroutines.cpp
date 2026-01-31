@@ -172,11 +172,22 @@ void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], dou
     for (int iBc = 0; iBc < eq.nBc; iBc++) {
       auto& bc = eq.bc[iBc];
       if (utils::btest(bc.bType, iBC_ZeroD)) {
-        QCoupled[ind] = bc.zerod_bc.get_Qo();
-        QnCoupled[ind] = bc.zerod_bc.get_Qn();
-        PCoupled[ind] = 0.0;  // Pressure not used for Neumann BC input
-        PnCoupled[ind] = 0.0;
-        ind = ind + 1;
+        // Only process Neumann ZeroD BCs here
+        if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+          QCoupled[ind] = bc.zerod_bc.get_Qo();
+          QnCoupled[ind] = bc.zerod_bc.get_Qn();
+          PCoupled[ind] = 0.0;  // Pressure not used for Neumann BC input
+          PnCoupled[ind] = 0.0;
+          ind = ind + 1;
+        } else if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+          QCoupled[ind] = bc.zerod_bc.get_Qo();
+          QnCoupled[ind] = bc.zerod_bc.get_Qn();
+          PCoupled[ind] = bc.zerod_bc.get_Po();
+          PnCoupled[ind] = bc.zerod_bc.get_Pn();
+          ind = ind + 1;
+        } else {
+          throw std::runtime_error("ERROR: [get_coupled_QP] Invalid ZeroD BC type.");
+        }
       }
     }
   }
@@ -494,12 +505,26 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
             auto& bc = eq.bc[iBc];
             if (utils::btest(bc.bType, iBC_ZeroD)) {
               if (current_idx == zerod_idx) {
-                if (init_flow_flag == 1) {
-                  lpn_state_y[sol_IDs[2 * s]] = init_flow;
-                }
-                if (init_press_flag == 1) {
-                  lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
-                  bc.zerod_bc.set_pressure(lpn_state_y[sol_IDs[2 * s + 1]]);
+                if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+                  // Neumann ZeroD BC: initialize flow, pressure comes from 0D solver
+                  if (init_flow_flag == 1) {
+                    lpn_state_y[sol_IDs[2 * s]] = init_flow;
+                  }
+                  if (init_press_flag == 1) {
+                    lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
+                    bc.zerod_bc.set_pressure(lpn_state_y[sol_IDs[2 * s + 1]]);
+                  }
+                } else if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+                  // Dirichlet ZeroD BC: initialize pressure, flow comes from 0D solver
+                  if (init_press_flag == 1) {
+                    lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
+                    bc.zerod_bc.set_pressure(lpn_state_y[sol_IDs[2 * s + 1]]);
+                  }
+                  if (init_flow_flag == 1) {
+                    lpn_state_y[sol_IDs[2 * s]] = init_flow;
+                  }
+                } else {
+                  throw std::runtime_error("ERROR: [init_svZeroD] Invalid ZeroD BC type.");
                 }
               }
               current_idx++;
@@ -546,35 +571,52 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       }
     }
     
-    // For ZeroD BCs - broadcast pressure values
+    // For ZeroD BCs - broadcast pressure values (only for Neumann, Dirichlet has pressure as input)
     if (nZeroD_count > 0) {
-      Vector<double> p(nZeroD_count);
-      
-      if (cm.mas(cm_mod)) {
-        int idx = 0;
-        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-          auto& eq = com_mod.eq[iEq];
-          for (int iBc = 0; iBc < eq.nBc; iBc++) {
-            auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_ZeroD)) {
-              p(idx) = bc.zerod_bc.get_pressure();
-              idx++;
-            }
+      // Count Neumann ZeroD BCs for broadcasting
+      int nZeroD_Neu = 0;
+      for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+        auto& eq = com_mod.eq[iEq];
+        for (int iBc = 0; iBc < eq.nBc; iBc++) {
+          auto& bc = eq.bc[iBc];
+          if (utils::btest(bc.bType, iBC_ZeroD) && 
+              bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+            nZeroD_Neu++;
           }
         }
       }
       
-      cm.bcast(cm_mod, p);
-      
-      if (cm.slv(cm_mod)) {
-        int idx = 0;
-        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-          auto& eq = com_mod.eq[iEq];
-          for (int iBc = 0; iBc < eq.nBc; iBc++) {
-            auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_ZeroD)) {
-              bc.zerod_bc.set_pressure(p(idx));
-              idx++;
+      if (nZeroD_Neu > 0) {
+        Vector<double> p(nZeroD_Neu);
+        
+        if (cm.mas(cm_mod)) {
+          int idx = 0;
+          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+            auto& eq = com_mod.eq[iEq];
+            for (int iBc = 0; iBc < eq.nBc; iBc++) {
+              auto& bc = eq.bc[iBc];
+              if (utils::btest(bc.bType, iBC_ZeroD) && 
+                  bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+                p(idx) = bc.zerod_bc.get_pressure();
+                idx++;
+              }
+            }
+          }
+        }
+        
+        cm.bcast(cm_mod, p);
+        
+        if (cm.slv(cm_mod)) {
+          int idx = 0;
+          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+            auto& eq = com_mod.eq[iEq];
+            for (int iBc = 0; iBc < eq.nBc; iBc++) {
+              auto& bc = eq.bc[iBc];
+              if (utils::btest(bc.bType, iBC_ZeroD) && 
+                  bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+                bc.zerod_bc.set_pressure(p(idx));
+                idx++;
+              }
             }
           }
         }
@@ -647,10 +689,39 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
 
       // Update pressure and flow in the zeroD model
       for (int i = 0; i < numCoupledSrfs; ++i) {
+        int surf_id = nsrflistCoupled[i];
+        bool is_dirichlet = false;
+        
         if (i < nDir) {
+          // Standard Dirichlet BC from cplBC
+          is_dirichlet = true;
+        } else if (surf_id >= cplBC.nFa) {
+          // ZeroD BC - check actual type
+          int zerod_idx = surf_id - cplBC.nFa;
+          int current_idx = 0;
+          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+            auto& eq = com_mod.eq[iEq];
+            for (int iBc = 0; iBc < eq.nBc; iBc++) {
+              auto& bc = eq.bc[iBc];
+              if (utils::btest(bc.bType, iBC_ZeroD)) {
+                if (current_idx == zerod_idx) {
+                  is_dirichlet = (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir);
+                  break;
+                }
+                current_idx++;
+              }
+            }
+            if (is_dirichlet || current_idx > zerod_idx) break;
+          }
+        }
+        // Otherwise it's a standard Neumann BC from cplBC
+        
+        if (is_dirichlet) {
+          // Dirichlet BC: use pressure as input
           params[0] = PCoupled[i];
           params[1] = PnCoupled[i];
         } else {
+          // Neumann BC: use flow as input
           params[0] = in_out_sign[i] * QCoupled[i];
           params[1] = in_out_sign[i] * QnCoupled[i];
           total_flow += QCoupled[i];
@@ -672,7 +743,7 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
           QCoupled[i] = in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]];
           cplBC.fa[surf_id].y = QCoupled[i];
         } else if (surf_id >= cplBC.nFa) {
-          // ZeroD BC - set pressure by iterating through eq.bc[]
+          // ZeroD BC - handle based on type
           int zerod_idx = surf_id - cplBC.nFa;
           int current_idx = 0;
           for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
@@ -681,8 +752,19 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
               auto& bc = eq.bc[iBc];
               if (utils::btest(bc.bType, iBC_ZeroD)) {
                 if (current_idx == zerod_idx) {
-                  PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
-                  bc.zerod_bc.set_pressure(PCoupled[i]);
+                  if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+                    // Neumann ZeroD BC: get pressure from 0D solver
+                    PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
+                    bc.zerod_bc.set_pressure(PCoupled[i]);
+                  } else if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+                    // Dirichlet ZeroD BC: get flow from 0D solver
+                    QCoupled[i] = in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]];
+                    // Store flow in ZeroDBoundaryCondition (use previous Qn as Qo, current as Qn)
+                    double Qo_prev = bc.zerod_bc.get_Qn();
+                    bc.zerod_bc.set_flowrates(Qo_prev, QCoupled[i]);
+                  } else {
+                    throw std::runtime_error("ERROR: [calc_svZeroD] Invalid ZeroD BC type.");
+                  }
                 }
                 current_idx++;
               }
@@ -731,35 +813,52 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
       }
     }
     
-    // Broadcast ZeroD BC pressure values
+    // Broadcast ZeroD BC pressure values (only for Neumann, Dirichlet has pressure as input)
     if (nZeroD > 0) {
-      Vector<double> p(nZeroD);
-      
-      if (cm.mas(cm_mod)) {
-        int idx = 0;
-        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-          auto& eq = com_mod.eq[iEq];
-          for (int iBc = 0; iBc < eq.nBc; iBc++) {
-            auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_ZeroD)) {
-              p(idx) = bc.zerod_bc.get_pressure();
-              idx++;
-            }
+      // Count Neumann ZeroD BCs for broadcasting
+      int nZeroD_Neu = 0;
+      for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+        auto& eq = com_mod.eq[iEq];
+        for (int iBc = 0; iBc < eq.nBc; iBc++) {
+          auto& bc = eq.bc[iBc];
+          if (utils::btest(bc.bType, iBC_ZeroD) && 
+              bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+            nZeroD_Neu++;
           }
         }
       }
       
-      cm.bcast(cm_mod, p);
-      
-      if (cm.slv(cm_mod)) {
-        int idx = 0;
-        for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-          auto& eq = com_mod.eq[iEq];
-          for (int iBc = 0; iBc < eq.nBc; iBc++) {
-            auto& bc = eq.bc[iBc];
-            if (utils::btest(bc.bType, iBC_ZeroD)) {
-              bc.zerod_bc.set_pressure(p(idx));
-              idx++;
+      if (nZeroD_Neu > 0) {
+        Vector<double> p(nZeroD_Neu);
+        
+        if (cm.mas(cm_mod)) {
+          int idx = 0;
+          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+            auto& eq = com_mod.eq[iEq];
+            for (int iBc = 0; iBc < eq.nBc; iBc++) {
+              auto& bc = eq.bc[iBc];
+              if (utils::btest(bc.bType, iBC_ZeroD) && 
+                  bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+                p(idx) = bc.zerod_bc.get_pressure();
+                idx++;
+              }
+            }
+          }
+        }
+        
+        cm.bcast(cm_mod, p);
+        
+        if (cm.slv(cm_mod)) {
+          int idx = 0;
+          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+            auto& eq = com_mod.eq[iEq];
+            for (int iBc = 0; iBc < eq.nBc; iBc++) {
+              auto& bc = eq.bc[iBc];
+              if (utils::btest(bc.bType, iBC_ZeroD) && 
+                  bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+                bc.zerod_bc.set_pressure(p(idx));
+                idx++;
+              }
             }
           }
         }

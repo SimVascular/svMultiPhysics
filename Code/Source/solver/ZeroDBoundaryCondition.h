@@ -133,6 +133,11 @@ public:
     /// @param cm_mod CmMod reference for communication
     /// @param phys Current physics type (struct, ustruct, fluid, etc.)
     void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys);
+    
+    /// @brief Compute average pressures at the boundary face at old and new timesteps (for Dirichlet BCs)
+    /// @param com_mod ComMod reference containing simulation data
+    /// @param cm_mod CmMod reference for communication
+    void compute_pressures(ComMod& com_mod, const CmMod& cm_mod);
 
     /// @brief Get the flowrate at old timestep
     /// @return Flowrate at t_n
@@ -162,6 +167,14 @@ public:
     /// @brief Get the current pressure value
     /// @return Current pressure value from 0D solver
     double get_pressure() const;
+    
+    /// @brief Get the pressure at old timestep
+    /// @return Pressure at t_n
+    double get_Po() const;
+    
+    /// @brief Get the pressure at new timestep
+    /// @return Pressure at t_{n+1}
+    double get_Pn() const;
     
     // =========================================================================
     // State management for derivative computation
