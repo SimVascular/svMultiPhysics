@@ -94,7 +94,7 @@
 
    <Add_BC name="lumen_outlet" > 
       <Type> Neu </Type> 
-      <Time_dependence> Coupled </Time_dependence> 
+      <Time_dependence> ZeroD_Coupled </Time_dependence> 
       <svZeroDSolver_block> RCR_coupling </svZeroDSolver_block>  
    </Add_BC> 
 
