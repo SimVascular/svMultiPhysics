@@ -285,6 +285,54 @@ void ZeroDBoundaryCondition::restore_state(const State& state)
 // Utility methods
 // =========================================================================
 
+void ZeroDBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
+{
+    #define n_debug_zerod_distribute
+    #ifdef debug_zerod_distribute
+    DebugMsg dmsg(__func__, cm.idcm());
+    dmsg << "Distributing ZeroD BC data" << std::endl;
+    #endif
+
+    // Update face pointer to local face
+    face_ = &face;
+
+    const bool is_slave = cm.slv(cm_mod);
+    
+    // Distribute BC type (Dirichlet or Neumann)
+    int bc_type_int = static_cast<int>(bc_type_);
+    cm.bcast(cm_mod, &bc_type_int);
+    if (is_slave) {
+        bc_type_ = static_cast<consts::BoundaryConditionType>(bc_type_int);
+    }
+    
+    // Distribute block name
+    cm.bcast(cm_mod, block_name_);
+    
+    // Distribute face name
+    cm.bcast(cm_mod, face_name_);
+    
+    // Distribute follower pressure load flag
+    cm.bcast(cm_mod, &follower_pressure_load_);
+    
+    // Distribute solution IDs
+    cm.bcast(cm_mod, &flow_sol_id_);
+    cm.bcast(cm_mod, &pressure_sol_id_);
+    cm.bcast(cm_mod, &in_out_sign_);
+    
+    #ifdef debug_zerod_distribute
+    dmsg << "Finished distributing ZeroD BC data" << std::endl;
+    dmsg << "  bc_type: " << static_cast<int>(bc_type_) << std::endl;
+    dmsg << "  block_name: " << block_name_ << std::endl;
+    dmsg << "  face_name: " << face_name_ << std::endl;
+    dmsg << "  follower_pressure_load: " << follower_pressure_load_ << std::endl;
+    #endif
+}
+
+void ZeroDBoundaryCondition::set_face(const faceType& face)
+{
+    face_ = &face;
+}
+
 const faceType* ZeroDBoundaryCondition::get_face() const
 {
     return face_;

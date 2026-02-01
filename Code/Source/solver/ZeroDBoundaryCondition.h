@@ -198,6 +198,17 @@ public:
     // Utility methods
     // =========================================================================
 
+    /// @brief Distribute BC metadata from master to slave processes
+    /// @param com_mod Reference to ComMod object
+    /// @param cm_mod Reference to CmMod object for MPI communication
+    /// @param cm Reference to cmType object for MPI communication
+    /// @param face Face associated with the BC (after distribution)
+    void distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face);
+    
+    /// @brief Set the associated face (used during distribution)
+    /// @param face Reference to the face
+    void set_face(const faceType& face);
+    
     /// @brief Get the associated face
     /// @return Pointer to the associated face (may be nullptr if not set)
     const faceType* get_face() const;

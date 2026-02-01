@@ -554,20 +554,22 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 
   // Broadcast initial values to follower processes
   if (!cm.seq()) {
-    // For cplBC.fa (Dir and Neu BCs)
-    Vector<double> y(cplBC.nFa);
+    // For cplBC.fa (Dir and Neu BCs) - only if there are any
+    if (cplBC.nFa > 0) {
+      Vector<double> y(cplBC.nFa);
 
-    if (cm.mas(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        y(i) = cplBC.fa[i].y;
+      if (cm.mas(cm_mod)) {
+        for (int i = 0; i < cplBC.nFa; i++) {
+          y(i) = cplBC.fa[i].y;
+        }
       }
-    }
 
-    cm.bcast(cm_mod, y);
+      cm.bcast(cm_mod, y);
 
-    if (cm.slv(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        cplBC.fa[i].y = y(i);
+      if (cm.slv(cm_mod)) {
+        for (int i = 0; i < cplBC.nFa; i++) {
+          cplBC.fa[i].y = y(i);
+        }
       }
     }
     
@@ -796,20 +798,22 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
 
   // If there are multiple procs (not sequential), broadcast outputs to follower procs
   if (!cm.seq()) {
-    // Broadcast cplBC.fa values (Dir and standard Neu BCs)
-    Vector<double> y(cplBC.nFa);
+    // Broadcast cplBC.fa values (Dir and standard Neu BCs) - only if there are any
+    if (cplBC.nFa > 0) {
+      Vector<double> y(cplBC.nFa);
 
-    if (cm.mas(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        y(i) = cplBC.fa[i].y;
+      if (cm.mas(cm_mod)) {
+        for (int i = 0; i < cplBC.nFa; i++) {
+          y(i) = cplBC.fa[i].y;
+        }
       }
-    }
 
-    cm.bcast(cm_mod, y);
+      cm.bcast(cm_mod, y);
 
-    if (cm.slv(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        cplBC.fa[i].y = y(i);
+      if (cm.slv(cm_mod)) {
+        for (int i = 0; i < cplBC.nFa; i++) {
+          cplBC.fa[i].y = y(i);
+        }
       }
     }
     
