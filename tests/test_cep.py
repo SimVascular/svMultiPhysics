@@ -32,6 +32,10 @@ def test_purkinje(n_proc):
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
 
+def test_cylinder_purkinje_1d3d(n_proc):
+    test_folder = "cylinder_purkinje_1d3d"
+    run_with_reference(base_folder, test_folder, fields, n_proc)
+
 @pytest.mark.parametrize(
     "confs_ecgs",
     [
