@@ -28,7 +28,7 @@ if __name__ == "__main__":
     ###########################################################
 
     run_flag = True
-    svfsi_exec = "svmultiphysics "
+    svmultiphysics_exec = "svmultiphysics "
 
     mesh_path = "example/ot/mesh-complete.mesh.vtu"
     outdir = "example/ot/output_doste"
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     # Optional CLI overrides
     parser = argparse.ArgumentParser(description="Generate fibers using the Bayer method.")
-    parser.add_argument("--svfsi-exec", default=svfsi_exec, help="svMultiPhysics executable/command (default: %(default)s)")
+    parser.add_argument("--svmultiphysics-exec", default=svmultiphysics_exec, help="svMultiPhysics executable/command (default: %(default)s)")
     parser.add_argument("--mesh-path", default=mesh_path, help="Path to the volumetric mesh .vtu (default: %(default)s)")
     parser.add_argument(
         "--surfaces-dir",
@@ -73,9 +73,9 @@ if __name__ == "__main__":
     parser.add_argument("--outdir", default=outdir, help="Output directory (default: %(default)s)")
     args = parser.parse_args()
 
-    svfsi_exec = args.svfsi_exec
-    if not svfsi_exec.endswith(" "):
-        svfsi_exec = svfsi_exec + " "
+    svmultiphysics_exec = args.svmultiphysics_exec
+    if not svmultiphysics_exec.endswith(" "):
+        svmultiphysics_exec = svmultiphysics_exec + " "
 
     mesh_path = args.mesh_path
     outdir = args.outdir
@@ -113,7 +113,7 @@ if __name__ == "__main__":
         generate_epi_apex(surface_paths)
 
     # Initialize Laplace solver
-    solver = LaplaceSolver(mesh_path, surface_paths, svfsi_exec)
+    solver = LaplaceSolver(mesh_path, surface_paths, svmultiphysics_exec)
 
     # Run the Laplace solver
     if run_flag:
