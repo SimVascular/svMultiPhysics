@@ -27,7 +27,7 @@ if __name__ == "__main__":
     ############  USER INPUTS  ################################
     ###########################################################
 
-    run_flag = True
+    run_flag = False
     svmultiphysics_exec = "svmultiphysics "
 
     mesh_path = "example/ot/mesh-complete.mesh.vtu"
@@ -48,12 +48,11 @@ if __name__ == "__main__":
         'AOTEPILV': 0,
         'AOTEPIRV': 0,
 
-        # B = beta angle (this have an opposite sign to the Doste paper, 
-        # but it's because the longitudinal direction is opposite)
-        'BENDORV': 20,
-        'BEPIRV': -20,
-        'BENDOLV': 20,
-        'BEPILV': -20,
+        # B = beta angle
+        'BENDORV': 0,
+        'BEPIRV': 20,
+        'BENDOLV': -20,
+        'BEPILV': 20,
     }
 
 

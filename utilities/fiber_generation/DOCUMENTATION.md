@@ -481,3 +481,20 @@ $$
 8. **Interpolate from endocardium to epicardium**:
    - $\mathbf{Q} = \text{interpolate\_basis}(\mathbf{Q}_{\text{sep}}, \mathbf{Q}_{\text{epi}}, \phi_{\text{epi,trans}})$
    - Extract: $\mathbf{f} = \mathbf{Q}[:, 0]$, $\mathbf{n} = \mathbf{Q}[:, 1]$, $\mathbf{s} = \mathbf{Q}[:, 2]$
+
+
+## On the convention of the orthogonal basis and angles
+
+Different papers use different conventions to define the orthogonal circumferential, longitudinal, and transmural basis (see Table below).
+
+| Method | Longitudinal | Transmural | sign(alpha) endo/epi | sign(beta) endo/epi |
+|--------|--------------|------------|----------------------|---------------------|
+| Bayer | apex -> base | endo -> epi | +/- | -/+ |
+| Doste | base -> apex | epi -> endo (rv) endo -> epi (lv) | -/+ (lv); +/- (rv) | -/+ |
+| Piersanti (Doste) | apex -> base | endo -> epi (rv) epi -> endo (lv) | -/+ (lv); +/- (rv) in text section 2.6; +/- (lv); +/- (rv) in eq. 8 | -/+ |
+
+For coherency, for all methods and for all chambers, we consider the transmural vector $\mathbf e_t$ pointing outwards (endo to epi), the longitudinal vector $\mathbf e_\ell$ pointint towards the base (apex to base), and the circumferential vector $\mathbf e_c=\mathbf e_\ell \times \mathbf e_t$. This way, when using literature angle values, we consider,
+
+| Method | Longitudinal | Transmural | sign(alpha) endo/epi | sign(beta) endo/epi |
+|--------|--------------|------------|----------------------|---------------------|
+| FibGen | apex -> base | endo -> epi | +/- | -/+ |

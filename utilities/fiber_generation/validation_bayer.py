@@ -88,15 +88,15 @@ if __name__ == "__main__":
     params_beta = {
         "ALFA_END": 0.0,
         "ALFA_EPI": 0.0,
-        "BETA_END": 20.0,
-        "BETA_EPI": -20.0,
+        "BETA_END": -20.0,
+        "BETA_EPI": 20.0,
     }
 
     params = {
         "ALFA_END": 60.0,
         "ALFA_EPI": -60.0,
-        "BETA_END": 20.0,
-        "BETA_EPI": -20.0,
+        "BETA_END": -20.0,
+        "BETA_EPI": 20.0,
     }
 
     # Read laplace solutions

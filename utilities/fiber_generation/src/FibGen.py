@@ -197,7 +197,7 @@ class FibGen:
         Qt = np.einsum('nij,njk->nik', Q, RaRb)
         
         return Qt
-
+        
     def orient_rodrigues(self, Q, alpha, beta):
         """Rotate basis using Rodrigues rotation formula (Doste method).
         
@@ -229,47 +229,44 @@ class FibGen:
         eC = self.normalize(eC)
         eL = self.normalize(eL)
         eT = self.normalize(eT)
-        
-        # First rotation: alpha about transmural axis (eT)
-        axis = eT
-        ca, sa = np.cos(alpha), np.sin(alpha)
-        R1 = np.zeros((3, 3, n), dtype=float)
-        R1[0, 0] = ca + axis[:, 0]**2 * (1 - ca)
-        R1[0, 1] = axis[:, 0] * axis[:, 1] * (1 - ca) - axis[:, 2] * sa
-        R1[0, 2] = axis[:, 0] * axis[:, 2] * (1 - ca) + axis[:, 1] * sa
-        R1[1, 0] = axis[:, 1] * axis[:, 0] * (1 - ca) + axis[:, 2] * sa
-        R1[1, 1] = ca + axis[:, 1]**2 * (1 - ca)
-        R1[1, 2] = axis[:, 1] * axis[:, 2] * (1 - ca) - axis[:, 0] * sa
-        R1[2, 0] = axis[:, 2] * axis[:, 0] * (1 - ca) - axis[:, 1] * sa
-        R1[2, 1] = axis[:, 2] * axis[:, 1] * (1 - ca) + axis[:, 0] * sa
-        R1[2, 2] = ca + axis[:, 2]**2 * (1 - ca)
-        
-        # Apply first rotation
-        # Stack as [eC, eL, eT] and transpose to (3, 3, n)
-        Q_stack = np.stack([eC, eL, eT], axis=-1).transpose(2, 1, 0)
-        QX = np.zeros_like(R1)
-        for i in range(n):
-            QX[:, :, i] = Q_stack[:, :, i] @ R1[:, :, i]
-        
-        # Second rotation: beta about rotated longitudinal axis
-        axis2 = QX[1, :, :].T  # Rotated longitudinal axis
-        cb, sb = np.cos(beta), np.sin(beta)
-        R2 = np.zeros((3, 3, n), dtype=float)
-        R2[0, 0] = cb + axis2[:, 0]**2 * (1 - cb)
-        R2[0, 1] = axis2[:, 0] * axis2[:, 1] * (1 - cb) - axis2[:, 2] * sb
-        R2[0, 2] = axis2[:, 0] * axis2[:, 2] * (1 - cb) + axis2[:, 1] * sb
-        R2[1, 0] = axis2[:, 1] * axis2[:, 0] * (1 - cb) + axis2[:, 2] * sb
-        R2[1, 1] = cb + axis2[:, 1]**2 * (1 - cb)
-        R2[1, 2] = axis2[:, 1] * axis2[:, 2] * (1 - cb) - axis2[:, 0] * sb
-        R2[2, 0] = axis2[:, 2] * axis2[:, 0] * (1 - cb) - axis2[:, 1] * sb
-        R2[2, 1] = axis2[:, 2] * axis2[:, 1] * (1 - cb) + axis2[:, 0] * sb
-        R2[2, 2] = cb + axis2[:, 2]**2 * (1 - cb)
-        
-        # Apply second rotation
+
+        # Vectorized Rodrigues rotation:
+        # v_rot = v*cos(theta) + (k x v)*sin(theta) + k*(k·v)*(1-cos(theta))
+
+        def rot(v, k, theta):
+            v = np.asarray(v, dtype=float)
+            k = np.asarray(k, dtype=float)
+            theta = np.asarray(theta, dtype=float)
+
+            if v.ndim != 2 or v.shape[1] != 3:
+                raise ValueError("orient_rodrigues expects vectors of shape (N, 3)")
+            if k.shape != v.shape:
+                raise ValueError("orient_rodrigues expects axes of shape (N, 3) matching vectors")
+                
+            # cos(theta) and sin(theta) are broadcasted to (N, 1)
+            ct = np.cos(theta)[:, None]
+            st = np.sin(theta)[:, None]
+
+            kv = np.cross(k, v, axis=1)
+            kdotv = np.einsum('ij,ij->i', k, v)[:, None]
+            return v * ct + kv * st + k * kdotv * (1.0 - ct)
+
+        # First rotation: alpha about transmural axis eT
+        eC1 = rot(eC, eT, alpha)
+        eL1 = rot(eL, eT, alpha)
+        eT1 = eT  # unchanged
+
+        # Second rotation: beta about rotated longitudinal axis eL1 (normalized)
+        eL1_axis = self.normalize(eL1)
+        eC2 = rot(eC1, eL1_axis, beta)
+        eL2 = eL1  # unchanged (rotation about itself)
+        eT2 = rot(eT1, eL1_axis, beta)
+
         result = np.zeros((n, 3, 3), dtype=float)
-        for i in range(n):
-            result[i] = (QX[:, :, i] @ R2[:, :, i]).T
-        
+        result[:, :, 0] = eC2
+        result[:, :, 1] = eL2
+        result[:, :, 2] = eT2
+
         return result
 
     
@@ -444,10 +441,10 @@ class FibGenBayer(FibGen):
         
         # Build LV and RV basis
         Q_LV0 = self.axis(self.grad['Long_AB'], -self.grad['Trans_LV'])
-        Q_LV = self.orient_matrix(Q_LV0, alfaS, np.abs(betaS))
+        Q_LV = self.orient_matrix(Q_LV0, alfaS, np.sign(params['BETA_END'])*np.abs(betaS))
         
         Q_RV0 = self.axis(self.grad['Long_AB'], self.grad['Trans_RV']) 
-        Q_RV = self.orient_matrix(Q_RV0, alfaS, np.abs(betaS))    
+        Q_RV = self.orient_matrix(Q_RV0, alfaS, np.sign(params['BETA_END'])*np.abs(betaS))    
         
         # Interpolate between LV and RV (endocardial layer)
         Q_END = self.interpolate_basis(Q_LV, Q_RV, d, correct_slerp=correct_slerp)
@@ -471,6 +468,13 @@ class FibGenBayer(FibGen):
         self.mesh.cell_data['fiber'] = F
         self.mesh.cell_data['sheet-normal'] = S
         self.mesh.cell_data['sheet'] = T
+
+        self.mesh.cell_data['eC_LV'] = Q_LV0[:, :, 0]
+        self.mesh.cell_data['eL_LV'] = Q_LV0[:, :, 1]
+        self.mesh.cell_data['eT_LV'] = Q_LV0[:, :, 2]
+        self.mesh.cell_data['eC_RV'] = Q_RV0[:, :, 0]
+        self.mesh.cell_data['eL_RV'] = Q_RV0[:, :, 1]
+        self.mesh.cell_data['eT_RV'] = Q_RV0[:, :, 2]
     
         return F, S, T
         
@@ -494,7 +498,7 @@ class FibGenBayer(FibGen):
         alfaS = self.calculate_angle(d, params['ALFA_END'], -params['ALFA_END'])
         betaS = self.calculate_angle(d, params['BETA_END'], -params['BETA_END'])
         alfaS = np.abs(alfaS)   # Note this is doing the same as flipping the sign
-        betaS = np.abs(betaS)   # Note this is doing the same as flipping the sign
+        betaS = np.sign(params['BETA_END'])*np.abs(betaS)   # Note this is doing the same as flipping the sign
         
         # Wall angles (interpolated from endo to epi)
         alfaW = self.calculate_angle(self.lap['Trans_EPI'], params['ALFA_END'], params['ALFA_EPI'])
@@ -589,7 +593,7 @@ class FibGenDoste(FibGen):
                    grad['Long_AV'] * (1 - lap['Weight_LV'][:, None]))
 
         # Calculate LV basis
-        Q_lv = self.axis(lv_glong, grad['Trans_LV'])
+        Q_lv = self.axis(-lv_glong, -grad['Trans_LV'])   # Minus signs to match Bayer convention
         eC_lv = Q_lv[:, :, 0]  # Circumferential
         eL_lv = Q_lv[:, :, 1]  # Longitudinal
         eT_lv = Q_lv[:, :, 2]  # Transmural
@@ -597,7 +601,7 @@ class FibGenDoste(FibGen):
         # Calculate combined RV longitudinal
         rv_glong = (grad['Long_TV'] * lap['Weight_RV'][:, None] + 
                    grad['Long_PV'] * (1 - lap['Weight_RV'][:, None]))
-        Q_rv = self.axis(rv_glong, grad['Trans_RV'])
+        Q_rv = self.axis(-rv_glong, -grad['Trans_RV'])   # Minus signs to match Bayer convention
         eC_rv = Q_rv[:, :, 0]  # Circumferential
         eL_rv = Q_rv[:, :, 1]  # Longitudinal
         eT_rv = Q_rv[:, :, 2]  # Transmural
@@ -724,6 +728,11 @@ class FibGenDoste(FibGen):
         self.mesh.cell_data['fiber'] = F
         self.mesh.cell_data['sheet-normal'] = S
         self.mesh.cell_data['sheet'] = T
+
+        for k, v in basis.items():
+            self.mesh.cell_data[k] = v
+        for k, v in angles.items():
+            self.mesh.cell_data[k] = np.rad2deg(v)
         
         return F, S, T
 

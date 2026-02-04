@@ -39,8 +39,8 @@ if __name__ == "__main__":
     params = {
         "ALFA_END": 60.0,
         "ALFA_EPI": -60.0,
-        "BETA_END": 20.0,
-        "BETA_EPI": -20.0,
+        "BETA_END": -20.0,
+        "BETA_EPI": 20.0,
     }
 
 

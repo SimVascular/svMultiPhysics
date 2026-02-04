@@ -53,13 +53,13 @@ def calculate_alpha_beta_angles(f, eC, eL, eT):
     beta_dot = np.abs(np.sum(f_projected * f, axis=1))
     beta_dot = np.clip(beta_dot, 0, 1)  # Ensure values are within valid range
     abs_beta_angle = np.rad2deg(np.arccos(beta_dot))
-    sign_beta = np.sign(np.sum(f * eT, axis=1))
+    sign_beta = -np.sign(np.sum(f * eT, axis=1))
     beta_angle = abs_beta_angle * sign_beta
 
     alpha_dot = np.abs(np.sum(eC * f_projected, axis=1))
     alpha_dot = np.clip(alpha_dot, 0, 1)  # Ensure values are within valid range
     abs_alpha_angle = np.rad2deg(np.arccos(alpha_dot))
-    sign_alpha = -np.sign(np.sum(f_projected * eL, axis=1))
+    sign_alpha = np.sign(np.sum(f_projected * eL, axis=1))
     alpha_angle = abs_alpha_angle * sign_alpha
     
     return alpha_angle, beta_angle, f_projected
@@ -116,10 +116,10 @@ if __name__ == "__main__":
         'AOTEPILV': 0,
         'AOTEPIRV': 0,
 
-        'BENDORV': 20,
-        'BEPIRV': -20,
-        'BENDOLV': 20,
-        'BEPILV': -20,
+        'BENDORV': 0,
+        'BEPIRV': 20,
+        'BENDOLV': -20,
+        'BEPILV': 20,
     }
 
     params = {
@@ -134,9 +134,9 @@ if __name__ == "__main__":
         'AOTEPIRV': 0,
 
         'BENDORV': 0,
-        'BEPIRV': -20,
-        'BENDOLV': 20,
-        'BEPILV': -20,
+        'BEPIRV': 20,
+        'BENDOLV': -20,
+        'BEPILV': 20,
     }
 
     # Read laplace solutions
