@@ -11,10 +11,14 @@ ResetSession()
 
 import os
 
-validation_file_path = 'example/ot/validation_doste_combined.vtu'
-png_output_path = os.path.dirname(validation_file_path)
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
-fiber_families = ['f']#, 's', 'n']
+# Set paths relative to the script directory
+validation_file_path = os.path.join(script_dir, 'example', 'ot', 'validation_doste_combined.vtu')
+png_output_path = os.path.join(script_dir, 'example', 'ot')
+
+fiber_families = ['f', 's', 'n']
 fiber_family_names = {'f': 'fiber', 's': 'sheet', 'n': 'sheet-normal'}
 
 # create a new 'XML Unstructured Grid Reader'
@@ -223,7 +227,7 @@ renderView1.Set(
 
 
 # save screenshot
-SaveScreenshot(filename='/home/javiera/Research/sv-fibergen/example/ot/doste_fiber.png', viewOrLayout=renderView1, location=16, ImageResolution=[993, 706])
+SaveScreenshot(filename=os.path.join(png_output_path, 'doste_fiber.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706], TransparentBackground=0)
 
 # set active source
 SetActiveSource(streamTracer1)
@@ -393,10 +397,8 @@ for fiber_family in fiber_families:
         CameraParallelScale=102.19338444140465,
     )
 
-
-
     # save screenshot
-    SaveScreenshot(filename=os.path.join(png_output_path, f'doste_{family_name}_slice.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706])
+    SaveScreenshot(filename=os.path.join(png_output_path, f'doste_{family_name}_slice.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706], TransparentBackground=0)
 
     # set active source
     SetActiveSource(validation_doste_combinedvtu)
@@ -450,12 +452,8 @@ for fiber_family in fiber_families:
         CameraParallelScale=102.19338444140465,
     )
 
-
-
-
-
     # save screenshot
-    SaveScreenshot(filename=os.path.join(png_output_path, f'doste_{family_name}.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706])
+    SaveScreenshot(filename=os.path.join(png_output_path, f'doste_{family_name}.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706], TransparentBackground=0)
     
     # Delete the stream tracer for this iteration before creating the next one
     Delete(streamTracer_current)

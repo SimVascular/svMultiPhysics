@@ -27,7 +27,7 @@ if __name__ == "__main__":
     ############  USER INPUTS  ################################
     ###########################################################
 
-    run_flag = False
+    run_flag = True
     svmultiphysics_exec = "svmultiphysics "
 
     mesh_path = "example/ot/mesh-complete.mesh.vtu"

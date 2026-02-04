@@ -11,8 +11,12 @@ ResetSession()
 
 import os
 
-validation_file_path = 'example/truncated/validation_bayer_combined.vtu'
-png_output_path = os.path.dirname(validation_file_path)
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Set paths relative to the script directory
+validation_file_path = os.path.join(script_dir, 'example', 'truncated', 'validation_bayer_combined.vtu')
+png_output_path = os.path.join(script_dir, 'example', 'truncated')
 
 fiber_families = ['f', 's', 'n']
 fiber_family_names = {'f': 'fiber', 's': 'sheet', 'n': 'sheet-normal'}
@@ -222,7 +226,7 @@ renderView1.Set(
 )
 
 # save screenshot
-SaveScreenshot(filename='/home/javiera/Research/sv-fibergen/example/truncated/bayer_fiber.png', viewOrLayout=renderView1, location=16, ImageResolution=[993, 706])
+SaveScreenshot(filename=os.path.join(png_output_path, 'bayer_fiber.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706], TransparentBackground=0)
 
 # set active source
 SetActiveSource(streamTracer1)
@@ -286,9 +290,6 @@ for fiber_family in fiber_families:
     
     # show color bar/color legend
     streamTracer_currentDisplay.SetScalarBarVisibility(renderView1, True)
-
-
-    ColorBy(slice1Display, None)
     
     # create a new 'Glyph'
     glyph1 = Glyph(registrationName='Glyph1', Input=slice1,
@@ -344,6 +345,12 @@ for fiber_family in fiber_families:
     # toggle interactive widget visibility (only when running from the GUI)
     ShowInteractiveWidgets(proxy=slice1.SliceType)
 
+    # turn off scalar coloring
+    ColorBy(slice1Display, None)
+
+    # Hide the scalar bar for this color map if no visible data is colored by it.
+    HideScalarBarIfNotNeeded(fLUT, renderView1)
+
     # hide data in view
     Hide(validation_bayer_combinedvtu, renderView1)
 
@@ -390,7 +397,7 @@ for fiber_family in fiber_families:
     )
 
     # save screenshot
-    SaveScreenshot(filename=os.path.join(png_output_path, f'bayer_{family_name}_slice.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706])
+    SaveScreenshot(filename=os.path.join(png_output_path, f'bayer_{family_name}_slice.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706], TransparentBackground=0)
 
     # set active source
     SetActiveSource(validation_bayer_combinedvtu)
@@ -445,7 +452,7 @@ for fiber_family in fiber_families:
     )
 
     # save screenshot
-    SaveScreenshot(filename=os.path.join(png_output_path, f'bayer_{family_name}.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706])
+    SaveScreenshot(filename=os.path.join(png_output_path, f'bayer_{family_name}.png'), viewOrLayout=renderView1, location=16, ImageResolution=[993, 706], TransparentBackground=0)
     
     # Delete the stream tracer for this iteration before creating the next one
     Delete(streamTracer_current)

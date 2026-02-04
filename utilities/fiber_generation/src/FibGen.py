@@ -468,13 +468,6 @@ class FibGenBayer(FibGen):
         self.mesh.cell_data['fiber'] = F
         self.mesh.cell_data['sheet-normal'] = S
         self.mesh.cell_data['sheet'] = T
-
-        self.mesh.cell_data['eC_LV'] = Q_LV0[:, :, 0]
-        self.mesh.cell_data['eL_LV'] = Q_LV0[:, :, 1]
-        self.mesh.cell_data['eT_LV'] = Q_LV0[:, :, 2]
-        self.mesh.cell_data['eC_RV'] = Q_RV0[:, :, 0]
-        self.mesh.cell_data['eL_RV'] = Q_RV0[:, :, 1]
-        self.mesh.cell_data['eT_RV'] = Q_RV0[:, :, 2]
     
         return F, S, T
         
@@ -728,11 +721,6 @@ class FibGenDoste(FibGen):
         self.mesh.cell_data['fiber'] = F
         self.mesh.cell_data['sheet-normal'] = S
         self.mesh.cell_data['sheet'] = T
-
-        for k, v in basis.items():
-            self.mesh.cell_data[k] = v
-        for k, v in angles.items():
-            self.mesh.cell_data[k] = np.rad2deg(v)
         
         return F, S, T
 
