@@ -31,9 +31,9 @@ if __name__ == "__main__":
     run_flag = True
     svmultiphysics_exec = "svmultiphysics "
 
-    mesh_path = "example/truncated/VOLUME.vtu"
-    outdir = "example/truncated/output_bayer"
-    surfaces_dir = 'example/truncated/mesh-surfaces'
+    mesh_path = "example/biv_truncated/VOLUME.vtu"
+    outdir = "example/biv_truncated/output_bayer"
+    surfaces_dir = 'example/biv_truncated/mesh-surfaces'
                     
     # Parameters for the Bayer et al. method https://doi.org/10.1007/s10439-012-0593-5. 
     params = {

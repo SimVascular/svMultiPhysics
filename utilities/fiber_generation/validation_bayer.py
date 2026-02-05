@@ -68,7 +68,7 @@ def calculate_alpha_beta_angles(f, eC, eL, eT):
 
 if __name__ == "__main__":
 
-    outdir = "example/truncated/output_bayer"
+    outdir = "example/biv_truncated/output_bayer"
     save_vtu = True
 
     params_zero = {
@@ -119,13 +119,16 @@ if __name__ == "__main__":
         fib_gen.mesh.cell_data['f'] = f_alpha
         fib_gen.mesh.cell_data['s'] = s_alpha
         fib_gen.mesh.cell_data['n'] = n_alpha
+        fib_gen.mesh.cell_data['eC'] = eC
+        fib_gen.mesh.cell_data['eL'] = eL
+        fib_gen.mesh.cell_data['eT'] = eT
         fib_gen.mesh.cell_data['alpha_only_a'] = alpha_only_a
         fib_gen.mesh.cell_data['beta_only_a'] = beta_only_a
         fib_gen.mesh.cell_data['alpha_ref_a'] = ref_alpha_only_a
         fib_gen.mesh.cell_data['beta_ref_a'] = ref_beta_only_a
         fib_gen.mesh.cell_data['diff_alpha_a'] = alpha_only_a - ref_alpha_only_a
         fib_gen.mesh.cell_data['diff_beta_a'] = beta_only_a - ref_beta_only_a
-        fib_gen.mesh.save('example/truncated/validation_bayer_onlyalpha.vtu')
+        fib_gen.mesh.save('example/biv_truncated/validation_bayer_onlyalpha.vtu')
 
     # Sanity check 2: Only beta rotation
     f_beta, n_beta, s_beta = fib_gen.generate_fibers(params_beta)
@@ -143,7 +146,7 @@ if __name__ == "__main__":
         fib_gen.mesh.cell_data['beta_ref_b'] = ref_beta_only_b
         fib_gen.mesh.cell_data['diff_alpha_b'] = alpha_only_b - ref_alpha_only_b
         fib_gen.mesh.cell_data['diff_beta_b'] = beta_only_b - ref_beta_only_b
-        fib_gen.mesh.save('example/truncated/validation_bayer_onlybeta.vtu')
+        fib_gen.mesh.save('example/biv_truncated/validation_bayer_onlybeta.vtu')
     
     # Alpha and beta rotation combined
     eC, eL, eT = fib_gen.generate_fibers(params_zero)
@@ -162,7 +165,7 @@ if __name__ == "__main__":
         fib_gen.mesh.cell_data['beta_ref'] = ref_beta_combined
         fib_gen.mesh.cell_data['diff_alpha'] = alpha_combined - ref_alpha_combined
         fib_gen.mesh.cell_data['diff_beta'] = beta_combined - ref_beta_combined
-        fib_gen.mesh.save('example/truncated/validation_bayer_combined.vtu')
+        fib_gen.mesh.save('example/biv_truncated/validation_bayer_combined.vtu')
     
     # For comparison, generate fibers using original Bayer method
     eC, eL, eT = fib_gen.generate_fibers(params_zero, correct_slerp=True, flip_rv=False)
@@ -180,7 +183,7 @@ if __name__ == "__main__":
         fib_gen.mesh.cell_data['beta_ref'] = ref_beta_combined
         fib_gen.mesh.cell_data['diff_alpha_og'] = alpha_og - ref_alpha_combined
         fib_gen.mesh.cell_data['diff_beta_og'] = beta_og - ref_beta_combined
-        fib_gen.mesh.save('example/truncated/validation_bayer_original.vtu')
+        fib_gen.mesh.save('example/biv_truncated/validation_bayer_original.vtu')
 
 
     # Create figure with correlation plots
@@ -246,4 +249,4 @@ if __name__ == "__main__":
     axes[1, 1].set_ylabel('Fiber angles (degrees)')
     axes[1, 1].legend(fontsize=8, loc='upper left')
 
-    plt.savefig('example/truncated/bayer_angle_correlations.png', dpi=150)
+    plt.savefig('example/biv_truncated/bayer_angle_correlations.png', dpi=150)

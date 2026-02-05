@@ -33,31 +33,31 @@ The Bayer method results are demonstrated on a truncated biventricular geometry.
 
 ### Fiber Orientation
 
-![Bayer Fiber Full View](example/truncated/bayer_fiber.png)
+![Bayer Fiber Full View](example/biv_truncated/bayer_fiber.png)
 
 *Figure 1: Fiber orientation field generated using the Bayer method - full view*
 
-![Bayer Fiber Slice View](example/truncated/bayer_fiber_slice.png)
+![Bayer Fiber Slice View](example/biv_truncated/bayer_fiber_slice.png)
 
 *Figure 2: Fiber orientation field generated using the Bayer method - slice view*
 
 ### Sheet Orientation
 
-![Bayer Sheet Full View](example/truncated/bayer_sheet.png)
+![Bayer Sheet Full View](example/biv_truncated/bayer_sheet.png)
 
 *Figure 3: Sheet orientation field generated using the Bayer method - full view*
 
-![Bayer Sheet Slice View](example/truncated/bayer_sheet_slice.png)
+![Bayer Sheet Slice View](example/biv_truncated/bayer_sheet_slice.png)
 
 *Figure 4: Sheet orientation field generated using the Bayer method - slice view*
 
 ### Sheet-Normal Orientation
 
-![Bayer Sheet-Normal Full View](example/truncated/bayer_sheet-normal.png)
+![Bayer Sheet-Normal Full View](example/biv_truncated/bayer_sheet-normal.png)
 
 *Figure 5: Sheet-normal orientation field generated using the Bayer method - full view*
 
-![Bayer Sheet-Normal Slice View](example/truncated/bayer_sheet-normal_slice.png)
+![Bayer Sheet-Normal Slice View](example/biv_truncated/bayer_sheet-normal_slice.png)
 
 *Figure 6: Sheet-normal orientation field generated using the Bayer method - slice view*
 
@@ -65,7 +65,7 @@ The Bayer method results are demonstrated on a truncated biventricular geometry.
 
 To check the code, we first calculate the $\alpha$ and $\beta$ angles using scalar interpolations. Then, we calculate the $\alpha$ and $\beta$ angles using the fiber direction $\mathbf f$ and the orthogonal basis $\mathbf e_c$, $\mathbf e_\ell$, $\mathbf e_t$. 
 
-![Bayer Angle Correlations](example/truncated/bayer_angle_correlations.png)
+![Bayer Angle Correlations](example/biv_truncated/bayer_angle_correlations.png)
 
 *Figure 7: Correlation plots comparing scalar interpolation angles with fiber derived angles for the Bayer method. Blue and red dots show the $\alpha$ and $\beta$ angles. For reference, the original Bayer method with no modifications is shown.*
 
@@ -77,37 +77,37 @@ The Doste method results are demonstrated on a complete biventricular geometry w
 
 ### Fiber Orientation
 
-![Doste Fiber Full View](example/ot/doste_fiber.png)
+![Doste Fiber Full View](example/biv_with_outflow_tracts/doste_fiber.png)
 
 *Figure 8: Fiber orientation field generated using the Doste method - full view*
 
-![Doste Fiber Slice View](example/ot/doste_fiber_slice.png)
+![Doste Fiber Slice View](example/biv_with_outflow_tracts/doste_fiber_slice.png)
 
 *Figure 9: Fiber orientation field generated using the Doste method - slice view*
 
 ### Sheet Orientation
 
-![Doste Sheet Full View](example/ot/doste_sheet.png)
+![Doste Sheet Full View](example/biv_with_outflow_tracts/doste_sheet.png)
 
 *Figure 10: Sheet orientation field generated using the Doste method - full view*
 
-![Doste Sheet Slice View](example/ot/doste_sheet_slice.png)
+![Doste Sheet Slice View](example/biv_with_outflow_tracts/doste_sheet_slice.png)
 
 *Figure 11: Sheet orientation field generated using the Doste method - slice view*
 
 ### Sheet-Normal Orientation
 
-![Doste Sheet-Normal Full View](example/ot/doste_sheet-normal.png)
+![Doste Sheet-Normal Full View](example/biv_with_outflow_tracts/doste_sheet-normal.png)
 
 *Figure 12: Sheet-normal orientation field generated using the Doste method - full view*
 
-![Doste Sheet-Normal Slice View](example/ot/doste_sheet-normal_slice.png)
+![Doste Sheet-Normal Slice View](example/biv_with_outflow_tracts/doste_sheet-normal_slice.png)
 
 *Figure 13: Sheet-normal orientation field generated using the Doste method - slice view*
 
 ### Angle Correlations
 
-![Doste Angle Correlations](example/ot/doste_angle_correlations.png)
+![Doste Angle Correlations](example/biv_with_outflow_tracts/doste_angle_correlations.png)
 
 *Figure 14: Correlation plots comparing scalar interpolation angles with fiber derived angles for the Doste method. Blue and red dots show the $\alpha$ and $\beta$ angles**
 

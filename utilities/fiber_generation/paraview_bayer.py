@@ -15,8 +15,8 @@ import os
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Set paths relative to the script directory
-validation_file_path = os.path.join(script_dir, 'example', 'truncated', 'validation_bayer_combined.vtu')
-png_output_path = os.path.join(script_dir, 'example', 'truncated')
+validation_file_path = os.path.join(script_dir, 'example', 'biv_truncated', 'validation_bayer_combined.vtu')
+png_output_path = os.path.join(script_dir, 'example', 'biv_truncated')
 
 fiber_families = ['f', 's', 'n']
 fiber_family_names = {'f': 'fiber', 's': 'sheet', 'n': 'sheet-normal'}

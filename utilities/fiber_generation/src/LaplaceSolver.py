@@ -254,8 +254,8 @@ class LaplaceSolver:
         return [
             # Trans_BiV: Ventricular transmural (LV=1, RV=0)
             ("Trans_BiV", [
-                ("lv_endocardium", 1.0),
-                ("rv_endocardium", 0.0),
+                ("lv_endocardium", -2.0),
+                ("rv_endocardium", 1.0),
             ]),
             # Long_AV: LV longitudinal from AV (apex=1, aortic_valve=0)
             ("Long_AV", [
@@ -303,6 +303,12 @@ class LaplaceSolver:
             ("Trans_RV", [
                 ("epicardium", 0.0),
                 ("lv_endocardium", 0.0),
+                ("rv_endocardium", 1.0),
+            ]),
+            # Trans: transmural (rv_endo=1, epi=0, lv_endo=-2)
+            ("Trans", [
+                ("epicardium", 0.0),
+                ("lv_endocardium", -2.0),
                 ("rv_endocardium", 1.0),
             ]),
         ]

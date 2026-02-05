@@ -513,7 +513,7 @@ class FibGenDoste(FibGen):
     
     # Field names in Laplace solution
     FIELD_NAMES = ['Trans_BiV', 'Long_AV', 'Long_MV', 'Long_PV', 'Long_TV',
-                   'Weight_LV', 'Weight_RV', 'Trans_EPI', 'Trans_LV', 'Trans_RV']
+                   'Weight_LV', 'Weight_RV', 'Trans_EPI', 'Trans_LV', 'Trans_RV', 'Trans']
     
     def __init__(self):
         """Initialize the Doste fiber generator."""
@@ -532,7 +532,13 @@ class FibGenDoste(FibGen):
         result_mesh = pv.read(file_path)
         
         print("   Computing gradients at points")
+        # _compute_gradients scales the fields to [0, 1] 
+        # but we need Trans_BiV in the original range 
+        trans_biv = result_mesh.point_data['Trans_BiV'].copy()
+        trans = result_mesh.point_data['Trans'].copy()
         result_mesh = self._compute_gradients(result_mesh, self.FIELD_NAMES)
+        result_mesh.point_data['Trans_BiV'] = trans_biv
+        result_mesh.point_data['Trans'] = trans
         
         # Convert point-data to cell-data
         mesh_cells = result_mesh.point_data_to_cell_data()
@@ -599,14 +605,9 @@ class FibGenDoste(FibGen):
         eL_rv = Q_rv[:, :, 1]  # Longitudinal
         eT_rv = Q_rv[:, :, 2]  # Transmural
         
-        # Global circumferential (blended)
-        eC = eC_rv * (1 - lap['Trans_BiV'][:, None]) + eC_lv * lap['Trans_BiV'][:, None]
-        eC = self.normalize(eC)
-        
         return {
             'eC_lv': eC_lv, 'eT_lv': eT_lv, 'eL_lv': eL_lv,
             'eC_rv': eC_rv, 'eT_rv': eT_rv, 'eL_rv': eL_rv,
-            'eC': eC
         }
     
     def _compute_angles(self, params):
@@ -641,15 +642,16 @@ class FibGenDoste(FibGen):
         beta_wall_rv = self.calculate_angle(lap['Trans_EPI'], params['BENDORV'], params['BEPIRV']) * rv_weight
         
         # Septum angles
-        sep = np.abs(lap['Trans_BiV'] - 0.5)
-        sep = (sep - np.min(sep)) / (np.max(sep) - np.min(sep))
-        alfaS = alpha_lv_endo * sep * lap['Trans_LV'] + alpha_rv_endo * sep * lap['Trans_RV']
-        beta_septum = params['BENDOLV'] * lap['Trans_LV'] * lv_weight + params['BENDORV'] * lap['Trans_RV'] * rv_weight
+        sep = lap['Trans'].copy()
+        sep[sep < 0.0] = sep[sep < 0.0] / 2
+        sep = np.abs(sep)   # This gives a field that is 1 at both endo but that assigns 2/3  of the septum to the lv
+        alpha_septum = alpha_lv_endo * sep * (lap['Trans_BiV'] < 0) + alpha_rv_endo * sep * (lap['Trans_BiV'] > 0)
+        beta_septum = params['BENDOLV'] * sep * (lap['Trans_BiV'] < 0)  * lv_weight + params['BENDORV'] * sep * (lap['Trans_BiV'] > 0) * rv_weight
         
         return {
             'alpha_wall_lv': alpha_wall_lv, 'beta_wall_lv': beta_wall_lv,
             'alpha_wall_rv': alpha_wall_rv, 'beta_wall_rv': beta_wall_rv,
-            'alfaS': alfaS, 'beta_septum': beta_septum
+            'alpha_septum': alpha_septum, 'beta_septum': beta_septum
         }
     
     
@@ -687,10 +689,10 @@ class FibGenDoste(FibGen):
         
         # Septum basis
         Qlv_sep = self.orient_rodrigues(
-            Q_lv, angles['alfaS'], angles['beta_septum']
+            Q_lv, angles['alpha_septum'], angles['beta_septum']
         )
         Qrv_sep = self.orient_rodrigues(
-            Q_rv, angles['alfaS'], angles['beta_septum']
+            Q_rv, angles['alpha_septum'], angles['beta_septum']
         )
         
         # Wall basis
@@ -702,13 +704,17 @@ class FibGenDoste(FibGen):
         )
         
         print("   Interpolating basis")
+        # Get interpolation factor between LV and RV
+        interp_biv = self.lap['Trans_BiV'].copy()  # Need to normalize this to [0, 1] for interpolation
+        interp_biv[interp_biv < 0.0] = interp_biv[interp_biv < 0.0] / 2
+        interp_biv = (interp_biv + 1) / 2
 
         # Get discontinous septal fibers
         Qsep = Qrv_sep.copy()
-        Qsep[self.lap['Trans_BiV'] > 0.5] = Qlv_sep[self.lap['Trans_BiV'] > 0.5]
+        Qsep[interp_biv < 0.5] = Qlv_sep[interp_biv < 0.5]
         
         # Interpolate across ventricles
-        Qepi = self.interpolate_basis(Qrv_wall, Qlv_wall, self.lap['Trans_BiV'])
+        Qepi = self.interpolate_basis(Qlv_wall, Qrv_wall, interp_biv)
         
         # Interpolate from endo to epi
         Q = self.interpolate_basis(Qsep, Qepi, self.lap['Trans_EPI'])
@@ -739,13 +745,20 @@ class FibGenDoste(FibGen):
             tuple: (alfa, beta) arrays of helix and transverse angles at each cell.
         """
 
-        # Interpolation factor between LV and RV
+        # Compute angles
         angles = self._compute_angles(params)
+        
+        # Normalize Trans_BiV for interpolation (matching generate_fibers implementation)
+        interp_biv = self.lap['Trans_BiV'].copy()
+        interp_biv[interp_biv < 0.0] = interp_biv[interp_biv < 0.0] / 2
+        interp_biv = (interp_biv + 1) / 2
 
-        alpha_epi = angles['alpha_wall_lv'] * self.lap['Trans_BiV'] + angles['alpha_wall_rv'] * (1 - self.lap['Trans_BiV'])
-        beta_epi = angles['beta_wall_lv'] * self.lap['Trans_BiV'] + angles['beta_wall_rv'] * (1 - self.lap['Trans_BiV'])
+        # Interpolate wall angles between LV and RV
+        alpha_epi = angles['alpha_wall_lv'] * (1 - interp_biv) + angles['alpha_wall_rv'] * interp_biv
+        beta_epi = angles['beta_wall_lv'] * (1 - interp_biv) + angles['beta_wall_rv'] * interp_biv
 
-        alfa = angles['alfaS'] * (1 - self.lap['Trans_EPI']) + alpha_epi * self.lap['Trans_EPI']
+        # Interpolate from septum (endo) to wall (epi) transmurally
+        alfa = angles['alpha_septum'] * (1 - self.lap['Trans_EPI']) + alpha_epi * self.lap['Trans_EPI']
         beta = angles['beta_septum'] * (1 - self.lap['Trans_EPI']) + beta_epi * self.lap['Trans_EPI']
         
         return alfa, beta

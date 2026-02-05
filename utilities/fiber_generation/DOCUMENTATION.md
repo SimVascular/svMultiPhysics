@@ -250,8 +250,8 @@ The Bayer method requires four input angle parameters (typically specified in de
 
 - **$\alpha_{\text{endo}}$**: Endocardial helix angle, typically $60°$
 - **$\alpha_{\text{epi}}$**: Epicardial helix angle, typically $-60°$
-- **$\beta_{\text{endo}}$**: Endocardial transverse angle, typically $20°$
-- **$\beta_{\text{epi}}$**: Epicardial transverse angle, typically $-20°$
+- **$\beta_{\text{endo}}$**: Endocardial transverse angle, typically $-20°$
+- **$\beta_{\text{epi}}$**: Epicardial transverse angle, typically $20°$
 
 These angles define the fiber architecture that varies smoothly from endocardium to epicardium across both ventricles.
 
@@ -314,14 +314,14 @@ When running the original implementation, we observed the resulting fibers showe
       Note that $\mathbf{Q}_{\mathrm{LV}}^{0}$ and $\mathbf{Q}_{\mathrm{RV}}^{0}$ share equivalent circumferential, longitudinal, and transmural directions \textbf{within the septum}. By definition, $\beta_s > 0$ on the LV side (assuming $\beta_{\mathrm{endo}} > 0$), causing the fiber vector to rotate outward from the septum. On the RV side, $\beta_s < 0$ which also causes the fiber vector to rotate away from the septum. However, this is a negative angle at the RV endocardium, which is not what we want. Taking the absolute value $|\beta_s|$ yields the correct fiber angles while preserving the transmural variation of $\beta_{\mathrm{endo}}$ (positive at both side of the septum and 0 at the center of the septum).
 
 
-      ![Illustration of beta angle effect at endocardium](example/truncated/betaendo.png)
+      ![Illustration of beta angle effect at endocardium](example/biv_truncated/betaendo.png)
    
    - After step 3, for elements where $d > 0.5$, flip the first and third basis vectors (fiber and sheet) of $\mathbf{Q}_{\text{endo}}$. 
    
       Note that $\mathbf{Q}_{\text{LV}}^{0}$ and $\mathbf{Q}_{\text{RV}}^{0}$ are constructed with opposite signs for the transmural direction. As a result, the LV basis rotates counterclockwise, whereas the RV basis rotates clockwise. At the septum, the circumferential vectors of both bases point in the same direction, which allows for a straightforward SLERP interpolation along the shortest path to obtain $\mathbf{Q}_{\text{endo}}$. However, on the RV side this construction causes the $\mathbf{Q}_{\text{endo}}$ basis to point exactly opposite to $\mathbf{Q}_{\text{epi}}$, leading to issues with the SLERP interpolation. Flipping the vectors on the RV side resolves this problem and ensures that the second interpolation remains smooth.
 
             
-      ![Illustration of beta angle effect at endocardium](example/truncated/flipping.png)
+      ![Illustration of beta angle effect at endocardium](example/biv_truncated/flipping.png)
 
 
 # Doste Method
@@ -352,25 +352,28 @@ where $S_{\text{epi}}$ is the epicardial surface, $S_{\text{top}}$ is the top su
 
 ### Required Laplace Fields
 
-Ten Laplace problems are solved:
+Eleven Laplace problems are solved:
 
-**Ventricular**:
-1. $\phi_{\text{BiV}}$: RV endocardium → LV endocardium (interventricular)
+**Interventricular**:
+1. $\phi_{\text{BiV}}$: RV endocardium → LV endocardium (interventricular field)
+2. $\phi_{\text{Trans}}$: Combined transmural field for septal angle calculation
 
 **Left Ventricle**:
-1. $\phi_{\text{LV,trans}}$: Epicardium → LV endocardium (LV transmural)
+1. $\phi_{\text{LV,trans}}$: Epicardium → LV endocardium (LV transmural for basis construction)
 2. $\phi_{\text{LV,av}}$: Aortic valve → apex (LV longitudinal from AV)
 3. $\phi_{\text{LV,mv}}$: Mitral valve → apex (LV longitudinal from MV)
 4. $\phi_{\text{LV,weight}}$: Aortic valve → mitral valve (LV valve weight)
 
 **Right Ventricle**:
-1. $\phi_{\text{RV,trans}}$: Epicardium → RV endocardium (RV transmural)
+1. $\phi_{\text{RV,trans}}$: Epicardium → RV endocardium (RV transmural for basis construction)
 2. $\phi_{\text{RV,pv}}$: Pulmonary valve → apex (RV longitudinal from PV)
 3. $\phi_{\text{RV,tv}}$: Tricuspid valve → apex (RV longitudinal from TV)
 4. $\phi_{\text{RV,weight}}$: Pulmonary valve → tricuspid valve (RV valve weight)
 
-**Global**:
-1. $\phi_{\text{epi,trans}}$: LV and RV endocardium → epicardium (global transmural)
+**Global Transmural**:
+1. $\phi_{\text{epi,trans}}$: LV and RV endocardium → epicardium (global transmural for angle interpolation)
+
+**Note**: All Laplace fields are automatically normalized to the $[0, 1]$ range **except** for $\phi_{\text{BiV}}$ and $\phi_{\text{Trans}}$, which are kept in their original range for proper septal field calculation and basis construction. The $\phi_{\text{BiV}}$ field typically has negative values on the RV side and positive values on the LV side.
 
 ## Input Angles
 
@@ -378,12 +381,12 @@ The Doste method requires twelve input angle parameters (typically specified in 
 
 - **$\alpha_{\text{endo,LV}}$**: LV endocardial helix angle, typically $60°$
 - **$\alpha_{\text{epi,LV}}$**: LV epicardial helix angle, typically $-60°$
-- **$\beta_{\text{endo,LV}}$**: LV endocardial transverse angle, typically $20°$
-- **$\beta_{\text{epi,LV}}$**: LV epicardial transverse angle, typically $-20°$
+- **$\beta_{\text{endo,LV}}$**: LV endocardial transverse angle, typically $-20°$
+- **$\beta_{\text{epi,LV}}$**: LV epicardial transverse angle, typically $20°$
 - **$\alpha_{\text{endo,RV}}$**: RV endocardial helix angle, typically $90°$
 - **$\alpha_{\text{epi,RV}}$**: RV epicardial helix angle, typically $-25°$
-- **$\beta_{\text{endo,RV}}$**: RV endocardial transverse angle, typically $20°$
-- **$\beta_{\text{epi,RV}}$**: RV epicardial transverse angle, typically $-20°$
+- **$\beta_{\text{endo,RV}}$**: RV endocardial transverse angle, typically $-20°$
+- **$\beta_{\text{epi,RV}}$**: RV epicardial transverse angle, typically $20°$
 - **$\alpha_{\text{OT,endo,LV}}$**: LV outflow tract endocardial helix angle, typically $90°$
 - **$\alpha_{\text{OT,epi,LV}}$**: LV outflow tract epicardial helix angle, typically $0°$
 - **$\alpha_{\text{OT,endo,RV}}$**: RV outflow tract endocardial helix angle, typically $90°$
@@ -436,15 +439,31 @@ $$
 \beta_{\text{wall,RV}} = \left[\beta_{\text{endo,RV}}(1 - \phi_{\text{epi,trans}}) + \beta_{\text{epi,RV}}\phi_{\text{epi,trans}}\right] w_{\text{RV}}
 $$
 
-**Septum angles**: Computed by blending LV and RV contributions weighted by septal position:
+**Septum angles**: Computed by blending LV and RV contributions weighted by septal position.
+
+First, compute a septal field $s$ that is 1 at both endocardia but assigns 2/3 of the septum to the LV:
 $$
-s = \frac{|\phi_{\text{BiV}} - 0.5| - \min(|\phi_{\text{BiV}} - 0.5|)}{\max(|\phi_{\text{BiV}} - 0.5|) - \min(|\phi_{\text{BiV}} - 0.5|)}
+s = \begin{cases}
+\phi_{\text{Trans}} / 2 & \text{if } \phi_{\text{Trans}} < 0 \\
+\phi_{\text{Trans}} & \text{otherwise}
+\end{cases}
 $$
 $$
-\alpha_{\text{septum}} = \alpha_{\text{LV,endo}} \cdot s \cdot \phi_{\text{LV,trans}} + \alpha_{\text{RV,endo}} \cdot s \cdot \phi_{\text{RV,trans}}
+s = |s|
+$$
+
+Then compute septum angles based on which ventricle the element belongs to:
+$$
+\alpha_{\text{septum}} = \begin{cases}
+\alpha_{\text{LV,endo}} \cdot s & \text{if } \phi_{\text{BiV}} < 0 \\
+\alpha_{\text{RV,endo}} \cdot s & \text{if } \phi_{\text{BiV}} > 0
+\end{cases}
 $$
 $$
-\beta_{\text{septum}} = \beta_{\text{endo,LV}} \cdot \phi_{\text{LV,trans}} \cdot w_{\text{LV}} + \beta_{\text{endo,RV}} \cdot \phi_{\text{RV,trans}} \cdot w_{\text{RV}}
+\beta_{\text{septum}} = \begin{cases}
+\beta_{\text{endo,LV}} \cdot s \cdot w_{\text{LV}} & \text{if } \phi_{\text{BiV}} < 0 \\
+\beta_{\text{endo,RV}} \cdot s \cdot w_{\text{RV}} & \text{if } \phi_{\text{BiV}} > 0
+\end{cases}
 $$
 
 ### Algorithm Steps
@@ -453,37 +472,54 @@ $$
    - Blend valve gradients: $\mathbf{g}_{\ell,\text{LV}} = w_{\text{LV}} \nabla\phi_{\text{LV,mv}} + (1 - w_{\text{LV}})\nabla\phi_{\text{LV,av}}$
    - Blend valve gradients: $\mathbf{g}_{\ell,\text{RV}} = w_{\text{RV}} \nabla\phi_{\text{RV,tv}} + (1 - w_{\text{RV}})\nabla\phi_{\text{RV,pv}}$
 
-2. **Construct LV and RV basis** for septum:
-   - $\mathbf{Q}_{\text{LV,sep}} = \text{axis}(\mathbf{g}_{\ell,\text{LV}}, \nabla\phi_{\text{LV,trans}})$
-   - $\mathbf{Q}_{\text{RV,sep}} = \text{axis}(\mathbf{g}_{\ell,\text{RV}}, \nabla\phi_{\text{RV,trans}})$
+2. **Construct LV and RV basis** using chamber-specific transmural fields:
+   - $\mathbf{Q}_{\text{LV}} = \text{axis}(-\mathbf{g}_{\ell,\text{LV}}, -\nabla\phi_{\text{LV,trans}})$
+   - $\mathbf{Q}_{\text{RV}} = \text{axis}(-\mathbf{g}_{\ell,\text{RV}}, -\nabla\phi_{\text{RV,trans}})$
+   
+   Note: The minus signs ensure the basis vectors follow the FibGen convention (apex → base, endo → epi).
 
-3. **Rotate by septum angles**:
-   - $\mathbf{Q}_{\text{LV,septum}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{LV,sep}}, \alpha_{\text{septum}}, \beta_{\text{septum}})$
-   - $\mathbf{Q}_{\text{RV,septum}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{RV,sep}}, \alpha_{\text{septum}}, \beta_{\text{septum}})$
+3. **Rotate by septum angles to create septal bases**:
+   - $\mathbf{Q}_{\text{LV,septum}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{LV}}, \alpha_{\text{septum}}, \beta_{\text{septum}})$
+   - $\mathbf{Q}_{\text{RV,septum}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{RV}}, \alpha_{\text{septum}}, \beta_{\text{septum}})$
 
-4. **Construct LV and RV basis** for wall:
-   - $\mathbf{Q}_{\text{LV,wall}}^0 = \text{axis}(\mathbf{g}_{\ell,\text{LV}}, \nabla\phi_{\text{LV,trans}})$
-   - $\mathbf{Q}_{\text{RV,wall}}^0 = \text{axis}(\mathbf{g}_{\ell,\text{RV}}, \nabla\phi_{\text{RV,trans}})$
+4. **Rotate by wall angles to create wall bases**:
+   - $\mathbf{Q}_{\text{LV,wall}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{LV}}, \alpha_{\text{wall,LV}}, \beta_{\text{wall,LV}})$
+   - $\mathbf{Q}_{\text{RV,wall}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{RV}}, \alpha_{\text{wall,RV}}, \beta_{\text{wall,RV}})$
 
-5. **Rotate by wall angles**:
-   - $\mathbf{Q}_{\text{LV,wall}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{LV,wall}}^0, \alpha_{\text{wall,LV}}, \beta_{\text{wall,LV}})$
-   - $\mathbf{Q}_{\text{RV,wall}} = \text{orient\_rodrigues}(\mathbf{Q}_{\text{RV,wall}}^0, \alpha_{\text{wall,RV}}, \beta_{\text{wall,RV}})$
-
-6. **Create discontinuous septal basis**:
+5. **Create discontinuous septal basis**:
+   
+   Normalize $\phi_{\text{BiV}}$ for interpolation:
+   $$
+   \phi_{\text{BiV}}^{\text{norm}} = \begin{cases}
+   \phi_{\text{BiV}} / 2 & \text{if } \phi_{\text{BiV}} < 0 \\
+   \phi_{\text{BiV}} & \text{otherwise}
+   \end{cases}
+   $$
+   $$
+   \phi_{\text{BiV}}^{\text{interp}} = \frac{\phi_{\text{BiV}}^{\text{norm}} + 1}{2}
+   $$
+   
+   Then assign septal basis discontinuously:
    $$\mathbf{Q}_{\text{sep}} = \begin{cases}
-   \mathbf{Q}_{\text{RV,septum}} & \text{if } \phi_{\text{BiV}} \leq 0.5 \\
-   \mathbf{Q}_{\text{LV,septum}} & \text{if } \phi_{\text{BiV}} > 0.5
+   \mathbf{Q}_{\text{LV,septum}} & \text{if } \phi_{\text{BiV}}^{\text{interp}} < 0.5 \\
+   \mathbf{Q}_{\text{RV,septum}} & \text{if } \phi_{\text{BiV}}^{\text{interp}} \geq 0.5
    \end{cases}$$
 
-7. **Interpolate epicardial basis**:
-   - $\mathbf{Q}_{\text{epi}} = \text{interpolate\_basis}(\mathbf{Q}_{\text{RV,wall}}, \mathbf{Q}_{\text{LV,wall}}, \phi_{\text{BiV}})$
+6. **Interpolate epicardial basis**:
+   - $\mathbf{Q}_{\text{epi}} = \text{interpolate\_basis}(\mathbf{Q}_{\text{LV,wall}}, \mathbf{Q}_{\text{RV,wall}}, \phi_{\text{BiV}}^{\text{interp}})$
 
-8. **Interpolate from endocardium to epicardium**:
+7. **Interpolate from endocardium to epicardium**:
    - $\mathbf{Q} = \text{interpolate\_basis}(\mathbf{Q}_{\text{sep}}, \mathbf{Q}_{\text{epi}}, \phi_{\text{epi,trans}})$
    - Extract: $\mathbf{f} = \mathbf{Q}[:, 0]$, $\mathbf{n} = \mathbf{Q}[:, 1]$, $\mathbf{s} = \mathbf{Q}[:, 2]$
 
 
-## On the convention of the orthogonal basis and angles
+
+
+### Modified algorithm steps
+In the original Doste paper, only one transmural field is mentioned ($\phi_{\text{Trans}}$) which is used to define the transmural gradient $\mathbf g_t$. Piersanti et al (2021) adds a second transmural field (see Fig. 4) ($\phi_{\text{BiV}}$) to differentiate between LV and RV. We use these two plus the individual transmural fields ($\phi_{\text{LV,trans}}$) and ($\phi_{\text{RV,trans}}$) which provides a smoother transition between LV and RV. 
+
+
+# On the convention of the orthogonal basis and angles
 
 Different papers use different conventions to define the orthogonal circumferential, longitudinal, and transmural basis (see Table below).
 
@@ -498,3 +534,9 @@ For coherency, for all methods and for all chambers, we consider the transmural 
 | Method | Longitudinal | Transmural | sign(alpha) endo/epi | sign(beta) endo/epi |
 |--------|--------------|------------|----------------------|---------------------|
 | FibGen | apex -> base | endo -> epi | +/- | -/+ |
+
+
+# References
+1. Bayer, J. D., Blake, R. C., Plank, G., & Trayanova, N. A. (2012). A Novel Rule-Based Algorithm for Assigning Myocardial Fiber Orientation to Computational Heart Models. Annals of Biomedical Engineering, 40(10), 2243–2254. https://doi.org/10.1007/s10439-012-0593-5
+2. Doste, R., Soto‐Iglesias, D., Bernardino, G., Alcaine, A., Sebastian, R., Giffard‐Roisin, S., Sermesant, M., Berruezo, A., Sanchez‐Quintana, D., & Camara, O. (2019). A rule‐based method to model myocardial fiber orientation in cardiac biventricular geometries with outflow tracts. International Journal for Numerical Methods in Biomedical Engineering, 35(4). https://doi.org/10.1002/cnm.3185
+3. Piersanti, R., Africa, P. C., Fedele, M., Vergara, C., Dedè, L., Corno, A. F., & Quarteroni, A. (2021). Modeling cardiac muscle fibers in ventricular and atrial electrophysiology simulations. Computer Methods in Applied Mechanics and Engineering, 373, 113468. https://doi.org/10.1016/j.cma.2020.113468

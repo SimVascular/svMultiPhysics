@@ -30,14 +30,13 @@ if __name__ == "__main__":
     run_flag = True
     svmultiphysics_exec = "svmultiphysics "
 
-    mesh_path = "example/ot/mesh-complete.mesh.vtu"
-    outdir = "example/ot/output_doste"
-    surfaces_dir = 'example/ot/mesh-surfaces'
+    mesh_path = "example/biv_with_outflow_tracts/mesh-complete.mesh.vtu"
+    outdir = "example/biv_with_outflow_tracts/output_doste"
+    surfaces_dir = 'example/biv_with_outflow_tracts/mesh-surfaces'
 
 
     # Parameters from the Doste paper https://doi.org/10.1002/cnm.3185
     params = {
-        # A = alpha angle
         'AENDORV': 90,
         'AEPIRV': -25,
         'AENDOLV': 60,
@@ -48,20 +47,18 @@ if __name__ == "__main__":
         'AOTEPILV': 0,
         'AOTEPIRV': 0,
 
-        # B = beta angle
         'BENDORV': 0,
         'BEPIRV': 20,
         'BENDOLV': -20,
         'BEPILV': 20,
     }
 
-
     ###########################################################
     ############  FIBER GENERATION  ###########################
     ###########################################################
 
     # Optional CLI overrides
-    parser = argparse.ArgumentParser(description="Generate fibers using the Bayer method.")
+    parser = argparse.ArgumentParser(description="Generate fibers using the Doste method.")
     parser.add_argument("--svmultiphysics-exec", default=svmultiphysics_exec, help="svMultiPhysics executable/command (default: %(default)s)")
     parser.add_argument("--mesh-path", default=mesh_path, help="Path to the volumetric mesh .vtu (default: %(default)s)")
     parser.add_argument(

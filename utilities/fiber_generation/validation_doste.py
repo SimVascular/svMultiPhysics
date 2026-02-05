@@ -68,7 +68,7 @@ def calculate_alpha_beta_angles(f, eC, eL, eT):
 
 if __name__ == "__main__":
 
-    outdir = "example/ot/output_doste"
+    outdir = "example/biv_with_outflow_tracts/output_doste"
     save_vtu = True
 
     params_zero = {
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         fib_gen.mesh.cell_data['beta_ref_a'] = ref_beta_only_a
         fib_gen.mesh.cell_data['diff_alpha_a'] = alpha_only_a - ref_alpha_only_a
         fib_gen.mesh.cell_data['diff_beta_a'] = beta_only_a - ref_beta_only_a
-        fib_gen.mesh.save('example/ot/validation_doste_onlyalpha.vtu')
+        fib_gen.mesh.save('example/biv_with_outflow_tracts/validation_doste_onlyalpha.vtu')
 
     # Sanity check 2: Only beta rotation
     f_beta, n_beta, s_beta = fib_gen.generate_fibers(params_beta)
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         fib_gen.mesh.cell_data['beta_ref_b'] = ref_beta_only_b
         fib_gen.mesh.cell_data['diff_alpha_b'] = alpha_only_b - ref_alpha_only_b
         fib_gen.mesh.cell_data['diff_beta_b'] = beta_only_b - ref_beta_only_b
-        fib_gen.mesh.save('example/ot/validation_doste_onlybeta.vtu')
+        fib_gen.mesh.save('example/biv_with_outflow_tracts/validation_doste_onlybeta.vtu')
     
     # Alpha and beta rotation combined
     eC, eL, eT = fib_gen.generate_fibers(params_zero)
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         fib_gen.mesh.cell_data['beta_ref'] = ref_beta_combined
         fib_gen.mesh.cell_data['diff_alpha'] = alpha_combined - ref_alpha_combined
         fib_gen.mesh.cell_data['diff_beta'] = beta_combined - ref_beta_combined
-        fib_gen.mesh.save('example/ot/validation_doste_combined.vtu')
+        fib_gen.mesh.save('example/biv_with_outflow_tracts/validation_doste_combined.vtu')
         
     # Create figure with correlation plots
     fig, axes = plt.subplots(1, 3, figsize=(8, 3.5), constrained_layout=True)
@@ -250,4 +250,4 @@ if __name__ == "__main__":
     axes[2].set_ylabel('Fiber angles (degrees)')
     axes[2].legend(fontsize=8, loc='upper left')
 
-    plt.savefig('example/ot/doste_angle_correlations.png', dpi=150)
+    plt.savefig('example/biv_with_outflow_tracts/doste_angle_correlations.png', dpi=150)
