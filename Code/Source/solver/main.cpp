@@ -852,8 +852,12 @@ int main(int argc, char *argv[])
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-  //std::cout << "[svFSI] MPI rank: " << mpi_rank << std::endl;
-  //std::cout << "[svFSI] MPI size: " << mpi_size << std::endl;
+
+#ifdef ENABLE_ARRAY_INDEX_CHECKING
+  if (mpi_rank == 0) {
+    std::cout << "WARNING: Index checking is enabled" << std::endl;
+  }
+#endif
 
   // Create a Simulation object that stores all data structures for a simulation.
   //
