@@ -19,9 +19,9 @@
 
 namespace mesh {
 
-void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Dg)
+void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Dg, const Array<double>& Do)
 {
-  #define n_debug_construct_mesh 
+  #define n_debug_construct_mesh
   #ifdef debug_construct_mesh
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
@@ -37,7 +37,6 @@ void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const A
   const auto& eq = com_mod.eq[cEq];
   auto& cDmn = com_mod.cDmn;
   const int nsymd = com_mod.nsymd;
-  auto& Do = com_mod.Do;
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;

@@ -1164,12 +1164,20 @@ void ppbin2vtk(Simulation* simulation)
         continue;
       }
 
+      // Create local SolutionStates for loading bin file
+      const int tDof = com_mod.tDof;
+      const int tnNo = com_mod.tnNo;
+      SolutionStates temp_solutions;
+      temp_solutions.old.A.resize(tDof, tnNo);
+      temp_solutions.old.Y.resize(tDof, tnNo);
+      temp_solutions.old.D.resize(tDof, tnNo);
+
       std::array<double,3> rtmp;
-      init_from_bin(simulation, fName, rtmp);
+      init_from_bin(simulation, fName, rtmp, temp_solutions);
 
       bool lAve = false;
 
-      vtk_xml::write_vtus(simulation, com_mod.Ao, com_mod.Yo, com_mod.Do, lAve);
+      vtk_xml::write_vtus(simulation, temp_solutions.old.A, temp_solutions.old.Y, temp_solutions.old.D, lAve);
     }
   }
 
