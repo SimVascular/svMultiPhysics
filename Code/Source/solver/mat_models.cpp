@@ -276,6 +276,39 @@ std::pair<Matrix<nsd>, Tensor<nsd>> bar_to_iso(
 
 
 /**
+ * @brief Compute normalized sheet-normal direction from fiber and sheet directions.
+ *
+ * Computes the cross product of fiber and sheet directions and normalizes it.
+ * Validates that the directions are not parallel and that the operation is valid in 3D.
+ *
+ * @tparam nsd Number of spatial dimensions.
+ * @param[in] fl Fiber directions matrix (nsd x nfd), where col(0) is fiber, col(1) is sheet.
+ * @return Normalized sheet-normal direction vector.
+ * @throws std::runtime_error if directions are parallel or if called in 2D.
+ */
+template<size_t nsd>
+Eigen::Matrix<double, nsd, 1> compute_sheet_normal(const Eigen::Matrix<double, nsd, Eigen::Dynamic>& fl)
+{
+  using namespace mat_fun;
+  
+  if constexpr (nsd == 2) {
+    throw std::runtime_error("Sheet-normal active stress (eta_n > 0) is not defined in 2D.");
+    
+  } else {  // nsd == 3
+    auto n_normal = cross_product<nsd>(fl.col(0), fl.col(1));
+    double norm_n = sqrt(n_normal.dot(n_normal));
+    
+    static constexpr double sheet_normal_tol = 1.0e-10; 
+    if (norm_n < sheet_normal_tol) {
+      throw std::runtime_error("Fiber and sheet directions are parallel; sheet-normal direction is undefined.");
+    }
+
+    return n_normal / norm_n;
+  }
+}
+
+
+/**
  * @brief Compute 2nd Piola-Kirchhoff stress and material stiffness tensors
  * including both dilational and isochoric components.
  *
@@ -323,10 +356,47 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
   double nd = static_cast<double>(nsd);
   double Kp = stM.Kpen;
 
-  // Fiber-reinforced stress
-  double Tfa = 0.0;
-  compute_fib_stress(com_mod, cep_mod, stM.Tf, Tfa);
-  double Tsa = Tfa*stM.Tf.eta_s;
+  // Fiber-reinforced stress - compute total active stress
+  double Ta = 0.0;
+  compute_fib_stress(com_mod, cep_mod, stM.Tf, Ta);
+
+  // Distribute total active stress among fiber directions
+  double Tfa = stM.Tf.eta_f * Ta;  // Fiber direction
+  double Tsa = stM.Tf.eta_s * Ta;  // Sheet direction
+  double Tna = stM.Tf.eta_n * Ta;  // Sheet-normal direction
+
+  // Validate directional distribution is supported for this constitutive model
+  // Only Guccione, HO, and HO-ma models support sheet and sheet-normal stress contributions
+  bool supports_directional_distribution = (stM.isoType == ConstitutiveModelType::stIso_Gucci || 
+                                            stM.isoType == ConstitutiveModelType::stIso_HO ||
+                                            stM.isoType == ConstitutiveModelType::stIso_HO_ma);
+  
+  if (!supports_directional_distribution && (stM.Tf.eta_s > 0.0 || stM.Tf.eta_n > 0.0)) {
+    throw std::runtime_error("Directional distribution of active stress (eta_s > 0 or eta_n > 0) "
+      "is only supported for Guccione, Holzapfel-Ogden (HO), and Holzapfel-Ogden Modified Anisotropy (HO-ma) models. "
+      "Current model does not support sheet or sheet-normal stress contributions. "
+      "Set Fiber_direction=1.0, Sheet_direction=0.0, Sheet_normal_direction=0.0.");
+  }
+
+  // Aliases for fiber directions
+  const auto& fib_dir1 = fl.col(0);
+  
+  // fib_dir2 only exists when nfd >= 2
+  Eigen::Matrix<double, nsd, 1> fib_dir2;
+  if (nfd >= 2) {
+    fib_dir2 = fl.col(1);
+  } else {
+    fib_dir2 = Eigen::Matrix<double, nsd, 1>::Zero();
+  }
+
+  // Precompute outer products (used by anisotropic models)
+  auto Hff = fib_dir1 * fib_dir1.transpose();
+  Matrix<nsd> Hss;
+  if (nfd >= 2) {
+    Hss = fib_dir2 * fib_dir2.transpose();
+  } else {
+    Hss = Matrix<nsd>::Zero();
+  }
 
   // Electromechanics coupling - active stress
   if (cep_mod.cem.aStress) {
@@ -408,14 +478,13 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
 
     // NeoHookean model
     case ConstitutiveModelType::stIso_nHook: {
-
       // Compute fictious stress and elasticity tensor
       Matrix<nsd> S_bar = 2.0 * stM.C10 * Idm;
       Tensor<nsd> CC_bar; 
       CC_bar.setZero();
 
       // Add fiber reinforcement/active stress
-      S_bar += Tfa * (fl.col(0) * fl.col(0).transpose());
+      S_bar += Tfa * Hff;
 
       // Compute and add isochoric stress and elasticity tensor
       auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
@@ -426,7 +495,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
 
     // Mooney-Rivlin model
     case ConstitutiveModelType::stIso_MR: {
-
       // Compute fictious stress and elasticity tensor
       Matrix<nsd> S_bar = 2.0 * (stM.C10 + Inv1 * stM.C01) * Idm 
                               -2.0 * stM.C01 * J2d * C;
@@ -434,7 +502,7 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       Tensor<nsd> CC_bar = 4.0 * J4d * stM.C01 * (dyadic_product<nsd>(Idm, Idm) - fourth_order_identity<nsd>());
 
       // Add fiber reinforcement/active stress
-      S_bar += Tfa * (fl.col(0) * fl.col(0).transpose());
+      S_bar += Tfa * Hff;
 
       // Compute and add isochoric stress and elasticity tensor
       auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
@@ -453,29 +521,30 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       // Compute preliminary quantities
       double kap = stM.kap;
 
-      double Inv4 = J2d * (fl.col(0).dot(C * fl.col(0)));
-      double Inv6 = J2d * (fl.col(1).dot(C * fl.col(1)));
+      double Inv4 = J2d * (fib_dir1.dot(C * fib_dir1));
+      double Inv6 = J2d * (fib_dir2.dot(C * fib_dir2));
 
       double Eff = kap*Inv1 + (1.0 - 3.0*kap)*Inv4 - 1.0;
       double Ess = kap*Inv1 + (1.0 - 3.0*kap)*Inv6 - 1.0;
 
-      Matrix<nsd> Hff = kap*Idm + (1.0-3.0*kap) * (fl.col(0) * fl.col(0).transpose());
-      Matrix<nsd> Hss = kap*Idm + (1.0-3.0*kap) * (fl.col(1) * fl.col(1).transpose());
+      // Dispersed fiber structure tensors
+      Matrix<nsd> Hff_disp = kap*Idm + (1.0-3.0*kap) * Hff;
+      Matrix<nsd> Hss_disp = kap*Idm + (1.0-3.0*kap) * Hss;
 
       // Compute fictious stress and elasticity tensor
       double g1 = stM.C10;
       double g2 = stM.aff * Eff * exp(stM.bff*Eff*Eff);
       double g3 = stM.ass * Ess * exp(stM.bss*Ess*Ess);
-      Matrix<nsd> S_bar = 2.0*(g1*Idm + g2*Hff + g3*Hss);
+      Matrix<nsd> S_bar = 2.0*(g1*Idm + g2*Hff_disp + g3*Hss_disp);
 
       g1 = stM.aff*(1.0 + 2.0*stM.bff*Eff*Eff)*exp(stM.bff*Eff*Eff);
       g2 = stM.ass*(1.0 + 2.0*stM.bss*Ess*Ess)*exp(stM.bss*Ess*Ess);
       g1 = 4.0*J4d*g1;
       g2 = 4.0*J4d*g2;
-      Tensor<nsd> CC_bar = g1 * dyadic_product<nsd>(Hff, Hff) + g2 * dyadic_product<nsd>(Hss, Hss);
+      Tensor<nsd> CC_bar = g1 * dyadic_product<nsd>(Hff_disp, Hff_disp) + g2 * dyadic_product<nsd>(Hss_disp, Hss_disp);
       
       // Add fiber reinforcement/active stress
-      S_bar += Tfa * (fl.col(0) * fl.col(0).transpose());
+      S_bar += Tfa * Hff;
       
       // Compute and add isochoric stress and elasticity tensor
       auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
@@ -490,14 +559,17 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
         throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for Guccione material model.");
       }
 
+      // Compute sheet-normal direction
+      auto fib_dir3 = compute_sheet_normal<nsd>(fl);
+
       // Compute isochoric component of E
       Matrix<nsd> E = 0.50 * (J2d*C - Idm);
 
       // Construct local orthogonal coordinate system
       Matrix<nsd> Rm;
-      Rm.col(0) = fl.col(0);
-      Rm.col(1) = fl.col(1);
-      Rm.col(2) = cross_product<nsd>(fl.col(0), fl.col(1));
+      Rm.col(0) = fib_dir1;
+      Rm.col(1) = fib_dir2;
+      Rm.col(2) = fib_dir3;
 
       // Project E to local orthogonal coordinate system
       Matrix<nsd> Es = Rm.transpose() * E * Rm;
@@ -538,8 +610,13 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
                       dyadic_product<nsd>(RmRm_20, RmRm_20));
       CC_bar = r2 * CC_bar;
 
-      // Add fiber reinforcement/active stress
-      S_bar += Tfa * (fl.col(0) * fl.col(0).transpose());
+      // Add fiber reinforcement/active stress in all three orthogonal directions
+      S_bar += Tfa * Hff;   // Fiber direction
+      S_bar += Tsa * Hss;   // Sheet direction
+      if (Tna > 0.0) {
+        auto Hnn = fib_dir3 * fib_dir3.transpose();
+        S_bar += Tna * Hnn;  // Sheet-normal direction
+      }
 
       // Compute and add isochoric stress and elasticity tensor
       auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
@@ -553,10 +630,16 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
         throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for Holzapfel material model.");
       }
 
+      // Compute sheet-normal direction
+      auto fib_dir3 = compute_sheet_normal<nsd>(fl);
+
+      // Compute cross fiber-sheet structure tensor
+      Matrix<nsd> Hfs = 0.5 * (fib_dir1 * fib_dir2.transpose() + fib_dir2 * fib_dir1.transpose());
+
       // Compute isochoric anisotropic invariants
-      double Inv4 = J2d * (fl.col(0).dot(C * fl.col(0)));
-      double Inv6 = J2d * (fl.col(1).dot(C * fl.col(1)));
-      double Inv8 = J2d * (fl.col(0).dot(C * fl.col(1)));
+      double Inv4 = J2d * (fib_dir1.dot(C * fib_dir1));
+      double Inv6 = J2d * (fib_dir2.dot(C * fib_dir2));
+      double Inv8 = J2d * (fib_dir1.dot(C * fib_dir2));
 
       // Compute fiber, stress, and fiber-sheet stretches
       double Eff = Inv4 - 1.0;
@@ -583,7 +666,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       // 1.S) Add isotropic + fiber-sheet interaction stress
       double g1 = stM.a * exp(stM.b*(Inv1-3.0));
       double g2 = 2.0 * stM.afs * Efs * exp(stM.bfs*Efs*Efs);
-      Matrix<nsd> Hfs = 0.5 * (fl.col(0) * fl.col(1).transpose() + fl.col(1) * fl.col(0).transpose());
       Matrix<nsd> S_bar = g1*Idm + g2*Hfs;
 
       // 1.CC) Add isotropic + fiber-sheet interaction stiffness
@@ -596,7 +678,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g1 = c4f * Eff * rexp;
       g1 = g1 + (0.5*dc4f/stM.bff) * (rexp - 1.0);
       g1 = 2.0 * stM.aff * g1 + Tfa;
-      Matrix<nsd> Hff = fl.col(0) * fl.col(0).transpose();
       S_bar += g1*Hff;
 
       // 2.CC) Add fiber-fiber interaction stiffness
@@ -611,7 +692,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g2 = c4s * Ess * rexp;
       g2 = g2 + (0.5*dc4s/stM.bss) * (rexp - 1.0);
       g2 = 2.0 * stM.ass * g2 + Tsa;
-      Matrix<nsd> Hss = fl.col(1) * fl.col(1).transpose();
       S_bar += g2 * Hss;
 
       // 3.CC) Add sheet-sheet interaction stiffness
@@ -621,6 +701,11 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g2 = 4.0 * J4d * stM.ass * g2;
       CC_bar += g2*dyadic_product<nsd>(Hss, Hss);
 
+      // 4.S) Add sheet-normal active stress (Tna)
+      if (Tna > 0.0) {
+        auto Hnn = fib_dir3 * fib_dir3.transpose();
+        S_bar += Tna * Hnn;  // Sheet-normal direction (fib_dir3 already normalized)
+      }
 
       // Compute and add isochoric stress and elasticity tensor
       auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
@@ -642,10 +727,16 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
         //err = "Min fiber directions not defined for Holzapfel material model (2)"
       }
 
+      // Compute sheet-normal direction
+      auto fib_dir3 = compute_sheet_normal<nsd>(fl);
+
+      // Compute cross fiber-sheet structure tensor
+      auto Hfs = 0.5 * (fib_dir1 * fib_dir2.transpose() + fib_dir2 * fib_dir1.transpose());
+
       // Compute full (not isochoric) anisotropic invariants
-      double Inv4 = fl.col(0).dot(C * fl.col(0));
-      double Inv6 = fl.col(1).dot(C * fl.col(1));
-      double Inv8 = fl.col(0).dot(C * fl.col(1));
+      double Inv4 = fib_dir1.dot(C * fib_dir1);
+      double Inv6 = fib_dir2.dot(C * fib_dir2);
+      double Inv8 = fib_dir1.dot(C * fib_dir2);
 
       // Compute fiber, stress, and fiber-sheet stretches
       double Eff = Inv4 - 1.0;
@@ -684,7 +775,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       // Now add aniostropic components to stress and elasticity tensor (in steps)
 
       // 1.S) Add fiber-sheet interaction stress
-      Matrix<nsd> Hfs = 0.5 * (fl.col(0) * fl.col(1).transpose() + fl.col(1) * fl.col(0).transpose());
       g1 = 2.0 * stM.afs * exp(stM.bfs*Efs*Efs);
       S += g1*Efs*Hfs;
 
@@ -697,7 +787,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g1 = c4f*Eff*rexp;
       g1 = g1 + (0.5*dc4f/stM.bff)*(rexp - 1.0);
       g1 = (2.0*stM.aff*g1) + Tfa;
-      Matrix<nsd> Hff = fl.col(0) * fl.col(0).transpose();
       S += g1*Hff;
 
       // 2.CC) Add fiber-fiber interaction stiffness
@@ -712,7 +801,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       double g2 = c4s*Ess*rexp;
       g2 = g2 + (0.5*dc4s/stM.bss)*(rexp - 1.0);
       g2 = 2.0*stM.ass*g2 + Tsa;
-      Matrix<nsd> Hss = fl.col(1) * fl.col(1).transpose();
       S  += g2*Hss;
 
       // 3.CC) Add sheet-sheet interaction stiffness
@@ -721,6 +809,12 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
       g2 = g2 + (0.5*ddc4s/stM.bss)*(rexp - 1.0);
       g2   = 4.0*stM.ass*g2;
       CC += g2*dyadic_product<nsd>(Hss, Hss);
+
+      // 4.S) Add sheet-normal active stress (Tna)
+      if (Tna > 0.0) {
+        auto Hnn = fib_dir3 * fib_dir3.transpose();
+        S += Tna * Hnn;  // Sheet-normal direction (fib_dir3 already normalized)
+      }
     } break;
 
     // Universal Material Subroutine - CANN Model

@@ -317,8 +317,15 @@ class fibStrsType
     // Constant steady value
     double g = 0.0;
 
-    // Cross fiber stress parameter
+    // Directional stress distribution parameters
+    // Fraction of active stress in fiber direction (default: 1.0)
+    double eta_f = 1.0;
+    
+    // Fraction of active stress in sheet direction (default: 0.0)
     double eta_s = 0.0;
+    
+    // Fraction of active stress in sheet-normal direction (default: 0.0)
+    double eta_n = 0.0;
 
     // Unsteady time-dependent values
     fcType gt;
