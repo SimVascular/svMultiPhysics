@@ -82,11 +82,11 @@ void get_svZeroD_variable_ids(std::string block_name, int* blk_ids, double* inle
   if ((num_inlet_nodes == 0) && (num_outlet_nodes == 1)) {
     blk_ids[0] = IDs[1+num_inlet_nodes*2+1]; // Outlet flow
     blk_ids[1] = IDs[1+num_inlet_nodes*2+2]; // Outlet pressure
-    *inlet_or_outlet = -1.0; // Signifies inlet to LPN
+    *inlet_or_outlet = 1.0; // Signifies inlet to LPN
   } else if ((num_inlet_nodes == 1) && (num_outlet_nodes == 0)) {
     blk_ids[0] = IDs[1]; // Inlet flow
     blk_ids[1] = IDs[2]; // Inlet pressure
-    *inlet_or_outlet = 1.0; // Signifies outlet to LPN
+    *inlet_or_outlet = -1.0; // Signifies outlet to LPN
   } else {
     std::runtime_error("ERROR: [lpn_interface_get_variable_ids] Not a flow/pressure block.");
   }

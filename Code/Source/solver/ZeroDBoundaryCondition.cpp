@@ -741,34 +741,8 @@ void ZeroDBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_
     int nsd = com_mod.nsd;
     double area = face_->area;
     
-    // Compute total area (face + cap if exists)
-    double total_area = area;
-    if (has_cap()) {
-        // Compute cap area using dedicated function
-        double cap_area = compute_cap_area(com_mod, cm_mod);
-        total_area += cap_area;
-    }
-    
-    if (utils::is_zero(total_area)) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_pressures] Total area (face + cap) is zero.");
-    }
-    
-    // Compute average pressures by integrating pressure over face and dividing by total area
-    // The all_fun::integ function with index nsd integrates the pressure scalar
-    double Po_face = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, nsd);
-    double Pn_face = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, nsd);
-    
-    // Add cap contribution if cap exists
-    // Use scalar integration for pressure (l == u means scalar)
-    if (has_cap()) {
-        double Po_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yo, nsd, nsd, MechanicalConfigurationType::reference);
-        double Pn_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yn, nsd, nsd, MechanicalConfigurationType::reference);
-        Po_face += Po_cap;
-        Pn_face += Pn_cap;
-    }
-    
-    Po_ = Po_face / total_area;
-    Pn_ = Pn_face / total_area;
+    Po_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, nsd) / area;
+    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, nsd) / area;
     
 }
 
