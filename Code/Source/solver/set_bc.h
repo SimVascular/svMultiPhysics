@@ -33,7 +33,7 @@ void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>&
 void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg);
 
 void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg);
-void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg);
+void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg);
 
 void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
   const Array<double>& Yg, const Array<double>& Dg);

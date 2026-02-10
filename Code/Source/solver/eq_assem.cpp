@@ -4,6 +4,7 @@
 #include "eq_assem.h"
 
 #include "all_fun.h"
+#include "CmMod.h"
 #include "consts.h"
 #include "lhsa.h"
 #include "nn.h"
@@ -286,7 +287,7 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 /// is eventually used in ADDBCMUL() in the linear solver to add the contribution
 /// from the resistance BC to the matrix-vector product of the tangent matrix and
 /// an arbitrary vector.
-void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
+void fsi_ls_upd(ComMod& com_mod, bcType& lBc, const faceType& lFa)
 {
   using namespace consts;
   using namespace utils;
@@ -340,7 +341,24 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
     }
   }
   // Update lhs.face(i).val with the new value of the surface integral
-  fsils_bc_update(com_mod.lhs, lBc.lsPtr, lFa.nNo, nsd, sVl); 
+  fsils_bc_update(com_mod.lhs, lBc.lsPtr, lFa.nNo, nsd, sVl);
+  
+  // If this is a ZeroD BC, copy cap data to linear solver face structure
+  if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_ZeroD))) {
+    auto& face = com_mod.lhs.face[lBc.lsPtr];
+    auto cfg = MechanicalConfigurationType::new_timestep;
+    // Create a CmMod instance for the reduce operation
+    CmMod cm_mod;
+    
+    // Copy cap data to linear solver face (handles both cap and non-cap cases)
+    lBc.zerod_bc.copy_cap_data_to_linear_solver_face(com_mod, cm_mod, face, cfg);
+  } else {
+    // Clear cap fields if not a ZeroD BC
+    auto& face = com_mod.lhs.face[lBc.lsPtr];
+    face.cap_val.resize(0, 0);
+    face.cap_valM.resize(0, 0);
+    face.cap_glob.resize(0);
+  }
 };
 
 /// @brief This routine assembles the equation on a given mesh.

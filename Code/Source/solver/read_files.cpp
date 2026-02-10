@@ -444,17 +444,18 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
     // Create the ZeroDBoundaryCondition object
     if (bc_params->svzerod_solver_cap.defined()) {
-      lBc.zerod_bc = ZeroDBoundaryCondition(zerod_bc_type, bc_params->svzerod_solver_cap.value(),
-                                            com_mod.msh[lBc.iM].fa[lBc.iFa],
+      lBc.zerod_bc = ZeroDBoundaryCondition(zerod_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa].name,
+                                            bc_params->svzerod_solver_block.value(),
+                                            bc_params->svzerod_solver_cap.value(),
                                             simulation->logger);
+      // Note: Cap integration initialization happens in initialize() after distribute() sets up com_mod.ltg
     } else {
       lBc.zerod_bc = ZeroDBoundaryCondition(zerod_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                            com_mod.msh[lBc.iM].fa[lBc.iFa].name,
+                                            bc_params->svzerod_solver_block.value(),
                                             simulation->logger);
     }
-    
-    // Set the block name and face name for svZeroD coupling
-    lBc.zerod_bc.set_block_name(bc_params->svzerod_solver_block.value());
-    lBc.zerod_bc.set_face_name(com_mod.msh[lBc.iM].fa[lBc.iFa].name);
   }
 
 

@@ -1144,11 +1144,22 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
       isCoupledBC = true;
       int faDof = std::min(face.dof,dof);
 
-      // Compute the coupled Neumann BC vector and store it in v
+      // Compute the coupled Neumann BC vector and store it in v (main face contribution)
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
           v(i,Ac) = v(i,Ac) + sqrt(fabs(res(faIn))) * face.val(i,a);
+        }
+      }
+      
+      // Add cap contribution (if cap exists for this face)
+      if (face.cap_val.size() != 0 && face.cap_glob.size() != 0) {
+        int cap_nNo = face.cap_val.ncols();
+        for (int a = 0; a < cap_nNo; a++) {
+          int Ac = face.cap_glob(a);
+          for (int i = 0; i < faDof; i++) {
+            v(i,Ac) = v(i,Ac) + sqrt(fabs(res(faIn))) * face.cap_val(i,a);
+          }
         }
       }
     }

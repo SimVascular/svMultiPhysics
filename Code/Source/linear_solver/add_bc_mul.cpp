@@ -46,46 +46,36 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
     int nsd = std::min(face.dof, dof);
 
     if (face.coupledFlag) {
-      // If face is shared across procs
-      if (face.sharedFlag) {
-        v = 0.0;
-        // Setting vector v = int{N_A n_i} dGamma
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            v(i,Ac) = face.valM(i,a);
-          }
-        }
-        // Computing S = coef * v^T * X
-        double S = coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, v, X);
+      bool isCapped = (face.cap_valM.size() > 0 && face.cap_glob.size() > 0);
 
-        // Computing Y = Y + v * S
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
+      // Computing S = coef * v^T * X
+      double S = 0.0;
+      for (int a = 0; a < face.nNo; a++) {
+        int Ac = face.glob(a);
+        for (int i = 0; i < nsd; i++) {
+          S = S + face.valM(i,a)*X(i,Ac);
+        }
+      }
+      
+      // If capping surface is present add its contribution to S
+      if (isCapped) {
+        for (int a = 0; a < face.cap_valM.ncols(); a++) {
+          int Ac = face.cap_glob(a);  // Map cap face-local index to linear solver index
           for (int i = 0; i < nsd; i++) {
-            Y(i,Ac) = Y(i,Ac) + v(i,Ac)*S;
+            S = S + face.cap_valM(i, a) * X(i, Ac);
           }
         }
+      }
 
-      } 
-      // If face is not shared across procs
-      else  {
-        // Computing S = coef * v^T * X
-        double S = 0.0;
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            S = S + face.valM(i,a)*X(i,Ac);
-          }
-        }
-        S = coef(faIn) * S;
-        
-        // Computing Y = Y + v * S
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            Y(i,Ac) = Y(i,Ac) + face.valM(i,a)*S;
-          }
+      // Multiply S by the resistance or related quantity if
+      // preconditioning
+      S = coef(faIn) * S;
+
+      // Computing Y = Y + v * S
+      for (int a = 0; a < face.nNo; a++) {
+        int Ac = face.glob(a);
+        for (int i = 0; i < nsd; i++) {
+          Y(i,Ac) = Y(i,Ac) + face.valM(i,a)*S;
         }
       }
     }

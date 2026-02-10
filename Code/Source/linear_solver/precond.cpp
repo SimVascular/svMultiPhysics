@@ -225,6 +225,17 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
           face.valM(i,a) = face.val(i,a) * W(i,Ac);
         }
       }
+      
+      // If this is a ZeroD BC with a cap, also compute cap_valM from cap_val
+      if (face.cap_val.size() > 0 && face.cap_glob.size() > 0) {
+        int cap_nNo = face.cap_val.ncols();
+        for (int a = 0; a < cap_nNo; a++) {
+          int Ac = face.cap_glob(a);  
+          for (int i = 0; i < std::min(face.dof,dof); i++) {
+            face.cap_valM(i,a) = face.cap_val(i,a) * W(i,Ac);
+          }
+        }
+      }
     }
   }
 }

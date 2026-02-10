@@ -1413,7 +1413,7 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
 
 /// @brief Set Neumann BC
 //
-void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg) 
+void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg) 
 {
   using namespace consts;
 

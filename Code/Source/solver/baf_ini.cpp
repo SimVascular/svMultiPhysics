@@ -152,6 +152,26 @@ void baf_ini(Simulation* simulation)
       svZeroD::init_svZeroD(com_mod, cm_mod);
     }
 
+    // Initialize cap integration for ZeroD boundary conditions
+    #ifdef debug_baf_ini
+    dmsg << "Initializing cap integration for ZeroD BCs...";
+    dmsg << "com_mod.nEq: " << com_mod.nEq;
+    #endif
+    for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+      auto& eq = com_mod.eq[iEq];
+      #ifdef debug_baf_ini
+      dmsg << "iEq: " << iEq << " eq.nBc: " << eq.nBc;
+      #endif
+      for (int iBc = 0; iBc < eq.nBc; iBc++) {
+        auto& bc = eq.bc[iBc];
+        if (utils::btest(bc.bType, iBC_ZeroD)) {
+          if (bc.zerod_bc.has_cap()) {
+            bc.zerod_bc.initialize_cap_integration(com_mod, cm_mod);
+          }
+        }
+      }
+    }
+
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
       set_bc::calc_der_cpl_bc(com_mod, cm_mod);
     }

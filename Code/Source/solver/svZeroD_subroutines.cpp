@@ -79,14 +79,14 @@ void get_svZeroD_variable_ids(std::string block_name, int* blk_ids, double* inle
   // {num inlet nodes, inlet flow[0], inlet pressure[0],..., num outlet nodes, outlet flow[0], outlet pressure[0],...}
   int num_inlet_nodes = IDs[0];
   int num_outlet_nodes = IDs[1+num_inlet_nodes*2];
-  if ((num_inlet_nodes == 0) && (num_outlet_nodes = 1)) {
+  if ((num_inlet_nodes == 0) && (num_outlet_nodes == 1)) {
     blk_ids[0] = IDs[1+num_inlet_nodes*2+1]; // Outlet flow
     blk_ids[1] = IDs[1+num_inlet_nodes*2+2]; // Outlet pressure
-    *inlet_or_outlet = 1.0; // Signifies inlet to LPN
+    *inlet_or_outlet = -1.0; // Signifies inlet to LPN
   } else if ((num_inlet_nodes == 1) && (num_outlet_nodes == 0)) {
     blk_ids[0] = IDs[1]; // Inlet flow
     blk_ids[1] = IDs[2]; // Inlet pressure
-    *inlet_or_outlet = -1.0; // Signifies outlet to LPN
+    *inlet_or_outlet = 1.0; // Signifies outlet to LPN
   } else {
     std::runtime_error("ERROR: [lpn_interface_get_variable_ids] Not a flow/pressure block.");
   }
@@ -724,8 +724,28 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
           params[1] = PnCoupled[i];
         } else {
           // Neumann BC: use flow as input
-          params[0] = in_out_sign[i] * QCoupled[i];
-          params[1] = in_out_sign[i] * QnCoupled[i];
+          // For ZeroD BCs, use the sign from ZeroDBoundaryCondition
+          double sign = in_out_sign[i];
+          if (surf_id >= cplBC.nFa) {
+            // ZeroD BC - get sign from ZeroDBoundaryCondition
+            int zerod_idx = surf_id - cplBC.nFa;
+            int current_idx = 0;
+            for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+              auto& eq = com_mod.eq[iEq];
+              for (int iBc = 0; iBc < eq.nBc; iBc++) {
+                auto& bc = eq.bc[iBc];
+                if (utils::btest(bc.bType, iBC_ZeroD)) {
+                  if (current_idx == zerod_idx) {
+                    sign = bc.zerod_bc.get_in_out_sign();
+                    break;
+                  }
+                  current_idx++;
+                }
+              }
+            }
+          }
+          params[0] = sign * QCoupled[i];
+          params[1] = sign * QnCoupled[i];
           total_flow += QCoupled[i];
         }
         update_svZeroD_block_params(svzd_blk_names[i], times, params);
@@ -754,19 +774,32 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
               auto& bc = eq.bc[iBc];
               if (utils::btest(bc.bType, iBC_ZeroD)) {
                 if (current_idx == zerod_idx) {
+                  // Use solution IDs stored in ZeroDBoundaryCondition
+                  int flow_id = bc.zerod_bc.get_flow_sol_id();
+                  int pressure_id = bc.zerod_bc.get_pressure_sol_id();
+                  double in_out = bc.zerod_bc.get_in_out_sign();
+                  
+                  // Validate solution IDs
+                  if (flow_id < 0 || flow_id >= system_size || pressure_id < 0 || pressure_id >= system_size) {
+                    throw std::runtime_error("ERROR: [calc_svZeroD] Invalid solution IDs for ZeroD BC: flow_id=" + 
+                                            std::to_string(flow_id) + ", pressure_id=" + std::to_string(pressure_id) + 
+                                            ", system_size=" + std::to_string(system_size));
+                  }
+                  
                   if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
                     // Neumann ZeroD BC: get pressure from 0D solver
-                    PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
+                    PCoupled[i] = lpn_state_y[pressure_id];
                     bc.zerod_bc.set_pressure(PCoupled[i]);
                   } else if (bc.zerod_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
                     // Dirichlet ZeroD BC: get flow from 0D solver
-                    QCoupled[i] = in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]];
+                    QCoupled[i] = in_out * lpn_state_y[flow_id];
                     // Store flow in ZeroDBoundaryCondition (use previous Qn as Qo, current as Qn)
                     double Qo_prev = bc.zerod_bc.get_Qn();
                     bc.zerod_bc.set_flowrates(Qo_prev, QCoupled[i]);
                   } else {
                     throw std::runtime_error("ERROR: [calc_svZeroD] Invalid ZeroD BC type.");
                   }
+                  break;
                 }
                 current_idx++;
               }
