@@ -165,6 +165,18 @@ class cepModelType
 
     /// @brief  Time integration options
     odeType odes;
+
+    /// @brief Domain-specific interface for Aliev-Panfilov cellular activation model
+    CepModAp ap;
+
+    /// @brief Domain-specific interface for Bueno-Orovio cellular activation model
+    CepModBo bo;
+
+    /// @brief Domain-specific interface for Fitzhugh-Nagumo cellular activation model
+    CepModFn fn;
+
+    /// @brief Domain-specific interface for Tusscher-Panfilov cellular activation model
+    CepModTtp ttp;
 };
 
 /// @brief Cardiac electromechanics model type
