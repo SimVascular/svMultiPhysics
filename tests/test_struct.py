@@ -51,6 +51,10 @@ def test_block_compression_CANN(n_proc):
     test_folder = "block_compression_CANN"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_directionally_distributed_active_stress(n_proc):
+    test_folder = "directionally_distributed_active_stress"
+    run_with_reference(base_folder, test_folder, fields, n_proc)
+
 def test_robin(n_proc):
     test_folder = "robin"
     run_with_reference(base_folder, test_folder, fields, n_proc)
