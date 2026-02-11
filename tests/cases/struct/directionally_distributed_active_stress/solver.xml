@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svMultiPhysicsFile version="0.1">
+
+<GeneralSimulationParameters>
+  <Continue_previous_simulation> 0 </Continue_previous_simulation>
+  <Number_of_spatial_dimensions> 3 </Number_of_spatial_dimensions> 
+  <Number_of_time_steps> 1 </Number_of_time_steps> 
+  <Time_step_size> 0.1 </Time_step_size> 
+  <Spectral_radius_of_infinite_time_step> 0.50 </Spectral_radius_of_infinite_time_step> 
+  <Searched_file_name_to_trigger_stop> STOP_SIM </Searched_file_name_to_trigger_stop> 
+
+  <Save_results_to_VTK_format> 1 </Save_results_to_VTK_format> 
+  <Name_prefix_of_saved_VTK_files> result </Name_prefix_of_saved_VTK_files> 
+  <Increment_in_saving_VTK_files> 1 </Increment_in_saving_VTK_files> 
+  <Start_saving_after_time_step> 1 </Start_saving_after_time_step> 
+
+  <Increment_in_saving_restart_files> 100 </Increment_in_saving_restart_files> 
+  <Convert_BIN_to_VTK_format> 0 </Convert_BIN_to_VTK_format> 
+
+  <Verbose> 1 </Verbose> 
+  <Warning> 0 </Warning> 
+  <Debug> 0 </Debug> 
+
+</GeneralSimulationParameters>
+
+
+<Add_mesh name="msh" > 
+
+  <Mesh_file_path> mesh/mesh-complete.mesh.vtu </Mesh_file_path>
+
+  <Add_face name="X0">
+      <Face_file_path> mesh/mesh-surfaces/X0.vtp </Face_file_path>
+  </Add_face>
+
+  <Add_face name="X1">
+      <Face_file_path> mesh/mesh-surfaces/X1.vtp </Face_file_path>
+  </Add_face>
+
+  <Add_face name="Y0">
+      <Face_file_path> mesh/mesh-surfaces/Y0.vtp </Face_file_path>
+  </Add_face>
+
+  <Add_face name="Y1">
+      <Face_file_path> mesh/mesh-surfaces/Y1.vtp </Face_file_path>
+  </Add_face>
+
+  <Add_face name="Z0">
+      <Face_file_path> mesh/mesh-surfaces/Z0.vtp </Face_file_path>
+  </Add_face>
+
+  <Add_face name="Z1">
+      <Face_file_path> mesh/mesh-surfaces/Z1.vtp </Face_file_path>
+  </Add_face>
+
+  <Fiber_direction> (0.0, 0.0, 1.0)  </Fiber_direction>
+  <Fiber_direction> (1.0, 0.0, 0.0)  </Fiber_direction>
+
+  <!-- Mesh is in centimeter scale -->
+  <!-- All following parameters should be in cgs unit -->
+
+</Add_mesh>
+
+
+<Add_equation type="struct" > 
+   <Min_iterations> 1 </Min_iterations>  
+   <Max_iterations> 4 </Max_iterations> 
+   <Tolerance> 1e-6 </Tolerance> 
+
+   <Density> 1.0 </Density>   <!-- g/cm^3 -->   
+   <Elasticity_modulus> 1.0e6 </Elasticity_modulus> <!-- dyn/cm^2 -->
+   <Poisson_ratio> 0.49 </Poisson_ratio>  <!-- unitless -->
+
+   <Constitutive_model type="HolzapfelOgden-ModifiedAnisotropy"> 
+     <a> 590.0 </a>     <!-- dyn/cm^2 -->
+     <b> 8.023 </b>
+     <a4f> 184720.0 </a4f> <!-- dyn/cm^2 -->
+     <b4f> 16.026 </b4f>
+     <a4s> 24810.0 </a4s> <!-- dyn/cm^2 -->
+     <b4s> 11.12 </b4s>
+     <afs> 2160.0 </afs>  <!-- dyn/cm^2 -->
+     <bfs> 11.436 </bfs>
+     <k> 100.0 </k>
+   </Constitutive_model>
+
+   <Dilational_penalty_model> ST91 </Dilational_penalty_model>
+   <Penalty_parameter> 1e7 </Penalty_parameter> <!-- dyn/cm^2 -->
+
+   <!-- Distribute active stress: 70% fiber, 20% sheet, 10% sheet-normal -->
+   <Fiber_reinforcement_stress type="Unsteady" >
+      <Temporal_values_file_path> stress.dat </Temporal_values_file_path> 
+      <Ramp_function> false </Ramp_function>
+      <Directional_distribution>
+         <Fiber_direction> 0.7 </Fiber_direction>
+         <Sheet_direction> 0.2 </Sheet_direction>
+         <Sheet_normal_direction> 0.1 </Sheet_normal_direction>
+      </Directional_distribution>
+   </Fiber_reinforcement_stress>
+
+   <Output type="Spatial" >
+     <Displacement> true </Displacement>
+     <Velocity> true </Velocity>
+     <Jacobian> true </Jacobian>
+     <Stress> true </Stress>
+     <Strain> true </Strain>
+     <Cauchy_stress> true </Cauchy_stress>
+     <Def_grad> true </Def_grad>
+     <VonMises_stress> true </VonMises_stress>
+   </Output>
+
+   <LS type="GMRES" >
+      <Linear_algebra type="fsils" >
+         <Preconditioner> fsils </Preconditioner>
+      </Linear_algebra>
+      <Tolerance> 1e-9 </Tolerance>
+      <Max_iterations> 400 </Max_iterations> 
+   </LS>
+
+   <Add_BC name="Z0" > 
+      <Type> Dir </Type> 
+      <Value> 0.0 </Value> 
+      <Effective_direction> (0, 0, 1) </Effective_direction> 
+      <Impose_on_state_variable_integral> true </Impose_on_state_variable_integral> 
+      <Zero_out_perimeter> false </Zero_out_perimeter> 
+   </Add_BC> 
+
+   <Add_BC name="X0" > 
+      <Type> Dir </Type> 
+      <Value> 0.0 </Value> 
+      <Effective_direction> (1, 0, 0) </Effective_direction> 
+      <Impose_on_state_variable_integral> true </Impose_on_state_variable_integral> 
+      <Zero_out_perimeter> false </Zero_out_perimeter> 
+   </Add_BC> 
+
+   <Add_BC name="Y0" > 
+      <Type> Dir </Type> 
+      <Value> 0.0 </Value> 
+      <Effective_direction> (0, 1, 0) </Effective_direction> 
+      <Impose_on_state_variable_integral> true </Impose_on_state_variable_integral> 
+      <Zero_out_perimeter> false </Zero_out_perimeter> 
+   </Add_BC> 
+
+</Add_equation>
+
+</svMultiPhysicsFile>

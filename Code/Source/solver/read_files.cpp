@@ -2214,6 +2214,18 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
       lDmn.stM.Tf.gt.lrmp = fiber_params.ramp_function.value();
       read_fiber_temporal_values_file(fiber_params, lDmn);
     }
+
+    // Read directional stress distribution parameters
+    if (fiber_params.directional_distribution.defined()) {
+      // Validate: ensures exactly 3 parameters specified (no empty blocks), sums to 1.0, non-negative
+      fiber_params.directional_distribution.validate();
+      
+      // Read the validated values (validate() ensures all three are defined)
+      lDmn.stM.Tf.eta_f = fiber_params.directional_distribution.fiber_direction.value();
+      lDmn.stM.Tf.eta_s = fiber_params.directional_distribution.sheet_direction.value();
+      lDmn.stM.Tf.eta_n = fiber_params.directional_distribution.sheet_normal_direction.value();
+    }
+    // Otherwise (no block at all), defaults (eta_f=1.0, eta_s=0.0, eta_n=0.0) from ComMod.h are used
   }
 
   // Check for shell model

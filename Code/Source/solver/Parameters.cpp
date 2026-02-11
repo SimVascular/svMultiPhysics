@@ -1759,6 +1759,108 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
 }
 
 //////////////////////////////////////////////////////////
+//        DirectionalDistributionParameters            //
+//////////////////////////////////////////////////////////
+
+/// @brief Define the XML element name for directional distribution parameters.
+const std::string DirectionalDistributionParameters::xml_element_name_ = "Directional_distribution";
+
+DirectionalDistributionParameters::DirectionalDistributionParameters()
+{
+  bool required = false;
+  
+  // Default: all stress in fiber direction
+  set_parameter("Fiber_direction", 1.0, required, fiber_direction);
+  set_parameter("Sheet_direction", 0.0, required, sheet_direction);
+  set_parameter("Sheet_normal_direction", 0.0, required, sheet_normal_direction);
+}
+
+void DirectionalDistributionParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  using namespace tinyxml2;
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind(&DirectionalDistributionParameters::set_parameter_value, *this, _1, _2);
+
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+
+  value_set = true;
+}
+
+void DirectionalDistributionParameters::validate() const
+{
+  if (!value_set) {
+    return;  // No validation needed if not set (will use defaults)
+  }
+  
+  // Check how many parameters are defined
+  bool fiber_defined = fiber_direction.defined();
+  bool sheet_defined = sheet_direction.defined();
+  bool normal_defined = sheet_normal_direction.defined();
+  
+  int num_defined = fiber_defined + sheet_defined + normal_defined;
+  
+  // Empty block is invalid - if block exists, must specify all three
+  if (num_defined == 0) {
+    throw std::runtime_error("Directional_distribution block is empty. "
+      "Either remove the block entirely (to use defaults: fiber=1.0, sheet=0.0, normal=0.0) "
+      "or specify all three directions: Fiber_direction, Sheet_direction, Sheet_normal_direction.");
+  }
+  
+  // Partial specification is invalid
+  if (num_defined < 3) {
+    std::string msg = "Directional_distribution requires all three directions to be specified. Found: ";
+    if (fiber_defined) msg += "Fiber_direction ";
+    if (sheet_defined) msg += "Sheet_direction ";
+    if (normal_defined) msg += "Sheet_normal_direction ";
+    msg += "\nMissing: ";
+    if (!fiber_defined) msg += "Fiber_direction ";
+    if (!sheet_defined) msg += "Sheet_direction ";
+    if (!normal_defined) msg += "Sheet_normal_direction ";
+    throw std::runtime_error(msg);
+  }
+  
+  // All three are specified, validate their values
+  double eta_f = fiber_direction.value();
+  double eta_s = sheet_direction.value();
+  double eta_n = sheet_normal_direction.value();
+  
+  // Validate that eta_f + eta_s + eta_n = 1.0
+  double eta_sum = eta_f + eta_s + eta_n;
+  const double tol = 1.0e-10;
+  if (std::abs(eta_sum - 1.0) > tol) {
+    throw std::runtime_error("Directional distribution fractions must sum to 1.0. " 
+      "Got: Fiber_direction=" + std::to_string(eta_f) + 
+      ", Sheet_direction=" + std::to_string(eta_s) + 
+      ", Sheet_normal_direction=" + std::to_string(eta_n) + 
+      ", sum=" + std::to_string(eta_sum));
+  }
+  
+  // Validate that each eta is non-negative
+  if (eta_f < 0.0 || eta_s < 0.0 || eta_n < 0.0) {
+    throw std::runtime_error("Directional distribution fractions must be non-negative. "
+      "Got: Fiber_direction=" + std::to_string(eta_f) + 
+      ", Sheet_direction=" + std::to_string(eta_s) + 
+      ", Sheet_normal_direction=" + std::to_string(eta_n));
+  }
+}
+
+void DirectionalDistributionParameters::print_parameters()
+{
+  if (!value_set) {
+    return;
+  }
+  std::cout << "  Directional Distribution:" << std::endl;
+  std::cout << "    Fiber_direction: " << fiber_direction.value() << std::endl;
+  std::cout << "    Sheet_direction: " << sheet_direction.value() << std::endl;
+  std::cout << "    Sheet_normal_direction: " << sheet_normal_direction.value() << std::endl;
+}
+
+//////////////////////////////////////////////////////////
 //            FiberReinforcementStressParameters        //
 //////////////////////////////////////////////////////////
 
@@ -1786,22 +1888,34 @@ void FiberReinforcementStressParameters::set_values(tinyxml2::XMLElement* xml_el
   using namespace tinyxml2;
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
-  // Get the 'type' from the <LS type=TYPE> element.
+  // Get the 'type' from the element attribute.
   const char* stype;
   auto result = xml_elem->QueryStringAttribute("type", &stype);
   if (stype == nullptr) {
-    throw std::runtime_error("No TYPE given in the XML <Stimulus=TYPE> element.");
+    throw std::runtime_error("No TYPE given in the XML <Fiber_reinforcement_stress type=TYPE> element.");
   }
   type.set(std::string(stype));
   auto item = xml_elem->FirstChildElement();
-
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-
-  std::function<void(const std::string&, const std::string&)> ftpr =
-      std::bind( &FiberReinforcementStressParameters::set_parameter_value, *this, _1, _2);
-
-  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+  
+  while (item != nullptr) {
+    std::string name = item->Value();
+    
+    if (name == DirectionalDistributionParameters::xml_element_name_) {
+      directional_distribution.set_values(item);
+      
+    } else if (item->GetText() != nullptr) {
+      auto value = item->GetText();
+      try {
+        set_parameter_value(name, value);
+      } catch (const std::bad_function_call& exception) {
+        throw std::runtime_error(error_msg + name + "'.");
+      }
+    } else {
+      throw std::runtime_error(error_msg + name + "'.");
+    }
+    
+    item = item->NextSiblingElement();
+  }
 
   value_set = true;
 }
@@ -1821,6 +1935,9 @@ void FiberReinforcementStressParameters::print_parameters()
   for (auto& [ key, value ] : params_name_value) {
     std::cout << key << ": " << value << std::endl;
   }
+  
+  // Print directional distribution if defined
+  directional_distribution.print_parameters();
 }
 
 //////////////////////////////////////////////////////////
