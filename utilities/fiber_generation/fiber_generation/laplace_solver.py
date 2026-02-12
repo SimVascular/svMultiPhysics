@@ -14,7 +14,7 @@ Supports both:
 import os
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
-from .SurfaceNames import SurfaceName
+from .surface_names import SurfaceName
 
 
 class LaplaceSolver:
@@ -252,7 +252,7 @@ class LaplaceSolver:
             list: List of (alias, boundary_conditions) tuples.
         """
         return [
-            # Trans_BiV: Ventricular transmural (LV=1, RV=0)
+            # Trans_BiV: Ventricular transmural (LV=-2, RV=1)
             ("Trans_BiV", [
                 ("lv_endocardium", -2.0),
                 ("rv_endocardium", 1.0),

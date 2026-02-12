@@ -8,11 +8,7 @@ import unittest
 import numpy as np
 import sys
 import os
-
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from src.FibGen import FibGen
+from fiber_generation.fiber_generator import FibGen
 
 
 class TestFibGen(unittest.TestCase):

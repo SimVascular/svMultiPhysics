@@ -15,10 +15,10 @@ output directories, and solver executables.
 import os
 import argparse
 import pyvista as pv
-from src.LaplaceSolver import LaplaceSolver
-from src.FibGen import FibGenDoste
-from src.SurfaceNames import SurfaceName
-from src.surface_utils import generate_epi_apex
+from fiber_generation.laplace_solver import LaplaceSolver
+from fiber_generation.fiber_generator import FibGenDoste
+from fiber_generation.surface_names import SurfaceName
+from fiber_generation.surface_utils import generate_epi_apex
 from time import time
 
 

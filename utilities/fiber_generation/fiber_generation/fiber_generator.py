@@ -18,7 +18,7 @@ import os
 import numpy as np
 import pyvista as pv
 
-import src.quat_utils as qu
+import fiber_generation.quat_utils as qu
 
 
 class FibGen:

@@ -1,4 +1,4 @@
-# SV-fibergen
+# svMultiPhysics fiber generation codes
 Python + svMultiPhysics codes for fiber generation. Two methods are implemented:
 * Bayer et al. (2012). [link](https://doi.org/10.1007/s10439-012-0593-5)
 * Doste et al. (2018). [link](https://doi.org/10.1002/cnm.3185)
@@ -6,7 +6,7 @@ Python + svMultiPhysics codes for fiber generation. Two methods are implemented:
 ## Installation
 
 ### Installing as a Python Package
-You can install `sv-fibergen` as a package using pip:
+You can install the `fiber_generation` codes as a package using pip:
 
 ```bash
 pip install -e .

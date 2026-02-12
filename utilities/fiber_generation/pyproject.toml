@@ -7,8 +7,7 @@ name = "sv-fibergen"
 version = "0.1.0"
 description = "Python + svMultiPhysics codes for biventricular fiber generation"
 readme = "README.md"
-
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.8"
 
 dependencies = [
@@ -17,3 +16,7 @@ dependencies = [
     "scipy>=1.7.0",
     "matplotlib>=3.4.0",
 ]
+
+[tool.setuptools]
+packages = ["fiber_generation"]
+

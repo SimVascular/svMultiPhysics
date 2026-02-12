@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pyvista as pv
 
-from src.FibGen import FibGenBayer
+from fiber_generation.fiber_generator import FibGenBayer
 from scipy import stats
 import matplotlib.pyplot as plt
 
