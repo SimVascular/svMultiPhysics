@@ -61,25 +61,26 @@ class FibGen:
             out[zero_rows] = 0.0
         return out
     
-    def _minmax01(self, arr):
-        """Scale array to [0, 1] range.
+    def scale_to_range(self, arr, range=(0.0, 1.0)):
+        """Scale array to specified range.
         
         Args:
             arr: Input array to scale.
+            range: Tuple (min, max) specifying the target range.
             
         Returns:
-            np.ndarray: Scaled array with values in [0, 1]. If all values are equal,
-                returns array filled with 0.5.
+            np.ndarray: Scaled array with values in the specified range. If all values are equal,
+                returns array filled with the midpoint of the range.
         """
         arr = np.asarray(arr, dtype=float)
         amin = np.min(arr)
         amax = np.max(arr)
         if amax > amin:
-            return (arr - amin) / (amax - amin)
+            return range[0] + (arr - amin) * (range[1] - range[0]) / (amax - amin)
         else:
-            return np.ones_like(arr) * 0.5
+            return np.ones_like(arr) * ((range[0] + range[1]) / 2.0)
     
-    def _compute_gradients(self, mesh, field_names):
+    def compute_gradients(self, mesh, field_names):
         """Compute gradients for specified fields at points.
         
         Args:
@@ -92,9 +93,6 @@ class FibGen:
         for name in field_names:
             if name not in mesh.point_data:
                 raise KeyError(f"Field '{name}' not found in mesh point_data")
-            
-            # Scale to [0, 1] before gradient computation
-            mesh.point_data[name] = self._minmax01(mesh.point_data[name])
             
             gmesh = mesh.compute_derivative(scalars=name, gradient=True, preference='point')
             mesh.point_data[name + "_grad"] = np.asarray(gmesh.point_data["gradient"])
@@ -373,6 +371,23 @@ class FibGenBayer(FibGen):
     def __init__(self):
         """Initialize the Bayer fiber generator."""
         super().__init__()
+
+
+    def rescale_fields(self, mesh):
+        """Rescale Laplace fields to [0, 1] range.
+        
+        Args:
+            mesh: PyVista mesh with point data containing the fields to rescale.
+        
+        Returns:
+            PyVista mesh with rescaled fields in point_data.
+        """
+        for name in self.FIELD_NAMES:
+            if name not in mesh.point_data:
+                raise KeyError(f"Field '{name}' not found in mesh point_data")
+            mesh.point_data[name] = self.scale_to_range(mesh.point_data[name], range=(0.0, 1.0))
+        return mesh
+    
     
     def load_laplace_results(self, file_path):
         """Load Laplace-Dirichlet solution for Bayer method.
@@ -385,9 +400,13 @@ class FibGenBayer(FibGen):
         """
         print(f"   Loading Laplace solution <--- {file_path}")
         result_mesh = pv.read(file_path)
-        
+
+        # Normalize fields to [0, 1]
+        result_mesh = self.rescale_fields(result_mesh)
+
+        # Compute gradients for the required fields
         print("   Computing gradients at points")
-        result_mesh = self._compute_gradients(result_mesh, self.FIELD_NAMES)
+        result_mesh = self.compute_gradients(result_mesh, self.FIELD_NAMES)
         
         # Convert point-data to cell-data
         mesh_cells = result_mesh.point_data_to_cell_data()
@@ -519,6 +538,31 @@ class FibGenDoste(FibGen):
         """Initialize the Doste fiber generator."""
         super().__init__()
     
+
+    def rescale_fields(self, mesh):
+        """Rescale Laplace fields to [0, 1] range.
+        
+        Args:
+            mesh: PyVista mesh with point data containing the fields to rescale.
+        
+        Returns:
+            PyVista mesh with rescaled fields in point_data.
+        """
+        for name in self.FIELD_NAMES:
+            if name not in mesh.point_data:
+                raise KeyError(f"Field '{name}' not found in mesh point_data")
+            
+            # Set respective range
+            if name in ['Trans_BiV', 'Trans']:
+                range = (-2.0, 1.0)
+            else:
+                range = (0.0, 1.0)
+
+            mesh.point_data[name] = self.scale_to_range(mesh.point_data[name], range=range)
+
+        return mesh
+    
+
     def load_laplace_results(self, file_path):
         """Load Laplace-Dirichlet solution for Doste method.
         
@@ -530,15 +574,13 @@ class FibGenDoste(FibGen):
         """
         print(f"   Loading Laplace solution <--- {file_path}")
         result_mesh = pv.read(file_path)
+
+        # Normalize fields to the original range
+        result_mesh = self.rescale_fields(result_mesh)
         
+        # Compute gradients for the required fields
         print("   Computing gradients at points")
-        # _compute_gradients scales the fields to [0, 1] 
-        # but we need Trans_BiV in the original range 
-        trans_biv = result_mesh.point_data['Trans_BiV'].copy()
-        trans = result_mesh.point_data['Trans'].copy()
-        result_mesh = self._compute_gradients(result_mesh, self.FIELD_NAMES)
-        result_mesh.point_data['Trans_BiV'] = trans_biv
-        result_mesh.point_data['Trans'] = trans
+        result_mesh = self.compute_gradients(result_mesh, self.FIELD_NAMES)
         
         # Convert point-data to cell-data
         mesh_cells = result_mesh.point_data_to_cell_data()
@@ -553,6 +595,7 @@ class FibGenDoste(FibGen):
             self.grad[key] = np.asarray(mesh_cells.cell_data[key + "_grad"])
         
         return self.lap, self.grad
+    
     
     def _redistribute_weight(self, weight, up, low):
         """Redistribute weight values to center their distribution.
