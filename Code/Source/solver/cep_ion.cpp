@@ -62,7 +62,7 @@ void cep_init(Simulation* simulation)
           Vector<double> Xl(nX); 
           Vector<double> Xgl(nG);
 
-          cep_init_l(cep_mod, eq.dmn[iDmn].cep, nX, nG, Xl, Xgl);
+          cep_init_l(eq.dmn[iDmn].cep, nX, nG, Xl, Xgl);
 
           sA(a) = sA(a) + 1.0;
 
@@ -97,7 +97,7 @@ void cep_init(Simulation* simulation)
         Vector<double> Xl(nX); 
         Vector<double> Xgl(nG);
 
-        cep_init_l(cep_mod, eq.dmn[1].cep, nX, nG, Xl, Xgl);
+        cep_init_l(eq.dmn[0].cep, nX, nG, Xl, Xgl);
 
         for (int i = 0; i < nX; i++) {
           cep_mod.Xion(i,a) = Xl(i);
@@ -114,7 +114,7 @@ void cep_init(Simulation* simulation)
 // cep_init_l
 //------------
 //
-void cep_init_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<double>& X, Vector<double>& Xg)
+void cep_init_l(cepModelType& cep, int nX, int nG, Vector<double>& X, Vector<double>& Xg)
 {
   switch (cep.cepType) {
 

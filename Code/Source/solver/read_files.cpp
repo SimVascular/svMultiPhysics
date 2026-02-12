@@ -999,7 +999,7 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     }
   }
 
-  // Set Ttp parameters (domain-specific).
+  // Set Ttp parameters.
   //
   if (domain_params->G_Na.defined())  { lDmn.cep.ttp.G_Na = domain_params->G_Na.value(); }
   if (domain_params->G_Kr.defined())  { lDmn.cep.ttp.G_Kr = domain_params->G_Kr.value(); }
@@ -1007,7 +1007,7 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   if (domain_params->G_to.defined())  { lDmn.cep.ttp.G_to[lDmn.cep.imyo - 1] = domain_params->G_to.value(); }
   if (domain_params->G_CaL.defined()) { lDmn.cep.ttp.G_CaL = domain_params->G_CaL.value(); }
 
-  // Set Bo parameters (domain-specific).
+  // Set Bo parameters.
   //
   if (domain_params->tau_si.defined())  { lDmn.cep.bo.tau_si[lDmn.cep.imyo - 1] = domain_params->tau_si.value(); }
   if (domain_params->tau_fi.defined())  { lDmn.cep.bo.tau_fi[lDmn.cep.imyo - 1] = domain_params->tau_fi.value(); }
