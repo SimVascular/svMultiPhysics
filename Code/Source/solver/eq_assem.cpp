@@ -28,7 +28,7 @@
 
 namespace eq_assem {
 
-void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg, SolutionStates& solutions)
+void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
@@ -79,7 +79,7 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.rslice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, nullptr, &Do, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
       double Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g)*Jac;
@@ -159,7 +159,7 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 /// @param lFa 
 /// @param hg Pressure magnitude
 /// @param Dg 
-void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg, SolutionStates& solutions)
+void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
@@ -251,7 +251,7 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
       // Get surface normal vector
       Vector<double> nV(nsd);
       auto Nx_g = lFa.Nx.rslice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx_g, nV, nullptr, &Do, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx_g, nV, solutions, consts::MechanicalConfigurationType::reference);
       Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g)*Jac;
@@ -332,7 +332,7 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Solutio
 
       auto cfg = MechanicalConfigurationType::new_timestep;
 
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, &Dn, &Do, cfg);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, solutions, cfg);
       // 
       for (int a = 0; a < lFa.eNoN; a++) {
         int Ac = lFa.IEN(a,e);
@@ -358,7 +358,7 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Solutio
 /// Ag(tDof,tnNo), Yg(tDof,tnNo), Dg(tDof,tnNo)
 //
 void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag,
-    const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
+    const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();

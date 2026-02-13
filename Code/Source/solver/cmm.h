@@ -16,7 +16,7 @@ void cmm_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<double
 
 void cmm_b(ComMod& com_mod, const faceType& lFa, const int e, const Array<double>& al, const Array<double>& dl,
     const Array<double>& xl, const Array<double>& bfl, const Vector<double>& pS0l, const Vector<double>& vwp,
-    const Vector<int>& ptr, const Array<double>& Do);
+    const Vector<int>& ptr, const SolutionStates& solutions);
 
 void bcmmi(ComMod& com_mod, const int eNoN, const int idof, const double w, const Vector<double>& N, const Array<double>& Nxi,
     const Array<double>& xl, const Array<double>& tfl, Array<double>& lR);

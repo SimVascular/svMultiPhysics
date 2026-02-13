@@ -19,7 +19,7 @@ namespace uris {
 
 /// @brief This subroutine computes the mean pressure and flux on the
 /// immersed surface
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates& solutions) {
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions) {
   // Local aliases for solution arrays
   auto& Yn = solutions.current.get_velocity();
   auto& Do = solutions.old.get_displacement();
@@ -153,7 +153,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates&
 
 /// @brief This subroutine computes the mean velocity in the fluid elements
 /// near the immersed surface
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates& solutions) {
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions) {
   // Local aliases for solution arrays
   auto& Yn = solutions.current.get_velocity();
   auto& Do = solutions.old.get_displacement();

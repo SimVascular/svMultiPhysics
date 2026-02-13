@@ -29,18 +29,18 @@ namespace all_fun {
 
   Array<double> global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Array<double>& U);
 
-  double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s, SolutionStates& solutions);
+  double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s, const SolutionStates& solutions);
 
   double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u,
-      SolutionStates& solutions, bool pFlag=false);
+      const SolutionStates& solutions, bool pFlag=false);
 
   double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s,
-      SolutionStates& solutions, bool pFlag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
+      const SolutionStates& solutions, bool pFlag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
 
   double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& s,
-      const int l, SolutionStates& solutions, std::optional<int> uo=std::nullopt, bool THflag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
+      const int l, const SolutionStates& solutions, std::optional<int> uo=std::nullopt, bool THflag=false, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
 
-  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& s, SolutionStates& solutions, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
+  double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& s, const SolutionStates& solutions, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
 
   bool is_domain(const ComMod& com_mod, const eqType& eq, const int node, const consts::EquationType phys);
 

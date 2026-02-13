@@ -575,9 +575,6 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, SolutionStates& solutions)
 //
 void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, const Array<double>& Dg, SolutionStates& solutions)
 {
-  // Local alias for old displacement
-  const auto& Do = solutions.old.get_displacement();
-
   using namespace consts;
 
   int cEq = com_mod.cEq;
@@ -603,9 +600,6 @@ void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, c
 
 void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& Ag, const Array<double>& Dg, SolutionStates& solutions)
 {
-  // Local alias for old displacement
-  const auto& Do = solutions.old.get_displacement();
-
   using namespace consts;
 
   const int nsd  = com_mod.nsd;
@@ -656,7 +650,7 @@ void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, con
     vwp = vwp / 3.0;
 
     // Add CMM BCs contributions to the LHS/RHS
-    cmm::cmm_b(com_mod, lFa, e, al, dl, xl, bfl, pSl, vwp, ptr, Do);
+    cmm::cmm_b(com_mod, lFa, e, al, dl, xl, bfl, pSl, vwp, ptr, solutions);
   }
 
 }
@@ -1101,7 +1095,7 @@ void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>&
 
 /// @brief Reproduces Fortran 'SETBCDIRWL'.
 //
-void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
+void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
@@ -1292,7 +1286,7 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV, nullptr, &Do, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
       double Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g) * Jac;
@@ -1556,10 +1550,10 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, nullptr, &Do, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
       double Jac = sqrt(utils::norm(nV));
       nV  = nV / Jac;
-      double w = lFa.w(g) * Jac; 
+      double w = lFa.w(g) * Jac;
       N = lFa.N.col(g);
       Vector<double> u(nsd), ud(nsd);
 
@@ -1839,7 +1833,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, nullptr, &Do, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
       double Jac = sqrt(utils::norm(nV));
       double w = lFa.w(g)*Jac;
       N = lFa.N.col(g);

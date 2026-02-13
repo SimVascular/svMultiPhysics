@@ -172,7 +172,7 @@ void read_restart_header(ComMod& com_mod, std::array<int,7>& tStamp, double& tim
 
 /// @brief Reproduces the Fortran 'WRITERESTART' subroutine.
 //
-void write_restart(Simulation* simulation, std::array<double,3>& timeP, SolutionStates& solutions)
+void write_restart(Simulation* simulation, std::array<double,3>& timeP, const SolutionStates& solutions)
 {
   // Local aliases for solution arrays
   auto& An = solutions.current.get_acceleration();
@@ -397,7 +397,7 @@ void write_restart_header(ComMod& com_mod, std::array<double,3>& timeP, std::ofs
 ///
 /// Reproduces: WRITE(fid, REC=myID) stamp, cTS, time,CPUT()-timeP(1), eq.iNorm, cplBC.xn, Yn, An, Dn
 //
-void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq, SolutionStates& solutions)
+void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq, const SolutionStates& solutions)
 {
   // Local aliases for solution arrays
   auto& An = solutions.current.get_acceleration();

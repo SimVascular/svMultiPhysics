@@ -90,7 +90,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
 }
 
 /// @brief  Weak treatment of RIS resistance boundary conditions
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
+void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
@@ -151,7 +151,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
 
 
 void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
-               const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
+               const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
 {
   // [HZ] looks not needed in the current implementation
 }

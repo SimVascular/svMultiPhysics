@@ -523,8 +523,11 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
 /// Reproduce Fortran 'GNNB'.
 //
 void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, const int nsd, const int insd,
-    const int eNoNb, const Array<double>& Nx, Vector<double>& n, const Array<double>* Dn, const Array<double>* Do, MechanicalConfigurationType cfg)
+    const int eNoNb, const Array<double>& Nx, Vector<double>& n, const SolutionStates& solutions, MechanicalConfigurationType cfg)
 {
+  // Local aliases for displacement arrays
+  const auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
   auto& cm = com_mod.cm;
 
   #define n_debug_gnnb 
@@ -608,7 +611,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
     if (com_mod.mvMsh) {
       for (int i = 0; i < lX.nrows(); i++) {
         // Add mesh displacement
-        lX(i,a) = lX(i,a) + (*Do)(i+nsd+1,Ac);
+        lX(i,a) = lX(i,a) + Do(i+nsd+1,Ac);
       }
     }
     else {
@@ -619,17 +622,13 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
         case MechanicalConfigurationType::old_timestep:
           for (int i = 0; i < lX.nrows(); i++) {
             // Add displacement at timestep n
-            lX(i,a) = lX(i,a) + (*Do)(i,Ac);
+            lX(i,a) = lX(i,a) + Do(i,Ac);
           }
           break;
         case MechanicalConfigurationType::new_timestep:
           for (int i = 0; i < lX.nrows(); i++) {
             // Add displacement at timestep n+1
-            if (Dn != nullptr) {
-              lX(i,a) = lX(i,a) + (*Dn)(i,Ac);
-            } else {
-              throw std::runtime_error("gnnb: Dn required for new_timestep configuration but neither provided");
-            }
+            lX(i,a) = lX(i,a) + Dn(i,Ac);
           }
           break;
         default:

@@ -30,7 +30,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions);
 void set_bc_dir(ComMod& com_mod, SolutionStates& solutions);
 void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array<double>& lA, Array<double>& lY, int lDof);
 void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions);
-void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions);
+void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
 
 void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions);
 void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions);

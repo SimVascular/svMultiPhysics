@@ -276,7 +276,7 @@ global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Arra
 /// @param s an array containing a scalar value for each node in the mesh
 /// Replicates 'FUNCTION vIntegM(dId, s, l, u, pFlag)' defined in ALLFUN.f.
 //
-double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s, SolutionStates& solutions)
+double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<double>& s, const SolutionStates& solutions)
 {
   using namespace consts;
 
@@ -429,7 +429,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
 /// Replicates 'FUNCTION vInteg(dId, s, l, u, pFlag)' defined in ALLFUN.f.
 //
 double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<double>& s, int l, int u,
-    SolutionStates& solutions, bool pFlag)
+    const SolutionStates& solutions, bool pFlag)
 {
   using namespace consts;
 
@@ -686,7 +686,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
 /// @param cfg denotes which mechanical configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
 //
 double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Vector<double>& s,
-    SolutionStates& solutions, bool pFlag, MechanicalConfigurationType cfg)
+    const SolutionStates& solutions, bool pFlag, MechanicalConfigurationType cfg)
 {
   using namespace consts;
   #define n_debug_integ_s
@@ -699,11 +699,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
   dmsg << "lFa.eType: " << lFa.eType;
   #endif
 
-  // Local aliases for solution arrays
-  const auto* Dn = &solutions.current.get_displacement();
-  const auto* Do = &solutions.old.get_displacement();
-
-  bool flag = pFlag; 
+  bool flag = pFlag;
   int nsd = com_mod.nsd;
   int insd = nsd - 1;
 
@@ -815,7 +811,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
       if (!isIB) {
         // Get normal vector in cfg configuration
         auto Nx = fs.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, insd, fs.eNoN, Nx, n, Dn, Do, cfg);
+        nn::gnnb(com_mod, lFa, e, g, nsd, insd, fs.eNoN, Nx, n, solutions, cfg);
       }
 
       // Calculating the Jacobian (encodes area of face element)
@@ -854,7 +850,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
 /// @param cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
 //
 double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
-            const Array<double>& s, SolutionStates& solutions, MechanicalConfigurationType cfg)
+            const Array<double>& s, const SolutionStates& solutions, MechanicalConfigurationType cfg)
 {
   using namespace consts;
 
@@ -865,10 +861,6 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
   dmsg << "IntegV " << " ";
   dmsg << "lFa.name: " << lFa.name;
   #endif
-
-  // Local aliases for solution arrays
-  const auto* Dn = &solutions.current.get_displacement();
-  const auto* Do = &solutions.old.get_displacement();
 
   auto& cm = com_mod.cm;
   int nsd = com_mod.nsd;
@@ -939,7 +931,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
       if (!isIB) {
         // Get normal vector in cfg configuration
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, Dn, Do, cfg);
+        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, solutions, cfg);
         //CALL GNNB(lFa, e, g, nsd-1, lFa.eNoN, lFa.Nx(:,:,g), n)
       } else {
         //CALL GNNIB(lFa, e, g, n)
@@ -992,7 +984,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
 ///
 //
 double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
-    const Array<double>& s, const int l, SolutionStates& solutions, std::optional<int> uo, bool THflag, MechanicalConfigurationType cfg)
+    const Array<double>& s, const int l, const SolutionStates& solutions, std::optional<int> uo, bool THflag, MechanicalConfigurationType cfg)
 {
   using namespace consts;
 
@@ -1004,10 +996,6 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa,
   dmsg << "l: " << l;
   dmsg << "uo: " << uo;
   #endif
-
-  // Local aliases for solution arrays
-  const auto* Dn = &solutions.current.get_displacement();
-  const auto* Do = &solutions.old.get_displacement();
 
   auto& cm = com_mod.cm;
   int nsd = com_mod.nsd;

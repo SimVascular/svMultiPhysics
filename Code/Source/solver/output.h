@@ -15,11 +15,11 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
 
 void read_restart_header(ComMod& com_mod, std::array<int,7>& tStamp, double& timeP, std::ifstream& restart_file);
 
-void write_restart(Simulation* simulation, std::array<double,3>& timeP, SolutionStates& solutions);
+void write_restart(Simulation* simulation, std::array<double,3>& timeP, const SolutionStates& solutions);
 
 void write_restart_header(ComMod& com_mod, std::array<double,3>& timeP, std::ofstream& restart_file);
 
-void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq, SolutionStates& solutions);
+void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq, const SolutionStates& solutions);
 
 };
 

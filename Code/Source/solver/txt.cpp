@@ -140,7 +140,7 @@ void create_volume_integral_file(const ComMod& com_mod, CmMod& cm_mod, const eqT
 // init_write - if true then this is the start of the simulation and 
 //   so create a new file to initialize output.
 //
-void txt(Simulation* simulation, const bool init_write, SolutionStates& solutions)
+void txt(Simulation* simulation, const bool init_write, const SolutionStates& solutions)
 {
   // Local aliases for solution arrays
   auto& An = solutions.current.get_acceleration();
@@ -414,7 +414,7 @@ void txt(Simulation* simulation, const bool init_write, SolutionStates& solution
 /// NOTE: Be carefu of a potential indexing problem here because 'm' is a length and not an index.
 //
 void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, SolutionStates& solutions)
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
@@ -492,7 +492,7 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
 /// NOTE: Be carefu of a potential indexing problem here because 'm' is a length and not an index.
 //
 void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, SolutionStates& solutions)
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();

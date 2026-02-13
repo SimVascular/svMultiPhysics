@@ -9,9 +9,9 @@
 
 namespace uris {
 
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates& solutions); // done
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions); // done
 
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, SolutionStates& solutions); // done
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions); // done
 
 void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions);
 

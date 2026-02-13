@@ -9,9 +9,9 @@
 namespace ris {
 
 void ris_meanq(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions);
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions);
+void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
 void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
-    const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions);
+    const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
 
 void ris_updater(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions);
 void ris_status(ComMod& com_mod, CmMod& cm_mod);

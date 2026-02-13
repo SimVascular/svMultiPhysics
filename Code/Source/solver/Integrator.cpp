@@ -486,7 +486,7 @@ void Integrator::predictor()
 
     // electrophysiology
     if (eq.phys == Equation_CEP) {
-      cep_ion::cep_integ(simulation_, iEq, e, Do, solutions_.old.get_velocity());
+      cep_ion::cep_integ(simulation_, iEq, e, solutions_);
     }
 
     // eqn 86 of Bazilevs 2007

@@ -243,7 +243,7 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
 // bc_ini
 //---------
 //
-void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, SolutionStates& solutions)
+void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
@@ -502,7 +502,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, SolutionStates
 
       for (int g = 0; g < lFa.nG; g++) {
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV, nullptr, &Do, consts::MechanicalConfigurationType::reference);
+        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
 
         for (int a = 0; a < lFa.eNoN; a++) { 
           int Ac = lFa.IEN(a,e);
@@ -685,7 +685,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, SolutionStates
 //
 // Replicates 'SUBROUTINE FSILSINI'.
 //
-void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, SolutionStates& solutions)
+void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
@@ -755,7 +755,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
         for (int g = 0; g < lFa.nG; g++) {
           Vector<double> n(nsd);
           auto Nx = lFa.Nx.slice(g);
-          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, nullptr, &Do, consts::MechanicalConfigurationType::reference);
+          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, solutions, consts::MechanicalConfigurationType::reference);
 
           for (int a = 0; a < lFa.eNoN; a++) {
             int Ac = lFa.IEN(a,e);
@@ -895,7 +895,7 @@ void set_shl_xien(Simulation* simulation, mshType& lM)
 //
 // Reproduces 'SUBROUTINE SHLBCINI(lBc, lFa, lM)'.
 //
-void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, SolutionStates& solutions)
+void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, const SolutionStates& solutions)
 {
   // Local alias for old displacement
   const auto& Do = solutions.old.get_displacement();
