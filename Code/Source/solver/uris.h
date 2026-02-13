@@ -9,11 +9,11 @@
 
 namespace uris {
 
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris); // done
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions); // done
 
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris); // done
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions); // done
 
-void uris_update_disp(ComMod& com_mod, CmMod& cm_mod);
+void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions);
 
 void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris);
 

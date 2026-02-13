@@ -17,9 +17,12 @@
 
 namespace uris { 
 
-/// @brief This subroutine computes the mean pressure and flux on the 
-/// immersed surface 
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
+/// @brief This subroutine computes the mean pressure and flux on the
+/// immersed surface
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions) {
+  // Local aliases for solution arrays
+  auto& Yn = solutions.current.get_velocity();
+  auto& Do = solutions.old.get_displacement();
   #define n_debug_uris_meanp
   #ifdef debug_uris_meanp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -41,7 +44,6 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   // auto& An = com_mod.An;
   // auto& Ad = com_mod.Ad;
   // auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
 
   // Let's conpute the mean pressure in the two regions of the fluid mesh 
   // For the moment let's define a flag IdSubDmn(size the number of elements)
@@ -68,7 +70,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   }
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volU += all_fun::integ(com_mod, cm_mod, iM, sUPS);
+    volU += all_fun::integ(com_mod, cm_mod, iM, sUPS, solutions);
   }
 
 
@@ -84,7 +86,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   } 
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volD += all_fun::integ(com_mod, cm_mod, iM, sDST);
+    volD += all_fun::integ(com_mod, cm_mod, iM, sDST, solutions);
   }
 
   // Print volume messages.
@@ -106,7 +108,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
     tmpV(0,j) = Yn(s,j)*sUPS(j);
   }
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanPU += all_fun::integ(com_mod, cm_mod, iM, tmpV);
+    meanPU += all_fun::integ(com_mod, cm_mod, iM, tmpV, solutions);
   }
   meanPU = meanPU / volU;
 
@@ -114,7 +116,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
     tmpV(0,j) = Yn(s,j)*sDST(j);
   }
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanPD += all_fun::integ(com_mod, cm_mod,iM, tmpV);
+    meanPD += all_fun::integ(com_mod, cm_mod,iM, tmpV, solutions);
   }
   meanPD = meanPD / volD;
 
@@ -149,9 +151,12 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   
 }
 
-/// @brief This subroutine computes the mean velocity in the fluid elements 
-/// near the immersed surface  
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
+/// @brief This subroutine computes the mean velocity in the fluid elements
+/// near the immersed surface
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions) {
+  // Local aliases for solution arrays
+  auto& Yn = solutions.current.get_velocity();
+  auto& Do = solutions.old.get_displacement();
   #define n_debug_uris_meanv
   #ifdef debug_uris_meanv
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -173,7 +178,6 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   // auto& An = com_mod.An;
   // auto& Ad = com_mod.Ad;
   // auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
 
   // Let's compute the neighboring region below the valve normal. When
   // the valve is open, this region should roughly be valve oriface.
@@ -193,7 +197,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   }
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    volI += all_fun::integ(com_mod, cm_mod, iM, sImm);
+    volI += all_fun::integ(com_mod, cm_mod, iM, sImm, solutions);
   }
   if (cm.mas(cm_mod)) {
     std::cout << "volume inside " << volI << " for: " << uris_obj.name << std::endl;
@@ -219,7 +223,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
 
   double meanV = 0.0;
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    meanV += all_fun::integ(com_mod, cm_mod, iM, tmpVNrm)/volI;
+    meanV += all_fun::integ(com_mod, cm_mod, iM, tmpVNrm, solutions)/volI;
   }
   
   if (cm.mas(cm_mod)) {
@@ -245,10 +249,12 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
 
 }
 
-/// @brief  This subroutine computes the displacement of the immersed 
+/// @brief  This subroutine computes the displacement of the immersed
 /// surface with fem projection
-void uris_update_disp(ComMod& com_mod, CmMod& cm_mod) {
-  #define n_debug_uris_update_disp 
+void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions) {
+  // Local alias for solution array
+  const auto& Do = solutions.old.get_displacement();
+  #define n_debug_uris_update_disp
   #ifdef debug_uris_update_disp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
@@ -313,10 +319,10 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod) {
       d = 0.0;
       for (int a = 0; a < mesh.eNoN; a++) {
         int Ac = mesh.IEN(a, iEln);
-        //We have to use Do because Dn contains the result coming from the solid 
-        d(0) += N(a)*com_mod.Do(nsd+1, Ac);
-        d(1) += N(a)*com_mod.Do(nsd+2, Ac);
-        d(2) += N(a)*com_mod.Do(nsd+3, Ac);
+        //We have to use Do because Dn contains the result coming from the solid
+        d(0) += N(a)*Do(nsd+1, Ac);
+        d(1) += N(a)*Do(nsd+2, Ac);
+        d(2) += N(a)*Do(nsd+3, Ac);
       }
       // update uris disp  
       localYd.set_col(nd, d);

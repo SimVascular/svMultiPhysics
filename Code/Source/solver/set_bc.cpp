@@ -25,10 +25,18 @@ namespace set_bc {
 /// as well as the resistance matrix M ~ dP/dQ from 0D using finite difference.
 /// Updates the pressure or flowrates stored in cplBC.fa[i].y and the resistance
 /// matrix M ~ dP/dQ stored in eq.bc[iBc].r.
-/// @param com_mod 
-/// @param cm_mod 
-void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
+/// @param com_mod
+/// @param cm_mod
+void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  const auto& Ao = solutions.old.get_acceleration();
+  const auto& Yo = solutions.old.get_velocity();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_calc_der_cpl_bc 
@@ -110,22 +118,22 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
         else {
           throw std::runtime_error("[calc_der_cpl_bc]  Invalid physics type for 0D coupling");
         }
-        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1, false, cfg_o);
-        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yn, 0, nsd-1, false, cfg_n);
+        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions, nsd-1, false, cfg_o);
+        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, Yn, 0, solutions, nsd-1, false, cfg_n);
         cplBC.fa[ptr].Po = 0.0;
         cplBC.fa[ptr].Pn = 0.0;
-        #ifdef debug_calc_der_cpl_bc 
+        #ifdef debug_calc_der_cpl_bc
         dmsg << "iBC_Neu ";
         dmsg << "cplBC.fa[ptr].Qo: " << cplBC.fa[ptr].Qo;
         dmsg << "cplBC.fa[ptr].Qn: " << cplBC.fa[ptr].Qn;
         #endif
 
       }
-      // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1 
+      // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
-        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, nsd) / area;
-        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yn, nsd) / area;
+        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
         cplBC.fa[ptr].Qo = 0.0;
         cplBC.fa[ptr].Qn = 0.0;
         #ifdef debug_calc_der_cpl_bc 
@@ -525,8 +533,13 @@ void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat)
 ///
 /// Replaces 'SUBROUTINE RCRINIT()'
 //
-void rcr_init(ComMod& com_mod, const CmMod& cm_mod)
+void rcr_init(ComMod& com_mod, const CmMod& cm_mod, SolutionStates& solutions)
 {
+  // Local aliases for old solution arrays
+  const auto& Ao = solutions.old.get_acceleration();
+  const auto& Do = solutions.old.get_displacement();
+  const auto& Yo = solutions.old.get_velocity();
+
   using namespace consts;
 
   const int iEq = 0;
@@ -541,15 +554,15 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod)
     int ptr = bc.cplBCptr;
 
     if (!utils::btest(bc.bType, iBC_RCR)) {
-      continue; 
+      continue;
     }
 
     if (ptr != -1) {
       if (cplBC.initRCR) {
         auto& fa = com_mod.msh[iM].fa[iFa];
         double area = fa.area;
-        double Qo = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, 0, nsd-1);
-        double Po = all_fun::integ(com_mod, cm_mod, fa, com_mod.Yo, nsd)  / area;
+        double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions, nsd-1, false, MechanicalConfigurationType::reference);
+        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
         cplBC.xo[ptr] = Po - (Qo * cplBC.fa[ptr].RCR.Rp);
       } else { 
         cplBC.xo[ptr] = cplBC.fa[ptr].RCR.Xo;
@@ -560,7 +573,7 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod)
 
 /// @brief Below defines the SET_BC methods for the Coupled Momentum Method (CMM)
 //
-void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, const Array<double>& Dg ) 
+void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, const Array<double>& Dg, SolutionStates& solutions)
 {
   using namespace consts;
 
@@ -571,7 +584,7 @@ void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, c
     auto& bc = eq.bc[iBc];
 
     if (!utils::btest(bc.bType,iBC_CMM)) {
-      continue; 
+      continue;
     }
 
     int iFa = bc.iFa;
@@ -581,11 +594,11 @@ void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, c
       throw std::runtime_error("[set_bc_cmm] CMM equation is formulated for tetrahedral elements (volume) and triangular (surface) elements");
     }
 
-    set_bc_cmm_l(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Ag, Dg);
+    set_bc_cmm_l(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Ag, Dg, solutions);
   }
 }
 
-void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& Ag, const Array<double>& Dg ) 
+void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& Ag, const Array<double>& Dg, SolutionStates& solutions)
 {
   using namespace consts;
 
@@ -637,7 +650,7 @@ void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, con
     vwp = vwp / 3.0;
 
     // Add CMM BCs contributions to the LHS/RHS
-    cmm::cmm_b(com_mod, lFa, e, al, dl, xl, bfl, pSl, vwp, ptr);
+    cmm::cmm_b(com_mod, lFa, e, al, dl, xl, bfl, pSl, vwp, ptr, solutions);
   }
 
 }
@@ -645,8 +658,16 @@ void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, con
 /// @brief Coupled BC quantities are computed here.
 /// Reproduces the Fortran 'SETBCCPL()' subrotutine.
 //
-void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
+void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  const auto& Ao = solutions.old.get_acceleration();
+  const auto& Yo = solutions.old.get_velocity();
+  const auto& Do = solutions.old.get_displacement();
+
   static double absTol = 1.E-8, relTol = 1.E-5;
 
   using namespace consts;
@@ -654,8 +675,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
   const int nsd = com_mod.nsd;
   const int tnNo = com_mod.tnNo;
   auto& cplBC = com_mod.cplBC;
-  auto& Yo = com_mod.Yo;
-  auto& Yn = com_mod.Yn;
+  // Yo, Ao, Do now passed as parameters
   const int iEq = 0;
   auto& eq = com_mod.eq[iEq];
 
@@ -666,10 +686,10 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
   auto cfg_o = MechanicalConfigurationType::reference;
   auto cfg_n = MechanicalConfigurationType::reference;
 
-  // If coupling scheme is implicit, calculate updated pressure and flowrate 
+  // If coupling scheme is implicit, calculate updated pressure and flowrate
   // from 0D, as well as resistance from 0D using finite difference.
-  if (cplBC.schm == CplBCType::cplBC_I) { 
-    calc_der_cpl_bc(com_mod, cm_mod);
+  if (cplBC.schm == CplBCType::cplBC_I) {
+    calc_der_cpl_bc(com_mod, cm_mod, solutions);
 
   // If coupling scheme is semi-implicit or explicit, only calculated updated
   // pressure and flowrate from 0D
@@ -685,8 +705,8 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
       faceType& lFa = com_mod.msh[iM].fa[iFa];
       Vector<double> sA(com_mod.tnNo);
       sA = 1.0;
-      double area = all_fun::integ(com_mod, cm_mod, lFa, sA);
-      baf_ini_ns::bc_ini(com_mod, cm_mod, eq.bc[iBc], lFa);
+      double area = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false, consts::MechanicalConfigurationType::reference);
+      baf_ini_ns::bc_ini(com_mod, cm_mod, eq.bc[iBc], lFa, solutions);
 
       int ptr = bc.cplBCptr;
 
@@ -720,15 +740,15 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
             throw std::runtime_error("[set_bc_cpl]  Invalid physics type for 0D coupling");
           }
         
-          cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, nsd-1, false, cfg_o);
-          cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, nsd-1, false, cfg_n);
+          cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, solutions, nsd-1, false, cfg_o);
+          cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, solutions, nsd-1, false, cfg_n);
           cplBC.fa[ptr].Po = 0.0;
           cplBC.fa[ptr].Pn = 0.0;
         } 
         // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
         else if (utils::btest(bc.bType,iBC_Dir)) {
-          cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, nsd) / area;
-          cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, nsd) / area;
+          cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+          cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
           cplBC.fa[ptr].Qo = 0.0;
           cplBC.fa[ptr].Qn = 0.0;
         }
@@ -771,8 +791,16 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
 ///
 /// Reproduces 'SUBROUTINE SETBCDIR(lA, lY, lD)'
 //
-void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD)
+void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& lA = solutions.current.get_acceleration();
+  auto& lY = solutions.current.get_velocity();
+  auto& lD = solutions.current.get_displacement();
+  const auto& Yo = solutions.old.get_velocity();
+  const auto& Ao = solutions.old.get_acceleration();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_set_bc_dir
@@ -932,8 +960,8 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
               for (int i = 0; i < nsd; i++) {
                 if (eDir[i]) {
                   int j = s + i;
-                  lA(j,Ac) = c1i*(lY(j,Ac) - com_mod.Yo(j,Ac) + c2*com_mod.Ao(j,Ac));
-                  com_mod.Ad(i,Ac) = c1i*(lD(j,Ac) - com_mod.Do(j,Ac) + c2*com_mod.Ad(i,Ac));
+                  lA(j,Ac) = c1i*(lY(j,Ac) - Yo(j,Ac) + c2*Ao(j,Ac));
+                  com_mod.Ad(i,Ac) = c1i*(lD(j,Ac) - Do(j,Ac) + c2*com_mod.Ad(i,Ac));
                 }
               }
             }
@@ -943,7 +971,7 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
               for (int i = 0; i < nsd; i++) {
                 if (eDir[i]) {
                   int j = s + i;
-                  lD(j,Ac) = c1*lY(j,Ac) - c2*com_mod.Ad(i,Ac) + com_mod.Do(j,Ac);
+                  lD(j,Ac) = c1*lY(j,Ac) - c2*com_mod.Ad(i,Ac) + Do(j,Ac);
                   com_mod.Ad(i,Ac) = lY(j,Ac);
                 }
               }
@@ -955,8 +983,8 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
             for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
               int Ac = com_mod.msh[iM].fa[iFa].gN(a);
               for (int i = 0; i < com_mod.Ad.nrows(); i++) {
-                lA(i+s,Ac) = c1i*(lY(i+s,Ac) - com_mod.Yo(i+s,Ac) + c2*com_mod.Ao(i+s,Ac));
-                com_mod.Ad(i,Ac) = c1i*(lD(i+s,Ac) - com_mod.Do(i+s,Ac) + c2*com_mod.Ad(i,Ac));
+                lA(i+s,Ac) = c1i*(lY(i+s,Ac) - Yo(i+s,Ac) + c2*Ao(i+s,Ac));
+                com_mod.Ad(i,Ac) = c1i*(lD(i+s,Ac) - Do(i+s,Ac) + c2*com_mod.Ad(i,Ac));
               }
             }
 
@@ -964,7 +992,7 @@ void set_bc_dir(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<dou
             for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
               int Ac = com_mod.msh[iM].fa[iFa].gN(a);
               for (int i = 0; i < com_mod.Ad.nrows(); i++) {
-                lD(i+s,Ac) = c1*lY(i+s,Ac) - c2*com_mod.Ad(i,Ac) + com_mod.Do(i+s,Ac);
+                lD(i+s,Ac) = c1*lY(i+s,Ac) - c2*com_mod.Ad(i,Ac) + Do(i+s,Ac);
                 com_mod.Ad(i,Ac) = lY(i+s,Ac);
               }
             }
@@ -1044,8 +1072,11 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
 
 /// @brief Weak treatment of Dirichlet boundary conditions
 //
-void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg)
+void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   const int cEq = com_mod.cEq;
@@ -1058,14 +1089,17 @@ void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>&
     if (!bc.weakDir) {
       continue;
     }
-    set_bc_dir_wl(com_mod, bc, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], Yg, Dg);
+    set_bc_dir_wl(com_mod, bc, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], Yg, Dg, solutions);
   }
 }
 
 /// @brief Reproduces Fortran 'SETBCDIRWL'.
 //
-void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg)
+void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_set_bc_dir_wl
@@ -1252,7 +1286,7 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
       double Jac = sqrt(utils::norm(nV));
       nV = nV / Jac;
       double w = lFa.w(g) * Jac;
@@ -1293,8 +1327,12 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
 
 /// @brief Set outlet BCs.
 //
-void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg)
+void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& Yn = solutions.current.get_velocity();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_set_bc_neu
@@ -1325,18 +1363,22 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
       dmsg << "iFa: " << iFa+1;
       dmsg << "name: " << com_mod.msh[iM].fa[iFa].name;
       #endif
-      set_bc_neu_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], Yg, Dg);
+      set_bc_neu_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], Yg, Dg, solutions);
 
-    } else if (utils::btest(bc.bType,iBC_trac)) { 
-      set_bc_trac_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]); 
+    } else if (utils::btest(bc.bType,iBC_trac)) {
+      set_bc_trac_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], solutions);
     } 
   }
 }
 
 /// @brief Set Neumann BC
 //
-void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg) 
+void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& Yn = solutions.current.get_velocity();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_set_bc_neu_l
@@ -1349,7 +1391,6 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   auto& eq = com_mod.eq[cEq];
   int tnNo = com_mod.tnNo;
   int nsd = com_mod.nsd;
-  auto& Yn = com_mod.Yn;
 
   int nNo = lFa.nNo;
   Vector<double> h(1), rtmp(1);
@@ -1385,7 +1426,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        }
 
      } else if (utils::btest(lBc.bType,iBC_res)) {
-       h(0) = lBc.r * all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, eq.s+nsd-1);
+       h(0) = lBc.r * all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions, eq.s+nsd-1, false, consts::MechanicalConfigurationType::reference);
 
      } else if (utils::btest(lBc.bType,iBC_std)) {
        h(0) = lBc.g;
@@ -1426,10 +1467,10 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // Add Neumann BCs contribution to the residual (and tangent if flwP)
   //
   if (lBc.flwP) {
-    eq_assem::b_neu_folw_p(com_mod, lBc, lFa, hg, Dg);
+    eq_assem::b_neu_folw_p(com_mod, lBc, lFa, hg, Dg, solutions);
 
   } else {
-    eq_assem::b_assem_neu_bc(com_mod, lFa, hg, Yg);
+    eq_assem::b_assem_neu_bc(com_mod, lFa, hg, Yg, solutions);
   }
 
 
@@ -1439,20 +1480,23 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // a follower pressure load (struct/ustruct) or a moving mesh (FSI)
   if (utils::btest(lBc.bType, iBC_res)) {
     if (lBc.flwP || com_mod.mvMsh) {
-      eq_assem::fsi_ls_upd(com_mod, lBc, lFa);
+      eq_assem::fsi_ls_upd(com_mod, lBc, lFa, solutions);
     }
   }
   // Now treat Robin BC (stiffness and damping) here
   if (lBc.robin_bc.is_initialized()) {
-    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, Yg, Dg);
+    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, Yg, Dg, solutions);
   }
 }
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
 void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
-  const Array<double>& Yg, const Array<double>& Dg)
+  const Array<double>& Yg, const Array<double>& Dg, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_set_bc_rbnl_l
@@ -1506,10 +1550,10 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
       double Jac = sqrt(utils::norm(nV));
       nV  = nV / Jac;
-      double w = lFa.w(g) * Jac; 
+      double w = lFa.w(g) * Jac;
       N = lFa.N.col(g);
       Vector<double> u(nsd), ud(nsd);
 
@@ -1700,12 +1744,15 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
 
 /// @brief Set Traction BC
 //
-void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa) 
+void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
-  #define n_debug_set_bc_trac_l 
-  #ifdef debug_set_bc_trac_l 
+  #define n_debug_set_bc_trac_l
+  #ifdef debug_set_bc_trac_l
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
@@ -1786,7 +1833,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
       double Jac = sqrt(utils::norm(nV));
       double w = lFa.w(g)*Jac;
       N = lFa.N.col(g);

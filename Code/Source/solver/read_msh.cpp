@@ -52,9 +52,9 @@ std::map<consts::ElementType, std::function<void(mshType&)>> check_element_conn 
 
 /// @brief Calculate element Aspect Ratio of a given mesh
 //
-void calc_elem_ar(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag)
+void calc_elem_ar(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag, const Array<double>& Do)
 {
-  #define n_debug_calc_elem_ar  
+  #define n_debug_calc_elem_ar
   #ifdef debug_calc_elem_ar
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
@@ -65,7 +65,7 @@ void calc_elem_ar(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag
 
   if (lM.eType != ElementType::TET4 && lM.eType != ElementType::TRI3) {
     //     wrn = "AR is computed for TRI and TET elements only"
-    return; 
+    return;
   }
 
   const int nsd = com_mod.nsd;
@@ -85,7 +85,7 @@ void calc_elem_ar(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag
       xl.set_col(a, com_mod.x.col(Ac));
       if (com_mod.mvMsh) {
         for (int i = 0; i < nsd; i++) {
-          dol(i,a) = com_mod.Do(i+nsd+1,Ac);
+          dol(i,a) = Do(i+nsd+1,Ac);
         }
       }
     }
@@ -147,10 +147,10 @@ void calc_elem_ar(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag
 
 /// @brief Calculate element Jacobian of a given mesh.
 //
-void calc_elem_jac(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag)
+void calc_elem_jac(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag, const Array<double>& Do)
 {
-  #define n_debug_calc_elem_jac 
-  #ifdef debug_calc_elem_jac 
+  #define n_debug_calc_elem_jac
+  #ifdef debug_calc_elem_jac
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "lM.nEl: " << lM.nEl;
@@ -161,7 +161,7 @@ void calc_elem_jac(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rfla
   #endif
   using namespace consts;
   const int nsd = com_mod.nsd;
-  rflag = false; 
+  rflag = false;
 
   // Careful here, lM.nEl can be 0.
   //
@@ -182,8 +182,8 @@ void calc_elem_jac(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rfla
       xl.set_col(a, com_mod.x.col(Ac));
       if (com_mod.mvMsh) {
         for (int i = 0; i < nsd; i++) {
-          dol(i,a) = com_mod.Do(i+nsd+1,Ac);
-          //dol(i,a) = com_mod.Do(i+nsd,Ac);
+          dol(i,a) = Do(i+nsd+1,Ac);
+          //dol(i,a) = Do(i+nsd,Ac);
         }
       }
     }
@@ -267,7 +267,7 @@ void calc_elem_jac(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rfla
 
 /// @brief Calculate element Skewness of a given mesh.
 //
-void calc_elem_skew(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag)
+void calc_elem_skew(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rflag, const Array<double>& Do)
 {
   #define n_debug_calc_elem_skew
   #ifdef debug_calc_elem_skew
@@ -299,7 +299,7 @@ void calc_elem_skew(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rfl
       xl.set_col(a, com_mod.x.col(Ac));
       if (com_mod.mvMsh) {
         for (int i = 0; i < nsd; i++) {
-          dol(i,a) = com_mod.Do(i+nsd+1,Ac);
+          dol(i,a) = Do(i+nsd+1,Ac);
         }
       }
     }
@@ -355,7 +355,7 @@ void calc_elem_skew(ComMod& com_mod, const CmMod& cm_mod, mshType& lM, bool& rfl
   #endif
 }
 
-void calc_mesh_props(ComMod& com_mod, const CmMod& cm_mod, const int nMesh, std::vector<mshType>& mesh)
+void calc_mesh_props(ComMod& com_mod, const CmMod& cm_mod, const int nMesh, std::vector<mshType>& mesh, const Array<double>& Do)
 {
   #define n_debug_calc_mesh_props
   #ifdef debug_calc_mesh_props
@@ -366,11 +366,11 @@ void calc_mesh_props(ComMod& com_mod, const CmMod& cm_mod, const int nMesh, std:
   using namespace consts;
   auto& rmsh = com_mod.rmsh;
   #ifdef debug_calc_mesh_props
-  dmsg << "nMesh: " << nMesh; 
-  dmsg << "resetSim: " << com_mod.resetSim; 
+  dmsg << "nMesh: " << nMesh;
+  dmsg << "resetSim: " << com_mod.resetSim;
   dmsg << "com_mod.cTS: " << com_mod.cTS;
-  dmsg << "rmsh.fTS: " << rmsh.fTS; 
-  dmsg << "rmsh.freq: " << rmsh.freq; 
+  dmsg << "rmsh.fTS: " << rmsh.fTS;
+  dmsg << "rmsh.freq: " << rmsh.freq;
   #endif
 
   for (int iM = 0; iM < nMesh; iM++) {
@@ -378,9 +378,9 @@ void calc_mesh_props(ComMod& com_mod, const CmMod& cm_mod, const int nMesh, std:
     dmsg << "----- mesh " + mesh[iM].name << " -----";
     #endif
     bool flag = false;
-    calc_elem_jac(com_mod, cm_mod, mesh[iM], flag);
-    calc_elem_skew(com_mod, cm_mod, mesh[iM], flag);
-    calc_elem_ar(com_mod, cm_mod, mesh[iM], flag);
+    calc_elem_jac(com_mod, cm_mod, mesh[iM], flag, Do);
+    calc_elem_skew(com_mod, cm_mod, mesh[iM], flag, Do);
+    calc_elem_ar(com_mod, cm_mod, mesh[iM], flag, Do);
     rmsh.flag[iM] = flag;
     #ifdef debug_calc_mesh_props
     dmsg << "mesh[iM].flag: " << rmsh.flag[iM];

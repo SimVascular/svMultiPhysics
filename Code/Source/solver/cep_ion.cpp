@@ -141,8 +141,11 @@ void cep_init_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doubl
 //-----------
 // State variable integration.
 //
-void cep_integ(Simulation* simulation, const int iEq, const int iDof, const Array<double>& Dg)
+void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  const auto& Dg = solutions.old.get_displacement();
+  auto& Yo = solutions.old.get_velocity();
   static bool IPASS = true;
 
   using namespace consts;
@@ -164,7 +167,6 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, const Arra
   auto& cem = cep_mod.cem;
   auto& eq = com_mod.eq[iEq];
 
-  auto& Yo = com_mod.Yo;
   auto& Xion = cep_mod.Xion;
   int nXion = cep_mod.nXion;
 

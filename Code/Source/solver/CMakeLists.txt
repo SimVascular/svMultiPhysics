@@ -181,6 +181,7 @@ set(CSRCS
   heatf.h heatf.cpp
   heats.h heats.cpp
   initialize.h initialize.cpp
+  Integrator.h Integrator.cpp
   l_elas.h l_elas.cpp
   lhsa.h lhsa.cpp
   ls.h ls.cpp
@@ -191,7 +192,6 @@ set(CSRCS
   nn.h nn.cpp
   output.h output.cpp
   load_msh.h load_msh.cpp
-  pic.h pic.cpp
   post.h post.cpp
   read_files.h read_files.cpp
   read_msh.h read_msh.cpp

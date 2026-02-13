@@ -38,7 +38,7 @@ namespace nn {
       double& Jac, Array<double>& ks);
 
   void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, const int nsd, const int insd,
-      const int eNoNb, const Array<double>& Nx, Vector<double>& n, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
+      const int eNoNb, const Array<double>& Nx, Vector<double>& n, const SolutionStates& solutions, consts::MechanicalConfigurationType cfg=consts::MechanicalConfigurationType::reference);
 
   void gnns(const int nsd, const int eNoN, const Array<double>& Nxi, Array<double>& xl, Vector<double>& nV, 
       Array<double>& gCov, Array<double>& gCnv);

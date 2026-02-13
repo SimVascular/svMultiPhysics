@@ -16,13 +16,13 @@ void create_boundary_integral_file(const ComMod& com_mod, CmMod& cm_mod, const e
 
 void create_volume_integral_file(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const std::string& file_name);
 
-void txt(Simulation* simulation, const bool flag);
+void txt(Simulation* simulation, const bool flag, const SolutionStates& solutions);
 
-void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m, 
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag);
+void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const SolutionStates& solutions);
 
-void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m, 
-    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag);
+void write_volume_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eqType& lEq, const int m,
+    const std::string file_name, const Array<double>& tmpV, const bool div, const bool pFlag, const SolutionStates& solutions);
 
 };
 
