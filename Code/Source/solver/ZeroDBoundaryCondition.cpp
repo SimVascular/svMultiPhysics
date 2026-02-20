@@ -21,148 +21,12 @@
 #include <fstream>
 
 
-// Map VTK cell types to ElementType (same as vtk_xml_parser.cpp)
-static consts::ElementType vtk_cell_type_to_element_type(int vtk_cell_type)
-{
-    using namespace consts;
-    switch (vtk_cell_type) {
-        case VTK_TRIANGLE: return ElementType::TRI3;
-        case VTK_QUADRATIC_TRIANGLE: return ElementType::TRI6;
-        case VTK_QUAD: return ElementType::QUD4;
-        case VTK_QUADRATIC_QUAD: return ElementType::QUD8;
-        case VTK_BIQUADRATIC_QUAD: return ElementType::QUD9;
-        case VTK_LINE: return ElementType::LIN1;
-        case VTK_TETRA: return ElementType::TET4;
-        case VTK_QUADRATIC_TETRA: return ElementType::TET10;
-        case VTK_HEXAHEDRON: return ElementType::HEX8;
-        case VTK_QUADRATIC_HEXAHEDRON: return ElementType::HEX20;
-        case VTK_TRIQUADRATIC_HEXAHEDRON: return ElementType::HEX27;
-        case VTK_WEDGE: return ElementType::WDG;
-        default:
-            throw std::runtime_error("[ZeroDBoundaryCondition] Unsupported VTK cell type " + 
-                                    std::to_string(vtk_cell_type) + " in cap VTP file.");
-    }
-}
-
 static std::string bc_type_to_string(consts::BoundaryConditionType type)
 {
     switch (type) {
         case consts::BoundaryConditionType::bType_Dir: return "Dirichlet";
         case consts::BoundaryConditionType::bType_Neu: return "Neumann";
         default: return "Unsupported";
-    }
-}
-
-// Helper functions to access cell data from VTP file
-namespace {
-    /// @brief Check if a cell data array exists in a VTP file
-    bool has_cell_data_in_vtp(const std::string& vtp_file_path, const std::string& data_name)
-    {
-        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-        reader->SetFileName(vtp_file_path.c_str());
-        reader->Update();
-        auto polydata = reader->GetOutput();
-        
-        if (polydata == nullptr) {
-            return false;
-        }
-        
-        int num_arrays = polydata->GetCellData()->GetNumberOfArrays();
-        for (int i = 0; i < num_arrays; i++) {
-            if (!strcmp(polydata->GetCellData()->GetArrayName(i), data_name.c_str())) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    /// @brief Get dimensions of a cell data array from a VTP file
-    /// @return Pair of (num_components, num_tuples), or (0, 0) if not found
-    std::pair<int, int> get_cell_data_dimensions_from_vtp(const std::string& vtp_file_path, const std::string& data_name)
-    {
-        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-        reader->SetFileName(vtp_file_path.c_str());
-        reader->Update();
-        auto polydata = reader->GetOutput();
-        
-        if (polydata == nullptr) {
-            return std::make_pair(0, 0);
-        }
-        
-        auto cell_data = polydata->GetCellData();
-        if (cell_data == nullptr) {
-            return std::make_pair(0, 0);
-        }
-        
-        auto vtk_array = cell_data->GetArray(data_name.c_str());
-        if (vtk_array == nullptr) {
-            return std::make_pair(0, 0);
-        }
-        
-        // Try to cast to vtkDoubleArray first
-        auto vtk_data = vtkDoubleArray::SafeDownCast(vtk_array);
-        if (vtk_data == nullptr) {
-            // If not double, try to get dimensions from the base array
-            // This handles cases where the array might be float or another numeric type
-            int num_comp = vtk_array->GetNumberOfComponents();
-            int num_tuples = vtk_array->GetNumberOfTuples();
-            return std::make_pair(num_comp, num_tuples);
-        }
-        
-        int num_comp = vtk_data->GetNumberOfComponents();
-        int num_tuples = vtk_data->GetNumberOfTuples();
-        
-        return std::make_pair(num_comp, num_tuples);
-    }
-    
-    /// @brief Copy cell data from a VTP file to an Array
-    void copy_cell_data_from_vtp(const std::string& vtp_file_path, const std::string& data_name, Array<double>& mesh_data)
-    {
-        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-        reader->SetFileName(vtp_file_path.c_str());
-        reader->Update();
-        auto polydata = reader->GetOutput();
-        
-        if (polydata == nullptr) {
-            return;
-        }
-        
-        auto cell_data = polydata->GetCellData();
-        if (cell_data == nullptr) {
-            return;
-        }
-        
-        auto vtk_array = cell_data->GetArray(data_name.c_str());
-        if (vtk_array == nullptr) {
-            return;
-        }
-        
-        int num_data = vtk_array->GetNumberOfTuples();
-        if (num_data == 0) {
-            return;
-        }
-        
-        int num_comp = vtk_array->GetNumberOfComponents();
-        
-        // Set the data - handle both double and float arrays
-        auto vtk_data = vtkDoubleArray::SafeDownCast(vtk_array);
-        if (vtk_data != nullptr) {
-            // Double array - direct copy
-            for (int i = 0; i < num_data; i++) {
-                auto tuple = vtk_data->GetTuple(i);
-                for (int j = 0; j < num_comp; j++) {
-                    mesh_data(j, i) = tuple[j];
-                }
-            }
-        } else {
-            // Other numeric type - convert to double
-            for (int i = 0; i < num_data; i++) {
-                for (int j = 0; j < num_comp; j++) {
-                    mesh_data(j, i) = vtk_array->GetComponent(i, j);
-                }
-            }
-        }
     }
 }
 
@@ -364,6 +228,398 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_
     // Load the cap VTP file if provided
     if (!cap_face_vtp_file_.empty()) {
         load_cap_face_vtp(cap_face_vtp_file_);
+    }
+}
+
+// =========================================================================
+// svZeroD block configuration
+// =========================================================================
+
+void ZeroDBoundaryCondition::set_block_name(const std::string& block_name)
+{
+    block_name_ = block_name;
+}
+
+const std::string& ZeroDBoundaryCondition::get_block_name() const
+{
+    return block_name_;
+}
+
+void ZeroDBoundaryCondition::set_face_name(const std::string& face_name)
+{
+    face_name_ = face_name;
+}
+
+const std::string& ZeroDBoundaryCondition::get_face_name() const
+{
+    return face_name_;
+}
+
+void ZeroDBoundaryCondition::set_solution_ids(int flow_id, int pressure_id, double in_out_sign)
+{
+    flow_sol_id_ = flow_id;
+    pressure_sol_id_ = pressure_id;
+    in_out_sign_ = in_out_sign;
+}
+
+int ZeroDBoundaryCondition::get_flow_sol_id() const
+{
+    return flow_sol_id_;
+}
+
+int ZeroDBoundaryCondition::get_pressure_sol_id() const
+{
+    return pressure_sol_id_;
+}
+
+double ZeroDBoundaryCondition::get_in_out_sign() const
+{
+    return in_out_sign_;
+}
+
+// =========================================================================
+// Flowrate computation and access
+// =========================================================================
+
+void ZeroDBoundaryCondition::set_follower_pressure_load(bool flwP)
+{
+    follower_pressure_load_ = flwP;
+}
+
+bool ZeroDBoundaryCondition::get_follower_pressure_load() const
+{
+    return follower_pressure_load_;
+}
+
+/// @brief Compute flowrates at the boundary face at old and new timesteps
+///
+/// This replicates the flowrate computation done in set_bc::calc_der_cpl_bc and
+/// set_bc::set_bc_cpl for coupled Neumann boundary conditions.
+///
+/// The flowrate is computed as the integral of velocity dotted with the face normal.
+/// For struct/ustruct physics, the integral is computed on the deformed configuration.
+/// For fluid/FSI/CMM physics, the integral is computed on the reference configuration.
+void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys)
+{
+    using namespace consts;
+    
+    
+    if (face_ == nullptr) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Face is not set.");
+    }
+    
+    int nsd = com_mod.nsd;
+    
+    // Determine mechanical configuration based on physics type
+    MechanicalConfigurationType cfg_o = MechanicalConfigurationType::reference;
+    MechanicalConfigurationType cfg_n = MechanicalConfigurationType::reference;
+    
+    // For struct or ustruct, use old and new configurations to compute flowrate integral
+    if ((phys == EquationType::phys_struct) || (phys == EquationType::phys_ustruct)) {
+        // Must use follower pressure load for 0D coupling with struct/ustruct
+        if (!follower_pressure_load_) {
+            throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Follower pressure load must be used for 0D coupling with struct/ustruct");
+        }
+        cfg_o = MechanicalConfigurationType::old_timestep;
+        cfg_n = MechanicalConfigurationType::new_timestep;
+    }
+    // For fluid, FSI, or CMM, use reference configuration to compute flowrate integral
+    else if ((phys == EquationType::phys_fluid) || (phys == EquationType::phys_FSI) || (phys == EquationType::phys_CMM)) {
+        cfg_o = MechanicalConfigurationType::reference;
+        cfg_n = MechanicalConfigurationType::reference;
+    }
+    else {
+        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Invalid physics type for 0D coupling");
+    }
+    
+    // Compute flowrates by integrating velocity over face
+    // The all_fun::integ function with indices 0 to nsd-1 integrates the velocity vector
+    // dotted with the face normal, giving the volumetric flowrate
+    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, cfg_o);
+    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, cfg_n);
+    
+    // Add cap contribution if cap exists
+    if (has_cap()) {
+        double Qo_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yo, 0, nsd-1, cfg_o);
+        double Qn_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yn, 0, nsd-1, cfg_n);
+        Qo_ += Qo_cap;
+        Qn_ += Qn_cap;
+    }
+    
+}
+
+/// @brief Compute average pressures at the boundary face at old and new timesteps
+///
+/// This replicates the pressure computation done in set_bc::calc_der_cpl_bc and
+/// set_bc::set_bc_cpl for coupled Dirichlet boundary conditions.
+///
+/// The pressure is computed as the average pressure over the face by integrating
+/// pressure (at index nsd in the solution vector) and dividing by the face area.
+void ZeroDBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod)
+{
+    using namespace consts;
+    
+    
+    if (face_ == nullptr) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::compute_pressures] Face is not set.");
+    }
+    
+    int nsd = com_mod.nsd;
+    double area = face_->area;
+    
+    Po_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, nsd) / area;
+    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, nsd) / area;
+    
+}
+
+double ZeroDBoundaryCondition::get_Qo() const
+{
+    return Qo_;
+}
+
+double ZeroDBoundaryCondition::get_Qn() const
+{
+    return Qn_;
+}
+
+void ZeroDBoundaryCondition::set_flowrates(double Qo, double Qn)
+{
+    Qo_ = Qo;
+    Qn_ = Qn;
+}
+
+void ZeroDBoundaryCondition::perturb_flowrate(double diff)
+{
+    Qn_ += diff;
+}
+
+// =========================================================================
+// Pressure access
+// =========================================================================
+
+void ZeroDBoundaryCondition::set_pressure(double pressure)
+{
+    pressure_ = pressure;
+}
+
+double ZeroDBoundaryCondition::get_pressure() const
+{
+    return pressure_;
+}
+
+double ZeroDBoundaryCondition::get_Po() const
+{
+    return Po_;
+}
+
+double ZeroDBoundaryCondition::get_Pn() const
+{
+    return Pn_;
+}
+
+// =========================================================================
+// State management
+// =========================================================================
+
+ZeroDBoundaryCondition::State ZeroDBoundaryCondition::save_state() const
+{
+    return State{Qn_, pressure_};
+}
+
+void ZeroDBoundaryCondition::restore_state(const State& state)
+{
+    Qn_ = state.Qn;
+    pressure_ = state.pressure;
+}
+
+// =========================================================================
+// Utility methods
+// =========================================================================
+
+void ZeroDBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
+{
+    #define n_debug_zerod_distribute
+
+    // Update face pointer to local face
+    face_ = &face;
+
+    const bool is_slave = cm.slv(cm_mod);
+    
+    // Distribute BC type (Dirichlet or Neumann)
+    int bc_type_int = static_cast<int>(bc_type_);
+    cm.bcast(cm_mod, &bc_type_int);
+    if (is_slave) {
+        bc_type_ = static_cast<consts::BoundaryConditionType>(bc_type_int);
+    }
+    
+    // Distribute block name
+    cm.bcast(cm_mod, block_name_);
+    
+    // Distribute face name
+    cm.bcast(cm_mod, face_name_);
+    
+    // Distribute follower pressure load flag
+    cm.bcast(cm_mod, &follower_pressure_load_);
+    
+    // Distribute solution IDs
+    cm.bcast(cm_mod, &flow_sol_id_);
+    cm.bcast(cm_mod, &pressure_sol_id_);
+    cm.bcast(cm_mod, &in_out_sign_);
+    
+}
+
+void ZeroDBoundaryCondition::set_face(const faceType& face)
+{
+    face_ = &face;
+}
+
+const faceType* ZeroDBoundaryCondition::get_face() const
+{
+    return face_;
+}
+
+bool ZeroDBoundaryCondition::is_initialized() const
+{
+    return (face_ != nullptr);
+}
+
+// =========================================================================
+// Cap: helpers and implementation (all cap-related code below)
+// =========================================================================
+
+// Map VTK cell types to ElementType (same as vtk_xml_parser.cpp)
+static consts::ElementType vtk_cell_type_to_element_type(int vtk_cell_type)
+{
+    using namespace consts;
+    switch (vtk_cell_type) {
+        case VTK_TRIANGLE: return ElementType::TRI3;
+        case VTK_QUADRATIC_TRIANGLE: return ElementType::TRI6;
+        case VTK_QUAD: return ElementType::QUD4;
+        case VTK_QUADRATIC_QUAD: return ElementType::QUD8;
+        case VTK_BIQUADRATIC_QUAD: return ElementType::QUD9;
+        case VTK_LINE: return ElementType::LIN1;
+        case VTK_TETRA: return ElementType::TET4;
+        case VTK_QUADRATIC_TETRA: return ElementType::TET10;
+        case VTK_HEXAHEDRON: return ElementType::HEX8;
+        case VTK_QUADRATIC_HEXAHEDRON: return ElementType::HEX20;
+        case VTK_TRIQUADRATIC_HEXAHEDRON: return ElementType::HEX27;
+        case VTK_WEDGE: return ElementType::WDG;
+        default:
+            throw std::runtime_error("[ZeroDBoundaryCondition] Unsupported VTK cell type " + 
+                                    std::to_string(vtk_cell_type) + " in cap VTP file.");
+    }
+}
+
+// Helper functions to access cell data from VTP file
+namespace {
+    /// @brief Check if a cell data array exists in a VTP file
+    bool has_cell_data_in_vtp(const std::string& vtp_file_path, const std::string& data_name)
+    {
+        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+        reader->SetFileName(vtp_file_path.c_str());
+        reader->Update();
+        auto polydata = reader->GetOutput();
+        
+        if (polydata == nullptr) {
+            return false;
+        }
+        
+        int num_arrays = polydata->GetCellData()->GetNumberOfArrays();
+        for (int i = 0; i < num_arrays; i++) {
+            if (!strcmp(polydata->GetCellData()->GetArrayName(i), data_name.c_str())) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// @brief Get dimensions of a cell data array from a VTP file
+    /// @return Pair of (num_components, num_tuples), or (0, 0) if not found
+    std::pair<int, int> get_cell_data_dimensions_from_vtp(const std::string& vtp_file_path, const std::string& data_name)
+    {
+        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+        reader->SetFileName(vtp_file_path.c_str());
+        reader->Update();
+        auto polydata = reader->GetOutput();
+        
+        if (polydata == nullptr) {
+            return std::make_pair(0, 0);
+        }
+        
+        auto cell_data = polydata->GetCellData();
+        if (cell_data == nullptr) {
+            return std::make_pair(0, 0);
+        }
+        
+        auto vtk_array = cell_data->GetArray(data_name.c_str());
+        if (vtk_array == nullptr) {
+            return std::make_pair(0, 0);
+        }
+        
+        // Try to cast to vtkDoubleArray first
+        auto vtk_data = vtkDoubleArray::SafeDownCast(vtk_array);
+        if (vtk_data == nullptr) {
+            // If not double, try to get dimensions from the base array
+            // This handles cases where the array might be float or another numeric type
+            int num_comp = vtk_array->GetNumberOfComponents();
+            int num_tuples = vtk_array->GetNumberOfTuples();
+            return std::make_pair(num_comp, num_tuples);
+        }
+        
+        int num_comp = vtk_data->GetNumberOfComponents();
+        int num_tuples = vtk_data->GetNumberOfTuples();
+        
+        return std::make_pair(num_comp, num_tuples);
+    }
+    
+    /// @brief Copy cell data from a VTP file to an Array
+    void copy_cell_data_from_vtp(const std::string& vtp_file_path, const std::string& data_name, Array<double>& mesh_data)
+    {
+        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+        reader->SetFileName(vtp_file_path.c_str());
+        reader->Update();
+        auto polydata = reader->GetOutput();
+        
+        if (polydata == nullptr) {
+            return;
+        }
+        
+        auto cell_data = polydata->GetCellData();
+        if (cell_data == nullptr) {
+            return;
+        }
+        
+        auto vtk_array = cell_data->GetArray(data_name.c_str());
+        if (vtk_array == nullptr) {
+            return;
+        }
+        
+        int num_data = vtk_array->GetNumberOfTuples();
+        if (num_data == 0) {
+            return;
+        }
+        
+        int num_comp = vtk_array->GetNumberOfComponents();
+        
+        // Set the data - handle both double and float arrays
+        auto vtk_data = vtkDoubleArray::SafeDownCast(vtk_array);
+        if (vtk_data != nullptr) {
+            // Double array - direct copy
+            for (int i = 0; i < num_data; i++) {
+                auto tuple = vtk_data->GetTuple(i);
+                for (int j = 0; j < num_comp; j++) {
+                    mesh_data(j, i) = tuple[j];
+                }
+            }
+        } else {
+            // Other numeric type - convert to double
+            for (int i = 0; i < num_data; i++) {
+                for (int j = 0; j < num_comp; j++) {
+                    mesh_data(j, i) = vtk_array->GetComponent(i, j);
+                }
+            }
+        }
     }
 }
 
@@ -603,288 +859,6 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     
     cap_loaded_ = true;
     
-}
-
-// =========================================================================
-// svZeroD block configuration
-// =========================================================================
-
-void ZeroDBoundaryCondition::set_block_name(const std::string& block_name)
-{
-    block_name_ = block_name;
-}
-
-const std::string& ZeroDBoundaryCondition::get_block_name() const
-{
-    return block_name_;
-}
-
-void ZeroDBoundaryCondition::set_face_name(const std::string& face_name)
-{
-    face_name_ = face_name;
-}
-
-const std::string& ZeroDBoundaryCondition::get_face_name() const
-{
-    return face_name_;
-}
-
-void ZeroDBoundaryCondition::set_solution_ids(int flow_id, int pressure_id, double in_out_sign)
-{
-    flow_sol_id_ = flow_id;
-    pressure_sol_id_ = pressure_id;
-    in_out_sign_ = in_out_sign;
-}
-
-int ZeroDBoundaryCondition::get_flow_sol_id() const
-{
-    return flow_sol_id_;
-}
-
-int ZeroDBoundaryCondition::get_pressure_sol_id() const
-{
-    return pressure_sol_id_;
-}
-
-double ZeroDBoundaryCondition::get_in_out_sign() const
-{
-    return in_out_sign_;
-}
-
-// =========================================================================
-// Flowrate computation and access
-// =========================================================================
-
-void ZeroDBoundaryCondition::set_follower_pressure_load(bool flwP)
-{
-    follower_pressure_load_ = flwP;
-}
-
-bool ZeroDBoundaryCondition::get_follower_pressure_load() const
-{
-    return follower_pressure_load_;
-}
-
-/// @brief Compute flowrates at the boundary face at old and new timesteps
-///
-/// This replicates the flowrate computation done in set_bc::calc_der_cpl_bc and
-/// set_bc::set_bc_cpl for coupled Neumann boundary conditions.
-///
-/// The flowrate is computed as the integral of velocity dotted with the face normal.
-/// For struct/ustruct physics, the integral is computed on the deformed configuration.
-/// For fluid/FSI/CMM physics, the integral is computed on the reference configuration.
-void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys)
-{
-    using namespace consts;
-    
-    
-    if (face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Face is not set.");
-    }
-    
-    int nsd = com_mod.nsd;
-    
-    // Determine mechanical configuration based on physics type
-    MechanicalConfigurationType cfg_o = MechanicalConfigurationType::reference;
-    MechanicalConfigurationType cfg_n = MechanicalConfigurationType::reference;
-    
-    // For struct or ustruct, use old and new configurations to compute flowrate integral
-    if ((phys == EquationType::phys_struct) || (phys == EquationType::phys_ustruct)) {
-        // Must use follower pressure load for 0D coupling with struct/ustruct
-        if (!follower_pressure_load_) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Follower pressure load must be used for 0D coupling with struct/ustruct");
-        }
-        cfg_o = MechanicalConfigurationType::old_timestep;
-        cfg_n = MechanicalConfigurationType::new_timestep;
-    }
-    // For fluid, FSI, or CMM, use reference configuration to compute flowrate integral
-    else if ((phys == EquationType::phys_fluid) || (phys == EquationType::phys_FSI) || (phys == EquationType::phys_CMM)) {
-        cfg_o = MechanicalConfigurationType::reference;
-        cfg_n = MechanicalConfigurationType::reference;
-    }
-    else {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Invalid physics type for 0D coupling");
-    }
-    
-    // Compute flowrates by integrating velocity over face
-    // The all_fun::integ function with indices 0 to nsd-1 integrates the velocity vector
-    // dotted with the face normal, giving the volumetric flowrate
-    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, cfg_o);
-    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, cfg_n);
-    
-    // Add cap contribution if cap exists
-    if (has_cap()) {
-        double Qo_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yo, 0, nsd-1, cfg_o);
-        double Qn_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yn, 0, nsd-1, cfg_n);
-        Qo_ += Qo_cap;
-        Qn_ += Qn_cap;
-    }
-    
-}
-
-/// @brief Compute average pressures at the boundary face at old and new timesteps
-///
-/// This replicates the pressure computation done in set_bc::calc_der_cpl_bc and
-/// set_bc::set_bc_cpl for coupled Dirichlet boundary conditions.
-///
-/// The pressure is computed as the average pressure over the face by integrating
-/// pressure (at index nsd in the solution vector) and dividing by the face area.
-void ZeroDBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod)
-{
-    using namespace consts;
-    
-    
-    if (face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_pressures] Face is not set.");
-    }
-    
-    int nsd = com_mod.nsd;
-    double area = face_->area;
-    
-    Po_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, nsd) / area;
-    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, nsd) / area;
-    
-}
-
-double ZeroDBoundaryCondition::get_Qo() const
-{
-    return Qo_;
-}
-
-double ZeroDBoundaryCondition::get_Qn() const
-{
-    return Qn_;
-}
-
-void ZeroDBoundaryCondition::set_flowrates(double Qo, double Qn)
-{
-    Qo_ = Qo;
-    Qn_ = Qn;
-}
-
-void ZeroDBoundaryCondition::perturb_flowrate(double diff)
-{
-    Qn_ += diff;
-}
-
-// =========================================================================
-// Pressure access
-// =========================================================================
-
-void ZeroDBoundaryCondition::set_pressure(double pressure)
-{
-    pressure_ = pressure;
-}
-
-double ZeroDBoundaryCondition::get_pressure() const
-{
-    return pressure_;
-}
-
-double ZeroDBoundaryCondition::get_Po() const
-{
-    return Po_;
-}
-
-double ZeroDBoundaryCondition::get_Pn() const
-{
-    return Pn_;
-}
-
-// =========================================================================
-// State management
-// =========================================================================
-
-ZeroDBoundaryCondition::State ZeroDBoundaryCondition::save_state() const
-{
-    return State{Qn_, pressure_};
-}
-
-void ZeroDBoundaryCondition::restore_state(const State& state)
-{
-    Qn_ = state.Qn;
-    pressure_ = state.pressure;
-}
-
-// =========================================================================
-// Utility methods
-// =========================================================================
-
-void ZeroDBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
-{
-    #define n_debug_zerod_distribute
-
-    // Update face pointer to local face
-    face_ = &face;
-
-    const bool is_slave = cm.slv(cm_mod);
-    
-    // Distribute BC type (Dirichlet or Neumann)
-    int bc_type_int = static_cast<int>(bc_type_);
-    cm.bcast(cm_mod, &bc_type_int);
-    if (is_slave) {
-        bc_type_ = static_cast<consts::BoundaryConditionType>(bc_type_int);
-    }
-    
-    // Distribute block name
-    cm.bcast(cm_mod, block_name_);
-    
-    // Distribute face name
-    cm.bcast(cm_mod, face_name_);
-    
-    // Distribute follower pressure load flag
-    cm.bcast(cm_mod, &follower_pressure_load_);
-    
-    // Distribute solution IDs
-    cm.bcast(cm_mod, &flow_sol_id_);
-    cm.bcast(cm_mod, &pressure_sol_id_);
-    cm.bcast(cm_mod, &in_out_sign_);
-    
-    // Distribute cap VTP file path
-    cm.bcast(cm_mod, cap_face_vtp_file_);
-    
-    // Load cap on all processes if not already loaded
-    // Note: This must happen after face_ is set (line 513) because load_cap_face_vtp uses face_->iM
-    // On slave processes, cap won't be loaded yet, so we need to load it
-    // On master process, cap is already loaded in constructor, but we reload to ensure consistency
-    if (!cap_face_vtp_file_.empty()) {
-        if (face_ == nullptr) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::distribute] Cannot load cap: face_ is null.");
-        }
-        // Always reload on slave processes, reload on master to ensure consistency after face_ update
-        try {
-            load_cap_face_vtp(cap_face_vtp_file_);
-        } catch (const std::exception& e) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::distribute] Failed to load cap VTP file '" + 
-                                    cap_face_vtp_file_ + "' on process " + std::to_string(cm.idcm()) + ": " + e.what());
-        }
-    } else {
-        // If cap file path is empty, clear any existing cap
-        cap_loaded_ = false;
-        cap_face_.reset();
-        cap_gnNo_to_tnNo_.clear();
-        cap_area_computed_ = false;
-        cap_initial_normals_.resize(0, 0);
-    }
-    
-    // Note: Cap integration initialization happens in initialize() after distribute()
-    // sets up com_mod.ltg for each process. The gnNo_to_tnNo mapping will be rebuilt in initialize().
-    
-}
-
-void ZeroDBoundaryCondition::set_face(const faceType& face)
-{
-    face_ = &face;
-}
-
-const faceType* ZeroDBoundaryCondition::get_face() const
-{
-    return face_;
-}
-
-bool ZeroDBoundaryCondition::is_initialized() const
-{
-    return (face_ != nullptr);
 }
 
 // =========================================================================
