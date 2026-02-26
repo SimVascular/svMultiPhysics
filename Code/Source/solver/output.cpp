@@ -322,8 +322,6 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
             urisClsFlagChar[i] = com_mod.uris[i].clsFlg ? 1 : 0;}
           restart_file.write((char*)urisCnt.data(), urisCnt.msize());
           restart_file.write(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
-        } else {
-          restart_file.write((char*)Dn.data(), Dn.msize());
         }
       }
 
