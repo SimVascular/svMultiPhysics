@@ -1470,6 +1470,7 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
   cm.bcast(cm_mod, &lEq.tol);
   cm.bcast(cm_mod, &lEq.useTLS);
   cm.bcast(cm_mod, &lEq.assmTLS);
+  cm.bcast(cm_mod, &lEq.expl_geom_cpl);
 
   #ifdef dist_eq
   dmsg << "lEq.nOutput: " << lEq.nOutput;

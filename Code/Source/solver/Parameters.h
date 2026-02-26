@@ -1378,6 +1378,11 @@ class EquationParameters : public ParameterLists
     Parameter<std::string> type;
     Parameter<bool> use_taylor_hood_type_basis;
 
+    // Explicit geometric coupling for FSI simulations: the fluid-structure equations
+    // are solved to convergence using the mesh displacement from the previous time step,
+    // and only then is the mesh equation solved.
+    Parameter<bool> explicit_geometric_coupling;
+
     // Inverse of Darcy permeability. Default value of 0.0 for Navier-Stokes and non-zero for Navier-Stokes-Brinkman
     Parameter<double> inverse_darcy_permeability;
 

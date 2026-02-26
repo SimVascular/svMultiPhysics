@@ -2154,6 +2154,7 @@ EquationParameters::EquationParameters()
 
   set_parameter("Tolerance", 0.5, !required, tolerance);
   set_parameter("Use_taylor_hood_type_basis", false, !required, use_taylor_hood_type_basis);
+  set_parameter("Explicit_geometric_coupling", false, !required, explicit_geometric_coupling);
 
 }
 
