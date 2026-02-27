@@ -36,10 +36,10 @@ var searchData=
   ['trilinosmatvec_33',['trilinosmatvec',['../class_trilinos_mat_vec.html',1,'TrilinosMatVec'],['../class_trilinos_mat_vec.html#a6a58fed912d0450689f95885c36684db',1,'TrilinosMatVec::TrilinosMatVec()']]],
   ['trilinosmatvec_20tt_20operator_34',['3. &lt;tt&gt;TrilinosMatVec&lt;/tt&gt; Operator',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md16',1,'']]],
   ['ts_35',['Ts',['../classstim_type.html#a11c427a48f79c75547d7b2591e8db9c2',1,'stimType']]],
-  ['tscale_36',['tscale',['../class_cep_mod_ap.html#ab466d4538a6ff0e73f24fce7a332e7df',1,'CepModAp::Tscale'],['../class_cep_mod_bo.html#a4d9138f955d7ed43c7045c860af5b95f',1,'CepModBo::Tscale'],['../class_cep_mod_fn.html#a0bba638a67749cecc5fc7c9eb5f04378',1,'CepModFn::Tscale'],['../class_cep_mod_ttp.html#a39e22e4ec7957eab3eb81056bbffb61a',1,'CepModTtp::Tscale']]],
+  ['tscale_36',['tscale',['../class_cep_mod_bo.html#a4d9138f955d7ed43c7045c860af5b95f',1,'CepModBo::Tscale'],['../class_cep_mod_ap.html#ab466d4538a6ff0e73f24fce7a332e7df',1,'CepModAp::Tscale'],['../class_cep_mod_fn.html#a0bba638a67749cecc5fc7c9eb5f04378',1,'CepModFn::Tscale'],['../class_cep_mod_ttp.html#a39e22e4ec7957eab3eb81056bbffb61a',1,'CepModTtp::Tscale']]],
   ['tt_20trilinos_20tt_20struct_37',['1. &lt;tt&gt;Trilinos&lt;/tt&gt; Struct',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md12',1,'']]],
   ['tt_20trilinosmatvec_20tt_20operator_38',['3. &lt;tt&gt;TrilinosMatVec&lt;/tt&gt; Operator',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md16',1,'']]],
-  ['ttp_39',['ttp',['../class_cep_mod.html#ad17e9172d8c1d358c50b236f6ca0ed9d',1,'CepMod']]],
+  ['ttp_39',['ttp',['../classcep_model_type.html#ae8ef089d32c942d1417f5b558c4a3fbe',1,'cepModelType::ttp'],['../class_cep_mod.html#ad17e9172d8c1d358c50b236f6ca0ed9d',1,'CepMod::ttp']]],
   ['type_20aliases_40',['2. Tpetra Type Aliases',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md14',1,'']]],
   ['types_41',['Solver Types',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md38',1,'']]]
 ];
