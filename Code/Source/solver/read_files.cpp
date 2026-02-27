@@ -1381,6 +1381,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   lEq.minItr = eq_params->min_iterations.value();
   lEq.maxItr = eq_params->max_iterations.value();
   lEq.tol = eq_params->tolerance.value();
+  lEq.expl_geom_cpl = eq_params->explicit_geometric_coupling.value();
 
   // Initialize coupled BC.
   //
@@ -1458,6 +1459,13 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   EquationNdop nDOP;
 
   set_equation_properties(simulation, eq_params, lEq, propL, outPuts, nDOP);
+
+  // Check if explicit geometric coupling is allowed for the equation
+  if (lEq.expl_geom_cpl) {
+    if (lEq.phys != EquationType::phys_FSI) {
+      throw std::runtime_error("Explicit geometric coupling is only allowed for FSI equation.");
+    }
+  }
 
   // Read VTK files or boundaries. [TODO:DaveP] this is not a correct comment.
   read_outputs(simulation, eq_params, lEq, nDOP, outPuts);
@@ -1796,7 +1804,9 @@ void read_files(Simulation* simulation, const std::string& file_name)
     if (eq.phys == EquationType::phys_mesh) {   
       if (!com_mod.mvMsh) {
         throw std::runtime_error("mesh equation can only be specified after FSI equation");
-      }     
+      }
+      // Use the explicit geometry coupling flag of the FSI equation.
+      eq.expl_geom_cpl = com_mod.eq[0].expl_geom_cpl; 
     }     
   }
   #ifdef debug_read_files
@@ -2214,6 +2224,18 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
       lDmn.stM.Tf.gt.lrmp = fiber_params.ramp_function.value();
       read_fiber_temporal_values_file(fiber_params, lDmn);
     }
+
+    // Read directional stress distribution parameters
+    if (fiber_params.directional_distribution.defined()) {
+      // Validate: ensures exactly 3 parameters specified (no empty blocks), sums to 1.0, non-negative
+      fiber_params.directional_distribution.validate();
+      
+      // Read the validated values (validate() ensures all three are defined)
+      lDmn.stM.Tf.eta_f = fiber_params.directional_distribution.fiber_direction.value();
+      lDmn.stM.Tf.eta_s = fiber_params.directional_distribution.sheet_direction.value();
+      lDmn.stM.Tf.eta_n = fiber_params.directional_distribution.sheet_normal_direction.value();
+    }
+    // Otherwise (no block at all), defaults (eta_f=1.0, eta_s=0.0, eta_n=0.0) from ComMod.h are used
   }
 
   // Check for shell model

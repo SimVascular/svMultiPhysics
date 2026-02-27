@@ -53,7 +53,7 @@ runs:
         git config --global --add safe.directory /__w/svMultiPhysics/svMultiPhysics
         git lfs pull
         cd tests
-        conda run -n svmultiphysics pytest -rPv --durations=0
+        conda run -n svmultiphysics pytest -v -rfEP --durations=0
         
     - name: Run unit tests
       shell: bash

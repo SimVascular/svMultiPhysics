@@ -27,7 +27,6 @@ class Array3
 
     static int num_allocated;
     static int active;
-    static bool show_index_check_message;
     static double memory_in_use;
     static double memory_returned;
     static bool write_enabled;
@@ -105,13 +104,6 @@ class Array3
 
     void check_index(const int i, const int j, const int k) const
     {
-      if (show_index_check_message) {
-        std::cout << "[Array3] **********************************" << std::endl;
-        std::cout << "[Array3] WARNING: Index checking is enabled " << std::endl;
-        std::cout << "[Array3] **********************************" << std::endl;
-        show_index_check_message = false;
-      }
-
       if (data_ == nullptr) {
         throw std::runtime_error(+"Accessing null data in Array3.");
       } 

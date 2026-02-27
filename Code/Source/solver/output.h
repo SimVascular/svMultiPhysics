@@ -21,6 +21,9 @@ void write_restart_header(ComMod& com_mod, std::array<double,3>& timeP, std::ofs
 
 void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq);
 
+void write_ris_data(ComMod& com_mod, std::ofstream& restart_file);
+void write_uris_data(ComMod& com_mod, std::ofstream& restart_file);
+
 };
 
 #endif

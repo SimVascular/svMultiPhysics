@@ -28,7 +28,6 @@ class Vector
     static double memory_in_use;
     static double memory_returned;
     static bool write_enabled;
-    static bool show_index_check_message;
     static void memory(const std::string& prefix="");
     static void stats(const std::string& prefix="");
 
@@ -574,13 +573,6 @@ class Vector
 
     void check_index(const int i) const
     {
-      if (show_index_check_message) {
-        std::cout << "[Vector] **********************************" << std::endl;
-        std::cout << "[Vector] WARNING: Index checking is enabled " << std::endl;
-        std::cout << "[Vector] **********************************" << std::endl;
-        show_index_check_message = false;
-      }
-
       if (data_ == nullptr) {
         std::cout << "[Vector] WARNING: Accessing null data in Vector at " << i << std::endl;
         return;

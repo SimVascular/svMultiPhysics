@@ -1470,6 +1470,7 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
   cm.bcast(cm_mod, &lEq.tol);
   cm.bcast(cm_mod, &lEq.useTLS);
   cm.bcast(cm_mod, &lEq.assmTLS);
+  cm.bcast(cm_mod, &lEq.expl_geom_cpl);
 
   #ifdef dist_eq
   dmsg << "lEq.nOutput: " << lEq.nOutput;
@@ -1732,7 +1733,11 @@ void dist_mat_consts(const ComMod& com_mod, const CmMod& cm_mod, const cmType& c
    cm.bcast(cm_mod, lStM.Tf.gt.r, "lStM.Tf.gt.r");
    cm.bcast(cm_mod, lStM.Tf.gt.i, "lStM.Tf.gt.i");
   }
+  
+  // Broadcast directional stress distribution parameters
+  cm.bcast(cm_mod, &lStM.Tf.eta_f);
   cm.bcast(cm_mod, &lStM.Tf.eta_s);
+  cm.bcast(cm_mod, &lStM.Tf.eta_n);
 
   // Distribute CANN parameter table
   if (lStM.isoType == ConstitutiveModelType::stArtificialNeuralNet) {

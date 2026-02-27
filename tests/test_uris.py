@@ -6,9 +6,16 @@ import subprocess
 base_folder = "uris"
 
 # Fields to test
-fields = ["Displacement", "Pressure", "Velocity", "WSS"]
+fields_cfd = ["Velocity", "Pressure", "Traction", "WSS", "Vorticity", "Divergence"]
 
-def test_pipe_uris_3d(n_proc):
-    test_folder = "pipe_uris_3d"
+def test_pipe_uris_cfd(n_proc):
+    test_folder = "pipe_uris_cfd"
     t_max = 5
-    run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
+    run_with_reference(base_folder, test_folder, fields_cfd, n_proc, t_max)
+
+fields_fsi = ["Displacement", "Pressure", "Velocity"]
+
+def test_pipe_uris_fsi(n_proc):
+    test_folder = "pipe_uris_fsi"
+    t_max = 5
+    run_with_reference(base_folder, test_folder, fields_fsi, n_proc, t_max)

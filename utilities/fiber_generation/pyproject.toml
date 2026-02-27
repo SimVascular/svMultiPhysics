@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sv-fibergen"
+version = "0.1.0"
+description = "Python + svMultiPhysics codes for biventricular fiber generation"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+
+dependencies = [
+    "numpy>=1.20.0",
+    "pyvista>=0.38.0",
+    "scipy>=1.7.0",
+    "matplotlib>=3.4.0",
+]
+
+[tool.setuptools]
+packages = ["fiber_generation"]
+
