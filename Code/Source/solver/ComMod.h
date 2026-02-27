@@ -1209,6 +1209,9 @@ class eqType
     /// @brief URIS: Outputs
     std::vector<outputType> outURIS;
 
+    /// @brief Explicit geometry coupling
+    bool expl_geom_cpl = false;
+
     /// @brief Body force associated with this equation
     std::vector<bfType> bf;
 };

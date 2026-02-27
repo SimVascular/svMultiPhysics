@@ -14,6 +14,9 @@ void init_from_vtu(Simulation* simulation, const std::string& fName, std::array<
 
 void initialize(Simulation* simulation, Vector<double>& timeP);
 
+void init_ris_data(ComMod& com_mod, std::ifstream& restart_file);
+void init_uris_data(ComMod& com_mod, std::ifstream& restart_file);
+
 void zero_init(Simulation* simulation);
 
 #endif

@@ -114,76 +114,58 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
       bin_file.read((char*)Do.data(), Do.msize());
 
       if (sstEq) {
+
         if (pstEq) {
           bin_file.read((char*)pS0.data(), pS0.msize());
           bin_file.read((char*)Ad.data(), Ad.msize());
+
         } else if (cepEq) {
           bin_file.read((char*)Ad.data(), Ad.msize());
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+
         } else if (risFlag) {
           bin_file.read((char*)Ad.data(), Ad.msize());
-          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
-          bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
-          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
-            com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+          init_ris_data(com_mod, bin_file); 
+
         } else if (urisFlag) {
           bin_file.read((char*)Ad.data(), Ad.msize());
-          Vector<int> urisCnt(com_mod.nUris);
-          bin_file.read((char*)urisCnt.data(), urisCnt.msize());
-          std::vector<char> urisClsFlagChar(com_mod.nUris);
-          bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
-          for (int i = 0; i < com_mod.nUris; i++) {
-            com_mod.uris[i].cnt = urisCnt(i);
-            com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
+          init_uris_data(com_mod, bin_file);
+
         } else {
           bin_file.read((char*)Ad.data(), Ad.msize());
         }
 
       } else {
+
         if (pstEq) {
           bin_file.read((char*)pS0.data(), pS0.msize());
+
         } else if (cepEq) {
           bin_file.read((char*)Xion.data(), Xion.msize());
           bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+
         } else if (risFlag) {
-          std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
-          bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
-          for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
-            com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+          init_ris_data(com_mod, bin_file); 
+
         } else if (urisFlag) {
-          Vector<int> urisCnt(com_mod.nUris);
-          bin_file.read((char*)urisCnt.data(), urisCnt.msize());
-          std::vector<char> urisClsFlagChar(com_mod.nUris);
-          bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
-          for (int i = 0; i < com_mod.nUris; i++) {
-            com_mod.uris[i].cnt = urisCnt(i);
-            com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
-        } else {
-          //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do
+          init_uris_data(com_mod, bin_file);
         }
+
       }
 
     // Mesh and Dn-Do variables not updated.
     //
     } else {
+
       if (cepEq) {
         bin_file.read((char*)Xion.data(), Xion.msize());
+
       } else if (risFlag) {
-        std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
-        bin_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
-        for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
-          com_mod.ris.clsFlg[i] = clsFlagChar[i] ? 1 : 0;}
+        init_ris_data(com_mod, bin_file); 
+
       } else if (urisFlag) {
-        Vector<int> urisCnt(com_mod.nUris);
-        bin_file.read((char*)urisCnt.data(), urisCnt.msize());
-        std::vector<char> urisClsFlagChar(com_mod.nUris);
-        bin_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
-        for (int i = 0; i < com_mod.nUris; i++) {
-          com_mod.uris[i].cnt = urisCnt(i);
-          com_mod.uris[i].clsFlg = urisClsFlagChar[i] ? 1 : 0;}
-      } else {
-        //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao
+        init_uris_data(com_mod, bin_file);
       }
     }
 
@@ -254,6 +236,30 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   #endif
 
   // if (ANY(tStamp != stamp)) err = "Simulation stamp"// " does not match with "//fName
+}
+
+void init_ris_data(ComMod& com_mod, std::ifstream& restart_file)
+{
+  std::vector<char> clsFlagChar(com_mod.ris.clsFlg.size());
+  restart_file.read(clsFlagChar.data(), clsFlagChar.size()*sizeof(char));
+
+  for (int i = 0; i < com_mod.ris.clsFlg.size(); i++) {
+    com_mod.ris.clsFlg[i] = clsFlagChar[i];
+  }
+}
+
+void init_uris_data(ComMod& com_mod, std::ifstream& restart_file)
+{
+  Vector<int> urisCnt(com_mod.nUris);
+  restart_file.read((char*)urisCnt.data(), urisCnt.msize());
+
+  std::vector<char> urisClsFlagChar(com_mod.nUris);
+  restart_file.read(urisClsFlagChar.data(), urisClsFlagChar.size()*sizeof(char));
+
+  for (int i = 0; i < com_mod.nUris; i++) {
+    com_mod.uris[i].cnt = urisCnt(i);
+    com_mod.uris[i].clsFlg = urisClsFlagChar[i];
+  }
 }
 
 /// @brief Using the saved VTU files for initialization

@@ -143,7 +143,12 @@ void picc(Simulation* simulation)
     pic_eth(simulation);
   }
 
-  if (eq.phys == Equation_FSI) {
+  // If explicit geometric coupling is not used, update the acceleration, 
+  // velocity, and displacement for the FSI equation as usual
+  if (eq.phys == Equation_FSI && !eq.expl_geom_cpl) {
+    if (com_mod.eq[1].phys != Equation_mesh) {
+      throw std::runtime_error("PICC: FSI simulation requires a mesh motion equation as the second equation.");
+    }
     int s = com_mod.eq[1].s;
     int e = com_mod.eq[1].e;
     #ifdef debug_picc
@@ -263,30 +268,62 @@ void picc(Simulation* simulation)
   //if (ALL(eq.ok)) RETURN
 
   if (eq.coupled) {
-    cEq = cEq + 1;
-    #ifdef debug_picc
-    dmsg << "eq " << " coupled ";
-    dmsg << "1st update cEq: " << cEq;
-    #endif
+    if (!eq.expl_geom_cpl) {
+      // For coupled equations, if explicit geometric coupling is not used, 
+      // increment the equation counter after each linear solve
+      cEq = cEq + 1;
+      #ifdef debug_picc
+      dmsg << "eq " << " coupled ";
+      dmsg << "1st update cEq: " << cEq;
+      #endif
 
-    auto& eqs = com_mod.eq;
-    if (std::count_if(eqs.begin(),eqs.end(),[](eqType& eq){return !eq.coupled || eq.ok;}) == eqs.size()) {
-      while (cEq < com_mod.nEq) {
-        if (!eqs[cEq].coupled) {
-          break;
+      auto& eqs = com_mod.eq;
+      if (std::count_if(eqs.begin(),eqs.end(),[](eqType& eq){return !eq.coupled || eq.ok;}) == eqs.size()) {
+        while (cEq < com_mod.nEq) {
+          if (!eqs[cEq].coupled) {
+            break;
+          }
+          cEq = cEq + 1;
         }
-        cEq = cEq + 1;
-      }
 
-    } else {
-      if (cEq >= com_mod.nEq) {
-        cEq = 0;
-      }
-
-      while (!eqs[cEq].coupled) {
-        cEq = cEq + 1;
+      } else {
         if (cEq >= com_mod.nEq) {
           cEq = 0;
+        }
+
+        while (!eqs[cEq].coupled) {
+          cEq = cEq + 1;
+          if (cEq >= com_mod.nEq) {
+            cEq = 0;
+          }
+        }
+      }
+    } else {
+      // If explicit geometric coupling is used for coupled equations, 
+      // only update the equation counter if the current equation is converged
+      if (eq.ok) {
+        cEq = cEq + 1;
+        if (cEq >= com_mod.nEq) {
+            cEq = 0;
+        }
+      }
+      // Update the acceleration, velocity, and displacement when the FSI equation is ok
+      if (eq.ok && eq.phys == Equation_FSI) {
+        if (com_mod.eq[1].phys != Equation_mesh) {
+          throw std::runtime_error("PICC: FSI simulation requires a mesh motion equation as the second equation.");
+        }
+        int s = com_mod.eq[1].s;
+        int e = com_mod.eq[1].e;
+        for (int Ac = 0; Ac < tnNo; Ac++) {
+          if (all_fun::is_domain(com_mod, eq, Ac, Equation_struct) || 
+              all_fun::is_domain(com_mod, eq, Ac, Equation_ustruct) || 
+              all_fun::is_domain(com_mod, eq, Ac, Equation_lElas)) {
+            for (int i = 0; i < e-s+1; i++) {
+              An(i+s,Ac) = An(i,Ac);
+              Yn(i+s,Ac) = Yn(i,Ac);
+              Dn(i+s,Ac) = Dn(i,Ac);
+            }
+          }
         }
       }
     }
