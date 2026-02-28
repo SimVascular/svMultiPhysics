@@ -25,6 +25,7 @@
 
 #include <fsils_api.hpp>
 
+#include <iostream>
 #include <math.h>
 
 namespace eq_assem {
@@ -349,7 +350,7 @@ void fsi_ls_upd(ComMod& com_mod, bcType& lBc, const faceType& lFa)
     auto cfg = MechanicalConfigurationType::new_timestep;
     // Create a CmMod instance for the reduce operation
     CmMod cm_mod;
-    
+
     // Copy cap data to linear solver face (handles both cap and non-cap cases)
     lBc.zerod_bc.copy_cap_data_to_linear_solver_face(com_mod, cm_mod, face, cfg);
   } else {
@@ -358,6 +359,8 @@ void fsi_ls_upd(ComMod& com_mod, bcType& lBc, const faceType& lFa)
     face.cap_val.resize(0, 0);
     face.cap_valM.resize(0, 0);
     face.cap_glob.resize(0);
+    face.cap_gN.resize(0);
+    face.has_cap = false;
   }
 };
 

@@ -227,10 +227,11 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
       }
       
       // If this is a ZeroD BC with a cap, also compute cap_valM from cap_val
-      if (face.cap_val.size() > 0 && face.cap_glob.size() > 0) {
+      if (face.has_cap) {
         int cap_nNo = face.cap_val.ncols();
         for (int a = 0; a < cap_nNo; a++) {
-          int Ac = face.cap_glob(a);  
+          int Ac = face.cap_glob(a);
+          if (Ac < 0) continue;  // cap node not on this rank
           for (int i = 0; i < std::min(face.dof,dof); i++) {
             face.cap_valM(i,a) = face.cap_val(i,a) * W(i,Ac);
           }

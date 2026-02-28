@@ -3,8 +3,10 @@
 
 #include "add_bc_mul.h"
 
-#include "CmMod.h"
 #include "dot.h"
+#include <iostream>
+
+#define debug_add_bc_mul
 
 namespace add_bc_mul {
 
@@ -44,38 +46,52 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
     auto& face = lhs.face[faIn];
+
+    // In the following calculations, we are computing the product of the
+    // coupled BC tangent contribution with the vector X (refer to Moghadam
+    // et al. 2013 eq. 27). This is computed by first constructing the vector
+    // v, which one of the integrals found in the expression, int{N_A * n_i} dGamma.
+    // Then, v is dotted with X to yield a quantity S. Then S is multiplied by
+    // by v again, and also multiplied by the appropriate coefficients in
+    // the expression.
+    // The calculations are complicated somewhat if there is a capping surface,
+    // but these complications are explained below.
+
+
+    // Calculating S, which is the inner product of the right integral (v) and
+    // the vector to be multiplied (X).
+
     int nsd = std::min(face.dof, dof);
 
     if (face.coupledFlag) {
-      bool isCapped = (face.cap_valM.size() > 0 && face.cap_glob.size() > 0);
-
-      // If face is shared across procs: use global dot for S so all ranks use the same S
+      // If face is shared across procs
       if (face.sharedFlag) {
         v = 0.0;
-        // Setting vector v = int{N_A n_i} dGamma (main face)
+        // Setting vector v = int{N_A n_i} dGamma
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);
           for (int i = 0; i < nsd; i++) {
             v(i,Ac) = face.valM(i,a);
           }
         }
-        // Global dot product for main face contribution to S
-        double S = dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, v, X);
-        // Cap contribution: local sum then reduce so S is consistent across ranks
-        if (isCapped) {
-          double local_cap_dot = 0.0;
-          for (int a = 0; a < face.cap_valM.ncols(); a++) {
+        // Computing S = coef * v^T * X
+        double S = coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, v, X);
+        
+        // Add cap surface contribution to S
+        // Cap surfaces contribute to flow rate but not pressure
+        if (face.has_cap) {
+          Array<double> vcap(dof,lhs.nNo);
+          vcap = 0.0;
+          for (int a = 0; a < face.cap_glob.size(); a++) {
             int Ac = face.cap_glob(a);
+            if (Ac < 0) continue;  // cap node not on this rank
             for (int i = 0; i < nsd; i++) {
-              local_cap_dot += face.cap_valM(i, a) * X(i, Ac);
+              vcap(i,Ac) = face.cap_valM(i,a);
             }
           }
-          double global_cap_dot = 0.0;
-          MPI_Allreduce(&local_cap_dot, &global_cap_dot, 1, cm_mod::mpreal, MPI_SUM, lhs.commu.comm);
-          S += global_cap_dot;
+          // Add capping surface contribution to S
+          S = S + coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, vcap, X);
         }
-        S = coef(faIn) * S;
-
         // Computing Y = Y + v * S
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);
@@ -83,20 +99,27 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
             Y(i,Ac) = Y(i,Ac) + v(i,Ac)*S;
           }
         }
-      } else {
-        // Face not shared: local S (and cap contribution) then local Y update
+      } 
+      // If face is not shared across procs
+      else  {
+        // Computing S = coef * v^T * X
         double S = 0.0;
+        double S_nocap = 0.0;
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);
           for (int i = 0; i < nsd; i++) {
             S = S + face.valM(i,a)*X(i,Ac);
+            S_nocap = S_nocap + face.valM(i,a)*X(i,Ac);
           }
         }
-        if (isCapped) {
-          for (int a = 0; a < face.cap_valM.ncols(); a++) {
+        
+        // If capping surface is present add its contribution to S
+        if (face.has_cap) {
+          for (int a = 0; a < face.cap_glob.size(); a++) {
             int Ac = face.cap_glob(a);
+            if (Ac < 0) continue;  // cap node not on this rank
             for (int i = 0; i < nsd; i++) {
-              S = S + face.cap_valM(i, a) * X(i, Ac);
+              S = S + face.cap_valM(i,a)*X(i,Ac);
             }
           }
         }

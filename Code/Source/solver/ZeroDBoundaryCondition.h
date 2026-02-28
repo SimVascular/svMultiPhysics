@@ -66,8 +66,8 @@ protected:
     bool follower_pressure_load_ = false;   ///< Whether to use follower pressure load (for struct/ustruct)
     
     /// @brief Cap surface data (for caps that don't share elements with mesh)
-    bool cap_loaded_ = false;                ///< Whether cap VTP has been loaded
-    std::unique_ptr<faceType> cap_face_;     ///< Temporary face structure for cap integration
+    bool has_cap_ = false;                   ///< True if cap is loaded (set on master at load; broadcast in distribute so all ranks agree)
+    std::unique_ptr<faceType> cap_face_;     ///< Temporary face structure for cap integration (non-null only on master after load)
     Vector<int> cap_global_node_ids_;        ///< GlobalNodeID from cap VTP file
     bool cap_area_computed_ = false;         ///< Whether cap area has been computed and printed
     std::unordered_map<int, int> cap_gnNo_to_tnNo_;  ///< Mapping from global node numbers to total node numbers for cap
@@ -76,6 +76,16 @@ protected:
                                             ///< If size is 0, no cap contribution (either no cap or not computed)
     Array<double> cap_initial_normals_;     ///< Initial element normals from VTP file (nsd x num_elems)
                                             ///< Used to ensure calculated normals point in the same direction
+
+    /// @brief Gathered cap node data on master (parallel only). Set by prepare_cap_gathered_data().
+    Array<double> cap_x_gathered_;
+    Array<double> cap_Do_gathered_;
+    Array<double> cap_Dn_gathered_;
+    Array<double> cap_Yo_gathered_;
+    Array<double> cap_Yn_gathered_;
+    int cap_nNo_gathered_ = 0;
+    /// @brief Broadcast cap global node IDs (gN) so all ranks can participate in gather; set in prepare_cap_gathered_data.
+    Vector<int> cap_gN_broadcast_;
 
 public:
     /// @brief Default constructor - creates an uninitialized object
@@ -261,15 +271,12 @@ public:
     /// @note This should be called after the cap is loaded and before any integration operations
     void initialize_cap_integration(ComMod& com_mod, const CmMod& cm_mod);
     
-    /// @brief Check if cap is loaded and valid
-    /// @return true if cap is loaded, false otherwise
-    bool has_cap() const { return cap_loaded_ && cap_face_ != nullptr; }
-    
-    /// @brief Compute the area of the cap surface
-    /// @param com_mod ComMod reference containing simulation data
-    /// @param cm_mod CmMod reference for communication
-    /// @return Area of the cap surface (0.0 if no cap is loaded)
-    double compute_cap_area(ComMod& com_mod, const CmMod& cm_mod);
+    /// @brief Check if this BC has a cap (loaded on master; broadcast in distribute so all ranks agree)
+    /// @return true if cap is present, false otherwise
+    bool has_cap() const { return has_cap_; }
+
+    /// @brief True if this rank has cap data (has_cap_ and cap_face_ loaded). In parallel, only master has cap_face_.
+    bool cap_face_ready() const { return has_cap_ && (cap_face_.get() != nullptr); }
     
     /// @brief Compute and update cap_valM (precomputed cap normal integrals)
     /// Similar to fsi_ls_upd, this computes ∫ N_A n_i dΓ over the cap surface
@@ -359,6 +366,40 @@ private:
     double integrate_vector_at_gauss_point(ComMod& com_mod, const Array<double>& s, int l, int nsd,
                                            int e, int g, const Vector<double>& n,
                                            const std::unordered_map<int, int>& gnNo_to_tnNo);
+
+    /// @brief Update cap element position using gathered data (for master after gather)
+    Array<double> update_cap_element_position(int e, consts::MechanicalConfigurationType cfg,
+                                              const Array<double>& cap_x, const Array<double>& cap_Do, const Array<double>& cap_Dn,
+                                              const std::unordered_map<int, int>& gnNo_to_capIdx);
+
+    /// @brief Integrate scalar at Gauss point using gathered cap data (cap node index map)
+    double integrate_scalar_at_gauss_point(const Array<double>& cap_s, int l_offset,
+                                           int e, int g, const std::unordered_map<int, int>& gnNo_to_capIdx);
+
+    /// @brief Integrate vector at Gauss point using gathered cap data
+    double integrate_vector_at_gauss_point(const Array<double>& cap_s, int l_offset, int nsd,
+                                           int e, int g, const Vector<double>& n,
+                                           const std::unordered_map<int, int>& gnNo_to_capIdx);
+
+    /// @brief Gather cap node positions and displacements (and field s) from all ranks to master
+    void gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
+                                        int l, int s_comps, consts::MechanicalConfigurationType cfg,
+                                        int cap_nNo, int nsd,
+                                        Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn, Array<double>& cap_s);
+
+    /// @brief Gather cap node data for both old and new timestep fields in one collective call
+    void gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
+                                        const Array<double>& s_old, const Array<double>& s_new,
+                                        int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n,
+                                        int cap_nNo, int nsd,
+                                        Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn,
+                                        Array<double>& cap_Yo, Array<double>& cap_Yn);
+
+public:
+    /// @brief Prepare gathered cap data for both Qo and Qn (parallel only; no-op in serial). Call once before integrate_over_cap.
+    void prepare_cap_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
+                                   const Array<double>& Yo, const Array<double>& Yn,
+                                   int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n);
 };
 
 #endif // ZEROD_BOUNDARY_CONDITION_H

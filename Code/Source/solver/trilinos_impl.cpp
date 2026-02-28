@@ -1157,6 +1157,7 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
         int cap_nNo = face.cap_val.ncols();
         for (int a = 0; a < cap_nNo; a++) {
           int Ac = face.cap_glob(a);
+          if (Ac < 0) continue;  // cap node not on this rank
           for (int i = 0; i < faDof; i++) {
             v(i,Ac) = v(i,Ac) + sqrt(fabs(res(faIn))) * face.cap_val(i,a);
           }

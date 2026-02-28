@@ -46,7 +46,7 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(const ZeroDBoundaryCondition& oth
     , pressure_sol_id_(other.pressure_sol_id_)
     , in_out_sign_(other.in_out_sign_)
     , follower_pressure_load_(other.follower_pressure_load_)
-    , cap_loaded_(other.cap_loaded_)
+    , has_cap_(other.has_cap_)
     , cap_global_node_ids_(other.cap_global_node_ids_)
     , cap_area_computed_(other.cap_area_computed_)
     , cap_gnNo_to_tnNo_(other.cap_gnNo_to_tnNo_)
@@ -96,7 +96,7 @@ ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(const ZeroDBoundaryCon
         pressure_sol_id_ = other.pressure_sol_id_;
         in_out_sign_ = other.in_out_sign_;
         follower_pressure_load_ = other.follower_pressure_load_;
-        cap_loaded_ = other.cap_loaded_;
+        has_cap_ = other.has_cap_;
         cap_global_node_ids_ = other.cap_global_node_ids_;
     cap_area_computed_ = other.cap_area_computed_;
     cap_gnNo_to_tnNo_ = other.cap_gnNo_to_tnNo_;
@@ -134,7 +134,7 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(ZeroDBoundaryCondition&& other) n
     , pressure_sol_id_(other.pressure_sol_id_)
     , in_out_sign_(other.in_out_sign_)
     , follower_pressure_load_(other.follower_pressure_load_)
-    , cap_loaded_(other.cap_loaded_)
+    , has_cap_(other.has_cap_)
     , cap_face_(std::move(other.cap_face_))
     , cap_global_node_ids_(std::move(other.cap_global_node_ids_))
     , cap_area_computed_(other.cap_area_computed_)
@@ -145,7 +145,7 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(ZeroDBoundaryCondition&& other) n
     // Reset moved-from object to valid state
     other.face_ = nullptr;
     other.logger_ = nullptr;
-    other.cap_loaded_ = false;
+    other.has_cap_ = false;
     other.cap_area_computed_ = false;
     other.flow_sol_id_ = -1;
     other.pressure_sol_id_ = -1;
@@ -174,7 +174,7 @@ ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(ZeroDBoundaryCondition
         pressure_sol_id_ = other.pressure_sol_id_;
         in_out_sign_ = other.in_out_sign_;
         follower_pressure_load_ = other.follower_pressure_load_;
-        cap_loaded_ = other.cap_loaded_;
+        has_cap_ = other.has_cap_;
         cap_face_ = std::move(other.cap_face_);
         cap_global_node_ids_ = std::move(other.cap_global_node_ids_);
     cap_area_computed_ = other.cap_area_computed_;
@@ -185,7 +185,7 @@ ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(ZeroDBoundaryCondition
         // Reset moved-from object to valid state
         other.face_ = nullptr;
         other.logger_ = nullptr;
-        other.cap_loaded_ = false;
+        other.has_cap_ = false;
         other.cap_area_computed_ = false;
         other.flow_sol_id_ = -1;
         other.pressure_sol_id_ = -1;
@@ -338,8 +338,9 @@ void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_
     Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, cfg_o);
     Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, cfg_n);
     
-    // Add cap contribution if cap exists
+    // Add cap contribution. prepare_cap_gathered_data (no-op in serial) gathers Yo and Yn in one go for parallel.
     if (has_cap()) {
+        prepare_cap_gathered_data(com_mod, cm_mod, com_mod.Yo, com_mod.Yn, 0, nsd, cfg_o, cfg_n);
         double Qo_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yo, 0, nsd-1, cfg_o);
         double Qn_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yn, 0, nsd-1, cfg_n);
         Qo_ += Qo_cap;
@@ -465,7 +466,9 @@ void ZeroDBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_m
     cm.bcast(cm_mod, &flow_sol_id_);
     cm.bcast(cm_mod, &pressure_sol_id_);
     cm.bcast(cm_mod, &in_out_sign_);
-    
+
+    // Distribute cap flag so all ranks agree (master loaded cap_face_; slaves have has_cap_ set here)
+    cm.bcast(cm_mod, &has_cap_);
 }
 
 void ZeroDBoundaryCondition::set_face(const faceType& face)
@@ -631,12 +634,12 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     }
     
     cap_face_vtp_file_ = vtp_file_path;
-    cap_loaded_ = false;
+    has_cap_ = false;
     cap_face_.reset();
     cap_gnNo_to_tnNo_.clear();  // Clear the mapping since we're reloading
     cap_area_computed_ = false;  // Reset area computation flag
     cap_initial_normals_.resize(0, 0);  // Clear initial normals
-    
+
     if (vtp_file_path.empty()) {
         return;
     }
@@ -758,51 +761,20 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     }
     cap_face_->gN.resize(nNo);
     for (int a = 0; a < nNo; a++) {
-        // Bounds check before accessing arrays
-        if (a < 0 || a >= cap_global_node_ids_.size()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Index out of bounds for cap_global_node_ids_: " +
-                                    std::to_string(a) + " (size=" + std::to_string(cap_global_node_ids_.size()) + ")");
-        }
-        if (a < 0 || a >= cap_face_->gN.size()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Index out of bounds for gN: " +
-                                    std::to_string(a) + " (size=" + std::to_string(cap_face_->gN.size()) + ")");
-        }
         cap_face_->gN(a) = cap_global_node_ids_(a) - 1;  // Convert from 1-based to 0-based
     }
     
     // Map connectivity from local cap node indices to global mesh node indices
     // The VTP connectivity contains local node indices (0 to nNo-1)
-    // We need to map these to global mesh node indices using gN
     cap_face_->IEN.resize(eNoN, num_elems);
     
-    // Verify gN is properly sized before using it
-    if (cap_face_->gN.size() != nNo) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] cap_face_->gN size mismatch: " +
-                                std::to_string(cap_face_->gN.size()) + " != " + std::to_string(nNo));
-    }
-    
     for (int e = 0; e < num_elems; e++) {
-        // Bounds check for element index
-        if (e < 0 || e >= conn.ncols()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Invalid element index " + 
-                                    std::to_string(e) + " (conn.ncols()=" + std::to_string(conn.ncols()) + ")");
-        }
         for (int a = 0; a < eNoN; a++) {
-            // Bounds check for node index in connectivity
-            if (a < 0 || a >= conn.nrows()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Invalid node index in connectivity " + 
-                                        std::to_string(a) + " (conn.nrows()=" + std::to_string(conn.nrows()) + ")");
-            }
             int local_node_idx = conn(a, e);  // Local node index in cap (0 to nNo-1)
             if (local_node_idx < 0 || local_node_idx >= nNo) {
                 throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Invalid local node index " + 
                                         std::to_string(local_node_idx) + " in cap connectivity (element " + 
                                         std::to_string(e) + ", node " + std::to_string(a) + ", nNo=" + std::to_string(nNo) + ").");
-            }
-            // Bounds check for gN access
-            if (local_node_idx < 0 || local_node_idx >= cap_face_->gN.size()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Index out of bounds for gN access: " + 
-                                        std::to_string(local_node_idx) + " (gN.size()=" + std::to_string(cap_face_->gN.size()) + ")");
             }
             cap_face_->IEN(a, e) = cap_face_->gN(local_node_idx);  // Map to global mesh node index
         }
@@ -856,9 +828,8 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
         throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error loading Normals from file '" + 
                                 vtp_file_path + "'");
     }
-    
-    cap_loaded_ = true;
-    
+
+    has_cap_ = true;
 }
 
 // =========================================================================
@@ -869,12 +840,10 @@ void ZeroDBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const C
 {
     using namespace consts;
     
-    if (!has_cap()) {
+    if (!cap_face_ready()) {
         return;
     }
-    
-    // Safety check: ensure cap_face_ is properly initialized
-    if (cap_face_ == nullptr || cap_face_->nEl == 0 || cap_face_->nNo == 0) {
+    if (cap_face_->nEl == 0 || cap_face_->nNo == 0) {
         throw std::runtime_error("[ZeroDBoundaryCondition::initialize_cap_integration] Cap face is not properly initialized.");
     }
     
@@ -968,10 +937,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
 {
     using namespace consts;
     
-    // Safety checks
-    if (cap_face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] cap_face_ is null.");
-    }
+    // Caller must ensure cap_face_ready(); e and IEN are validated here
     if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
         throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] cap_face_->IEN is not allocated.");
     }
@@ -988,12 +954,6 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
     Array<double> xl(nsd, cap_face_->eNoN);
     
     for (int a = 0; a < cap_face_->eNoN; a++) {
-        // Bounds check for IEN access
-        if (a < 0 || a >= cap_face_->IEN.nrows()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] Node index a=" + 
-                                    std::to_string(a) + " is out of bounds (IEN.nrows()=" + std::to_string(cap_face_->IEN.nrows()) + ").");
-        }
-        
         // IEN contains gnNo index, map it to tnNo index
         int gnNo_idx = cap_face_->IEN(a, e);
         auto it = gnNo_to_tnNo.find(gnNo_idx);
@@ -1049,20 +1009,300 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
     return xl;
 }
 
-std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_and_normal(const Array<double>& xl, 
+Array<double> ZeroDBoundaryCondition::update_cap_element_position(int e, consts::MechanicalConfigurationType cfg,
+                                                                  const Array<double>& cap_x, const Array<double>& cap_Do, const Array<double>& cap_Dn,
+                                                                  const std::unordered_map<int, int>& gnNo_to_capIdx)
+{
+    if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position(gathered)] cap_face_->IEN not ready.");
+    }
+    int nsd = cap_x.nrows();
+    Array<double> xl(nsd, cap_face_->eNoN);
+    for (int a = 0; a < cap_face_->eNoN; a++) {
+        int gnNo_idx = cap_face_->IEN(a, e);
+        auto it = gnNo_to_capIdx.find(gnNo_idx);
+        if (it == gnNo_to_capIdx.end()) {
+            throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position(gathered)] IEN gnNo " +
+                                    std::to_string(gnNo_idx) + " not in gnNo_to_capIdx.");
+        }
+        int cap_idx = it->second;
+        for (int i = 0; i < nsd; i++) {
+            xl(i, a) = cap_x(i, cap_idx);
+        }
+        if (cfg == consts::MechanicalConfigurationType::old_timestep) {
+            for (int i = 0; i < nsd; i++) xl(i, a) += cap_Do(i, cap_idx);
+        } else if (cfg == consts::MechanicalConfigurationType::new_timestep) {
+            for (int i = 0; i < nsd; i++) xl(i, a) += cap_Dn(i, cap_idx);
+        }
+    }
+    return xl;
+}
+
+double ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(const Array<double>& cap_s, int l_offset,
+                                                               int e, int g, const std::unordered_map<int, int>& gnNo_to_capIdx)
+{
+    if (cap_face_->N.nrows() == 0 || cap_face_->N.ncols() == 0 ||
+        cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(gathered)] cap_face_ not ready.");
+    }
+    double sHat = 0.0;
+    for (int a = 0; a < cap_face_->eNoN; a++) {
+        int gnNo_idx = cap_face_->IEN(a, e);
+        auto it = gnNo_to_capIdx.find(gnNo_idx);
+        if (it == gnNo_to_capIdx.end()) {
+            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(gathered)] IEN gnNo not in map.");
+        }
+        int cap_idx = it->second;
+        sHat += cap_face_->N(a, g) * cap_s(l_offset, cap_idx);
+    }
+    return sHat;
+}
+
+double ZeroDBoundaryCondition::integrate_vector_at_gauss_point(const Array<double>& cap_s, int l_offset, int nsd,
+                                                               int e, int g, const Vector<double>& n,
+                                                               const std::unordered_map<int, int>& gnNo_to_capIdx)
+{
+    if (cap_face_->N.nrows() == 0 || cap_face_->IEN.nrows() == 0 || n.size() != static_cast<size_t>(nsd)) {
+        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point(gathered)] invalid inputs.");
+    }
+    double sHat = 0.0;
+    for (int a = 0; a < cap_face_->eNoN; a++) {
+        int gnNo_idx = cap_face_->IEN(a, e);
+        auto it = gnNo_to_capIdx.find(gnNo_idx);
+        if (it == gnNo_to_capIdx.end()) {
+            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point(gathered)] IEN gnNo not in map.");
+        }
+        int cap_idx = it->second;
+        for (int i = 0; i < nsd; i++) {
+            sHat += cap_face_->N(a, g) * cap_s(l_offset + i, cap_idx) * n(i);
+        }
+    }
+    return sHat;
+}
+
+void ZeroDBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
+                                                           int l, int s_comps, consts::MechanicalConfigurationType cfg,
+                                                           int cap_nNo, int nsd,
+                                                           Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn, Array<double>& cap_s)
+{
+    auto& cm = com_mod.cm;
+    const int root = cm_mod.master;
+    const int nProcs = cm.np();
+    if (nProcs == 1) {
+        if (!cap_face_ready()) return;
+        for (int a = 0; a < cap_nNo; a++) {
+            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
+            if (it == cap_gnNo_to_tnNo_.end()) continue;
+            int Ac = it->second;
+            for (int i = 0; i < nsd; i++) {
+                cap_x(i, a) = com_mod.x(i, Ac);
+                cap_Do(i, a) = com_mod.Do(i, Ac);
+                cap_Dn(i, a) = com_mod.Dn(i, Ac);
+            }
+            for (int i = 0; i < s_comps; i++) cap_s(i, a) = s(l + i, Ac);
+        }
+        return;
+    }
+    const int per_node = 1 + 3 * nsd + s_comps;
+    Vector<double> send_buf;
+    int n_owned = 0;
+    if (cap_face_ready()) {
+        for (int a = 0; a < cap_nNo; a++) {
+            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
+            if (it == cap_gnNo_to_tnNo_.end()) continue;
+            n_owned++;
+        }
+        send_buf.resize(n_owned * per_node);
+        int idx = 0;
+        for (int a = 0; a < cap_nNo; a++) {
+            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
+            if (it == cap_gnNo_to_tnNo_.end()) continue;
+            int Ac = it->second;
+            send_buf(idx++) = static_cast<double>(a);
+            for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.x(i, Ac);
+            for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.Do(i, Ac);
+            for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.Dn(i, Ac);
+            for (int i = 0; i < s_comps; i++) send_buf(idx++) = s(l + i, Ac);
+        }
+    } else {
+        send_buf.resize(0);
+    }
+    const int my_send_count = static_cast<int>(send_buf.size());
+    Vector<int> send_count_vec(1);
+    send_count_vec(0) = my_send_count;
+    Vector<int> recv_counts(nProcs);
+    cm.gather(cm_mod, send_count_vec, recv_counts, root);
+    Vector<double> recv_buf;
+    Vector<int> displs(nProcs);
+    if (cm.idcm() == root) {
+        int total = 0;
+        for (int i = 0; i < nProcs; i++) {
+            displs(i) = total;
+            total += recv_counts(i);
+        }
+        recv_buf.resize(total);
+    }
+    cm.gatherv(cm_mod, send_buf, recv_buf, recv_counts, displs, root);
+    if (cm.idcm() == root) {
+        int pos = 0;
+        while (pos < static_cast<int>(recv_buf.size())) {
+            int cap_idx = static_cast<int>(recv_buf(pos++));
+            for (int i = 0; i < nsd; i++) cap_x(i, cap_idx) = recv_buf(pos++);
+            for (int i = 0; i < nsd; i++) cap_Do(i, cap_idx) = recv_buf(pos++);
+            for (int i = 0; i < nsd; i++) cap_Dn(i, cap_idx) = recv_buf(pos++);
+            for (int i = 0; i < s_comps; i++) cap_s(i, cap_idx) = recv_buf(pos++);
+        }
+    }
+}
+
+void ZeroDBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
+                                                            const Array<double>& s_old, const Array<double>& s_new,
+                                                            int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n,
+                                                            int cap_nNo, int nsd,
+                                                            Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn,
+                                                            Array<double>& cap_Yo, Array<double>& cap_Yn)
+{
+    (void)cfg_o;
+    (void)cfg_n;
+    auto& cm = com_mod.cm;
+    const int root = cm_mod.master;
+    const int nProcs = cm.np();
+    if (nProcs == 1) {
+        if (!cap_face_ready()) return;
+        for (int a = 0; a < cap_nNo; a++) {
+            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
+            if (it == cap_gnNo_to_tnNo_.end()) continue;
+            int Ac = it->second;
+            for (int i = 0; i < nsd; i++) {
+                cap_x(i, a) = com_mod.x(i, Ac);
+                cap_Do(i, a) = com_mod.Do(i, Ac);
+                cap_Dn(i, a) = com_mod.Dn(i, Ac);
+            }
+            for (int i = 0; i < s_comps; i++) {
+                cap_Yo(i, a) = s_old(l + i, Ac);
+                cap_Yn(i, a) = s_new(l + i, Ac);
+            }
+        }
+        return;
+    }
+    // Build local map gnNo -> Ac from this rank's ltg so every rank can send its owned cap nodes
+    std::unordered_map<int, int> gnNo_to_Ac;
+    for (int Ac = 0; Ac < com_mod.tnNo; Ac++)
+        gnNo_to_Ac[com_mod.ltg(Ac)] = Ac;
+
+    const int per_node = 1 + 3 * nsd + 2 * s_comps;
+    Vector<double> send_buf;
+    int n_owned = 0;
+    for (int a = 0; a < cap_nNo; a++) {
+        if (gnNo_to_Ac.find(cap_gN_broadcast_(a)) != gnNo_to_Ac.end()) n_owned++;
+    }
+    send_buf.resize(n_owned * per_node);
+    int idx = 0;
+    for (int a = 0; a < cap_nNo; a++) {
+        auto it = gnNo_to_Ac.find(cap_gN_broadcast_(a));
+        if (it == gnNo_to_Ac.end()) continue;
+        int Ac = it->second;
+        send_buf(idx++) = static_cast<double>(a);
+        for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.x(i, Ac);
+        for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.Do(i, Ac);
+        for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.Dn(i, Ac);
+        for (int i = 0; i < s_comps; i++) send_buf(idx++) = s_old(l + i, Ac);
+        for (int i = 0; i < s_comps; i++) send_buf(idx++) = s_new(l + i, Ac);
+    }
+    const int my_send_count = static_cast<int>(send_buf.size());
+    Vector<int> send_count_vec(1);
+    send_count_vec(0) = my_send_count;
+    Vector<int> recv_counts(nProcs);
+    cm.gather(cm_mod, send_count_vec, recv_counts, root);
+    Vector<double> recv_buf;
+    Vector<int> displs(nProcs);
+    if (cm.idcm() == root) {
+        int total = 0;
+        for (int i = 0; i < nProcs; i++) {
+            displs(i) = total;
+            total += recv_counts(i);
+        }
+        recv_buf.resize(total);
+    }
+    cm.gatherv(cm_mod, send_buf, recv_buf, recv_counts, displs, root);
+    if (cm.idcm() == root) {
+        int pos = 0;
+        while (pos < static_cast<int>(recv_buf.size())) {
+            int cap_idx = static_cast<int>(recv_buf(pos++));
+            for (int i = 0; i < nsd; i++) cap_x(i, cap_idx) = recv_buf(pos++);
+            for (int i = 0; i < nsd; i++) cap_Do(i, cap_idx) = recv_buf(pos++);
+            for (int i = 0; i < nsd; i++) cap_Dn(i, cap_idx) = recv_buf(pos++);
+            for (int i = 0; i < s_comps; i++) cap_Yo(i, cap_idx) = recv_buf(pos++);
+            for (int i = 0; i < s_comps; i++) cap_Yn(i, cap_idx) = recv_buf(pos++);
+        }
+    }
+}
+
+void ZeroDBoundaryCondition::prepare_cap_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
+                                                       const Array<double>& Yo, const Array<double>& Yn,
+                                                       int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n)
+{
+    auto& cm = com_mod.cm;
+    if (cm.seq()) {
+        if (!cap_face_ready()) return;
+        const int cap_nNo = cap_face_->nNo;
+        if (cap_nNo == 0) return;
+        cap_nNo_gathered_ = cap_nNo;
+        const int nsd = com_mod.nsd;
+        cap_x_gathered_.resize(nsd, cap_nNo);
+        cap_Do_gathered_.resize(nsd, cap_nNo);
+        cap_Dn_gathered_.resize(nsd, cap_nNo);
+        cap_Yo_gathered_.resize(s_comps, cap_nNo);
+        cap_Yn_gathered_.resize(s_comps, cap_nNo);
+        for (int a = 0; a < cap_nNo; a++) {
+            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
+            if (it == cap_gnNo_to_tnNo_.end()) continue;
+            int Ac = it->second;
+            for (int i = 0; i < nsd; i++) {
+                cap_x_gathered_(i, a) = com_mod.x(i, Ac);
+                cap_Do_gathered_(i, a) = com_mod.Do(i, Ac);
+                cap_Dn_gathered_(i, a) = com_mod.Dn(i, Ac);
+            }
+            for (int i = 0; i < s_comps; i++) {
+                cap_Yo_gathered_(i, a) = Yo(l + i, Ac);
+                cap_Yn_gathered_(i, a) = Yn(l + i, Ac);
+            }
+        }
+        return;
+    }
+    int cap_nNo = 0;
+    if (cm.idcm() == cm_mod.master && cap_face_ready()) {
+        cap_nNo = cap_face_->nNo;
+    }
+    cm.bcast(cm_mod, &cap_nNo);
+    cap_nNo_gathered_ = cap_nNo;
+    if (cap_nNo == 0) {
+        return;
+    }
+    // Broadcast cap global node IDs so all ranks can determine which cap nodes they own and send
+    cap_gN_broadcast_.resize(cap_nNo);
+    if (cm.idcm() == cm_mod.master && cap_face_ready()) {
+        for (int a = 0; a < cap_nNo; a++)
+            cap_gN_broadcast_(a) = cap_face_->gN(a);
+    }
+    cm.bcast(cm_mod, cap_gN_broadcast_);
+
+    const int nsd = com_mod.nsd;
+    if (cm.idcm() == cm_mod.master) {
+        cap_x_gathered_.resize(nsd, cap_nNo);
+        cap_Do_gathered_.resize(nsd, cap_nNo);
+        cap_Dn_gathered_.resize(nsd, cap_nNo);
+        cap_Yo_gathered_.resize(s_comps, cap_nNo);
+        cap_Yn_gathered_.resize(s_comps, cap_nNo);
+    }
+    gather_cap_node_data_to_master(com_mod, cm_mod, Yo, Yn, l, s_comps, cfg_o, cfg_n, cap_nNo, nsd,
+                                   cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, cap_Yo_gathered_, cap_Yn_gathered_);
+}
+
+std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_and_normal(const Array<double>& xl,
                                                                                            int e, int g, int nsd, int insd)
 {
-    // Safety checks
-    if (cap_face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] cap_face_ is null.");
-    }
-    if (cap_face_->eNoN <= 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] cap_face_->eNoN is invalid: " + 
-                                std::to_string(cap_face_->eNoN));
-    }
-    if (cap_face_->Nx.nslices() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] cap_face_->Nx is not allocated.");
-    }
+    // Caller must ensure cap_face_ready() and initialize_cap_integration() has been called.
     if (e < 0 || e >= cap_face_->nEl) {
         throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] Element index e=" + 
                                 std::to_string(e) + " is out of bounds (nEl=" + std::to_string(cap_face_->nEl) + ").");
@@ -1070,11 +1310,6 @@ std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_a
     if (g < 0 || g >= cap_face_->Nx.nslices()) {
         throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] Gauss point index g=" + 
                                 std::to_string(g) + " is out of bounds (nG=" + std::to_string(cap_face_->Nx.nslices()) + ").");
-    }
-    if (cap_face_->Nx.nrows() != insd || cap_face_->Nx.ncols() != cap_face_->eNoN) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] cap_face_->Nx has wrong dimensions: " +
-                                std::to_string(cap_face_->Nx.nrows()) + "x" + std::to_string(cap_face_->Nx.ncols()) + 
-                                " (expected " + std::to_string(insd) + "x" + std::to_string(cap_face_->eNoN) + ").");
     }
     if (xl.nrows() != nsd || xl.ncols() != cap_face_->eNoN) {
         throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] xl has wrong dimensions: " +
@@ -1171,13 +1406,7 @@ std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_a
 double ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(ComMod& com_mod, const Array<double>& s, int l,
                                                                 int e, int g, const std::unordered_map<int, int>& gnNo_to_tnNo)
 {
-    // Safety checks
-    if (cap_face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] cap_face_ is null.");
-    }
-    if (cap_face_->N.nrows() == 0 || cap_face_->N.ncols() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] cap_face_->N is not allocated.");
-    }
+    // Caller must ensure cap_face_ready() and initialize_cap_integration() has been called.
     if (g < 0 || g >= cap_face_->N.ncols()) {
         throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Gauss point index g=" + 
                                 std::to_string(g) + " is out of bounds (N.ncols()=" + std::to_string(cap_face_->N.ncols()) + ").");
@@ -1189,22 +1418,8 @@ double ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(ComMod& com_mod, 
         throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Element index e=" + 
                                 std::to_string(e) + " is out of bounds (IEN.ncols()=" + std::to_string(cap_face_->IEN.ncols()) + ").");
     }
-    
     double sHat = 0.0;
-    
     for (int a = 0; a < cap_face_->eNoN; a++) {
-        // Bounds check for IEN access
-        if (a < 0 || a >= cap_face_->IEN.nrows()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Node index a=" + 
-                                    std::to_string(a) + " is out of bounds (IEN.nrows()=" + std::to_string(cap_face_->IEN.nrows()) + ").");
-        }
-        // Bounds check for N access
-        if (a < 0 || a >= cap_face_->N.nrows()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Node index a=" + 
-                                    std::to_string(a) + " is out of bounds (N.nrows()=" + std::to_string(cap_face_->N.nrows()) + ").");
-        }
-        
-        // IEN contains gnNo index, map it to tnNo index
         int gnNo_idx = cap_face_->IEN(a, e);
         auto it = gnNo_to_tnNo.find(gnNo_idx);
         if (it == gnNo_to_tnNo.end()) {
@@ -1213,15 +1428,10 @@ double ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(ComMod& com_mod, 
                                     ") contains invalid gnNo index " + std::to_string(gnNo_idx) + 
                                     " not found in com_mod.ltg mapping.");
         }
-        int Ac = it->second;  // tnNo index
-        
-        // Bounds checking
+        int Ac = it->second;
         if (Ac < 0 || Ac >= com_mod.tnNo) {
-            std::string msg = "[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Invalid node index Ac=" + 
-                             std::to_string(Ac);
-            throw std::runtime_error(msg);
+            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Invalid node index Ac=" + std::to_string(Ac));
         }
-        // Check array bounds for s
         if (l >= s.nrows() || Ac >= s.ncols()) {
             std::string msg = std::string("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Array s bounds exceeded: ") +
                              std::string("s.nrows()=") + std::to_string(s.nrows()) + std::string(", s.ncols()=") + std::to_string(s.ncols()) +
@@ -1238,25 +1448,16 @@ double ZeroDBoundaryCondition::integrate_vector_at_gauss_point(ComMod& com_mod, 
                                                                 int e, int g, const Vector<double>& n,
                                                                 const std::unordered_map<int, int>& gnNo_to_tnNo)
 {
-    // Safety checks
-    if (cap_face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] cap_face_ is null.");
-    }
-    if (cap_face_->N.nrows() == 0 || cap_face_->N.ncols() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] cap_face_->N is not allocated.");
-    }
+    // Caller must ensure cap_face_ready() and initialize_cap_integration() has been called.
     if (g < 0 || g >= cap_face_->N.ncols()) {
         throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Gauss point index g=" + 
                                 std::to_string(g) + " is out of bounds (N.ncols()=" + std::to_string(cap_face_->N.ncols()) + ").");
-    }
-    if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] cap_face_->IEN is not allocated.");
     }
     if (e < 0 || e >= cap_face_->IEN.ncols()) {
         throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Element index e=" + 
                                 std::to_string(e) + " is out of bounds (IEN.ncols()=" + std::to_string(cap_face_->IEN.ncols()) + ").");
     }
-    if (n.size() != nsd) {
+    if (n.size() != static_cast<size_t>(nsd)) {
         throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Normal vector size mismatch: " +
                                 std::to_string(n.size()) + " != " + std::to_string(nsd));
     }
@@ -1264,17 +1465,6 @@ double ZeroDBoundaryCondition::integrate_vector_at_gauss_point(ComMod& com_mod, 
     double sHat = 0.0;
     
     for (int a = 0; a < cap_face_->eNoN; a++) {
-        // Bounds check for IEN access
-        if (a < 0 || a >= cap_face_->IEN.nrows()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Node index a=" + 
-                                    std::to_string(a) + " is out of bounds (IEN.nrows()=" + std::to_string(cap_face_->IEN.nrows()) + ").");
-        }
-        // Bounds check for N access
-        if (a < 0 || a >= cap_face_->N.nrows()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Node index a=" + 
-                                    std::to_string(a) + " is out of bounds (N.nrows()=" + std::to_string(cap_face_->N.nrows()) + ").");
-        }
-        
         // IEN contains gnNo index, map it to tnNo index
         int gnNo_idx = cap_face_->IEN(a, e);
         auto it = gnNo_to_tnNo.find(gnNo_idx);
@@ -1284,15 +1474,10 @@ double ZeroDBoundaryCondition::integrate_vector_at_gauss_point(ComMod& com_mod, 
                                     ") contains invalid gnNo index " + std::to_string(gnNo_idx) + 
                                     " not found in com_mod.ltg mapping.");
         }
-        int Ac = it->second;  // tnNo index
-        
-        // Bounds checking
+        int Ac = it->second;
         if (Ac < 0 || Ac >= com_mod.tnNo) {
-            std::string msg = "[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Invalid node index Ac=" + 
-                             std::to_string(Ac);
-            throw std::runtime_error(msg);
+            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Invalid node index Ac=" + std::to_string(Ac));
         }
-        // Check array bounds for s
         if (l + nsd - 1 >= s.nrows() || Ac >= s.ncols()) {
             std::string msg = std::string("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Array s bounds exceeded: ") +
                              std::string("s.nrows()=") + std::to_string(s.nrows()) + std::string(", s.ncols()=") + std::to_string(s.ncols()) +
@@ -1311,142 +1496,67 @@ double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& 
                                                    int l, std::optional<int> u, consts::MechanicalConfigurationType cfg)
 {
     using namespace consts;
-    
-    if (!has_cap()) {
-        return 0.0;
-    }
-    
-    // Get a local pointer to cap_face_ to avoid it being reset between check and use
-    // This prevents race conditions if cap_face_ is modified concurrently
-    faceType* cap_face = cap_face_.get();
-    if (cap_face == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Cap face is null.");
-    }
-    
-    // Safety check: ensure cap_face_ is properly initialized
-    if (cap_face->nEl == 0 || cap_face->nNo == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Cap face is not properly initialized.");
-    }
-    
-    // Ensure integration requirements are initialized
-    if (cap_face->nG == 0 || cap_face->w.size() == 0 || cap_face->N.nrows() == 0 || cap_gnNo_to_tnNo_.empty()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Cap integration not initialized. Call initialize_cap_integration() first.");
-    }
-    if (cap_face->Nx.nslices() == 0 || cap_face->Nx.nslices() != cap_face->nG) {
-        throw std::runtime_error(std::string("[ZeroDBoundaryCondition::integrate_over_cap] cap_face_->Nx is not properly allocated: ") +
-                                "nG=" + std::to_string(cap_face->nG) + ", Nx.nslices()=" + std::to_string(cap_face->Nx.nslices()) + 
-                                ". Call initialize_cap_integration() first.");
-    }
-    
+    auto& cm = com_mod.cm;
     int nsd = com_mod.nsd;
     int insd = nsd - 1;
-    
-    
-    // Determine if scalar or vector integration
     int u_val = u.has_value() ? u.value() : l;
     bool is_scalar = (u_val == l);
-    
-    // Custom integration for cap (since cap doesn't share elements with mesh)
-    // We compute the normal directly from cap geometry without using gnnb
-    double result = 0.0;
-    
-    // Loop over cap elements
-    for (int e = 0; e < cap_face->nEl; e++) {
-        // Update cap element position based on configuration
-        Array<double> xl = update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
-        
-        // Loop over Gauss points
-        for (int g = 0; g < cap_face->nG; g++) {
-            // Bounds check for w access
-            if (g < 0 || g >= cap_face->w.size()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Gauss point index g=" + 
-                                        std::to_string(g) + " is out of bounds (w.size()=" + std::to_string(cap_face->w.size()) + ").");
-            }
-            
-            // Compute Jacobian and normal vector
-            auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, insd);
-            
-            // Compute integrand at this Gauss point
-            double sHat = 0.0;
-            if (is_scalar) {
-                // Scalar integration: ∫ s dA
-                sHat = integrate_scalar_at_gauss_point(com_mod, s, l, e, g, cap_gnNo_to_tnNo_);
-            } else {
-                // Vector integration: ∫ (s dot n) dA
-                sHat = integrate_vector_at_gauss_point(com_mod, s, l, nsd, e, g, n, cap_gnNo_to_tnNo_);
-            }
-            
-            // Add contribution to integral
-            result += cap_face->w(g) * Jac * sHat;
+    const int s_comps = is_scalar ? 1 : nsd;
+
+    // Serial: only master has cap; early return if this rank has no cap
+    if (cm.seq()) {
+        if (!cap_face_ready()) {
+            return 0.0;
         }
+        faceType* cap_face = cap_face_.get();
+        // initialize_cap_integration() must have been called first (e.g. from baf_ini).
+        double result = 0.0;
+        for (int e = 0; e < cap_face->nEl; e++) {
+            Array<double> xl = update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
+            for (int g = 0; g < cap_face->nG; g++) {
+                auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, insd);
+                double sHat = 0.0;
+                if (is_scalar) {
+                    sHat = integrate_scalar_at_gauss_point(com_mod, s, l, e, g, cap_gnNo_to_tnNo_);
+                } else {
+                    sHat = integrate_vector_at_gauss_point(com_mod, s, l, nsd, e, g, n, cap_gnNo_to_tnNo_);
+                }
+                result += cap_face->w(g) * Jac * sHat;
+            }
+        }
+        return result;
     }
-    
-    // Reduce across processors if needed
-    auto& cm = com_mod.cm;
-    if (!cm.seq()) {
-        result = cm.reduce(cm_mod, result);
-    }
-    
-    return result;
-}
 
-// =========================================================================
-// Cap area calculation
-// =========================================================================
-
-double ZeroDBoundaryCondition::compute_cap_area(ComMod& com_mod, const CmMod& cm_mod)
-{
-    using namespace consts;
-    
-    if (!has_cap()) {
+    // Parallel: use pre-gathered data (caller must call prepare_cap_gathered_data first). Only master has cap and does the integration.
+    if (cap_nNo_gathered_ == 0) {
         return 0.0;
     }
-    
-    // Get a local pointer to cap_face_ to avoid it being reset between check and use
-    faceType* cap_face = cap_face_.get();
-    if (cap_face == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_area] Cap face is null.");
-    }
-    
-    // Safety check: ensure cap_face_ is properly initialized
-    if (cap_face->nEl == 0 || cap_face->nNo == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_area] Cap face is not properly initialized.");
-    }
-    
-    // Ensure integration requirements are initialized
-    if (cap_face->nG == 0 || cap_face->w.size() == 0 || cap_face->N.nrows() == 0 || cap_gnNo_to_tnNo_.empty()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_area] Cap integration not initialized. Call initialize_cap_integration() first.");
-    }
-    
-    int nsd = com_mod.nsd;
-    int insd = nsd - 1;
-    
-    // Compute area by integrating 1 over the cap surface (using reference configuration)
-    double area = 0.0;
-    
-    // Loop over cap elements
-    for (int e = 0; e < cap_face->nEl; e++) {
-        // Update cap element position (using reference configuration for area calculation)
-        Array<double> xl = update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, MechanicalConfigurationType::reference);
-        
-        // Loop over Gauss points
-        for (int g = 0; g < cap_face->nG; g++) {
-            // Compute Jacobian and normal vector
-            auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, insd);
-            
-            // Integrate 1 over the surface: ∫ 1 dA = Σ w_g * Jac_g
-            area += cap_face->w(g) * Jac;
+    const int cap_nNo = cap_nNo_gathered_;
+    const Array<double>& cap_s_use = (cfg == MechanicalConfigurationType::new_timestep) ? cap_Yn_gathered_ : cap_Yo_gathered_;
+    double result = 0.0;
+    if (cm.idcm() == cm_mod.master) {
+        faceType* cap_face = cap_face_.get();
+        std::unordered_map<int, int> gnNo_to_capIdx;
+        gnNo_to_capIdx.reserve(cap_nNo);
+        for (int a = 0; a < cap_nNo; a++) {
+            gnNo_to_capIdx[cap_face->gN(a)] = a;
+        }
+        for (int e = 0; e < cap_face->nEl; e++) {
+            Array<double> xl = update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_capIdx);
+            for (int g = 0; g < cap_face->nG; g++) {
+                auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, insd);
+                double sHat = 0.0;
+                if (is_scalar) {
+                    sHat = integrate_scalar_at_gauss_point(cap_s_use, 0, e, g, gnNo_to_capIdx);
+                } else {
+                    sHat = integrate_vector_at_gauss_point(cap_s_use, 0, nsd, e, g, n, gnNo_to_capIdx);
+                }
+                result += cap_face->w(g) * Jac * sHat;
+            }
         }
     }
-    
-    // Reduce across processors if needed
-    auto& cm = com_mod.cm;
-    if (!cm.seq()) {
-        area = cm.reduce(cm_mod, area);
-    }
-    
-    
-    return area;
+    cm.bcast(cm_mod, &result);
+    return result;
 }
 
 // =========================================================================
@@ -1457,32 +1567,12 @@ void ZeroDBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_m
 {
     using namespace consts;
     
-    if (!has_cap()) {
+    if (!cap_face_ready()) {
         cap_valM_.resize(0, 0);
         return;
     }
-    
-    // Get a local pointer to cap_face_ to avoid it being reset between check and use
     faceType* cap_face = cap_face_.get();
-    if (cap_face == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Cap face is null.");
-    }
-    
-    // Safety check: ensure cap_face_ is properly initialized
-    if (cap_face->nEl == 0 || cap_face->nNo == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Cap face is not properly initialized.");
-    }
-    
-    // Ensure integration requirements are initialized
-    if (cap_face->nG == 0 || cap_face->w.size() == 0 || cap_face->N.nrows() == 0 || cap_gnNo_to_tnNo_.empty()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Cap integration not initialized. Call initialize_cap_integration() first.");
-    }
-    if (cap_face->Nx.nslices() == 0 || cap_face->Nx.nslices() != cap_face->nG) {
-        throw std::runtime_error(std::string("[ZeroDBoundaryCondition::compute_cap_valM] cap_face_->Nx is not properly allocated: ") +
-                                "nG=" + std::to_string(cap_face->nG) + ", Nx.nslices()=" + std::to_string(cap_face->Nx.nslices()) + 
-                                ". Call initialize_cap_integration() first.");
-    }
-    
+    // initialize_cap_integration() must have been called first (e.g. from baf_ini).
     int nsd = com_mod.nsd;
     int cap_nNo = cap_face->nNo;
     
@@ -1496,59 +1586,55 @@ void ZeroDBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_m
         int gnNo = cap_face->gN(a);
         gnNo_to_cap_local[gnNo] = a;
     }
-    
+
+    auto& cm = com_mod.cm;
+    const bool use_gathered = !cm.seq() && cap_nNo_gathered_ > 0;
+
     // Loop over cap elements
     for (int e = 0; e < cap_face->nEl; e++) {
-        // Update cap element position based on configuration
-        Array<double> xl = update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
-        
+        // In parallel use gathered positions (all cap nodes); in serial use local com_mod
+        Array<double> xl;
+        if (use_gathered) {
+            xl = update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_cap_local);
+        } else {
+            xl = update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
+        }
+
         // Loop over Gauss points
         for (int g = 0; g < cap_face->nG; g++) {
             // Compute Jacobian and normal vector
             auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, nsd - 1);
-            
+
             // Accumulate ∫ N_A n_i dΓ at each node
-            // Similar to fsi_ls_upd, but accumulate by cap face-local node index
             for (int a = 0; a < cap_face->eNoN; a++) {
-                // Get the global node index from IEN
                 int gnNo_idx = cap_face->IEN(a, e);
-                
-                // Map gnNo to cap face-local index
                 auto it = gnNo_to_cap_local.find(gnNo_idx);
                 if (it == gnNo_to_cap_local.end()) {
-                    throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] IEN entry (element " + 
-                                            std::to_string(e) + ", node " + std::to_string(a) + 
-                                            ") contains invalid gnNo index " + std::to_string(gnNo_idx) + 
+                    throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] IEN entry (element " +
+                                            std::to_string(e) + ", node " + std::to_string(a) +
+                                            ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
                                             " not found in cap face nodes.");
                 }
-                int cap_a = it->second;  // cap face-local index
-                
-                // Bounds checking
+                int cap_a = it->second;
                 if (cap_a < 0 || cap_a >= cap_nNo) {
-                    throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Invalid cap face-local index cap_a=" + 
+                    throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Invalid cap face-local index cap_a=" +
                                             std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) + ")");
                 }
-                
-                // Accumulate: cap_valM_(i,cap_a) += N(a,g) * w(g) * Jac * n(i)
-                // Note: n is normalized, so we multiply by Jac to get the surface element
-                // Stored with cap face-local indices, matching GenBC implementation
                 for (int i = 0; i < nsd; i++) {
                     cap_valM_(i, cap_a) += cap_face->N(a, g) * cap_face->w(g) * Jac * n(i);
                 }
             }
         }
     }
-    
-    // Reduce across processors if needed
-    auto& cm = com_mod.cm;
-    if (!cm.seq()) {
+
+    // Reduce across processors only when using local data (each rank had partial cap_gnNo_to_tnNo_); when using gathered data only master computed
+    if (!cm.seq() && !use_gathered) {
         for (int i = 0; i < nsd; i++) {
             Vector<double> row = cap_valM_.row(i);
             row = cm.reduce(cm_mod, row);
             cap_valM_.set_row(i, row);
         }
     }
-    
 }
 
 // =========================================================================
@@ -1559,42 +1645,120 @@ void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod
                                                                    fsi_linear_solver::FSILS_faceType& lhs_face,
                                                                    consts::MechanicalConfigurationType cfg)
 {
+    lhs_face.has_cap = has_cap();
     if (!has_cap()) {
-        // Clear all cap-related fields if no cap is present
         lhs_face.cap_val.resize(0, 0);
         lhs_face.cap_valM.resize(0, 0);
         lhs_face.cap_glob.resize(0);
+        lhs_face.cap_gN.resize(0);
         return;
     }
-    
-    // Compute cap_valM if not already computed
-    compute_cap_valM(com_mod, cm_mod, cfg);
-    
-    const faceType* cap_face = cap_face_.get();
-    if (cap_face == nullptr || cap_face->nNo == 0) {
+
+    const int nsd = com_mod.nsd;
+    const bool serial = com_mod.cm.seq();
+
+    if (serial) {
+        // Serial: only this rank has cap_face_; fill lhs_face directly.
+        if (!cap_face_ready()) {
+            lhs_face.cap_val.resize(0, 0);
+            lhs_face.cap_valM.resize(0, 0);
+            lhs_face.cap_glob.resize(0);
+            lhs_face.cap_gN.resize(0);
+            return;
+        }
+        compute_cap_valM(com_mod, cm_mod, cfg);
+        const faceType* cap_face = cap_face_.get();
+        int cap_nNo = cap_face->nNo;
+        lhs_face.cap_val = cap_valM_;
+        lhs_face.cap_valM.resize(nsd, cap_nNo);
+        lhs_face.cap_valM = 0.0;
+        lhs_face.cap_glob.resize(cap_nNo);
+        lhs_face.cap_gN.resize(cap_nNo);
+        for (int a = 0; a < cap_nNo; a++) {
+            int gnNo = cap_face->gN(a);
+            lhs_face.cap_gN(a) = gnNo;
+            int localIdx = -1;
+            for (int i = 0; i < com_mod.tnNo; i++) {
+                if (com_mod.ltg(i) == gnNo) {
+                    localIdx = i;
+                    break;
+                }
+            }
+            lhs_face.cap_glob(a) = (localIdx >= 0) ? com_mod.lhs.map(localIdx) : -1;
+        }
+        return;
+    }
+
+    // Parallel: broadcast full cap data from master, then each rank builds local subset.
+    int cap_nNo = 0;
+    Vector<int> cap_gN_all;
+    Array<double> cap_val_all;
+
+    if (cap_face_ready()) {
+        compute_cap_valM(com_mod, cm_mod, cfg);
+        const faceType* cap_face = cap_face_.get();
+        if (cap_face->nNo > 0) {
+            cap_nNo = cap_face->nNo;
+            cap_gN_all.resize(cap_nNo);
+            cap_val_all.resize(nsd, cap_nNo);
+            for (int a = 0; a < cap_nNo; a++) {
+                cap_gN_all(a) = cap_face->gN(a);
+                for (int i = 0; i < nsd; i++)
+                    cap_val_all(i, a) = cap_valM_(i, a);
+            }
+        }
+    }
+
+    com_mod.cm.bcast(cm_mod, &cap_nNo);
+    if (cap_nNo == 0) {
         lhs_face.cap_val.resize(0, 0);
         lhs_face.cap_valM.resize(0, 0);
         lhs_face.cap_glob.resize(0);
+        lhs_face.cap_gN.resize(0);
         return;
     }
-    
-    int nsd = com_mod.nsd;
-    int cap_nNo = cap_face->nNo;
-    
-    // Copy cap_valM_ to cap_val (unpreconditioned values)
-    // cap_val will be preconditioned later in precond_diag to produce cap_valM
-    lhs_face.cap_val = cap_valM_;
-    
-    // Initialize cap_valM to zero (will be computed in precond_diag)
-    lhs_face.cap_valM.resize(nsd, cap_nNo);
-    lhs_face.cap_valM = 0.0;
-    
-    // Set up cap_glob mapping: cap face-local index -> linear solver index
-    // Similar to face.glob, but for cap nodes
-    lhs_face.cap_glob.resize(cap_nNo);
+    // Only resize on ranks that don't have the data; Vector::resize() deallocates and
+    // zero-initializes, which would wipe the sender's cap_gN_all/cap_val_all.
+    const bool i_am_sender = cap_face_ready();
+    if (!i_am_sender) {
+        cap_gN_all.resize(cap_nNo);
+        cap_val_all.resize(nsd, cap_nNo);
+    }
+    com_mod.cm.bcast(cm_mod, cap_gN_all);
+    com_mod.cm.bcast(cm_mod, cap_val_all);
+
+    int n_owned = 0;
     for (int a = 0; a < cap_nNo; a++) {
-        int gnNo = cap_face->gN(a);
-        int Ac = com_mod.lhs.map(gnNo);
-        lhs_face.cap_glob(a) = Ac;
+        int gnNo = cap_gN_all(a);
+        for (int i = 0; i < com_mod.tnNo; i++) {
+            if (com_mod.ltg(i) == gnNo) {
+                n_owned++;
+                break;
+            }
+        }
+    }
+    lhs_face.cap_glob.resize(n_owned);
+    lhs_face.cap_gN.resize(n_owned);
+    lhs_face.cap_val.resize(nsd, n_owned);
+    lhs_face.cap_valM.resize(nsd, n_owned);
+    lhs_face.cap_valM = 0.0;
+
+    int idx = 0;
+    for (int a = 0; a < cap_nNo; a++) {
+        int gnNo = cap_gN_all(a);
+        int localIdx = -1;
+        for (int i = 0; i < com_mod.tnNo; i++) {
+            if (com_mod.ltg(i) == gnNo) {
+                localIdx = i;
+                break;
+            }
+        }
+        if (localIdx >= 0) {
+            lhs_face.cap_glob(idx) = com_mod.lhs.map(localIdx);
+            lhs_face.cap_gN(idx) = gnNo;
+            for (int i = 0; i < nsd; i++)
+                lhs_face.cap_val(i, idx) = cap_val_all(i, a);
+            idx++;
+        }
     }
 }
