@@ -9,7 +9,7 @@ var searchData=
   ['read_5ffiles_5fns_6',['read_files_ns',['../namespaceread__files__ns.html',1,'']]],
   ['read_5fparameters_7',['read_parameters',['../class_simulation.html#aade1883dedf6e7145283f3a09fd22b7d',1,'Simulation']]],
   ['read_5fxml_8',['read_xml',['../class_parameters.html#a9bf5624296006a1f843cf0e7cdf4a9d6',1,'Parameters']]],
-  ['readme_9',['readme',['../md_liner__solver_2_r_e_a_d_m_e.html',1,'README'],['../md_solver_2_r_e_a_d_m_e.html',1,'README']]],
+  ['readme_9',['readme',['../md_linear__solver_2_r_e_a_d_m_e.html',1,'README'],['../md_solver_2_r_e_a_d_m_e.html',1,'README']]],
   ['recln_10',['recLn',['../class_com_mod.html#ad5148740d8c669d0a55ec6044febf389',1,'ComMod']]],
   ['references_11',['References',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md48',1,'']]],
   ['reltol_12',['reltol',['../classls_type.html#acb851846402df623d3480030b5831932',1,'lsType::relTol'],['../classode_type.html#a09c0984b088e1276c1421aeb932067aa',1,'odeType::relTol']]],
