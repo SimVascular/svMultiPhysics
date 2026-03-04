@@ -454,6 +454,39 @@ void read_vtp(const std::string& file_name, faceType& face)
   }
 }
 
+/// @brief Read in element data from an integer vector array data 
+/// named `data_name` stored in VTK VTU file into 'element_data'. 
+///
+void read_element_data(const mshType& mesh, const std::string& file_name, const std::string& data_name, Vector<int>& element_data)
+{
+  if (FILE *file = fopen(file_name.c_str(), "r")) {
+    fclose(file);
+  } else {
+    throw std::runtime_error("The VTK element data file '" + file_name + "' can't be read.");
+  }
+
+  auto vtk_data = VtkData::create_reader(file_name);
+  if (vtk_data == nullptr) {
+    throw std::runtime_error("Failed to create VTK reader for file: " + file_name);
+  }
+
+  int num_elems = vtk_data->num_elems();
+  int num_points = vtk_data->num_points();
+
+  if (num_elems != mesh.gnEl) {
+    throw std::runtime_error("The number of elements (" + std::to_string(num_elems) +
+        ") in the file '" + file_name + "' is not equal to the number of elements ("
+        + std::to_string(mesh.gnEl) + ") for the mesh named '" + mesh.name + "'.");
+  }
+
+  if (!vtk_data->has_cell_data(data_name)) {
+    throw std::runtime_error("No CellData DataArray named '" + data_name +
+        "' found in the VTK file '" + file_name + "' for the mesh named '" + mesh.name + "'.");
+  }
+
+  vtk_data->copy_cell_data(data_name, element_data);
+}
+
 //----------------
 // read_vtp_pdata
 //----------------
