@@ -114,24 +114,28 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a628d5bcdfe13179b046c473e81f97bb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacf399cbbaee78220d0bba120a417670" id="r_aacf399cbbaee78220d0bba120a417670"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#aacf399cbbaee78220d0bba120a417670">read_file</a> (const std::string &amp;file_name) override</td></tr>
 <tr class="separator:aacf399cbbaee78220d0bba120a417670"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d1eb10487525b17010e21872e1cd3c5" id="r_a1d1eb10487525b17010e21872e1cd3c5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a1d1eb10487525b17010e21872e1cd3c5">copy_points</a> (Array&lt; double &gt; &amp;points) override</td></tr>
+<tr class="memitem:a1d1eb10487525b17010e21872e1cd3c5" id="r_a1d1eb10487525b17010e21872e1cd3c5"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a1d1eb10487525b17010e21872e1cd3c5">copy_points</a> (Array&lt; double &gt; &amp;points) override</td></tr>
 <tr class="memdesc:a1d1eb10487525b17010e21872e1cd3c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy points into the given array.  <br /></td></tr>
 <tr class="separator:a1d1eb10487525b17010e21872e1cd3c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e0afd0bdd6af06c3d39b6d285848194" id="r_a4e0afd0bdd6af06c3d39b6d285848194"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a4e0afd0bdd6af06c3d39b6d285848194">copy_point_data</a> (const std::string &amp;data_name, Array&lt; double &gt; &amp;mesh_data) override</td></tr>
+<tr class="memitem:a4e0afd0bdd6af06c3d39b6d285848194" id="r_a4e0afd0bdd6af06c3d39b6d285848194"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a4e0afd0bdd6af06c3d39b6d285848194">copy_point_data</a> (const std::string &amp;data_name, Array&lt; double &gt; &amp;mesh_data) override</td></tr>
 <tr class="memdesc:a4e0afd0bdd6af06c3d39b6d285848194"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy an array of point data from an polydata mesh into the given Array.  <br /></td></tr>
 <tr class="separator:a4e0afd0bdd6af06c3d39b6d285848194"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac47a9410471c03e90afff29f34a83f4" id="r_aac47a9410471c03e90afff29f34a83f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#aac47a9410471c03e90afff29f34a83f4">copy_point_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;mesh_data) override</td></tr>
+<tr class="memitem:aac47a9410471c03e90afff29f34a83f4" id="r_aac47a9410471c03e90afff29f34a83f4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#aac47a9410471c03e90afff29f34a83f4">copy_point_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;mesh_data) override</td></tr>
 <tr class="separator:aac47a9410471c03e90afff29f34a83f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d679aff7b7db4e6d7a17d81cb4a23f7" id="r_a5d679aff7b7db4e6d7a17d81cb4a23f7"><td class="memItemLeft" align="right" valign="top"><a id="a5d679aff7b7db4e6d7a17d81cb4a23f7" name="a5d679aff7b7db4e6d7a17d81cb4a23f7"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_point_data</b> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;mesh_data)</td></tr>
-<tr class="separator:a5d679aff7b7db4e6d7a17d81cb4a23f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f946b5f9e516909bd186e0d2b38cf28" id="r_a9f946b5f9e516909bd186e0d2b38cf28"><td class="memItemLeft" align="right" valign="top">Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a9f946b5f9e516909bd186e0d2b38cf28">get_point_data</a> (const std::string &amp;data_name)</td></tr>
-<tr class="memdesc:a9f946b5f9e516909bd186e0d2b38cf28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get an array of point data from an unstructured grid.  <br /></td></tr>
-<tr class="separator:a9f946b5f9e516909bd186e0d2b38cf28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a521d98309e9abcd8c544dfe2ef2efc3a" id="r_a521d98309e9abcd8c544dfe2ef2efc3a"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a521d98309e9abcd8c544dfe2ef2efc3a">get_point_data_names</a> ()</td></tr>
-<tr class="memdesc:a521d98309e9abcd8c544dfe2ef2efc3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of point data names.  <br /></td></tr>
-<tr class="separator:a521d98309e9abcd8c544dfe2ef2efc3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a509e7b579f1442f1d6e9af70753478" id="r_a2a509e7b579f1442f1d6e9af70753478"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a2a509e7b579f1442f1d6e9af70753478">has_point_data</a> (const std::string &amp;data_name) override</td></tr>
+<tr class="memitem:a24fd171431e4e715d31686e9c5baa22b" id="r_a24fd171431e4e715d31686e9c5baa22b"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a24fd171431e4e715d31686e9c5baa22b">copy_point_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;mesh_data) override</td></tr>
+<tr class="separator:a24fd171431e4e715d31686e9c5baa22b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3493cbc21e3139148a3b74a8ed266192" id="r_a3493cbc21e3139148a3b74a8ed266192"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a3493cbc21e3139148a3b74a8ed266192">copy_cell_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;mesh_data) override</td></tr>
+<tr class="memdesc:a3493cbc21e3139148a3b74a8ed266192"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy an array of cell data from an polydata mesh into the given <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>.  <br /></td></tr>
+<tr class="separator:a3493cbc21e3139148a3b74a8ed266192"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0ca8c35634853f8f558cd8c4c687f38" id="r_aa0ca8c35634853f8f558cd8c4c687f38"><td class="memItemLeft" align="right" valign="top">virtual Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#aa0ca8c35634853f8f558cd8c4c687f38">get_point_data</a> (const std::string &amp;data_name) override</td></tr>
+<tr class="memdesc:aa0ca8c35634853f8f558cd8c4c687f38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get an array of point data from an unstructured grid.  <br /></td></tr>
+<tr class="separator:aa0ca8c35634853f8f558cd8c4c687f38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2839cfb013c5b0ecc0f6f29c5e119ae8" id="r_a2839cfb013c5b0ecc0f6f29c5e119ae8"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a2839cfb013c5b0ecc0f6f29c5e119ae8">get_point_data_names</a> () override</td></tr>
+<tr class="memdesc:a2839cfb013c5b0ecc0f6f29c5e119ae8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of point data names.  <br /></td></tr>
+<tr class="separator:a2839cfb013c5b0ecc0f6f29c5e119ae8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57e8e2708deb89920d3e18ed0808e860" id="r_a57e8e2708deb89920d3e18ed0808e860"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a57e8e2708deb89920d3e18ed0808e860">has_cell_data</a> (const std::string &amp;data_name) override</td></tr>
+<tr class="separator:a57e8e2708deb89920d3e18ed0808e860"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a509e7b579f1442f1d6e9af70753478" id="r_a2a509e7b579f1442f1d6e9af70753478"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a2a509e7b579f1442f1d6e9af70753478">has_point_data</a> (const std::string &amp;data_name) override</td></tr>
 <tr class="separator:a2a509e7b579f1442f1d6e9af70753478"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4505cb0d008c76214137b71d2f30c1d0" id="r_a4505cb0d008c76214137b71d2f30c1d0"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtp_data.html#a4505cb0d008c76214137b71d2f30c1d0">set_connectivity</a> (const int nsd, const Array&lt; int &gt; &amp;conn, const int pid=0) override</td></tr>
 <tr class="separator:a4505cb0d008c76214137b71d2f30c1d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -165,8 +169,48 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
 <tr class="separator:a4f292bf9f011bf00cf6a688d116472bc inherit pub_attribs_class_vtk_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a3493cbc21e3139148a3b74a8ed266192" name="a3493cbc21e3139148a3b74a8ed266192"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3493cbc21e3139148a3b74a8ed266192">&#9670;&#160;</a></span>copy_cell_data()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void VtkVtpData::copy_cell_data </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Copy an array of cell data from an polydata mesh into the given <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>. </p>
+
+<p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
+
+</div>
+</div>
 <a id="a4e0afd0bdd6af06c3d39b6d285848194" name="a4e0afd0bdd6af06c3d39b6d285848194"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4e0afd0bdd6af06c3d39b6d285848194">&#9670;&#160;</a></span>copy_point_data() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e0afd0bdd6af06c3d39b6d285848194">&#9670;&#160;</a></span>copy_point_data() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -206,7 +250,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
 </div>
 </div>
 <a id="aac47a9410471c03e90afff29f34a83f4" name="aac47a9410471c03e90afff29f34a83f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aac47a9410471c03e90afff29f34a83f4">&#9670;&#160;</a></span>copy_point_data() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aac47a9410471c03e90afff29f34a83f4">&#9670;&#160;</a></span>copy_point_data() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -224,6 +268,44 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
+
+</div>
+</div>
+<a id="a24fd171431e4e715d31686e9c5baa22b" name="a24fd171431e4e715d31686e9c5baa22b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24fd171431e4e715d31686e9c5baa22b">&#9670;&#160;</a></span>copy_point_data() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void VtkVtpData::copy_point_data </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;&#160;</td>
           <td class="paramname"><em>mesh_data</em>&#160;</td>
         </tr>
         <tr>
@@ -327,11 +409,14 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
 
 </div>
 </div>
-<a id="a9f946b5f9e516909bd186e0d2b38cf28" name="a9f946b5f9e516909bd186e0d2b38cf28"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9f946b5f9e516909bd186e0d2b38cf28">&#9670;&#160;</a></span>get_point_data()</h2>
+<a id="aa0ca8c35634853f8f558cd8c4c687f38" name="aa0ca8c35634853f8f558cd8c4c687f38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0ca8c35634853f8f558cd8c4c687f38">&#9670;&#160;</a></span>get_point_data()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">Array&lt; double &gt; VtkVtpData::get_point_data </td>
@@ -341,17 +426,27 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Get an array of point data from an unstructured grid. </p>
 
+<p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
+
 </div>
 </div>
-<a id="a521d98309e9abcd8c544dfe2ef2efc3a" name="a521d98309e9abcd8c544dfe2ef2efc3a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a521d98309e9abcd8c544dfe2ef2efc3a">&#9670;&#160;</a></span>get_point_data_names()</h2>
+<a id="a2839cfb013c5b0ecc0f6f29c5e119ae8" name="a2839cfb013c5b0ecc0f6f29c5e119ae8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2839cfb013c5b0ecc0f6f29c5e119ae8">&#9670;&#160;</a></span>get_point_data_names()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt; std::string &gt; VtkVtpData::get_point_data_names </td>
@@ -360,9 +455,16 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Get a list of point data names. </p>
+
+<p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
 
 </div>
 </div>
@@ -390,6 +492,34 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
 </div><div class="memdoc">
 
 <p>Get an array of point data from an unstructured grid. </p>
+
+<p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
+
+</div>
+</div>
+<a id="a57e8e2708deb89920d3e18ed0808e860" name="a57e8e2708deb89920d3e18ed0808e860"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a57e8e2708deb89920d3e18ed0808e860">&#9670;&#160;</a></span>has_cell_data()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool VtkVtpData::has_cell_data </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 <p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
 
