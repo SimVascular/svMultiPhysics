@@ -567,6 +567,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   }
 
   //  For Neumann BC, is load vector changing with deformation (follower pressure)
+  //
   lBc.flwP = false;
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) {
     if (lEq.phys == Equation_struct || lEq.phys == Equation_ustruct) {

@@ -25,7 +25,6 @@
 
 #include <fsils_api.hpp>
 
-#include <iostream>
 #include <math.h>
 
 namespace eq_assem {

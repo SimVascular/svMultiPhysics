@@ -122,7 +122,7 @@ void baf_ini(Simulation* simulation)
 
         } else if (utils::btest(bc.bType, iBC_Neu)) {
           com_mod.cplBC.fa[i].bGrp = CplBCType::cplBC_Neu;
-          // For implicit or semi-implicit coupling scheme, 
+          // For implicit or semi-implicit (not explicit) Neumann 0D coupling scheme, 
           // set bType to resistance
           if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
             bc.bType= utils::ibset(bc.bType, iBC_res);

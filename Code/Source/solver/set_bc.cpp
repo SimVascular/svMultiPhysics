@@ -47,7 +47,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
   auto& eq = com_mod.eq[iEq];
   auto& cplBC = com_mod.cplBC;
 
-  // If coupling is all with Dirichlet faces (and no ZeroD BCs), no derivative calculation is needed
+  // If coupling is all with Dirichlet faces, no derivative calculation is needed
   // (see Moghadam et al. 2013 Section 2.2.2)
   // Also check for ZeroD BCs which are not in cplBC.fa
   bool has_ZeroD = false;
@@ -207,6 +207,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     int i = bc.cplBCptr;
 
     if (i != -1 && utils::btest(bc.bType, iBC_Neu)) {
+
         // Finite difference perturbation in flowrate
         cplBC.fa[i].Qn = orgQ[i] + diff;
 
@@ -1368,7 +1369,6 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
   }
 }
 
-
 /// @brief Set outlet BCs.
 //
 void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg)
@@ -1438,7 +1438,8 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceT
   if (utils::btest(lBc.bType,iBC_cpl) || utils::btest(lBc.bType,iBC_RCR)) {
     h(0) = lBc.g;
 
-  } else {    
+  } else {   
+     
     if (utils::btest(lBc.bType,iBC_gen)) {
        // [NOTE] The Fortran code was passing a vector to 'igbc' 
        // which treats is as an array dY(gm%dof,SIZE(gm%d,2).
