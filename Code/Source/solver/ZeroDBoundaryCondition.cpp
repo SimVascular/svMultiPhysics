@@ -13,22 +13,8 @@
 #include <optional>
 #include <unordered_map>
 #include <vtkCellType.h>
-#include <vtkXMLPolyDataReader.h>
-#include <vtkPolyData.h>
-#include <vtkCellData.h>
-#include <vtkDoubleArray.h>
-#include <vtkSmartPointer.h>
 #include <fstream>
 
-
-static std::string bc_type_to_string(consts::BoundaryConditionType type)
-{
-    switch (type) {
-        case consts::BoundaryConditionType::bType_Dir: return "Dirichlet";
-        case consts::BoundaryConditionType::bType_Neu: return "Neumann";
-        default: return "Unsupported";
-    }
-}
 
 ZeroDBoundaryCondition::ZeroDBoundaryCondition(const ZeroDBoundaryCondition& other)
     : face_(other.face_)
@@ -487,7 +473,7 @@ bool ZeroDBoundaryCondition::is_initialized() const
 }
 
 // =========================================================================
-// Cap: helpers and implementation (all cap-related code below)
+// Cap: helpers and implementation 
 // =========================================================================
 
 // Map VTK cell types to ElementType (same as vtk_xml_parser.cpp)
@@ -513,115 +499,17 @@ static consts::ElementType vtk_cell_type_to_element_type(int vtk_cell_type)
     }
 }
 
-// Helper functions to access cell data from VTP file
-namespace {
-    /// @brief Check if a cell data array exists in a VTP file
-    bool has_cell_data_in_vtp(const std::string& vtp_file_path, const std::string& data_name)
-    {
-        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-        reader->SetFileName(vtp_file_path.c_str());
-        reader->Update();
-        auto polydata = reader->GetOutput();
-        
-        if (polydata == nullptr) {
-            return false;
-        }
-        
-        int num_arrays = polydata->GetCellData()->GetNumberOfArrays();
-        for (int i = 0; i < num_arrays; i++) {
-            if (!strcmp(polydata->GetCellData()->GetArrayName(i), data_name.c_str())) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    /// @brief Get dimensions of a cell data array from a VTP file
-    /// @return Pair of (num_components, num_tuples), or (0, 0) if not found
-    std::pair<int, int> get_cell_data_dimensions_from_vtp(const std::string& vtp_file_path, const std::string& data_name)
-    {
-        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-        reader->SetFileName(vtp_file_path.c_str());
-        reader->Update();
-        auto polydata = reader->GetOutput();
-        
-        if (polydata == nullptr) {
-            return std::make_pair(0, 0);
-        }
-        
-        auto cell_data = polydata->GetCellData();
-        if (cell_data == nullptr) {
-            return std::make_pair(0, 0);
-        }
-        
-        auto vtk_array = cell_data->GetArray(data_name.c_str());
-        if (vtk_array == nullptr) {
-            return std::make_pair(0, 0);
-        }
-        
-        // Try to cast to vtkDoubleArray first
-        auto vtk_data = vtkDoubleArray::SafeDownCast(vtk_array);
-        if (vtk_data == nullptr) {
-            // If not double, try to get dimensions from the base array
-            // This handles cases where the array might be float or another numeric type
-            int num_comp = vtk_array->GetNumberOfComponents();
-            int num_tuples = vtk_array->GetNumberOfTuples();
-            return std::make_pair(num_comp, num_tuples);
-        }
-        
-        int num_comp = vtk_data->GetNumberOfComponents();
-        int num_tuples = vtk_data->GetNumberOfTuples();
-        
-        return std::make_pair(num_comp, num_tuples);
-    }
-    
-    /// @brief Copy cell data from a VTP file to an Array
-    void copy_cell_data_from_vtp(const std::string& vtp_file_path, const std::string& data_name, Array<double>& mesh_data)
-    {
-        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-        reader->SetFileName(vtp_file_path.c_str());
-        reader->Update();
-        auto polydata = reader->GetOutput();
-        
-        if (polydata == nullptr) {
-            return;
-        }
-        
-        auto cell_data = polydata->GetCellData();
-        if (cell_data == nullptr) {
-            return;
-        }
-        
-        auto vtk_array = cell_data->GetArray(data_name.c_str());
-        if (vtk_array == nullptr) {
-            return;
-        }
-        
-        int num_data = vtk_array->GetNumberOfTuples();
-        if (num_data == 0) {
-            return;
-        }
-        
-        int num_comp = vtk_array->GetNumberOfComponents();
-        
-        // Set the data - handle both double and float arrays
-        auto vtk_data = vtkDoubleArray::SafeDownCast(vtk_array);
-        if (vtk_data != nullptr) {
-            // Double array - direct copy
-            for (int i = 0; i < num_data; i++) {
-                auto tuple = vtk_data->GetTuple(i);
-                for (int j = 0; j < num_comp; j++) {
-                    mesh_data(j, i) = tuple[j];
-                }
-            }
-        } else {
-            // Other numeric type - convert to double
-            for (int i = 0; i < num_data; i++) {
-                for (int j = 0; j < num_comp; j++) {
-                    mesh_data(j, i) = vtk_array->GetComponent(i, j);
-                }
-            }
+template <typename GetXlFn, typename ComputeJacNFn, typename OnGaussFn>
+void for_each_cap_gauss_point(const faceType* cap_face, int nsd, int insd,
+                              GetXlFn&& get_xl,
+                              ComputeJacNFn&& compute_jac_n,
+                              OnGaussFn&& on_gauss)
+{
+    for (int e = 0; e < cap_face->nEl; e++) {
+        Array<double> xl = get_xl(e);
+        for (int g = 0; g < cap_face->nG; g++) {
+            auto [Jac, n] = compute_jac_n(xl, e, g, nsd, insd);
+            on_gauss(e, g, Jac, n);
         }
     }
 }
@@ -783,10 +671,10 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     // Load initial element normals from VTP file if available
     // The normals are stored as cell data array called "Normals"
     try {
-        bool has_normals = has_cell_data_in_vtp(vtp_file_path, "Normals");
+        bool has_normals = vtp_data.has_cell_data("Normals");
         if (has_normals) {
-            // Get dimensions from VTK array
-            auto [num_comp, num_tuples] = get_cell_data_dimensions_from_vtp(vtp_file_path, "Normals");
+            auto [num_comp, num_tuples] = vtp_data.get_cell_data_dimensions("Normals");
+
             if (num_comp == 0 || num_tuples == 0) {
                 // Provide more detailed error message
                 std::string error_msg = "[ZeroDBoundaryCondition::load_cap_face_vtp] Normals array exists but has zero size. ";
@@ -808,7 +696,7 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
             
             // Resize array to correct dimensions
             cap_initial_normals_.resize(num_comp, num_elems);
-            copy_cell_data_from_vtp(vtp_file_path, "Normals", cap_initial_normals_);
+            vtp_data.copy_cell_data("Normals", cap_initial_normals_);
             
             // Verify that data was actually copied
             if (cap_initial_normals_.nrows() != num_comp || cap_initial_normals_.ncols() != num_elems) {
@@ -1038,48 +926,6 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(int e, consts:
     return xl;
 }
 
-double ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(const Array<double>& cap_s, int l_offset,
-                                                               int e, int g, const std::unordered_map<int, int>& gnNo_to_capIdx)
-{
-    if (cap_face_->N.nrows() == 0 || cap_face_->N.ncols() == 0 ||
-        cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(gathered)] cap_face_ not ready.");
-    }
-    double sHat = 0.0;
-    for (int a = 0; a < cap_face_->eNoN; a++) {
-        int gnNo_idx = cap_face_->IEN(a, e);
-        auto it = gnNo_to_capIdx.find(gnNo_idx);
-        if (it == gnNo_to_capIdx.end()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(gathered)] IEN gnNo not in map.");
-        }
-        int cap_idx = it->second;
-        sHat += cap_face_->N(a, g) * cap_s(l_offset, cap_idx);
-    }
-    return sHat;
-}
-
-double ZeroDBoundaryCondition::integrate_vector_at_gauss_point(const Array<double>& cap_s, int l_offset, int nsd,
-                                                               int e, int g, const Vector<double>& n,
-                                                               const std::unordered_map<int, int>& gnNo_to_capIdx)
-{
-    if (cap_face_->N.nrows() == 0 || cap_face_->IEN.nrows() == 0 || n.size() != static_cast<size_t>(nsd)) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point(gathered)] invalid inputs.");
-    }
-    double sHat = 0.0;
-    for (int a = 0; a < cap_face_->eNoN; a++) {
-        int gnNo_idx = cap_face_->IEN(a, e);
-        auto it = gnNo_to_capIdx.find(gnNo_idx);
-        if (it == gnNo_to_capIdx.end()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point(gathered)] IEN gnNo not in map.");
-        }
-        int cap_idx = it->second;
-        for (int i = 0; i < nsd; i++) {
-            sHat += cap_face_->N(a, g) * cap_s(l_offset + i, cap_idx) * n(i);
-        }
-    }
-    return sHat;
-}
-
 void ZeroDBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
                                                            int l, int s_comps, consts::MechanicalConfigurationType cfg,
                                                            int cap_nNo, int nsd,
@@ -1302,15 +1148,6 @@ void ZeroDBoundaryCondition::prepare_cap_gathered_data(ComMod& com_mod, const Cm
 std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_and_normal(const Array<double>& xl,
                                                                                            int e, int g, int nsd, int insd)
 {
-    // Caller must ensure cap_face_ready() and initialize_cap_integration() has been called.
-    if (e < 0 || e >= cap_face_->nEl) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] Element index e=" + 
-                                std::to_string(e) + " is out of bounds (nEl=" + std::to_string(cap_face_->nEl) + ").");
-    }
-    if (g < 0 || g >= cap_face_->Nx.nslices()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] Gauss point index g=" + 
-                                std::to_string(g) + " is out of bounds (nG=" + std::to_string(cap_face_->Nx.nslices()) + ").");
-    }
     if (xl.nrows() != nsd || xl.ncols() != cap_face_->eNoN) {
         throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] xl has wrong dimensions: " +
                                 std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) + 
@@ -1339,12 +1176,6 @@ std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_a
     Vector<double> n(nsd);
     if (nsd == 3 && insd == 2) {
         // 3D surface: Jacobian = ||∂x/∂ξ₁ × ∂x/∂ξ₂||
-        // Verify xXi dimensions before calling cross
-        if (xXi.nrows() != 3 || xXi.ncols() != 2) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] xXi has wrong dimensions: " +
-                                    std::to_string(xXi.nrows()) + "x" + std::to_string(xXi.ncols()) + 
-                                    " (expected 3x2 for 3D surface).");
-        }
         n = utils::cross(xXi);
         Jac = sqrt(utils::norm(n));  // utils::norm returns squared norm, need sqrt
     } else if (nsd == 2 && insd == 1) {
@@ -1403,95 +1234,6 @@ std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_a
     return std::make_pair(Jac, n);
 }
 
-double ZeroDBoundaryCondition::integrate_scalar_at_gauss_point(ComMod& com_mod, const Array<double>& s, int l,
-                                                                int e, int g, const std::unordered_map<int, int>& gnNo_to_tnNo)
-{
-    // Caller must ensure cap_face_ready() and initialize_cap_integration() has been called.
-    if (g < 0 || g >= cap_face_->N.ncols()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Gauss point index g=" + 
-                                std::to_string(g) + " is out of bounds (N.ncols()=" + std::to_string(cap_face_->N.ncols()) + ").");
-    }
-    if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] cap_face_->IEN is not allocated.");
-    }
-    if (e < 0 || e >= cap_face_->IEN.ncols()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Element index e=" + 
-                                std::to_string(e) + " is out of bounds (IEN.ncols()=" + std::to_string(cap_face_->IEN.ncols()) + ").");
-    }
-    double sHat = 0.0;
-    for (int a = 0; a < cap_face_->eNoN; a++) {
-        int gnNo_idx = cap_face_->IEN(a, e);
-        auto it = gnNo_to_tnNo.find(gnNo_idx);
-        if (it == gnNo_to_tnNo.end()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] IEN entry (element " + 
-                                    std::to_string(e) + ", node " + std::to_string(a) + 
-                                    ") contains invalid gnNo index " + std::to_string(gnNo_idx) + 
-                                    " not found in com_mod.ltg mapping.");
-        }
-        int Ac = it->second;
-        if (Ac < 0 || Ac >= com_mod.tnNo) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Invalid node index Ac=" + std::to_string(Ac));
-        }
-        if (l >= s.nrows() || Ac >= s.ncols()) {
-            std::string msg = std::string("[ZeroDBoundaryCondition::integrate_scalar_at_gauss_point] Array s bounds exceeded: ") +
-                             std::string("s.nrows()=") + std::to_string(s.nrows()) + std::string(", s.ncols()=") + std::to_string(s.ncols()) +
-                             std::string(", l=") + std::to_string(l) + std::string(", Ac=") + std::to_string(Ac);
-            throw std::runtime_error(msg);
-        }
-        sHat += cap_face_->N(a, g) * s(l, Ac);
-    }
-    
-    return sHat;
-}
-
-double ZeroDBoundaryCondition::integrate_vector_at_gauss_point(ComMod& com_mod, const Array<double>& s, int l, int nsd,
-                                                                int e, int g, const Vector<double>& n,
-                                                                const std::unordered_map<int, int>& gnNo_to_tnNo)
-{
-    // Caller must ensure cap_face_ready() and initialize_cap_integration() has been called.
-    if (g < 0 || g >= cap_face_->N.ncols()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Gauss point index g=" + 
-                                std::to_string(g) + " is out of bounds (N.ncols()=" + std::to_string(cap_face_->N.ncols()) + ").");
-    }
-    if (e < 0 || e >= cap_face_->IEN.ncols()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Element index e=" + 
-                                std::to_string(e) + " is out of bounds (IEN.ncols()=" + std::to_string(cap_face_->IEN.ncols()) + ").");
-    }
-    if (n.size() != static_cast<size_t>(nsd)) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Normal vector size mismatch: " +
-                                std::to_string(n.size()) + " != " + std::to_string(nsd));
-    }
-    
-    double sHat = 0.0;
-    
-    for (int a = 0; a < cap_face_->eNoN; a++) {
-        // IEN contains gnNo index, map it to tnNo index
-        int gnNo_idx = cap_face_->IEN(a, e);
-        auto it = gnNo_to_tnNo.find(gnNo_idx);
-        if (it == gnNo_to_tnNo.end()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] IEN entry (element " + 
-                                    std::to_string(e) + ", node " + std::to_string(a) + 
-                                    ") contains invalid gnNo index " + std::to_string(gnNo_idx) + 
-                                    " not found in com_mod.ltg mapping.");
-        }
-        int Ac = it->second;
-        if (Ac < 0 || Ac >= com_mod.tnNo) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Invalid node index Ac=" + std::to_string(Ac));
-        }
-        if (l + nsd - 1 >= s.nrows() || Ac >= s.ncols()) {
-            std::string msg = std::string("[ZeroDBoundaryCondition::integrate_vector_at_gauss_point] Array s bounds exceeded: ") +
-                             std::string("s.nrows()=") + std::to_string(s.nrows()) + std::string(", s.ncols()=") + std::to_string(s.ncols()) +
-                             std::string(", l=") + std::to_string(l) + std::string(", nsd=") + std::to_string(nsd) + std::string(", Ac=") + std::to_string(Ac);
-            throw std::runtime_error(msg);
-        }
-        for (int i = 0; i < nsd; i++) {
-            sHat += cap_face_->N(a, g) * s(l + i, Ac) * n(i);
-        }
-    }
-    
-    return sHat;
-}
-
 double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s, 
                                                    int l, std::optional<int> u, consts::MechanicalConfigurationType cfg)
 {
@@ -1503,6 +1245,30 @@ double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& 
     bool is_scalar = (u_val == l);
     const int s_comps = is_scalar ? 1 : nsd;
 
+    auto integrate_kernel = [&](const faceType* cap_face, auto&& get_xl, auto&& get_value) -> double
+    {
+        double result = 0.0;
+        auto compute_jac_n = [&](const Array<double>& xl, int e, int g, int l_nsd, int l_insd) {
+            return compute_cap_jacobian_and_normal(xl, e, g, l_nsd, l_insd);
+        };
+        auto on_gauss = [&](int e, int g, double Jac, const Vector<double>& n) {
+                double sHat = 0.0;
+                for (int a = 0; a < cap_face->eNoN; a++) {
+                    const double Na = cap_face->N(a, g);
+                    if (is_scalar) {
+                        sHat += Na * get_value(e, a, 0);
+                    } else {
+                        for (int i = 0; i < s_comps; i++) {
+                            sHat += Na * get_value(e, a, i) * n(i);
+                        }
+                    }
+                }
+                result += cap_face->w(g) * Jac * sHat;
+        };
+        for_each_cap_gauss_point(cap_face, nsd, insd, get_xl, compute_jac_n, on_gauss);
+        return result;
+    };
+
     // Serial: only master has cap; early return if this rank has no cap
     if (cm.seq()) {
         if (!cap_face_ready()) {
@@ -1510,20 +1276,25 @@ double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& 
         }
         faceType* cap_face = cap_face_.get();
         // initialize_cap_integration() must have been called first (e.g. from baf_ini).
-        double result = 0.0;
-        for (int e = 0; e < cap_face->nEl; e++) {
-            Array<double> xl = update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
-            for (int g = 0; g < cap_face->nG; g++) {
-                auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, insd);
-                double sHat = 0.0;
-                if (is_scalar) {
-                    sHat = integrate_scalar_at_gauss_point(com_mod, s, l, e, g, cap_gnNo_to_tnNo_);
-                } else {
-                    sHat = integrate_vector_at_gauss_point(com_mod, s, l, nsd, e, g, n, cap_gnNo_to_tnNo_);
-                }
-                result += cap_face->w(g) * Jac * sHat;
+        auto get_xl = [&](int e) {
+            return update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
+        };
+        auto get_value = [&](int e, int a, int comp) -> double {
+            int gnNo_idx = cap_face->IEN(a, e);
+            auto it = cap_gnNo_to_tnNo_.find(gnNo_idx);
+            if (it == cap_gnNo_to_tnNo_.end()) {
+                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in cap_gnNo_to_tnNo_.");
             }
-        }
+            int Ac = it->second;
+            if (Ac < 0 || Ac >= com_mod.tnNo) {
+                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Invalid tnNo index while integrating cap.");
+            }
+            if (l + comp >= s.nrows() || Ac >= s.ncols()) {
+                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Array bounds exceeded while integrating cap.");
+            }
+            return s(l + comp, Ac);
+        };
+        double result = integrate_kernel(cap_face, get_xl, get_value);
         return result;
     }
 
@@ -1541,19 +1312,22 @@ double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& 
         for (int a = 0; a < cap_nNo; a++) {
             gnNo_to_capIdx[cap_face->gN(a)] = a;
         }
-        for (int e = 0; e < cap_face->nEl; e++) {
-            Array<double> xl = update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_capIdx);
-            for (int g = 0; g < cap_face->nG; g++) {
-                auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, insd);
-                double sHat = 0.0;
-                if (is_scalar) {
-                    sHat = integrate_scalar_at_gauss_point(cap_s_use, 0, e, g, gnNo_to_capIdx);
-                } else {
-                    sHat = integrate_vector_at_gauss_point(cap_s_use, 0, nsd, e, g, n, gnNo_to_capIdx);
-                }
-                result += cap_face->w(g) * Jac * sHat;
+        auto get_xl = [&](int e) {
+            return update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_capIdx);
+        };
+        auto get_value = [&](int e, int a, int comp) -> double {
+            int gnNo_idx = cap_face->IEN(a, e);
+            auto it = gnNo_to_capIdx.find(gnNo_idx);
+            if (it == gnNo_to_capIdx.end()) {
+                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in gathered cap map.");
             }
-        }
+            int cap_idx = it->second;
+            if (comp >= cap_s_use.nrows() || cap_idx >= cap_s_use.ncols()) {
+                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Gathered array bounds exceeded while integrating cap.");
+            }
+            return cap_s_use(comp, cap_idx);
+        };
+        result = integrate_kernel(cap_face, get_xl, get_value);
     }
     cm.bcast(cm_mod, &result);
     return result;
@@ -1590,42 +1364,37 @@ void ZeroDBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_m
     auto& cm = com_mod.cm;
     const bool use_gathered = !cm.seq() && cap_nNo_gathered_ > 0;
 
-    // Loop over cap elements
-    for (int e = 0; e < cap_face->nEl; e++) {
-        // In parallel use gathered positions (all cap nodes); in serial use local com_mod
-        Array<double> xl;
+    auto get_xl = [&](int e) {
         if (use_gathered) {
-            xl = update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_cap_local);
-        } else {
-            xl = update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
+            return update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_cap_local);
         }
-
-        // Loop over Gauss points
-        for (int g = 0; g < cap_face->nG; g++) {
-            // Compute Jacobian and normal vector
-            auto [Jac, n] = compute_cap_jacobian_and_normal(xl, e, g, nsd, nsd - 1);
-
-            // Accumulate ∫ N_A n_i dΓ at each node
-            for (int a = 0; a < cap_face->eNoN; a++) {
-                int gnNo_idx = cap_face->IEN(a, e);
-                auto it = gnNo_to_cap_local.find(gnNo_idx);
-                if (it == gnNo_to_cap_local.end()) {
-                    throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] IEN entry (element " +
-                                            std::to_string(e) + ", node " + std::to_string(a) +
-                                            ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
-                                            " not found in cap face nodes.");
-                }
-                int cap_a = it->second;
-                if (cap_a < 0 || cap_a >= cap_nNo) {
-                    throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Invalid cap face-local index cap_a=" +
-                                            std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) + ")");
-                }
-                for (int i = 0; i < nsd; i++) {
-                    cap_valM_(i, cap_a) += cap_face->N(a, g) * cap_face->w(g) * Jac * n(i);
-                }
+        return update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
+    };
+    auto compute_jac_n = [&](const Array<double>& xl, int e, int g, int l_nsd, int l_insd) {
+        return compute_cap_jacobian_and_normal(xl, e, g, l_nsd, l_insd);
+    };
+    auto on_gauss = [&](int e, int g, double Jac, const Vector<double>& n) {
+        // Accumulate ∫ N_A n_i dΓ at each node
+        for (int a = 0; a < cap_face->eNoN; a++) {
+            int gnNo_idx = cap_face->IEN(a, e);
+            auto it = gnNo_to_cap_local.find(gnNo_idx);
+            if (it == gnNo_to_cap_local.end()) {
+                throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] IEN entry (element " +
+                                        std::to_string(e) + ", node " + std::to_string(a) +
+                                        ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
+                                        " not found in cap face nodes.");
+            }
+            int cap_a = it->second;
+            if (cap_a < 0 || cap_a >= cap_nNo) {
+                throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Invalid cap face-local index cap_a=" +
+                                        std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) + ")");
+            }
+            for (int i = 0; i < nsd; i++) {
+                cap_valM_(i, cap_a) += cap_face->N(a, g) * cap_face->w(g) * Jac * n(i);
             }
         }
-    }
+    };
+    for_each_cap_gauss_point(cap_face, nsd, nsd - 1, get_xl, compute_jac_n, on_gauss);
 
     // Reduce across processors only when using local data (each rank had partial cap_gnNo_to_tnNo_); when using gathered data only master computed
     if (!cm.seq() && !use_gathered) {

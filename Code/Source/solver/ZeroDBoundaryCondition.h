@@ -342,44 +342,10 @@ private:
     std::pair<double, Vector<double>> compute_cap_jacobian_and_normal(const Array<double>& xl, 
                                                                        int e, int g, int nsd, int insd);
     
-    /// @brief Integrate scalar field over cap element at a Gauss point
-    /// @param com_mod ComMod reference containing simulation data
-    /// @param s Array containing scalar values
-    /// @param l Index of scalar in s
-    /// @param e Element index
-    /// @param g Gauss point index
-    /// @param gnNo_to_tnNo Mapping from global node numbers to total node numbers
-    /// @return Scalar integrand value
-    double integrate_scalar_at_gauss_point(ComMod& com_mod, const Array<double>& s, int l,
-                                           int e, int g, const std::unordered_map<int, int>& gnNo_to_tnNo);
-    
-    /// @brief Integrate vector field over cap element at a Gauss point
-    /// @param com_mod ComMod reference containing simulation data
-    /// @param s Array containing vector values
-    /// @param l Lower index of vector in s
-    /// @param nsd Number of spatial dimensions
-    /// @param e Element index
-    /// @param g Gauss point index
-    /// @param n Normalized normal vector
-    /// @param gnNo_to_tnNo Mapping from global node numbers to total node numbers
-    /// @return Vector integrand value (s dot n)
-    double integrate_vector_at_gauss_point(ComMod& com_mod, const Array<double>& s, int l, int nsd,
-                                           int e, int g, const Vector<double>& n,
-                                           const std::unordered_map<int, int>& gnNo_to_tnNo);
-
     /// @brief Update cap element position using gathered data (for master after gather)
     Array<double> update_cap_element_position(int e, consts::MechanicalConfigurationType cfg,
                                               const Array<double>& cap_x, const Array<double>& cap_Do, const Array<double>& cap_Dn,
                                               const std::unordered_map<int, int>& gnNo_to_capIdx);
-
-    /// @brief Integrate scalar at Gauss point using gathered cap data (cap node index map)
-    double integrate_scalar_at_gauss_point(const Array<double>& cap_s, int l_offset,
-                                           int e, int g, const std::unordered_map<int, int>& gnNo_to_capIdx);
-
-    /// @brief Integrate vector at Gauss point using gathered cap data
-    double integrate_vector_at_gauss_point(const Array<double>& cap_s, int l_offset, int nsd,
-                                           int e, int g, const Vector<double>& n,
-                                           const std::unordered_map<int, int>& gnNo_to_capIdx);
 
     /// @brief Gather cap node positions and displacements (and field s) from all ranks to master
     void gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
