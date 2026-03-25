@@ -1000,17 +1000,26 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   }
 
   // Set Ttp parameters.
-  //
-  if (domain_params->G_Na.defined())  { cep_mod.ttp.G_Na = domain_params->G_Na.value(); }
-  if (domain_params->G_Kr.defined())  { cep_mod.ttp.G_Kr = domain_params->G_Kr.value(); }
-  if (domain_params->G_Ks.defined())  { cep_mod.ttp.G_Ks[lDmn.cep.imyo - 1] = domain_params->G_Ks.value(); }
-  if (domain_params->G_to.defined())  { cep_mod.ttp.G_to[lDmn.cep.imyo - 1] = domain_params->G_to.value(); }
-  if (domain_params->G_CaL.defined()) { cep_mod.ttp.G_CaL = domain_params->G_CaL.value(); }
+  // Scalar params
+  std::map<Parameter<double>*,double*> simple_ttp_params{
+    {&domain_params->G_Na, &lDmn.cep.ttp.G_Na},
+    {&domain_params->G_Kr, &lDmn.cep.ttp.G_Kr},
+    {&domain_params->G_CaL, &lDmn.cep.ttp.G_CaL}
+  };
 
-  // Set Bo parameters.
-  //
-  if (domain_params->tau_si.defined())  { cep_mod.bo.tau_si[lDmn.cep.imyo - 1] = domain_params->tau_si.value(); }
-  if (domain_params->tau_fi.defined())  { cep_mod.bo.tau_fi[lDmn.cep.imyo - 1] = domain_params->tau_fi.value(); }
+  for (auto& [param, value] : simple_ttp_params) {
+    if (param->defined()) {
+      *value = param->value();
+    }
+  }
+
+  // Array params
+  if (domain_params->G_Ks.defined()) {
+    lDmn.cep.ttp.G_Ks[lDmn.cep.imyo - 1] = domain_params->G_Ks.value();
+  }
+  if (domain_params->G_to.defined()) {
+    lDmn.cep.ttp.G_to[lDmn.cep.imyo - 1] = domain_params->G_to.value();
+  }
 
   // Set stimulus parameters. 
   //

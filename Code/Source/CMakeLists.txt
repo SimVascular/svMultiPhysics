@@ -38,7 +38,7 @@ if(SV_USE_DUMMY_MPI)
             is set to true.")
 endif()
 
-set(FLOWSOLVER_SUBDIRS ${FLOWSOLVER_SUBDIRS} liner_solver)
+set(FLOWSOLVER_SUBDIRS ${FLOWSOLVER_SUBDIRS} linear_solver)
 set(FLOWSOLVER_SUBDIRS ${FLOWSOLVER_SUBDIRS} solver)
 
 #-----------------------------------------------------------------------------

@@ -32,11 +32,20 @@ class VtkData {
     virtual void set_points(const Array<double>& points) = 0;
     virtual void set_connectivity(const int nsd, const Array<int>& conn, const int pid = 0) = 0;
 
+    virtual bool has_cell_data(const std::string& data_name) = 0;
     virtual bool has_point_data(const std::string& data_name) = 0;
 
     virtual void copy_points(Array<double>& points) = 0;
+
     virtual void copy_point_data(const std::string& data_name, Array<double>& mesh_data) = 0;
     virtual void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) = 0;
+    virtual void copy_point_data(const std::string& data_name, Vector<int>& mesh_data) = 0;
+
+    virtual void copy_cell_data(const std::string& data_name, Vector<int>& mesh_data) = 0;
+
+    virtual Array<double> get_point_data(const std::string& data_name) = 0;
+    virtual std::vector<std::string> get_point_data_names() = 0;
+
     virtual void write() = 0;
 
     static VtkData* create_reader(const std::string& file_name);
@@ -64,13 +73,20 @@ class VtkVtpData : public VtkData {
     virtual int num_points() const override;
     virtual void read_file(const std::string& file_name) override;
 
-    void copy_points(Array<double>& points) override;
-    void copy_point_data(const std::string& data_name, Array<double>& mesh_data) override;
-    void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) override;
-    void copy_point_data(const std::string& data_name, Vector<int>& mesh_data);
-    Array<double> get_point_data(const std::string& data_name);
-    std::vector<std::string> get_point_data_names();
-    bool has_point_data(const std::string& data_name) override;
+    virtual void copy_points(Array<double>& points) override;
+
+    virtual void copy_point_data(const std::string& data_name, Array<double>& mesh_data) override;
+    virtual void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) override;
+    virtual void copy_point_data(const std::string& data_name, Vector<int>& mesh_data) override;
+
+    virtual void copy_cell_data(const std::string& data_name, Vector<int>& mesh_data) override;
+
+    virtual Array<double> get_point_data(const std::string& data_name) override;
+    virtual std::vector<std::string> get_point_data_names() override;
+
+    virtual bool has_cell_data(const std::string& data_name) override;
+    virtual bool has_point_data(const std::string& data_name) override;
+
     virtual void set_connectivity(const int nsd, const Array<int>& conn, const int pid = 0) override;
 
     virtual void set_element_data(const std::string& data_name, const Array<double>& data) override;
@@ -101,15 +117,22 @@ class VtkVtuData : public VtkData {
     virtual int num_points() const override;
     virtual void read_file(const std::string& file_name) override;
 
-    void copy_points(Array<double>& points) override;
-    void copy_point_data(const std::string& data_name, Array<double>& mesh_data) override;
-    void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) override;
-    void copy_point_data(const std::string& data_name, Vector<int>& mesh_data);
+    virtual void copy_points(Array<double>& points) override;
 
-    Array<double> get_point_data(const std::string& data_name);
-    std::vector<std::string> get_point_data_names();
+    virtual void copy_point_data(const std::string& data_name, Array<double>& mesh_data) override;
+    virtual void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) override;
+    virtual void copy_point_data(const std::string& data_name, Vector<int>& mesh_data) override;
+
+    virtual void copy_cell_data(const std::string& data_name, Vector<int>& mesh_data) override;
+
+    virtual Array<double> get_point_data(const std::string& data_name) override;
+    virtual std::vector<std::string> get_point_data_names() override;
+
     virtual Array<double> get_points() const override;
-    bool has_point_data(const std::string& data_name) override;
+
+    virtual bool has_cell_data(const std::string& data_name) override;
+    virtual bool has_point_data(const std::string& data_name) override;
+
     virtual void set_connectivity(const int nsd, const Array<int>& conn, const int pid = 0) override;
 
     virtual void set_element_data(const std::string& data_name, const Array<double>& data) override;
