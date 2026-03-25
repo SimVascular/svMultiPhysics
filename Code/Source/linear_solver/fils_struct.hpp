@@ -31,7 +31,7 @@ namespace fsi_linear_solver {
 enum class BcType
 {
   BC_TYPE_Dir = 0,
-  BC_TYPE_Neu = 1,
+  BC_TYPE_Neu = 1
 };
 
 enum class BcopType
@@ -138,9 +138,6 @@ class FSILS_faceType
     /// ZeroD: Cap node mapping from cap face-local index to linear solver index
     /// Similar to glob, but for cap nodes
     Vector<int> cap_glob;
-
-    /// ZeroD: Global node id for each cap node (same order as cap_glob)
-    Vector<int> cap_gN;
 
     /// ZeroD: True if this face has a cap (set from zerod_bc.has_cap() so all ranks agree in parallel)
     bool has_cap = false;

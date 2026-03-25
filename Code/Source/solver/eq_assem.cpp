@@ -358,7 +358,6 @@ void fsi_ls_upd(ComMod& com_mod, bcType& lBc, const faceType& lFa)
     face.cap_val.resize(0, 0);
     face.cap_valM.resize(0, 0);
     face.cap_glob.resize(0);
-    face.cap_gN.resize(0);
     face.has_cap = false;
   }
 };

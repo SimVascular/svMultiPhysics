@@ -22,9 +22,6 @@
 
 #include <math.h>
 
-// #define debug_gmres
-// #define debug_gmres_v   // used when dof>1 (e.g. structure); debug_gmres is for gmres() path (dof==1)
-
 namespace gmres {
 
 void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLsType& ls, const int dof, 

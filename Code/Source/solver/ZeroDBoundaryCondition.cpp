@@ -1419,7 +1419,6 @@ void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod
         lhs_face.cap_val.resize(0, 0);
         lhs_face.cap_valM.resize(0, 0);
         lhs_face.cap_glob.resize(0);
-        lhs_face.cap_gN.resize(0);
         return;
     }
 
@@ -1432,7 +1431,6 @@ void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod
             lhs_face.cap_val.resize(0, 0);
             lhs_face.cap_valM.resize(0, 0);
             lhs_face.cap_glob.resize(0);
-            lhs_face.cap_gN.resize(0);
             return;
         }
         compute_cap_valM(com_mod, cm_mod, cfg);
@@ -1442,10 +1440,8 @@ void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod
         lhs_face.cap_valM.resize(nsd, cap_nNo);
         lhs_face.cap_valM = 0.0;
         lhs_face.cap_glob.resize(cap_nNo);
-        lhs_face.cap_gN.resize(cap_nNo);
         for (int a = 0; a < cap_nNo; a++) {
             int gnNo = cap_face->gN(a);
-            lhs_face.cap_gN(a) = gnNo;
             int localIdx = -1;
             for (int i = 0; i < com_mod.tnNo; i++) {
                 if (com_mod.ltg(i) == gnNo) {
@@ -1483,7 +1479,6 @@ void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod
         lhs_face.cap_val.resize(0, 0);
         lhs_face.cap_valM.resize(0, 0);
         lhs_face.cap_glob.resize(0);
-        lhs_face.cap_gN.resize(0);
         return;
     }
     // Only resize on ranks that don't have the data; Vector::resize() deallocates and
@@ -1507,7 +1502,6 @@ void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod
         }
     }
     lhs_face.cap_glob.resize(n_owned);
-    lhs_face.cap_gN.resize(n_owned);
     lhs_face.cap_val.resize(nsd, n_owned);
     lhs_face.cap_valM.resize(nsd, n_owned);
     lhs_face.cap_valM = 0.0;
@@ -1524,7 +1518,6 @@ void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod
         }
         if (localIdx >= 0) {
             lhs_face.cap_glob(idx) = com_mod.lhs.map(localIdx);
-            lhs_face.cap_gN(idx) = gnNo;
             for (int i = 0; i < nsd; i++)
                 lhs_face.cap_val(i, idx) = cap_val_all(i, a);
             idx++;

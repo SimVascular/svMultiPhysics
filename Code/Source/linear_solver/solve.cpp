@@ -60,7 +60,7 @@ void fsils_solve(FSILS_lhsType& lhs, FSILS_lsType& ls, const int dof, Array<doub
 
     bool flag = false;
     for (auto& face : lhs.face) { 
-      if (face.bGrp == BcType::BC_TYPE_Neu) { 
+      if (face.bGrp == BcType::BC_TYPE_Neu) {
         flag = true;
         break;
       }

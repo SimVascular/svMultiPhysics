@@ -4,9 +4,6 @@
 #include "add_bc_mul.h"
 
 #include "dot.h"
-#include <iostream>
-
-#define debug_add_bc_mul
 
 namespace add_bc_mul {
 
@@ -104,12 +101,10 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
       else  {
         // Computing S = coef * v^T * X
         double S = 0.0;
-        double S_nocap = 0.0;
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);
           for (int i = 0; i < nsd; i++) {
             S = S + face.valM(i,a)*X(i,Ac);
-            S_nocap = S_nocap + face.valM(i,a)*X(i,Ac);
           }
         }
         
