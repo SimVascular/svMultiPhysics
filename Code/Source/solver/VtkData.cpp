@@ -800,7 +800,7 @@ Array<double> VtkVtpData::get_points() const
 
 bool VtkVtpData::has_cell_data(const std::string& data_name)
 {
-  int num_arrays = impl->vtk_polydata->GetPointData()->GetNumberOfArrays();
+  int num_arrays = impl->vtk_polydata->GetCellData()->GetNumberOfArrays();
 
   for (int i = 0; i < num_arrays; i++) {
     if (!strcmp(impl->vtk_polydata->GetCellData()->GetArrayName(i), data_name.c_str())) {
@@ -1059,7 +1059,7 @@ void VtkVtuData::copy_points(Array<double>& points)
 
 bool VtkVtuData::has_cell_data(const std::string& data_name)
 {
-  int num_arrays = impl->vtk_ugrid->GetPointData()->GetNumberOfArrays();
+  int num_arrays = impl->vtk_ugrid->GetCellData()->GetNumberOfArrays();
 
   for (int i = 0; i < num_arrays; i++) {
     if (!strcmp(impl->vtk_ugrid->GetCellData()->GetArrayName(i), data_name.c_str())) {
