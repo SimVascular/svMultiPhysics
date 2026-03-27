@@ -9,6 +9,7 @@
     <Spectral_radius_of_infinite_time_step> 0.50 </Spectral_radius_of_infinite_time_step> 
     <Searched_file_name_to_trigger_stop> STOP_SIM </Searched_file_name_to_trigger_stop> 
 
+    <Save_results_in_folder> dat </Save_results_in_folder> 
     <Save_results_to_VTK_format> true </Save_results_to_VTK_format> 
     <Name_prefix_of_saved_VTK_files> result </Name_prefix_of_saved_VTK_files> 
     <Increment_in_saving_VTK_files> 1 </Increment_in_saving_VTK_files> 
@@ -33,7 +34,7 @@
       <Face_file_path> ./mesh/surface_x20.vtp </Face_file_path>
     </Add_face>
 
-    <Domain_file_path> ./mesh/domainIDs.vtu </Domain_file_path>
+    <Domain_file_path> ./mesh/domainIDs.dat </Domain_file_path>
 
     <Mesh_scale_factor> 1.0 </Mesh_scale_factor>
   </Add_mesh>
