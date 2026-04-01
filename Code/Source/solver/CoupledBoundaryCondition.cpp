@@ -12,6 +12,7 @@
 #include "fils_struct.hpp"
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 #include <vtkCellType.h>
 #include <fstream>
 
@@ -710,6 +711,26 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
     } catch (...) {
         throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error loading Normals from file '" + 
                                 vtp_file_path + "'");
+    }
+
+    // Cap GlobalNodeID must match at least one gnNo on the coupled face (same mesh indexing as initialize_cap_integration)
+    std::unordered_set<int> face_gn;
+    face_gn.reserve(static_cast<size_t>(face_->nNo));
+    for (int a = 0; a < face_->nNo; a++) {
+        face_gn.insert(face_->gN(a));
+    }
+    bool any_shared = false;
+    for (int a = 0; a < cap_face_->nNo; a++) {
+        if (face_gn.find(cap_face_->gN(a)) != face_gn.end()) {
+            any_shared = true;
+            break;
+        }
+    }
+    if (!any_shared) {
+        throw std::runtime_error(
+            "[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path +
+            "' has no GlobalNodeID entries in common with coupled face '" + face_name_ +
+            "'. The cap must share at least one mesh node with that face.");
     }
 
     has_cap_ = true;
