@@ -752,6 +752,30 @@ class BoundaryConditionRCRParameters : public ParameterLists
     bool value_set = false;
 };
 
+/// @brief svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled).
+///
+/// \code {.xml}
+/// <Coupling_interface>
+///   <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+///   <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
+/// </Coupling_interface>
+/// \endcode
+class CouplingInterfaceParameters : public ParameterLists
+{
+  public:
+    CouplingInterfaceParameters();
+
+    static const std::string xml_element_name_;
+
+    void set_values(tinyxml2::XMLElement* xml_elem);
+    void print_parameters();
+
+    Parameter<std::string> svzerod_solver_block;
+    Parameter<std::string> chamber_cap_surface;
+
+    bool value_set = false;
+};
+
 /// @brief The BoundaryConditionParameters stores paramaters for various
 /// type of boundary conditions under the Add_BC XML element.
 class BoundaryConditionParameters : public ParameterLists
@@ -764,6 +788,9 @@ class BoundaryConditionParameters : public ParameterLists
 
     // RCR parameters sub-element.
     BoundaryConditionRCRParameters rcr;
+
+    // svZeroDSolver coupling subsection (with Time_dependence Coupled).
+    CouplingInterfaceParameters coupling_interface;
 
     // Add_BC name= attribute.
     Parameter<std::string> name;
@@ -794,8 +821,6 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<std::string> spatial_profile_file_path;
     Parameter<std::string> spatial_values_file_path;
     Parameter<double> stiffness;
-    Parameter<std::string> svzerod_solver_block;
-    Parameter<std::string> svzerod_solver_cap;
 
     Parameter<std::string> temporal_and_spatial_values_file_path;
     Parameter<std::string> temporal_values_file_path;

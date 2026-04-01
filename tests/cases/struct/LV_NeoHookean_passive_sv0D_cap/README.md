@@ -1,5 +1,5 @@
 # Problem Description
-This test case simulates an idealized model of a left ventricle (LV) using a NeoHookean material. The LV is inflated at an approximately constant rate of change of volume using a boundary condition coupled to the SimVascular [svZeroDSolver](https://simvascular.github.io/documentation/rom_simulation.html#0d-solver). 
+This test case simulates an idealized model of a left ventricle (LV) using a NeoHookean material. This test considers a cap to quantify flowrates. The LV is inflated at an approximately constant rate of change of volume using a boundary condition coupled to the SimVascular [svZeroDSolver](https://simvascular.github.io/documentation/rom_simulation.html#0d-solver). 
 
 # svZeroDSolver
 The svZeroDSolver simulates bulk cardiovascular flow rates and pressures using an arbitrary zero-dimensional (0D) lumped parameter model (LPM) of a discrete network of components analogous to electrical circuits.  The svMultiPhysics solver can directly access the svZeroDSolver by loading the svZeroDSolver as a shared (dynamic) library available after installing it from [SimTK](https://simtk.org/frs/?group_id=188) or building it from source.
@@ -69,11 +69,14 @@ The boundary condition is defined for the **endo** endocardium surface using the
   <Type> Neu </Type>
   <Time_dependence> Coupled </Time_dependence>
   <Follower_pressure_load> true </Follower_pressure_load>
-  <svZeroDSolver_block> LV_IN </svZeroDSolver_block>  
+  <Coupling_interface>
+    <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+    <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
+  </Coupling_interface>
 </Add_BC>
 ```
 where 
-- `Time_dependence` set to `Coupled` identifies this boundary condition as being coupled to the svZeroDSolver
-- `svZeroDSolver_block` identifies the svZeroDSolver block used to generate values for this boiundary condition
+- `Time_dependence` set to `Coupled` with `Coupling_interface` selects the CoupledBoundaryCondition path for svZeroDSolver
+- `svZeroDSolver_block` names the svZeroDSolver block; optional `Chamber_cap_surface` gives the cap VTP for flow integration
   
 

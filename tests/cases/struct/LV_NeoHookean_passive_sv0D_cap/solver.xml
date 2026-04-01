@@ -11,7 +11,6 @@
 
   <Save_results_to_VTK_format> 1 </Save_results_to_VTK_format> 
   <Name_prefix_of_saved_VTK_files> result </Name_prefix_of_saved_VTK_files> 
-  <Save_results_in_folder> results </Save_results_in_folder>
   <Increment_in_saving_VTK_files> 1 </Increment_in_saving_VTK_files> 
   <Start_saving_after_time_step> 1 </Start_saving_after_time_step> 
 
@@ -76,7 +75,7 @@
       <Linear_algebra type="fsils" >
          <Preconditioner> fsils </Preconditioner>
       </Linear_algebra> 
-      <Tolerance> 1e-5 </Tolerance>
+      <Tolerance> 1e-9 </Tolerance>
       <Max_iterations> 1000 </Max_iterations> 
       <Krylov_space_dimension> 50 </Krylov_space_dimension>
    </LS>
@@ -84,7 +83,7 @@
    <svZeroDSolver_interface>
      <Coupling_type> semi-implicit </Coupling_type>
      <Configuration_file> svzerod_3Dcoupling.json </Configuration_file>
-     <Shared_library> /Users/jjv/software/svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library>
+     <Shared_library> ../../../../svZeroDSolver/build/src/interface/libsvzero_interface.dylib </Shared_library>
      <Initial_flows> 0.0 </Initial_flows>
      <Initial_pressures> 0.0 </Initial_pressures>
    </svZeroDSolver_interface>
@@ -98,10 +97,12 @@
 
    <Add_BC name="endo" > 
       <Type> Neu </Type> 
-      <Time_dependence> ZeroD_Coupled </Time_dependence> 
+      <Time_dependence> Coupled </Time_dependence> 
       <Follower_pressure_load> true </Follower_pressure_load>
-      <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
-      <svZeroDSolver_cap> mesh/mesh-surfaces/endo_cap.vtp </svZeroDSolver_cap>  
+      <Coupling_interface>
+         <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+         <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
+      </Coupling_interface>
    </Add_BC> 
    
 </Add_equation>

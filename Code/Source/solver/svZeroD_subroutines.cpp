@@ -257,7 +257,8 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   int nCoupledBcCount = count_coupled_bcs(com_mod);
   if (nCoupledBcCount == 0) {
     throw std::runtime_error(
-        "ERROR: [init_svZeroD] svZeroDSolver is enabled but no ZeroD_Coupled boundaries were found.");
+        "ERROR: [init_svZeroD] svZeroDSolver is enabled but no Time_dependence Coupled boundaries with "
+        "<Coupling_interface> were found.");
   }
   numCoupledSrfs = nCoupledBcCount;
 
