@@ -784,10 +784,6 @@ class svZeroDSolverInterfaceType
     // The path/name of the 0D solver shared library.
     std::string solver_library;
 
-    // Maps a 0D block name with a 3D face name representing the 
-    // coupling of a 0D block with a 3D face.
-    std::map<std::string,std::string> block_surface_map;
-
     // The path/name of the 0D solver JSON file.
     std::string configuration_file;
 
@@ -807,7 +803,6 @@ class svZeroDSolverInterfaceType
     bool has_data = false;
 
     void set_data(const svZeroDSolverInterfaceParameters& params);
-    void add_block_face(const std::string& block_name, const std::string& face_name);
 };
 
 /// @brief For coupled 0D-3D problems

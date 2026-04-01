@@ -215,16 +215,3 @@ void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters
 
   has_data = true;
 }
-
-//----------------
-// add_block_face
-//----------------
-// Add a block name / face name pair representing the coupling of a 
-// 0D block with a 3D face.
-//
-void svZeroDSolverInterfaceType::add_block_face(const std::string& block_name, const std::string& face_name)
-{
-  block_surface_map[block_name] = face_name;
-}
-
-
