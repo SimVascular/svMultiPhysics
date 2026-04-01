@@ -782,10 +782,10 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
     lBc.robin_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
   }
 
-  // Communicating ZeroD BC
+  // Communicating Coupled BC
   //
-  if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_ZeroD))) {
-    lBc.zerod_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
+  if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_Coupled))) {
+    lBc.coupled_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
   }
 
 

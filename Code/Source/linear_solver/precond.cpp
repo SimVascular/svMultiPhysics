@@ -226,7 +226,7 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
         }
       }
       
-      // If this is a ZeroD BC with a cap, also compute cap_valM from cap_val
+      // If this is a Coupled BC with a cap, also compute cap_valM from cap_val
       if (face.has_cap) {
         int cap_nNo = face.cap_val.ncols();
         for (int a = 0; a < cap_nNo; a++) {

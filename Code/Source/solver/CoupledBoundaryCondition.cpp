@@ -3,7 +3,7 @@
 
 #include "ComMod.h"
 #include "SimulationLogger.h"
-#include "ZeroDBoundaryCondition.h"
+#include "CoupledBoundaryCondition.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "utils.h"
@@ -16,7 +16,7 @@
 #include <fstream>
 
 
-ZeroDBoundaryCondition::ZeroDBoundaryCondition(const ZeroDBoundaryCondition& other)
+CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryCondition& other)
     : face_(other.face_)
     , cap_face_vtp_file_(other.cap_face_vtp_file_)
     , logger_(other.logger_)
@@ -48,23 +48,23 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(const ZeroDBoundaryCondition& oth
             if (cap_face_ != nullptr) {
                 // Basic validation - ensure sizes are consistent
                 if (cap_face_->nNo > 0 && cap_face_->gN.size() != cap_face_->nNo) {
-                    throw std::runtime_error("[ZeroDBoundaryCondition::copy constructor] Invalid cap_face_ after copy: gN.size()=" +
+                    throw std::runtime_error("[CoupledBoundaryCondition::copy constructor] Invalid cap_face_ after copy: gN.size()=" +
                                             std::to_string(cap_face_->gN.size()) + " != nNo=" + std::to_string(cap_face_->nNo));
                 }
                 if (cap_face_->nEl > 0 && cap_face_->IEN.ncols() != cap_face_->nEl) {
-                    throw std::runtime_error("[ZeroDBoundaryCondition::copy constructor] Invalid cap_face_ after copy: IEN.ncols()=" +
+                    throw std::runtime_error("[CoupledBoundaryCondition::copy constructor] Invalid cap_face_ after copy: IEN.ncols()=" +
                                             std::to_string(cap_face_->IEN.ncols()) + " != nEl=" + std::to_string(cap_face_->nEl));
                 }
             }
         } catch (const std::exception& e) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::copy constructor] Failed to copy cap_face_: " + std::string(e.what()));
+            throw std::runtime_error("[CoupledBoundaryCondition::copy constructor] Failed to copy cap_face_: " + std::string(e.what()));
         }
     } else {
         cap_face_.reset();
     }
 }
 
-ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(const ZeroDBoundaryCondition& other)
+CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBoundaryCondition& other)
 {
     if (this != &other) {
         face_ = other.face_;
@@ -95,7 +95,7 @@ ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(const ZeroDBoundaryCon
             try {
                 cap_face_ = std::make_unique<faceType>(*other.cap_face_);
             } catch (const std::exception& e) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::operator=] Failed to copy cap_face_: " + std::string(e.what()));
+                throw std::runtime_error("[CoupledBoundaryCondition::operator=] Failed to copy cap_face_: " + std::string(e.what()));
             }
         } else {
             cap_face_.reset();
@@ -104,7 +104,7 @@ ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(const ZeroDBoundaryCon
     return *this;
 }
 
-ZeroDBoundaryCondition::ZeroDBoundaryCondition(ZeroDBoundaryCondition&& other) noexcept
+CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& other) noexcept
     : face_(other.face_)
     , cap_face_vtp_file_(std::move(other.cap_face_vtp_file_))
     , logger_(other.logger_)
@@ -142,7 +142,7 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(ZeroDBoundaryCondition&& other) n
     other.pressure_ = 0.0;
 }
 
-ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(ZeroDBoundaryCondition&& other) noexcept
+CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCondition&& other) noexcept
 {
     if (this != &other) {
         face_ = other.face_;
@@ -184,7 +184,7 @@ ZeroDBoundaryCondition& ZeroDBoundaryCondition::operator=(ZeroDBoundaryCondition
     return *this;
 }
 
-ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
+CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
                                                const std::string& block_name, SimulationLogger& logger)
     : face_(&face)
     , logger_(&logger)
@@ -194,11 +194,11 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_
 {
     if (bc_type_ != consts::BoundaryConditionType::bType_Dir &&
         bc_type_ != consts::BoundaryConditionType::bType_Neu) {
-        throw std::runtime_error("[ZeroDBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
+        throw std::runtime_error("[CoupledBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
     }
 }
 
-ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
+CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
                                                const std::string& block_name, const std::string& cap_face_vtp_file, SimulationLogger& logger)
     : cap_face_vtp_file_(cap_face_vtp_file)
     , face_(&face)
@@ -209,7 +209,7 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_
 {
     if (bc_type_ != consts::BoundaryConditionType::bType_Dir &&
         bc_type_ != consts::BoundaryConditionType::bType_Neu) {
-        throw std::runtime_error("[ZeroDBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
+        throw std::runtime_error("[CoupledBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
     }
     // Load the cap VTP file if provided
     if (!cap_face_vtp_file_.empty()) {
@@ -221,44 +221,39 @@ ZeroDBoundaryCondition::ZeroDBoundaryCondition(consts::BoundaryConditionType bc_
 // svZeroD block configuration
 // =========================================================================
 
-void ZeroDBoundaryCondition::set_block_name(const std::string& block_name)
+void CoupledBoundaryCondition::set_block_name(const std::string& block_name)
 {
     block_name_ = block_name;
 }
 
-const std::string& ZeroDBoundaryCondition::get_block_name() const
+const std::string& CoupledBoundaryCondition::get_block_name() const
 {
     return block_name_;
 }
 
-void ZeroDBoundaryCondition::set_face_name(const std::string& face_name)
+void CoupledBoundaryCondition::set_face_name(const std::string& face_name)
 {
     face_name_ = face_name;
 }
 
-const std::string& ZeroDBoundaryCondition::get_face_name() const
-{
-    return face_name_;
-}
-
-void ZeroDBoundaryCondition::set_solution_ids(int flow_id, int pressure_id, double in_out_sign)
+void CoupledBoundaryCondition::set_solution_ids(int flow_id, int pressure_id, double in_out_sign)
 {
     flow_sol_id_ = flow_id;
     pressure_sol_id_ = pressure_id;
     in_out_sign_ = in_out_sign;
 }
 
-int ZeroDBoundaryCondition::get_flow_sol_id() const
+int CoupledBoundaryCondition::get_flow_sol_id() const
 {
     return flow_sol_id_;
 }
 
-int ZeroDBoundaryCondition::get_pressure_sol_id() const
+int CoupledBoundaryCondition::get_pressure_sol_id() const
 {
     return pressure_sol_id_;
 }
 
-double ZeroDBoundaryCondition::get_in_out_sign() const
+double CoupledBoundaryCondition::get_in_out_sign() const
 {
     return in_out_sign_;
 }
@@ -267,12 +262,12 @@ double ZeroDBoundaryCondition::get_in_out_sign() const
 // Flowrate computation and access
 // =========================================================================
 
-void ZeroDBoundaryCondition::set_follower_pressure_load(bool flwP)
+void CoupledBoundaryCondition::set_follower_pressure_load(bool flwP)
 {
     follower_pressure_load_ = flwP;
 }
 
-bool ZeroDBoundaryCondition::get_follower_pressure_load() const
+bool CoupledBoundaryCondition::get_follower_pressure_load() const
 {
     return follower_pressure_load_;
 }
@@ -285,13 +280,13 @@ bool ZeroDBoundaryCondition::get_follower_pressure_load() const
 /// The flowrate is computed as the integral of velocity dotted with the face normal.
 /// For struct/ustruct physics, the integral is computed on the deformed configuration.
 /// For fluid/FSI/CMM physics, the integral is computed on the reference configuration.
-void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys)
+void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys)
 {
     using namespace consts;
     
     
     if (face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Face is not set.");
+        throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Face is not set.");
     }
     
     int nsd = com_mod.nsd;
@@ -304,7 +299,7 @@ void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_
     if ((phys == EquationType::phys_struct) || (phys == EquationType::phys_ustruct)) {
         // Must use follower pressure load for 0D coupling with struct/ustruct
         if (!follower_pressure_load_) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Follower pressure load must be used for 0D coupling with struct/ustruct");
+            throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Follower pressure load must be used for 0D coupling with struct/ustruct");
         }
         cfg_o = MechanicalConfigurationType::old_timestep;
         cfg_n = MechanicalConfigurationType::new_timestep;
@@ -315,7 +310,7 @@ void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_
         cfg_n = MechanicalConfigurationType::reference;
     }
     else {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_flowrates] Invalid physics type for 0D coupling");
+        throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Invalid physics type for 0D coupling");
     }
     
     // Compute flowrates by integrating velocity over face
@@ -342,13 +337,13 @@ void ZeroDBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_
 ///
 /// The pressure is computed as the average pressure over the face by integrating
 /// pressure (at index nsd in the solution vector) and dividing by the face area.
-void ZeroDBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod)
+void CoupledBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod)
 {
     using namespace consts;
     
     
     if (face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_pressures] Face is not set.");
+        throw std::runtime_error("[CoupledBoundaryCondition::compute_pressures] Face is not set.");
     }
     
     int nsd = com_mod.nsd;
@@ -359,23 +354,23 @@ void ZeroDBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_
     
 }
 
-double ZeroDBoundaryCondition::get_Qo() const
+double CoupledBoundaryCondition::get_Qo() const
 {
     return Qo_;
 }
 
-double ZeroDBoundaryCondition::get_Qn() const
+double CoupledBoundaryCondition::get_Qn() const
 {
     return Qn_;
 }
 
-void ZeroDBoundaryCondition::set_flowrates(double Qo, double Qn)
+void CoupledBoundaryCondition::set_flowrates(double Qo, double Qn)
 {
     Qo_ = Qo;
     Qn_ = Qn;
 }
 
-void ZeroDBoundaryCondition::perturb_flowrate(double diff)
+void CoupledBoundaryCondition::perturb_flowrate(double diff)
 {
     Qn_ += diff;
 }
@@ -384,22 +379,22 @@ void ZeroDBoundaryCondition::perturb_flowrate(double diff)
 // Pressure access
 // =========================================================================
 
-void ZeroDBoundaryCondition::set_pressure(double pressure)
+void CoupledBoundaryCondition::set_pressure(double pressure)
 {
     pressure_ = pressure;
 }
 
-double ZeroDBoundaryCondition::get_pressure() const
+double CoupledBoundaryCondition::get_pressure() const
 {
     return pressure_;
 }
 
-double ZeroDBoundaryCondition::get_Po() const
+double CoupledBoundaryCondition::get_Po() const
 {
     return Po_;
 }
 
-double ZeroDBoundaryCondition::get_Pn() const
+double CoupledBoundaryCondition::get_Pn() const
 {
     return Pn_;
 }
@@ -408,12 +403,12 @@ double ZeroDBoundaryCondition::get_Pn() const
 // State management
 // =========================================================================
 
-ZeroDBoundaryCondition::State ZeroDBoundaryCondition::save_state() const
+CoupledBoundaryCondition::State CoupledBoundaryCondition::save_state() const
 {
     return State{Qn_, pressure_};
 }
 
-void ZeroDBoundaryCondition::restore_state(const State& state)
+void CoupledBoundaryCondition::restore_state(const State& state)
 {
     Qn_ = state.Qn;
     pressure_ = state.pressure;
@@ -423,9 +418,9 @@ void ZeroDBoundaryCondition::restore_state(const State& state)
 // Utility methods
 // =========================================================================
 
-void ZeroDBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
+void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face)
 {
-    #define n_debug_zerod_distribute
+    #define n_debug_coupled_distribute
 
     // Update face pointer to local face
     face_ = &face;
@@ -457,17 +452,17 @@ void ZeroDBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm_m
     cm.bcast(cm_mod, &has_cap_);
 }
 
-void ZeroDBoundaryCondition::set_face(const faceType& face)
+void CoupledBoundaryCondition::set_face(const faceType& face)
 {
     face_ = &face;
 }
 
-const faceType* ZeroDBoundaryCondition::get_face() const
+const faceType* CoupledBoundaryCondition::get_face() const
 {
     return face_;
 }
 
-bool ZeroDBoundaryCondition::is_initialized() const
+bool CoupledBoundaryCondition::is_initialized() const
 {
     return (face_ != nullptr);
 }
@@ -494,7 +489,7 @@ static consts::ElementType vtk_cell_type_to_element_type(int vtk_cell_type)
         case VTK_TRIQUADRATIC_HEXAHEDRON: return ElementType::HEX27;
         case VTK_WEDGE: return ElementType::WDG;
         default:
-            throw std::runtime_error("[ZeroDBoundaryCondition] Unsupported VTK cell type " + 
+            throw std::runtime_error("[CoupledBoundaryCondition] Unsupported VTK cell type " + 
                                     std::to_string(vtk_cell_type) + " in cap VTP file.");
     }
 }
@@ -514,11 +509,11 @@ void for_each_cap_gauss_point(const faceType* cap_face, int nsd, int insd,
     }
 }
 
-void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
+void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
 {
     // Safety check: ensure face_ is set before loading cap
     if (face_ == nullptr) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Cannot load cap: face_ is null. Call set_face() first.");
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cannot load cap: face_ is null. Call set_face() first.");
     }
     
     cap_face_vtp_file_ = vtp_file_path;
@@ -535,7 +530,7 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     // Check if file exists and is readable
     std::ifstream file_check(vtp_file_path);
     if (!file_check.good()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Cannot open cap VTP file '" + vtp_file_path + "' for reading.");
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cannot open cap VTP file '" + vtp_file_path + "' for reading.");
     }
     file_check.close();
     
@@ -548,10 +543,10 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
         // The constructor with file_name will call read_file() internally
         vtp_data = VtkVtpData(vtp_file_path, true);
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to construct VtkVtpData from file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to construct VtkVtpData from file '" + 
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error constructing VtkVtpData from file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error constructing VtkVtpData from file '" + 
                                 vtp_file_path + "'. This may indicate a crash in the VTK library.");
     }
     
@@ -559,28 +554,28 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     try {
         nNo = vtp_data.num_points();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to get number of points from VTP file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to get number of points from VTP file '" + 
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error getting number of points from file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error getting number of points from file '" + 
                                 vtp_file_path + "'");
     }
     if (nNo == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain any points.");
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain any points.");
     }
     
     int num_elems = 0;
     try {
         num_elems = vtp_data.num_elems();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to get number of elements from VTP file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to get number of elements from VTP file '" + 
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error getting number of elements from file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error getting number of elements from file '" + 
                                 vtp_file_path + "'");
     }
     if (num_elems == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain any elements.");
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain any elements.");
     }
     
     // Get GlobalNodeID from VTP file
@@ -588,24 +583,24 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     try {
         has_global_node_id = vtp_data.has_point_data("GlobalNodeID");
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to check for GlobalNodeID in VTP file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to check for GlobalNodeID in VTP file '" + 
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error checking for GlobalNodeID in file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error checking for GlobalNodeID in file '" + 
                                 vtp_file_path + "'");
     }
     if (!has_global_node_id) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain 'GlobalNodeID' point data.");
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain 'GlobalNodeID' point data.");
     }
     
     try {
         cap_global_node_ids_.resize(nNo);
         vtp_data.copy_point_data("GlobalNodeID", cap_global_node_ids_);
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to copy GlobalNodeID from VTP file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to copy GlobalNodeID from VTP file '" + 
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error copying GlobalNodeID from file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error copying GlobalNodeID from file '" + 
                                 vtp_file_path + "'");
     }
     
@@ -618,14 +613,14 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
         eNoN = vtp_data.np_elem();
         vtk_cell_type = vtp_data.elem_type();  // This returns VTK cell type (e.g., 5 for VTK_TRIANGLE)
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to get connectivity from VTP file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to get connectivity from VTP file '" + 
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error getting connectivity from file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error getting connectivity from file '" + 
                                 vtp_file_path + "'");
     }
     if (eNoN <= 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Invalid number of nodes per element: " + std::to_string(eNoN));
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Invalid number of nodes per element: " + std::to_string(eNoN));
     }
     
     // Convert VTK cell type to ElementType enum
@@ -644,7 +639,7 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
     // Set global node IDs (map GlobalNodeID from VTP to mesh global node indices)
     // Verify cap_global_node_ids_ is properly sized
     if (cap_global_node_ids_.size() != nNo) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] cap_global_node_ids_ size mismatch: " +
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] cap_global_node_ids_ size mismatch: " +
                                 std::to_string(cap_global_node_ids_.size()) + " != " + std::to_string(nNo));
     }
     cap_face_->gN.resize(nNo);
@@ -660,7 +655,7 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
         for (int a = 0; a < eNoN; a++) {
             int local_node_idx = conn(a, e);  // Local node index in cap (0 to nNo-1)
             if (local_node_idx < 0 || local_node_idx >= nNo) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Invalid local node index " + 
+                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Invalid local node index " + 
                                         std::to_string(local_node_idx) + " in cap connectivity (element " + 
                                         std::to_string(e) + ", node " + std::to_string(a) + ", nNo=" + std::to_string(nNo) + ").");
             }
@@ -677,7 +672,7 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
 
             if (num_comp == 0 || num_tuples == 0) {
                 // Provide more detailed error message
-                std::string error_msg = "[ZeroDBoundaryCondition::load_cap_face_vtp] Normals array exists but has zero size. ";
+                std::string error_msg = "[CoupledBoundaryCondition::load_cap_face_vtp] Normals array exists but has zero size. ";
                 error_msg += "num_components=" + std::to_string(num_comp) + ", num_tuples=" + std::to_string(num_tuples);
                 error_msg += ", expected num_elems=" + std::to_string(num_elems);
                 error_msg += ". The array may not be a numeric type or may be empty.";
@@ -685,12 +680,12 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
             }
             
             if (num_tuples != num_elems) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Normals array size mismatch: " +
+                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Normals array size mismatch: " +
                                         std::to_string(num_tuples) + " != " + std::to_string(num_elems));
             }
             
             if (num_comp != 2 && num_comp != 3) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Invalid number of components in Normals array: " +
+                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Invalid number of components in Normals array: " +
                                         std::to_string(num_comp) + " (expected 2 or 3)");
             }
             
@@ -700,7 +695,7 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
             
             // Verify that data was actually copied
             if (cap_initial_normals_.nrows() != num_comp || cap_initial_normals_.ncols() != num_elems) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to copy Normals data. "
+                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to copy Normals data. "
                                         "Expected size: " + std::to_string(num_comp) + "x" + std::to_string(num_elems) +
                                         ", Actual size: " + std::to_string(cap_initial_normals_.nrows()) + "x" + 
                                         std::to_string(cap_initial_normals_.ncols()));
@@ -710,10 +705,10 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
             cap_initial_normals_.resize(0, 0);
         }
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Failed to load Normals from VTP file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to load Normals from VTP file '" + 
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::load_cap_face_vtp] Unknown error loading Normals from file '" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error loading Normals from file '" + 
                                 vtp_file_path + "'");
     }
 
@@ -724,7 +719,7 @@ void ZeroDBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
 // Cap surface integration
 // =========================================================================
 
-void ZeroDBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const CmMod& cm_mod)
+void CoupledBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const CmMod& cm_mod)
 {
     using namespace consts;
     
@@ -732,7 +727,7 @@ void ZeroDBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const C
         return;
     }
     if (cap_face_->nEl == 0 || cap_face_->nNo == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::initialize_cap_integration] Cap face is not properly initialized.");
+        throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] Cap face is not properly initialized.");
     }
     
     // Skip if already initialized
@@ -756,7 +751,7 @@ void ZeroDBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const C
         return;
     }
     if (com_mod.ltg.size() != com_mod.tnNo) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::initialize_cap_integration] com_mod.ltg size (" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] com_mod.ltg size (" + 
                                 std::to_string(com_mod.ltg.size()) + ") does not match com_mod.tnNo (" + 
                                 std::to_string(com_mod.tnNo) + ")");
     }
@@ -767,7 +762,7 @@ void ZeroDBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const C
         int gnNo_idx = com_mod.ltg(a);
         // Check for valid gnNo index
         if (gnNo_idx < 0 || gnNo_idx >= msh.gnNo) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::initialize_cap_integration] Invalid gnNo index " + 
+            throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] Invalid gnNo index " + 
                                     std::to_string(gnNo_idx) + " in com_mod.ltg at position " + 
                                     std::to_string(a) + " (msh.gnNo=" + std::to_string(msh.gnNo) + ")");
         }
@@ -810,7 +805,7 @@ void ZeroDBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const C
             nn::get_gnn(insd, cap_face_->eType, cap_face_->eNoN, g, cap_face_->xi, cap_face_->N, cap_face_->Nx);
         }
     } catch (const std::exception& e) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::initialize_cap_integration] Failed to initialize cap face shape functions: " + 
+        throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] Failed to initialize cap face shape functions: " + 
                                 std::string(e.what()));
     }
 }
@@ -819,7 +814,7 @@ void ZeroDBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const C
 // Cap integration helper functions
 // =========================================================================
 
-Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mod, int e, 
+Array<double> CoupledBoundaryCondition::update_cap_element_position(ComMod& com_mod, int e, 
                                                                   const std::unordered_map<int, int>& gnNo_to_tnNo,
                                                                   consts::MechanicalConfigurationType cfg)
 {
@@ -827,14 +822,14 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
     
     // Caller must ensure cap_face_ready(); e and IEN are validated here
     if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] cap_face_->IEN is not allocated.");
+        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] cap_face_->IEN is not allocated.");
     }
     if (e < 0 || e >= cap_face_->IEN.ncols()) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] Element index e=" + 
+        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Element index e=" + 
                                 std::to_string(e) + " is out of bounds (IEN.ncols()=" + std::to_string(cap_face_->IEN.ncols()) + ").");
     }
     if (cap_face_->eNoN <= 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] cap_face_->eNoN is invalid: " + 
+        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] cap_face_->eNoN is invalid: " + 
                                 std::to_string(cap_face_->eNoN));
     }
     
@@ -846,7 +841,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
         int gnNo_idx = cap_face_->IEN(a, e);
         auto it = gnNo_to_tnNo.find(gnNo_idx);
         if (it == gnNo_to_tnNo.end()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] IEN entry (element " + 
+            throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] IEN entry (element " + 
                                     std::to_string(e) + ", node " + std::to_string(a) + 
                                     ") contains invalid gnNo index " + std::to_string(gnNo_idx) + 
                                     " not found in com_mod.ltg mapping.");
@@ -855,7 +850,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
         
         // Bounds checking
         if (Ac < 0 || Ac >= com_mod.tnNo) {
-            std::string msg = "[ZeroDBoundaryCondition::update_cap_element_position] Invalid node index Ac=" + 
+            std::string msg = "[CoupledBoundaryCondition::update_cap_element_position] Invalid node index Ac=" + 
                              std::to_string(Ac) + " (tnNo=" + std::to_string(com_mod.tnNo) + 
                              ") at element " + std::to_string(e) + ", local node " + std::to_string(a);
             throw std::runtime_error(msg);
@@ -863,7 +858,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
         
         // Bounds check for com_mod.x
         if (Ac >= com_mod.x.ncols() || nsd > com_mod.x.nrows()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.x: Ac=" + 
+            throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.x: Ac=" + 
                                     std::to_string(Ac) + ", x.ncols()=" + std::to_string(com_mod.x.ncols()) + 
                                     ", nsd=" + std::to_string(nsd) + ", x.nrows()=" + std::to_string(com_mod.x.nrows()));
         }
@@ -874,7 +869,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
         if (cfg == MechanicalConfigurationType::old_timestep) {
             // Bounds check for com_mod.Do
             if (Ac >= com_mod.Do.ncols() || nsd > com_mod.Do.nrows()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.Do: Ac=" + 
+                throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.Do: Ac=" + 
                                         std::to_string(Ac) + ", Do.ncols()=" + std::to_string(com_mod.Do.ncols()) + 
                                         ", nsd=" + std::to_string(nsd) + ", Do.nrows()=" + std::to_string(com_mod.Do.nrows()));
             }
@@ -884,7 +879,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
         } else if (cfg == MechanicalConfigurationType::new_timestep) {
             // Bounds check for com_mod.Dn
             if (Ac >= com_mod.Dn.ncols() || nsd > com_mod.Dn.nrows()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.Dn: Ac=" + 
+                throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.Dn: Ac=" + 
                                         std::to_string(Ac) + ", Dn.ncols()=" + std::to_string(com_mod.Dn.ncols()) + 
                                         ", nsd=" + std::to_string(nsd) + ", Dn.nrows()=" + std::to_string(com_mod.Dn.nrows()));
             }
@@ -897,12 +892,12 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(ComMod& com_mo
     return xl;
 }
 
-Array<double> ZeroDBoundaryCondition::update_cap_element_position(int e, consts::MechanicalConfigurationType cfg,
+Array<double> CoupledBoundaryCondition::update_cap_element_position(int e, consts::MechanicalConfigurationType cfg,
                                                                   const Array<double>& cap_x, const Array<double>& cap_Do, const Array<double>& cap_Dn,
                                                                   const std::unordered_map<int, int>& gnNo_to_capIdx)
 {
     if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position(gathered)] cap_face_->IEN not ready.");
+        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position(gathered)] cap_face_->IEN not ready.");
     }
     int nsd = cap_x.nrows();
     Array<double> xl(nsd, cap_face_->eNoN);
@@ -910,7 +905,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(int e, consts:
         int gnNo_idx = cap_face_->IEN(a, e);
         auto it = gnNo_to_capIdx.find(gnNo_idx);
         if (it == gnNo_to_capIdx.end()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::update_cap_element_position(gathered)] IEN gnNo " +
+            throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position(gathered)] IEN gnNo " +
                                     std::to_string(gnNo_idx) + " not in gnNo_to_capIdx.");
         }
         int cap_idx = it->second;
@@ -926,82 +921,7 @@ Array<double> ZeroDBoundaryCondition::update_cap_element_position(int e, consts:
     return xl;
 }
 
-void ZeroDBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
-                                                           int l, int s_comps, consts::MechanicalConfigurationType cfg,
-                                                           int cap_nNo, int nsd,
-                                                           Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn, Array<double>& cap_s)
-{
-    auto& cm = com_mod.cm;
-    const int root = cm_mod.master;
-    const int nProcs = cm.np();
-    if (nProcs == 1) {
-        if (!cap_face_ready()) return;
-        for (int a = 0; a < cap_nNo; a++) {
-            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
-            if (it == cap_gnNo_to_tnNo_.end()) continue;
-            int Ac = it->second;
-            for (int i = 0; i < nsd; i++) {
-                cap_x(i, a) = com_mod.x(i, Ac);
-                cap_Do(i, a) = com_mod.Do(i, Ac);
-                cap_Dn(i, a) = com_mod.Dn(i, Ac);
-            }
-            for (int i = 0; i < s_comps; i++) cap_s(i, a) = s(l + i, Ac);
-        }
-        return;
-    }
-    const int per_node = 1 + 3 * nsd + s_comps;
-    Vector<double> send_buf;
-    int n_owned = 0;
-    if (cap_face_ready()) {
-        for (int a = 0; a < cap_nNo; a++) {
-            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
-            if (it == cap_gnNo_to_tnNo_.end()) continue;
-            n_owned++;
-        }
-        send_buf.resize(n_owned * per_node);
-        int idx = 0;
-        for (int a = 0; a < cap_nNo; a++) {
-            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
-            if (it == cap_gnNo_to_tnNo_.end()) continue;
-            int Ac = it->second;
-            send_buf(idx++) = static_cast<double>(a);
-            for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.x(i, Ac);
-            for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.Do(i, Ac);
-            for (int i = 0; i < nsd; i++) send_buf(idx++) = com_mod.Dn(i, Ac);
-            for (int i = 0; i < s_comps; i++) send_buf(idx++) = s(l + i, Ac);
-        }
-    } else {
-        send_buf.resize(0);
-    }
-    const int my_send_count = static_cast<int>(send_buf.size());
-    Vector<int> send_count_vec(1);
-    send_count_vec(0) = my_send_count;
-    Vector<int> recv_counts(nProcs);
-    cm.gather(cm_mod, send_count_vec, recv_counts, root);
-    Vector<double> recv_buf;
-    Vector<int> displs(nProcs);
-    if (cm.idcm() == root) {
-        int total = 0;
-        for (int i = 0; i < nProcs; i++) {
-            displs(i) = total;
-            total += recv_counts(i);
-        }
-        recv_buf.resize(total);
-    }
-    cm.gatherv(cm_mod, send_buf, recv_buf, recv_counts, displs, root);
-    if (cm.idcm() == root) {
-        int pos = 0;
-        while (pos < static_cast<int>(recv_buf.size())) {
-            int cap_idx = static_cast<int>(recv_buf(pos++));
-            for (int i = 0; i < nsd; i++) cap_x(i, cap_idx) = recv_buf(pos++);
-            for (int i = 0; i < nsd; i++) cap_Do(i, cap_idx) = recv_buf(pos++);
-            for (int i = 0; i < nsd; i++) cap_Dn(i, cap_idx) = recv_buf(pos++);
-            for (int i = 0; i < s_comps; i++) cap_s(i, cap_idx) = recv_buf(pos++);
-        }
-    }
-}
-
-void ZeroDBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
+void CoupledBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
                                                             const Array<double>& s_old, const Array<double>& s_new,
                                                             int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n,
                                                             int cap_nNo, int nsd,
@@ -1084,7 +1004,7 @@ void ZeroDBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, con
     }
 }
 
-void ZeroDBoundaryCondition::prepare_cap_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
+void CoupledBoundaryCondition::prepare_cap_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
                                                        const Array<double>& Yo, const Array<double>& Yn,
                                                        int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n)
 {
@@ -1145,11 +1065,11 @@ void ZeroDBoundaryCondition::prepare_cap_gathered_data(ComMod& com_mod, const Cm
                                    cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, cap_Yo_gathered_, cap_Yn_gathered_);
 }
 
-std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_and_normal(const Array<double>& xl,
+std::pair<double, Vector<double>> CoupledBoundaryCondition::compute_cap_jacobian_and_normal(const Array<double>& xl,
                                                                                            int e, int g, int nsd, int insd)
 {
     if (xl.nrows() != nsd || xl.ncols() != cap_face_->eNoN) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] xl has wrong dimensions: " +
+        throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] xl has wrong dimensions: " +
                                 std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) + 
                                 " (expected " + std::to_string(nsd) + "x" + std::to_string(cap_face_->eNoN) + ").");
     }
@@ -1185,12 +1105,12 @@ std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_a
         n(0) = -xXi(1, 0);
         n(1) = xXi(0, 0);
     } else {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] Unsupported nsd/insd combination: " + 
+        throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] Unsupported nsd/insd combination: " + 
                                 std::to_string(nsd) + "/" + std::to_string(insd));
     }
     
     if (utils::is_zero(Jac)) {
-        throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] Zero Jacobian at Gauss point " + 
+        throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] Zero Jacobian at Gauss point " + 
                                 std::to_string(g));
     }
     
@@ -1201,7 +1121,7 @@ std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_a
     if (cap_initial_normals_.ncols() > 0 && cap_initial_normals_.nrows() == nsd) {
         // Check bounds for element index
         if (e < 0 || e >= cap_initial_normals_.ncols()) {
-            throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_jacobian_and_normal] Element index e=" + 
+            throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] Element index e=" + 
                                     std::to_string(e) + " is out of bounds for cap_initial_normals_ (ncols=" + 
                                     std::to_string(cap_initial_normals_.ncols()) + ").");
         }
@@ -1234,7 +1154,7 @@ std::pair<double, Vector<double>> ZeroDBoundaryCondition::compute_cap_jacobian_a
     return std::make_pair(Jac, n);
 }
 
-double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s, 
+double CoupledBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s, 
                                                    int l, std::optional<int> u, consts::MechanicalConfigurationType cfg)
 {
     using namespace consts;
@@ -1283,14 +1203,14 @@ double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& 
             int gnNo_idx = cap_face->IEN(a, e);
             auto it = cap_gnNo_to_tnNo_.find(gnNo_idx);
             if (it == cap_gnNo_to_tnNo_.end()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in cap_gnNo_to_tnNo_.");
+                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in cap_gnNo_to_tnNo_.");
             }
             int Ac = it->second;
             if (Ac < 0 || Ac >= com_mod.tnNo) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Invalid tnNo index while integrating cap.");
+                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] Invalid tnNo index while integrating cap.");
             }
             if (l + comp >= s.nrows() || Ac >= s.ncols()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Array bounds exceeded while integrating cap.");
+                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] Array bounds exceeded while integrating cap.");
             }
             return s(l + comp, Ac);
         };
@@ -1319,11 +1239,11 @@ double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& 
             int gnNo_idx = cap_face->IEN(a, e);
             auto it = gnNo_to_capIdx.find(gnNo_idx);
             if (it == gnNo_to_capIdx.end()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in gathered cap map.");
+                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in gathered cap map.");
             }
             int cap_idx = it->second;
             if (comp >= cap_s_use.nrows() || cap_idx >= cap_s_use.ncols()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::integrate_over_cap] Gathered array bounds exceeded while integrating cap.");
+                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] Gathered array bounds exceeded while integrating cap.");
             }
             return cap_s_use(comp, cap_idx);
         };
@@ -1337,7 +1257,7 @@ double ZeroDBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& 
 // Cap valM computation (precomputed normal integrals)
 // =========================================================================
 
-void ZeroDBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_mod, consts::MechanicalConfigurationType cfg)
+void CoupledBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_mod, consts::MechanicalConfigurationType cfg)
 {
     using namespace consts;
     
@@ -1379,14 +1299,14 @@ void ZeroDBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_m
             int gnNo_idx = cap_face->IEN(a, e);
             auto it = gnNo_to_cap_local.find(gnNo_idx);
             if (it == gnNo_to_cap_local.end()) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] IEN entry (element " +
+                throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_valM] IEN entry (element " +
                                         std::to_string(e) + ", node " + std::to_string(a) +
                                         ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
                                         " not found in cap face nodes.");
             }
             int cap_a = it->second;
             if (cap_a < 0 || cap_a >= cap_nNo) {
-                throw std::runtime_error("[ZeroDBoundaryCondition::compute_cap_valM] Invalid cap face-local index cap_a=" +
+                throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_valM] Invalid cap face-local index cap_a=" +
                                         std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) + ")");
             }
             for (int i = 0; i < nsd; i++) {
@@ -1410,7 +1330,7 @@ void ZeroDBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_m
 // Copy cap data to linear solver face structure
 // =========================================================================
 
-void ZeroDBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod, 
+void CoupledBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod, 
                                                                    fsi_linear_solver::FSILS_faceType& lhs_face,
                                                                    consts::MechanicalConfigurationType cfg)
 {

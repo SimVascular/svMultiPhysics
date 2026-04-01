@@ -49,17 +49,17 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
 
   // If coupling is all with Dirichlet faces, no derivative calculation is needed
   // (see Moghadam et al. 2013 Section 2.2.2)
-  // Also check for ZeroD BCs which are not in cplBC.fa
-  bool has_ZeroD = false;
-  int iBC_ZeroD_local = static_cast<int>(BoundaryConditionType::bType_ZeroD);
+  // Also check for Coupled BCs which are not in cplBC.fa
+  bool has_coupled_bc = false;
+  int iBC_Coupled_local = static_cast<int>(BoundaryConditionType::bType_Coupled);
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
-    if (utils::btest(eq.bc[iBc].bType, iBC_ZeroD_local)) {
-      has_ZeroD = true;
+    if (utils::btest(eq.bc[iBc].bType, iBC_Coupled_local)) {
+      has_coupled_bc = true;
       break;
     }
   }
   
-  if (!has_ZeroD && std::count_if(cplBC.fa.begin(),cplBC.fa.end(),[](cplFaceType& fa){return fa.bGrp == CplBCType::cplBC_Dir;}) == cplBC.fa.size()) { 
+  if (!has_coupled_bc && std::count_if(cplBC.fa.begin(),cplBC.fa.end(),[](cplFaceType& fa){return fa.bGrp == CplBCType::cplBC_Dir;}) == cplBC.fa.size()) { 
     #ifdef debug_calc_der_cpl_bc 
     dmsg << "all cplBC_Dir " << std::endl;
     #endif
@@ -97,13 +97,13 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       }
     }
 
-    // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for ZeroD BCs
-    if (utils::btest(bc.bType, iBC_ZeroD)) {
-      bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
+    // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
+    if (utils::btest(bc.bType, iBC_Coupled)) {
+      bc.coupled_bc.compute_flowrates(com_mod, cm_mod, cPhys);
       #ifdef debug_calc_der_cpl_bc 
-      dmsg << "iBC_ZeroD ";
-      dmsg << "zerod_bc.Qo: " << bc.zerod_bc.get_Qo();
-      dmsg << "zerod_bc.Qn: " << bc.zerod_bc.get_Qn();
+      dmsg << "iBC_Coupled ";
+      dmsg << "coupled_bc.Qo: " << bc.coupled_bc.get_Qo();
+      dmsg << "coupled_bc.Qn: " << bc.coupled_bc.get_Qn();
       #endif
     }
     
@@ -231,17 +231,17 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     }
   }
   
-  // Compute derivative for ZeroD BCs using ZeroDBoundaryCondition state management
+  // Compute derivative for Coupled BCs using CoupledBoundaryCondition state management
   j = 0;
   diff = 0.0;
   
-  // Collect ZeroD BCs and calculate perturbation size
-  std::vector<std::pair<int, ZeroDBoundaryCondition::State>> zerod_states;
+  // Collect Coupled BCs and calculate perturbation size
+  std::vector<std::pair<int, CoupledBoundaryCondition::State>> coupled_states;
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
-    if (utils::btest(bc.bType, iBC_ZeroD)) {
-      zerod_states.emplace_back(iBc, bc.zerod_bc.save_state());
-      double Qn = bc.zerod_bc.get_Qn();
+    if (utils::btest(bc.bType, iBC_Coupled)) {
+      coupled_states.emplace_back(iBc, bc.coupled_bc.save_state());
+      double Qn = bc.coupled_bc.get_Qn();
       diff += Qn * Qn;
       j++;
     }
@@ -251,20 +251,20 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
     diff = sqrt(diff / static_cast<double>(j));
     diff = (diff * relTol < absTol) ? absTol : diff * relTol;
     
-    // Compute derivative for each ZeroD BC
-    for (auto& [iBc, orig_state] : zerod_states) {
+    // Compute derivative for each Coupled BC
+    for (auto& [iBc, orig_state] : coupled_states) {
       auto& bc = eq.bc[iBc];
       
       // Perturb flowrate and compute new pressure
-      bc.zerod_bc.perturb_flowrate(diff);
+      bc.coupled_bc.perturb_flowrate(diff);
       svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
       
       // Finite difference: dP/dQ
-      bc.r = (bc.zerod_bc.get_pressure() - orig_state.pressure) / diff;
+      bc.r = (bc.coupled_bc.get_pressure() - orig_state.pressure) / diff;
       
-      // Restore all ZeroD BCs
-      for (auto& [jBc, saved_state] : zerod_states) {
-        eq.bc[jBc].zerod_bc.restore_state(saved_state);
+      // Restore all Coupled BCs
+      for (auto& [jBc, saved_state] : coupled_states) {
+        eq.bc[jBc].coupled_bc.restore_state(saved_state);
       }
       // Restore cplBC values
       for (size_t jj = 0; jj < cplBC.fa.size(); jj++) {
@@ -762,9 +762,9 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
       }
 
 
-      // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for ZeroD BCs
-      if (utils::btest(bc.bType, iBC_ZeroD)) {
-        bc.zerod_bc.compute_flowrates(com_mod, cm_mod, cPhys);
+      // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
+      if (utils::btest(bc.bType, iBC_Coupled)) {
+        bc.coupled_bc.compute_flowrates(com_mod, cm_mod, cPhys);
       }
       
       if (ptr != -1) {
@@ -820,9 +820,9 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
     auto& bc = eq.bc[iBc];
     int iFa = bc.iFa;
     
-    // For ZeroD BC, get pressure from ZeroDBoundaryCondition (set by svZeroD_subroutines)
-    if (utils::btest(bc.bType, iBC_ZeroD)) {
-      bc.g = bc.zerod_bc.get_pressure();
+    // For Coupled BC, get pressure from CoupledBoundaryCondition (set by svZeroD_subroutines)
+    if (utils::btest(bc.bType, iBC_Coupled)) {
+      bc.g = bc.coupled_bc.get_pressure();
     }
     // For other coupled BCs (Dir, Neu), get from cplBC.fa
     else {
@@ -1397,7 +1397,7 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
 
     if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
 
-    if (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_ZeroD)) {
+    if (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Coupled)) {
       #ifdef debug_set_bc_neu
       dmsg << "iM: " << iM+1;
       dmsg << "iFa: " << iFa+1;

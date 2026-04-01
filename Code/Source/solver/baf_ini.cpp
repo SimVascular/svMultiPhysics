@@ -104,7 +104,7 @@ void baf_ini(Simulation* simulation)
       int iFa = bc.iFa;
       int iM  = bc.iM;
 
-      if (utils::btest(bc.bType, iBC_ZeroD)) {
+      if (utils::btest(bc.bType, iBC_Coupled)) {
         // For implicit or semi-implicit 0D coupling scheme, 
         // set bType to resistance
         if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
@@ -152,9 +152,9 @@ void baf_ini(Simulation* simulation)
       svZeroD::init_svZeroD(com_mod, cm_mod);
     }
 
-    // Initialize cap integration for ZeroD boundary conditions
+    // Initialize cap integration for Coupled boundary conditions
     #ifdef debug_baf_ini
-    dmsg << "Initializing cap integration for ZeroD BCs...";
+    dmsg << "Initializing cap integration for Coupled BCs...";
     dmsg << "com_mod.nEq: " << com_mod.nEq;
     #endif
     for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
@@ -164,9 +164,9 @@ void baf_ini(Simulation* simulation)
       #endif
       for (int iBc = 0; iBc < eq.nBc; iBc++) {
         auto& bc = eq.bc[iBc];
-        if (utils::btest(bc.bType, iBC_ZeroD)) {
-          if (bc.zerod_bc.has_cap()) {
-            bc.zerod_bc.initialize_cap_integration(com_mod, cm_mod);
+        if (utils::btest(bc.bType, iBC_Coupled)) {
+          if (bc.coupled_bc.has_cap()) {
+            bc.coupled_bc.initialize_cap_integration(com_mod, cm_mod);
           }
         }
       }
@@ -745,7 +745,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
     }
 
-  } else if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_ZeroD)) {
+  } else if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_Coupled)) {
     // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
     if (btest(lBc.bType, iBC_res)) {
       sV = 0.0;

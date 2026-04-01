@@ -227,7 +227,7 @@ set(CSRCS
 
   BoundaryCondition.h BoundaryCondition.cpp
   RobinBoundaryCondition.h RobinBoundaryCondition.cpp
-  ZeroDBoundaryCondition.h ZeroDBoundaryCondition.cpp
+  CoupledBoundaryCondition.h CoupledBoundaryCondition.cpp
 )
 
   # Set PETSc interace code.

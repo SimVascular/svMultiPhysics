@@ -128,18 +128,18 @@ class FSILS_faceType
     /// Neu W*Sai                      (TMP)
     Array<double> valM;
     
-    /// ZeroD: Cap contribution (precomputed cap normal integrals, nsd x cap_nNo)
+    /// Coupled: Cap contribution (precomputed cap normal integrals, nsd x cap_nNo)
     Array<double> cap_val;
     
-    /// ZeroD: Cap contribution after preconditioning (W*cap_val), nsd x cap_nNo
-    /// Only allocated if this is a ZeroD face with a cap
+    /// Coupled: Cap contribution after preconditioning (W*cap_val), nsd x cap_nNo
+    /// Only allocated if this is a Coupled face with a cap
     Array<double> cap_valM;
     
-    /// ZeroD: Cap node mapping from cap face-local index to linear solver index
+    /// Coupled: Cap node mapping from cap face-local index to linear solver index
     /// Similar to glob, but for cap nodes
     Vector<int> cap_glob;
 
-    /// ZeroD: True if this face has a cap (set from zerod_bc.has_cap() so all ranks agree in parallel)
+    /// Coupled: True if this face has a cap (set from coupled_bc.has_cap() so all ranks agree in parallel)
     bool has_cap = false;
 };
 

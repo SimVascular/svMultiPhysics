@@ -343,17 +343,17 @@ void fsi_ls_upd(ComMod& com_mod, bcType& lBc, const faceType& lFa)
   // Update lhs.face(i).val with the new value of the surface integral
   fsils_bc_update(com_mod.lhs, lBc.lsPtr, lFa.nNo, nsd, sVl);
   
-  // If this is a ZeroD BC, copy cap data to linear solver face structure
-  if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_ZeroD))) {
+  // If this is a Coupled BC, copy cap data to linear solver face structure
+  if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_Coupled))) {
     auto& face = com_mod.lhs.face[lBc.lsPtr];
     auto cfg = MechanicalConfigurationType::new_timestep;
     // Create a CmMod instance for the reduce operation
     CmMod cm_mod;
 
     // Copy cap data to linear solver face (handles both cap and non-cap cases)
-    lBc.zerod_bc.copy_cap_data_to_linear_solver_face(com_mod, cm_mod, face, cfg);
+    lBc.coupled_bc.copy_cap_data_to_linear_solver_face(com_mod, cm_mod, face, cfg);
   } else {
-    // Clear cap fields if not a ZeroD BC
+    // Clear cap fields if not a Coupled BC
     auto& face = com_mod.lhs.face[lBc.lsPtr];
     face.cap_val.resize(0, 0);
     face.cap_valM.resize(0, 0);

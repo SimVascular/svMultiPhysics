@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef ZEROD_BOUNDARY_CONDITION_H
-#define ZEROD_BOUNDARY_CONDITION_H
+#ifndef COUPLED_BOUNDARY_CONDITION_H
+#define COUPLED_BOUNDARY_CONDITION_H
 
 #include <string>
 #include <vector>
@@ -25,7 +25,7 @@ namespace fsi_linear_solver {
     class FSILS_faceType;
 }
 
-/// @brief Object-oriented 0D-coupled boundary condition on a cap face
+/// @brief Object-oriented Coupled boundary condition on a cap face
 ///
 /// This class provides an interface for:
 ///  - loading a cap face VTP,
@@ -33,15 +33,15 @@ namespace fsi_linear_solver {
 ///  - getting/setting pressure values from/to a 0D solver.
 ///
 /// The class manages its own coupling data. svZeroD_subroutines accesses
-/// ZeroD boundary conditions by iterating through com_mod.eq[].bc[].
-class ZeroDBoundaryCondition {
+/// coupled boundary conditions by iterating through com_mod.eq[].bc[].
+class CoupledBoundaryCondition {
 protected:
     /// @brief Data members for BC
-    const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by ZeroDBoundaryCondition)
+    const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by CoupledBoundaryCondition)
     std::string cap_face_vtp_file_;          ///< Path to VTP file (empty if no cap)
-    const SimulationLogger* logger_ = nullptr;  ///< Logger for warnings/info (not owned by ZeroDBoundaryCondition)
+    const SimulationLogger* logger_ = nullptr;  ///< Logger for warnings/info (not owned by CoupledBoundaryCondition)
 
-    /// @brief 3D boundary condition type (Dirichlet or Neumann) for this 0D-coupled BC.
+    /// @brief 3D boundary condition type (Dirichlet or Neumann) for this Coupled BC.
     consts::BoundaryConditionType bc_type_ = consts::BoundaryConditionType::bType_Neu;
 
     /// @brief svZeroD coupling data
@@ -60,7 +60,7 @@ protected:
     /// @brief svZeroD solution IDs
     int flow_sol_id_ = -1;                   ///< ID in svZeroD solution vector for flow
     int pressure_sol_id_ = -1;               ///< ID in svZeroD solution vector for pressure
-    double in_out_sign_ = 1.0;               ///< Sign for inlet/outlet (+1 inlet to LPN, -1 outlet)
+    double in_out_sign_ = 1.0;               ///< Sign for inlet/outlet (+1 inlet to 0D model, -1 outlet)
     
     /// @brief Configuration for flowrate computation
     bool follower_pressure_load_ = false;   ///< Whether to use follower pressure load (for struct/ustruct)
@@ -89,19 +89,19 @@ protected:
 
 public:
     /// @brief Default constructor - creates an uninitialized object
-    ZeroDBoundaryCondition() = default;
+    CoupledBoundaryCondition() = default;
     
     /// @brief Copy constructor
-    ZeroDBoundaryCondition(const ZeroDBoundaryCondition& other);
+    CoupledBoundaryCondition(const CoupledBoundaryCondition& other);
     
     /// @brief Copy assignment operator
-    ZeroDBoundaryCondition& operator=(const ZeroDBoundaryCondition& other);
+    CoupledBoundaryCondition& operator=(const CoupledBoundaryCondition& other);
     
     /// @brief Move constructor
-    ZeroDBoundaryCondition(ZeroDBoundaryCondition&& other) noexcept;
+    CoupledBoundaryCondition(CoupledBoundaryCondition&& other) noexcept;
     
     /// @brief Move assignment operator
-    ZeroDBoundaryCondition& operator=(ZeroDBoundaryCondition&& other) noexcept;
+    CoupledBoundaryCondition& operator=(CoupledBoundaryCondition&& other) noexcept;
 
     /// @brief Construct with a face association (no VTP data loaded)
     /// @param bc_type The 3D boundary condition type (must be bType_Dir or bType_Neu)
@@ -109,7 +109,7 @@ public:
     /// @param face_name Face name from the mesh
     /// @param block_name Block name in svZeroDSolver configuration
     /// @param logger Simulation logger used to write warnings
-    ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
+    CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
                           const std::string& block_name, SimulationLogger& logger);
 
     /// @brief Construct and optionally point to a cap face VTP file
@@ -119,10 +119,10 @@ public:
     /// @param block_name Block name in svZeroDSolver configuration
     /// @param cap_face_vtp_file Path to the cap face VTP file
     /// @param logger Simulation logger used to write warnings
-    ZeroDBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
+    CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
                           const std::string& block_name, const std::string& cap_face_vtp_file, SimulationLogger& logger);
 
-    /// @brief Get the 3D BC type for this 0D-coupled boundary condition.
+    /// @brief Get the 3D BC type for this Coupled boundary condition.
     consts::BoundaryConditionType get_bc_type() const { return bc_type_; }
 
     /// @brief Load the cap face VTP file and associate it with this boundary condition
@@ -144,10 +144,6 @@ public:
     /// @brief Set the face name
     /// @param face_name Face name from the mesh
     void set_face_name(const std::string& face_name);
-    
-    /// @brief Get the face name
-    /// @return Face name
-    const std::string& get_face_name() const;
     
     /// @brief Set the svZeroD solution IDs for flow and pressure
     /// @param flow_id Flow solution ID
@@ -347,12 +343,6 @@ private:
                                               const Array<double>& cap_x, const Array<double>& cap_Do, const Array<double>& cap_Dn,
                                               const std::unordered_map<int, int>& gnNo_to_capIdx);
 
-    /// @brief Gather cap node positions and displacements (and field s) from all ranks to master
-    void gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
-                                        int l, int s_comps, consts::MechanicalConfigurationType cfg,
-                                        int cap_nNo, int nsd,
-                                        Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn, Array<double>& cap_s);
-
     /// @brief Gather cap node data for both old and new timestep fields in one collective call
     void gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
                                         const Array<double>& s_old, const Array<double>& s_new,
@@ -368,4 +358,4 @@ public:
                                    int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n);
 };
 
-#endif // ZEROD_BOUNDARY_CONDITION_H
+#endif // COUPLED_BOUNDARY_CONDITION_H
