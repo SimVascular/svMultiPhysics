@@ -350,8 +350,15 @@ void fsi_ls_upd(ComMod& com_mod, bcType& lBc, const faceType& lFa)
     // Create a CmMod instance for the reduce operation
     CmMod cm_mod;
 
-    // Copy cap data to linear solver face (handles both cap and non-cap cases)
-    lBc.coupled_bc.copy_cap_data_to_linear_solver_face(com_mod, cm_mod, face, cfg);
+    auto& cpl = lBc.coupled_bc;
+    face.has_cap = cpl.has_cap();
+    if (!cpl.has_cap() || !cpl.capping_surface()) {
+      face.cap_val.resize(0, 0);
+      face.cap_valM.resize(0, 0);
+      face.cap_glob.resize(0);
+    } else {
+      cpl.capping_surface()->copy_to_linear_solver_face(com_mod, cm_mod, face, cfg);
+    }
   } else {
     // Clear cap fields if not a Coupled BC
     auto& face = com_mod.lhs.face[lBc.lsPtr];

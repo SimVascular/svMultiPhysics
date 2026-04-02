@@ -7,15 +7,19 @@
 #include "all_fun.h"
 #include "consts.h"
 #include "utils.h"
+#include "fils_struct.hpp"
 #include "VtkData.h"
 #include "nn.h"
-#include "fils_struct.hpp"
-#include <optional>
-#include <unordered_map>
+#include <fstream>
 #include <unordered_set>
 #include <vtkCellType.h>
-#include <fstream>
 
+
+// =========================================================================
+// CoupledBoundaryCondition
+// =========================================================================
+
+CoupledBoundaryCondition::~CoupledBoundaryCondition() = default;
 
 CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryCondition& other)
     : face_(other.face_)
@@ -34,34 +38,9 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryConditio
     , in_out_sign_(other.in_out_sign_)
     , follower_pressure_load_(other.follower_pressure_load_)
     , has_cap_(other.has_cap_)
-    , cap_global_node_ids_(other.cap_global_node_ids_)
-    , cap_area_computed_(other.cap_area_computed_)
-    , cap_gnNo_to_tnNo_(other.cap_gnNo_to_tnNo_)
-    , cap_valM_(other.cap_valM_)
-    , cap_initial_normals_(other.cap_initial_normals_)
 {
-    // Deep copy the cap_face_ unique_ptr if it exists
-    // Note: faceType uses default copy constructor, which should properly copy all arrays
-    if (other.cap_face_ != nullptr) {
-        try {
-            cap_face_ = std::make_unique<faceType>(*other.cap_face_);
-            // Validate the copied faceType
-            if (cap_face_ != nullptr) {
-                // Basic validation - ensure sizes are consistent
-                if (cap_face_->nNo > 0 && cap_face_->gN.size() != cap_face_->nNo) {
-                    throw std::runtime_error("[CoupledBoundaryCondition::copy constructor] Invalid cap_face_ after copy: gN.size()=" +
-                                            std::to_string(cap_face_->gN.size()) + " != nNo=" + std::to_string(cap_face_->nNo));
-                }
-                if (cap_face_->nEl > 0 && cap_face_->IEN.ncols() != cap_face_->nEl) {
-                    throw std::runtime_error("[CoupledBoundaryCondition::copy constructor] Invalid cap_face_ after copy: IEN.ncols()=" +
-                                            std::to_string(cap_face_->IEN.ncols()) + " != nEl=" + std::to_string(cap_face_->nEl));
-                }
-            }
-        } catch (const std::exception& e) {
-            throw std::runtime_error("[CoupledBoundaryCondition::copy constructor] Failed to copy cap_face_: " + std::string(e.what()));
-        }
-    } else {
-        cap_face_.reset();
+    if (other.cap_ != nullptr) {
+        cap_ = std::make_unique<CappingSurface>(*other.cap_);
     }
 }
 
@@ -84,22 +63,10 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         in_out_sign_ = other.in_out_sign_;
         follower_pressure_load_ = other.follower_pressure_load_;
         has_cap_ = other.has_cap_;
-        cap_global_node_ids_ = other.cap_global_node_ids_;
-    cap_area_computed_ = other.cap_area_computed_;
-    cap_gnNo_to_tnNo_ = other.cap_gnNo_to_tnNo_;
-    cap_valM_ = other.cap_valM_;
-    cap_initial_normals_ = other.cap_initial_normals_;
-        
-        // Deep copy the cap_face_ unique_ptr if it exists
-        // Note: faceType uses default copy constructor, which should properly copy all arrays
-        if (other.cap_face_ != nullptr) {
-            try {
-                cap_face_ = std::make_unique<faceType>(*other.cap_face_);
-            } catch (const std::exception& e) {
-                throw std::runtime_error("[CoupledBoundaryCondition::operator=] Failed to copy cap_face_: " + std::string(e.what()));
-            }
+        if (other.cap_ != nullptr) {
+            cap_ = std::make_unique<CappingSurface>(*other.cap_);
         } else {
-            cap_face_.reset();
+            cap_.reset();
         }
     }
     return *this;
@@ -122,18 +89,12 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , in_out_sign_(other.in_out_sign_)
     , follower_pressure_load_(other.follower_pressure_load_)
     , has_cap_(other.has_cap_)
-    , cap_face_(std::move(other.cap_face_))
-    , cap_global_node_ids_(std::move(other.cap_global_node_ids_))
-    , cap_area_computed_(other.cap_area_computed_)
-    , cap_gnNo_to_tnNo_(std::move(other.cap_gnNo_to_tnNo_))
-    , cap_valM_(std::move(other.cap_valM_))
-    , cap_initial_normals_(std::move(other.cap_initial_normals_))
+    , cap_(std::move(other.cap_))
 {
     // Reset moved-from object to valid state
     other.face_ = nullptr;
     other.logger_ = nullptr;
     other.has_cap_ = false;
-    other.cap_area_computed_ = false;
     other.flow_sol_id_ = -1;
     other.pressure_sol_id_ = -1;
     other.Qo_ = 0.0;
@@ -162,18 +123,12 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         in_out_sign_ = other.in_out_sign_;
         follower_pressure_load_ = other.follower_pressure_load_;
         has_cap_ = other.has_cap_;
-        cap_face_ = std::move(other.cap_face_);
-        cap_global_node_ids_ = std::move(other.cap_global_node_ids_);
-    cap_area_computed_ = other.cap_area_computed_;
-    cap_gnNo_to_tnNo_ = std::move(other.cap_gnNo_to_tnNo_);
-    cap_valM_ = std::move(other.cap_valM_);
-    cap_initial_normals_ = std::move(other.cap_initial_normals_);
+        cap_ = std::move(other.cap_);
         
         // Reset moved-from object to valid state
         other.face_ = nullptr;
         other.logger_ = nullptr;
         other.has_cap_ = false;
-        other.cap_area_computed_ = false;
         other.flow_sol_id_ = -1;
         other.pressure_sol_id_ = -1;
         other.Qo_ = 0.0;
@@ -320,15 +275,11 @@ void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& c
     Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, cfg_o);
     Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, cfg_n);
     
-    // Add cap contribution. prepare_cap_gathered_data (no-op in serial) gathers Yo and Yn in one go for parallel.
-    if (has_cap()) {
-        prepare_cap_gathered_data(com_mod, cm_mod, com_mod.Yo, com_mod.Yn, 0, nsd, cfg_o, cfg_n);
-        double Qo_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yo, 0, nsd-1, cfg_o);
-        double Qn_cap = integrate_over_cap(com_mod, cm_mod, com_mod.Yn, 0, nsd-1, cfg_n);
+    if (has_cap_) {
+        const auto [Qo_cap, Qn_cap] = calculate_cap_contribution(com_mod, cm_mod, nsd, cfg_o, cfg_n);
         Qo_ += Qo_cap;
         Qn_ += Qn_cap;
     }
-    
 }
 
 /// @brief Compute average pressures at the boundary face at old and new timesteps
@@ -451,6 +402,17 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
 
     // Distribute cap flag so all ranks agree (master loaded cap_face_; slaves have has_cap_ set here)
     cm.bcast(cm_mod, &has_cap_);
+
+    // Keep a cap object on every rank when has_cap_ is true so collective
+    // cap gather/integration preparation can be called everywhere. Only
+    // ranks with loaded geometry have cap_->is_ready() == true.
+    if (has_cap_) {
+        if (!cap_) {
+            cap_ = std::make_unique<CappingSurface>();
+        }
+    } else {
+        cap_.reset();
+    }
 }
 
 void CoupledBoundaryCondition::set_face(const faceType& face)
@@ -468,12 +430,80 @@ bool CoupledBoundaryCondition::is_initialized() const
     return (face_ != nullptr);
 }
 
+bool CoupledBoundaryCondition::cap_face_ready() const
+{
+    return has_cap_ && (cap_ != nullptr) && cap_->is_ready();
+}
+
+
 // =========================================================================
-// Cap: helpers and implementation 
+// Cap surface loading and integration
 // =========================================================================
 
-// Map VTK cell types to ElementType (same as vtk_xml_parser.cpp)
-static consts::ElementType vtk_cell_type_to_element_type(int vtk_cell_type)
+void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
+{
+    if (face_ == nullptr) {
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cannot load cap: face_ is null. Call set_face() first.");
+    }
+
+    cap_face_vtp_file_ = vtp_file_path;
+    has_cap_ = false;
+    cap_.reset();
+
+    if (vtp_file_path.empty()) {
+        return;
+    }
+
+    cap_ = std::make_unique<CappingSurface>();
+    try {
+        cap_->load_from_vtp(vtp_file_path, *face_, face_name_);
+    } catch (...) {
+        cap_.reset();
+        has_cap_ = false;
+        throw;
+    }
+    has_cap_ = true;
+}
+
+std::pair<double, double> CoupledBoundaryCondition::calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,
+    int nsd, consts::MechanicalConfigurationType cfg_o,
+    consts::MechanicalConfigurationType cfg_n)
+{
+    auto& cm = com_mod.cm;
+    double Qo_cap = 0.0;
+    double Qn_cap = 0.0;
+    const bool i_am_master = cm.mas(cm_mod);
+    const bool serial_run = (cm.np() == 1);
+
+    // Gather Yo and Yn on the cap surface
+    if (!cap_) {
+        throw std::runtime_error("[CoupledBoundaryCondition::calculate_cap_contribution] Cap is enabled (has_cap) but no CappingSurface on this rank.");
+    }
+    cap_->prepare_gathered_data(com_mod, cm_mod, com_mod.Yo, com_mod.Yn, 0, nsd, cfg_o, cfg_n);
+
+    // Integrate over the cap surface
+    if (serial_run || i_am_master) {
+        if (cap_ && cap_->is_ready()) {
+            Qo_cap = cap_->integrate_over(com_mod, cm_mod, com_mod.Yo, 0, nsd - 1, cfg_o);
+            Qn_cap = cap_->integrate_over(com_mod, cm_mod, com_mod.Yn, 0, nsd - 1, cfg_n);
+        }
+    }
+
+    // Broadcast Qo_cap and Qn_cap to all ranks
+    if (!serial_run) {
+        cm.bcast(cm_mod, &Qo_cap);
+        cm.bcast(cm_mod, &Qn_cap);
+    }
+    return {Qo_cap, Qn_cap};
+}
+
+// =========================================================================
+// CappingSurface (definitions; class at bottom of CoupledBoundaryCondition.h)
+// =========================================================================
+
+namespace {
+
+consts::ElementType vtk_cell_type_to_element_type(int vtk_cell_type)
 {
     using namespace consts;
     switch (vtk_cell_type) {
@@ -490,7 +520,7 @@ static consts::ElementType vtk_cell_type_to_element_type(int vtk_cell_type)
         case VTK_TRIQUADRATIC_HEXAHEDRON: return ElementType::HEX27;
         case VTK_WEDGE: return ElementType::WDG;
         default:
-            throw std::runtime_error("[CoupledBoundaryCondition] Unsupported VTK cell type " + 
+            throw std::runtime_error("[CappingSurface] Unsupported VTK cell type " +
                                     std::to_string(vtk_cell_type) + " in cap VTP file.");
     }
 }
@@ -510,398 +540,408 @@ void for_each_cap_gauss_point(const faceType* cap_face, int nsd, int insd,
     }
 }
 
-void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
+} // namespace
+
+CappingSurface::CappingSurface(const CappingSurface& other)
+    : global_node_ids_(other.global_node_ids_)
+    , area_computed_(other.area_computed_)
+    , gnNo_to_tnNo_(other.gnNo_to_tnNo_)
+    , valM_(other.valM_)
+    , initial_normals_(other.initial_normals_)
+    , x_gathered_(other.x_gathered_)
+    , Do_gathered_(other.Do_gathered_)
+    , Dn_gathered_(other.Dn_gathered_)
+    , Yo_gathered_(other.Yo_gathered_)
+    , Yn_gathered_(other.Yn_gathered_)
+    , nNo_gathered_(other.nNo_gathered_)
+    , gN_broadcast_(other.gN_broadcast_)
 {
-    // Safety check: ensure face_ is set before loading cap
-    if (face_ == nullptr) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cannot load cap: face_ is null. Call set_face() first.");
+    if (other.face_ != nullptr) {
+        try {
+            face_ = std::make_unique<faceType>(*other.face_);
+            if (face_ != nullptr) {
+                if (face_->nNo > 0 && face_->gN.size() != face_->nNo) {
+                    throw std::runtime_error("[CappingSurface::copy constructor] Invalid face_: gN.size()=" +
+                                            std::to_string(face_->gN.size()) + " != nNo=" + std::to_string(face_->nNo));
+                }
+                if (face_->nEl > 0 && face_->IEN.ncols() != face_->nEl) {
+                    throw std::runtime_error("[CappingSurface::copy constructor] Invalid face_: IEN.ncols()=" +
+                                            std::to_string(face_->IEN.ncols()) + " != nEl=" + std::to_string(face_->nEl));
+                }
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error("[CappingSurface::copy constructor] Failed to copy face_: " + std::string(e.what()));
+        }
+    } else {
+        face_.reset();
     }
-    
-    cap_face_vtp_file_ = vtp_file_path;
-    has_cap_ = false;
-    cap_face_.reset();
-    cap_gnNo_to_tnNo_.clear();  // Clear the mapping since we're reloading
-    cap_area_computed_ = false;  // Reset area computation flag
-    cap_initial_normals_.resize(0, 0);  // Clear initial normals
+}
+
+CappingSurface& CappingSurface::operator=(const CappingSurface& other)
+{
+    if (this != &other) {
+        global_node_ids_ = other.global_node_ids_;
+        area_computed_ = other.area_computed_;
+        gnNo_to_tnNo_ = other.gnNo_to_tnNo_;
+        valM_ = other.valM_;
+        initial_normals_ = other.initial_normals_;
+        x_gathered_ = other.x_gathered_;
+        Do_gathered_ = other.Do_gathered_;
+        Dn_gathered_ = other.Dn_gathered_;
+        Yo_gathered_ = other.Yo_gathered_;
+        Yn_gathered_ = other.Yn_gathered_;
+        nNo_gathered_ = other.nNo_gathered_;
+        gN_broadcast_ = other.gN_broadcast_;
+        if (other.face_ != nullptr) {
+            try {
+                face_ = std::make_unique<faceType>(*other.face_);
+            } catch (const std::exception& e) {
+                throw std::runtime_error("[CappingSurface::operator=] Failed to copy face_: " + std::string(e.what()));
+            }
+        } else {
+            face_.reset();
+        }
+    }
+    return *this;
+}
+
+void CappingSurface::load_from_vtp(const std::string& vtp_file_path, const faceType& coupled_face,
+                                   const std::string& coupled_face_name)
+{
+    face_.reset();
+    gnNo_to_tnNo_.clear();
+    area_computed_ = false;
+    initial_normals_.resize(0, 0);
 
     if (vtp_file_path.empty()) {
         return;
     }
-    
-    // Check if file exists and is readable
+
     std::ifstream file_check(vtp_file_path);
     if (!file_check.good()) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cannot open cap VTP file '" + vtp_file_path + "' for reading.");
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Cannot open cap VTP file '" + vtp_file_path +
+                                "' for reading.");
     }
     file_check.close();
-    
-    
-    // Load the VTP file - wrap in try-catch to handle any exceptions
-    // Note: VtkVtpData constructor with file_name calls read_file() which may throw or crash
+
     VtkVtpData vtp_data;
     try {
-        // Construct VtkVtpData and read file in one step
-        // The constructor with file_name will call read_file() internally
         vtp_data = VtkVtpData(vtp_file_path, true);
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to construct VtkVtpData from file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to construct VtkVtpData from file '" +
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error constructing VtkVtpData from file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Unknown error constructing VtkVtpData from file '" +
                                 vtp_file_path + "'. This may indicate a crash in the VTK library.");
     }
-    
+
     int nNo = 0;
     try {
         nNo = vtp_data.num_points();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to get number of points from VTP file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to get number of points from VTP file '" +
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error getting number of points from file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Unknown error getting number of points from file '" +
                                 vtp_file_path + "'");
     }
     if (nNo == 0) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain any points.");
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
+                                "' does not contain any points.");
     }
-    
+
     int num_elems = 0;
     try {
         num_elems = vtp_data.num_elems();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to get number of elements from VTP file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to get number of elements from VTP file '" +
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error getting number of elements from file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Unknown error getting number of elements from file '" +
                                 vtp_file_path + "'");
     }
     if (num_elems == 0) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain any elements.");
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
+                                "' does not contain any elements.");
     }
-    
-    // Get GlobalNodeID from VTP file
+
     bool has_global_node_id = false;
     try {
         has_global_node_id = vtp_data.has_point_data("GlobalNodeID");
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to check for GlobalNodeID in VTP file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to check for GlobalNodeID in VTP file '" +
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error checking for GlobalNodeID in file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Unknown error checking for GlobalNodeID in file '" +
                                 vtp_file_path + "'");
     }
     if (!has_global_node_id) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path + "' does not contain 'GlobalNodeID' point data.");
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
+                                "' does not contain 'GlobalNodeID' point data.");
     }
-    
+
     try {
-        cap_global_node_ids_.resize(nNo);
-        vtp_data.copy_point_data("GlobalNodeID", cap_global_node_ids_);
+        global_node_ids_.resize(nNo);
+        vtp_data.copy_point_data("GlobalNodeID", global_node_ids_);
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to copy GlobalNodeID from VTP file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to copy GlobalNodeID from VTP file '" +
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error copying GlobalNodeID from file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Unknown error copying GlobalNodeID from file '" +
                                 vtp_file_path + "'");
     }
-    
-    // Get connectivity from VTP file
+
     Array<int> conn;
     int eNoN = 0;
     int vtk_cell_type = 0;
     try {
         conn = vtp_data.get_connectivity();
         eNoN = vtp_data.np_elem();
-        vtk_cell_type = vtp_data.elem_type();  // This returns VTK cell type (e.g., 5 for VTK_TRIANGLE)
+        vtk_cell_type = vtp_data.elem_type();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to get connectivity from VTP file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to get connectivity from VTP file '" +
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error getting connectivity from file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Unknown error getting connectivity from file '" +
                                 vtp_file_path + "'");
     }
     if (eNoN <= 0) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Invalid number of nodes per element: " + std::to_string(eNoN));
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Invalid number of nodes per element: " +
+                                std::to_string(eNoN));
     }
-    
-    // Convert VTK cell type to ElementType enum
+
     consts::ElementType eType = vtk_cell_type_to_element_type(vtk_cell_type);
-    
-    // Create a temporary faceType structure for the cap
-    cap_face_ = std::make_unique<faceType>();
-    cap_face_->name = face_name_ + "_cap";
-    cap_face_->iM = face_->iM;  // Use the same mesh index as the main face
-    cap_face_->nNo = nNo;
-    cap_face_->nEl = num_elems;
-    cap_face_->gnEl = num_elems;
-    cap_face_->eNoN = eNoN;
-    cap_face_->eType = eType;
-    
-    // Set global node IDs (map GlobalNodeID from VTP to mesh global node indices)
-    // Verify cap_global_node_ids_ is properly sized
-    if (cap_global_node_ids_.size() != nNo) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] cap_global_node_ids_ size mismatch: " +
-                                std::to_string(cap_global_node_ids_.size()) + " != " + std::to_string(nNo));
+
+    face_ = std::make_unique<faceType>();
+    face_->name = coupled_face_name + "_cap";
+    face_->iM = coupled_face.iM;
+    face_->nNo = nNo;
+    face_->nEl = num_elems;
+    face_->gnEl = num_elems;
+    face_->eNoN = eNoN;
+    face_->eType = eType;
+
+    if (global_node_ids_.size() != nNo) {
+        throw std::runtime_error("[CappingSurface::load_from_vtp] global_node_ids_ size mismatch: " +
+                                std::to_string(global_node_ids_.size()) + " != " + std::to_string(nNo));
     }
-    cap_face_->gN.resize(nNo);
+    face_->gN.resize(nNo);
     for (int a = 0; a < nNo; a++) {
-        cap_face_->gN(a) = cap_global_node_ids_(a) - 1;  // Convert from 1-based to 0-based
+        face_->gN(a) = global_node_ids_(a) - 1;
     }
-    
-    // Map connectivity from local cap node indices to global mesh node indices
-    // The VTP connectivity contains local node indices (0 to nNo-1)
-    cap_face_->IEN.resize(eNoN, num_elems);
-    
+
+    face_->IEN.resize(eNoN, num_elems);
+
     for (int e = 0; e < num_elems; e++) {
         for (int a = 0; a < eNoN; a++) {
-            int local_node_idx = conn(a, e);  // Local node index in cap (0 to nNo-1)
+            int local_node_idx = conn(a, e);
             if (local_node_idx < 0 || local_node_idx >= nNo) {
-                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Invalid local node index " + 
-                                        std::to_string(local_node_idx) + " in cap connectivity (element " + 
+                throw std::runtime_error("[CappingSurface::load_from_vtp] Invalid local node index " +
+                                        std::to_string(local_node_idx) + " in cap connectivity (element " +
                                         std::to_string(e) + ", node " + std::to_string(a) + ", nNo=" + std::to_string(nNo) + ").");
             }
-            cap_face_->IEN(a, e) = cap_face_->gN(local_node_idx);  // Map to global mesh node index
+            face_->IEN(a, e) = face_->gN(local_node_idx);
         }
     }
-    
-    // Load initial element normals from VTP file if available
-    // The normals are stored as cell data array called "Normals"
+
     try {
         bool has_normals = vtp_data.has_cell_data("Normals");
         if (has_normals) {
             auto [num_comp, num_tuples] = vtp_data.get_cell_data_dimensions("Normals");
 
             if (num_comp == 0 || num_tuples == 0) {
-                // Provide more detailed error message
-                std::string error_msg = "[CoupledBoundaryCondition::load_cap_face_vtp] Normals array exists but has zero size. ";
+                std::string error_msg = "[CappingSurface::load_from_vtp] Normals array exists but has zero size. ";
                 error_msg += "num_components=" + std::to_string(num_comp) + ", num_tuples=" + std::to_string(num_tuples);
                 error_msg += ", expected num_elems=" + std::to_string(num_elems);
                 error_msg += ". The array may not be a numeric type or may be empty.";
                 throw std::runtime_error(error_msg);
             }
-            
+
             if (num_tuples != num_elems) {
-                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Normals array size mismatch: " +
+                throw std::runtime_error("[CappingSurface::load_from_vtp] Normals array size mismatch: " +
                                         std::to_string(num_tuples) + " != " + std::to_string(num_elems));
             }
-            
+
             if (num_comp != 2 && num_comp != 3) {
-                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Invalid number of components in Normals array: " +
+                throw std::runtime_error("[CappingSurface::load_from_vtp] Invalid number of components in Normals array: " +
                                         std::to_string(num_comp) + " (expected 2 or 3)");
             }
-            
-            // Resize array to correct dimensions
-            cap_initial_normals_.resize(num_comp, num_elems);
-            vtp_data.copy_cell_data("Normals", cap_initial_normals_);
-            
-            // Verify that data was actually copied
-            if (cap_initial_normals_.nrows() != num_comp || cap_initial_normals_.ncols() != num_elems) {
-                throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to copy Normals data. "
+
+            initial_normals_.resize(num_comp, num_elems);
+            vtp_data.copy_cell_data("Normals", initial_normals_);
+
+            if (initial_normals_.nrows() != num_comp || initial_normals_.ncols() != num_elems) {
+                throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to copy Normals data. "
                                         "Expected size: " + std::to_string(num_comp) + "x" + std::to_string(num_elems) +
-                                        ", Actual size: " + std::to_string(cap_initial_normals_.nrows()) + "x" + 
-                                        std::to_string(cap_initial_normals_.ncols()));
+                                        ", Actual size: " + std::to_string(initial_normals_.nrows()) + "x" +
+                                        std::to_string(initial_normals_.ncols()));
             }
         } else {
-            // Normals not found - initialize to empty array
-            cap_initial_normals_.resize(0, 0);
+            initial_normals_.resize(0, 0);
         }
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Failed to load Normals from VTP file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to load Normals from VTP file '" +
                                 vtp_file_path + "': " + e.what());
     } catch (...) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Unknown error loading Normals from file '" + 
+        throw std::runtime_error("[CappingSurface::load_from_vtp] Unknown error loading Normals from file '" +
                                 vtp_file_path + "'");
     }
 
-    // Cap GlobalNodeID must match at least one gnNo on the coupled face (same mesh indexing as initialize_cap_integration)
     std::unordered_set<int> face_gn;
-    face_gn.reserve(static_cast<size_t>(face_->nNo));
-    for (int a = 0; a < face_->nNo; a++) {
-        face_gn.insert(face_->gN(a));
+    face_gn.reserve(static_cast<size_t>(coupled_face.nNo));
+    for (int a = 0; a < coupled_face.nNo; a++) {
+        face_gn.insert(coupled_face.gN(a));
     }
     bool any_shared = false;
-    for (int a = 0; a < cap_face_->nNo; a++) {
-        if (face_gn.find(cap_face_->gN(a)) != face_gn.end()) {
+    for (int a = 0; a < face_->nNo; a++) {
+        if (face_gn.find(face_->gN(a)) != face_gn.end()) {
             any_shared = true;
             break;
         }
     }
     if (!any_shared) {
         throw std::runtime_error(
-            "[CoupledBoundaryCondition::load_cap_face_vtp] Cap VTP file '" + vtp_file_path +
-            "' has no GlobalNodeID entries in common with coupled face '" + face_name_ +
+            "[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
+            "' has no GlobalNodeID entries in common with coupled face '" + coupled_face_name +
             "'. The cap must share at least one mesh node with that face.");
     }
-
-    has_cap_ = true;
 }
 
-// =========================================================================
-// Cap surface integration
-// =========================================================================
-
-void CoupledBoundaryCondition::initialize_cap_integration(ComMod& com_mod, const CmMod& cm_mod)
+void CappingSurface::initialize_integration(ComMod& com_mod, const CmMod& cm_mod)
 {
+    (void)cm_mod;
     using namespace consts;
-    
-    if (!cap_face_ready()) {
+
+    if (!is_ready()) {
         return;
     }
-    if (cap_face_->nEl == 0 || cap_face_->nNo == 0) {
-        throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] Cap face is not properly initialized.");
+    if (face_->nEl == 0 || face_->nNo == 0) {
+        throw std::runtime_error("[CappingSurface::initialize_integration] Cap face is not properly initialized.");
     }
-    
-    // Skip if already initialized
-    if (cap_face_->nG > 0 && cap_face_->w.size() > 0 && cap_face_->N.nrows() > 0 && 
-        cap_face_->Nx.nslices() == cap_face_->nG && !cap_gnNo_to_tnNo_.empty()) {
+
+    if (face_->nG > 0 && face_->w.size() > 0 && face_->N.nrows() > 0 &&
+        face_->Nx.nslices() == face_->nG && !gnNo_to_tnNo_.empty()) {
         return;
     }
-    
+
     int nsd = com_mod.nsd;
     int insd = nsd - 1;
-    
-    
-    // Build reverse map from gnNo to tnNo using com_mod.ltg
-    // com_mod.ltg maps from tnNo to gnNo, so we reverse it
-    // IEN contains gnNo indices from load_cap_face_vtp, we'll map them on-the-fly during integration
-    // Note: com_mod.ltg might not be set up yet when called from read_files.cpp.
-    // If it's not ready, we'll skip initialization and it will be done later when needed.
+
     auto& msh = com_mod.msh[face_->iM];
     if (com_mod.ltg.size() == 0 || com_mod.tnNo == 0) {
-        // ltg not ready yet - will be initialized later when ltg is set up
         return;
     }
     if (com_mod.ltg.size() != com_mod.tnNo) {
-        throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] com_mod.ltg size (" + 
-                                std::to_string(com_mod.ltg.size()) + ") does not match com_mod.tnNo (" + 
+        throw std::runtime_error("[CappingSurface::initialize_integration] com_mod.ltg size (" +
+                                std::to_string(com_mod.ltg.size()) + ") does not match com_mod.tnNo (" +
                                 std::to_string(com_mod.tnNo) + ")");
     }
-    
-    cap_gnNo_to_tnNo_.clear();
-    cap_gnNo_to_tnNo_.reserve(com_mod.tnNo);  // Reserve space for better performance
+
+    gnNo_to_tnNo_.clear();
+    gnNo_to_tnNo_.reserve(com_mod.tnNo);
     for (int a = 0; a < com_mod.tnNo; a++) {
         int gnNo_idx = com_mod.ltg(a);
-        // Check for valid gnNo index
         if (gnNo_idx < 0 || gnNo_idx >= msh.gnNo) {
-            throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] Invalid gnNo index " + 
-                                    std::to_string(gnNo_idx) + " in com_mod.ltg at position " + 
+            throw std::runtime_error("[CappingSurface::initialize_integration] Invalid gnNo index " +
+                                    std::to_string(gnNo_idx) + " in com_mod.ltg at position " +
                                     std::to_string(a) + " (msh.gnNo=" + std::to_string(msh.gnNo) + ")");
         }
-        cap_gnNo_to_tnNo_[gnNo_idx] = a;
+        gnNo_to_tnNo_[gnNo_idx] = a;
     }
-    
+
     try {
-        // Determine nG based on element type (similar to select_eleb)
-        // For common surface elements:
-        if (cap_face_->eType == ElementType::TRI3) {
-            // Use 1-point centroid rule for TRI3 (more efficient than 3-point rule)
-            cap_face_->nG = 1;
-        } else if (cap_face_->eType == ElementType::QUD4) {
-            cap_face_->nG = 4;  // 4 Gauss points for QUD4
-        } else if (cap_face_->eType == ElementType::TRI6) {
-            cap_face_->nG = 3;  // 3 Gauss points for TRI6
+        if (face_->eType == ElementType::TRI3) {
+            face_->nG = 1;
+        } else if (face_->eType == ElementType::QUD4) {
+            face_->nG = 4;
+        } else if (face_->eType == ElementType::TRI6) {
+            face_->nG = 3;
         } else {
-            // Default: use 1 Gauss point per element node
-            cap_face_->nG = cap_face_->eNoN;
+            face_->nG = face_->eNoN;
         }
-        
-        // Allocate and initialize Gauss points and weights
-        cap_face_->w.resize(cap_face_->nG);
-        cap_face_->xi.resize(insd, cap_face_->nG);
-        
-        // For TRI3 with 1 point, manually set up centroid rule (get_gip is hardcoded for 3 points)
-        if (cap_face_->eType == ElementType::TRI3 && cap_face_->nG == 1) {
-            cap_face_->w(0) = 0.5;  // Weight for centroid rule on reference triangle
-            cap_face_->xi(0, 0) = 1.0/3.0;  // Centroid coordinate
-            cap_face_->xi(1, 0) = 1.0/3.0;  // Centroid coordinate
+
+        face_->w.resize(face_->nG);
+        face_->xi.resize(insd, face_->nG);
+
+        if (face_->eType == ElementType::TRI3 && face_->nG == 1) {
+            face_->w(0) = 0.5;
+            face_->xi(0, 0) = 1.0 / 3.0;
+            face_->xi(1, 0) = 1.0 / 3.0;
         } else {
-            // For other element types, use get_gip
-            nn::get_gip(insd, cap_face_->eType, cap_face_->nG, cap_face_->w, cap_face_->xi);
+            nn::get_gip(insd, face_->eType, face_->nG, face_->w, face_->xi);
         }
-        
-        // Allocate and compute shape functions
-        cap_face_->N.resize(cap_face_->eNoN, cap_face_->nG);
-        cap_face_->Nx.resize(insd, cap_face_->eNoN, cap_face_->nG);
-        for (int g = 0; g < cap_face_->nG; g++) {
-            nn::get_gnn(insd, cap_face_->eType, cap_face_->eNoN, g, cap_face_->xi, cap_face_->N, cap_face_->Nx);
+
+        face_->N.resize(face_->eNoN, face_->nG);
+        face_->Nx.resize(insd, face_->eNoN, face_->nG);
+        for (int g = 0; g < face_->nG; g++) {
+            nn::get_gnn(insd, face_->eType, face_->eNoN, g, face_->xi, face_->N, face_->Nx);
         }
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CoupledBoundaryCondition::initialize_cap_integration] Failed to initialize cap face shape functions: " + 
+        throw std::runtime_error("[CappingSurface::initialize_integration] Failed to initialize cap face shape functions: " +
                                 std::string(e.what()));
     }
 }
 
-// =========================================================================
-// Cap integration helper functions
-// =========================================================================
-
-Array<double> CoupledBoundaryCondition::update_cap_element_position(ComMod& com_mod, int e, 
-                                                                  const std::unordered_map<int, int>& gnNo_to_tnNo,
-                                                                  consts::MechanicalConfigurationType cfg)
+Array<double> CappingSurface::update_element_position(ComMod& com_mod, int e,
+                                                      const std::unordered_map<int, int>& gnNo_to_tnNo,
+                                                      consts::MechanicalConfigurationType cfg)
 {
     using namespace consts;
-    
-    // Caller must ensure cap_face_ready(); e and IEN are validated here
-    if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
-        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] cap_face_->IEN is not allocated.");
+
+    if (face_->IEN.nrows() == 0 || face_->IEN.ncols() == 0) {
+        throw std::runtime_error("[CappingSurface::update_element_position] face_->IEN is not allocated.");
     }
-    if (e < 0 || e >= cap_face_->IEN.ncols()) {
-        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Element index e=" + 
-                                std::to_string(e) + " is out of bounds (IEN.ncols()=" + std::to_string(cap_face_->IEN.ncols()) + ").");
+    if (e < 0 || e >= face_->IEN.ncols()) {
+        throw std::runtime_error("[CappingSurface::update_element_position] Element index e=" +
+                                std::to_string(e) + " is out of bounds (IEN.ncols()=" + std::to_string(face_->IEN.ncols()) + ").");
     }
-    if (cap_face_->eNoN <= 0) {
-        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] cap_face_->eNoN is invalid: " + 
-                                std::to_string(cap_face_->eNoN));
+    if (face_->eNoN <= 0) {
+        throw std::runtime_error("[CappingSurface::update_element_position] face_->eNoN is invalid: " +
+                                std::to_string(face_->eNoN));
     }
-    
+
     int nsd = com_mod.nsd;
-    Array<double> xl(nsd, cap_face_->eNoN);
-    
-    for (int a = 0; a < cap_face_->eNoN; a++) {
-        // IEN contains gnNo index, map it to tnNo index
-        int gnNo_idx = cap_face_->IEN(a, e);
+    Array<double> xl(nsd, face_->eNoN);
+
+    for (int a = 0; a < face_->eNoN; a++) {
+        int gnNo_idx = face_->IEN(a, e);
         auto it = gnNo_to_tnNo.find(gnNo_idx);
         if (it == gnNo_to_tnNo.end()) {
-            throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] IEN entry (element " + 
-                                    std::to_string(e) + ", node " + std::to_string(a) + 
-                                    ") contains invalid gnNo index " + std::to_string(gnNo_idx) + 
+            throw std::runtime_error("[CappingSurface::update_element_position] IEN entry (element " +
+                                    std::to_string(e) + ", node " + std::to_string(a) +
+                                    ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
                                     " not found in com_mod.ltg mapping.");
         }
-        int Ac = it->second;  // tnNo index
-        
-        // Bounds checking
+        int Ac = it->second;
+
         if (Ac < 0 || Ac >= com_mod.tnNo) {
-            std::string msg = "[CoupledBoundaryCondition::update_cap_element_position] Invalid node index Ac=" + 
-                             std::to_string(Ac) + " (tnNo=" + std::to_string(com_mod.tnNo) + 
+            std::string msg = "[CappingSurface::update_element_position] Invalid node index Ac=" +
+                             std::to_string(Ac) + " (tnNo=" + std::to_string(com_mod.tnNo) +
                              ") at element " + std::to_string(e) + ", local node " + std::to_string(a);
             throw std::runtime_error(msg);
         }
-        
-        // Bounds check for com_mod.x
+
         if (Ac >= com_mod.x.ncols() || nsd > com_mod.x.nrows()) {
-            throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.x: Ac=" + 
-                                    std::to_string(Ac) + ", x.ncols()=" + std::to_string(com_mod.x.ncols()) + 
+            throw std::runtime_error("[CappingSurface::update_element_position] Invalid bounds for com_mod.x: Ac=" +
+                                    std::to_string(Ac) + ", x.ncols()=" + std::to_string(com_mod.x.ncols()) +
                                     ", nsd=" + std::to_string(nsd) + ", x.nrows()=" + std::to_string(com_mod.x.nrows()));
         }
-        
+
         xl.set_col(a, com_mod.x.col(Ac));
-        
-        // Apply displacement if needed based on configuration
+
         if (cfg == MechanicalConfigurationType::old_timestep) {
-            // Bounds check for com_mod.Do
             if (Ac >= com_mod.Do.ncols() || nsd > com_mod.Do.nrows()) {
-                throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.Do: Ac=" + 
-                                        std::to_string(Ac) + ", Do.ncols()=" + std::to_string(com_mod.Do.ncols()) + 
+                throw std::runtime_error("[CappingSurface::update_element_position] Invalid bounds for com_mod.Do: Ac=" +
+                                        std::to_string(Ac) + ", Do.ncols()=" + std::to_string(com_mod.Do.ncols()) +
                                         ", nsd=" + std::to_string(nsd) + ", Do.nrows()=" + std::to_string(com_mod.Do.nrows()));
             }
             for (int i = 0; i < nsd; i++) {
                 xl(i, a) += com_mod.Do(i, Ac);
             }
         } else if (cfg == MechanicalConfigurationType::new_timestep) {
-            // Bounds check for com_mod.Dn
             if (Ac >= com_mod.Dn.ncols() || nsd > com_mod.Dn.nrows()) {
-                throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position] Invalid bounds for com_mod.Dn: Ac=" + 
-                                        std::to_string(Ac) + ", Dn.ncols()=" + std::to_string(com_mod.Dn.ncols()) + 
+                throw std::runtime_error("[CappingSurface::update_element_position] Invalid bounds for com_mod.Dn: Ac=" +
+                                        std::to_string(Ac) + ", Dn.ncols()=" + std::to_string(com_mod.Dn.ncols()) +
                                         ", nsd=" + std::to_string(nsd) + ", Dn.nrows()=" + std::to_string(com_mod.Dn.nrows()));
             }
             for (int i = 0; i < nsd; i++) {
@@ -909,24 +949,25 @@ Array<double> CoupledBoundaryCondition::update_cap_element_position(ComMod& com_
             }
         }
     }
-    
+
     return xl;
 }
 
-Array<double> CoupledBoundaryCondition::update_cap_element_position(int e, consts::MechanicalConfigurationType cfg,
-                                                                  const Array<double>& cap_x, const Array<double>& cap_Do, const Array<double>& cap_Dn,
-                                                                  const std::unordered_map<int, int>& gnNo_to_capIdx)
+Array<double> CappingSurface::update_element_position(int e, consts::MechanicalConfigurationType cfg,
+                                                      const Array<double>& cap_x, const Array<double>& cap_Do,
+                                                      const Array<double>& cap_Dn,
+                                                      const std::unordered_map<int, int>& gnNo_to_capIdx)
 {
-    if (cap_face_->IEN.nrows() == 0 || cap_face_->IEN.ncols() == 0) {
-        throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position(gathered)] cap_face_->IEN not ready.");
+    if (face_->IEN.nrows() == 0 || face_->IEN.ncols() == 0) {
+        throw std::runtime_error("[CappingSurface::update_element_position(gathered)] face_->IEN not ready.");
     }
     int nsd = cap_x.nrows();
-    Array<double> xl(nsd, cap_face_->eNoN);
-    for (int a = 0; a < cap_face_->eNoN; a++) {
-        int gnNo_idx = cap_face_->IEN(a, e);
+    Array<double> xl(nsd, face_->eNoN);
+    for (int a = 0; a < face_->eNoN; a++) {
+        int gnNo_idx = face_->IEN(a, e);
         auto it = gnNo_to_capIdx.find(gnNo_idx);
         if (it == gnNo_to_capIdx.end()) {
-            throw std::runtime_error("[CoupledBoundaryCondition::update_cap_element_position(gathered)] IEN gnNo " +
+            throw std::runtime_error("[CappingSurface::update_element_position(gathered)] IEN gnNo " +
                                     std::to_string(gnNo_idx) + " not in gnNo_to_capIdx.");
         }
         int cap_idx = it->second;
@@ -942,12 +983,13 @@ Array<double> CoupledBoundaryCondition::update_cap_element_position(int e, const
     return xl;
 }
 
-void CoupledBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
-                                                            const Array<double>& s_old, const Array<double>& s_new,
-                                                            int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n,
-                                                            int cap_nNo, int nsd,
-                                                            Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn,
-                                                            Array<double>& cap_Yo, Array<double>& cap_Yn)
+void CappingSurface::gather_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
+                                                const Array<double>& s_old, const Array<double>& s_new,
+                                                int l, int s_comps, consts::MechanicalConfigurationType cfg_o,
+                                                consts::MechanicalConfigurationType cfg_n,
+                                                int cap_nNo, int nsd,
+                                                Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn,
+                                                Array<double>& cap_Yo, Array<double>& cap_Yn)
 {
     (void)cfg_o;
     (void)cfg_n;
@@ -955,10 +997,10 @@ void CoupledBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, c
     const int root = cm_mod.master;
     const int nProcs = cm.np();
     if (nProcs == 1) {
-        if (!cap_face_ready()) return;
+        if (!is_ready()) return;
         for (int a = 0; a < cap_nNo; a++) {
-            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
-            if (it == cap_gnNo_to_tnNo_.end()) continue;
+            auto it = gnNo_to_tnNo_.find(face_->gN(a));
+            if (it == gnNo_to_tnNo_.end()) continue;
             int Ac = it->second;
             for (int i = 0; i < nsd; i++) {
                 cap_x(i, a) = com_mod.x(i, Ac);
@@ -972,7 +1014,6 @@ void CoupledBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, c
         }
         return;
     }
-    // Build local map gnNo -> Ac from this rank's ltg so every rank can send its owned cap nodes
     std::unordered_map<int, int> gnNo_to_Ac;
     for (int Ac = 0; Ac < com_mod.tnNo; Ac++)
         gnNo_to_Ac[com_mod.ltg(Ac)] = Ac;
@@ -981,12 +1022,12 @@ void CoupledBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, c
     Vector<double> send_buf;
     int n_owned = 0;
     for (int a = 0; a < cap_nNo; a++) {
-        if (gnNo_to_Ac.find(cap_gN_broadcast_(a)) != gnNo_to_Ac.end()) n_owned++;
+        if (gnNo_to_Ac.find(gN_broadcast_(a)) != gnNo_to_Ac.end()) n_owned++;
     }
     send_buf.resize(n_owned * per_node);
     int idx = 0;
     for (int a = 0; a < cap_nNo; a++) {
-        auto it = gnNo_to_Ac.find(cap_gN_broadcast_(a));
+        auto it = gnNo_to_Ac.find(gN_broadcast_(a));
         if (it == gnNo_to_Ac.end()) continue;
         int Ac = it->second;
         send_buf(idx++) = static_cast<double>(a);
@@ -1025,158 +1066,142 @@ void CoupledBoundaryCondition::gather_cap_node_data_to_master(ComMod& com_mod, c
     }
 }
 
-void CoupledBoundaryCondition::prepare_cap_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
-                                                       const Array<double>& Yo, const Array<double>& Yn,
-                                                       int l, int s_comps, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n)
+void CappingSurface::prepare_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
+                                           const Array<double>& Yo, const Array<double>& Yn,
+                                           int l, int s_comps, consts::MechanicalConfigurationType cfg_o,
+                                           consts::MechanicalConfigurationType cfg_n)
 {
     auto& cm = com_mod.cm;
     if (cm.seq()) {
-        if (!cap_face_ready()) return;
-        const int cap_nNo = cap_face_->nNo;
+        if (!is_ready()) return;
+        const int cap_nNo = face_->nNo;
         if (cap_nNo == 0) return;
-        cap_nNo_gathered_ = cap_nNo;
+        nNo_gathered_ = cap_nNo;
         const int nsd = com_mod.nsd;
-        cap_x_gathered_.resize(nsd, cap_nNo);
-        cap_Do_gathered_.resize(nsd, cap_nNo);
-        cap_Dn_gathered_.resize(nsd, cap_nNo);
-        cap_Yo_gathered_.resize(s_comps, cap_nNo);
-        cap_Yn_gathered_.resize(s_comps, cap_nNo);
+        x_gathered_.resize(nsd, cap_nNo);
+        Do_gathered_.resize(nsd, cap_nNo);
+        Dn_gathered_.resize(nsd, cap_nNo);
+        Yo_gathered_.resize(s_comps, cap_nNo);
+        Yn_gathered_.resize(s_comps, cap_nNo);
         for (int a = 0; a < cap_nNo; a++) {
-            auto it = cap_gnNo_to_tnNo_.find(cap_face_->gN(a));
-            if (it == cap_gnNo_to_tnNo_.end()) continue;
+            auto it = gnNo_to_tnNo_.find(face_->gN(a));
+            if (it == gnNo_to_tnNo_.end()) continue;
             int Ac = it->second;
             for (int i = 0; i < nsd; i++) {
-                cap_x_gathered_(i, a) = com_mod.x(i, Ac);
-                cap_Do_gathered_(i, a) = com_mod.Do(i, Ac);
-                cap_Dn_gathered_(i, a) = com_mod.Dn(i, Ac);
+                x_gathered_(i, a) = com_mod.x(i, Ac);
+                Do_gathered_(i, a) = com_mod.Do(i, Ac);
+                Dn_gathered_(i, a) = com_mod.Dn(i, Ac);
             }
             for (int i = 0; i < s_comps; i++) {
-                cap_Yo_gathered_(i, a) = Yo(l + i, Ac);
-                cap_Yn_gathered_(i, a) = Yn(l + i, Ac);
+                Yo_gathered_(i, a) = Yo(l + i, Ac);
+                Yn_gathered_(i, a) = Yn(l + i, Ac);
             }
         }
         return;
     }
     int cap_nNo = 0;
-    if (cm.idcm() == cm_mod.master && cap_face_ready()) {
-        cap_nNo = cap_face_->nNo;
+    if (cm.idcm() == cm_mod.master && is_ready()) {
+        cap_nNo = face_->nNo;
     }
     cm.bcast(cm_mod, &cap_nNo);
-    cap_nNo_gathered_ = cap_nNo;
+    nNo_gathered_ = cap_nNo;
     if (cap_nNo == 0) {
         return;
     }
-    // Broadcast cap global node IDs so all ranks can determine which cap nodes they own and send
-    cap_gN_broadcast_.resize(cap_nNo);
-    if (cm.idcm() == cm_mod.master && cap_face_ready()) {
+    gN_broadcast_.resize(cap_nNo);
+    if (cm.idcm() == cm_mod.master && is_ready()) {
         for (int a = 0; a < cap_nNo; a++)
-            cap_gN_broadcast_(a) = cap_face_->gN(a);
+            gN_broadcast_(a) = face_->gN(a);
     }
-    cm.bcast(cm_mod, cap_gN_broadcast_);
+    cm.bcast(cm_mod, gN_broadcast_);
 
     const int nsd = com_mod.nsd;
     if (cm.idcm() == cm_mod.master) {
-        cap_x_gathered_.resize(nsd, cap_nNo);
-        cap_Do_gathered_.resize(nsd, cap_nNo);
-        cap_Dn_gathered_.resize(nsd, cap_nNo);
-        cap_Yo_gathered_.resize(s_comps, cap_nNo);
-        cap_Yn_gathered_.resize(s_comps, cap_nNo);
+        x_gathered_.resize(nsd, cap_nNo);
+        Do_gathered_.resize(nsd, cap_nNo);
+        Dn_gathered_.resize(nsd, cap_nNo);
+        Yo_gathered_.resize(s_comps, cap_nNo);
+        Yn_gathered_.resize(s_comps, cap_nNo);
     }
-    gather_cap_node_data_to_master(com_mod, cm_mod, Yo, Yn, l, s_comps, cfg_o, cfg_n, cap_nNo, nsd,
-                                   cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, cap_Yo_gathered_, cap_Yn_gathered_);
+    gather_node_data_to_master(com_mod, cm_mod, Yo, Yn, l, s_comps, cfg_o, cfg_n, cap_nNo, nsd,
+                              x_gathered_, Do_gathered_, Dn_gathered_, Yo_gathered_, Yn_gathered_);
 }
 
-std::pair<double, Vector<double>> CoupledBoundaryCondition::compute_cap_jacobian_and_normal(const Array<double>& xl,
-                                                                                           int e, int g, int nsd, int insd)
+std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl,
+                                                                              int e, int g, int nsd, int insd)
 {
-    if (xl.nrows() != nsd || xl.ncols() != cap_face_->eNoN) {
-        throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] xl has wrong dimensions: " +
-                                std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) + 
-                                " (expected " + std::to_string(nsd) + "x" + std::to_string(cap_face_->eNoN) + ").");
+    if (xl.nrows() != nsd || xl.ncols() != face_->eNoN) {
+        throw std::runtime_error("[CappingSurface::compute_jacobian_and_normal] xl has wrong dimensions: " +
+                                std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) +
+                                " (expected " + std::to_string(nsd) + "x" + std::to_string(face_->eNoN) + ").");
     }
-    
-    // Get shape function derivatives at this Gauss point
-    Array<double> Nx_g = cap_face_->Nx.slice(g);  // (insd x eNoN)
-    
-    // Compute tangent vectors using basis functions
-    // For 3D surface: compute ∂x/∂ξ₁ and ∂x/∂ξ₂
-    // For 2D curve: compute ∂x/∂ξ
-    Array<double> xXi(nsd, insd);  // Tangent vectors
+
+    Array<double> Nx_g = face_->Nx.slice(g);
+
+    Array<double> xXi(nsd, insd);
     xXi = 0.0;
-    
-    for (int a = 0; a < cap_face_->eNoN; a++) {
+
+    for (int a = 0; a < face_->eNoN; a++) {
         for (int i = 0; i < insd; i++) {
             for (int j = 0; j < nsd; j++) {
                 xXi(j, i) += xl(j, a) * Nx_g(i, a);
             }
         }
     }
-    
-    // Compute Jacobian (area element) from tangent vectors
+
     double Jac = 0.0;
     Vector<double> n(nsd);
     if (nsd == 3 && insd == 2) {
-        // 3D surface: Jacobian = ||∂x/∂ξ₁ × ∂x/∂ξ₂||
         n = utils::cross(xXi);
-        Jac = sqrt(utils::norm(n));  // utils::norm returns squared norm, need sqrt
+        Jac = sqrt(utils::norm(n));
     } else if (nsd == 2 && insd == 1) {
-        // 2D curve: Jacobian = ||∂x/∂ξ||
-        Jac = sqrt(utils::norm(xXi.col(0)));  // utils::norm returns squared norm, need sqrt
-        // For 2D, compute normal from tangent
+        Jac = sqrt(utils::norm(xXi.col(0)));
         n(0) = -xXi(1, 0);
         n(1) = xXi(0, 0);
     } else {
-        throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] Unsupported nsd/insd combination: " + 
+        throw std::runtime_error("[CappingSurface::compute_jacobian_and_normal] Unsupported nsd/insd combination: " +
                                 std::to_string(nsd) + "/" + std::to_string(insd));
     }
-    
+
     if (utils::is_zero(Jac)) {
-        throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] Zero Jacobian at Gauss point " + 
+        throw std::runtime_error("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
                                 std::to_string(g));
     }
-    
-    // Normalize normal vector
+
     n = n / Jac;
-    
-    // Check if initial normals are available and ensure consistency
-    if (cap_initial_normals_.ncols() > 0 && cap_initial_normals_.nrows() == nsd) {
-        // Check bounds for element index
-        if (e < 0 || e >= cap_initial_normals_.ncols()) {
-            throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_jacobian_and_normal] Element index e=" + 
-                                    std::to_string(e) + " is out of bounds for cap_initial_normals_ (ncols=" + 
-                                    std::to_string(cap_initial_normals_.ncols()) + ").");
+
+    if (initial_normals_.ncols() > 0 && initial_normals_.nrows() == nsd) {
+        if (e < 0 || e >= initial_normals_.ncols()) {
+            throw std::runtime_error("[CappingSurface::compute_jacobian_and_normal] Element index e=" +
+                                    std::to_string(e) + " is out of bounds for initial_normals_ (ncols=" +
+                                    std::to_string(initial_normals_.ncols()) + ").");
         }
-        
-        // Get initial normal for this element
+
         Vector<double> n0(nsd);
         for (int i = 0; i < nsd; i++) {
-            n0(i) = cap_initial_normals_(i, e);
+            n0(i) = initial_normals_(i, e);
         }
-        
-        // Normalize initial normal (in case it's not normalized)
+
         double n0_norm = sqrt(utils::norm(n0));
         if (!utils::is_zero(n0_norm)) {
             n0 = n0 / n0_norm;
-            
-            // Check if calculated normal and initial normal point in opposite directions
-            // Dot product < 0 means they point in opposite directions
+
             double dot_product = 0.0;
             for (int i = 0; i < nsd; i++) {
                 dot_product += n(i) * n0(i);
             }
-            
-            // If dot product is negative, flip the calculated normal
+
             if (dot_product < 0.0) {
                 n = -n;
             }
         }
     }
-    
+
     return std::make_pair(Jac, n);
 }
 
-double CoupledBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s, 
-                                                   int l, std::optional<int> u, consts::MechanicalConfigurationType cfg)
+double CappingSurface::integrate_over(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
+                                      int l, std::optional<int> u, consts::MechanicalConfigurationType cfg)
 {
     using namespace consts;
     auto& cm = com_mod.cm;
@@ -1190,48 +1215,46 @@ double CoupledBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod
     {
         double result = 0.0;
         auto compute_jac_n = [&](const Array<double>& xl, int e, int g, int l_nsd, int l_insd) {
-            return compute_cap_jacobian_and_normal(xl, e, g, l_nsd, l_insd);
+            return compute_jacobian_and_normal(xl, e, g, l_nsd, l_insd);
         };
         auto on_gauss = [&](int e, int g, double Jac, const Vector<double>& n) {
-                double sHat = 0.0;
-                for (int a = 0; a < cap_face->eNoN; a++) {
-                    const double Na = cap_face->N(a, g);
-                    if (is_scalar) {
-                        sHat += Na * get_value(e, a, 0);
-                    } else {
-                        for (int i = 0; i < s_comps; i++) {
-                            sHat += Na * get_value(e, a, i) * n(i);
-                        }
+            double sHat = 0.0;
+            for (int a = 0; a < cap_face->eNoN; a++) {
+                const double Na = cap_face->N(a, g);
+                if (is_scalar) {
+                    sHat += Na * get_value(e, a, 0);
+                } else {
+                    for (int i = 0; i < s_comps; i++) {
+                        sHat += Na * get_value(e, a, i) * n(i);
                     }
                 }
-                result += cap_face->w(g) * Jac * sHat;
+            }
+            result += cap_face->w(g) * Jac * sHat;
         };
         for_each_cap_gauss_point(cap_face, nsd, insd, get_xl, compute_jac_n, on_gauss);
         return result;
     };
 
-    // Serial: only master has cap; early return if this rank has no cap
     if (cm.seq()) {
-        if (!cap_face_ready()) {
+        if (!is_ready()) {
             return 0.0;
         }
-        faceType* cap_face = cap_face_.get();
-        // initialize_cap_integration() must have been called first (e.g. from baf_ini).
+        faceType* cap_face = face_.get();
         auto get_xl = [&](int e) {
-            return update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
+            return update_element_position(com_mod, e, gnNo_to_tnNo_, cfg);
         };
         auto get_value = [&](int e, int a, int comp) -> double {
             int gnNo_idx = cap_face->IEN(a, e);
-            auto it = cap_gnNo_to_tnNo_.find(gnNo_idx);
-            if (it == cap_gnNo_to_tnNo_.end()) {
-                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in cap_gnNo_to_tnNo_.");
+            auto it = gnNo_to_tnNo_.find(gnNo_idx);
+            if (it == gnNo_to_tnNo_.end()) {
+                throw std::runtime_error("[CappingSurface::integrate_over] IEN entry references gnNo not found in gnNo_to_tnNo_.");
             }
             int Ac = it->second;
             if (Ac < 0 || Ac >= com_mod.tnNo) {
-                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] Invalid tnNo index while integrating cap.");
+                throw std::runtime_error("[CappingSurface::integrate_over] Invalid tnNo index while integrating cap.");
             }
             if (l + comp >= s.nrows() || Ac >= s.ncols()) {
-                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] Array bounds exceeded while integrating cap.");
+                throw std::runtime_error("[CappingSurface::integrate_over] Array bounds exceeded while integrating cap.");
             }
             return s(l + comp, Ac);
         };
@@ -1239,63 +1262,54 @@ double CoupledBoundaryCondition::integrate_over_cap(ComMod& com_mod, const CmMod
         return result;
     }
 
-    // Parallel: use pre-gathered data (caller must call prepare_cap_gathered_data first). Only master has cap and does the integration.
-    if (cap_nNo_gathered_ == 0) {
+    if (nNo_gathered_ == 0) {
         return 0.0;
     }
-    const int cap_nNo = cap_nNo_gathered_;
-    const Array<double>& cap_s_use = (cfg == MechanicalConfigurationType::new_timestep) ? cap_Yn_gathered_ : cap_Yo_gathered_;
+    const int cap_nNo = nNo_gathered_;
+    const Array<double>& cap_s_use = (cfg == MechanicalConfigurationType::new_timestep) ? Yn_gathered_ : Yo_gathered_;
     double result = 0.0;
     if (cm.idcm() == cm_mod.master) {
-        faceType* cap_face = cap_face_.get();
+        faceType* cap_face = face_.get();
         std::unordered_map<int, int> gnNo_to_capIdx;
         gnNo_to_capIdx.reserve(cap_nNo);
         for (int a = 0; a < cap_nNo; a++) {
             gnNo_to_capIdx[cap_face->gN(a)] = a;
         }
         auto get_xl = [&](int e) {
-            return update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_capIdx);
+            return update_element_position(e, cfg, x_gathered_, Do_gathered_, Dn_gathered_, gnNo_to_capIdx);
         };
         auto get_value = [&](int e, int a, int comp) -> double {
             int gnNo_idx = cap_face->IEN(a, e);
             auto it = gnNo_to_capIdx.find(gnNo_idx);
             if (it == gnNo_to_capIdx.end()) {
-                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] IEN entry references gnNo not found in gathered cap map.");
+                throw std::runtime_error("[CappingSurface::integrate_over] IEN entry references gnNo not found in gathered cap map.");
             }
             int cap_idx = it->second;
             if (comp >= cap_s_use.nrows() || cap_idx >= cap_s_use.ncols()) {
-                throw std::runtime_error("[CoupledBoundaryCondition::integrate_over_cap] Gathered array bounds exceeded while integrating cap.");
+                throw std::runtime_error("[CappingSurface::integrate_over] Gathered array bounds exceeded while integrating cap.");
             }
             return cap_s_use(comp, cap_idx);
         };
         result = integrate_kernel(cap_face, get_xl, get_value);
     }
-    cm.bcast(cm_mod, &result);
     return result;
 }
 
-// =========================================================================
-// Cap valM computation (precomputed normal integrals)
-// =========================================================================
-
-void CoupledBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm_mod, consts::MechanicalConfigurationType cfg)
+void CappingSurface::compute_valM(ComMod& com_mod, const CmMod& cm_mod, consts::MechanicalConfigurationType cfg)
 {
     using namespace consts;
-    
-    if (!cap_face_ready()) {
-        cap_valM_.resize(0, 0);
+
+    if (!is_ready()) {
+        valM_.resize(0, 0);
         return;
     }
-    faceType* cap_face = cap_face_.get();
-    // initialize_cap_integration() must have been called first (e.g. from baf_ini).
+    faceType* cap_face = face_.get();
     int nsd = com_mod.nsd;
     int cap_nNo = cap_face->nNo;
-    
-    // Initialize cap_valM_ to zero: nsd x cap_nNo (stored with cap face-local indices, like face.valM)
-    cap_valM_.resize(nsd, cap_nNo);
-    cap_valM_ = 0.0;
-    
-    // Create mapping from gnNo to cap face-local index for efficient lookup
+
+    valM_.resize(nsd, cap_nNo);
+    valM_ = 0.0;
+
     std::unordered_map<int, int> gnNo_to_cap_local;
     for (int a = 0; a < cap_nNo; a++) {
         int gnNo = cap_face->gN(a);
@@ -1303,81 +1317,66 @@ void CoupledBoundaryCondition::compute_cap_valM(ComMod& com_mod, const CmMod& cm
     }
 
     auto& cm = com_mod.cm;
-    const bool use_gathered = !cm.seq() && cap_nNo_gathered_ > 0;
+    const bool use_gathered = !cm.seq() && nNo_gathered_ > 0;
 
     auto get_xl = [&](int e) {
         if (use_gathered) {
-            return update_cap_element_position(e, cfg, cap_x_gathered_, cap_Do_gathered_, cap_Dn_gathered_, gnNo_to_cap_local);
+            return update_element_position(e, cfg, x_gathered_, Do_gathered_, Dn_gathered_, gnNo_to_cap_local);
         }
-        return update_cap_element_position(com_mod, e, cap_gnNo_to_tnNo_, cfg);
+        return update_element_position(com_mod, e, gnNo_to_tnNo_, cfg);
     };
     auto compute_jac_n = [&](const Array<double>& xl, int e, int g, int l_nsd, int l_insd) {
-        return compute_cap_jacobian_and_normal(xl, e, g, l_nsd, l_insd);
+        return compute_jacobian_and_normal(xl, e, g, l_nsd, l_insd);
     };
     auto on_gauss = [&](int e, int g, double Jac, const Vector<double>& n) {
-        // Accumulate ∫ N_A n_i dΓ at each node
         for (int a = 0; a < cap_face->eNoN; a++) {
             int gnNo_idx = cap_face->IEN(a, e);
             auto it = gnNo_to_cap_local.find(gnNo_idx);
             if (it == gnNo_to_cap_local.end()) {
-                throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_valM] IEN entry (element " +
+                throw std::runtime_error("[CappingSurface::compute_valM] IEN entry (element " +
                                         std::to_string(e) + ", node " + std::to_string(a) +
                                         ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
                                         " not found in cap face nodes.");
             }
             int cap_a = it->second;
             if (cap_a < 0 || cap_a >= cap_nNo) {
-                throw std::runtime_error("[CoupledBoundaryCondition::compute_cap_valM] Invalid cap face-local index cap_a=" +
+                throw std::runtime_error("[CappingSurface::compute_valM] Invalid cap face-local index cap_a=" +
                                         std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) + ")");
             }
             for (int i = 0; i < nsd; i++) {
-                cap_valM_(i, cap_a) += cap_face->N(a, g) * cap_face->w(g) * Jac * n(i);
+                valM_(i, cap_a) += cap_face->N(a, g) * cap_face->w(g) * Jac * n(i);
             }
         }
     };
     for_each_cap_gauss_point(cap_face, nsd, nsd - 1, get_xl, compute_jac_n, on_gauss);
 
-    // Reduce across processors only when using local data (each rank had partial cap_gnNo_to_tnNo_); when using gathered data only master computed
     if (!cm.seq() && !use_gathered) {
         for (int i = 0; i < nsd; i++) {
-            Vector<double> row = cap_valM_.row(i);
+            Vector<double> row = valM_.row(i);
             row = cm.reduce(cm_mod, row);
-            cap_valM_.set_row(i, row);
+            valM_.set_row(i, row);
         }
     }
 }
 
-// =========================================================================
-// Copy cap data to linear solver face structure
-// =========================================================================
-
-void CoupledBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod, 
-                                                                   fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                                   consts::MechanicalConfigurationType cfg)
+void CappingSurface::copy_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
+                                                fsi_linear_solver::FSILS_faceType& lhs_face,
+                                                consts::MechanicalConfigurationType cfg)
 {
-    lhs_face.has_cap = has_cap();
-    if (!has_cap()) {
-        lhs_face.cap_val.resize(0, 0);
-        lhs_face.cap_valM.resize(0, 0);
-        lhs_face.cap_glob.resize(0);
-        return;
-    }
-
     const int nsd = com_mod.nsd;
     const bool serial = com_mod.cm.seq();
 
     if (serial) {
-        // Serial: only this rank has cap_face_; fill lhs_face directly.
-        if (!cap_face_ready()) {
+        if (!is_ready()) {
             lhs_face.cap_val.resize(0, 0);
             lhs_face.cap_valM.resize(0, 0);
             lhs_face.cap_glob.resize(0);
             return;
         }
-        compute_cap_valM(com_mod, cm_mod, cfg);
-        const faceType* cap_face = cap_face_.get();
+        compute_valM(com_mod, cm_mod, cfg);
+        const faceType* cap_face = face_.get();
         int cap_nNo = cap_face->nNo;
-        lhs_face.cap_val = cap_valM_;
+        lhs_face.cap_val = valM_;
         lhs_face.cap_valM.resize(nsd, cap_nNo);
         lhs_face.cap_valM = 0.0;
         lhs_face.cap_glob.resize(cap_nNo);
@@ -1395,14 +1394,13 @@ void CoupledBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_m
         return;
     }
 
-    // Parallel: broadcast full cap data from master, then each rank builds local subset.
     int cap_nNo = 0;
     Vector<int> cap_gN_all;
     Array<double> cap_val_all;
 
-    if (cap_face_ready()) {
-        compute_cap_valM(com_mod, cm_mod, cfg);
-        const faceType* cap_face = cap_face_.get();
+    if (is_ready()) {
+        compute_valM(com_mod, cm_mod, cfg);
+        const faceType* cap_face = face_.get();
         if (cap_face->nNo > 0) {
             cap_nNo = cap_face->nNo;
             cap_gN_all.resize(cap_nNo);
@@ -1410,7 +1408,7 @@ void CoupledBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_m
             for (int a = 0; a < cap_nNo; a++) {
                 cap_gN_all(a) = cap_face->gN(a);
                 for (int i = 0; i < nsd; i++)
-                    cap_val_all(i, a) = cap_valM_(i, a);
+                    cap_val_all(i, a) = valM_(i, a);
             }
         }
     }
@@ -1422,9 +1420,7 @@ void CoupledBoundaryCondition::copy_cap_data_to_linear_solver_face(ComMod& com_m
         lhs_face.cap_glob.resize(0);
         return;
     }
-    // Only resize on ranks that don't have the data; Vector::resize() deallocates and
-    // zero-initializes, which would wipe the sender's cap_gN_all/cap_val_all.
-    const bool i_am_sender = cap_face_ready();
+    const bool i_am_sender = is_ready();
     if (!i_am_sender) {
         cap_gN_all.resize(cap_nNo);
         cap_val_all.resize(nsd, cap_nNo);
