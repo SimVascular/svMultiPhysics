@@ -33,7 +33,7 @@
       <Face_file_path> ./mesh/surface_x20.vtp </Face_file_path>
     </Add_face>
 
-    <Domain_file_path> ./mesh/domain.txt </Domain_file_path>
+    <Domain_file_path> ./mesh/domainIDs.vtu </Domain_file_path>
 
     <Mesh_scale_factor> 1.0 </Mesh_scale_factor>
   </Add_mesh>
