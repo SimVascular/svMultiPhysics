@@ -19,8 +19,6 @@
 // CoupledBoundaryCondition
 // =========================================================================
 
-CoupledBoundaryCondition::~CoupledBoundaryCondition() = default;
-
 CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryCondition& other)
     : face_(other.face_)
     , cap_face_vtp_file_(other.cap_face_vtp_file_)
@@ -37,11 +35,12 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryConditio
     , pressure_sol_id_(other.pressure_sol_id_)
     , in_out_sign_(other.in_out_sign_)
     , follower_pressure_load_(other.follower_pressure_load_)
+    , phys_(other.phys_)
+    , flowrate_cfg_o_(other.flowrate_cfg_o_)
+    , flowrate_cfg_n_(other.flowrate_cfg_n_)
     , has_cap_(other.has_cap_)
+    , cap_(other.cap_)
 {
-    if (other.cap_ != nullptr) {
-        cap_ = std::make_unique<CappingSurface>(*other.cap_);
-    }
 }
 
 CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBoundaryCondition& other)
@@ -62,12 +61,11 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         pressure_sol_id_ = other.pressure_sol_id_;
         in_out_sign_ = other.in_out_sign_;
         follower_pressure_load_ = other.follower_pressure_load_;
+        phys_ = other.phys_;
+        flowrate_cfg_o_ = other.flowrate_cfg_o_;
+        flowrate_cfg_n_ = other.flowrate_cfg_n_;
         has_cap_ = other.has_cap_;
-        if (other.cap_ != nullptr) {
-            cap_ = std::make_unique<CappingSurface>(*other.cap_);
-        } else {
-            cap_.reset();
-        }
+        cap_ = other.cap_;
     }
     return *this;
 }
@@ -88,10 +86,12 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , pressure_sol_id_(other.pressure_sol_id_)
     , in_out_sign_(other.in_out_sign_)
     , follower_pressure_load_(other.follower_pressure_load_)
+    , phys_(other.phys_)
+    , flowrate_cfg_o_(other.flowrate_cfg_o_)
+    , flowrate_cfg_n_(other.flowrate_cfg_n_)
     , has_cap_(other.has_cap_)
     , cap_(std::move(other.cap_))
 {
-    // Reset moved-from object to valid state
     other.face_ = nullptr;
     other.logger_ = nullptr;
     other.has_cap_ = false;
@@ -102,6 +102,9 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     other.Po_ = 0.0;
     other.Pn_ = 0.0;
     other.pressure_ = 0.0;
+    other.phys_ = consts::EquationType::phys_NA;
+    other.flowrate_cfg_o_ = consts::MechanicalConfigurationType::reference;
+    other.flowrate_cfg_n_ = consts::MechanicalConfigurationType::reference;
 }
 
 CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCondition&& other) noexcept
@@ -122,10 +125,12 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         pressure_sol_id_ = other.pressure_sol_id_;
         in_out_sign_ = other.in_out_sign_;
         follower_pressure_load_ = other.follower_pressure_load_;
+        phys_ = other.phys_;
+        flowrate_cfg_o_ = other.flowrate_cfg_o_;
+        flowrate_cfg_n_ = other.flowrate_cfg_n_;
         has_cap_ = other.has_cap_;
         cap_ = std::move(other.cap_);
-        
-        // Reset moved-from object to valid state
+
         other.face_ = nullptr;
         other.logger_ = nullptr;
         other.has_cap_ = false;
@@ -136,41 +141,42 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         other.Po_ = 0.0;
         other.Pn_ = 0.0;
         other.pressure_ = 0.0;
+        other.phys_ = consts::EquationType::phys_NA;
+        other.flowrate_cfg_o_ = consts::MechanicalConfigurationType::reference;
+        other.flowrate_cfg_n_ = consts::MechanicalConfigurationType::reference;
     }
     return *this;
 }
 
 CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
-                                               const std::string& block_name, SimulationLogger& logger)
+                                               const std::string& block_name, consts::EquationType phys, bool follower_pressure_load,
+                                               SimulationLogger& logger)
     : face_(&face)
     , logger_(&logger)
     , bc_type_(bc_type)
     , block_name_(block_name)
     , face_name_(face_name)
+    , phys_(phys)
 {
-    if (bc_type_ != consts::BoundaryConditionType::bType_Dir &&
-        bc_type_ != consts::BoundaryConditionType::bType_Neu) {
-        throw std::runtime_error("[CoupledBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
-    }
+    set_flowrate_mechanical_configurations(phys, follower_pressure_load);
 }
 
 CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
-                                               const std::string& block_name, const std::string& cap_face_vtp_file, SimulationLogger& logger)
+                                               const std::string& block_name, const std::string& cap_face_vtp_file,
+                                               consts::EquationType phys, bool follower_pressure_load, SimulationLogger& logger)
     : cap_face_vtp_file_(cap_face_vtp_file)
     , face_(&face)
     , logger_(&logger)
     , bc_type_(bc_type)
     , block_name_(block_name)
     , face_name_(face_name)
+    , phys_(phys)
 {
-    if (bc_type_ != consts::BoundaryConditionType::bType_Dir &&
-        bc_type_ != consts::BoundaryConditionType::bType_Neu) {
-        throw std::runtime_error("[CoupledBoundaryCondition] bc_type must be bType_Dir or bType_Neu.");
-    }
     // Load the cap VTP file if provided
     if (!cap_face_vtp_file_.empty()) {
         load_cap_face_vtp(cap_face_vtp_file_);
     }
+    set_flowrate_mechanical_configurations(phys, follower_pressure_load);
 }
 
 // =========================================================================
@@ -228,6 +234,20 @@ bool CoupledBoundaryCondition::get_follower_pressure_load() const
     return follower_pressure_load_;
 }
 
+void CoupledBoundaryCondition::set_flowrate_mechanical_configurations(consts::EquationType phys, bool follower_pressure_load)
+{
+    using namespace consts;
+    phys_ = phys;
+    follower_pressure_load_ = follower_pressure_load;
+    if ((phys == EquationType::phys_struct) || (phys == EquationType::phys_ustruct)) {
+        flowrate_cfg_o_ = MechanicalConfigurationType::old_timestep;
+        flowrate_cfg_n_ = MechanicalConfigurationType::new_timestep;
+    } else {
+        flowrate_cfg_o_ = MechanicalConfigurationType::reference;
+        flowrate_cfg_n_ = MechanicalConfigurationType::reference;
+    }
+}
+
 /// @brief Compute flowrates at the boundary face at old and new timesteps
 ///
 /// This replicates the flowrate computation done in set_bc::calc_der_cpl_bc and
@@ -236,47 +256,20 @@ bool CoupledBoundaryCondition::get_follower_pressure_load() const
 /// The flowrate is computed as the integral of velocity dotted with the face normal.
 /// For struct/ustruct physics, the integral is computed on the deformed configuration.
 /// For fluid/FSI/CMM physics, the integral is computed on the reference configuration.
-void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, consts::EquationType phys)
+void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod)
 {
-    using namespace consts;
-    
-    
     if (face_ == nullptr) {
         throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Face is not set.");
     }
     
     int nsd = com_mod.nsd;
     
-    // Determine mechanical configuration based on physics type
-    MechanicalConfigurationType cfg_o = MechanicalConfigurationType::reference;
-    MechanicalConfigurationType cfg_n = MechanicalConfigurationType::reference;
-    
-    // For struct or ustruct, use old and new configurations to compute flowrate integral
-    if ((phys == EquationType::phys_struct) || (phys == EquationType::phys_ustruct)) {
-        // Must use follower pressure load for 0D coupling with struct/ustruct
-        if (!follower_pressure_load_) {
-            throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Follower pressure load must be used for 0D coupling with struct/ustruct");
-        }
-        cfg_o = MechanicalConfigurationType::old_timestep;
-        cfg_n = MechanicalConfigurationType::new_timestep;
-    }
-    // For fluid, FSI, or CMM, use reference configuration to compute flowrate integral
-    else if ((phys == EquationType::phys_fluid) || (phys == EquationType::phys_FSI) || (phys == EquationType::phys_CMM)) {
-        cfg_o = MechanicalConfigurationType::reference;
-        cfg_n = MechanicalConfigurationType::reference;
-    }
-    else {
-        throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Invalid physics type for 0D coupling");
-    }
-    
-    // Compute flowrates by integrating velocity over face
-    // The all_fun::integ function with indices 0 to nsd-1 integrates the velocity vector
-    // dotted with the face normal, giving the volumetric flowrate
-    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, cfg_o);
-    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, cfg_n);
+    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, flowrate_cfg_o_);
+    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, flowrate_cfg_n_);
     
     if (has_cap_) {
-        const auto [Qo_cap, Qn_cap] = calculate_cap_contribution(com_mod, cm_mod, nsd, cfg_o, cfg_n);
+        const auto [Qo_cap, Qn_cap] =
+            calculate_cap_contribution(com_mod, cm_mod, nsd, flowrate_cfg_o_, flowrate_cfg_n_);
         Qo_ += Qo_cap;
         Qn_ += Qn_cap;
     }
@@ -374,7 +367,8 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
 {
     #define n_debug_coupled_distribute
 
-    // Update face pointer to local face
+    // In the constructor, the face pointer is set to the global face, which is then partitioned and distributed among all processes.
+    // Here, we update the face pointer to the local face.
     face_ = &face;
 
     const bool is_slave = cm.slv(cm_mod);
@@ -394,6 +388,18 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     
     // Distribute follower pressure load flag
     cm.bcast(cm_mod, &follower_pressure_load_);
+
+    int phys_int = static_cast<int>(phys_);
+    cm.bcast(cm_mod, &phys_int);
+    int cfg_o_int = static_cast<int>(flowrate_cfg_o_);
+    int cfg_n_int = static_cast<int>(flowrate_cfg_n_);
+    cm.bcast(cm_mod, &cfg_o_int);
+    cm.bcast(cm_mod, &cfg_n_int);
+    if (is_slave) {
+        phys_ = static_cast<consts::EquationType>(phys_int);
+        flowrate_cfg_o_ = static_cast<consts::MechanicalConfigurationType>(cfg_o_int);
+        flowrate_cfg_n_ = static_cast<consts::MechanicalConfigurationType>(cfg_n_int);
+    }
     
     // Distribute solution IDs
     cm.bcast(cm_mod, &flow_sol_id_);
@@ -407,17 +413,12 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     // cap gather/integration preparation can be called everywhere. Only
     // ranks with loaded geometry have cap_->is_ready() == true.
     if (has_cap_) {
-        if (!cap_) {
-            cap_ = std::make_unique<CappingSurface>();
+        if (!cap_.has_value()) {
+            cap_.emplace();
         }
     } else {
         cap_.reset();
     }
-}
-
-void CoupledBoundaryCondition::set_face(const faceType& face)
-{
-    face_ = &face;
 }
 
 const faceType* CoupledBoundaryCondition::get_face() const
@@ -432,7 +433,7 @@ bool CoupledBoundaryCondition::is_initialized() const
 
 bool CoupledBoundaryCondition::cap_face_ready() const
 {
-    return has_cap_ && (cap_ != nullptr) && cap_->is_ready();
+    return has_cap_ && cap_.has_value() && cap_->is_ready();
 }
 
 
@@ -443,7 +444,7 @@ bool CoupledBoundaryCondition::cap_face_ready() const
 void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
 {
     if (face_ == nullptr) {
-        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cannot load cap: face_ is null. Call set_face() first.");
+        throw std::runtime_error("[CoupledBoundaryCondition::load_cap_face_vtp] Cannot load cap: face_ is null (BC not constructed with a face or distribute() not run).");
     }
 
     cap_face_vtp_file_ = vtp_file_path;
@@ -454,7 +455,7 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
         return;
     }
 
-    cap_ = std::make_unique<CappingSurface>();
+    cap_.emplace();
     try {
         cap_->load_from_vtp(vtp_file_path, *face_, face_name_);
     } catch (...) {
