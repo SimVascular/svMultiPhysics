@@ -352,12 +352,12 @@ void fsi_ls_upd(ComMod& com_mod, bcType& lBc, const faceType& lFa)
 
     auto& cpl = lBc.coupled_bc;
     face.has_cap = cpl.has_cap();
-    if (!cpl.has_cap() || !cpl.capping_surface()) {
+    if (!cpl.has_cap()) {
       face.cap_val.resize(0, 0);
       face.cap_valM.resize(0, 0);
       face.cap_glob.resize(0);
     } else {
-      cpl.capping_surface()->copy_to_linear_solver_face(com_mod, cm_mod, face, cfg);
+      cpl.copy_cap_surface_to_linear_solver_face(com_mod, cm_mod, face, cfg);
     }
   } else {
     // Clear cap fields if not a Coupled BC

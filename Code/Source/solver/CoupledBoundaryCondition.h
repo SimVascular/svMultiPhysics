@@ -8,7 +8,6 @@
 #include <vector>
 #include <memory>
 #include <optional>
-#include <unordered_map>
 #include <utility>
 #include "consts.h"
 #include "Array.h"
@@ -25,12 +24,35 @@ namespace fsi_linear_solver {
     class FSILS_faceType;
 }
 
+/// @brief Mesh-wide nodal state on the master (columns indexed by com_mod.ltg / gtnNo).
+///
+/// Built via \ref CoupledBoundaryCondition::gather_global_mesh_state; cap IEN entries index these columns directly.
+struct CapGlobalMeshState {
+    int gtnNo = 0;
+    Array<double> x;
+    Array<double> Do;
+    Array<double> Dn;
+    Array<double> Yo;
+    Array<double> Yn;
+
+    void clear()
+    {
+        gtnNo = 0;
+        x.resize(0, 0);
+        Do.resize(0, 0);
+        Dn.resize(0, 0);
+        Yo.resize(0, 0);
+        Yn.resize(0, 0);
+    }
+};
 
 /// @brief Capping surface geometry and integration for a coupled boundary.
 ///
 /// Loaded from a cap VTP (GlobalNodeID connectivity), used for extra surface
 /// flux contribution and linear-operator cap blocks. Definitions in CoupledBoundaryCondition.cpp.
 class CappingSurface {
+    friend class CoupledBoundaryCondition;
+
     public:
         CappingSurface() = default;
         CappingSurface(const CappingSurface& other);
@@ -41,34 +63,26 @@ class CappingSurface {
         void load_from_vtp(const std::string& vtp_file_path, const faceType& coupled_face,
                            const std::string& coupled_face_name);
     
-        void initialize_integration(ComMod& com_mod, const CmMod& cm_mod);
-    
-        bool is_ready() const { return face_ != nullptr; }
+        void init_cap_face_quadrature(const ComMod& com_mod);
     
         const faceType* face() const { return face_.get(); }
         faceType* face() { return face_.get(); }
     
         const Array<double>& valM() const { return valM_; }
     
-        void prepare_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
-                                   const Array<double>& Yo, const Array<double>& Yn,
-                                   int l, int s_comps, consts::MechanicalConfigurationType cfg_o,
-                                   consts::MechanicalConfigurationType cfg_n);
-    
-        double integrate_over(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& s,
-                              int l, std::optional<int> u, consts::MechanicalConfigurationType cfg);
-    
         void compute_valM(ComMod& com_mod, const CmMod& cm_mod, consts::MechanicalConfigurationType cfg);
-    
-        void copy_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
-                                        fsi_linear_solver::FSILS_faceType& lhs_face,
-                                        consts::MechanicalConfigurationType cfg);
-    
+
+        /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
+        double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity, int l_vel, int nsd,
+                                       consts::MechanicalConfigurationType cfg);
+
     private:
+        void pack_cap_linear_solver_bcast(ComMod& com_mod, const CmMod& cm_mod,
+                                          consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& gstate,
+                                          int& cap_nNo, Vector<int>& cap_gN_all, Array<double>& cap_val_all);
+
         std::unique_ptr<faceType> face_;
         Vector<int> global_node_ids_;
-        bool area_computed_ = false;
-        std::unordered_map<int, int> gnNo_to_tnNo_;
         Array<double> valM_;
         Array<double> initial_normals_;
     
@@ -77,25 +91,14 @@ class CappingSurface {
         Array<double> Dn_gathered_;
         Array<double> Yo_gathered_;
         Array<double> Yn_gathered_;
+        /// Width of gathered arrays; expected to match \c com_mod.gtnNo when global state is installed.
         int nNo_gathered_ = 0;
-        Vector<int> gN_broadcast_;
-    
-        void gather_node_data_to_master(ComMod& com_mod, const CmMod& cm_mod,
-                                        const Array<double>& s_old, const Array<double>& s_new,
-                                        int l, int s_comps, consts::MechanicalConfigurationType cfg_o,
-                                        consts::MechanicalConfigurationType cfg_n,
-                                        int cap_nNo, int nsd,
-                                        Array<double>& cap_x, Array<double>& cap_Do, Array<double>& cap_Dn,
-                                        Array<double>& cap_Yo, Array<double>& cap_Yn);
-    
-        Array<double> update_element_position(ComMod& com_mod, int e,
-                                              const std::unordered_map<int, int>& gnNo_to_tnNo,
-                                              consts::MechanicalConfigurationType cfg);
-    
-        Array<double> update_element_position(int e, consts::MechanicalConfigurationType cfg,
-                                              const Array<double>& cap_x, const Array<double>& cap_Do,
-                                              const Array<double>& cap_Dn,
-                                              const std::unordered_map<int, int>& gnNo_to_capIdx);
+
+        void install_gathered_from_state(const CapGlobalMeshState& st);
+
+        Array<double> update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
+                                                     const Array<double>& mesh_x, const Array<double>& mesh_Do,
+                                                     const Array<double>& mesh_Dn, int gtnNo_cols) const;
     
         std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl,
                                                                       int e, int g, int nsd, int insd);
@@ -111,7 +114,13 @@ class CappingSurface {
 /// The class manages its own coupling data. svZeroD_subroutines accesses
 /// coupled boundary conditions by iterating through com_mod.eq[].bc[].
 class CoupledBoundaryCondition {
+private:
+    /// Gather x, Do, Dn and optionally Yo/Yn rows 0..s_comps-1 into \a gtnNo-wide columns (MPI root holds \a out).
+    static void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yo,
+                                         const Array<double>& Yn, int s_comps, CapGlobalMeshState& out);
+
 protected:
+
     /// @brief Data members for BC
     const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by CoupledBoundaryCondition)
     std::string cap_face_vtp_file_;          ///< Path to VTP file (empty if no cap)
@@ -146,7 +155,11 @@ protected:
     
     /// @brief True if this BC uses a chamber cap (broadcast in distribute so all ranks agree).
     bool has_cap_ = false;
-    /// @brief Cap geometry and integration when engaged (empty optional if no cap on this rank).
+    /// @brief True on ranks that hold \ref cap_ mesh/quadrature (MPI master when \ref has_cap_; true in serial when cap loaded).
+    bool owns_cap_ = false;
+    /// @brief Global mesh node IDs for cap surface nodes (same on all ranks after distribute; master fills at load).
+    Vector<int> cap_mesh_global_node_ids_;
+    /// @brief Cap geometry on ranks with \ref owns_cap_; empty on non-owning MPI ranks.
     std::optional<CappingSurface> cap_;
 
 public:
@@ -250,12 +263,13 @@ public:
     /// @param cm_mod CmMod reference for communication
     void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod);
 
-    /// @brief Gather cap surface nodal data for integration (serial path or MPI bcast/gatherv).
-    /// Call on every rank when has_cap() so cap MPI collectives match; no-op when cap disabled.
-    void prepare_cap_gathered_data(ComMod& com_mod, const CmMod& cm_mod,
-                                   const Array<double>& Yo, const Array<double>& Yn,
-                                   int l, int s_comps, consts::MechanicalConfigurationType cfg_o,
-                                   consts::MechanicalConfigurationType cfg_n);
+    /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
+    void initialize_cap(ComMod& com_mod, const CmMod& cm_mod);
+
+    /// @brief Gather mesh geometry, compute cap \a valM on master, and copy to FSILS face (all ranks enter MPI gather).
+    void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
+                                                fsi_linear_solver::FSILS_faceType& lhs_face,
+                                                consts::MechanicalConfigurationType cfg);
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod, int nsd,
@@ -344,12 +358,12 @@ public:
     /// @brief Check if this BC has a cap (broadcast in distribute so all ranks agree).
     bool has_cap() const { return has_cap_; }
 
-    /// @brief Cap object on this rank when present; nullptr if disengaged (e.g. slave placeholder not yet emplaced).
+    /// @brief True if this rank stores the cap mesh / quadrature in \ref cap_.
+    bool owns_cap() const { return owns_cap_; }
+
+    /// @brief Cap object when \ref owns_cap_; nullptr on non-owning MPI ranks.
     CappingSurface* capping_surface() noexcept { return cap_.has_value() ? &*cap_ : nullptr; }
     const CappingSurface* capping_surface() const noexcept { return cap_.has_value() ? &*cap_ : nullptr; }
-
-    /// @brief True if this rank holds loaded cap surface data (mesh / quadrature).
-    bool cap_face_ready() const;
 };
 
 

@@ -166,9 +166,7 @@ void baf_ini(Simulation* simulation)
         auto& bc = eq.bc[iBc];
         if (utils::btest(bc.bType, iBC_Coupled)) {
           if (bc.coupled_bc.has_cap()) {
-            if (CappingSurface* cap = bc.coupled_bc.capping_surface()) {
-              cap->initialize_integration(com_mod, cm_mod);
-            }
+            bc.coupled_bc.initialize_cap(com_mod, cm_mod);
           }
         }
       }
