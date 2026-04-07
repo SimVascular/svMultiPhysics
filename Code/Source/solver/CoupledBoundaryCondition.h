@@ -70,38 +70,26 @@ class CappingSurface {
     
         const Array<double>& valM() const { return valM_; }
     
-        void compute_valM(ComMod& com_mod, const CmMod& cm_mod, consts::MechanicalConfigurationType cfg);
+        void compute_valM(ComMod& com_mod, consts::MechanicalConfigurationType cfg,
+                          const CapGlobalMeshState& st);
 
         /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
-        double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity, int l_vel, int nsd,
+        double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity, int l_vel,
                                        consts::MechanicalConfigurationType cfg);
 
     private:
-        void pack_cap_linear_solver_bcast(ComMod& com_mod, const CmMod& cm_mod,
-                                          consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& gstate,
-                                          int& cap_nNo, Vector<int>& cap_gN_all, Array<double>& cap_val_all);
-
         std::unique_ptr<faceType> face_;
         Vector<int> global_node_ids_;
         Array<double> valM_;
         Array<double> initial_normals_;
+        static constexpr int cap_nsd_ = 3;
+        static constexpr int cap_insd_ = 2;
     
-        Array<double> x_gathered_;
-        Array<double> Do_gathered_;
-        Array<double> Dn_gathered_;
-        Array<double> Yo_gathered_;
-        Array<double> Yn_gathered_;
-        /// Width of gathered arrays; expected to match \c com_mod.gtnNo when global state is installed.
-        int nNo_gathered_ = 0;
-
-        void install_gathered_from_state(const CapGlobalMeshState& st);
-
         Array<double> update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
                                                      const Array<double>& mesh_x, const Array<double>& mesh_Do,
                                                      const Array<double>& mesh_Dn, int gtnNo_cols) const;
     
-        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl,
-                                                                      int e, int g, int nsd, int insd);
+        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g);
     };
 
 /// @brief Object-oriented Coupled boundary condition on a cap face
@@ -264,7 +252,7 @@ public:
     void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod);
 
     /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
-    void initialize_cap(ComMod& com_mod, const CmMod& cm_mod);
+    void initialize_cap(ComMod& com_mod);
 
     /// @brief Gather mesh geometry, compute cap \a valM on master, and copy to FSILS face (all ranks enter MPI gather).
     void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
