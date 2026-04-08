@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "ComMod.h"
-#include "SimulationLogger.h"
 #include "CoupledBoundaryCondition.h"
 #include "all_fun.h"
 #include "consts.h"
@@ -22,7 +21,6 @@
 CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryCondition& other)
     : face_(other.face_)
     , cap_face_vtp_file_(other.cap_face_vtp_file_)
-    , logger_(other.logger_)
     , bc_type_(other.bc_type_)
     , block_name_(other.block_name_)
     , face_name_(other.face_name_)
@@ -51,7 +49,6 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
     if (this != &other) {
         face_ = other.face_;
         cap_face_vtp_file_ = other.cap_face_vtp_file_;
-        logger_ = other.logger_;
         bc_type_ = other.bc_type_;
         block_name_ = other.block_name_;
         face_name_ = other.face_name_;
@@ -79,7 +76,6 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
 CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& other) noexcept
     : face_(other.face_)
     , cap_face_vtp_file_(std::move(other.cap_face_vtp_file_))
-    , logger_(other.logger_)
     , bc_type_(other.bc_type_)
     , block_name_(std::move(other.block_name_))
     , face_name_(std::move(other.face_name_))
@@ -102,7 +98,6 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , cap_global_mesh_state_(std::move(other.cap_global_mesh_state_))
 {
     other.face_ = nullptr;
-    other.logger_ = nullptr;
     other.has_cap_ = false;
     other.owns_cap_ = false;
     other.flow_sol_id_ = -1;
@@ -123,7 +118,6 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
     if (this != &other) {
         face_ = other.face_;
         cap_face_vtp_file_ = std::move(other.cap_face_vtp_file_);
-        logger_ = other.logger_;
         bc_type_ = other.bc_type_;
         block_name_ = std::move(other.block_name_);
         face_name_ = std::move(other.face_name_);
@@ -146,7 +140,6 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         cap_global_mesh_state_ = std::move(other.cap_global_mesh_state_);
 
         other.face_ = nullptr;
-        other.logger_ = nullptr;
         other.has_cap_ = false;
         other.owns_cap_ = false;
         other.flow_sol_id_ = -1;
@@ -166,10 +159,8 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
 
 /// @brief Constructor for a coupled boundary condition
 CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
-                                               const std::string& block_name, consts::EquationType phys, bool follower_pressure_load,
-                                               SimulationLogger& logger)
+                                               const std::string& block_name, consts::EquationType phys, bool follower_pressure_load)
     : face_(&face)
-    , logger_(&logger)
     , bc_type_(bc_type)
     , block_name_(block_name)
     , face_name_(face_name)
@@ -181,10 +172,9 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType
 /// @brief Constructor for a coupled boundary condition with a cap
 CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
                                                const std::string& block_name, const std::string& cap_face_vtp_file,
-                                               consts::EquationType phys, bool follower_pressure_load, SimulationLogger& logger)
+                                               consts::EquationType phys, bool follower_pressure_load)
     : cap_face_vtp_file_(cap_face_vtp_file)
     , face_(&face)
-    , logger_(&logger)
     , bc_type_(bc_type)
     , block_name_(block_name)
     , face_name_(face_name)

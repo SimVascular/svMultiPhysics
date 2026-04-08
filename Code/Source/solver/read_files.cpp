@@ -475,11 +475,11 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     if (use_cap) {
       lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
                                                 com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, zd_cap,
-                                                lEq.phys, cpl_flwP, simulation->logger);
+                                                lEq.phys, cpl_flwP);
     } else {
       lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
                                                 com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, lEq.phys,
-                                                cpl_flwP, simulation->logger);
+                                                cpl_flwP);
     }
   }
 

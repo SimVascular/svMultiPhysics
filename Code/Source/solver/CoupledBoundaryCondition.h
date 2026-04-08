@@ -18,7 +18,6 @@ class LPNSolverInterface;
 class faceType;
 class ComMod;
 class CmMod;
-class SimulationLogger;
 
 namespace fsi_linear_solver {
     class FSILS_faceType;
@@ -120,7 +119,6 @@ private:
     /// @brief Data members for BC
     const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by CoupledBoundaryCondition)
     std::string cap_face_vtp_file_;          ///< Path to VTP file (empty if no cap)
-    const SimulationLogger* logger_ = nullptr;  ///< Logger for warnings/info (not owned by CoupledBoundaryCondition)
 
     /// @brief 3D boundary condition type (Dirichlet or Neumann) for this Coupled BC.
     consts::BoundaryConditionType bc_type_ = consts::BoundaryConditionType::bType_Neu;
@@ -191,10 +189,8 @@ public:
     /// @param block_name Block name in svZeroDSolver configuration
     /// @param phys Equation physics for this boundary (struct, fluid, FSI, etc.)
     /// @param follower_pressure_load Follower pressure load flag (struct/ustruct); false for fluid-like physics
-    /// @param logger Simulation logger used to write warnings
     CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
-                          const std::string& block_name, consts::EquationType phys, bool follower_pressure_load,
-                          SimulationLogger& logger);
+                          const std::string& block_name, consts::EquationType phys, bool follower_pressure_load);
 
     /// @brief Construct and optionally point to a cap face VTP file
     /// @param bc_type The 3D boundary condition type (must be bType_Dir or bType_Neu)
@@ -204,10 +200,9 @@ public:
     /// @param cap_face_vtp_file Path to the cap face VTP file
     /// @param phys Equation physics for this boundary (struct, fluid, FSI, etc.)
     /// @param follower_pressure_load Follower pressure load flag (struct/ustruct); false for fluid-like physics
-    /// @param logger Simulation logger used to write warnings
     CoupledBoundaryCondition(consts::BoundaryConditionType bc_type, const faceType& face, const std::string& face_name,
                           const std::string& block_name, const std::string& cap_face_vtp_file,
-                          consts::EquationType phys, bool follower_pressure_load, SimulationLogger& logger);
+                          consts::EquationType phys, bool follower_pressure_load);
 
     /// @brief Get the 3D BC type for this Coupled boundary condition.
     consts::BoundaryConditionType get_bc_type() const { return bc_type_; }
