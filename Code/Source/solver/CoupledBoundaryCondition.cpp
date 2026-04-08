@@ -1174,24 +1174,26 @@ namespace {
 /// @param com_mod The com_mod object.
 /// @param cm_mod The cm_mod object.
 /// @param lhs_face The linear solver face.
-/// @param cap_nNo The number of cap nodes.
+/// @param cap_nNo The number of cap nodes (same on all ranks: \c cap_mesh_global_node_ids_.size() from \c distribute).
 /// @param cap_gN_all The global node IDs of the cap nodes.
 /// @param cap_val_all The values of the cap nodes.
 void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
-                                fsi_linear_solver::FSILS_faceType& lhs_face, int& cap_nNo,
+                                fsi_linear_solver::FSILS_faceType& lhs_face, int cap_nNo,
                                 Vector<int>& cap_gN_all, Array<double>& cap_val_all)
 {
     auto& cm = com_mod.cm;
     const bool i_am_sender = cm.mas(cm_mod);
     int nsd = com_mod.nsd;
 
-    // Resize the cap contribution to the linear solver face (in all ranks)
-    if (!i_am_sender) {
+    if (!i_am_sender && cap_nNo > 0) {
         cap_gN_all.resize(cap_nNo);
         cap_val_all.resize(nsd, cap_nNo);
     }
-    cm.bcast(cm_mod, cap_gN_all);
-    cm.bcast(cm_mod, cap_val_all);
+
+    if (cap_nNo > 0) {
+        cm.bcast(cm_mod, cap_gN_all);
+        cm.bcast(cm_mod, cap_val_all);
+    }
 
     // Count the number of owned cap nodes
     int n_owned = 0;
@@ -1247,15 +1249,19 @@ void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& co
 
     gather_global_mesh_state(com_mod, cm_mod, com_mod.Yo, com_mod.Yn, false);
 
-    int cap_nNo = 0;
+    // Same count on every rank: IDs were broadcast in distribute() (not inferable from has_cap/owns_cap alone).
+    const int cap_nNo = static_cast<int>(cap_mesh_global_node_ids_.size());
     Vector<int> cap_gN_all;
     Array<double> cap_val_all;
 
     // Calculate the cap contribution to the linear solver face (in master rank)
     if (owns_cap_ && cap_) {
         const faceType* cap_face = cap_->face();
+        if (cap_face->nNo != cap_nNo) {
+            throw std::runtime_error("[copy_cap_surface_to_linear_solver_face] Cap face node count does not match "
+                                     "cap_mesh_global_node_ids_ size.");
+        }
         cap_->compute_valM(cfg, cap_global_mesh_state_);
-        cap_nNo = cap_face->nNo;
         cap_gN_all.resize(cap_nNo);
         cap_val_all.resize(nsd, cap_nNo);
         for (int a = 0; a < cap_nNo; a++) {
