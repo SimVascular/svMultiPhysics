@@ -24,9 +24,7 @@ namespace fsi_linear_solver {
     class FSILS_faceType;
 }
 
-/// @brief Mesh-wide nodal state on the master (columns indexed by com_mod.ltg / gtnNo).
-///
-/// Built via \ref CoupledBoundaryCondition::gather_global_mesh_state; cap IEN entries index these columns directly.
+/// @brief Mesh-wide nodal state (columns indexed by com_mod.ltg / gtnNo).
 struct CapGlobalMeshState {
     int gtnNo = 0;
     Array<double> x;
@@ -47,48 +45,64 @@ struct CapGlobalMeshState {
 };
 
 /// @brief Capping surface geometry and integration for a coupled boundary.
-///
-/// Loaded from a cap VTP (GlobalNodeID connectivity), used for extra surface
-/// flux contribution and linear-operator cap blocks. Definitions in CoupledBoundaryCondition.cpp.
 class CappingSurface {
-    friend class CoupledBoundaryCondition;
-
     public:
+        /// @brief Default constructor.
         CappingSurface() = default;
+        /// @brief Copy constructor.
         CappingSurface(const CappingSurface& other);
+        /// @brief Copy assignment operator.
         CappingSurface& operator=(const CappingSurface& other);
+        /// @brief Move constructor.
         CappingSurface(CappingSurface&& other) noexcept = default;
+        /// @brief Move assignment operator.
         CappingSurface& operator=(CappingSurface&& other) noexcept = default;
     
+        /// @brief Load the cap face from a VTP file.
         void load_from_vtp(const std::string& vtp_file_path, const faceType& coupled_face,
                            const std::string& coupled_face_name);
     
+        /// @brief Initialize the cap face quadrature.
         void init_cap_face_quadrature(const ComMod& com_mod);
-    
-        const faceType* face() const { return face_.get(); }
-        faceType* face() { return face_.get(); }
-    
-        const Array<double>& valM() const { return valM_; }
-    
-        void compute_valM(ComMod& com_mod, consts::MechanicalConfigurationType cfg,
-                          const CapGlobalMeshState& st);
 
+        /// @brief Initialize the cap contribution storage.
+        void initialize_valM();
+    
         /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
-        double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity, int l_vel,
-                                       consts::MechanicalConfigurationType cfg);
+        double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
+            consts::MechanicalConfigurationType cfg);
+
+        /// @brief Compute the cap contribution to the linear solver face.
+        void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st);
+
+        /// @brief Get the cap face.
+        faceType* face() { return face_.get(); }
+
+        /// @brief Get the cap contribution.
+        const Array<double>& valM() const { return valM_; }
 
     private:
+        /// @brief The cap face.
         std::unique_ptr<faceType> face_;
+        /// @brief The global node IDs.
         Vector<int> global_node_ids_;
+        /// @brief The normals.
+        Array<double> normals_;
+
+        /// @brief The number of spatial dimensions (3D).
+        static constexpr int cap_nsd_ = 3;  
+        /// @brief The number of independent spatial dimensions (2D).
+        static constexpr int cap_insd_ = 2; 
+
+        /// @brief The cap contribution.
         Array<double> valM_;
-        Array<double> initial_normals_;
-        static constexpr int cap_nsd_ = 3;
-        static constexpr int cap_insd_ = 2;
-    
+
+        /// @brief Update the element position in global coordinates.
         Array<double> update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
                                                      const Array<double>& mesh_x, const Array<double>& mesh_Do,
                                                      const Array<double>& mesh_Dn, int gtnNo_cols) const;
     
+        /// @brief Compute the Jacobian and normal vector for a given element and Gauss point.
         std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g);
     };
 
@@ -103,12 +117,6 @@ class CappingSurface {
 /// coupled boundary conditions by iterating through com_mod.eq[].bc[].
 class CoupledBoundaryCondition {
 private:
-    /// Gather x, Do, Dn and optionally Yo/Yn rows 0..s_comps-1 into \a gtnNo-wide columns (MPI root holds \a out).
-    static void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yo,
-                                         const Array<double>& Yn, int s_comps, CapGlobalMeshState& out);
-
-protected:
-
     /// @brief Data members for BC
     const faceType* face_ = nullptr;         ///< Face associated with the BC (not owned by CoupledBoundaryCondition)
     std::string cap_face_vtp_file_;          ///< Path to VTP file (empty if no cap)
@@ -149,11 +157,19 @@ protected:
     Vector<int> cap_mesh_global_node_ids_;
     /// @brief Cap geometry on ranks with \ref owns_cap_; empty on non-owning MPI ranks.
     std::optional<CappingSurface> cap_;
+    /// @brief Reused global-column mesh state for cap gather (allocated on ranks that unpack; includes Yo/Yn rows).
+    CapGlobalMeshState cap_global_mesh_state_;
+
+    /// Fill \ref cap_global_mesh_state_. Serial: all ranks. Parallel: root only (slaves skip buffer allocation).
+    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yo,
+                                  const Array<double>& Yn, bool gather_Y);
+
 
 public:
     /// @brief Default constructor - creates an uninitialized object
     CoupledBoundaryCondition() = default;
 
+    /// @brief Destructor
     ~CoupledBoundaryCondition() = default;
     
     /// @brief Copy constructor
@@ -196,25 +212,13 @@ public:
     /// @brief Get the 3D BC type for this Coupled boundary condition.
     consts::BoundaryConditionType get_bc_type() const { return bc_type_; }
 
-    /// @brief Load the cap face VTP file and associate it with this boundary condition
-    /// @param vtp_file_path Path to the cap face VTP file
-    void load_cap_face_vtp(const std::string& vtp_file_path);
-
     // =========================================================================
     // svZeroD block configuration
     // =========================================================================
     
-    /// @brief Set the svZeroD block name
-    /// @param block_name Block name in svZeroDSolver configuration
-    void set_block_name(const std::string& block_name);
-    
     /// @brief Get the svZeroD block name
     /// @return Block name
     const std::string& get_block_name() const;
-    
-    /// @brief Set the face name
-    /// @param face_name Face name from the mesh
-    void set_face_name(const std::string& face_name);
     
     /// @brief Set the svZeroD solution IDs for flow and pressure
     /// @param flow_id Flow solution ID
@@ -235,14 +239,6 @@ public:
     // Flowrate computation and access
     // =========================================================================
 
-    /// @brief Set the follower pressure load flag
-    /// @param flwP Whether to use follower pressure load
-    void set_follower_pressure_load(bool flwP);
-    
-    /// @brief Get the follower pressure load flag
-    /// @return Whether to use follower pressure load
-    bool get_follower_pressure_load() const;
-
     /// @brief Set follower load flag and mechanical configs used for flowrate integration (also run from the face constructors).
     void set_flowrate_mechanical_configurations(consts::EquationType phys, bool follower_pressure_load);
 
@@ -260,7 +256,7 @@ public:
                                                 consts::MechanicalConfigurationType cfg);
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
-    std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod, int nsd,
+    std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,
                                                          consts::MechanicalConfigurationType cfg_o,
                                                          consts::MechanicalConfigurationType cfg_n);
     
@@ -334,24 +330,17 @@ public:
     /// @param cm Reference to cmType object for MPI communication
     /// @param face Face associated with the BC (after distribution)
     void distribute(const ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const faceType& face);
-    
-    /// @brief Get the associated face
-    /// @return Pointer to the associated face (may be nullptr if not set)
-    const faceType* get_face() const;
-    
-    /// @brief Check if the BC is properly initialized
-    /// @return true if face is set, false otherwise
-    bool is_initialized() const;
-    
+
+    /// @brief Load the cap face VTP file and associate it with this boundary condition
+    /// @param vtp_file_path Path to the cap face VTP file
+    void load_cap_face_vtp(const std::string& vtp_file_path);
+
     /// @brief Check if this BC has a cap (broadcast in distribute so all ranks agree).
     bool has_cap() const { return has_cap_; }
 
     /// @brief True if this rank stores the cap mesh / quadrature in \ref cap_.
     bool owns_cap() const { return owns_cap_; }
 
-    /// @brief Cap object when \ref owns_cap_; nullptr on non-owning MPI ranks.
-    CappingSurface* capping_surface() noexcept { return cap_.has_value() ? &*cap_ : nullptr; }
-    const CappingSurface* capping_surface() const noexcept { return cap_.has_value() ? &*cap_ : nullptr; }
 };
 
 
