@@ -56,24 +56,24 @@ public:
    *
    * @return Reference to Ag array (acceleration in structural mechanics)
    */
-  Array<double>& get_Ag() { return Ag_; }
-  const Array<double>& get_Ag() const { return Ag_; }
+  Array<double>& get_Ag() { return solutions_.intermediate.get_acceleration(); }
+  const Array<double>& get_Ag() const { return solutions_.intermediate.get_acceleration(); }
 
   /**
    * @brief Get reference to solution variable Yg (variables)
    *
    * @return Reference to Yg array (velocity in structural mechanics)
    */
-  Array<double>& get_Yg() { return Yg_; }
-  const Array<double>& get_Yg() const { return Yg_; }
+  Array<double>& get_Yg() { return solutions_.intermediate.get_velocity(); }
+  const Array<double>& get_Yg() const { return solutions_.intermediate.get_velocity(); }
 
   /**
    * @brief Get reference to solution variable Dg (integrated variables)
    *
    * @return Reference to Dg array (displacement in structural mechanics)
    */
-  Array<double>& get_Dg() { return Dg_; }
-  const Array<double>& get_Dg() const { return Dg_; }
+  Array<double>& get_Dg() { return solutions_.intermediate.get_displacement(); }
+  const Array<double>& get_Dg() const { return solutions_.intermediate.get_displacement(); }
 
   /**
    * @brief Get reference to solution states struct
@@ -93,16 +93,7 @@ private:
   /** @brief Pointer to the simulation object */
   Simulation* simulation_;
 
-  /** @brief Time derivative of variables (acceleration in structural mechanics) */
-  Array<double> Ag_;
-
-  /** @brief Variables (velocity in structural mechanics) */
-  Array<double> Yg_;
-
-  /** @brief Integrated variables (displacement in structural mechanics) */
-  Array<double> Dg_;
-
-  /** @brief Solution states at old and current time levels */
+  /** @brief Solution states at old, current, and intermediate time levels */
   SolutionStates solutions_;
 
   /** @brief Residual vector for face-based quantities */

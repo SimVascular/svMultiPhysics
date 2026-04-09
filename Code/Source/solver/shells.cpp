@@ -21,9 +21,11 @@ namespace shells {
 /// 
 /// Reproduces Fortran CONSTRUCT_SHELL
 //
-void construct_shell(ComMod& com_mod, const mshType& lM, const Array<double>& Ag,
-    const Array<double>& Yg, const Array<double>& Dg)
+void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
   using namespace consts;
 
   #define n_debug_construct_shell

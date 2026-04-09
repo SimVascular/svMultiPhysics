@@ -7,7 +7,7 @@
 #include "Array.h"
 
 /**
- * @brief Represents solution variables at a single time level
+ * @brief Represents solution variables at a single time step
  *
  * Contains the three primary solution arrays used in time integration:
  * A (time derivative), D (integrated variable), and Y (variable)
@@ -29,15 +29,17 @@ private:
 };
 
 /**
- * @brief Holds solution state at old and current time levels
+ * @brief Holds solution state at old, current, and intermediate time levels
  *
- * Contains solution arrays at two time levels for time integration:
+ * Contains solution arrays at three time levels for time integration:
  * - old: Previous converged solution at time n
  * - current: Current solution being computed at time n+1
+ * - intermediate: Generalized-alpha intermediate level (Ag, Yg, Dg)
  */
 struct SolutionStates {
-  Solution old;      ///< Previous converged solution at time n (Ao, Do, Yo)
-  Solution current;  ///< Current solution being computed at time n+1 (An, Dn, Yn)
+  Solution old;           ///< Previous converged solution at time n (Ao, Do, Yo)
+  Solution current;       ///< Current solution being computed at time n+1 (An, Dn, Yn)
+  Solution intermediate;  ///< Generalized-alpha intermediate level (Ag, Yg, Dg)
 };
 
 #endif

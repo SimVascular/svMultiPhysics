@@ -23,21 +23,21 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& soluti
 
 void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat);
 
-void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, const Array<double>& Dg, const SolutionStates& solutions);
-void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& Ag, const Array<double>& Dg, const SolutionStates& solutions);
+void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
+void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const SolutionStates& solutions);
 
 void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions);
 
 void set_bc_dir(ComMod& com_mod, SolutionStates& solutions);
 void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array<double>& lA, Array<double>& lY, int lDof);
-void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
-void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
+void set_bc_dir_w(ComMod& com_mod, const SolutionStates& solutions);
+void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const SolutionStates& solutions);
 
-void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
-void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
+void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
+void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const SolutionStates& solutions);
 
 void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
-  const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions);
+  const SolutionStates& solutions);
 
 void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const SolutionStates& solutions);
 

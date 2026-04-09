@@ -18,8 +18,10 @@
 
 namespace stokes {
 
-void construct_stokes(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg)
+void construct_stokes(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
   #define n_debug_construct_stokes
   #ifdef debug_construct_stokes
   DebugMsg dmsg(__func__, com_mod.cm.idcm());

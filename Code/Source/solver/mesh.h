@@ -11,7 +11,7 @@
 
 namespace mesh {
 
-void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Dg, const SolutionStates& solutions);
+void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);
 
 };
 

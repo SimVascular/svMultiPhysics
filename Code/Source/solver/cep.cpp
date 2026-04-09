@@ -392,9 +392,11 @@ void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
 // construct_cep
 //---------------
 //
-void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, 
-    const Array<double>& Yg, const Array<double>& Dg)
+void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
   #define n_debug_construct_cep 
   #ifdef debug_construct_cep 
   DebugMsg dmsg(__func__, com_mod.cm.idcm());

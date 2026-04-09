@@ -89,10 +89,12 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 }
 
 /// @brief  Weak treatment of RIS resistance boundary conditions
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void ris_resbc(ComMod& com_mod, const SolutionStates& solutions)
 {
-  // Local alias for old displacement
+  // Local aliases for solution arrays
   const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   using namespace consts;
   #define n_debug_ris_resbc
@@ -140,7 +142,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
       
       if (cPhys == EquationType::phys_fluid) {
         // Build the correct BC
-        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, solutions);
+        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], solutions);
       }
       lBc.gx.clear();
     }
@@ -149,8 +151,8 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
 }
 
 
-void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, 
-               const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
+               const SolutionStates& solutions)
 {
   // [HZ] looks not needed in the current implementation
 }
@@ -365,10 +367,12 @@ void setbcdir_ris(ComMod& com_mod, const SolutionStates& solutions)
 }
 
 /// RIS0D code
-void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 {
   const auto& Yn = solutions.current.get_velocity();
   const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   using namespace consts;
 
@@ -408,12 +412,12 @@ void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Arr
       // Apply bc Dir 
       lBc.gx.resize(msh[iM].fa[iFa].nNo);
       lBc.gx = 1.0;
-      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg, solutions);
+      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], solutions);
       lBc.gx.clear();
       lBc.eDrn.clear();
     } else {
-      // Apply Neu bc 
-      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg, solutions);
+      // Apply Neu bc
+      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], solutions);
     }
 
   }

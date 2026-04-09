@@ -5,12 +5,13 @@
 #define HEATS_H 
 
 #include "ComMod.h"
+#include "SolutionStates.h"
 
 namespace heats {
 
 void b_heats(ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, const double h, Array<double>& lR);
 
-void construct_heats(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Dg);
+void construct_heats(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions);
 
 void heats_2d(ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, const Array<double>& Nx, 
     const Array<double>& al, const Array<double>& yl, Array<double>& lR, Array3<double>& lK);

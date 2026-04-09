@@ -19,9 +19,11 @@
 
 namespace mesh {
 
-void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Dg, const SolutionStates& solutions)
+void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions)
 {
   const auto& Do = solutions.old.get_displacement();
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Dg = solutions.intermediate.get_displacement();
   #define n_debug_construct_mesh 
   #ifdef debug_construct_mesh
   DebugMsg dmsg(__func__, com_mod.cm.idcm());

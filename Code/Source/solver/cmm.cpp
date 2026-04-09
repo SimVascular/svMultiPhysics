@@ -755,8 +755,11 @@ void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double
 
 /// @brief Reproduces Fortran 'CONSTRUCT_CMM'.
 //
-void construct_cmm(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg, const Array<double>& Dg)
+void construct_cmm(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
   using namespace consts;
 
   #define n_debug_construct_cmm 

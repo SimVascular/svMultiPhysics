@@ -28,10 +28,11 @@
 
 namespace eq_assem {
 
-void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const Array<double>& Yg, const SolutionStates& solutions)
+void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& hg, const SolutionStates& solutions)
 {
-  // Local alias for old displacement
+  // Local aliases for solution arrays
   const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
 
   #define n_debug_b_assem_neu_bc
   #ifdef debug_b_assem_neu_bc
@@ -159,13 +160,11 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 /// @param lFa 
 /// @param hg Pressure magnitude
 /// @param Dg 
-void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const Array<double>& Dg, const SolutionStates& solutions)
+void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const SolutionStates& solutions)
 {
-  // Local alias for old displacement
-  const auto& Do = solutions.old.get_displacement();
-
   using namespace consts;
   using namespace utils;
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   #define n_debug_b_neu_folw_p
   #ifdef debug_b_neu_folw_p 
@@ -294,10 +293,6 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 /// an arbitrary vector.
 void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const SolutionStates& solutions)
 {
-  // Local aliases for displacement arrays
-  const auto& Dn = solutions.current.get_displacement();
-  const auto& Do = solutions.old.get_displacement();
-
   using namespace consts;
   using namespace utils;
   using namespace fsi_linear_solver;
@@ -355,10 +350,9 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
 
 /// @brief This routine assembles the equation on a given mesh.
 ///
-/// Ag(tDof,tnNo), Yg(tDof,tnNo), Dg(tDof,tnNo)
+/// Ag(tDof,tnNo), Yg(tDof,tnNo), Dg(tDof,tnNo) are taken from solutions.intermediate.
 //
-void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, 
-    const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions)
 {
   #define n_debug_global_eq_assem
   #ifdef debug_global_eq_assem
@@ -381,51 +375,51 @@ void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const 
   switch (eq.phys) {
 
     case EquationType::phys_fluid:
-      fluid::construct_fluid(com_mod, lM, Ag, Yg);
+      fluid::construct_fluid(com_mod, lM, solutions);
     break;
 
     case EquationType::phys_heatF:
-      heatf::construct_heatf(com_mod, lM, Ag, Yg);
+      heatf::construct_heatf(com_mod, lM, solutions);
     break;
 
     case EquationType::phys_heatS:
-      heats::construct_heats(com_mod, lM, Ag, Yg);
+      heats::construct_heats(com_mod, lM, solutions);
     break;
 
     case EquationType::phys_lElas:
-      l_elas::construct_l_elas(com_mod, lM, Ag, Dg);
+      l_elas::construct_l_elas(com_mod, lM, solutions);
     break;
 
     case EquationType::phys_struct:
-      struct_ns::construct_dsolid(com_mod, cep_mod, lM, Ag, Yg, Dg);
+      struct_ns::construct_dsolid(com_mod, cep_mod, lM, solutions);
     break;
 
     case EquationType::phys_ustruct:
-      ustruct::construct_usolid(com_mod, cep_mod, lM, Ag, Yg, Dg);
+      ustruct::construct_usolid(com_mod, cep_mod, lM, solutions);
     break;
 
     case EquationType::phys_CMM:
-      cmm::construct_cmm(com_mod, lM, Ag, Yg, Dg);
+      cmm::construct_cmm(com_mod, lM, solutions);
     break;
 
     case EquationType::phys_shell:
-      shells::construct_shell(com_mod, lM, Ag, Yg, Dg);
+      shells::construct_shell(com_mod, lM, solutions);
     break;
 
     case EquationType::phys_FSI:
-      fsi::construct_fsi(com_mod, cep_mod, lM, Ag, Yg, Dg);
+      fsi::construct_fsi(com_mod, cep_mod, lM, solutions);
     break;
 
     case EquationType::phys_mesh:
-      mesh::construct_mesh(com_mod, cep_mod, lM, Ag, Dg, solutions);
+      mesh::construct_mesh(com_mod, cep_mod, lM, solutions);
     break;
 
     case EquationType::phys_CEP:
-      cep::construct_cep(com_mod, cep_mod, lM, Ag, Yg, Dg);
+      cep::construct_cep(com_mod, cep_mod, lM, solutions);
     break;
 
     case EquationType::phys_stokes:
-      stokes::construct_stokes(com_mod, lM, Ag, Yg);
+      stokes::construct_stokes(com_mod, lM, solutions);
     break;
 
     default:

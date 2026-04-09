@@ -572,7 +572,7 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& soluti
 
 /// @brief Below defines the SET_BC methods for the Coupled Momentum Method (CMM)
 //
-void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, const Array<double>& Dg, const SolutionStates& solutions)
+void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
   using namespace consts;
 
@@ -583,7 +583,7 @@ void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, c
     auto& bc = eq.bc[iBc];
 
     if (!utils::btest(bc.bType,iBC_CMM)) {
-      continue; 
+      continue;
     }
 
     int iFa = bc.iFa;
@@ -593,13 +593,15 @@ void set_bc_cmm(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Ag, c
       throw std::runtime_error("[set_bc_cmm] CMM equation is formulated for tetrahedral elements (volume) and triangular (surface) elements");
     }
 
-    set_bc_cmm_l(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Ag, Dg, solutions);
+    set_bc_cmm_l(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], solutions);
   }
 }
 
-void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const Array<double>& Ag, const Array<double>& Dg, const SolutionStates& solutions)
+void set_bc_cmm_l(ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, const SolutionStates& solutions)
 {
   using namespace consts;
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   const int nsd  = com_mod.nsd;
   const int tDof = com_mod.tDof;
@@ -776,15 +778,10 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 
 /// @brief Apply Dirichlet BCs strongly.
 ///
-/// Parameters
-///   lA - New time derivative of variables (An)
-///   lY - New variables (Yn)
-///   lD - New integrated variables (Dn)
-///
-/// Modfies:
-///   lA(tDof, tnNo)
-///   lY(tDof, tnNo)
-///   lD(tDof, tnNo)
+/// Modifies:
+///   An(tDof, tnNo) - solutions.current acceleration
+///   Yn(tDof, tnNo) - solutions.current velocity
+///   Dn(tDof, tnNo) - solutions.current displacement
 ///   com_mod.Ad - Time derivative of displacement
 ///
 /// Reproduces 'SUBROUTINE SETBCDIR(lA, lY, lD)'
@@ -792,9 +789,9 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
 {
   // Local aliases for solution arrays
-  auto& lA = solutions.current.get_acceleration();
-  auto& lY = solutions.current.get_velocity();
-  auto& lD = solutions.current.get_displacement();
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
   const auto& Yo = solutions.old.get_velocity();
   const auto& Ao = solutions.old.get_acceleration();
   const auto& Do = solutions.old.get_displacement();
@@ -837,8 +834,8 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
           if (utils::is_zero(bc.gx(a))) {
             int Ac = com_mod.msh[iM].fa[iFa].gN(a);
             for (int i = s; i <= e; i++) { 
-              lA(i,Ac) = 0.0;
-              lY(i,Ac) = 0.0;
+              An(i,Ac) = 0.0;
+              Yn(i,Ac) = 0.0;
             }
           }
         }
@@ -899,8 +896,8 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
 
             for (int i = 0; i < nsd; i++) {
               if (eDir[i]) {
-                lY(s+i,Ac) = tmpA(lDof,a);
-                lD(s+i,Ac) = tmpY(lDof,a);
+                Yn(s+i,Ac) = tmpA(lDof,a);
+                Dn(s+i,Ac) = tmpY(lDof,a);
                 lDof = lDof + 1;
               }
             }
@@ -912,8 +909,8 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
             lDof = 0;
             for (int i = 0; i < nsd; i++) {
               if (eDir[i]) {
-                lA(s+i,Ac) = tmpA(lDof,a);
-                lY(s+i,Ac) = tmpY(lDof,a);
+                An(s+i,Ac) = tmpA(lDof,a);
+                Yn(s+i,Ac) = tmpY(lDof,a);
                 lDof = lDof + 1;
               }
             }
@@ -927,16 +924,16 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
           for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
             int Ac = com_mod.msh[iM].fa[iFa].gN(a);
             for (int i = 0; i < tmpA.nrows(); i++) {
-              lY(i+s,Ac) = tmpA(i,a);
-              lD(i+s,Ac) = tmpY(i,a);
+              Yn(i+s,Ac) = tmpA(i,a);
+              Dn(i+s,Ac) = tmpY(i,a);
             }
           }
         } else {
           for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
             int Ac = com_mod.msh[iM].fa[iFa].gN(a);
             for (int i = 0; i < lDof; i++) {
-              lA(i+s,Ac) = tmpA(i,a);
-              lY(i+s,Ac) = tmpY(i,a);
+              An(i+s,Ac) = tmpA(i,a);
+              Yn(i+s,Ac) = tmpY(i,a);
             }
           }
         }
@@ -958,8 +955,8 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
               for (int i = 0; i < nsd; i++) {
                 if (eDir[i]) {
                   int j = s + i;
-                  lA(j,Ac) = c1i*(lY(j,Ac) - Yo(j,Ac) + c2*Ao(j,Ac));
-                  com_mod.Ad(i,Ac) = c1i*(lD(j,Ac) - Do(j,Ac) + c2*com_mod.Ad(i,Ac));
+                  An(j,Ac) = c1i*(Yn(j,Ac) - Yo(j,Ac) + c2*Ao(j,Ac));
+                  com_mod.Ad(i,Ac) = c1i*(Dn(j,Ac) - Do(j,Ac) + c2*com_mod.Ad(i,Ac));
                 }
               }
             }
@@ -969,8 +966,8 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
               for (int i = 0; i < nsd; i++) {
                 if (eDir[i]) {
                   int j = s + i;
-                  lD(j,Ac) = c1*lY(j,Ac) - c2*com_mod.Ad(i,Ac) + Do(j,Ac);
-                  com_mod.Ad(i,Ac) = lY(j,Ac);
+                  Dn(j,Ac) = c1*Yn(j,Ac) - c2*com_mod.Ad(i,Ac) + Do(j,Ac);
+                  com_mod.Ad(i,Ac) = Yn(j,Ac);
                 }
               }
             }
@@ -981,8 +978,8 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
             for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
               int Ac = com_mod.msh[iM].fa[iFa].gN(a);
               for (int i = 0; i < com_mod.Ad.nrows(); i++) {
-                lA(i+s,Ac) = c1i*(lY(i+s,Ac) - Yo(i+s,Ac) + c2*Ao(i+s,Ac));
-                com_mod.Ad(i,Ac) = c1i*(lD(i+s,Ac) - Do(i+s,Ac) + c2*com_mod.Ad(i,Ac));
+                An(i+s,Ac) = c1i*(Yn(i+s,Ac) - Yo(i+s,Ac) + c2*Ao(i+s,Ac));
+                com_mod.Ad(i,Ac) = c1i*(Dn(i+s,Ac) - Do(i+s,Ac) + c2*com_mod.Ad(i,Ac));
               }
             }
 
@@ -990,8 +987,8 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
             for (int a = 0; a < com_mod.msh[iM].fa[iFa].nNo; a++) {
               int Ac = com_mod.msh[iM].fa[iFa].gN(a);
               for (int i = 0; i < com_mod.Ad.nrows(); i++) {
-                lD(i+s,Ac) = c1*lY(i+s,Ac) - c2*com_mod.Ad(i,Ac) + Do(i+s,Ac);
-                com_mod.Ad(i,Ac) = lY(i+s,Ac);
+                Dn(i+s,Ac) = c1*Yn(i+s,Ac) - c2*com_mod.Ad(i,Ac) + Do(i+s,Ac);
+                com_mod.Ad(i,Ac) = Yn(i+s,Ac);
               }
             }
           }
@@ -1070,11 +1067,8 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
 
 /// @brief Weak treatment of Dirichlet boundary conditions
 //
-void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void set_bc_dir_w(ComMod& com_mod, const SolutionStates& solutions)
 {
-  // Local alias for old displacement
-  const auto& Do = solutions.old.get_displacement();
-
   using namespace consts;
 
   const int cEq = com_mod.cEq;
@@ -1087,16 +1081,18 @@ void set_bc_dir_w(ComMod& com_mod, const Array<double>& Yg, const Array<double>&
     if (!bc.weakDir) {
       continue;
     }
-    set_bc_dir_wl(com_mod, bc, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], Yg, Dg, solutions);
+    set_bc_dir_wl(com_mod, bc, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], solutions);
   }
 }
 
 /// @brief Reproduces Fortran 'SETBCDIRWL'.
 //
-void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, const SolutionStates& solutions)
 {
-  // Local alias for old displacement
+  // Local aliases for solution arrays
   const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   using namespace consts;
 
@@ -1325,7 +1321,7 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
 
 /// @brief Set outlet BCs.
 //
-void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
   const auto& Yn = solutions.current.get_velocity();
   const auto& Do = solutions.old.get_displacement();
@@ -1360,7 +1356,7 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
       dmsg << "iFa: " << iFa+1;
       dmsg << "name: " << com_mod.msh[iM].fa[iFa].name;
       #endif
-      set_bc_neu_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], Yg, Dg, solutions);
+      set_bc_neu_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], solutions);
 
     } else if (utils::btest(bc.bType,iBC_trac)) { 
       set_bc_trac_l(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], solutions);
@@ -1370,10 +1366,12 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yg, c
 
 /// @brief Set Neumann BC
 //
-void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const faceType& lFa, const SolutionStates& solutions)
 {
   const auto& Yn = solutions.current.get_velocity();
   const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   using namespace consts;
 
@@ -1463,10 +1461,10 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   // Add Neumann BCs contribution to the residual (and tangent if flwP)
   //
   if (lBc.flwP) {
-    eq_assem::b_neu_folw_p(com_mod, lBc, lFa, hg, Dg, solutions);
+    eq_assem::b_neu_folw_p(com_mod, lBc, lFa, hg, solutions);
 
   } else {
-    eq_assem::b_assem_neu_bc(com_mod, lFa, hg, Yg, solutions);
+    eq_assem::b_assem_neu_bc(com_mod, lFa, hg, solutions);
   }
 
 
@@ -1481,17 +1479,19 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   }
   // Now treat Robin BC (stiffness and damping) here
   if (lBc.robin_bc.is_initialized()) {
-    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, Yg, Dg, solutions);
+    set_bc_rbnl(com_mod, lFa, lBc.robin_bc, solutions);
   }
 }
 
 /// @brief Set Robin BC contribution to residual and tangent
 //
 void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondition& robin_bc,
-  const Array<double>& Yg, const Array<double>& Dg, const SolutionStates& solutions)
+  const SolutionStates& solutions)
 {
-  // Local alias for old displacement
+  // Local aliases for solution arrays
   const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   using namespace consts;
 

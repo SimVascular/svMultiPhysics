@@ -40,9 +40,9 @@ void Integrator::initialize_arrays() {
   int tnNo = com_mod.tnNo;
   int nFacesLS = com_mod.nFacesLS;
 
-  Ag_.resize(tDof, tnNo);
-  Yg_.resize(tDof, tnNo);
-  Dg_.resize(tDof, tnNo);
+  solutions_.intermediate.get_acceleration().resize(tDof, tnNo);
+  solutions_.intermediate.get_velocity().resize(tDof, tnNo);
+  solutions_.intermediate.get_displacement().resize(tDof, tnNo);
   solutions_.current.get_acceleration().resize(tDof, tnNo);
   solutions_.current.get_displacement().resize(tDof, tnNo);
   solutions_.current.get_velocity().resize(tDof, tnNo);
@@ -131,7 +131,7 @@ bool Integrator::step() {
     dmsg << "com_mod.sstEq: " << com_mod.sstEq;
     #endif
     if (com_mod.sstEq) {
-      ustruct::ustruct_r(com_mod, Yg_);
+      ustruct::ustruct_r(com_mod, solutions_);
     }
 
     // Set the residual of the continuity equation to 0 on edge nodes
@@ -180,12 +180,12 @@ void Integrator::initiator_step() {
   dmsg << "Initiator step ..." << std::endl;
   #endif
 
-  initiator(Ag_, Yg_, Dg_);
+  initiator(solutions_.intermediate.get_acceleration(), solutions_.intermediate.get_velocity(), solutions_.intermediate.get_displacement());
 
   #ifdef debug_integrator_step
-  Ag_.write("Ag_pic" + istr_);
-  Yg_.write("Yg_pic" + istr_);
-  Dg_.write("Dg_pic" + istr_);
+  solutions_.intermediate.get_acceleration().write("Ag_pic" + istr_);
+  solutions_.intermediate.get_velocity().write("Yg_pic" + istr_);
+  solutions_.intermediate.get_displacement().write("Dg_pic" + istr_);
   solutions_.current.get_velocity().write("solutions_.current.Ypic" + istr_);
   #endif
 }
@@ -215,7 +215,7 @@ void Integrator::set_body_forces() {
   dmsg << "Set body forces ..." << std::endl;
   #endif
 
-  bf::set_bf(simulation_->com_mod, Dg_);
+  bf::set_bf(simulation_->com_mod, solutions_);
 
   #ifdef debug_integrator_step
   simulation_->com_mod.Val.write("Val_bf" + istr_);
@@ -235,7 +235,7 @@ void Integrator::assemble_equations() {
   #endif
 
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], Ag_, Yg_, Dg_, solutions_);
+    eq_assem::global_eq_assem(com_mod, cep_mod, com_mod.msh[iM], solutions_);
   }
 
   #ifdef debug_integrator_step
@@ -254,39 +254,39 @@ void Integrator::apply_boundary_conditions() {
   #ifdef debug_integrator_step
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg << "Apply boundary conditions ..." << std::endl;
-  Yg_.write("Yg_vor_neu" + istr_);
-  Dg_.write("Dg_vor_neu" + istr_);
+  solutions_.intermediate.get_velocity().write("Yg_vor_neu" + istr_);
+  solutions_.intermediate.get_displacement().write("Dg_vor_neu" + istr_);
   #endif
 
   // Apply Neumann or Traction boundary conditions
-  set_bc::set_bc_neu(com_mod, cm_mod, Yg_, Dg_, solutions_);
+  set_bc::set_bc_neu(com_mod, cm_mod, solutions_);
 
   // Apply CMM BC conditions
   if (!com_mod.cmmInit) {
-    set_bc::set_bc_cmm(com_mod, cm_mod, Ag_, Dg_, solutions_);
+    set_bc::set_bc_cmm(com_mod, cm_mod, solutions_);
   }
 
   // Apply weakly applied Dirichlet BCs
-  set_bc::set_bc_dir_w(com_mod, Yg_, Dg_, solutions_);
+  set_bc::set_bc_dir_w(com_mod, solutions_);
 
   if (com_mod.risFlag) {
-    ris::ris_resbc(com_mod, Yg_, Dg_, solutions_);
+    ris::ris_resbc(com_mod, solutions_);
   }
 
   if (com_mod.ris0DFlag) {
-    ris::ris0d_bc(com_mod, cm_mod, Yg_, Dg_, solutions_);
+    ris::ris0d_bc(com_mod, cm_mod, solutions_);
   }
 
   // Apply contact model and add its contribution to residual
   if (com_mod.iCntct) {
-    contact::construct_contact_pnlty(com_mod, cm_mod, Dg_);
+    contact::construct_contact_pnlty(com_mod, cm_mod, solutions_);
   }
 
   #ifdef debug_integrator_step
   com_mod.Val.write("Val_neu" + istr_);
   com_mod.R.write("R_neu" + istr_);
-  Yg_.write("Yg_neu" + istr_);
-  Dg_.write("Dg_neu" + istr_);
+  solutions_.intermediate.get_velocity().write("Yg_neu" + istr_);
+  solutions_.intermediate.get_displacement().write("Dg_neu" + istr_);
   #endif
 }
 
@@ -347,6 +347,7 @@ void Integrator::update_residual_arrays(eqType& eq) {
   dmsg << "Update res() and incL ..." << std::endl;
   #endif
 
+  res_ = 0.0;
   incL_ = 0;
   if (eq.phys == Equation_mesh) {
     incL_(nFacesLS - 1) = 1;
@@ -366,6 +367,16 @@ void Integrator::update_residual_arrays(eqType& eq) {
   }
 }
 
+
+// The code here replicates the Fortran code in PIC.f.
+//
+// See the publications below, section 4.4 for theory and derivation:
+//  1.  Bazilevs, et al. "Isogeometric fluid-structure interaction:
+//      theory, algorithms, and computations.", Computational Mechanics,
+//      43 (2008): 3-37. doi: 10.1007/s00466-008-0315-x
+//  2. Bazilevs, et al. "Variational multiscale residual-based 
+//      turbulence modeling for large eddy simulation of incompressible 
+//      flows.", CMAME (2007)
 //------------------------
 // predictor (picp)
 //------------------------

@@ -33,8 +33,10 @@ void b_l_elas(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
 
 /// @brief Reproduces Fortran 'CONSTRUCT_LELAS'.
 //
-void construct_l_elas(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Dg)
+void construct_l_elas(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Dg = solutions.intermediate.get_displacement();
   using namespace consts;
 
   #define n_debug_construct_l_elas 

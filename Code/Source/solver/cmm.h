@@ -31,7 +31,7 @@ void cmm_mass(ComMod& com_mod, const double w, const Vector<double>& N, const Ar
 void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double>& xl, const Array<double>& dl,                        
     const Vector<double>& pS0l, const Vector<double>& vwp, Vector<double>& pSl, Array<double>& lR, Array3<double>& lK);
 
-void construct_cmm(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg, const Array<double>& Dg);
+void construct_cmm(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions);
 
 };
 
