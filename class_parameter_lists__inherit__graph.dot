@@ -85,11 +85,17 @@ digraph "ParameterLists"
   Node1 -> Node40 [id="edge39_Node000001_Node000040",dir="back",color="steelblue1",style="solid",tooltip=" "];
   Node40 [id="Node000040",label="StimulusParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_stimulus_parameters.html",tooltip="The StimulusParameters class stores parameters for 'Stimulus' XML element used to parameters for pace..."];
   Node1 -> Node41 [id="edge40_Node000001_Node000041",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node41 [id="Node000041",label="URISFaceParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_u_r_i_s_face_parameters.html",tooltip="The URISFaceParameters class is used to store parameters for the 'Add_URIS_face' XML element."];
+  Node41 [id="Node000041",label="TTPGatingVariablesParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_t_t_p_gating_variables_parameters.html",tooltip="Stores parameters for the 'Gating_variables' XML element under TTP_initial_conditions."];
   Node1 -> Node42 [id="edge41_Node000001_Node000042",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node42 [id="Node000042",label="URISMeshParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_u_r_i_s_mesh_parameters.html",tooltip="The URISMeshParameters class is used to store paramaters for the 'Add_URIS_mesh' XML element."];
+  Node42 [id="Node000042",label="TTPInitialConditionsParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_t_t_p_initial_conditions_parameters.html",tooltip="Stores parameters for the 'TTP_initial_conditions' XML element under Domain."];
   Node1 -> Node43 [id="edge42_Node000001_Node000043",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node43 [id="Node000043",label="VariableWallPropsParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_variable_wall_props_parameters.html",tooltip="The VariableWallPropsParameters class stores parameters for variable wall properties for the CMM equa..."];
+  Node43 [id="Node000043",label="TTPInitialStatesParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_t_t_p_initial_states_parameters.html",tooltip="Stores parameters for the 'Initial_states' XML element under TTP_initial_conditions."];
   Node1 -> Node44 [id="edge43_Node000001_Node000044",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node44 [id="Node000044",label="svZeroDSolverInterfaceParameters",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$classsv_zero_d_solver_interface_parameters.html",tooltip=" "];
+  Node44 [id="Node000044",label="URISFaceParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_u_r_i_s_face_parameters.html",tooltip="The URISFaceParameters class is used to store parameters for the 'Add_URIS_face' XML element."];
+  Node1 -> Node45 [id="edge44_Node000001_Node000045",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node45 [id="Node000045",label="URISMeshParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_u_r_i_s_mesh_parameters.html",tooltip="The URISMeshParameters class is used to store paramaters for the 'Add_URIS_mesh' XML element."];
+  Node1 -> Node46 [id="edge45_Node000001_Node000046",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node46 [id="Node000046",label="VariableWallPropsParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_variable_wall_props_parameters.html",tooltip="The VariableWallPropsParameters class stores parameters for variable wall properties for the CMM equa..."];
+  Node1 -> Node47 [id="edge46_Node000001_Node000047",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node47 [id="Node000047",label="svZeroDSolverInterfaceParameters",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$classsv_zero_d_solver_interface_parameters.html",tooltip=" "];
 }

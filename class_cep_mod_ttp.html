@@ -77,11 +77,6 @@ $(function() {
   <div class="headertitle"><div class="title">CepModTtp Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>This module defines data structures for ten Tusscher-Panfilov epicardial cellular activation model for cardiac electrophysiology.  
- <a href="class_cep_mod_ttp.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="_cep_mod_ttp_8h_source.html">CepModTtp.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -91,18 +86,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a981535c10c7df81717eb4e08f58b1338" id="r_a981535c10c7df81717eb4e08f58b1338"><td class="memItemLeft" align="right" valign="top"><a id="a981535c10c7df81717eb4e08f58b1338" name="a981535c10c7df81717eb4e08f58b1338"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>actv_strs</b> (const double c_Ca, const double dt, double &amp;Tact, double &amp;epsX)</td></tr>
 <tr class="separator:a981535c10c7df81717eb4e08f58b1338"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16af868d1a2219d4b44e668a0eb40c8a" id="r_a16af868d1a2219d4b44e668a0eb40c8a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#a16af868d1a2219d4b44e668a0eb40c8a">getf</a> (const int i, const int nX, const int nG, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;dX, const double I_stim, const double K_sac, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;RPAR)</td></tr>
-<tr class="memdesc:a16af868d1a2219d4b44e668a0eb40c8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute currents and time derivatives of state variables.  <br /></td></tr>
-<tr class="separator:a16af868d1a2219d4b44e668a0eb40c8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a62c9b86f06c177045102fe95b7e5a428" id="r_a62c9b86f06c177045102fe95b7e5a428"><td class="memItemLeft" align="right" valign="top"><a id="a62c9b86f06c177045102fe95b7e5a428" name="a62c9b86f06c177045102fe95b7e5a428"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>getj</b> (const int i, const int nX, const int nG, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, Array&lt; double &gt; &amp;JAC, const double Ksac)</td></tr>
-<tr class="separator:a62c9b86f06c177045102fe95b7e5a428"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f47eb77cb30772c5f584ca04d213ff3" id="r_a2f47eb77cb30772c5f584ca04d213ff3"><td class="memItemLeft" align="right" valign="top"><a id="a2f47eb77cb30772c5f584ca04d213ff3" name="a2f47eb77cb30772c5f584ca04d213ff3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const int imyo, const int nX, const int nG, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg)</td></tr>
-<tr class="separator:a2f47eb77cb30772c5f584ca04d213ff3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a533004d8c05a4c1d2801e4e73859edb3" id="r_a533004d8c05a4c1d2801e4e73859edb3"><td class="memItemLeft" align="right" valign="top"><a id="a533004d8c05a4c1d2801e4e73859edb3" name="a533004d8c05a4c1d2801e4e73859edb3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const int imyo, const int nX, const int nG, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X0, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg0)</td></tr>
-<tr class="separator:a533004d8c05a4c1d2801e4e73859edb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39c4c84525901870e6a1fed09bfc2bcf" id="r_a39c4c84525901870e6a1fed09bfc2bcf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#a39c4c84525901870e6a1fed09bfc2bcf">getf</a> (const int nX, const int nG, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;dX, const double I_stim, const double K_sac, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;RPAR)</td></tr>
+<tr class="memdesc:a39c4c84525901870e6a1fed09bfc2bcf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute currents and time derivatives of state variables.  <br /></td></tr>
+<tr class="separator:a39c4c84525901870e6a1fed09bfc2bcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5c77544e7d4df6be466adbd01a483c2" id="r_af5c77544e7d4df6be466adbd01a483c2"><td class="memItemLeft" align="right" valign="top"><a id="af5c77544e7d4df6be466adbd01a483c2" name="af5c77544e7d4df6be466adbd01a483c2"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>getj</b> (const int nX, const int nG, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, Array&lt; double &gt; &amp;JAC, const double Ksac)</td></tr>
+<tr class="separator:af5c77544e7d4df6be466adbd01a483c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bb6fc7af7b9ba9fbb1adc4f2ac1e0bf" id="r_a0bb6fc7af7b9ba9fbb1adc4f2ac1e0bf"><td class="memItemLeft" align="right" valign="top"><a id="a0bb6fc7af7b9ba9fbb1adc4f2ac1e0bf" name="a0bb6fc7af7b9ba9fbb1adc4f2ac1e0bf"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const int nX, const int nG, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg)</td></tr>
+<tr class="separator:a0bb6fc7af7b9ba9fbb1adc4f2ac1e0bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66bf093414e9b7402fee5ca14f0e02a4" id="r_a66bf093414e9b7402fee5ca14f0e02a4"><td class="memItemLeft" align="right" valign="top"><a id="a66bf093414e9b7402fee5ca14f0e02a4" name="a66bf093414e9b7402fee5ca14f0e02a4"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_initial_conditions</b> (const <a class="el" href="class_t_t_p_initial_conditions_parameters.html">TTPInitialConditionsParameters</a> &amp;params)</td></tr>
+<tr class="separator:a66bf093414e9b7402fee5ca14f0e02a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a434b62413b6cd70212b363f4b1848c3b" id="r_a434b62413b6cd70212b363f4b1848c3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#a434b62413b6cd70212b363f4b1848c3b">integ_cn2</a> (const int imyo, const int nX, const int nG, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, const double Ts, const double dt, const double Istim, const double Ksac, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;IPAR, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;RPAR)</td></tr>
 <tr class="memdesc:a434b62413b6cd70212b363f4b1848c3b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time integration performed using Crank-Nicholson method.  <br /></td></tr>
 <tr class="separator:a434b62413b6cd70212b363f4b1848c3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -112,9 +107,18 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>integ_fe</b> (const i
 <tr class="memitem:ab8947dab17679fb1c44921469b710cf3" id="r_ab8947dab17679fb1c44921469b710cf3"><td class="memItemLeft" align="right" valign="top"><a id="ab8947dab17679fb1c44921469b710cf3" name="ab8947dab17679fb1c44921469b710cf3"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>integ_rk</b> (const int imyo, const int nX, const int nG, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, const double Ts, const double dt, const double Istim, const double Ksac, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;RPAR)</td></tr>
 <tr class="separator:ab8947dab17679fb1c44921469b710cf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5389e251be36f47ede09007f8cfd272" id="r_ac5389e251be36f47ede09007f8cfd272"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#ac5389e251be36f47ede09007f8cfd272">update_g</a> (const int i, const double dt, const int n, const int nG, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg)</td></tr>
-<tr class="memdesc:ac5389e251be36f47ede09007f8cfd272"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update all the gating variables.  <br /></td></tr>
-<tr class="separator:ac5389e251be36f47ede09007f8cfd272"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70432b94e8879fdc758d6dfe90d81ea1" id="r_a70432b94e8879fdc758d6dfe90d81ea1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#a70432b94e8879fdc758d6dfe90d81ea1">update_g</a> (const int imyo, const double dt, const int n, const int nG, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg)</td></tr>
+<tr class="memdesc:a70432b94e8879fdc758d6dfe90d81ea1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update all the gating variables.  <br /></td></tr>
+<tr class="separator:a70432b94e8879fdc758d6dfe90d81ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b384c1eb2153cc67b1b8f41c14494c3" id="r_a3b384c1eb2153cc67b1b8f41c14494c3"><td class="memItemLeft" align="right" valign="top"><a id="a3b384c1eb2153cc67b1b8f41c14494c3" name="a3b384c1eb2153cc67b1b8f41c14494c3"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_state_to_vectors</b> (<a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg) const</td></tr>
+<tr class="separator:a3b384c1eb2153cc67b1b8f41c14494c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f96229841e597e90561e56d0df8b0fc" id="r_a2f96229841e597e90561e56d0df8b0fc"><td class="memItemLeft" align="right" valign="top"><a id="a2f96229841e597e90561e56d0df8b0fc" name="a2f96229841e597e90561e56d0df8b0fc"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>distribute_conductance</b> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="classcm_type.html">cmType</a> &amp;cm)</td></tr>
+<tr class="separator:a2f96229841e597e90561e56d0df8b0fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98d5162dcfdfc21c53341c28e8076c05" id="r_a98d5162dcfdfc21c53341c28e8076c05"><td class="memItemLeft" align="right" valign="top"><a id="a98d5162dcfdfc21c53341c28e8076c05" name="a98d5162dcfdfc21c53341c28e8076c05"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>distribute_initial_state</b> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="classcm_type.html">cmType</a> &amp;cm)</td></tr>
+<tr class="separator:a98d5162dcfdfc21c53341c28e8076c05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -160,15 +164,15 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:afd21b86a9c2950338185d56a88723a8f" id="r_afd21b86a9c2950338185d56a88723a8f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#afd21b86a9c2950338185d56a88723a8f">G_K1</a> = 5.405</td></tr>
 <tr class="memdesc:afd21b86a9c2950338185d56a88723a8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximal I_K1 conductance [nS/pF].  <br /></td></tr>
 <tr class="separator:afd21b86a9c2950338185d56a88723a8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5286eb994079482ac2dcc8818ce90065" id="r_a5286eb994079482ac2dcc8818ce90065"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#a5286eb994079482ac2dcc8818ce90065">G_to</a> = {0.294, 0.073, 0.294}</td></tr>
-<tr class="memdesc:a5286eb994079482ac2dcc8818ce90065"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximal epicardial I_to conductance [nS/pF].  <br /></td></tr>
-<tr class="separator:a5286eb994079482ac2dcc8818ce90065"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9219bc96e72b1124d17817c89d429734" id="r_a9219bc96e72b1124d17817c89d429734"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#a9219bc96e72b1124d17817c89d429734">G_to</a> = 0.294</td></tr>
+<tr class="memdesc:a9219bc96e72b1124d17817c89d429734"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximal I_to conductance [nS/pF].  <br /></td></tr>
+<tr class="separator:a9219bc96e72b1124d17817c89d429734"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8a13e67d1898fd542f2432a9888b621" id="r_ac8a13e67d1898fd542f2432a9888b621"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#ac8a13e67d1898fd542f2432a9888b621">G_Kr</a> = 0.153</td></tr>
 <tr class="memdesc:ac8a13e67d1898fd542f2432a9888b621"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximal I_Kr conductance [nS/pF].  <br /></td></tr>
 <tr class="separator:ac8a13e67d1898fd542f2432a9888b621"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af28fcacef1f75cbd54d064e364aa6174" id="r_af28fcacef1f75cbd54d064e364aa6174"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#af28fcacef1f75cbd54d064e364aa6174">G_Ks</a> = {0.392, 0.392, 0.098}</td></tr>
-<tr class="memdesc:af28fcacef1f75cbd54d064e364aa6174"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximal epicardial I_Ks conductance [nS/pF].  <br /></td></tr>
-<tr class="separator:af28fcacef1f75cbd54d064e364aa6174"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae75371bce8fa46fd5f41962927498d44" id="r_ae75371bce8fa46fd5f41962927498d44"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#ae75371bce8fa46fd5f41962927498d44">G_Ks</a> = 0.392</td></tr>
+<tr class="memdesc:ae75371bce8fa46fd5f41962927498d44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximal I_Ks conductance [nS/pF].  <br /></td></tr>
+<tr class="separator:ae75371bce8fa46fd5f41962927498d44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a861ec4bff000e5975c315312b99bda30" id="r_a861ec4bff000e5975c315312b99bda30"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod_ttp.html#a861ec4bff000e5975c315312b99bda30">p_KNa</a> = 3.E-2</td></tr>
 <tr class="memdesc:a861ec4bff000e5975c315312b99bda30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Relative I_Ks permeability to Na [-].  <br /></td></tr>
 <tr class="separator:a861ec4bff000e5975c315312b99bda30"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -634,12 +638,11 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Cass</b></td></tr
 <tr class="memitem:a924d12145ea2e6b0ffb65b7c28768c64" id="r_a924d12145ea2e6b0ffb65b7c28768c64"><td class="memItemLeft" align="right" valign="top"><a id="a924d12145ea2e6b0ffb65b7c28768c64" name="a924d12145ea2e6b0ffb65b7c28768c64"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr>
 <tr class="separator:a924d12145ea2e6b0ffb65b7c28768c64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52470554de02c385c8f2773415abe1a4" id="r_a52470554de02c385c8f2773415abe1a4"><td class="memItemLeft" align="right" valign="top"><a id="a52470554de02c385c8f2773415abe1a4" name="a52470554de02c385c8f2773415abe1a4"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>user_initial_state</b> = false</td></tr>
+<tr class="separator:a52470554de02c385c8f2773415abe1a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>This module defines data structures for ten Tusscher-Panfilov epicardial cellular activation model for cardiac electrophysiology. </p>
-<p>The classes defined here duplicate the data structures in the Fortran TPPMOD module defined in CEPMOD_TTP.f and PARAMS_TPP.f files. <br  />
- </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a id="afbb3ce17a9cb6abf710c7bada8d6a34a" name="afbb3ce17a9cb6abf710c7bada8d6a34a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afbb3ce17a9cb6abf710c7bada8d6a34a">&#9670;&#160;</a></span>actv_strn()</h2>
 
@@ -682,8 +685,8 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr
 
 </div>
 </div>
-<a id="a16af868d1a2219d4b44e668a0eb40c8a" name="a16af868d1a2219d4b44e668a0eb40c8a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a16af868d1a2219d4b44e668a0eb40c8a">&#9670;&#160;</a></span>getf()</h2>
+<a id="a39c4c84525901870e6a1fed09bfc2bcf" name="a39c4c84525901870e6a1fed09bfc2bcf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39c4c84525901870e6a1fed09bfc2bcf">&#9670;&#160;</a></span>getf()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -691,12 +694,6 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr
         <tr>
           <td class="memname">void CepModTtp::getf </td>
           <td>(</td>
-          <td class="paramtype">const int&#160;</td>
-          <td class="paramname"><em>i</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">const int&#160;</td>
           <td class="paramname"><em>nX</em>, </td>
         </tr>
@@ -751,7 +748,6 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr
 </div><div class="memdoc">
 
 <p>Compute currents and time derivatives of state variables. </p>
-<p>Note that is 'i' the myocardium zone id: 1, 2 or 3.</p>
 <p>Reproduces Fortran 'GETF()'. </p>
 
 </div>
@@ -840,8 +836,8 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr
 
 </div>
 </div>
-<a id="ac5389e251be36f47ede09007f8cfd272" name="ac5389e251be36f47ede09007f8cfd272"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac5389e251be36f47ede09007f8cfd272">&#9670;&#160;</a></span>update_g()</h2>
+<a id="a70432b94e8879fdc758d6dfe90d81ea1" name="a70432b94e8879fdc758d6dfe90d81ea1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70432b94e8879fdc758d6dfe90d81ea1">&#9670;&#160;</a></span>update_g()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -850,7 +846,7 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr
           <td class="memname">void CepModTtp::update_g </td>
           <td>(</td>
           <td class="paramtype">const int&#160;</td>
-          <td class="paramname"><em>i</em>, </td>
+          <td class="paramname"><em>imyo</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1247,19 +1243,19 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr
 
 </div>
 </div>
-<a id="af28fcacef1f75cbd54d064e364aa6174" name="af28fcacef1f75cbd54d064e364aa6174"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af28fcacef1f75cbd54d064e364aa6174">&#9670;&#160;</a></span>G_Ks</h2>
+<a id="ae75371bce8fa46fd5f41962927498d44" name="ae75371bce8fa46fd5f41962927498d44"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae75371bce8fa46fd5f41962927498d44">&#9670;&#160;</a></span>G_Ks</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; CepModTtp::G_Ks = {0.392, 0.392, 0.098}</td>
+          <td class="memname">double CepModTtp::G_Ks = 0.392</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Maximal epicardial I_Ks conductance [nS/pF]. </p>
+<p>Maximal I_Ks conductance [nS/pF]. </p>
 
 </div>
 </div>
@@ -1311,19 +1307,19 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>O_Rbar</b></td></tr
 
 </div>
 </div>
-<a id="a5286eb994079482ac2dcc8818ce90065" name="a5286eb994079482ac2dcc8818ce90065"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5286eb994079482ac2dcc8818ce90065">&#9670;&#160;</a></span>G_to</h2>
+<a id="a9219bc96e72b1124d17817c89d429734" name="a9219bc96e72b1124d17817c89d429734"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9219bc96e72b1124d17817c89d429734">&#9670;&#160;</a></span>G_to</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; CepModTtp::G_to = {0.294, 0.073, 0.294}</td>
+          <td class="memname">double CepModTtp::G_to = 0.294</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Maximal epicardial I_to conductance [nS/pF]. </p>
+<p>Maximal I_to conductance [nS/pF]. </p>
 
 </div>
 </div>
