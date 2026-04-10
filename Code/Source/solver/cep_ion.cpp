@@ -42,7 +42,7 @@ void cep_init(Simulation* simulation)
     }
 
     if (com_mod.dmnId.size() != 0) {
-      Vector<double> sA(tnNo); 
+      Vector<double> sA(tnNo);
       Array<double> sF(nXion,tnNo);
 
       for (int a = 0; a < tnNo; a++) {
@@ -131,7 +131,7 @@ void cep_init_l(cepModelType& cep, int nX, int nG, Vector<double>& X, Vector<dou
     break;
 
     case ElectrophysiologyModelType::TTP:
-      cep.ttp.init(cep.imyo, nX, nG, X, Xg);
+      cep.ttp.init(nX, nG, X, Xg);
     break;
   }
 }
@@ -644,5 +644,4 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
   }
 }
 
-
-};
+}

@@ -3,8 +3,34 @@
 
 #include "CepModTtp.h"
 
+#include "CmMod.h"
+#include "Parameters.h"
 #include "mat_fun.h"
 #include <math.h>
+
+// Parameters discussed in https://doi.org/10.1152/ajpheart.00109.2006
+// Default parameters are for epicardium state (source: https://models.cellml.org/e/80d)
+const TenTusscherPanfilovState TenTusscherPanfilovState::default_state = {
+    .V      = -85.23,
+    .K_i    =  136.89,
+    .Na_i   =  8.6040,
+    .Ca_i   =  1.26E-4,
+    .Ca_ss  =  3.6E-4,
+    .Ca_sr  =  3.64,
+    .R_bar  =  0.9073,
+    .x_r1   =  6.21E-3,
+    .x_r2   =  0.4712,
+    .x_s    =  9.5E-3,
+    .m      =  1.72E-3,
+    .h      =  0.7444,
+    .j      =  0.7045,
+    .d      =  3.373E-5,
+    .f      =  0.7888,
+    .f2     =  0.9755,
+    .fcass  =  0.9953,
+    .s      =  0.999998,
+    .r      =  2.42E-8
+};
 
 CepModTtp::CepModTtp()
 {
@@ -13,6 +39,7 @@ CepModTtp::CepModTtp()
 CepModTtp::~CepModTtp()
 {
 }
+
 
 /// @brief Compute macroscopic fiber strain based on sacromere force-length relationship and calcium concentration
 void CepModTtp::actv_strn(const double c_Ca, const double I4f, const double dt, double& gf)
@@ -43,10 +70,8 @@ void CepModTtp::actv_strs(const double c_Ca, const double dt, double& Tact, doub
 
 /// @brief Compute currents and time derivatives of state variables
 ///
-/// Note that is 'i' the myocardium zone id: 1, 2 or 3.
-///
 /// Reproduces Fortran 'GETF()'.
-void CepModTtp::getf(const int i, const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg, Vector<double>& dX, 
+void CepModTtp::getf(const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg, Vector<double>& dX,
     const double I_stim, const double K_sac, Vector<double>& RPAR)
 {
   // Local copies of state variables
@@ -86,8 +111,7 @@ void CepModTtp::getf(const int i, const int nX, const int nG, const Vector<doubl
   double I_Na = G_Na * pow(m,3.0) * h * j * (V - E_Na);
 
   // I_to: transient outward current
-  double I_to = G_to[i-1] * r * s * (V - E_K);
-  //I_to = G_to(i) * r * s * (V - E_K)
+  double I_to = G_to * r * s * (V - E_K);
 
   // I_K1: inward rectifier outward current
   double e1   = exp(0.06*(V - E_K - 200.0));
@@ -104,7 +128,7 @@ void CepModTtp::getf(const int i, const int nX, const int nG, const Vector<doubl
   double I_Kr = G_Kr * sq5 * xr1 * xr2 * (V - E_K);
 
   // I_Ks: slow delayed rectifier current
-  double I_Ks = G_Ks[i-1] * pow(xs,2.0) * (V - E_Ks);
+  double I_Ks = G_Ks * pow(xs,2.0) * (V - E_Ks);
 
   // I_CaL: L-type Ca current
   a = 2.0*(V-15.)/RT;
@@ -207,7 +231,7 @@ void CepModTtp::getf(const int i, const int nX, const int nG, const Vector<doubl
   RPAR(17) = I_xfer;
 }
 
-void CepModTtp::getj(const int i, const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg, 
+void CepModTtp::getj(const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg,
     Array<double>& JAC, const double Ksac)
 {
 
@@ -254,8 +278,8 @@ void CepModTtp::getj(const int i, const int nX, const int nG, const Vector<doubl
   I_Na_Nai = I_Na_V * (-E_Na_Nai);
 
   // I_to: transient outward current
-  I_to = G_to[i-1] * r * s * (V - E_K);
-  I_to_V  = G_to[i-1] * r * s;
+  I_to = G_to * r * s * (V - E_K);
+  I_to_V  = G_to * r * s;
   I_to_Ki = I_to_V * (-E_K_Ki);
 
   // I_K1: inward rectifier outward current
@@ -281,8 +305,8 @@ void CepModTtp::getj(const int i, const int nX, const int nG, const Vector<doubl
   I_Kr_Ki  = I_Kr_V * (-E_K_Ki);
 
   // I_Ks: slow delayed rectifier current
-  I_Ks = G_Ks[i-1] * pow(xs,2.0) * (V - E_Ks);
-  I_Ks_V   = G_Ks[i-1] * pow(xs,2.0);
+  I_Ks = G_Ks * pow(xs,2.0) * (V - E_Ks);
+  I_Ks_V   = G_Ks * pow(xs,2.0);
   I_Ks_Ki  = I_Ks_V * (-E_Ks_Ki);
   I_Ks_Nai = I_Ks_V * (-E_Ks_Nai);
 
@@ -444,104 +468,78 @@ void CepModTtp::getj(const int i, const int nX, const int nG, const Vector<doubl
   JAC(6,6) = -(k2*Ca_ss + k4);
 }
 
-void CepModTtp::init(const int imyo, const int nX, const int nG, Vector<double>& X, Vector<double>& Xg )
+void CepModTtp::set_initial_conditions(const TTPInitialConditionsParameters& params)
 {
-  switch (imyo) {
+  auto& s = params.initial_states;
+  initial_state.V     = s.V.value();
+  initial_state.K_i   = s.K_i.value();
+  initial_state.Na_i  = s.Na_i.value();
+  initial_state.Ca_i  = s.Ca_i.value();
+  initial_state.Ca_ss = s.Ca_ss.value();
+  initial_state.Ca_sr = s.Ca_sr.value();
+  initial_state.R_bar = s.R_bar.value();
 
-    // epi
-    case 1:
-      // Initialize state variables
-      X(0)   = -85.23;      // V      (units: mV)
-      X(1)   =  136.89;     // K_i    (units: mM)
-      X(2)   =  8.6040;     // Na_i   (units: mM)
-      X(3)   =  1.26E-4;    // Ca_i   (units: mM)
-      X(4)   =  3.6E-4;     // Ca_ss  (units: mM)
-      X(5)   =  3.64;       // Ca_sr  (units: mM)
-      X(6)   =  0.9073;     // R'     (dimensionless)
+  auto& g = params.gating_variables;
+  initial_state.x_r1  = g.x_r1_rectifier.value();
+  initial_state.x_r2  = g.x_r2_rectifier.value();
+  initial_state.x_s   = g.x_s_rectifier.value();
+  initial_state.m     = g.m_fast_Na.value();
+  initial_state.h     = g.h_fast_Na.value();
+  initial_state.j     = g.j_fast_Na.value();
+  initial_state.d     = g.d_slow_in.value();
+  initial_state.f     = g.f_slow_in.value();
+  initial_state.f2    = g.f2_slow_in.value();
+  initial_state.fcass = g.fcass_slow_in.value();
+  initial_state.s     = g.s_out.value();
+  initial_state.r     = g.r_out.value();
 
-      // Initialize gating variables
-      Xg(0)  =  6.21E-3;    // x_r1   (dimensionless)
-      Xg(1)  =  0.4712;     // x_r2   (dimensionless)
-      Xg(2)  =  9.5E-3;     // x_s    (dimensionless)
-      Xg(3)  =  1.72E-3;    // m      (dimensionless)
-      Xg(4)  =  0.7444;     // h      (dimensionless)
-      Xg(5)  =  0.7045;     // j      (dimensionless)
-      Xg(6)  =  3.373E-5;   // d      (dimensionless)
-      Xg(7)  =  0.7888;     // f      (dimensionless)
-      Xg(8)  =  0.9755;     // f_2    (dimensionless)
-      Xg(9)  =  0.9953;     // f_cass (dimensionless)
-      Xg(10) =  0.999998;   // s      (dimensionless)
-      Xg(11) =  2.42E-8;    // r      (dimensionless)
-    break;
-
-    // endo
-    case 2:
-      // Initialize state variables
-      X(0)   = -86.709;     // V      (units: mV)
-      X(1)   =  138.4;      // K_i    (units: mM)
-      X(2)   =  10.355;     // Na_i   (units: mM)
-      X(3)   =  1.3E-4;    // Ca_i   (units: mM)
-      X(4)   =  3.6E-4;     // Ca_ss  (units: mM)
-      X(5)   =  3.715;      // Ca_sr  (units: mM)
-      X(6)   =  0.9068;     // R'     (dimensionless)
-
-      // Initialize gating variables
-      Xg(0)  =  4.48E-3;    // x_r1   (dimensionless)
-      Xg(1)  =  0.476;      // x_r2   (dimensionless)
-      Xg(2)  =  8.7E-3;     // x_s    (dimensionless)
-      Xg(3)  =  1.55E-3;    // m      (dimensionless)
-      Xg(4)  =  0.7573;     // h      (dimensionless)
-      Xg(5)  =  0.7225;     // j      (dimensionless)
-      Xg(6)  =  3.164E-5;   // d      (dimensionless)
-      Xg(7)  =  0.8009;     // f      (dimensionless)
-      Xg(8)  =  0.9778;     // f_2    (dimensionless)
-      Xg(9)  =  0.9953;     // f_cass (dimensionless)
-      Xg(10) =  0.3212;     // s      (dimensionless)
-      Xg(11) =  2.235E-8;   // r      (dimensionless)
-    break;
-
-    // mid-myo
-    case 3:
-      // Initialize state variables
-      X(0)   = -85.423;     // V      (units: mV)
-      X(1)   =  138.52;     // K_i    (units: mM)
-      X(2)   =  10.132;     // Na_i   (units: mM)
-      X(3)   =  1.53E-4;    // Ca_i   (units: mM)
-      X(4)   =  4.2E-4;     // Ca_ss  (units: mM)
-      X(5)   =  4.272;      // Ca_sr  (units: mM)
-      X(6)   =  0.8978;     // R'     (dimensionless)
-
-      //     Initialize gating variables
-      Xg(0)  =  1.65E-2;    // x_r1   (dimensionless)
-      Xg(1)  =  0.4730;     // x_r2   (dimensionless)
-      Xg(2)  =  1.74E-2;    // x_s    (dimensionless)
-      Xg(3)  =  1.65E-3;    // m      (dimensionless)
-      Xg(4)  =  0.7490;     // h      (dimensionless)
-      Xg(5)  =  0.6788;     // j      (dimensionless)
-      Xg(6)  =  3.288E-5;   // d      (dimensionless)
-      Xg(7)  =  0.7026;     // f      (dimensionless)
-      Xg(8)  =  0.9526;     // f_2    (dimensionless)
-      Xg(9)  =  0.9942;     // f_cass (dimensionless)
-      Xg(10) =  0.999998;   // s      (dimensionless)
-      Xg(11) =  2.347E-8;   // r      (dimensionless)
-    break;
-  }
-
+  user_initial_state = true;
 }
 
-void CepModTtp::init(const int imyo, const int nX, const int nG, Vector<double>& X, Vector<double>& Xg, 
-    Vector<double>& X0, Vector<double>& Xg0)
+void CepModTtp::distribute_conductance(const CmMod& cm_mod, const cmType& cm)
 {
-  init(imyo, nX, nG, X, Xg);
+  cm.bcast(cm_mod, &G_Na);
+  cm.bcast(cm_mod, &G_CaL);
+  cm.bcast(cm_mod, &G_Kr);
+  cm.bcast(cm_mod, &G_Ks);
+  cm.bcast(cm_mod, &G_to);
+}
 
-  if (X0.size() != 0) {
-    X = X0;
-  }
+void CepModTtp::distribute_initial_state(const CmMod& cm_mod, const cmType& cm)
+{
+  cm.bcast(cm_mod, &user_initial_state);
 
-  if (Xg0.size() != 0) {
-    Xg = Xg0;
+  if (user_initial_state) {
+    cm.bcast(cm_mod, &initial_state.V);
+    cm.bcast(cm_mod, &initial_state.K_i);
+    cm.bcast(cm_mod, &initial_state.Na_i);
+    cm.bcast(cm_mod, &initial_state.Ca_i);
+    cm.bcast(cm_mod, &initial_state.Ca_ss);
+    cm.bcast(cm_mod, &initial_state.Ca_sr);
+    cm.bcast(cm_mod, &initial_state.R_bar);
+    cm.bcast(cm_mod, &initial_state.x_r1);
+    cm.bcast(cm_mod, &initial_state.x_r2);
+    cm.bcast(cm_mod, &initial_state.x_s);
+    cm.bcast(cm_mod, &initial_state.m);
+    cm.bcast(cm_mod, &initial_state.h);
+    cm.bcast(cm_mod, &initial_state.j);
+    cm.bcast(cm_mod, &initial_state.d);
+    cm.bcast(cm_mod, &initial_state.f);
+    cm.bcast(cm_mod, &initial_state.f2);
+    cm.bcast(cm_mod, &initial_state.fcass);
+    cm.bcast(cm_mod, &initial_state.s);
+    cm.bcast(cm_mod, &initial_state.r);
   }
 }
+
+void CepModTtp::init(const int nX, const int nG, Vector<double>& X, Vector<double>& Xg)
+{
+  if (!user_initial_state) {
+    initial_state = TenTusscherPanfilovState::default_state;
+  }
+  copy_state_to_vectors(X, Xg);
+}
+
 
 /// @brief Time integration performed using Crank-Nicholson method
 void CepModTtp::integ_cn2(const int imyo, const int nX, const int nG, Vector<double>& Xn, Vector<double>& Xg, 
@@ -553,7 +551,7 @@ void CepModTtp::integ_cn2(const int imyo, const int nX, const int nG, Vector<dou
   auto Im = mat_fun::mat_id(nX);
 
   Vector<double> fn(nX);
-  getf(imyo, nX, nG, Xn, Xg, fn, Istim, Ksac, RPAR);
+  getf(nX, nG, Xn, Xg, fn, Istim, Ksac, RPAR);
 
   int k  = 0;
   auto Xk = Xn;
@@ -566,7 +564,7 @@ void CepModTtp::integ_cn2(const int imyo, const int nX, const int nG, Vector<dou
   while (true) {
     k = k + 1;
     Vector<double> fk(nX);
-    getf(imyo, nX, nG, Xn, Xg, fn, Istim, Ksac, RPAR);
+    getf(nX, nG, Xn, Xg, fn, Istim, Ksac, RPAR);
 
     auto rK = Xk - Xn - 0.5*dt*(fk + fn);
 
@@ -589,7 +587,7 @@ void CepModTtp::integ_cn2(const int imyo, const int nX, const int nG, Vector<dou
     }
 
     Array<double> JAC(nX,nX);
-    getj(imyo, nX, nG, Xk, Xg, JAC, Ksac);
+    getj(nX, nG, Xk, Xg, JAC, Ksac);
 
     JAC = Im - 0.5*dt*JAC;
     JAC = mat_fun::mat_inv(JAC, nX);
@@ -600,7 +598,7 @@ void CepModTtp::integ_cn2(const int imyo, const int nX, const int nG, Vector<dou
   Xn = Xk;
 
   update_g(imyo, dt, nX, nG, Xn, Xg);
-  getf(imyo, nX, nG, Xn, Xg, fn, Istim, Ksac, RPAR);
+  getf(nX, nG, Xn, Xg, fn, Istim, Ksac, RPAR);
 
   if (!l2 && !l3) {
     IPAR(1) = IPAR(1) + 1;
@@ -613,7 +611,7 @@ void CepModTtp::integ_fe(const int imyo, const int nX, const int nG, Vector<doub
   Vector<double> f(nX);
 
   // Get time derivatives (RHS)
-  getf(imyo, nX, nG, X, Xg, f, Istim, Ksac, RPAR);
+  getf(nX, nG, X, Xg, f, Istim, Ksac, RPAR);
   //CALL TTP_GETF(imyo, nX, nG, X, Xg, f, Istim, Ksac, RPAR)
 
   // Update gating variables
@@ -633,7 +631,7 @@ void CepModTtp::integ_rk(const int imyo, const int nX, const int nG, Vector<doub
 
   // RK4: 1st pass
   auto Xrk = X;
-  getf(imyo, nX, nG, Xrk, Xg, frk1, Istim, Ksac, RPAR);
+  getf(nX, nG, Xrk, Xg, frk1, Istim, Ksac, RPAR);
 
   // Update gating variables by half-dt
   auto Xgr = Xg;
@@ -641,11 +639,11 @@ void CepModTtp::integ_rk(const int imyo, const int nX, const int nG, Vector<doub
 
   // RK4: 2nd pass
   Xrk = X + 0.5*dt*frk1;
-  getf(imyo, nX, nG, Xrk, Xgr, frk2, Istim, Ksac, RPAR);
+  getf(nX, nG, Xrk, Xgr, frk2, Istim, Ksac, RPAR);
 
   // RK4: 3rd pass
   Xrk = X + 0.5*dt*frk2;
-  getf(imyo, nX, nG, Xrk, Xgr, frk3, Istim, Ksac, RPAR);
+  getf(nX, nG, Xrk, Xgr, frk3, Istim, Ksac, RPAR);
 
   // Update gating variables by full-dt
   Xgr = Xg;
@@ -653,14 +651,14 @@ void CepModTtp::integ_rk(const int imyo, const int nX, const int nG, Vector<doub
 
   // RK4: 4th pass
   Xrk = X + dt*frk3;
-  getf(imyo, nX, nG, Xrk, Xgr, frk4, Istim, Ksac, RPAR);
+  getf(nX, nG, Xrk, Xgr, frk4, Istim, Ksac, RPAR);
 
   X = X + dt6 * (frk1 + 2.0*(frk2 + frk3) + frk4);
   Xg = Xgr;
 }
 
 /// @brief Update all the gating variables
-void CepModTtp::update_g(const int i, const double dt, const int n, const int nG, const Vector<double>& X, Vector<double>& Xg)
+void CepModTtp::update_g(const int imyo, const double dt, const int n, const int nG, const Vector<double>& X, Vector<double>& Xg)
 {
   V  = X(0);
   Ca_ss = X(4);
@@ -774,10 +772,10 @@ void CepModTtp::update_g(const int i, const double dt, const int n, const int nG
   Xg(9) = fcassi - (fcassi - fcass)*exp(-dt/tau);
 
   // s: inactivation gate for I_to
-  if (i == 1 || i == 3) {
+  if (imyo == 1 || imyo == 3) {
      si = 1.0/(1.0 + exp((20.0+V)/5.0));
      tau = 85.0*exp(-pow(V+45.0,2.0) / 320.0) + 5.0/(1.0+exp((V-20.0)/5.0)) + 3.0;
-  } else if (i  ==  2) {
+  } else if (imyo  ==  2) {
      si = 1.0/(1.0 + exp((28.0+V)/5.0));
      tau = 1000.0*exp(-pow(V+67.0,2.0) /1000.0) + 8.0;
      //tau = 1000.0*exp(-((V+67.0)**2.0) /1000.0) + 8.0;
@@ -791,5 +789,26 @@ void CepModTtp::update_g(const int i, const double dt, const int n, const int nG
   Xg(11) = ri - (ri - r)*exp(-dt/tau);
 }
 
+void CepModTtp::copy_state_to_vectors(Vector<double>& X, Vector<double>& Xg) const
+{
+  X(0) = initial_state.V;
+  X(1) = initial_state.K_i;
+  X(2) = initial_state.Na_i;
+  X(3) = initial_state.Ca_i;
+  X(4) = initial_state.Ca_ss;
+  X(5) = initial_state.Ca_sr;
+  X(6) = initial_state.R_bar;
 
-
+  Xg(0)  = initial_state.x_r1;
+  Xg(1)  = initial_state.x_r2;
+  Xg(2)  = initial_state.x_s;
+  Xg(3)  = initial_state.m;
+  Xg(4)  = initial_state.h;
+  Xg(5)  = initial_state.j;
+  Xg(6)  = initial_state.d;
+  Xg(7)  = initial_state.f;
+  Xg(8)  = initial_state.f2;
+  Xg(9)  = initial_state.fcass;
+  Xg(10) = initial_state.s;
+  Xg(11) = initial_state.r;
+}

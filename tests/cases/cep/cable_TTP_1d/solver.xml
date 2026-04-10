@@ -36,12 +36,14 @@
 
    <Domain id="1" >
      <Electrophysiology_model> TTP </Electrophysiology_model> 
+     <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
      <Isotropic_conductivity> 0.15432 </Isotropic_conductivity> 
      <ODE_solver> RK </ODE_solver> 
    </Domain>
    
    <Domain id="2" >
       <Electrophysiology_model> TTP </Electrophysiology_model> 
+      <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
       <Isotropic_conductivity> 0.15432 </Isotropic_conductivity> 
       <ODE_solver> RK </ODE_solver> 
       <Stimulus type="Istim" >

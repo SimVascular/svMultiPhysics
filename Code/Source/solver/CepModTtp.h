@@ -8,6 +8,10 @@
 #include "Vector.h"
 #include <array>
 
+class CmMod;
+class cmType;
+class TTPInitialConditionsParameters;
+
 #include <optional>
 #include <functional>
 
@@ -17,10 +21,40 @@ T& make_ref(T&& x) { return x; }
 /// @brief This module defines data structures for ten Tusscher-Panfilov
 /// epicardial cellular activation model for cardiac electrophysiology
 ///
-/// The classes defined here duplicate the data structures in the Fortran TPPMOD module defined 
-/// in CEPMOD_TTP.f and PARAMS_TPP.f files. 
+/// The classes defined here duplicate the data structures in the Fortran TPPMOD module defined
+/// in CEPMOD_TTP.f and PARAMS_TPP.f files.
+
+/// @brief Stores all TTP state and gating variables in a single typed struct.
+class TenTusscherPanfilovState {
+  public:
+    double V;
+    double K_i;
+    double Na_i;
+    double Ca_i;
+    double Ca_ss;
+    double Ca_sr;
+    double R_bar;
+    double x_r1;
+    double x_r2;
+    double x_s;
+    double m;
+    double h;
+    double j;
+    double d;
+    double f;
+    double f2;
+    double fcass;
+    double s;
+    double r;
+
+    static const TenTusscherPanfilovState default_state;
+};
+
 class CepModTtp
 {
+  private:
+    TenTusscherPanfilovState initial_state;
+
   public:
     CepModTtp();
     ~CepModTtp();
@@ -29,7 +63,7 @@ class CepModTtp
 //--------------------------------------------------------------------
 //
 //     Constants for TenTusscher-Panfilov Ventricular Myocyte Model.
-//
+//     Default values are for the epicardium state (source: https://models.cellml.org/e/80d)
 //--------------------------------------------------------------------
 
 //     Default model parameters
@@ -75,20 +109,14 @@ class CepModTtp
       /// Maximal I_K1 conductance [nS/pF]
       double G_K1 = 5.405;
 
-      /// Maximal epicardial I_to conductance [nS/pF]
-      Vector<double> G_to = {0.294, 0.073, 0.294};
+      /// Maximal I_to conductance [nS/pF]
+      double G_to = 0.294;
 
       /// Maximal I_Kr conductance [nS/pF]
       double G_Kr = 0.153;
 
-//     G_Kr for spiral wave breakup
-//      double G_Kr = 0.172;     // units: nS/pF
-
-      /// Maximal epicardial I_Ks conductance [nS/pF]
-      Vector<double> G_Ks = {0.392, 0.392, 0.098};
-
-//     G_Ks for spiral wave breakup (epi)
-//      double G_Ks(3) = (/0.441, 0.392_RKIND, 0.098_RKIND/)
+      /// Maximal I_Ks conductance [nS/pF]
+      double G_Ks = 0.392;
 
       /// Relative I_Ks permeability to Na [-]
       double p_KNa = 3.E-2;
@@ -126,14 +154,8 @@ class CepModTtp
       /// Maximal I_pK conductance [nS/pF]
       double G_pK = 1.46E-2;
 
-//     G_pK for spiral wave breakup
-//      double G_pK = 2.19E-3;    // units: nS/pF
-
       /// Maximal I_pCa conductance [pA/pF]
       double G_pCa = 0.1238;
-
-//     G_pCa for spiral wave breakup
-//      double G_pCa = 0.8666;    // units: pA/pF
 
       /// Half-saturation constant of I_pCa [mM]
       double K_pCa = 5.E-4;
@@ -367,19 +389,21 @@ class CepModTtp
       double I_xfer_Cai, I_xfer_Cass;
       double k_casr_sr, k1_casr, O_Casr, O_Cass, O_Rbar;
 
+//      Flag for user defined initial conditions
+      bool user_initial_state = false;
+
     void actv_strn(const double c_Ca, const double I4f, const double dt, double& gf);
     void actv_strs(const double c_Ca, const double dt, double& Tact, double& epsX);
 
-    void getf(const int i, const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg, 
+    void getf(const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg,
         Vector<double>& dX, const double I_stim, const double K_sac, Vector<double>& RPAR);
 
-    void getj(const int i, const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg, 
+    void getj(const int nX, const int nG, const Vector<double>& X, const Vector<double>& Xg,
         Array<double>& JAC, const double Ksac);
 
-    void init(const int imyo, const int nX, const int nG, Vector<double>& X, Vector<double>& Xg);
+    void init(const int nX, const int nG, Vector<double>& X, Vector<double>& Xg);
 
-    void init(const int imyo, const int nX, const int nG, Vector<double>& X, Vector<double>& Xg,
-        Vector<double>& X0, Vector<double>& Xg0);
+    void set_initial_conditions(const TTPInitialConditionsParameters& params);
 
     void integ_cn2(const int imyo, const int nX, const int nG, Vector<double>& X, Vector<double>& Xg,
         const double Ts, const double dt, const double Istim, const double Ksac, 
@@ -391,8 +415,14 @@ class CepModTtp
     void integ_rk(const int imyo, const int nX, const int nG, Vector<double>& X, Vector<double>& Xg, 
         const double Ts, const double dt, const double Istim, const double Ksac, Vector<double>& RPAR);
 
-    void update_g(const int i, const double dt, const int n, const int nG, const Vector<double>& X, 
+    void update_g(const int imyo, const double dt, const int n, const int nG, const Vector<double>& X, 
         Vector<double>& Xg);
+
+    void copy_state_to_vectors(Vector<double>& X, Vector<double>& Xg) const;
+
+    void distribute_conductance(const CmMod& cm_mod, const cmType& cm);
+
+    void distribute_initial_state(const CmMod& cm_mod, const cmType& cm);
 
 };
 

@@ -22,6 +22,11 @@ def test_spiral_BO_2d(n_proc):
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
 
+def test_spiral_TTP_2d(n_proc):
+    test_folder = "spiral_TTP_2d"
+    run_with_reference(base_folder, test_folder, fields, n_proc)
+
+
 def test_square_AP_2d(n_proc):
     test_folder = "square_AP_2d"
     run_with_reference(base_folder, test_folder, fields, n_proc)
