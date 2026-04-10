@@ -180,7 +180,7 @@ void Integrator::initiator_step() {
   dmsg << "Initiator step ..." << std::endl;
   #endif
 
-  initiator(solutions_.intermediate.get_acceleration(), solutions_.intermediate.get_velocity(), solutions_.intermediate.get_displacement());
+  initiator(solutions_);
 
   #ifdef debug_integrator_step
   solutions_.intermediate.get_acceleration().write("Ag_pic" + istr_);
@@ -531,7 +531,7 @@ void Integrator::predictor()
 ///   Yg - velocity
 ///   Dg - displacement
 ///
-void Integrator::initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg)
+void Integrator::initiator(SolutionStates& solutions)
 {
   using namespace consts;
 
@@ -559,12 +559,15 @@ void Integrator::initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& 
   dmsg << "com_mod.pstEq: " << com_mod.pstEq;
   #endif
 
-  const auto& Ao = solutions_.old.get_acceleration();
-  const auto& An = solutions_.current.get_acceleration();
-  const auto& Do = solutions_.old.get_displacement();
-  const auto& Dn = solutions_.current.get_displacement();
-  const auto& Yo = solutions_.old.get_velocity();
-  const auto& Yn = solutions_.current.get_velocity();
+  const auto& Ao = solutions.old.get_acceleration();
+  const auto& An = solutions.current.get_acceleration();
+  const auto& Do = solutions.old.get_displacement();
+  const auto& Dn = solutions.current.get_displacement();
+  const auto& Yo = solutions.old.get_velocity();
+  const auto& Yn = solutions.current.get_velocity();
+  auto& Ag = solutions.intermediate.get_acceleration();
+  auto& Yg = solutions.intermediate.get_velocity();
+  auto& Dg = solutions.intermediate.get_displacement();
 
   for (int i = 0; i < com_mod.nEq; i++) {
     auto& eq = com_mod.eq[i];

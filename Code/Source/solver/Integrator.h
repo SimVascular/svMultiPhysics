@@ -166,13 +166,12 @@ private:
    *
    * Computes solution variables at intermediate time levels using
    * generalized-alpha parameters (am, af) for time integration.
-   * Updates Ag, Yg, Dg based on An, Ao, Yn, Yo, Dn, Do.
+   * Updates solutions.intermediate (Ag, Yg, Dg) based on solutions.current
+   * (An, Yn, Dn) and solutions.old (Ao, Yo, Do).
    *
-   * @param Ag Time derivative array at generalized-alpha level
-   * @param Yg Solution variable array at generalized-alpha level
-   * @param Dg Integrated variable array at generalized-alpha level
+   * @param solutions Solution states containing old, current, and intermediate levels
    */
-  void initiator(Array<double>& Ag, Array<double>& Yg, Array<double>& Dg);
+  void initiator(SolutionStates& solutions);
 
   /**
    * @brief Corrector function with convergence check (corrector)
