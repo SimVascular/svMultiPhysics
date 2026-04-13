@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="read_msh_ns::blkType",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classread__msh__ns_1_1blk_type.html",tooltip=" "];
+  Node0 [id="Node000000",label="rcrType",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classrcr_type.html",tooltip=" "];
 }

@@ -18,14 +18,12 @@ var searchData=
   ['dmnib_15',['dmnIB',['../classeq_type.html#ac9596dcfa3a9f0e7505758df1783bcb0',1,'eqType']]],
   ['dmnid_16',['dmnid',['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID'],['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId']]],
   ['dmntype_17',['dmnType',['../classdmn_type.html',1,'']]],
-  ['dn_18',['Dn',['../class_com_mod.html#a86fe135e9367ae9fa24bcca66c0c25ae',1,'ComMod']]],
-  ['do_19',['Do',['../class_com_mod.html#abe59a1b34b4ad737800637b511c41fa7',1,'ComMod']]],
-  ['dof_20',['dof',['../class_com_mod.html#a2e33f05e98147d2b0e32c410fe24265f',1,'ComMod::dof'],['../classeq_type.html#ad256e1ab17832d3c425de3925678a742',1,'eqType::dof']]],
-  ['dof_20ordering_21',['DOF Ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md32',1,'']]],
-  ['domainparameters_22',['DomainParameters',['../class_domain_parameters.html',1,'']]],
-  ['dot_23',['dot',['../class_vector.html#a5be8b64d660df6e59dc41305a3c5a2a1',1,'Vector']]],
-  ['double_5fdot_5fproduct_24',['double_dot_product',['../namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577',1,'mat_fun']]],
-  ['dt_25',['dt',['../classcep_model_type.html#a9150e6fecfe73b9e008600f0c4211cc1',1,'cepModelType::dt'],['../class_com_mod.html#a8a94399601d9bfca1102b5e5be27a055',1,'ComMod::dt']]],
-  ['dx_26',['dx',['../classmsh_type.html#a4578725ffdbfede707e48b4358d47de9',1,'mshType']]],
-  ['dyadic_5fproduct_27',['dyadic_product',['../namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54',1,'mat_fun']]]
+  ['dof_18',['dof',['../classeq_type.html#ad256e1ab17832d3c425de3925678a742',1,'eqType::dof'],['../class_com_mod.html#a2e33f05e98147d2b0e32c410fe24265f',1,'ComMod::dof']]],
+  ['dof_20ordering_19',['DOF Ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md32',1,'']]],
+  ['domainparameters_20',['DomainParameters',['../class_domain_parameters.html',1,'']]],
+  ['dot_21',['dot',['../class_vector.html#a5be8b64d660df6e59dc41305a3c5a2a1',1,'Vector']]],
+  ['double_5fdot_5fproduct_22',['double_dot_product',['../namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577',1,'mat_fun']]],
+  ['dt_23',['dt',['../classcep_model_type.html#a9150e6fecfe73b9e008600f0c4211cc1',1,'cepModelType::dt'],['../class_com_mod.html#a8a94399601d9bfca1102b5e5be27a055',1,'ComMod::dt']]],
+  ['dx_24',['dx',['../classmsh_type.html#a4578725ffdbfede707e48b4358d47de9',1,'mshType']]],
+  ['dyadic_5fproduct_25',['dyadic_product',['../namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54',1,'mat_fun']]]
 ];
