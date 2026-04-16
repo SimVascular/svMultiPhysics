@@ -712,44 +712,42 @@ VtkVtpData load_cap_vtp(const std::string& vtp_file_path)
     try {
         vtp_data = VtkVtpData(vtp_file_path, true);
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to construct VtkVtpData from file '" +
-                                vtp_file_path + "': " + e.what());
+        throw CappingSurfaceVtpException("Failed to construct VtkVtpData from file '" + vtp_file_path +
+                                         "': " + e.what());
     }
 
     int nNo = 0;
     try {
         nNo = vtp_data.num_points();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to get number of points from VTP file '" +
-                                vtp_file_path + "': " + e.what());
+        throw CappingSurfaceVtpException("Failed to get number of points from VTP file '" + vtp_file_path +
+                                         "': " + e.what());
     }
     if (nNo == 0) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
-                                "' does not contain any points.");
+        throw CappingSurfaceVtpException("Cap VTP file '" + vtp_file_path + "' does not contain any points.");
     }
 
     int num_elems = 0;
     try {
         num_elems = vtp_data.num_elems();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to get number of elements from VTP file '" +
-                                vtp_file_path + "': " + e.what());
+        throw CappingSurfaceVtpException("Failed to get number of elements from VTP file '" + vtp_file_path +
+                                         "': " + e.what());
     }
     if (num_elems == 0) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
-                                "' does not contain any elements.");
+        throw CappingSurfaceVtpException("Cap VTP file '" + vtp_file_path + "' does not contain any elements.");
     }
 
     bool has_global_node_id = false;
     try {
         has_global_node_id = vtp_data.has_point_data("GlobalNodeID");
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to check for GlobalNodeID in VTP file '" +
-                                vtp_file_path + "': " + e.what());
+        throw CappingSurfaceVtpException("Failed to check for GlobalNodeID in VTP file '" + vtp_file_path +
+                                         "': " + e.what());
     }
     if (!has_global_node_id) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
-                                "' does not contain 'GlobalNodeID' point data.");
+        throw CappingSurfaceVtpException("Cap VTP file '" + vtp_file_path +
+                                         "' does not contain 'GlobalNodeID' point data.");
     }
 
     return vtp_data;
@@ -769,38 +767,39 @@ void load_cap_vtp_normals(VtkVtpData& vtp_data, const std::string& vtp_file_path
             auto [num_comp, num_tuples] = vtp_data.get_cell_data_dimensions("Normals");
 
             if (num_comp == 0 || num_tuples == 0) {
-                std::string error_msg = "[CappingSurface::load_from_vtp] Normals array exists but has zero size. ";
+                std::string error_msg = "Normals array exists but has zero size. ";
                 error_msg += "num_components=" + std::to_string(num_comp) + ", num_tuples=" + std::to_string(num_tuples);
                 error_msg += ", expected num_elems=" + std::to_string(num_elems);
                 error_msg += ". The array may not be a numeric type or may be empty.";
-                throw std::runtime_error(error_msg);
+                throw CappingSurfaceVtpException(error_msg);
             }
 
             if (num_tuples != num_elems) {
-                throw std::runtime_error("[CappingSurface::load_from_vtp] Normals array size mismatch: " +
-                                        std::to_string(num_tuples) + " != " + std::to_string(num_elems));
+                throw CappingSurfaceVtpException("Normals array size mismatch: " + std::to_string(num_tuples) +
+                                                 " != " + std::to_string(num_elems));
             }
 
             if (num_comp != 2 && num_comp != 3) {
-                throw std::runtime_error("[CappingSurface::load_from_vtp] Invalid number of components in Normals array: " +
-                                        std::to_string(num_comp) + " (expected 2 or 3)");
+                throw CappingSurfaceVtpException("Invalid number of components in Normals array: " +
+                                                 std::to_string(num_comp) + " (expected 2 or 3)");
             }
 
             normals.resize(num_comp, num_elems);
             vtp_data.copy_cell_data("Normals", normals);
 
             if (normals.nrows() != num_comp || normals.ncols() != num_elems) {
-                throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to copy Normals data. "
-                                        "Expected size: " + std::to_string(num_comp) + "x" + std::to_string(num_elems) +
-                                        ", Actual size: " + std::to_string(normals.nrows()) + "x" +
-                                        std::to_string(normals.ncols()));
+                throw CappingSurfaceVtpException("Failed to copy Normals data. Expected size: " +
+                                                 std::to_string(num_comp) + "x" + std::to_string(num_elems) +
+                                                 ", Actual size: " + std::to_string(normals.nrows()) + "x" +
+                                                 std::to_string(normals.ncols()));
             }
         } else {
             normals.resize(0, 0);
         }
+    } catch (const CappingSurfaceBaseException&) {
+        throw;
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to load Normals from VTP file '" +
-                                vtp_file_path + "': " + e.what());
+        throw CappingSurfaceVtpException("Failed to load Normals from VTP file '" + vtp_file_path + "': " + e.what());
     }
 }
 
@@ -823,10 +822,7 @@ void check_cap_shares_nodes_with_coupled_face(const faceType& coupled_face, cons
             return;
         }
     }
-    throw std::runtime_error(
-        "[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_file_path +
-        "' has no GlobalNodeID entries in common with coupled face '" + coupled_face_name +
-        "'. The cap must share at least one mesh node with that face.");
+    throw CappingSurfaceCouplingTopologyException(vtp_file_path, coupled_face_name);
 }
 
 } // namespace
@@ -839,18 +835,21 @@ CappingSurface::CappingSurface(const CappingSurface& other)
     if (other.face_ != nullptr) {
         try {
             face_ = std::make_unique<faceType>(*other.face_);
-            if (face_ != nullptr) {
-                if (face_->nNo > 0 && face_->gN.size() != face_->nNo) {
-                    throw std::runtime_error("[CappingSurface::copy constructor] Invalid face_: gN.size()=" +
-                                            std::to_string(face_->gN.size()) + " != nNo=" + std::to_string(face_->nNo));
-                }
-                if (face_->nEl > 0 && face_->IEN.ncols() != face_->nEl) {
-                    throw std::runtime_error("[CappingSurface::copy constructor] Invalid face_: IEN.ncols()=" +
-                                            std::to_string(face_->IEN.ncols()) + " != nEl=" + std::to_string(face_->nEl));
-                }
-            }
         } catch (const std::exception& e) {
-            throw std::runtime_error("[CappingSurface::copy constructor] Failed to copy face_: " + std::string(e.what()));
+            throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Failed to copy face_: " +
+                                             std::string(e.what()));
+        }
+        if (face_ != nullptr) {
+            if (face_->nNo > 0 && face_->gN.size() != face_->nNo) {
+                throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Invalid face_: gN.size()=" +
+                                                std::to_string(face_->gN.size()) + " != nNo=" +
+                                                std::to_string(face_->nNo));
+            }
+            if (face_->nEl > 0 && face_->IEN.ncols() != face_->nEl) {
+                throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Invalid face_: IEN.ncols()=" +
+                                                std::to_string(face_->IEN.ncols()) + " != nEl=" +
+                                                std::to_string(face_->nEl));
+            }
         }
     } else {
         face_.reset();
@@ -867,7 +866,8 @@ CappingSurface& CappingSurface::operator=(const CappingSurface& other)
             try {
                 face_ = std::make_unique<faceType>(*other.face_);
             } catch (const std::exception& e) {
-                throw std::runtime_error("[CappingSurface::operator=] Failed to copy face_: " + std::string(e.what()));
+                throw CappingSurfaceCopyException("[CappingSurface::operator=] Failed to copy face_: " +
+                                                  std::string(e.what()));
             }
         } else {
             face_.reset();
@@ -887,8 +887,7 @@ void CappingSurface::load_from_vtp(const std::string& vtp_file_path, const faceT
     // Check if the VTP file exists.
     std::ifstream file_check(vtp_file_path);
     if (!file_check.good()) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Cannot open cap VTP file '" + vtp_file_path +
-                                "' for reading.");
+        throw CappingSurfaceFileException(vtp_file_path);
     }
     file_check.close();
 
@@ -903,8 +902,8 @@ void CappingSurface::load_from_vtp(const std::string& vtp_file_path, const faceT
         global_node_ids_.resize(nNo);
         vtp_data.copy_point_data("GlobalNodeID", global_node_ids_);
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to copy GlobalNodeID from VTP file '" +
-                                vtp_file_path + "': " + e.what());
+        throw CappingSurfaceVtpException("Failed to copy GlobalNodeID from VTP file '" + vtp_file_path + "': " +
+                                         e.what());
     }
 
     // Get the connectivity from the VTP file and validate the number of nodes per element.
@@ -916,16 +915,14 @@ void CappingSurface::load_from_vtp(const std::string& vtp_file_path, const faceT
         eNoN = vtp_data.np_elem();
         vtk_cell_type = vtp_data.elem_type();
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Failed to get connectivity from VTP file '" +
-                                vtp_file_path + "': " + e.what());
+        throw CappingSurfaceVtpException("Failed to get connectivity from VTP file '" + vtp_file_path + "': " +
+                                         e.what());
     }
     if (vtk_cell_type != VTK_TRIANGLE) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Unsupported cap cell type " +
-                                std::to_string(vtk_cell_type) + ". Only VTK_TRIANGLE (TRI3) is supported.");
+        throw CappingSurfaceUnsupportedCellException(vtk_cell_type);
     }
     if (eNoN != 3) {
-        throw std::runtime_error("[CappingSurface::load_from_vtp] Invalid nodes-per-element for triangle cap: " +
-                                std::to_string(eNoN) + " (expected 3).");
+        throw CappingSurfaceInvalidElementNodesException(eNoN, 3);
     }
 
     // Create the face object (cap path assumes TRI3 everywhere).
@@ -970,7 +967,7 @@ void CappingSurface::init_cap_face_quadrature(const ComMod& com_mod)
 
     try {
         if (nsd != cap_nsd_) {
-            throw std::runtime_error("[CappingSurface::init_cap_face_quadrature] Cap surface requires nsd=3.");
+            throw CappingSurfaceGeometryException("[CappingSurface::init_cap_face_quadrature] Cap surface requires nsd=3.");
         }
         face_->nG = 1;
 
@@ -986,9 +983,10 @@ void CappingSurface::init_cap_face_quadrature(const ComMod& com_mod)
         for (int g = 0; g < face_->nG; g++) {
             nn::get_gnn(cap_insd_, face_->eType, face_->eNoN, g, face_->xi, face_->N, face_->Nx);
         }
+    } catch (const CappingSurfaceBaseException&) {
+        throw;
     } catch (const std::exception& e) {
-        throw std::runtime_error("[CappingSurface::init_cap_face_quadrature] Failed to initialize cap face shape functions: " +
-                                std::string(e.what()));
+        throw CappingSurfaceQuadratureException(std::string(e.what()));
     }
 }
 
@@ -1018,7 +1016,8 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
     using namespace consts;
 
     if (mesh_x.nrows() < cap_nsd_ || mesh_Do.nrows() < cap_nsd_ || mesh_Dn.nrows() < cap_nsd_) {
-        throw std::runtime_error("[CappingSurface::update_element_position_global] Mesh arrays must have at least 3 rows.");
+        throw CappingSurfaceGeometryException(
+            "[CappingSurface::update_element_position_global] Mesh arrays must have at least 3 rows.");
     }
     Array<double> xl(cap_nsd_, face_->eNoN);
 
@@ -1049,9 +1048,10 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
 std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int e, int g)
 {
     if (xl.nrows() != cap_nsd_ || xl.ncols() != face_->eNoN) {
-        throw std::runtime_error("[CappingSurface::compute_jacobian_and_normal] xl has wrong dimensions: " +
-                                std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) +
-                                " (expected " + std::to_string(cap_nsd_) + "x" + std::to_string(face_->eNoN) + ").");
+        throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] xl has wrong dimensions: " +
+                                              std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) +
+                                              " (expected " + std::to_string(cap_nsd_) + "x" +
+                                              std::to_string(face_->eNoN) + ").");
     }
 
     // Get the shape function derivatives for the Gauss point.
@@ -1075,8 +1075,8 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
     Jac = sqrt(utils::norm(n));
 
     if (utils::is_zero(Jac)) {
-        throw std::runtime_error("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
-                                std::to_string(g));
+        throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
+                                              std::to_string(g));
     }
 
     n = n / Jac;
@@ -1084,9 +1084,9 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
     // Check if the initial normals are provided and if they are valid.
     if (normals_.ncols() > 0 && normals_.nrows() == cap_nsd_) {
         if (e < 0 || e >= normals_.ncols()) {
-            throw std::runtime_error("[CappingSurface::compute_jacobian_and_normal] Element index e=" +
-                                    std::to_string(e) + " is out of bounds for normals_ (ncols=" +
-                                    std::to_string(normals_.ncols()) + ").");
+            throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] Element index e=" +
+                                                std::to_string(e) + " is out of bounds for normals_ (ncols=" +
+                                                std::to_string(normals_.ncols()) + ").");
         }
 
         Vector<double> n0(cap_nsd_);
@@ -1168,15 +1168,16 @@ void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const
                 int gnNo_idx = face_->IEN(a, e);
                 auto it = gnNo_to_cap_local.find(gnNo_idx);
                 if (it == gnNo_to_cap_local.end()) {
-                    throw std::runtime_error("[CappingSurface::compute_valM] IEN entry (element " +
-                                            std::to_string(e) + ", node " + std::to_string(a) +
-                                            ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
-                                            " not found in cap face nodes.");
+                    throw CappingSurfaceAssemblyException("[CappingSurface::compute_valM] IEN entry (element " +
+                                                          std::to_string(e) + ", node " + std::to_string(a) +
+                                                          ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
+                                                          " not found in cap face nodes.");
                 }
                 int cap_a = it->second;
                 if (cap_a < 0 || cap_a >= cap_nNo) {
-                    throw std::runtime_error("[CappingSurface::compute_valM] Invalid cap face-local index cap_a=" +
-                                            std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) + ")");
+                    throw CappingSurfaceAssemblyException("[CappingSurface::compute_valM] Invalid cap face-local index cap_a=" +
+                                                          std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) +
+                                                          ")");
                 }
                 for (int i = 0; i < cap_nsd_; i++) {
                     valM_(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);

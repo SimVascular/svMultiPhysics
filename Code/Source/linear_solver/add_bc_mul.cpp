@@ -43,21 +43,6 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
     auto& face = lhs.face[faIn];
-
-    // In the following calculations, we are computing the product of the
-    // coupled BC tangent contribution with the vector X (refer to Moghadam
-    // et al. 2013 eq. 27). This is computed by first constructing the vector
-    // v, which one of the integrals found in the expression, int{N_A * n_i} dGamma.
-    // Then, v is dotted with X to yield a quantity S. Then S is multiplied by
-    // by v again, and also multiplied by the appropriate coefficients in
-    // the expression.
-    // The calculations are complicated somewhat if there is a capping surface,
-    // but these complications are explained below.
-
-
-    // Calculating S, which is the inner product of the right integral (v) and
-    // the vector to be multiplied (X).
-
     int nsd = std::min(face.dof, dof);
 
     if (face.coupledFlag) {
@@ -96,6 +81,7 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
             Y(i,Ac) = Y(i,Ac) + v(i,Ac)*S;
           }
         }
+        
       } 
       // If face is not shared across procs
       else  {

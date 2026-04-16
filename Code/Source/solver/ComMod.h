@@ -201,7 +201,7 @@ class bcType
     // Robin BC class
     RobinBoundaryCondition robin_bc;
 
-    // Coupled BC class <<dev_class>>
+    // Coupled BC class
     CoupledBoundaryCondition coupled_bc;
 };
 

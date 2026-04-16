@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <exception>
 #include <optional>
 #include <utility>
 #include "consts.h"
@@ -42,6 +43,87 @@ struct CapGlobalMeshState {
         Yo.resize(0, 0);
         Yn.resize(0, 0);
     }
+};
+
+/// @brief Base exception for capping surface (cap VTP) errors.
+///
+/// These indicate fatal errors while loading or using a cap surface. They are not
+/// expected to be recovered; callers may catch \ref CappingSurfaceBaseException to
+/// handle all cap-related failures.
+class CappingSurfaceBaseException : public std::exception {
+public:
+    explicit CappingSurfaceBaseException(std::string msg) : message_(std::move(msg)) {}
+
+    const char* what() const noexcept override { return message_.c_str(); }
+
+private:
+    std::string message_;
+};
+
+/// @brief Cap VTP file cannot be opened.
+class CappingSurfaceFileException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceFileException(const std::string& path)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Cannot open cap VTP file '" + path +
+                                      "' for reading.") {}
+};
+
+/// @brief VTP read, parse, or validation error during cap load.
+class CappingSurfaceVtpException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceVtpException(const std::string& detail)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] " + detail) {}
+};
+
+/// @brief Cap mesh shares no nodes with the coupled boundary face.
+class CappingSurfaceCouplingTopologyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceCouplingTopologyException(const std::string& vtp_path, const std::string& coupled_face_name)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_path +
+                                      "' has no GlobalNodeID entries in common with coupled face '" +
+                                      coupled_face_name + "'. The cap must share at least one mesh node with that face.") {}
+};
+
+/// @brief Cap VTP uses an unsupported cell type (only TRI3 is supported).
+class CappingSurfaceUnsupportedCellException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceUnsupportedCellException(int vtk_cell_type)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Unsupported cap cell type " +
+                                      std::to_string(vtk_cell_type) + ". Only VTK_TRIANGLE (TRI3) is supported.") {}
+};
+
+/// @brief Cap VTP connectivity does not match expected TRI3 topology.
+class CappingSurfaceInvalidElementNodesException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceInvalidElementNodesException(int eNoN, int expected)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Invalid nodes-per-element for triangle cap: " +
+                                      std::to_string(eNoN) + " (expected " + std::to_string(expected) + ").") {}
+};
+
+/// @brief Geometry or Jacobian error during cap surface integration.
+class CappingSurfaceGeometryException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceGeometryException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
+/// @brief Cap face quadrature (shape functions on TRI3) setup failed.
+class CappingSurfaceQuadratureException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceQuadratureException(const std::string& nested)
+        : CappingSurfaceBaseException("[CappingSurface::init_cap_face_quadrature] Failed to initialize cap face shape "
+                                      "functions: " + nested) {}
+};
+
+/// @brief Inconsistent cap connectivity or assembly indexing.
+class CappingSurfaceAssemblyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceAssemblyException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
+/// @brief Failure copying a \ref CappingSurface or its internal face.
+class CappingSurfaceCopyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceCopyException(std::string msg) : CappingSurfaceBaseException(std::move(msg)) {}
 };
 
 /// @brief Capping surface geometry and integration for a coupled boundary.
