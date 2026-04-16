@@ -11,6 +11,7 @@
 #include <utility>
 #include "consts.h"
 #include "Array.h"
+#include "SolutionStates.h"
 #include "Vector.h"
 
 // Forward declarations to avoid heavy includes
@@ -159,8 +160,7 @@ private:
     CapGlobalMeshState cap_global_mesh_state_;
 
     /// Fill \ref cap_global_mesh_state_. Serial: all ranks. Parallel: root only (slaves skip buffer allocation).
-    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yo,
-                                  const Array<double>& Yn, bool gather_Y);
+    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions, bool gather_Y);
 
 
 public:
@@ -240,7 +240,7 @@ public:
     /// @brief Compute flowrates at the boundary face at old and new timesteps
     /// @param com_mod ComMod reference containing simulation data
     /// @param cm_mod CmMod reference for communication
-    void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod);
+    void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
     /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
     void initialize_cap(ComMod& com_mod);
@@ -248,17 +248,19 @@ public:
     /// @brief Gather mesh geometry, compute cap \a valM on master, and copy to FSILS face (all ranks enter MPI gather).
     void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
                                                 fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                consts::MechanicalConfigurationType cfg);
+                                                consts::MechanicalConfigurationType cfg,
+                                                const SolutionStates& solutions);
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,
+                                                         const SolutionStates& solutions,
                                                          consts::MechanicalConfigurationType cfg_o,
                                                          consts::MechanicalConfigurationType cfg_n);
     
     /// @brief Compute average pressures at the boundary face at old and new timesteps (for Dirichlet BCs)
     /// @param com_mod ComMod reference containing simulation data
     /// @param cm_mod CmMod reference for communication
-    void compute_pressures(ComMod& com_mod, const CmMod& cm_mod);
+    void compute_pressures(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
     /// @brief Get the flowrate at old timestep
     /// @return Flowrate at t_n

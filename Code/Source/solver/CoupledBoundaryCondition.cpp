@@ -10,6 +10,7 @@
 #include "VtkData.h"
 #include "nn.h"
 #include <fstream>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vtkCellType.h>
@@ -247,20 +248,24 @@ void CoupledBoundaryCondition::set_flowrate_mechanical_configurations(consts::Eq
 /// The flowrate is computed as the integral of velocity dotted with the face normal.
 /// For struct/ustruct physics, the integral is computed on the deformed configuration.
 /// For fluid/FSI/CMM physics, the integral is computed on the reference configuration.
-void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod)
+void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
     if (face_ == nullptr) {
         throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Face is not set.");
     }
     
     int nsd = com_mod.nsd;
+    const auto& Yo = solutions.old.get_velocity();
+    const auto& Yn = solutions.current.get_velocity();
     
-    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, 0, nsd-1, false, flowrate_cfg_o_);
-    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, 0, nsd-1, false, flowrate_cfg_n_);
+    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, Yo, 0, solutions,
+                         std::optional<int>(nsd - 1), false, flowrate_cfg_o_);
+    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, Yn, 0, solutions,
+                         std::optional<int>(nsd - 1), false, flowrate_cfg_n_);
     
     if (has_cap_) {
         const auto [Qo_cap, Qn_cap] =
-            calculate_cap_contribution(com_mod, cm_mod, flowrate_cfg_o_, flowrate_cfg_n_);
+            calculate_cap_contribution(com_mod, cm_mod, solutions, flowrate_cfg_o_, flowrate_cfg_n_);
         Qo_ += Qo_cap;
         Qn_ += Qn_cap;
     }
@@ -273,7 +278,7 @@ void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& c
 ///
 /// The pressure is computed as the average pressure over the face by integrating
 /// pressure (at index nsd in the solution vector) and dividing by the face area.
-void CoupledBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod)
+void CoupledBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
     using namespace consts;
     
@@ -284,9 +289,13 @@ void CoupledBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& c
     
     int nsd = com_mod.nsd;
     double area = face_->area;
+    const auto& Yo = solutions.old.get_velocity();
+    const auto& Yn = solutions.current.get_velocity();
     
-    Po_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yo, nsd) / area;
-    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, com_mod.Yn, nsd) / area;
+    Po_ = all_fun::integ(com_mod, cm_mod, *face_, Yo, nsd, solutions,
+                         std::nullopt, false, flowrate_cfg_o_) / area;
+    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, Yn, nsd, solutions,
+                         std::nullopt, false, flowrate_cfg_n_) / area;
     
 }
 
@@ -496,9 +505,14 @@ void CoupledBoundaryCondition::initialize_cap(ComMod& com_mod)
 namespace {
 
 /// @brief Gathers the global mesh state on the serial rank.
-void gather_global_mesh_state_serial(ComMod& com_mod, const Array<double>& Yo, const Array<double>& Yn, bool gather_Y,
+void gather_global_mesh_state_serial(ComMod& com_mod, const SolutionStates& solutions, bool gather_Y,
                                      int nsd, int gtnNo, int tnNo, CapGlobalMeshState& out)
 {
+    const auto& Do = solutions.old.get_displacement();
+    const auto& Dn = solutions.current.get_displacement();
+    const auto& Yo = solutions.old.get_velocity();
+    const auto& Yn = solutions.current.get_velocity();
+
     // Initialize the output global mesh state.
     out.gtnNo = gtnNo;
     out.x = 0.0;
@@ -517,8 +531,8 @@ void gather_global_mesh_state_serial(ComMod& com_mod, const Array<double>& Yo, c
         }
         for (int i = 0; i < nsd; i++) {
             out.x(i, g) = com_mod.x(i, Ac);
-            out.Do(i, g) = com_mod.Do(i, Ac);
-            out.Dn(i, g) = com_mod.Dn(i, Ac);
+            out.Do(i, g) = Do(i, Ac);
+            out.Dn(i, g) = Dn(i, Ac);
         }
         if (gather_Y) {
             for (int i = 0; i < nsd; i++) {
@@ -531,10 +545,15 @@ void gather_global_mesh_state_serial(ComMod& com_mod, const Array<double>& Yo, c
 
 
 /// @brief Gathers the global mesh state on the MPI root.
-void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmType& cm, const Array<double>& Yo,
-                                       const Array<double>& Yn, bool gather_Y, int nsd, int gtnNo, int tnNo, int root,
+void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmType& cm, const SolutionStates& solutions,
+                                       bool gather_Y, int nsd, int gtnNo, int tnNo, int root,
                                        int nProcs, CapGlobalMeshState& out)
 {
+    const auto& Do = solutions.old.get_displacement();
+    const auto& Dn = solutions.current.get_displacement();
+    const auto& Yo = solutions.old.get_velocity();
+    const auto& Yn = solutions.current.get_velocity();
+
     // Pack the global mesh state into a send buffer.
     const int per_node = 1 + 3 * nsd + (gather_Y ? 2 * nsd : 0);
     const int nPack = tnNo > 0 ? tnNo : 0;
@@ -547,10 +566,10 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
             send_buf(idx++) = com_mod.x(i, Ac);
         }
         for (int i = 0; i < nsd; i++) {
-            send_buf(idx++) = com_mod.Do(i, Ac);
+            send_buf(idx++) = Do(i, Ac);
         }
         for (int i = 0; i < nsd; i++) {
-            send_buf(idx++) = com_mod.Dn(i, Ac);
+            send_buf(idx++) = Dn(i, Ac);
         }
         if (gather_Y) {
             for (int i = 0; i < nsd; i++) {
@@ -623,11 +642,10 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
 /// @brief Gathers the global mesh state on the MPI root.
 /// @param com_mod The com_mod object.
 /// @param cm_mod The cm_mod object.
-/// @param Yo The Yo array.
-/// @param Yn The Yn array.
+/// @param solutions Old/current displacement and velocity for gather.
 /// @param gather_Y If true, gather Yo/Yn with \c nsd rows per node; if false, geometry only (x, Do, Dn).
-void CoupledBoundaryCondition::gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yo,
-                                                        const Array<double>& Yn, bool gather_Y)
+void CoupledBoundaryCondition::gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod,
+                                                        const SolutionStates& solutions, bool gather_Y)
 {
     auto& cm = com_mod.cm;
     const int nsd = com_mod.nsd;
@@ -638,12 +656,12 @@ void CoupledBoundaryCondition::gather_global_mesh_state(ComMod& com_mod, const C
 
     // Serial: no MPI, just gather the global mesh state locally.
     if (cm.seq()) {
-        gather_global_mesh_state_serial(com_mod, Yo, Yn, gather_Y, nsd, gtnNo, tnNo, cap_global_mesh_state_);
+        gather_global_mesh_state_serial(com_mod, solutions, gather_Y, nsd, gtnNo, tnNo, cap_global_mesh_state_);
         return;
     }
 
     // Parallel: gather the global mesh state on the MPI root.
-    gather_global_mesh_state_parallel(com_mod, cm_mod, cm, Yo, Yn, gather_Y, nsd, gtnNo, tnNo, root, nProcs,
+    gather_global_mesh_state_parallel(com_mod, cm_mod, cm, solutions, gather_Y, nsd, gtnNo, tnNo, root, nProcs,
                                       cap_global_mesh_state_);
 }
 
@@ -654,6 +672,7 @@ void CoupledBoundaryCondition::gather_global_mesh_state(ComMod& com_mod, const C
 /// @param cfg_n The new mechanical configuration type.
 /// @return The cap contribution.
 std::pair<double, double> CoupledBoundaryCondition::calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,
+    const SolutionStates& solutions,
     consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n)
 {
     auto& cm = com_mod.cm;
@@ -662,7 +681,7 @@ std::pair<double, double> CoupledBoundaryCondition::calculate_cap_contribution(C
     const bool i_am_master = cm.mas(cm_mod);
     const bool serial_run = (cm.np() == 1);
 
-    gather_global_mesh_state(com_mod, cm_mod, com_mod.Yo, com_mod.Yn, true);
+    gather_global_mesh_state(com_mod, cm_mod, solutions, true);
 
     // Integrate the velocity flux over the cap surface (in master rank)
     if ((serial_run || i_am_master) && owns_cap_ && cap_ && cap_->face()) {
@@ -1243,11 +1262,12 @@ void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
 /// @param cfg The mechanical configuration type.
 void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
                                                                       fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                                      consts::MechanicalConfigurationType cfg)
+                                                                      consts::MechanicalConfigurationType cfg,
+                                                                      const SolutionStates& solutions)
 {
     const int nsd = com_mod.nsd;
 
-    gather_global_mesh_state(com_mod, cm_mod, com_mod.Yo, com_mod.Yn, false);
+    gather_global_mesh_state(com_mod, cm_mod, solutions, false);
 
     // Same count on every rank: IDs were broadcast in distribute() (not inferable from has_cap/owns_cap alone).
     const int cap_nNo = static_cast<int>(cap_mesh_global_node_ids_.size());

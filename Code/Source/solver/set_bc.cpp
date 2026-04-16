@@ -106,7 +106,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
 
     // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
     if (utils::btest(bc.bType, iBC_Coupled)) {
-      bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+      bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
       #ifdef debug_calc_der_cpl_bc 
       dmsg << "iBC_Coupled ";
       dmsg << "coupled_bc.Qo: " << bc.coupled_bc.get_Qo();
@@ -784,7 +784,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 
       // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
       if (utils::btest(bc.bType, iBC_Coupled)) {
-        bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+        bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
       }
       
       if (ptr != -1) {
