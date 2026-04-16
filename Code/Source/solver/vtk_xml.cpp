@@ -909,7 +909,7 @@ void write_vtu_debug(ComMod& com_mod, mshType& lM, const std::string& fName)
 //------------
 // Reproduces 'SUBROUTINE WRITEVTUS(lA, lY, lD, lAve)'
 //
-void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<double>& lY, const Array<double>& lD, const bool lAve)
+void write_vtus(Simulation* simulation, const SolutionStates& solutions, const bool lAve)
 {
   #define n_debug_write_vtus
   #ifdef debug_write_vtus 
@@ -920,6 +920,9 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
   using namespace consts;
 
   auto& com_mod = simulation->com_mod;
+  const auto& lA = solutions.current.get_acceleration();
+  const auto& lY = solutions.current.get_velocity();
+  const auto& lD = solutions.current.get_displacement();
   auto& cm = com_mod.cm;
   auto& cm_mod = simulation->cm_mod;
   auto& cep_mod = simulation->cep_mod;
@@ -1129,7 +1132,7 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
 
           case OutputNameType::outGrp_WSS:
           case OutputNameType::outGrp_trac:
-            post::bpost(simulation, msh, tmpV, lY, lD, oGrp);
+            post::bpost(simulation, msh, tmpV, solutions, oGrp);
 
             for (int a = 0; a < msh.nNo; a++) {
               for (int i = 0; i < l; i++) {
@@ -1144,7 +1147,7 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
           case OutputNameType::outGrp_stInv: 
           case OutputNameType::outGrp_vortex: 
           case OutputNameType::outGrp_Visc: 
-            post::post(simulation, msh, tmpV, lY, lD, oGrp, iEq);
+            post::post(simulation, msh, tmpV, solutions, oGrp, iEq);
             for (int a = 0; a < msh.nNo; a++) {
               int Ac = msh.gN(a);
               for (int i = 0; i < l; i++) {
@@ -1166,7 +1169,7 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
             cOut = cOut - 1;
             tmpV.resize(nFn*nsd,msh.nNo);
             if (msh.nFn != 0) {
-              post::fib_dir_post(simulation, msh, nFn, tmpV, lD, iEq);
+              post::fib_dir_post(simulation, msh, nFn, tmpV, solutions, iEq);
             }
             for (int iFn = 0; iFn < nFn; iFn++) {
               cOut = cOut + 1;
@@ -1187,7 +1190,7 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
           case OutputNameType::outGrp_fA:
             tmpV.resize(1,msh.nNo);
             if (msh.nFn == 2) {
-              post::fib_algn_post(simulation, msh, tmpV, lD, iEq);
+              post::fib_algn_post(simulation, msh, tmpV, solutions, iEq);
             }
             for (int a = 0; a < msh.nNo; a++) {
               d[iM].x(is,a) = tmpV(0,a);
@@ -1214,11 +1217,11 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
             }
 
             if (msh.lShl) {
-              post::shl_post(simulation, msh, l, tmpV, tmpVe, lD, iEq, oGrp);
+              post::shl_post(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
               //CALL SHLPOST(msh(iM), l, tmpV, tmpVe, lD, iEq,oGrp)
             } else { 
               if (!com_mod.cmmInit) {
-                post::tpost(simulation, msh, l, tmpV, tmpVe, lD, lY, iEq, oGrp);
+                post::tpost(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
               }
             }
 
@@ -1251,10 +1254,10 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
             tmpVe.resize(msh.nEl);
 
             if (msh.lShl) {
-              post::shl_post(simulation, msh, l, tmpV, tmpVe, lD, iEq, oGrp);
+              post::shl_post(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
               //CALL SHLPOST(msh(iM), l, tmpV, tmpVe, lD, iEq,oGrp)
             } else {
-              post::tpost(simulation, msh, l, tmpV, tmpVe, lD, lY, iEq, oGrp);
+              post::tpost(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
             }
 
             for (int a = 0; a < msh.nNo; a++) {
@@ -1284,7 +1287,7 @@ void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<dou
 
           case OutputNameType::outGrp_divV:
             tmpV.resize(l,msh.nNo); 
-            post::div_post(simulation, msh, tmpV, lY, lD, iEq);
+            post::div_post(simulation, msh, tmpV, solutions, iEq);
             for (int a = 0; a < msh.nNo; a++) {
               d[iM].x(is,a) = tmpV(0,a);
             }

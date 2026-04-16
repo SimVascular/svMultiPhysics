@@ -76,8 +76,6 @@
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
        <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
 
-       <Myocardial_zone> pfib </Myocardial_zone>
-
        <ODE_solver> FE </ODE_solver>
    </Domain>
   
@@ -86,8 +84,6 @@
 
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
        <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
-
-       <Myocardial_zone> pfib </Myocardial_zone>
 
        <Stimulus type="Istim" >
            <Amplitude> -35.714 </Amplitude>

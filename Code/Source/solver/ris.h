@@ -5,15 +5,16 @@
 #define RIS_H
 
 #include "ComMod.h"
+#include "SolutionStates.h"
 
 namespace ris {
 
-void ris_meanq(ComMod& com_mod, CmMod& cm_mod);
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg);
-void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, 
-    const Array<double>& Yg, const Array<double>& Dg);
+void ris_meanq(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions);
+void ris_resbc(ComMod& com_mod, const SolutionStates& solutions);
+void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
+    const SolutionStates& solutions);
 
-void ris_updater(ComMod& com_mod, CmMod& cm_mod);
+void ris_updater(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions);
 void ris_status(ComMod& com_mod, CmMod& cm_mod);
 
 void doassem_ris(ComMod& com_mod, const int d, const Vector<int>& eqN, 
@@ -23,11 +24,11 @@ void doassem_velris(ComMod& com_mod, const int d, const Array<int>& eqN,
     const Array3<double>& lK, const Array<double>& lR);
 
 void clean_r_ris(ComMod& com_mod);
-void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD);
+void setbcdir_ris(ComMod& com_mod, const SolutionStates& solutions);
 
 // TODO: RIS 0D code
-void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg);
-void ris0d_status(ComMod& com_mod, CmMod& cm_mod); //, const Array<double>& Yg, const Array<double>& Dg);
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions);
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions);
 
 };
 

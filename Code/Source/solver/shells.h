@@ -6,11 +6,11 @@
 
 #include "ComMod.h"
 #include "Simulation.h"
+#include "SolutionStates.h"
 
 namespace shells {
 
-void construct_shell(ComMod& com_mod, const mshType& lM, const Array<double>& Ag,
-    const Array<double>& Yg, const Array<double>& Dg);
+void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions);
 
 void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
     const int nFn, const Array<double>& fN, const Array<double>& al, const Array<double>& yl, 

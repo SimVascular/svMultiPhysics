@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "Simulation.h"
+#include "SolutionStates.h"
 #include "ComMod.h"
 #include "Array.h"
 
@@ -34,7 +35,7 @@ void write_vtu(ComMod& com_mod, mshType& lM, const std::string& fName);
 
 void write_vtu_debug(ComMod& com_mod, mshType& lM, const std::string& fName);
 
-void write_vtus(Simulation* simulation, const Array<double>& lA, const Array<double>& lY, const Array<double>& lD, const bool lAve);
+void write_vtus(Simulation* simulation, const SolutionStates& solutions, const bool lAve);
 
 };
 

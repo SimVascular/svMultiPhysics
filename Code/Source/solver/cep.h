@@ -5,6 +5,7 @@
 #define CEP_H 
 
 #include "ComMod.h"
+#include "SolutionStates.h"
 
 namespace cep {
 
@@ -22,8 +23,7 @@ void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl,
     const Array<double>& dl, const Array<double>& fN, Array<double>& lR, Array3<double>& lK);
 
-void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, 
-    const Array<double>& Yg, const Array<double>& Dg);
+void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);
 
 };
 

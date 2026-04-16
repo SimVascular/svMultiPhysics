@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svMultiPhysicsFile version="0.1">
+
+<G_Na> 14.838 </G_Na>
+<G_CaL> 3.98E-5 </G_CaL>
+<G_Kr> 0.153 </G_Kr>
+<G_Ks> 0.392 </G_Ks>
+<G_to> 0.294 </G_to>
+
+<Isotropic_conductivity> 0.1 </Isotropic_conductivity>
+
+<Myocardial_zone> epicardium </Myocardial_zone>
+
+<TTP_initial_conditions>
+    <Initial_states>
+        <V>18.167</V>
+        <K_i>136.897</K_i>
+        <Na_i>8.6105</Na_i>
+        <Ca_i>1.2592E-4</Ca_i>
+        <Ca_ss>3.6181E-4</Ca_ss>
+        <Ca_sr>3.6399</Ca_sr>
+        <R_bar>0.9078</R_bar>
+    </Initial_states>
+
+    <Gating_variables>
+        <x_r1_rectifier>6.368E-3</x_r1_rectifier>
+        <x_r2_rectifier>0.36774</x_r2_rectifier>
+        <x_s_rectifier>9.77E-3</x_s_rectifier>
+        <m_fast_Na>0.9338</m_fast_Na>
+        <h_fast_Na>0.5276</h_fast_Na>
+        <j_fast_Na>0.6837</j_fast_Na>
+        <d_slow_in>1.9520E-2</d_slow_in>
+        <f_slow_in>0.7896</f_slow_in>
+        <f2_slow_in>0.9752</f2_slow_in>
+        <fcass_slow_in>0.9954</fcass_slow_in>
+        <s_out>0.9941</s_out>
+        <r_out>4.2757E-5</r_out>
+    </Gating_variables>
+</TTP_initial_conditions>
+
+</svMultiPhysicsFile>

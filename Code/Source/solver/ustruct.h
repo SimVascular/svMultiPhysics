@@ -5,6 +5,7 @@
 #define USTRUCT_H 
 
 #include "ComMod.h"
+#include "SolutionStates.h"
 
 namespace ustruct {
 
@@ -18,8 +19,7 @@ void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const V
 
 bool constitutive_model_is_valid(consts::ConstitutiveModelType model);
 
-void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg, 
-    const Array<double>& Dg);
+void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);
 
 int get_col_ptr(ComMod& com_mod, const int rowN, const int colN);
 
@@ -50,7 +50,7 @@ void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd, 
     const Array3<double>& lK, const Array<double>& lR);
 
-void ustruct_r(ComMod& com_mod, const Array<double>& Yg);
+void ustruct_r(ComMod& com_mod, const SolutionStates& solutions);
 
 };
 

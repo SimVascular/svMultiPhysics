@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svMultiPhysicsFile version="0.1">
+
+<G_Ks> 0.098 </G_Ks>
+<G_to> 0.294 </G_to>
+
+<Myocardial_zone> myocardium </Myocardial_zone>
+
+<TTP_initial_conditions>
+    <Initial_states>
+        <V> -85.423 </V>
+        <K_i> 138.52 </K_i>
+        <Na_i> 10.132 </Na_i>
+        <Ca_i> 1.53E-4 </Ca_i>
+        <Ca_ss> 4.2E-4 </Ca_ss>
+        <Ca_sr> 4.272 </Ca_sr>
+        <R_bar> 0.8978 </R_bar>
+    </Initial_states>
+
+    <Gating_variables>
+        <x_r1_rectifier> 1.65E-2 </x_r1_rectifier>
+        <x_r2_rectifier> 0.4730 </x_r2_rectifier>
+        <x_s_rectifier> 1.74E-2 </x_s_rectifier>
+        <m_fast_Na> 1.65E-3 </m_fast_Na>
+        <h_fast_Na> 0.7490 </h_fast_Na>
+        <j_fast_Na> 0.6788 </j_fast_Na>
+        <d_slow_in> 3.288E-5 </d_slow_in>
+        <f_slow_in> 0.7026 </f_slow_in>
+        <f2_slow_in> 0.9526 </f2_slow_in>
+        <fcass_slow_in> 0.9942 </fcass_slow_in>
+        <s_out> 0.999998 </s_out>
+        <r_out> 2.347E-8 </r_out>
+    </Gating_variables>
+</TTP_initial_conditions>
+
+</svMultiPhysicsFile>

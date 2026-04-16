@@ -5,11 +5,16 @@
 #define SIMULATION_H 
 
 #include "ComMod.h"
+#include "SolutionStates.h"
 #include "Parameters.h"
 #include "SimulationLogger.h"
 #include "LinearAlgebra.h"
 
 #include <string>
+#include <memory>
+
+// Forward declaration
+class Integrator;
 
 class Simulation {
 
@@ -22,6 +27,11 @@ class Simulation {
     CepMod& get_cep_mod() { return cep_mod; };
     ChnlMod& get_chnl_mod() { return chnl_mod; };
     ComMod& get_com_mod() { return com_mod; };
+    Integrator& get_integrator();
+
+    // Initialize the Integrator object after simulation setup is complete
+    // Takes ownership of solution states via move semantics
+    void initialize_integrator(SolutionStates&& solutions);
 
     // Read a solver paramerer input XML file.
     void read_parameters(const std::string& fileName);
@@ -61,6 +71,10 @@ class Simulation {
     std::string history_file_name;
 
     LinearAlgebra* linear_algebra = nullptr;
+
+  private:
+    // Time integrator for Newton iteration loop
+    std::unique_ptr<Integrator> integrator_;
 };
 
 #endif
