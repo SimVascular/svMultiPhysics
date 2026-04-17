@@ -22,6 +22,7 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryConditio
     , bc_type_(other.bc_type_)
     , block_name_(other.block_name_)
     , face_name_(other.face_name_)
+    , oned_input_file_(other.oned_input_file_)
     , Qo_(other.Qo_)
     , Qn_(other.Qn_)
     , Po_(other.Po_)
@@ -53,7 +54,7 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         bc_type_ = other.bc_type_;
         block_name_ = other.block_name_;
         face_name_ = other.face_name_;
-        Qo_ = other.Qo_;
+        oned_input_file_ = other.oned_input_file_;
         Qn_ = other.Qn_;
         Po_ = other.Po_;
         Pn_ = other.Pn_;
@@ -83,7 +84,7 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , bc_type_(other.bc_type_)
     , block_name_(std::move(other.block_name_))
     , face_name_(std::move(other.face_name_))
-    , Qo_(other.Qo_)
+    , oned_input_file_(std::move(other.oned_input_file_))
     , Qn_(other.Qn_)
     , Po_(other.Po_)
     , Pn_(other.Pn_)
@@ -129,7 +130,7 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         bc_type_ = other.bc_type_;
         block_name_ = std::move(other.block_name_);
         face_name_ = std::move(other.face_name_);
-        Qo_ = other.Qo_;
+        oned_input_file_ = std::move(other.oned_input_file_);
         Qn_ = other.Qn_;
         Po_ = other.Po_;
         Pn_ = other.Pn_;
@@ -206,6 +207,16 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType
 const std::string& CoupledBoundaryCondition::get_block_name() const
 {
     return block_name_;
+}
+
+const std::string& CoupledBoundaryCondition::get_oned_input_file() const
+{
+    return oned_input_file_;
+}
+
+void CoupledBoundaryCondition::set_oned_input_file(const std::string& path)
+{
+    oned_input_file_ = path;
 }
 
 void CoupledBoundaryCondition::set_solution_ids(int flow_id, int pressure_id, double in_out_sign)
@@ -400,6 +411,9 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     
     // Distribute block name
     cm.bcast(cm_mod, block_name_);
+    
+    // Distribute 1D input file path
+    cm.bcast(cm_mod, oned_input_file_);
     
     // Distribute face name
     cm.bcast(cm_mod, face_name_);

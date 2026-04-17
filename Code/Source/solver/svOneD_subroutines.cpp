@@ -43,7 +43,8 @@
 //         concurrently.
 //     Phase 2 – batch result exchange:
 //       - After every rank has finished solving, results are shared via
-//         MPI_Bcast so that ALL ranks know ALL cplBC.fa[i].y values.
+//         MPI_Bcast so that ALL ranks know the result, and each BC's
+//         coupled_bc.set_pressure() is updated accordingly.
 //
 // params array passed to run_1d_simulation_step_1d_:
 //   params[0] = 2.0          (number of time points)
@@ -72,9 +73,8 @@ namespace svOneD {
 
 // ---------------------------------------------------------------------------
 // Per-model state.  Each entry corresponds to one svOneD-coupled face (one 1D
-// model).  Indexed by the sequential order in which faces were added to
-// cplBC.fa (i.e., entry k corresponds to the k-th svOneD face, which has
-// cplBCptr == face_ptr_list[k]).
+// model).  Indexed by the sequential order in which coupled faces were found
+// in eq[0].bc[].
 // ---------------------------------------------------------------------------
 
 struct OneDModelState {
@@ -99,8 +99,8 @@ struct OneDModelState {
   // Owning MPI rank for this model.
   int owner_rank = 0;
 
-  // Index into cplBC.fa[] that this model services.
-  int fa_ptr = -1;
+  // Index into eq[0].bc[] for the BC this model services.
+  int iBc = -1;
 };
 
 // ---------------------------------------------------------------------------
@@ -148,21 +148,19 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   svOneDTime = com_mod.time;
 
   // ----- Collect the list of svOneD-coupled faces -----
-  // We iterate over eq[0]'s BCs and pick those with iBC_cpl AND a non-empty
-  // oned_input_file.  Their cplBCptr values are the indices into cplBC.fa[].
+  // Iterate over eq[0]'s BCs and pick those with iBC_Coupled and a non-empty
+  // oned_input_file (stored in coupled_bc).
   {
     const int iEq = 0;
     const auto& eq = com_mod.eq[iEq];
     for (int iBc = 0; iBc < eq.nBc; iBc++) {
       const auto& bc = eq.bc[iBc];
-      int ptr = bc.cplBCptr;
-      if (ptr == -1) continue;
-      if (!utils::btest(bc.bType, iBC_cpl)) continue;
-      if (cplBC.fa[ptr].oned_input_file.empty()) continue;
+      if (!utils::btest(bc.bType, iBC_Coupled)) continue;
+      if (bc.coupled_bc.get_oned_input_file().empty()) continue;
 
       OneDModelState st;
-      st.fa_ptr   = ptr;
-      st.coupling_type = (cplBC.fa[ptr].bGrp == CplBCType::cplBC_Neu) ? "NEU" : "DIR";
+      st.iBc = iBc;
+      st.coupling_type = (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) ? "NEU" : "DIR";
       oned_models.push_back(std::move(st));
     }
   }
@@ -195,6 +193,8 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   // reading and initializing only the model(s) it owns.  Rank k owns model k
   // (assigned via k % nProcs), so for N models and N ranks every rank handles
   // exactly one model with no inter-rank synchronization.
+  const int iEq = 0;
+  auto& eq = com_mod.eq[iEq];
   for (int k = 0; k < nTotalModels; k++) {
     auto& st = oned_models[k];
     st.owner_rank = k % nProcs;
@@ -202,7 +202,7 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
     if (myRank != st.owner_rank) continue;
 
     // This rank owns model k: read the input file and initialize.
-    const std::string& input_file = cplBC.fa[st.fa_ptr].oned_input_file;
+    const std::string& input_file = eq.bc[st.iBc].coupled_bc.get_oned_input_file();
     int problem_id  = 0;
     int system_size = 0;
 
@@ -219,8 +219,8 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
     st.solution.resize(system_size, 0.0);
     shared_lib_instance->return_solution(problem_id, st.solution.data(), system_size);
 
-    // Initial cplBC.fa y = 0; first calc_svOneD call sets the real value.
-    cplBC.fa[st.fa_ptr].y = 0.0;
+    // Initial coupled value = 0; first calc_svOneD call sets the real value.
+    eq.bc[st.iBc].coupled_bc.set_pressure(0.0);
   }
 
   // ----- Broadcast metadata for all models (Phase 2: batch exchange) -----
@@ -246,13 +246,15 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
 {
   using namespace consts;
 
-  auto& cplBC  = com_mod.cplBC;
   auto& cm     = com_mod.cm;
   const int myRank = cm.taskId;
 
   const double t_old = svOneDTime;
   const double t_new = svOneDTime + com_mod.dt;
   const int    nTotalModels = static_cast<int>(oned_models.size());
+
+  const int iEq = 0;
+  auto& eq = com_mod.eq[iEq];
 
   // ----- Phase 1: each rank runs its own models without blocking -----
   // All ranks proceed through this loop simultaneously, each executing only
@@ -261,8 +263,8 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
   std::vector<double> cpl_values(nTotalModels, 0.0);
 
   for (int k = 0; k < nTotalModels; k++) {
-    auto& st     = oned_models[k];
-    int   fa_ptr = st.fa_ptr;
+    auto& st = oned_models[k];
+    auto& bc = eq.bc[st.iBc];
 
     if (myRank != st.owner_rank) continue;
 
@@ -272,12 +274,12 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     params[1] = t_old;
     params[2] = t_new;
 
-    if (cplBC.fa[fa_ptr].bGrp == CplBCType::cplBC_Neu) {
-      params[3] = cplBC.fa[fa_ptr].Qo;
-      params[4] = cplBC.fa[fa_ptr].Qn;
+    if (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
+      params[3] = bc.coupled_bc.get_Qo();
+      params[4] = bc.coupled_bc.get_Qn();
     } else {
-      params[3] = cplBC.fa[fa_ptr].Po;
-      params[4] = cplBC.fa[fa_ptr].Pn;
+      params[3] = bc.coupled_bc.get_Po();
+      params[4] = bc.coupled_bc.get_Pn();
     }
 
     // Working copy of solution so that 'D' steps don't corrupt the
@@ -295,7 +297,7 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     if (error_code != 0) {
       throw std::runtime_error(
           "[svOneD::calc_svOneD] 1D solver step for face '" +
-          cplBC.fa[fa_ptr].name + "' failed with error code " +
+          bc.coupled_bc.get_oned_input_file() + "' failed with error code " +
           std::to_string(error_code));
     }
 
@@ -305,14 +307,14 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     }
   }
 
-  // ----- Phase 2: broadcast all results and update cplBC.fa[].y -----
+  // ----- Phase 2: broadcast all results and update coupled BCs -----
   // After every rank has finished solving its own models, gather the results.
   // Each MPI_Bcast here is a cheap scalar transfer; the expensive 1D solver
   // work has already been done concurrently in Phase 1.
   for (int k = 0; k < nTotalModels; k++) {
     auto& st = oned_models[k];
     MPI_Bcast(&cpl_values[k], 1, MPI_DOUBLE, st.owner_rank, cm.com());
-    cplBC.fa[st.fa_ptr].y = cpl_values[k];
+    eq.bc[st.iBc].coupled_bc.set_pressure(cpl_values[k]);
   }
 
   // Advance the simulation clock after the final iteration.

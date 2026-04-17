@@ -191,6 +191,8 @@ private:
     /// @brief svZeroD coupling data
     std::string block_name_;                 ///< Block name in svZeroDSolver configuration
     std::string face_name_;                  ///< Face name from the mesh
+    /// @brief svOneD coupling data
+    std::string oned_input_file_;            ///< Path to svOneDSolver input file (empty for svZeroD BCs)
     
     /// @brief Flowrate data
     double Qo_ = 0.0;                        ///< Flowrate at old timestep (t_n)
@@ -288,6 +290,13 @@ public:
     /// @brief Get the svZeroD block name
     /// @return Block name
     const std::string& get_block_name() const;
+    
+    /// @brief Get the svOneD input file path
+    /// @return Path to the 1D solver input file (empty for svZeroD BCs)
+    const std::string& get_oned_input_file() const;
+
+    /// @brief Set the svOneD input file path
+    void set_oned_input_file(const std::string& path);
     
     /// @brief Set the svZeroD solution IDs for flow and pressure
     /// @param flow_id Flow solution ID
