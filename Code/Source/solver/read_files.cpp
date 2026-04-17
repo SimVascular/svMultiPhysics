@@ -538,6 +538,17 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_flx)); 
   }
 
+  // For DIR Coupled BCs (svZeroD or svOneD), the downstream solver always returns a
+  // volumetric flow rate Q [m³/s], not a velocity [m/s].  Without bType_flx, bc_ini
+  // sets gx(a) = 1, and set_bc_dir_l applies velocity = Q * nV which has the wrong
+  // dimensions.  With bType_flx, bc_ini normalises gx(a) = 1/area, so the applied
+  // velocity = (Q/area) * nV [m/s] is physically correct.  Enforce this automatically
+  // regardless of the user's <impose_flux> setting.
+  if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled)) &&
+      coupled_bc_type == BoundaryConditionType::bType_Dir) {
+    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_flx));
+  }
+
   // To zero-out perimeter or not. Default is .true. for Dir/CMM
   //
   ltmp = false; 
