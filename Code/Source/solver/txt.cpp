@@ -166,10 +166,7 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
   dmsg << "cplBC.coupled: " << cplBC.coupled;
   #endif
 
-  int fid = 1;
-
-  // Writing data related to cplBC
-  //
+  // Writing data related to cplBC (genBC, svZeroD, or RCR).
   if (!com_mod.resetSim) {
     if (cplBC.coupled) {
       bool ltmp = false;
@@ -177,49 +174,20 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
       if (!init_write) {
         if (cplBC.useGenBC) {
           set_bc::genBC_Integ_X(com_mod, cm_mod, "L");
-
-        } else if (cplBC.useSvZeroD){
+        } else if (cplBC.useSvZeroD) {
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'L');
-          
         } else {
-
           for (auto& bc : com_mod.eq[0].bc) {
             if (utils::btest(bc.bType, iBC_RCR)) {
               ltmp = true;
               break;
             }
           }
-
           set_bc::cplBC_Integ_X(com_mod, cm_mod, ltmp);
         }
       }
-
-      if (com_mod.cm.mas(cm_mod) && !cplBC.useGenBC) {
-        if (init_write) {
-          if (com_mod.cTS == 0 || !ltmp) {
-            //OPEN(fid, FILE=cplBC.saveName)
-            //CLOSE(fid, STATUS='DELETE')
-          } else {
-            //CALL TRIMFILE(cTS,cplBC.saveName)
-          }
-        } else {
-          //OPEN(fid, FILE=cplBC.saveName, POSITION='APPEND')
-          //WRITE(fid,'(ES14.6E2)',ADVANCE='NO') cplBC.xp(1)
-
-          for (int i = 0; i < cplBC.nX; i++) {
-            // WRITE(fid,'(2(1X,ES14.6E2))',ADVANCE='NO') cplBC.xn(i), cplBC.fa(i).y
-          }
-
-          for (int i = 1; i < cplBC.nXp; i++) {
-            //WRITE(fid,'(ES14.6E2)',ADVANCE='NO') cplBC.xp(i)
-          }
-
-          //WRITE(fid,*)
-          //CLOSE(fid)
-        }
-      }
     }
-  } // resetSim
+  }
 
   // Process eq outputs
   //

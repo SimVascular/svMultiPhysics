@@ -29,8 +29,6 @@ namespace read_files_ns {
 
   void read_bf(ComMod& com_mod, BodyForceParameters* bf_params, bfType& lBf);
 
-  void read_cplbc_initialization_file(const std::string& file_name, cplBCType& cplBC);
-
   void read_domain(Simulation* simulation, EquationParameters* eq_params, eqType& lEq, EquationProps& propL,  EquationPhys = {});
 
   void read_eq(Simulation* simulation, EquationParameters* params, eqType& eq);

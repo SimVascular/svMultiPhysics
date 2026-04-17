@@ -564,7 +564,8 @@ void distribute(Simulation* simulation)
       cplBC.xo.resize(cplBC.nX);
     }
 
-  } else { 
+  } else {
+    // RCR (Windkessel): nX/xo sized in read_files from nFa; not genBC/svZeroD.
     cm.bcast(cm_mod, &cplBC.nX);
     if (cplBC.xo.size() == 0) {
        cplBC.xo.resize(cplBC.nX);

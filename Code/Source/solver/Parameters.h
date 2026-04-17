@@ -618,32 +618,6 @@ class ConstitutiveModelParameters : public ParameterLists
     bool value_set = false;
 };
 
-/// @brief Couple to reduced-order models.
-class CoupleCplBCParameters : public ParameterLists
-{
-  public:
-    CoupleCplBCParameters();
-
-    static const std::string xml_element_name_;
-
-    bool defined() const { return value_set; };
-    void set_values(tinyxml2::XMLElement* xml_elem);
-    void print_parameters();
-
-    // attribute.
-    Parameter<std::string> type;
-
-    Parameter<std::string> file_name_for_0D_3D_communication;
-    Parameter<std::string> file_name_for_saving_unknowns;
-    Parameter<int> number_of_unknowns;
-    Parameter<int> number_of_user_defined_outputs;
-    Parameter<std::string> unknowns_initialization_file_path;
-
-    Parameter<std::string> zerod_code_file_path;
-
-    bool value_set = false;
-};
-
 /// @brief Coupling to GenBC.
 class CoupleGenBCParameters : public ParameterLists
 {
@@ -1494,7 +1468,6 @@ class EquationParameters : public ParameterLists
 
     std::vector<BoundaryConditionParameters*> boundary_conditions;
 
-    CoupleCplBCParameters couple_to_cplBC;
     CoupleGenBCParameters couple_to_genBC;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;

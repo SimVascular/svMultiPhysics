@@ -1035,71 +1035,6 @@ void ConstitutiveModelParameters::check_constitutive_model(const Parameter<std::
 }
 
 //////////////////////////////////////////////////////////
-//                  CoupleCplBCParameters               //
-//////////////////////////////////////////////////////////
-
-/// @brief Couple to reduced-order models.
-///
-/// Define the XML element name for equation Couple_to_genBC parameters.
-const std::string CoupleCplBCParameters::xml_element_name_ = "Couple_to_cplBC";
-
-CoupleCplBCParameters::CoupleCplBCParameters()
-{
-  // A parameter that must be defined.
-  bool required = true;
-
-  // Define attributes.
-  type = Parameter<std::string>("type", "", required);
-
-  set_parameter("File_name_for_0D_3D_communication", "", required, file_name_for_0D_3D_communication);
-  set_parameter("File_name_for_saving_unknowns", "", required, file_name_for_saving_unknowns);
-  set_parameter("Number_of_unknowns", 0, required, number_of_unknowns);
-  set_parameter("Number_of_user_defined_outputs", 0, required, number_of_user_defined_outputs);
-  set_parameter("Unknowns_initialization_file_path", "", !required, unknowns_initialization_file_path);
-  set_parameter("ZeroD_code_file_path", "", required, zerod_code_file_path);
-}
-
-void CoupleCplBCParameters::set_values(tinyxml2::XMLElement* xml_elem)
-{
-  std::string error_msg = "Unknown Couple_to_cplBC type=TYPE XML element '";
-
-  // Get the 'type' from the <Couple_to_cplBC type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    throw std::runtime_error("No TYPE given in the XML <Stimulus=TYPE> element.");
-  }
-  type.set(std::string(stype));
-  auto item = xml_elem->FirstChildElement();
-
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-  std::function<void(const std::string&, const std::string&)> ftpr =
-      std::bind( &CoupleCplBCParameters::set_parameter_value, *this, _1, _2);
-
-  xml_util_set_parameters(ftpr, xml_elem, error_msg);
-
-  value_set = true;
-}
-
-void CoupleCplBCParameters::print_parameters()
-{
-  if (!value_set) { 
-    return;
-  }
-  std::cout << std::endl;
-  std::cout << "----------------------" << std::endl;
-  std::cout << "CoupleCplBC Parameters" << std::endl;
-  std::cout << "----------------------" << std::endl;
-  std::cout << type.name() << ": " << type.value() << std::endl;
-
-  auto params_name_value = get_parameter_list();
-  for (auto& [ key, value ] : params_name_value) {
-    std::cout << key << ": " << value << std::endl;
-  }
-}
-
-//////////////////////////////////////////////////////////
 //                  CoupleGenBCParameters               //
 //////////////////////////////////////////////////////////
 
@@ -2408,8 +2343,6 @@ void EquationParameters::print_parameters()
 
   linear_solver.print_parameters();
 
-  couple_to_cplBC.print_parameters();
-
   for (auto& bc : boundary_conditions) {
     bc->print_parameters();
   }
@@ -2461,9 +2394,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
     } else if (name == ConstitutiveModelParameters::xml_element_name_) {
       domain->constitutive_model.set_values(item);
       domain->constitutive_model.check_constitutive_model(type);
-
-    } else if (name == CoupleCplBCParameters::xml_element_name_) {
-      couple_to_cplBC.set_values(item);
 
     } else if (name == CoupleGenBCParameters::xml_element_name_) {
       couple_to_genBC.set_values(item);

@@ -1248,40 +1248,6 @@ void read_cep_equation(CepMod* cep_mod, Simulation* simulation, EquationParamete
   }
 }
 
-//--------------------------------
-// read_cplbc_initialization_file
-//--------------------------------
-// Read the float values for a cplBC initialzation.
-//
-void read_cplbc_initialization_file(const std::string& file_name, cplBCType& cplBC) 
-{
-  std::ifstream init_file;
-  init_file.open(file_name);
-  if (!init_file.is_open()) {
-    throw std::runtime_error("Failed to open the cplBC initialization file '" + file_name + "'.");
-  }
-
-  double value;
-  std::string str_value;
-  int n = 0;
-
-  while (init_file >> value) {
-    if (n == cplBC.nX) { 
-      throw std::runtime_error("The number of values in the cplBC initialization file '" + file_name + 
-         "' is larger than the number of values given in the Couple_to_cplBC 'Number_of_unknowns' parameter (" + 
-         std::to_string(cplBC.nX) + ").");
-    }
-    cplBC.xo[n] = value;
-    n += 1;
-  }
-
-  if (n < cplBC.nX) { 
-    throw std::runtime_error("The number of values in the cplBC initialization file '" + file_name + 
-      "' (" + std::to_string(n) + ") is smaller than the number of values given in the Couple_to_cplBC 'Number_of_unknowns' parameter (" + 
-      std::to_string(cplBC.nX) + ").");
-  }
-}
-
 //-------------
 // read_domain
 //-------------
@@ -1511,12 +1477,9 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       cplBC.useSvZeroD = true;
       cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
       cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
-
-    } else if (eq_params->couple_to_cplBC.defined()) {
-      cplbc_type_str = eq_params->couple_to_cplBC.type.value();
     }
 
-    if (eq_params->couple_to_genBC.defined() || eq_params->couple_to_cplBC.defined() || eq_params->svzerodsolver_interface_parameters.defined()) { 
+    if (eq_params->couple_to_genBC.defined() || eq_params->svzerodsolver_interface_parameters.defined()) { 
       try {
         cplBC.schm = consts::cplbc_name_to_type.at(cplbc_type_str);
       } catch (const std::out_of_range& exception) {
@@ -1535,22 +1498,6 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
 
       } else if (cplBC.useSvZeroD) {
         cplBC.nX = 0;
-
-      } else {
-        auto& cplBC_params = eq_params->couple_to_cplBC;
-        cplBC.nX = cplBC_params.number_of_unknowns.value();
-        cplBC.xo.resize(cplBC.nX);
-        cplBC.binPath = cplBC_params.zerod_code_file_path.value();
-        if (cplBC_params.unknowns_initialization_file_path.defined()) { 
-          auto file_name = cplBC_params.unknowns_initialization_file_path.value();
-          read_cplbc_initialization_file(file_name, cplBC); 
-        }
-
-        cplBC.commuName = simulation->chnl_mod.appPath + cplBC_params.file_name_for_0D_3D_communication.value();
-        cplBC.saveName = simulation->chnl_mod.appPath + cplBC_params.file_name_for_saving_unknowns.value();
-
-        cplBC.nXp = cplBC_params.number_of_user_defined_outputs.value();
-        cplBC.xp.resize(cplBC.nXp);
       }
     }
   }
