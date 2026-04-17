@@ -813,6 +813,11 @@ class CouplingInterfaceParameters : public ParameterLists
     Parameter<int>    coupling_ramp_steps;
     Parameter<double> coupling_ramp_ref_pressure;
 
+    // Under-relaxation factor for pressure passed to the 1D solver (DIR coupling only).
+    // Applied as: P_sent = omega * P_new + (1 - omega) * P_prev_sent.
+    // Range: (0, 1].  Default 1.0 = no relaxation.
+    Parameter<double> coupling_dir_relax_factor;
+
     bool value_set = false;
 };
 

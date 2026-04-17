@@ -472,6 +472,12 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
         lBc.coupled_bc.set_oned_ramp(ramp_steps, ramp_P_ref);
       }
 
+      // Read optional under-relaxation factor for DIR coupling pressure.
+      if (bc_params->coupling_interface.coupling_dir_relax_factor.defined()) {
+        double omega = bc_params->coupling_interface.coupling_dir_relax_factor.value();
+        lBc.coupled_bc.set_oned_relax_factor(omega);
+      }
+
     } else if (com_mod.cplBC.svzerod_solver_interface.has_data) {
       // ------------------------------------------------------------------
       // svZeroD path (existing).

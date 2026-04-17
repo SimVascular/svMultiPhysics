@@ -109,6 +109,13 @@ struct OneDModelState {
   int    ramp_steps = 0;
   double ramp_ref_pressure = 0.0;
   int    step_count = 0;  ///< Number of committed (BCFlag=='L') steps taken.
+
+  // Under-relaxation for DIR coupling pressure (omega in (0, 1]).
+  // Applied after ramping: P_sent = omega * P_target + (1-omega) * P_prev_sent.
+  // Default 1.0 = no relaxation.
+  double relax_factor = 1.0;
+  double P_prev_sent_old = 0.0;  ///< Under-relaxed pressure sent at params[3] (t_old) on last 'L' step.
+  double P_prev_sent_new = 0.0;  ///< Under-relaxed pressure sent at params[4] (t_new) on last 'L' step.
 };
 
 // ---------------------------------------------------------------------------
@@ -171,6 +178,7 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
       st.coupling_type = (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) ? "NEU" : "DIR";
       st.ramp_steps         = bc.coupled_bc.get_oned_ramp_steps();
       st.ramp_ref_pressure  = bc.coupled_bc.get_oned_ramp_ref_pressure();
+      st.relax_factor       = bc.coupled_bc.get_oned_relax_factor();
       oned_models.push_back(std::move(st));
     }
   }
@@ -290,15 +298,25 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     } else {
       double raw_P_old = bc.coupled_bc.get_Po();
       double raw_P_new = bc.coupled_bc.get_Pn();
+
+      // Step 1: apply pressure ramp (scales amplitude from ramp_ref_pressure
+      //         to actual 3D pressure over the first ramp_steps steps).
+      double P_target_old, P_target_new;
       if (st.ramp_steps > 0) {
         double ramp_factor = std::min(1.0, static_cast<double>(st.step_count) / st.ramp_steps);
         double P_ref = st.ramp_ref_pressure;
-        params[3] = P_ref + ramp_factor * (raw_P_old - P_ref);
-        params[4] = P_ref + ramp_factor * (raw_P_new - P_ref);
+        P_target_old = P_ref + ramp_factor * (raw_P_old - P_ref);
+        P_target_new = P_ref + ramp_factor * (raw_P_new - P_ref);
       } else {
-        params[3] = raw_P_old;
-        params[4] = raw_P_new;
+        P_target_old = raw_P_old;
+        P_target_new = raw_P_new;
       }
+
+      // Step 2: apply under-relaxation (damps timestep-to-timestep oscillations).
+      // P_sent = omega * P_target + (1 - omega) * P_prev_sent
+      const double omega = st.relax_factor;
+      params[3] = omega * P_target_old + (1.0 - omega) * st.P_prev_sent_old;
+      params[4] = omega * P_target_new + (1.0 - omega) * st.P_prev_sent_new;
     }
 
     // Working copy of solution so that 'D' steps don't corrupt the
@@ -323,6 +341,11 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     // Commit the updated solution only on the final iteration.
     if (BCFlag == 'L') {
       st.solution = work_sol;
+      // Update the under-relaxation history with the values actually sent.
+      if (st.coupling_type != "NEU") {
+        st.P_prev_sent_old = params[3];
+        st.P_prev_sent_new = params[4];
+      }
     }
   }
 
