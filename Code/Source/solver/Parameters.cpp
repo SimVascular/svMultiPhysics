@@ -471,7 +471,7 @@ CouplingInterfaceParameters::CouplingInterfaceParameters()
   set_parameter("svOneDSolver_input_file","", !required, svoned_input_file);
   set_parameter("Coupling_ramp_steps",       0,   !required, coupling_ramp_steps);
   set_parameter("Coupling_ramp_ref_pressure", 0.0, !required, coupling_ramp_ref_pressure);
-  set_parameter("Coupling_dir_relax_factor",  1.0, !required, coupling_dir_relax_factor);
+  set_parameter("Coupling_relax_factor",  1.0, !required, coupling_relax_factor);
 }
 
 void CouplingInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
