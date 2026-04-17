@@ -23,13 +23,27 @@
 // -----------------
 //   Unlike the 0D solver (which is solved once on the master rank), each
 //   1D model is INDEPENDENT and has its own input file.  Multiple 1D models
-//   are therefore solved in parallel:
+//   are therefore read, initialized, and solved in parallel:
 //
-//     - Collect all sv1D-coupled faces into a list indexed 0..N-1.
-//     - Assign face (model) k to MPI rank  k % nProcs.
-//     - Each rank owns and solves only its assigned model(s).
-//     - After solving, results are shared via MPI_Bcast from every owner
-//       rank so that ALL ranks know ALL cplBC.fa[i].y values.
+//   Initialization (init_sv1D):
+//     Phase 1 – parallel init:
+//       - Collect all sv1D-coupled faces into a list indexed 0..N-1.
+//       - Assign face (model) k to MPI rank  k % nProcs.
+//       - Each rank reads and initializes ONLY its owned model(s) with no
+//         MPI synchronization, so all ranks work simultaneously.
+//     Phase 2 – batch metadata exchange:
+//       - After every rank has finished initializing its own model(s),
+//         share system_size and coupled_dof via MPI_Bcast so that all
+//         ranks know the sizes needed for subsequent result broadcasts.
+//
+//   Time-stepping (calc_sv1D):
+//     Phase 1 – parallel solve:
+//       - Each rank runs run_step() for its owned model(s) with no MPI
+//         calls, so model k on rank A and model k+1 on rank B truly run
+//         concurrently.
+//     Phase 2 – batch result exchange:
+//       - After every rank has finished solving, results are shared via
+//         MPI_Bcast so that ALL ranks know ALL cplBC.fa[i].y values.
 //
 // params array passed to run_1d_simulation_step_1d_:
 //   params[0] = 2.0          (number of time points)
@@ -162,37 +176,46 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
   shared_lib_instance = new OneDSolverInterface();
   shared_lib_instance->load_library(lib_path);
 
-  // ----- Assign ranks and initialize owned models -----
+  // ----- Assign ranks and initialize owned models (Phase 1: parallel) -----
+  // No MPI calls in this loop.  All ranks proceed simultaneously, each
+  // reading and initializing only the model(s) it owns.  Rank k owns model k
+  // (assigned via k % nProcs), so for N models and N ranks every rank handles
+  // exactly one model with no inter-rank synchronization.
   const int nTotalModels = static_cast<int>(oned_models.size());
   for (int k = 0; k < nTotalModels; k++) {
     auto& st = oned_models[k];
     st.owner_rank = k % nProcs;
 
-    if (myRank == st.owner_rank) {
-      // This rank owns model k: initialize it.
-      const std::string& input_file = cplBC.fa[st.fa_ptr].oned_input_file;
-      int problem_id  = 0;
-      int system_size = 0;
+    if (myRank != st.owner_rank) continue;
 
-      shared_lib_instance->initialize(input_file, problem_id, system_size,
-                                      st.coupling_type);
-      st.problem_id   = problem_id;
-      st.system_size  = system_size;
-      st.interface    = shared_lib_instance;
+    // This rank owns model k: read the input file and initialize.
+    const std::string& input_file = cplBC.fa[st.fa_ptr].oned_input_file;
+    int problem_id  = 0;
+    int system_size = 0;
 
-      shared_lib_instance->set_external_step_size(problem_id, com_mod.dt);
-      shared_lib_instance->extract_coupled_dof(problem_id, st.coupled_dof,
-                                               st.coupling_type);
+    shared_lib_instance->initialize(input_file, problem_id, system_size,
+                                    st.coupling_type);
+    st.problem_id   = problem_id;
+    st.system_size  = system_size;
+    st.interface    = shared_lib_instance;
 
-      st.solution.resize(system_size, 0.0);
-      shared_lib_instance->return_solution(problem_id, st.solution.data(), system_size);
+    shared_lib_instance->set_external_step_size(problem_id, com_mod.dt);
+    shared_lib_instance->extract_coupled_dof(problem_id, st.coupled_dof,
+                                             st.coupling_type);
 
-      // Initial cplBC.fa y = 0; first calc_sv1D call sets the real value.
-      cplBC.fa[st.fa_ptr].y = 0.0;
-    }
+    st.solution.resize(system_size, 0.0);
+    shared_lib_instance->return_solution(problem_id, st.solution.data(), system_size);
 
-    // Broadcast system_size and coupled_dof from owner to all ranks so that
-    // every rank knows the metadata (needed for consistent broadcast later).
+    // Initial cplBC.fa y = 0; first calc_sv1D call sets the real value.
+    cplBC.fa[st.fa_ptr].y = 0.0;
+  }
+
+  // ----- Broadcast metadata for all models (Phase 2: batch exchange) -----
+  // All initialization is complete.  Now share system_size and coupled_dof
+  // from each owner so that every rank knows the sizes needed for consistent
+  // result broadcasts in calc_sv1D.
+  for (int k = 0; k < nTotalModels; k++) {
+    auto& st = oned_models[k];
     MPI_Bcast(&st.system_size,  1, MPI_INT, st.owner_rank, cm.com());
     MPI_Bcast(&st.coupled_dof,  1, MPI_INT, st.owner_rank, cm.com());
   }
