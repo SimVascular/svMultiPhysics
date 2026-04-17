@@ -549,10 +549,20 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_flx));
   }
 
-  // To zero-out perimeter or not. Default is .true. for Dir/CMM
+  // To zero-out perimeter or not. Default is .true. for Dir/CMM and Coupled-DIR.
+  // For Coupled-DIR BCs, bType_Dir is cleared, but we still need bType_zp so that
+  // bc_ini zeros shared perimeter nodes before normalising gx.  Without bType_zp,
+  // gx = 1/full_area and the wall BC later zeros perimeter nodes, reducing the
+  // effective flux to Q*(interior_area/full_area) instead of Q.
   //
   ltmp = false; 
   ltmp = utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+  // Also enable zero-perimeter for Coupled-DIR (svZeroD or svOneD DIR coupling).
+  if (!ltmp &&
+      utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled)) &&
+      coupled_bc_type == BoundaryConditionType::bType_Dir) {
+    ltmp = true;
+  }
   if (bc_params->zero_out_perimeter.defined()) {
     ltmp = bc_params->zero_out_perimeter.value();
   }
