@@ -218,7 +218,7 @@ void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters
   has_data = true;
 }
 
-void sv1DSolverInterfaceType::set_data(const svOneDSolverInterfaceParameters& params)
+void svOneDSolverInterfaceType::set_data(const svOneDSolverInterfaceParameters& params)
 {
   if (!params.defined()) {
     return;

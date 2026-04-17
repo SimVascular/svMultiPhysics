@@ -205,7 +205,7 @@ class bcType
     // Coupled BC class
     CoupledBoundaryCondition coupled_bc;
 
-    // sv1D: per-face 1D solver input file path (set when Time_dependence=Coupled
+    // svOneD: per-face 1D solver input file path (set when Time_dependence=Coupled
     // and svOneDSolver_interface is active).
     std::string oned_input_file;
 };
@@ -776,7 +776,7 @@ class cplFaceType
     // RCR type BC
     rcrType RCR;
 
-    // sv1D: path to the per-face 1D solver input file.
+    // svOneD: path to the per-face 1D solver input file.
     std::string oned_input_file;
 
     // Whether this face uses RCR (Windkessel) boundary condition.
@@ -818,11 +818,11 @@ class svZeroDSolverInterfaceType
 };
 
 //----------------------------
-// sv1DSolverInterfaceType
+// svOneDSolverInterfaceType
 //----------------------------
 // This class stores information used to interface to the svOneDSolver.
 //
-class sv1DSolverInterfaceType
+class svOneDSolverInterfaceType
 {
   public:
     // Path to the 1D solver shared library (without .so/.dylib extension,
@@ -852,7 +852,7 @@ class cplBCType
     //  Whether to use svZeroD
     bool useSvZeroD = false;
 
-    //  Whether to use sv1D (svOneDSolver)
+    //  Whether to use svOneD (svOneDSolver)
     bool useSv1D = false;
 
     //  Whether to initialize RCR from flow data
@@ -886,7 +886,7 @@ class cplBCType
 
     svZeroDSolverInterfaceType svzerod_solver_interface;
 
-    sv1DSolverInterfaceType sv1d_solver_interface;
+    svOneDSolverInterfaceType sv1d_solver_interface;
 
     /// @brief The name of history file containing "X"
     std::string saveName;

@@ -18,7 +18,7 @@
 #include "utils.h"
 #include <math.h>
 #include "svZeroD_interface.h"
-#include "sv1D_subroutines.h"
+#include "svOneD_subroutines.h"
 
 namespace set_bc {
 
@@ -175,8 +175,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
    } else if (cplBC.useSvZeroD) {
      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
    } else if (cplBC.useSv1D) {
-     sv1D::calc_sv1D(com_mod, cm_mod, 'D');
-     // Also integrate any RCR faces that coexist with sv1D faces.
+     svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+     // Also integrate any RCR faces that coexist with svOneD faces.
      if (RCRflag) {
        set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
      }
@@ -229,8 +229,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
         } else if (cplBC.useSvZeroD) {
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
         } else if (cplBC.useSv1D) {
-          sv1D::calc_sv1D(com_mod, cm_mod, 'D');
-          // Also integrate any RCR faces that coexist with sv1D faces.
+          svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+          // Also integrate any RCR faces that coexist with svOneD faces.
           if (RCRflag) {
             set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
           }
@@ -490,7 +490,7 @@ void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat)
   double tt = fmax(time - dt, 0.0);
   double dtt = dt / static_cast<double>(nTS);
 
-  // Collect indices of RCR faces only.  When sv1D and RCR are mixed, some
+  // Collect indices of RCR faces only.  When svOneD and RCR are mixed, some
   // cplBC.fa[] entries belong to the 1D solver and must be skipped here to
   // avoid accessing uninitialised RCR parameters (Rp/C/Rd/Pd = 0) and
   // causing division-by-zero inside the RK4 loop.
@@ -822,8 +822,8 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
     } else if (cplBC.useSvZeroD){
       svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
     } else if (cplBC.useSv1D) {
-      sv1D::calc_sv1D(com_mod, cm_mod, 'D');
-      // Also integrate any RCR faces that coexist with sv1D faces.
+      svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+      // Also integrate any RCR faces that coexist with svOneD faces.
       if (RCRflag) {
         set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
       }

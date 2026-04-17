@@ -25,9 +25,9 @@
 //   1D model is INDEPENDENT and has its own input file.  Multiple 1D models
 //   are therefore read, initialized, and solved in parallel:
 //
-//   Initialization (init_sv1D):
+//   Initialization (init_svOneD):
 //     Phase 1 – parallel init:
-//       - Collect all sv1D-coupled faces into a list indexed 0..N-1.
+//       - Collect all svOneD-coupled faces into a list indexed 0..N-1.
 //       - Assign face (model) k to MPI rank  k % nProcs.
 //       - Each rank reads and initializes ONLY its owned model(s) with no
 //         MPI synchronization, so all ranks work simultaneously.
@@ -36,7 +36,7 @@
 //         share system_size and coupled_dof via MPI_Bcast so that all
 //         ranks know the sizes needed for subsequent result broadcasts.
 //
-//   Time-stepping (calc_sv1D):
+//   Time-stepping (calc_svOneD):
 //     Phase 1 – parallel solve:
 //       - Each rank runs run_step() for its owned model(s) with no MPI
 //         calls, so model k on rank A and model k+1 on rank B truly run
@@ -52,7 +52,7 @@
 //   params[3] = BC_val_old    (Q or P at t_old)
 //   params[4] = BC_val_new    (Q or P at t_new)
 
-#include "sv1D_subroutines.h"
+#include "svOneD_subroutines.h"
 
 #include <fstream>
 #include <iomanip>
@@ -64,16 +64,16 @@
 #include "ComMod.h"
 #include "consts.h"
 #include "utils.h"
-#include "sv1D_interface/OneDSolverInterface.h"
+#include "svOneD_interface/OneDSolverInterface.h"
 
 #include "mpi.h"
 
-namespace sv1D {
+namespace svOneD {
 
 // ---------------------------------------------------------------------------
-// Per-model state.  Each entry corresponds to one sv1D-coupled face (one 1D
+// Per-model state.  Each entry corresponds to one svOneD-coupled face (one 1D
 // model).  Indexed by the sequential order in which faces were added to
-// cplBC.fa (i.e., entry k corresponds to the k-th sv1D face, which has
+// cplBC.fa (i.e., entry k corresponds to the k-th svOneD face, which has
 // cplBCptr == face_ptr_list[k]).
 // ---------------------------------------------------------------------------
 
@@ -107,14 +107,14 @@ struct OneDModelState {
 // Module-level state.
 // ---------------------------------------------------------------------------
 
-// One entry per sv1D-coupled face, filled during init_sv1D().
+// One entry per svOneD-coupled face, filled during init_svOneD().
 static std::vector<OneDModelState> oned_models;
 
 // Shared library handle (one per process, loaded once).
 static OneDSolverInterface* shared_lib_instance = nullptr;
 
 // Simulation time (advanced only on 'L' steps).
-static double sv1DTime = 0.0;
+static double svOneDTime = 0.0;
 
 // ---------------------------------------------------------------------------
 // Helper: resolve the shared-library path (.so / .dylib / as-is).
@@ -127,9 +127,9 @@ static std::string resolve_lib_path(const std::string& lib_base)
 }
 
 // ---------------------------------------------------------------------------
-// init_sv1D
+// init_svOneD
 // ---------------------------------------------------------------------------
-void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
+void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
 {
   using namespace consts;
 
@@ -140,14 +140,14 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
   const int myRank = cm.taskId;
 
   if (!solver_if.has_data) {
-    throw std::runtime_error("[sv1D::init_sv1D] sv1D solver interface data is missing.");
+    throw std::runtime_error("[svOneD::init_svOneD] svOneD solver interface data is missing.");
   }
 
   // Initialize the 1D simulation clock from the 3D solver's current time so
   // that restarts and non-zero start times are handled correctly.
-  sv1DTime = com_mod.time;
+  svOneDTime = com_mod.time;
 
-  // ----- Collect the list of sv1D-coupled faces -----
+  // ----- Collect the list of svOneD-coupled faces -----
   // We iterate over eq[0]'s BCs and pick those with iBC_cpl AND a non-empty
   // oned_input_file.  Their cplBCptr values are the indices into cplBC.fa[].
   {
@@ -168,7 +168,7 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
   }
 
   if (oned_models.empty()) {
-    throw std::runtime_error("[sv1D::init_sv1D] No sv1D-coupled faces with input files found.");
+    throw std::runtime_error("[svOneD::init_svOneD] No svOneD-coupled faces with input files found.");
   }
 
   // ----- Guard: require at least one MPI rank per 1D model -----
@@ -178,8 +178,8 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
   const int nTotalModels = static_cast<int>(oned_models.size());
   if (nProcs < nTotalModels) {
     throw std::runtime_error(
-        "[sv1D::init_sv1D] Number of MPI processes (" + std::to_string(nProcs) +
-        ") is less than the number of sv1D-coupled faces (" +
+        "[svOneD::init_svOneD] Number of MPI processes (" + std::to_string(nProcs) +
+        ") is less than the number of svOneD-coupled faces (" +
         std::to_string(nTotalModels) +
         ").  Please run with at least " + std::to_string(nTotalModels) +
         " MPI processes.");
@@ -219,14 +219,14 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
     st.solution.resize(system_size, 0.0);
     shared_lib_instance->return_solution(problem_id, st.solution.data(), system_size);
 
-    // Initial cplBC.fa y = 0; first calc_sv1D call sets the real value.
+    // Initial cplBC.fa y = 0; first calc_svOneD call sets the real value.
     cplBC.fa[st.fa_ptr].y = 0.0;
   }
 
   // ----- Broadcast metadata for all models (Phase 2: batch exchange) -----
   // All initialization is complete.  Now share system_size and coupled_dof
   // from each owner so that every rank knows the sizes needed for consistent
-  // result broadcasts in calc_sv1D.
+  // result broadcasts in calc_svOneD.
   for (int k = 0; k < nTotalModels; k++) {
     auto& st = oned_models[k];
     MPI_Bcast(&st.system_size,  1, MPI_INT, st.owner_rank, cm.com());
@@ -235,14 +235,14 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
 
   // Run one 'D' step to populate the initial resistance term bc.r.
   if (cplBC.schm != CplBCType::cplBC_E) {
-    calc_sv1D(com_mod, cm_mod, 'D');
+    calc_svOneD(com_mod, cm_mod, 'D');
   }
 }
 
 // ---------------------------------------------------------------------------
-// calc_sv1D
+// calc_svOneD
 // ---------------------------------------------------------------------------
-void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
+void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
 {
   using namespace consts;
 
@@ -250,8 +250,8 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
   auto& cm     = com_mod.cm;
   const int myRank = cm.taskId;
 
-  const double t_old = sv1DTime;
-  const double t_new = sv1DTime + com_mod.dt;
+  const double t_old = svOneDTime;
+  const double t_new = svOneDTime + com_mod.dt;
   const int    nTotalModels = static_cast<int>(oned_models.size());
 
   // ----- Phase 1: each rank runs its own models without blocking -----
@@ -294,7 +294,7 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
 
     if (error_code != 0) {
       throw std::runtime_error(
-          "[sv1D::calc_sv1D] 1D solver step for face '" +
+          "[svOneD::calc_svOneD] 1D solver step for face '" +
           cplBC.fa[fa_ptr].name + "' failed with error code " +
           std::to_string(error_code));
     }
@@ -317,8 +317,8 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
 
   // Advance the simulation clock after the final iteration.
   if (BCFlag == 'L') {
-    sv1DTime += com_mod.dt;
+    svOneDTime += com_mod.dt;
   }
 }
 
-}  // namespace sv1D
+}  // namespace svOneD
