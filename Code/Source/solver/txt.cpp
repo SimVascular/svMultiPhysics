@@ -189,6 +189,20 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
           }
 
         } else if (cplBC.useSv1D) {
+          // Update NEU coupling flowrates from the final converged velocity
+          // field (Yn) before committing the 1D solution.  During the Newton
+          // loop, compute_flowrates() is called at the *start* of each
+          // iteration using a partially-converged Yn.  After the last picc
+          // correction Yn is fully converged, but Qn_ is never refreshed.
+          // Re-computing here ensures the 1D solver receives the same
+          // flowrate that write_boundary_integral_data() reports in
+          // B_NS_Velocity_flux.txt.
+          for (auto& bc : com_mod.eq[0].bc) {
+            if (utils::btest(bc.bType, iBC_Coupled) &&
+                bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
+              bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+            }
+          }
           svOneD::calc_svOneD(com_mod, cm_mod, 'L');
           // Also integrate any RCR faces that coexist with svOneD faces.
           for (auto& bc : com_mod.eq[0].bc) {
