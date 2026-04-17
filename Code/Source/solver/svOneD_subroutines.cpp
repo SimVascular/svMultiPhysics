@@ -5,7 +5,7 @@
 //
 // These routines interface the 3D finite-element solver (svMultiPhysics) with
 // the 1D blood-flow solver (svOneDSolver) via a dynamically loaded shared
-// library (libsvoned_interface.so/.dylib).
+// library (libsvOneDSolver_interface.so/.dylib).
 //
 // Coupling overview
 // -----------------
