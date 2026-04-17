@@ -193,6 +193,9 @@ private:
     std::string face_name_;                  ///< Face name from the mesh
     /// @brief svOneD coupling data
     std::string oned_input_file_;            ///< Path to svOneDSolver input file (empty for svZeroD BCs)
+    /// @brief Pressure ramp parameters for 1D coupling initialization (DIR coupling only).
+    int    oned_ramp_steps_ = 0;             ///< Number of ramp steps (0 = disabled)
+    double oned_ramp_ref_pressure_ = 0.0;   ///< Reference pressure at step 0
     
     /// @brief Flowrate data
     double Qo_ = 0.0;                        ///< Flowrate at old timestep (t_n)
@@ -297,6 +300,20 @@ public:
 
     /// @brief Set the svOneD input file path
     void set_oned_input_file(const std::string& path);
+
+    /// @brief Get the pressure ramp step count (0 = disabled).
+    int get_oned_ramp_steps() const { return oned_ramp_steps_; }
+
+    /// @brief Set the pressure ramp parameters for 1D coupling initialization.
+    /// @param steps  Number of time steps over which to ramp (0 = disabled).
+    /// @param P_ref  Reference pressure at step 0 (typically the 1D initial pressure).
+    void set_oned_ramp(int steps, double P_ref) {
+      oned_ramp_steps_ = steps;
+      oned_ramp_ref_pressure_ = P_ref;
+    }
+
+    /// @brief Get the ramp reference pressure.
+    double get_oned_ramp_ref_pressure() const { return oned_ramp_ref_pressure_; }
     
     /// @brief Set the svZeroD solution IDs for flow and pressure
     /// @param flow_id Flow solution ID

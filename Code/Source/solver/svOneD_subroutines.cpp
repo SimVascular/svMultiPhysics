@@ -101,6 +101,14 @@ struct OneDModelState {
 
   // Index into eq[0].bc[] for the BC this model services.
   int iBc = -1;
+
+  // Pressure ramp for 1D coupling initialization (DIR coupling only).
+  // Over the first ramp_steps committed time steps the pressure sent to the
+  // 1D solver is linearly interpolated from ramp_ref_pressure to the actual
+  // 3D pressure value.  Zero means no ramping.
+  int    ramp_steps = 0;
+  double ramp_ref_pressure = 0.0;
+  int    step_count = 0;  ///< Number of committed (BCFlag=='L') steps taken.
 };
 
 // ---------------------------------------------------------------------------
@@ -161,6 +169,8 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
       OneDModelState st;
       st.iBc = iBc;
       st.coupling_type = (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) ? "NEU" : "DIR";
+      st.ramp_steps         = bc.coupled_bc.get_oned_ramp_steps();
+      st.ramp_ref_pressure  = bc.coupled_bc.get_oned_ramp_ref_pressure();
       oned_models.push_back(std::move(st));
     }
   }
@@ -278,8 +288,17 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
       params[3] = bc.coupled_bc.get_Qo();
       params[4] = bc.coupled_bc.get_Qn();
     } else {
-      params[3] = bc.coupled_bc.get_Po();
-      params[4] = bc.coupled_bc.get_Pn();
+      double raw_P_old = bc.coupled_bc.get_Po();
+      double raw_P_new = bc.coupled_bc.get_Pn();
+      if (st.ramp_steps > 0) {
+        double ramp_factor = std::min(1.0, static_cast<double>(st.step_count) / st.ramp_steps);
+        double P_ref = st.ramp_ref_pressure;
+        params[3] = P_ref + ramp_factor * (raw_P_old - P_ref);
+        params[4] = P_ref + ramp_factor * (raw_P_new - P_ref);
+      } else {
+        params[3] = raw_P_old;
+        params[4] = raw_P_new;
+      }
     }
 
     // Working copy of solution so that 'D' steps don't corrupt the
@@ -334,6 +353,9 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
   // Advance the simulation clock after the final iteration.
   if (BCFlag == 'L') {
     svOneDTime += com_mod.dt;
+    for (auto& st : oned_models) {
+      st.step_count++;
+    }
   }
 }
 

@@ -462,6 +462,16 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
                                                 /*block_name=*/"", lEq.phys, /*follower_pressure_load=*/false);
       lBc.coupled_bc.set_oned_input_file(lBc.oned_input_file);
 
+      // Read optional pressure ramp parameters for 1D coupling initialization.
+      if (bc_params->coupling_interface.coupling_ramp_steps.defined() &&
+          bc_params->coupling_interface.coupling_ramp_steps.value() > 0) {
+        int    ramp_steps = bc_params->coupling_interface.coupling_ramp_steps.value();
+        double ramp_P_ref = bc_params->coupling_interface.coupling_ramp_ref_pressure.defined()
+                            ? bc_params->coupling_interface.coupling_ramp_ref_pressure.value()
+                            : 0.0;
+        lBc.coupled_bc.set_oned_ramp(ramp_steps, ramp_P_ref);
+      }
+
     } else if (com_mod.cplBC.svzerod_solver_interface.has_data) {
       // ------------------------------------------------------------------
       // svZeroD path (existing).

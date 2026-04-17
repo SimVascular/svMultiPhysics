@@ -806,6 +806,13 @@ class CouplingInterfaceParameters : public ParameterLists
     // Path to the svOneDSolver .in input file for this face (1D coupling).
     Parameter<std::string> svoned_input_file;
 
+    // Pressure ramp for 1D coupling initialization (DIR coupling only).
+    // Over the first Coupling_ramp_steps time steps the pressure passed to the
+    // 1D solver is linearly ramped from Coupling_ramp_ref_pressure to the
+    // actual 3D pressure.  Set Coupling_ramp_steps = 0 (default) to disable.
+    Parameter<int>    coupling_ramp_steps;
+    Parameter<double> coupling_ramp_ref_pressure;
+
     bool value_set = false;
 };
 
