@@ -550,6 +550,7 @@ void distribute(Simulation* simulation)
   cm.bcast_enum(cm_mod, &cplBC.schm);
   cm.bcast(cm_mod, &cplBC.useGenBC);
   cm.bcast(cm_mod, &cplBC.useSvZeroD);
+  cm.bcast(cm_mod, &cplBC.useSv1D);
 
   if (cplBC.useGenBC) {   
     if (cm.slv(cm_mod)) {   
