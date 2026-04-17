@@ -195,9 +195,6 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     double t_old = sv1DTime;
     double t_new = sv1DTime + com_mod.dt;
 
-    // Save solution so that perturbation steps can be undone.
-    std::vector<double> solution_snapshot = oned_solution;
-
     for (int iBc = 0; iBc < eq.nBc; iBc++) {
       auto& bc = eq.bc[iBc];
       int ptr  = bc.cplBCptr;
@@ -205,6 +202,8 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
       if (!utils::btest(bc.bType, iBC_cpl)) continue;
 
       // Build params = [2, t_old, t_new, BC_val_old, BC_val_new]
+      // params[1..2] carry the time window; t_old is also passed as the
+      // standalone current_time argument required by the 1D library API.
       double params[5];
       params[0] = 2.0;
       params[1] = t_old;
@@ -223,8 +222,6 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
       // Use a working copy of the solution so that perturbation steps
       // ('D') do not corrupt the committed state in oned_solution.
       std::vector<double> work_sol = oned_solution;
-
-      // Push the stored (committed) solution into the 1D solver.
       oned_interface->update_solution(oned_model_id, work_sol.data(),
                                       oned_system_size);
 

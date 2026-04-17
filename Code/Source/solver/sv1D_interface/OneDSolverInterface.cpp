@@ -6,6 +6,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 OneDSolverInterface::~OneDSolverInterface()
 {
@@ -102,7 +103,9 @@ void OneDSolverInterface::extract_coupled_dof(int problem_id, int& coupled_dof,
   if (!extract_coupled_dof_) {
     throw std::runtime_error("[OneDSolverInterface] extract_coupled_dof not loaded");
   }
-  // The shared-library signature uses a non-const char* buffer.
-  std::string buf = coupling_type;
-  extract_coupled_dof_(problem_id, coupled_dof, &buf[0]);
+  // Copy into a mutable buffer; the shared-library function signature uses
+  // char* (not const char*) so we must pass a writable copy.
+  std::vector<char> buf(coupling_type.begin(), coupling_type.end());
+  buf.push_back('\0');
+  extract_coupled_dof_(problem_id, coupled_dof, buf.data());
 }
