@@ -181,6 +181,10 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
      set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
    } else if (cplBC.useSvZeroD) {
      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+     // Also integrate any RCR faces that coexist with svZeroD faces.
+     if (RCRflag) {
+       set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+     }
    } else if (cplBC.useSv1D) {
      svOneD::calc_svOneD(com_mod, cm_mod, 'D');
      // Also integrate any RCR faces that coexist with svOneD faces.
@@ -235,6 +239,10 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
           set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
         } else if (cplBC.useSvZeroD) {
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+          // Also integrate any RCR faces that coexist with svZeroD faces.
+          if (RCRflag) {
+            set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+          }
         } else if (cplBC.useSv1D) {
           svOneD::calc_svOneD(com_mod, cm_mod, 'D');
           // Also integrate any RCR faces that coexist with svOneD faces.
@@ -838,6 +846,10 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
        set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
     } else if (cplBC.useSvZeroD){
       svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      // Also integrate any RCR faces that coexist with svZeroD faces.
+      if (RCRflag) {
+        set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+      }
     } else if (cplBC.useSv1D) {
       svOneD::calc_svOneD(com_mod, cm_mod, 'D');
       // Also integrate any RCR faces that coexist with svOneD faces.
