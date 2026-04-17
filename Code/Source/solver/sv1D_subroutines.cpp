@@ -218,57 +218,65 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
   const double t_new = sv1DTime + com_mod.dt;
   const int    nTotalModels = static_cast<int>(oned_models.size());
 
-  // Each rank solves its own models and then broadcasts the result.
+  // ----- Phase 1: each rank runs its own models without blocking -----
+  // All ranks proceed through this loop simultaneously, each executing only
+  // the models it owns.  No MPI call here, so model k on rank A and model k+1
+  // on rank B truly run at the same time.
+  std::vector<double> cpl_values(nTotalModels, 0.0);
+
   for (int k = 0; k < nTotalModels; k++) {
     auto& st     = oned_models[k];
     int   fa_ptr = st.fa_ptr;
 
-    double cpl_value = 0.0;
+    if (myRank != st.owner_rank) continue;
 
-    if (myRank == st.owner_rank) {
-      // Build params = [2, t_old, t_new, BC_val_old, BC_val_new]
-      double params[5];
-      params[0] = 2.0;
-      params[1] = t_old;
-      params[2] = t_new;
+    // Build params = [2, t_old, t_new, BC_val_old, BC_val_new]
+    double params[5];
+    params[0] = 2.0;
+    params[1] = t_old;
+    params[2] = t_new;
 
-      if (cplBC.fa[fa_ptr].bGrp == CplBCType::cplBC_Neu) {
-        params[3] = cplBC.fa[fa_ptr].Qo;
-        params[4] = cplBC.fa[fa_ptr].Qn;
-      } else {
-        params[3] = cplBC.fa[fa_ptr].Po;
-        params[4] = cplBC.fa[fa_ptr].Pn;
-      }
-
-      // Working copy of solution so that 'D' steps don't corrupt the
-      // committed state.
-      std::vector<double> work_sol = st.solution;
-      st.interface->update_solution(st.problem_id, work_sol.data(), st.system_size);
-
-      int save_flag  = (BCFlag == 'L') ? 1 : 0;
-      int error_code = 0;
-
-      st.interface->run_step(st.problem_id, t_old, save_flag,
-                             st.coupling_type, params,
-                             work_sol.data(), cpl_value, error_code);
-
-      if (error_code != 0) {
-        throw std::runtime_error(
-            "[sv1D::calc_sv1D] 1D solver step for face '" +
-            cplBC.fa[fa_ptr].name + "' failed with error code " +
-            std::to_string(error_code));
-      }
-
-      // Commit the updated solution only on the final iteration.
-      if (BCFlag == 'L') {
-        st.solution = work_sol;
-      }
+    if (cplBC.fa[fa_ptr].bGrp == CplBCType::cplBC_Neu) {
+      params[3] = cplBC.fa[fa_ptr].Qo;
+      params[4] = cplBC.fa[fa_ptr].Qn;
+    } else {
+      params[3] = cplBC.fa[fa_ptr].Po;
+      params[4] = cplBC.fa[fa_ptr].Pn;
     }
 
-    // Broadcast the BC value returned by this model from its owner to all
-    // ranks so that every rank can update cplBC.fa[fa_ptr].y.
-    MPI_Bcast(&cpl_value, 1, MPI_DOUBLE, st.owner_rank, cm.com());
-    cplBC.fa[fa_ptr].y = cpl_value;
+    // Working copy of solution so that 'D' steps don't corrupt the
+    // committed state.
+    std::vector<double> work_sol = st.solution;
+    st.interface->update_solution(st.problem_id, work_sol.data(), st.system_size);
+
+    int save_flag  = (BCFlag == 'L') ? 1 : 0;
+    int error_code = 0;
+
+    st.interface->run_step(st.problem_id, t_old, save_flag,
+                           st.coupling_type, params,
+                           work_sol.data(), cpl_values[k], error_code);
+
+    if (error_code != 0) {
+      throw std::runtime_error(
+          "[sv1D::calc_sv1D] 1D solver step for face '" +
+          cplBC.fa[fa_ptr].name + "' failed with error code " +
+          std::to_string(error_code));
+    }
+
+    // Commit the updated solution only on the final iteration.
+    if (BCFlag == 'L') {
+      st.solution = work_sol;
+    }
+  }
+
+  // ----- Phase 2: broadcast all results and update cplBC.fa[].y -----
+  // After every rank has finished solving its own models, gather the results.
+  // Each MPI_Bcast here is a cheap scalar transfer; the expensive 1D solver
+  // work has already been done concurrently in Phase 1.
+  for (int k = 0; k < nTotalModels; k++) {
+    auto& st = oned_models[k];
+    MPI_Bcast(&cpl_values[k], 1, MPI_DOUBLE, st.owner_rank, cm.com());
+    cplBC.fa[st.fa_ptr].y = cpl_values[k];
   }
 
   // Advance the simulation clock after the final iteration.
