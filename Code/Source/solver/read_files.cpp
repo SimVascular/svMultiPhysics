@@ -473,8 +473,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       }
 
       // Read optional under-relaxation factor for DIR coupling pressure.
-      if (bc_params->coupling_interface.coupling_dir_relax_factor.defined()) {
-        double omega = bc_params->coupling_interface.coupling_dir_relax_factor.value();
+      if (bc_params->coupling_interface.coupling_relax_factor.defined()) {
+        double omega = bc_params->coupling_interface.coupling_relax_factor.value();
         lBc.coupled_bc.set_oned_relax_factor(omega);
       }
 
