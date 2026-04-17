@@ -1402,6 +1402,7 @@ class DomainParameters : public ParameterLists
     StimulusParameters stimulus;
     FluidViscosityParameters fluid_viscosity;
     SolidViscosityParameters solid_viscosity;
+    TTPInitialConditionsParameters ttp_initial_conditions;
 
     // Ionic model parameters.
     std::map<std::string, std::unique_ptr<IonicModelParameters>> ionic_models;

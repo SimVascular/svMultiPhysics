@@ -302,6 +302,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
               "<svOneDSolver_interface> is defined on the equation.");
         }
 
+
+
         lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
         com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
         lBc.cplBCptr = com_mod.cplBC.nFa - 1;
@@ -539,6 +541,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
                                                    com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, lEq.phys,
                                                    cpl_flwP);
       }
+
     } else {
       throw std::runtime_error(
           std::string("[read_bc] bType_Coupled is set on face '") + face_name +

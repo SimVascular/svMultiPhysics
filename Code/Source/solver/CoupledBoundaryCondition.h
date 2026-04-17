@@ -98,12 +98,30 @@ public:
                                       std::to_string(eNoN) + " (expected " + std::to_string(expected) + ").") {}
 };
 
+/// @brief Geometry or Jacobian error during cap surface integration.
+class CappingSurfaceGeometryException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceGeometryException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
 /// @brief Cap face quadrature (shape functions on TRI3) setup failed.
 class CappingSurfaceQuadratureException : public CappingSurfaceBaseException {
 public:
     explicit CappingSurfaceQuadratureException(const std::string& nested)
         : CappingSurfaceBaseException("[CappingSurface::init_cap_face_quadrature] Failed to initialize cap face shape "
                                       "functions: " + nested) {}
+};
+
+/// @brief Inconsistent cap connectivity or assembly indexing.
+class CappingSurfaceAssemblyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceAssemblyException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
+/// @brief Failure copying a \ref CappingSurface or its internal face.
+class CappingSurfaceCopyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceCopyException(std::string msg) : CappingSurfaceBaseException(std::move(msg)) {}
 };
 
 /// @brief Capping surface geometry and integration for a coupled boundary.

@@ -216,7 +216,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
      diff = diff*relTol;
   }
 
-  // Store the original pressures and flowrates
+  // Store the original pressures and flowrates for cplBC
   std::vector<double> orgY(cplBC.fa.size());
   std::vector<double> orgQ(cplBC.fa.size());
 
@@ -313,6 +313,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
 }
 
 /// @brief RCR (Windkessel) integration for the non-genBC / non-svZeroD branch.
+/// The legacy external Fortran Couple_to_cplBC file coupling has been removed.
 void cplBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const bool RCRflag)
 {
   using namespace consts;
