@@ -938,7 +938,12 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
         }
       } // END bType_CMM
 
-      if (!utils::btest(bc.bType, iBC_Dir)) {
+      // Allow Coupled BCs whose internal coupling type is DIR (svZeroD/svOneD DIR
+      // coupling): iBC_Dir is cleared for these in read_files but the velocity
+      // profile must still be applied via set_bc_dir_l.
+      bool isCoupledDir = utils::btest(bc.bType, iBC_Coupled) &&
+                          (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir);
+      if (!utils::btest(bc.bType, iBC_Dir) && !isCoupledDir) {
         continue;
       }
 
@@ -1447,7 +1452,11 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solu
 
     if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
 
-    if (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Coupled)) {
+    // Coupled BCs with DIR type must be handled by set_bc_dir (velocity profile),
+    // not here.  Only NEU Coupled BCs get a Neumann pressure traction.
+    bool isCoupledDir = utils::btest(bc.bType, iBC_Coupled) &&
+                        (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir);
+    if ((utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Coupled)) && !isCoupledDir) {
       #ifdef debug_set_bc_neu
       dmsg << "iM: " << iM+1;
       dmsg << "iFa: " << iFa+1;
