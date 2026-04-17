@@ -84,17 +84,23 @@ void OneDSolverInterface::update_solution(int problem_id, double* solution, int 
 }
 
 void OneDSolverInterface::run_step(int problem_id, double current_time,
-                                   int save_flag,
+                                   int save_incr,
                                    const std::string& coupling_type,
                                    double* params, double* solution,
-                                   double& cpl_value, int& error_code)
+                                   double& cpl_value, char last_flag,
+                                   int& error_code)
 {
   if (!run_1d_simulation_step_1d_) {
     throw std::runtime_error("[OneDSolverInterface] run_1d_simulation_step_1d not loaded");
   }
-  run_1d_simulation_step_1d_(problem_id, current_time, save_flag,
-                              coupling_type.c_str(), params, solution,
-                              cpl_value, error_code);
+  // Copy coupling_type into a mutable buffer (shared-library uses char*).
+  std::vector<char> ctype_buf(coupling_type.begin(), coupling_type.end());
+  ctype_buf.push_back('\0');
+  // Copy last_flag into a mutable single-character buffer.
+  char flag_buf[2] = { last_flag, '\0' };
+  run_1d_simulation_step_1d_(problem_id, current_time, save_incr,
+                              ctype_buf.data(), params, solution,
+                              cpl_value, flag_buf, error_code);
 }
 
 void OneDSolverInterface::extract_coupled_dof(int problem_id, int& coupled_dof,

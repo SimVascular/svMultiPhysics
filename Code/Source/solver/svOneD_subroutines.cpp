@@ -287,12 +287,12 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     std::vector<double> work_sol = st.solution;
     st.interface->update_solution(st.problem_id, work_sol.data(), st.system_size);
 
-    int save_flag  = (BCFlag == 'L') ? 1 : 0;
+    int save_incr  = com_mod.saveIncr;
     int error_code = 0;
 
-    st.interface->run_step(st.problem_id, t_old, save_flag,
+    st.interface->run_step(st.problem_id, t_old, save_incr,
                            st.coupling_type, params,
-                           work_sol.data(), cpl_values[k], error_code);
+                           work_sol.data(), cpl_values[k], BCFlag, error_code);
 
     if (error_code != 0) {
       throw std::runtime_error(

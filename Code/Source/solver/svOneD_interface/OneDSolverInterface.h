@@ -50,16 +50,20 @@ class OneDSolverInterface {
   /// @brief Advance the 1D solver by one time step.
   /// @param problem_id   Problem identifier.
   /// @param current_time Current simulation time (start of the step).
-  /// @param save_flag    Non-zero to write VTK output for this step.
+  /// @param save_incr    VTK output interval (Increment_in_saving_VTK_files from solver.xml);
+  ///                     the 1D library decides internally whether to write output.
   /// @param coupling_type "NEU" or "DIR".
   /// @param params       Array [N, t1, t2, ..., val1, val2, ...] where N=2.
   /// @param solution     In/out: solution vector updated after the step.
   /// @param cpl_value    Output: the BC value returned by the 1D solver
   ///                     (pressure for NEU, flow for DIR).
+  /// @param last_flag    'L' for the final (committed) iteration, 'D' for
+  ///                     derivative / predictor steps.
   /// @param error_code   Output: non-zero on failure.
-  void run_step(int problem_id, double current_time, int save_flag,
+  void run_step(int problem_id, double current_time, int save_incr,
                 const std::string& coupling_type, double* params,
-                double* solution, double& cpl_value, int& error_code);
+                double* solution, double& cpl_value, char last_flag,
+                int& error_code);
 
   /// @brief Retrieve the index within the solution vector that corresponds to
   ///        the coupled boundary DOF.
@@ -79,7 +83,7 @@ class OneDSolverInterface {
   void (*return_1d_solution_)(int, double*, int) = nullptr;
   void (*update_1d_solution_)(int, double*, int) = nullptr;
   void (*run_1d_simulation_step_1d_)(int, double, int, const char*, double*,
-                                     double*, double&, int&) = nullptr;
+                                     double*, double&, char*, int&) = nullptr;
   void (*extract_coupled_dof_)(int, int&, char*) = nullptr;
 };
 
