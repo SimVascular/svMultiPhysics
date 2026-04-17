@@ -1188,8 +1188,10 @@ svOneDSolverInterfaceParameters::svOneDSolverInterfaceParameters()
 
   set_parameter("Coupling_type",  "", required,  coupling_type);
   set_parameter("Shared_library", "", required,  shared_library);
-  // Note: Input_file is no longer defined here. Each coupled face specifies
-  // its own 1D model input file via <Coupling_interface> <svOneDSolver_input_file>.
+  // Unlike svZeroDSolver (which uses a single global Input_file for all faces),
+  // svOneDSolver requires each coupled face to supply its own input file.
+  // Per-face input files are specified via <Coupling_interface>
+  // <svOneDSolver_input_file> inside each <Add_BC> element.
 }
 
 void svOneDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)

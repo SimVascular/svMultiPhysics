@@ -129,6 +129,10 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
     throw std::runtime_error("[sv1D::init_sv1D] sv1D solver interface data is missing.");
   }
 
+  // Initialize the 1D simulation clock from the 3D solver's current time so
+  // that restarts and non-zero start times are handled correctly.
+  sv1DTime = com_mod.time;
+
   // ----- Collect the list of sv1D-coupled faces -----
   // We iterate over eq[0]'s BCs and pick those with iBC_cpl AND a non-empty
   // oned_input_file.  Their cplBCptr values are the indices into cplBC.fa[].
@@ -159,8 +163,8 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
   shared_lib_instance->load_library(lib_path);
 
   // ----- Assign ranks and initialize owned models -----
-  const int nModels = static_cast<int>(oned_models.size());
-  for (int k = 0; k < nModels; k++) {
+  const int nTotalModels = static_cast<int>(oned_models.size());
+  for (int k = 0; k < nTotalModels; k++) {
     auto& st = oned_models[k];
     st.owner_rank = k % nProcs;
 
@@ -212,10 +216,10 @@ void calc_sv1D(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
 
   const double t_old = sv1DTime;
   const double t_new = sv1DTime + com_mod.dt;
-  const int    nModels = static_cast<int>(oned_models.size());
+  const int    nTotalModels = static_cast<int>(oned_models.size());
 
   // Each rank solves its own models and then broadcasts the result.
-  for (int k = 0; k < nModels; k++) {
+  for (int k = 0; k < nTotalModels; k++) {
     auto& st     = oned_models[k];
     int   fa_ptr = st.fa_ptr;
 
