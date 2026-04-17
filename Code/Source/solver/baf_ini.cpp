@@ -145,6 +145,9 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
           com_mod.cplBC.fa[i].RCR.Rd = bc.RCR.Rd;
           com_mod.cplBC.fa[i].RCR.Pd = bc.RCR.Pd;
           com_mod.cplBC.fa[i].RCR.Xo = bc.RCR.Xo;
+          if (utils::btest(bc.bType, iBC_RCR)) {
+            com_mod.cplBC.fa[i].isRCR = true;
+          }
         } else { 
           throw std::runtime_error("Not a compatible cplBC_type");
         }

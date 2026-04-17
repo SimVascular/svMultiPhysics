@@ -778,6 +778,9 @@ class cplFaceType
 
     // sv1D: path to the per-face 1D solver input file.
     std::string oned_input_file;
+
+    // Whether this face uses RCR (Windkessel) boundary condition.
+    bool isRCR = false;
 };
 
 //----------------------------
