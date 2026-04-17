@@ -852,9 +852,16 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
     auto& bc = eq.bc[iBc];
     int iFa = bc.iFa;
     
-    // For Coupled BC, get pressure from CoupledBoundaryCondition (set by svZeroD interface)
+    // For Coupled BC, get the coupling value from CoupledBoundaryCondition:
+    //   NEU: 0D/1D solver returns pressure P  → apply as Neumann traction
+    //   DIR: 0D/1D solver returns flow rate Q → apply as Dirichlet velocity (bc.g = Q, then
+    //        set_bc_dir_l multiplies by gx(a)*nV to produce the nodal velocity profile)
     if (utils::btest(bc.bType, iBC_Coupled)) {
-      bc.g = bc.coupled_bc.get_pressure();
+      if (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir) {
+        bc.g = bc.coupled_bc.get_Qn();
+      } else {
+        bc.g = bc.coupled_bc.get_pressure();
+      }
     }
     // For other coupled BCs (Dir, Neu), get from cplBC.fa
     else {

@@ -314,7 +314,16 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
   for (int k = 0; k < nTotalModels; k++) {
     auto& st = oned_models[k];
     MPI_Bcast(&cpl_values[k], 1, MPI_DOUBLE, st.owner_rank, cm.com());
-    eq.bc[st.iBc].coupled_bc.set_pressure(cpl_values[k]);
+    auto& cpl_bc = eq.bc[st.iBc].coupled_bc;
+    if (cpl_bc.get_bc_type() == BoundaryConditionType::bType_Dir) {
+      // 1D solver returns flow Q for DIR coupling; store it as flowrate so that
+      // set_bc can read get_Qn() and build the nodal velocity profile.
+      double Qo_prev = cpl_bc.get_Qn();
+      cpl_bc.set_flowrates(Qo_prev, cpl_values[k]);
+    } else {
+      // 1D solver returns pressure P for NEU coupling.
+      cpl_bc.set_pressure(cpl_values[k]);
+    }
   }
 
   // Advance the simulation clock after the final iteration.
