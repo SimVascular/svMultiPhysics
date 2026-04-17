@@ -171,6 +171,20 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
     throw std::runtime_error("[sv1D::init_sv1D] No sv1D-coupled faces with input files found.");
   }
 
+  // ----- Guard: require at least one MPI rank per 1D model -----
+  // Each rank owns exactly one model (owner_rank = k % nProcs).  If nProcs < N
+  // a single rank would own multiple models and call shared_lib_instance->initialize()
+  // more than once, corrupting the static problem-ID state inside the shared library.
+  const int nTotalModels = static_cast<int>(oned_models.size());
+  if (nProcs < nTotalModels) {
+    throw std::runtime_error(
+        "[sv1D::init_sv1D] Number of MPI processes (" + std::to_string(nProcs) +
+        ") is less than the number of sv1D-coupled faces (" +
+        std::to_string(nTotalModels) +
+        ").  Please run with at least " + std::to_string(nTotalModels) +
+        " MPI processes.");
+  }
+
   // ----- Load shared library (once per process) -----
   const std::string lib_path = resolve_lib_path(solver_if.solver_library);
   shared_lib_instance = new OneDSolverInterface();
@@ -181,7 +195,6 @@ void init_sv1D(ComMod& com_mod, const CmMod& cm_mod)
   // reading and initializing only the model(s) it owns.  Rank k owns model k
   // (assigned via k % nProcs), so for N models and N ranks every rank handles
   // exactly one model with no inter-rank synchronization.
-  const int nTotalModels = static_cast<int>(oned_models.size());
   for (int k = 0; k < nTotalModels; k++) {
     auto& st = oned_models[k];
     st.owner_rank = k % nProcs;
