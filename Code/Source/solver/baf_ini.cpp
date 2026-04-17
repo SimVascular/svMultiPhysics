@@ -776,10 +776,21 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       }
       fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
     }
+    
+  } else if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_Coupled)) {
+    // For Coupled-DIR BCs: iBC_Dir was cleared in read_files but the face DOFs must still
+    // be excluded from the linear solve (Ax=b). Register as BC_TYPE_Dir so the
+    // preconditioner zeros out those rows/columns, preventing the solver from
+    // overwriting the velocity values set by set_bc_dir.
+    if (btest(lBc.bType, iBC_Coupled) &&
+        lBc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+      lsPtr = lsPtr + 1;
+      lBc.lsPtr = lsPtr;
+      sVl = 0.0;
+      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl);
 
-  } else if (btest(lBc.bType, iBC_Neu)) {
     // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
-    if (btest(lBc.bType, iBC_res)) {
+    } else if (btest(lBc.bType, iBC_res)) {
       sV = 0.0;
       for (int e = 0; e < lFa.nEl; e++) {
         if (lFa.eType == ElementType::NRB) {
