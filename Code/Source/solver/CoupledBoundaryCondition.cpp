@@ -4,13 +4,10 @@
 #include "ComMod.h"
 #include "CoupledBoundaryCondition.h"
 #include "all_fun.h"
-#include "consts.h"
 #include "utils.h"
-#include "fils_struct.hpp"
 #include "VtkData.h"
 #include "nn.h"
 #include <fstream>
-#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vtkCellType.h>
@@ -18,6 +15,8 @@
 // =========================================================================
 // CoupledBoundaryCondition
 // =========================================================================
+
+const CmMod CoupledBoundaryCondition::cm_mod_{};
 
 CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryCondition& other)
     : face_(other.face_)
@@ -1258,17 +1257,16 @@ void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
 
 /// @brief Calculates the cap contribution to the linear solver face and broadcasts it to all ranks.
 /// @param com_mod The com_mod object.
-/// @param cm_mod The cm_mod object.
 /// @param lhs_face The linear solver face.
 /// @param cfg The mechanical configuration type.
-void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
+void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& com_mod,
                                                                       fsi_linear_solver::FSILS_faceType& lhs_face,
                                                                       consts::MechanicalConfigurationType cfg,
                                                                       const SolutionStates& solutions)
 {
     const int nsd = com_mod.nsd;
 
-    gather_global_mesh_state(com_mod, cm_mod, solutions, false);
+    gather_global_mesh_state(com_mod, cm_mod_, solutions, false);
 
     // Same count on every rank: IDs were broadcast in distribute() (not inferable from has_cap/owns_cap alone).
     const int cap_nNo = static_cast<int>(cap_mesh_global_node_ids_.size());
@@ -1294,5 +1292,22 @@ void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& co
     }
 
     // Broadcast the cap contribution to all ranks
-    bcast_cap_lhs_contribution(com_mod, cm_mod, lhs_face, cap_nNo, cap_gN_all, cap_val_all);
+    bcast_cap_lhs_contribution(com_mod, cm_mod_, lhs_face, cap_nNo, cap_gN_all, cap_val_all);
+}
+
+void CoupledBoundaryCondition::bcast_coupled_neumann_pressure(const CmMod& cm_mod, cmType& cm)
+{
+    if (cm.seq()) {
+        return;
+    }
+    using namespace consts;
+    if (get_bc_type() != BoundaryConditionType::bType_Neu) {
+        return;
+    }
+    double pr = 0.0;
+    if (cm.mas(cm_mod)) {
+        pr = get_pressure();
+    }
+    cm.bcast(cm_mod, &pr);
+    set_pressure(pr);
 }

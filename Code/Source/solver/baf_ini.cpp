@@ -11,7 +11,7 @@
 #include "nn.h"
 #include "set_bc.h"
 #include "utils.h"
-#include "svZeroD_subroutines.h"
+#include "svZeroD_interface.h"
 
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
@@ -163,15 +163,8 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
     }
 
     // Initialize cap integration for Coupled boundary conditions
-    #ifdef debug_baf_ini
-    dmsg << "Initializing cap integration for Coupled BCs...";
-    dmsg << "com_mod.nEq: " << com_mod.nEq;
-    #endif
     for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
       auto& eq = com_mod.eq[iEq];
-      #ifdef debug_baf_ini
-      dmsg << "iEq: " << iEq << " eq.nBc: " << eq.nBc;
-      #endif
       for (int iBc = 0; iBc < eq.nBc; iBc++) {
         auto& bc = eq.bc[iBc];
         if (utils::btest(bc.bType, iBC_Coupled)) {

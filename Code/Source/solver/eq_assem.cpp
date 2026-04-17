@@ -4,7 +4,6 @@
 #include "eq_assem.h"
 
 #include "all_fun.h"
-#include "CmMod.h"
 #include "consts.h"
 #include "lhsa.h"
 #include "nn.h"
@@ -352,13 +351,11 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
   if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_Coupled))) {
     auto& face = com_mod.lhs.face[lBc.lsPtr];
     auto cfg = MechanicalConfigurationType::new_timestep;
-    // Create a CmMod instance for the reduce operation
-    CmMod cm_mod;
 
     auto& cpl = lBc.coupled_bc;
     face.has_cap = cpl.has_cap();
     if (cpl.has_cap()) {
-      cpl.copy_cap_surface_to_linear_solver_face(com_mod, cm_mod, face, cfg, solutions);
+      cpl.copy_cap_surface_to_linear_solver_face(com_mod, face, cfg, solutions);
     }
   } else {
     // Clear cap fields if not a Coupled BC

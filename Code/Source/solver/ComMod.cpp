@@ -66,6 +66,8 @@ void adjType::destroy()
 cplBCType::cplBCType()
 {
   schm = consts::CplBCType::cplBC_NA;
+  nSvZeroD_coupled_bc = 0;
+  svZeroD_coupled_bc_idxs.clear();
 }
 
 ///////////////////

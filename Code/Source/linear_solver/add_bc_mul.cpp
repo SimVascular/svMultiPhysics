@@ -81,7 +81,7 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
             Y(i,Ac) = Y(i,Ac) + v(i,Ac)*S;
           }
         }
-        
+
       } 
       // If face is not shared across procs
       else  {

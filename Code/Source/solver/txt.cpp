@@ -12,7 +12,7 @@
 #include "set_bc.h"
 #include "utils.h"
 #include <math.h>
-#include "svZeroD_subroutines.h"
+#include "svZeroD_interface.h"
 
 namespace txt_ns {
 

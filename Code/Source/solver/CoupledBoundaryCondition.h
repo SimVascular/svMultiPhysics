@@ -5,21 +5,18 @@
 #define COUPLED_BOUNDARY_CONDITION_H
 
 #include <string>
-#include <vector>
 #include <memory>
 #include <exception>
 #include <optional>
 #include <utility>
 #include "consts.h"
-#include "Array.h"
+#include "CmMod.h"
 #include "SolutionStates.h"
-#include "Vector.h"
 
 // Forward declarations to avoid heavy includes
 class LPNSolverInterface;
 class faceType;
 class ComMod;
-class CmMod;
 
 namespace fsi_linear_solver {
     class FSILS_faceType;
@@ -195,7 +192,7 @@ class CappingSurface {
 ///  - computing flowrates on the face for coupling, and
 ///  - getting/setting pressure values from/to a 0D solver.
 ///
-/// The class manages its own coupling data. svZeroD_subroutines accesses
+/// The class manages its own coupling data. svZeroD interface code accesses
 /// coupled boundary conditions by iterating through com_mod.eq[].bc[].
 class CoupledBoundaryCondition {
 private:
@@ -240,6 +237,9 @@ private:
     std::optional<CappingSurface> cap_;
     /// @brief Reused global-column mesh state for cap gather (allocated on ranks that unpack; includes Yo/Yn rows).
     CapGlobalMeshState cap_global_mesh_state_;
+
+    /// @brief Default CmMod used for cap gather/bcast (master rank id and MPI datatypes; stateless for this use).
+    static const CmMod cm_mod_;
 
     /// Fill \ref cap_global_mesh_state_. Serial: all ranks. Parallel: root only (slaves skip buffer allocation).
     void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions, bool gather_Y);
@@ -328,8 +328,7 @@ public:
     void initialize_cap(ComMod& com_mod);
 
     /// @brief Gather mesh geometry, compute cap \a valM on master, and copy to FSILS face (all ranks enter MPI gather).
-    void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
-                                                fsi_linear_solver::FSILS_faceType& lhs_face,
+    void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
                                                 consts::MechanicalConfigurationType cfg,
                                                 const SolutionStates& solutions);
 
@@ -420,8 +419,9 @@ public:
     /// @brief True if this rank stores the cap mesh / quadrature in \ref cap_.
     bool owns_cap() const { return owns_cap_; }
 
+    /// @brief Master reads Neumann pressure, one scalar \c MPI_Bcast, all ranks set pressure (svZeroD sync).
+    void bcast_coupled_neumann_pressure(const CmMod& cm_mod, cmType& cm);
+
 };
-
-
 
 #endif // COUPLED_BOUNDARY_CONDITION_H

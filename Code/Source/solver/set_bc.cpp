@@ -17,7 +17,7 @@
 #include "ustruct.h"
 #include "utils.h"
 #include <math.h>
-#include "svZeroD_subroutines.h"
+#include "svZeroD_interface.h"
 
 namespace set_bc {
 
@@ -147,7 +147,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
         dmsg << "cplBC.fa[ptr].Qn: " << cplBC.fa[ptr].Qn;
         #endif
 
-      } 
+      }
       // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1 
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
@@ -198,7 +198,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
    } else {
      diff = diff*relTol;
   }
-  
+
   // Store the original pressures and flowrates for cplBC
   std::vector<double> orgY(cplBC.fa.size());
   std::vector<double> orgQ(cplBC.fa.size());
@@ -320,7 +320,7 @@ void cplBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const bool RCRflag)
     cm.bcast(cm_mod, cplBC.xn);
     cm.bcast(cm_mod, y);
 
-    if (cm.slv(cm_mod)) {
+    if (cm.slv(cm_mod)) { 
       for (int i = 0; i < cplBC.nFa; i++) {
         cplBC.fa[i].y = y(i);
       }
@@ -805,7 +805,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
     auto& bc = eq.bc[iBc];
     int iFa = bc.iFa;
     
-    // For Coupled BC, get pressure from CoupledBoundaryCondition (set by svZeroD_subroutines)
+    // For Coupled BC, get pressure from CoupledBoundaryCondition (set by svZeroD interface)
     if (utils::btest(bc.bType, iBC_Coupled)) {
       bc.g = bc.coupled_bc.get_pressure();
     }
@@ -1438,8 +1438,8 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   if (utils::btest(lBc.bType,iBC_cpl) || utils::btest(lBc.bType,iBC_RCR)) {
     h(0) = lBc.g;
 
-  } else {   
-     
+  } else {
+    
     if (utils::btest(lBc.bType,iBC_gen)) {
        // [NOTE] The Fortran code was passing a vector to 'igbc' 
        // which treats is as an array dY(gm%dof,SIZE(gm%d,2).

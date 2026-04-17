@@ -13,9 +13,9 @@
 
 namespace svZeroD {
 
-void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], double QnCoupled[], double PCoupled[], double PnCoupled[]);
+void get_coupled_QP(ComMod& com_mod, double QCoupled[], double QnCoupled[], double PCoupled[], double PnCoupled[]);
 
-void print_svZeroD(int* nSrfs, int surfID[], double Q[], double P[]);
+void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], double P[]);
 
 void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod);
 

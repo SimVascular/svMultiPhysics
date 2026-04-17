@@ -36,6 +36,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -826,6 +827,12 @@ class cplBCType
 
     /// @brief Number of coupled faces
     int nFa = 0;
+
+    /// @brief Number of \c Time_dependence Coupled BCs for svZeroD (set in \c init_svZeroD).
+    int nSvZeroD_coupled_bc = 0;
+
+    /// @brief (\c iEq, \c iBc) for each svZeroD coupled BC in deterministic traversal order.
+    std::vector<std::pair<int, int>> svZeroD_coupled_bc_idxs;
 
     /// @brief Number of unknowns in the 0D domain
     int nX = 0;

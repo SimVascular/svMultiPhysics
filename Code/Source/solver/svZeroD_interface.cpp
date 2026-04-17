@@ -1,14 +1,11 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "svZeroD_subroutines.h"
+#include "svZeroD_interface.h"
 
-#include <iostream>
 #include <fstream>
 #include <string>
-#include <cmath>
 #include <iomanip>
-#include "cmm.h"
 #include "consts.h"
 #include "svZeroD_interface/LPNSolverInterface.h"
 #include "ComMod.h"
@@ -23,36 +20,30 @@ namespace svZeroD {
 
 namespace {
 
-static int count_coupled_bcs(ComMod& com_mod)
+/// Fills \c com_mod.cplBC.nSvZeroD_coupled_bc and \c svZeroD_coupled_bc_idxs (same order as nested eq/bc loops).
+static void build_svzero_coupled_bc_idxs(ComMod& com_mod)
 {
-  int n = 0;
+  auto& cpl = com_mod.cplBC;
+  cpl.svZeroD_coupled_bc_idxs.clear();
   for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
     for (int iBc = 0; iBc < com_mod.eq[iEq].nBc; iBc++) {
       if (utils::btest(com_mod.eq[iEq].bc[iBc].bType, consts::iBC_Coupled)) {
-        n++;
+        cpl.svZeroD_coupled_bc_idxs.emplace_back(iEq, iBc);
       }
     }
   }
-  return n;
+  cpl.nSvZeroD_coupled_bc = static_cast<int>(cpl.svZeroD_coupled_bc_idxs.size());
 }
 
 static bool nth_coupled_bc(ComMod& com_mod, int n, bcType** out_bc)
 {
-  int k = 0;
-  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-    auto& eq = com_mod.eq[iEq];
-    for (int iBc = 0; iBc < eq.nBc; iBc++) {
-      auto& bc = eq.bc[iBc];
-      if (utils::btest(bc.bType, consts::iBC_Coupled)) {
-        if (k == n) {
-          *out_bc = &bc;
-          return true;
-        }
-        k++;
-      }
-    }
+  auto& cpl = com_mod.cplBC;
+  if (n < 0 || n >= cpl.nSvZeroD_coupled_bc) {
+    return false;
   }
-  return false;
+  const auto pr = cpl.svZeroD_coupled_bc_idxs[static_cast<size_t>(n)];
+  *out_bc = &com_mod.eq[pr.first].bc[pr.second];
+  return true;
 }
 
 }  // namespace
@@ -67,7 +58,6 @@ int model_id;
 
 std::vector<int> nsrflistCoupled(numCoupledSrfs);
 std::vector<std::string> svzd_blk_names(numCoupledSrfs);
-std::vector<int> svzd_blk_name_len(numCoupledSrfs);
 std::vector<double> in_out_sign(numCoupledSrfs);
 std::vector<double> lpn_times(num_output_steps);
 std::vector<double> lpn_solutions((num_output_steps * system_size));
@@ -117,13 +107,13 @@ void get_svZeroD_variable_ids(std::string block_name, int* blk_ids, double* inle
   if ((num_inlet_nodes == 0) && (num_outlet_nodes == 1)) {
     blk_ids[0] = IDs[1+num_inlet_nodes*2+1]; // Outlet flow
     blk_ids[1] = IDs[1+num_inlet_nodes*2+2]; // Outlet pressure
-    *inlet_or_outlet = 1.0; // Signifies inlet to 0D model
+    *inlet_or_outlet = 1.0; // Signifies inlet to LPN
   } else if ((num_inlet_nodes == 1) && (num_outlet_nodes == 0)) {
     blk_ids[0] = IDs[1]; // Inlet flow
     blk_ids[1] = IDs[2]; // Inlet pressure
-    *inlet_or_outlet = -1.0; // Signifies outlet from 0D model
+    *inlet_or_outlet = -1.0; // Signifies outlet to LPN
   } else {
-    std::runtime_error("ERROR: [lpn_interface_get_variable_ids] Not a flow/pressure block.");
+    throw std::runtime_error("ERROR: [lpn_interface_get_variable_ids] Not a flow/pressure block.");
   }
 }
 
@@ -170,37 +160,32 @@ void write_svZeroD_solution(const double* lpn_time, std::vector<double>& lpn_sol
   }
 }
 
-void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], double QnCoupled[], double PCoupled[], double PnCoupled[])
+void get_coupled_QP(ComMod& com_mod, double QCoupled[], double QnCoupled[], double PCoupled[], double PnCoupled[])
 {
   using namespace consts;
 
-  int ind = 0;
-  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-    auto& eq = com_mod.eq[iEq];
-    for (int iBc = 0; iBc < eq.nBc; iBc++) {
-      auto& bc = eq.bc[iBc];
-      if (utils::btest(bc.bType, iBC_Coupled)) {
-        if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-          QCoupled[ind] = bc.coupled_bc.get_Qo();
-          QnCoupled[ind] = bc.coupled_bc.get_Qn();
-          PCoupled[ind] = 0.0;
-          PnCoupled[ind] = 0.0;
-          ind = ind + 1;
-        } else if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
-          QCoupled[ind] = bc.coupled_bc.get_Qo();
-          QnCoupled[ind] = bc.coupled_bc.get_Qn();
-          PCoupled[ind] = bc.coupled_bc.get_Po();
-          PnCoupled[ind] = bc.coupled_bc.get_Pn();
-          ind = ind + 1;
-        } else {
-          throw std::runtime_error("ERROR: [get_coupled_QP] Invalid Coupled BC type.");
-        }
-      }
+  const auto& cpl = com_mod.cplBC;
+  for (int ind = 0; ind < cpl.nSvZeroD_coupled_bc; ind++) {
+    const size_t i_path = static_cast<size_t>(ind);
+    const std::pair<int, int>& pr = cpl.svZeroD_coupled_bc_idxs[i_path];
+    auto& bc = com_mod.eq[pr.first].bc[pr.second];
+    if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+      QCoupled[ind] = bc.coupled_bc.get_Qo();
+      QnCoupled[ind] = bc.coupled_bc.get_Qn();
+      PCoupled[ind] = 0.0;
+      PnCoupled[ind] = 0.0;
+    } else if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+      QCoupled[ind] = bc.coupled_bc.get_Qo();
+      QnCoupled[ind] = bc.coupled_bc.get_Qn();
+      PCoupled[ind] = bc.coupled_bc.get_Po();
+      PnCoupled[ind] = bc.coupled_bc.get_Pn();
+    } else {
+      throw std::runtime_error("ERROR: [get_coupled_QP] Invalid Coupled BC type.");
     }
   }
 }
 
-void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[]) {
+void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], double P[]) {
   int nParam = 2;
   const char* fileNames[2] = {"Q_svZeroD", "P_svZeroD"};
   std::vector<std::vector<double>> R(nParam, std::vector<double>(*nSrfs));
@@ -211,10 +196,6 @@ void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[])
     R[0][i] = Q[i];
     R[1][i] = P[i];
   }
-
-  // Set formats
-  std::string myFMT1 = "(" + std::to_string(*nSrfs) + "(E13.5))";
-  std::string myFMT2 = "(" + std::to_string(*nSrfs) + "(I13))";
 
   for (int i = 0; i < nParam; ++i) {
     std::ifstream file(fileNames[i]);
@@ -254,13 +235,13 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   auto& cm = com_mod.cm;
   double dt = com_mod.dt;
 
-  int nCoupledBcCount = count_coupled_bcs(com_mod);
-  if (nCoupledBcCount == 0) {
+  build_svzero_coupled_bc_idxs(com_mod);
+  if (cplBC.nSvZeroD_coupled_bc == 0) {
     throw std::runtime_error(
         "ERROR: [init_svZeroD] svZeroDSolver is enabled but no Time_dependence Coupled boundaries with "
         "<Coupling_interface> were found.");
   }
-  numCoupledSrfs = nCoupledBcCount;
+  numCoupledSrfs = cplBC.nSvZeroD_coupled_bc;
 
 #ifdef debug_init_svZeroD
   dmsg << "numCoupledSrfs: " << numCoupledSrfs;
@@ -274,7 +255,6 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   if (cm.mas(cm_mod)) {
     nsrflistCoupled.clear();
     svzd_blk_names.clear();
-    svzd_blk_name_len.clear();
     in_out_sign.clear();
 
     for (int k = 0; k < numCoupledSrfs; k++) {
@@ -304,7 +284,6 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       }
       const std::string blk_name = bc->coupled_bc.get_block_name();
       svzd_blk_names.push_back(blk_name);
-      svzd_blk_name_len.push_back(static_cast<int>(blk_name.length()));
 #ifdef debug_init_svZeroD
       dmsg << "  coupled surface s=" << s << " block='" << blk_name << "'";
 #endif
@@ -376,72 +355,15 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 
   // Broadcast initial values to follower processes
   if (!cm.seq()) {
-    // For cplBC.fa (Dir and Neu BCs) - only if there are any
-    if (cplBC.nFa > 0) {
-      Vector<double> y(cplBC.nFa);
-
-      if (cm.mas(cm_mod)) {
-        for (int i = 0; i < cplBC.nFa; i++) {
-          y(i) = cplBC.fa[i].y;
-        }
-      }
-
-      cm.bcast(cm_mod, y);
-
-      if (cm.slv(cm_mod)) {
-        for (int i = 0; i < cplBC.nFa; i++) {
-          cplBC.fa[i].y = y(i);
-        }
-      }
-    }
-    
-    // For Coupled BCs - broadcast pressure values (only for Neumann, Dirichlet has pressure as input)
-    if (nCoupledBcCount > 0) {
-      // Count Neumann Coupled BCs for broadcasting
-      int nCoupledNeuCount = 0;
+    // Coupled BCs - broadcast Neumann pressures (one scalar bcast per BC).
+    if (cplBC.nSvZeroD_coupled_bc > 0) {
       for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
         auto& eq = com_mod.eq[iEq];
         for (int iBc = 0; iBc < eq.nBc; iBc++) {
           auto& bc = eq.bc[iBc];
-          if (utils::btest(bc.bType, iBC_Coupled) && 
-              bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-            nCoupledNeuCount++;
-          }
-        }
-      }
-      
-      if (nCoupledNeuCount > 0) {
-        Vector<double> p(nCoupledNeuCount);
-        
-        if (cm.mas(cm_mod)) {
-          int idx = 0;
-          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-            auto& eq = com_mod.eq[iEq];
-            for (int iBc = 0; iBc < eq.nBc; iBc++) {
-              auto& bc = eq.bc[iBc];
-              if (utils::btest(bc.bType, iBC_Coupled) && 
-                  bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-                p(idx) = bc.coupled_bc.get_pressure();
-                idx++;
-              }
-            }
-          }
-        }
-        
-        cm.bcast(cm_mod, p);
-        
-        if (cm.slv(cm_mod)) {
-          int idx = 0;
-          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-            auto& eq = com_mod.eq[iEq];
-            for (int iBc = 0; iBc < eq.nBc; iBc++) {
-              auto& bc = eq.bc[iBc];
-              if (utils::btest(bc.bType, iBC_Coupled) && 
-                  bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-                bc.coupled_bc.set_pressure(p(idx));
-                idx++;
-              }
-            }
+          if (utils::btest(bc.bType, iBC_Coupled) &&
+              bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
+            bc.coupled_bc.bcast_coupled_neumann_pressure(cm_mod, cm);
           }
         }
       }
@@ -457,16 +379,15 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
   auto& cplBC = com_mod.cplBC;
   auto& cm = com_mod.cm;
 
-  int nCoupledBc = count_coupled_bcs(com_mod);
+  const int nCoupledBc = cplBC.nSvZeroD_coupled_bc;
 
   if (cm.mas(cm_mod)) {
     double QCoupled[numCoupledSrfs], QnCoupled[numCoupledSrfs], PCoupled[numCoupledSrfs], PnCoupled[numCoupledSrfs];
-    double total_flow;
     double params[2];
     double times[2];
     int error_code;
     
-    get_coupled_QP(com_mod, cm_mod, QCoupled, QnCoupled, PCoupled, PnCoupled);
+    get_coupled_QP(com_mod, QCoupled, QnCoupled, PCoupled, PnCoupled);
 
     if (writeSvZeroD == 1) {
       if (BCFlag == 'L') {
@@ -484,8 +405,6 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
       times[0] = svZeroDTime;
       times[1] = svZeroDTime + com_mod.dt;
 
-      total_flow = 0.0;
-
       // Update pressure and flow in the zeroD model
       for (int i = 0; i < numCoupledSrfs; ++i) {
         bcType* bc = nullptr;
@@ -502,7 +421,6 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
         } else {
           params[0] = sign * QCoupled[i];
           params[1] = sign * QnCoupled[i];
-          total_flow += QCoupled[i];
         }
         update_svZeroD_block_params(svzd_blk_names[i], times, params);
       }
@@ -557,74 +475,17 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     }
   }
 
-  // If there are multiple procs (not sequential), broadcast outputs to follower procs
+  // If there are multiple procs (not sequential), broadcast coupled Neumann CBC pressures to followers.
   if (!cm.seq()) {
-    // Broadcast cplBC.fa values (Dir and standard Neu BCs) - only if there are any
-    if (cplBC.nFa > 0) {
-      Vector<double> y(cplBC.nFa);
-
-      if (cm.mas(cm_mod)) {
-        for (int i = 0; i < cplBC.nFa; i++) {
-          y(i) = cplBC.fa[i].y;
-        }
-      }
-
-      cm.bcast(cm_mod, y);
-
-      if (cm.slv(cm_mod)) {
-        for (int i = 0; i < cplBC.nFa; i++) {
-          cplBC.fa[i].y = y(i);
-        }
-      }
-    }
-    
-    // Broadcast Coupled BC pressure values (only for Neumann, Dirichlet has pressure as input)
+    // Broadcast Coupled BC Neumann pressures (one scalar bcast per BC).
     if (nCoupledBc > 0) {
-      // Count Neumann Coupled BCs for broadcasting
-      int nCoupledNeuCount = 0;
       for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
         auto& eq = com_mod.eq[iEq];
         for (int iBc = 0; iBc < eq.nBc; iBc++) {
           auto& bc = eq.bc[iBc];
-          if (utils::btest(bc.bType, iBC_Coupled) && 
-              bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-            nCoupledNeuCount++;
-          }
-        }
-      }
-      
-      if (nCoupledNeuCount > 0) {
-        Vector<double> p(nCoupledNeuCount);
-        
-        if (cm.mas(cm_mod)) {
-          int idx = 0;
-          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-            auto& eq = com_mod.eq[iEq];
-            for (int iBc = 0; iBc < eq.nBc; iBc++) {
-              auto& bc = eq.bc[iBc];
-              if (utils::btest(bc.bType, iBC_Coupled) && 
-                  bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-                p(idx) = bc.coupled_bc.get_pressure();
-                idx++;
-              }
-            }
-          }
-        }
-        
-        cm.bcast(cm_mod, p);
-        
-        if (cm.slv(cm_mod)) {
-          int idx = 0;
-          for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
-            auto& eq = com_mod.eq[iEq];
-            for (int iBc = 0; iBc < eq.nBc; iBc++) {
-              auto& bc = eq.bc[iBc];
-              if (utils::btest(bc.bType, iBC_Coupled) && 
-                  bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-                bc.coupled_bc.set_pressure(p(idx));
-                idx++;
-              }
-            }
+          if (utils::btest(bc.bType, iBC_Coupled) &&
+              bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
+            bc.coupled_bc.bcast_coupled_neumann_pressure(cm_mod, cm);
           }
         }
       }
