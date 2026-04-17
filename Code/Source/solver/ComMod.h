@@ -204,6 +204,10 @@ class bcType
 
     // Coupled BC class
     CoupledBoundaryCondition coupled_bc;
+
+    // sv1D: per-face 1D solver input file path (set when Time_dependence=Coupled
+    // and svOneDSolver_interface is active).
+    std::string oned_input_file;
 };
 
 /// @brief Class storing data for B-Splines.
@@ -771,6 +775,9 @@ class cplFaceType
 
     // RCR type BC
     rcrType RCR;
+
+    // sv1D: path to the per-face 1D solver input file.
+    std::string oned_input_file;
 };
 
 //----------------------------
@@ -819,11 +826,9 @@ class sv1DSolverInterfaceType
     // or with extension if the full path is provided).
     std::string solver_library;
 
-    // Path to the 1D solver .in input file.
-    std::string input_file;
-
     // If the data has been set for the interface.  Set to true after
     // the svOneDSolver_interface XML element has been parsed.
+    // Note: the per-face input files are stored in cplFaceType::oned_input_file.
     bool has_data = false;
 
     void set_data(const svOneDSolverInterfaceParameters& params);

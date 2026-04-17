@@ -264,10 +264,27 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       }
 
     } else {
-      // Coupled BC to GenBC
-      if (ci_set) {
-        throw std::runtime_error(
-            "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> is defined on the equation.");
+      // genBC / sv1D path: uses cplBC.fa mechanism.
+      const bool sv1d_iface = com_mod.cplBC.sv1d_solver_interface.has_data;
+
+      if (sv1d_iface) {
+        // For sv1D: each coupled face must specify its own 1D input file via
+        // <Coupling_interface> <svOneDSolver_input_file> ... </svOneDSolver_input_file>
+        if (!ci_set || !bc_params->coupling_interface.svoned_input_file.defined()) {
+          throw std::runtime_error(
+              std::string("[read_bc] With <svOneDSolver_interface>, each 1D-coupled face needs "
+                          "<Coupling_interface> with <svOneDSolver_input_file> (Time_dependence Coupled) "
+                          "on face '") +
+              face_name + "'.");
+        }
+        lBc.oned_input_file = bc_params->coupling_interface.svoned_input_file.value();
+
+      } else {
+        if (ci_set) {
+          throw std::runtime_error(
+              "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> or "
+              "<svOneDSolver_interface> is defined on the equation.");
+        }
       }
 
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));

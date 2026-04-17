@@ -688,7 +688,6 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
 /// <svOneDSolver_interface>
 ///   <Coupling_type> Implicit </Coupling_type>
 ///   <Shared_library> /path/to/libsvoned_interface </Shared_library>
-///   <Input_file> /path/to/solver.in </Input_file>
 /// </svOneDSolver_interface>
 /// \endcode
 ///
@@ -700,7 +699,10 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
 ///   Shared_library: Path to the 1D interface shared library.  The
 ///     extension (.so or .dylib) may be omitted; it will be appended
 ///     automatically based on the platform.
-///   Input_file: Path to the svOneDSolver .in input file.
+///
+///   Each coupled face specifies its own input file via
+///   <Coupling_interface> <svOneDSolver_input_file> ... </svOneDSolver_input_file>
+///   </Coupling_interface> inside the corresponding <Add_BC> element.
 //
 class svOneDSolverInterfaceParameters : public ParameterLists
 {
@@ -714,7 +716,6 @@ class svOneDSolverInterfaceParameters : public ParameterLists
 
     Parameter<std::string> coupling_type;
     Parameter<std::string> shared_library;
-    Parameter<std::string> input_file;
 
     bool value_set = false;
 };
@@ -801,6 +802,9 @@ class CouplingInterfaceParameters : public ParameterLists
 
     Parameter<std::string> svzerod_solver_block;
     Parameter<std::string> chamber_cap_surface;
+
+    // Path to the svOneDSolver .in input file for this face (1D coupling).
+    Parameter<std::string> svoned_input_file;
 
     bool value_set = false;
 };

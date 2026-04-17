@@ -225,6 +225,5 @@ void sv1DSolverInterfaceType::set_data(const svOneDSolverInterfaceParameters& pa
   }
 
   solver_library = params.shared_library();
-  input_file     = params.input_file();
   has_data       = true;
 }

@@ -466,8 +466,9 @@ void BoundaryConditionRCRParameters::set_values(tinyxml2::XMLElement* xml_elem)
 CouplingInterfaceParameters::CouplingInterfaceParameters()
 {
   bool required = false;
-  set_parameter("svZeroDSolver_block", "", !required, svzerod_solver_block);
-  set_parameter("Chamber_cap_surface", "", !required, chamber_cap_surface);
+  set_parameter("svZeroDSolver_block",    "", !required, svzerod_solver_block);
+  set_parameter("Chamber_cap_surface",    "", !required, chamber_cap_surface);
+  set_parameter("svOneDSolver_input_file","", !required, svoned_input_file);
 }
 
 void CouplingInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
@@ -1187,7 +1188,8 @@ svOneDSolverInterfaceParameters::svOneDSolverInterfaceParameters()
 
   set_parameter("Coupling_type",  "", required,  coupling_type);
   set_parameter("Shared_library", "", required,  shared_library);
-  set_parameter("Input_file",     "", required,  input_file);
+  // Note: Input_file is no longer defined here. Each coupled face specifies
+  // its own 1D model input file via <Coupling_interface> <svOneDSolver_input_file>.
 }
 
 void svOneDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
