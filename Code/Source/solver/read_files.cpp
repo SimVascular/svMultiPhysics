@@ -337,7 +337,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
     if ((com_mod.cplBC.schm != CplBCType::cplBC_NA && !com_mod.cplBC.useSv1D) ||
         com_mod.cplBC.xo.size() != 0) {
-      throw std::runtime_error("[read_bc] RCR cannot be used in conjunction with cplBC.");
+      throw std::runtime_error("[read_bc] RCR cannot be used in conjunction with cplBC (except alongside sv1D).");
     }
     com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
     lBc.cplBCptr = com_mod.cplBC.nFa - 1;
