@@ -318,8 +318,13 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     if (cpl_bc.get_bc_type() == BoundaryConditionType::bType_Dir) {
       // 1D solver returns flow Q for DIR coupling; store it as flowrate so that
       // set_bc can read get_Qn() and build the nodal velocity profile.
+      // Negate the sign: the 1D solver returns Q > 0 for inflow, but the 3D
+      // code applies velocity as Q * gx * outward_normal, so Q must be negative
+      // for an inlet face (outward normal points away from the domain).
+      // This matches the svZeroD convention: in_out = -1 for DIR (outlet of 0D
+      // = inlet of 3D), giving QCoupled = -1 * lpn_state_y[flow_id].
       double Qo_prev = cpl_bc.get_Qn();
-      cpl_bc.set_flowrates(Qo_prev, cpl_values[k]);
+      cpl_bc.set_flowrates(Qo_prev, -cpl_values[k]);
     } else {
       // 1D solver returns pressure P for NEU coupling.
       cpl_bc.set_pressure(cpl_values[k]);
