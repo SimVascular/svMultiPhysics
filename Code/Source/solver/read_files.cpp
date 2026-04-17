@@ -351,9 +351,9 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     lBc.RCR.Pd = bc_params->rcr.distal_pressure.value();
     lBc.RCR.Xo = bc_params->rcr.initial_pressure.value();
 
-    if ((com_mod.cplBC.schm != CplBCType::cplBC_NA && !com_mod.cplBC.useSv1D) ||
+    if ((com_mod.cplBC.schm != CplBCType::cplBC_NA && !com_mod.cplBC.useSv1D && !com_mod.cplBC.useSvZeroD) ||
         com_mod.cplBC.xo.size() != 0) {
-      throw std::runtime_error("[read_bc] RCR cannot be used in conjunction with cplBC (except alongside svOneD).");
+      throw std::runtime_error("[read_bc] RCR cannot be used in conjunction with cplBC (except alongside svOneD or svZeroD).");
     }
     com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
     lBc.cplBCptr = com_mod.cplBC.nFa - 1;
@@ -1625,9 +1625,9 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     if (std::set<EquationType>{Equation_fluid,Equation_FSI,Equation_CMM}.count(lEq.phys) == 0) {
       throw std::runtime_error("RCR-type BC is allowed for fluid/CMM/FSI eq. only.");
     }
-    // Only set coupling scheme if not already configured by an external solver (e.g. svOneD).
-    // When svOneD and RCR coexist, svOneD owns the scheme; RCR uses the same scheme.
-    if (!cplBC.useSv1D) {
+    // Only set coupling scheme if not already configured by an external solver (e.g. svOneD, svZeroD).
+    // When svOneD/svZeroD and RCR coexist, the external solver owns the scheme; RCR uses the same scheme.
+    if (!cplBC.useSv1D && !cplBC.useSvZeroD) {
       cplBC.schm = CplBCType::cplBC_SI;
       if (lEq.useTLS) {
         cplBC.schm = CplBCType::cplBC_E;

@@ -177,6 +177,16 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
           set_bc::genBC_Integ_X(com_mod, cm_mod, "L");
         } else if (cplBC.useSvZeroD) {
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'L');
+          // Also integrate any RCR faces that coexist with svZeroD faces.
+          for (auto& bc : com_mod.eq[0].bc) {
+            if (utils::btest(bc.bType, iBC_RCR)) {
+              ltmp = true;
+              break;
+            }
+          }
+          if (ltmp) {
+            set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+          }
 
         } else if (cplBC.useSv1D) {
           svOneD::calc_svOneD(com_mod, cm_mod, 'L');
