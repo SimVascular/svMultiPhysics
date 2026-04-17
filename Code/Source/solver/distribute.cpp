@@ -557,10 +557,15 @@ void distribute(Simulation* simulation)
       cplBC.xo.resize(cplBC.nX);
     }
 
-  } else if (cplBC.useSvZeroD) {   
-    if (cm.slv(cm_mod)) {   
-      cplBC.nX = 0;
+  } else if (cplBC.useSvZeroD) {
+    // Broadcast nX and xo: when RCR faces coexist with svZeroD, nX > 0 and xo must
+    // be distributed to all slave processes so rcr_init can access cplBC.xo[ptr].
+    cm.bcast(cm_mod, &cplBC.nX);
+    if (cplBC.xo.size() == 0) {
       cplBC.xo.resize(cplBC.nX);
+    }
+    if (cplBC.nX != 0) {
+      cm.bcast(cm_mod, cplBC.xo);
     }
 
   } else {
