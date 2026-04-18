@@ -117,12 +117,6 @@ public:
     explicit CappingSurfaceAssemblyException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
 };
 
-/// @brief Failure copying a \ref CappingSurface or its internal face.
-class CappingSurfaceCopyException : public CappingSurfaceBaseException {
-public:
-    explicit CappingSurfaceCopyException(std::string msg) : CappingSurfaceBaseException(std::move(msg)) {}
-};
-
 /// @brief Capping surface geometry and integration for a coupled boundary.
 class CappingSurface {
     public:

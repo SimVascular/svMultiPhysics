@@ -831,27 +831,8 @@ CappingSurface::CappingSurface(const CappingSurface& other)
     , valM_(other.valM_)
     , normals_(other.normals_)
 {
-    if (other.face_ != nullptr) {
-        try {
-            face_ = std::make_unique<faceType>(*other.face_);
-        } catch (const std::exception& e) {
-            throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Failed to copy face_: " +
-                                             std::string(e.what()));
-        }
-        if (face_ != nullptr) {
-            if (face_->nNo > 0 && face_->gN.size() != face_->nNo) {
-                throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Invalid face_: gN.size()=" +
-                                                std::to_string(face_->gN.size()) + " != nNo=" +
-                                                std::to_string(face_->nNo));
-            }
-            if (face_->nEl > 0 && face_->IEN.ncols() != face_->nEl) {
-                throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Invalid face_: IEN.ncols()=" +
-                                                std::to_string(face_->IEN.ncols()) + " != nEl=" +
-                                                std::to_string(face_->nEl));
-            }
-        }
-    } else {
-        face_.reset();
+    if (other.face_) {
+        face_ = std::make_unique<faceType>(*other.face_);
     }
 }
 
@@ -861,13 +842,8 @@ CappingSurface& CappingSurface::operator=(const CappingSurface& other)
         global_node_ids_ = other.global_node_ids_;
         valM_ = other.valM_;
         normals_ = other.normals_;
-        if (other.face_ != nullptr) {
-            try {
-                face_ = std::make_unique<faceType>(*other.face_);
-            } catch (const std::exception& e) {
-                throw CappingSurfaceCopyException("[CappingSurface::operator=] Failed to copy face_: " +
-                                                  std::string(e.what()));
-            }
+        if (other.face_) {
+            face_ = std::make_unique<faceType>(*other.face_);
         } else {
             face_.reset();
         }
@@ -1295,6 +1271,9 @@ void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& co
     bcast_cap_lhs_contribution(com_mod, cm_mod_, lhs_face, cap_nNo, cap_gN_all, cap_val_all);
 }
 
+/// @brief Broadcasts the coupled Neumann pressure to all ranks.
+/// @param cm_mod The cm_mod object.
+/// @param cm The cm object.
 void CoupledBoundaryCondition::bcast_coupled_neumann_pressure(const CmMod& cm_mod, cmType& cm)
 {
     if (cm.seq()) {
