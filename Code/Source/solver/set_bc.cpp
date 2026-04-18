@@ -182,7 +182,6 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
   int j = 0;
   double diff = 0.0;
 
-  // Calculate diff for standard Neu BCs (from cplBC)
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
     int i = bc.cplBCptr;
@@ -199,7 +198,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
      diff = diff*relTol;
   }
 
-  // Store the original pressures and flowrates for cplBC
+  // Store the original pressures and flowrates
   std::vector<double> orgY(cplBC.fa.size());
   std::vector<double> orgQ(cplBC.fa.size());
 
@@ -208,7 +207,6 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
     orgQ[i] = cplBC.fa[i].Qn;
   }
 
-  // Compute derivative for standard Neu BCs
   for (int iBc = 0; iBc < eq.nBc; iBc++) {
     auto& bc = eq.bc[iBc];
     int i = bc.cplBCptr;
@@ -283,7 +281,6 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
 }
 
 /// @brief RCR (Windkessel) integration for the non-genBC / non-svZeroD branch.
-/// The legacy external Fortran Couple_to_cplBC file coupling has been removed.
 void cplBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const bool RCRflag)
 {
   using namespace consts;
