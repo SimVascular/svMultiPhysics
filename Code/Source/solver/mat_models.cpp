@@ -295,12 +295,18 @@ Eigen::Matrix<double, nsd, 1> compute_sheet_normal(const Eigen::Matrix<double, n
     throw std::runtime_error("Sheet-normal active stress (eta_n > 0) is not defined in 2D.");
     
   } else {  // nsd == 3
+    // Zero fiber/sheet vector means no fibers in this region: return zero so Hnn = n*n^T = 0.
+    static constexpr double fib_zero_tol = 1.0e-10;
+    if (fl.col(0).norm() < fib_zero_tol || fl.col(1).norm() < fib_zero_tol) {
+      return Eigen::Matrix<double, nsd, 1>::Zero();
+    }
+
     auto n_normal = cross_product<nsd>(fl.col(0), fl.col(1));
     double norm_n = sqrt(n_normal.dot(n_normal));
-    
-    static constexpr double sheet_normal_tol = 1.0e-10; 
+
+    static constexpr double sheet_normal_tol = 1.0e-10;
     if (norm_n < sheet_normal_tol) {
-      throw std::runtime_error("Fiber and sheet directions are parallel; sheet-normal direction is undefined.");
+      throw std::runtime_error("Fiber and sheet directions are non-zero but parallel; sheet-normal direction is undefined.");
     }
 
     return n_normal / norm_n;
