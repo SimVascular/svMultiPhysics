@@ -226,6 +226,8 @@ private:
     double P_prev_sent_new_ = 0.0;    ///< Under-relaxed pressure sent at t_new on last 'L' step (DIR input).
     double Q_prev_sent_ = 0.0;        ///< Under-relaxed flow output on last 'L' step (DIR output).
     double P_neu_prev_  = 0.0;        ///< Under-relaxed pressure output on last 'L' step (NEU output).
+    double Q_input_prev_old_ = 0.0;   ///< Under-relaxed flow sent at t_old on last 'L' step (NEU input).
+    double Q_input_prev_new_ = 0.0;   ///< Under-relaxed flow sent at t_new on last 'L' step (NEU input).
 
     /// @brief Flowrate data
     double Qo_ = 0.0;                        ///< Flowrate at old timestep (t_n)
@@ -385,6 +387,18 @@ public:
 
     /// @brief Set the NEU output pressure history (call on 'L' steps).
     void set_P_neu_prev(double P) { P_neu_prev_ = P; }
+
+    /// @brief Get the under-relaxed flow sent at t_old on the last 'L' step (NEU input).
+    double get_Q_input_prev_old() const { return Q_input_prev_old_; }
+
+    /// @brief Get the under-relaxed flow sent at t_new on the last 'L' step (NEU input).
+    double get_Q_input_prev_new() const { return Q_input_prev_new_; }
+
+    /// @brief Set the NEU input flow history (call on 'L' steps).
+    void set_Q_input_prev(double old_val, double new_val) {
+        Q_input_prev_old_ = old_val;
+        Q_input_prev_new_ = new_val;
+    }
 
     /// @brief Set the svZeroD solution IDs for flow and pressure
     /// @param flow_id Flow solution ID

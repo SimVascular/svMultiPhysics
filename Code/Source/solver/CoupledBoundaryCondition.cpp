@@ -33,6 +33,8 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryConditio
     , P_prev_sent_new_(other.P_prev_sent_new_)
     , Q_prev_sent_(other.Q_prev_sent_)
     , P_neu_prev_(other.P_neu_prev_)
+    , Q_input_prev_old_(other.Q_input_prev_old_)
+    , Q_input_prev_new_(other.Q_input_prev_new_)
     , Qo_(other.Qo_)
     , Qn_(other.Qn_)
     , Po_(other.Po_)
@@ -73,6 +75,8 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         P_prev_sent_new_ = other.P_prev_sent_new_;
         Q_prev_sent_ = other.Q_prev_sent_;
         P_neu_prev_ = other.P_neu_prev_;
+        Q_input_prev_old_ = other.Q_input_prev_old_;
+        Q_input_prev_new_ = other.Q_input_prev_new_;
         Qo_ = other.Qo_;
         Qn_ = other.Qn_;
         Po_ = other.Po_;
@@ -112,6 +116,8 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , P_prev_sent_new_(other.P_prev_sent_new_)
     , Q_prev_sent_(other.Q_prev_sent_)
     , P_neu_prev_(other.P_neu_prev_)
+    , Q_input_prev_old_(other.Q_input_prev_old_)
+    , Q_input_prev_new_(other.Q_input_prev_new_)
     , Qo_(other.Qo_)
     , Qn_(other.Qn_)
     , Po_(other.Po_)
@@ -167,6 +173,8 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         P_prev_sent_new_ = other.P_prev_sent_new_;
         Q_prev_sent_ = other.Q_prev_sent_;
         P_neu_prev_ = other.P_neu_prev_;
+        Q_input_prev_old_ = other.Q_input_prev_old_;
+        Q_input_prev_new_ = other.Q_input_prev_new_;
         Qo_ = other.Qo_;
         Qn_ = other.Qn_;
         Po_ = other.Po_;
