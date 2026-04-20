@@ -13,6 +13,7 @@
 #include "utils.h"
 #include <math.h>
 #include "svZeroD_interface.h"
+#include "sv1D_subroutines.h"
 
 namespace txt_ns {
 
@@ -176,6 +177,10 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
           set_bc::genBC_Integ_X(com_mod, cm_mod, "L");
         } else if (cplBC.useSvZeroD) {
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'L');
+
+        } else if (cplBC.useSv1D) {
+          sv1D::calc_sv1D(com_mod, cm_mod, 'L');
+          
         } else {
           for (auto& bc : com_mod.eq[0].bc) {
             if (utils::btest(bc.bType, iBC_RCR)) {

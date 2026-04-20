@@ -679,7 +679,46 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
     bool value_set = false;
 };
 
-/// @brief Body force over a mesh using the "Add_BF" command.
+//----------------------------------
+// svOneDSolverInterfaceParameters
+//----------------------------------
+/// @brief Parameters for coupling to the svOneDSolver (1D blood-flow solver).
+///
+/// XML element: \code {.xml}
+/// <svOneDSolver_interface>
+///   <Coupling_type> Implicit </Coupling_type>
+///   <Shared_library> /path/to/libsvoned_interface </Shared_library>
+///   <Input_file> /path/to/solver.in </Input_file>
+/// </svOneDSolver_interface>
+/// \endcode
+///
+/// Notes
+/// -----
+///   Coupling_type: "Explicit" | "Implicit" | "Semi-implicit"
+///     Controls how the 3D Newton iteration couples to the 1D solver
+///     (same semantics as the 0D coupling_type).
+///   Shared_library: Path to the 1D interface shared library.  The
+///     extension (.so or .dylib) may be omitted; it will be appended
+///     automatically based on the platform.
+///   Input_file: Path to the svOneDSolver .in input file.
+//
+class svOneDSolverInterfaceParameters : public ParameterLists
+{
+  public:
+    svOneDSolverInterfaceParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    Parameter<std::string> coupling_type;
+    Parameter<std::string> shared_library;
+    Parameter<std::string> input_file;
+
+    bool value_set = false;
+};
+
 ///
 /// \code {.xml}
 /// <Add_BF mesh="msh" >
@@ -1527,6 +1566,8 @@ class EquationParameters : public ParameterLists
     CoupleGenBCParameters couple_to_genBC;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
+
+    svOneDSolverInterfaceParameters svonedsolver_interface_parameters;
 
     DomainParameters* default_domain = nullptr;
 

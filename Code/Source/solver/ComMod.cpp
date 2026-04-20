@@ -217,3 +217,14 @@ void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters
 
   has_data = true;
 }
+
+void sv1DSolverInterfaceType::set_data(const svOneDSolverInterfaceParameters& params)
+{
+  if (!params.defined()) {
+    return;
+  }
+
+  solver_library = params.shared_library();
+  input_file     = params.input_file();
+  has_data       = true;
+}

@@ -1176,6 +1176,34 @@ void svZeroDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem
 }
 
 //////////////////////////////////////////////////////////
+//           svOneDSolverInterfaceParameters            //
+//////////////////////////////////////////////////////////
+
+const std::string svOneDSolverInterfaceParameters::xml_element_name_ = "svOneDSolver_interface";
+
+svOneDSolverInterfaceParameters::svOneDSolverInterfaceParameters()
+{
+  bool required = true;
+
+  set_parameter("Coupling_type",  "", required,  coupling_type);
+  set_parameter("Shared_library", "", required,  shared_library);
+  set_parameter("Input_file",     "", required,  input_file);
+}
+
+void svOneDSolverInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  std::string error_msg = "Unknown svOneDSolver_interface XML element '";
+
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind(&svOneDSolverInterfaceParameters::set_parameter_value, *this, _1, _2);
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+
+  value_set = true;
+}
+
+//////////////////////////////////////////////////////////
 //                  OutputParameters                    //
 //////////////////////////////////////////////////////////
 
@@ -2414,6 +2442,9 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
 
     } else if (name == svZeroDSolverInterfaceParameters::xml_element_name_) {
       svzerodsolver_interface_parameters.set_values(item);
+
+    } else if (name == svOneDSolverInterfaceParameters::xml_element_name_) {
+      svonedsolver_interface_parameters.set_values(item);
 
     } else if (name == DomainParameters::xml_element_name_) {
       auto domain_params = new DomainParameters();

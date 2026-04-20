@@ -18,6 +18,7 @@
 #include "utils.h"
 #include <math.h>
 #include "svZeroD_interface.h"
+#include "sv1D_subroutines.h"
 
 namespace set_bc {
 
@@ -173,6 +174,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
      set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
    } else if (cplBC.useSvZeroD) {
      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+   } else if (cplBC.useSv1D) {
+     sv1D::calc_sv1D(com_mod, cm_mod, 'D');
    } else {
      set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
   }
@@ -221,6 +224,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
           set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
         } else if (cplBC.useSvZeroD) {
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+        } else if (cplBC.useSv1D) {
+          sv1D::calc_sv1D(com_mod, cm_mod, 'D');
         } else {
           set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
         }
@@ -793,6 +798,8 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
        set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
     } else if (cplBC.useSvZeroD){
       svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+    } else if (cplBC.useSv1D) {
+      sv1D::calc_sv1D(com_mod, cm_mod, 'D');
     } else {
        set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
     }

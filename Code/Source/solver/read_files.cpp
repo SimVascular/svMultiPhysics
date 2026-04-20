@@ -1425,9 +1425,15 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       cplBC.useSvZeroD = true;
       cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
       cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
+    } else if (eq_params->svonedsolver_interface_parameters.defined()) {
+      cplBC.useSv1D = true;
+      cplbc_type_str = eq_params->svonedsolver_interface_parameters.coupling_type.value();
+      cplBC.sv1d_solver_interface.set_data(eq_params->svonedsolver_interface_parameters);
     }
 
-    if (eq_params->couple_to_genBC.defined() || eq_params->svzerodsolver_interface_parameters.defined()) { 
+    if (eq_params->couple_to_genBC.defined() ||
+        eq_params->svzerodsolver_interface_parameters.defined() ||
+        eq_params->svonedsolver_interface_parameters.defined()) {
       try {
         cplBC.schm = consts::cplbc_name_to_type.at(cplbc_type_str);
       } catch (const std::out_of_range& exception) {
@@ -1445,6 +1451,9 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
         cplBC.xp.resize(cplBC.nX);
 
       } else if (cplBC.useSvZeroD) {
+        cplBC.nX = 0;
+
+      } else if (cplBC.useSv1D) {
         cplBC.nX = 0;
       }
     }
