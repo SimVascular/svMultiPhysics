@@ -486,6 +486,9 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
           if (utils::btest(bc.bType, iBC_Coupled) &&
               bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
             bc.coupled_bc.bcast_coupled_neumann_pressure(cm_mod, cm);
+          } else if (utils::btest(bc.bType, iBC_Coupled) &&
+                     bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir) {
+            bc.coupled_bc.bcast_coupled_dir_flowrate(cm_mod, cm);
           }
         }
       }

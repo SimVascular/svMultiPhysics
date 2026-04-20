@@ -469,6 +469,9 @@ public:
     /// @brief Master reads Neumann pressure, one scalar \c MPI_Bcast, all ranks set pressure (svZeroD sync).
     void bcast_coupled_neumann_pressure(const CmMod& cm_mod, cmType& cm);
 
+    /// @brief Master reads DIR flowrates (Qo, Qn), two scalar \c MPI_Bcast, all ranks set flowrates (svZeroD sync).
+    void bcast_coupled_dir_flowrate(const CmMod& cm_mod, cmType& cm);
+
 };
 
 #endif // COUPLED_BOUNDARY_CONDITION_H

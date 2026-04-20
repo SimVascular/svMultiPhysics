@@ -1399,3 +1399,23 @@ void CoupledBoundaryCondition::bcast_coupled_neumann_pressure(const CmMod& cm_mo
     cm.bcast(cm_mod, &pr);
     set_pressure(pr);
 }
+
+void CoupledBoundaryCondition::bcast_coupled_dir_flowrate(const CmMod& cm_mod, cmType& cm)
+{
+    if (cm.seq()) {
+        return;
+    }
+    using namespace consts;
+    if (get_bc_type() != BoundaryConditionType::bType_Dir) {
+        return;
+    }
+    double Qo = 0.0;
+    double Qn = 0.0;
+    if (cm.mas(cm_mod)) {
+        Qo = get_Qo();
+        Qn = get_Qn();
+    }
+    cm.bcast(cm_mod, &Qo);
+    cm.bcast(cm_mod, &Qn);
+    set_flowrates(Qo, Qn);
+}
