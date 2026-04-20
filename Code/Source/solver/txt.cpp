@@ -200,7 +200,7 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
           for (auto& bc : com_mod.eq[0].bc) {
             if (utils::btest(bc.bType, iBC_Coupled) &&
                 bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
-              bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+              bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
             }
           }
           svOneD::calc_svOneD(com_mod, cm_mod, 'L');
