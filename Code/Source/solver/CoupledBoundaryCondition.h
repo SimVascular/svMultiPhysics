@@ -151,12 +151,11 @@ class CappingSurface {
         /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
         double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
             consts::MechanicalConfigurationType cfg);
-
-        /// @brief Compute the cap contribution to the linear solver face (fills \ref valM_; safe under \c const *this).
+        
+            /// @brief Compute the cap contribution to the linear solver face (fills \ref valM_; safe under \c const *this).
         void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
 
         /// @brief Get the cap face.
-        faceType* face() { return face_.get(); }
         const faceType* face() const { return face_.get(); }
 
         /// @brief Get the cap contribution.
