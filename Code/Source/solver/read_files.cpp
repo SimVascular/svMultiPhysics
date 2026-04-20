@@ -542,6 +542,22 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
                                                    cpl_flwP);
       }
 
+      // Read optional pressure ramp parameters for 0D coupling initialization.
+      if (bc_params->coupling_interface.coupling_ramp_steps.defined() &&
+          bc_params->coupling_interface.coupling_ramp_steps.value() > 0) {
+        int    ramp_steps = bc_params->coupling_interface.coupling_ramp_steps.value();
+        double ramp_P_ref = bc_params->coupling_interface.coupling_ramp_ref_pressure.defined()
+                            ? bc_params->coupling_interface.coupling_ramp_ref_pressure.value()
+                            : 0.0;
+        lBc.coupled_bc.set_oned_ramp(ramp_steps, ramp_P_ref);
+      }
+
+      // Read optional under-relaxation factor for 0D coupling.
+      if (bc_params->coupling_interface.coupling_relax_factor.defined()) {
+        double omega = bc_params->coupling_interface.coupling_relax_factor.value();
+        lBc.coupled_bc.set_oned_relax_factor(omega);
+      }
+
     } else {
       throw std::runtime_error(
           std::string("[read_bc] bType_Coupled is set on face '") + face_name +

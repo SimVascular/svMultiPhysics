@@ -218,7 +218,15 @@ private:
     /// Applied as: P_sent = omega * P_new + (1 - omega) * P_prev_sent.
     /// Range: (0, 1].  Default 1.0 = no relaxation.
     double oned_relax_factor_ = 1.0;
-    
+
+    /// @brief Ramp/relax runtime state (shared by both 0D and 1D coupling).
+    /// Updated only on committed ('L') time steps.
+    int    ramp_step_count_ = 0;      ///< Number of committed steps taken (used for ramp fraction).
+    double P_prev_sent_old_ = 0.0;    ///< Under-relaxed pressure sent at t_old on last 'L' step (DIR input).
+    double P_prev_sent_new_ = 0.0;    ///< Under-relaxed pressure sent at t_new on last 'L' step (DIR input).
+    double Q_prev_sent_ = 0.0;        ///< Under-relaxed flow output on last 'L' step (DIR output).
+    double P_neu_prev_  = 0.0;        ///< Under-relaxed pressure output on last 'L' step (NEU output).
+
     /// @brief Flowrate data
     double Qo_ = 0.0;                        ///< Flowrate at old timestep (t_n)
     double Qn_ = 0.0;                        ///< Flowrate at new timestep (t_{n+1})
@@ -343,7 +351,41 @@ public:
     /// @brief Set the under-relaxation factor for DIR coupling pressure.
     /// @param omega Relaxation factor in (0, 1].  1.0 disables relaxation.
     void set_oned_relax_factor(double omega) { oned_relax_factor_ = omega; }
-    
+
+    // =========================================================================
+    // Ramp/relax runtime state accessors (shared by 0D and 1D coupling)
+    // =========================================================================
+
+    /// @brief Get the number of committed time steps (used for ramp fraction).
+    int get_ramp_step_count() const { return ramp_step_count_; }
+
+    /// @brief Increment the committed step counter (call once per 'L' step).
+    void increment_ramp_step_count() { ramp_step_count_++; }
+
+    /// @brief Get the under-relaxed pressure sent at t_old on the last 'L' step (DIR input).
+    double get_P_prev_sent_old() const { return P_prev_sent_old_; }
+
+    /// @brief Get the under-relaxed pressure sent at t_new on the last 'L' step (DIR input).
+    double get_P_prev_sent_new() const { return P_prev_sent_new_; }
+
+    /// @brief Set the DIR input pressure history (call on 'L' steps).
+    void set_P_prev_sent(double old_val, double new_val) {
+        P_prev_sent_old_ = old_val;
+        P_prev_sent_new_ = new_val;
+    }
+
+    /// @brief Get the under-relaxed flow output on the last 'L' step (DIR output).
+    double get_Q_prev_sent() const { return Q_prev_sent_; }
+
+    /// @brief Set the DIR output flow history (call on 'L' steps).
+    void set_Q_prev_sent(double Q) { Q_prev_sent_ = Q; }
+
+    /// @brief Get the under-relaxed pressure output on the last 'L' step (NEU output).
+    double get_P_neu_prev() const { return P_neu_prev_; }
+
+    /// @brief Set the NEU output pressure history (call on 'L' steps).
+    void set_P_neu_prev(double P) { P_neu_prev_ = P; }
+
     /// @brief Set the svZeroD solution IDs for flow and pressure
     /// @param flow_id Flow solution ID
     /// @param pressure_id Pressure solution ID

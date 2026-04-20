@@ -386,6 +386,12 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     double params[2];
     double times[2];
     int error_code;
+
+    // Temporary arrays to record relaxed values for history update on 'L' steps.
+    std::vector<double> P_sent_old_arr(numCoupledSrfs, 0.0);
+    std::vector<double> P_sent_new_arr(numCoupledSrfs, 0.0);
+    std::vector<double> Q_relaxed_arr(numCoupledSrfs, 0.0);
+    std::vector<double> P_relaxed_arr(numCoupledSrfs, 0.0);
     
     get_coupled_QP(com_mod, QCoupled, QnCoupled, PCoupled, PnCoupled);
 
@@ -416,8 +422,30 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
         double sign = bc->coupled_bc.get_in_out_sign();
 
         if (is_dirichlet) {
-          params[0] = PCoupled[i];
-          params[1] = PnCoupled[i];
+          double raw_P_old = PCoupled[i];
+          double raw_P_new = PnCoupled[i];
+
+          // Step 1: apply pressure ramp (scales amplitude from ramp_ref_pressure
+          //         to actual 3D pressure over the first ramp_steps steps).
+          int ramp_steps = bc->coupled_bc.get_oned_ramp_steps();
+          double P_target_old, P_target_new;
+          if (ramp_steps > 0) {
+            double ramp_factor = std::min(1.0, static_cast<double>(bc->coupled_bc.get_ramp_step_count()) / ramp_steps);
+            double P_ref = bc->coupled_bc.get_oned_ramp_ref_pressure();
+            P_target_old = P_ref + ramp_factor * (raw_P_old - P_ref);
+            P_target_new = P_ref + ramp_factor * (raw_P_new - P_ref);
+          } else {
+            P_target_old = raw_P_old;
+            P_target_new = raw_P_new;
+          }
+
+          // Step 2: apply under-relaxation (damps timestep-to-timestep oscillations).
+          // P_sent = omega * P_target + (1 - omega) * P_prev_sent
+          const double omega = bc->coupled_bc.get_oned_relax_factor();
+          params[0] = omega * P_target_old + (1.0 - omega) * bc->coupled_bc.get_P_prev_sent_old();
+          params[1] = omega * P_target_new + (1.0 - omega) * bc->coupled_bc.get_P_prev_sent_new();
+          P_sent_old_arr[i] = params[0];
+          P_sent_new_arr[i] = params[1];
         } else {
           params[0] = sign * QCoupled[i];
           params[1] = sign * QnCoupled[i];
@@ -447,12 +475,20 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
         }
 
         if (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
-          PCoupled[i] = lpn_state_y[pressure_id];
-          bc->coupled_bc.set_pressure(PCoupled[i]);
+          double P_raw = lpn_state_y[pressure_id];
+          // Apply under-relaxation to the pressure output.
+          const double omega = bc->coupled_bc.get_oned_relax_factor();
+          double P_relaxed = omega * P_raw + (1.0 - omega) * bc->coupled_bc.get_P_neu_prev();
+          bc->coupled_bc.set_pressure(P_relaxed);
+          P_relaxed_arr[i] = P_relaxed;
         } else if (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
-          QCoupled[i] = in_out * lpn_state_y[flow_id];
+          double Q_raw = in_out * lpn_state_y[flow_id];
+          // Apply under-relaxation to the flow output to damp timestep-to-timestep oscillations.
+          const double omega = bc->coupled_bc.get_oned_relax_factor();
+          double Q_relaxed = omega * Q_raw + (1.0 - omega) * bc->coupled_bc.get_Q_prev_sent();
           double Qo_prev = bc->coupled_bc.get_Qn();
-          bc->coupled_bc.set_flowrates(Qo_prev, QCoupled[i]);
+          bc->coupled_bc.set_flowrates(Qo_prev, Q_relaxed);
+          Q_relaxed_arr[i] = Q_relaxed;
         } else {
           throw std::runtime_error("ERROR: [calc_svZeroD] Invalid Coupled BC type.");
         }
@@ -462,6 +498,19 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
         // Save state and update time only after the last inner iteration
         interface->return_ydot(last_state_ydot);
         std::copy(lpn_state_y.begin(), lpn_state_y.end(), last_state_y.begin());
+
+        // Update ramp/relax history for all coupled BCs.
+        for (int i = 0; i < numCoupledSrfs; ++i) {
+          bcType* bc_hist = nullptr;
+          if (!nth_coupled_bc(com_mod, i, &bc_hist)) continue;
+          if (bc_hist->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+            bc_hist->coupled_bc.set_P_prev_sent(P_sent_old_arr[i], P_sent_new_arr[i]);
+            bc_hist->coupled_bc.set_Q_prev_sent(Q_relaxed_arr[i]);
+          } else {
+            bc_hist->coupled_bc.set_P_neu_prev(P_relaxed_arr[i]);
+          }
+          bc_hist->coupled_bc.increment_ramp_step_count();
+        }
 
         if (writeSvZeroD == 1) {
           // Write the state vector to a file
