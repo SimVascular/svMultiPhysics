@@ -76,13 +76,11 @@
        <G_Na> 14.838 </G_Na>
        <G_CaL> 3.98E-5 </G_CaL>
        <G_Kr> 0.153 </G_Kr>
-       <G_Ks> 0.392 </G_Ks> 
-       <G_to> 0.294 </G_to>
 
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
        <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
 
-       <Myocardial_zone> epicardium </Myocardial_zone>
+       <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 
        <ODE_solver> FE </ODE_solver>
    </Domain>
@@ -93,13 +91,11 @@
        <G_Na> 14.838 </G_Na>
        <G_CaL> 3.98E-5 </G_CaL>
        <G_Kr> 0.153 </G_Kr>
-       <G_Ks> 0.392 </G_Ks> 
-       <G_to> 0.294 </G_to>
 
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
        <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
 
-       <Myocardial_zone> epicardium </Myocardial_zone>
+       <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 
        <Stimulus type="Istim" >
            <Amplitude> -35.714 </Amplitude>

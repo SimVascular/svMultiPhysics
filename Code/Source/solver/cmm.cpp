@@ -262,7 +262,7 @@ void cmm_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<double
 
 void cmm_b(ComMod& com_mod, const faceType& lFa, const int e, const Array<double>& al, const Array<double>& dl, 
     const Array<double>& xl, const Array<double>& bfl, const Vector<double>& pS0l, const Vector<double>& vwp, 
-    const Vector<int>& ptr) 
+    const Vector<int>& ptr, const SolutionStates& solutions)
 {
   const int nsd  = com_mod.nsd;
   const int dof = com_mod.dof;
@@ -282,7 +282,7 @@ void cmm_b(ComMod& com_mod, const faceType& lFa, const int e, const Array<double
   for (int g = 0; g < lFa.nG; g++) {
     Vector<double> nV(nsd);
     auto Nx = lFa.Nx.slice(g);
-    nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, 3, Nx, nV);
+    nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, 3, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
     double Jac = sqrt(utils::norm(nV));
     nV = nV / Jac;
     double w = lFa.w(g)*Jac;
@@ -755,8 +755,11 @@ void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double
 
 /// @brief Reproduces Fortran 'CONSTRUCT_CMM'.
 //
-void construct_cmm(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg, const Array<double>& Dg)
+void construct_cmm(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
   using namespace consts;
 
   #define n_debug_construct_cmm 

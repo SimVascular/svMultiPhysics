@@ -5,7 +5,7 @@
 #define FLUID_H 
 
 #include "ComMod.h"
-
+#include "SolutionStates.h"
 #include "consts.h"
 
 namespace fluid {
@@ -21,7 +21,7 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
     const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& yl, const Vector<double>& ub, 
     const Vector<double>& nV, const Vector<double>& tauB, Array<double>& lR, Array3<double>& lK);
 
-void construct_fluid(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg);
+void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions);
 
 void fluid_2d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 

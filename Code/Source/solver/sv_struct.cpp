@@ -181,8 +181,11 @@ void b_struct_3d(const ComMod& com_mod, const int eNoN, const double w, const Ve
 
 /// @brief Replicates the Fortan 'CONSTRUCT_dSOLID' subroutine.
 //
-void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg, const Array<double>& Dg)
+void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
   using namespace consts;
 
   #define n_debug_construct_dsolid

@@ -12,6 +12,7 @@
 
 #include "Array.h"
 #include "Array3.h"
+#include "SolutionStates.h"
 #include "CepMod.h"
 #include "ChnlMod.h"
 #include "CmMod.h"
@@ -1752,18 +1753,6 @@ class ComMod {
     /// @brief RIS mapping array, with global (total) enumeration
      std::vector<Array2D> grisMapList;
 
-    /// @brief Old time derivative of variables (acceleration); known result at current time step
-    Array<double>  Ao;
-
-    /// @brief New time derivative of variables (acceleration); unknown result at next time step
-    Array<double>  An;
-
-    /// @brief Old integrated variables (displacement)
-    Array<double>  Do;
-
-    /// @brief New integrated variables (displacement)
-    Array<double>  Dn;
-
     /// @brief Residual vector
     Array<double>  R;
 
@@ -1772,12 +1761,6 @@ class ComMod {
 
     /// @brief Position vector of mesh nodes (in ref config)
     Array<double>  x;
-
-    /// @brief Old variables (velocity); known result at current time step
-    Array<double>  Yo;
-
-    /// @brief New variables (velocity); unknown result at next time step
-    Array<double>  Yn;
 
     /// @brief Body force
     Array<double>  Bf;

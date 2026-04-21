@@ -6,6 +6,7 @@
 #include "distribute.h"
 
 #include "all_fun.h"
+#include "CepModTtp.h"
 #include "ComMod.h"
 #include "consts.h"
 #include "nn.h"
@@ -1559,11 +1560,8 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       }
 
       // Broadcast domain-specific model parameters
-      cm.bcast(cm_mod, &cep.ttp.G_Na);
-      cm.bcast(cm_mod, &cep.ttp.G_CaL);
-      cm.bcast(cm_mod, &cep.ttp.G_Kr);
-      cm.bcast(cm_mod, cep.ttp.G_Ks);
-      cm.bcast(cm_mod, cep.ttp.G_to);
+      cep.ttp.distribute_conductance(cm_mod, cm);
+      cep.ttp.distribute_initial_state(cm_mod, cm);
 
       cm.bcast(cm_mod, cep.bo.tau_si);
       cm.bcast(cm_mod, cep.bo.tau_fi);

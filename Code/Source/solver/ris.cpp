@@ -13,8 +13,13 @@
 namespace ris {
 
 /// @brief This subroutine computes the mean pressure and flux on the ris surface 
-void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
+void ris_meanq(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 {
+  const auto& An = solutions.current.get_acceleration();
+  const auto& Yn = solutions.current.get_velocity();
+  const auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
+
   #define n_debug_ris_meanq
   #ifdef debug_ris_meanq
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -31,11 +36,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
 
   const int nsd = com_mod.nsd;
   const int cEq = com_mod.cEq;
-
-  auto& An = com_mod.An;
   auto& Ad = com_mod.Ad;
-  auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
 
   Array<double> tmpV(maxNSD, com_mod.tnNo);
 
@@ -58,7 +59,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
       int iM = RIS.lst(i,0,iProj);
       int iFa = RIS.lst(i,1,iProj);
       double tmp = msh[iM].fa[iFa].area;
-      RIS.meanP(iProj,i) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0)/tmp;
+      RIS.meanP(iProj,i) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, solutions, std::nullopt, false, consts::MechanicalConfigurationType::reference)/tmp;
     }
   }
 
@@ -76,7 +77,7 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
     }
     int iM = RIS.lst(0,0,iProj);
     int iFa = RIS.lst(0,1,iProj);
-    RIS.meanFl(iProj) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1);
+    RIS.meanFl(iProj) = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, solutions, m-1, false, consts::MechanicalConfigurationType::reference);
 
     if (cm.mas(cm_mod)) {
       std::cout << "For RIS projection: " << iProj << std::endl;
@@ -88,8 +89,13 @@ void ris_meanq(ComMod& com_mod, CmMod& cm_mod)
 }
 
 /// @brief  Weak treatment of RIS resistance boundary conditions
-void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg) 
+void ris_resbc(ComMod& com_mod, const SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
+
   using namespace consts;
   #define n_debug_ris_resbc
   #ifdef debug_ris_resbc
@@ -136,7 +142,7 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
       
       if (cPhys == EquationType::phys_fluid) {
         // Build the correct BC
-        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg);
+        set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], solutions);
       }
       lBc.gx.clear();
     }
@@ -145,8 +151,8 @@ void ris_resbc(ComMod& com_mod, const Array<double>& Yg, const Array<double>& Dg
 }
 
 
-void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa, 
-               const Array<double>& Yg, const Array<double>& Dg)
+void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const faceType& lFa,
+               const SolutionStates& solutions)
 {
   // [HZ] looks not needed in the current implementation
 }
@@ -154,8 +160,16 @@ void setbc_ris(ComMod& com_mod, const bcType& lBc, const mshType& lM, const face
 
 /// @brief  This subroutine updates the resistance and activation flag for the 
 /// closed and open configurations of the RIS surfaces 
-void ris_updater(ComMod& com_mod, CmMod& cm_mod)
+void ris_updater(ComMod& com_mod, CmMod& cm_mod, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  auto& Ao = solutions.old.get_acceleration();
+  auto& Yo = solutions.old.get_velocity();
+  auto& Do = solutions.old.get_displacement();
+
   #define n_debug_ris_updater
   #ifdef debug_ris_updater
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -184,9 +198,9 @@ void ris_updater(ComMod& com_mod, CmMod& cm_mod)
         // goes from close to open to prevent the valve goes back
         // to close at the next iteration. This is needed only for
         // close to open and cannot be used for open to close.
-        com_mod.Ao = com_mod.An;
-        com_mod.Yo = com_mod.Yn;
-        if (com_mod.dFlag) {com_mod.Do = com_mod.Dn;}
+        Ao = An;
+        Yo = Yn;
+        if (com_mod.dFlag) {Do = Dn;}
         com_mod.cplBC.xo = com_mod.cplBC.xn;
       } 
     } else {
@@ -347,14 +361,19 @@ void clean_r_ris(ComMod& com_mod)
   // [HZ] looks not needed in the current implementation
 }
 
-void setbcdir_ris(ComMod& com_mod, Array<double>& lA, Array<double>& lY, Array<double>& lD)
+void setbcdir_ris(ComMod& com_mod, const SolutionStates& solutions)
 {
   // [HZ] looks not needed in the current implementation
 }
 
 /// RIS0D code
-void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Array<double>& Dg) 
+void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 {
+  const auto& Yn = solutions.current.get_velocity();
+  const auto& Do = solutions.old.get_displacement();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
+
   using namespace consts;
 
   #define n_debug_ris0d_bc
@@ -393,20 +412,25 @@ void ris0d_bc(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Yg, const Arr
       // Apply bc Dir 
       lBc.gx.resize(msh[iM].fa[iFa].nNo);
       lBc.gx = 1.0;
-      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], Yg, Dg);
+      set_bc::set_bc_dir_wl(com_mod, lBc, msh[iM], msh[iM].fa[iFa], solutions);
       lBc.gx.clear();
       lBc.eDrn.clear();
     } else {
-      // Apply Neu bc 
-      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], Yg, Dg);
+      // Apply Neu bc
+      set_bc::set_bc_neu_l(com_mod, cm_mod, eq[cEq].bc[iBc], msh[iM].fa[iFa], solutions);
     }
 
   }
 
 }
 
-void ris0d_status(ComMod& com_mod, CmMod& cm_mod)//, const Array<double>& Yg, const Array<double>& Dg) 
+void ris0d_status(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 {
+  const auto& An = solutions.current.get_acceleration();
+  const auto& Yn = solutions.current.get_velocity();
+  const auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   #define n_debug_status
@@ -422,11 +446,7 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod)//, const Array<double>& Yg, co
 
   const int nsd = com_mod.nsd;
   const int cEq = com_mod.cEq;
-
-  auto& An = com_mod.An;
   auto& Ad = com_mod.Ad;
-  auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
 
   bcType lBc;
   faceType lFa;
@@ -460,8 +480,8 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod)//, const Array<double>& Yg, co
     sA = 1.0;
     lFa = msh[iM].fa[iFa];
     // such update may be not correct
-    tmp_new = all_fun::integ(com_mod, cm_mod, lFa, sA);
-    meanP = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1)/tmp_new;
+    tmp_new = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false, consts::MechanicalConfigurationType::reference);
+    meanP = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, solutions, m-1, false, consts::MechanicalConfigurationType::reference)/tmp_new;
 
     // For the velocity
     m = nsd;
@@ -476,7 +496,7 @@ void ris0d_status(ComMod& com_mod, CmMod& cm_mod)//, const Array<double>& Yg, co
       }
     }
 
-    meanFl = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, m-1);
+    meanFl = all_fun::integ(com_mod, cm_mod, msh[iM].fa[iFa], tmpV, 0, solutions, m-1, false, consts::MechanicalConfigurationType::reference);
 
     std::cout << "The average pressure is: " << meanP << std::endl;
     std::cout << "The pressure from 0D is: " << eq[cEq].bc[iBc].g << std::endl;

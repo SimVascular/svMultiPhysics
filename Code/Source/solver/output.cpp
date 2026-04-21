@@ -172,8 +172,12 @@ void read_restart_header(ComMod& com_mod, std::array<int,7>& tStamp, double& tim
 
 /// @brief Reproduces the Fortran 'WRITERESTART' subroutine.
 //
-void write_restart(Simulation* simulation, std::array<double,3>& timeP)
+void write_restart(Simulation* simulation, std::array<double,3>& timeP, const SolutionStates& solutions)
 {
+  const auto& An = solutions.current.get_acceleration();
+  const auto& Yn = solutions.current.get_velocity();
+  const auto& Dn = solutions.current.get_displacement();
+
   auto& com_mod = simulation->com_mod;
   #define n_debug_write_restart
   #ifdef debug_write_restart
@@ -202,10 +206,7 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP)
 
   auto& cplBC = com_mod.cplBC;
   auto& Ad = com_mod.Ad;
-  auto& An = com_mod.An;
-  auto& Dn = com_mod.Dn;
   auto& pS0 = com_mod.pS0;
-  auto& Yn = com_mod.Yn;
   auto& Xion = cep_mod.Xion;
   auto& cem = cep_mod.cem;
 
@@ -389,13 +390,13 @@ void write_restart_header(ComMod& com_mod, std::array<double,3>& timeP, std::ofs
 ///
 /// Reproduces: WRITE(fid, REC=myID) stamp, cTS, time,CPUT()-timeP(1), eq.iNorm, cplBC.xn, Yn, An, Dn
 //
-void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq)
+void write_results(ComMod& com_mod, const std::array<double,3>& timeP, const std::string& fName, const bool sstEq, const SolutionStates& solutions)
 {
-  int cTS = com_mod.cTS;
+  const auto& An = solutions.current.get_acceleration();
+  const auto& Yn = solutions.current.get_velocity();
+  const auto& Dn = solutions.current.get_displacement();
 
-  auto& An = com_mod.An;
-  auto& Dn = com_mod.Dn;
-  auto& Yn = com_mod.Yn;
+  int cTS = com_mod.cTS;
 
   auto& stamp = com_mod.stamp;
 

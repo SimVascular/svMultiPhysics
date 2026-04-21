@@ -87,8 +87,9 @@ void bf_construct(ComMod& com_mod, const mshType& lM, const int e, const int eNo
 
 /// @brief Modifes: com_mod.Bf, Dg
 //
-void set_bf(ComMod& com_mod, const Array<double>& Dg)
+void set_bf(ComMod& com_mod, const SolutionStates& solutions)
 {
+  const auto& Dg = solutions.intermediate.get_displacement();
   #define n_debug_set_bf
   auto& cm = com_mod.cm;
   #ifdef debug_set_bf 
@@ -106,7 +107,7 @@ void set_bf(ComMod& com_mod, const Array<double>& Dg)
 
   for (int iBf = 0; iBf < eq.nBf; iBf++) {
     int iM = eq.bf[iBf].iM;
-    set_bf_l(com_mod, eq.bf[iBf], com_mod.msh[iM], Dg);
+    set_bf_l(com_mod, eq.bf[iBf], com_mod.msh[iM], solutions);
   }
 }
 
@@ -117,8 +118,9 @@ void set_bf(ComMod& com_mod, const Array<double>& Dg)
 ///
 /// Reproduces 'SUBROUTINE SETBFL(lBf, lM, Dg)'.
 //
-void set_bf_l(ComMod& com_mod, bfType& lBf, mshType& lM, const Array<double>& Dg)
+void set_bf_l(ComMod& com_mod, bfType& lBf, mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Dg = solutions.intermediate.get_displacement();
   #define n_debug_set_bf_l 
   auto& cm = com_mod.cm;
   #ifdef debug_set_bf_l 

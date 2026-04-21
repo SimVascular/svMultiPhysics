@@ -5,6 +5,7 @@
 #define STRUCT_H 
 
 #include "ComMod.h"
+#include "SolutionStates.h"
 
 namespace struct_ns {
 
@@ -16,8 +17,7 @@ void b_struct_3d(const ComMod& com_mod, const int eNoN, const double w, const Ve
     const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV, 
     Array<double>& lR, Array3<double>& lK);
 
-void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, 
-    const Array<double>& Yg, const Array<double>& Dg);
+void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);
 
 void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w, 
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl, 

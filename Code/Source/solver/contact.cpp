@@ -17,8 +17,9 @@ namespace contact {
 ///
 /// Reproduces Fortran CONSTRUCT_CONTACTPNLTY.
 //
-void construct_contact_pnlty(ComMod& com_mod, CmMod& cm_mod, const Array<double>& Dg)
+void construct_contact_pnlty(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
 {
+  const auto& Dg = solutions.intermediate.get_displacement();
   using namespace consts;
 
   const int nsd  = com_mod.nsd;

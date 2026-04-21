@@ -42,8 +42,10 @@ void b_heatf(ComMod& com_mod, const int eNoN, const double w, const Vector<doubl
 }
 
 
-void construct_heatf(ComMod& com_mod, const mshType& lM, const Array<double>& Ag, const Array<double>& Yg)
+void construct_heatf(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
   #define n_debug_construct_heatf 
   #ifdef debug_construct_heatf
   DebugMsg dmsg(__func__, com_mod.cm.idcm());

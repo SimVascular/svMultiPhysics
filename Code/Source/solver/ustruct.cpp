@@ -200,9 +200,11 @@ bool constitutive_model_is_valid(consts::ConstitutiveModelType model)
 
 /// @brief Reproduces Fortran CONSTRUCT_uSOLID.
 //
-void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const Array<double>& Ag, 
-    const Array<double>& Yg, const Array<double>& Dg)
+void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  const auto& Ag = solutions.intermediate.get_acceleration();
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
   using namespace consts;
 
   #define n_debug_construct_usolid
@@ -1710,8 +1712,9 @@ void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, cons
 /// Modifies:
 ///   com_mod.Rd
 //
-void ustruct_r(ComMod& com_mod, const Array<double>& Yg)
+void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
 {
+  const auto& Yg = solutions.intermediate.get_velocity();
   using namespace consts;
 
   #define n_debug_ustruct_r 
