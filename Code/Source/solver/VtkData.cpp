@@ -666,8 +666,6 @@ void VtkVtpData::copy_cell_data(const std::string& data_name, Vector<double>& me
     return;
   }
 
-  int num_comp = vtk_data->GetNumberOfComponents();
-
   // Set the data.
   for (int i = 0; i < num_data; i++) {
     mesh_data(i) = vtk_data->GetValue(i);
@@ -1037,8 +1035,6 @@ void VtkVtuData::copy_cell_data(const std::string& data_name, Vector<double>& me
   if (num_data == 0) {
     return;
   }
-
-  int num_comp = vtk_data->GetNumberOfComponents();
 
   // Set the data.
   for (int i = 0; i < num_data; i++) {

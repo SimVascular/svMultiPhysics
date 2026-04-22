@@ -16,8 +16,6 @@
 // CoupledBoundaryCondition
 // =========================================================================
 
-const CmMod CoupledBoundaryCondition::cm_mod_{};
-
 CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryCondition& other)
     : face_(other.face_)
     , cap_face_vtp_file_(other.cap_face_vtp_file_)
@@ -38,9 +36,10 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryConditio
     , flowrate_cfg_n_(other.flowrate_cfg_n_)
     , has_cap_(other.has_cap_)
     , owns_cap_(other.owns_cap_)
-    , cap_mesh_global_node_ids_(other.cap_mesh_global_node_ids_)
+    , cap_n_no_(other.cap_n_no_)
     , cap_(other.cap_)
     , cap_global_mesh_state_(other.cap_global_mesh_state_)
+    , cm_mod_(other.cm_mod_)
 {
 }
 
@@ -66,9 +65,10 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         flowrate_cfg_n_ = other.flowrate_cfg_n_;
         has_cap_ = other.has_cap_;
         owns_cap_ = other.owns_cap_;
-        cap_mesh_global_node_ids_ = other.cap_mesh_global_node_ids_;
+        cap_n_no_ = other.cap_n_no_;
         cap_ = other.cap_;
         cap_global_mesh_state_ = other.cap_global_mesh_state_;
+        cm_mod_ = other.cm_mod_;
     }
     return *this;
 }
@@ -93,13 +93,15 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , flowrate_cfg_n_(other.flowrate_cfg_n_)
     , has_cap_(other.has_cap_)
     , owns_cap_(other.owns_cap_)
-    , cap_mesh_global_node_ids_(std::move(other.cap_mesh_global_node_ids_))
+    , cap_n_no_(other.cap_n_no_)
     , cap_(std::move(other.cap_))
     , cap_global_mesh_state_(std::move(other.cap_global_mesh_state_))
+    , cm_mod_(other.cm_mod_)
 {
     other.face_ = nullptr;
     other.has_cap_ = false;
     other.owns_cap_ = false;
+    other.cap_n_no_ = 0;
     other.flow_sol_id_ = -1;
     other.pressure_sol_id_ = -1;
     other.Qo_ = 0.0;
@@ -135,13 +137,15 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         flowrate_cfg_n_ = other.flowrate_cfg_n_;
         has_cap_ = other.has_cap_;
         owns_cap_ = other.owns_cap_;
-        cap_mesh_global_node_ids_ = std::move(other.cap_mesh_global_node_ids_);
+        cap_n_no_ = other.cap_n_no_;
         cap_ = std::move(other.cap_);
         cap_global_mesh_state_ = std::move(other.cap_global_mesh_state_);
+        cm_mod_ = other.cm_mod_;
 
         other.face_ = nullptr;
         other.has_cap_ = false;
         other.owns_cap_ = false;
+        other.cap_n_no_ = 0;
         other.flow_sol_id_ = -1;
         other.pressure_sol_id_ = -1;
         other.Qo_ = 0.0;
@@ -249,10 +253,6 @@ void CoupledBoundaryCondition::set_flowrate_mechanical_configurations(consts::Eq
 /// For fluid/FSI/CMM physics, the integral is computed on the reference configuration.
 void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
-    if (face_ == nullptr) {
-        throw std::runtime_error("[CoupledBoundaryCondition::compute_flowrates] Face is not set.");
-    }
-    
     int nsd = com_mod.nsd;
     const auto& Yo = solutions.old.get_velocity();
     const auto& Yn = solutions.current.get_velocity();
@@ -280,12 +280,7 @@ void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& c
 void CoupledBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
     using namespace consts;
-    
-    
-    if (face_ == nullptr) {
-        throw std::runtime_error("[CoupledBoundaryCondition::compute_pressures] Face is not set.");
-    }
-    
+
     int nsd = com_mod.nsd;
     double area = face_->area;
     const auto& Yo = solutions.old.get_velocity();
@@ -374,6 +369,7 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     // In the constructor, the face pointer is set to the global face, which is then partitioned and distributed among all processes.
     // Here, we update the face pointer to the local face.
     face_ = &face;
+    cm_mod_ = cm_mod;
 
     const bool is_slave = cm.slv(cm_mod);
     
@@ -413,15 +409,8 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     // Distribute cap flag so all ranks agree (master loaded cap_face_; slaves have has_cap_ set here)
     cm.bcast(cm_mod, &has_cap_);
 
-    // Distribute cap mesh global node IDs
-    int cap_nn = static_cast<int>(cap_mesh_global_node_ids_.size());
-    cm.bcast(cm_mod, &cap_nn);
-    if (is_slave) {
-        cap_mesh_global_node_ids_.resize(cap_nn);
-    }
-    if (cap_nn > 0) {
-        cm.bcast(cm_mod, cap_mesh_global_node_ids_);
-    } 
+    // Distribute cap surface node count (same on all ranks; owning rank set it at load).
+    cm.bcast(cm_mod, &cap_n_no_);
 }
 
 // =========================================================================
@@ -435,6 +424,7 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
     cap_face_vtp_file_ = vtp_file_path;
     has_cap_ = false;
     owns_cap_ = false;
+    cap_n_no_ = 0;
 
     if (vtp_file_path.empty()) {
         return;
@@ -448,7 +438,7 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
         cap_.reset();
         has_cap_ = false;
         owns_cap_ = false;
-        cap_mesh_global_node_ids_.resize(0);
+        cap_n_no_ = 0;
         cap_global_mesh_state_.clear();
         throw;
     }
@@ -457,14 +447,8 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
     has_cap_ = true;
     owns_cap_ = true;
 
-    // Copy the global node IDs to the cap mesh global node IDs.
     const faceType* cf = cap_->face();
-    if (cf != nullptr && cf->nNo > 0) {
-        cap_mesh_global_node_ids_.resize(cf->nNo);
-        for (int a = 0; a < cf->nNo; a++) {
-            cap_mesh_global_node_ids_(a) = cf->gN(a) - 1;
-        }
-    }
+    cap_n_no_ = (cf != nullptr) ? cf->nNo : 0;
 }
 
 
@@ -942,7 +926,7 @@ void CappingSurface::init_cap_face_quadrature(const ComMod& com_mod)
 
     try {
         if (nsd != cap_nsd_) {
-            throw CappingSurfaceGeometryException("[CappingSurface::init_cap_face_quadrature] Cap surface requires nsd=3.");
+            throw CappingSurfaceBaseException("[CappingSurface::init_cap_face_quadrature] Cap surface requires nsd=3.");
         }
         face_->nG = 1;
 
@@ -982,18 +966,13 @@ void CappingSurface::initialize_valM()
 /// @param mesh_x The mesh x coordinates.
 /// @param mesh_Do The mesh Do coordinates.
 /// @param mesh_Dn The mesh Dn coordinates.
-/// @param gtnNo_cols The number of global nodes.
 /// @return The element position in global coordinates.
 Array<double> CappingSurface::update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
                                                              const Array<double>& mesh_x, const Array<double>& mesh_Do,
-                                                             const Array<double>& mesh_Dn, int gtnNo_cols) const
+                                                             const Array<double>& mesh_Dn) const
 {
     using namespace consts;
-
-    if (mesh_x.nrows() < cap_nsd_ || mesh_Do.nrows() < cap_nsd_ || mesh_Dn.nrows() < cap_nsd_) {
-        throw CappingSurfaceGeometryException(
-            "[CappingSurface::update_element_position_global] Mesh arrays must have at least 3 rows.");
-    }
+    
     Array<double> xl(cap_nsd_, face_->eNoN);
 
     for (int a = 0; a < face_->eNoN; a++) {
@@ -1020,15 +999,8 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
 /// @param e The element index.
 /// @param g The Gauss point index.
 /// @return The Jacobian and normal vector.
-std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int e, int g)
+std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const
 {
-    if (xl.nrows() != cap_nsd_ || xl.ncols() != face_->eNoN) {
-        throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] xl has wrong dimensions: " +
-                                              std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) +
-                                              " (expected " + std::to_string(cap_nsd_) + "x" +
-                                              std::to_string(face_->eNoN) + ").");
-    }
-
     // Get the shape function derivatives for the Gauss point.
     Array<double> Nx_g = face_->Nx.rslice(g);
     Array<double> xXi(cap_nsd_, cap_insd_);
@@ -1050,7 +1022,7 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
     Jac = sqrt(utils::norm(n));
 
     if (utils::is_zero(Jac)) {
-        throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
+        throw CappingSurfaceBaseException("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
                                               std::to_string(g));
     }
 
@@ -1058,11 +1030,6 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
 
     // Check if the initial normals are provided and if they are valid.
     if (normals_.ncols() > 0 && normals_.nrows() == cap_nsd_) {
-        if (e < 0 || e >= normals_.ncols()) {
-            throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] Element index e=" +
-                                                std::to_string(e) + " is out of bounds for normals_ (ncols=" +
-                                                std::to_string(normals_.ncols()) + ").");
-        }
 
         Vector<double> n0(cap_nsd_);
         for (int i = 0; i < cap_nsd_; i++) {
@@ -1101,7 +1068,7 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
     // Integrate the velocity flux over the cap surface.
     double result = 0.0;
     for (int e = 0; e < face_->nEl; e++) {
-        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn, st.gtnNo);
+        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn);
         for (int g = 0; g < face_->nG; g++) {
             auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
             double sHat = 0.0;
@@ -1122,7 +1089,7 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
 /// @brief Computes the cap contribution to the linear solver face.
 /// @param cfg The mechanical configuration type.
 /// @param st The cap global mesh state.
-void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st)
+void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const
 {
     int cap_nNo = face_->nNo;
 
@@ -1136,24 +1103,13 @@ void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const
     }
 
     for (int e = 0; e < face_->nEl; e++) {
-        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn, st.gtnNo);
+        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn);
         for (int g = 0; g < face_->nG; g++) {
             auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
             for (int a = 0; a < face_->eNoN; a++) {
                 int gnNo_idx = face_->IEN(a, e);
                 auto it = gnNo_to_cap_local.find(gnNo_idx);
-                if (it == gnNo_to_cap_local.end()) {
-                    throw CappingSurfaceAssemblyException("[CappingSurface::compute_valM] IEN entry (element " +
-                                                          std::to_string(e) + ", node " + std::to_string(a) +
-                                                          ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
-                                                          " not found in cap face nodes.");
-                }
                 int cap_a = it->second;
-                if (cap_a < 0 || cap_a >= cap_nNo) {
-                    throw CappingSurfaceAssemblyException("[CappingSurface::compute_valM] Invalid cap face-local index cap_a=" +
-                                                          std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) +
-                                                          ")");
-                }
                 for (int i = 0; i < cap_nsd_; i++) {
                     valM_(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);
                 }
@@ -1169,7 +1125,7 @@ namespace {
 /// @param com_mod The com_mod object.
 /// @param cm_mod The cm_mod object.
 /// @param lhs_face The linear solver face.
-/// @param cap_nNo The number of cap nodes (same on all ranks: \c cap_mesh_global_node_ids_.size() from \c distribute).
+/// @param cap_nNo The number of cap nodes (same on all ranks: \c cap_n_no_ from \c distribute()).
 /// @param cap_gN_all The global node IDs of the cap nodes.
 /// @param cap_val_all The values of the cap nodes.
 void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
@@ -1238,24 +1194,17 @@ void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
 void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& com_mod,
                                                                       fsi_linear_solver::FSILS_faceType& lhs_face,
                                                                       consts::MechanicalConfigurationType cfg,
-                                                                      const SolutionStates& solutions)
+                                                                      const SolutionStates& solutions) const
 {
     const int nsd = com_mod.nsd;
 
-    gather_global_mesh_state(com_mod, cm_mod_, solutions, false);
-
-    // Same count on every rank: IDs were broadcast in distribute() (not inferable from has_cap/owns_cap alone).
-    const int cap_nNo = static_cast<int>(cap_mesh_global_node_ids_.size());
+    const int cap_nNo = cap_n_no_;
     Vector<int> cap_gN_all;
     Array<double> cap_val_all;
 
     // Calculate the cap contribution to the linear solver face (in master rank)
     if (owns_cap_ && cap_) {
         const faceType* cap_face = cap_->face();
-        if (cap_face->nNo != cap_nNo) {
-            throw std::runtime_error("[copy_cap_surface_to_linear_solver_face] Cap face node count does not match "
-                                     "cap_mesh_global_node_ids_ size.");
-        }
         cap_->compute_valM(cfg, cap_global_mesh_state_);
         cap_gN_all.resize(cap_nNo);
         cap_val_all.resize(nsd, cap_nNo);

@@ -419,19 +419,12 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
           std::string("[read_bc] CoupledBoundaryCondition (svZeroDSolver) is only supported for struct, ustruct, fluid, FSI, or CMM physics on face '") +
           face_name + "'.");
     }
-
-    // Sanity check: CoupledBoundaryCondition must be Dirichlet or Neumann
-    if (coupled_bc_type != BoundaryConditionType::bType_Dir &&
-      coupled_bc_type != BoundaryConditionType::bType_Neu) {
-    throw std::runtime_error(
-        std::string("[read_bc] CoupledBoundaryCondition (svZeroDSolver) requires boundary <Type> Dirichlet or Neumann on face '") +
-        face_name + "'.");
-    }
-
-    // Sanity check: struct/ustruct svZeroDSolver coupling must use Neumann.
-    if ((cpl_phys == Equation_struct || cpl_phys == Equation_ustruct) &&
-        coupled_bc_type != BoundaryConditionType::bType_Neu) {
-      throw std::runtime_error("[read_bc] svZeroDSolver-coupled BC for struct/ustruct must use <Type> Neu </Type>.");
+    
+    // Sanity check: svZeroDSolver coupling is currently implemented only for Neumann-type boundaries.
+    if (coupled_bc_type != BoundaryConditionType::bType_Neu) {
+      throw std::runtime_error(
+          std::string("[read_bc] CoupledBoundaryCondition (svZeroDSolver) currently requires boundary <Type> Neu </Type> on face '") +
+          face_name + "'.");
     }
 
     // Sanity check: Follower pressure load must be used for 0D coupling with struct/ustruct
