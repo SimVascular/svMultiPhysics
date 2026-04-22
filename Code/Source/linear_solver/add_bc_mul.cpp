@@ -62,17 +62,22 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
         // Add cap surface contribution to S
         // Cap surfaces contribute to flow rate but not pressure
         if (face.has_cap) {
-          Array<double> vcap(dof,lhs.nNo);
-          vcap = 0.0;
+          // Compute sparse cap contribution directly over cap nodes.
+          // This avoids forming a full dof x nNo temporary array.
+          double Scap = 0.0;
           for (int a = 0; a < face.cap_glob.size(); a++) {
             int Ac = face.cap_glob(a);
             if (Ac < 0) continue;  // cap node not on this rank
             for (int i = 0; i < nsd; i++) {
-              vcap(i,Ac) = face.cap_valM(i,a);
+              Scap += face.cap_valM(i,a) * X(i,Ac);
             }
           }
-          // Add capping surface contribution to S
-          S = S + coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, vcap, X);
+          if (lhs.commu.nTasks > 1) {
+            double tmp = 0.0;
+            MPI_Allreduce(&Scap, &tmp, 1, cm_mod::mpreal, MPI_SUM, lhs.commu.comm);
+            Scap = tmp;
+          }
+          S = S + coef(faIn) * Scap;
         }
         // Computing Y = Y + v * S
         for (int a = 0; a < face.nNo; a++) {

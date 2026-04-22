@@ -37,6 +37,8 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryConditio
     , has_cap_(other.has_cap_)
     , owns_cap_(other.owns_cap_)
     , cap_n_no_(other.cap_n_no_)
+    , cap_mesh_global_node_ids_(other.cap_mesh_global_node_ids_)
+    , cap_g_to_cap_col_(other.cap_g_to_cap_col_)
     , cap_(other.cap_)
     , cap_global_mesh_state_(other.cap_global_mesh_state_)
     , cm_mod_(other.cm_mod_)
@@ -66,6 +68,8 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         has_cap_ = other.has_cap_;
         owns_cap_ = other.owns_cap_;
         cap_n_no_ = other.cap_n_no_;
+        cap_mesh_global_node_ids_ = other.cap_mesh_global_node_ids_;
+        cap_g_to_cap_col_ = other.cap_g_to_cap_col_;
         cap_ = other.cap_;
         cap_global_mesh_state_ = other.cap_global_mesh_state_;
         cm_mod_ = other.cm_mod_;
@@ -94,6 +98,8 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , has_cap_(other.has_cap_)
     , owns_cap_(other.owns_cap_)
     , cap_n_no_(other.cap_n_no_)
+    , cap_mesh_global_node_ids_(std::move(other.cap_mesh_global_node_ids_))
+    , cap_g_to_cap_col_(std::move(other.cap_g_to_cap_col_))
     , cap_(std::move(other.cap_))
     , cap_global_mesh_state_(std::move(other.cap_global_mesh_state_))
     , cm_mod_(other.cm_mod_)
@@ -138,6 +144,8 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         has_cap_ = other.has_cap_;
         owns_cap_ = other.owns_cap_;
         cap_n_no_ = other.cap_n_no_;
+        cap_mesh_global_node_ids_ = std::move(other.cap_mesh_global_node_ids_);
+        cap_g_to_cap_col_ = std::move(other.cap_g_to_cap_col_);
         cap_ = std::move(other.cap_);
         cap_global_mesh_state_ = std::move(other.cap_global_mesh_state_);
         cm_mod_ = other.cm_mod_;
@@ -357,6 +365,16 @@ void CoupledBoundaryCondition::restore_state(const State& state)
 // Utility methods
 // =========================================================================
 
+/// @brief Rebuild the map from global node ID to cap column index.
+void CoupledBoundaryCondition::rebuild_cap_global_to_col_map()
+{
+    cap_g_to_cap_col_.clear();
+    cap_g_to_cap_col_.reserve(static_cast<size_t>(cap_mesh_global_node_ids_.size()));
+    for (int a = 0; a < static_cast<int>(cap_mesh_global_node_ids_.size()); a++) {
+        cap_g_to_cap_col_[cap_mesh_global_node_ids_(a)] = a;
+    }
+}
+
 /// @brief Distribute the boundary condition metadata to all processes.
 /// @param com_mod The com_mod object.
 /// @param cm_mod The cm_mod object.
@@ -409,8 +427,17 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     // Distribute cap flag so all ranks agree (master loaded cap_face_; slaves have has_cap_ set here)
     cm.bcast(cm_mod, &has_cap_);
 
-    // Distribute cap surface node count (same on all ranks; owning rank set it at load).
-    cm.bcast(cm_mod, &cap_n_no_);
+    // Distribute cap surface global node IDs (same count on every rank; master filled at load).
+    int cap_nn = static_cast<int>(cap_mesh_global_node_ids_.size());
+    cm.bcast(cm_mod, &cap_nn);
+    if (is_slave) {
+        cap_mesh_global_node_ids_.resize(cap_nn);
+    }
+    if (cap_nn > 0) {
+        cm.bcast(cm_mod, cap_mesh_global_node_ids_);
+    }
+    cap_n_no_ = cap_nn;
+    rebuild_cap_global_to_col_map();
 }
 
 // =========================================================================
@@ -425,6 +452,8 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
     has_cap_ = false;
     owns_cap_ = false;
     cap_n_no_ = 0;
+    cap_mesh_global_node_ids_.resize(0);
+    cap_g_to_cap_col_.clear();
 
     if (vtp_file_path.empty()) {
         return;
@@ -439,6 +468,8 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
         has_cap_ = false;
         owns_cap_ = false;
         cap_n_no_ = 0;
+        cap_mesh_global_node_ids_.resize(0);
+        cap_g_to_cap_col_.clear();
         cap_global_mesh_state_.clear();
         throw;
     }
@@ -447,8 +478,21 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
     has_cap_ = true;
     owns_cap_ = true;
 
+    // Set the cap mesh global node IDs.
     const faceType* cf = cap_->face();
-    cap_n_no_ = (cf != nullptr) ? cf->nNo : 0;
+    if (cf != nullptr && cf->nNo > 0) {
+        cap_mesh_global_node_ids_.resize(cf->nNo);
+        for (int a = 0; a < cf->nNo; a++) {
+            cap_mesh_global_node_ids_(a) = cf->gN(a);
+        }
+        cap_n_no_ = cf->nNo;
+    } else {
+        cap_mesh_global_node_ids_.resize(0);
+        cap_n_no_ = 0;
+    }
+
+    // Rebuild the map from global node ID to cap column index.
+    rebuild_cap_global_to_col_map();
 }
 
 
@@ -469,15 +513,15 @@ void CoupledBoundaryCondition::initialize_cap(ComMod& com_mod)
     // Initialize cap contribution storage.
     cap_->initialize_valM();
 
-    // Initialize the cap global mesh state.
+    // Reset the cap global mesh state buffers.
     const int nsd = com_mod.nsd;
-    const int gtnNo = com_mod.gtnNo;
-    cap_global_mesh_state_.gtnNo = gtnNo;
-    cap_global_mesh_state_.x.resize(nsd, gtnNo);
-    cap_global_mesh_state_.Do.resize(nsd, gtnNo);
-    cap_global_mesh_state_.Dn.resize(nsd, gtnNo);
-    cap_global_mesh_state_.Yo.resize(nsd, gtnNo);
-    cap_global_mesh_state_.Yn.resize(nsd, gtnNo);
+    const int n_cap = cap_n_no_;
+    cap_global_mesh_state_.n_cap = n_cap;
+    cap_global_mesh_state_.x.resize(nsd, n_cap);
+    cap_global_mesh_state_.Do.resize(nsd, n_cap);
+    cap_global_mesh_state_.Dn.resize(nsd, n_cap);
+    cap_global_mesh_state_.Yo.resize(nsd, n_cap);
+    cap_global_mesh_state_.Yn.resize(nsd, n_cap);
     cap_global_mesh_state_.x = 0.0;
     cap_global_mesh_state_.Do = 0.0;
     cap_global_mesh_state_.Dn = 0.0;
@@ -487,17 +531,18 @@ void CoupledBoundaryCondition::initialize_cap(ComMod& com_mod)
 
 namespace {
 
-/// @brief Gathers the global mesh state on the serial rank.
-void gather_global_mesh_state_serial(ComMod& com_mod, const SolutionStates& solutions, bool gather_Y,
-                                     int nsd, int gtnNo, int tnNo, CapGlobalMeshState& out)
+/// @brief Gathers cap-node mesh state on the serial rank (columns 0..n_cap-1 match \p cap_gn order).
+void gather_global_mesh_state_serial(ComMod& com_mod, const SolutionStates& solutions, bool gather_Y, int nsd, int tnNo,
+                                     const Vector<int>& cap_gn, CapGlobalMeshState& out)
 {
     const auto& Do = solutions.old.get_displacement();
     const auto& Dn = solutions.current.get_displacement();
     const auto& Yo = solutions.old.get_velocity();
     const auto& Yn = solutions.current.get_velocity();
 
-    // Initialize the output global mesh state.
-    out.gtnNo = gtnNo;
+    const int n_cap = static_cast<int>(cap_gn.size());
+
+    // Reset the cap global mesh state buffers.
     out.x = 0.0;
     out.Do = 0.0;
     out.Dn = 0.0;
@@ -505,45 +550,68 @@ void gather_global_mesh_state_serial(ComMod& com_mod, const SolutionStates& solu
         out.Yo = 0.0;
         out.Yn = 0.0;
     }
-
-    // Copy the global mesh state.
-    for (int Ac = 0; Ac < tnNo; Ac++) {
-        int g = com_mod.ltg(Ac);
-        if (g < 0 || g >= gtnNo) {
-            continue;
-        }
-        for (int i = 0; i < nsd; i++) {
-            out.x(i, g) = com_mod.x(i, Ac);
-            out.Do(i, g) = Do(i, Ac);
-            out.Dn(i, g) = Dn(i, Ac);
-        }
-        if (gather_Y) {
-            for (int i = 0; i < nsd; i++) {
-                out.Yo(i, g) = Yo(i, Ac);
-                out.Yn(i, g) = Yn(i, Ac);
+    
+    // Gather the cap global mesh state.
+    for (int a = 0; a < n_cap; a++) {
+        const int gn = cap_gn(a);
+        for (int Ac = 0; Ac < tnNo; Ac++) {
+            if (com_mod.ltg(Ac) != gn) {
+                continue;
             }
+            for (int i = 0; i < nsd; i++) {
+                out.x(i, a) = com_mod.x(i, Ac);
+                out.Do(i, a) = Do(i, Ac);
+                out.Dn(i, a) = Dn(i, Ac);
+            }
+            if (gather_Y) {
+                for (int i = 0; i < nsd; i++) {
+                    out.Yo(i, a) = Yo(i, Ac);
+                    out.Yn(i, a) = Yn(i, Ac);
+                }
+            }
+            break;
         }
     }
 }
 
 
-/// @brief Gathers the global mesh state on the MPI root.
+/// @brief Gathers cap-node mesh state on the MPI root (columns 0..n_cap-1 match \p cap_gn order).
 void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmType& cm, const SolutionStates& solutions,
-                                       bool gather_Y, int nsd, int gtnNo, int tnNo, int root,
-                                       int nProcs, CapGlobalMeshState& out)
+                                        bool gather_Y, int nsd, int tnNo, int root, int nProcs, const Vector<int>& cap_gn,
+                                        const std::unordered_map<int, int>& g_to_cap_col,
+                                        CapGlobalMeshState& out)
 {
     const auto& Do = solutions.old.get_displacement();
     const auto& Dn = solutions.current.get_displacement();
     const auto& Yo = solutions.old.get_velocity();
     const auto& Yn = solutions.current.get_velocity();
 
-    // Pack the global mesh state into a send buffer.
+    // Count the number of cap nodes.
+    const int n_cap = static_cast<int>(cap_gn.size());
+    std::unordered_set<int> cap_gn_set;
+    cap_gn_set.reserve(static_cast<size_t>(n_cap));
+    for (int a = 0; a < n_cap; a++) {
+        cap_gn_set.insert(cap_gn(a));
+    }
+
+    // Count the number of values to pack for each node.
     const int per_node = 1 + 3 * nsd + (gather_Y ? 2 * nsd : 0);
-    const int nPack = tnNo > 0 ? tnNo : 0;
-    Vector<double> send_buf(static_cast<size_t>(nPack * per_node));
+    int n_pack = 0;
+    for (int Ac = 0; Ac < tnNo; Ac++) {
+        const int g = com_mod.ltg(Ac);
+        if (cap_gn_set.find(g) != cap_gn_set.end()) {
+            n_pack++;
+        }
+    }
+
+    // Pack the cap global mesh state.
+    Vector<double> send_buf(static_cast<size_t>(n_pack * per_node));
     int idx = 0;
     for (int Ac = 0; Ac < tnNo; Ac++) {
-        int g = com_mod.ltg(Ac);
+        const int g = com_mod.ltg(Ac);
+        if (cap_gn_set.find(g) == cap_gn_set.end()) {
+            continue;
+        }
         send_buf(idx++) = static_cast<double>(g);
         for (int i = 0; i < nsd; i++) {
             send_buf(idx++) = com_mod.x(i, Ac);
@@ -564,7 +632,7 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
         }
     }
 
-    // Gather the global mesh state on the MPI root.
+    // Gather the cap global mesh state.
     Vector<int> send_count_vec(1);
     send_count_vec(0) = static_cast<int>(send_buf.size());
     Vector<int> recv_counts(nProcs);
@@ -581,13 +649,12 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
     }
     cm.gatherv(cm_mod, send_buf, recv_buf, recv_counts, displs, root);
 
-    // If not the root, return.
+    // If not the root rank, return.
     if (cm.idcm() != root) {
         return;
     }
 
-    // Initialize the output global mesh state.
-    out.gtnNo = gtnNo;
+    // Initialize the cap global mesh state.
     out.x = 0.0;
     out.Do = 0.0;
     out.Dn = 0.0;
@@ -596,25 +663,31 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
         out.Yn = 0.0;
     }
 
-    // Unpack the global mesh state from the receive buffer.
+    // Unpack the cap global mesh state.
     int pos = 0;
     while (pos + per_node <= static_cast<int>(recv_buf.size())) {
-        int g = static_cast<int>(recv_buf(pos++));
+        const int g = static_cast<int>(recv_buf(pos++));
+        const auto it = g_to_cap_col.find(g);
+        if (it == g_to_cap_col.end()) {
+            pos += 3 * nsd + (gather_Y ? 2 * nsd : 0);
+            continue;
+        }
+        const int col = it->second;
         for (int i = 0; i < nsd; i++) {
-            out.x(i, g) = recv_buf(pos++);
+            out.x(i, col) = recv_buf(pos++);
         }
         for (int i = 0; i < nsd; i++) {
-            out.Do(i, g) = recv_buf(pos++);
+            out.Do(i, col) = recv_buf(pos++);
         }
         for (int i = 0; i < nsd; i++) {
-            out.Dn(i, g) = recv_buf(pos++);
+            out.Dn(i, col) = recv_buf(pos++);
         }
         if (gather_Y) {
             for (int i = 0; i < nsd; i++) {
-                out.Yo(i, g) = recv_buf(pos++);
+                out.Yo(i, col) = recv_buf(pos++);
             }
             for (int i = 0; i < nsd; i++) {
-                out.Yn(i, g) = recv_buf(pos++);
+                out.Yn(i, col) = recv_buf(pos++);
             }
         }
     }
@@ -622,30 +695,28 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
 
 } // namespace
 
-/// @brief Gathers the global mesh state on the MPI root.
+/// @brief Gathers cap-node mesh state (see \ref cap_mesh_global_node_ids_).
 /// @param com_mod The com_mod object.
 /// @param cm_mod The cm_mod object.
 /// @param solutions Old/current displacement and velocity for gather.
 /// @param gather_Y If true, gather Yo/Yn with \c nsd rows per node; if false, geometry only (x, Do, Dn).
 void CoupledBoundaryCondition::gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod,
-                                                        const SolutionStates& solutions, bool gather_Y)
+                                                        const SolutionStates& solutions, bool gather_Y) const
 {
     auto& cm = com_mod.cm;
     const int nsd = com_mod.nsd;
-    const int gtnNo = com_mod.gtnNo;
     const int tnNo = com_mod.tnNo;
     const int root = cm_mod.master;
     const int nProcs = cm.np();
 
-    // Serial: no MPI, just gather the global mesh state locally.
     if (cm.seq()) {
-        gather_global_mesh_state_serial(com_mod, solutions, gather_Y, nsd, gtnNo, tnNo, cap_global_mesh_state_);
+        gather_global_mesh_state_serial(com_mod, solutions, gather_Y, nsd, tnNo, cap_mesh_global_node_ids_,
+                                        cap_global_mesh_state_);
         return;
     }
 
-    // Parallel: gather the global mesh state on the MPI root.
-    gather_global_mesh_state_parallel(com_mod, cm_mod, cm, solutions, gather_Y, nsd, gtnNo, tnNo, root, nProcs,
-                                      cap_global_mesh_state_);
+    gather_global_mesh_state_parallel(com_mod, cm_mod, cm, solutions, gather_Y, nsd, tnNo, root, nProcs,
+                                        cap_mesh_global_node_ids_, cap_g_to_cap_col_, cap_global_mesh_state_);
 }
 
 /// @brief Calculates the cap contribution to the linear solver face.
@@ -969,24 +1040,26 @@ void CappingSurface::initialize_valM()
 /// @return The element position in global coordinates.
 Array<double> CappingSurface::update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
                                                              const Array<double>& mesh_x, const Array<double>& mesh_Do,
-                                                             const Array<double>& mesh_Dn) const
+                                                             const Array<double>& mesh_Dn,
+                                                             const std::unordered_map<int, int>& gn_to_cap_local) const
 {
     using namespace consts;
-    
+
     Array<double> xl(cap_nsd_, face_->eNoN);
 
     for (int a = 0; a < face_->eNoN; a++) {
-        int g = face_->IEN(a, e);
+        const int gn = face_->IEN(a, e);
+        const int col = gn_to_cap_local.at(gn);
         for (int i = 0; i < cap_nsd_; i++) {
-            xl(i, a) = mesh_x(i, g);
+            xl(i, a) = mesh_x(i, col);
         }
         if (cfg == MechanicalConfigurationType::old_timestep) {
             for (int i = 0; i < cap_nsd_; i++) {
-                xl(i, a) += mesh_Do(i, g);
+                xl(i, a) += mesh_Do(i, col);
             }
         } else if (cfg == MechanicalConfigurationType::new_timestep) {
             for (int i = 0; i < cap_nsd_; i++) {
-                xl(i, a) += mesh_Dn(i, g);
+                xl(i, a) += mesh_Dn(i, col);
             }
         }
     }
@@ -1062,21 +1135,26 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
 double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
                                                  consts::MechanicalConfigurationType cfg)
 {
-    // Get the velocity array (Yn or Yo).
     const Array<double>& cap_vel = use_Yn_velocity ? st.Yn : st.Yo;
-    
-    // Integrate the velocity flux over the cap surface.
+
+    std::unordered_map<int, int> gn_to_cap_local;
+    gn_to_cap_local.reserve(static_cast<size_t>(face_->nNo));
+    for (int a = 0; a < face_->nNo; a++) {
+        gn_to_cap_local[face_->gN(a)] = a;
+    }
+
     double result = 0.0;
     for (int e = 0; e < face_->nEl; e++) {
-        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn);
+        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn, gn_to_cap_local);
         for (int g = 0; g < face_->nG; g++) {
             auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
             double sHat = 0.0;
             for (int a = 0; a < face_->eNoN; a++) {
                 const int gn = face_->IEN(a, e);
+                const int col = gn_to_cap_local.at(gn);
                 const double Na = face_->N(a, g);
                 for (int i = 0; i < cap_nsd_; i++) {
-                    sHat += Na * cap_vel(i, gn) * n(i);
+                    sHat += Na * cap_vel(i, col) * n(i);
                 }
             }
             result += face_->w(g) * Jac * sHat;
@@ -1103,13 +1181,12 @@ void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const
     }
 
     for (int e = 0; e < face_->nEl; e++) {
-        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn);
+        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn, gnNo_to_cap_local);
         for (int g = 0; g < face_->nG; g++) {
             auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
             for (int a = 0; a < face_->eNoN; a++) {
-                int gnNo_idx = face_->IEN(a, e);
-                auto it = gnNo_to_cap_local.find(gnNo_idx);
-                int cap_a = it->second;
+                const int gnNo_idx = face_->IEN(a, e);
+                const int cap_a = gnNo_to_cap_local.at(gnNo_idx);
                 for (int i = 0; i < cap_nsd_; i++) {
                     valM_(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);
                 }

@@ -8,6 +8,7 @@
 #include <memory>
 #include <exception>
 #include <optional>
+#include <unordered_map>
 #include <utility>
 #include "consts.h"
 #include "CmMod.h"
@@ -22,9 +23,9 @@ namespace fsi_linear_solver {
     class FSILS_faceType;
 }
 
-/// @brief Mesh-wide nodal state (columns indexed by com_mod.ltg / gtnNo).
+/// @brief Cap-surface nodal state: \c n_cap columns, column \c a is cap node \c a (same order as cap face \c gN / broadcast id list).
 struct CapGlobalMeshState {
-    int gtnNo = 0;
+    int n_cap = 0;
     Array<double> x;
     Array<double> Do;
     Array<double> Dn;
@@ -33,7 +34,7 @@ struct CapGlobalMeshState {
 
     void clear()
     {
-        gtnNo = 0;
+        n_cap = 0;
         x.resize(0, 0);
         Do.resize(0, 0);
         Dn.resize(0, 0);
@@ -156,10 +157,11 @@ class CappingSurface {
         /// @brief The number of independent spatial dimensions (2D).
         static constexpr int cap_insd_ = 2; 
 
-        /// @brief Update the element position in global coordinates.
+        /// @brief Update the element position using cap-compact mesh columns (\a gn_to_cap_local maps global node id to column).
         Array<double> update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
                                                      const Array<double>& mesh_x, const Array<double>& mesh_Do,
-                                                     const Array<double>& mesh_Dn) const;
+                                                     const Array<double>& mesh_Dn,
+                                                     const std::unordered_map<int, int>& gn_to_cap_local) const;
     
         /// @brief Compute the Jacobian and normal vector for a given element and Gauss point.
         std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const;
@@ -214,18 +216,25 @@ private:
     bool has_cap_ = false;
     /// @brief True on ranks that hold \ref cap_ mesh/quadrature (MPI master when \ref has_cap_; true in serial when cap loaded).
     bool owns_cap_ = false;
-    /// @brief Number of cap surface nodes (\c face_->nNo on owning rank); broadcast in \c distribute() so all ranks agree.
+    /// @brief Number of cap surface nodes (same as \ref cap_mesh_global_node_ids_.size(); broadcast in \c distribute()).
     int cap_n_no_ = 0;
+    /// @brief Global mesh node id per cap surface node column (0-based solver ids; broadcast in \c distribute()).
+    Vector<int> cap_mesh_global_node_ids_;
+    /// @brief Cached map: global cap node id -> cap column index (derived from \ref cap_mesh_global_node_ids_).
+    std::unordered_map<int, int> cap_g_to_cap_col_;
     /// @brief Cap geometry on ranks with \ref owns_cap_; empty on non-owning MPI ranks.
     std::optional<CappingSurface> cap_;
-    /// @brief Reused global-column mesh state for cap gather (allocated on ranks that unpack; includes Yo/Yn rows).
-    CapGlobalMeshState cap_global_mesh_state_;
+    /// @brief Cap-only mesh state for integration (columns 0..n_cap-1); refreshed by \ref gather_global_mesh_state.
+    mutable CapGlobalMeshState cap_global_mesh_state_;
 
     /// @brief Simulation \c CmMod copy; set in \c distribute() for cap MPI (e.g. \c copy_cap_surface_to_linear_solver_face).
     CmMod cm_mod_{};
 
-    /// Fill \ref cap_global_mesh_state_. Serial: all ranks. Parallel: root only (slaves skip buffer allocation).
-    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions, bool gather_Y);
+    /// Build \ref cap_g_to_cap_col_ from \ref cap_mesh_global_node_ids_.
+    void rebuild_cap_global_to_col_map();
+
+    /// Fill \ref cap_global_mesh_state_ with cap nodes only (uses \ref cap_mesh_global_node_ids_).
+    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions, bool gather_Y) const;
 
 
 public:
@@ -310,7 +319,7 @@ public:
     /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
     void initialize_cap(ComMod& com_mod);
 
-    /// @brief Gather mesh geometry, compute cap \a valM on master, and copy to FSILS face (all ranks enter MPI gather).
+    /// @brief Compute cap \a valM from current cap mesh state on owner and copy/broadcast cap data to FSILS face.
     void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
                                                 consts::MechanicalConfigurationType cfg,
                                                 const SolutionStates& solutions) const;
