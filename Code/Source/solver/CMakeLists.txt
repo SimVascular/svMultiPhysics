@@ -220,6 +220,8 @@ set(CSRCS
   ComMod.h ComMod.cpp
   Timer.h
   ArtificialNeuralNetMaterial.h ArtificialNeuralNetMaterial.cpp
+
+  ionic_model.cpp
   
   SPLIT.c
 
