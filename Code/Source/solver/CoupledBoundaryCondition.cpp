@@ -369,8 +369,8 @@ void CoupledBoundaryCondition::restore_state(const State& state)
 void CoupledBoundaryCondition::rebuild_cap_global_to_col_map()
 {
     cap_g_to_cap_col_.clear();
-    cap_g_to_cap_col_.reserve(static_cast<size_t>(cap_mesh_global_node_ids_.size()));
-    for (int a = 0; a < static_cast<int>(cap_mesh_global_node_ids_.size()); a++) {
+    cap_g_to_cap_col_.reserve(cap_mesh_global_node_ids_.size());
+    for (int a = 0; a < cap_mesh_global_node_ids_.size(); a++) {
         cap_g_to_cap_col_[cap_mesh_global_node_ids_(a)] = a;
     }
 }
@@ -428,15 +428,14 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     cm.bcast(cm_mod, &has_cap_);
 
     // Distribute cap surface global node IDs (same count on every rank; master filled at load).
-    int cap_nn = static_cast<int>(cap_mesh_global_node_ids_.size());
-    cm.bcast(cm_mod, &cap_nn);
+    cap_n_no_ = cap_mesh_global_node_ids_.size();
+    cm.bcast(cm_mod, &cap_n_no_);
     if (is_slave) {
-        cap_mesh_global_node_ids_.resize(cap_nn);
+        cap_mesh_global_node_ids_.resize(cap_n_no_);
     }
-    if (cap_nn > 0) {
+    if (cap_n_no_ > 0) {
         cm.bcast(cm_mod, cap_mesh_global_node_ids_);
     }
-    cap_n_no_ = cap_nn;
     rebuild_cap_global_to_col_map();
 }
 
@@ -449,11 +448,6 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
 void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_path)
 {
     cap_face_vtp_file_ = vtp_file_path;
-    has_cap_ = false;
-    owns_cap_ = false;
-    cap_n_no_ = 0;
-    cap_mesh_global_node_ids_.resize(0);
-    cap_g_to_cap_col_.clear();
 
     if (vtp_file_path.empty()) {
         return;
@@ -480,16 +474,11 @@ void CoupledBoundaryCondition::load_cap_face_vtp(const std::string& vtp_file_pat
 
     // Set the cap mesh global node IDs.
     const faceType* cf = cap_->face();
-    if (cf != nullptr && cf->nNo > 0) {
-        cap_mesh_global_node_ids_.resize(cf->nNo);
-        for (int a = 0; a < cf->nNo; a++) {
-            cap_mesh_global_node_ids_(a) = cf->gN(a);
-        }
-        cap_n_no_ = cf->nNo;
-    } else {
-        cap_mesh_global_node_ids_.resize(0);
-        cap_n_no_ = 0;
+    cap_mesh_global_node_ids_.resize(cf->nNo);
+    for (int a = 0; a < cf->nNo; a++) {
+        cap_mesh_global_node_ids_(a) = cf->gN(a);
     }
+    cap_n_no_ = cf->nNo;
 
     // Rebuild the map from global node ID to cap column index.
     rebuild_cap_global_to_col_map();
@@ -514,8 +503,8 @@ void CoupledBoundaryCondition::initialize_cap(ComMod& com_mod)
     cap_->initialize_valM();
 
     // Reset the cap global mesh state buffers.
-    const int nsd = com_mod.nsd;
-    const int n_cap = cap_n_no_;
+    int nsd = com_mod.nsd;
+    int n_cap = cap_n_no_;
     cap_global_mesh_state_.n_cap = n_cap;
     cap_global_mesh_state_.x.resize(nsd, n_cap);
     cap_global_mesh_state_.Do.resize(nsd, n_cap);
@@ -540,7 +529,7 @@ void gather_global_mesh_state_serial(ComMod& com_mod, const SolutionStates& solu
     const auto& Yo = solutions.old.get_velocity();
     const auto& Yn = solutions.current.get_velocity();
 
-    const int n_cap = static_cast<int>(cap_gn.size());
+    const int n_cap = cap_gn.size();
 
     // Reset the cap global mesh state buffers.
     out.x = 0.0;
@@ -553,7 +542,7 @@ void gather_global_mesh_state_serial(ComMod& com_mod, const SolutionStates& solu
     
     // Gather the cap global mesh state.
     for (int a = 0; a < n_cap; a++) {
-        const int gn = cap_gn(a);
+        int gn = cap_gn(a);
         for (int Ac = 0; Ac < tnNo; Ac++) {
             if (com_mod.ltg(Ac) != gn) {
                 continue;
@@ -587,28 +576,28 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
     const auto& Yn = solutions.current.get_velocity();
 
     // Count the number of cap nodes.
-    const int n_cap = static_cast<int>(cap_gn.size());
+    const int n_cap = cap_gn.size();
     std::unordered_set<int> cap_gn_set;
-    cap_gn_set.reserve(static_cast<size_t>(n_cap));
+    cap_gn_set.reserve(n_cap);
     for (int a = 0; a < n_cap; a++) {
         cap_gn_set.insert(cap_gn(a));
     }
 
     // Count the number of values to pack for each node.
-    const int per_node = 1 + 3 * nsd + (gather_Y ? 2 * nsd : 0);
+    int per_node = 1 + 3 * nsd + (gather_Y ? 2 * nsd : 0);
     int n_pack = 0;
     for (int Ac = 0; Ac < tnNo; Ac++) {
-        const int g = com_mod.ltg(Ac);
+        int g = com_mod.ltg(Ac);
         if (cap_gn_set.find(g) != cap_gn_set.end()) {
             n_pack++;
         }
     }
 
     // Pack the cap global mesh state.
-    Vector<double> send_buf(static_cast<size_t>(n_pack * per_node));
+    Vector<double> send_buf(n_pack * per_node);
     int idx = 0;
     for (int Ac = 0; Ac < tnNo; Ac++) {
-        const int g = com_mod.ltg(Ac);
+        int g = com_mod.ltg(Ac);
         if (cap_gn_set.find(g) == cap_gn_set.end()) {
             continue;
         }
@@ -634,7 +623,7 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
 
     // Gather the cap global mesh state.
     Vector<int> send_count_vec(1);
-    send_count_vec(0) = static_cast<int>(send_buf.size());
+    send_count_vec(0) = send_buf.size();
     Vector<int> recv_counts(nProcs);
     cm.gather(cm_mod, send_count_vec, recv_counts, root);
     Vector<double> recv_buf;
@@ -665,14 +654,14 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
 
     // Unpack the cap global mesh state.
     int pos = 0;
-    while (pos + per_node <= static_cast<int>(recv_buf.size())) {
-        const int g = static_cast<int>(recv_buf(pos++));
-        const auto it = g_to_cap_col.find(g);
+    while (pos + per_node <= recv_buf.size()) {
+        int g = recv_buf(pos++);
+        auto it = g_to_cap_col.find(g);
         if (it == g_to_cap_col.end()) {
             pos += 3 * nsd + (gather_Y ? 2 * nsd : 0);
             continue;
         }
-        const int col = it->second;
+        int col = it->second;
         for (int i = 0; i < nsd; i++) {
             out.x(i, col) = recv_buf(pos++);
         }
@@ -867,7 +856,7 @@ void check_cap_shares_nodes_with_coupled_face(const faceType& coupled_face, cons
                                                        const std::string& coupled_face_name)
 {
     std::unordered_set<int> coupled_gn;
-    coupled_gn.reserve(static_cast<size_t>(coupled_face.nNo));
+    coupled_gn.reserve(coupled_face.nNo);
     for (int a = 0; a < coupled_face.nNo; a++) {
         coupled_gn.insert(coupled_face.gN(a));
     }
@@ -1048,8 +1037,8 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
     Array<double> xl(cap_nsd_, face_->eNoN);
 
     for (int a = 0; a < face_->eNoN; a++) {
-        const int gn = face_->IEN(a, e);
-        const int col = gn_to_cap_local.at(gn);
+        int gn = face_->IEN(a, e);
+        int col = gn_to_cap_local.at(gn);
         for (int i = 0; i < cap_nsd_; i++) {
             xl(i, a) = mesh_x(i, col);
         }
@@ -1138,7 +1127,7 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
     const Array<double>& cap_vel = use_Yn_velocity ? st.Yn : st.Yo;
 
     std::unordered_map<int, int> gn_to_cap_local;
-    gn_to_cap_local.reserve(static_cast<size_t>(face_->nNo));
+    gn_to_cap_local.reserve(face_->nNo);
     for (int a = 0; a < face_->nNo; a++) {
         gn_to_cap_local[face_->gN(a)] = a;
     }
@@ -1150,9 +1139,9 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
             auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
             double sHat = 0.0;
             for (int a = 0; a < face_->eNoN; a++) {
-                const int gn = face_->IEN(a, e);
-                const int col = gn_to_cap_local.at(gn);
-                const double Na = face_->N(a, g);
+                int gn = face_->IEN(a, e);
+                int col = gn_to_cap_local.at(gn);
+                double Na = face_->N(a, g);
                 for (int i = 0; i < cap_nsd_; i++) {
                     sHat += Na * cap_vel(i, col) * n(i);
                 }
@@ -1185,8 +1174,8 @@ void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const
         for (int g = 0; g < face_->nG; g++) {
             auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
             for (int a = 0; a < face_->eNoN; a++) {
-                const int gnNo_idx = face_->IEN(a, e);
-                const int cap_a = gnNo_to_cap_local.at(gnNo_idx);
+                int gnNo_idx = face_->IEN(a, e);
+                int cap_a = gnNo_to_cap_local.at(gnNo_idx);
                 for (int i = 0; i < cap_nsd_; i++) {
                     valM_(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);
                 }
@@ -1211,7 +1200,7 @@ void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
 {
     auto& cm = com_mod.cm;
     const bool i_am_sender = cm.mas(cm_mod);
-    int nsd = com_mod.nsd;
+    const int nsd = com_mod.nsd;
 
     if (!i_am_sender && cap_nNo > 0) {
         cap_gN_all.resize(cap_nNo);
@@ -1274,7 +1263,6 @@ void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& co
                                                                       const SolutionStates& solutions) const
 {
     const int nsd = com_mod.nsd;
-
     const int cap_nNo = cap_n_no_;
     Vector<int> cap_gN_all;
     Array<double> cap_val_all;
