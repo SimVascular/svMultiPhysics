@@ -41,6 +41,8 @@
  *
  * @todo
  *
+ * @todo The number of state variables in the model should be moved to this
+ * class.
  */
 class IonicModel {
 public:

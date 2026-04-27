@@ -86,6 +86,7 @@ void BuenoOrovio::getj(const unsigned int zone_id, const int n,
       (1.0 - H_uo) * (1.0 - u / tau_winf[zone_id]) + H_uo * ws_inf[zone_id];
 
   // Define Jacobian
+  // @todo Ksac might need to be added here.
   Jac = 0.0;
 
   {
