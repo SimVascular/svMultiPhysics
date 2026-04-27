@@ -35,15 +35,14 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
   const double t = Ts / Tscale + dt;
   X(0) = (X(0) - Voffset) / Vscale;
 
-  // Total external stimulus current is the sum of the applied current and the
-  // SAC current.
-  const double fext = (Istim + Isac) * Tscale / Vscale;
+  const double I_stim_scaled = Istim * Tscale / Vscale;
+  const double I_sac_scaled = Isac * Tscale / Vscale;
 
   const auto Im = mat_fun::mat_id(nX);
 
   // Evaluate the right-hand side function for the system at the old time.
   Vector<double> fn(nX);
-  getf(zone_id, nX, nG, X, Xg, fn, fext);
+  getf(zone_id, nX, nG, X, Xg, fn, I_stim_scaled, I_sac_scaled);
 
   int k = 0;    // Current nonlinear iteration index.
   auto Xk = X;  // Current solution. This copy is probably unnecessary.
@@ -66,7 +65,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
     // Evaluate the right-hand side function for the system at the new time and
     // current nonlinear iteration.
     Vector<double> fk(nX);
-    getf(zone_id, nX, nG, Xk, Xg, fk, fext);
+    getf(zone_id, nX, nG, Xk, Xg, fk, I_stim_scaled, I_sac_scaled);
 
     auto rK = Xk - X - 0.5 * dt * (fk + fn);
 
@@ -103,7 +102,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
 
   update_g(zone_id, dt, nX, nG, X, Xg);
   // @todo This call seems unnecessary, since fn is not used after this point.
-  getf(zone_id, nX, nG, X, Xg, fn, fext);
+  getf(zone_id, nX, nG, X, Xg, fn, I_stim_scaled, I_sac_scaled);
 
   // Bring the potential variable back to dimensional units.
   X(0) = X(0) * Vscale + Voffset;
@@ -128,10 +127,11 @@ void IonicModel::integ_fe(const unsigned int zone_id, const int nX,
 
   X(0) = (X(0) - Voffset) / Vscale;
 
-  const double fext = (Istim + Isac) * Tscale / Vscale;
+  const double I_stim_scaled = Istim * Tscale / Vscale;
+  const double I_sac_scaled = Isac * Tscale / Vscale;
 
   Vector<double> f(nX);
-  getf(zone_id, nX, nG, X, Xg, f, fext);
+  getf(zone_id, nX, nG, X, Xg, f, I_stim_scaled, I_sac_scaled);
 
   update_g(zone_id, dt, nX, nG, X, Xg);
 
@@ -154,14 +154,15 @@ void IonicModel::integ_rk(const unsigned int zone_id, const int nX,
   const double dt = Ti / Tscale;
   X(0) = (X(0) - Voffset) / Vscale;
 
-  const double fext = (Istim + Isac) * Tscale / Vscale;
+  const double I_stim_scaled = Istim * Tscale / Vscale;
+  const double I_sac_scaled = Isac * Tscale / Vscale;
 
   Vector<double> Xrk(nX);
   Vector<double> frk1(nX), frk2(nX), frk3(nX), frk4(nX);
 
   // First RK stage.
   Xrk = X;
-  getf(zone_id, nX, nG, Xrk, Xg, frk1, fext);
+  getf(zone_id, nX, nG, Xrk, Xg, frk1, I_stim_scaled, I_sac_scaled);
 
   // Update gating variables by half a step.
   auto Xgr = Xg;
@@ -169,11 +170,11 @@ void IonicModel::integ_rk(const unsigned int zone_id, const int nX,
 
   // Second RK stage.
   Xrk = X + 0.5 * dt * frk1;
-  getf(zone_id, nX, nG, Xrk, Xgr, frk2, fext);
+  getf(zone_id, nX, nG, Xrk, Xgr, frk2, I_stim_scaled, I_sac_scaled);
 
   // Third RK stage.
   Xrk = X + 0.5 * dt * frk2;
-  getf(zone_id, nX, nG, Xrk, Xgr, frk3, fext);
+  getf(zone_id, nX, nG, Xrk, Xgr, frk3, I_stim_scaled, I_sac_scaled);
 
   // Update gating variables by the whole step.
   Xgr = Xg;
@@ -181,7 +182,7 @@ void IonicModel::integ_rk(const unsigned int zone_id, const int nX,
 
   // Fourth RK stage.
   Xrk = X + dt * frk3;
-  getf(zone_id, nX, nG, Xrk, Xgr, frk4, fext);
+  getf(zone_id, nX, nG, Xrk, Xgr, frk4, I_stim_scaled, I_sac_scaled);
 
   X = X + dt / 6.0 * (frk1 + 2.0 * (frk2 + frk3) + frk4);
   Xg = Xgr;

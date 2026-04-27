@@ -77,7 +77,8 @@ protected:
   /// Model right-hand side.
   virtual void getf(const unsigned int zone_id, const int nX, const int nG,
                     const Vector<double> &X, const Vector<double> &Xg,
-                    Vector<double> &f, const double fext) const override;
+                    Vector<double> &f, const double I_stim,
+                    const double I_sac) const override;
 
   /// Model jacobian.
   virtual void getj(const unsigned int zone_id, const int nX, const int nG,

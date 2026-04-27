@@ -10,8 +10,9 @@ void AlievPanfilov::init(const int nX, Vector<double> &X) const {
 
 void AlievPanfilov::getf(const unsigned int zone_id, const int nX, const int nG,
                          const Vector<double> &X, const Vector<double> &Xg,
-                         Vector<double> &f, const double fext) const {
-  f(0) = X(0) * (c * (X(0) - alpha) * (1.0 - X(0)) - X(1)) - fext;
+                         Vector<double> &f, const double I_stim,
+                         const double I_sac) const {
+  f(0) = X(0) * (c * (X(0) - alpha) * (1.0 - X(0)) - X(1)) - I_stim + I_sac;
   f(1) =
       (a + mu1 * X(1) / (mu2 + X(0))) * (-X(1) - c * X(0) * (X(0) - b - 1.0));
 }

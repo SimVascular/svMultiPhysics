@@ -12,7 +12,8 @@ void BuenoOrovio::init(const int nX, Vector<double> &X) const {
 
 void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
                        const Vector<double> &X, const Vector<double> &Xg,
-                       Vector<double> &f, const double fext) const {
+                       Vector<double> &f, const double I_stim,
+                       const double I_sac) const {
   // Create local copies of the state variables
   const double u = X(0);
   const double v = X(1);
@@ -45,7 +46,7 @@ void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
   const double I_si = -H_uw * w * s / tau_si[i];
 
   // Compute RHS of state variable equations
-  f(0) = -(I_fi + I_so + I_si + fext);
+  f(0) = -(I_fi + I_so + I_si + I_stim) + I_sac;
   f(1) = (1.0 - H_uv) * (v_inf - v) / taum_v - H_uv * v / taup_v[i];
   f(2) = (1.0 - H_uw) * (w_inf - w) / taum_w - H_uw * w / taup_w[i];
   f(3) = (0.5 * (1.0 + tanh(k_s[i] * (u - u_s[i]))) - s) / tau_s;

@@ -144,7 +144,8 @@ protected:
    */
   virtual void getf(const unsigned int zone_id, const int nX, const int nG,
                     const Vector<double> &X, const Vector<double> &Xg,
-                    Vector<double> &f, const double fext) const = 0;
+                    Vector<double> &f, const double I_stim,
+                    const double I_sac) const = 0;
 
   /**
    * @brief Model jacobian.
