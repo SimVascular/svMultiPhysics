@@ -378,16 +378,6 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     throw std::runtime_error("[cep_integ_l] Ionic model not initialized");
   }
 
-  Vector<int> IPAR(2);
-  // @todo BO and TTP06 write ionic currents into entries of RPAR starting from
-  // index 2, as part of the call to getj. Those values appear to be unused,
-  // however.
-  Vector<double> RPAR(2);
-  IPAR(0) = cep.odes.maxItr;
-  IPAR(1) = 0.0;
-  RPAR(0) = cep.odes.absTol;
-  RPAR(1) = cep.odes.relTol;
-
   // @todo Restore active stress/strain.
   switch (cep.odes.tIntType) {
   case TimeIntegratioType::FE:
@@ -407,6 +397,14 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     break;
 
   case TimeIntegratioType::CN2:
+
+    Vector<int> IPAR = {cep.odes.maxItr, 0};
+
+    // @todo BO and TTP06 write ionic currents into entries of RPAR starting
+    // from index 2, as part of the call to getj. Those values appear to be
+    // unused, however.
+    Vector<double> RPAR = {cep.odes.absTol, cep.odes.relTol};
+
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;

@@ -91,6 +91,9 @@ public:
    * @brief Integrate the model with the Crank-Nicolson method.
    *
    * @todo Document numerical formulation.
+   *
+   * @todo IPAR and RPAR can probably be made const here. Also, the meaning of
+   *       their entries needs to be documented.
    */
   void integ_cn2(const unsigned int zone_id, const int nX, Vector<double> &Xn,
                  const double Ts, const double Ti, const double Istim,
