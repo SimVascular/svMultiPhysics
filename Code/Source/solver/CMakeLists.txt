@@ -222,6 +222,7 @@ set(CSRCS
   ArtificialNeuralNetMaterial.h ArtificialNeuralNetMaterial.cpp
 
   ionic_model.cpp
+  ionic_aliev_panfilov.cpp
   
   SPLIT.c
 

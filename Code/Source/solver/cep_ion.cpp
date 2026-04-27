@@ -3,6 +3,8 @@
 
 #include "cep_ion.h"
 
+#include "ionic_aliev_panfilov.h"
+
 #include "all_fun.h"
 #include "post.h"
 #include "utils.h"
@@ -116,7 +118,10 @@ void cep_init(Simulation* simulation)
 //
 void cep_init_l(cepModelType& cep, int nX, int nG, Vector<double>& X, Vector<double>& Xg)
 {
-  switch (cep.cepType) {
+  cep.ionic_model = std::make_shared<AlievPanfilov>();
+  cep.ionic_model->init(nX, X);
+
+  /* switch (cep.cepType) {
 
     case ElectrophysiologyModelType::AP:
       cep.ap.init(nX, X);
@@ -133,7 +138,7 @@ void cep_init_l(cepModelType& cep, int nX, int nG, Vector<double>& X, Vector<dou
     case ElectrophysiologyModelType::TTP:
       cep.ttp.init(nX, nG, X, Xg);
     break;
-  }
+  } */
 }
 
 //-----------
@@ -364,9 +369,51 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
   dmsg << "cep.odes.tIntTyp: " << cep.odes.tIntType;
   #endif
 
-  switch (cep.cepType) {
+  // @todo Replace with exception as in issue #526.
+  if (cep.ionic_model == nullptr) {
+    throw std::runtime_error("[cep_integ_l] Ionic model not initialized");
+  }
+
+  Vector<int> IPAR(2);
+  // @todo BO and TTP06 write ionic currents into entries of RPAR starting from
+  // index 2, as part of the call to getj. Those values appear to be unused,
+  // however.
+  Vector<double> RPAR(2);
+  IPAR(0) = cep.odes.maxItr;
+  IPAR(1) = 0.0;
+  RPAR(0) = cep.odes.absTol;
+  RPAR(1) = cep.odes.relTol;
+
+  // @todo Restore active stress/strain.
+  switch (cep.odes.tIntType) {
+  case TimeIntegratioType::FE:
+    for (unsigned int i = 0; i < nt; ++i) {
+      const double t = t1 + i * cep.dt;
+      const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
+      cep.ionic_model->integ_fe(nX, X, t, cep.dt, Istim, Ksac);
+    }
+    break;
+
+  case TimeIntegratioType::RK4:
+    for (int i = 0; i < nt; i++) {
+      const double t = t1 + i * cep.dt;
+      const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
+      cep.ionic_model->integ_rk(nX, X, t, cep.dt, Istim, Ksac);
+    }
+    break;
+
+  case TimeIntegratioType::CN2:
+    for (int i = 0; i < nt; i++) {
+      const double t = t1 + i * cep.dt;
+      const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
+      cep.ionic_model->integ_cn2(nX, X, t, cep.dt, Istim, Ksac, IPAR, RPAR);
+    }
+    break;
+  }
+
+  /* switch (cep.cepType) {
     case ElectrophysiologyModelType::AP: {
-      Vector<int> IPAR(2); 
+      Vector<int> IPAR(2);
       Vector<double> RPAR(2);
       IPAR(0) = cep.odes.maxItr;
       IPAR(1) = 0;
@@ -384,14 +431,14 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
               Istim = 0.0;
             }
             cep.ap.integ_fe(nX, X, t, cep.dt, Istim, Ksac);
-  
+
             // Electromechanics excitation-activation
             if (cem.aStress) {
               double epsX;
               cep.ap.actv_strs(X(0), cep.dt, yl, epsX);
             }
           }
-        } break; 
+        } break;
 
         case TimeIntegratioType::RK4: {
           for (int i = 0; i < nt; i++) {
@@ -410,7 +457,7 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
               cep.ap.actv_strs(X(0), cep.dt, yl, epsX);
             }
           }
-        } break; 
+        } break;
 
         case TimeIntegratioType::CN2: {
           for (int i = 0; i < nt; i++) {
@@ -430,12 +477,12 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
               cep.ap.actv_strs(X(0), cep.dt, yl, epsX);
             }
           }
-        } break; 
-      } 
-    } break; 
+        } break;
+      }
+    } break;
 
     case ElectrophysiologyModelType::BO: {
-      Vector<int> IPAR(2); 
+      Vector<int> IPAR(2);
       Vector<double> RPAR(5);
       IPAR(0) = cep.odes.maxItr;
       IPAR(1) = 0.0;
@@ -508,11 +555,11 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
             }
           }
         } break;
-      } 
-    } break; 
+      }
+    } break;
 
     case ElectrophysiologyModelType::FN: {
-      Vector<int> IPAR(2); 
+      Vector<int> IPAR(2);
       Vector<double> RPAR(2);
       IPAR(0) = cep.odes.maxItr;
       IPAR(0) = cep.odes.maxItr;
@@ -560,10 +607,10 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
            }
         } break;
       }
-    } break; 
+    } break;
 
     case ElectrophysiologyModelType::TTP: {
-      Vector<int> IPAR(2); 
+      Vector<int> IPAR(2);
       Vector<double> RPAR(18);
       IPAR(0) = cep.odes.maxItr;
       IPAR(1) = 0;
@@ -636,8 +683,8 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
           }
         } break;
       }
-    } break; 
-  } 
+    } break;
+  } */
 
   if (isnan(X(0)) ||  isnan(yl)) {
     throw std::runtime_error("[cep_integ_l] A NaN has been computed during time integration of electrophysiology variables.");

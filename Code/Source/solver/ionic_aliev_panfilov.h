@@ -1,0 +1,67 @@
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
+// University of California, and others. SPDX-License-Identifier: BSD-3-Clause
+
+#ifndef IONIC_ALIEV_PANFILOV_H
+#define IONIC_ALIEV_PANFILOV_H
+
+#include "ionic_model.h"
+
+#include "Vector.h"
+
+/**
+ * @brief Aliev-Panfilov ionic model.
+ *
+ * **Reference**: Aliev, Panfilov. A simple two-variable model of cardiac
+ * excitation. Chaos, Solitons and Fractals (1996).
+ */
+class AlievPanfilov : public IonicModel {
+public:
+  /// Constructor.
+  AlievPanfilov()
+      : IonicModel(/* Vrest_ = */ -80.0, /* Vscale_ = */ 100.0,
+                   /* Tscale_ = */ 12.90, /* Voffset_ = */ -80.0) {}
+
+  /// Setup of initial conditions.
+  virtual void init(const int nX, Vector<double> &X) const override;
+
+protected:
+  /// @name Model parameters
+  /// @todo Document units of measure.
+  /// @{
+
+  /// Corresponding to parameter a in Aliev-Panfilov paper.
+  const double alpha = 1.0e-2;
+
+  /// Corresponding to parameter epsilon0 in Aliev-Panfilov paper.
+  const double a = 2.0e-3;
+
+  /// Corresponding to parameter a in Aliev-Panfilov paper.
+  const double b = 0.15;
+
+  /// Corresponding to parameter k in Aliev-Panfilov paper.
+  const double c = 8.0;
+
+  const double mu1 = 0.20;
+  const double mu2 = 0.30;
+
+  /// Cell capacitance per unit surface area.
+  const double Cm = 1.0;
+
+  /// Membrane surface to volume ratio.
+  const double sV = 1.0;
+
+  /// Cellular resistivity.
+  const double rho = 1.0;
+
+  /// @}
+
+  /// Model right-hand side.
+  virtual void getf(const int n, const Vector<double> &X, Vector<double> &f,
+                    const double fext) const override;
+
+  /// Model jacobian.
+  virtual void getj(const int n, const Vector<double> &X, Array<double> &Jac,
+                    const double Ksac) const override;
+};
+
+#endif
