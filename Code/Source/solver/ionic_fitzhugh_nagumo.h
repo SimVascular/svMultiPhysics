@@ -49,14 +49,6 @@ protected:
   virtual void getj(const unsigned int zone_id, const int n,
                     const Vector<double> &X, Array<double> &Jac,
                     const double Ksac) const override;
-
-  /// Step function.
-  inline double step(const double r) const { return r < 0.0 ? 0.0 : 1.0; }
-
-  /// Delta function.
-  inline double delta(const double r) const {
-    return utils::is_zero(r) ? 1.0 : 0.0;
-  }
 };
 
 #endif
