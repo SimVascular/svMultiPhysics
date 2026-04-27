@@ -223,6 +223,7 @@ set(CSRCS
 
   ionic_model.cpp
   ionic_aliev_panfilov.cpp
+  ionic_bueno_orovio.cpp
   
   SPLIT.c
 

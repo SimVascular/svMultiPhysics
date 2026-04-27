@@ -82,7 +82,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
     rmsA = sqrt(rmsA / nX);
     rmsR = sqrt(rmsR / nX);
 
-    l1 = (k >= itMax);
+    l1 = (k > itMax);
     l2 = (rmsA <= atol);
     l3 = (rmsR <= rtol);
 
