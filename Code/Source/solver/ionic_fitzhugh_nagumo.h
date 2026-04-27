@@ -1,0 +1,62 @@
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
+// University of California, and others. SPDX-License-Identifier: BSD-3-Clause
+
+#ifndef IONIC_FITZHUGH_NAGUMO_H
+#define IONIC_FITZHUGH_NAGUMO_H
+
+#include "ionic_model.h"
+
+#include "Vector.h"
+#include "utils.h"
+
+/**
+ * @brief FitzHugh-Nagumo ionic model.
+ *
+ * **References**:
+ * - FitzHugh, Impulses and physiological states in theoretical models of nerve
+ *   membrane. Biophysical Journal (1961)
+ * - Nagumo, Arimoto, Yoshizawa. An active pulse transmission line simulating
+ *   nerve axon. Proceedings of the IRE (1962).
+ */
+class FitzHughNagumo : public IonicModel {
+public:
+  /// Constructor.
+  FitzHughNagumo()
+      : IonicModel(/* Vrest_ = */ 0.0, /* Vscale_ = */ 1.0,
+                   /* Tscale_ = */ 1.0, /* Voffset_ = */ 0.0) {}
+
+  /// Setup of initial conditions.
+  virtual void init(const int nX, Vector<double> &X) const override;
+
+protected:
+  /// @name Model parameters
+  /// @todo Document units of measure.
+  /// @{
+
+  const double alpha = -0.50;
+  const double a = 0.0;
+  const double b = -0.60;
+  const double c = 50.0;
+
+  /// @}
+
+  /// Model right-hand side.
+  virtual void getf(const unsigned int zone_id, const int n,
+                    const Vector<double> &X, Vector<double> &f,
+                    const double fext) const override;
+
+  /// Model jacobian.
+  virtual void getj(const unsigned int zone_id, const int n,
+                    const Vector<double> &X, Array<double> &Jac,
+                    const double Ksac) const override;
+
+  /// Step function.
+  inline double step(const double r) const { return r < 0.0 ? 0.0 : 1.0; }
+
+  /// Delta function.
+  inline double delta(const double r) const {
+    return utils::is_zero(r) ? 1.0 : 0.0;
+  }
+};
+
+#endif

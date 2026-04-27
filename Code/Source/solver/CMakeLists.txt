@@ -224,6 +224,7 @@ set(CSRCS
   ionic_model.cpp
   ionic_aliev_panfilov.cpp
   ionic_bueno_orovio.cpp
+  ionic_fitzhugh_nagumo.cpp
   
   SPLIT.c
 
