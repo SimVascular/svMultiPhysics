@@ -22,7 +22,8 @@ public:
                    /* Tscale_ = */ 12.90, /* Voffset_ = */ -80.0) {}
 
   /// Setup of initial conditions.
-  virtual void init(const int nX, Vector<double> &X) const override;
+  virtual void init(const int nX, const int nG, Vector<double> &X,
+                    Vector<double> &Xg) const override;
 
 protected:
   /// @name Model parameters

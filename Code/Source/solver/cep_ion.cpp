@@ -143,7 +143,7 @@ void cep_init_l(cepModelType &cep, int nX, int nG, Vector<double> &X,
     //   break;
   }
 
-  cep.ionic_model->init(nX, X);
+  cep.ionic_model->init(nX, nG, X, Xg);
 }
 
 //-----------

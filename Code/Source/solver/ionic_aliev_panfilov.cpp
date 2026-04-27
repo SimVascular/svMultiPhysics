@@ -3,7 +3,8 @@
 
 #include "ionic_aliev_panfilov.h"
 
-void AlievPanfilov::init(const int nX, Vector<double> &X) const {
+void AlievPanfilov::init(const int nX, const int nG, Vector<double> &X,
+                         Vector<double> &Xg) const {
   X = 1.0e-3;
   X(0) = Voffset;
 }

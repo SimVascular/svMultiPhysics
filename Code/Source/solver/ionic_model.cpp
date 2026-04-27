@@ -5,15 +5,6 @@
 
 #include "mat_fun.h"
 
-void IonicModel::init(const int nX, Vector<double> &X, double X0) const {
-  X = X0;
-}
-
-void IonicModel::init(const int nX, Vector<double> &X,
-                      const Vector<double> &X0) const {
-  X = X0;
-}
-
 void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
                            const int nG, Vector<double> &X, Vector<double> &Xg,
                            const double Ts, const double Ti, const double Istim,

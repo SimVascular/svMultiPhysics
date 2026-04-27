@@ -3,7 +3,8 @@
 
 #include "ionic_bueno_orovio.h"
 
-void BuenoOrovio::init(const int nX, Vector<double> &X) const {
+void BuenoOrovio::init(const int nX, const int nG, Vector<double> &X,
+                       Vector<double> &Xg) const {
   X(0) = Voffset;
   X(1) = 1.0;
   X(2) = 1.0;

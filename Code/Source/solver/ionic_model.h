@@ -62,27 +62,12 @@ public:
    * @brief Setup model initial conditions.
    *
    * @param[in] nX Number of state variables.
+   * @param[in] nG Number of gating variables.
    * @param[out] X Vector of state variables to be initialized.
+   * @param[out] Xg Vector of gating variables to be initialized.
    */
-  virtual void init(const int nX, Vector<double> &X) const = 0;
-
-  /**
-   * @brief Setup model initial conditions.
-   *
-   * @param[in] nX Number of state variables.
-   * @param[out] X Vector of state variables to be initialized.
-   * @param[in] X0 Value to be assigned to all the state variables.
-   */
-  void init(const int nX, Vector<double> &X, double X0) const;
-
-  /**
-   * @brief Setup model initial conditions.
-   *
-   * @param[in] nX Number of state variables.
-   * @param[out] X Vector of state variables to be initialized.
-   * @param[in] X0 Vector of initial state values.
-   */
-  void init(const int nX, Vector<double> &X, const Vector<double> &X0) const;
+  virtual void init(const int nX, const int nG, Vector<double> &X,
+                    Vector<double> &Xg) const = 0;
 
   /**
    * @name Integration methods.

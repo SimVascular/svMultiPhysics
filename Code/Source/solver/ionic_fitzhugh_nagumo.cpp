@@ -3,7 +3,10 @@
 
 #include "ionic_fitzhugh_nagumo.h"
 
-void FitzHughNagumo::init(const int nX, Vector<double> &X) const { X = 1.e-3; }
+void FitzHughNagumo::init(const int nX, const int nG, Vector<double> &X,
+                          Vector<double> &Xg) const {
+  X = 1.e-3;
+}
 
 void FitzHughNagumo::getf(const unsigned int zone_id, const int nX,
                           const int nG, const Vector<double> &X,
