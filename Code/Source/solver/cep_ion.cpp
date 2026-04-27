@@ -390,7 +390,7 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     for (unsigned int i = 0; i < nt; ++i) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_fe(nX, X, t, cep.dt, Istim, Ksac);
+      cep.ionic_model->integ_fe(cep.imyo, nX, X, t, cep.dt, Istim, Ksac);
     }
     break;
 
@@ -398,7 +398,7 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_rk(nX, X, t, cep.dt, Istim, Ksac);
+      cep.ionic_model->integ_rk(cep.imyo, nX, X, t, cep.dt, Istim, Ksac);
     }
     break;
 
@@ -406,7 +406,8 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_cn2(nX, X, t, cep.dt, Istim, Ksac, IPAR, RPAR);
+      cep.ionic_model->integ_cn2(cep.imyo, nX, X, t, cep.dt, Istim, Ksac, IPAR,
+                                 RPAR);
     }
     break;
   }

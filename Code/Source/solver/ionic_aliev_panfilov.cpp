@@ -8,15 +8,17 @@ void AlievPanfilov::init(const int nX, Vector<double> &X) const {
   X(0) = Voffset;
 }
 
-void AlievPanfilov::getf(const int n, const Vector<double> &X,
-                         Vector<double> &f, const double fext) const {
+void AlievPanfilov::getf(const unsigned int zone_id, const int n,
+                         const Vector<double> &X, Vector<double> &f,
+                         const double fext) const {
   f(0) = X(0) * (c * (X(0) - alpha) * (1.0 - X(0)) - X(1)) - fext;
   f(1) =
       (a + mu1 * X(1) / (mu2 + X(0))) * (-X(1) - c * X(0) * (X(0) - b - 1.0));
 }
 
-void AlievPanfilov::getj(const int n, const Vector<double> &X,
-                         Array<double> &Jac, const double Ksac) const {
+void AlievPanfilov::getj(const unsigned int zone_id, const int n,
+                         const Vector<double> &X, Array<double> &Jac,
+                         const double Ksac) const {
   Jac = 0.0;
 
   double n1 = X(0) - alpha;

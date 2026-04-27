@@ -14,10 +14,10 @@ void IonicModel::init(const int nX, Vector<double> &X,
   X = X0;
 }
 
-void IonicModel::integ_cn2(const int nX, Vector<double> &Xn, const double Ts,
-                           const double Ti, const double Istim,
-                           const double Ksac, Vector<int> &IPAR,
-                           Vector<double> &RPAR) const {
+void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
+                           Vector<double> &Xn, const double Ts, const double Ti,
+                           const double Istim, const double Ksac,
+                           Vector<int> &IPAR, Vector<double> &RPAR) const {
   // @todo The nX argument can probably be removed and replaced by the length of
   // the state vector Xn.
 
@@ -42,7 +42,7 @@ void IonicModel::integ_cn2(const int nX, Vector<double> &Xn, const double Ts,
 
   // Evaluate the right-hand side function for the system at the old time.
   Vector<double> fn(nX);
-  getf(nX, Xn, fn, fext);
+  getf(zone_id, nX, Xn, fn, fext);
 
   int k = 0;    // Current nonlinear iteration index.
   auto Xk = Xn; // Current solution. This copy is probably unnecessary.
@@ -65,7 +65,7 @@ void IonicModel::integ_cn2(const int nX, Vector<double> &Xn, const double Ts,
     // Evaluate the right-hand side function for the system at the new time and
     // current nonlinear iteration.
     Vector<double> fk(nX);
-    getf(nX, Xk, fk, fext);
+    getf(zone_id, nX, Xk, fk, fext);
 
     auto rK = Xk - Xn - 0.5 * dt * (fk + fn);
 
@@ -90,7 +90,7 @@ void IonicModel::integ_cn2(const int nX, Vector<double> &Xn, const double Ts,
       break;
 
     Array<double> JAC(nX, nX);
-    getj(nX, Xk, JAC, Ksac * Tscale);
+    getj(zone_id, nX, Xk, JAC, Ksac * Tscale);
 
     JAC = Im - 0.5 * dt * JAC;
     JAC = mat_fun::mat_inv(JAC, nX);
@@ -101,7 +101,7 @@ void IonicModel::integ_cn2(const int nX, Vector<double> &Xn, const double Ts,
   Xn = Xk;
 
   // @todo This call seems unnecessary, since fn is not used after this point.
-  getf(nX, Xn, fn, fext);
+  getf(zone_id, nX, Xn, fn, fext);
 
   // Bring the potential variable back to dimensional units.
   Xn(0) = Xn(0) * Vscale + Voffset;
@@ -111,9 +111,9 @@ void IonicModel::integ_cn2(const int nX, Vector<double> &Xn, const double Ts,
   }
 }
 
-void IonicModel::integ_fe(const int nX, Vector<double> &X, const double Ts,
-                          const double Ti, const double Istim,
-                          const double Ksac) const {
+void IonicModel::integ_fe(const unsigned int zone_id, const int nX,
+                          Vector<double> &X, const double Ts, const double Ti,
+                          const double Istim, const double Ksac) const {
 
   // Rescale current time, timestep and transmembrane potential by the
   // model-specific scaling factors.
@@ -128,7 +128,7 @@ void IonicModel::integ_fe(const int nX, Vector<double> &X, const double Ts,
   const double fext = (Istim + Isac) * Tscale / Vscale;
 
   Vector<double> f(nX);
-  getf(nX, X, f, fext);
+  getf(zone_id, nX, X, f, fext);
 
   X = X + dt * f;
 
@@ -136,9 +136,9 @@ void IonicModel::integ_fe(const int nX, Vector<double> &X, const double Ts,
   X(0) = X(0) * Vscale + Voffset;
 }
 
-void IonicModel::integ_rk(const int nX, Vector<double> &X, const double Ts,
-                          const double Ti, const double Istim,
-                          const double Ksac) const {
+void IonicModel::integ_rk(const unsigned int zone_id, const int nX,
+                          Vector<double> &X, const double Ts, const double Ti,
+                          const double Istim, const double Ksac) const {
   // Stretch-activated current.
   const double Isac = Ksac * (Vrest - X(0));
 
@@ -155,19 +155,19 @@ void IonicModel::integ_rk(const int nX, Vector<double> &X, const double Ts,
 
   // First RK stage.
   Xrk = X;
-  getf(nX, Xrk, frk1, fext);
+  getf(zone_id, nX, Xrk, frk1, fext);
 
   // Second RK stage.
   Xrk = X + 0.5 * dt * frk1;
-  getf(nX, Xrk, frk2, fext);
+  getf(zone_id, nX, Xrk, frk2, fext);
 
   // Third RK stage.
   Xrk = X + 0.5 * dt * frk2;
-  getf(nX, Xrk, frk3, fext);
+  getf(zone_id, nX, Xrk, frk3, fext);
 
   // Fourth RK stage.
   Xrk = X + dt * frk3;
-  getf(nX, Xrk, frk4, fext);
+  getf(zone_id, nX, Xrk, frk4, fext);
 
   X = X + dt / 6.0 * (frk1 + 2.0 * (frk2 + frk3) + frk4);
 

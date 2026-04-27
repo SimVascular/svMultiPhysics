@@ -56,11 +56,13 @@ protected:
   /// @}
 
   /// Model right-hand side.
-  virtual void getf(const int n, const Vector<double> &X, Vector<double> &f,
+  virtual void getf(const unsigned int zone_id, const int n,
+                    const Vector<double> &X, Vector<double> &f,
                     const double fext) const override;
 
   /// Model jacobian.
-  virtual void getj(const int n, const Vector<double> &X, Array<double> &Jac,
+  virtual void getj(const unsigned int zone_id, const int n,
+                    const Vector<double> &X, Array<double> &Jac,
                     const double Ksac) const override;
 };
 

@@ -92,25 +92,28 @@ public:
    *
    * @todo Document numerical formulation.
    */
-  void integ_cn2(const int nX, Vector<double> &Xn, const double Ts,
-                 const double Ti, const double Istim, const double Ksac,
-                 Vector<int> &IPAR, Vector<double> &RPAR) const;
+  void integ_cn2(const unsigned int zone_id, const int nX, Vector<double> &Xn,
+                 const double Ts, const double Ti, const double Istim,
+                 const double Ksac, Vector<int> &IPAR,
+                 Vector<double> &RPAR) const;
 
   /**
    * @brief Integrate the model with the forward Euler method.
    *
    * @todo Document numerical formulation.
    */
-  void integ_fe(const int nX, Vector<double> &X, const double Ts,
-                const double Ti, const double Istim, const double Ksac) const;
+  void integ_fe(const unsigned int zone_id, const int nX, Vector<double> &X,
+                const double Ts, const double Ti, const double Istim,
+                const double Ksac) const;
 
   /**
    * @brief Integrate the model with the Runge-Kutta method.
    *
    * @todo Document numerical formulation.
    */
-  void integ_rk(const int nX, Vector<double> &X, const double Ts,
-                const double Ti, const double Istim, const double Ksac) const;
+  void integ_rk(const unsigned int zone_id, const int nX, Vector<double> &X,
+                const double Ts, const double Ti, const double Istim,
+                const double Ksac) const;
 
   /**
    * @}
@@ -125,7 +128,8 @@ protected:
    *
    * @todo Document the meaning of the individual parameters.
    */
-  virtual void getf(const int n, const Vector<double> &X, Vector<double> &f,
+  virtual void getf(const unsigned int zone_id, const int n,
+                    const Vector<double> &X, Vector<double> &f,
                     const double fext) const = 0;
 
   /**
@@ -136,7 +140,8 @@ protected:
    *
    * @todo Document the meaning of the individual parameters.
    */
-  virtual void getj(const int n, const Vector<double> &X, Array<double> &Jac,
+  virtual void getj(const unsigned int zone_id, const int n,
+                    const Vector<double> &X, Array<double> &Jac,
                     const double Ksac) const = 0;
 
   /// Resting transmembrane potential. It is used to define the
