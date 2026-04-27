@@ -6,6 +6,7 @@
 #include "ionic_aliev_panfilov.h"
 #include "ionic_bueno_orovio.h"
 #include "ionic_fitzhugh_nagumo.h"
+#include "ionic_ttp.h"
 
 #include "all_fun.h"
 #include "post.h"
@@ -138,9 +139,9 @@ void cep_init_l(cepModelType &cep, int nX, int nG, Vector<double> &X,
     cep.ionic_model = std::make_shared<FitzHughNagumo>();
     break;
 
-    // case ElectrophysiologyModelType::TTP:
-    //   cep.ttp.init(nX, nG, X, Xg);
-    //   break;
+  case ElectrophysiologyModelType::TTP:
+    cep.ionic_model = std::make_shared<TTP>();
+    break;
   }
 
   cep.ionic_model->init(nX, nG, X, Xg);
