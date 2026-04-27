@@ -5,15 +5,17 @@
 
 void FitzHughNagumo::init(const int nX, Vector<double> &X) const { X = 1.e-3; }
 
-void FitzHughNagumo::getf(const unsigned int zone_id, const int n,
-                          const Vector<double> &X, Vector<double> &f,
+void FitzHughNagumo::getf(const unsigned int zone_id, const int nX,
+                          const int nG, const Vector<double> &X,
+                          const Vector<double> &Xg, Vector<double> &f,
                           const double fext) const {
   f(0) = c * (X(0) * (X(0) - alpha) * (1.0 - X(0)) - X(1)) + fext;
   f(1) = X(0) - b * X(1) + a;
 }
 
-void FitzHughNagumo::getj(const unsigned int zone_id, const int n,
-                          const Vector<double> &X, Array<double> &Jac,
+void FitzHughNagumo::getj(const unsigned int zone_id, const int nX,
+                          const int nG, const Vector<double> &X,
+                          const Vector<double> &Xg, Array<double> &Jac,
                           const double Ksac) const {
   Jac = 0.0;
 

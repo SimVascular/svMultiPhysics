@@ -15,24 +15,25 @@ void IonicModel::init(const int nX, Vector<double> &X,
 }
 
 void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
-                           Vector<double> &Xn, const double Ts, const double Ti,
-                           const double Istim, const double Ksac,
-                           Vector<int> &IPAR, Vector<double> &RPAR) const {
-  // @todo The nX argument can probably be removed and replaced by the length of
-  // the state vector Xn.
+                           const int nG, Vector<double> &X, Vector<double> &Xg,
+                           const double Ts, const double Ti, const double Istim,
+                           const double Ksac, Vector<int> &IPAR,
+                           Vector<double> &RPAR) const {
+  // @todo The nX and nG arguments can probably be removed and replaced by the
+  // length of the state vectors X and Xg.
 
   const int itMax = IPAR(0);   // Maximum iterations for nonlinear solver.
   const double atol = RPAR(0); // Absolute tolerance for nonlinear solver.
   const double rtol = RPAR(1); // Relative tolerance for nonlinear solver.
 
   // Stretch-activated current.
-  const double Isac = Ksac * (Vrest - Xn(0));
+  const double Isac = Ksac * (Vrest - X(0));
 
   // Rescale current time, timestep and transmembrane potential by the
   // model-specific scaling factors.
   const double dt = Ti / Tscale;
   const double t = Ts / Tscale + dt;
-  Xn(0) = (Xn(0) - Voffset) / Vscale;
+  X(0) = (X(0) - Voffset) / Vscale;
 
   // Total external stimulus current is the sum of the applied current and the
   // SAC current.
@@ -42,10 +43,10 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
 
   // Evaluate the right-hand side function for the system at the old time.
   Vector<double> fn(nX);
-  getf(zone_id, nX, Xn, fn, fext);
+  getf(zone_id, nX, nG, X, Xg, fn, fext);
 
   int k = 0;    // Current nonlinear iteration index.
-  auto Xk = Xn; // Current solution. This copy is probably unnecessary.
+  auto Xk = X;  // Current solution. This copy is probably unnecessary.
 
   // @todo The following flags should be given meaningful names.
   // Flag indicating whether the maximum number of iterations was reached.
@@ -65,9 +66,9 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
     // Evaluate the right-hand side function for the system at the new time and
     // current nonlinear iteration.
     Vector<double> fk(nX);
-    getf(zone_id, nX, Xk, fk, fext);
+    getf(zone_id, nX, nG, Xk, Xg, fk, fext);
 
-    auto rK = Xk - Xn - 0.5 * dt * (fk + fn);
+    auto rK = Xk - X - 0.5 * dt * (fk + fn);
 
     double rmsA = 0.0;
     double rmsR = 0.0;
@@ -90,7 +91,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
       break;
 
     Array<double> JAC(nX, nX);
-    getj(zone_id, nX, Xk, JAC, Ksac * Tscale);
+    getj(zone_id, nX, nG, Xk, Xg, JAC, Ksac * Tscale);
 
     JAC = Im - 0.5 * dt * JAC;
     JAC = mat_fun::mat_inv(JAC, nX);
@@ -98,13 +99,14 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
     Xk = Xk - rK;
   }
 
-  Xn = Xk;
+  X = Xk;
 
+  update_g(zone_id, dt, nX, nG, X, Xg);
   // @todo This call seems unnecessary, since fn is not used after this point.
-  getf(zone_id, nX, Xn, fn, fext);
+  getf(zone_id, nX, nG, X, Xg, fn, fext);
 
   // Bring the potential variable back to dimensional units.
-  Xn(0) = Xn(0) * Vscale + Voffset;
+  X(0) = X(0) * Vscale + Voffset;
 
   if (!l2 && !l3) {
     IPAR(1) = IPAR(1) + 1;
@@ -112,8 +114,9 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
 }
 
 void IonicModel::integ_fe(const unsigned int zone_id, const int nX,
-                          Vector<double> &X, const double Ts, const double Ti,
-                          const double Istim, const double Ksac) const {
+                          const int nG, Vector<double> &X, Vector<double> &Xg,
+                          const double Ts, const double Ti, const double Istim,
+                          const double Ksac) const {
 
   // Rescale current time, timestep and transmembrane potential by the
   // model-specific scaling factors.
@@ -128,7 +131,9 @@ void IonicModel::integ_fe(const unsigned int zone_id, const int nX,
   const double fext = (Istim + Isac) * Tscale / Vscale;
 
   Vector<double> f(nX);
-  getf(zone_id, nX, X, f, fext);
+  getf(zone_id, nX, nG, X, Xg, f, fext);
+
+  update_g(zone_id, dt, nX, nG, X, Xg);
 
   X = X + dt * f;
 
@@ -137,8 +142,9 @@ void IonicModel::integ_fe(const unsigned int zone_id, const int nX,
 }
 
 void IonicModel::integ_rk(const unsigned int zone_id, const int nX,
-                          Vector<double> &X, const double Ts, const double Ti,
-                          const double Istim, const double Ksac) const {
+                          const int nG, Vector<double> &X, Vector<double> &Xg,
+                          const double Ts, const double Ti, const double Istim,
+                          const double Ksac) const {
   // Stretch-activated current.
   const double Isac = Ksac * (Vrest - X(0));
 
@@ -155,21 +161,30 @@ void IonicModel::integ_rk(const unsigned int zone_id, const int nX,
 
   // First RK stage.
   Xrk = X;
-  getf(zone_id, nX, Xrk, frk1, fext);
+  getf(zone_id, nX, nG, Xrk, Xg, frk1, fext);
+
+  // Update gating variables by half a step.
+  auto Xgr = Xg;
+  update_g(zone_id, 0.5 * dt, nX, nG, X, Xgr);
 
   // Second RK stage.
   Xrk = X + 0.5 * dt * frk1;
-  getf(zone_id, nX, Xrk, frk2, fext);
+  getf(zone_id, nX, nG, Xrk, Xgr, frk2, fext);
 
   // Third RK stage.
   Xrk = X + 0.5 * dt * frk2;
-  getf(zone_id, nX, Xrk, frk3, fext);
+  getf(zone_id, nX, nG, Xrk, Xgr, frk3, fext);
+
+  // Update gating variables by the whole step.
+  Xgr = Xg;
+  update_g(zone_id, dt, nX, nG, X, Xgr);
 
   // Fourth RK stage.
   Xrk = X + dt * frk3;
-  getf(zone_id, nX, Xrk, frk4, fext);
+  getf(zone_id, nX, nG, Xrk, Xgr, frk4, fext);
 
   X = X + dt / 6.0 * (frk1 + 2.0 * (frk2 + frk3) + frk4);
+  Xg = Xgr;
 
   // Bring the potential variable back to dimensional units.
   X(0) = X(0) * Vscale + Voffset;

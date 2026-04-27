@@ -10,9 +10,9 @@ void BuenoOrovio::init(const int nX, Vector<double> &X) const {
   X(3) = 0.0;
 }
 
-void BuenoOrovio::getf(const unsigned int zone_id, const int n,
-                       const Vector<double> &X, Vector<double> &f,
-                       const double fext) const {
+void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
+                       const Vector<double> &X, const Vector<double> &Xg,
+                       Vector<double> &f, const double fext) const {
   // Create local copies of the state variables
   const double u = X(0);
   const double v = X(1);
@@ -51,9 +51,9 @@ void BuenoOrovio::getf(const unsigned int zone_id, const int n,
   f(3) = (0.5 * (1.0 + tanh(k_s[i] * (u - u_s[i]))) - s) / tau_s;
 }
 
-void BuenoOrovio::getj(const unsigned int zone_id, const int n,
-                       const Vector<double> &X, Array<double> &Jac,
-                       const double Ksac) const {
+void BuenoOrovio::getj(const unsigned int zone_id, const int nX, const int nG,
+                       const Vector<double> &X, const Vector<double> &Xg,
+                       Array<double> &Jac, const double Ksac) const {
   // Create local copies of the state variables
   const double u = X(0);
   const double v = X(1);
