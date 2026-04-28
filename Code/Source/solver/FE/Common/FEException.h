@@ -12,7 +12,7 @@
  * solver exception infrastructure in Core/Exception.h.
  */
 
-#include "Core/Exception.h"
+#include "Exception.h"
 
 #include <sstream>
 #include <string>
