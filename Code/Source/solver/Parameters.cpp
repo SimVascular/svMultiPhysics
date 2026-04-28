@@ -145,7 +145,7 @@ IncludeParametersFile::IncludeParametersFile(const char* cfile_name)
   root_element = document.FirstChildElement(Parameters::FSI_FILE.c_str());
 
   if (error != tinyxml2::XML_SUCCESS || root_element == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "The following error occured while reading the XML file '" +
+    svmp::raise<svmp::ParseException>(SVMP_HERE, "The following error occurred while reading the XML file '" +
         file_name + "'.\n" + "[svMultiPhysics] ERROR " + std::string(document.ErrorStr())); 
   }
 }
