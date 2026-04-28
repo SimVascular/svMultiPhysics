@@ -2544,13 +2544,13 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
         try {
           default_domain->set_parameter_value(name, value);
         } catch (const std::bad_function_call& exception) {
-          svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name_ + " XML element '" + name + ".");
+          svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name_ + " XML element '" + name + "'.");
         }
       }
 
 
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "[Equation] Unknown " + xml_element_name_ + " XML element '" + name + ".");
+      svmp::raise<svmp::ParseException>(SVMP_HERE, "[Equation] Unknown " + xml_element_name_ + " XML element '" + name + "'.");
     }
 
     item = item->NextSiblingElement();
