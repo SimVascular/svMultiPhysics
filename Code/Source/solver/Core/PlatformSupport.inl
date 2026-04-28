@@ -1,8 +1,12 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef SVMP_CORE_PLATFORM_SUPPORT_H
-#define SVMP_CORE_PLATFORM_SUPPORT_H
+#ifndef SVMP_CORE_PLATFORM_SUPPORT_INL
+#define SVMP_CORE_PLATFORM_SUPPORT_INL
+
+#ifndef SVMP_CORE_EXCEPTION_INCLUDE_PLATFORM_SUPPORT
+#error "PlatformSupport.inl is private; include Core/Exception.h instead."
+#endif
 
 #include <mpi.h>
 
@@ -160,4 +164,4 @@ inline void PlatformSupport::abort_mpi_if_needed(int exit_code) noexcept
 
 } // namespace svmp
 
-#endif // SVMP_CORE_PLATFORM_SUPPORT_H
+#endif // SVMP_CORE_PLATFORM_SUPPORT_INL

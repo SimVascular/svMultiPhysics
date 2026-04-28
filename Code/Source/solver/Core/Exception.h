@@ -128,7 +128,9 @@ public:
 };
 } // namespace svmp
 
-#include "Core/PlatformSupport.h"
+#define SVMP_CORE_EXCEPTION_INCLUDE_PLATFORM_SUPPORT
+#include "PlatformSupport.inl"
+#undef SVMP_CORE_EXCEPTION_INCLUDE_PLATFORM_SUPPORT
 
 namespace svmp {
 
