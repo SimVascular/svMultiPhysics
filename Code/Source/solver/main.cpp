@@ -695,9 +695,9 @@ int main(int argc, char *argv[])
   MPI_Finalize();
   return 0;
 
-  } catch (const svmp::ParseException& exception) {
+  } catch (const svmp::ExceptionBase& exception) {
     if (mpi_rank == 0) {
-      std::cerr << "[svMultiPhysics] XML parse error:" << std::endl;
+      std::cerr << "[svMultiPhysics] ERROR: The svMultiPhysics program has failed due to unhandled exception." << std::endl;
       std::cerr << exception.what() << std::endl;
     }
     svmp::ExceptionRuntime::abort_mpi_if_needed(EXIT_FAILURE);
