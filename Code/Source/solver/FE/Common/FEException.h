@@ -9,7 +9,7 @@
  * @brief Exception hierarchy for error handling in the FE library
  *
  * This header defines FE-specific exception types that derive from the shared
- * solver exception infrastructure in Core/Exception.h.
+ * solver exception infrastructure in Exception.h.
  */
 
 #include "Exception.h"

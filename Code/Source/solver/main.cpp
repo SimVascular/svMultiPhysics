@@ -711,5 +711,12 @@ int main(int argc, char *argv[])
     svmp::ExceptionRuntime::abort_mpi_if_needed(EXIT_FAILURE);
     svmp::ExceptionRuntime::finalize_mpi_if_needed();
     return EXIT_FAILURE;
+  } catch (...) {
+    if (mpi_rank == 0) {
+      std::cerr << "[svMultiPhysics] ERROR: The svMultiPhysics program has failed due to an unknown unhandled exception." << std::endl;
+    }
+    svmp::ExceptionRuntime::abort_mpi_if_needed(EXIT_FAILURE);
+    svmp::ExceptionRuntime::finalize_mpi_if_needed();
+    return EXIT_FAILURE;
   }
 }
