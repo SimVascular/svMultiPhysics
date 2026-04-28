@@ -301,9 +301,7 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solu
 
       for (int a = 0; a < mesh.eNoN; a++) {
         int Ac = mesh.IEN(a, iEln);
-        for (int i = 0; i < nsd; i++) {
-          xl(i, a) = com_mod.x(i, Ac);
-        }
+        xl.rcol(a) = com_mod.x.rcol(Ac);
       }
       // Get displacement  
       // Localize p inside the parent element
@@ -331,12 +329,8 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solu
                   cm_mod::mpreal, MPI_SUM, cm.com());
 
     for (int nd = 0; nd < uris_obj.tnNo; nd++) {
-      double divisor = static_cast<double>(std::max(1, uris_obj.elemCounter(nd)));
-      // Vector<double> Yd_vec = uris_obj.Yd.col(nd) / div;
-      // uris_obj.Yd.set_col(nd, Yd_vec);
-      for (int i = 0; i < nsd; i++) {
-        uris_obj.Yd(i,nd) /= divisor;
-      }
+      double divisor = std::max(1, uris_obj.elemCounter(nd));
+      uris_obj.Yd.rcol(nd) = uris_obj.Yd.rcol(nd) / divisor;
     }
 
   }
@@ -401,9 +395,7 @@ void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
       for (int iEln = 0; iEln < mesh.nEl && !found; iEln++) {
         for (int a = 0; a < mesh.eNoN; a++) {
           int Ac = mesh.IEN(a, iEln);
-          for(int i = 0; i < nsd; i++) {
-            xl(i,a) = com_mod.x(i,Ac);
-          }
+          xl.rcol(a) = com_mod.x.rcol(Ac);
         }
         inside_tet(com_mod, mesh.eNoN, xp, xl, flag, ultra);
         if (flag == 1) {
@@ -466,6 +458,23 @@ void inside_tet(ComMod& com_mod, int& eNoN, Vector<double>& xp,
   }
 }
 
+/// @brief Precompute whether each node belongs to a fluid-related domain.
+void uris_build_fluid_node_mask(ComMod& com_mod) {
+  using namespace consts;
+
+  com_mod.urisFluidNodeMask.resize(com_mod.tnNo, 0);
+  for (int a = 0; a < com_mod.tnNo; ++a) {
+    for (int iEq = 0; iEq < com_mod.nEq; ++iEq) {
+      const auto& eq = com_mod.eq[iEq];
+      if (all_fun::is_domain(com_mod, eq, a, Equation_fluid) ||
+          all_fun::is_domain(com_mod, eq, a, Equation_CMM) ||
+          all_fun::is_domain(com_mod, eq, a, Equation_stokes)) {
+        com_mod.urisFluidNodeMask[a] = 1;
+        break;
+      }
+    }
+  }
+}
 
 /// @brief Read the URIS mesh separately 
 void uris_read_msh(Simulation* simulation) {
@@ -581,7 +590,6 @@ void uris_read_msh(Simulation* simulation) {
         for (int a = 0; a < dispNnOpen; a++) {
           for (int i = 0; i < nsd; i++) {
             file_stream >> dispOpen(t,i,a);
-            // std::cout << "dispOpen: " << dispOpen(t,n,a) << std::endl;
           }
         }
       }
@@ -608,7 +616,6 @@ void uris_read_msh(Simulation* simulation) {
         for (int a = 0; a < dispNnClose; a++) {
           for (int i = 0; i < nsd; i++) {
             file_stream >> dispClose(t,i,a);
-            // std::cout << "dispClose: " << dispClose(t,n,a) << std::endl;
           }
         }
       }
@@ -629,59 +636,40 @@ void uris_read_msh(Simulation* simulation) {
         Array<double> tmpX(nsd, uris_obj.tnNo);
         tmpX = gX;
         gX.resize(nsd, a);
-        for (int i = 0; i < nsd; i++) {
-          for (int j = 0; j < uris_obj.tnNo; j++) {
-            gX(i,j) = tmpX(i,j);
-          }
+        for (int j = 0; j < uris_obj.tnNo; j++) {
+          gX.rcol(j) = tmpX.rcol(j);
         }
+
         // Move data for open
         Array3<double> tmpDxOpen(dispNtOpen, nsd, uris_obj.tnNo);
         tmpDxOpen = uris_obj.DxOpen;
         uris_obj.DxOpen.resize(dispNtOpen, nsd, a);
-        for (int k = 0; k < dispNtOpen; k++) {
-          for (int i = 0; i < nsd; i++) {
-            for (int j = 0; j < uris_obj.tnNo; j++) {
-              uris_obj.DxOpen(k,i,j) = tmpDxOpen(k,i,j);
-            }
-          }
+        for (int i = 0; i < uris_obj.tnNo; i++) {
+          uris_obj.DxOpen.rslice(i) = tmpDxOpen.rslice(i);
         }
         // Move data for open
         Array3<double> tmpDxClose(dispNtClose, nsd, uris_obj.tnNo);
         tmpDxClose = uris_obj.DxClose;
         uris_obj.DxClose.resize(dispNtClose, nsd, a);
-        for (int k = 0; k < dispNtClose; k++) {
-          for (int i = 0; i < nsd; i++) {
-            for (int j = 0; j < uris_obj.tnNo; j++) {
-              uris_obj.DxClose(k,i,j) = tmpDxClose(k,i,j);
-            }
-          }
+        for (int i = 0; i < uris_obj.tnNo; i++) {
+          uris_obj.DxClose.rslice(i) = tmpDxClose.rslice(i);
         }
       }
 
-      for (int i = 0; i < nsd; i++) {
-        for (int j = uris_obj.tnNo; j < a; j++) {
-          gX(i,j) = mesh.x(i,j-uris_obj.tnNo) * uris_obj.scF;
-        }
+      for (int i = uris_obj.tnNo; i < a; i++) {
+        gX.rcol(i) = mesh.x.rcol(i-uris_obj.tnNo) * uris_obj.scF;
       }
-      for (int k = 0; k < dispNtOpen; k++) {
-        for (int i = 0; i < nsd; i++) {
-          for (int j = uris_obj.tnNo; j < a; j++) {
-            uris_obj.DxOpen(k,i,j) = dispOpen(k,i,j-uris_obj.tnNo) * uris_obj.scF;
-          }
-        }
+
+      for (int i = uris_obj.tnNo; i < a; i++) {
+        uris_obj.DxOpen.rslice(i) = dispOpen.rslice(i-uris_obj.tnNo) * uris_obj.scF;
       }
-      for (int k = 0; k < dispNtClose; k++) {
-        for (int i = 0; i < nsd; i++) {
-          for (int j = uris_obj.tnNo; j < a; j++) {
-            uris_obj.DxClose(k,i,j) = dispClose(k,i,j-uris_obj.tnNo) * uris_obj.scF;
-          }
-        }
+
+      for (int i = uris_obj.tnNo; i < a; i++) {
+        uris_obj.DxClose.rslice(i) = dispClose.rslice(i-uris_obj.tnNo) * uris_obj.scF;
       }
       uris_obj.tnNo = a;
-      // mesh.x.clear();
-      // dispOpen.clear();
-      // dispClose.clear();
     }
+    
     uris_obj.x.resize(nsd, uris_obj.tnNo);
     uris_obj.x = gX;
     uris_obj.Yd.resize(nsd, uris_obj.tnNo);
@@ -888,14 +876,20 @@ void uris_write_vtus(ComMod& com_mod) {
 void uris_calc_sdf(ComMod& com_mod) {
   #define n_debug_uris_calc_sdf 
   #ifdef debug_uris_calc_sdf
-  DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
+
+  using namespace consts;
 
   auto& cm = com_mod.cm;
   auto& uris = com_mod.uris;
   const int nsd = com_mod.nsd;
   const int nUris = com_mod.nUris;
+
+  if (com_mod.urisFluidNodeMask.size() != static_cast<size_t>(com_mod.tnNo)) {
+    uris_build_fluid_node_mask(com_mod);
+  }
 
   Array<double> xXi(nsd, nsd-1);
 
@@ -919,7 +913,6 @@ void uris_calc_sdf(ComMod& com_mod) {
       }
     }
     
-    // if (uris_obj.sdf.allocated() && cnt < uris_obj.cnt) {continue;}
     if (uris_obj.sdf.size() > 0 && cnt < uris_obj.cnt) {continue;}
 
     int max_eNoN = 0;
@@ -931,7 +924,6 @@ void uris_calc_sdf(ComMod& com_mod) {
     }
 
     Array<double> lX(nsd, max_eNoN);
-    // if (!uris_obj.sdf.allocated()) {
     if (uris_obj.sdf.size() <= 0) {
       uris_obj.sdf.resize(com_mod.tnNo);
       uris_obj.sdf = 0.0;
@@ -975,104 +967,39 @@ void uris_calc_sdf(ComMod& com_mod) {
     Vector<double> xp(nsd);
     for (int ca = 0; ca < com_mod.tnNo; ca++) {
       double minS = std::numeric_limits<double>::max();
-      for (int i = 0; i < nsd; i++) {
-        xp(i) = com_mod.x(i,ca);
-      }
-      // Is the node inside the BBox?
-      bool inside = true;
-      for (int i = 0; i < nsd; i++) {
-        if (xp(i) < (minb(i) - extra(i)) || xp(i) > (maxb(i) + extra(i))) {
-          inside = false;
+      xp = com_mod.x.rcol(ca);
+      // Check whether the node lies inside the expanded bounding box
+      bool inside_bbox = true;
+      for (int i = 0; i < nsd; ++i) {
+        const double lower = minb(i) - extra(i);
+        const double upper = maxb(i) + extra(i);
+        if (xp(i) < lower || xp(i) > upper) {
+          inside_bbox = false;
           break;
         }
       }
-      if (inside) {
-        // This point is inside the BBox
-        // Find the closest URIS face centroid
-        int Ec = -1;
-        int jM = -1;
-        Vector<double> xb(nsd);
-        for (int iM = 0; iM < uris_obj.nFa; iM++) {
-          auto& mesh = uris_obj.msh[iM];
-          for (int e = 0; e < mesh.nEl; e++) {
-            xb = 0.0;
-            for (int a = 0; a < mesh.eNoN; a++) {
-              int Ac = mesh.IEN(a,e);
-              for (int i = 0; i < nsd; i++) {
-                xb(i) += uris_obj.x(i,Ac);
-              }
-            }
-            for (int i = 0; i < nsd; i++) {
-              xb(i) /= static_cast<double>(mesh.eNoN);
-            }
-            double dS = 0.0;
-            for (int i = 0; i < nsd; i++) {
-              dS += (xp[i] - xb[i]) * (xp[i] - xb[i]);
-            }
-            dS = std::sqrt(dS);
-
-            if (dS < minS) {
-              minS = dS;
-              Ec = e;
-              jM = iM;
-            }
-          }
-        }
-
-        // We also need to compute the sign (above or below the valve).
-        // Compute the element normal
-        auto& mesh = uris_obj.msh[jM];
-        xXi = 0.0;
-        lX = 0.0;
-        xb = 0.0;
-        for (int a = 0; a < mesh.eNoN; a++) {
-          int Ac = mesh.IEN(a,Ec);
-          for (int i = 0; i < nsd; i++) {
-            xb(i) += uris_obj.x(i,Ac);
-            lX(i,a) = uris_obj.x(i,Ac);
-          }
-        }
-        for (int i = 0; i < nsd; i++) {
-          xb(i) /= static_cast<double>(mesh.eNoN);
-        }
-
-        for (int a = 0; a < mesh.eNoN; a++) {
-          for (int i = 0; i < nsd - 1; i++) {
-            double factor = mesh.Nx(i,a,0);
-            for (int j = 0; j < nsd; j++)
-                xXi(j,i) += lX(j,a) * factor;
-          }
-        }
-
-        auto nV = utils::cross(xXi);
-        auto Jac = sqrt(utils::norm(nV));
-        nV = nV / Jac;
-        auto dotP = utils::norm(xp-xb, nV);
-
-        // if (dotP < 0.0) {
-        //   dotP = -1.0;
-        // } else {
-        //   dotP = 1.0;
-        // }
-
-        // [HZ] Improved implementation for SDF sign
-        if (uris_obj.clsFlg) {
-          auto dot_nrm = utils::norm(xp-xb, uris_obj.nrm);
-          if (dot_nrm < 0.0 && dotP < 0.0) {
-            dotP = -1.0;
-          } else {
-            dotP = 1.0;
-          }
-        } else {
-          if (dotP < 0.0) {
-            dotP = -1.0;
-          } else {
-            dotP = 1.0;
-          }
-        }
-
-        uris_obj.sdf[ca] = dotP * minS;
+      if (!inside_bbox) {
+        continue;
       }
+
+      if (!com_mod.urisFluidNodeMask[ca]) {
+        continue;
+      }
+
+      // This point is in the fluid domain and inside the BBox
+      // Find the closest URIS face centroid
+      int Ec = -1;
+      int jM = -1;
+      Vector<double> xb(nsd);
+      uris_find_closest_face_centroid(uris_obj, xp, nsd, minS, Ec, jM);
+
+      // Compute the element normal contribution for sign
+      auto dotp = uris_compute_face_dotp(uris_obj, nsd, jM, Ec, xp, xXi, lX, xb);
+
+      double sdf_sign = uris_compute_sdf_sign(uris_obj, xp, xb, dotp);
+
+      uris_obj.sdf[ca] = sdf_sign * minS;
+
     }
   }
 }
@@ -1183,9 +1110,9 @@ int in_poly(Vector<double>& P, Array<double>& P1, bool ext) {
 /// @brief Chech if a point is on the same side of anotehr point wrt a triangle in 3D
 int same_side(Vector<double>& v1, Vector<double>& v2, Vector<double>& v3,
               Vector<double>& v4, Vector<double>& p, bool ext) {
-  #define n_dbg_read_sv
-  #ifdef dbg_read_sv
-    DebugMsg dmsg(__func__, simulation->com_mod.cm.idcm());
+  #define n_dbg_same_side
+  #ifdef dbg_same_side
+    DebugMsg dmsg(__func__, 0);
     dmsg.banner();
     dmsg << "checking same side";
   #endif
@@ -1220,4 +1147,90 @@ int same_side(Vector<double>& v1, Vector<double>& v2, Vector<double>& v3,
   return sameside;
 }
 
+/// @brief Find the closest URIS face centroid to a point.
+void uris_find_closest_face_centroid(const urisType& uris_obj, const Vector<double>& xp,
+                                     const int nsd, double& minS, int& Ec, int& jM) {
+  #define n_dbg_uris_find_closest_face_centroid
+  #ifdef dbg_uris_find_closest_face_centroid
+    DebugMsg dmsg(__func__, 0);
+    dmsg.banner();
+    dmsg << "finding closest face centroid";
+  #endif
+
+  Vector<double> xb(nsd);
+  for (int iM = 0; iM < uris_obj.nFa; iM++) {
+    const auto& mesh = uris_obj.msh[iM];
+    for (int e = 0; e < mesh.nEl; e++) {
+      xb = 0.0;
+      for (int a = 0; a < mesh.eNoN; a++) {
+        const int Ac = mesh.IEN(a,e);
+        xb = xb + uris_obj.x.rcol(Ac);
+      }
+      xb = xb / mesh.eNoN;
+
+      const double dS = std::sqrt((xp - xb) * (xp - xb));
+
+      if (dS < minS) {
+        minS = dS;
+        Ec = e;
+        jM = iM;
+      }
+    }
+  }
+}
+
+/// @brief Compute centroid and signed distance projection along local face normal.
+double uris_compute_face_dotp(const urisType& uris_obj, const int nsd, const int jM,
+                              const int Ec, const Vector<double>& xp, Array<double>& xXi, 
+                              Array<double>& lX, Vector<double>& xb) {
+  #define n_dbg_uris_compute_face_dotp
+  #ifdef dbg_uris_compute_face_dotp
+    DebugMsg dmsg(__func__, 0);
+    dmsg.banner();
+    dmsg << "computing face dot product";
+  #endif
+
+  const auto& mesh = uris_obj.msh[jM];
+  xXi = 0.0;
+  lX = 0.0;
+  xb = 0.0;
+
+  for (int a = 0; a < mesh.eNoN; a++) {
+    int Ac = mesh.IEN(a,Ec);
+    xb = xb + uris_obj.x.rcol(Ac);
+    lX.rcol(a) = uris_obj.x.rcol(Ac);
+  }
+  xb = xb / mesh.eNoN;
+
+  for (int a = 0; a < mesh.eNoN; a++) {
+    for (int i = 0; i < nsd - 1; i++) {
+      xXi.rcol(i) = xXi.rcol(i) + lX.rcol(a) * mesh.Nx(i,a,0);
+    }
+  }
+
+  auto nV = utils::cross(xXi);
+  auto Jac = sqrt(utils::norm(nV));
+  nV = nV / Jac;
+  return utils::norm(xp-xb, nV);
+}
+
+/// @brief Compute SDF sign for open/closed URIS states.
+double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
+  const Vector<double>& xb, const double dotP) {
+  #define n_dbg_uris_compute_sdf_sign
+  #ifdef dbg_uris_compute_sdf_sign
+    DebugMsg dmsg(__func__, 0);
+    dmsg.banner();
+    dmsg << "computing SDF sign";
+  #endif
+
+  // Improved implementation for SDF sign. For closed state, sign is less 
+  // sensitive to local face normal orientation inconsistency and more 
+  // aligned with the intended physical flow direction
+  if (uris_obj.clsFlg) {
+    auto dot_nrm = utils::norm(xp-xb, uris_obj.nrm);
+    return (dot_nrm < 0.0 && dotP < 0.0) ? -1.0 : 1.0;
+  }
+  return (dotP < 0.0) ? -1.0 : 1.0;
+  }
 }

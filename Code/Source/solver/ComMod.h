@@ -1608,6 +1608,10 @@ class ComMod {
     /// @brief URIS resistance when the valve is closed
     double urisResClose;
 
+    /// @brief Fluid-related node mask for URIS SDF. Built once when
+    /// consistent with tnNo; rebuilt automatically if tnNo changes.
+    std::vector<bool> urisFluidNodeMask;
+
     /// @brief Whether to use precomputed state-variable solutions
     bool usePrecomp = false;
     //----- int members -----//
