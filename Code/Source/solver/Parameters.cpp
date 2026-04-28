@@ -203,7 +203,7 @@ void Parameters::read_xml(std::string file_name)
   auto root_element = doc.FirstChildElement(FSI_FILE.c_str());
   if (error != tinyxml2::XML_SUCCESS || root_element == nullptr) {
     svmp::raise<svmp::ParseException>(SVMP_HERE, "The following error occured while reading the XML file '" + file_name + "'.\n" +
-        "[svFSI] ERROR " + std::string(doc.ErrorStr()));
+        "[svMultiPhysics] ERROR " + std::string(doc.ErrorStr()));
   }
 
   // Get general parameters.
