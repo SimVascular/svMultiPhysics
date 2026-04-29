@@ -11,7 +11,7 @@
 #include "nn.h"
 #include "set_bc.h"
 #include "utils.h"
-#include "svZeroD_subroutines.h"
+#include "svZeroD_interface.h"
 
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
@@ -109,7 +109,15 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
       int iFa = bc.iFa;
       int iM  = bc.iM;
 
-      if (utils::btest(bc.bType,iBC_cpl) || utils::btest(bc.bType,iBC_RCR)) {
+      if (utils::btest(bc.bType, iBC_Coupled)) {
+        // For implicit or semi-implicit 0D coupling scheme, 
+        // set bType to resistance
+        if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
+          bc.bType = utils::ibset(bc.bType, iBC_res);
+        }
+      }
+      // For Fluid Dir and Neu coupled BCs, use cplBC.fa
+      else if (utils::btest(bc.bType, iBC_cpl) || utils::btest(bc.bType, iBC_RCR)) {
         int i = bc.cplBCptr;
         com_mod.cplBC.fa[i].name = com_mod.msh[iM].fa[iFa].name;
         com_mod.cplBC.fa[i].y = 0.0;
@@ -152,6 +160,19 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
 
     if (com_mod.cplBC.useSvZeroD) {
       svZeroD::init_svZeroD(com_mod, cm_mod);
+    }
+
+    // Initialize cap integration for Coupled boundary conditions
+    for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+      auto& eq = com_mod.eq[iEq];
+      for (int iBc = 0; iBc < eq.nBc; iBc++) {
+        auto& bc = eq.bc[iBc];
+        if (utils::btest(bc.bType, iBC_Coupled)) {
+          if (bc.coupled_bc.has_cap()) {
+            bc.coupled_bc.initialize_cap(com_mod);
+          }
+        }
+      }
     }
 
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {

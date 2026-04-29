@@ -618,32 +618,6 @@ class ConstitutiveModelParameters : public ParameterLists
     bool value_set = false;
 };
 
-/// @brief Couple to reduced-order models.
-class CoupleCplBCParameters : public ParameterLists
-{
-  public:
-    CoupleCplBCParameters();
-
-    static const std::string xml_element_name_;
-
-    bool defined() const { return value_set; };
-    void set_values(tinyxml2::XMLElement* xml_elem);
-    void print_parameters();
-
-    // attribute.
-    Parameter<std::string> type;
-
-    Parameter<std::string> file_name_for_0D_3D_communication;
-    Parameter<std::string> file_name_for_saving_unknowns;
-    Parameter<int> number_of_unknowns;
-    Parameter<int> number_of_user_defined_outputs;
-    Parameter<std::string> unknowns_initialization_file_path;
-
-    Parameter<std::string> zerod_code_file_path;
-
-    bool value_set = false;
-};
-
 /// @brief Coupling to GenBC.
 class CoupleGenBCParameters : public ParameterLists
 {
@@ -752,6 +726,30 @@ class BoundaryConditionRCRParameters : public ParameterLists
     bool value_set = false;
 };
 
+/// @brief svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled).
+///
+/// \code {.xml}
+/// <Coupling_interface>
+///   <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+///   <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
+/// </Coupling_interface>
+/// \endcode
+class CouplingInterfaceParameters : public ParameterLists
+{
+  public:
+    CouplingInterfaceParameters();
+
+    static const std::string xml_element_name_;
+
+    void set_values(tinyxml2::XMLElement* xml_elem);
+    void print_parameters();
+
+    Parameter<std::string> svzerod_solver_block;
+    Parameter<std::string> chamber_cap_surface;
+
+    bool value_set = false;
+};
+
 /// @brief The BoundaryConditionParameters stores paramaters for various
 /// type of boundary conditions under the Add_BC XML element.
 class BoundaryConditionParameters : public ParameterLists
@@ -764,6 +762,9 @@ class BoundaryConditionParameters : public ParameterLists
 
     // RCR parameters sub-element.
     BoundaryConditionRCRParameters rcr;
+
+    // svZeroDSolver coupling subsection (with Time_dependence Coupled).
+    CouplingInterfaceParameters coupling_interface;
 
     // Add_BC name= attribute.
     Parameter<std::string> name;
@@ -794,7 +795,6 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<std::string> spatial_profile_file_path;
     Parameter<std::string> spatial_values_file_path;
     Parameter<double> stiffness;
-    Parameter<std::string> svzerod_solver_block;
 
     Parameter<std::string> temporal_and_spatial_values_file_path;
     Parameter<std::string> temporal_values_file_path;
@@ -1468,7 +1468,6 @@ class EquationParameters : public ParameterLists
 
     std::vector<BoundaryConditionParameters*> boundary_conditions;
 
-    CoupleCplBCParameters couple_to_cplBC;
     CoupleGenBCParameters couple_to_genBC;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;

@@ -345,7 +345,26 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
     }
   }
   // Update lhs.face(i).val with the new value of the surface integral
-  fsils_bc_update(com_mod.lhs, lBc.lsPtr, lFa.nNo, nsd, sVl); 
+  fsils_bc_update(com_mod.lhs, lBc.lsPtr, lFa.nNo, nsd, sVl);
+  
+  // If this is a Coupled BC, copy cap data to linear solver face structure
+  if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_Coupled))) {
+    auto& face = com_mod.lhs.face[lBc.lsPtr];
+    auto cfg = MechanicalConfigurationType::new_timestep;
+
+    auto& cpl = lBc.coupled_bc;
+    face.has_cap = cpl.has_cap();
+    if (cpl.has_cap()) {
+      cpl.copy_cap_surface_to_linear_solver_face(com_mod, face, cfg, solutions);
+    }
+  } else {
+    // Clear cap fields if not a Coupled BC
+    auto& face = com_mod.lhs.face[lBc.lsPtr];
+    face.cap_val.resize(0, 0);
+    face.cap_valM.resize(0, 0);
+    face.cap_glob.resize(0);
+    face.has_cap = false;
+  }
 };
 
 /// @brief This routine assembles the equation on a given mesh.

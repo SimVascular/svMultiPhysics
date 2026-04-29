@@ -18,6 +18,7 @@
 #include "CmMod.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
+#include "CoupledBoundaryCondition.h"
 #include "Timer.h"
 #include "Vector.h"
 
@@ -35,6 +36,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -199,6 +201,9 @@ class bcType
 
     // Robin BC class
     RobinBoundaryCondition robin_bc;
+
+    // Coupled BC class
+    CoupledBoundaryCondition coupled_bc;
 };
 
 /// @brief Class storing data for B-Splines.
@@ -781,10 +786,6 @@ class svZeroDSolverInterfaceType
     // The path/name of the 0D solver shared library.
     std::string solver_library;
 
-    // Maps a 0D block name with a 3D face name representing the 
-    // coupling of a 0D block with a 3D face.
-    std::map<std::string,std::string> block_surface_map;
-
     // The path/name of the 0D solver JSON file.
     std::string configuration_file;
 
@@ -804,7 +805,6 @@ class svZeroDSolverInterfaceType
     bool has_data = false;
 
     void set_data(const svZeroDSolverInterfaceParameters& params);
-    void add_block_face(const std::string& block_name, const std::string& face_name);
 };
 
 /// @brief For coupled 0D-3D problems
@@ -827,6 +827,12 @@ class cplBCType
 
     /// @brief Number of coupled faces
     int nFa = 0;
+
+    /// @brief Number of \c Time_dependence Coupled BCs for svZeroD (set in \c init_svZeroD).
+    int nSvZeroD_coupled_bc = 0;
+
+    /// @brief (\c iEq, \c iBc) for each svZeroD coupled BC in deterministic traversal order.
+    std::vector<std::pair<int, int>> svZeroD_coupled_bc_idxs;
 
     /// @brief Number of unknowns in the 0D domain
     int nX = 0;

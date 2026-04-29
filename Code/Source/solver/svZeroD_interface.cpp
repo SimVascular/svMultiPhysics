@@ -1,24 +1,52 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "svZeroD_subroutines.h"
+#include "svZeroD_interface.h"
 
-#include <iostream>
 #include <fstream>
 #include <string>
-#include <cmath>
 #include <iomanip>
-#include "cmm.h"
 #include "consts.h"
 #include "svZeroD_interface/LPNSolverInterface.h"
+#include "ComMod.h"
+#include "utils.h"
 
 #include <map>
 #include <algorithm>
-#include <iterator>
 
 static std::map<int,LPNSolverInterface*> interfaces;
 
 namespace svZeroD {
+
+namespace {
+
+/// Fills \c com_mod.cplBC.nSvZeroD_coupled_bc and \c svZeroD_coupled_bc_idxs (same order as nested eq/bc loops).
+static void build_svzero_coupled_bc_idxs(ComMod& com_mod)
+{
+  auto& cpl = com_mod.cplBC;
+  cpl.svZeroD_coupled_bc_idxs.clear();
+  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+    for (int iBc = 0; iBc < com_mod.eq[iEq].nBc; iBc++) {
+      if (utils::btest(com_mod.eq[iEq].bc[iBc].bType, consts::iBC_Coupled)) {
+        cpl.svZeroD_coupled_bc_idxs.emplace_back(iEq, iBc);
+      }
+    }
+  }
+  cpl.nSvZeroD_coupled_bc = static_cast<int>(cpl.svZeroD_coupled_bc_idxs.size());
+}
+
+static bool nth_coupled_bc(ComMod& com_mod, int n, bcType** out_bc)
+{
+  auto& cpl = com_mod.cplBC;
+  if (n < 0 || n >= cpl.nSvZeroD_coupled_bc) {
+    return false;
+  }
+  const auto pr = cpl.svZeroD_coupled_bc_idxs[static_cast<size_t>(n)];
+  *out_bc = &com_mod.eq[pr.first].bc[pr.second];
+  return true;
+}
+
+}  // namespace
 
 static int numCoupledSrfs;
 static bool writeSvZeroD = true;
@@ -30,7 +58,6 @@ int model_id;
 
 std::vector<int> nsrflistCoupled(numCoupledSrfs);
 std::vector<std::string> svzd_blk_names(numCoupledSrfs);
-std::vector<int> svzd_blk_name_len(numCoupledSrfs);
 std::vector<double> in_out_sign(numCoupledSrfs);
 std::vector<double> lpn_times(num_output_steps);
 std::vector<double> lpn_solutions((num_output_steps * system_size));
@@ -77,7 +104,7 @@ void get_svZeroD_variable_ids(std::string block_name, int* blk_ids, double* inle
   // {num inlet nodes, inlet flow[0], inlet pressure[0],..., num outlet nodes, outlet flow[0], outlet pressure[0],...}
   int num_inlet_nodes = IDs[0];
   int num_outlet_nodes = IDs[1+num_inlet_nodes*2];
-  if ((num_inlet_nodes == 0) && (num_outlet_nodes = 1)) {
+  if ((num_inlet_nodes == 0) && (num_outlet_nodes == 1)) {
     blk_ids[0] = IDs[1+num_inlet_nodes*2+1]; // Outlet flow
     blk_ids[1] = IDs[1+num_inlet_nodes*2+2]; // Outlet pressure
     *inlet_or_outlet = 1.0; // Signifies inlet to LPN
@@ -86,7 +113,7 @@ void get_svZeroD_variable_ids(std::string block_name, int* blk_ids, double* inle
     blk_ids[1] = IDs[2]; // Inlet pressure
     *inlet_or_outlet = -1.0; // Signifies outlet to LPN
   } else {
-    std::runtime_error("ERROR: [lpn_interface_get_variable_ids] Not a flow/pressure block.");
+    throw std::runtime_error("ERROR: [lpn_interface_get_variable_ids] Not a flow/pressure block.");
   }
 }
 
@@ -133,32 +160,32 @@ void write_svZeroD_solution(const double* lpn_time, std::vector<double>& lpn_sol
   }
 }
 
-void get_coupled_QP(ComMod& com_mod, const CmMod& cm_mod, double QCoupled[], double QnCoupled[], double PCoupled[], double PnCoupled[]){
-  auto& cplBC = com_mod.cplBC;
-  int ind = 0;
-  for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
-    auto& fa = cplBC.fa[iFa];
-    if (fa.bGrp == consts::CplBCType::cplBC_Dir) {
-      QCoupled[ind] = fa.Qo;
-      QnCoupled[ind] = fa.Qn;
-      PCoupled[ind] = fa.Po;
-      PnCoupled[ind] = fa.Pn;
-      ind = ind + 1;
-    }
-  }
-  for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
-    auto& fa = cplBC.fa[iFa];
-    if (fa.bGrp == consts::CplBCType::cplBC_Neu) {
-      QCoupled[ind] = fa.Qo;
-      QnCoupled[ind] = fa.Qn;
-      PCoupled[ind] = fa.Po;
-      PnCoupled[ind] = fa.Pn;
-      ind = ind + 1;
+void get_coupled_QP(ComMod& com_mod, double QCoupled[], double QnCoupled[], double PCoupled[], double PnCoupled[])
+{
+  using namespace consts;
+
+  const auto& cpl = com_mod.cplBC;
+  for (int ind = 0; ind < cpl.nSvZeroD_coupled_bc; ind++) {
+    const size_t i_path = static_cast<size_t>(ind);
+    const std::pair<int, int>& pr = cpl.svZeroD_coupled_bc_idxs[i_path];
+    auto& bc = com_mod.eq[pr.first].bc[pr.second];
+    if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+      QCoupled[ind] = bc.coupled_bc.get_Qo();
+      QnCoupled[ind] = bc.coupled_bc.get_Qn();
+      PCoupled[ind] = 0.0;
+      PnCoupled[ind] = 0.0;
+    } else if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+      QCoupled[ind] = bc.coupled_bc.get_Qo();
+      QnCoupled[ind] = bc.coupled_bc.get_Qn();
+      PCoupled[ind] = bc.coupled_bc.get_Po();
+      PnCoupled[ind] = bc.coupled_bc.get_Pn();
+    } else {
+      throw std::runtime_error("ERROR: [get_coupled_QP] Invalid Coupled BC type.");
     }
   }
 }
 
-void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[]) {
+void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], double P[]) {
   int nParam = 2;
   const char* fileNames[2] = {"Q_svZeroD", "P_svZeroD"};
   std::vector<std::vector<double>> R(nParam, std::vector<double>(*nSrfs));
@@ -169,10 +196,6 @@ void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[])
     R[0][i] = Q[i];
     R[1][i] = P[i];
   }
-
-  // Set formats
-  std::string myFMT1 = "(" + std::to_string(*nSrfs) + "(E13.5))";
-  std::string myFMT2 = "(" + std::to_string(*nSrfs) + "(I13))";
 
   for (int i = 0; i < nParam; ++i) {
     std::ifstream file(fileNames[i]);
@@ -199,6 +222,8 @@ void print_svZeroD(int* nSrfs, std::vector<int>& surfID, double Q[], double P[])
 //
 void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) 
 {
+  using namespace consts;
+  
   #define n_debug_init_svZeroD
   #ifdef debug_init_svZeroD
   DebugMsg dmsg(__func__, com_mod.cm.idcm()); 
@@ -210,120 +235,58 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   auto& cm = com_mod.cm;
   double dt = com_mod.dt;
 
-  numCoupledSrfs = cplBC.nFa;
-  int nDir = 0;
-  int nNeu = 0;
-  
-  // If this process is the master process on the communicator
-  if (cm.mas(cm_mod)) {
-    for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
-      auto& fa = cplBC.fa[iFa];
-
-      if (fa.bGrp == consts::CplBCType::cplBC_Dir) {
-        nsrflistCoupled.push_back(iFa);
-        nDir = nDir + 1;
-      }
-    }
-    for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
-      auto& fa = cplBC.fa[iFa];
-
-      if (fa.bGrp == consts::CplBCType::cplBC_Neu) {
-        nsrflistCoupled.push_back(iFa);
-        nNeu = nNeu + 1;
-      }
-    }
+  build_svzero_coupled_bc_idxs(com_mod);
+  if (cplBC.nSvZeroD_coupled_bc == 0) {
+    throw std::runtime_error(
+        "ERROR: [init_svZeroD] svZeroDSolver is enabled but no Time_dependence Coupled boundaries with "
+        "<Coupling_interface> were found.");
   }
+  numCoupledSrfs = cplBC.nSvZeroD_coupled_bc;
 
-  #ifdef debug_init_svZeroD
-  dmsg << "nDir: " << nDir;
-  dmsg << "nNeu: " << nNeu;
+#ifdef debug_init_svZeroD
   dmsg << "numCoupledSrfs: " << numCoupledSrfs;
-  for (int surf_id : nsrflistCoupled) {
-    dmsg << "surface id: " << surf_id;
-  }
-  #endif
+#endif
 
   std::string svzerod_library;
   std::string svzerod_file;
-  std::string buffer;
   int ids[2];
-  std::vector<std::string> svzd_blk_names_unsrtd(numCoupledSrfs);
-  std::vector<int> svzd_blk_ids(numCoupledSrfs);
-  int init_flow_flag, init_press_flag;
-  double init_flow, init_press, in_out;
-  
+  double in_out;
+
   if (cm.mas(cm_mod)) {
+    nsrflistCoupled.clear();
+    svzd_blk_names.clear();
+    in_out_sign.clear();
 
-    if (solver_interface.has_data) { 
-      #ifdef debug_init_svZeroD
-      dmsg << "#### Use XML data #### " << " ";
-      #endif
+    for (int k = 0; k < numCoupledSrfs; k++) {
+      nsrflistCoupled.push_back(k);
+    }
 
-      svzerod_library = solver_interface.solver_library;
-      svzerod_file = solver_interface.configuration_file;
+    if (!solver_interface.has_data) {
+      throw std::runtime_error("ERROR: [init_svZeroD] svZeroDSolver interface data is missing.");
+    }
 
-      int i = 0;
-      for (const auto& pair : solver_interface.block_surface_map) {
-        #ifdef debug_init_svZeroD
-        dmsg << "block_surface_map: '" + pair.first << "'";
-        #endif
-        svzd_blk_ids[i] = -1;
-        svzd_blk_names_unsrtd[i] = pair.first;
-        for (int j = 0; j < cplBC.nFa; j++) {
-          auto& fa = cplBC.fa[j];
-          if (fa.name == pair.second) { 
-            svzd_blk_ids[i] = j;
-          }
-        }
+#ifdef debug_init_svZeroD
+    dmsg << "#### Use XML data #### ";
+#endif
 
-        if (svzd_blk_ids[i] == -1) { 
-          throw std::runtime_error("ERROR: Did not find a coupled boundary condition for block '" + 
-              pair.first + "' and surface '" + pair.second + "'; check th Block_to_surface_map solver XML parameter.");
-        }
- 
-        i += 1;
-      }
+    svzerod_library = solver_interface.solver_library;
+    svzerod_file = solver_interface.configuration_file;
 
-      init_flow_flag = solver_interface.have_initial_flows;
-      init_flow = solver_interface.initial_flows;
-
-      init_press_flag = solver_interface.have_initial_pressures;
-      init_press = solver_interface.initial_pressures;
-
-    } 
-
-    // Arrange svzd_blk_names in the same order as surface IDs in nsrflistCoupled
-    #ifdef debug_init_svZeroD
-    dmsg << "Arrange svzd_blk_names ... " << " ";
-    #endif
+    const bool have_init_flow = solver_interface.have_initial_flows;
+    const double init_flow = solver_interface.initial_flows;
+    const bool have_init_press = solver_interface.have_initial_pressures;
+    const double init_press = solver_interface.initial_pressures;
 
     for (int s = 0; s < numCoupledSrfs; ++s) {
-      int found = 0;
-      #ifdef debug_init_svZeroD
-      dmsg << ">>> s " << s;
-      dmsg << "  nsrflistCoupled[s]: " << nsrflistCoupled[s];
-      #endif
-
-      for (int t = 0; t < numCoupledSrfs; ++t) {
-        #ifdef debug_init_svZeroD
-        dmsg << "  >>> t " << t;
-        dmsg << "    svzd_blk_ids[t]: " << svzd_blk_ids[t];
-        #endif
-        if (svzd_blk_ids[t] == nsrflistCoupled[s]) {
-          #ifdef debug_init_svZeroD
-          dmsg << "    Found  " << " " ;
-          dmsg << "    svzd_blk_names_unsrtd[t]: '" << svzd_blk_names_unsrtd[t];
-          #endif
-          found = 1;
-          svzd_blk_names.push_back(svzd_blk_names_unsrtd[t]);
-          svzd_blk_name_len.push_back(svzd_blk_names_unsrtd[t].length());
-          break;
-        }
+      bcType* bc = nullptr;
+      if (!nth_coupled_bc(com_mod, s, &bc)) {
+        throw std::runtime_error("ERROR: [init_svZeroD] Internal error resolving Coupled BC index.");
       }
-
-      if (found == 0) {
-        throw std::runtime_error("ERROR: Did not find block name for surface ID: " + nsrflistCoupled[s]);
-      }
+      const std::string blk_name = bc->coupled_bc.get_block_name();
+      svzd_blk_names.push_back(blk_name);
+#ifdef debug_init_svZeroD
+      dmsg << "  coupled surface s=" << s << " block='" << blk_name << "'";
+#endif
     }
 
     // Create the svZeroD model
@@ -334,11 +297,16 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
     // Save IDs of relevant variables in the solution vector
     sol_IDs.assign(2 * numCoupledSrfs, 0);
     for (int s = 0; s < numCoupledSrfs; ++s) {
-      int len = svzd_blk_name_len[s];
       get_svZeroD_variable_ids(svzd_blk_names[s], ids, &in_out);
       sol_IDs[2 * s] = ids[0];
       sol_IDs[2 * s + 1] = ids[1];
       in_out_sign.push_back(in_out);
+
+      bcType* bc = nullptr;
+      if (!nth_coupled_bc(com_mod, s, &bc)) {
+        throw std::runtime_error("ERROR: [init_svZeroD] Internal error resolving Coupled BC for solution IDs.");
+      }
+      bc->coupled_bc.set_solution_ids(ids[0], ids[1], in_out);
     }
 
     // Initialize lpn_state variables corresponding to external coupling blocks
@@ -350,14 +318,30 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
 
     interface->return_y(lpn_state_y);
     interface->return_ydot(last_state_ydot);
+    
     for (int s = 0; s < numCoupledSrfs; ++s) {
-      if (init_flow_flag == 1) {
-        lpn_state_y[sol_IDs[2 * s]] = init_flow;
-        cplBC.fa[s].y = lpn_state_y[sol_IDs[2 * s]];
+      bcType* bc = nullptr;
+      if (!nth_coupled_bc(com_mod, s, &bc)) {
+        throw std::runtime_error("ERROR: [init_svZeroD] Internal error resolving Coupled BC for initialization.");
       }
-      if (init_press_flag == 1) {
-        lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
-        cplBC.fa[s].y = lpn_state_y[sol_IDs[2 * s + 1]];
+      if (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+        if (have_init_flow) {
+          lpn_state_y[sol_IDs[2 * s]] = init_flow;
+        }
+        if (have_init_press) {
+          lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
+          bc->coupled_bc.set_pressure(lpn_state_y[sol_IDs[2 * s + 1]]);
+        }
+      } else if (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+        if (have_init_press) {
+          lpn_state_y[sol_IDs[2 * s + 1]] = init_press;
+          bc->coupled_bc.set_pressure(lpn_state_y[sol_IDs[2 * s + 1]]);
+        }
+        if (have_init_flow) {
+          lpn_state_y[sol_IDs[2 * s]] = init_flow;
+        }
+      } else {
+        throw std::runtime_error("ERROR: [init_svZeroD] Invalid Coupled BC type.");
       }
     }
     std::copy(lpn_state_y.begin(), lpn_state_y.end(), last_state_y.begin());
@@ -369,52 +353,41 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
     }
   }
 
+  // Broadcast initial values to follower processes
   if (!cm.seq()) {
-    Vector<double> y(cplBC.nFa);
-
-    if (cm.mas(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        y(i) = cplBC.fa[i].y;
-      }
-    }
-
-    cm.bcast(cm_mod, y);
-
-    if (cm.slv(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        cplBC.fa[i].y = y(i);
+    // Coupled BCs - broadcast Neumann pressures (one scalar bcast per BC).
+    if (cplBC.nSvZeroD_coupled_bc > 0) {
+      for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+        auto& eq = com_mod.eq[iEq];
+        for (int iBc = 0; iBc < eq.nBc; iBc++) {
+          auto& bc = eq.bc[iBc];
+          if (utils::btest(bc.bType, iBC_Coupled) &&
+              bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
+            bc.coupled_bc.bcast_coupled_neumann_pressure(cm_mod, cm);
+          }
+        }
       }
     }
   }
 }
 
 
-void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
-  int nDir = 0;
-  int nNeu = 0;
-  double dt = com_mod.dt;
+void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
+{
+  using namespace consts;
+
   auto& cplBC = com_mod.cplBC;
   auto& cm = com_mod.cm;
 
-  // If this process is the master process on the communicator
+  const int nCoupledBc = cplBC.nSvZeroD_coupled_bc;
+
   if (cm.mas(cm_mod)) {
-    for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
-      auto& fa = cplBC.fa[iFa];
-
-      if (fa.bGrp == consts::CplBCType::cplBC_Dir) {
-        nDir = nDir + 1;
-      } else if (fa.bGrp == consts::CplBCType::cplBC_Neu) {
-        nNeu = nNeu + 1;
-      }
-    }
-
     double QCoupled[numCoupledSrfs], QnCoupled[numCoupledSrfs], PCoupled[numCoupledSrfs], PnCoupled[numCoupledSrfs];
-    double total_flow;
     double params[2];
     double times[2];
     int error_code;
     
-    get_coupled_QP(com_mod, cm_mod, QCoupled, QnCoupled, PCoupled, PnCoupled);
+    get_coupled_QP(com_mod, QCoupled, QnCoupled, PCoupled, PnCoupled);
 
     if (writeSvZeroD == 1) {
       if (BCFlag == 'L') {
@@ -432,17 +405,22 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
       times[0] = svZeroDTime;
       times[1] = svZeroDTime + com_mod.dt;
 
-      total_flow = 0.0;
-
       // Update pressure and flow in the zeroD model
       for (int i = 0; i < numCoupledSrfs; ++i) {
-        if (i < nDir) {
+        bcType* bc = nullptr;
+        if (!nth_coupled_bc(com_mod, i, &bc)) {
+          throw std::runtime_error("ERROR: [calc_svZeroD] Internal error resolving Coupled BC.");
+        }
+        const bool is_dirichlet =
+            (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir);
+        double sign = bc->coupled_bc.get_in_out_sign();
+
+        if (is_dirichlet) {
           params[0] = PCoupled[i];
           params[1] = PnCoupled[i];
         } else {
-          params[0] = in_out_sign[i] * QCoupled[i];
-          params[1] = in_out_sign[i] * QnCoupled[i];
-          total_flow += QCoupled[i];
+          params[0] = sign * QCoupled[i];
+          params[1] = sign * QnCoupled[i];
         }
         update_svZeroD_block_params(svzd_blk_names[i], times, params);
       }
@@ -454,12 +432,29 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
       std::copy(lpn_solutions.begin() + (num_output_steps-1)*system_size, lpn_solutions.end(), lpn_state_y.begin());
       
       for (int i = 0; i < numCoupledSrfs; ++i) {
-        if (i < nDir) {
-          QCoupled[i] = in_out_sign[i] * lpn_state_y[sol_IDs[2 * i]];
-          cplBC.fa[i].y = QCoupled[i];
+        bcType* bc = nullptr;
+        if (!nth_coupled_bc(com_mod, i, &bc)) {
+          throw std::runtime_error("ERROR: [calc_svZeroD] Internal error resolving Coupled BC for output.");
+        }
+        int flow_id = bc->coupled_bc.get_flow_sol_id();
+        int pressure_id = bc->coupled_bc.get_pressure_sol_id();
+        double in_out = bc->coupled_bc.get_in_out_sign();
+
+        if (flow_id < 0 || flow_id >= system_size || pressure_id < 0 || pressure_id >= system_size) {
+          throw std::runtime_error("ERROR: [calc_svZeroD] Invalid solution IDs for Coupled BC: flow_id=" +
+                                   std::to_string(flow_id) + ", pressure_id=" + std::to_string(pressure_id) +
+                                   ", system_size=" + std::to_string(system_size));
+        }
+
+        if (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
+          PCoupled[i] = lpn_state_y[pressure_id];
+          bc->coupled_bc.set_pressure(PCoupled[i]);
+        } else if (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+          QCoupled[i] = in_out * lpn_state_y[flow_id];
+          double Qo_prev = bc->coupled_bc.get_Qn();
+          bc->coupled_bc.set_flowrates(Qo_prev, QCoupled[i]);
         } else {
-          PCoupled[i] = lpn_state_y[sol_IDs[2 * i + 1]];
-          cplBC.fa[i].y = PCoupled[i];
+          throw std::runtime_error("ERROR: [calc_svZeroD] Invalid Coupled BC type.");
         }
       }
 
@@ -480,23 +475,22 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag) {
     }
   }
 
-  // If there are multiple procs (not sequential), broadcast outputs to follower procs
+  // If there are multiple procs (not sequential), broadcast coupled Neumann CBC pressures to followers.
   if (!cm.seq()) {
-    Vector<double> y(cplBC.nFa);
-
-    if (cm.mas(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        y(i) = cplBC.fa[i].y;
-      }
-    }
-
-    cm.bcast(cm_mod, y);
-
-    if (cm.slv(cm_mod)) {
-      for (int i = 0; i < cplBC.nFa; i++) {
-        cplBC.fa[i].y = y(i);
+    // Broadcast Coupled BC Neumann pressures (one scalar bcast per BC).
+    if (nCoupledBc > 0) {
+      for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+        auto& eq = com_mod.eq[iEq];
+        for (int iBc = 0; iBc < eq.nBc; iBc++) {
+          auto& bc = eq.bc[iBc];
+          if (utils::btest(bc.bType, iBC_Coupled) &&
+              bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
+            bc.coupled_bc.bcast_coupled_neumann_pressure(cm_mod, cm);
+          }
+        }
       }
     }
   }
 }
-};
+
+}

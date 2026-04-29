@@ -201,7 +201,7 @@ set(CSRCS
   shells.h shells.cpp
   stokes.h stokes.cpp
   sv_struct.h sv_struct.cpp
-  svZeroD_subroutines.h svZeroD_subroutines.cpp
+  svZeroD_interface.h svZeroD_interface.cpp
   txt.h txt.cpp
   utils.h utils.cpp
   ustruct.h ustruct.cpp
@@ -227,6 +227,7 @@ set(CSRCS
 
   BoundaryCondition.h BoundaryCondition.cpp
   RobinBoundaryCondition.h RobinBoundaryCondition.cpp
+  CoupledBoundaryCondition.h CoupledBoundaryCondition.cpp
 )
 
   # Set PETSc interace code.

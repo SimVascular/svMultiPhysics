@@ -367,6 +367,7 @@ void BodyForceParameters::set_values(tinyxml2::XMLElement* xml_elem)
 /// @brief Define the XML element name for equation boundary condition parameters.
 const std::string BoundaryConditionParameters::xml_element_name_ = "Add_BC";
 const std::string BoundaryConditionRCRParameters::xml_element_name_ = "RCR_values";
+const std::string CouplingInterfaceParameters::xml_element_name_ = "Coupling_interface";
 
 /// @brief RCR values for Neumann BC type.
 BoundaryConditionRCRParameters::BoundaryConditionRCRParameters()
@@ -394,6 +395,37 @@ void BoundaryConditionRCRParameters::set_values(tinyxml2::XMLElement* xml_elem)
   xml_util_set_parameters(ftpr, xml_elem, error_msg);
 
   value_set = true;
+}
+
+CouplingInterfaceParameters::CouplingInterfaceParameters()
+{
+  bool required = false;
+  set_parameter("svZeroDSolver_block", "", !required, svzerod_solver_block);
+  set_parameter("Chamber_cap_surface", "", !required, chamber_cap_surface);
+}
+
+void CouplingInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind(&CouplingInterfaceParameters::set_parameter_value, *this, _1, _2);
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+
+  value_set = true;
+}
+
+void CouplingInterfaceParameters::print_parameters()
+{
+  std::cout << std::endl;
+  std::cout << "---------------------------------" << std::endl;
+  std::cout << "Coupling interface parameters" << std::endl;
+  std::cout << "---------------------------------" << std::endl;
+  auto params_name_value = get_parameter_list();
+  for (auto& [key, value] : params_name_value) {
+    std::cout << key << ": " << value << std::endl;
+  }
 }
 
 void BoundaryConditionRCRParameters::print_parameters()
@@ -444,7 +476,6 @@ BoundaryConditionParameters::BoundaryConditionParameters()
   set_parameter("Spatial_profile_file_path", "", !required, spatial_profile_file_path);
   set_parameter("Spatial_values_file_path", "", !required, spatial_values_file_path);
   set_parameter("Stiffness", 1.0, !required, stiffness);
-  set_parameter("svZeroDSolver_block", "", !required, svzerod_solver_block);
 
   set_parameter("Temporal_and_spatial_values_file_path", "", !required, temporal_and_spatial_values_file_path);
   set_parameter("Temporal_values_file_path", "", !required, temporal_values_file_path);
@@ -476,6 +507,9 @@ void BoundaryConditionParameters::print_parameters()
   }
 
   rcr.print_parameters();
+  if (coupling_interface.value_set) {
+    coupling_interface.print_parameters();
+  }
 }
 
 void BoundaryConditionParameters::set_values(tinyxml2::XMLElement* xml_elem)
@@ -498,9 +532,9 @@ void BoundaryConditionParameters::set_values(tinyxml2::XMLElement* xml_elem)
 
     if (name == BoundaryConditionRCRParameters::xml_element_name_) {
       rcr.set_values(item);
-    }
-   
-    else if (item->GetText() != nullptr) {
+    } else if (name == CouplingInterfaceParameters::xml_element_name_) {
+      coupling_interface.set_values(item);
+    } else if (item->GetText() != nullptr) {
       auto value = item->GetText();
       try {
         set_parameter_value(name, value);
@@ -997,71 +1031,6 @@ void ConstitutiveModelParameters::check_constitutive_model(const Parameter<std::
     if (! ustruct::constitutive_model_is_valid(model)) {
       throw std::runtime_error("The " + type.value() + " constitutive model is not valid for ustruct equations.");
     }
-  }
-}
-
-//////////////////////////////////////////////////////////
-//                  CoupleCplBCParameters               //
-//////////////////////////////////////////////////////////
-
-/// @brief Couple to reduced-order models.
-///
-/// Define the XML element name for equation Couple_to_genBC parameters.
-const std::string CoupleCplBCParameters::xml_element_name_ = "Couple_to_cplBC";
-
-CoupleCplBCParameters::CoupleCplBCParameters()
-{
-  // A parameter that must be defined.
-  bool required = true;
-
-  // Define attributes.
-  type = Parameter<std::string>("type", "", required);
-
-  set_parameter("File_name_for_0D_3D_communication", "", required, file_name_for_0D_3D_communication);
-  set_parameter("File_name_for_saving_unknowns", "", required, file_name_for_saving_unknowns);
-  set_parameter("Number_of_unknowns", 0, required, number_of_unknowns);
-  set_parameter("Number_of_user_defined_outputs", 0, required, number_of_user_defined_outputs);
-  set_parameter("Unknowns_initialization_file_path", "", !required, unknowns_initialization_file_path);
-  set_parameter("ZeroD_code_file_path", "", required, zerod_code_file_path);
-}
-
-void CoupleCplBCParameters::set_values(tinyxml2::XMLElement* xml_elem)
-{
-  std::string error_msg = "Unknown Couple_to_cplBC type=TYPE XML element '";
-
-  // Get the 'type' from the <Couple_to_cplBC type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    throw std::runtime_error("No TYPE given in the XML <Stimulus=TYPE> element.");
-  }
-  type.set(std::string(stype));
-  auto item = xml_elem->FirstChildElement();
-
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-  std::function<void(const std::string&, const std::string&)> ftpr =
-      std::bind( &CoupleCplBCParameters::set_parameter_value, *this, _1, _2);
-
-  xml_util_set_parameters(ftpr, xml_elem, error_msg);
-
-  value_set = true;
-}
-
-void CoupleCplBCParameters::print_parameters()
-{
-  if (!value_set) { 
-    return;
-  }
-  std::cout << std::endl;
-  std::cout << "----------------------" << std::endl;
-  std::cout << "CoupleCplBC Parameters" << std::endl;
-  std::cout << "----------------------" << std::endl;
-  std::cout << type.name() << ": " << type.value() << std::endl;
-
-  auto params_name_value = get_parameter_list();
-  for (auto& [ key, value ] : params_name_value) {
-    std::cout << key << ": " << value << std::endl;
   }
 }
 
@@ -2374,8 +2343,6 @@ void EquationParameters::print_parameters()
 
   linear_solver.print_parameters();
 
-  couple_to_cplBC.print_parameters();
-
   for (auto& bc : boundary_conditions) {
     bc->print_parameters();
   }
@@ -2427,9 +2394,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
     } else if (name == ConstitutiveModelParameters::xml_element_name_) {
       domain->constitutive_model.set_values(item);
       domain->constitutive_model.check_constitutive_model(type);
-
-    } else if (name == CoupleCplBCParameters::xml_element_name_) {
-      couple_to_cplBC.set_values(item);
 
     } else if (name == CoupleGenBCParameters::xml_element_name_) {
       couple_to_genBC.set_values(item);
