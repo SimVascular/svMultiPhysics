@@ -126,15 +126,12 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 {
   using namespace consts;
   auto bc_type = bc_params->type.value();
-  BoundaryConditionType coupled_bc_type = BoundaryConditionType::bType_Neu;
 
   if (std::set<std::string>{"Dirichlet", "Dir"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir)); 
-    coupled_bc_type = BoundaryConditionType::bType_Dir;
 
   } else if (std::set<std::string>{"Neumann", "Neu"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)); 
-    coupled_bc_type = BoundaryConditionType::bType_Neu;
     if ((lEq.phys == EquationType::phys_fluid) || (lEq.phys == EquationType::phys_FSI)) {
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
     }
@@ -250,10 +247,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     if (svzd_iface) {
       // Coupled BC to svZeroDSolver
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
-      lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
-      lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Neu));
       lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
-      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
 
       // Sanity check: <Coupling_interface> must define <svZeroDSolver_block>
       if (!ci_has_block) {
@@ -421,7 +415,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     }
     
     // Sanity check: svZeroDSolver coupling is currently implemented only for Neumann-type boundaries.
-    if (coupled_bc_type != BoundaryConditionType::bType_Neu) {
+    if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) {
       throw std::runtime_error(
           std::string("[read_bc] CoupledBoundaryCondition (svZeroDSolver) currently requires boundary <Type> Neu </Type> on face '") +
           face_name + "'.");
@@ -442,6 +436,15 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       use_cap = true;
     }
 
+    // Figure out the coupled BC type
+    BoundaryConditionType coupled_bc_type = BoundaryConditionType::bType_Neu;
+    if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Dir))) {
+      coupled_bc_type = BoundaryConditionType::bType_Dir;
+    } else if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) {
+      coupled_bc_type = BoundaryConditionType::bType_Neu;
+    }
+
+    // Create the coupled boundary condition object
     if (use_cap) {
       lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
                                                 com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, zerod_cap,

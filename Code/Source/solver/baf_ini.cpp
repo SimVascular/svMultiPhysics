@@ -764,7 +764,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
     }
 
-  } else if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_Coupled)) {
+  } else if (btest(lBc.bType, iBC_Neu)) {
     // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
     if (btest(lBc.bType, iBC_res)) {
       sV = 0.0;

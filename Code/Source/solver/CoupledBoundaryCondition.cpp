@@ -1212,13 +1212,17 @@ void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
         cm.bcast(cm_mod, cap_val_all);
     }
 
-    // Count the number of owned cap nodes
+    // Count cap nodes owned by this rank only (exclude ghost duplicates).
+    // Ownership follows FSILS ordering: mapped index in [0, mynNo).
     int n_owned = 0;
     for (int a = 0; a < cap_nNo; a++) {
         int gnNo = cap_gN_all(a);
         for (int i = 0; i < com_mod.tnNo; i++) {
             if (com_mod.ltg(i) == gnNo) {
-                n_owned++;
+                int mapped = com_mod.lhs.map(i);
+                if (mapped >= 0 && mapped < com_mod.lhs.mynNo) {
+                    n_owned++;
+                }
                 break;
             }
         }
@@ -1242,11 +1246,14 @@ void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
             }
         }
         if (localIdx >= 0) {
-            lhs_face.cap_glob(idx) = com_mod.lhs.map(localIdx);
-            for (int i = 0; i < nsd; i++) {
-                lhs_face.cap_val(i, idx) = cap_val_all(i, a);
+            int mapped = com_mod.lhs.map(localIdx);
+            if (mapped >= 0 && mapped < com_mod.lhs.mynNo) {
+                lhs_face.cap_glob(idx) = mapped;
+                for (int i = 0; i < nsd; i++) {
+                    lhs_face.cap_val(i, idx) = cap_val_all(i, a);
+                }
+                idx++;
             }
-            idx++;
         }
     }
 }

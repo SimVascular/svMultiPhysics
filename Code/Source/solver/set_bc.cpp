@@ -1432,7 +1432,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
 
   // Geting the contribution of Neu BC
   //
-  if (utils::btest(lBc.bType,iBC_cpl) || utils::btest(lBc.bType,iBC_RCR)) {
+  if (utils::btest(lBc.bType,iBC_cpl) || utils::btest(lBc.bType,iBC_RCR) || utils::btest(lBc.bType,iBC_Coupled)) {
     h(0) = lBc.g;
 
   } else {

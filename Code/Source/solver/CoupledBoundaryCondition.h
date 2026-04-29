@@ -170,12 +170,12 @@ class CappingSurface {
         mutable Array<double> valM_;
     };
 
-/// @brief Object-oriented Coupled boundary condition on a cap face
+/// @brief Object-oriented Coupled boundary condition
 ///
 /// This class provides an interface for:
-///  - loading a cap face VTP,
 ///  - computing flowrates on the face for coupling, and
-///  - getting/setting pressure values from/to a 0D solver.
+///  - getting/setting pressure values from/to a 0D solver, and
+///  - (optionally) loading a cap face VTP for struct/ustruct coupling.
 ///
 /// The class manages its own coupling data. svZeroD interface code accesses
 /// coupled boundary conditions by iterating through com_mod.eq[].bc[].
