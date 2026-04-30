@@ -806,15 +806,18 @@ class CouplingInterfaceParameters : public ParameterLists
     // Path to the svOneDSolver .in input file for this face (1D coupling).
     Parameter<std::string> svoned_input_file;
 
-    // Pressure ramp for 1D coupling initialization (DIR coupling only).
-    // Over the first Coupling_ramp_steps time steps the pressure passed to the
-    // 1D solver is linearly ramped from Coupling_ramp_ref_pressure to the
-    // actual 3D pressure.  Set Coupling_ramp_steps = 0 (default) to disable.
+    // Ramp for 1D coupling initialization (both DIR and NEU coupling).
+    // Over the first Coupling_ramp_steps committed time steps the value passed
+    // to the 1D solver is linearly ramped:
+    //   DIR: pressure P ramped from Coupling_ramp_ref_pressure to actual 3D P.
+    //   NEU: flow rate Q ramped from 0 to actual 3D Q (ref pressure not used).
+    // Set Coupling_ramp_steps = 0 (default) to disable.
     Parameter<int>    coupling_ramp_steps;
     Parameter<double> coupling_ramp_ref_pressure;
 
-    // Under-relaxation factor for pressure passed to the 1D solver (DIR coupling only).
-    // Applied as: P_sent = omega * P_new + (1 - omega) * P_prev_sent.
+    // Under-relaxation factor for the value passed to the 1D solver (both DIR and NEU coupling).
+    //   DIR: P_sent = omega * P_target + (1 - omega) * P_prev_sent
+    //   NEU: Q_sent = omega * Q_target + (1 - omega) * Q_prev_sent
     // Range: (0, 1].  Default 1.0 = no relaxation.
     Parameter<double> coupling_relax_factor;
 

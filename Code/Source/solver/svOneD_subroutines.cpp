@@ -102,10 +102,13 @@ struct OneDModelState {
   // Index into eq[0].bc[] for the BC this model services.
   int iBc = -1;
 
-  // Pressure ramp for 1D coupling initialization (DIR coupling only).
-  // Over the first ramp_steps committed time steps the pressure sent to the
-  // 1D solver is linearly interpolated from ramp_ref_pressure to the actual
-  // 3D pressure value.  Zero means no ramping.
+  // Pressure ramp for 1D coupling initialization.
+  // DIR: over the first ramp_steps committed time steps the pressure sent to
+  //      the 1D solver is linearly interpolated from ramp_ref_pressure to the
+  //      actual 3D pressure value.
+  // NEU: over the first ramp_steps committed time steps the flow rate sent to
+  //      the 1D solver is linearly interpolated from 0 to the actual 3D Q.
+  // Zero means no ramping.
   int    ramp_steps = 0;
   double ramp_ref_pressure = 0.0;
   int    step_count = 0;  ///< Number of committed (BCFlag=='L') steps taken.
@@ -117,12 +120,15 @@ struct OneDModelState {
   //   Output (Q from 1D)   : Q_relax = omega * Q_raw    + (1-omega) * Q_prev_sent
   //
   // NEU coupling:
+  //   Input  (Q sent to 1D): Q_sent  = omega * Q_target + (1-omega) * Q_prev_sent
   //   Output (P from 1D)   : P_relax = omega * P_raw    + (1-omega) * P_neu_prev
   double relax_factor = 1.0;
   double P_prev_sent_old = 0.0;  ///< Under-relaxed pressure sent at params[3] (t_old) on last 'L' step (DIR).
   double P_prev_sent_new = 0.0;  ///< Under-relaxed pressure sent at params[4] (t_new) on last 'L' step (DIR).
   double Q_prev_sent = 0.0;      ///< Under-relaxed flow rate output on last 'L' step (DIR only).
   double P_neu_prev  = 0.0;      ///< Under-relaxed pressure output on last 'L' step (NEU only).
+  double Q_prev_sent_old = 0.0;  ///< Under-relaxed flow rate sent at params[3] (t_old) on last 'L' step (NEU).
+  double Q_prev_sent_new = 0.0;  ///< Under-relaxed flow rate sent at params[4] (t_new) on last 'L' step (NEU).
 };
 
 // ---------------------------------------------------------------------------
@@ -300,8 +306,24 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     params[2] = t_new;
 
     if (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
-      params[3] = bc.coupled_bc.get_Qo();
-      params[4] = bc.coupled_bc.get_Qn();
+      double raw_Q_old = bc.coupled_bc.get_Qo();
+      double raw_Q_new = bc.coupled_bc.get_Qn();
+      // Step 1: apply flow rate ramp (scales amplitude from 0 to actual 3D
+      //         flow rate over the first ramp_steps committed steps).
+      double Q_target_old, Q_target_new;
+      if (st.ramp_steps > 0) {
+        double ramp_factor = std::min(1.0, static_cast<double>(st.step_count) / st.ramp_steps);
+        Q_target_old = ramp_factor * raw_Q_old;
+        Q_target_new = ramp_factor * raw_Q_new;
+      } else {
+        Q_target_old = raw_Q_old;
+        Q_target_new = raw_Q_new;
+      }
+      // Step 2: apply under-relaxation (damps timestep-to-timestep oscillations).
+      // Q_sent = omega * Q_target + (1 - omega) * Q_prev_sent
+      const double omega = st.relax_factor;
+      params[3] = omega * Q_target_old + (1.0 - omega) * st.Q_prev_sent_old;
+      params[4] = omega * Q_target_new + (1.0 - omega) * st.Q_prev_sent_new;
     } else {
       double raw_P_old = bc.coupled_bc.get_Po();
       double raw_P_new = bc.coupled_bc.get_Pn();
@@ -349,7 +371,10 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     if (BCFlag == 'L') {
       st.solution = work_sol;
       // Update the under-relaxation history with the values actually sent.
-      if (st.coupling_type != "NEU") {
+      if (st.coupling_type == "NEU") {
+        st.Q_prev_sent_old = params[3];
+        st.Q_prev_sent_new = params[4];
+      } else {
         st.P_prev_sent_old = params[3];
         st.P_prev_sent_new = params[4];
       }
