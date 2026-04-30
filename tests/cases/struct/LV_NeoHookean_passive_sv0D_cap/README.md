@@ -79,5 +79,8 @@ where
 - `Time_dependence` set to `Coupled` with `Coupling_interface` selects the CoupledBoundaryCondition path for svZeroDSolver
 - `svZeroDSolver_block` names the svZeroDSolver block; optional `Chamber_cap_surface` gives the cap VTP for flow integration
 - `Chamber_cap_surface` adds a capping surface to close the endocardial surface; thus allowing the calculation of flow rates by integrating the velocity in the surface. For more information see https://doi.org/10.1016/j.cma.2024.116764
+
+# Generating the cap surface
+An script to generate a capping surface to close a surface can be found in `utilities/generate_cap_surface/generate_cap.py`
   
 
