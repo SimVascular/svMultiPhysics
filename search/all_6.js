@@ -16,7 +16,7 @@ var searchData=
   ['distribute_13',['distribute',['../class_boundary_condition.html#a7859d5d785d1411542d6d3137c823c37',1,'BoundaryCondition']]],
   ['dmn_14',['dmn',['../classeq_type.html#a8444f77be8c6f85297aca3c3ce9eb1ec',1,'eqType']]],
   ['dmnib_15',['dmnIB',['../classeq_type.html#ac9596dcfa3a9f0e7505758df1783bcb0',1,'eqType']]],
-  ['dmnid_16',['dmnid',['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID'],['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId']]],
+  ['dmnid_16',['dmnid',['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId'],['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID']]],
   ['dmntype_17',['dmnType',['../classdmn_type.html',1,'']]],
   ['dof_18',['dof',['../classeq_type.html#ad256e1ab17832d3c425de3925678a742',1,'eqType::dof'],['../class_com_mod.html#a2e33f05e98147d2b0e32c410fe24265f',1,'ComMod::dof']]],
   ['dof_20ordering_19',['DOF Ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md32',1,'']]],

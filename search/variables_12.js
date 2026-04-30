@@ -9,9 +9,10 @@ var searchData=
   ['uris_6',['uris',['../class_com_mod.html#a791e048ad901a65854a7f8c613a8f423',1,'ComMod']]],
   ['urisactflag_7',['urisActFlag',['../class_com_mod.html#a8cb10e231ac4f7dc3f7b4f9b784953ed',1,'ComMod']]],
   ['urisflag_8',['urisFlag',['../class_com_mod.html#a329c98e1fc8079818b428e718dd5fe6f',1,'ComMod']]],
-  ['urisres_9',['urisRes',['../class_com_mod.html#a4ff010ae89015236fb87db8fa0e640ec',1,'ComMod']]],
-  ['urisresclose_10',['urisResClose',['../class_com_mod.html#aa5c8dca70d75c35b147bcbbadbac1e73',1,'ComMod']]],
-  ['usegenbc_11',['useGenBC',['../classcpl_b_c_type.html#a730f8b6f595d77b46516534f4687a5c4',1,'cplBCType']]],
-  ['useprecomp_12',['usePrecomp',['../class_com_mod.html#a949caadf37a65de770358a86798b0060',1,'ComMod']]],
-  ['usetls_13',['useTLS',['../classeq_type.html#a6e56218d0c32814aac1b24e011d48805',1,'eqType']]]
+  ['urisfluidnodemask_9',['urisFluidNodeMask',['../class_com_mod.html#a6ee4397f29b232ef418235132f3bbc4a',1,'ComMod']]],
+  ['urisres_10',['urisRes',['../class_com_mod.html#a4ff010ae89015236fb87db8fa0e640ec',1,'ComMod']]],
+  ['urisresclose_11',['urisResClose',['../class_com_mod.html#aa5c8dca70d75c35b147bcbbadbac1e73',1,'ComMod']]],
+  ['usegenbc_12',['useGenBC',['../classcpl_b_c_type.html#a730f8b6f595d77b46516534f4687a5c4',1,'cplBCType']]],
+  ['useprecomp_13',['usePrecomp',['../class_com_mod.html#a949caadf37a65de770358a86798b0060',1,'ComMod']]],
+  ['usetls_14',['useTLS',['../classeq_type.html#a6e56218d0c32814aac1b24e011d48805',1,'eqType']]]
 ];
