@@ -7,6 +7,10 @@
 #include "Array.h"
 #include "Vector.h"
 
+#include <map>
+#include <string>
+#include <utility>
+
 /**
  * @brief Abstract ionic model class.
  *
@@ -46,14 +50,32 @@
  */
 class IonicModel {
 public:
+  /// State variable information. Bundles a string label for the variable, to be
+  /// used for parameter files, and the variable's initial value.
+  class StateVariable {
+  public:
+    std::string label;
+    double initial_value;
+  };
+
+  /// Alias for state variables vector.
+  using StateVector = std::vector<StateVariable>;
+
+  /// Class for managing initial values for a generic ionic model.
+  class InitialValues : public ParameterLists {};
+
   /// Constructor.
-  IonicModel(const double Vrest_)
-      : Vrest(Vrest_), Vscale(1.0), Tscale(1.0), Voffset(0.0) {}
+  IonicModel(const StateVector &states_X_, const StateVector &states_Xg_,
+             const double Vrest_)
+      : states_X(states_X_), states_Xg(states_Xg_), Vrest(Vrest_), Vscale(1.0),
+        Tscale(1.0), Voffset(0.0) {}
 
   /// Constructor with scaling factors.
-  IonicModel(const double Vrest_, const double Vscale_, const double Tscale_,
+  IonicModel(const StateVector &states_X_, const StateVector &states_Xg_,
+             const double Vrest_, const double Vscale_, const double Tscale_,
              const double Voffset_)
-      : Vrest(Vrest_), Vscale(Vscale_), Tscale(Tscale_), Voffset(Voffset_) {}
+      : states_X(states_X_), states_Xg(states_Xg_), Vrest(Vrest_),
+        Vscale(Vscale_), Tscale(Tscale_), Voffset(Voffset_) {}
 
   /// Virtual destructor.
   virtual ~IonicModel() = default;
@@ -66,8 +88,8 @@ public:
    * @param[out] X Vector of state variables to be initialized.
    * @param[out] Xg Vector of gating variables to be initialized.
    */
-  virtual void init(const int nX, const int nG, Vector<double> &X,
-                    Vector<double> &Xg) const = 0;
+  void init(const int nX, const int nG, Vector<double> &X,
+            Vector<double> &Xg) const;
 
   /**
    * @name Integration methods.
@@ -143,6 +165,12 @@ protected:
   virtual void getj(const unsigned int zone_id, const int nX, const int nG,
                     const Vector<double> &X, const Vector<double> &Xg,
                     Array<double> &Jac, const double Ksac) const = 0;
+
+  /// Initial states.
+  StateVector states_X;
+
+  /// Initial gating variables.
+  StateVector states_Xg;
 
   /// Resting transmembrane potential. It is used to define the
   /// stretch-activated current.

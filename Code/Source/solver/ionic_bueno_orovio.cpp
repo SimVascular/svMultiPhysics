@@ -3,14 +3,6 @@
 
 #include "ionic_bueno_orovio.h"
 
-void BuenoOrovio::init(const int nX, const int nG, Vector<double> &X,
-                       Vector<double> &Xg) const {
-  X(0) = Voffset;
-  X(1) = 1.0;
-  X(2) = 1.0;
-  X(3) = 0.0;
-}
-
 void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
                        const Vector<double> &X, const Vector<double> &Xg,
                        Vector<double> &f, const double I_stim,

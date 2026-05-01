@@ -18,12 +18,10 @@ class AlievPanfilov : public IonicModel {
 public:
   /// Constructor.
   AlievPanfilov()
-      : IonicModel(/* Vrest_ = */ -80.0, /* Vscale_ = */ 100.0,
+      : IonicModel(/* states_X_ = */ {{"V", -80.0}, {"w", 1.0e-3}},
+                   /* states_Xg_ = */ {},
+                   /* Vrest_ = */ -80.0, /* Vscale_ = */ 100.0,
                    /* Tscale_ = */ 12.90, /* Voffset_ = */ -80.0) {}
-
-  /// Setup of initial conditions.
-  virtual void init(const int nX, const int nG, Vector<double> &X,
-                    Vector<double> &Xg) const override;
 
 protected:
   /// @name Model parameters

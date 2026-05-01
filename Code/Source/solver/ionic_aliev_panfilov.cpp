@@ -3,12 +3,6 @@
 
 #include "ionic_aliev_panfilov.h"
 
-void AlievPanfilov::init(const int nX, const int nG, Vector<double> &X,
-                         Vector<double> &Xg) const {
-  X = 1.0e-3;
-  X(0) = Voffset;
-}
-
 void AlievPanfilov::getf(const unsigned int zone_id, const int nX, const int nG,
                          const Vector<double> &X, const Vector<double> &Xg,
                          Vector<double> &f, const double I_stim,

@@ -18,54 +18,45 @@
  * reference below.
  *
  * **References**:
- * - Ten Tusscher, Noble, Noble, Panfilov. A model for human ventricular tissue.
- *   American Journal of Physiology - Heart and Circulatory Physiology (2004).
- * - Ten Tusscher, Panfilov. Alternans and spiral breakup in a human ventricular
- *   tissue model. American Journal of Physiology - Heart and Circulatory
- *   Physiology (2006).
+ * 1. Ten Tusscher, Noble, Noble, Panfilov. A model for human ventricular
+ * tissue. American Journal of Physiology - Heart and Circulatory Physiology
+ * (2004).
+ * 2. Ten Tusscher, Panfilov. Alternans and spiral breakup in a human
+ * ventricular tissue model. American Journal of Physiology - Heart and
+ * Circulatory Physiology (2006).
+ *
+ * Model parameters are from reference 2 above. Default parameters are for
+ * epicardium state (source: https://models.cellml.org/e/80d)
  */
 class TTP : public IonicModel {
 public:
   /// Constructor.
   TTP()
-      : IonicModel(/* Vrest_ = */ -85.23, /* Vscale_ = */ 1.0,
-                   /* Tscale_ = */ 1.0, /* Voffset_ = */ 0.0) {}
-
-  /// Setup of initial conditions.
-  virtual void init(const int nX, const int nG, Vector<double> &X,
-                    Vector<double> &Xg) const override;
+      : IonicModel(
+            /* states_X_ = */ {{"V", -85.23},
+                               {"K_i", 136.89},
+                               {"Na_i", 8.6040},
+                               {"Ca_i", 1.26e-4},
+                               {"Ca_ss", 3.6e-4},
+                               {"Ca_sr", 3.64},
+                               {"R_bar", 0.9073}},
+            /* states_Xg_ = */
+            {{"x_r1", 6.21e-3},
+             {"x_r2", 0.4712},
+             {"x_s", 9.5e-3},
+             {"m", 1.72e-3},
+             {"h", 0.7444},
+             {"j", 0.7045},
+             {"d", 3.373e-5},
+             {"f", 0.7888},
+             {"f2", 0.9755},
+             {"fcass", 0.9953},
+             {"s", 0.999998},
+             {"r", 2.42e-8}},
+            /* Vrest_ = */ -85.23, /* Vscale_ = */ 1.0,
+            /* Tscale_ = */ 1.0, /* Voffset_ = */ 0.0) {}
 
 protected:
-  /// @brief Stores all model state and gating variables in a single typed
-  /// struct.
-  class State {
-  public:
-    double V;
-    double K_i;
-    double Na_i;
-    double Ca_i;
-    double Ca_ss;
-    double Ca_sr;
-    double R_bar;
-    double x_r1;
-    double x_r2;
-    double x_s;
-    double m;
-    double h;
-    double j;
-    double d;
-    double f;
-    double f2;
-    double fcass;
-    double s;
-    double r;
-
-    static const State default_initial_state;
-  };
-
-  /// Model initial state.
-  State initial_state = State::default_initial_state;
-
   /// @name Model parameters
   /// @{
 
@@ -240,9 +231,6 @@ protected:
   virtual void getj(const unsigned int zone_id, const int nX, const int nG,
                     const Vector<double> &X, const Vector<double> &Xg,
                     Array<double> &Jac, const double Ksac) const override;
-
-  /// Reads the initial state object from parameters parsed from file.
-  void set_initial_conditions(const TTPInitialConditionsParameters &params);
 };
 
 #endif

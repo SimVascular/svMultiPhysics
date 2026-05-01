@@ -20,12 +20,13 @@ class BuenoOrovio : public IonicModel {
 public:
   /// Constructor.
   BuenoOrovio()
-      : IonicModel(/* Vrest_ = */ -84.0, /* Vscale_ = */ 85.70,
+      : IonicModel(/* states_X_ = */ {{"u", -84.0},
+                                      {"v", 1.0},
+                                      {"w", 1.0},
+                                      {"s", 0.0}},
+                   /* states_Xg_ = */ {},
+                   /* Vrest_ = */ -84.0, /* Vscale_ = */ 85.70,
                    /* Tscale_ = */ 1.0, /* Voffset_ = */ -84.0) {}
-
-  /// Setup of initial conditions.
-  virtual void init(const int nX, const int nG, Vector<double> &X,
-                    Vector<double> &Xg) const override;
 
 protected:
   /// @name Model parameters
