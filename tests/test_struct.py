@@ -1,6 +1,5 @@
 from .conftest import run_with_reference
 import os
-import pytest
 import subprocess
 
 # Common folder for all tests in this file
@@ -92,14 +91,13 @@ def test_LV_NeoHookean_passive_sv0D(n_proc):
 
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
 
-@pytest.mark.parametrize("solver", ["fsils", "trilinos"])
-def test_LV_NeoHookean_passive_sv0D_cap(solver, n_proc):
+def test_LV_NeoHookean_passive_sv0D_cap(n_proc):
     test_folder = "LV_NeoHookean_passive_sv0D_cap"
-    if solver == "fsils":
-        name_inp = "solver_fsils.xml"
-    else:
-        name_inp = "solver_trilinos.xml"
-    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3, name_inp=name_inp)
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
+
+def test_LV_NeoHookean_passive_sv0D_cap_trilinos(n_proc):
+    test_folder = "LV_NeoHookean_passive_sv0D_cap_trilinos"
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
 
 def test_tensile_adventitia_Guccione_active(n_proc):
     test_folder = "tensile_adventitia_Guccione_active"
