@@ -115,6 +115,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a65d59f645d6d626160e43214488ecf89"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a8b93ddaf8f2bf29669f2da1bcc6eba" id="r_a8a8b93ddaf8f2bf29669f2da1bcc6eba"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtu_data.html#a8a8b93ddaf8f2bf29669f2da1bcc6eba">copy_point_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;mesh_data) override</td></tr>
 <tr class="separator:a8a8b93ddaf8f2bf29669f2da1bcc6eba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade7e45e82bea16fe0f454e1b2e1c89d9" id="r_ade7e45e82bea16fe0f454e1b2e1c89d9"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtu_data.html#ade7e45e82bea16fe0f454e1b2e1c89d9">copy_cell_data</a> (const std::string &amp;data_name, Array&lt; double &gt; &amp;mesh_data) override</td></tr>
+<tr class="separator:ade7e45e82bea16fe0f454e1b2e1c89d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad03fcc69898e966a0b539740d2e73f91" id="r_ad03fcc69898e966a0b539740d2e73f91"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtu_data.html#ad03fcc69898e966a0b539740d2e73f91">copy_cell_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;mesh_data) override</td></tr>
+<tr class="separator:ad03fcc69898e966a0b539740d2e73f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0410a5f6bbff213f55d7edd3d6078190" id="r_a0410a5f6bbff213f55d7edd3d6078190"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_vtu_data.html#a0410a5f6bbff213f55d7edd3d6078190">copy_cell_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;mesh_data) override</td></tr>
 <tr class="memdesc:a0410a5f6bbff213f55d7edd3d6078190"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy an array of cell data from an unstructured mesh into the given <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>.  <br /></td></tr>
 <tr class="separator:a0410a5f6bbff213f55d7edd3d6078190"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -162,8 +166,84 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
 <tr class="separator:a4f292bf9f011bf00cf6a688d116472bc inherit pub_attribs_class_vtk_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ade7e45e82bea16fe0f454e1b2e1c89d9" name="ade7e45e82bea16fe0f454e1b2e1c89d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade7e45e82bea16fe0f454e1b2e1c89d9">&#9670;&#160;</a></span>copy_cell_data() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void VtkVtuData::copy_cell_data </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
+
+</div>
+</div>
+<a id="ad03fcc69898e966a0b539740d2e73f91" name="ad03fcc69898e966a0b539740d2e73f91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad03fcc69898e966a0b539740d2e73f91">&#9670;&#160;</a></span>copy_cell_data() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void VtkVtuData::copy_cell_data </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="class_vtk_data.html">VtkData</a>.</p>
+
+</div>
+</div>
 <a id="a0410a5f6bbff213f55d7edd3d6078190" name="a0410a5f6bbff213f55d7edd3d6078190"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0410a5f6bbff213f55d7edd3d6078190">&#9670;&#160;</a></span>copy_cell_data()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0410a5f6bbff213f55d7edd3d6078190">&#9670;&#160;</a></span>copy_cell_data() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">

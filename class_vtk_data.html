@@ -143,6 +143,11 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_point_da
 <tr class="memitem:a84935686979a4b5df8121b54b7986a70" id="r_a84935686979a4b5df8121b54b7986a70"><td class="memItemLeft" align="right" valign="top"><a id="a84935686979a4b5df8121b54b7986a70" name="a84935686979a4b5df8121b54b7986a70"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_point_data</b> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;mesh_data)=0</td></tr>
 <tr class="separator:a84935686979a4b5df8121b54b7986a70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5f322ad5ac8395d66c2bfb16e81abb9" id="r_ab5f322ad5ac8395d66c2bfb16e81abb9"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_data.html#ab5f322ad5ac8395d66c2bfb16e81abb9">copy_cell_data</a> (const std::string &amp;data_name, Array&lt; double &gt; &amp;mesh_data)=0</td></tr>
+<tr class="separator:ab5f322ad5ac8395d66c2bfb16e81abb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe0984740de4e970b4cef57cf0cd646f" id="r_afe0984740de4e970b4cef57cf0cd646f"><td class="memItemLeft" align="right" valign="top"><a id="afe0984740de4e970b4cef57cf0cd646f" name="afe0984740de4e970b4cef57cf0cd646f"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_cell_data</b> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;mesh_data)=0</td></tr>
+<tr class="separator:afe0984740de4e970b4cef57cf0cd646f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa29966772623b77d155e37d6d5970420" id="r_aa29966772623b77d155e37d6d5970420"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_data.html#aa29966772623b77d155e37d6d5970420">copy_cell_data</a> (const std::string &amp;data_name, <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;mesh_data)=0</td></tr>
 <tr class="separator:aa29966772623b77d155e37d6d5970420"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5b759a3df98089d05eb5387709ef03e" id="r_af5b759a3df98089d05eb5387709ef03e"><td class="memItemLeft" align="right" valign="top">virtual Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vtk_data.html#af5b759a3df98089d05eb5387709ef03e">get_point_data</a> (const std::string &amp;data_name)=0</td></tr>
@@ -169,8 +174,46 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>file_name</b><
 <tr class="separator:a4f292bf9f011bf00cf6a688d116472bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab5f322ad5ac8395d66c2bfb16e81abb9" name="ab5f322ad5ac8395d66c2bfb16e81abb9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab5f322ad5ac8395d66c2bfb16e81abb9">&#9670;&#160;</a></span>copy_cell_data() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void VtkData::copy_cell_data </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>data_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="class_vtk_vtp_data.html#a62b876ad0a3f58ab6f6078e9f54c40b9">VtkVtpData</a>.</p>
+
+</div>
+</div>
 <a id="aa29966772623b77d155e37d6d5970420" name="aa29966772623b77d155e37d6d5970420"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa29966772623b77d155e37d6d5970420">&#9670;&#160;</a></span>copy_cell_data()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa29966772623b77d155e37d6d5970420">&#9670;&#160;</a></span>copy_cell_data() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['n_0',['n',['../classutils_1_1stack_type.html#aab9fe6a4b9b4cdada815fc2b6346be46',1,'utils::stackType::n'],['../classmsh_type.html#a14952aebe301a67a398b7c46cc5156e8',1,'mshType::N'],['../classib_comm_type.html#a896bcb6d7f4f4bcb9b0d1006555cb631',1,'ibCommType::n']]],
+  ['n_0',['n',['../classib_comm_type.html#a896bcb6d7f4f4bcb9b0d1006555cb631',1,'ibCommType::n'],['../classmsh_type.html#a14952aebe301a67a398b7c46cc5156e8',1,'mshType::N'],['../classutils_1_1stack_type.html#aab9fe6a4b9b4cdada815fc2b6346be46',1,'utils::stackType::n']]],
   ['na_5fo_1',['Na_o',['../class_cep_mod_ttp.html#ab2b2597cf55fc40d4c69e8ae865a93e9',1,'CepModTtp']]],
   ['nadj_2',['nAdj',['../classmsh_type.html#a21ecec528c189cd9f1852a7029fb42cb',1,'mshType']]],
   ['name_3',['name',['../classmsh_type.html#ae7cec54505739f048489e9cd5f383da3',1,'mshType']]],
@@ -19,7 +19,7 @@ var searchData=
   ['nfacesls_16',['nFacesLS',['../class_com_mod.html#a3f419496e3cd3ed34fb027be0313dbbe',1,'ComMod']]],
   ['nfn_17',['nfn',['../classcep_model_type.html#a2db9f0997d90ca998330590c9349a8f2',1,'cepModelType::nFn'],['../classmsh_type.html#a51a0fbc76606a6795f1604936b1c9d11',1,'mshType::nFn']]],
   ['nfs_18',['nFs',['../classmsh_type.html#aa9997b7eae481b810eaadaee41a2ae7c',1,'mshType']]],
-  ['ng_19',['ng',['../classcep_model_type.html#a8880458b31a59e1bcf3888d0cc49d362',1,'cepModelType::nG'],['../classib_comm_type.html#a7ec57dd2fdc131d944989fcdae0d201f',1,'ibCommType::nG'],['../classmsh_type.html#a2f2053c35318bfab54d506ef417ce6ad',1,'mshType::nG']]],
+  ['ng_19',['ng',['../classib_comm_type.html#a7ec57dd2fdc131d944989fcdae0d201f',1,'ibCommType::nG'],['../classmsh_type.html#a2f2053c35318bfab54d506ef417ce6ad',1,'mshType::nG'],['../classcep_model_type.html#a8880458b31a59e1bcf3888d0cc49d362',1,'cepModelType::nG']]],
   ['nits_20',['nITs',['../class_com_mod.html#a0d0572be3664ac20c76b2e5e98694e35',1,'ComMod']]],
   ['nmsh_21',['nmsh',['../classib_type.html#ad24de3ed46d7f280746e8339379e45eb',1,'ibType::nMsh'],['../class_com_mod.html#a166dd76f86b78f6694d2bff8c0279165',1,'ComMod::nMsh']]],
   ['nno_22',['nNo',['../classmsh_type.html#a03b4f66a6b899a991ffb507c8b4557d7',1,'mshType']]],
@@ -28,14 +28,15 @@ var searchData=
   ['nouturis_25',['nOutURIS',['../classeq_type.html#a9ccfe4af889d00b647ae93cac8579dff',1,'eqType']]],
   ['nsd_26',['nsd',['../class_com_mod.html#a3e15056f9da21f7d2cc39ace1d9468be',1,'ComMod']]],
   ['nsl_27',['nSl',['../classmsh_type.html#a848df651a98f1c0ec2ac3b37444937b2',1,'mshType']]],
-  ['nsymd_28',['nsymd',['../class_com_mod.html#a42d8db5bf10f90358aff5cc5b079045b',1,'ComMod']]],
-  ['nts_29',['nTS',['../class_com_mod.html#ac8c5f7afe5fcc37e0c39347e215b9ec2',1,'ComMod']]],
-  ['num_5fleads_30',['num_leads',['../classecg_leads_type.html#a7451b7e1caea28147f1f795c1a2d5bf6',1,'ecgLeadsType']]],
-  ['nuris_31',['nUris',['../class_com_mod.html#aa8f740abdfe7812b6c36c5d8a37ec023',1,'ComMod']]],
-  ['nv_32',['nV',['../classmsh_type.html#abd4b3d01290cb3653305009d824cb351',1,'mshType']]],
-  ['nw_33',['nW',['../classmsh_type.html#ace5ec618859ac45c6acaeb9598427d09',1,'mshType']]],
-  ['nx_34',['nx',['../classcep_model_type.html#a7f18cba9550474e1003ba6905260a55e',1,'cepModelType::nX'],['../classcpl_b_c_type.html#a1b52f2119c8dd1948d694fa1a2c4d279',1,'cplBCType::nX'],['../classmsh_type.html#acfa922ac71083771d7c1f58554a0373d',1,'mshType::Nx']]],
-  ['nxion_35',['nXion',['../class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2',1,'CepMod']]],
-  ['nxp_36',['nXp',['../classcpl_b_c_type.html#ae766cb7798304a67b8d03535de6cd0b0',1,'cplBCType']]],
-  ['nxx_37',['Nxx',['../classmsh_type.html#a3bb2df3b406465e8586ec681e9dba36e',1,'mshType']]]
+  ['nsvzerod_5fcoupled_5fbc_28',['nSvZeroD_coupled_bc',['../classcpl_b_c_type.html#a609c83af7fa899ab363f861f54dc3a74',1,'cplBCType']]],
+  ['nsymd_29',['nsymd',['../class_com_mod.html#a42d8db5bf10f90358aff5cc5b079045b',1,'ComMod']]],
+  ['nts_30',['nTS',['../class_com_mod.html#ac8c5f7afe5fcc37e0c39347e215b9ec2',1,'ComMod']]],
+  ['num_5fleads_31',['num_leads',['../classecg_leads_type.html#a7451b7e1caea28147f1f795c1a2d5bf6',1,'ecgLeadsType']]],
+  ['nuris_32',['nUris',['../class_com_mod.html#aa8f740abdfe7812b6c36c5d8a37ec023',1,'ComMod']]],
+  ['nv_33',['nV',['../classmsh_type.html#abd4b3d01290cb3653305009d824cb351',1,'mshType']]],
+  ['nw_34',['nW',['../classmsh_type.html#ace5ec618859ac45c6acaeb9598427d09',1,'mshType']]],
+  ['nx_35',['nx',['../classcep_model_type.html#a7f18cba9550474e1003ba6905260a55e',1,'cepModelType::nX'],['../classcpl_b_c_type.html#a1b52f2119c8dd1948d694fa1a2c4d279',1,'cplBCType::nX'],['../classmsh_type.html#acfa922ac71083771d7c1f58554a0373d',1,'mshType::Nx']]],
+  ['nxion_36',['nXion',['../class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2',1,'CepMod']]],
+  ['nxp_37',['nXp',['../classcpl_b_c_type.html#ae766cb7798304a67b8d03535de6cd0b0',1,'cplBCType']]],
+  ['nxx_38',['Nxx',['../classmsh_type.html#a3bb2df3b406465e8586ec681e9dba36e',1,'mshType']]]
 ];

@@ -12,7 +12,7 @@ var searchData=
   ['operator_2b_9',['operator+',['../class_vector.html#a0226d8916960275bfac50ee837f2efa8',1,'Vector::operator+(const Vector&lt; T &gt; &amp;vec) const'],['../class_vector.html#a9c0b34e94413a4ef55adc63784cc2da9',1,'Vector::operator+(const T value) const']]],
   ['operator_2d_10',['operator-',['../class_vector.html#aed09a49898d7a949b93addb54657f1ed',1,'Vector']]],
   ['operator_2f_11',['operator/',['../class_vector.html#a9d039799d2c2b1c8c3c02a28d2548b47',1,'Vector']]],
-  ['operator_3d_12',['operator=',['../class_array3.html#a35fd645a503475a7cc980acaa1af246a',1,'Array3::operator=()'],['../class_boundary_condition.html#a4112d1d42b93f0614e3193d075de8705',1,'BoundaryCondition::operator=()'],['../class_vector.html#a7594fda7b9388c049c2fe95ffe154075',1,'Vector::operator=()']]],
+  ['operator_3d_12',['operator=',['../class_array3.html#a35fd645a503475a7cc980acaa1af246a',1,'Array3::operator=()'],['../class_boundary_condition.html#a4112d1d42b93f0614e3193d075de8705',1,'BoundaryCondition::operator=()'],['../class_capping_surface.html#a677af41a0ea524918e68eae4d7af7d38',1,'CappingSurface::operator=(const CappingSurface &amp;other)'],['../class_capping_surface.html#a6677152b672b8727859b991e102c857f',1,'CappingSurface::operator=(CappingSurface &amp;&amp;other) noexcept=default'],['../class_coupled_boundary_condition.html#a1084d8e3e0e8cfca134b2150d224f404',1,'CoupledBoundaryCondition::operator=(const CoupledBoundaryCondition &amp;other)'],['../class_coupled_boundary_condition.html#ad1f7dc6ed936a004fa311d2d90ff649e',1,'CoupledBoundaryCondition::operator=(CoupledBoundaryCondition &amp;&amp;other) noexcept'],['../class_vector.html#a7594fda7b9388c049c2fe95ffe154075',1,'Vector::operator=()']]],
   ['ordering_13',['ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md32',1,'DOF Ordering'],['../classmsh_type.html#a0c78a71d1348faa5432b75c48c872fd5',1,'mshType::ordering']]],
   ['otnien_14',['otnIEN',['../classmsh_type.html#a4eae34247ad01296d1a2a5bce7cf243f',1,'mshType']]],
   ['out_5ffiles_15',['out_files',['../classecg_leads_type.html#af77b84a8b3e4444955a642447c278a34',1,'ecgLeadsType']]],
@@ -22,5 +22,6 @@ var searchData=
   ['outputparameters_19',['OutputParameters',['../class_output_parameters.html',1,'']]],
   ['outputtype_20',['outputType',['../classoutput_type.html',1,'']]],
   ['outuris_21',['outURIS',['../classeq_type.html#a7b64d6dd21156fde4abb359b4af5609d',1,'eqType']]],
-  ['overview_22',['Overview',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md7',1,'']]]
+  ['overview_22',['Overview',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md7',1,'']]],
+  ['owns_5fcap_23',['owns_cap',['../class_coupled_boundary_condition.html#ac6dc612544b96e87fa06207d82d4f04a',1,'CoupledBoundaryCondition']]]
 ];

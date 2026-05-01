@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>svMultiPhysics: CoupleCplBCParameters Class Reference</title>
+<title>svMultiPhysics: CouplingInterfaceParameters Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -74,32 +74,29 @@ $(function() {
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="class_couple_cpl_b_c_parameters-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">CoupleCplBCParameters Class Reference</div></div>
+<a href="class_coupling_interface_parameters-members.html">List of all members</a>  </div>
+  <div class="headertitle"><div class="title">CouplingInterfaceParameters Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Couple to reduced-order models.  
- <a href="class_couple_cpl_b_c_parameters.html#details">More...</a></p>
+<p>svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled).  
+ <a href="class_coupling_interface_parameters.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="_parameters_8h_source.html">Parameters.h</a>&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for CoupleCplBCParameters:</div>
+Inheritance diagram for CouplingInterfaceParameters:</div>
 <div class="dyncontent">
 <div class="center"><!-- SVG 0 --></div>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af0d0e375f28563bed682df7c473cbe82" id="r_af0d0e375f28563bed682df7c473cbe82"><td class="memItemLeft" align="right" valign="top"><a id="af0d0e375f28563bed682df7c473cbe82" name="af0d0e375f28563bed682df7c473cbe82"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>defined</b> () const</td></tr>
-<tr class="separator:af0d0e375f28563bed682df7c473cbe82"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b8e29c00e54581f9f71f2557ae9b9e7" id="r_a6b8e29c00e54581f9f71f2557ae9b9e7"><td class="memItemLeft" align="right" valign="top"><a id="a6b8e29c00e54581f9f71f2557ae9b9e7" name="a6b8e29c00e54581f9f71f2557ae9b9e7"></a>
+<tr class="memitem:a24a560266958ab1e8d519148bd26441b" id="r_a24a560266958ab1e8d519148bd26441b"><td class="memItemLeft" align="right" valign="top"><a id="a24a560266958ab1e8d519148bd26441b" name="a24a560266958ab1e8d519148bd26441b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>set_values</b> (tinyxml2::XMLElement *xml_elem)</td></tr>
-<tr class="separator:a6b8e29c00e54581f9f71f2557ae9b9e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24e3088b08aee2ff9442ec70c07386e6" id="r_a24e3088b08aee2ff9442ec70c07386e6"><td class="memItemLeft" align="right" valign="top"><a id="a24e3088b08aee2ff9442ec70c07386e6" name="a24e3088b08aee2ff9442ec70c07386e6"></a>
+<tr class="separator:a24a560266958ab1e8d519148bd26441b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bda10b8512208bafc9f3069b01d828a" id="r_a5bda10b8512208bafc9f3069b01d828a"><td class="memItemLeft" align="right" valign="top"><a id="a5bda10b8512208bafc9f3069b01d828a" name="a5bda10b8512208bafc9f3069b01d828a"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>print_parameters</b> ()</td></tr>
-<tr class="separator:a24e3088b08aee2ff9442ec70c07386e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a5bda10b8512208bafc9f3069b01d828a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_parameter_lists"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_parameter_lists')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_parameter_lists.html">ParameterLists</a></td></tr>
 <tr class="memitem:a6d6b1f24d88e33ab3e752a31c2203f6d inherit pub_methods_class_parameter_lists" id="r_a6d6b1f24d88e33ab3e752a31c2203f6d"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>set_xml_element_name</b> (const std::string &amp;name)</td></tr>
@@ -143,30 +140,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>set_parameter</b> (co
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a9953fbdb8fa6e2e4d78220ff295a20a7" id="r_a9953fbdb8fa6e2e4d78220ff295a20a7"><td class="memItemLeft" align="right" valign="top"><a id="a9953fbdb8fa6e2e4d78220ff295a20a7" name="a9953fbdb8fa6e2e4d78220ff295a20a7"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>type</b></td></tr>
-<tr class="separator:a9953fbdb8fa6e2e4d78220ff295a20a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a565e5a2f3147cb4acdacf3bca5d2f5" id="r_a1a565e5a2f3147cb4acdacf3bca5d2f5"><td class="memItemLeft" align="right" valign="top"><a id="a1a565e5a2f3147cb4acdacf3bca5d2f5" name="a1a565e5a2f3147cb4acdacf3bca5d2f5"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>file_name_for_0D_3D_communication</b></td></tr>
-<tr class="separator:a1a565e5a2f3147cb4acdacf3bca5d2f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0e88eb62922eb0b3c3ffa7b294853a6" id="r_ae0e88eb62922eb0b3c3ffa7b294853a6"><td class="memItemLeft" align="right" valign="top"><a id="ae0e88eb62922eb0b3c3ffa7b294853a6" name="ae0e88eb62922eb0b3c3ffa7b294853a6"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>file_name_for_saving_unknowns</b></td></tr>
-<tr class="separator:ae0e88eb62922eb0b3c3ffa7b294853a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33a4701c8a5f231976b13c36b6e0e5bf" id="r_a33a4701c8a5f231976b13c36b6e0e5bf"><td class="memItemLeft" align="right" valign="top"><a id="a33a4701c8a5f231976b13c36b6e0e5bf" name="a33a4701c8a5f231976b13c36b6e0e5bf"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>number_of_unknowns</b></td></tr>
-<tr class="separator:a33a4701c8a5f231976b13c36b6e0e5bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa5ef3209aa9f2a80b3b0d00175d7575b" id="r_aa5ef3209aa9f2a80b3b0d00175d7575b"><td class="memItemLeft" align="right" valign="top"><a id="aa5ef3209aa9f2a80b3b0d00175d7575b" name="aa5ef3209aa9f2a80b3b0d00175d7575b"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>number_of_user_defined_outputs</b></td></tr>
-<tr class="separator:aa5ef3209aa9f2a80b3b0d00175d7575b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb6729c3d9e625f08fa2a6ea9c5864ae" id="r_adb6729c3d9e625f08fa2a6ea9c5864ae"><td class="memItemLeft" align="right" valign="top"><a id="adb6729c3d9e625f08fa2a6ea9c5864ae" name="adb6729c3d9e625f08fa2a6ea9c5864ae"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>unknowns_initialization_file_path</b></td></tr>
-<tr class="separator:adb6729c3d9e625f08fa2a6ea9c5864ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f57b39ea0492ec5d85707e5186f8ad3" id="r_a3f57b39ea0492ec5d85707e5186f8ad3"><td class="memItemLeft" align="right" valign="top"><a id="a3f57b39ea0492ec5d85707e5186f8ad3" name="a3f57b39ea0492ec5d85707e5186f8ad3"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>zerod_code_file_path</b></td></tr>
-<tr class="separator:a3f57b39ea0492ec5d85707e5186f8ad3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2a0f0e4ca6b82ff1a3a254d46572705" id="r_ae2a0f0e4ca6b82ff1a3a254d46572705"><td class="memItemLeft" align="right" valign="top"><a id="ae2a0f0e4ca6b82ff1a3a254d46572705" name="ae2a0f0e4ca6b82ff1a3a254d46572705"></a>
+<tr class="memitem:af2f73120947fdaf49abda95bd1c64124" id="r_af2f73120947fdaf49abda95bd1c64124"><td class="memItemLeft" align="right" valign="top"><a id="af2f73120947fdaf49abda95bd1c64124" name="af2f73120947fdaf49abda95bd1c64124"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>svzerod_solver_block</b></td></tr>
+<tr class="separator:af2f73120947fdaf49abda95bd1c64124"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae9adfc0633d4e082cb4a4ed1b20a8792" id="r_ae9adfc0633d4e082cb4a4ed1b20a8792"><td class="memItemLeft" align="right" valign="top"><a id="ae9adfc0633d4e082cb4a4ed1b20a8792" name="ae9adfc0633d4e082cb4a4ed1b20a8792"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>chamber_cap_surface</b></td></tr>
+<tr class="separator:ae9adfc0633d4e082cb4a4ed1b20a8792"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75f13af3dfe0548f34556c0f0afcbd94" id="r_a75f13af3dfe0548f34556c0f0afcbd94"><td class="memItemLeft" align="right" valign="top"><a id="a75f13af3dfe0548f34556c0f0afcbd94" name="a75f13af3dfe0548f34556c0f0afcbd94"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>value_set</b> = false</td></tr>
-<tr class="separator:ae2a0f0e4ca6b82ff1a3a254d46572705"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a75f13af3dfe0548f34556c0f0afcbd94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_attribs_class_parameter_lists"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_class_parameter_lists')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="class_parameter_lists.html">ParameterLists</a></td></tr>
 <tr class="memitem:a6131758a550b2e63f34e7554933e27f8 inherit pub_attribs_class_parameter_lists" id="r_a6131758a550b2e63f34e7554933e27f8"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::string, std::variant&lt; <a class="el" href="class_parameter.html">Parameter</a>&lt; bool &gt; *, <a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt; *, <a class="el" href="class_parameter.html">Parameter</a>&lt; int &gt; *, <a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt; *, <a class="el" href="class_vector_parameter.html">VectorParameter</a>&lt; double &gt; *, <a class="el" href="class_vector_parameter.html">VectorParameter</a>&lt; int &gt; *, <a class="el" href="class_vector_parameter.html">VectorParameter</a>&lt; std::string &gt; * &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#a6131758a550b2e63f34e7554933e27f8">params_map</a></td></tr>
 <tr class="memdesc:a6131758a550b2e63f34e7554933e27f8 inherit pub_attribs_class_parameter_lists"><td class="mdescLeft">&#160;</td><td class="mdescRight">Map used for storing parameters by name / <a class="el" href="class_parameter.html" title="The Parameter class template is used to store a named paramater and its scalar value as a basic type:...">Parameter</a> template union.  <br /></td></tr>
@@ -177,39 +159,17 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a029010e6e29d2464e0c18f828a5fcad4" id="r_a029010e6e29d2464e0c18f828a5fcad4"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_couple_cpl_b_c_parameters.html#a029010e6e29d2464e0c18f828a5fcad4">xml_element_name_</a> = &quot;Couple_to_cplBC&quot;</td></tr>
-<tr class="memdesc:a029010e6e29d2464e0c18f828a5fcad4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Couple to reduced-order models.  <br /></td></tr>
-<tr class="separator:a029010e6e29d2464e0c18f828a5fcad4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00897df3279b811483182500f7c90ee7" id="r_a00897df3279b811483182500f7c90ee7"><td class="memItemLeft" align="right" valign="top"><a id="a00897df3279b811483182500f7c90ee7" name="a00897df3279b811483182500f7c90ee7"></a>
+static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_name_</b> = &quot;Coupling_interface&quot;</td></tr>
+<tr class="separator:a00897df3279b811483182500f7c90ee7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Couple to reduced-order models. </p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="a029010e6e29d2464e0c18f828a5fcad4" name="a029010e6e29d2464e0c18f828a5fcad4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a029010e6e29d2464e0c18f828a5fcad4">&#9670;&#160;</a></span>xml_element_name_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const std::string CoupleCplBCParameters::xml_element_name_ = &quot;Couple_to_cplBC&quot;</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Couple to reduced-order models. </p>
-<p>Define the XML element name for equation Couple_to_genBC parameters. </p>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following files:<ul>
+<div class="textblock"><p>svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled). </p>
+<div class="fragment"><div class="line">&lt;<span class="keywordtype">Coupling_interface</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">svZeroDSolver_block</span>&gt; <span class="keyword">LV_IN</span> &lt;/<span class="keywordtype">svZeroDSolver_block</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">Chamber_cap_surface</span>&gt; <span class="keyword">mesh</span>/<span class="keyword">mesh-surfaces</span>/<span class="keyword">endo_cap.vtp</span> &lt;/<span class="keywordtype">Chamber_cap_surface</span>&gt;</div>
+<div class="line">&lt;/<span class="keywordtype">Coupling_interface</span>&gt;</div>
+</div><!-- fragment --> </div><hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<a class="el" href="_parameters_8h_source.html">Parameters.h</a></li>
 <li>solver/<b>Parameters.cpp</b></li>
 </ul>

@@ -21,9 +21,9 @@ digraph "ParameterLists"
   Node1 -> Node8 [id="edge7_Node000001_Node000008",dir="back",color="steelblue1",style="solid",tooltip=" "];
   Node8 [id="Node000008",label="ContactParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_contact_parameters.html",tooltip="The ContactParameters class stores parameters for the 'Contact'' XML element used to specify paramete..."];
   Node1 -> Node9 [id="edge8_Node000001_Node000009",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node9 [id="Node000009",label="CoupleCplBCParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_couple_cpl_b_c_parameters.html",tooltip="Couple to reduced-order models."];
+  Node9 [id="Node000009",label="CoupleGenBCParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_couple_gen_b_c_parameters.html",tooltip="Coupling to GenBC."];
   Node1 -> Node10 [id="edge9_Node000001_Node000010",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node10 [id="Node000010",label="CoupleGenBCParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_couple_gen_b_c_parameters.html",tooltip="Coupling to GenBC."];
+  Node10 [id="Node000010",label="CouplingInterfaceParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_coupling_interface_parameters.html",tooltip="svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled)."];
   Node1 -> Node11 [id="edge10_Node000001_Node000011",dir="back",color="steelblue1",style="solid",tooltip=" "];
   Node11 [id="Node000011",label="DirectionalDistributionParameters",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$class_directional_distribution_parameters.html",tooltip="The DirectionalDistributionParameters class stores directional distribution parameters for active str..."];
   Node1 -> Node12 [id="edge11_Node000001_Node000012",dir="back",color="steelblue1",style="solid",tooltip=" "];
