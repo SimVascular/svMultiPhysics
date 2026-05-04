@@ -71,16 +71,25 @@ void TrilinosMatVec::apply(const Tpetra_MultiVector& x, Tpetra_MultiVector& y,
   // Now add on the coupled Neumann boundary contribution y += v1*(v1'*x) + v2*(v2'*x) + ...
   if (coupledBC)
   {
-    // Declare dot product v_i'*x
-    Scalar_d dot = 0.0;
-    // Loop over all coupled Neumann boundary vectors
-    for (auto bdryVec : trilinos_->bdryVec_list)
+    // Cap terms contribute to the flux scalar term only, not to pressure update rows.
+    // So we compute (v_face^T x + v_cap^T x) and apply it with v_face.
+    for (size_t i = 0; i < trilinos_->bdryVec_list.size(); ++i)
     {
-      // Compute dot = bdryVec^T * x
+      Scalar_d dot_face = 0.0;
+      Scalar_d dot_cap = 0.0;
       Teuchos::Array<Scalar_d> dots(1);
+
+      auto bdryVec = trilinos_->bdryVec_list[i];
       x.dot(*bdryVec, dots());
-      dot = dots[0];  
-      y.update(dot, *bdryVec, 1.0);
+      dot_face = dots[0];
+
+      if (i < trilinos_->bdryCapVec_list.size()) {
+        auto bdryCapVec = trilinos_->bdryCapVec_list[i];
+        x.dot(*bdryCapVec, dots());
+        dot_cap = dots[0];
+      }
+
+      y.update(dot_face + dot_cap, *bdryVec, 1.0);
     }
   }
 }
@@ -295,9 +304,11 @@ void trilinos_lhs_create(const Teuchos::RCP<Trilinos> &trilinos_, const int numG
 
   // Construct a boundary vector for each coupled Neumann boundary condition
   trilinos_->bdryVec_list.clear();
+  trilinos_->bdryCapVec_list.clear();
   for (int i = 0; i < numCoupledNeumannBC; ++i)
   {
     trilinos_->bdryVec_list.push_back(Teuchos::rcp(new Tpetra_MultiVector(trilinos_->Map, 1)));
+    trilinos_->bdryCapVec_list.push_back(Teuchos::rcp(new Tpetra_MultiVector(trilinos_->Map, 1)));
   }
 
   // Initialize solution vector which is unique and does not include the ghost
@@ -646,6 +657,8 @@ void trilinos_solve_(const Teuchos::RCP<Trilinos> &trilinos_, double *x, const d
   if (coupledBC) {
     for (auto bdryVec : trilinos_->bdryVec_list)
       bdryVec->putScalar(0.0);
+    for (auto bdryCapVec : trilinos_->bdryCapVec_list)
+      bdryCapVec->putScalar(0.0);
 
   }
   trilinos_->X->putScalar(0.0);
@@ -879,6 +892,9 @@ void constructJacobiScaling(const Teuchos::RCP<Trilinos> &trilinos_, const doubl
     for (auto bdryVec : trilinos_->bdryVec_list) {
       bdryVec->elementWiseMultiply(1.0, diagonal, *bdryVec, 0.0);
     }
+    for (auto bdryCapVec : trilinos_->bdryCapVec_list) {
+      bdryCapVec->elementWiseMultiply(1.0, diagonal, *bdryCapVec, 0.0);
+    }
   }
 } // void constructJacobiScaling()
 
@@ -887,8 +903,8 @@ void constructJacobiScaling(const Teuchos::RCP<Trilinos> &trilinos_, const doubl
  * \param  v            coupled boundary vector
  * \param  isCoupledBC  determines if coupled resistance BC is turned on
  */
-void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_, 
-  const std::vector<Array<double>> &v_list, bool &isCoupledBC)
+void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_,
+  const std::vector<Array<double>> &v_list, const std::vector<Array<double>> &vcap_list, bool &isCoupledBC)
 {
   // store as global to determine which matvec multiply to use in solver
   coupledBC = isCoupledBC;
@@ -903,10 +919,12 @@ void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_,
       {
         const double* v = v_list[k].data();
         auto bdryVec = trilinos_->bdryVec_list[k];
+        const double* vcap = vcap_list[k].data();
+        auto bdryCapVec = trilinos_->bdryCapVec_list[k];
         for (int j = 0; j < dof; ++j)
         {
-          const double value = v[i * dof + j];
-          bdryVec->replaceGlobalValue(globalRow * dof + j, 0, value);
+          bdryVec->replaceGlobalValue(globalRow * dof + j, 0, v[i * dof + j]);
+          bdryCapVec->replaceGlobalValue(globalRow * dof + j, 0, vcap[i * dof + j]);
         }
       }
     }
@@ -1130,6 +1148,7 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
   }
 
   std::vector<Array<double>> v_list;
+  std::vector<Array<double>> vcap_list;
   bool isCoupledBC = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
@@ -1139,23 +1158,37 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
     // Create a new array for each face and add it to the list
     v_list.push_back(Array<double>(dof,tnNo));
     auto& v = v_list.back();
+    vcap_list.push_back(Array<double>(dof,tnNo));
+    auto& vcap = vcap_list.back();
     
     if (face.coupledFlag) {
       isCoupledBC = true;
       int faDof = std::min(face.dof,dof);
 
-      // Compute the coupled Neumann BC vector and store it in v
+      // Compute the coupled Neumann BC vector and store it in v (main face contribution)
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
           v(i,Ac) = v(i,Ac) + sqrt(fabs(res(faIn))) * face.val(i,a);
         }
       }
+      
+      // Add cap contribution (if cap exists for this face)
+      if (face.cap_val.size() != 0 && face.cap_glob.size() != 0) {
+        int cap_nNo = face.cap_val.ncols();
+        for (int a = 0; a < cap_nNo; a++) {
+          int Ac = face.cap_glob(a);
+          if (Ac < 0) continue;  // cap node not on this rank
+          for (int i = 0; i < faDof; i++) {
+            vcap(i,Ac) = vcap(i,Ac) + sqrt(fabs(res(faIn))) * face.cap_val(i,a);
+          }
+        }
+      }
     }
   }
 
   // Add the v vectors to global bdryVec_list
-  trilinos_bc_create_(trilinos_, v_list, isCoupledBC);
+  trilinos_bc_create_(trilinos_, v_list, vcap_list, isCoupledBC);
 
 }
 

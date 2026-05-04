@@ -128,6 +128,7 @@ struct Trilinos
   Teuchos::RCP<Tpetra_Vector> ghostX;
   Teuchos::RCP<Tpetra_Import> Importer;
   std::vector<Teuchos::RCP<Tpetra_MultiVector>> bdryVec_list;
+  std::vector<Teuchos::RCP<Tpetra_MultiVector>> bdryCapVec_list;
   Teuchos::RCP<const Teuchos::Comm<int>> comm;
   Teuchos::RCP<Tpetra_CrsGraph> K_graph;
 
@@ -198,7 +199,8 @@ public:
    * \param v           coeff in the scalar product
    * \param isCoupledBC determines if coupled resistance BC is turned on
    */
-  void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_, const std::vector<Array<double>> &v_list, bool &isCoupledBC);
+  void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_, const std::vector<Array<double>> &v_list,
+    const std::vector<Array<double>> &vcap_list, bool &isCoupledBC);
 
   void trilinos_doassem_(const Teuchos::RCP<Trilinos> &trilinos_, int &numNodesPerElement, const int *eqN,
           const double *lK, double *lR);

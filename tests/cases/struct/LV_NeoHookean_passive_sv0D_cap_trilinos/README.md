@@ -1,5 +1,6 @@
 # Problem Description
-This test case simulates an idealized model of a left ventricle (LV) using a NeoHookean material. The LV is inflated at an approximately constant rate of change of volume using a boundary condition coupled to the SimVascular [svZeroDSolver](https://simvascular.github.io/documentation/rom_simulation.html#0d-solver). 
+This test case simulates an idealized model of a left ventricle (LV) using a NeoHookean material. This test considers a cap to quantify flowrates. The LV is inflated at an approximately constant rate of change of volume using a boundary condition coupled to the SimVascular [svZeroDSolver](https://simvascular.github.io/documentation/rom_simulation.html#0d-solver). 
+This is the same test case as in `tests/cases/struct/LV_NeoHookean_passive_sv0D_cap` but it is solved using `trilinos` for the linear solver with a `trilinos-diagonal` preconditioner.  
 
 # svZeroDSolver
 The svZeroDSolver simulates bulk cardiovascular flow rates and pressures using an arbitrary zero-dimensional (0D) lumped parameter model (LPM) of a discrete network of components analogous to electrical circuits.  The svMultiPhysics solver can directly access the svZeroDSolver by loading the svZeroDSolver as a shared (dynamic) library available after installing it from [SimTK](https://simtk.org/frs/?group_id=188) or building it from source.
@@ -71,11 +72,16 @@ The boundary condition is defined for the **endo** endocardium surface using the
   <Follower_pressure_load> true </Follower_pressure_load>
   <Coupling_interface>
     <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+    <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
   </Coupling_interface>
 </Add_BC>
 ```
 where 
 - `Time_dependence` set to `Coupled` with `Coupling_interface` selects the CoupledBoundaryCondition path for svZeroDSolver
-- `svZeroDSolver_block` (inside `Coupling_interface`) names the svZeroDSolver block for this face
+- `svZeroDSolver_block` names the svZeroDSolver block; optional `Chamber_cap_surface` gives the cap VTP for flow integration
+- `Chamber_cap_surface` adds a capping surface to close the endocardial surface; thus allowing the calculation of flow rates by integrating the velocity in the surface. For more information see https://doi.org/10.1016/j.cma.2024.116764
+
+# Generating the cap surface
+An script to generate a capping surface to close a surface can be found in `utilities/generate_cap_surface/generate_cap.py`
   
 

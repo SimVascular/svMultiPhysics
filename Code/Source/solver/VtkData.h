@@ -7,6 +7,7 @@
 #include "Array.h"
 #include "Vector.h"
 
+#include <utility>
 #include <string>
 
 class VtkData {
@@ -41,6 +42,8 @@ class VtkData {
     virtual void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) = 0;
     virtual void copy_point_data(const std::string& data_name, Vector<int>& mesh_data) = 0;
 
+    virtual void copy_cell_data(const std::string& data_name, Array<double>& mesh_data) = 0;
+    virtual void copy_cell_data(const std::string& data_name, Vector<double>& mesh_data) = 0;
     virtual void copy_cell_data(const std::string& data_name, Vector<int>& mesh_data) = 0;
 
     virtual Array<double> get_point_data(const std::string& data_name) = 0;
@@ -79,7 +82,10 @@ class VtkVtpData : public VtkData {
     virtual void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) override;
     virtual void copy_point_data(const std::string& data_name, Vector<int>& mesh_data) override;
 
+    virtual void copy_cell_data(const std::string& data_name, Array<double>& mesh_data) override;
+    virtual void copy_cell_data(const std::string& data_name, Vector<double>& mesh_data) override;
     virtual void copy_cell_data(const std::string& data_name, Vector<int>& mesh_data) override;
+    std::pair<int,int> get_cell_data_dimensions(const std::string& data_name) const;
 
     virtual Array<double> get_point_data(const std::string& data_name) override;
     virtual std::vector<std::string> get_point_data_names() override;
@@ -123,6 +129,8 @@ class VtkVtuData : public VtkData {
     virtual void copy_point_data(const std::string& data_name, Vector<double>& mesh_data) override;
     virtual void copy_point_data(const std::string& data_name, Vector<int>& mesh_data) override;
 
+    virtual void copy_cell_data(const std::string& data_name, Array<double>& mesh_data) override;
+    virtual void copy_cell_data(const std::string& data_name, Vector<double>& mesh_data) override;
     virtual void copy_cell_data(const std::string& data_name, Vector<int>& mesh_data) override;
 
     virtual Array<double> get_point_data(const std::string& data_name) override;
