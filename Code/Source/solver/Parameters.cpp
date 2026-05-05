@@ -1715,15 +1715,16 @@ void IonicInitialStateParameters::set_values(
     if (item->GetText() != nullptr) {
       const auto value = item->GetText();
 
-      // @todo Update with exceptions from #526.
       try {
         set_parameter_value(name, value);
         value_set = true;
       } catch (const std::bad_function_call &exception) {
-        throw std::runtime_error(error_msg_prefix + name + "'.");
+        svmp::raise<svmp::ParseException>(SVMP_HERE,
+                                          error_msg_prefix + name + "'.");
       }
     } else {
-      throw std::runtime_error(error_msg_prefix + name + "'.");
+      svmp::raise<svmp::ParseException>(SVMP_HERE,
+                                        error_msg_prefix + name + "'.");
     }
   }
 }
@@ -1765,9 +1766,9 @@ void IonicInitialConditionsParameters::set_values(
       initial_Xg_parameters.set_values(item);
       value_set = true;
     } else {
-      // @todo Replace with exception from #526.
-      throw std::runtime_error("Unknown " + xml_element_name +
-                               " XML element '" + name + "'.");
+      svmp::raise<svmp::ParseException>(SVMP_HERE,
+                                        "Unknown " + xml_element_name +
+                                            " XML element '" + name + "'.");
     }
   }
 

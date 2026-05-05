@@ -200,6 +200,21 @@ public:
     }
 };
 
+class NotInitializedException : public FEException {
+public:
+  NotInitializedException(const std::string &feature,
+                          const char *file,
+                          int line = 0,
+                          const char *function = "")
+      : FEException("Missing initialization: " + feature,
+                    StatusCode::InvalidState,
+                    file,
+                    line,
+                    function)
+  {
+  }
+};
+
 class ConvergenceException : public FEException {
 public:
     ConvergenceException(const std::string& message,

@@ -3,6 +3,7 @@
 
 #include "cep_ion.h"
 
+#include "FE/Common/FEException.h"
 #include "all_fun.h"
 #include "post.h"
 #include "utils.h"
@@ -347,9 +348,9 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
   dmsg << "cep.odes.tIntTyp: " << cep.odes.tIntType;
   #endif
 
-  // @todo Replace with exception as in issue #526.
   if (cep.ionic_model == nullptr) {
-    throw std::runtime_error("[cep_integ_l] Ionic model not initialized");
+    svmp::raise<svmp::FE::NotInitializedException>(
+        SVMP_HERE, "ionic model was not constructed.");
   }
 
   // @todo Restore active stress/strain.

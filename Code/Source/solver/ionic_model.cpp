@@ -3,6 +3,7 @@
 
 #include "ionic_model.h"
 
+#include "FE/Common/FEException.h"
 #include "Parameters.h"
 #include "mat_fun.h"
 
@@ -26,17 +27,19 @@ void IonicModel::distribute_initial_conditions(const CmMod &cm_mod,
 
 void IonicModel::init(const int nX, const int nG, Vector<double> &X,
                       Vector<double> &Xg) const {
-  // @todo Replace with appropriate exception.
-  if (initial_X.size() != X.size())
-    throw std::runtime_error(
-        "Initial conditions size for X does not match vector size.");
+  if (initial_X.size() != X.size()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Initial conditions size for X does not match vector size.");
+  }
 
   for (size_t i = 0; i < initial_X.size(); ++i)
     X[i] = initial_X[i].second;
 
-  if (initial_Xg.size() != Xg.size())
-    throw std::runtime_error(
+  if (initial_Xg.size() != Xg.size()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE,
         "Initial conditions size for Xg does not match vector size.");
+  }
 
   for (size_t i = 0; i < initial_Xg.size(); ++i)
     Xg[i] = initial_Xg[i].second;
