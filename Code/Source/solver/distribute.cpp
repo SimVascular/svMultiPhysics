@@ -19,10 +19,7 @@
 #include <iostream>
 #include <math.h>
 
-#include "ionic_aliev_panfilov.h"
-#include "ionic_bueno_orovio.h"
-#include "ionic_fitzhugh_nagumo.h"
-#include "ionic_ttp.h"
+#include "ionic_model.h"
 
 extern "C" {
 
@@ -1548,23 +1545,9 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       cm.bcast_enum(cm_mod, &cep.cepType);
 
       // All ranks but the master need to allocate the ionic model instance.
-      // @todo This would be made easier by a factory.
-      switch (cep.cepType) {
-      case ElectrophysiologyModelType::AP:
-        cep.ionic_model = std::make_shared<AlievPanfilov>();
-        break;
-
-      case ElectrophysiologyModelType::FN:
-        cep.ionic_model = std::make_shared<FitzHughNagumo>();
-        break;
-
-      case ElectrophysiologyModelType::BO:
-        cep.ionic_model = std::make_shared<BuenoOrovio>();
-        break;
-
-      case ElectrophysiologyModelType::TTP:
-        cep.ionic_model = std::make_shared<TTP>();
-        break;
+      if (!cm.mas(cm_mod)) {
+        cep.ionic_model = IonicModelFactory::create_model(
+            cep_model_type_to_name.at(cep.cepType));
       }
 
       cm.bcast(cm_mod, &cep.nX);

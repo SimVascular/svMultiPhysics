@@ -32,6 +32,7 @@ enum class ElectrophysiologyModelType {
   TTP = 104
 };
 
+extern const std::map<ElectrophysiologyModelType, std::string> cep_model_type_to_name;
 extern const std::map<std::string,ElectrophysiologyModelType> cep_model_name_to_type;
 
 /// @brief Print ElectrophysiologyModelType as a string.

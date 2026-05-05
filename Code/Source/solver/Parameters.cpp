@@ -60,10 +60,7 @@
 #include <set>
 #include <sstream>
 
-#include "ionic_aliev_panfilov.h"
-#include "ionic_bueno_orovio.h"
-#include "ionic_fitzhugh_nagumo.h"
-#include "ionic_ttp.h"
+#include "ionic_model.h"
 
 namespace {
 
@@ -1865,34 +1862,12 @@ DomainParameters::DomainParameters() {
                 inverse_darcy_permeability);
 
   // Ionic model parameters.
-  // @todo A factory pattern could help here.
-  {
-    AlievPanfilov dummy;
-    ionic_initial_conditions.emplace(
-        "AP", IonicInitialConditionsParameters("AP", dummy.get_initial_X(),
-                                               dummy.get_initial_Xg()));
-  }
-
-  {
-    BuenoOrovio dummy;
-    ionic_initial_conditions.emplace(
-        "BO", IonicInitialConditionsParameters("BO", dummy.get_initial_X(),
-                                               dummy.get_initial_Xg()));
-  }
-
-  {
-    FitzHughNagumo dummy;
-    ionic_initial_conditions.emplace(
-        "FHN", IonicInitialConditionsParameters("FHN", dummy.get_initial_X(),
-                                                dummy.get_initial_Xg()));
-  }
-
-  {
-    TTP dummy;
-    ionic_initial_conditions.emplace(
-        "TTP", IonicInitialConditionsParameters("TTP", dummy.get_initial_X(),
-                                                dummy.get_initial_Xg()));
-  }
+  IonicModelFactory::visit(
+      [this](const std::string &name, const IonicModel &model) {
+        ionic_initial_conditions.emplace(
+            name, IonicInitialConditionsParameters(name, model.get_initial_X(),
+                                                   model.get_initial_Xg()));
+      });
 }
 
 void DomainParameters::print_parameters() {

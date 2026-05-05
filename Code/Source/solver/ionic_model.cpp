@@ -3,7 +3,6 @@
 
 #include "ionic_model.h"
 
-#include "FE/Common/FEException.h"
 #include "Parameters.h"
 #include "mat_fun.h"
 
@@ -14,6 +13,10 @@ void IonicModel::set_initial_conditions(
   const auto &params_X = params.get_initial_X();
   for (auto &[label, value] : initial_X)
     value = params_X[label];
+
+  const auto &params_Xg = params.get_initial_Xg();
+  for (auto &[label, value] : initial_Xg)
+    value = params_Xg[label];
 }
 
 void IonicModel::distribute_initial_conditions(const CmMod &cm_mod,
@@ -220,4 +223,28 @@ void IonicModel::integ_rk(const unsigned int zone_id, const int nX,
 
   // Bring the potential variable back to dimensional units.
   X(0) = X(0) * Vscale + Voffset;
+}
+
+std::unique_ptr<IonicModel>
+IonicModelFactory::create_model(const std::string &name) {
+  const auto &factory_instance = get_instance();
+
+  auto iter = factory_instance.children.find(name);
+  if (iter == factory_instance.children.end()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "No model with name '" + name +
+                       "' was registered in the ionic model factory.");
+  }
+
+  return iter->second();
+}
+
+void IonicModelFactory::visit(
+    const std::function<void(const std::string &, const IonicModel &)> &f) {
+  const auto &factory_instance = get_instance();
+
+  for (auto &[name, builder] : factory_instance.children) {
+    std::unique_ptr<IonicModel> dummy = builder();
+    f(name, *dummy);
+  }
 }

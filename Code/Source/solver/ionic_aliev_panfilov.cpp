@@ -34,3 +34,5 @@ void AlievPanfilov::getj(const unsigned int zone_id, const int nX, const int nG,
   n3 = -n3;
   Jac(1, 1) = n1 * n3 - n2;
 }
+
+REGISTER_IONIC_MODEL("AP", AlievPanfilov);

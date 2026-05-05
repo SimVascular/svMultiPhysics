@@ -8,10 +8,7 @@
 #include "all_fun.h"
 #include "consts.h"
 #include "fft.h"
-#include "ionic_aliev_panfilov.h"
-#include "ionic_bueno_orovio.h"
-#include "ionic_fitzhugh_nagumo.h"
-#include "ionic_ttp.h"
+#include "ionic_model.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
 
@@ -1096,32 +1093,13 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     }
   }
 
-  // Set ionic model initial conditions.
-  // @todo This would be improved by a factory pattern.
-  switch (model_type) {
-  case ElectrophysiologyModelType::AP:
-    lDmn.cep.ionic_model = std::make_shared<AlievPanfilov>();
-    lDmn.cep.ionic_model->set_initial_conditions(
-        domain_params->ionic_initial_conditions.at("AP"));
-    break;
+  // Instantiate the ionic model and set its initial conditions.
+  {
+    const std::string model_name = cep_model_type_to_name.at(model_type);
 
-  case ElectrophysiologyModelType::FN:
-    lDmn.cep.ionic_model = std::make_shared<FitzHughNagumo>();
+    lDmn.cep.ionic_model = IonicModelFactory::create_model(model_name);
     lDmn.cep.ionic_model->set_initial_conditions(
-        domain_params->ionic_initial_conditions.at("FN"));
-    break;
-
-  case ElectrophysiologyModelType::BO:
-    lDmn.cep.ionic_model = std::make_shared<BuenoOrovio>();
-    lDmn.cep.ionic_model->set_initial_conditions(
-        domain_params->ionic_initial_conditions.at("BO"));
-    break;
-
-  case ElectrophysiologyModelType::TTP:
-    lDmn.cep.ionic_model = std::make_shared<TTP>();
-    lDmn.cep.ionic_model->set_initial_conditions(
-        domain_params->ionic_initial_conditions.at("TTP"));
-    break;
+        domain_params->ionic_initial_conditions.at(model_name));
   }
 
   // Set stimulus parameters. 

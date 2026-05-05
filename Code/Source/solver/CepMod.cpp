@@ -4,6 +4,14 @@
 #include "CepMod.h"
 #include <math.h>
 
+const std::map<ElectrophysiologyModelType, std::string> cep_model_type_to_name{
+    {ElectrophysiologyModelType::NA, "NA"},
+    {ElectrophysiologyModelType::AP, "AP"},
+    {ElectrophysiologyModelType::BO, "BO"},
+    {ElectrophysiologyModelType::FN, "FN"},
+    {ElectrophysiologyModelType::TTP, "TTP"}
+};
+
 const std::map<std::string,ElectrophysiologyModelType> cep_model_name_to_type
 {
   {"aliev-panfilov", ElectrophysiologyModelType::AP},

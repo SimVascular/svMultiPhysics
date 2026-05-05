@@ -126,3 +126,5 @@ void BuenoOrovio::getj(const unsigned int zone_id, const int nX, const int nG,
     Jac(3, 3) = -n3;
   }
 }
+
+REGISTER_IONIC_MODEL("BO", BuenoOrovio);

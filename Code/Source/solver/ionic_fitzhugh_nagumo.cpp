@@ -26,3 +26,5 @@ void FitzHughNagumo::getj(const unsigned int zone_id, const int nX,
   Jac(1, 0) = 1.0;
   Jac(1, 1) = -b;
 }
+
+REGISTER_IONIC_MODEL("FN", FitzHughNagumo);

@@ -1200,7 +1200,7 @@ public:
   void set_values(const tinyxml2::XMLElement *xml_elem);
 
   /// Get the value of a parameter by label.
-  const double &operator[](const std::string &label) const {
+  double operator[](const std::string &label) const {
     return parameters.at(label).value();
   }
 

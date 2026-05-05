@@ -581,3 +581,5 @@ void TTP::getj(const unsigned int zone_id, const int nX, const int nG,
   Jac(6, 5) = -(k2p * k_casr_sr) * Ca_ss * R_bar;
   Jac(6, 6) = -(k2 * Ca_ss + k4);
 }
+
+REGISTER_IONIC_MODEL("TTP", TTP);
