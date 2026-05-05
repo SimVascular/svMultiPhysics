@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -171,95 +172,101 @@ private:
     StackTrace stack_trace_;
 };
 
-class ExceptionFormatter final {
-public:
-    static std::string format(const ExceptionContext& context,
-                              const std::string& message,
-                              const char* subsystem_label)
-    {
-        std::ostringstream oss;
+namespace ExceptionFormatter {
 
-        oss << "[" << ((subsystem_label == nullptr) ? "Exception" : subsystem_label)
-            << "] " << status_code_to_string(context.status_code());
-        if (context.mpi_rank() >= 0) {
-            oss << " (Rank " << context.mpi_rank() << ")";
+inline std::string format(const ExceptionContext& context,
+                          const std::string& message,
+                          std::string_view subsystem_label = "Exception")
+{
+    if (subsystem_label.empty()) {
+        subsystem_label = "Exception";
+    }
+
+    std::ostringstream oss;
+
+    oss << "[" << subsystem_label << "] "
+        << status_code_to_string(context.status_code());
+    if (context.mpi_rank() >= 0) {
+        oss << " (Rank " << context.mpi_rank() << ")";
+    }
+    oss << "\n";
+
+    if (!context.file().empty()) {
+        oss << "  Location: " << context.file() << ":" << context.line();
+        if (!context.function().empty()) {
+            oss << " in " << context.function() << "()";
         }
         oss << "\n";
+    }
 
-        if (!context.file().empty()) {
-            oss << "  Location: " << context.file() << ":" << context.line();
-            if (!context.function().empty()) {
-                oss << " in " << context.function() << "()";
+    oss << "  Message: " << message << "\n";
+
+    if (!context.stack_trace().empty()) {
+        oss << "  Stack trace:\n";
+        std::size_t frame_index = 0;
+        for (const auto& frame : context.stack_trace().frames()) {
+            oss << "    #" << frame_index++ << " ";
+            if (!frame.symbol().empty()) {
+                oss << frame.symbol();
+            } else {
+                std::ostringstream address;
+                address << "0x" << std::hex << frame.address();
+                oss << address.str();
             }
+
+            if (!frame.module().empty()) {
+                oss << " [" << frame.module() << "]";
+            }
+
+            if (!frame.file().empty()) {
+                oss << " (" << frame.file();
+                if (frame.line() > 0) {
+                    oss << ":" << frame.line();
+                }
+                oss << ")";
+            }
+
             oss << "\n";
         }
-
-        oss << "  Message: " << message << "\n";
-
-        if (!context.stack_trace().empty()) {
-            oss << "  Stack trace:\n";
-            std::size_t frame_index = 0;
-            for (const auto& frame : context.stack_trace().frames()) {
-                oss << "    #" << frame_index++ << " ";
-                if (!frame.symbol().empty()) {
-                    oss << frame.symbol();
-                } else {
-                    std::ostringstream address;
-                    address << "0x" << std::hex << frame.address();
-                    oss << address.str();
-                }
-
-                if (!frame.module().empty()) {
-                    oss << " [" << frame.module() << "]";
-                }
-
-                if (!frame.file().empty()) {
-                    oss << " (" << frame.file();
-                    if (frame.line() > 0) {
-                        oss << ":" << frame.line();
-                    }
-                    oss << ")";
-                }
-
-                oss << "\n";
-            }
-        }
-
-        return oss.str();
     }
-};
+
+    return oss.str();
+}
+
+} // namespace ExceptionFormatter
 
 class ExceptionBase;
 
-class ExceptionRuntime final {
-public:
-    static int query_mpi_rank() noexcept
+namespace ExceptionRuntime {
+
+    inline int query_mpi_rank() noexcept
     {
         return PlatformSupport::query_mpi_rank();
     }
 
-    static StackTrace capture_stack_trace()
+    inline StackTrace capture_stack_trace()
     {
         return PlatformSupport::capture_stack_trace();
     }
 
-    static void finalize_mpi_if_needed() noexcept
+    inline void finalize_mpi_if_needed() noexcept
     {
         PlatformSupport::finalize_mpi_if_needed();
     }
 
-    static void install_terminate_handler();
+    void install_terminate_handler();
 
-    static void report_unhandled_exception(const std::exception& exception)
+    inline void report_unhandled_exception(const std::exception& exception)
     {
         std::cerr << exception.what() << std::endl;
     }
 
-    static void abort_mpi_if_needed(int exit_code) noexcept
+    inline void abort_mpi_if_needed(int exit_code) noexcept
     {
         PlatformSupport::abort_mpi_if_needed(exit_code);
     }
-};
+
+} // namespace ExceptionRuntime
 
 class ExceptionBase : public std::exception {
 public:
@@ -271,15 +278,18 @@ public:
     void add_context(const std::string& context)
     {
         message_ = context + "\n  -> " + message_;
-        rebuild_what(subsystem_label());
+        rebuild_what();
     }
 
     virtual ~ExceptionBase() noexcept = default;
 
 protected:
-    ExceptionBase(std::string message, StatusCode status, const char* file,
+    ExceptionBase(std::string message, StatusCode status,
+                  std::string_view subsystem_label, const char* file,
                   int line, const char* function)
-        : message_(std::move(message))
+        : message_(std::move(message)),
+          subsystem_label_(subsystem_label.empty() ? std::string_view("Exception")
+                                                   : subsystem_label)
     {
         context_.set_status_code(status);
         context_.set_source_location(file, line, function);
@@ -287,17 +297,17 @@ protected:
 #if SVMP_EXCEPTION_DEBUG_MODE
         context_.set_stack_trace(ExceptionRuntime::capture_stack_trace());
 #endif
+        rebuild_what();
     }
 
-    virtual const char* subsystem_label() const noexcept = 0;
-
-    void rebuild_what(const char* subsystem_label)
+    void rebuild_what()
     {
-        what_ = ExceptionFormatter::format(context_, message_, subsystem_label);
+        what_ = ExceptionFormatter::format(context_, message_, subsystem_label_);
     }
 
     std::string message_;
     ExceptionContext context_;
+    std::string_view subsystem_label_;
     std::string what_;
 };
 
@@ -308,15 +318,8 @@ public:
                   const char* file = "",
                   int line = 0,
                   const char* function = "")
-        : ExceptionBase(message, status, file, line, function)
+        : ExceptionBase(message, status, "Core Exception", file, line, function)
     {
-        rebuild_what(subsystem_label());
-    }
-
-protected:
-    const char* subsystem_label() const noexcept override
-    {
-        return "Core Exception";
     }
 };
 
@@ -398,5 +401,18 @@ PointerT* check_not_null(PointerT* ptr, SourceLocation location, Args&&... args)
 } // namespace svmp
 
 #define SVMP_HERE ::svmp::SourceLocation{__FILE__, __LINE__, __func__}
+
+#if SVMP_EXCEPTION_DEBUG_MODE
+#define SVMP_DEBUG_CHECK(ExceptionT, condition, ...)                         \
+    do {                                                                     \
+        if (!(condition)) {                                                  \
+            ::svmp::raise<ExceptionT>(SVMP_HERE, __VA_ARGS__);               \
+        }                                                                    \
+    } while (false)
+#else
+#define SVMP_DEBUG_CHECK(ExceptionT, condition, ...)                         \
+    do {                                                                     \
+    } while (false)
+#endif
 
 #endif // SVMP_CORE_EXCEPTION_H

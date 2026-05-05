@@ -48,6 +48,8 @@
 #include "LinearAlgebra.h"
 #include "ustruct.h"
 
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <regex>
 #include <set>
@@ -57,15 +59,42 @@
 
 namespace {
 
+std::string uppercase_xml_name(const std::string& value)
+{
+  std::string upper = value;
+  std::transform(upper.begin(), upper.end(), upper.begin(),
+      [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+  return upper;
+}
+
+std::string missing_xml_attribute_message(tinyxml2::XMLElement* element,
+    const char* attribute_name)
+{
+  const std::string element_name =
+      (element != nullptr && element->Name() != nullptr)
+          ? std::string(element->Name())
+          : std::string("unknown");
+  const std::string attribute =
+      (attribute_name != nullptr) ? std::string(attribute_name)
+                                  : std::string("attribute");
+  const std::string attribute_upper = uppercase_xml_name(attribute);
+
+  return "No " + attribute_upper + " given in the XML <" + element_name + " " +
+      attribute + "=" + attribute_upper + "> element.";
+}
+
 const char* require_xml_attribute(tinyxml2::XMLElement* element,
     const char* attribute_name, svmp::SourceLocation location,
-    const std::string& message)
+    const std::string& message = std::string())
 {
   const char* value = nullptr;
   if (element == nullptr ||
       element->QueryStringAttribute(attribute_name, &value) != tinyxml2::XML_SUCCESS ||
       value == nullptr) {
-    svmp::raise<svmp::ParseException>(location, message);
+    svmp::raise<svmp::ParseException>(
+        location,
+        message.empty() ? missing_xml_attribute_message(element, attribute_name)
+                        : message);
   }
   return value;
 }
@@ -131,15 +160,13 @@ std::string IncludeParametersFile::NAME = "Include_xml";
 
 IncludeParametersFile::IncludeParametersFile(const char* cfile_name)
 {
-  if (cfile_name == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Include_xml requires a file name.");
-  }
+  svmp::check<svmp::ParseException>(
+      cfile_name != nullptr, SVMP_HERE, "Include_xml requires a file name.");
 
   std::string file_name(cfile_name);
   file_name.erase(std::remove_if(file_name.begin(), file_name.end(), ::isspace), file_name.end());
-  if (file_name.empty()) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Include_xml requires a non-empty file name.");
-  }
+  svmp::check<svmp::ParseException>(
+      !file_name.empty(), SVMP_HERE, "Include_xml requires a non-empty file name.");
 
   auto error = document.LoadFile(file_name.c_str());
   root_element = document.FirstChildElement(Parameters::FSI_FILE.c_str());
@@ -247,8 +274,7 @@ void Parameters::set_equation_values(tinyxml2::XMLElement* root_element)
   auto add_eq_item = root_element->FirstChildElement(EquationParameters::xml_element_name_.c_str());
 
   while (add_eq_item) {
-    const char* eq_type = require_xml_attribute(add_eq_item, "type", SVMP_HERE,
-        "No TYPE given in the XML <Add_equation type=TYPE> element.");
+    const char* eq_type = require_xml_attribute(add_eq_item, "type", SVMP_HERE);
 
     auto eq_params = new EquationParameters();
     eq_params->type.set(std::string(eq_type));
@@ -264,8 +290,7 @@ void Parameters::set_mesh_values(tinyxml2::XMLElement* root_element)
   auto add_mesh_item = root_element->FirstChildElement(MeshParameters::xml_element_name_.c_str());
 
   while (add_mesh_item) {
-    const char* mesh_name = require_xml_attribute(add_mesh_item, "name", SVMP_HERE,
-        "No NAME given in the XML <Add_mesh name=NAME> element.");
+    const char* mesh_name = require_xml_attribute(add_mesh_item, "name", SVMP_HERE);
 
     MeshParameters* mesh_params = new MeshParameters();
     mesh_params->name.set(std::string(mesh_name));
@@ -291,8 +316,7 @@ void Parameters::set_projection_values(tinyxml2::XMLElement* root_element)
   auto add_proj_item = root_element->FirstChildElement(ProjectionParameters::xml_element_name_.c_str());
 
   while (add_proj_item) {
-    const char* proj_name = require_xml_attribute(add_proj_item, "name", SVMP_HERE,
-        "No NAME given in the XML <Add_projection name=NAME> element.");
+    const char* proj_name = require_xml_attribute(add_proj_item, "name", SVMP_HERE);
 
     ProjectionParameters* proj_params = new ProjectionParameters();
     proj_params->name.set(std::string(proj_name));
@@ -308,8 +332,8 @@ void Parameters::set_RIS_projection_values(tinyxml2::XMLElement* root_element)
   auto add_RIS_proj_item = root_element->FirstChildElement(RISProjectionParameters::xml_element_name_.c_str());
 
   while (add_RIS_proj_item) {
-    const char* RIS_proj_name = require_xml_attribute(add_RIS_proj_item, "name", SVMP_HERE,
-        "No NAME given in the XML <Add_RIS_projection name=NAME> element.");
+    const char* RIS_proj_name =
+        require_xml_attribute(add_RIS_proj_item, "name", SVMP_HERE);
 
     RISProjectionParameters* RIS_proj_params = new RISProjectionParameters();
     RIS_proj_params->name.set(std::string(RIS_proj_name));
@@ -325,8 +349,8 @@ void Parameters::set_URIS_mesh_values(tinyxml2::XMLElement* root_element)
   auto add_URIS_mesh_item = root_element->FirstChildElement(URISMeshParameters::xml_element_name_.c_str());
 
   while (add_URIS_mesh_item) {
-    const char* URIS_mesh_name = require_xml_attribute(add_URIS_mesh_item, "name", SVMP_HERE,
-        "No NAME given in the XML <Add_URIS_mesh name=NAME> element.");
+    const char* URIS_mesh_name =
+        require_xml_attribute(add_URIS_mesh_item, "name", SVMP_HERE);
 
     URISMeshParameters* URIS_mesh_params = new URISMeshParameters();
     URIS_mesh_params->name.set(std::string(URIS_mesh_name));
@@ -386,11 +410,7 @@ void BodyForceParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <LS type=TYPE> element.
-  const char* smesh;
-  auto result = xml_elem->QueryStringAttribute("mesh", &smesh);
-  if (smesh == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No MESH given in the XML <Add_BF mesh=MESH> element.");
-  }
+  const char* smesh = require_xml_attribute(xml_elem, "mesh", SVMP_HERE);
   mesh_name.set(std::string(smesh));
   //auto item = xml_elem->FirstChildElement();
 
@@ -564,11 +584,7 @@ void BoundaryConditionParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
   // Get the 'name' from the <Add_BC name=NAME> element.
-  const char* sname;
-  auto result = xml_elem->QueryStringAttribute("name", &sname);
-  if (sname == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No NAME given in the XML <Add_BC name=NAME> element.");
-  }
+  const char* sname = require_xml_attribute(xml_elem, "name", SVMP_HERE);
   name.set(std::string(sname));
 
   auto item = xml_elem->FirstChildElement();
@@ -921,17 +937,16 @@ void CANNRowParameters::print_parameters()
 
 void CANNRowParameters::set_values(tinyxml2::XMLElement* row_elem)
 {
-  if (!row_elem) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "CANNRowParameters::set_values: Received null XML element.");
-  }
+  row_elem = svmp::check_not_null<svmp::ParseException>(
+      row_elem, SVMP_HERE, "CANNRowParameters::set_values: Received null XML element.");
 
   using namespace tinyxml2;
 
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
   // Set row_name for current row element
-  const char* row_name_input = require_xml_attribute(row_elem, "row_name", SVMP_HERE,
-      "No ROW_NAME given in the XML <Add_row row_name=ROW_NAME> element.");
+  const char* row_name_input =
+      require_xml_attribute(row_elem, "row_name", SVMP_HERE);
   row_name.set(std::string(row_name_input));
 
   auto item = row_elem->FirstChildElement();
@@ -1039,11 +1054,7 @@ void ConstitutiveModelParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
   // Get the 'type' from the <Constitutive_model type= > element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No TYPE given in the XML <Constitutive_model type=TYPE> element.");
-  }
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
 
   // Check constitutive model type.
@@ -1106,11 +1117,7 @@ void CoupleGenBCParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown Couple_to_genBC type=TYPE XML element '";
   
   // Get the 'type' from the <Couple_to_genBC type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No TYPE given in the XML <Couple_to_genBC type=TYPE> element.");
-  }
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
   auto item = xml_elem->FirstChildElement();
   
@@ -1200,8 +1207,7 @@ void OutputParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string msg("[OutputParameters::set_values] ");
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE,
-      "No TYPE given in the XML <Output type=TYPE> element.");
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
 
   // Get values from XML file.
@@ -1284,8 +1290,7 @@ void VariableWallPropsParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Variable_wall_properties mesh_name=NAME> element.
-  const char* sname = require_xml_attribute(xml_elem, "mesh_name", SVMP_HERE,
-      "No MESH_NAME given in the XML <Variable_wall_properties mesh_name=NAME> element.");
+  const char* sname = require_xml_attribute(xml_elem, "mesh_name", SVMP_HERE);
   mesh_name.set(std::string(sname));
   auto item = xml_elem->FirstChildElement();
 
@@ -1450,12 +1455,7 @@ void FluidViscosityParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
   using namespace tinyxml2;
 
-  const char* smodel;
-  auto result = xml_elem->QueryStringAttribute("model", &smodel);
-
-  if (smodel == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No MODEL given in the <Viscosity model=MODEL > XML element.");
-  }
+  const char* smodel = require_xml_attribute(xml_elem, "model", SVMP_HERE);
   model.set(std::string(smodel));
 
   // Check fluid_viscosity model name.
@@ -1575,12 +1575,7 @@ void SolidViscosityParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
   using namespace tinyxml2;
 
-  const char* smodel;
-  auto result = xml_elem->QueryStringAttribute("model", &smodel);
-
-  if (smodel == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No MODEL given in the <Viscosity model=MODEL > XML element.");
-  }
+  const char* smodel = require_xml_attribute(xml_elem, "model", SVMP_HERE);
   model.set(std::string(smodel));
 
   // Check solid viscosity model name.
@@ -1706,11 +1701,7 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
   // If not reading from an external xml file then get the <Domain id=ID> 'id' attrribute.
   //
   if (!from_external_xml) {
-    const char* sid;
-    auto result = domain_elem->QueryStringAttribute("id", &sid);
-    if (sid == nullptr) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "No ID found in the  <Domain id=ID> XML element.");
-    }
+    const char* sid = require_xml_attribute(domain_elem, "id", SVMP_HERE);
     id.set(std::string(sid));
   }
 
@@ -2094,11 +2085,7 @@ void FiberReinforcementStressParameters::set_values(tinyxml2::XMLElement* xml_el
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the element attribute.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No TYPE given in the XML <Fiber_reinforcement_stress type=TYPE> element.");
-  }
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
   auto item = xml_elem->FirstChildElement();
   
@@ -2175,11 +2162,7 @@ void StimulusParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <LS type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No TYPE given in the XML <Stimulus=TYPE> element.");
-  }
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
   auto item = xml_elem->FirstChildElement();
   
@@ -2308,11 +2291,7 @@ void ContactParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Add_projection name=NAME> element.
-  const char* mname;
-  auto result = xml_elem->QueryStringAttribute("model", &mname);
-  if (mname == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No MODEL given in the XML <Contact model=MODEL> element.");
-  }
+  const char* mname = require_xml_attribute(xml_elem, "model", SVMP_HERE);
   model.set(std::string(mname));
 
   using std::placeholders::_1;
@@ -2680,8 +2659,7 @@ void FaceParameters::set_values(tinyxml2::XMLElement* face_elem)
   using namespace tinyxml2;
 
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
-  const char* face_name = require_xml_attribute(face_elem, "name", SVMP_HERE,
-      "No NAME given in the XML <Add_face name=NAME> element.");
+  const char* face_name = require_xml_attribute(face_elem, "name", SVMP_HERE);
   name.set(std::string(face_name));
   auto item = face_elem->FirstChildElement();
 
@@ -2739,11 +2717,7 @@ void RemesherParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name + " XML element '";
 
   // Get the 'type' from the <Remesher type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No TYPE given in the XML <Remesher type=TYPE> element.");
-  }
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
   values_set_ = true;
 
@@ -2757,15 +2731,8 @@ void RemesherParameters::set_values(tinyxml2::XMLElement* xml_elem)
     if (name == "Max_edge_size") {
       const char* name;
       const char* value;
-      auto result = item->QueryStringAttribute("name", &name);
-      if (name == nullptr) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, "No NAME given in the XML Remesher <Max_edge_size name=NAME  value=VALUE> element.");
-      }
-
-      result = item->QueryStringAttribute("value", &value);
-      if (value == nullptr) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, "No VALUE given in the XML Remesher <Max_edge_size name=NAME  value=VALUE> element.");
-      }
+      name = require_xml_attribute(item, "name", SVMP_HERE);
+      value = require_xml_attribute(item, "value", SVMP_HERE);
       auto svalue = std::string(value);
 
       try {
@@ -2961,11 +2928,7 @@ void ProjectionParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Add_projection name=NAME> element.
-  const char* sname;
-  auto result = xml_elem->QueryStringAttribute("name", &sname);
-  if (sname == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No NAME given in the XML <Add_projection name=NAME> element.");
-  }
+  const char* sname = require_xml_attribute(xml_elem, "name", SVMP_HERE);
   name.set(std::string(sname));
 
   using std::placeholders::_1;
@@ -3002,11 +2965,7 @@ void RISProjectionParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Add_RIS_projection name=NAME> element.
-  const char* sname;
-  auto result = xml_elem->QueryStringAttribute("name", &sname);
-  if (sname == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No NAME given in the XML <Add_RIS_projection name=NAME> element.");
-  }
+  const char* sname = require_xml_attribute(xml_elem, "name", SVMP_HERE);
   name.set(std::string(sname));
 
   using std::placeholders::_1;
@@ -3136,8 +3095,7 @@ void URISFaceParameters::set_values(tinyxml2::XMLElement* face_elem)
   using namespace tinyxml2;
 
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
-  const char* face_name = require_xml_attribute(face_elem, "name", SVMP_HERE,
-      "No NAME given in the XML <Add_URIS_face name=NAME> element.");
+  const char* face_name = require_xml_attribute(face_elem, "name", SVMP_HERE);
   name.set(std::string(face_name));
   auto item = face_elem->FirstChildElement();
 
@@ -3207,11 +3165,7 @@ void LinearAlgebraParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name + " XML element '";
 
   // Get the 'type' from the <Linear_algebra type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No TYPE given in the XML <Linear_algebra type=TYPE> element.");
-  }
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
 
   // Check Linear_algebra type=TYPE> element.
@@ -3335,11 +3289,7 @@ void LinearSolverParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name + " XML element '";
 
   // Get the 'type' from the <LS type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "No TYPE given in the XML <LStype=TYPE> element.");
-  }
+  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
 
   type.set(std::string(stype));
 

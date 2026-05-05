@@ -9,7 +9,8 @@
  * @brief Exception hierarchy for error handling in the FE library
  *
  * This header defines FE-specific exception types that derive from the shared
- * solver exception infrastructure in Exception.h.
+ * solver exception infrastructure in Exception.h. FEException marks
+ * failures from finite-element assembly, backend, DOF, and element operations.
  */
 
 #include "Exception.h"
@@ -28,14 +29,13 @@ public:
                 const char* file = "",
                 int line = 0,
                 const char* function = "")
-        : ExceptionBase(prefix_status_message(message, status),
+        : ExceptionBase(message,
                         status,
+                        "FE Exception",
                         file,
                         line,
-                        function),
-          status_(status)
+                        function)
     {
-        rebuild_what(subsystem_label());
     }
 
     FEException(const std::string& message,
@@ -46,27 +46,7 @@ public:
     {
     }
 
-    StatusCode status() const noexcept { return status_; }
-
-protected:
-    const char* subsystem_label() const noexcept override
-    {
-        return "FE Exception";
-    }
-
-private:
-    static std::string prefix_status_message(const std::string& message,
-                                             StatusCode status)
-    {
-        if (status == StatusCode::Success || status == StatusCode::Unknown) {
-            return message;
-        }
-
-        return std::string("[") + status_code_to_string(status) + "] " +
-               message;
-    }
-
-    StatusCode status_ = StatusCode::Unknown;
+    StatusCode status() const noexcept { return status_code(); }
 };
 
 class InvalidArgumentException : public FEException {
