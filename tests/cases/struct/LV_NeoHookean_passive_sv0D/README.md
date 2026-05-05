@@ -69,11 +69,13 @@ The boundary condition is defined for the **endo** endocardium surface using the
   <Type> Neu </Type>
   <Time_dependence> Coupled </Time_dependence>
   <Follower_pressure_load> true </Follower_pressure_load>
-  <svZeroDSolver_block> LV_IN </svZeroDSolver_block>  
+  <Coupling_interface>
+    <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+  </Coupling_interface>
 </Add_BC>
 ```
 where 
-- `Time_dependence` set to `Coupled` identifies this boundary condition as being coupled to the svZeroDSolver
-- `svZeroDSolver_block` identifies the svZeroDSolver block used to generate values for this boiundary condition
+- `Time_dependence` set to `Coupled` with `Coupling_interface` selects the CoupledBoundaryCondition path for svZeroDSolver
+- `svZeroDSolver_block` (inside `Coupling_interface`) names the svZeroDSolver block for this face
   
 

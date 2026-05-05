@@ -414,7 +414,8 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   }
 
   for (auto& bc : com_mod.eq[0].bc) {
-    if (bc.cplBCptr != -1) { 
+    // Check for coupled faces (Dir, Neu via cplBC) or Coupled BCs
+    if (bc.cplBCptr != -1 || utils::btest(bc.bType, static_cast<int>(consts::BoundaryConditionType::bType_Coupled))) { 
       com_mod.cplBC.coupled = true;
       break; 
     }

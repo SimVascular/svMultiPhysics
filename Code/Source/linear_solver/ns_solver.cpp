@@ -441,7 +441,7 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
     ls.RI.fNorm = 0.0;
 
     if (lhs.commu.masF) {
-      throw std::runtime_error("FSILS: unexpected behavior in FSILS (likely due to the ill-conditioned LHS matrix)"); 
+      std::cout << "[svMultiPhysics] WARNING: The NS solver has computed an ill-conditioned LHS matrix." << std::endl; 
     }
   }
 

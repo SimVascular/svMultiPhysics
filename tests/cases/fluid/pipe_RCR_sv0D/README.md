@@ -38,11 +38,13 @@ An RCR boundary condition is defined for the **lumen_outlet** outlet face using 
 <Add_BC name="lumen_outlet" > 
   <Type> Neu </Type> 
   <Time_dependence> Coupled </Time_dependence> 
-  <svZeroDSolver_block> RCR_coupling </svZeroDSolver_block>  
+  <Coupling_interface>
+    <svZeroDSolver_block> RCR_coupling </svZeroDSolver_block>
+  </Coupling_interface>
 </Add_BC> 
 ```
 where 
-- `Time_dependence` set to `Coupled` identifies this boundary condition as being coupled to the svZeroDSolver
-- `svZeroDSolver_block` identifies the svZeroDSolver block used to generate values for this boiundary condition
+- `Time_dependence` set to `Coupled` with `Coupling_interface` selects the CoupledBoundaryCondition path for svZeroDSolver
+- `svZeroDSolver_block` names the svZeroDSolver block for this face
 
 

@@ -99,7 +99,9 @@
       <Type> Neu </Type> 
       <Time_dependence> Coupled </Time_dependence> 
       <Follower_pressure_load> true </Follower_pressure_load> 
-      <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+      <Coupling_interface>
+         <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+      </Coupling_interface>
    </Add_BC> 
    
 </Add_equation>
