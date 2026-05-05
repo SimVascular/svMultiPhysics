@@ -19,6 +19,11 @@
 #include <iostream>
 #include <math.h>
 
+#include "ionic_aliev_panfilov.h"
+#include "ionic_bueno_orovio.h"
+#include "ionic_fitzhugh_nagumo.h"
+#include "ionic_ttp.h"
+
 extern "C" {
 
 int split_(int *nElptr, int *eNoNptr, int *eNoNbptr, int *IEN, int *nPartsPtr, int *iElmdist, float *iWgt, int *part);
@@ -1534,6 +1539,27 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
     if (dmn.phys == EquationType::phys_CEP) {
       auto& cep = dmn.cep;
       cm.bcast_enum(cm_mod, &cep.cepType);
+
+      // All ranks but the master need to allocate the ionic model instance.
+      // @todo This would be made easier by a factory.
+      switch (cep.cepType) {
+      case ElectrophysiologyModelType::AP:
+        cep.ionic_model = std::make_shared<AlievPanfilov>();
+        break;
+
+      case ElectrophysiologyModelType::FN:
+        cep.ionic_model = std::make_shared<FitzHughNagumo>();
+        break;
+
+      case ElectrophysiologyModelType::BO:
+        cep.ionic_model = std::make_shared<BuenoOrovio>();
+        break;
+
+      case ElectrophysiologyModelType::TTP:
+        cep.ionic_model = std::make_shared<TTP>();
+        break;
+      }
+
       cm.bcast(cm_mod, &cep.nX);
       cm.bcast(cm_mod, &cep.nG);
       cm.bcast(cm_mod, &cep.nFn);
@@ -1562,6 +1588,8 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       // Broadcast domain-specific model parameters
       cep.ttp.distribute_conductance(cm_mod, cm);
       cep.ttp.distribute_initial_state(cm_mod, cm);
+
+      cep.ionic_model->distribute_initial_conditions(cm_mod, cm);
 
       cm.bcast(cm_mod, cep.bo.tau_si);
       cm.bcast(cm_mod, cep.bo.tau_fi);

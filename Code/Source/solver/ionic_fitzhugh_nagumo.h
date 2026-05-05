@@ -22,8 +22,8 @@ class FitzHughNagumo : public IonicModel {
 public:
   /// Constructor.
   FitzHughNagumo()
-      : IonicModel(/* states_X_ = */ {{"V", 1.0e-3}, {"w", 1.0e-3}},
-                   /* states_Xg_ = */ {},
+      : IonicModel(/* initial_X_ = */ {{"V", 1.0e-3}, {"w", 1.0e-3}},
+                   /* initial_Xg_ = */ {},
                    /* Vrest_ = */ 0.0, /* Vscale_ = */ 1.0,
                    /* Tscale_ = */ 1.0, /* Voffset_ = */ 0.0) {}
 

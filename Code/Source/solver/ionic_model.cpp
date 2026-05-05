@@ -3,24 +3,43 @@
 
 #include "ionic_model.h"
 
+#include "Parameters.h"
 #include "mat_fun.h"
+
+#include <iostream>
+
+void IonicModel::set_initial_conditions(
+    const IonicInitialConditionsParameters &params) {
+  const auto &params_X = params.get_initial_X();
+  for (auto &[label, value] : initial_X)
+    value = params_X[label];
+}
+
+void IonicModel::distribute_initial_conditions(const CmMod &cm_mod,
+                                               const cmType &cm) {
+  for (size_t i = 0; i < initial_X.size(); ++i)
+    cm.bcast(cm_mod, &initial_X[i].second);
+
+  for (size_t i = 0; i < initial_Xg.size(); ++i)
+    cm.bcast(cm_mod, &initial_Xg[i].second);
+}
 
 void IonicModel::init(const int nX, const int nG, Vector<double> &X,
                       Vector<double> &Xg) const {
   // @todo Replace with appropriate exception.
-  if (states_X.size() != X.size())
+  if (initial_X.size() != X.size())
     throw std::runtime_error(
         "Initial conditions size for X does not match vector size.");
 
-  for (size_t i = 0; i < states_X.size(); ++i)
-    X[i] = states_X[i].initial_value;
+  for (size_t i = 0; i < initial_X.size(); ++i)
+    X[i] = initial_X[i].second;
 
-  if (states_Xg.size() != Xg.size())
+  if (initial_Xg.size() != Xg.size())
     throw std::runtime_error(
         "Initial conditions size for Xg does not match vector size.");
 
-  for (size_t i = 0; i < states_Xg.size(); ++i)
-    Xg[i] = states_Xg[i].initial_value;
+  for (size_t i = 0; i < initial_Xg.size(); ++i)
+    Xg[i] = initial_Xg[i].second;
 }
 
 void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,

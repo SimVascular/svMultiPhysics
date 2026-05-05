@@ -6,7 +6,7 @@
 
 <Myocardial_zone> myocardium </Myocardial_zone>
 
-<TTP_initial_conditions>
+<TTP>
     <Initial_states>
         <V> -85.423 </V>
         <K_i> 138.52 </K_i>
@@ -31,6 +31,6 @@
         <s_out> 0.999998 </s_out>
         <r_out> 2.347E-8 </r_out>
     </Gating_variables>
-</TTP_initial_conditions>
+</TTP>
 
 </svMultiPhysicsFile>

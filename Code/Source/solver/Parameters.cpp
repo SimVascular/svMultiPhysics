@@ -55,6 +55,11 @@
 #include <limits>
 #include <math.h>
 
+#include "ionic_aliev_panfilov.h"
+#include "ionic_bueno_orovio.h"
+#include "ionic_fitzhugh_nagumo.h"
+#include "ionic_ttp.h"
+
 /// @brief Set paramaters using a function pointing to the 'ParameterLists::set_parameter_value' method.
 //
 // Subsection names given in 'sub_sections' are ignored and processed elsewhere.
@@ -1578,6 +1583,115 @@ void SolidViscosityParameters::set_values(tinyxml2::XMLElement* xml_elem)
 }
 
 //////////////////////////////////////////////////////////
+//             IonicInitialStateParameters              //
+//////////////////////////////////////////////////////////
+
+IonicInitialStateParameters::IonicInitialStateParameters(
+    const std::string &xml_element_name_,
+    const std::vector<std::pair<std::string, double>> &states)
+    : xml_element_name(xml_element_name_) {
+  constexpr bool required = true;
+
+  for (const auto &[label, initial_value] : states) {
+    set_parameter(label, initial_value, required, parameters[label]);
+  }
+}
+
+void IonicInitialStateParameters::print_parameters() const {
+  if (value_set) {
+    std::cout << xml_element_name << std::endl;
+    for (const auto &[key, value] : get_parameter_list()) {
+      std::cout << "    " << key << ": " << value << std::endl;
+    }
+  }
+}
+
+void IonicInitialStateParameters::set_values(
+    const tinyxml2::XMLElement *xml_elem) {
+  // @todo Maybe throw an exception if the name of xml_elem does not match the
+  // one stored in xml_element_name.
+
+  const std::string error_msg_prefix =
+      "Unknown " + xml_element_name + " XML element '";
+
+  for (const tinyxml2::XMLElement *item = xml_elem->FirstChildElement();
+       item != nullptr; item = item->NextSiblingElement()) {
+    const std::string name = item->Value();
+
+    if (item->GetText() != nullptr) {
+      const auto value = item->GetText();
+
+      // @todo Update with exceptions from #526.
+      try {
+        set_parameter_value(name, value);
+        value_set = true;
+      } catch (const std::bad_function_call &exception) {
+        throw std::runtime_error(error_msg_prefix + name + "'.");
+      }
+    } else {
+      throw std::runtime_error(error_msg_prefix + name + "'.");
+    }
+  }
+}
+
+//////////////////////////////////////////////////////////
+//          IonicInitialConditionsParameters            //
+//////////////////////////////////////////////////////////
+
+IonicInitialConditionsParameters::IonicInitialConditionsParameters(
+    const std::string &xml_element_name_,
+    const std::vector<std::pair<std::string, double>> &initial_X,
+    const std::vector<std::pair<std::string, double>> &initial_Xg)
+    : xml_element_name(xml_element_name_),
+      initial_X_parameters("Initial_states", initial_X),
+      initial_Xg_parameters("Gating_variables", initial_Xg) {}
+
+void IonicInitialConditionsParameters::print_parameters() const {
+  if (value_set) {
+    std::cout << "\n"
+              << xml_element_name << "\n"
+              << "---------------------------------\n";
+    initial_X_parameters.print_parameters();
+    initial_Xg_parameters.print_parameters();
+  }
+}
+
+void IonicInitialConditionsParameters::set_values(
+    const tinyxml2::XMLElement *xml_elem) {
+  using namespace tinyxml2;
+
+  for (const XMLElement *item = xml_elem->FirstChildElement(); item != nullptr;
+       item = item->NextSiblingElement()) {
+    const std::string name = item->Value();
+
+    if (name == initial_X_parameters.xml_element_name) {
+      initial_X_parameters.set_values(item);
+      value_set = true;
+    } else if (name == initial_Xg_parameters.xml_element_name) {
+      initial_Xg_parameters.set_values(item);
+      value_set = true;
+    } else {
+      // @todo Replace with exception from #526.
+      throw std::runtime_error("Unknown " + xml_element_name +
+                               " XML element '" + name + "'.");
+    }
+  }
+
+  // The initial values of both state and gating variables must be set.
+  if (!initial_X_parameters.defined()) {
+    throw std::runtime_error(xml_element_name + " requires an '" +
+                             initial_X_parameters.xml_element_name +
+                             "' XML section.");
+  }
+
+  if (!initial_Xg_parameters.defined()) {
+    throw std::runtime_error(xml_element_name + " requires an '" +
+                             initial_Xg_parameters.xml_element_name +
+                             "' XML section.");
+  }
+}
+
+//////////////////////////////////////////////////////////
 //                  DomainParameters                    //
 //////////////////////////////////////////////////////////
 
@@ -1645,6 +1759,36 @@ DomainParameters::DomainParameters()
   set_parameter("Time_step_for_integration", 0.0, !required, time_step_for_integration);
 
   set_parameter("Inverse_darcy_permeability", 0.0, !required, inverse_darcy_permeability);
+
+  // Ionic model parameters.
+  // @todo A factory pattern could help here.
+  {
+    AlievPanfilov dummy;
+    ionic_initial_conditions.emplace(
+        "AP", IonicInitialConditionsParameters("AP", dummy.get_initial_X(),
+                                               dummy.get_initial_Xg()));
+  }
+
+  {
+    BuenoOrovio dummy;
+    ionic_initial_conditions.emplace(
+        "BO", IonicInitialConditionsParameters("BO", dummy.get_initial_X(),
+                                               dummy.get_initial_Xg()));
+  }
+
+  {
+    FitzHughNagumo dummy;
+    ionic_initial_conditions.emplace(
+        "FHN", IonicInitialConditionsParameters("FHN", dummy.get_initial_X(),
+                                                dummy.get_initial_Xg()));
+  }
+
+  {
+    TTP dummy;
+    ionic_initial_conditions.emplace(
+        "TTP", IonicInitialConditionsParameters("TTP", dummy.get_initial_X(),
+                                                dummy.get_initial_Xg()));
+  }
 }
 
 void DomainParameters::print_parameters()
@@ -1666,7 +1810,9 @@ void DomainParameters::print_parameters()
 
   stimulus.print_parameters();
 
-  ttp_initial_conditions.print_parameters();
+  for (const auto &[cepType, params] : ionic_initial_conditions) {
+    params.print_parameters();
+  }
 
   fluid_viscosity.print_parameters();
 
@@ -1704,20 +1850,31 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
   //
   while (item != nullptr) {
     auto name = std::string(item->Value());
-  
+    bool item_found = false;
+
     if (name == ConstitutiveModelParameters::xml_element_name_) {
       constitutive_model.set_values(item);
+      item_found = true;
+    }
 
-    } else if (name == FiberReinforcementStressParameters::xml_element_name_) {
+    if (name == FiberReinforcementStressParameters::xml_element_name_) {
       fiber_reinforcement_stress.set_values(item);
+      item_found = true;
+    }
 
-    } else if (name == StimulusParameters::xml_element_name_) {
+    if (name == StimulusParameters::xml_element_name_) {
       stimulus.set_values(item);
+      item_found = true;
+    }
 
-    } else if (name == TTPInitialConditionsParameters::xml_element_name_) {
-      ttp_initial_conditions.set_values(item);
+    for (auto &[label, params] : ionic_initial_conditions)
+      if (name == params.xml_element_name) {
+        params.set_values(item);
+        item_found = true;
+      }
 
-    } else if (name == FluidViscosityParameters::xml_element_name_ || name == SolidViscosityParameters::xml_element_name_) {
+    if (name == FluidViscosityParameters::xml_element_name_ ||
+        name == SolidViscosityParameters::xml_element_name_) {
       auto eq_type = consts::equation_name_to_type.at(equation.value());
       if (eq_type == consts::EquationType::phys_fluid || eq_type == consts::EquationType::phys_CMM || eq_type == consts::EquationType::phys_stokes) {
         fluid_viscosity.set_values(item);
@@ -1728,12 +1885,18 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
         throw std::runtime_error("Viscosity model not supported for equation '" + equation.value() + "'.");
       }
 
-    } else if (name == include_xml.name()) { 
+      item_found = true;
+    }
+
+    if (name == include_xml.name()) {
       auto value = item->GetText();
       IncludeParametersFile include_parameters(value);
       set_values(include_parameters.root_element, true);
-  
-    } else if (item->GetText() != nullptr) {
+
+      item_found = true;
+    }
+
+    if (item->GetText() != nullptr) {
       auto value = item->GetText();
       try {
         set_parameter_value(name, value);
@@ -1741,10 +1904,13 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
         throw std::runtime_error(error_msg + name + "'.");
       }
 
-    } else {
+      item_found = true;
+    }
+
+    if (!item_found) {
       throw std::runtime_error(error_msg + name + "'.");
     }
-  
+
     item = item->NextSiblingElement();
   }
 
@@ -1762,187 +1928,6 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
       "' in '" + domain_params->Name() + "'.");
   }
 */
-}
-
-//////////////////////////////////////////////////////////
-//            TTPInitialConditionsParameters              //
-//////////////////////////////////////////////////////////
-
-const std::string TTPInitialConditionsParameters::xml_element_name_ = "TTP_initial_conditions";
-
-TTPInitialConditionsParameters::TTPInitialConditionsParameters()
-{
-}
-
-void TTPInitialConditionsParameters::print_parameters()
-{
-  if (value_set) {
-    std::cout << std::endl;
-    std::cout << "TTP Initial Conditions Parameters" << std::endl;
-    std::cout << "---------------------------------" << std::endl;
-    initial_states.print_parameters();
-    gating_variables.print_parameters();
-  }
-}
-
-void TTPInitialConditionsParameters::set_values(tinyxml2::XMLElement* xml_elem)
-{
-  using namespace tinyxml2;
-  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
-
-  auto item = xml_elem->FirstChildElement();
-
-  while (item != nullptr) {
-    auto name = std::string(item->Value());
-
-    if (name == TTPInitialStatesParameters::xml_element_name_) {
-      initial_states.set_values(item);
-      value_set = true;
-
-    } else if (name == TTPGatingVariablesParameters::xml_element_name_) {
-      gating_variables.set_values(item);
-      value_set = true;
-
-    } else {
-      throw std::runtime_error(error_msg + name + "'.");
-    }
-
-    item = item->NextSiblingElement();
-  }
-
-  if (!initial_states.defined()) {
-    throw std::runtime_error(xml_element_name_ + " requires an '" +
-        TTPInitialStatesParameters::xml_element_name_ + "' XML section.");
-  }
-
-  if (!gating_variables.defined()) {
-    throw std::runtime_error(xml_element_name_ + " requires a '" +
-        TTPGatingVariablesParameters::xml_element_name_ + "' XML section.");
-  }
-}
-
-//////////////////////////////////////////////////////////
-//            TTPInitialStatesParameters                   //
-//////////////////////////////////////////////////////////
-
-const std::string TTPInitialStatesParameters::xml_element_name_ = "Initial_states";
-
-TTPInitialStatesParameters::TTPInitialStatesParameters()
-{
-  bool required = true;
-
-  set_parameter("V",      -85.23,   required, V);
-  set_parameter("K_i",    136.89,   required, K_i);
-  set_parameter("Na_i",   8.6040,   required, Na_i);
-  set_parameter("Ca_i",   1.26E-4,  required, Ca_i);
-  set_parameter("Ca_ss",  3.6E-4,   required, Ca_ss);
-  set_parameter("Ca_sr",  3.64,     required, Ca_sr);
-  set_parameter("R_bar",  0.9073,   required, R_bar);
-}
-
-void TTPInitialStatesParameters::print_parameters()
-{
-  if (value_set) {
-    std::cout << "  Initial States:" << std::endl;
-    auto params_name_value = get_parameter_list();
-    for (auto& [key, value] : params_name_value) {
-      std::cout << "    " << key << ": " << value << std::endl;
-    }
-  }
-}
-
-void TTPInitialStatesParameters::set_values(tinyxml2::XMLElement* xml_elem)
-{
-  using namespace tinyxml2;
-  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
-
-  auto item = xml_elem->FirstChildElement();
-
-  while (item != nullptr) {
-    auto name = std::string(item->Value());
-
-    if (item->GetText() != nullptr) {
-      auto value = item->GetText();
-      try {
-        set_parameter_value(name, value);
-        value_set = true;
-      } catch (const std::bad_function_call& exception) {
-        throw std::runtime_error(error_msg + name + "'.");
-      }
-    } else {
-      throw std::runtime_error(error_msg + name + "'.");
-    }
-
-    item = item->NextSiblingElement();
-  }
-
-  check_required();
-}
-
-//////////////////////////////////////////////////////////
-//            TTPGatingVariablesParameters                 //
-//////////////////////////////////////////////////////////
-
-const std::string TTPGatingVariablesParameters::xml_element_name_ = "Gating_variables";
-
-TTPGatingVariablesParameters::TTPGatingVariablesParameters()
-{
-  bool required = true;
-
-  set_parameter("x_r1_rectifier", 6.21E-3,   required, x_r1_rectifier);
-  set_parameter("x_r2_rectifier", 0.4712,    required, x_r2_rectifier);
-  set_parameter("x_s_rectifier",  9.5E-3,    required, x_s_rectifier);
-
-  set_parameter("m_fast_Na",      1.72E-3,   required, m_fast_Na);
-  set_parameter("h_fast_Na",      0.7444,    required, h_fast_Na);
-  set_parameter("j_fast_Na",      0.7045,    required, j_fast_Na);
-
-  set_parameter("d_slow_in",      3.373E-5,  required, d_slow_in);
-  set_parameter("f_slow_in",      0.7888,    required, f_slow_in);
-  set_parameter("f2_slow_in",     0.9755,    required, f2_slow_in);
-  set_parameter("fcass_slow_in",  0.9953,    required, fcass_slow_in);
-
-  set_parameter("s_out",          0.999998,  required, s_out);
-  set_parameter("r_out",          2.42E-8,   required, r_out);
-}
-
-void TTPGatingVariablesParameters::print_parameters()
-{
-  if (value_set) {
-    std::cout << "  Gating Variables:" << std::endl;
-    auto params_name_value = get_parameter_list();
-    for (auto& [key, value] : params_name_value) {
-      std::cout << "    " << key << ": " << value << std::endl;
-    }
-  }
-}
-
-void TTPGatingVariablesParameters::set_values(tinyxml2::XMLElement* xml_elem)
-{
-  using namespace tinyxml2;
-  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
-
-  auto item = xml_elem->FirstChildElement();
-
-  while (item != nullptr) {
-    auto name = std::string(item->Value());
-
-    if (item->GetText() != nullptr) {
-      auto value = item->GetText();
-      try {
-        set_parameter_value(name, value);
-        value_set = true;
-      } catch (const std::bad_function_call& exception) {
-        throw std::runtime_error(error_msg + name + "'.");
-      }
-    } else {
-      throw std::runtime_error(error_msg + name + "'.");
-    }
-
-    item = item->NextSiblingElement();
-  }
-
-  check_required();
 }
 
 //////////////////////////////////////////////////////////

@@ -5,11 +5,14 @@
 #define IONIC_MODEL_H
 
 #include "Array.h"
+#include "Parameters.h"
 #include "Vector.h"
 
-#include <map>
 #include <string>
 #include <utility>
+#include <vector>
+
+#include "CmMod.h"
 
 /**
  * @brief Abstract ionic model class.
@@ -50,35 +53,37 @@
  */
 class IonicModel {
 public:
-  /// State variable information. Bundles a string label for the variable, to be
-  /// used for parameter files, and the variable's initial value.
-  class StateVariable {
-  public:
-    std::string label;
-    double initial_value;
-  };
-
-  /// Alias for state variables vector.
-  using StateVector = std::vector<StateVariable>;
-
-  /// Class for managing initial values for a generic ionic model.
-  class InitialValues : public ParameterLists {};
+  /// Alias for initial states vector. Each initial state is a pair of a label
+  /// for that state variable and its initial value.
+  /// @todo This would work better with a struct, due to the fields having
+  /// meaningful names instead of first and second.
+  using InitialStates = std::vector<std::pair<std::string, double>>;
 
   /// Constructor.
-  IonicModel(const StateVector &states_X_, const StateVector &states_Xg_,
+  IonicModel(const InitialStates &initial_X_, const InitialStates &initial_Xg_,
              const double Vrest_)
-      : states_X(states_X_), states_Xg(states_Xg_), Vrest(Vrest_), Vscale(1.0),
-        Tscale(1.0), Voffset(0.0) {}
+      : initial_X(initial_X_), initial_Xg(initial_Xg_), Vrest(Vrest_),
+        Vscale(1.0), Tscale(1.0), Voffset(0.0) {}
 
   /// Constructor with scaling factors.
-  IonicModel(const StateVector &states_X_, const StateVector &states_Xg_,
+  IonicModel(const InitialStates &initial_X_, const InitialStates &initial_Xg_,
              const double Vrest_, const double Vscale_, const double Tscale_,
              const double Voffset_)
-      : states_X(states_X_), states_Xg(states_Xg_), Vrest(Vrest_),
+      : initial_X(initial_X_), initial_Xg(initial_Xg_), Vrest(Vrest_),
         Vscale(Vscale_), Tscale(Tscale_), Voffset(Voffset_) {}
 
   /// Virtual destructor.
   virtual ~IonicModel() = default;
+
+  /**
+   * @brief Set model initial conditions from a parameter object.
+   */
+  void set_initial_conditions(const IonicInitialConditionsParameters &params);
+
+  /**
+   * @brief Distribute initial conditions to all parallel processes.
+   */
+  void distribute_initial_conditions(const CmMod &cm_mod, const cmType &cm);
 
   /**
    * @brief Setup model initial conditions.
@@ -131,6 +136,16 @@ public:
    * @}
    */
 
+  /**
+   * @brief Get initial conditions for the model.
+   */
+  const InitialStates &get_initial_X() const { return initial_X; }
+
+  /**
+   * @brief Get initial gating variables for the model.
+   */
+  const InitialStates &get_initial_Xg() const { return initial_Xg; }
+
 protected:
   /**
    * @brief Update variables with analytical solution.
@@ -167,10 +182,10 @@ protected:
                     Array<double> &Jac, const double Ksac) const = 0;
 
   /// Initial states.
-  StateVector states_X;
+  InitialStates initial_X;
 
   /// Initial gating variables.
-  StateVector states_Xg;
+  InitialStates initial_Xg;
 
   /// Resting transmembrane potential. It is used to define the
   /// stretch-activated current.

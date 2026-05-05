@@ -3,11 +3,6 @@
 
 #include "cep_ion.h"
 
-#include "ionic_aliev_panfilov.h"
-#include "ionic_bueno_orovio.h"
-#include "ionic_fitzhugh_nagumo.h"
-#include "ionic_ttp.h"
-
 #include "all_fun.h"
 #include "post.h"
 #include "utils.h"
@@ -121,29 +116,6 @@ void cep_init(Simulation* simulation)
 //
 void cep_init_l(cepModelType &cep, int nX, int nG, Vector<double> &X,
                 Vector<double> &Xg) {
-
-  // Construct the concrete ionic model.
-  // @todo This probably shouldn't be in this function. The function has the
-  // goal of setting up the state variables correctly, and the initialization of
-  // the ionic model seems like a side effect. It should be placed elsewhere.
-  switch (cep.cepType) {
-  case ElectrophysiologyModelType::AP:
-    cep.ionic_model = std::make_shared<AlievPanfilov>();
-    break;
-
-  case ElectrophysiologyModelType::BO:
-    cep.ionic_model = std::make_shared<BuenoOrovio>();
-    break;
-
-  case ElectrophysiologyModelType::FN:
-    cep.ionic_model = std::make_shared<FitzHughNagumo>();
-    break;
-
-  case ElectrophysiologyModelType::TTP:
-    cep.ionic_model = std::make_shared<TTP>();
-    break;
-  }
-
   cep.ionic_model->init(nX, nG, X, Xg);
 }
 

@@ -18,8 +18,8 @@ class AlievPanfilov : public IonicModel {
 public:
   /// Constructor.
   AlievPanfilov()
-      : IonicModel(/* states_X_ = */ {{"V", -80.0}, {"w", 1.0e-3}},
-                   /* states_Xg_ = */ {},
+      : IonicModel(/* initial_X_ = */ {{"V", -80.0}, {"w", 1.0e-3}},
+                   /* initial_Xg_ = */ {},
                    /* Vrest_ = */ -80.0, /* Vscale_ = */ 100.0,
                    /* Tscale_ = */ 12.90, /* Voffset_ = */ -80.0) {}
 
