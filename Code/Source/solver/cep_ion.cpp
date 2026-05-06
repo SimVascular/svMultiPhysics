@@ -353,7 +353,7 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
         SVMP_HERE, "ionic model was not constructed.");
   }
 
-  // @todo Restore active stress/strain.
+  // @todo[michelebucelli] Restore active stress/strain.
   switch (cep.odes.tIntType) {
   case TimeIntegratioType::FE:
     for (unsigned int i = 0; i < nt; ++i) {
@@ -377,7 +377,7 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
 
     Vector<int> IPAR = {cep.odes.maxItr, 0};
 
-    // @todo BO and TTP06 write ionic currents into entries of RPAR starting
+    // @todo[michelebucelli] BO and TTP06 write ionic currents into entries of RPAR starting
     // from index 2, as part of the call to getj. Those values appear to be
     // unused, however.
     Vector<double> RPAR = {cep.odes.absTol, cep.odes.relTol};

@@ -39,7 +39,7 @@ void FitzHughNagumo::getj(const unsigned int zone_id, const int nX,
   double n1 = -3.0 * pow(X(0), 2.0);
   double n2 = 2.0 * (1.0 + alpha) * X(0);
 
-  // @todo This should probably also account for Ksac.
+  // @todo[michelebucelli] This should probably also account for Ksac.
   Jac(0, 0) = c * (n1 + n2 - alpha);
   Jac(0, 1) = -c;
   Jac(1, 0) = 1.0;

@@ -95,7 +95,7 @@ public:
 
 protected:
   /// @name Model parameters
-  /// @todo Document units of measure.
+  /// @todo[michelebucelli] Document units of measure.
   /// @{
 
   /// Alias for model parameters container. The three entries in each of these

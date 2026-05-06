@@ -51,7 +51,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
                            const double Ts, const double Ti, const double Istim,
                            const double Ksac, Vector<int> &IPAR,
                            Vector<double> &RPAR) const {
-  // @todo The nX and nG arguments can probably be removed and replaced by the
+  // @todo[michelebucelli] The nX and nG arguments can probably be removed and replaced by the
   // length of the state vectors X and Xg.
 
   const int itMax = IPAR(0);   // Maximum iterations for nonlinear solver.
@@ -79,7 +79,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
   int k = 0;    // Current nonlinear iteration index.
   auto Xk = X;  // Current solution. This copy is probably unnecessary.
 
-  // @todo The following flags should be given meaningful names.
+  // @todo[michelebucelli] The following flags should be given meaningful names.
   // Flag indicating whether the maximum number of iterations was reached.
   bool l1 = false;
 
@@ -133,7 +133,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, const int nX,
   X = Xk;
 
   update_g(zone_id, dt, nX, nG, X, Xg);
-  // @todo This call seems unnecessary, since fn is not used after this point.
+  // @todo[michelebucelli] This call seems unnecessary, since fn is not used after this point.
   getf(zone_id, nX, nG, X, Xg, fn, I_stim_scaled, I_sac_scaled);
 
   // Bring the potential variable back to dimensional units.

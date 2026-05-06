@@ -40,24 +40,24 @@
  *  - Colli Franzone, Pavarino, Scacchi. Mathematical Cardiac Electrophysiology.
  *    Springer, 2014.
  *
- * @todo Document stretch-activated current.
+ * @todo[michelebucelli] Document stretch-activated current.
  *
  * ### Numerical methods
  *
- * @todo
+ * @todo[michelebucelli]
  *
  * ### Implementation details
  *
- * @todo
+ * @todo[michelebucelli]
  *
- * @todo The number of state variables in the model should be moved to this
+ * @todo[michelebucelli] The number of state variables in the model should be moved to this
  * class.
  */
 class IonicModel {
 public:
   /// Alias for initial states vector. Each initial state is a pair of a label
   /// for that state variable and its initial value.
-  /// @todo This would work better with a struct, due to the fields having
+  /// @todo[michelebucelli] This would work better with a struct, due to the fields having
   /// meaningful names instead of first and second.
   using InitialStates = std::vector<std::pair<std::string, double>>;
 
@@ -113,9 +113,9 @@ public:
   /**
    * @brief Integrate the model with the Crank-Nicolson method.
    *
-   * @todo Document numerical formulation.
+   * @todo[michelebucelli] Document numerical formulation.
    *
-   * @todo IPAR and RPAR can probably be made const here. Also, the meaning of
+   * @todo[michelebucelli] IPAR and RPAR can probably be made const here. Also, the meaning of
    *       their entries needs to be documented.
    */
   void integ_cn2(const unsigned int zone_id, const int nX, const int nG,
@@ -126,7 +126,7 @@ public:
   /**
    * @brief Integrate the model with the forward Euler method.
    *
-   * @todo Document numerical formulation.
+   * @todo[michelebucelli] Document numerical formulation.
    */
   void integ_fe(const unsigned int zone_id, const int nX, const int nG,
                 Vector<double> &X, Vector<double> &Xg, const double Ts,
@@ -135,7 +135,7 @@ public:
   /**
    * @brief Integrate the model with the Runge-Kutta method.
    *
-   * @todo Document numerical formulation.
+   * @todo[michelebucelli] Document numerical formulation.
    */
   void integ_rk(const unsigned int zone_id, const int nX, const int nG,
                 Vector<double> &X, Vector<double> &Xg, const double Ts,
@@ -186,7 +186,7 @@ protected:
   /**
    * @brief Update variables with analytical solution.
    *
-   * @todo Extend documentation.
+   * @todo[michelebucelli] Extend documentation.
    */
   virtual void update_g(const unsigned int zone_id, const double dt,
                         const int nX, const int nG, const Vector<double> &X,
@@ -198,7 +198,7 @@ protected:
    * Defines the right-hand side function for the potential and ionic equations.
    * Must be ovverridden in derived classes.
    *
-   * @todo Document the meaning of the individual parameters.
+   * @todo[michelebucelli] Document the meaning of the individual parameters.
    */
   virtual void getf(const unsigned int zone_id, const int nX, const int nG,
                     const Vector<double> &X, const Vector<double> &Xg,
@@ -211,7 +211,7 @@ protected:
    * Defines the jacobian matrix of the model equations, that is the matirx of
    * derivatives of the function evaulated by getf.
    *
-   * @todo Document the meaning of the individual parameters.
+   * @todo[michelebucelli] Document the meaning of the individual parameters.
    */
   virtual void getj(const unsigned int zone_id, const int nX, const int nG,
                     const Vector<double> &X, const Vector<double> &Xg,
@@ -234,7 +234,7 @@ protected:
    * e.g. to bring them into dimensionless form. These are the factors used for
    * that purpose. They are assigned in the constructor of this class.
    *
-   * @todo Document units of measure.
+   * @todo[michelebucelli] Document units of measure.
    *
    * @{
    */

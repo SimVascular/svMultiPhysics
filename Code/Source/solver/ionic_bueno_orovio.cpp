@@ -79,7 +79,7 @@ void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
   const double w = X(2);
   const double s = X(3);
 
-  // @todo Why minus 1? In getj this seems not to be the case.
+  // @todo[michelebucelli] Why minus 1? In getj this seems not to be the case.
   const int i = zone_id - 1;
 
   // Define step functions
@@ -146,7 +146,7 @@ void BuenoOrovio::getj(const unsigned int zone_id, const int nX, const int nG,
       (1.0 - H_uo) * (1.0 - u / tau_winf[zone_id]) + H_uo * ws_inf[zone_id];
 
   // Define Jacobian
-  // @todo Ksac might need to be added here.
+  // @todo[michelebucelli] Ksac might need to be added here.
   Jac = 0.0;
 
   {
