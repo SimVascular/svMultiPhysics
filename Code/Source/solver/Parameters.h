@@ -1194,11 +1194,9 @@ public:
   bool defined() const { return value_set; }
 
   /// Print the value of parameters.
-  /// @todo[michelebucelli] This seems generic enough that it could be in ParameterLists.
   void print_parameters() const;
 
   /// Set the value of parameters in this object from an XML element.
-  /// @todo[michelebucelli] This seems generic enough that it could be in ParameterLists.
   void set_values(const tinyxml2::XMLElement *xml_elem);
 
   /// Get the value of a parameter by label.

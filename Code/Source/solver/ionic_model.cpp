@@ -71,9 +71,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
   Vector<double> fn(nX);
   getf(zone_id, X, Xg, fn, I_stim_scaled, I_sac_scaled);
 
-  int k = 0; // Current nonlinear iteration index.
-
-  // @todo[michelebucelli] This copy is probably unnecessary.
+  int k = 0;   // Current nonlinear iteration index.
   auto Xk = X; // Current solution.
 
   constexpr double eps = std::numeric_limits<double>::epsilon();

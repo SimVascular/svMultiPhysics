@@ -351,7 +351,6 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
         SVMP_HERE, "ionic model was not constructed.");
   }
 
-  // @todo[michelebucelli] Restore active stress/strain.
   switch (cep.odes.tIntType) {
   case TimeIntegratioType::FE:
     for (unsigned int i = 0; i < nt; ++i) {
