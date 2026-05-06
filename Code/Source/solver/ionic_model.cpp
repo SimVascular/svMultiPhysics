@@ -117,9 +117,6 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
 
   update_g(zone_id, dt, X, Xg);
 
-  // @todo[michelebucelli] This call seems unnecessary, since fn is not used after this point.
-  getf(zone_id, X, Xg, fn, I_stim_scaled, I_sac_scaled);
-
   // Bring the potential variable back to dimensional units.
   X(0) = X(0) * Vscale + Voffset;
 }
