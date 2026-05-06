@@ -1015,31 +1015,22 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   } catch (const std::out_of_range& exception) {
     throw std::runtime_error("[read_cep_domain] Unknown model type '" + model_str + "'.");
   }
-  
-  // Set model parameters based on model type.
-  //
-  lDmn.cep.nG = 0;
+
   lDmn.cep.cepType = model_type;
 
-  switch (model_type) {
-    case ElectrophysiologyModelType::AP: 
-    case ElectrophysiologyModelType::FN:
-      lDmn.cep.nX = 2;
-    break;
+  // Setup the ionic models.
+  {
+    const std::string model_name = cep_model_type_to_name.at(model_type);
 
-    case ElectrophysiologyModelType::BO:
-      lDmn.cep.nX = 4;
-    break;
+    lDmn.cep.ionic_model = IonicModelFactory::create_model(model_name);
+    lDmn.cep.ionic_model->read_parameters(
+        *domain_params->ionic_models.at(model_name));
 
-    case ElectrophysiologyModelType::TTP:
-      lDmn.cep.nX = 7;
-      lDmn.cep.nG = 12;
-    break;
-
-    default: 
-    break;
+    // Set model parameters based on the instantiated ionic model.
+    lDmn.cep.nX = lDmn.cep.ionic_model->nX();
+    lDmn.cep.nG = lDmn.cep.ionic_model->nG();
   }
-  
+
   // Set the maximum number of dof for cellular activation model.
   auto& cep_mod = simulation->get_cep_mod();
   if (cep_mod.nXion < lDmn.cep.nX + lDmn.cep.nG) {
@@ -1076,15 +1067,6 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     } else {
       throw std::runtime_error("Unknown myocardial zone type '" + myocardial_zone + "'.");
     }
-  }
-
-  // Instantiate the ionic model and set its initial conditions.
-  {
-    const std::string model_name = cep_model_type_to_name.at(model_type);
-
-    lDmn.cep.ionic_model = IonicModelFactory::create_model(model_name);
-    lDmn.cep.ionic_model->read_parameters(
-        *domain_params->ionic_models.at(model_name));
   }
 
   // Set stimulus parameters. 

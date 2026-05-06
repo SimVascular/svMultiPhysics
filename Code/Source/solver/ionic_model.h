@@ -77,9 +77,6 @@
  *    file, not in a header file.
  * 7. Edit the files `CepMod.h` and `CepMod.cpp` to add the label for the new
  *    ionic model type.
- *
- * @todo[michelebucelli] The number of state variables in the model should be
- * moved to this class.
  */
 class IonicModel {
 public:
@@ -252,14 +249,14 @@ public:
    */
 
   /**
-   * @brief Get initial conditions for the model.
+   * @brief Get the number of state variables.
    */
-  const InitialStates &get_initial_X() const { return initial_X; }
+  unsigned int nX() const { return initial_X.size(); }
 
   /**
-   * @brief Get initial gating variables for the model.
+   * @brief Get the number of gating variables.
    */
-  const InitialStates &get_initial_Xg() const { return initial_Xg; }
+  unsigned int nG() const { return initial_Xg.size(); }
 
   /**
    * @brief Get the index of the intracellular calcium concentration in the
