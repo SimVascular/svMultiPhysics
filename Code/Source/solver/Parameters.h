@@ -1258,7 +1258,12 @@ public:
   /// Get the value of a vector parameter by label.
   Vector<double> get_vector(const std::string &label) const {
     auto param_value = vector_parameters.at(label).value();
-    return Vector<double>(param_value.size(), param_value.data());
+
+    Vector<double> param_vec(param_value.size());
+    for (size_t i = 0; i < param_value.size(); ++i)
+      param_vec[i] = param_value[i];
+
+    return param_vec;
   }
 
 protected:
