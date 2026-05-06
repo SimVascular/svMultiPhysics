@@ -47,20 +47,24 @@
 
     <Domain id="1">
       <Electrophysiology_model> TTP </Electrophysiology_model>
-      <G_Na> 29.68 </G_Na> 
-      <G_CaL> 7.96e-5 </G_CaL>
-      <G_Kr> 0.31 </G_Kr>
       <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
+      <TTP>
+        <G_Na> 29.68 </G_Na>
+        <G_CaL> 7.96e-5 </G_CaL>
+        <G_Kr> 0.31 </G_Kr>
+      </TTP>
       <Isotropic_conductivity> 0.033192 </Isotropic_conductivity>
       <ODE_solver> RK </ODE_solver>
     </Domain>
 
     <Domain id="2">
       <Electrophysiology_model> TTP </Electrophysiology_model>
-      <G_Na> 7.42  </G_Na> 
-      <G_CaL> 1.99e-5 </G_CaL>
-      <G_Kr> 0.08 </G_Kr>
       <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
+      <TTP>
+        <G_Na> 7.42  </G_Na>
+        <G_CaL> 1.99e-5 </G_CaL>
+        <G_Kr> 0.08 </G_Kr>
+      </TTP>
       <Isotropic_conductivity> 0.033192 </Isotropic_conductivity>
       <ODE_solver> RK </ODE_solver>
     </Domain>
@@ -68,11 +72,12 @@
     <Domain id="3">
       <Electrophysiology_model> TTP </Electrophysiology_model>
 
-      <G_Na> 29.68 </G_Na> 
-      <G_CaL> 7.96e-5 </G_CaL>
-      <G_Kr> 0.31 </G_Kr>
-
       <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
+      <TTP>
+        <G_Na> 29.68 </G_Na>
+        <G_CaL> 7.96e-5 </G_CaL>
+        <G_Kr> 0.31 </G_Kr>
+      </TTP>
 
       <Isotropic_conductivity> 0.033192 </Isotropic_conductivity>
 

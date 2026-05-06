@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <svMultiPhysicsFile version="0.1">
 
-<G_Na> 14.838 </G_Na>
-<G_CaL> 3.98E-5 </G_CaL>
-<G_Kr> 0.153 </G_Kr>
-<G_Ks> 0.392 </G_Ks>
-<G_to> 0.294 </G_to>
-
 <Isotropic_conductivity> 0.1 </Isotropic_conductivity>
 
 <Myocardial_zone> epicardium </Myocardial_zone>
 
-<TTP_initial_conditions>
+<TTP>
+    <G_Na> 14.838 </G_Na>
+    <G_CaL> 3.98E-5 </G_CaL>
+    <G_Kr> 0.153 </G_Kr>
+    <G_Ks> 0.392 </G_Ks>
+    <G_to> 0.294 </G_to>
+
     <Initial_states>
         <V>-85.423</V>
         <K_i>138.52</K_i>
@@ -36,6 +36,6 @@
         <s_out>0.999998</s_out>
         <r_out>2.347E-8</r_out>
     </Gating_variables>
-</TTP_initial_conditions>
+</TTP>
 
 </svMultiPhysicsFile>
