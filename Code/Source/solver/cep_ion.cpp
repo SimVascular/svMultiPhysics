@@ -370,19 +370,12 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
     break;
 
   case TimeIntegratioType::CN2:
-
-    Vector<int> IPAR = {cep.odes.maxItr, 0};
-
-    // @todo[michelebucelli] BO and TTP06 write ionic currents into entries of RPAR starting
-    // from index 2, as part of the call to getj. Those values appear to be
-    // unused, however.
-    Vector<double> RPAR = {cep.odes.absTol, cep.odes.relTol};
-
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_cn2(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac, IPAR,
-                                 RPAR);
+      cep.ionic_model->integ_cn2(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac,
+                                 cep.odes.maxItr, cep.odes.relTol,
+                                 cep.odes.absTol);
     }
     break;
   }

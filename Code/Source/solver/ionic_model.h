@@ -111,14 +111,12 @@ public:
    * @brief Integrate the model with the Crank-Nicolson method.
    *
    * @todo[michelebucelli] Document numerical formulation.
-   *
-   * @todo[michelebucelli] IPAR and RPAR can probably be made const here. Also, the meaning of
-   *       their entries needs to be documented.
    */
   void integ_cn2(const unsigned int zone_id, Vector<double> &X,
                  Vector<double> &Xg, const double Ts, const double Ti,
-                 const double Istim, const double Ksac, Vector<int> &IPAR,
-                 Vector<double> &RPAR) const;
+                 const double Istim, const double Ksac,
+                 const unsigned int max_iter, const double rtol,
+                 const double atol) const;
 
   /**
    * @brief Integrate the model with the forward Euler method.

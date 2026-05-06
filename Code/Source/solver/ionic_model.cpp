@@ -48,11 +48,8 @@ void IonicModel::init(Vector<double> &X, Vector<double> &Xg) const {
 void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
                            Vector<double> &Xg, const double Ts, const double Ti,
                            const double Istim, const double Ksac,
-                           Vector<int> &IPAR, Vector<double> &RPAR) const {
-  const int itMax = IPAR(0);   // Maximum iterations for nonlinear solver.
-  const double atol = RPAR(0); // Absolute tolerance for nonlinear solver.
-  const double rtol = RPAR(1); // Relative tolerance for nonlinear solver.
-
+                           const unsigned int max_iter, const double rtol,
+                           const double atol) const {
   const unsigned int nX = X.size();
   const unsigned int nG = Xg.size();
 
@@ -74,18 +71,10 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
   Vector<double> fn(nX);
   getf(zone_id, X, Xg, fn, I_stim_scaled, I_sac_scaled);
 
-  int k = 0;    // Current nonlinear iteration index.
-  auto Xk = X;  // Current solution. This copy is probably unnecessary.
+  int k = 0; // Current nonlinear iteration index.
 
-  // @todo[michelebucelli] The following flags should be given meaningful names.
-  // Flag indicating whether the maximum number of iterations was reached.
-  bool l1 = false;
-
-  // Flag indicating whether absolute tolerance is satisfied.
-  bool l2 = false;
-
-  // Flag indicating whether relative tolerance is satisfied.
-  bool l3 = false;
+  // @todo[michelebucelli] This copy is probably unnecessary.
+  auto Xk = X; // Current solution.
 
   constexpr double eps = std::numeric_limits<double>::epsilon();
 
@@ -112,11 +101,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
     rmsA = sqrt(rmsA / nX);
     rmsR = sqrt(rmsR / nX);
 
-    l1 = (k > itMax);
-    l2 = (rmsA <= atol);
-    l3 = (rmsR <= rtol);
-
-    if (l1 || l2 || l3)
+    if (k > max_iter || rmsA <= atol || rmsR <= rtol)
       break;
 
     Array<double> JAC(nX, nX);
@@ -137,10 +122,6 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
 
   // Bring the potential variable back to dimensional units.
   X(0) = X(0) * Vscale + Voffset;
-
-  if (!l2 && !l3) {
-    IPAR(1) = IPAR(1) + 1;
-  }
 }
 
 void IonicModel::integ_fe(const unsigned int zone_id, Vector<double> &X,
