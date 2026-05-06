@@ -1699,8 +1699,10 @@ void IonicInitialStateParameters::print_parameters() const {
 
 void IonicInitialStateParameters::set_values(
     const tinyxml2::XMLElement *xml_elem) {
-  // @todo[michelebucelli] Maybe throw an exception if the name of xml_elem does not match the
-  // one stored in xml_element_name.
+  if (xml_elem->Name() != xml_element_name) {
+    svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name +
+                                                     " XML element '");
+  }
 
   const std::string error_msg_prefix =
       "Unknown " + xml_element_name + " XML element '";
