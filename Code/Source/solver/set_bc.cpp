@@ -1539,7 +1539,38 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
          }
        }
 
-     } else if (utils::btest(lBc.bType,iBC_res)) {
+     } else if (utils::btest(lBc.bType,iBC_Coupled)) {
+       // New-style Coupled NEU BC (svOneD/svZeroD): apply the actual 1D/0D
+       // pressure from the most recent 'D' solver call.  bc.g is updated
+       // every Newton iteration by set_bc_cpl / calc_der_cpl_bc.
+       
+       //h(0) = lBc.g;
+
+       double Q_3D = all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions,
+                                    eq.s+nsd-1, false,
+                                    consts::MechanicalConfigurationType::reference);
+      //h(0) = lBc.g - lBc.r * Q_3D;
+
+       // Double-sided Robin: use |Q_3D| so that the correction always
+         // reduces h from P_1D, regardless of flow direction.
+         h(0) = lBc.g - lBc.r * std::abs(Q_3D);
+         // Backflow kinetic energy correction: when backflow is detected
+         // (Q < 0), subtract the face-averaged dynamic pressure to further
+         // reduce the applied traction and damp the incoming flow.
+         if (Q_3D < 0.0) {
+           int iM = lFa.iM;
+           int cDmn_local = all_fun::domain(com_mod, com_mod.msh[iM], cEq, lFa.gE(0));
+           double rho  = eq.dmn[cDmn_local].prop.at(
+               consts::PhysicalProperyType::fluid_density);
+           double beta = eq.dmn[cDmn_local].prop.at(
+               consts::PhysicalProperyType::backflow_stab);
+           double A   = lFa.area;
+           if (A > 0.0) {
+             double u_n = Q_3D / A;  // face-averaged normal velocity (< 0)
+             h(0) -= 0.5 * beta * rho * u_n * u_n;
+           }
+         }     
+        } else if (utils::btest(lBc.bType,iBC_res)) {
        h(0) = lBc.r * all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions, eq.s+nsd-1, false, consts::MechanicalConfigurationType::reference);
 
      } else if (utils::btest(lBc.bType,iBC_std)) {
