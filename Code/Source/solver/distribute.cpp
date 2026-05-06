@@ -5,9 +5,8 @@
 
 #include "distribute.h"
 
-#include "all_fun.h"
-#include "CepModTtp.h"
 #include "ComMod.h"
+#include "all_fun.h"
 #include "consts.h"
 #include "nn.h"
 #include "utils.h"

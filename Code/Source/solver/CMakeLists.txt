@@ -213,10 +213,6 @@ set(CSRCS
   uris.h uris.cpp
 
   CepMod.h CepMod.cpp
-  CepModAp.h CepModAp.cpp
-  CepModBo.h CepModBo.cpp
-  CepModFn.h CepModFn.cpp
-  CepModTtp.h CepModTtp.cpp
   ChnlMod.h ChnlMod.cpp
   CmMod.h CmMod.cpp
   ComMod.h ComMod.cpp
