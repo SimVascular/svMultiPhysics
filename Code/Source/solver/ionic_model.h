@@ -155,6 +155,33 @@ public:
    */
   const InitialStates &get_initial_Xg() const { return initial_Xg; }
 
+  /**
+   * @brief Get the index of the intracellular calcium concentration in the
+   * state vector.
+   *
+   * This is the index of the variable to be used for electromechanics coupling.
+   */
+  virtual unsigned int get_calcium_index() const = 0;
+
+  /**
+   * @brief Get a list of state variables to export to VTU.
+   *
+   * By default, this function returns the calcium index as the only exported
+   * state variable. Derived classes can override this to export additional
+   * states if needed. Beware that, for phenomenological models, the calcium
+   * variable might actually be a proxy for calcium, rather than the actual
+   * concentration (and in particular it might be non-dimensional or have
+   * different units than a molar concentration).
+   *
+   * @return A vector of pairs {variable_name, state_vector_index}. The vector
+   * need not include the transmembrane potential V, which is exported by other
+   * means.
+   */
+  virtual std::vector<std::pair<std::string, int>>
+  get_output_variables() const {
+    return {{"Calcium", get_calcium_index()}};
+  }
+
 protected:
   /**
    * @brief Update variables with analytical solution.

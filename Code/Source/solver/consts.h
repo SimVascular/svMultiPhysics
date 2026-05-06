@@ -344,6 +344,7 @@ enum class OutputNameType
   outGrp_fS = 523,
   outGrp_C = 524, 
   outGrp_I1 = 525,
+  outGrp_ionicState = 526,
 
   out_velocity = 599,
   out_pressure = 598, 

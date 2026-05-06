@@ -1130,6 +1130,13 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
             }
           break;
 
+          case OutputNameType::outGrp_ionicState:
+            for (int a = 0; a < msh.nNo; a++) {
+              int Ac = msh.gN(a);
+              d[iM].x(is, a) = cep_mod.Xion(eq.output[iOut].o, Ac);
+            }
+            break;
+
           case OutputNameType::outGrp_WSS:
           case OutputNameType::outGrp_trac:
             post::bpost(simulation, msh, tmpV, solutions, oGrp);

@@ -129,6 +129,11 @@ public:
   virtual void distribute_parameters(const CmMod &cm_mod,
                                      const cmType &cm) override;
 
+  /// Get the index of Ca_i in the state vector.
+  virtual unsigned int get_calcium_index() const override {
+    return calcium_index;
+  }
+
 protected:
   /// @name Model parameters
   /// @{

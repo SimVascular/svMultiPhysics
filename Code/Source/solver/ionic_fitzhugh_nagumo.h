@@ -65,6 +65,11 @@ public:
   virtual void distribute_parameters(const CmMod &cm_mod,
                                      const cmType &cm) override;
 
+  /// Get the calcium proxy index.
+  virtual unsigned int get_calcium_index() const override {
+    return calcium_index;
+  }
+
 protected:
   /// @name Model parameters
   /// @todo Document units of measure.
