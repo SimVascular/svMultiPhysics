@@ -145,7 +145,6 @@ void BuenoOrovio::getj(const unsigned int zone_id, const Vector<double> &X,
       (1.0 - H_uo) * (1.0 - u / tau_winf[zone_id]) + H_uo * ws_inf[zone_id];
 
   // Define Jacobian
-  // @todo[michelebucelli] Ksac might need to be added here.
   Jac = 0.0;
 
   {
@@ -157,7 +156,7 @@ void BuenoOrovio::getj(const unsigned int zone_id, const Vector<double> &X,
          w * s / tau_si[zone_id]) *
         D_uw;
 
-    Jac(0, 0) = n1 + n2 + n3;
+    Jac(0, 0) = n1 + n2 + n3 - Ksac;
   }
 
   Jac(0, 1) =
