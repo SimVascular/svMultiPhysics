@@ -1575,14 +1575,7 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
         cm.bcast(cm_mod, &cep.odes.relTol);
       }
 
-      // Broadcast domain-specific model parameters
-      cep.ttp.distribute_conductance(cm_mod, cm);
-      cep.ttp.distribute_initial_state(cm_mod, cm);
-
-      cep.ionic_model->distribute_initial_conditions(cm_mod, cm);
-
-      cm.bcast(cm_mod, cep.bo.tau_si);
-      cm.bcast(cm_mod, cep.bo.tau_fi);
+      cep.ionic_model->distribute_parameters(cm_mod, cm);
     } 
 
     if ((dmn.phys == EquationType::phys_struct) || (dmn.phys == EquationType::phys_ustruct)) {

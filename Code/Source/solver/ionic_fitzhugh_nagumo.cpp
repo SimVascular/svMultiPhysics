@@ -3,6 +3,25 @@
 
 #include "ionic_fitzhugh_nagumo.h"
 
+void FitzHughNagumo::read_parameters(const IonicModelParameters &params) {
+  IonicModel::read_parameters(params);
+
+  alpha = params.get_scalar("alpha");
+  a = params.get_scalar("a");
+  b = params.get_scalar("b");
+  c = params.get_scalar("c");
+}
+
+void FitzHughNagumo::distribute_parameters(const CmMod &cm_mod,
+                                           const cmType &cm) {
+  IonicModel::distribute_parameters(cm_mod, cm);
+
+  cm.bcast(cm_mod, &alpha);
+  cm.bcast(cm_mod, &a);
+  cm.bcast(cm_mod, &b);
+  cm.bcast(cm_mod, &c);
+}
+
 void FitzHughNagumo::getf(const unsigned int zone_id, const int nX,
                           const int nG, const Vector<double> &X,
                           const Vector<double> &Xg, Vector<double> &f,

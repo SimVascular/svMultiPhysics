@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <svMultiPhysicsFile version="0.1">
 
-<G_Ks> 0.392 </G_Ks>
-<G_to> 0.294 </G_to>
-
 <Myocardial_zone> epicardium </Myocardial_zone>
 
 <TTP>
+    <G_Ks> 0.392 </G_Ks>
+    <G_to> 0.294 </G_to>
+
     <Initial_states>
         <V> -85.23 </V>
         <K_i> 136.89 </K_i>

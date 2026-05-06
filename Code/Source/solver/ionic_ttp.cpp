@@ -3,6 +3,118 @@
 
 #include "ionic_ttp.h"
 
+void TTP::read_parameters(const IonicModelParameters &params) {
+  IonicModel::read_parameters(params);
+
+  Rc = params.get_scalar("Rc");
+  Tc = params.get_scalar("Tc");
+  Fc = params.get_scalar("Fc");
+  Cm = params.get_scalar("Cm");
+  sV = params.get_scalar("sV");
+  rho = params.get_scalar("rho");
+  V_c = params.get_scalar("V_c");
+  V_sr = params.get_scalar("V_sr");
+  V_ss = params.get_scalar("V_ss");
+  K_o = params.get_scalar("K_o");
+  Na_o = params.get_scalar("Na_o");
+  Ca_o = params.get_scalar("Ca_o");
+  G_Na = params.get_scalar("G_Na");
+  G_K1 = params.get_scalar("G_K1");
+  G_to = params.get_scalar("G_to");
+  G_Kr = params.get_scalar("G_Kr");
+  G_Ks = params.get_scalar("G_Ks");
+  p_KNa = params.get_scalar("p_KNa");
+  G_CaL = params.get_scalar("G_CaL");
+  K_NaCa = params.get_scalar("K_NaCa");
+  gamma = params.get_scalar("gamma");
+  K_mCa = params.get_scalar("K_mCa");
+  K_mNai = params.get_scalar("K_mNai");
+  K_sat = params.get_scalar("K_sat");
+  alpha = params.get_scalar("alpha");
+  p_NaK = params.get_scalar("p_NaK");
+  K_mK = params.get_scalar("K_mK");
+  K_mNa = params.get_scalar("K_mNa");
+  G_pK = params.get_scalar("G_pK");
+  G_pCa = params.get_scalar("G_pCa");
+  K_pCa = params.get_scalar("K_pCa");
+  G_bNa = params.get_scalar("G_bNa");
+  G_bCa = params.get_scalar("G_bCa");
+  Vmax_up = params.get_scalar("Vmax_up");
+  K_up = params.get_scalar("K_up");
+  V_rel = params.get_scalar("V_rel");
+  k1p = params.get_scalar("k1p");
+  k2p = params.get_scalar("k2p");
+  k3 = params.get_scalar("k3");
+  k4 = params.get_scalar("k4");
+  EC = params.get_scalar("EC");
+  max_sr = params.get_scalar("max_sr");
+  min_sr = params.get_scalar("min_sr");
+  V_leak = params.get_scalar("V_leak");
+  V_xfer = params.get_scalar("V_xfer");
+  Buf_c = params.get_scalar("Buf_c");
+  K_bufc = params.get_scalar("K_bufc");
+  Buf_sr = params.get_scalar("Buf_sr");
+  K_bufsr = params.get_scalar("K_bufsr");
+  Buf_ss = params.get_scalar("Buf_ss");
+  K_bufss = params.get_scalar("K_bufss");
+}
+
+void TTP::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
+  IonicModel::distribute_parameters(cm_mod, cm);
+
+  cm.bcast(cm_mod, &Rc);
+  cm.bcast(cm_mod, &Tc);
+  cm.bcast(cm_mod, &Fc);
+  cm.bcast(cm_mod, &Cm);
+  cm.bcast(cm_mod, &sV);
+  cm.bcast(cm_mod, &rho);
+  cm.bcast(cm_mod, &V_c);
+  cm.bcast(cm_mod, &V_sr);
+  cm.bcast(cm_mod, &V_ss);
+  cm.bcast(cm_mod, &K_o);
+  cm.bcast(cm_mod, &Na_o);
+  cm.bcast(cm_mod, &Ca_o);
+  cm.bcast(cm_mod, &G_Na);
+  cm.bcast(cm_mod, &G_K1);
+  cm.bcast(cm_mod, &G_to);
+  cm.bcast(cm_mod, &G_Kr);
+  cm.bcast(cm_mod, &G_Ks);
+  cm.bcast(cm_mod, &p_KNa);
+  cm.bcast(cm_mod, &G_CaL);
+  cm.bcast(cm_mod, &K_NaCa);
+  cm.bcast(cm_mod, &gamma);
+  cm.bcast(cm_mod, &K_mCa);
+  cm.bcast(cm_mod, &K_mNai);
+  cm.bcast(cm_mod, &K_sat);
+  cm.bcast(cm_mod, &alpha);
+  cm.bcast(cm_mod, &p_NaK);
+  cm.bcast(cm_mod, &K_mK);
+  cm.bcast(cm_mod, &K_mNa);
+  cm.bcast(cm_mod, &G_pK);
+  cm.bcast(cm_mod, &G_pCa);
+  cm.bcast(cm_mod, &K_pCa);
+  cm.bcast(cm_mod, &G_bNa);
+  cm.bcast(cm_mod, &G_bCa);
+  cm.bcast(cm_mod, &Vmax_up);
+  cm.bcast(cm_mod, &K_up);
+  cm.bcast(cm_mod, &V_rel);
+  cm.bcast(cm_mod, &k1p);
+  cm.bcast(cm_mod, &k2p);
+  cm.bcast(cm_mod, &k3);
+  cm.bcast(cm_mod, &k4);
+  cm.bcast(cm_mod, &EC);
+  cm.bcast(cm_mod, &max_sr);
+  cm.bcast(cm_mod, &min_sr);
+  cm.bcast(cm_mod, &V_leak);
+  cm.bcast(cm_mod, &V_xfer);
+  cm.bcast(cm_mod, &Buf_c);
+  cm.bcast(cm_mod, &K_bufc);
+  cm.bcast(cm_mod, &Buf_sr);
+  cm.bcast(cm_mod, &K_bufsr);
+  cm.bcast(cm_mod, &Buf_ss);
+  cm.bcast(cm_mod, &K_bufss);
+}
+
 void TTP::update_g(const unsigned int zone_id, const double dt, const int nX,
                    const int nG, const Vector<double> &X,
                    Vector<double> &Xg) const {

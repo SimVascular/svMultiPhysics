@@ -1727,29 +1727,52 @@ void IonicInitialStateParameters::set_values(
 }
 
 //////////////////////////////////////////////////////////
-//          IonicInitialConditionsParameters            //
+//                 IonicModelParameters                 //
 //////////////////////////////////////////////////////////
 
-IonicInitialConditionsParameters::IonicInitialConditionsParameters(
+IonicModelParameters::IonicModelParameters(
     const std::string &xml_element_name_,
     const std::vector<std::pair<std::string, double>> &initial_X,
     const std::vector<std::pair<std::string, double>> &initial_Xg)
     : xml_element_name(xml_element_name_),
       initial_X_parameters("Initial_states", initial_X),
-      initial_Xg_parameters("Gating_variables", initial_Xg) {}
+      initial_Xg_parameters("Gating_variables", initial_Xg) {
+  set_xml_element_name(xml_element_name_);
+}
 
-void IonicInitialConditionsParameters::print_parameters() const {
+void IonicModelParameters::print_parameters() const {
   if (value_set) {
     std::cout << "\n"
               << xml_element_name << "\n"
               << "---------------------------------\n";
+
+    if (!parameters.empty()) {
+      std::cout << "Model parameters:" << std::endl;
+      for (const auto &[name, param] : parameters) {
+        std::cout << "  " << name << ": " << param.value() << std::endl;
+      }
+    }
+
+    if (!vector_parameters.empty()) {
+      std::cout << "Vector model parameters:" << std::endl;
+      for (const auto &[name, param] : vector_parameters) {
+        std::cout << "  " << name << ": ";
+        for (const auto &v : param.value()) {
+          std::cout << v << " ";
+        }
+        std::cout << std::endl;
+      }
+    }
+
+    std::cout << "Initial state:" << std::endl;
     initial_X_parameters.print_parameters();
+
+    std::cout << "Initial gating variables:" << std::endl;
     initial_Xg_parameters.print_parameters();
   }
 }
 
-void IonicInitialConditionsParameters::set_values(
-    const tinyxml2::XMLElement *xml_elem) {
+void IonicModelParameters::set_values(const tinyxml2::XMLElement *xml_elem) {
   using namespace tinyxml2;
 
   for (const XMLElement *item = xml_elem->FirstChildElement(); item != nullptr;
@@ -1763,9 +1786,9 @@ void IonicInitialConditionsParameters::set_values(
       initial_Xg_parameters.set_values(item);
       value_set = true;
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE,
-                                        "Unknown " + xml_element_name +
-                                            " XML element '" + name + "'.");
+      const std::string text = item->GetText() ? item->GetText() : "";
+      set_parameter_value(name, text);
+      value_set = true;
     }
   }
 
@@ -1837,15 +1860,6 @@ DomainParameters::DomainParameters() {
                 momentum_stabilization_coefficient);
   set_parameter("Myocardial_zone", "epicardium", !required, myocardial_zone);
 
-  set_parameter("G_Na", 14.838, !required, G_Na);
-  set_parameter("G_CaL", 3.98E-5, !required, G_CaL);
-  set_parameter("G_Kr", 0.153, !required, G_Kr);
-  set_parameter("G_Ks", 0.392, !required, G_Ks);
-  set_parameter("G_to", 0.294, !required, G_to);
-
-  set_parameter("tau_fi", 0.110, !required, tau_fi);
-  set_parameter("tau_si", 1.88750, !required, tau_si);
-
   set_parameter("ODE_solver", "euler", !required, ode_solver);
 
   set_parameter("Penalty_parameter", 0.0, !required, penalty_parameter);
@@ -1864,9 +1878,7 @@ DomainParameters::DomainParameters() {
   // Ionic model parameters.
   IonicModelFactory::visit(
       [this](const std::string &name, const IonicModel &model) {
-        ionic_initial_conditions.emplace(
-            name, IonicInitialConditionsParameters(name, model.get_initial_X(),
-                                                   model.get_initial_Xg()));
+        ionic_models.emplace(name, model.get_parameters());
       });
 }
 
@@ -1888,8 +1900,8 @@ void DomainParameters::print_parameters() {
 
   stimulus.print_parameters();
 
-  for (const auto &[cepType, params] : ionic_initial_conditions) {
-    params.print_parameters();
+  for (const auto &[cepType, params] : ionic_models) {
+    params->print_parameters();
   }
 
   fluid_viscosity.print_parameters();
@@ -1941,9 +1953,9 @@ void DomainParameters::set_values(tinyxml2::XMLElement *domain_elem,
       item_found = true;
     }
 
-    for (auto &[label, params] : ionic_initial_conditions)
-      if (name == params.xml_element_name) {
-        params.set_values(item);
+    for (auto &[label, params] : ionic_models)
+      if (name == params->xml_element_name) {
+        params->set_values(item);
         item_found = true;
       }
 

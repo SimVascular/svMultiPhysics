@@ -3,6 +3,72 @@
 
 #include "ionic_bueno_orovio.h"
 
+void BuenoOrovio::read_parameters(const IonicModelParameters &params) {
+  IonicModel::read_parameters(params);
+
+  u_o = params.get_vector("u_o");
+  u_u = params.get_vector("u_u");
+  theta_v = params.get_vector("theta_v");
+  theta_w = params.get_vector("theta_w");
+  thetam_v = params.get_vector("thetam_v");
+  theta_o = params.get_vector("theta_o");
+  taum_v1 = params.get_vector("taum_v1");
+  taum_v2 = params.get_vector("taum_v2");
+  taup_v = params.get_vector("taup_v");
+  taum_w1 = params.get_vector("taum_w1");
+  taum_w2 = params.get_vector("taum_w2");
+  km_w = params.get_vector("km_w");
+  um_w = params.get_vector("um_w");
+  taup_w = params.get_vector("taup_w");
+  tau_fi = params.get_vector("tau_fi");
+  tau_o1 = params.get_vector("tau_o1");
+  tau_o2 = params.get_vector("tau_o2");
+  tau_so1 = params.get_vector("tau_so1");
+  tau_so2 = params.get_vector("tau_so2");
+  k_so = params.get_vector("k_so");
+  u_so = params.get_vector("u_so");
+  tau_s1 = params.get_vector("tau_s1");
+  tau_s2 = params.get_vector("tau_s2");
+  k_s = params.get_vector("k_s");
+  u_s = params.get_vector("u_s");
+  tau_si = params.get_vector("tau_si");
+  tau_winf = params.get_vector("tau_winf");
+  ws_inf = params.get_vector("ws_inf");
+}
+
+void BuenoOrovio::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
+  IonicModel::distribute_parameters(cm_mod, cm);
+
+  cm.bcast(cm_mod, u_o);
+  cm.bcast(cm_mod, u_u);
+  cm.bcast(cm_mod, theta_v);
+  cm.bcast(cm_mod, theta_w);
+  cm.bcast(cm_mod, thetam_v);
+  cm.bcast(cm_mod, theta_o);
+  cm.bcast(cm_mod, taum_v1);
+  cm.bcast(cm_mod, taum_v2);
+  cm.bcast(cm_mod, taup_v);
+  cm.bcast(cm_mod, taum_w1);
+  cm.bcast(cm_mod, taum_w2);
+  cm.bcast(cm_mod, km_w);
+  cm.bcast(cm_mod, um_w);
+  cm.bcast(cm_mod, taup_w);
+  cm.bcast(cm_mod, tau_fi);
+  cm.bcast(cm_mod, tau_o1);
+  cm.bcast(cm_mod, tau_o2);
+  cm.bcast(cm_mod, tau_so1);
+  cm.bcast(cm_mod, tau_so2);
+  cm.bcast(cm_mod, k_so);
+  cm.bcast(cm_mod, u_so);
+  cm.bcast(cm_mod, tau_s1);
+  cm.bcast(cm_mod, tau_s2);
+  cm.bcast(cm_mod, k_s);
+  cm.bcast(cm_mod, u_s);
+  cm.bcast(cm_mod, tau_si);
+  cm.bcast(cm_mod, tau_winf);
+  cm.bcast(cm_mod, ws_inf);
+}
+
 void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
                        const Vector<double> &X, const Vector<double> &Xg,
                        Vector<double> &f, const double I_stim,

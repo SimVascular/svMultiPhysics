@@ -8,8 +8,7 @@
 
 #include <iostream>
 
-void IonicModel::set_initial_conditions(
-    const IonicInitialConditionsParameters &params) {
+void IonicModel::read_parameters(const IonicModelParameters &params) {
   const auto &params_X = params.get_initial_X();
   for (auto &[label, value] : initial_X)
     value = params_X[label];
@@ -19,8 +18,7 @@ void IonicModel::set_initial_conditions(
     value = params_Xg[label];
 }
 
-void IonicModel::distribute_initial_conditions(const CmMod &cm_mod,
-                                               const cmType &cm) {
+void IonicModel::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
   for (size_t i = 0; i < initial_X.size(); ++i)
     cm.bcast(cm_mod, &initial_X[i].second);
 

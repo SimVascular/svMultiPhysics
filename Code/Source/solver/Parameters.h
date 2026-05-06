@@ -16,6 +16,8 @@
 #include <variant>
 #include <vector>
 
+#include "Vector.h"
+
 #include "Core/Exception.h"
 #include "tinyxml2.h"
 
@@ -1220,10 +1222,10 @@ protected:
 ///
 /// Bundles initial conditions for the model's ionic concentrations and gating
 /// variables, represented by two instances of IonicInitialStateParameters.
-class IonicInitialConditionsParameters : public ParameterLists {
+class IonicModelParameters : public ParameterLists {
 public:
   /// Constructor.
-  IonicInitialConditionsParameters(
+  IonicModelParameters(
       const std::string &xml_element_name_,
       const std::vector<std::pair<std::string, double>> &initial_X,
       const std::vector<std::pair<std::string, double>> &initial_Xg);
@@ -1250,12 +1252,44 @@ public:
   /// Name of the XML element for this object.
   const std::string xml_element_name;
 
+  /// Get the value of a scalar parameter by label.
+  double get_scalar(const std::string &label) const {
+    return parameters.at(label).value();
+  }
+
+  /// Get the value of a vector parameter by label.
+  Vector<double> get_vector(const std::string &label) const {
+    auto param_value = vector_parameters.at(label).value();
+    return Vector<double>(param_value.size(), param_value.data());
+  }
+
 protected:
+  /// Add a new parameter to this object.
+  void add_parameter(const std::string &label, double default_value,
+                     bool required) {
+    set_parameter(label, default_value, required, parameters[label]);
+  }
+
+  /// Add a new vector parameter to this object.
+  void add_parameter(const std::string &label,
+                     std::initializer_list<double> default_value,
+                     bool required) {
+    set_parameter(label, default_value, required, vector_parameters[label]);
+  }
+
   /// Parameters for the state variables.
   IonicInitialStateParameters initial_X_parameters;
 
   /// Parameters for the gating variables.
   IonicInitialStateParameters initial_Xg_parameters;
+
+  /// Other parameters (i.e. other than initial conditions) are stored in a map
+  /// as key-parameter pairs. Derived classes should add parameters to this map
+  /// in their constructors by calling add_parameter.
+  std::map<std::string, Parameter<double>> parameters;
+
+  /// Vector parameters are stored in a map as key-parameter pairs.
+  std::map<std::string, VectorParameter<double>> vector_parameters;
 
   /// Flag indicating whether the values of the parameters stored in this
   /// object have been set.
@@ -1293,11 +1327,7 @@ class DomainParameters : public ParameterLists
     SolidViscosityParameters solid_viscosity;
 
     // Ionic model parameters.
-    // TTPInitialConditionsParameters ttp_initial_conditions;
-    // @todo This should be a map from ionic model type to initial conditions
-    // parameters, instead of strings.
-    std::map<std::string, IonicInitialConditionsParameters>
-        ionic_initial_conditions;
+    std::map<std::string, std::unique_ptr<IonicModelParameters>> ionic_models;
 
     // Attributes.
     Parameter<std::string> id;
@@ -1330,15 +1360,6 @@ class DomainParameters : public ParameterLists
     Parameter<int> maximum_iterations;
     Parameter<double> momentum_stabilization_coefficient;
     Parameter<std::string> myocardial_zone;
-
-    Parameter<double> G_Na;
-    Parameter<double> G_CaL;
-    Parameter<double> G_Kr;
-    Parameter<double> G_Ks;
-    Parameter<double> G_to;
-
-    Parameter<double> tau_fi;
-    Parameter<double> tau_si;
 
     Parameter<std::string> ode_solver;
     Parameter<double> penalty_parameter;

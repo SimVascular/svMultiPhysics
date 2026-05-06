@@ -1078,28 +1078,13 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     }
   }
 
-  // Set Ttp parameters.
-  std::map<Parameter<double>*,double*> simple_ttp_params{
-    {&domain_params->G_Na,  &lDmn.cep.ttp.G_Na},
-    {&domain_params->G_Kr,  &lDmn.cep.ttp.G_Kr},
-    {&domain_params->G_CaL, &lDmn.cep.ttp.G_CaL},
-    {&domain_params->G_Ks,  &lDmn.cep.ttp.G_Ks},
-    {&domain_params->G_to,  &lDmn.cep.ttp.G_to},
-  };
-
-  for (auto& [param, value] : simple_ttp_params) {
-    if (param->defined()) {
-      *value = param->value();
-    }
-  }
-
   // Instantiate the ionic model and set its initial conditions.
   {
     const std::string model_name = cep_model_type_to_name.at(model_type);
 
     lDmn.cep.ionic_model = IonicModelFactory::create_model(model_name);
-    lDmn.cep.ionic_model->set_initial_conditions(
-        domain_params->ionic_initial_conditions.at(model_name));
+    lDmn.cep.ionic_model->read_parameters(
+        *domain_params->ionic_models.at(model_name));
   }
 
   // Set stimulus parameters. 

@@ -16,41 +16,77 @@
  */
 class AlievPanfilov : public IonicModel {
 public:
+  /// Model label.
+  static inline const std::string label = "AP";
+
+  /// State variables.
+  static inline const InitialStates initial_X = {{"V", -80.0}, {"w", 1.0e-3}};
+
+  /// Gating variables.
+  static inline const InitialStates initial_Xg = {};
+
+  /// Index of the recovery variable (w), used as calcium proxy for
+  /// electromechanical coupling.
+  static constexpr unsigned int calcium_index = 1;
+
+  /// Model parameters class.
+  class Parameters : public IonicModelParameters {
+  public:
+    Parameters() : IonicModelParameters(label, initial_X, initial_Xg) {
+      constexpr bool required = true;
+
+      add_parameter("alpha", 1.0e-2, required);
+      add_parameter("a", 2.0e-3, required);
+      add_parameter("b", 0.15, required);
+      add_parameter("c", 8.0, required);
+      add_parameter("mu1", 0.20, required);
+      add_parameter("mu2", 0.30, required);
+    }
+  };
+
   /// Constructor.
   AlievPanfilov()
-      : IonicModel(/* initial_X_ = */ {{"V", -80.0}, {"w", 1.0e-3}},
-                   /* initial_Xg_ = */ {},
+      : IonicModel(initial_X, initial_Xg,
                    /* Vrest_ = */ -80.0, /* Vscale_ = */ 100.0,
                    /* Tscale_ = */ 12.90, /* Voffset_ = */ -80.0) {}
 
+  /// Construct an instance of model parameters.
+  virtual std::unique_ptr<IonicModelParameters>
+  get_parameters() const override {
+    return std::make_unique<Parameters>();
+  }
+
+  /// Read model parameters from a parameter object.
+  virtual void read_parameters(const IonicModelParameters &params) override;
+
+  /// Distribute model parameters to all parallel processes.
+  virtual void distribute_parameters(const CmMod &cm_mod,
+                                     const cmType &cm) override;
+
+  /// Get the calcium proxy index.
+  virtual unsigned int get_calcium_index() const override {
+    return calcium_index;
+  }
+
 protected:
   /// @name Model parameters
-  /// @todo Document units of measure.
+  /// @todo[michelebucelli] Document units of measure.
   /// @{
 
   /// Corresponding to parameter a in Aliev-Panfilov paper.
-  const double alpha = 1.0e-2;
+  double alpha = 1.0e-2;
 
   /// Corresponding to parameter epsilon0 in Aliev-Panfilov paper.
-  const double a = 2.0e-3;
+  double a = 2.0e-3;
 
   /// Corresponding to parameter a in Aliev-Panfilov paper.
-  const double b = 0.15;
+  double b = 0.15;
 
   /// Corresponding to parameter k in Aliev-Panfilov paper.
-  const double c = 8.0;
+  double c = 8.0;
 
-  const double mu1 = 0.20;
-  const double mu2 = 0.30;
-
-  /// Cell capacitance per unit surface area.
-  const double Cm = 1.0;
-
-  /// Membrane surface to volume ratio.
-  const double sV = 1.0;
-
-  /// Cellular resistivity.
-  const double rho = 1.0;
+  double mu1 = 0.20;
+  double mu2 = 0.30;
 
   /// @}
 

@@ -3,6 +3,29 @@
 
 #include "ionic_aliev_panfilov.h"
 
+void AlievPanfilov::read_parameters(const IonicModelParameters &params) {
+  IonicModel::read_parameters(params);
+
+  alpha = params.get_scalar("alpha");
+  a = params.get_scalar("a");
+  b = params.get_scalar("b");
+  c = params.get_scalar("c");
+  mu1 = params.get_scalar("mu1");
+  mu2 = params.get_scalar("mu2");
+}
+
+void AlievPanfilov::distribute_parameters(const CmMod &cm_mod,
+                                          const cmType &cm) {
+  IonicModel::distribute_parameters(cm_mod, cm);
+
+  cm.bcast(cm_mod, &alpha);
+  cm.bcast(cm_mod, &a);
+  cm.bcast(cm_mod, &b);
+  cm.bcast(cm_mod, &c);
+  cm.bcast(cm_mod, &mu1);
+  cm.bcast(cm_mod, &mu2);
+}
+
 void AlievPanfilov::getf(const unsigned int zone_id, const int nX, const int nG,
                          const Vector<double> &X, const Vector<double> &Xg,
                          Vector<double> &f, const double I_stim,

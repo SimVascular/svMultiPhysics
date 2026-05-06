@@ -18,15 +18,75 @@
  */
 class BuenoOrovio : public IonicModel {
 public:
+  /// Model label.
+  static inline const std::string label = "BO";
+
+  /// State variables.
+  static inline const InitialStates initial_X = {
+      {"u", -84.0}, {"v", 1.0}, {"w", 1.0}, {"s", 0.0}};
+
+  /// Gating variables.
+  static inline const InitialStates initial_Xg = {};
+
+  /// Index of the slow inward current gate (s), used as calcium proxy for
+  /// electromechanical coupling.
+  static constexpr unsigned int calcium_index = 3;
+
+  /// Model parameters class.
+  class Parameters : public IonicModelParameters {
+  public:
+    Parameters() : IonicModelParameters(label, initial_X, initial_Xg) {
+      constexpr bool required = true;
+
+      add_parameter("u_o", {0.0, 0.0, 0.0}, required);
+      add_parameter("u_u", {1.550, 1.56, 1.61}, required);
+      add_parameter("theta_v", {0.30, 0.3, 0.3}, required);
+      add_parameter("theta_w", {0.130, 0.13, 0.13}, required);
+      add_parameter("thetam_v", {6.E-3, 0.2, 0.1}, required);
+      add_parameter("theta_o", {6.E-3, 6.E-3, 5.E-3}, required);
+      add_parameter("taum_v1", {60.0, 75., 80.}, required);
+      add_parameter("taum_v2", {1.15E3, 10., 1.4506}, required);
+      add_parameter("taup_v", {1.45060, 1.4506, 1.4506}, required);
+      add_parameter("taum_w1", {60.0, 6., 70.}, required);
+      add_parameter("taum_w2", {15.0, 140., 8.}, required);
+      add_parameter("km_w", {65.0, 200., 200.}, required);
+      add_parameter("um_w", {3.E-2, 1.6E-2, 1.6E-2}, required);
+      add_parameter("taup_w", {200.0, 280., 280.}, required);
+      add_parameter("tau_fi", {0.110, 0.1, 0.078}, required);
+      add_parameter("tau_o1", {400.0, 470., 410.}, required);
+      add_parameter("tau_o2", {6.0, 6., 7.}, required);
+      add_parameter("tau_so1", {30.01810, 40., 91.}, required);
+      add_parameter("tau_so2", {0.99570, 1.2, 0.8}, required);
+      add_parameter("k_so", {2.04580, 2., 2.1}, required);
+      add_parameter("u_so", {0.650, 0.65, 0.6}, required);
+      add_parameter("tau_s1", {2.73420, 2.7342, 2.7342}, required);
+      add_parameter("tau_s2", {16.0, 2., 2.}, required);
+      add_parameter("k_s", {2.09940, 2.0994, 2.0994}, required);
+      add_parameter("u_s", {0.90870, 0.9087, 0.9087}, required);
+      add_parameter("tau_si", {1.88750, 2.9013, 3.3849}, required);
+      add_parameter("tau_winf", {7.E-2, 2.73E-2, 1.E-2}, required);
+      add_parameter("ws_inf", {0.940, 0.78, 0.5}, required);
+    }
+  };
+
   /// Constructor.
   BuenoOrovio()
-      : IonicModel(/* initial_X_ = */ {{"u", -84.0},
-                                       {"v", 1.0},
-                                       {"w", 1.0},
-                                       {"s", 0.0}},
-                   /* initial_Xg_ = */ {},
+      : IonicModel(initial_X, initial_Xg,
                    /* Vrest_ = */ -84.0, /* Vscale_ = */ 85.70,
                    /* Tscale_ = */ 1.0, /* Voffset_ = */ -84.0) {}
+
+  /// Construct an instance of model parameters.
+  virtual std::unique_ptr<IonicModelParameters>
+  get_parameters() const override {
+    return std::make_unique<Parameters>();
+  }
+
+  /// Read model parameters from a parameter object.
+  virtual void read_parameters(const IonicModelParameters &params) override;
+
+  /// Distribute model parameters to all parallel processes.
+  virtual void distribute_parameters(const CmMod &cm_mod,
+                                     const cmType &cm) override;
 
 protected:
   /// @name Model parameters
@@ -39,34 +99,34 @@ protected:
   /// \todo [TODO:DaveP] these guys should be maps map<int,double>.
   using ModelParam = Vector<double>;
 
-  const ModelParam u_o = {0.0, 0.0, 0.0};
-  const ModelParam u_u = {1.550, 1.56, 1.61};
-  const ModelParam theta_v = {0.30, 0.3, 0.3};
-  const ModelParam theta_w = {0.130, 0.13, 0.13};
-  const ModelParam thetam_v = {6.E-3, 0.2, 0.1};
-  const ModelParam theta_o = {6.E-3, 6.E-3, 5.E-3};
-  const ModelParam taum_v1 = {60.0, 75., 80.};
-  const ModelParam taum_v2 = {1.15E3, 10., 1.4506};
-  const ModelParam taup_v = {1.45060, 1.4506, 1.4506};
-  const ModelParam taum_w1 = {60.0, 6., 70.};
-  const ModelParam taum_w2 = {15.0, 140., 8.};
-  const ModelParam km_w = {65.0, 200., 200.};
-  const ModelParam um_w = {3.E-2, 1.6E-2, 1.6E-2};
-  const ModelParam taup_w = {200.0, 280., 280.};
-  const ModelParam tau_fi = {0.110, 0.1, 0.078};
-  const ModelParam tau_o1 = {400.0, 470., 410.};
-  const ModelParam tau_o2 = {6.0, 6., 7.};
-  const ModelParam tau_so1 = {30.01810, 40., 91.};
-  const ModelParam tau_so2 = {0.99570, 1.2, 0.8};
-  const ModelParam k_so = {2.04580, 2., 2.1};
-  const ModelParam u_so = {0.650, 0.65, 0.6};
-  const ModelParam tau_s1 = {2.73420, 2.7342, 2.7342};
-  const ModelParam tau_s2 = {16.0, 2., 2.};
-  const ModelParam k_s = {2.09940, 2.0994, 2.0994};
-  const ModelParam u_s = {0.90870, 0.9087, 0.9087};
-  const ModelParam tau_si = {1.88750, 2.9013, 3.3849};
-  const ModelParam tau_winf = {7.E-2, 2.73E-2, 1.E-2};
-  const ModelParam ws_inf = {0.940, 0.78, 0.5};
+  ModelParam u_o = {0.0, 0.0, 0.0};
+  ModelParam u_u = {1.550, 1.56, 1.61};
+  ModelParam theta_v = {0.30, 0.3, 0.3};
+  ModelParam theta_w = {0.130, 0.13, 0.13};
+  ModelParam thetam_v = {6.E-3, 0.2, 0.1};
+  ModelParam theta_o = {6.E-3, 6.E-3, 5.E-3};
+  ModelParam taum_v1 = {60.0, 75., 80.};
+  ModelParam taum_v2 = {1.15E3, 10., 1.4506};
+  ModelParam taup_v = {1.45060, 1.4506, 1.4506};
+  ModelParam taum_w1 = {60.0, 6., 70.};
+  ModelParam taum_w2 = {15.0, 140., 8.};
+  ModelParam km_w = {65.0, 200., 200.};
+  ModelParam um_w = {3.E-2, 1.6E-2, 1.6E-2};
+  ModelParam taup_w = {200.0, 280., 280.};
+  ModelParam tau_fi = {0.110, 0.1, 0.078};
+  ModelParam tau_o1 = {400.0, 470., 410.};
+  ModelParam tau_o2 = {6.0, 6., 7.};
+  ModelParam tau_so1 = {30.01810, 40., 91.};
+  ModelParam tau_so2 = {0.99570, 1.2, 0.8};
+  ModelParam k_so = {2.04580, 2., 2.1};
+  ModelParam u_so = {0.650, 0.65, 0.6};
+  ModelParam tau_s1 = {2.73420, 2.7342, 2.7342};
+  ModelParam tau_s2 = {16.0, 2., 2.};
+  ModelParam k_s = {2.09940, 2.0994, 2.0994};
+  ModelParam u_s = {0.90870, 0.9087, 0.9087};
+  ModelParam tau_si = {1.88750, 2.9013, 3.3849};
+  ModelParam tau_winf = {7.E-2, 2.73E-2, 1.E-2};
+  ModelParam ws_inf = {0.940, 0.78, 0.5};
 
   /// @}
 

@@ -20,22 +20,60 @@
  */
 class FitzHughNagumo : public IonicModel {
 public:
+  /// Model label.
+  static inline const std::string label = "FN";
+
+  /// State variables.
+  static inline const InitialStates initial_X = {{"V", 1.0e-3}, {"w", 1.0e-3}};
+
+  /// Gating variables.
+  static inline const InitialStates initial_Xg = {};
+
+  /// Index of the recovery variable (w), used as calcium proxy for
+  /// electromechanical coupling.
+  static constexpr unsigned int calcium_index = 1;
+
+  /// Model parameters class.
+  class Parameters : public IonicModelParameters {
+  public:
+    Parameters() : IonicModelParameters(label, initial_X, initial_Xg) {
+      constexpr bool required = true;
+
+      add_parameter("alpha", -0.50, required);
+      add_parameter("a", 0.0, required);
+      add_parameter("b", -0.60, required);
+      add_parameter("c", 50.0, required);
+    }
+  };
+
   /// Constructor.
   FitzHughNagumo()
-      : IonicModel(/* initial_X_ = */ {{"V", 1.0e-3}, {"w", 1.0e-3}},
-                   /* initial_Xg_ = */ {},
+      : IonicModel(initial_X, initial_Xg,
                    /* Vrest_ = */ 0.0, /* Vscale_ = */ 1.0,
                    /* Tscale_ = */ 1.0, /* Voffset_ = */ 0.0) {}
+
+  /// Construct an instance of model parameters.
+  virtual std::unique_ptr<IonicModelParameters>
+  get_parameters() const override {
+    return std::make_unique<Parameters>();
+  }
+
+  /// Read model parameters from a parameter object.
+  virtual void read_parameters(const IonicModelParameters &params) override;
+
+  /// Distribute model parameters to all parallel processes.
+  virtual void distribute_parameters(const CmMod &cm_mod,
+                                     const cmType &cm) override;
 
 protected:
   /// @name Model parameters
   /// @todo Document units of measure.
   /// @{
 
-  const double alpha = -0.50;
-  const double a = 0.0;
-  const double b = -0.60;
-  const double c = 50.0;
+  double alpha = -0.50;
+  double a = 0.0;
+  double b = -0.60;
+  double c = 50.0;
 
   /// @}
 

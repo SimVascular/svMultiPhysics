@@ -78,14 +78,21 @@ public:
   virtual ~IonicModel() = default;
 
   /**
-   * @brief Set model initial conditions from a parameter object.
+   * @brief Construct an instance of model parameters for this model.
    */
-  void set_initial_conditions(const IonicInitialConditionsParameters &params);
+  virtual std::unique_ptr<IonicModelParameters> get_parameters() const {
+    return nullptr;
+  };
 
   /**
-   * @brief Distribute initial conditions to all parallel processes.
+   * @brief Read model parameters from a parameter object.
    */
-  void distribute_initial_conditions(const CmMod &cm_mod, const cmType &cm);
+  virtual void read_parameters(const IonicModelParameters &params);
+
+  /**
+   * @brief Distribute model parameters to all parallel processes.
+   */
+  virtual void distribute_parameters(const CmMod &cm_mod, const cmType &cm);
 
   /**
    * @brief Setup model initial conditions.
