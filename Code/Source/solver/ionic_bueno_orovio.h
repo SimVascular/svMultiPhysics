@@ -95,43 +95,44 @@ public:
 
 protected:
   /// @name Model parameters
-  /// @todo[michelebucelli] Document units of measure.
   /// @{
 
   /// Alias for model parameters container. The three entries in each of these
   /// correspond to epicardium, endocardium and myocardium, respectively (see
   /// also table 1 in the reference paper).
   /// \todo [TODO:DaveP] these guys should be maps map<int,double>.
+  /// @todo[michelebucelli] Would it make sense to treat these in the same way
+  /// as the epi/endo/myo zone are treated in the TTP model?
   using ModelParam = Vector<double>;
 
-  ModelParam u_o = {0.0, 0.0, 0.0};
-  ModelParam u_u = {1.550, 1.56, 1.61};
-  ModelParam theta_v = {0.30, 0.3, 0.3};
-  ModelParam theta_w = {0.130, 0.13, 0.13};
-  ModelParam thetam_v = {6.E-3, 0.2, 0.1};
-  ModelParam theta_o = {6.E-3, 6.E-3, 5.E-3};
-  ModelParam taum_v1 = {60.0, 75., 80.};
-  ModelParam taum_v2 = {1.15E3, 10., 1.4506};
-  ModelParam taup_v = {1.45060, 1.4506, 1.4506};
-  ModelParam taum_w1 = {60.0, 6., 70.};
-  ModelParam taum_w2 = {15.0, 140., 8.};
-  ModelParam km_w = {65.0, 200., 200.};
-  ModelParam um_w = {3.E-2, 1.6E-2, 1.6E-2};
-  ModelParam taup_w = {200.0, 280., 280.};
-  ModelParam tau_fi = {0.110, 0.1, 0.078};
-  ModelParam tau_o1 = {400.0, 470., 410.};
-  ModelParam tau_o2 = {6.0, 6., 7.};
-  ModelParam tau_so1 = {30.01810, 40., 91.};
-  ModelParam tau_so2 = {0.99570, 1.2, 0.8};
-  ModelParam k_so = {2.04580, 2., 2.1};
-  ModelParam u_so = {0.650, 0.65, 0.6};
-  ModelParam tau_s1 = {2.73420, 2.7342, 2.7342};
-  ModelParam tau_s2 = {16.0, 2., 2.};
-  ModelParam k_s = {2.09940, 2.0994, 2.0994};
-  ModelParam u_s = {0.90870, 0.9087, 0.9087};
-  ModelParam tau_si = {1.88750, 2.9013, 3.3849};
-  ModelParam tau_winf = {7.E-2, 2.73E-2, 1.E-2};
-  ModelParam ws_inf = {0.940, 0.78, 0.5};
+  ModelParam u_o = {0.0, 0.0, 0.0};              ///< [1].
+  ModelParam u_u = {1.550, 1.56, 1.61};          ///< [1].
+  ModelParam theta_v = {0.30, 0.3, 0.3};         ///< [1].
+  ModelParam theta_w = {0.130, 0.13, 0.13};      ///< [1].
+  ModelParam thetam_v = {6.E-3, 0.2, 0.1};       ///< [1].
+  ModelParam theta_o = {6.E-3, 6.E-3, 5.E-3};    ///< [1].
+  ModelParam taum_v1 = {60.0, 75., 80.};         ///< [1/s].
+  ModelParam taum_v2 = {1.15E3, 10., 1.4506};    ///< [1/s].
+  ModelParam taup_v = {1.45060, 1.4506, 1.4506}; ///< [1/s].
+  ModelParam taum_w1 = {60.0, 6., 70.};          ///< [1/s].
+  ModelParam taum_w2 = {15.0, 140., 8.};         ///< [1/s].
+  ModelParam km_w = {65.0, 200., 200.};          ///< [1].
+  ModelParam um_w = {3.E-2, 1.6E-2, 1.6E-2};     ///< [1].
+  ModelParam taup_w = {200.0, 280., 280.};       ///< [1/s].
+  ModelParam tau_fi = {0.110, 0.1, 0.078};       ///< [1/s].
+  ModelParam tau_o1 = {400.0, 470., 410.};       ///< [1/s].
+  ModelParam tau_o2 = {6.0, 6., 7.};             ///< [1/s].
+  ModelParam tau_so1 = {30.01810, 40., 91.};     ///< [1/s].
+  ModelParam tau_so2 = {0.99570, 1.2, 0.8};      ///< [1/s].
+  ModelParam k_so = {2.04580, 2., 2.1};          ///< [1].
+  ModelParam u_so = {0.650, 0.65, 0.6};          ///< [1].
+  ModelParam tau_s1 = {2.73420, 2.7342, 2.7342}; ///< [1/s].
+  ModelParam tau_s2 = {16.0, 2., 2.};            ///< [1/s].
+  ModelParam k_s = {2.09940, 2.0994, 2.0994};    ///< [1].
+  ModelParam u_s = {0.90870, 0.9087, 0.9087};    ///< [1].
+  ModelParam tau_si = {1.88750, 2.9013, 3.3849}; ///< [1/s].
+  ModelParam tau_winf = {7.E-2, 2.73E-2, 1.E-2}; ///< [1/s].
+  ModelParam ws_inf = {0.940, 0.78, 0.5};        ///< [1].
 
   /// @}
 

@@ -70,23 +70,22 @@ public:
 
 protected:
   /// @name Model parameters
-  /// @todo[michelebucelli] Document units of measure.
   /// @{
 
-  /// Corresponding to parameter a in Aliev-Panfilov paper.
+  /// Corresponding to parameter a in Aliev-Panfilov paper [1].
   double alpha = 1.0e-2;
 
-  /// Corresponding to parameter epsilon0 in Aliev-Panfilov paper.
+  /// Corresponding to parameter epsilon0 in Aliev-Panfilov paper [1].
   double a = 2.0e-3;
 
-  /// Corresponding to parameter a in Aliev-Panfilov paper.
+  /// Corresponding to parameter a in Aliev-Panfilov paper [1].
   double b = 0.15;
 
-  /// Corresponding to parameter k in Aliev-Panfilov paper.
+  /// Corresponding to parameter k in Aliev-Panfilov paper [1].
   double c = 8.0;
 
-  double mu1 = 0.20;
-  double mu2 = 0.30;
+  double mu1 = 0.20; ///< [1].
+  double mu2 = 0.30; ///< [1].
 
   /// @}
 

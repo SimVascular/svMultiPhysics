@@ -293,8 +293,30 @@ protected:
 
   /// @}
 
-  /// Update variable with analytical solution. This applies to the model's
-  /// gating variables.
+  /**
+   * @brief Update gating variables.
+   *
+   * The evolution rate of all the gating variables for this model has an
+   * expression in the form:
+   * @f[
+   *   \frac{\text{d}y}{\text{d}t} = \frac{y_\infty(v) - y}{\tau(v)}\;,
+   * @f]
+   * with @f$v@f$ denotes the transmembrane potential. Assuming @f$v@f$ to be
+   * constant over the integration step, the above equation admits the following
+   * exact solution:
+   * @f[
+   *   y^{n+1} = y_\infty(v) - (y_\infty(v) - y^n) e^{-\Delta t / \tau(v)}\;.
+   * @f]
+   * Accordingly, this function goes through all gating variables, computes
+   * the values of @f$y_\infty(v)\f$ and @f$\tau(v)\f$, and updates the
+   * gating variables using the above formula.
+   *
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in] dt Time step.
+   * @param[in] X Vector of state variables.
+   * @param[out] Xg Vector of gating variables.
+   */
   virtual void update_g(const unsigned int zone_id, const double dt,
                         const Vector<double> &X,
                         Vector<double> &Xg) const override;

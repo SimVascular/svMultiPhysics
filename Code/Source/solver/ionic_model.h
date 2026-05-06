@@ -25,7 +25,7 @@
  * @f[ \begin{aligned}
  *   \frac{\partial v}{\partial t} + I_\text{ion}(v, \mathbf{w}) &=
  *      I_\text{ext}(t) \\
- *   \frac{\partial \mathbf{w}}{\partial t} &= \mathbf{F}(v, \mathbf{w})
+ *   \frac{\partial \mathbf{w}}{\partial t} &= \mathbf{f}(v, \mathbf{w})
  * \end{aligned} @f]
  * where @f$v@f$ is the transmembrane potential, @f$\mathbf{w}@f$ is a vector of
  * ionic model variables (which may be gating variables or ionic
@@ -39,26 +39,54 @@
  * **References**:
  *  - Colli Franzone, Pavarino, Scacchi. Mathematical Cardiac Electrophysiology.
  *    Springer, 2014.
- *
- * @todo[michelebucelli] Document stretch-activated current.
+ *  - Goktepe, Kuhl. Computational Modeling of Cardiac Electrophysiology: a
+ *    Novel Finite Element Approach. International Journal for Numerical Methods
+ *    in Biomedical Engineering, 2009.
  *
  * ### Numerical methods
  *
- * @todo[michelebucelli]
+ * The vector of state variables @f$\mathbf{w}@f$ is partitioned into two
+ * groups, the state variables @f$\mathbf{x}@f$ (including the transmembrane
+ * potential @f$v@f$) and the gating variables @f$\mathbf{x}_g@f$. The ODE
+ * system is advanced through a Rush-Larsen scheme, in which the gating
+ * variables are updated through an analytical expression and the state
+ * variables through a time-stepping scheme.
  *
- * ### Implementation details
+ * This class currently supports forward Euler (FE), fourth-order explicit
+ * Runge-Kutta (RK) and Crank-Nicolson (CN) for advancing the state variables.
+ * Refer to the documentation of the functions integ_fe, integ_rk and integ_cn2
+ * for details on the individual methods. Beware that the CN method is only
+ * supported for ionic models that implement the getj method, and an exception
+ * is raised otherwise.
  *
- * @todo[michelebucelli]
+ * ### Implementing concrete ionic models
  *
- * @todo[michelebucelli] The number of state variables in the model should be moved to this
- * class.
+ * To implement a new ionic model, the following steps need to be taken:
+ *
+ * 1. Create a class derived from @ref IonicModel.
+ * 2. Override the methods @ref init, @ref update_g, @ref getf for that ionic
+ *    model. If implicit solvers are desired, also override @ref getj.
+ * 3. Create a class derived from @ref IonicModelParameters to manage the
+ *    parameters specific to the new ionic model.
+ * 4. Override the methods @ref get_parameters, @ref read_parameters and @ref
+ *    distribute_parameters to manage the parameters of the new ionic model.
+ * 5. Override the @ref get_calcium_index method to return the index of the
+ *    calcium proxy variable.
+ * 6. Register the new class into the ionic model factory by using the macro
+ *    @ref REGISTER_IONIC_MODEL. The macro should be called in a `.cpp`
+ *    file, not in a header file.
+ * 7. Edit the files `CepMod.h` and `CepMod.cpp` to add the label for the new
+ *    ionic model type.
+ *
+ * @todo[michelebucelli] The number of state variables in the model should be
+ * moved to this class.
  */
 class IonicModel {
 public:
   /// Alias for initial states vector. Each initial state is a pair of a label
   /// for that state variable and its initial value.
-  /// @todo[michelebucelli] This would work better with a struct, due to the fields having
-  /// meaningful names instead of first and second.
+  /// @todo[michelebucelli] This would work better with a struct, due to the
+  /// fields having meaningful names instead of first and second.
   using InitialStates = std::vector<std::pair<std::string, double>>;
 
   /// Constructor.
@@ -86,11 +114,19 @@ public:
 
   /**
    * @brief Read model parameters from a parameter object.
+   *
+   * By default, this method only takes care of the parameters related to
+   * initial states. If a derived ionic model has other parameters, then this
+   * method should be overridden to read those as well.
    */
   virtual void read_parameters(const IonicModelParameters &params);
 
   /**
    * @brief Distribute model parameters to all parallel processes.
+   *
+   * By default, this method only takes care of the parameters related to
+   * initial states. If a derived ionic model has other parameters, then this
+   * method should be overridden to distribute those as well.
    */
   virtual void distribute_parameters(const CmMod &cm_mod, const cmType &cm);
 
@@ -108,33 +144,108 @@ public:
    */
 
   /**
-   * @brief Integrate the model with the Crank-Nicolson method.
-   *
-   * @todo[michelebucelli] Document numerical formulation.
-   */
-  void integ_cn2(const unsigned int zone_id, Vector<double> &X,
-                 Vector<double> &Xg, const double Ts, const double Ti,
-                 const double Istim, const double Ksac,
-                 const unsigned int max_iter, const double rtol,
-                 const double atol) const;
-
-  /**
    * @brief Integrate the model with the forward Euler method.
    *
-   * @todo[michelebucelli] Document numerical formulation.
+   * @f[ \begin{aligned}
+   *   \mathbf{x}^{n+1} &=
+   *     \mathbf{x}^n + \Delta t \mathbf{f}(\mathbf{x}^n, \mathbf{x}_g^n) \\
+   *   \mathbf{x}_g^{n+1} &=
+   *     \texttt{update_g}(\Delta t, \mathbf{x}^n, \mathbf{x}_g^n)
+   * \end{aligned} @f]
+   *
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in,out] X Vector of state variables to be updated.
+   * @param[in,out] Xg Vector of gating variables to be updated.
+   * @param[in] Ts Current time.
+   * @param[in] Ti Time step.
+   * @param[in] Istim Applied current.
+   * @param[in] Ksac Stretch-activated current coefficient.
    */
   void integ_fe(const unsigned int zone_id, Vector<double> &X,
                 Vector<double> &Xg, const double Ts, const double Ti,
                 const double Istim, const double Ksac) const;
 
   /**
-   * @brief Integrate the model with the Runge-Kutta method.
+   * @brief Integrate the model with the fourth-order explicit Runge-Kutta
+   * method.
    *
-   * @todo[michelebucelli] Document numerical formulation.
+   * @f[ \begin{aligned}
+   *   \mathbf{x}^{(1)} &= \mathbf{x}^n \\
+   *   \mathbf{f}^{(1)} &= \mathbf{f}(\mathbf{x}^{(1)}, \mathbf{x}_g^n) \\
+   *   \mathbf{x}_g^{(1)} &=
+   *     \texttt{update_g}(\Delta t/2, \mathbf{x}^{(1)}, \mathbf{x}_g^n) \\
+   *   \\
+   *   \mathbf{x}^{(2)} &= \mathbf{x}^n + \frac{\Delta t}{2}\mathbf{f}^{(1)} \\
+   *   \mathbf{f}^{(2)} &= \mathbf{f}(\mathbf{x}^{(2)}, \mathbf{x}_g^{(1)}) \\
+   *   \\
+   *   \mathbf{x}^{(3)} &= \mathbf{x}^n + \frac{\Delta t}{2}\mathbf{f}^{(2)} \\
+   *   \mathbf{f}^{(3)} &= \mathbf{f}(\mathbf{x}^{(3)}, \mathbf{x}_g^{(1)}) \\
+   *   \\
+   *   \mathbf{x}_g^{(4)} &=
+   *     \texttt{update_g}(\Delta t, \mathbf{x}^{(1)}, \mathbf{x}_g^{(1)}) \\
+   *   \mathbf{x}^{(4)} &= \mathbf{x} + \Delta t \mathbf{f}^{(3)} \\
+   *   \mathbf{f}^{(4)} &= \mathbf{f}(\mathbf{x}^{(4)}, \mathbf{x}_g^{(4)}) \\
+   *   \\
+   *   \mathbf{x}^{n+1} &= \mathbf{x} + \frac{\Delta t}{6} \left(
+   *     \mathbf{f}^{(1)} + 2\mathbf{f}^{(2)} +
+   *     2\mathbf{f}^{(3)} + \mathbf{f}^{(4)} \right) \\
+   *   \mathbf{x}_g^{n+1} &= \mathbf{x}_g^{(4)}
+   * \end{aligned} @f]
+   *
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in,out] X Vector of state variables to be updated.
+   * @param[in,out] Xg Vector of gating variables to be updated.
+   * @param[in] Ts Current time.
+   * @param[in] Ti Time step.
+   * @param[in] Istim Applied current.
+   * @param[in] Ksac Stretch-activated current coefficient.
    */
   void integ_rk(const unsigned int zone_id, Vector<double> &X,
                 Vector<double> &Xg, const double Ts, const double Ti,
                 const double Istim, const double Ksac) const;
+
+  /**
+   * @brief Integrate the model with the Crank-Nicolson method.
+   *
+   * The state variables @f$\mathbf{x}@f$ are updated by solving the following
+   * non-linear problem:
+   * @f[
+   *   \frac{\mathbf{x}^{n+1} - \mathbf{x}^n}{\Delta t} = \frac{1}{2} \left(
+   *     \mathbf{f}(\mathbf{x}^n, \mathbf{x}_g^n) +
+   *     \mathbf{f}(\mathbf{x}^{n+1}, \mathbf{x}_g^n) \right)
+   * @f]
+   * The problem is solved through Newton's method. Subsequently, the gating
+   * variables are updated:
+   * @f[
+   *   \mathbf{x}_g^{n+1} =
+   *     \texttt{update_g}(\Delta t, \mathbf{x}^{n+1}, \mathbf{x}_g^n)
+   * @f]
+   *
+   * Since this method involves solving a nonlinear system of equations, it is
+   * only available for those derived classes that implement the Jacobian matrix
+   * of the system through getj. An exception will be raised otherwise.
+   *
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in,out] X Vector of state variables to be updated.
+   * @param[in,out] Xg Vector of gating variables to be updated.
+   * @param[in] Ts Current time.
+   * @param[in] Ti Time step.
+   * @param[in] Istim Applied current.
+   * @param[in] Ksac Stretch-activated current coefficient.
+   * @param[in] max_iter Maximum number of Newton iterations. Beware that no
+   *   error is raised if the maximum number of iterations is reached, so that
+   *   the solution might be affected by the truncation of the iterations.
+   * @param[in] rtol Relative tolerance for the Newton method.
+   * @param[in] atol Absolute tolerance for the Newton method.
+   */
+  void integ_cn2(const unsigned int zone_id, Vector<double> &X,
+                 Vector<double> &Xg, const double Ts, const double Ti,
+                 const double Istim, const double Ksac,
+                 const unsigned int max_iter, const double rtol,
+                 const double atol) const;
 
   /**
    * @}
@@ -181,7 +292,11 @@ protected:
   /**
    * @brief Update variables with analytical solution.
    *
-   * @todo[michelebucelli] Extend documentation.
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in] dt Time step.
+   * @param[in] X Vector of state variables.
+   * @param[out] Xg Vector of gating variables.
    */
   virtual void update_g(const unsigned int zone_id, const double dt,
                         const Vector<double> &X, Vector<double> &Xg) const = 0;
@@ -192,7 +307,13 @@ protected:
    * Defines the right-hand side function for the potential and ionic equations.
    * Must be ovverridden in derived classes.
    *
-   * @todo[michelebucelli] Document the meaning of the individual parameters.
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in] X Vector of state variables.
+   * @param[in] Xg Vector of gating variables.
+   * @param[out] f Right-hand side of the model equations.
+   * @param[in] I_stim Applied current.
+   * @param[in] I_sac Stretch-activated current.
    */
   virtual void getf(const unsigned int zone_id, const Vector<double> &X,
                     const Vector<double> &Xg, Vector<double> &f,
@@ -204,11 +325,19 @@ protected:
    * Defines the jacobian matrix of the model equations, that is the matirx of
    * derivatives of the function evaulated by getf.
    *
-   * @todo[michelebucelli] Document the meaning of the individual parameters.
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in] X Vector of state variables.
+   * @param[in] Xg Vector of gating variables.
+   * @param[out] Jac Jacobian matrix.
+   * @param[in] Ksac Stretch-activated current coefficient.
    */
   virtual void getj(const unsigned int zone_id, const Vector<double> &X,
                     const Vector<double> &Xg, Array<double> &Jac,
-                    const double Ksac) const = 0;
+                    const double Ksac) const {
+    svmp::raise<svmp::FE::NotImplementedException>(
+        SVMP_HERE, "getj method not implemented for this ionic model.");
+  }
 
   /// Initial states.
   InitialStates initial_X;
@@ -227,18 +356,17 @@ protected:
    * e.g. to bring them into dimensionless form. These are the factors used for
    * that purpose. They are assigned in the constructor of this class.
    *
-   * @todo[michelebucelli] Document units of measure.
-   *
    * @{
    */
 
-  /// Voltage scaling.
+  /// Voltage scaling [mV].
   const double Vscale;
 
   /// Time scaling.
+  /// @todo[michelebucelli] Document unit of measure.
   const double Tscale;
 
-  /// Voltage offset parameter.
+  /// Voltage offset parameter [mV].
   const double Voffset;
 
   /**

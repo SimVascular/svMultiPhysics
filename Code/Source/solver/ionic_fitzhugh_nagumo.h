@@ -72,13 +72,12 @@ public:
 
 protected:
   /// @name Model parameters
-  /// @todo[michelebucelli] Document units of measure.
   /// @{
 
-  double alpha = -0.50;
-  double a = 0.0;
-  double b = -0.60;
-  double c = 50.0;
+  double alpha = -0.50; ///< [1].
+  double a = 0.0;       ///< [1].
+  double b = -0.60;     ///< [1].
+  double c = 50.0;      ///< [1].
 
   /// @}
 
