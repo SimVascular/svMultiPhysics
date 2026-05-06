@@ -58,12 +58,11 @@ void cep_init(Simulation* simulation)
           }
           int nX = eq.dmn[iDmn].cep.nX;
           int nG = eq.dmn[iDmn].cep.nG;
-          int imyo = eq.dmn[iDmn].cep.imyo;
 
           Vector<double> Xl(nX); 
           Vector<double> Xgl(nG);
 
-          cep_init_l(eq.dmn[iDmn].cep, nX, nG, Xl, Xgl);
+          cep_init_l(eq.dmn[iDmn].cep, Xl, Xgl);
 
           sA(a) = sA(a) + 1.0;
 
@@ -98,7 +97,7 @@ void cep_init(Simulation* simulation)
         Vector<double> Xl(nX); 
         Vector<double> Xgl(nG);
 
-        cep_init_l(eq.dmn[0].cep, nX, nG, Xl, Xgl);
+        cep_init_l(eq.dmn[0].cep, Xl, Xgl);
 
         for (int i = 0; i < nX; i++) {
           cep_mod.Xion(i,a) = Xl(i);
@@ -115,9 +114,8 @@ void cep_init(Simulation* simulation)
 // cep_init_l
 //------------
 //
-void cep_init_l(cepModelType &cep, int nX, int nG, Vector<double> &X,
-                Vector<double> &Xg) {
-  cep.ionic_model->init(nX, nG, X, Xg);
+void cep_init_l(cepModelType &cep, Vector<double> &X, Vector<double> &Xg) {
+  cep.ionic_model->init(X, Xg);
 }
 
 //-----------
@@ -231,7 +229,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
           yl = cem.Ya(Ac);
         }
 
-        cep_integ_l(cep_mod, dmn.cep, nX, nG, Xl, Xgl, time-dt, yl, I4f(Ac), dt);
+        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt);
 
         sA(Ac) = sA(Ac) + 1.0;
         for (int i = 0; i < nX; i++) {
@@ -280,7 +278,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
         yl = cem.Ya(Ac);
       }
 
-      cep_integ_l(cep_mod, eq.dmn[0].cep, nX, nG, Xl, Xgl, time-dt, yl, I4f(Ac), dt);
+      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt);
 
       for (int i = 0; i < nX; i++) {
         Xion(i,Ac) = Xl(i);
@@ -308,9 +306,9 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 // integrate excitation-activation variables form coupled electro-
 // mechanics. The equations are integrated at domain nodes.
 //
-void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<double>& X, Vector<double>& Xg, 
-    const double t1, double& yl, const double I4f, const double dt)
-{
+void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
+                 Vector<double> &Xg, const double t1, double &yl,
+                 const double I4f, const double dt) {
   using namespace consts;
 
   #define n_debug_cep_integ_l
@@ -359,8 +357,7 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     for (unsigned int i = 0; i < nt; ++i) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_fe(cep.imyo, nX, nG, X, Xg, t, cep.dt, Istim,
-                                Ksac);
+      cep.ionic_model->integ_fe(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac);
     }
     break;
 
@@ -368,8 +365,7 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_rk(cep.imyo, nX, nG, X, Xg, t, cep.dt, Istim,
-                                Ksac);
+      cep.ionic_model->integ_rk(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac);
     }
     break;
 
@@ -385,8 +381,8 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_cn2(cep.imyo, nX, nG, X, Xg, t, cep.dt, Istim,
-                                 Ksac, IPAR, RPAR);
+      cep.ionic_model->integ_cn2(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac, IPAR,
+                                 RPAR);
     }
     break;
   }
@@ -395,5 +391,4 @@ void cep_integ_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<doub
     throw std::runtime_error("[cep_integ_l] A NaN has been computed during time integration of electrophysiology variables.");
   }
 }
-
 }

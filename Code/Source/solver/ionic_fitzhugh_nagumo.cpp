@@ -22,16 +22,14 @@ void FitzHughNagumo::distribute_parameters(const CmMod &cm_mod,
   cm.bcast(cm_mod, &c);
 }
 
-void FitzHughNagumo::getf(const unsigned int zone_id, const int nX,
-                          const int nG, const Vector<double> &X,
+void FitzHughNagumo::getf(const unsigned int zone_id, const Vector<double> &X,
                           const Vector<double> &Xg, Vector<double> &f,
                           const double I_stim, const double I_sac) const {
   f(0) = c * (X(0) * (X(0) - alpha) * (1.0 - X(0)) - X(1)) + I_stim + I_sac;
   f(1) = X(0) - b * X(1) + a;
 }
 
-void FitzHughNagumo::getj(const unsigned int zone_id, const int nX,
-                          const int nG, const Vector<double> &X,
+void FitzHughNagumo::getj(const unsigned int zone_id, const Vector<double> &X,
                           const Vector<double> &Xg, Array<double> &Jac,
                           const double Ksac) const {
   Jac = 0.0;

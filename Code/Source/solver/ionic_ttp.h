@@ -296,19 +296,18 @@ protected:
   /// Update variable with analytical solution. This applies to the model's
   /// gating variables.
   virtual void update_g(const unsigned int zone_id, const double dt,
-                        const int nX, const int nG, const Vector<double> &X,
+                        const Vector<double> &X,
                         Vector<double> &Xg) const override;
 
   /// Model right-hand side.
-  virtual void getf(const unsigned int zone_id, const int nX, const int nG,
-                    const Vector<double> &X, const Vector<double> &Xg,
-                    Vector<double> &f, const double I_stim,
-                    const double I_sac) const override;
+  virtual void getf(const unsigned int zone_id, const Vector<double> &X,
+                    const Vector<double> &Xg, Vector<double> &f,
+                    const double I_stim, const double I_sac) const override;
 
   /// Model jacobian.
-  virtual void getj(const unsigned int zone_id, const int nX, const int nG,
-                    const Vector<double> &X, const Vector<double> &Xg,
-                    Array<double> &Jac, const double Ksac) const override;
+  virtual void getj(const unsigned int zone_id, const Vector<double> &X,
+                    const Vector<double> &Xg, Array<double> &Jac,
+                    const double Ksac) const override;
 };
 
 #endif

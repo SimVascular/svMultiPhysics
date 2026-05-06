@@ -69,10 +69,9 @@ void BuenoOrovio::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
   cm.bcast(cm_mod, ws_inf);
 }
 
-void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
-                       const Vector<double> &X, const Vector<double> &Xg,
-                       Vector<double> &f, const double I_stim,
-                       const double I_sac) const {
+void BuenoOrovio::getf(const unsigned int zone_id, const Vector<double> &X,
+                       const Vector<double> &Xg, Vector<double> &f,
+                       const double I_stim, const double I_sac) const {
   // Create local copies of the state variables
   const double u = X(0);
   const double v = X(1);
@@ -111,9 +110,9 @@ void BuenoOrovio::getf(const unsigned int zone_id, const int nX, const int nG,
   f(3) = (0.5 * (1.0 + tanh(k_s[i] * (u - u_s[i]))) - s) / tau_s;
 }
 
-void BuenoOrovio::getj(const unsigned int zone_id, const int nX, const int nG,
-                       const Vector<double> &X, const Vector<double> &Xg,
-                       Array<double> &Jac, const double Ksac) const {
+void BuenoOrovio::getj(const unsigned int zone_id, const Vector<double> &X,
+                       const Vector<double> &Xg, Array<double> &Jac,
+                       const double Ksac) const {
   // Create local copies of the state variables
   const double u = X(0);
   const double v = X(1);

@@ -97,13 +97,10 @@ public:
   /**
    * @brief Setup model initial conditions.
    *
-   * @param[in] nX Number of state variables.
-   * @param[in] nG Number of gating variables.
    * @param[out] X Vector of state variables to be initialized.
    * @param[out] Xg Vector of gating variables to be initialized.
    */
-  void init(const int nX, const int nG, Vector<double> &X,
-            Vector<double> &Xg) const;
+  void init(Vector<double> &X, Vector<double> &Xg) const;
 
   /**
    * @name Integration methods.
@@ -118,28 +115,28 @@ public:
    * @todo[michelebucelli] IPAR and RPAR can probably be made const here. Also, the meaning of
    *       their entries needs to be documented.
    */
-  void integ_cn2(const unsigned int zone_id, const int nX, const int nG,
-                 Vector<double> &X, Vector<double> &Xg, const double Ts,
-                 const double Ti, const double Istim, const double Ksac,
-                 Vector<int> &IPAR, Vector<double> &RPAR) const;
+  void integ_cn2(const unsigned int zone_id, Vector<double> &X,
+                 Vector<double> &Xg, const double Ts, const double Ti,
+                 const double Istim, const double Ksac, Vector<int> &IPAR,
+                 Vector<double> &RPAR) const;
 
   /**
    * @brief Integrate the model with the forward Euler method.
    *
    * @todo[michelebucelli] Document numerical formulation.
    */
-  void integ_fe(const unsigned int zone_id, const int nX, const int nG,
-                Vector<double> &X, Vector<double> &Xg, const double Ts,
-                const double Ti, const double Istim, const double Ksac) const;
+  void integ_fe(const unsigned int zone_id, Vector<double> &X,
+                Vector<double> &Xg, const double Ts, const double Ti,
+                const double Istim, const double Ksac) const;
 
   /**
    * @brief Integrate the model with the Runge-Kutta method.
    *
    * @todo[michelebucelli] Document numerical formulation.
    */
-  void integ_rk(const unsigned int zone_id, const int nX, const int nG,
-                Vector<double> &X, Vector<double> &Xg, const double Ts,
-                const double Ti, const double Istim, const double Ksac) const;
+  void integ_rk(const unsigned int zone_id, Vector<double> &X,
+                Vector<double> &Xg, const double Ts, const double Ti,
+                const double Istim, const double Ksac) const;
 
   /**
    * @}
@@ -189,8 +186,7 @@ protected:
    * @todo[michelebucelli] Extend documentation.
    */
   virtual void update_g(const unsigned int zone_id, const double dt,
-                        const int nX, const int nG, const Vector<double> &X,
-                        Vector<double> &Xg) const = 0;
+                        const Vector<double> &X, Vector<double> &Xg) const = 0;
 
   /**
    * @brief Model right hand side.
@@ -200,10 +196,9 @@ protected:
    *
    * @todo[michelebucelli] Document the meaning of the individual parameters.
    */
-  virtual void getf(const unsigned int zone_id, const int nX, const int nG,
-                    const Vector<double> &X, const Vector<double> &Xg,
-                    Vector<double> &f, const double I_stim,
-                    const double I_sac) const = 0;
+  virtual void getf(const unsigned int zone_id, const Vector<double> &X,
+                    const Vector<double> &Xg, Vector<double> &f,
+                    const double I_stim, const double I_sac) const = 0;
 
   /**
    * @brief Model jacobian.
@@ -213,9 +208,9 @@ protected:
    *
    * @todo[michelebucelli] Document the meaning of the individual parameters.
    */
-  virtual void getj(const unsigned int zone_id, const int nX, const int nG,
-                    const Vector<double> &X, const Vector<double> &Xg,
-                    Array<double> &Jac, const double Ksac) const = 0;
+  virtual void getj(const unsigned int zone_id, const Vector<double> &X,
+                    const Vector<double> &Xg, Array<double> &Jac,
+                    const double Ksac) const = 0;
 
   /// Initial states.
   InitialStates initial_X;

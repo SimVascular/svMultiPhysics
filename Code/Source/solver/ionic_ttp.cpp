@@ -115,9 +115,8 @@ void TTP::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
   cm.bcast(cm_mod, &K_bufss);
 }
 
-void TTP::update_g(const unsigned int zone_id, const double dt, const int nX,
-                   const int nG, const Vector<double> &X,
-                   Vector<double> &Xg) const {
+void TTP::update_g(const unsigned int zone_id, const double dt,
+                   const Vector<double> &X, Vector<double> &Xg) const {
   // Local copies of state and gating variables.
   const double V = X(0);
   const double Ca_ss = X(4);
@@ -288,10 +287,9 @@ void TTP::update_g(const unsigned int zone_id, const double dt, const int nX,
   }
 }
 
-void TTP::getf(const unsigned int zone_id, const int nX, const int nG,
-               const Vector<double> &X, const Vector<double> &Xg,
-               Vector<double> &dX, const double I_stim,
-               const double I_sac) const {
+void TTP::getf(const unsigned int zone_id, const Vector<double> &X,
+               const Vector<double> &Xg, Vector<double> &dX,
+               const double I_stim, const double I_sac) const {
   // Local copies of state variables
   const double V = X(0);
   const double K_i = X(1);
@@ -454,9 +452,9 @@ void TTP::getf(const unsigned int zone_id, const int nX, const int nG,
   }
 }
 
-void TTP::getj(const unsigned int zone_id, const int nX, const int nG,
-               const Vector<double> &X, const Vector<double> &Xg,
-               Array<double> &Jac, const double Ksac) const {
+void TTP::getj(const unsigned int zone_id, const Vector<double> &X,
+               const Vector<double> &Xg, Array<double> &Jac,
+               const double Ksac) const {
   double a, b, c, tau, sq5, e1, e2, e3, e4, n1, n2, d1, d2, d3;
 
   // Local copies of state and gating variables
