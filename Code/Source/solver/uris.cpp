@@ -329,9 +329,7 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solu
       d = 0.0;
       for (int a = 0; a < mesh.eNoN; a++) {
         int Ac = mesh.IEN(a, iEln);
-        for (int i = 0; i < nsd; i++) {
-          d(i) += N(a)*Dn(nsd+i+1, Ac);
-        }
+        d = d + N(a) * Dn.rows(nsd+1, 2*nsd, Ac);
       }
       // update uris disp  
       localYd.set_col(nd, d);
@@ -1125,8 +1123,9 @@ void uris_read_sv(Simulation* simulation, mshType& mesh, const URISFaceParameter
 
 
 /// @brief Check whether point P lies inside a convex polygon (2D) or
-/// tetrahedron (3D) defined by vertices P1. Returns 1 if inside or on
-/// the boundary (when include_bdry is true), 0 otherwise.
+/// tetrahedron (3D) defined by vertices P1. Returns true if P is inside,
+/// or if P lies on the boundary and include_bdry is true; otherwise
+/// returns false.
 bool in_poly(const Vector<double>& P, const Array<double>& P1, bool include_bdry) {
   #define n_dbg_in_poly
   #ifdef dbg_in_poly
@@ -1163,7 +1162,7 @@ bool in_poly(const Vector<double>& P, const Array<double>& P1, bool include_bdry
   }
 }
 
-/// @brief Chech if a point is on the same side of anotehr point wrt a triangle in 3D
+/// @brief Check if a point is on the same side of another point wrt a triangle in 3D
 bool same_side(const Vector<double>& v1, const Vector<double>& v2,
                const Vector<double>& v3, const Vector<double>& v4,
                const Vector<double>& p,  bool include_bdry) {

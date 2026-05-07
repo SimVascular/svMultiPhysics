@@ -1491,7 +1491,7 @@ class urisType
     // Iteration count.
     int cnt = 1000000;
 
-    // Signed distance function of each surface node to the fluid mesh.
+    // Signed distance function indexed by fluid/background mesh node.
     Vector<double> sdf;
 
     // Mesh scale factor.
