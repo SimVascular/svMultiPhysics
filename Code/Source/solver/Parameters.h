@@ -16,6 +16,7 @@
 #include <variant>
 #include <vector>
 
+#include "Core/Exception.h"
 #include "tinyxml2.h"
 
 template<typename T>
@@ -136,7 +137,7 @@ class Parameter
       if (!(str_stream >> value_)) {
         std::istringstream str_stream(str);
         if (!(str_stream >> std::boolalpha >> value_)) {
-          throw std::runtime_error("Incorrect value '" + str + "' for '" + name_ + "'.");
+          svmp::raise<svmp::ParseException>(SVMP_HERE, "Incorrect value '" + str + "' for '" + name_ + "'.");
         }
       }
 
@@ -325,7 +326,7 @@ class ParameterLists
     void set_parameter_value_CANN(const std::string& name, const std::string& value) 
     {
       if (params_map.count(name) == 0) {
-        throw std::runtime_error("Unknown " + xml_element_name + " XML element '" + name + "'.");
+        svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name + " XML element '" + name + "'.");
       }
 
       auto& param_variant = params_map[name];
@@ -336,7 +337,7 @@ class ParameterLists
           (*vec_param)->value_.clear();  // Clear the vector before setting
           (*vec_param)->set(value);  // Set the new value
         } else {
-          throw std::runtime_error("Activation_functions is not a VectorParameter<int>.");
+          svmp::raise<svmp::ParseException>(SVMP_HERE, "Activation_functions is not a VectorParameter<int>.");
         }
       }
       // Check for Weights
@@ -345,7 +346,7 @@ class ParameterLists
           (*vec_param)->value_.clear();  // Clear the vector before setting
           (*vec_param)->set(value);  // Set the new value
         } else {
-          throw std::runtime_error("Weights is not a VectorParameter<double>.");
+          svmp::raise<svmp::ParseException>(SVMP_HERE, "Weights is not a VectorParameter<double>.");
         }
       }
       // Default: everything else
@@ -362,7 +363,7 @@ class ParameterLists
     void set_parameter_value(const std::string& name, const std::string& value) 
     {
       if (params_map.count(name) == 0) {
-        throw std::runtime_error("Unknown " + xml_element_name + " XML element '" + name + "'.");
+        svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name + " XML element '" + name + "'.");
       }
 
       std::visit([value](auto&& p) { p->set(value); }, params_map[name]);
@@ -377,7 +378,7 @@ class ParameterLists
         if (std::visit([](auto&& p) {
           return !p->check_required_set();
         }, param)) { 
-          throw std::runtime_error(xml_element_name + " XML element '" + key + "' has not been set.");
+          svmp::raise<svmp::ParseException>(SVMP_HERE, xml_element_name + " XML element '" + key + "' has not been set.");
         }
       }
     }
@@ -618,32 +619,6 @@ class ConstitutiveModelParameters : public ParameterLists
     bool value_set = false;
 };
 
-/// @brief Couple to reduced-order models.
-class CoupleCplBCParameters : public ParameterLists
-{
-  public:
-    CoupleCplBCParameters();
-
-    static const std::string xml_element_name_;
-
-    bool defined() const { return value_set; };
-    void set_values(tinyxml2::XMLElement* xml_elem);
-    void print_parameters();
-
-    // attribute.
-    Parameter<std::string> type;
-
-    Parameter<std::string> file_name_for_0D_3D_communication;
-    Parameter<std::string> file_name_for_saving_unknowns;
-    Parameter<int> number_of_unknowns;
-    Parameter<int> number_of_user_defined_outputs;
-    Parameter<std::string> unknowns_initialization_file_path;
-
-    Parameter<std::string> zerod_code_file_path;
-
-    bool value_set = false;
-};
-
 /// @brief Coupling to GenBC.
 class CoupleGenBCParameters : public ParameterLists
 {
@@ -752,6 +727,30 @@ class BoundaryConditionRCRParameters : public ParameterLists
     bool value_set = false;
 };
 
+/// @brief svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled).
+///
+/// \code {.xml}
+/// <Coupling_interface>
+///   <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
+///   <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
+/// </Coupling_interface>
+/// \endcode
+class CouplingInterfaceParameters : public ParameterLists
+{
+  public:
+    CouplingInterfaceParameters();
+
+    static const std::string xml_element_name_;
+
+    void set_values(tinyxml2::XMLElement* xml_elem);
+    void print_parameters();
+
+    Parameter<std::string> svzerod_solver_block;
+    Parameter<std::string> chamber_cap_surface;
+
+    bool value_set = false;
+};
+
 /// @brief The BoundaryConditionParameters stores paramaters for various
 /// type of boundary conditions under the Add_BC XML element.
 class BoundaryConditionParameters : public ParameterLists
@@ -764,6 +763,9 @@ class BoundaryConditionParameters : public ParameterLists
 
     // RCR parameters sub-element.
     BoundaryConditionRCRParameters rcr;
+
+    // svZeroDSolver coupling subsection (with Time_dependence Coupled).
+    CouplingInterfaceParameters coupling_interface;
 
     // Add_BC name= attribute.
     Parameter<std::string> name;
@@ -794,7 +796,6 @@ class BoundaryConditionParameters : public ParameterLists
     Parameter<std::string> spatial_profile_file_path;
     Parameter<std::string> spatial_values_file_path;
     Parameter<double> stiffness;
-    Parameter<std::string> svzerod_solver_block;
 
     Parameter<std::string> temporal_and_spatial_values_file_path;
     Parameter<std::string> temporal_values_file_path;
@@ -1468,7 +1469,6 @@ class EquationParameters : public ParameterLists
 
     std::vector<BoundaryConditionParameters*> boundary_conditions;
 
-    CoupleCplBCParameters couple_to_cplBC;
     CoupleGenBCParameters couple_to_genBC;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
@@ -1774,4 +1774,3 @@ class Parameters {
 };
 
 #endif
-

@@ -564,7 +564,8 @@ void distribute(Simulation* simulation)
       cplBC.xo.resize(cplBC.nX);
     }
 
-  } else { 
+  } else {
+    // RCR (Windkessel): nX/xo sized in read_files from nFa; not genBC/svZeroD.
     cm.bcast(cm_mod, &cplBC.nX);
     if (cplBC.xo.size() == 0) {
        cplBC.xo.resize(cplBC.nX);
@@ -781,6 +782,12 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
 
   if (has_robin_bc) {
     lBc.robin_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
+  }
+
+  // Communicating Coupled BC
+  //
+  if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_Coupled))) {
+    lBc.coupled_bc.distribute(com_mod, cm_mod, cm, com_mod.msh[lBc.iM].fa[lBc.iFa]);
   }
 
 
