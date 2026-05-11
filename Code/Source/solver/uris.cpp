@@ -448,24 +448,34 @@ void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   MPI_Allreduce(local_counter.data(), global_counter.data(), 
                 uris_obj.tnNo, cm_mod::mpint, MPI_SUM, cm.com());
 
-  // Select one owner per node: the rank with the smallest centroid distance
-  // Then reduce every rank knows the global minimum metric for each node 
-  // and determine ownership without a second MPI call.
+  // Select one owner per node: first find the global minimum centroid
+  // distance, then break ties deterministically by choosing the smallest
+  // rank among all ranks that attained that minimum.
   MPI_Allreduce(local_metric.data(), global_metric.data(),
                 uris_obj.tnNo, cm_mod::mpreal, MPI_MIN, cm.com());
 
   const double owner_tol = 1.0e-14;
+  const int my_rank = cm.idcm();
+  Vector<int> local_owner_rank(uris_obj.tnNo);
+  Vector<int> global_owner_rank(uris_obj.tnNo);
+
   for (int nd = 0; nd < uris_obj.tnNo; nd++) {
-    // A rank owns node nd if it found an element for it AND its metric
-    // matches the global minimum within tolerance.
-    bool is_owner = (local_metric(nd) != std::numeric_limits<double>::max()) && 
-                    (std::fabs(local_metric(nd) - global_metric(nd)) <= owner_tol);
+    bool is_min_metric = (local_metric(nd) != std::numeric_limits<double>::max()) &&
+                         (std::fabs(local_metric(nd) - global_metric(nd)) <= owner_tol);
+    local_owner_rank(nd) = is_min_metric ? my_rank : std::numeric_limits<int>::max();
+  }
+  MPI_Allreduce(local_owner_rank.data(), global_owner_rank.data(),
+                uris_obj.tnNo, cm_mod::mpint, MPI_MIN, cm.com());
+
+  for (int nd = 0; nd < uris_obj.tnNo; nd++) {
+    bool is_owner = (local_owner_rank(nd) != std::numeric_limits<int>::max()) &&
+                    (global_owner_rank(nd) == my_rank);
     uris_obj.localNode(nd) = is_owner ? 1 : 0;
   }
 
-  // Diagnostic: nodes claimed by more than one rank indicate ghost/shared
-  // element overlap. localNode ensures only one rank contributes to the
-  // MPI_SUM gather, but a high count may signal mesh partitioning issues.
+  // Diagnostic: nodes found on more than one rank indicate ghost/shared
+  // element overlap. Ownership is still unique because ties are broken
+  // deterministically by rank before the MPI_SUM gather.
   int multi_owner_count = 0;
   for (int nd = 0; nd < uris_obj.tnNo; nd++) {
       if (global_counter(nd) > 1) {
