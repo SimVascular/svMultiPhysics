@@ -359,8 +359,7 @@ protected:
   /// Voltage scaling [mV].
   const double Vscale;
 
-  /// Time scaling.
-  /// @todo[michelebucelli] Document unit of measure.
+  /// Time scaling [ms].
   const double Tscale;
 
   /// Voltage offset parameter [mV].
