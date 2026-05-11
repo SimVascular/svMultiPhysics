@@ -596,6 +596,8 @@ void uris_read_msh(Simulation* simulation) {
 
     uris_obj.sdf_deps = param->thickness();
     uris_obj.sdf_deps_close = param->close_thickness();
+    // Use large default value for the signed distance function to indicate that 
+    // the fluid node is far away from the valve. 
     uris_obj.sdf_default = param->close_thickness() * 1e6;
     uris_obj.clsFlg = param->valve_starts_as_closed();
 
