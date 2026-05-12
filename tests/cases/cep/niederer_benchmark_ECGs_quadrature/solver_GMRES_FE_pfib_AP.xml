@@ -97,6 +97,7 @@
 
    <Output type="Spatial" >
       <Action_potential> true </Action_potential>
+      <Ionic_state_variables> true </Ionic_state_variables>
    </Output>
 
    <LS type="GMRES" >

@@ -1478,24 +1478,34 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   // If this is the CEP equation, dynamically register output variables
   // requested by the ionic models
   if (lEq.phys == consts::EquationType::phys_CEP) {
-    std::set<std::string> registered_vars;
-    for (int iDmn = 0; iDmn < lEq.nDmn; iDmn++) {
-      if (lEq.dmn[iDmn].phys == consts::EquationType::phys_CEP &&
-          lEq.dmn[iDmn].cep.ionic_model) {
-        const auto ionic_output_variables =
-            lEq.dmn[iDmn].cep.ionic_model->get_output_variables();
+    bool output_ionic_vars = false;
+    for (auto out_params : eq_params->outputs)
+      if (out_params->type.value() == "Spatial") {
+        output_ionic_vars =
+            out_params->get_output_value("Ionic_state_variables");
+        break;
+      }
 
-        for (const auto &var : ionic_output_variables) {
-          if (registered_vars.find(var.first) == registered_vars.end()) {
-            outputType out;
-            out.grp = consts::OutputNameType::outGrp_ionicState;
-            out.o = var.second;
-            out.l = 1;
-            out.name = var.first;
-            out.options.spatial = true;
-            lEq.output.push_back(out);
-            lEq.nOutput++;
-            registered_vars.insert(var.first);
+    if (output_ionic_vars) {
+      std::set<std::string> registered_vars;
+      for (int iDmn = 0; iDmn < lEq.nDmn; iDmn++) {
+        if (lEq.dmn[iDmn].phys == consts::EquationType::phys_CEP &&
+            lEq.dmn[iDmn].cep.ionic_model) {
+          const auto ionic_output_variables =
+              lEq.dmn[iDmn].cep.ionic_model->get_output_variables();
+
+          for (const auto &var : ionic_output_variables) {
+            if (registered_vars.find(var.first) == registered_vars.end()) {
+              outputType out;
+              out.grp = consts::OutputNameType::outGrp_ionicState;
+              out.o = var.second;
+              out.l = 1;
+              out.name = var.first;
+              out.options.spatial = true;
+              lEq.output.push_back(out);
+              lEq.nOutput++;
+              registered_vars.insert(var.first);
+            }
           }
         }
       }
