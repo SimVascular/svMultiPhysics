@@ -55,7 +55,7 @@ def test_slab_domains(domain_definition, n_proc):
         ["BICG_CN_epicardium_BO", -0.0786707, 0.0786707, 0.00891599],
         ["CG_RK4_myocardium_BO", -0.0781115, 0.0781115, 0.00885261],
         ["GMRES_FE_epicardium_TTP", -0.0786707, 0.0786707, 0.00891599],
-        ["GMRES_FE_pfib_AP", 0.0786707, -0.0786707, -0.00891599],
+        ["GMRES_FE_pfib_AP", -0.0786707, 0.0786707, 0.00891599],
     ],
 )
 def test_niederer_benchmark_ECGs_quadrature(confs_ecgs, n_proc):
