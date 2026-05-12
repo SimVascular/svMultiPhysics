@@ -352,7 +352,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
   }
 
   switch (cep.odes.tIntType) {
-  case TimeIntegratioType::FE:
+  case TimeIntegrationType::FE:
     for (unsigned int i = 0; i < nt; ++i) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
@@ -360,7 +360,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
     }
     break;
 
-  case TimeIntegratioType::RK4:
+  case TimeIntegrationType::RK4:
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
@@ -368,7 +368,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
     }
     break;
 
-  case TimeIntegratioType::CN2:
+  case TimeIntegrationType::CN2:
     for (int i = 0; i < nt; i++) {
       const double t = t1 + i * cep.dt;
       const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;

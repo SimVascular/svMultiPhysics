@@ -1568,7 +1568,7 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       cm.bcast(cm_mod, &cep.Istim.A);
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 
-      if (cep.odes.tIntType == TimeIntegratioType::CN2) {
+      if (cep.odes.tIntType == TimeIntegrationType::CN2) {
         cm.bcast(cm_mod, &cep.odes.maxItr);
         cm.bcast(cm_mod, &cep.odes.absTol);
         cm.bcast(cm_mod, &cep.odes.relTol);

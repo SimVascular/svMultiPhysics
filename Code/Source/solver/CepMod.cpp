@@ -24,22 +24,17 @@ const std::map<std::string,ElectrophysiologyModelType> cep_model_name_to_type
   {"ttp", ElectrophysiologyModelType::TTP}
 };
 
-const std::map<std::string,TimeIntegratioType> cep_time_int_to_type 
-{
-  {"cn", TimeIntegratioType::CN2},
-  {"cn2", TimeIntegratioType::CN2},
-  {"implicit", TimeIntegratioType::CN2},
+const std::map<std::string, TimeIntegrationType> cep_time_int_to_type{
+    {"cn", TimeIntegrationType::CN2},       {"cn2", TimeIntegrationType::CN2},
+    {"implicit", TimeIntegrationType::CN2},
 
-  {"fe", TimeIntegratioType::FE},
-  {"euler", TimeIntegratioType::FE},
-  {"explicit", TimeIntegratioType::FE},
+    {"fe", TimeIntegrationType::FE},        {"euler", TimeIntegrationType::FE},
+    {"explicit", TimeIntegrationType::FE},
 
-  {"rk", TimeIntegratioType::RK4},
-  {"rk4", TimeIntegratioType::RK4},
-  {"runge", TimeIntegratioType::RK4}
+    {"rk", TimeIntegrationType::RK4},       {"rk4", TimeIntegrationType::RK4},
+    {"runge", TimeIntegrationType::RK4}
 
 };
-
 
 cepModelType::cepModelType()
 {

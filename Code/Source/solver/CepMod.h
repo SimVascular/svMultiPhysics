@@ -45,22 +45,16 @@ static std::ostream &operator << ( std::ostream& strm, ElectrophysiologyModelTyp
 }
 
 /// @brief Time integration scheme.
-enum class TimeIntegratioType {
-  NA = 200, 
-  FE = 201,
-  RK4 = 202, 
-  CN2 = 203
-};
+enum class TimeIntegrationType { NA = 200, FE = 201, RK4 = 202, CN2 = 203 };
 
-extern const std::map<std::string,TimeIntegratioType> cep_time_int_to_type;
+extern const std::map<std::string, TimeIntegrationType> cep_time_int_to_type;
 
-static std::ostream &operator << ( std::ostream& strm, TimeIntegratioType type)
-{
-  const std::map<TimeIntegratioType, std::string> names = { 
-    {TimeIntegratioType::NA, "NA"}, 
-    {TimeIntegratioType::FE, "FE"}, 
-    {TimeIntegratioType::RK4, "RK4"}, 
-    {TimeIntegratioType::CN2, "CN2"}, 
+static std::ostream &operator<<(std::ostream &strm, TimeIntegrationType type) {
+  const std::map<TimeIntegrationType, std::string> names = {
+      {TimeIntegrationType::NA, "NA"},
+      {TimeIntegrationType::FE, "FE"},
+      {TimeIntegrationType::RK4, "RK4"},
+      {TimeIntegrationType::CN2, "CN2"},
   };
   return strm << names.at(type);
 }
@@ -71,7 +65,7 @@ class odeType {
     odeType() {};
 
     /// @brief Time integration method type
-    TimeIntegratioType tIntType = TimeIntegratioType::NA;
+    TimeIntegrationType tIntType = TimeIntegrationType::NA;
     //int tIntType = tIntType_NA;
 
     /// @brief Max. iterations for Newton-Raphson method
