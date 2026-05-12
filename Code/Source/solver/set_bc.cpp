@@ -1549,11 +1549,11 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        double Q_3D = all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions,
                                     eq.s+nsd-1, false,
                                     consts::MechanicalConfigurationType::reference);
-      //h(0) = lBc.g - lBc.r * Q_3D;
 
-       // Double-sided Robin: use |Q_3D| so that the correction always
-         // reduces h from P_1D, regardless of flow direction.
-         h(0) = lBc.g - lBc.r * std::abs(Q_3D);
+         
+         h(0) = lBc.g;
+         //h(0) = lBc.g - lBc.r * std::abs(Q_3D);
+         
          // Backflow kinetic energy correction: when backflow is detected
          // (Q < 0), subtract the face-averaged dynamic pressure to further
          // reduce the applied traction and damp the incoming flow.
