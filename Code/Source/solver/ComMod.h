@@ -1482,7 +1482,11 @@ class urisType
     // if the fully closed position alone is not able to prevent backflow.
     double sdf_deps_close;
 
-    // Whether to invert the valve surface normal vector.
+    // Whether to invert the valve surface normal vector. Default is false.
+    // If true, inverts the shell face normal used for SDF sign calculation so the negative
+    // and positive SDF sides remain consistent with the upstream and downstream directions.
+    // Mesh face normals are assumed to point outward from the leaflet. Set to true if the
+    // surface mesh has inward-pointing normals to preserve the SDF sign convention.
     bool invert_normal;
 
     // Opening positions of the valve surfaces.
