@@ -17,7 +17,7 @@ var searchData=
   ['distribute_14',['distribute',['../class_boundary_condition.html#a7859d5d785d1411542d6d3137c823c37',1,'BoundaryCondition::distribute()'],['../class_coupled_boundary_condition.html#a95f637f4794b73e914ef5a87467ff874',1,'CoupledBoundaryCondition::distribute()']]],
   ['dmn_15',['dmn',['../classeq_type.html#a8444f77be8c6f85297aca3c3ce9eb1ec',1,'eqType']]],
   ['dmnib_16',['dmnIB',['../classeq_type.html#ac9596dcfa3a9f0e7505758df1783bcb0',1,'eqType']]],
-  ['dmnid_17',['dmnid',['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId'],['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID']]],
+  ['dmnid_17',['dmnid',['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID'],['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId']]],
   ['dmntype_18',['dmnType',['../classdmn_type.html',1,'']]],
   ['dof_19',['dof',['../classeq_type.html#ad256e1ab17832d3c425de3925678a742',1,'eqType::dof'],['../class_com_mod.html#a2e33f05e98147d2b0e32c410fe24265f',1,'ComMod::dof']]],
   ['dof_20ordering_20',['DOF Ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md32',1,'']]],

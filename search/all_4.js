@@ -9,7 +9,7 @@ var searchData=
   ['bcib_6',['bcIB',['../classeq_type.html#ad0dc4339c1c8d79c2a01361d2df63cc0',1,'eqType']]],
   ['bctype_7',['bcType',['../classbc_type.html',1,'']]],
   ['beta_8',['beta',['../classeq_type.html#af8b6728acf22adfdf385b3a29c6fed39',1,'eqType']]],
-  ['bf_9',['bf',['../class_com_mod.html#af3c9f64171f5a55a88e5b2c094c8b30c',1,'ComMod::Bf'],['../classeq_type.html#aa38fe7bb149cec558ca09eacef052ac6',1,'eqType::bf']]],
+  ['bf_9',['bf',['../classeq_type.html#aa38fe7bb149cec558ca09eacef052ac6',1,'eqType::bf'],['../class_com_mod.html#af3c9f64171f5a55a88e5b2c094c8b30c',1,'ComMod::Bf']]],
   ['bftype_10',['bfType',['../classbf_type.html',1,'']]],
   ['bin2vtk_11',['bin2VTK',['../class_com_mod.html#a71096696d480232eb3b82b2e15a050f4',1,'ComMod']]],
   ['binpath_12',['binPath',['../classcpl_b_c_type.html#a8cd85265d73d2e9ebdb21c097d24cf70',1,'cplBCType']]],
