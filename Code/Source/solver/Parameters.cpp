@@ -1653,7 +1653,7 @@ IonicModelParameters::IonicModelParameters(
     const std::vector<std::pair<std::string, double>> &initial_Xg)
     : xml_element_name(xml_element_name_),
       initial_X_parameters("Initial_states", initial_X),
-      initial_Xg_parameters("Gating_variables", initial_Xg) {
+      initial_Xg_parameters("Initial_gating_variables", initial_Xg) {
   set_xml_element_name(xml_element_name_);
 }
 

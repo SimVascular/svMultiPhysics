@@ -22,7 +22,7 @@
         <R_bar>0.9078</R_bar>
     </Initial_states>
 
-    <Gating_variables>
+    <Initial_gating_variables>
         <x_r1_rectifier>6.368E-3</x_r1_rectifier>
         <x_r2_rectifier>0.36774</x_r2_rectifier>
         <x_s_rectifier>9.77E-3</x_s_rectifier>
@@ -35,7 +35,7 @@
         <fcass_slow_in>0.9954</fcass_slow_in>
         <s_out>0.9941</s_out>
         <r_out>4.2757E-5</r_out>
-    </Gating_variables>
+    </Initial_gating_variables>
 </TTP>
 
 </svMultiPhysicsFile>
