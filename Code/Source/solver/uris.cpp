@@ -171,8 +171,9 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
 
   const int nsd = com_mod.nsd;
 
-  // Compute the neighboring region with negative sdf distance. When
-  // the valve is open, this region should roughly be valve oriface.
+  // Compute the neighboring region with negative sdf within the 
+  // valve's bounding box. When the valve is open, this region 
+  // should roughly be valve orifice.
   int iEq = 0;
 
   double Deps = uris_obj.sdf_deps;
