@@ -5,13 +5,9 @@
 
 <Myocardial_zone> epicardium </Myocardial_zone>
 
-<TTP>
-    <G_Na> 14.838 </G_Na>
-    <G_CaL> 3.98E-5 </G_CaL>
-    <G_Kr> 0.153 </G_Kr>
-    <G_Ks> 0.392 </G_Ks>
-    <G_to> 0.294 </G_to>
+<Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 
+<TTP>
     <Initial_states>
         <V>-44.756</V>
         <K_i>136.88</K_i>

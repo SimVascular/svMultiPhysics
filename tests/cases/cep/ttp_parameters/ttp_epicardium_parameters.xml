@@ -4,8 +4,57 @@
 <Myocardial_zone> epicardium </Myocardial_zone>
 
 <TTP>
-    <G_Ks> 0.392 </G_Ks>
+    <Rc> 8314.472 </Rc>
+    <Tc> 310.0 </Tc>
+    <Fc> 96485.3415 </Fc>
+    <Cm> 0.185 </Cm>
+    <sV> 0.2 </sV>
+    <rho> 162.0 </rho>
+    <V_c> 16.404E-3 </V_c>
+    <V_sr> 1.094E-3 </V_sr>
+    <V_ss> 5.468E-5 </V_ss>
+    <K_o> 5.4 </K_o>
+    <Na_o> 140.0 </Na_o>
+    <Ca_o> 2.0 </Ca_o>
+    <G_Na> 14.838 </G_Na>
+    <G_K1> 5.405 </G_K1>
     <G_to> 0.294 </G_to>
+    <G_Kr> 0.153 </G_Kr>
+    <G_Ks> 0.392 </G_Ks>
+    <p_KNa> 3.E-2 </p_KNa>
+    <G_CaL> 3.98E-5 </G_CaL>
+    <K_NaCa> 1000. </K_NaCa>
+    <gamma> 0.35 </gamma>
+    <K_mCa> 1.38 </K_mCa>
+    <K_mNai> 87.5 </K_mNai>
+    <K_sat> 0.1 </K_sat>
+    <alpha> 2.5 </alpha>
+    <p_NaK> 2.724 </p_NaK>
+    <K_mK> 1. </K_mK>
+    <K_mNa> 40. </K_mNa>
+    <G_pK> 1.46E-2 </G_pK>
+    <G_pCa> 0.1238 </G_pCa>
+    <K_pCa> 5.E-4 </K_pCa>
+    <G_bNa> 2.9E-4 </G_bNa>
+    <G_bCa> 5.92E-4 </G_bCa>
+    <Vmax_up> 6.375E-3 </Vmax_up>
+    <K_up> 2.5E-4 </K_up>
+    <V_rel> 0.102 </V_rel>
+    <k1p> 0.15 </k1p>
+    <k2p> 4.5E-2 </k2p>
+    <k3> 6.E-2 </k3>
+    <k4> 5.E-3 </k4>
+    <EC> 1.5 </EC>
+    <max_sr> 2.5 </max_sr>
+    <min_sr> 1. </min_sr>
+    <V_leak> 3.6E-4 </V_leak>
+    <V_xfer> 3.8E-3 </V_xfer>
+    <Buf_c> 0.2 </Buf_c>
+    <K_bufc> 1.E-3 </K_bufc>
+    <Buf_sr> 10. </Buf_sr>
+    <K_bufsr> 0.3 </K_bufsr>
+    <Buf_ss> 0.4 </Buf_ss>
+    <K_bufss> 2.5E-4 </K_bufss>
 
     <Initial_states>
         <V> -85.23 </V>
