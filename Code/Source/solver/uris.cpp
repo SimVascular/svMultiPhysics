@@ -954,8 +954,6 @@ void uris_calc_sdf(ComMod& com_mod) {
     uris_build_fluid_node_mask(com_mod);
   }
 
-  Array<double> xXi(nsd, nsd-1);
-
   for (int iUris = 0; iUris < nUris; iUris++) {
     // We need to check if the valve needs to move 
     auto& uris_obj = uris[iUris];
@@ -978,15 +976,6 @@ void uris_calc_sdf(ComMod& com_mod) {
     
     if (uris_obj.sdf.size() > 0 && cnt < uris_obj.cnt) {continue;}
 
-    int max_eNoN = 0;
-    for (int iM = 0; iM < uris_obj.nFa; iM++) {
-      auto& mesh = uris_obj.msh[iM];
-      if (mesh.eNoN > max_eNoN) {
-        max_eNoN = mesh.eNoN;
-      }
-    }
-
-    Array<double> lX(nsd, max_eNoN);
     if (uris_obj.sdf.size() <= 0) {
       uris_obj.sdf.resize(com_mod.tnNo);
       uris_obj.sdf = 0.0;
@@ -1055,11 +1044,9 @@ void uris_calc_sdf(ComMod& com_mod) {
       int jM = -1;
       Vector<double> xb(nsd);
       Vector<double> unitNormal(nsd);
-      uris_find_closest_face_centroid(uris_obj, xp, nsd, minS, Ec, jM);
-
-      // Compute the element normal contribution for sign
-      auto dotp = uris_compute_face_dotp(uris_obj, nsd, jM, Ec, xp, xXi, lX, xb, unitNormal);
-
+      uris_find_closest_face_centroid(uris_obj, xp, nsd, minS, Ec, jM, xb);
+      uris_face_unit_normal(uris_obj, nsd, jM, Ec, unitNormal);
+      const double dotp = utils::norm(xp - xb, unitNormal);
       double sdf_sign = uris_compute_sdf_sign(uris_obj, xp, xb, dotp);
 
       uris_obj.sdf[ca] = sdf_sign * minS;
@@ -1198,75 +1185,80 @@ bool same_side(const Vector<double>& v1, const Vector<double>& v2,
   return sameside;
 }
 
-/// @brief Find the closest URIS face centroid to a point.
+/// @brief Barycenter of URIS surface/shell element (jM, Ec) in current valve coordinates uris_obj.x.
+void surface_element_barycenter(const urisType& uris_obj, int jM, int Ec, Vector<double>& xb) {
+  const auto& mesh = uris_obj.msh[jM];
+  xb = 0.0;
+  for (int a = 0; a < mesh.eNoN; a++) {
+    const int Ac = mesh.IEN(a, Ec);
+    xb = xb + uris_obj.x.rcol(Ac);
+  }
+  xb = xb / mesh.eNoN;
+}
+
+/// @brief Find the closest URIS shell-element centroid to xp; writes that centroid to xb.
 void uris_find_closest_face_centroid(const urisType& uris_obj, const Vector<double>& xp,
-                                     const int nsd, double& minS, int& Ec, int& jM) {
+                                     const int nsd, double& minS, int& Ec, int& jM,
+                                     Vector<double>& xb) {
   #define n_dbg_uris_find_closest_face_centroid
   #ifdef dbg_uris_find_closest_face_centroid
-    DebugMsg dmsg(__func__, 0);
-    dmsg.banner();
-    dmsg << "finding closest face centroid";
+  DebugMsg dmsg(__func__, 0);
+  dmsg.banner();
+  dmsg << "finding closest face centroid";
   #endif
 
-  Vector<double> xb(nsd);
+  Vector<double> face_centroid(nsd);
   for (int iM = 0; iM < uris_obj.nFa; iM++) {
     const auto& mesh = uris_obj.msh[iM];
     for (int e = 0; e < mesh.nEl; e++) {
-      xb = 0.0;
-      for (int a = 0; a < mesh.eNoN; a++) {
-        const int Ac = mesh.IEN(a,e);
-        xb = xb + uris_obj.x.rcol(Ac);
-      }
-      xb = xb / mesh.eNoN;
-
-      const double dS = std::sqrt((xp - xb) * (xp - xb));
-
+      surface_element_barycenter(uris_obj, iM, e, face_centroid);
+      const double dS = std::sqrt((xp - face_centroid) * (xp - face_centroid));
       if (dS < minS) {
         minS = dS;
         Ec = e;
         jM = iM;
+        xb = face_centroid;
       }
     }
   }
 }
 
-/// @brief Compute centroid and signed distance projection along local face normal.
-double uris_compute_face_dotp(const urisType& uris_obj, const int nsd, const int jM,
-                              const int Ec, const Vector<double>& xp, Array<double>& xXi, 
-                              Array<double>& lX, Vector<double>& xb, Vector<double>& unitNormal) {
-  #define n_dbg_uris_compute_face_dotp
-  #ifdef dbg_uris_compute_face_dotp
-    DebugMsg dmsg(__func__, 0);
-    dmsg.banner();
-    dmsg << "computing face dot product";
+/// @brief Unit normal of URIS face element (jM, Ec) from parametric tangents 
+/// (optionally flipped by uris_obj.invert_normal).
+void uris_face_unit_normal(const urisType& uris_obj, const int nsd, const int jM, const int Ec,
+                                 Vector<double>& unitNormal) {
+  #define n_dbg_uris_face_unit_normal
+  #ifdef dbg_uris_face_unit_normal
+  DebugMsg dmsg(__func__, 0);
+  dmsg.banner();
+  dmsg << "computing URIS face unit normal";
   #endif
 
   const auto& mesh = uris_obj.msh[jM];
+  Array<double> xXi(nsd, nsd - 1);
+  Array<double> lX(nsd, mesh.eNoN);
+
   xXi = 0.0;
   lX = 0.0;
-  xb = 0.0;
 
   for (int a = 0; a < mesh.eNoN; a++) {
-    int Ac = mesh.IEN(a,Ec);
-    xb = xb + uris_obj.x.rcol(Ac);
+    const int Ac = mesh.IEN(a, Ec);
     lX.rcol(a) = uris_obj.x.rcol(Ac);
   }
-  xb = xb / mesh.eNoN;
 
   for (int a = 0; a < mesh.eNoN; a++) {
     for (int i = 0; i < nsd - 1; i++) {
-      xXi.rcol(i) = xXi.rcol(i) + lX.rcol(a) * mesh.Nx(i,a,0);
+      xXi.rcol(i) = xXi.rcol(i) + lX.rcol(a) * mesh.Nx(i, a, 0);
     }
   }
 
   unitNormal = utils::cross(xXi);
-  auto Jac = sqrt(utils::norm(unitNormal));
+  const auto Jac = sqrt(utils::norm(unitNormal));
   if (uris_obj.invert_normal) {
     unitNormal = -unitNormal / Jac;
   } else {
     unitNormal = unitNormal / Jac;
   }
-  return utils::norm(xp-xb, unitNormal);
 }
 
 /// @brief Compute SDF sign for open/closed URIS states.
@@ -1287,5 +1279,6 @@ double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
     return (dot_nrm < 0.0 && dotP < 0.0) ? -1.0 : 1.0;
   }
   return (dotP < 0.0) ? -1.0 : 1.0;
-  }
+}
+
 }

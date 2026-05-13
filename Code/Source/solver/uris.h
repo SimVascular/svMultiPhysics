@@ -33,12 +33,13 @@ bool in_poly(const Vector<double>& P, const Array<double>& P1, bool include_bdry
 bool same_side(const Vector<double>& v1, const Vector<double>& v2, const Vector<double>& v3,
               const Vector<double>& v4, const Vector<double>& p, bool include_bdry);
 
-void uris_find_closest_face_centroid(const urisType& uris_obj, const Vector<double>& xp,
-  const int nsd, double& minS, int& Ec, int& jM);
+void surface_element_barycenter(const urisType& uris_obj, int jM, int Ec, Vector<double>& xb);
 
-double uris_compute_face_dotp(const urisType& uris_obj, const int nsd, const int jM,
-  const int Ec, const Vector<double>& xp, Array<double>& xXi, Array<double>& lX, 
-  Vector<double>& xb, Vector<double>& unitNormal);
+void uris_find_closest_face_centroid(const urisType& uris_obj, const Vector<double>& xp,
+  const int nsd, double& minS, int& Ec, int& jM, Vector<double>& xb);
+
+void uris_face_unit_normal(const urisType& uris_obj, const int nsd, const int jM, const int Ec,
+  Vector<double>& unitNormal);
 
 double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
   const Vector<double>& xb, const double dotP);
