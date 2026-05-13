@@ -1595,11 +1595,11 @@ void SolidViscosityParameters::set_values(tinyxml2::XMLElement* xml_elem)
 IonicInitialStateParameters::IonicInitialStateParameters(
     const std::string &xml_element_name_,
     const std::vector<std::pair<std::string, double>> &states)
-    : xml_element_name(xml_element_name_) {
-  constexpr bool required = true;
+    : xml_element_name(xml_element_name_), required(states.size() > 0) {
+  constexpr bool param_required = true;
 
   for (const auto &[label, initial_value] : states) {
-    set_parameter(label, initial_value, required, parameters[label]);
+    set_parameter(label, initial_value, param_required, parameters[label]);
   }
 }
 
@@ -1710,16 +1710,18 @@ void IonicModelParameters::set_values(const tinyxml2::XMLElement *xml_elem) {
   }
 
   // The initial values of both state and gating variables must be set.
-  if (!initial_X_parameters.defined()) {
-    throw std::runtime_error(xml_element_name + " requires an '" +
-                             initial_X_parameters.xml_element_name +
-                             "' XML section.");
+  if (initial_X_parameters.required && !initial_X_parameters.defined()) {
+    svmp::raise<svmp::ParseException>(
+        SVMP_HERE, xml_element_name + " requires an '" +
+                       initial_X_parameters.xml_element_name +
+                       "' XML section.");
   }
 
-  if (!initial_Xg_parameters.defined()) {
-    throw std::runtime_error(xml_element_name + " requires an '" +
-                             initial_Xg_parameters.xml_element_name +
-                             "' XML section.");
+  if (initial_Xg_parameters.required && !initial_Xg_parameters.defined()) {
+    svmp::raise<svmp::ParseException>(
+        SVMP_HERE, xml_element_name + " requires an '" +
+                       initial_Xg_parameters.xml_element_name +
+                       "' XML section.");
   }
 }
 

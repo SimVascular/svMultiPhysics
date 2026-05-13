@@ -1207,6 +1207,11 @@ public:
   /// Name of the XML element for this object.
   const std::string xml_element_name;
 
+  /// Flag indicating whether these XML section represented by this object is
+  /// required. It is set to true if the number of states provided to the
+  /// constructor is greater than zero.
+  const bool required;
+
 protected:
   /// Parameter instances underlying this object.
   std::map<std::string, Parameter<double>> parameters;
