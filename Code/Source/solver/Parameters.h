@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #ifndef PARAMETERS_H 
-#define PARAMETERS_H 
+#define PARAMETERS_H
 
 #include <any>
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <regex>
 #include <set>
 #include <sstream>
