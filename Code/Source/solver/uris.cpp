@@ -39,32 +39,30 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   auto& uris_obj = uris[iUris];
 
   const int nsd = com_mod.nsd;
-  // const int cEq = com_mod.cEq;
 
-  // auto& An = com_mod.An;
-  // auto& Ad = com_mod.Ad;
-  // auto& Dn = com_mod.Dn;
+  // Compute the mean pressure in the upstream and downstream regions of the fluid mesh 
 
-  // Let's conpute the mean pressure in the two regions of the fluid mesh 
-  // For the moment let's define a flag IdSubDmn(size the number of elements)
-
-  // Now we can compute the pressure mean on each subdomain
-  // We need to have a sdf array for each mesh
-  double Deps = uris_obj.sdf_deps * 2.5;
+  // Set the limit of the upstream and downstream regions to 5 times the closed 
+  // valve thickness. This should give a reasonable range for the upstream and 
+  // downstream regions.
+  double Deps = uris_obj.sdf_deps_close * 5.0;
   double volU = 0.0;
   double volD = 0.0;
 
-  // Let's compute left side 
-  Array<double> sUPS(1,com_mod.tnNo);
-  // std::cout << "com_mod.tnNo: " << com_mod.tnNo << std::endl;
-  // std::cout << "uris_obj.sdf size: " << uris_obj.sdf.size() << std::endl;
+  if (cm.mas(cm_mod)) {
+    std::cout << "Computing upstream region from SDF -" << Deps << " to -" 
+              << uris_obj.sdf_deps_close << " for: " << uris_obj.name << std::endl;
+    std::cout << "Computing downstream region from SDF " << uris_obj.sdf_deps_close 
+              << " to " << Deps << " for: " << uris_obj.name << std::endl;
+  }
 
+  // Compute the upstream region: negative sdf side (opposite to valve normal), 
+  // outside resistance region
+  Array<double> sUPS(1, com_mod.tnNo);
   sUPS = 0.0;
-  for (size_t j = 0; j < sUPS.size(); j++) {
-    if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
-    // Reverse the sdf distance for aortic valve
-    // [HZ] Adjust this value to be more flexible about the box
-    // if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) { 
+  for (size_t j = 0; j < com_mod.tnNo; j++) {
+    double sdf_j = uris_obj.sdf(j);
+    if (sdf_j >= -Deps && sdf_j <= -uris_obj.sdf_deps_close) {
         sUPS(0,j) = 1.0;
     }
   }
@@ -73,15 +71,14 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
     volU += all_fun::integ(com_mod, cm_mod, iM, sUPS, solutions);
   }
 
-
-  // Let's compute right side
-  Array<double> sDST(1,com_mod.tnNo);
+  // Compute the downstream region: positive sdf side (valve normal direction), 
+  // outside resistance region
+  Array<double> sDST(1, com_mod.tnNo);
   sDST = 0.0;
-  for (size_t j = 0; j < sDST.size(); j++) {
-    if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) {
-    // Reverse the sdf distance for aortic valve
-    // if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
-        sDST(0,j) = 1.0;
+  for (size_t j = 0; j < com_mod.tnNo; j++) {
+    double sdf_j = uris_obj.sdf(j);
+    if (sdf_j >= uris_obj.sdf_deps_close && sdf_j <= Deps) {
+      sDST(0,j) = 1.0;
     }
   } 
 
@@ -134,7 +131,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
 
   //  If the uris has passed the closing state
   if (uris_obj.cnt > uris_obj.DxClose.nrows()) {
-    if (uris_obj.meanPD > uris_obj.meanPU) {
+    if (uris_obj.meanPU > uris_obj.meanPD) {
       uris_obj.cnt = 1;
       uris_obj.clsFlg = false;
       com_mod.urisActFlag = true;
@@ -173,13 +170,8 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   auto& uris_obj = uris[iUris];
 
   const int nsd = com_mod.nsd;
-  // const int cEq = com_mod.cEq;
 
-  // auto& An = com_mod.An;
-  // auto& Ad = com_mod.Ad;
-  // auto& Dn = com_mod.Dn;
-
-  // Let's compute the neighboring region below the valve normal. When
+  // Compute the neighboring region with negative sdf distance. When
   // the valve is open, this region should roughly be valve oriface.
   int iEq = 0;
 
@@ -190,8 +182,6 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
 
   for (int i = 0; i < com_mod.tnNo; i++) {
     if (uris_obj.sdf(i) <= -Deps) {
-    // Reverse the sdf distance for aortic valve
-    // if (uris_obj.sdf(i) >= Deps) {
       sImm(0,i) = 1.0;
     }
   }
@@ -205,7 +195,6 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   
   int m = nsd;
   int s = eq[iEq].s;
-  // int e = s + m - 1;
 
   Array<double> tmpV(maxNSD, com_mod.tnNo);
   for (int i = 0; i < nsd; i++) {
@@ -610,6 +599,7 @@ void uris_read_msh(Simulation* simulation) {
     // the fluid node is far away from the valve. 
     uris_obj.sdf_default = param->close_thickness() * 1e6;
     uris_obj.clsFlg = param->valve_starts_as_closed();
+    uris_obj.invert_normal = param->invert_normal();
 
     // uris_obj.tnNo = 0;
     for (int iM = 0; iM < uris_obj.nFa; iM++) {
@@ -1064,10 +1054,11 @@ void uris_calc_sdf(ComMod& com_mod) {
       int Ec = -1;
       int jM = -1;
       Vector<double> xb(nsd);
+      Vector<double> unitNormal(nsd);
       uris_find_closest_face_centroid(uris_obj, xp, nsd, minS, Ec, jM);
 
       // Compute the element normal contribution for sign
-      auto dotp = uris_compute_face_dotp(uris_obj, nsd, jM, Ec, xp, xXi, lX, xb);
+      auto dotp = uris_compute_face_dotp(uris_obj, nsd, jM, Ec, xp, xXi, lX, xb, unitNormal);
 
       double sdf_sign = uris_compute_sdf_sign(uris_obj, xp, xb, dotp);
 
@@ -1242,7 +1233,7 @@ void uris_find_closest_face_centroid(const urisType& uris_obj, const Vector<doub
 /// @brief Compute centroid and signed distance projection along local face normal.
 double uris_compute_face_dotp(const urisType& uris_obj, const int nsd, const int jM,
                               const int Ec, const Vector<double>& xp, Array<double>& xXi, 
-                              Array<double>& lX, Vector<double>& xb) {
+                              Array<double>& lX, Vector<double>& xb, Vector<double>& unitNormal) {
   #define n_dbg_uris_compute_face_dotp
   #ifdef dbg_uris_compute_face_dotp
     DebugMsg dmsg(__func__, 0);
@@ -1268,10 +1259,14 @@ double uris_compute_face_dotp(const urisType& uris_obj, const int nsd, const int
     }
   }
 
-  auto nV = utils::cross(xXi);
-  auto Jac = sqrt(utils::norm(nV));
-  nV = nV / Jac;
-  return utils::norm(xp-xb, nV);
+  unitNormal = utils::cross(xXi);
+  auto Jac = sqrt(utils::norm(unitNormal));
+  if (uris_obj.invert_normal) {
+    unitNormal = -unitNormal / Jac;
+  } else {
+    unitNormal = unitNormal / Jac;
+  }
+  return utils::norm(xp-xb, unitNormal);
 }
 
 /// @brief Compute SDF sign for open/closed URIS states.

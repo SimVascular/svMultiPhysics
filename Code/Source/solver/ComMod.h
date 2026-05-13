@@ -1482,6 +1482,9 @@ class urisType
     // if the fully closed position alone is not able to prevent backflow.
     double sdf_deps_close;
 
+    // Whether to invert the valve surface normal vector.
+    bool invert_normal;
+
     // Opening positions of the valve surfaces.
     Array3<double> DxOpen;
 
