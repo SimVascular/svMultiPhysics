@@ -1475,43 +1475,6 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   // Read VTK files or boundaries. [TODO:DaveP] this is not a correct comment.
   read_outputs(simulation, eq_params, lEq, nDOP, outPuts);
 
-  // If this is the CEP equation, dynamically register output variables
-  // requested by the ionic models
-  if (lEq.phys == consts::EquationType::phys_CEP) {
-    bool output_ionic_vars = false;
-    for (auto out_params : eq_params->outputs)
-      if (out_params->type.value() == "Spatial") {
-        output_ionic_vars =
-            out_params->get_output_value("Ionic_state_variables");
-        break;
-      }
-
-    if (output_ionic_vars) {
-      std::set<std::string> registered_vars;
-      for (int iDmn = 0; iDmn < lEq.nDmn; iDmn++) {
-        if (lEq.dmn[iDmn].phys == consts::EquationType::phys_CEP &&
-            lEq.dmn[iDmn].cep.ionic_model) {
-          const auto ionic_output_variables =
-              lEq.dmn[iDmn].cep.ionic_model->get_output_variables();
-
-          for (const auto &var : ionic_output_variables) {
-            if (registered_vars.find(var.first) == registered_vars.end()) {
-              outputType out;
-              out.grp = consts::OutputNameType::outGrp_ionicState;
-              out.o = var.second;
-              out.l = 1;
-              out.name = var.first;
-              out.options.spatial = true;
-              lEq.output.push_back(out);
-              lEq.nOutput++;
-              registered_vars.insert(var.first);
-            }
-          }
-        }
-      }
-    }
-  }
-
   // Set the number of function spaces
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
     auto& msh = com_mod.msh[iM];
@@ -2391,6 +2354,41 @@ void read_outputs(Simulation* simulation, EquationParameters* eq_params, eqType&
       auto alias_name = output_params->get_alias_value(lEq.output[i].name);
       if (alias_name.size() != 0) { 
         lEq.output[i].name = alias_name;
+      }
+    }
+  }
+
+  // If this is the CEP equation, dynamically register output variables
+  // requested by the ionic models
+  if (lEq.phys == consts::EquationType::phys_CEP) {
+    bool output_ionic_vars = false;
+    for (auto out_params : eq_params->outputs)
+      if (out_params->type.value() == "Spatial") {
+        output_ionic_vars =
+            out_params->get_output_value("Ionic_state_variables");
+        break;
+      }
+
+    if (output_ionic_vars) {
+      for (const auto &dmn : lEq.dmn) {
+        if (dmn.phys == consts::EquationType::phys_CEP) {
+          if (dmn.cep.ionic_model == nullptr) {
+            svmp::raise<svmp::FE::NotInitializedException>(
+                SVMP_HERE, "ionic model was not constructed.");
+          }
+
+          for (const auto &var : dmn.cep.ionic_model->get_output_variables()) {
+            outputType out;
+            out.grp = consts::OutputNameType::outGrp_ionicState;
+            out.o = var.second;
+            out.l = 1;
+            out.name = var.first;
+            out.options.spatial = true;
+
+            lEq.output.push_back(out);
+            lEq.nOutput++;
+          }
+        }
       }
     }
   }
