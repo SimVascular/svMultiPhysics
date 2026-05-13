@@ -1641,6 +1641,8 @@ void IonicInitialStateParameters::set_values(
                                         error_msg_prefix + name + "'.");
     }
   }
+
+  check_required();
 }
 
 //////////////////////////////////////////////////////////
@@ -1723,6 +1725,8 @@ void IonicModelParameters::set_values(const tinyxml2::XMLElement *xml_elem) {
                        initial_Xg_parameters.xml_element_name +
                        "' XML section.");
   }
+
+  check_required();
 }
 
 //////////////////////////////////////////////////////////
