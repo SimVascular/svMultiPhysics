@@ -62,7 +62,7 @@ void cep_init(Simulation* simulation)
           Vector<double> Xl(nX); 
           Vector<double> Xgl(nG);
 
-          cep_init_l(eq.dmn[iDmn].cep, Xl, Xgl);
+          eq.dmn[iDmn].cep.ionic_model->init(Xl, Xgl);
 
           sA(a) = sA(a) + 1.0;
 
@@ -97,7 +97,7 @@ void cep_init(Simulation* simulation)
         Vector<double> Xl(nX); 
         Vector<double> Xgl(nG);
 
-        cep_init_l(eq.dmn[0].cep, Xl, Xgl);
+        eq.dmn[0].cep.ionic_model->init(Xl, Xgl);
 
         for (int i = 0; i < nX; i++) {
           cep_mod.Xion(i,a) = Xl(i);
@@ -108,14 +108,6 @@ void cep_init(Simulation* simulation)
       }
     }
   }
-}
-
-//------------
-// cep_init_l
-//------------
-//
-void cep_init_l(cepModelType &cep, Vector<double> &X, Vector<double> &Xg) {
-  cep.ionic_model->init(X, Xg);
 }
 
 //-----------
