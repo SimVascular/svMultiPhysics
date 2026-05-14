@@ -42,10 +42,14 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
 
   // Compute the mean pressure in the upstream and downstream regions of the fluid mesh 
 
+  // Dimensionless factor scaling sdf_deps_close to set the outer signed distance limit 
+  // of the upstream/downstream fluid bands used for mean pressure computation.
+  double sdf_region_factor = 5.0; 
+
   // Set the limit of the upstream and downstream regions to 5 times the closed 
   // valve thickness. This should give a reasonable range for the upstream and 
   // downstream regions.
-  double Deps = uris_obj.sdf_deps_close * 5.0;
+  double Deps = uris_obj.sdf_deps_close * sdf_region_factor;
   double volU = 0.0;
   double volD = 0.0;
 
@@ -819,7 +823,7 @@ void uris_write_vtus(ComMod& com_mod) {
     for (int iM = 0; iM < uris_obj.nFa; iM++) {
       auto& mesh = uris_obj.msh[iM];
       int cOut = 0;
-      outS(cOut) = 0; // [HZ] Need to check this if it's 1 or 0
+      outS(cOut) = 0;
       outS(cOut+1) = nsd;
       // outNames[cOut] = "";
 
