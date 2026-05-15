@@ -1473,7 +1473,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     }
   }
 
-  // Read VTK files or boundaries. [TODO:DaveP] this is not a correct comment.
+  // Read parameters related to VTU output.
   read_outputs(simulation, eq_params, lEq, nDOP, outPuts);
 
   // Set the number of function spaces
