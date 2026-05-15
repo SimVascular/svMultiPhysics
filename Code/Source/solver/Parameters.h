@@ -231,6 +231,8 @@ class VectorParameter
       std::regex sep("\\(|\\)|\\,");
       auto str = std::regex_replace(str_value, sep, " ");
 
+      value_.clear();
+
       if constexpr (std::is_same<T, std::string>::value) {
         std::stringstream ssin(str);
         std::string value;
@@ -244,6 +246,8 @@ class VectorParameter
           value_.push_back(value);
         }
       }
+
+      value_set_ = true;
     }
 
     bool check_required_set()
