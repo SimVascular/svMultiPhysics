@@ -231,7 +231,16 @@ class VectorParameter
       std::regex sep("\\(|\\)|\\,");
       auto str = std::regex_replace(str_value, sep, " ");
 
-      value_.clear();
+      // If this is the first time this method is called, we clear any previous
+      // content of the vector of values. This means that, when the XML tag
+      // associated to this parameter is encoutered for the first time, the
+      // values given when declaring the parameter (see other overload of the
+      // set function) will be discarded. However, if the same XML tag is
+      // encountered again, the new values are appended, without discarding the
+      // previously encoutered ones.
+      if (!value_set_) {
+        value_.clear();
+      }
 
       if constexpr (std::is_same<T, std::string>::value) {
         std::stringstream ssin(str);
