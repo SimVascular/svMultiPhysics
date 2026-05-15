@@ -10,29 +10,28 @@
 
 namespace uris {
 
-void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions); // done
+void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions);
 
-void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions); // done
+void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionStates& solutions);
 
 void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions);
 
 void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris);
 
-void inside_tet(ComMod& com_mod, int& eNoN, Vector<double>& xp, 
-                Array<double>& xl, int& flag, bool ext); // done
+bool inside_tet(ComMod& com_mod, int& eNoN, Vector<double>& xp, Array<double>& xl, bool include_bdry);
 
-void uris_read_msh(Simulation* simulation); // done
+void uris_read_msh(Simulation* simulation);
 
-void uris_write_vtus(ComMod& com_mod); // done
+void uris_write_vtus(ComMod& com_mod);
 
-void uris_calc_sdf(ComMod& com_mod); // done
+void uris_calc_sdf(ComMod& com_mod);
 
-void uris_read_sv(Simulation* simulation, mshType& mesh, const URISFaceParameters* mesh_param); //done
+void uris_read_sv(Simulation* simulation, mshType& mesh, const URISFaceParameters* mesh_param);
 
-int in_poly(Vector<double>& P, Array<double>& P1, bool ext); // done
+bool in_poly(const Vector<double>& P, const Array<double>& P1, bool include_bdry);
 
-int same_side(Vector<double>& v1, Vector<double>& v2, Vector<double>& v3,
-              Vector<double>& v4, Vector<double>& p, bool ext); //done
+bool same_side(const Vector<double>& v1, const Vector<double>& v2, const Vector<double>& v3,
+              const Vector<double>& v4, const Vector<double>& p, bool include_bdry);
 
 void uris_find_closest_face_centroid(const urisType& uris_obj, const Vector<double>& xp,
   const int nsd, double& minS, int& Ec, int& jM);

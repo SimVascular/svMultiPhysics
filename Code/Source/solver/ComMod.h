@@ -1466,41 +1466,42 @@ class urisType
     // Number of IB meshes.
     int nFa = 0;
 
-    // Position coordinates (2D array: rows x columns).
+    // Valve surface position coordinates.
     Array<double> x;
 
-    // Displacement (new) (2D array).
+    // Valve displacement.
     Array<double> Yd;
 
     // Default signed distance value away from the valve.
-    double sdf_default = 1000.0;
+    double sdf_default;
 
-    // Default distance value of the valve boundary (valve thickness).
-    double sdf_deps = 0.25;
+    // Half-valve thickness when the valve is open.
+    double sdf_deps;
 
-    // Default distance value of the valve boundary when the valve is closed.
-    double sdf_deps_close = 0.25;
+    // Half-thickness used when the valve is closed. Set larger than sdf_deps 
+    // if the fully closed position alone is not able to prevent backflow.
+    double sdf_deps_close;
 
-    // Displacements of the valve when it opens (3D array).
+    // Opening positions of the valve surfaces.
     Array3<double> DxOpen;
 
-    // Displacements of the valve when it closes (3D array).
+    // Closing positions of the valve surfaces.
     Array3<double> DxClose;
 
-    // Normal vector pointing in the positive flow direction (1D array).
+    // Normal vector pointing in the positive flow direction.
     Vector<double> nrm;
 
     // Close flag.
-    bool clsFlg = true;
+    bool clsFlg;
 
     // Iteration count.
     int cnt = 1000000;
 
-    // URIS: signed distance function of each node to the uris (1D array).
+    // Signed distance function indexed by fluid/background mesh node.
     Vector<double> sdf;
 
     // Mesh scale factor.
-    double scF = 1.0;
+    double scF;
 
     // Mean pressure upstream.
     double meanPU = 0.0;
@@ -1511,11 +1512,16 @@ class urisType
     // Relaxation factor to compute weighted averages of pressure values.
     double relax_factor = 0.5;
 
-    // Array to store the fluid mesh elements that the uris node is in (2D array).
+    // elemId(0, nd) = mesh index jM, elemId(1, nd) = element index iEln
+    // for the fluid element containing immersed surface node nd.
+    // Set to -1 if no containing element was found on this rank.
     Array<int> elemId;
 
-    // Array to count how many times a uris node is found in the fluid mesh of a processor (1D array).
-    Vector<int> elemCounter;
+    // Per-node ownership flag set by uris_find_tetra. A value of 1 means this
+    // rank own that node and is used for interpolating its displacement. 
+    // A value of 0 means another rank owns it and this rank skips it to avoid 
+    //double-counting in the MPI_SUM gather.
+    Vector<int> localNode;
 
     // Derived type variables
     // IB meshes

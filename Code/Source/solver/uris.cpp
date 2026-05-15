@@ -252,30 +252,21 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
 /// @brief  This subroutine computes the displacement of the immersed 
 /// surface with fem projection
 void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions) {
-  // Local alias for solution array
-  const auto& Do = solutions.old.get_displacement();
   #define n_debug_uris_update_disp 
   #ifdef debug_uris_update_disp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
 
-  // using namespace consts;
+  // Local alias for solution array
+  const auto& Dn = solutions.current.get_displacement();
 
   auto& cm = com_mod.cm;
-  // auto& eq = com_mod.eq;
   auto& uris = com_mod.uris;
   auto& msh = com_mod.msh;
   int nUris = com_mod.nUris;
 
   const int nsd = com_mod.nsd;
-
-  // For each point in the immersed surface we need to localize it 
-  // = find the fluid element that contains the node
-  // Since the fluid element could be on another processor, we need to
-  // gather the displacement values at the end      
-  // [FK] it's probably better to save the element ids so that we don't
-  // have to run the search every time step, only during open or close 
 
   Array<double> localYd, xl, Nxi;
   Vector<double> N;
@@ -283,15 +274,31 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solu
   bool fl;
 
   for (int iUris = 0; iUris < nUris; iUris++) {
-    auto& uris_obj = uris[iUris];
+    // Localize each immersed surface node into a fluid element and elect
+    // one owner rank per node. Result is cached in elemId and localNode;
+    // the search is skipped on subsequent steps if the valve state is unchanged.
     uris_find_tetra(com_mod, cm_mod, iUris);
+
+    auto& uris_obj = uris[iUris];
     localYd.resize(nsd, uris_obj.tnNo);
     localYd = 0.0;
+    int local_xi_fail_count = 0;
+    int local_elem_miss_count = 0;
+
     for (int nd = 0; nd < uris_obj.tnNo; nd++) {
+      // Skip nodes not owned by this rank to avoid double-counting
+      // in the subsequent MPI_SUM gather.
+      if (!uris_obj.localNode(nd)) { continue; }
+
       int jM = uris_obj.elemId(0, nd);
+      if (jM == -1) {
+        // Defensive check: localNode guarantees a containing element was found
+        // across all fluid meshes during uris_find_tetra, so jM == -1 here
+        // indicates an inconsistency.
+        local_elem_miss_count += 1;
+        continue;
+      }
       auto& mesh = msh[jM];
-      // If the fluid mesh element is not on the current proc
-      if (jM == -1) {continue;}
 
       int iEln = uris_obj.elemId(1, nd);
       Vector<double> xp = uris_obj.x.col(nd);
@@ -303,38 +310,48 @@ void uris_update_disp(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solu
         int Ac = mesh.IEN(a, iEln);
         xl.rcol(a) = com_mod.x.rcol(Ac);
       }
-      // Get displacement  
-      // Localize p inside the parent element
+
+      // Localize xp inside the parent element to get reference coords xi
+      xi = 0.0;
       nn::get_xi(nsd, mesh.eType, mesh.eNoN, xl, xp, xi, fl);
       if (!fl) {
+        local_xi_fail_count += 1;
         if (cm.mas(cm_mod)) {
           std::cout << "[WARNING] URIS get_xi not converging!" << std::endl;
         }
+        continue;
       }
-      // evaluate N at xi 
+
+      // Evaluate shape functions N at xi
       nn::get_gnn(nsd, mesh.eType, mesh.eNoN, xi, N, Nxi);
-      // use this to compute disp al node xp
+
+      // Interpolate displacement at node xp using shape functions.
       d = 0.0;
       for (int a = 0; a < mesh.eNoN; a++) {
         int Ac = mesh.IEN(a, iEln);
-        //We have to use Do because Dn contains the result coming from the solid 
-        d(0) += N(a)*Do(nsd+1, Ac);
-        d(1) += N(a)*Do(nsd+2, Ac);
-        d(2) += N(a)*Do(nsd+3, Ac);
+        d = d + N(a) * Dn.rows(nsd+1, 2*nsd, Ac);
       }
       // update uris disp  
       localYd.set_col(nd, d);
     }
+
+    // Each node is written by exactly one rank (localNode), so MPI_SUM
+    // correctly assembles the global displacement array without double-counting.
     MPI_Allreduce(localYd.data(), uris_obj.Yd.data(), uris_obj.tnNo*nsd,
                   cm_mod::mpreal, MPI_SUM, cm.com());
 
-    for (int nd = 0; nd < uris_obj.tnNo; nd++) {
-      double divisor = std::max(1, uris_obj.elemCounter(nd));
-      uris_obj.Yd.rcol(nd) = uris_obj.Yd.rcol(nd) / divisor;
+    int xi_fail_count = 0;
+    int elem_miss_count = 0;
+    MPI_Allreduce(&local_xi_fail_count, &xi_fail_count, 1,
+                  cm_mod::mpint, MPI_SUM, cm.com());
+    MPI_Allreduce(&local_elem_miss_count, &elem_miss_count, 1,
+                  cm_mod::mpint, MPI_SUM, cm.com());
+    if (cm.mas(cm_mod) && (xi_fail_count > 0 || elem_miss_count > 0)) {
+      std::cout << "[URIS WARNING] URIS disp update failed for " << uris_obj.name
+                << ": elem_miss=" << elem_miss_count
+                << ", xi_fail=" << xi_fail_count << std::endl;
     }
-
   }
-
 }
 
 /// @brief  This subroutine computes the tetrahedral elements
@@ -363,32 +380,39 @@ void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   }
 
   // For each point in the immersed surface we need to localize it 
-  // = find the fluid element that contains the node
+  // and find the fluid element that contains the node
   // Since the fluid element could be on another processor, we need to
-  // gather the displacement values at the end      
-  // [FK] it's probably better to save the element ids so that we don't
-  // have to run the search every time step, only during open or close      
+  // gather the displacement values at the end 
 
-  bool ultra = true;
+  bool include_bdry = true;
   if (!uris_obj.elemId.allocated()) {
     uris_obj.elemId.resize(2, uris_obj.tnNo);
   }
-  if (!uris_obj.elemCounter.allocated()) {
-    uris_obj.elemCounter.resize(uris_obj.tnNo);
+  // localNode(nd) = 1 if this rank is the elected owner of node nd, 0 otherwise.
+  // Ownership is resolved here via centroid distance + MPI_MIN so that
+  // uris_update_disp does not need a second ownership reduce.
+  if (!uris_obj.localNode.allocated()) {
+    uris_obj.localNode.resize(uris_obj.tnNo);
   }
-  Vector<int> local_counter(uris_obj.tnNo);
-  local_counter = 0;
+
   uris_obj.elemId = -1;
-  uris_obj.elemCounter = 0;
-  int flag;
-  Array<double> xl;
+  uris_obj.localNode = 0;
+
+  Vector<int> local_counter(uris_obj.tnNo);
+  Vector<int> global_counter(uris_obj.tnNo);
+  // local_metric(nd): squared distance from node nd to the centroid of its
+  // found element on this rank. Used to elect a single owner when multiple
+  // ranks find the same node.
+  Vector<double> local_metric(uris_obj.tnNo);
+  Vector<double> global_metric(uris_obj.tnNo);
+  Array<double>  xl;
+
+  local_counter = 0;
+  local_metric  = std::numeric_limits<double>::max();
+
   for (int nd = 0; nd < uris_obj.tnNo; nd++) {
-    flag = 0;
-    // Check if we were able to find the tetra.
-    // [FK] if not, the tetra is on another processor 
     Vector<double> xp = uris_obj.x.col(nd);
     bool found = false;
-
     for (int jM = 0; jM < com_mod.nMsh && !found; jM++) {
       auto& mesh = com_mod.msh[jM];
       xl.resize(nsd, mesh.eNoN);
@@ -397,26 +421,77 @@ void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
           int Ac = mesh.IEN(a, iEln);
           xl.rcol(a) = com_mod.x.rcol(Ac);
         }
-        inside_tet(com_mod, mesh.eNoN, xp, xl, flag, ultra);
-        if (flag == 1) {
+        if (inside_tet(com_mod, mesh.eNoN, xp, xl, include_bdry)) {
           uris_obj.elemId(0, nd) = jM;
           uris_obj.elemId(1, nd) = iEln;
           local_counter(nd) += 1;
+
+          // Compute squared distance from node to element centroid.
+          // This metric is used below to elect one owner per node via
+          // MPI_MIN, avoiding double-counting in uris_update_disp.
+          Vector<double> x_cent(nsd);
+          x_cent = 0.0;
+          for (int a = 0; a < mesh.eNoN; a++) {
+            int Ac = mesh.IEN(a, iEln);
+            x_cent = x_cent + com_mod.x.rcol(Ac);
+          }
+          x_cent = x_cent / mesh.eNoN;
+          Vector<double> dx = xp - x_cent;
+          local_metric(nd) = dx * dx;
           found = true;
         }
       }
     }
   }
 
-  MPI_Allreduce(local_counter.data(), uris_obj.elemCounter.data(), 
+  // Accumulate how many ranks found each node (used for diagnostics only)
+  MPI_Allreduce(local_counter.data(), global_counter.data(), 
                 uris_obj.tnNo, cm_mod::mpint, MPI_SUM, cm.com());
 
+  // Select one owner per node: first find the global minimum centroid
+  // distance, then break ties deterministically by choosing the smallest
+  // rank among all ranks that attained that minimum.
+  MPI_Allreduce(local_metric.data(), global_metric.data(),
+                uris_obj.tnNo, cm_mod::mpreal, MPI_MIN, cm.com());
+
+  const double owner_tol = 1.0e-14;
+  const int my_rank = cm.idcm();
+  Vector<int> local_owner_rank(uris_obj.tnNo);
+  Vector<int> global_owner_rank(uris_obj.tnNo);
+
+  for (int nd = 0; nd < uris_obj.tnNo; nd++) {
+    bool is_min_metric = (local_metric(nd) != std::numeric_limits<double>::max()) &&
+                         (std::fabs(local_metric(nd) - global_metric(nd)) <= owner_tol);
+    local_owner_rank(nd) = is_min_metric ? my_rank : std::numeric_limits<int>::max();
+  }
+  MPI_Allreduce(local_owner_rank.data(), global_owner_rank.data(),
+                uris_obj.tnNo, cm_mod::mpint, MPI_MIN, cm.com());
+
+  for (int nd = 0; nd < uris_obj.tnNo; nd++) {
+    bool is_owner = (local_owner_rank(nd) != std::numeric_limits<int>::max()) &&
+                    (global_owner_rank(nd) == my_rank);
+    uris_obj.localNode(nd) = is_owner ? 1 : 0;
+  }
+
+  // Diagnostic: nodes found on more than one rank indicate ghost/shared
+  // element overlap. Ownership is still unique because ties are broken
+  // deterministically by rank before the MPI_SUM gather.
+  int multi_owner_count = 0;
+  for (int nd = 0; nd < uris_obj.tnNo; nd++) {
+      if (global_counter(nd) > 1) {
+          multi_owner_count += 1;
+      }
+  }
+  if (cm.mas(cm_mod) && multi_owner_count > 0) {
+      std::cout << "[URIS WARNING] Multi-owner nodes for " << uris_obj.name
+                << ": " << multi_owner_count << std::endl;
+  }
 }
 
 
 /// @brief This subroutine check if a node is inside a tetrahedron
-void inside_tet(ComMod& com_mod, int& eNoN, Vector<double>& xp, 
-                Array<double>& xl, int& flag, bool ext) {
+bool inside_tet(ComMod& com_mod, int& eNoN, Vector<double>& xp, 
+                Array<double>& xl, bool include_bdry) {
   #define n_debug_inside_tet 
   #ifdef debug_inside_tet
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
@@ -429,33 +504,29 @@ void inside_tet(ComMod& com_mod, int& eNoN, Vector<double>& xp,
   Vector<double> maxb(nsd);
 
   // Create a bounding box around of the current solid location 
-  // [FK]: Hard coded BBox?? This is going to cause problem if scale changes
+  // Make the bbox tolerance scale-aware (relative to element size)
   for (int i = 0; i < nsd; i++) {
     double min_val = std::numeric_limits<double>::max();
     double max_val = std::numeric_limits<double>::lowest();
     for (int j = 0; j < eNoN; j++) {
-      double val_minus = xl(i,j) - 0.1;
-      double val_plus = xl(i,j) + 0.1;
-      if (val_minus < min_val) {min_val = val_minus;}
-      if (val_plus > max_val) {max_val = val_plus;}
+      double val = xl(i,j);
+      if (val < min_val) {min_val = val;}
+      if (val > max_val) {max_val = val;}
     }
-    minb(i) = min_val;
-    maxb(i) = max_val;
+    double range = std::max(max_val - min_val, 0.0);
+    // Relative tolerance with a tiny floor for near-degenerate spans
+    double tol = std::max(range * 1.0e-3, 1.0e-12);
+    minb(i) = min_val - tol;
+    maxb(i) = max_val + tol;
   }
 
   // Is the node inside the BBox? 
-  bool inside = true;
   for (int i = 0; i < nsd; ++i) {
     if (xp(i) < minb(i) || xp(i) > maxb(i)) {
-      inside = false;
-      break;
+      return false;
     }
   }
-
-  flag = 0;
-  if (inside) {
-    flag = in_poly(xp, xl, ext);
-  }
+  return in_poly(xp, xl, include_bdry);
 }
 
 /// @brief Precompute whether each node belongs to a fluid-related domain.
@@ -533,9 +604,11 @@ void uris_read_msh(Simulation* simulation) {
     }
     file_stream.close();
 
-    uris_obj.sdf_default = uris_obj.sdf_default * uris_obj.scF;
-    uris_obj.sdf_deps = param->thickness() * uris_obj.scF;
-    uris_obj.sdf_deps_close = param->close_thickness() * uris_obj.scF;
+    uris_obj.sdf_deps = param->thickness();
+    uris_obj.sdf_deps_close = param->close_thickness();
+    // Use large default value for the signed distance function to indicate that 
+    // the fluid node is far away from the valve. 
+    uris_obj.sdf_default = param->close_thickness() * 1e6;
     uris_obj.clsFlg = param->valve_starts_as_closed();
 
     // uris_obj.tnNo = 0;
@@ -798,7 +871,7 @@ void uris_write_vtus(ComMod& com_mod) {
       for (int a = 0; a < mesh.nNo; a++) {
         int Ac = mesh.gN(a);
         for (int i = 0; i < nsd; i++) {
-          d[iM].x(is+i,a) = uris_obj.Yd(s+i,Ac) / uris_obj.scF; // [HZ] Need to check this
+          d[iM].x(is+i,a) = uris_obj.Yd(s+i,Ac) / uris_obj.scF;
         }
       }
 
@@ -1061,87 +1134,74 @@ void uris_read_sv(Simulation* simulation, mshType& mesh, const URISFaceParameter
 }
 
 
-/// @brief This routine gives the distance between two points 
+/// @brief Check whether point P lies inside a convex polygon (2D) or
+/// tetrahedron (3D) defined by vertices P1. Returns true if P is inside,
+/// or if P lies on the boundary and include_bdry is true; otherwise
+/// returns false.
+bool in_poly(const Vector<double>& P, const Array<double>& P1, bool include_bdry) {
+  #define n_dbg_in_poly
+  #ifdef dbg_in_poly
+    DebugMsg dmsg(__func__, 0);
+    dmsg.banner();
+    dmsg << "checking in_poly";
+  #endif
 
-int in_poly(Vector<double>& P, Array<double>& P1, bool ext) {
-  int nd = P1.nrows();
-  bool flag = true;
-  int inpoly = 0;
-
-  Vector<double> N(nd);
-  N = 0.0;
+  const int nd = P1.nrows();
 
   if (nd == 2) {
-    for (int i = 0; i <= nd; i++) {
-      // compute normal in 2D for P2-P1 P3-P1
-      if (i != nd) {
-        N(0) = P1(1,i) - P1(1,i+1);
-        N(1) = P1(0,i+1) - P1(0,i);
-      } else {
-        N(0) = P1(1,i) - P1(1,0);
-        N(1) = P1(0,0) - P1(0,i);
+      Vector<double> N(nd);
+      for (int i = 0; i <= nd; i++) {
+          const int j = (i < nd) ? i + 1 : 0;  // wrap last edge back to 0
+          N(0) = P1(1,i) - P1(1,j);
+          N(1) = P1(0,j) - P1(0,i);
+          const double dotP = N(0)*(P(0)-P1(0,i)) + N(1)*(P(1)-P1(1,i));
+          if (dotP < 0.0) { return false; }
       }
-      // test dot product between P-P1 and the normals
-      double dotP = N(0)*(P(0)-P1(0,i)) + N(1)*(P(1)-P1(1,i));
-      if (dotP < 0.0) {
-        flag = false;
-        break;
-      }
-    }
-    if (flag) {
-      inpoly = 1;
-    }
-  } else {
-    Vector<double> v1 = P1.col(0);
-    Vector<double> v2 = P1.col(1);
-    Vector<double> v3 = P1.col(2);
-    Vector<double> v4 = P1.col(3);
-    int s1 = same_side(v1, v2, v3, v4, P, ext);
-    int s2 = same_side(v2, v3, v4, v1, P, ext);
-    int s3 = same_side(v3, v4, v1, v2, P, ext);
-    int s4 = same_side(v4, v1, v2, v3, P, ext);
-    inpoly = (s1 + s2 + s3 + s4) / 4;
-  }
+      return true;
+  } else if (nd == 3) {
+    // 3D: all four faces must pass the same-side test
+    const Vector<double> v1 = P1.col(0);
+    const Vector<double> v2 = P1.col(1);
+    const Vector<double> v3 = P1.col(2);
+    const Vector<double> v4 = P1.col(3);
 
-  return inpoly;
+    return same_side(v1, v2, v3, v4, P, include_bdry)
+        && same_side(v2, v3, v4, v1, P, include_bdry)
+        && same_side(v3, v4, v1, v2, P, include_bdry)
+        && same_side(v4, v1, v2, v3, P, include_bdry);
+  } else {
+    throw std::runtime_error("Invalid number of dimensions for in_poly");
+  }
 }
 
-
-/// @brief Chech if a point is on the same side of anotehr point wrt a triangle in 3D
-int same_side(Vector<double>& v1, Vector<double>& v2, Vector<double>& v3,
-              Vector<double>& v4, Vector<double>& p, bool ext) {
+/// @brief Check if a point is on the same side of another point wrt a triangle in 3D
+bool same_side(const Vector<double>& v1, const Vector<double>& v2,
+               const Vector<double>& v3, const Vector<double>& v4,
+               const Vector<double>& p,  bool include_bdry) {
   #define n_dbg_same_side
   #ifdef dbg_same_side
     DebugMsg dmsg(__func__, 0);
     dmsg.banner();
-    dmsg << "checking same side";
+    dmsg << "checking same_side";
   #endif
-
-  int sameside = 0;
-  double eps = 2.0e-4;
 
   Vector<double> v21 = v2 - v1;
   Vector<double> v31 = v3 - v1;
-  Array<double> V(3,2);
+  Array<double> V(3, 2);
   V.set_col(0, v21);
   V.set_col(1, v31);
-  Vector<double> v41 = v4 - v1;
-  Vector<double> vp1 = p - v1;
-  Vector<double> N = utils::cross(V);
-  double dotV4 = utils::norm(N, v41);
-  double dotP = utils::norm(N, vp1);
-  // check if P and P4 are from the same side
-  // int sn = utils::sign(dotP);
-  // if (sn == 1) {
-  if ((dotP >= 0 && dotV4 >= 0) || (dotP < 0 && dotV4 < 0)) {
-    sameside = 1;
-  }
 
-  // If it is not, check if it is on any face, it might on the face 
-  if (ext && sameside != 1) {
-    if (std::fabs(dotP) <= eps) {
-      sameside = 1;
-    }
+  const Vector<double> N = utils::cross(V);
+  const double dotV4 = utils::norm(N, v4-v1);
+  const double dotP = utils::norm(N, p-v1);
+
+  // P and v4 are on the same side if their dot products share a sign
+  const bool sameside = (dotP >= 0.0) == (dotV4 >= 0.0);
+
+  // If not strictly same side, accept if P lies on the face within tolerance
+  if (include_bdry && !sameside) {
+    const double tol = 1.0e-9 * std::max(std::fabs(dotV4), 1.0e-30);
+    return std::fabs(dotP) <= tol;
   }
 
   return sameside;

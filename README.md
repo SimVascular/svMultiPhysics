@@ -1,7 +1,6 @@
 # svMultiPhysics
 
-[![Build Status (Ubuntu)](https://github.com/SimVascular/svMultiPhysics/actions/workflows/test_ubuntu.yml/badge.svg)](https://github.com/SimVascular/svMultiPhysics/actions)
-[![Build Status (macOS)](https://github.com/SimVascular/svMultiPhysics/actions/workflows/test_macos.yml/badge.svg)](https://github.com/SimVascular/svMultiPhysics/actions)
+[![Tests](https://github.com/SimVascular/svMultiPhysics/actions/workflows/tests.yml/badge.svg)](https://github.com/SimVascular/svMultiPhysics/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/github/SimVascular/svMultiPhysics/graph/badge.svg?token=I848DNIHSP)](https://codecov.io/github/SimVascular/svMultiPhysics)
 ![Latest Release](https://img.shields.io/github/v/release/SimVascular/svMultiPhysics?label=latest)
 ![Platform](https://img.shields.io/badge/platform-macOS%20|%20linux-blue)
