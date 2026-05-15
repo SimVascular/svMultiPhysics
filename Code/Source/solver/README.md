@@ -145,11 +145,7 @@ C++ functions are defined within a `namespace` defined for each Fortran file. Fo
          - [<b>fsi_linear_solver::fsils_commu_create(communicator, cm.com())</b>](#fsils_commu_create) -
          - [<b>fsi_linear_solver::fsils_lhs_create(com_mod.lhs, communicator, com_mod.gtnNo, com_mod.tnNo, nnz,com_mod.ltg, com_mod.rowPtr, com_mod.colPtr, nFacesLS)</b>](#fsils_lhs_create) - Initialize FSILS structures
          - [<b>cep_ion::cep_init(simulation)</b>](#cep_init) - 
-           - [<b>cep_ion::cep_init_l(CepMod& cep_mod, cepModelType& cep, int nX, int nG, Vector<double>& X, Vector<double>& Xg)</b>](#cep_init_l) -
-             - [<b>cep_mod.ap.init(nX, X)</b>]() - 
-             - [<b>cep_mod.bo.init(nX, X)</b>]() -
-             - [<b>cep_mod.bfn.init(nX, X)</b>]() -
-             - [<b>cep_mod.ttp.init(cep.imyo, nX, nG, X, Xg)</b>]() -
+           - [<b>IonicModel::init(Vector<double>& X, Vector<double>& Xg) const</b>](#ionic_model_init) -
          - [<b>fs::init_fs_msh(com_mod, mesh)</b>](#init_fs_msh) -
          - [<b>fs::init_fs_face(com_mod, mesh, mesh.fa[iFa])</b>](#init_fs_face) -
          - [<b>all_fun::integ(com_mod, cm_mod, i, s, 0, 0)</b>](#integ) - Calculating the volume of each domain
@@ -1208,7 +1204,7 @@ Modifies:
  cep_mod.Xion
  ```
  
- - `cep_init_l(cep_mod, eq.dmn[iDmn].cep, nX, nG, Xl, Xgl)`
+ - `IonicModel::init(Xl, Xgl)`
  
  - `all_fun::commu(com_mod, sA)`
  - `all_fun::commu(com_mod, sF)`
