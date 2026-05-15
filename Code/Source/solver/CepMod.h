@@ -44,40 +44,6 @@ static std::ostream &operator << ( std::ostream& strm, ElectrophysiologyModelTyp
   return strm << names.at(type);
 }
 
-/// @brief Time integration scheme.
-enum class TimeIntegrationType { NA = 200, FE = 201, RK4 = 202, CN2 = 203 };
-
-extern const std::map<std::string, TimeIntegrationType> cep_time_int_to_type;
-
-static std::ostream &operator<<(std::ostream &strm, TimeIntegrationType type) {
-  const std::map<TimeIntegrationType, std::string> names = {
-      {TimeIntegrationType::NA, "NA"},
-      {TimeIntegrationType::FE, "FE"},
-      {TimeIntegrationType::RK4, "RK4"},
-      {TimeIntegrationType::CN2, "CN2"},
-  };
-  return strm << names.at(type);
-}
-
-/// @brief Time integration scheme and related parameters
-class odeType {
-  public:
-    odeType() {};
-
-    /// @brief Time integration method type
-    TimeIntegrationType tIntType = TimeIntegrationType::NA;
-    //int tIntType = tIntType_NA;
-
-    /// @brief Max. iterations for Newton-Raphson method
-    int maxItr = 5;
-
-    /// @brief Absolute tolerance
-    double absTol = 1.E-8;
-
-    /// @brief Relative tolerance
-    double relTol = 1.E-4;
-};
-
 /// @brief External stimulus type
 class stimType
 {

@@ -309,24 +309,16 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
   dmsg.banner();
   #endif
 
-  auto& cem = cep_mod.cem;
-
   // Feedback coefficient for stretch-activated-currents
-  double Ksac = 0.0;
-  if (I4f > 1.0) {
-     Ksac = cep.Ksac * (sqrt(I4f) - 1.0);
-  } else {
-     Ksac = 0.0;
-  }
+  const double Ksac = I4f > 1.0 ? cep.Ksac * (sqrt(I4f) - 1.0) : 0.0;
 
   // Total time steps
-  int nt = static_cast<int>(dt/cep.dt);
+  const unsigned nt = static_cast<unsigned int>(dt / cep.dt);
 
   // External stimulus duration
-  int icl = static_cast<int>(fmax(floor(t1/cep.Istim.CL),0.0));
-  double Ts = cep.Istim.Ts + static_cast<double>(icl)*cep.Istim.CL;
-  double Te = Ts + cep.Istim.Td;
-  double eps = std::numeric_limits<double>::epsilon();
+  const int icl = static_cast<int>(fmax(floor(t1 / cep.Istim.CL), 0.0));
+  const double Ts = cep.Istim.Ts + static_cast<double>(icl) * cep.Istim.CL;
+  const double Te = Ts + cep.Istim.Td;
 
   #ifdef debug_cep_integ_l
   dmsg << "nt: " << nt;
@@ -338,37 +330,16 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
   dmsg << "cep.odes.tIntTyp: " << cep.odes.tIntType;
   #endif
 
-  if (cep.ionic_model == nullptr) {
-    svmp::raise<svmp::FE::NotInitializedException>(
-        SVMP_HERE, "ionic model was not constructed.");
-  }
+  svmp::check_not_null<svmp::FE::NotInitializedException>(
+      cep.ionic_model.get(), SVMP_HERE, "ionic model was not constructed.");
 
-  switch (cep.odes.tIntType) {
-  case TimeIntegrationType::FE:
-    for (unsigned int i = 0; i < nt; ++i) {
-      const double t = t1 + i * cep.dt;
-      const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_fe(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac);
-    }
-    break;
+  const double eps = std::numeric_limits<double>::epsilon();
 
-  case TimeIntegrationType::RK4:
-    for (int i = 0; i < nt; i++) {
-      const double t = t1 + i * cep.dt;
-      const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_rk(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac);
-    }
-    break;
+  for (unsigned int i = 0; i < nt; ++i) {
+    const double t = t1 + i * dt;
+    const double Istim = (Ts - eps <= t && t <= Te + eps) ? cep.Istim.A : 0.0;
 
-  case TimeIntegrationType::CN2:
-    for (int i = 0; i < nt; i++) {
-      const double t = t1 + i * cep.dt;
-      const double Istim = (t >= Ts - eps && t <= Te + eps) ? cep.Istim.A : 0.0;
-      cep.ionic_model->integ_cn2(cep.imyo, X, Xg, t, cep.dt, Istim, Ksac,
-                                 cep.odes.maxItr, cep.odes.relTol,
-                                 cep.odes.absTol);
-    }
-    break;
+    cep.ionic_model->integ(cep.odes, cep.imyo, t, cep.dt, Istim, Ksac, X, Xg);
   }
 
   if (isnan(X(0)) ||  isnan(yl)) {

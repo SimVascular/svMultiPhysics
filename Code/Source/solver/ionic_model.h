@@ -16,8 +16,51 @@
 
 #include "CmMod.h"
 
-// Forward declaration.
+// Forward declarations.
 class outputType;
+
+/**
+ * @brief Enumeration of time integration types for ODEs.
+ */
+enum class TimeIntegrationType {
+  NA = 200,  ///< Undefined integration method.
+  FE = 201,  ///< Forward Euler.
+  RK4 = 202, ///< 4th order explicit Runge-Kutta
+  CN2 = 203  ///< Crank-Nicolson.
+};
+
+/// Map from a string representation of the integration type to the actual type.
+extern const std::map<std::string, TimeIntegrationType> cep_time_int_to_type;
+
+/// Write a TimeIntegrationType to an output stream.
+static std::ostream &operator<<(std::ostream &strm, TimeIntegrationType type) {
+  const std::map<TimeIntegrationType, std::string> names = {
+      {TimeIntegrationType::NA, "NA"},
+      {TimeIntegrationType::FE, "FE"},
+      {TimeIntegrationType::RK4, "RK4"},
+      {TimeIntegrationType::CN2, "CN2"},
+  };
+
+  return strm << names.at(type);
+}
+
+/// @brief Time integration scheme and related parameters
+class odeType {
+public:
+  odeType() {};
+
+  /// @brief Time integration method type
+  TimeIntegrationType tIntType = TimeIntegrationType::NA;
+
+  /// @brief Max. iterations for Newton-Raphson method
+  int maxItr = 5;
+
+  /// @brief Absolute tolerance
+  double absTol = 1.E-8;
+
+  /// @brief Relative tolerance
+  double relTol = 1.E-4;
+};
 
 /**
  * @brief Abstract ionic model class.
@@ -139,6 +182,67 @@ public:
   void init(Vector<double> &X, Vector<double> &Xg) const;
 
   /**
+   * @brief Integrate over one time step.
+   *
+   * @param[in] ode_solver_params ODE solver parameters structure, including
+   *   the solver method and the stopping criterion information.
+   * @param[in] zone_id Identifier for the transmural zone (epicardium,
+   *   endocardium, myocardium).
+   * @param[in] t Current time.
+   * @param[in] dt Integration time step.
+   * @param[in] Istim Amplitude of the stimulus current at the current time.
+   * @param[in] Ksac Amplitude of the stretch-activated current.
+   * @param[in,out] X Vector of state variables to be updated.
+   * @param[in,out] Xg Vector of gating variables to be updated.
+   */
+  void integ(const odeType &ode_solver_params, const int zone_id,
+             const double t, const double dt, const double Istim,
+             const double Ksac, Vector<double> &X, Vector<double> &Xg) const;
+
+  /**
+   * @brief Get the number of state variables.
+   */
+  unsigned int nX() const { return initial_X.size(); }
+
+  /**
+   * @brief Get the number of gating variables.
+   */
+  unsigned int nG() const { return initial_Xg.size(); }
+
+  /**
+   * @brief Get the index of the intracellular calcium concentration in the
+   * state vector.
+   *
+   * This is the index of the variable to be used for electromechanics coupling.
+   */
+  virtual unsigned int get_calcium_index() const = 0;
+
+  /**
+   * @brief Get a list of state variables to export to VTU.
+   *
+   * By default, this function returns the calcium index as the only exported
+   * state variable. Derived classes can override this to export additional
+   * states if needed. Beware that, for phenomenological models, the calcium
+   * variable might actually be a proxy for calcium, rather than the actual
+   * concentration (and in particular it might be non-dimensional or have
+   * different units than a molar concentration).
+   *
+   * @return A vector of pairs {variable_name, state_vector_index}. The vector
+   * need not include the transmembrane potential V, which is exported by other
+   * means.
+   */
+  virtual std::vector<std::pair<std::string, int>>
+  get_output_variables() const {
+    return {{"Calcium", get_calcium_index()}};
+  }
+
+  /**
+   * @brief Get output variable information for output registration.
+   */
+  std::vector<outputType> get_registered_outputs() const;
+
+protected:
+  /**
    * @name Integration methods.
    * @{
    */
@@ -251,49 +355,6 @@ public:
    * @}
    */
 
-  /**
-   * @brief Get the number of state variables.
-   */
-  unsigned int nX() const { return initial_X.size(); }
-
-  /**
-   * @brief Get the number of gating variables.
-   */
-  unsigned int nG() const { return initial_Xg.size(); }
-
-  /**
-   * @brief Get the index of the intracellular calcium concentration in the
-   * state vector.
-   *
-   * This is the index of the variable to be used for electromechanics coupling.
-   */
-  virtual unsigned int get_calcium_index() const = 0;
-
-  /**
-   * @brief Get a list of state variables to export to VTU.
-   *
-   * By default, this function returns the calcium index as the only exported
-   * state variable. Derived classes can override this to export additional
-   * states if needed. Beware that, for phenomenological models, the calcium
-   * variable might actually be a proxy for calcium, rather than the actual
-   * concentration (and in particular it might be non-dimensional or have
-   * different units than a molar concentration).
-   *
-   * @return A vector of pairs {variable_name, state_vector_index}. The vector
-   * need not include the transmembrane potential V, which is exported by other
-   * means.
-   */
-  virtual std::vector<std::pair<std::string, int>>
-  get_output_variables() const {
-    return {{"Calcium", get_calcium_index()}};
-  }
-
-  /**
-   * @brief Get output variable information for output registration.
-   */
-  std::vector<outputType> get_registered_outputs() const;
-
-protected:
   /**
    * @brief Update variables with analytical solution.
    *

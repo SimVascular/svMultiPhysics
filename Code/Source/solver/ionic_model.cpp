@@ -9,6 +9,17 @@
 
 #include <iostream>
 
+const std::map<std::string, TimeIntegrationType> cep_time_int_to_type = {
+    {"cn", TimeIntegrationType::CN2},
+    {"cn2", TimeIntegrationType::CN2},
+    {"implicit", TimeIntegrationType::CN2},
+    {"fe", TimeIntegrationType::FE},
+    {"euler", TimeIntegrationType::FE},
+    {"explicit", TimeIntegrationType::FE},
+    {"rk", TimeIntegrationType::RK4},
+    {"rk4", TimeIntegrationType::RK4},
+    {"runge", TimeIntegrationType::RK4}};
+
 void IonicModel::read_parameters(const IonicModelParameters &params) {
   const auto &params_X = params.get_initial_X();
   for (auto &[label, value] : initial_X)
@@ -44,6 +55,32 @@ void IonicModel::init(Vector<double> &X, Vector<double> &Xg) const {
 
   for (size_t i = 0; i < initial_Xg.size(); ++i)
     Xg[i] = initial_Xg[i].second;
+}
+
+void IonicModel::integ(const odeType &ode_solver_params, const int zone_id,
+                       const double t, const double dt, const double Istim,
+                       const double Ksac, Vector<double> &X,
+                       Vector<double> &Xg) const {
+  switch (ode_solver_params.tIntType) {
+  case TimeIntegrationType::FE:
+    integ_fe(zone_id, X, Xg, t, dt, Istim, Ksac);
+    break;
+
+  case TimeIntegrationType::RK4:
+    integ_rk(zone_id, X, Xg, t, dt, Istim, Ksac);
+    break;
+
+  case TimeIntegrationType::CN2:
+    integ_cn2(zone_id, X, Xg, t, dt, Istim, Ksac, ode_solver_params.maxItr,
+              ode_solver_params.relTol, ode_solver_params.absTol);
+    break;
+
+  default:
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE,
+        "Unknown time integration type: " +
+            std::to_string(static_cast<int>(ode_solver_params.tIntType)));
+  }
 }
 
 void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
