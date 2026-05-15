@@ -112,7 +112,7 @@
    </Domain>
 
    <Output type="Spatial" >
-      <Action_potential> true </Action_potential>
+      <Membrane_potential> true </Membrane_potential>
       <Ionic_state_variables> true </Ionic_state_variables>
    </Output>
 

@@ -16,7 +16,7 @@ cpp_exec_p = os.path.join(this_file_dir, "..", "build-petsc", "svMultiPhysics-bu
 
 # Relative tolerances for each tested field
 RTOL = {
-    "Action_potential": 1.0e-10,
+    "Membrane_potential": 1.0e-10,
     "Calcium": 1.0e-10,
     "Cauchy_stress": 1.0e-4,
     "Concentration": 1.0e-10,

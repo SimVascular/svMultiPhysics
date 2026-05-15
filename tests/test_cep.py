@@ -9,7 +9,7 @@ from .conftest import run_with_reference, RTOL
 base_folder = "cep"
 
 # Fields to test
-fields = ["Action_potential", "Calcium"]
+fields = ["Membrane_potential", "Calcium"]
 
 
 def test_cable_TTP_1d(n_proc):
