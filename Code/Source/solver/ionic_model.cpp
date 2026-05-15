@@ -3,6 +3,7 @@
 
 #include "ionic_model.h"
 
+#include "ComMod.h"
 #include "Parameters.h"
 #include "mat_fun.h"
 
@@ -199,6 +200,24 @@ void IonicModel::integ_rk(const unsigned int zone_id, Vector<double> &X,
 
   // Bring the potential variable back to dimensional units.
   X(0) = X(0) * Vscale + Voffset;
+}
+
+std::vector<outputType> IonicModel::get_registered_outputs() const {
+  std::vector<outputType> result;
+
+  for (const auto &[name, index] : get_output_variables()) {
+    outputType out;
+
+    out.grp = consts::OutputNameType::outGrp_ionicState;
+    out.name = name;
+    out.o = index;
+    out.l = 1;
+    out.options.spatial = true;
+
+    result.push_back(out);
+  }
+
+  return result;
 }
 
 std::unique_ptr<IonicModel>

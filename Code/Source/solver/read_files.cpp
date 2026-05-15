@@ -5,6 +5,7 @@
 
 #include "read_files.h"
 
+#include "FE/Common/FEException.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "fft.h"
@@ -2371,24 +2372,18 @@ void read_outputs(Simulation* simulation, EquationParameters* eq_params, eqType&
 
     if (output_ionic_vars) {
       for (const auto &dmn : lEq.dmn) {
-        if (dmn.phys == consts::EquationType::phys_CEP) {
-          if (dmn.cep.ionic_model == nullptr) {
-            svmp::raise<svmp::FE::NotInitializedException>(
-                SVMP_HERE, "ionic model was not constructed.");
-          }
+        if (dmn.phys != consts::EquationType::phys_CEP)
+          continue;
 
-          for (const auto &var : dmn.cep.ionic_model->get_output_variables()) {
-            outputType out;
-            out.grp = consts::OutputNameType::outGrp_ionicState;
-            out.o = var.second;
-            out.l = 1;
-            out.name = var.first;
-            out.options.spatial = true;
+        svmp::check_not_null<svmp::FE::NotInitializedException>(
+            dmn.cep.ionic_model.get(), SVMP_HERE,
+            "ionic model was not constructed.");
 
-            lEq.output.push_back(out);
-            lEq.nOutput++;
-          }
-        }
+        const auto registered_outputs =
+            dmn.cep.ionic_model->get_registered_outputs();
+        lEq.output.insert(lEq.output.end(), registered_outputs.begin(),
+                          registered_outputs.end());
+        lEq.nOutput += registered_outputs.size();
       }
     }
   }

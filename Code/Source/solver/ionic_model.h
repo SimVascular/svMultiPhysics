@@ -16,6 +16,9 @@
 
 #include "CmMod.h"
 
+// Forward declaration.
+class outputType;
+
 /**
  * @brief Abstract ionic model class.
  *
@@ -284,6 +287,11 @@ public:
   get_output_variables() const {
     return {{"Calcium", get_calcium_index()}};
   }
+
+  /**
+   * @brief Get output variable information for output registration.
+   */
+  std::vector<outputType> get_registered_outputs() const;
 
 protected:
   /**
