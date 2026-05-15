@@ -236,46 +236,53 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       read_fourier_coeff_values_file(file_name, lBc);
     }
 
-  // Coupling to a 0D model:
+  // Coupling to a 0D/1D model:
   // - GenBC / cplBC: Time_dependence Coupled without <Coupling_interface> (cplBC.fa).
   // - svZeroDSolver: Time_dependence Coupled + <Coupling_interface> (CoupledBoundaryCondition).
   //
   } else if (ctmp == "Coupled") {
     auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
     const bool svzd_iface = com_mod.cplBC.svzerod_solver_interface.has_data;
+    const bool sv1d_iface = com_mod.cplBC.sv1d_solver_interface.has_data;
     const bool ci_set = bc_params->coupling_interface.value_set;
-    const bool ci_has_block = ci_set && bc_params->coupling_interface.svzerod_solver_block.defined();
-
-    if (svzd_iface) {
-      // Coupled BC to svZeroDSolver
-      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
-      lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
+    const bool ci_has_block   = ci_set && bc_params->coupling_interface.svzerod_solver_block.defined();
+    const bool ci_has_1d_file = ci_set && bc_params->coupling_interface.svoned_input_file.defined();
 
       // Sanity check: <Coupling_interface> must define <svZeroDSolver_block>
-      if (!ci_has_block) {
-        if (ci_set) {
-          throw std::runtime_error(std::string("[read_bc] <Coupling_interface> on face '") + face_name +
-                                   "' must define <svZeroDSolver_block>.");
-        }
+      if (svzd_iface || sv1d_iface) {
+      // svZeroD and/or svOneD path: route each face individually based on its
+      // <Coupling_interface> content.
+
+      if (ci_has_block && ci_has_1d_file) {
         throw std::runtime_error(
-            std::string("[read_bc] With <svZeroDSolver_interface>, each svZeroD-coupled face needs "
-                        "<Coupling_interface> with <svZeroDSolver_block> (Time_dependence Coupled) on face '") +
-            face_name + "'.");
+            std::string("[read_bc] <Coupling_interface> on face '") + face_name +
+            "' defines both <svZeroDSolver_block> and <svOneDSolver_input_file>. "
+            "Specify exactly one per face.");
       }
 
-    } else {
-      // genBC / cplBC / svOneD path.
-      const bool sv1d_iface = com_mod.cplBC.sv1d_solver_interface.has_data;
-
-            if (sv1d_iface) {
-        // For svOneD: each coupled face must specify its own 1D input file via
-        // <Coupling_interface> <svOneDSolver_input_file> ... </svOneDSolver_input_file>
-        if (!ci_set || !bc_params->coupling_interface.svoned_input_file.defined()) {
+      if (ci_has_block) {
+        // 0D face: route to svZeroD.
+        if (!svzd_iface) {
           throw std::runtime_error(
-              std::string("[read_bc] With <svOneDSolver_interface>, each 1D-coupled face needs "
-                          "<Coupling_interface> with <svOneDSolver_input_file> (Time_dependence Coupled) "
-                          "on face '") +
-              face_name + "'.");
+              std::string("[read_bc] Face '") + face_name +
+              "' specifies <svZeroDSolver_block> but no <svZeroDSolver_interface> "
+              "is defined on the equation.");
+        }
+        lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Neu));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
+        lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
+        // oned_input_file stays empty — marks this as a 0D face in the
+        // CoupledBoundaryCondition construction block below.
+
+      } else if (ci_has_1d_file) {
+        // 1D face: route to svOneD.
+        if (!sv1d_iface) {
+          throw std::runtime_error(
+              std::string("[read_bc] Face '") + face_name +
+              "' specifies <svOneDSolver_input_file> but no <svOneDSolver_interface> "
+              "is defined on the equation.");
         }
         lBc.oned_input_file = bc_params->coupling_interface.svoned_input_file.value();
 
@@ -295,25 +302,45 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
         }
 
       } else {
-        // genBC / cplBC: uses cplBC.fa array mechanism.
+        // <Coupling_interface> is present but has neither field, or is absent entirely.
         if (ci_set) {
           throw std::runtime_error(
-              "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> or "
-              "<svOneDSolver_interface> is defined on the equation.");
+              std::string("[read_bc] <Coupling_interface> on face '") + face_name +
+              "' must define either <svZeroDSolver_block> (for 0D coupling) or "
+              "<svOneDSolver_input_file> (for 1D coupling).");
         }
 
-
-
-        lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
-        com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
-        lBc.cplBCptr = com_mod.cplBC.nFa - 1;
-
-        if (com_mod.cplBC.schm == CplBCType::cplBC_NA) {
+        if (svzd_iface) {
           throw std::runtime_error(
-              std::string("[read_bc] A coupling method (e.g. Couple_to_genBC) must be defined for Time_dependence "
-                          "Coupled on face '") +
+              std::string("[read_bc] With <svZeroDSolver_interface>, each svZeroD-coupled face needs "
+                          "<Coupling_interface> with <svZeroDSolver_block> "
+                          "(Time_dependence Coupled) on face '") +
+              face_name + "'.");
+        } else {
+          throw std::runtime_error(
+              std::string("[read_bc] With <svOneDSolver_interface>, each 1D-coupled face needs "
+                          "<Coupling_interface> with <svOneDSolver_input_file> "
+                          "(Time_dependence Coupled) on face '") +
               face_name + "'.");
         }
+      }
+    } else {
+      // genBC / cplBC path: no svZeroD or svOneD interface defined.
+      if (bc_params->coupling_interface.value_set) {
+        throw std::runtime_error(
+            "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> or "
+            "<svOneDSolver_interface> is defined on the equation.");
+      }
+
+      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
+      com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
+      lBc.cplBCptr = com_mod.cplBC.nFa - 1;
+
+      if (com_mod.cplBC.schm == CplBCType::cplBC_NA) {
+        throw std::runtime_error(
+            std::string("[read_bc] A coupling method (e.g. Couple_to_genBC) must be defined for Time_dependence "
+                        "Coupled on face '") +
+            face_name + "'.");
       }
     }
 
@@ -444,7 +471,9 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
           face_name + "'.");
     }
 
-    if (com_mod.cplBC.sv1d_solver_interface.has_data) {
+    const bool is_sv1d_face = !lBc.oned_input_file.empty();
+
+    if (is_sv1d_face) {
       // ------------------------------------------------------------------
       // svOneD path: construct CoupledBoundaryCondition with empty
       // block_name and store the 1D input file path.
@@ -1549,14 +1578,33 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       cplBC.useGenBC = true;
       cplbc_type_str = eq_params->couple_to_genBC.type.value();
 
-    } else if (eq_params->svzerodsolver_interface_parameters.defined()) {
-      cplBC.useSvZeroD = true;
-      cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
-      cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
-    } else if (eq_params->svonedsolver_interface_parameters.defined()) {
-      cplBC.useSv1D = true;
-      cplbc_type_str = eq_params->svonedsolver_interface_parameters.coupling_type.value();
-      cplBC.sv1d_solver_interface.set_data(eq_params->svonedsolver_interface_parameters);
+    } else {
+      // Allow svZeroDSolver_interface and svOneDSolver_interface to coexist
+      // (mixed coupling: some faces go to 0D, others to 1D).
+      //
+      // Processing order: svZeroD first, then svOneD.
+      // cplbc_type_str is set by whichever interface is processed first;
+      // the second interface must match that type.
+      if (eq_params->svzerodsolver_interface_parameters.defined()) {
+        cplBC.useSvZeroD = true;
+        cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
+        cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
+      }
+
+      if (eq_params->svonedsolver_interface_parameters.defined()) {
+        const std::string sv1d_type = eq_params->svonedsolver_interface_parameters.coupling_type.value();
+        // When both interfaces are defined, their Coupling_type must match.
+        if (!cplbc_type_str.empty() && cplbc_type_str != sv1d_type) {
+          throw std::runtime_error(
+              "[read_eq] svZeroDSolver_interface and svOneDSolver_interface must use the same "
+              "Coupling_type in a mixed-coupling simulation "
+              "(svZeroDSolver_interface has '" + cplbc_type_str +
+              "', svOneDSolver_interface has '" + sv1d_type + "').");
+        }
+        cplbc_type_str = sv1d_type;
+        cplBC.useSv1D = true;
+        cplBC.sv1d_solver_interface.set_data(eq_params->svonedsolver_interface_parameters);
+      }
     }
 
     if (eq_params->couple_to_genBC.defined() ||
@@ -1578,10 +1626,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
         cplBC.nX = 0;
         cplBC.xp.resize(cplBC.nX);
 
-      } else if (cplBC.useSvZeroD) {
-        cplBC.nX = 0;
-
-      } else if (cplBC.useSv1D) {
+      } else {
         cplBC.nX = 0;
       }
     }

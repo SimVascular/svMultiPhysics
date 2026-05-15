@@ -27,7 +27,13 @@ static void build_svzero_coupled_bc_idxs(ComMod& com_mod)
   cpl.svZeroD_coupled_bc_idxs.clear();
   for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
     for (int iBc = 0; iBc < com_mod.eq[iEq].nBc; iBc++) {
-      if (utils::btest(com_mod.eq[iEq].bc[iBc].bType, consts::iBC_Coupled)) {
+      const auto& bc = com_mod.eq[iEq].bc[iBc];
+      // A Coupled face belongs to svZeroD only when it is not a 1D face.
+      // The is_sv1d_face() helper encapsulates the routing invariant:
+      //   1D face → oned_input_file_ non-empty, block_name_ empty
+      //   0D face → block_name_ non-empty, oned_input_file_ empty
+      if (utils::btest(bc.bType, consts::iBC_Coupled) &&
+          !bc.coupled_bc.is_sv1d_face()) {
         cpl.svZeroD_coupled_bc_idxs.emplace_back(iEq, iBc);
       }
     }

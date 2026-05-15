@@ -333,6 +333,8 @@ public:
     /// @brief Set the svOneD input file path
     void set_oned_input_file(const std::string& path);
 
+    bool is_sv1d_face() const { return !oned_input_file_.empty(); }
+
     /// @brief Get the pressure ramp step count (0 = disabled).
     int get_oned_ramp_steps() const { return oned_ramp_steps_; }
 

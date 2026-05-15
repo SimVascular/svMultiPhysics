@@ -179,20 +179,21 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
   // Call genBC or cplBC to get updated pressures or flowrates.
   if (cplBC.useGenBC) {
      set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
-   } else if (cplBC.useSvZeroD) {
-     svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
-     // Also integrate any RCR faces that coexist with svZeroD faces.
-     if (RCRflag) {
-       set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
-     }
-   } else if (cplBC.useSv1D) {
-     svOneD::calc_svOneD(com_mod, cm_mod, 'D');
-     // Also integrate any RCR faces that coexist with svOneD faces.
-     if (RCRflag) {
-       set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
-     }
    } else {
-     set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+    // In mixed-coupling simulations both useSvZeroD and useSv1D can be true.
+    // Call each active solver independently.
+    if (cplBC.useSvZeroD) {
+      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+    }
+    if (cplBC.useSv1D) {
+      svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+    }
+    if (!cplBC.useSvZeroD && !cplBC.useSv1D) {
+      set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+    } else if (RCRflag) {
+      // Also integrate any RCR faces that coexist with svZeroD/svOneD faces.
+      set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+    }
   }
 
   // Compute the epsilon parameter (diff) for the finite difference calculation
@@ -290,7 +291,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
       
       // Perturb flowrate and compute new pressure
       bc.coupled_bc.perturb_flowrate(diff);
-      if (cplBC.useSv1D) {
+      if (bc.coupled_bc.is_sv1d_face()) {
         svOneD::calc_svOneD(com_mod, cm_mod, 'D');
       } else {
         svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
@@ -845,20 +846,21 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
     // Updates pressure or flowrates stored in cplBC.fa[i].y
     if (cplBC.useGenBC) {
        set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
-    } else if (cplBC.useSvZeroD){
-      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
-      // Also integrate any RCR faces that coexist with svZeroD faces.
-      if (RCRflag) {
-        set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
-      }
-    } else if (cplBC.useSv1D) {
-      svOneD::calc_svOneD(com_mod, cm_mod, 'D');
-      // Also integrate any RCR faces that coexist with svOneD faces.
-      if (RCRflag) {
-        set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
-      }
     } else {
-       set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+      // In mixed-coupling simulations both useSvZeroD and useSv1D can be true.
+      // Call each active solver independently.
+      if (cplBC.useSvZeroD) {
+        svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      }
+    if (cplBC.useSv1D) {
+        svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+      }
+      if (!cplBC.useSvZeroD && !cplBC.useSv1D) {
+        set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+      } else if (RCRflag) {
+        // Also integrate any RCR faces that coexist with svZeroD/svOneD faces.
+        set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+      }
     }
   }
 
