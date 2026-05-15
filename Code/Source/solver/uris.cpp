@@ -49,16 +49,16 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   // Set the limit of the upstream and downstream regions to 5 times the closed 
   // valve thickness. This should give a reasonable range for the upstream and 
   // downstream regions.
-  double Deps = uris_obj.sdf_deps_close * sdf_region_factor;
+  double meanp_sdf_outer_limit = uris_obj.sdf_deps_close * sdf_region_factor;
   double volU = 0.0;
   double volD = 0.0;
 
-  if (cm.mas(cm_mod)) {
-    std::cout << "Computing upstream region from SDF -" << Deps << " to -" 
-              << uris_obj.sdf_deps_close << " for: " << uris_obj.name << std::endl;
-    std::cout << "Computing downstream region from SDF " << uris_obj.sdf_deps_close 
-              << " to " << Deps << " for: " << uris_obj.name << std::endl;
-  }
+  // if (cm.mas(cm_mod)) {
+  //   std::cout << "Computing upstream region from SDF -" << meanp_sdf_outer_limit << " to -" 
+  //             << uris_obj.sdf_deps_close << " for: " << uris_obj.name << std::endl;
+  //   std::cout << "Computing downstream region from SDF " << uris_obj.sdf_deps_close 
+  //             << " to " << meanp_sdf_outer_limit << " for: " << uris_obj.name << std::endl;
+  // }
 
   // Compute the upstream region: negative sdf side (opposite to valve normal), 
   // outside resistance region
@@ -66,7 +66,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   sUPS = 0.0;
   for (int j = 0; j < com_mod.tnNo; j++) {
     double sdf_j = uris_obj.sdf(j);
-    if (sdf_j >= -Deps && sdf_j <= -uris_obj.sdf_deps_close) {
+    if (sdf_j >= -meanp_sdf_outer_limit && sdf_j <= -uris_obj.sdf_deps_close) {
         sUPS(0,j) = 1.0;
     }
   }
@@ -81,7 +81,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   sDST = 0.0;
   for (size_t j = 0; j < com_mod.tnNo; j++) {
     double sdf_j = uris_obj.sdf(j);
-    if (sdf_j >= uris_obj.sdf_deps_close && sdf_j <= Deps) {
+    if (sdf_j >= uris_obj.sdf_deps_close && sdf_j <= meanp_sdf_outer_limit) {
       sDST(0,j) = 1.0;
     }
   } 
