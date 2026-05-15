@@ -64,7 +64,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   // outside resistance region
   Array<double> sUPS(1, com_mod.tnNo);
   sUPS = 0.0;
-  for (size_t j = 0; j < com_mod.tnNo; j++) {
+  for (int j = 0; j < com_mod.tnNo; j++) {
     double sdf_j = uris_obj.sdf(j);
     if (sdf_j >= -Deps && sdf_j <= -uris_obj.sdf_deps_close) {
         sUPS(0,j) = 1.0;
