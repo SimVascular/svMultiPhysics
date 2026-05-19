@@ -82,6 +82,7 @@
   <Closed_thickness> 0.2 </Closed_thickness>
   <Resistance> 1.0e5 </Resistance>
   <Closed_resistance> 1.0e5 </Closed_resistance>
+  <Invert_normal> false </Invert_normal>
   <Positive_flow_normal_file_path> meshes/normal.dat </Positive_flow_normal_file_path>
 </Add_URIS_mesh>
 
@@ -106,6 +107,7 @@
   <Closed_thickness> 0.2 </Closed_thickness>
   <Resistance> 1.0e5 </Resistance>
   <Closed_resistance> 1.0e5 </Closed_resistance>
+  <Invert_normal> false </Invert_normal>
   <Positive_flow_normal_file_path> meshes/normal.dat </Positive_flow_normal_file_path>
 </Add_URIS_mesh>
 

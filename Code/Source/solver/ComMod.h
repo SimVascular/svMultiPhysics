@@ -1482,6 +1482,14 @@ class urisType
     // if the fully closed position alone is not able to prevent backflow.
     double sdf_deps_close;
 
+    // Whether to invert the valve surface normal vector. Default is false.
+    // 
+    // Valve normal vectors are assumed to point downstream, so that the
+    // downstream region has positive signed distance and the upstream region
+    // has negative signed distance. If the input surface does not satisfy
+    // this assumption, this flag should be set to true to flip the normals.
+    bool invert_normal;
+
     // Opening positions of the valve surfaces.
     Array3<double> DxOpen;
 

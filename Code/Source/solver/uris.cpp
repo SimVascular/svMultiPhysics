@@ -39,32 +39,34 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   auto& uris_obj = uris[iUris];
 
   const int nsd = com_mod.nsd;
-  // const int cEq = com_mod.cEq;
 
-  // auto& An = com_mod.An;
-  // auto& Ad = com_mod.Ad;
-  // auto& Dn = com_mod.Dn;
+  // Compute the mean pressure in the upstream and downstream regions of the fluid mesh 
 
-  // Let's conpute the mean pressure in the two regions of the fluid mesh 
-  // For the moment let's define a flag IdSubDmn(size the number of elements)
+  // Dimensionless factor scaling sdf_deps_close to set the outer signed distance limit 
+  // of the upstream/downstream fluid bands used for mean pressure computation.
+  double sdf_region_factor = 5.0; 
 
-  // Now we can compute the pressure mean on each subdomain
-  // We need to have a sdf array for each mesh
-  double Deps = uris_obj.sdf_deps * 2.5;
+  // Set the limit of the upstream and downstream regions to 5 times the closed 
+  // valve thickness. This should give a reasonable range for the upstream and 
+  // downstream regions.
+  double meanp_sdf_outer_limit = uris_obj.sdf_deps_close * sdf_region_factor;
   double volU = 0.0;
   double volD = 0.0;
 
-  // Let's compute left side 
-  Array<double> sUPS(1,com_mod.tnNo);
-  // std::cout << "com_mod.tnNo: " << com_mod.tnNo << std::endl;
-  // std::cout << "uris_obj.sdf size: " << uris_obj.sdf.size() << std::endl;
+  // if (cm.mas(cm_mod)) {
+  //   std::cout << "Computing upstream region from SDF -" << meanp_sdf_outer_limit << " to -" 
+  //             << uris_obj.sdf_deps_close << " for: " << uris_obj.name << std::endl;
+  //   std::cout << "Computing downstream region from SDF " << uris_obj.sdf_deps_close 
+  //             << " to " << meanp_sdf_outer_limit << " for: " << uris_obj.name << std::endl;
+  // }
 
+  // Compute the upstream region: negative sdf side (opposite to valve normal), 
+  // outside resistance region
+  Array<double> sUPS(1, com_mod.tnNo);
   sUPS = 0.0;
-  for (size_t j = 0; j < sUPS.size(); j++) {
-    if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
-    // Reverse the sdf distance for aortic valve
-    // [HZ] Adjust this value to be more flexible about the box
-    // if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) { 
+  for (int j = 0; j < com_mod.tnNo; j++) {
+    double sdf_j = uris_obj.sdf(j);
+    if (sdf_j >= -meanp_sdf_outer_limit && sdf_j <= -uris_obj.sdf_deps_close) {
         sUPS(0,j) = 1.0;
     }
   }
@@ -73,15 +75,14 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
     volU += all_fun::integ(com_mod, cm_mod, iM, sUPS, solutions);
   }
 
-
-  // Let's compute right side
-  Array<double> sDST(1,com_mod.tnNo);
+  // Compute the downstream region: positive sdf side (valve normal direction), 
+  // outside resistance region
+  Array<double> sDST(1, com_mod.tnNo);
   sDST = 0.0;
-  for (size_t j = 0; j < sDST.size(); j++) {
-    if (uris_obj.sdf(j) < 0.0 && uris_obj.sdf(j) >= -Deps) {
-    // Reverse the sdf distance for aortic valve
-    // if (uris_obj.sdf(j) >= 0.0 && uris_obj.sdf(j) <= Deps) {
-        sDST(0,j) = 1.0;
+  for (size_t j = 0; j < com_mod.tnNo; j++) {
+    double sdf_j = uris_obj.sdf(j);
+    if (sdf_j >= uris_obj.sdf_deps_close && sdf_j <= meanp_sdf_outer_limit) {
+      sDST(0,j) = 1.0;
     }
   } 
 
@@ -134,7 +135,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
 
   //  If the uris has passed the closing state
   if (uris_obj.cnt > uris_obj.DxClose.nrows()) {
-    if (uris_obj.meanPD > uris_obj.meanPU) {
+    if (uris_obj.meanPU > uris_obj.meanPD) {
       uris_obj.cnt = 1;
       uris_obj.clsFlg = false;
       com_mod.urisActFlag = true;
@@ -173,14 +174,10 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   auto& uris_obj = uris[iUris];
 
   const int nsd = com_mod.nsd;
-  // const int cEq = com_mod.cEq;
 
-  // auto& An = com_mod.An;
-  // auto& Ad = com_mod.Ad;
-  // auto& Dn = com_mod.Dn;
-
-  // Let's compute the neighboring region below the valve normal. When
-  // the valve is open, this region should roughly be valve oriface.
+  // Compute the neighboring region with negative sdf within the 
+  // valve's bounding box. When the valve is open, this region 
+  // should roughly be valve orifice.
   int iEq = 0;
 
   double Deps = uris_obj.sdf_deps;
@@ -190,8 +187,6 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
 
   for (int i = 0; i < com_mod.tnNo; i++) {
     if (uris_obj.sdf(i) <= -Deps) {
-    // Reverse the sdf distance for aortic valve
-    // if (uris_obj.sdf(i) >= Deps) {
       sImm(0,i) = 1.0;
     }
   }
@@ -205,7 +200,6 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   
   int m = nsd;
   int s = eq[iEq].s;
-  // int e = s + m - 1;
 
   Array<double> tmpV(maxNSD, com_mod.tnNo);
   for (int i = 0; i < nsd; i++) {
@@ -610,6 +604,7 @@ void uris_read_msh(Simulation* simulation) {
     // the fluid node is far away from the valve. 
     uris_obj.sdf_default = param->close_thickness() * 1e6;
     uris_obj.clsFlg = param->valve_starts_as_closed();
+    uris_obj.invert_normal = param->invert_normal();
 
     // uris_obj.tnNo = 0;
     for (int iM = 0; iM < uris_obj.nFa; iM++) {
@@ -828,7 +823,7 @@ void uris_write_vtus(ComMod& com_mod) {
     for (int iM = 0; iM < uris_obj.nFa; iM++) {
       auto& mesh = uris_obj.msh[iM];
       int cOut = 0;
-      outS(cOut) = 0; // [HZ] Need to check this if it's 1 or 0
+      outS(cOut) = 0;
       outS(cOut+1) = nsd;
       // outNames[cOut] = "";
 
@@ -964,8 +959,6 @@ void uris_calc_sdf(ComMod& com_mod) {
     uris_build_fluid_node_mask(com_mod);
   }
 
-  Array<double> xXi(nsd, nsd-1);
-
   for (int iUris = 0; iUris < nUris; iUris++) {
     // We need to check if the valve needs to move 
     auto& uris_obj = uris[iUris];
@@ -988,15 +981,6 @@ void uris_calc_sdf(ComMod& com_mod) {
     
     if (uris_obj.sdf.size() > 0 && cnt < uris_obj.cnt) {continue;}
 
-    int max_eNoN = 0;
-    for (int iM = 0; iM < uris_obj.nFa; iM++) {
-      auto& mesh = uris_obj.msh[iM];
-      if (mesh.eNoN > max_eNoN) {
-        max_eNoN = mesh.eNoN;
-      }
-    }
-
-    Array<double> lX(nsd, max_eNoN);
     if (uris_obj.sdf.size() <= 0) {
       uris_obj.sdf.resize(com_mod.tnNo);
       uris_obj.sdf = 0.0;
@@ -1064,11 +1048,10 @@ void uris_calc_sdf(ComMod& com_mod) {
       int Ec = -1;
       int jM = -1;
       Vector<double> xb(nsd);
-      uris_find_closest_face_centroid(uris_obj, xp, nsd, minS, Ec, jM);
-
-      // Compute the element normal contribution for sign
-      auto dotp = uris_compute_face_dotp(uris_obj, nsd, jM, Ec, xp, xXi, lX, xb);
-
+      Vector<double> unitNormal(nsd);
+      uris_find_closest_face_centroid(uris_obj, xp, nsd, minS, Ec, jM, xb);
+      uris_face_unit_normal(uris_obj, nsd, jM, Ec, unitNormal);
+      const double dotp = utils::norm(xp - xb, unitNormal);
       double sdf_sign = uris_compute_sdf_sign(uris_obj, xp, xb, dotp);
 
       uris_obj.sdf[ca] = sdf_sign * minS;
@@ -1207,71 +1190,80 @@ bool same_side(const Vector<double>& v1, const Vector<double>& v2,
   return sameside;
 }
 
-/// @brief Find the closest URIS face centroid to a point.
+/// @brief Barycenter of URIS surface/shell element (jM, Ec) in current valve coordinates uris_obj.x.
+void surface_element_barycenter(const urisType& uris_obj, int jM, int Ec, Vector<double>& xb) {
+  const auto& mesh = uris_obj.msh[jM];
+  xb = 0.0;
+  for (int a = 0; a < mesh.eNoN; a++) {
+    const int Ac = mesh.IEN(a, Ec);
+    xb = xb + uris_obj.x.rcol(Ac);
+  }
+  xb = xb / mesh.eNoN;
+}
+
+/// @brief Find the closest URIS shell-element centroid to xp; writes that centroid to xb.
 void uris_find_closest_face_centroid(const urisType& uris_obj, const Vector<double>& xp,
-                                     const int nsd, double& minS, int& Ec, int& jM) {
+                                     const int nsd, double& minS, int& Ec, int& jM,
+                                     Vector<double>& xb) {
   #define n_dbg_uris_find_closest_face_centroid
   #ifdef dbg_uris_find_closest_face_centroid
-    DebugMsg dmsg(__func__, 0);
-    dmsg.banner();
-    dmsg << "finding closest face centroid";
+  DebugMsg dmsg(__func__, 0);
+  dmsg.banner();
+  dmsg << "finding closest face centroid";
   #endif
 
-  Vector<double> xb(nsd);
+  Vector<double> face_centroid(nsd);
   for (int iM = 0; iM < uris_obj.nFa; iM++) {
     const auto& mesh = uris_obj.msh[iM];
     for (int e = 0; e < mesh.nEl; e++) {
-      xb = 0.0;
-      for (int a = 0; a < mesh.eNoN; a++) {
-        const int Ac = mesh.IEN(a,e);
-        xb = xb + uris_obj.x.rcol(Ac);
-      }
-      xb = xb / mesh.eNoN;
-
-      const double dS = std::sqrt((xp - xb) * (xp - xb));
-
+      surface_element_barycenter(uris_obj, iM, e, face_centroid);
+      const double dS = std::sqrt((xp - face_centroid) * (xp - face_centroid));
       if (dS < minS) {
         minS = dS;
         Ec = e;
         jM = iM;
+        xb = face_centroid;
       }
     }
   }
 }
 
-/// @brief Compute centroid and signed distance projection along local face normal.
-double uris_compute_face_dotp(const urisType& uris_obj, const int nsd, const int jM,
-                              const int Ec, const Vector<double>& xp, Array<double>& xXi, 
-                              Array<double>& lX, Vector<double>& xb) {
-  #define n_dbg_uris_compute_face_dotp
-  #ifdef dbg_uris_compute_face_dotp
-    DebugMsg dmsg(__func__, 0);
-    dmsg.banner();
-    dmsg << "computing face dot product";
+/// @brief Unit normal of URIS face element (jM, Ec) from parametric tangents 
+/// (optionally flipped by uris_obj.invert_normal).
+void uris_face_unit_normal(const urisType& uris_obj, const int nsd, const int jM, const int Ec,
+                                 Vector<double>& unitNormal) {
+  #define n_dbg_uris_face_unit_normal
+  #ifdef dbg_uris_face_unit_normal
+  DebugMsg dmsg(__func__, 0);
+  dmsg.banner();
+  dmsg << "computing URIS face unit normal";
   #endif
 
   const auto& mesh = uris_obj.msh[jM];
+  Array<double> xXi(nsd, nsd - 1);
+  Array<double> lX(nsd, mesh.eNoN);
+
   xXi = 0.0;
   lX = 0.0;
-  xb = 0.0;
 
   for (int a = 0; a < mesh.eNoN; a++) {
-    int Ac = mesh.IEN(a,Ec);
-    xb = xb + uris_obj.x.rcol(Ac);
+    const int Ac = mesh.IEN(a, Ec);
     lX.rcol(a) = uris_obj.x.rcol(Ac);
   }
-  xb = xb / mesh.eNoN;
 
   for (int a = 0; a < mesh.eNoN; a++) {
     for (int i = 0; i < nsd - 1; i++) {
-      xXi.rcol(i) = xXi.rcol(i) + lX.rcol(a) * mesh.Nx(i,a,0);
+      xXi.rcol(i) = xXi.rcol(i) + lX.rcol(a) * mesh.Nx(i, a, 0);
     }
   }
 
-  auto nV = utils::cross(xXi);
-  auto Jac = sqrt(utils::norm(nV));
-  nV = nV / Jac;
-  return utils::norm(xp-xb, nV);
+  unitNormal = utils::cross(xXi);
+  const auto Jac = sqrt(utils::norm(unitNormal));
+  if (uris_obj.invert_normal) {
+    unitNormal = -unitNormal / Jac;
+  } else {
+    unitNormal = unitNormal / Jac;
+  }
 }
 
 /// @brief Compute SDF sign for open/closed URIS states.
@@ -1292,5 +1284,6 @@ double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
     return (dot_nrm < 0.0 && dotP < 0.0) ? -1.0 : 1.0;
   }
   return (dotP < 0.0) ? -1.0 : 1.0;
-  }
+}
+
 }

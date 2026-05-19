@@ -1179,6 +1179,7 @@ void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm) {
     cm.bcast(cm_mod, &uris[iUris].sdf_deps);
     cm.bcast(cm_mod, &uris[iUris].sdf_deps_close);
     cm.bcast(cm_mod, &uris[iUris].clsFlg);
+    cm.bcast(cm_mod, &uris[iUris].invert_normal);
     cm.bcast(cm_mod, &uris[iUris].cnt);
     cm.bcast(cm_mod, &uris[iUris].scF);
     cm.bcast(cm_mod, uris[iUris].nrm);
