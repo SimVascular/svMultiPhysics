@@ -937,8 +937,9 @@ void CANNRowParameters::print_parameters()
 
 void CANNRowParameters::set_values(tinyxml2::XMLElement* row_elem)
 {
-  row_elem = svmp::check_not_null<svmp::ParseException>(
-      row_elem, SVMP_HERE, "CANNRowParameters::set_values: Received null XML element.");
+  svmp::check_not_null<svmp::ParseException>(
+      row_elem, SVMP_HERE,
+      "CANNRowParameters::set_values: Received null XML element.");
 
   using namespace tinyxml2;
 

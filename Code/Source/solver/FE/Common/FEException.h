@@ -308,11 +308,10 @@ inline void check_arg(bool condition, SourceLocation location, Args&&... args)
 
 template <class ExceptionT = InvalidArgumentException, class PointerT,
           class... Args>
-inline PointerT* check_not_null(PointerT* ptr, SourceLocation location,
-                                Args&&... args)
+inline void check_not_null(PointerT ptr, SourceLocation location,
+                           Args&&... args)
 {
-    return ::svmp::check_not_null<ExceptionT>(ptr, location,
-                                              std::forward<Args>(args)...);
+    ::svmp::check_not_null<ExceptionT>(ptr, location, std::forward<Args>(args)...);
 }
 
 template <class ExceptionT = InvalidArgumentException, class IndexT,

@@ -2376,8 +2376,7 @@ void read_outputs(Simulation* simulation, EquationParameters* eq_params, eqType&
           continue;
 
         svmp::check_not_null<svmp::FE::NotInitializedException>(
-            dmn.cep.ionic_model.get(), SVMP_HERE,
-            "ionic model was not constructed.");
+            dmn.cep.ionic_model, SVMP_HERE, "ionic model was not constructed.");
 
         const auto registered_outputs =
             dmn.cep.ionic_model->get_registered_outputs();

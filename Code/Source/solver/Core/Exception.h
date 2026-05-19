@@ -390,12 +390,11 @@ void check_arg(bool condition, SourceLocation location, Args&&... args)
 }
 
 template <class ExceptionT, class PointerT, class... Args>
-PointerT* check_not_null(PointerT* ptr, SourceLocation location, Args&&... args)
+void check_not_null(PointerT ptr, SourceLocation location, Args&&... args)
 {
     if (ptr == nullptr) {
         raise<ExceptionT>(location, std::forward<Args>(args)...);
     }
-    return ptr;
 }
 
 } // namespace svmp
