@@ -106,8 +106,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
   const auto Im = mat_fun::mat_id(nX);
 
   // Evaluate the right-hand side function for the system at the old time.
-  Vector<double> fn(nX);
-  getf(zone_id, X, Xg, fn, I_stim_scaled, I_sac_scaled);
+  const Vector<double> fn = getf(zone_id, X, Xg, I_stim_scaled, I_sac_scaled);
 
   int k = 0;   // Current nonlinear iteration index.
   auto Xk = X; // Current solution.
@@ -119,8 +118,8 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
 
     // Evaluate the right-hand side function for the system at the new time and
     // current nonlinear iteration.
-    Vector<double> fk(nX);
-    getf(zone_id, Xk, Xg, fk, I_stim_scaled, I_sac_scaled);
+    const Vector<double> fk =
+        getf(zone_id, Xk, Xg, I_stim_scaled, I_sac_scaled);
 
     auto rK = Xk - X - 0.5 * dt * (fk + fn);
 
@@ -140,8 +139,7 @@ void IonicModel::integ_cn2(const unsigned int zone_id, Vector<double> &X,
     if (k > max_iter || rmsA <= atol || rmsR <= rtol)
       break;
 
-    Array<double> JAC(nX, nX);
-    getj(zone_id, Xk, Xg, JAC, Ksac * Tscale);
+    Array<double> JAC = getj(zone_id, Xk, Xg, Ksac * Tscale);
 
     JAC = Im - 0.5 * dt * JAC;
     JAC = mat_fun::mat_inv(JAC, nX);
@@ -176,8 +174,7 @@ void IonicModel::integ_fe(const unsigned int zone_id, Vector<double> &X,
   const double I_stim_scaled = Istim * Tscale / Vscale;
   const double I_sac_scaled = Isac * Tscale / Vscale;
 
-  Vector<double> f(nX);
-  getf(zone_id, X, Xg, f, I_stim_scaled, I_sac_scaled);
+  const Vector<double> f = getf(zone_id, X, Xg, I_stim_scaled, I_sac_scaled);
 
   update_g(zone_id, dt, X, Xg);
 
@@ -206,11 +203,11 @@ void IonicModel::integ_rk(const unsigned int zone_id, Vector<double> &X,
   const double I_sac_scaled = Isac * Tscale / Vscale;
 
   Vector<double> Xrk(nX);
-  Vector<double> frk1(nX), frk2(nX), frk3(nX), frk4(nX);
 
   // First RK stage.
   Xrk = X;
-  getf(zone_id, Xrk, Xg, frk1, I_stim_scaled, I_sac_scaled);
+  const Vector<double> frk1 =
+      getf(zone_id, Xrk, Xg, I_stim_scaled, I_sac_scaled);
 
   // Update gating variables by half a step.
   auto Xgr = Xg;
@@ -218,11 +215,13 @@ void IonicModel::integ_rk(const unsigned int zone_id, Vector<double> &X,
 
   // Second RK stage.
   Xrk = X + 0.5 * dt * frk1;
-  getf(zone_id, Xrk, Xgr, frk2, I_stim_scaled, I_sac_scaled);
+  const Vector<double> frk2 =
+      getf(zone_id, Xrk, Xgr, I_stim_scaled, I_sac_scaled);
 
   // Third RK stage.
   Xrk = X + 0.5 * dt * frk2;
-  getf(zone_id, Xrk, Xgr, frk3, I_stim_scaled, I_sac_scaled);
+  const Vector<double> frk3 =
+      getf(zone_id, Xrk, Xgr, I_stim_scaled, I_sac_scaled);
 
   // Update gating variables by the whole step.
   Xgr = Xg;
@@ -230,7 +229,8 @@ void IonicModel::integ_rk(const unsigned int zone_id, Vector<double> &X,
 
   // Fourth RK stage.
   Xrk = X + dt * frk3;
-  getf(zone_id, Xrk, Xgr, frk4, I_stim_scaled, I_sac_scaled);
+  const Vector<double> frk4 =
+      getf(zone_id, Xrk, Xgr, I_stim_scaled, I_sac_scaled);
 
   X = X + dt / 6.0 * (frk1 + 2.0 * (frk2 + frk3) + frk4);
   Xg = Xgr;

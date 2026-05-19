@@ -26,18 +26,25 @@ void AlievPanfilov::distribute_parameters(const CmMod &cm_mod,
   cm.bcast(cm_mod, &mu2);
 }
 
-void AlievPanfilov::getf(const unsigned int zone_id, const Vector<double> &X,
-                         const Vector<double> &Xg, Vector<double> &f,
-                         const double I_stim, const double I_sac) const {
+Vector<double> AlievPanfilov::getf(const unsigned int zone_id,
+                                   const Vector<double> &X,
+                                   const Vector<double> &Xg,
+                                   const double I_stim,
+                                   const double I_sac) const {
+  Vector<double> f(X.size());
+
   f(0) = X(0) * (c * (X(0) - alpha) * (1.0 - X(0)) - X(1)) - I_stim + I_sac;
   f(1) =
       (a + mu1 * X(1) / (mu2 + X(0))) * (-X(1) - c * X(0) * (X(0) - b - 1.0));
+
+  return f;
 }
 
-void AlievPanfilov::getj(const unsigned int zone_id, const Vector<double> &X,
-                         const Vector<double> &Xg, Array<double> &Jac,
-                         const double Ksac) const {
-  Jac = 0.0;
+Array<double> AlievPanfilov::getj(const unsigned int zone_id,
+                                  const Vector<double> &X,
+                                  const Vector<double> &Xg,
+                                  const double Ksac) const {
+  Array<double> Jac(X.size(), X.size());
 
   double n1 = X(0) - alpha;
   double n2 = 1.0 - X(0);
@@ -55,6 +62,8 @@ void AlievPanfilov::getj(const unsigned int zone_id, const Vector<double> &X,
   n2 = a + n1 * X(1);
   n3 = -n3;
   Jac(1, 1) = n1 * n3 - n2;
+
+  return Jac;
 }
 
 REGISTER_IONIC_MODEL("AP", AlievPanfilov);

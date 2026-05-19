@@ -143,14 +143,15 @@ protected:
                         Vector<double> &Xg) const override {}
 
   /// Model right-hand side.
-  virtual void getf(const unsigned int zone_id, const Vector<double> &X,
-                    const Vector<double> &Xg, Vector<double> &f,
-                    const double I_stim, const double I_sac) const override;
+  virtual Vector<double> getf(const unsigned int zone_id,
+                              const Vector<double> &X, const Vector<double> &Xg,
+                              const double I_stim,
+                              const double I_sac) const override;
 
   /// Model jacobian.
-  virtual void getj(const unsigned int zone_id, const Vector<double> &X,
-                    const Vector<double> &Xg, Array<double> &Jac,
-                    const double Ksac) const override;
+  virtual Array<double> getj(const unsigned int zone_id,
+                             const Vector<double> &X, const Vector<double> &Xg,
+                             const double Ksac) const override;
 
   /// Step function.
   inline double step(const double r) const { return r < 0.0 ? 0.0 : 1.0; }

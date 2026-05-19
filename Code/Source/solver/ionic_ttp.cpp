@@ -287,9 +287,9 @@ void TTP::update_g(const unsigned int zone_id, const double dt,
   }
 }
 
-void TTP::getf(const unsigned int zone_id, const Vector<double> &X,
-               const Vector<double> &Xg, Vector<double> &dX,
-               const double I_stim, const double I_sac) const {
+Vector<double> TTP::getf(const unsigned int zone_id, const Vector<double> &X,
+                         const Vector<double> &Xg, const double I_stim,
+                         const double I_sac) const {
   // Local copies of state variables
   const double V = X(0);
   const double K_i = X(1);
@@ -410,6 +410,8 @@ void TTP::getf(const unsigned int zone_id, const Vector<double> &X,
   const double I_xfer = V_xfer * (Ca_ss - Ca_i);
 
   // Now compute time derivatives
+  Vector<double> dX(X.size());
+
   // dV/dt: rate of change of transmembrane voltage
   dX(0) = -(I_Na + I_to + I_K1 + I_Kr + I_Ks + I_CaL + I_NaCa + I_NaK + I_pCa +
             I_pK + I_bCa + I_bNa + I_stim) +
@@ -450,11 +452,12 @@ void TTP::getf(const unsigned int zone_id, const Vector<double> &X,
     const double k2 = k2p * k_casr;
     dX(6) = -k2 * Ca_ss * R_bar + k4 * (1.0 - R_bar);
   }
+
+  return dX;
 }
 
-void TTP::getj(const unsigned int zone_id, const Vector<double> &X,
-               const Vector<double> &Xg, Array<double> &Jac,
-               const double Ksac) const {
+Array<double> TTP::getj(const unsigned int zone_id, const Vector<double> &X,
+                        const Vector<double> &Xg, const double Ksac) const {
   double a, b, c, tau, sq5, e1, e2, e3, e4, n1, n2, d1, d2, d3;
 
   // Local copies of state and gating variables
@@ -627,7 +630,8 @@ void TTP::getj(const unsigned int zone_id, const Vector<double> &X,
   const double I_xfer_Cass = V_xfer;
 
   // Compute Jacobian matrix
-  Jac = 0.0;
+  Array<double> Jac(X.size(), X.size());
+
   c = Cm / (V_c * Fc);
 
   //  V
@@ -690,6 +694,8 @@ void TTP::getj(const unsigned int zone_id, const Vector<double> &X,
   Jac(6, 4) = -k2 * R_bar;
   Jac(6, 5) = -(k2p * k_casr_sr) * Ca_ss * R_bar;
   Jac(6, 6) = -(k2 * Ca_ss + k4);
+
+  return Jac;
 }
 
 REGISTER_IONIC_MODEL("TTP", TTP);

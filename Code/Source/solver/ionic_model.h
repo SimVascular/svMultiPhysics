@@ -377,13 +377,15 @@ protected:
    *   endocardium, myocardium).
    * @param[in] X Vector of state variables.
    * @param[in] Xg Vector of gating variables.
-   * @param[out] f Right-hand side of the model equations.
    * @param[in] I_stim Applied current.
    * @param[in] I_sac Stretch-activated current.
+   *
+   * @return A vector containing the right-hand side of the model equations.
    */
-  virtual void getf(const unsigned int zone_id, const Vector<double> &X,
-                    const Vector<double> &Xg, Vector<double> &f,
-                    const double I_stim, const double I_sac) const = 0;
+  virtual Vector<double> getf(const unsigned int zone_id,
+                              const Vector<double> &X, const Vector<double> &Xg,
+                              const double I_stim,
+                              const double I_sac) const = 0;
 
   /**
    * @brief Model jacobian.
@@ -395,14 +397,19 @@ protected:
    *   endocardium, myocardium).
    * @param[in] X Vector of state variables.
    * @param[in] Xg Vector of gating variables.
-   * @param[out] Jac Jacobian matrix.
    * @param[in] Ksac Stretch-activated current coefficient.
+   *
+   * @return A matrix containing the jacobian of the model equations.
    */
-  virtual void getj(const unsigned int zone_id, const Vector<double> &X,
-                    const Vector<double> &Xg, Array<double> &Jac,
-                    const double Ksac) const {
+  virtual Array<double> getj(const unsigned int zone_id,
+                             const Vector<double> &X, const Vector<double> &Xg,
+                             const double Ksac) const {
     svmp::raise<svmp::FE::NotImplementedException>(
         SVMP_HERE, "getj method not implemented for this ionic model.");
+
+    // Dummy return statement to avoid compiler warnings.
+    Array<double> dummy(X.size(), X.size());
+    return dummy;
   }
 
   /// Initial states.

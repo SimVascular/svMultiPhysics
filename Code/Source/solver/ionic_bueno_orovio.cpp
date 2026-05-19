@@ -69,9 +69,11 @@ void BuenoOrovio::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
   cm.bcast(cm_mod, ws_inf);
 }
 
-void BuenoOrovio::getf(const unsigned int zone_id, const Vector<double> &X,
-                       const Vector<double> &Xg, Vector<double> &f,
-                       const double I_stim, const double I_sac) const {
+Vector<double> BuenoOrovio::getf(const unsigned int zone_id,
+                                 const Vector<double> &X,
+                                 const Vector<double> &Xg, const double I_stim,
+                                 const double I_sac) const {
+
   // Create local copies of the state variables
   const double u = X(0);
   const double v = X(1);
@@ -104,15 +106,20 @@ void BuenoOrovio::getf(const unsigned int zone_id, const Vector<double> &X,
   const double I_si = -H_uw * w * s / tau_si[i];
 
   // Compute RHS of state variable equations
+  Vector<double> f(X.size());
+
   f(0) = -(I_fi + I_so + I_si + I_stim) + I_sac;
   f(1) = (1.0 - H_uv) * (v_inf - v) / taum_v - H_uv * v / taup_v[i];
   f(2) = (1.0 - H_uw) * (w_inf - w) / taum_w - H_uw * w / taup_w[i];
   f(3) = (0.5 * (1.0 + tanh(k_s[i] * (u - u_s[i]))) - s) / tau_s;
+
+  return f;
 }
 
-void BuenoOrovio::getj(const unsigned int zone_id, const Vector<double> &X,
-                       const Vector<double> &Xg, Array<double> &Jac,
-                       const double Ksac) const {
+Array<double> BuenoOrovio::getj(const unsigned int zone_id,
+                                const Vector<double> &X,
+                                const Vector<double> &Xg,
+                                const double Ksac) const {
   // Create local copies of the state variables
   const double u = X(0);
   const double v = X(1);
@@ -145,7 +152,7 @@ void BuenoOrovio::getj(const unsigned int zone_id, const Vector<double> &X,
       (1.0 - H_uo) * (1.0 - u / tau_winf[i]) + H_uo * ws_inf[i];
 
   // Define Jacobian
-  Jac = 0.0;
+  Array<double> Jac(X.size(), X.size());
 
   {
     const double n1 = v * H_uv * (u_u[i] + theta_v[i] - 2.0 * u) / tau_fi[i];
@@ -186,6 +193,8 @@ void BuenoOrovio::getj(const unsigned int zone_id, const Vector<double> &X,
     Jac(3, 0) = 0.50 * k_s[i] * n2 * n3;
     Jac(3, 3) = -n3;
   }
+
+  return Jac;
 }
 
 REGISTER_IONIC_MODEL("BO", BuenoOrovio);
