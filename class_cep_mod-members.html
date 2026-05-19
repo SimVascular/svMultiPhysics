@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -76,14 +93,10 @@ $(function() {
 
 <p>This is the complete list of members for <a class="el" href="class_cep_mod.html">CepMod</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#aa037fcfe2629d29605fc0b2c4d910bf5">ap</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#a391d6215474c64e476a18b90b0ab7633">bo</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">cem</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">cepEq</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">ecgleads</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#ab5fdf4316f4fc2049094b2bf04007554">fn</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">nXion</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#ad17e9172d8c1d358c50b236f6ca0ed9d">ttp</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">nXion</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">Xion</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->

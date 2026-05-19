@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -81,6 +98,7 @@ $(function() {
 <li>BoundaryConditionNodeCountException()&#160;:&#160;<a class="el" href="class_boundary_condition_node_count_exception.html#ade0b6b35d410384e9350c1308d231365">BoundaryConditionNodeCountException</a></li>
 <li>BoundaryConditionRCRParameters()&#160;:&#160;<a class="el" href="class_boundary_condition_r_c_r_parameters.html#a16380b51c24edf2b09a3c044fe5c5e00">BoundaryConditionRCRParameters</a></li>
 <li>BoundaryConditionValidationException()&#160;:&#160;<a class="el" href="class_boundary_condition_validation_exception.html#ae0ede2d5d99ee5d2c6e4681fa6b81ef7">BoundaryConditionValidationException</a></li>
+<li>BuenoOrovio()&#160;:&#160;<a class="el" href="class_bueno_orovio.html#af148545a19f3324ea55feb53c17d5da5">BuenoOrovio</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

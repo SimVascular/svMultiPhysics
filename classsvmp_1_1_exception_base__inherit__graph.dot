@@ -31,5 +31,7 @@ digraph "svmp::ExceptionBase"
   Node6 -> Node13 [id="edge12_Node000006_Node000013",dir="back",color="steelblue1",style="solid",tooltip=" "];
   Node13 [id="Node000013",label="svmp::FE::NotImplemented\lException",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$classsvmp_1_1_f_e_1_1_not_implemented_exception.html",tooltip=" "];
   Node6 -> Node14 [id="edge13_Node000006_Node000014",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node14 [id="Node000014",label="svmp::FE::SingularMapping\lException",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$classsvmp_1_1_f_e_1_1_singular_mapping_exception.html",tooltip=" "];
+  Node14 [id="Node000014",label="svmp::FE::NotInitialized\lException",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$classsvmp_1_1_f_e_1_1_not_initialized_exception.html",tooltip=" "];
+  Node6 -> Node15 [id="edge14_Node000006_Node000015",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node15 [id="Node000015",label="svmp::FE::SingularMapping\lException",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$classsvmp_1_1_f_e_1_1_singular_mapping_exception.html",tooltip=" "];
 }

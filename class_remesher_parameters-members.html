@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -80,7 +97,7 @@ $(function() {
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>defined</b>() const (defined in <a class="el" href="class_remesher_parameters.html">RemesherParameters</a>)</td><td class="entry"><a class="el" href="class_remesher_parameters.html">RemesherParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>frequency_for_copying_data</b> (defined in <a class="el" href="class_remesher_parameters.html">RemesherParameters</a>)</td><td class="entry"><a class="el" href="class_remesher_parameters.html">RemesherParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>get_edge_size</b>(const std::string &amp;name) const (defined in <a class="el" href="class_remesher_parameters.html">RemesherParameters</a>)</td><td class="entry"><a class="el" href="class_remesher_parameters.html">RemesherParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a2f00a499245e0190cd1da7a0d0773932">get_parameter_list</a>()</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a9fe04f3c28dec4a1fe01da2c468b75f6">get_parameter_list</a>() const</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>has_edge_size</b>(const std::string &amp;name) const (defined in <a class="el" href="class_remesher_parameters.html">RemesherParameters</a>)</td><td class="entry"><a class="el" href="class_remesher_parameters.html">RemesherParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>max_edge_sizes_</b> (defined in <a class="el" href="class_remesher_parameters.html">RemesherParameters</a>)</td><td class="entry"><a class="el" href="class_remesher_parameters.html">RemesherParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>max_radius_ratio</b> (defined in <a class="el" href="class_remesher_parameters.html">RemesherParameters</a>)</td><td class="entry"><a class="el" href="class_remesher_parameters.html">RemesherParameters</a></td><td class="entry"></td></tr>

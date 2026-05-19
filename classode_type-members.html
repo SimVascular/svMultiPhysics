@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -80,7 +97,7 @@ $(function() {
   <tr class="odd"><td class="entry"><a class="el" href="classode_type.html#ad24afe40416393519ff181274c376365">maxItr</a></td><td class="entry"><a class="el" href="classode_type.html">odeType</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>odeType</b>() (defined in <a class="el" href="classode_type.html">odeType</a>)</td><td class="entry"><a class="el" href="classode_type.html">odeType</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classode_type.html#a09c0984b088e1276c1421aeb932067aa">relTol</a></td><td class="entry"><a class="el" href="classode_type.html">odeType</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classode_type.html#a2149217b76302c0bf2c807146b174608">tIntType</a></td><td class="entry"><a class="el" href="classode_type.html">odeType</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classode_type.html#a22441c13b34522f6bb03091cc84e9fcc">tIntType</a></td><td class="entry"><a class="el" href="classode_type.html">odeType</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

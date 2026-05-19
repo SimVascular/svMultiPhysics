@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -76,7 +93,7 @@ $(function() {
 <li>n&#160;:&#160;<a class="el" href="classib_comm_type.html#a896bcb6d7f4f4bcb9b0d1006555cb631">ibCommType</a></li>
 <li>N&#160;:&#160;<a class="el" href="classmsh_type.html#a14952aebe301a67a398b7c46cc5156e8">mshType</a></li>
 <li>n&#160;:&#160;<a class="el" href="classutils_1_1stack_type.html#aab9fe6a4b9b4cdada815fc2b6346be46">utils::stackType</a></li>
-<li>Na_o&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#ab2b2597cf55fc40d4c69e8ae865a93e9">CepModTtp</a></li>
+<li>Na_o&#160;:&#160;<a class="el" href="class_t_t_p.html#a1a43c212db02f3a4eb8142cf2478b7bc">TTP</a></li>
 <li>nAdj&#160;:&#160;<a class="el" href="classmsh_type.html#a21ecec528c189cd9f1852a7029fb42cb">mshType</a></li>
 <li>name&#160;:&#160;<a class="el" href="classmsh_type.html#ae7cec54505739f048489e9cd5f383da3">mshType</a></li>
 <li>Nb&#160;:&#160;<a class="el" href="classmsh_type.html#ab78f168b4bfb81759baac80f5b06dd9d">mshType</a></li>

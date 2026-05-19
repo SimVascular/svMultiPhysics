@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,12 +90,13 @@ $(function() {
 <div class="textblock">Here is a list of all documented functions with links to the class documentation for each member:</div>
 
 <h3><a id="index_o" name="index_o"></a>- o -</h3><ul>
-<li>operator()()&#160;:&#160;<a class="el" href="class_array3.html#ad3e801b3eba93502f6d48f43bd0aafd7">Array3&lt; T &gt;</a></li>
+<li>operator()()&#160;:&#160;<a class="el" href="class_array3.html#ae97685e04f50c5f5bb9c70538679c07d">Array3&lt; T &gt;</a></li>
 <li>operator*()&#160;:&#160;<a class="el" href="class_array3.html#a4efd9c0c2c3c1c4a2f32c14f3cccb929">Array3&lt; T &gt;</a>, <a class="el" href="class_vector.html#ab5c6ea220a41d4f9ca505aa989bff046">Vector&lt; T &gt;</a></li>
 <li>operator+()&#160;:&#160;<a class="el" href="class_vector.html#a0226d8916960275bfac50ee837f2efa8">Vector&lt; T &gt;</a></li>
 <li>operator-()&#160;:&#160;<a class="el" href="class_vector.html#aed09a49898d7a949b93addb54657f1ed">Vector&lt; T &gt;</a></li>
 <li>operator/()&#160;:&#160;<a class="el" href="class_vector.html#a9d039799d2c2b1c8c3c02a28d2548b47">Vector&lt; T &gt;</a></li>
 <li>operator=()&#160;:&#160;<a class="el" href="class_array3.html#a35fd645a503475a7cc980acaa1af246a">Array3&lt; T &gt;</a>, <a class="el" href="class_boundary_condition.html#a4112d1d42b93f0614e3193d075de8705">BoundaryCondition</a>, <a class="el" href="class_capping_surface.html#a677af41a0ea524918e68eae4d7af7d38">CappingSurface</a>, <a class="el" href="class_coupled_boundary_condition.html#a1084d8e3e0e8cfca134b2150d224f404">CoupledBoundaryCondition</a>, <a class="el" href="class_vector.html#a7594fda7b9388c049c2fe95ffe154075">Vector&lt; T &gt;</a></li>
+<li>operator[]()&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#abda09b5dcc8aa71318df9c88f990c6f2">IonicInitialStateParameters</a></li>
 <li>owns_cap()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#ac6dc612544b96e87fa06207d82d4f04a">CoupledBoundaryCondition</a></li>
 </ul>
 </div><!-- contents -->

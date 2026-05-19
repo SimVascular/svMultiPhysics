@@ -4,7 +4,7 @@ var searchData=
   ['ucann_5fh0_1',['uCANN_h0',['../class_artificial_neural_net_material.html#aa70835906df5ea2363492213502d5442',1,'ArtificialNeuralNetMaterial']]],
   ['ucann_5fh1_2',['uCANN_h1',['../class_artificial_neural_net_material.html#a1417c0a8cfe17a635e1597d2b4a280dc',1,'ArtificialNeuralNetMaterial']]],
   ['ucann_5fh2_3',['uCANN_h2',['../class_artificial_neural_net_material.html#aed1c2c7008e77d2152801f6e0e6e8221',1,'ArtificialNeuralNetMaterial']]],
-  ['update_5fg_4',['update_g',['../class_cep_mod_ttp.html#a70432b94e8879fdc758d6dfe90d81ea1',1,'CepModTtp']]],
+  ['update_5fg_4',['update_g',['../class_aliev_panfilov.html#aa288c83cf1370aa2bc81313ce507822f',1,'AlievPanfilov::update_g()'],['../class_bueno_orovio.html#a3d1b4ecd85cb66a28ebb190fa7f5daa9',1,'BuenoOrovio::update_g()'],['../class_fitz_hugh_nagumo.html#a72a77eaf5c9676ebac3bd85b52c18599',1,'FitzHughNagumo::update_g()'],['../class_ionic_model.html#a910da48c092c9e6feef4a9be516ae3b8',1,'IonicModel::update_g()'],['../class_t_t_p.html#ad668c6a83bafea4faa854b59ad26d374',1,'TTP::update_g()']]],
   ['ustruct_5f2d_5fc_5',['ustruct_2d_c',['../ustruct_8cpp.html#a1932a6e82fe23a81987cfc209b92f394',1,'ustruct']]],
   ['ustruct_5f2d_5fm_6',['ustruct_2d_m',['../ustruct_8cpp.html#a80e8da99aee39c727871f006d2548d07',1,'ustruct']]],
   ['ustruct_5f3d_5fc_7',['ustruct_3d_c',['../ustruct_8cpp.html#addd531ce2343b1ad531413660c82977b',1,'ustruct']]],

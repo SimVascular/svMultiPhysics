@@ -21,5 +21,6 @@ var searchData=
   ['boundaryconditionvalidationexception_18',['BoundaryConditionValidationException',['../class_boundary_condition_validation_exception.html',1,'']]],
   ['boundaryconditionvtparraydimensionexception_19',['BoundaryConditionVtpArrayDimensionException',['../class_boundary_condition_vtp_array_dimension_exception.html',1,'']]],
   ['boundaryconditionvtparrayexception_20',['BoundaryConditionVtpArrayException',['../class_boundary_condition_vtp_array_exception.html',1,'']]],
-  ['bstype_21',['bsType',['../classbs_type.html',1,'']]]
+  ['bstype_21',['bsType',['../classbs_type.html',1,'']]],
+  ['buenoorovio_22',['BuenoOrovio',['../class_bueno_orovio.html',1,'']]]
 ];

@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -76,6 +93,7 @@ $(function() {
 <li>face()&#160;:&#160;<a class="el" href="class_capping_surface.html#a83aef73940209e4d6a5bf215283773eb">CappingSurface</a></li>
 <li>finalize()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#a8e09a6f326486bd1cb2b3d99750f37a1">FsilsLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#a9fac4eee782809b2ca1c6ae4ff0c77bd">TrilinosLinearAlgebra</a></li>
 <li>find_vtp_point_index()&#160;:&#160;<a class="el" href="class_boundary_condition.html#af2fe6f7d38a0e4fbc5fd76d4c3d312a7">BoundaryCondition</a></li>
+<li>FitzHughNagumo()&#160;:&#160;<a class="el" href="class_fitz_hugh_nagumo.html#a9548b1649adfbf401d01ef48934a6522">FitzHughNagumo</a></li>
 <li>flags_to_string()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a938edfefc9e6f4a110201f16edac44b2">BoundaryCondition</a></li>
 </ul>
 </div><!-- contents -->

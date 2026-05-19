@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -92,6 +109,11 @@ Include dependency graph for FEException.h:</div>
 <div class="dyncontent">
 <div class="center"><!-- SVG 0 --></div>
 </div>
+</div><div class="textblock"><div class="dynheader">
+This graph shows which files directly or indirectly include this file:</div>
+<div class="dyncontent">
+<div class="center"><!-- SVG 1 --></div>
+</div>
 </div>
 <p><a href="_f_e_exception_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -110,6 +132,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_backend_exception.html">svmp::FE::BackendException</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_not_implemented_exception.html">svmp::FE::NotImplementedException</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_not_initialized_exception.html">svmp::FE::NotInitializedException</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_convergence_exception.html">svmp::FE::ConvergenceException</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -130,10 +154,10 @@ template&lt;class ExceptionT  = FEException, class... Args&gt; </td></tr>
 template&lt;class ExceptionT  = InvalidArgumentException, class... Args&gt; </td></tr>
 <tr class="memitem:a0b816712453a25e009cfdc0d66aa02e1"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::check_arg</b> (bool condition, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location, Args &amp;&amp;... args)</td></tr>
 <tr class="separator:a0b816712453a25e009cfdc0d66aa02e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adcff1daa586215fea27199a10e4740b2" id="r_adcff1daa586215fea27199a10e4740b2"><td class="memTemplParams" colspan="2"><a id="adcff1daa586215fea27199a10e4740b2" name="adcff1daa586215fea27199a10e4740b2"></a>
+<tr class="memitem:aef21c785a138b5ba6efb7212e88d442e" id="r_aef21c785a138b5ba6efb7212e88d442e"><td class="memTemplParams" colspan="2"><a id="aef21c785a138b5ba6efb7212e88d442e" name="aef21c785a138b5ba6efb7212e88d442e"></a>
 template&lt;class ExceptionT  = InvalidArgumentException, class PointerT , class... Args&gt; </td></tr>
-<tr class="memitem:adcff1daa586215fea27199a10e4740b2"><td class="memTemplItemLeft" align="right" valign="top">PointerT *&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::check_not_null</b> (PointerT *ptr, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location, Args &amp;&amp;... args)</td></tr>
-<tr class="separator:adcff1daa586215fea27199a10e4740b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef21c785a138b5ba6efb7212e88d442e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::check_not_null</b> (PointerT ptr, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location, Args &amp;&amp;... args)</td></tr>
+<tr class="separator:aef21c785a138b5ba6efb7212e88d442e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabb5cb6903822f93ca2ba80c0afc1e84" id="r_aabb5cb6903822f93ca2ba80c0afc1e84"><td class="memTemplParams" colspan="2"><a id="aabb5cb6903822f93ca2ba80c0afc1e84" name="aabb5cb6903822f93ca2ba80c0afc1e84"></a>
 template&lt;class ExceptionT  = InvalidArgumentException, class IndexT , class SizeT &gt; </td></tr>
 <tr class="memitem:aabb5cb6903822f93ca2ba80c0afc1e84"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::check_index</b> (IndexT index, SizeT size, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location)</td></tr>

@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -80,13 +97,13 @@ $(function() {
 <p>Time integration scheme and related parameters.  
  <a href="classode_type.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="_cep_mod_8h_source.html">CepMod.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="ionic__model_8h_source.html">ionic_model.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a2149217b76302c0bf2c807146b174608" id="r_a2149217b76302c0bf2c807146b174608"><td class="memItemLeft" align="right" valign="top">TimeIntegratioType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classode_type.html#a2149217b76302c0bf2c807146b174608">tIntType</a> = TimeIntegratioType::NA</td></tr>
-<tr class="memdesc:a2149217b76302c0bf2c807146b174608"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time integration method type.  <br /></td></tr>
-<tr class="separator:a2149217b76302c0bf2c807146b174608"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22441c13b34522f6bb03091cc84e9fcc" id="r_a22441c13b34522f6bb03091cc84e9fcc"><td class="memItemLeft" align="right" valign="top">TimeIntegrationType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classode_type.html#a22441c13b34522f6bb03091cc84e9fcc">tIntType</a> = TimeIntegrationType::NA</td></tr>
+<tr class="memdesc:a22441c13b34522f6bb03091cc84e9fcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time integration method type.  <br /></td></tr>
+<tr class="separator:a22441c13b34522f6bb03091cc84e9fcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad24afe40416393519ff181274c376365" id="r_ad24afe40416393519ff181274c376365"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classode_type.html#ad24afe40416393519ff181274c376365">maxItr</a> = 5</td></tr>
 <tr class="memdesc:ad24afe40416393519ff181274c376365"><td class="mdescLeft">&#160;</td><td class="mdescRight">Max. iterations for Newton-Raphson method.  <br /></td></tr>
 <tr class="separator:ad24afe40416393519ff181274c376365"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -148,14 +165,14 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a2149217b76302c0bf2c807146b174608" name="a2149217b76302c0bf2c807146b174608"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2149217b76302c0bf2c807146b174608">&#9670;&#160;</a></span>tIntType</h2>
+<a id="a22441c13b34522f6bb03091cc84e9fcc" name="a22441c13b34522f6bb03091cc84e9fcc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22441c13b34522f6bb03091cc84e9fcc">&#9670;&#160;</a></span>tIntType</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">TimeIntegratioType odeType::tIntType = TimeIntegratioType::NA</td>
+          <td class="memname">TimeIntegrationType odeType::tIntType = TimeIntegrationType::NA</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -165,7 +182,7 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>solver/<a class="el" href="_cep_mod_8h_source.html">CepMod.h</a></li>
+<li>solver/<a class="el" href="ionic__model_8h_source.html">ionic_model.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

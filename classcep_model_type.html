@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -117,54 +134,13 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a5561dc6f1de77d662ee66199a15317b4" id="r_a5561dc6f1de77d662ee66199a15317b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classode_type.html">odeType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a5561dc6f1de77d662ee66199a15317b4">odes</a></td></tr>
 <tr class="memdesc:a5561dc6f1de77d662ee66199a15317b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time integration options.  <br /></td></tr>
 <tr class="separator:a5561dc6f1de77d662ee66199a15317b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4f9daafc04e2c1a9743798555ffd2ed" id="r_ab4f9daafc04e2c1a9743798555ffd2ed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_cep_mod_ap.html">CepModAp</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#ab4f9daafc04e2c1a9743798555ffd2ed">ap</a></td></tr>
-<tr class="memdesc:ab4f9daafc04e2c1a9743798555ffd2ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface for Aliev-Panfilov cellular activation model.  <br /></td></tr>
-<tr class="separator:ab4f9daafc04e2c1a9743798555ffd2ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f2527913042a056b5a20f699da8fd9b" id="r_a2f2527913042a056b5a20f699da8fd9b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_cep_mod_bo.html">CepModBo</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a2f2527913042a056b5a20f699da8fd9b">bo</a></td></tr>
-<tr class="memdesc:a2f2527913042a056b5a20f699da8fd9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface for Bueno-Orovio cellular activation model.  <br /></td></tr>
-<tr class="separator:a2f2527913042a056b5a20f699da8fd9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a982e5b87940f00f1d1c29eef9f53449a" id="r_a982e5b87940f00f1d1c29eef9f53449a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_cep_mod_fn.html">CepModFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a982e5b87940f00f1d1c29eef9f53449a">fn</a></td></tr>
-<tr class="memdesc:a982e5b87940f00f1d1c29eef9f53449a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface for Fitzhugh-Nagumo cellular activation model.  <br /></td></tr>
-<tr class="separator:a982e5b87940f00f1d1c29eef9f53449a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8ef089d32c942d1417f5b558c4a3fbe" id="r_ae8ef089d32c942d1417f5b558c4a3fbe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_cep_mod_ttp.html">CepModTtp</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#ae8ef089d32c942d1417f5b558c4a3fbe">ttp</a></td></tr>
-<tr class="memdesc:ae8ef089d32c942d1417f5b558c4a3fbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface for Tusscher-Panfilov cellular activation model.  <br /></td></tr>
-<tr class="separator:ae8ef089d32c942d1417f5b558c4a3fbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88c28fd3839cb1634a3fa9de77b2e65c" id="r_a88c28fd3839cb1634a3fa9de77b2e65c"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="class_ionic_model.html">IonicModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a88c28fd3839cb1634a3fa9de77b2e65c">ionic_model</a></td></tr>
+<tr class="memdesc:a88c28fd3839cb1634a3fa9de77b2e65c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ionic model instance.  <br /></td></tr>
+<tr class="separator:a88c28fd3839cb1634a3fa9de77b2e65c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Cardiac electrophysiology model type. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="ab4f9daafc04e2c1a9743798555ffd2ed" name="ab4f9daafc04e2c1a9743798555ffd2ed"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab4f9daafc04e2c1a9743798555ffd2ed">&#9670;&#160;</a></span>ap</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_cep_mod_ap.html">CepModAp</a> cepModelType::ap</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Interface for Aliev-Panfilov cellular activation model. </p>
-
-</div>
-</div>
-<a id="a2f2527913042a056b5a20f699da8fd9b" name="a2f2527913042a056b5a20f699da8fd9b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f2527913042a056b5a20f699da8fd9b">&#9670;&#160;</a></span>bo</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_cep_mod_bo.html">CepModBo</a> cepModelType::bo</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Interface for Bueno-Orovio cellular activation model. </p>
-
-</div>
-</div>
 <a id="a6fa666a049b988196394450bcac85608" name="a6fa666a049b988196394450bcac85608"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6fa666a049b988196394450bcac85608">&#9670;&#160;</a></span>cepType</h2>
 
@@ -229,22 +205,6 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a982e5b87940f00f1d1c29eef9f53449a" name="a982e5b87940f00f1d1c29eef9f53449a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a982e5b87940f00f1d1c29eef9f53449a">&#9670;&#160;</a></span>fn</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_cep_mod_fn.html">CepModFn</a> cepModelType::fn</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Interface for Fitzhugh-Nagumo cellular activation model. </p>
-
-</div>
-</div>
 <a id="adf8dae39eb269c22c4d7cc52a4192588" name="adf8dae39eb269c22c4d7cc52a4192588"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adf8dae39eb269c22c4d7cc52a4192588">&#9670;&#160;</a></span>imyo</h2>
 
@@ -258,6 +218,22 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Myocardium zone id, default to epicardium. </p>
+
+</div>
+</div>
+<a id="a88c28fd3839cb1634a3fa9de77b2e65c" name="a88c28fd3839cb1634a3fa9de77b2e65c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88c28fd3839cb1634a3fa9de77b2e65c">&#9670;&#160;</a></span>ionic_model</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt;<a class="el" href="class_ionic_model.html">IonicModel</a>&gt; cepModelType::ionic_model</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Ionic model instance. </p>
 
 </div>
 </div>
@@ -354,22 +330,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Time integration options. </p>
-
-</div>
-</div>
-<a id="ae8ef089d32c942d1417f5b558c4a3fbe" name="ae8ef089d32c942d1417f5b558c4a3fbe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae8ef089d32c942d1417f5b558c4a3fbe">&#9670;&#160;</a></span>ttp</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_cep_mod_ttp.html">CepModTtp</a> cepModelType::ttp</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Interface for Tusscher-Panfilov cellular activation model. </p>
 
 </div>
 </div>

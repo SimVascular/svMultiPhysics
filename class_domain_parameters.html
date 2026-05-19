@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -131,9 +148,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>set_parameter</b> (co
 <tr class="memitem:a09feae36022f5ebf7cd9a8c86bcbca78 inherit pub_methods_class_parameter_lists" id="r_a09feae36022f5ebf7cd9a8c86bcbca78"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#a09feae36022f5ebf7cd9a8c86bcbca78">check_required</a> ()</td></tr>
 <tr class="memdesc:a09feae36022f5ebf7cd9a8c86bcbca78 inherit pub_methods_class_parameter_lists"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if any required parameters have not been set.  <br /></td></tr>
 <tr class="separator:a09feae36022f5ebf7cd9a8c86bcbca78 inherit pub_methods_class_parameter_lists"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f00a499245e0190cd1da7a0d0773932 inherit pub_methods_class_parameter_lists" id="r_a2f00a499245e0190cd1da7a0d0773932"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#a2f00a499245e0190cd1da7a0d0773932">get_parameter_list</a> ()</td></tr>
-<tr class="memdesc:a2f00a499245e0190cd1da7a0d0773932 inherit pub_methods_class_parameter_lists"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the defined parameters as a map of strings.  <br /></td></tr>
-<tr class="separator:a2f00a499245e0190cd1da7a0d0773932 inherit pub_methods_class_parameter_lists"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fe04f3c28dec4a1fe01da2c468b75f6 inherit pub_methods_class_parameter_lists" id="r_a9fe04f3c28dec4a1fe01da2c468b75f6"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#a9fe04f3c28dec4a1fe01da2c468b75f6">get_parameter_list</a> () const</td></tr>
+<tr class="memdesc:a9fe04f3c28dec4a1fe01da2c468b75f6 inherit pub_methods_class_parameter_lists"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the defined parameters as a map of strings.  <br /></td></tr>
+<tr class="separator:a9fe04f3c28dec4a1fe01da2c468b75f6 inherit pub_methods_class_parameter_lists"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2f5c08258f5805a7f2f9c50c8939fe4 inherit pub_methods_class_parameter_lists" id="r_ab2f5c08258f5805a7f2f9c50c8939fe4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4">print_parameter_list</a> ()</td></tr>
 <tr class="memdesc:ab2f5c08258f5805a7f2f9c50c8939fe4 inherit pub_methods_class_parameter_lists"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print the parameters.  <br /></td></tr>
 <tr class="separator:ab2f5c08258f5805a7f2f9c50c8939fe4 inherit pub_methods_class_parameter_lists"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -155,9 +172,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a45d5d90936a90253e1a46db79e3b53b6" id="r_a45d5d90936a90253e1a46db79e3b53b6"><td class="memItemLeft" align="right" valign="top"><a id="a45d5d90936a90253e1a46db79e3b53b6" name="a45d5d90936a90253e1a46db79e3b53b6"></a>
 <a class="el" href="class_solid_viscosity_parameters.html">SolidViscosityParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><b>solid_viscosity</b></td></tr>
 <tr class="separator:a45d5d90936a90253e1a46db79e3b53b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa4279aa0eefeed4792d9783d9546380f" id="r_aa4279aa0eefeed4792d9783d9546380f"><td class="memItemLeft" align="right" valign="top"><a id="aa4279aa0eefeed4792d9783d9546380f" name="aa4279aa0eefeed4792d9783d9546380f"></a>
-<a class="el" href="class_t_t_p_initial_conditions_parameters.html">TTPInitialConditionsParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ttp_initial_conditions</b></td></tr>
-<tr class="separator:aa4279aa0eefeed4792d9783d9546380f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf4b99b072002c79e4247f1b83284b2c" id="r_abf4b99b072002c79e4247f1b83284b2c"><td class="memItemLeft" align="right" valign="top"><a id="abf4b99b072002c79e4247f1b83284b2c" name="abf4b99b072002c79e4247f1b83284b2c"></a>
+std::map&lt; std::string, std::unique_ptr&lt; <a class="el" href="class_ionic_model_parameters.html">IonicModelParameters</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ionic_models</b></td></tr>
+<tr class="separator:abf4b99b072002c79e4247f1b83284b2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade676fbca0d925f2de82d34932f40522" id="r_ade676fbca0d925f2de82d34932f40522"><td class="memItemLeft" align="right" valign="top"><a id="ade676fbca0d925f2de82d34932f40522" name="ade676fbca0d925f2de82d34932f40522"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>id</b></td></tr>
 <tr class="separator:ade676fbca0d925f2de82d34932f40522"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -224,27 +241,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a5f19c072c600d1a3ff47b61ad0d6c3a5" id="r_a5f19c072c600d1a3ff47b61ad0d6c3a5"><td class="memItemLeft" align="right" valign="top"><a id="a5f19c072c600d1a3ff47b61ad0d6c3a5" name="a5f19c072c600d1a3ff47b61ad0d6c3a5"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>myocardial_zone</b></td></tr>
 <tr class="separator:a5f19c072c600d1a3ff47b61ad0d6c3a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aca7cd30ecf486834a648bed9ad87fcd1" id="r_aca7cd30ecf486834a648bed9ad87fcd1"><td class="memItemLeft" align="right" valign="top"><a id="aca7cd30ecf486834a648bed9ad87fcd1" name="aca7cd30ecf486834a648bed9ad87fcd1"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>G_Na</b></td></tr>
-<tr class="separator:aca7cd30ecf486834a648bed9ad87fcd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ecf411007560f93149f5ac344b07644" id="r_a1ecf411007560f93149f5ac344b07644"><td class="memItemLeft" align="right" valign="top"><a id="a1ecf411007560f93149f5ac344b07644" name="a1ecf411007560f93149f5ac344b07644"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>G_CaL</b></td></tr>
-<tr class="separator:a1ecf411007560f93149f5ac344b07644"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5fe98fdf590c9c6b33e61bbe0489585d" id="r_a5fe98fdf590c9c6b33e61bbe0489585d"><td class="memItemLeft" align="right" valign="top"><a id="a5fe98fdf590c9c6b33e61bbe0489585d" name="a5fe98fdf590c9c6b33e61bbe0489585d"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>G_Kr</b></td></tr>
-<tr class="separator:a5fe98fdf590c9c6b33e61bbe0489585d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae632cfa5d1d1747320e6a703c6e0f1c8" id="r_ae632cfa5d1d1747320e6a703c6e0f1c8"><td class="memItemLeft" align="right" valign="top"><a id="ae632cfa5d1d1747320e6a703c6e0f1c8" name="ae632cfa5d1d1747320e6a703c6e0f1c8"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>G_Ks</b></td></tr>
-<tr class="separator:ae632cfa5d1d1747320e6a703c6e0f1c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff8cf55d57542a6be449826c3472c828" id="r_aff8cf55d57542a6be449826c3472c828"><td class="memItemLeft" align="right" valign="top"><a id="aff8cf55d57542a6be449826c3472c828" name="aff8cf55d57542a6be449826c3472c828"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>G_to</b></td></tr>
-<tr class="separator:aff8cf55d57542a6be449826c3472c828"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7750dc685fc90fbf6ffa4148a1675225" id="r_a7750dc685fc90fbf6ffa4148a1675225"><td class="memItemLeft" align="right" valign="top"><a id="a7750dc685fc90fbf6ffa4148a1675225" name="a7750dc685fc90fbf6ffa4148a1675225"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>tau_fi</b></td></tr>
-<tr class="separator:a7750dc685fc90fbf6ffa4148a1675225"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6bd22c165184e1df702d9209aa111e7" id="r_af6bd22c165184e1df702d9209aa111e7"><td class="memItemLeft" align="right" valign="top"><a id="af6bd22c165184e1df702d9209aa111e7" name="af6bd22c165184e1df702d9209aa111e7"></a>
-<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>tau_si</b></td></tr>
-<tr class="separator:af6bd22c165184e1df702d9209aa111e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af276e70a548772abf28bf1e71b37cef4" id="r_af276e70a548772abf28bf1e71b37cef4"><td class="memItemLeft" align="right" valign="top"><a id="af276e70a548772abf28bf1e71b37cef4" name="af276e70a548772abf28bf1e71b37cef4"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ode_solver</b></td></tr>
 <tr class="separator:af276e70a548772abf28bf1e71b37cef4"><td class="memSeparator" colspan="2">&#160;</td></tr>

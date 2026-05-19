@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -82,6 +99,7 @@ $(function() {
 <li>operator-()&#160;:&#160;<a class="el" href="class_vector.html#aed09a49898d7a949b93addb54657f1ed">Vector&lt; T &gt;</a></li>
 <li>operator/()&#160;:&#160;<a class="el" href="class_vector.html#a9d039799d2c2b1c8c3c02a28d2548b47">Vector&lt; T &gt;</a></li>
 <li>operator=()&#160;:&#160;<a class="el" href="class_array3.html#a35fd645a503475a7cc980acaa1af246a">Array3&lt; T &gt;</a>, <a class="el" href="class_boundary_condition.html#a4112d1d42b93f0614e3193d075de8705">BoundaryCondition</a>, <a class="el" href="class_capping_surface.html#a677af41a0ea524918e68eae4d7af7d38">CappingSurface</a>, <a class="el" href="class_coupled_boundary_condition.html#a1084d8e3e0e8cfca134b2150d224f404">CoupledBoundaryCondition</a>, <a class="el" href="class_vector.html#a7594fda7b9388c049c2fe95ffe154075">Vector&lt; T &gt;</a></li>
+<li>operator[]()&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#abda09b5dcc8aa71318df9c88f990c6f2">IonicInitialStateParameters</a></li>
 <li>ordering&#160;:&#160;<a class="el" href="classmsh_type.html#a0c78a71d1348faa5432b75c48c872fd5">mshType</a></li>
 <li>otnIEN&#160;:&#160;<a class="el" href="classmsh_type.html#a4eae34247ad01296d1a2a5bce7cf243f">mshType</a></li>
 <li>out_files&#160;:&#160;<a class="el" href="classecg_leads_type.html#af77b84a8b3e4444955a642447c278a34">ecgLeadsType</a></li>

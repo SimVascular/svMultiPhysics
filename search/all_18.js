@@ -3,5 +3,6 @@ var searchData=
   ['w_0',['w',['../classmsh_type.html#a09ebd9daea57633ac72086ce2019707b',1,'mshType']]],
   ['w_5f_1',['W_',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#a224ba4edf831c8649e9922118e891958',1,'TrilinosLinearAlgebra::TrilinosImpl']]],
   ['what_2',['what',['../class_boundary_condition_base_exception.html#a32c5778b38fef28785b310c9fe005a05',1,'BoundaryConditionBaseException']]],
-  ['workflow_3',['Workflow',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md18',1,'']]]
+  ['workflow_3',['Workflow',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md21',1,'']]],
+  ['ws_5finf_4',['ws_inf',['../class_bueno_orovio.html#aeae2eb78be8f4841812243b8eb368c3a',1,'BuenoOrovio']]]
 ];

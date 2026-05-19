@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,8 +90,9 @@ $(function() {
 <div class="textblock">Here is a list of all documented class members with links to the class documentation for each member:</div>
 
 <h3><a id="index_p" name="index_p"></a>- p -</h3><ul>
-<li>p_KNa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a861ec4bff000e5975c315312b99bda30">CepModTtp</a></li>
-<li>p_NaK&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a6c7b910749350b8689cc09c6c7a55e6d">CepModTtp</a></li>
+<li>p_KNa&#160;:&#160;<a class="el" href="class_t_t_p.html#abb479aedee33fde848dc1b18619d4a36">TTP</a></li>
+<li>p_NaK&#160;:&#160;<a class="el" href="class_t_t_p.html#a0eb1bc9717cc4fb3c47268ef696b0929">TTP</a></li>
+<li>parameters&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#af88e0556bc4dcea73dd626ea5ed2ab79">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a5e200e57379a827fb5a0145488750cc8">IonicModelParameters</a></li>
 <li>params_map&#160;:&#160;<a class="el" href="class_parameter_lists.html#a6131758a550b2e63f34e7554933e27f8">ParameterLists</a></li>
 <li>partRIS&#160;:&#160;<a class="el" href="classmsh_type.html#a833f5a2d43f2a4137aca88ce42e6227e">mshType</a></li>
 <li>perturb_flowrate()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a05790b2236ad41d26e8367ac8afaea1b">CoupledBoundaryCondition</a></li>
@@ -87,6 +105,7 @@ $(function() {
 <li>precompFileName&#160;:&#160;<a class="el" href="class_com_mod.html#a5703dd4af9a8701876de31e2e4ae0a61">ComMod</a></li>
 <li>predictor()&#160;:&#160;<a class="el" href="class_integrator.html#adc20c8caeb6e1b6d80034afb70605d1c">Integrator</a></li>
 <li>print_parameter_list()&#160;:&#160;<a class="el" href="class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4">ParameterLists</a></li>
+<li>print_parameters()&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#a7f6df694028b607ba3c4c65835cd1511">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#ab21f192042cb0d4651f71d2388af7106">IonicModelParameters</a></li>
 <li>pS0&#160;:&#160;<a class="el" href="class_com_mod.html#af6037b9453a02db9505b7af5bc403cae">ComMod</a></li>
 <li>pseudo_ECG&#160;:&#160;<a class="el" href="classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a">ecgLeadsType</a></li>
 <li>pstEq&#160;:&#160;<a class="el" href="class_com_mod.html#a87707963de89cffba1c523da18569cd8">ComMod</a></li>

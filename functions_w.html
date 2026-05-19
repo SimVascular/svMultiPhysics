@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -76,6 +93,7 @@ $(function() {
 <li>w&#160;:&#160;<a class="el" href="classmsh_type.html#a09ebd9daea57633ac72086ce2019707b">mshType</a></li>
 <li>W_&#160;:&#160;<a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#a224ba4edf831c8649e9922118e891958">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>what()&#160;:&#160;<a class="el" href="class_boundary_condition_base_exception.html#a32c5778b38fef28785b310c9fe005a05">BoundaryConditionBaseException</a></li>
+<li>ws_inf&#160;:&#160;<a class="el" href="class_bueno_orovio.html#aeae2eb78be8f4841812243b8eb368c3a">BuenoOrovio</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,17 +90,35 @@ $(function() {
 <div class="textblock">Here is a list of all documented variables with links to the class documentation for each member:</div>
 
 <h3><a id="index_t" name="index_t"></a>- t -</h3><ul>
-<li>Tc&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#aaa98317b05682c190b526d5f12d3f4e6">CepModTtp</a></li>
+<li>tau_fi&#160;:&#160;<a class="el" href="class_bueno_orovio.html#ad6373dbe388fc64c33b9e85c7575990f">BuenoOrovio</a></li>
+<li>tau_o1&#160;:&#160;<a class="el" href="class_bueno_orovio.html#aa11920a2d9ff6571cc0b28b1a84ea843">BuenoOrovio</a></li>
+<li>tau_o2&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a59090f4c1875b79140926002e73ba3a1">BuenoOrovio</a></li>
+<li>tau_s1&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a31ab76946f3e15fed86e1ef9e92e9fd5">BuenoOrovio</a></li>
+<li>tau_s2&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a2dadb19ddc974493ba3990b0629a8e00">BuenoOrovio</a></li>
+<li>tau_si&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a91008e03474d81db3da04f464ad9def7">BuenoOrovio</a></li>
+<li>tau_so1&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a59652cc210c3b21fa66deaa15c1903ca">BuenoOrovio</a></li>
+<li>tau_so2&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a141bc77ef375a7e1ff54c83f6a86a1e6">BuenoOrovio</a></li>
+<li>tau_winf&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a3dc624629d4a4823e0f489ef8ba3456e">BuenoOrovio</a></li>
+<li>taum_v1&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a85bed0d2f201dd122a249b73bfcc9f7c">BuenoOrovio</a></li>
+<li>taum_v2&#160;:&#160;<a class="el" href="class_bueno_orovio.html#aa4e738b807802bde9ad491683f3c6872">BuenoOrovio</a></li>
+<li>taum_w1&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a48f47206f40c6d0204ca408621755ff3">BuenoOrovio</a></li>
+<li>taum_w2&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a4a52fa9eef2f975327c265b20404290f">BuenoOrovio</a></li>
+<li>taup_v&#160;:&#160;<a class="el" href="class_bueno_orovio.html#aa21e3548f0b9b57bbb5a83a28d0608ad">BuenoOrovio</a></li>
+<li>taup_w&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a7cb178cc40a76e31bf49cb46d49a62e8">BuenoOrovio</a></li>
+<li>Tc&#160;:&#160;<a class="el" href="class_t_t_p.html#ae21916a30b938b5fa5109c905a107842">TTP</a></li>
 <li>Td&#160;:&#160;<a class="el" href="classstim_type.html#af2ff9342a37876d80073e49009772148">stimType</a></li>
 <li>tDof&#160;:&#160;<a class="el" href="class_com_mod.html#a74b27b683845cc2a621040e48a945dca">ComMod</a></li>
+<li>theta_o&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a9f8a1c0e77eb1b448bfbc2a842e3419a">BuenoOrovio</a></li>
+<li>theta_v&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a0ff805035c7e52931385509a10bd6a55">BuenoOrovio</a></li>
+<li>theta_w&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a1fed3ddc868406837cbdd84d90921c76">BuenoOrovio</a></li>
+<li>thetam_v&#160;:&#160;<a class="el" href="class_bueno_orovio.html#aefb631c7742a15342c418950f21d4b90">BuenoOrovio</a></li>
 <li>time&#160;:&#160;<a class="el" href="class_com_mod.html#a8611e1387341bc17c0ddf6f54ded1f09">ComMod</a>, <a class="el" href="classrmsh_type.html#abae9de29ce3e1e04ae4df7ebe942f62f">rmshType</a></li>
-<li>tIntType&#160;:&#160;<a class="el" href="classode_type.html#a2149217b76302c0bf2c807146b174608">odeType</a></li>
+<li>tIntType&#160;:&#160;<a class="el" href="classode_type.html#a22441c13b34522f6bb03091cc84e9fcc">odeType</a></li>
 <li>tnNo&#160;:&#160;<a class="el" href="class_com_mod.html#a39e53febfdde055cb194b83de669f4b5">ComMod</a>, <a class="el" href="classib_type.html#a2ff4a8734fa1b1c382f92caaa6949ed2">ibType</a></li>
 <li>tol&#160;:&#160;<a class="el" href="classeq_type.html#a6c12a0776a7ceeb92dd9d48aa1117ff6">eqType</a>, <a class="el" href="classmsh_type.html#af6631f9d1aa2c75ec38b6378f617d099">mshType</a></li>
 <li>trc&#160;:&#160;<a class="el" href="classmsh_type.html#a14e868eaaa895cdf881c8c0094ee954e">mshType</a></li>
 <li>Ts&#160;:&#160;<a class="el" href="classstim_type.html#a11c427a48f79c75547d7b2591e8db9c2">stimType</a></li>
-<li>Tscale&#160;:&#160;<a class="el" href="class_cep_mod_ap.html#ab466d4538a6ff0e73f24fce7a332e7df">CepModAp</a>, <a class="el" href="class_cep_mod_bo.html#a4d9138f955d7ed43c7045c860af5b95f">CepModBo</a>, <a class="el" href="class_cep_mod_fn.html#a0bba638a67749cecc5fc7c9eb5f04378">CepModFn</a>, <a class="el" href="class_cep_mod_ttp.html#a39e22e4ec7957eab3eb81056bbffb61a">CepModTtp</a></li>
-<li>ttp&#160;:&#160;<a class="el" href="class_cep_mod.html#ad17e9172d8c1d358c50b236f6ca0ed9d">CepMod</a>, <a class="el" href="classcep_model_type.html#ae8ef089d32c942d1417f5b558c4a3fbe">cepModelType</a></li>
+<li>Tscale&#160;:&#160;<a class="el" href="class_ionic_model.html#ae0201b6ad29f2a8410af97aaf2416120">IonicModel</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

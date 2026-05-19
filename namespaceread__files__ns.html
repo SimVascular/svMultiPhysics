@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -188,7 +205,7 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>maxOutput</b> = 
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Define some types used to pass data to functions. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000013">Todo:</a></b></dt><dd>[TODO:DaveP] maxOutput=5 is is defined in consts but in the Fortran READEQ subroutine is defined as maxOutput=22. </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000014">Todo:</a></b></dt><dd>[TODO:DaveP] maxOutput=5 is is defined in consts but in the Fortran READEQ subroutine is defined as maxOutput=22. </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a6efc237e196580d73a5eb1df52003a05" name="a6efc237e196580d73a5eb1df52003a05"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6efc237e196580d73a5eb1df52003a05">&#9670;&#160;</a></span>face_match()</h2>
@@ -229,7 +246,7 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>maxOutput</b> = 
 </div><div class="memdoc">
 
 <p>Match two faces? </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000012">Todo:</a></b></dt><dd>[TODO:DaveP] this has not been tested. </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000013">Todo:</a></b></dt><dd>[TODO:DaveP] this has not been tested. </dd></dl>
 
 </div>
 </div>

@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -123,9 +140,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>set_parameter</b> (co
 <tr class="memitem:a09feae36022f5ebf7cd9a8c86bcbca78" id="r_a09feae36022f5ebf7cd9a8c86bcbca78"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#a09feae36022f5ebf7cd9a8c86bcbca78">check_required</a> ()</td></tr>
 <tr class="memdesc:a09feae36022f5ebf7cd9a8c86bcbca78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if any required parameters have not been set.  <br /></td></tr>
 <tr class="separator:a09feae36022f5ebf7cd9a8c86bcbca78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f00a499245e0190cd1da7a0d0773932" id="r_a2f00a499245e0190cd1da7a0d0773932"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#a2f00a499245e0190cd1da7a0d0773932">get_parameter_list</a> ()</td></tr>
-<tr class="memdesc:a2f00a499245e0190cd1da7a0d0773932"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the defined parameters as a map of strings.  <br /></td></tr>
-<tr class="separator:a2f00a499245e0190cd1da7a0d0773932"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fe04f3c28dec4a1fe01da2c468b75f6" id="r_a9fe04f3c28dec4a1fe01da2c468b75f6"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#a9fe04f3c28dec4a1fe01da2c468b75f6">get_parameter_list</a> () const</td></tr>
+<tr class="memdesc:a9fe04f3c28dec4a1fe01da2c468b75f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the defined parameters as a map of strings.  <br /></td></tr>
+<tr class="separator:a9fe04f3c28dec4a1fe01da2c468b75f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2f5c08258f5805a7f2f9c50c8939fe4" id="r_ab2f5c08258f5805a7f2f9c50c8939fe4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4">print_parameter_list</a> ()</td></tr>
 <tr class="memdesc:ab2f5c08258f5805a7f2f9c50c8939fe4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print the parameters.  <br /></td></tr>
 <tr class="separator:ab2f5c08258f5805a7f2f9c50c8939fe4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -169,8 +186,8 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 
 </div>
 </div>
-<a id="a2f00a499245e0190cd1da7a0d0773932" name="a2f00a499245e0190cd1da7a0d0773932"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f00a499245e0190cd1da7a0d0773932">&#9670;&#160;</a></span>get_parameter_list()</h2>
+<a id="a9fe04f3c28dec4a1fe01da2c468b75f6" name="a9fe04f3c28dec4a1fe01da2c468b75f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9fe04f3c28dec4a1fe01da2c468b75f6">&#9670;&#160;</a></span>get_parameter_list()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -182,7 +199,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
           <td class="memname">std::map&lt; std::string, std::string &gt; ParameterLists::get_parameter_list </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
   </td>

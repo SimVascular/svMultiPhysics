@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -74,16 +91,21 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><dl class="reflist">
-<dt>Member <a class="el" href="class_cep_mod_bo.html#a5c04dde57f665bda837eaddf642daf6f">CepModBo::u_o</a>  </dt>
-<dd><a class="anchor" id="_todo000002"></a>[TODO:DaveP] these guys should be maps map&lt;int,double&gt;.  </dd>
+<dt>Member <a class="el" href="class_bueno_orovio.html#a4e0fe5c4269cac9450c3023c42df8263">BuenoOrovio::ModelParam</a>  </dt>
+<dd><p class="startdd"><a class="anchor" id="_todo000003"></a>[TODO:DaveP] these guys should be maps map&lt;int,double&gt;. </p>
+<p class="interdd"></p>
+<p class="enddd">[michelebucelli] Would it make sense to treat these in the same way as the epi/endo/myo zone are treated in the <a class="el" href="class_t_t_p.html" title="Ten Tusscher-Panfilov ionic model.">TTP</a> model?  </p>
+</dd>
+<dt>Member <a class="el" href="class_ionic_model.html#a6b22b6ab1011997356a9f2424335dfff">IonicModel::InitialStates</a>  </dt>
+<dd><a class="anchor" id="_todo000004"></a>[michelebucelli] This would work better with a struct, due to the fields having meaningful names instead of first and second.  </dd>
 <dt>Namespace <a class="el" href="namespacemat__fun.html">mat_fun</a>  </dt>
-<dd><a class="anchor" id="_todo000005"></a>[TODO:DaveP] this should just be a namespace?  </dd>
+<dd><a class="anchor" id="_todo000006"></a>[TODO:DaveP] this should just be a namespace?  </dd>
 <dt>Member <a class="el" href="namespacemat__fun.html#ab3811947b4d5d230a30e666e3a8107ca">mat_fun::mat_inv_ge_orig</a>  (const Array&lt; double &gt; &amp;A, const int nd, bool debug)</dt>
-<dd><a class="anchor" id="_todo000004"></a>[TODO:DaveP] The original version sometimes produced NaNs.  </dd>
+<dd><a class="anchor" id="_todo000005"></a>[TODO:DaveP] The original version sometimes produced NaNs.  </dd>
 <dt>Namespace <a class="el" href="namespaceread__files__ns.html">read_files_ns</a>  </dt>
-<dd><a class="anchor" id="_todo000013"></a>[TODO:DaveP] maxOutput=5 is is defined in consts but in the Fortran READEQ subroutine is defined as maxOutput=22.  </dd>
+<dd><a class="anchor" id="_todo000014"></a>[TODO:DaveP] maxOutput=5 is is defined in consts but in the Fortran READEQ subroutine is defined as maxOutput=22.  </dd>
 <dt>Member <a class="el" href="namespaceread__files__ns.html#a6efc237e196580d73a5eb1df52003a05">read_files_ns::face_match</a>  (<a class="el" href="class_com_mod.html" title="The ComMod class duplicates the data structures in the Fortran COMMOD module defined in MOD....">ComMod</a> &amp;com_mod, <a class="el" href="classface_type.html" title="The face type containing mesh at boundary.">faceType</a> &amp;lFa, <a class="el" href="classface_type.html" title="The face type containing mesh at boundary.">faceType</a> &amp;gFa, <a class="el" href="class_vector.html">Vector&lt; int &gt;</a> &amp;ptr)</dt>
-<dd><a class="anchor" id="_todo000012"></a>[TODO:DaveP] this has not been tested. </dd>
+<dd><a class="anchor" id="_todo000013"></a>[TODO:DaveP] this has not been tested. </dd>
 </dl>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -142,16 +159,16 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:ae11f68cd2d856517f7be3e1a184dcafa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of equation fluid/heatF/heatS/lElas/FSI.  <br /></td></tr>
 <tr class="separator:ae11f68cd2d856517f7be3e1a184dcafa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb83ca2583ed26cfd4a4230386302786" id="r_abb83ca2583ed26cfd4a4230386302786"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#abb83ca2583ed26cfd4a4230386302786">af</a> = 0.0</td></tr>
-<tr class="memdesc:abb83ca2583ed26cfd4a4230386302786"><td class="mdescLeft">&#160;</td><td class="mdescRight"><picture><source srcset="form_1_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\alpha_f$" src="form_1.png"/></picture>  <br /></td></tr>
+<tr class="memdesc:abb83ca2583ed26cfd4a4230386302786"><td class="mdescLeft">&#160;</td><td class="mdescRight">\(\alpha_f\)  <br /></td></tr>
 <tr class="separator:abb83ca2583ed26cfd4a4230386302786"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8615023d7532cdafc3a5fc78dc26de5d" id="r_a8615023d7532cdafc3a5fc78dc26de5d"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#a8615023d7532cdafc3a5fc78dc26de5d">am</a> = 0.0</td></tr>
-<tr class="memdesc:a8615023d7532cdafc3a5fc78dc26de5d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><picture><source srcset="form_2_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\alpha_m$" src="form_2.png"/></picture>  <br /></td></tr>
+<tr class="memdesc:a8615023d7532cdafc3a5fc78dc26de5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">\(\alpha_m\)  <br /></td></tr>
 <tr class="separator:a8615023d7532cdafc3a5fc78dc26de5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8b6728acf22adfdf385b3a29c6fed39" id="r_af8b6728acf22adfdf385b3a29c6fed39"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#af8b6728acf22adfdf385b3a29c6fed39">beta</a> = 0.0</td></tr>
-<tr class="memdesc:af8b6728acf22adfdf385b3a29c6fed39"><td class="mdescLeft">&#160;</td><td class="mdescRight"><picture><source srcset="form_3_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\beta$" src="form_3.png"/></picture>  <br /></td></tr>
+<tr class="memdesc:af8b6728acf22adfdf385b3a29c6fed39"><td class="mdescLeft">&#160;</td><td class="mdescRight">\(\beta\)  <br /></td></tr>
 <tr class="separator:af8b6728acf22adfdf385b3a29c6fed39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a920f1cd12fcf62e93c72fe7910b53e" id="r_a7a920f1cd12fcf62e93c72fe7910b53e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#a7a920f1cd12fcf62e93c72fe7910b53e">gam</a> = 0.0</td></tr>
-<tr class="memdesc:a7a920f1cd12fcf62e93c72fe7910b53e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><picture><source srcset="form_4_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\gamma$" src="form_4.png"/></picture>  <br /></td></tr>
+<tr class="memdesc:a7a920f1cd12fcf62e93c72fe7910b53e"><td class="mdescLeft">&#160;</td><td class="mdescRight">\(\gamma\)  <br /></td></tr>
 <tr class="separator:a7a920f1cd12fcf62e93c72fe7910b53e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8651a65d06d8ef4e6bec9fde9d2a585f" id="r_a8651a65d06d8ef4e6bec9fde9d2a585f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#a8651a65d06d8ef4e6bec9fde9d2a585f">iNorm</a> = 0.0</td></tr>
 <tr class="memdesc:a8651a65d06d8ef4e6bec9fde9d2a585f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initial norm of residual.  <br /></td></tr>
@@ -160,7 +177,7 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:aa4f553772b195bbbc7be3d9b281cb4c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">First iteration norm.  <br /></td></tr>
 <tr class="separator:aa4f553772b195bbbc7be3d9b281cb4c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b8e111bef52996593a8550bfe202506" id="r_a0b8e111bef52996593a8550bfe202506"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#a0b8e111bef52996593a8550bfe202506">roInf</a> = 0.0</td></tr>
-<tr class="memdesc:a0b8e111bef52996593a8550bfe202506"><td class="mdescLeft">&#160;</td><td class="mdescRight"><picture><source srcset="form_5_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\rho_{infinity}$" src="form_5.png"/></picture>  <br /></td></tr>
+<tr class="memdesc:a0b8e111bef52996593a8550bfe202506"><td class="mdescLeft">&#160;</td><td class="mdescRight">\(\rho_{infinity}\)  <br /></td></tr>
 <tr class="separator:a0b8e111bef52996593a8550bfe202506"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c12a0776a7ceeb92dd9d48aa1117ff6" id="r_a6c12a0776a7ceeb92dd9d48aa1117ff6"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#a6c12a0776a7ceeb92dd9d48aa1117ff6">tol</a> = 0.0</td></tr>
 <tr class="memdesc:a6c12a0776a7ceeb92dd9d48aa1117ff6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accepted relative tolerance.  <br /></td></tr>
@@ -229,7 +246,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p><picture><source srcset="form_1_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\alpha_f$" src="form_1.png"/></picture> </p>
+<p>\(\alpha_f\) </p>
 
 </div>
 </div>
@@ -245,7 +262,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p><picture><source srcset="form_2_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\alpha_m$" src="form_2.png"/></picture> </p>
+<p>\(\alpha_m\) </p>
 <p>For second order equations: am = (2.0 - roInf) / (1.0 + roInf) First order equations: am = 0.5 * (3.0 - roInf) / (1.0 + roInf) </p>
 
 </div>
@@ -310,7 +327,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p><picture><source srcset="form_3_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\beta$" src="form_3.png"/></picture> </p>
+<p>\(\beta\) </p>
 
 </div>
 </div>
@@ -454,7 +471,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p><picture><source srcset="form_4_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\gamma$" src="form_4.png"/></picture> </p>
+<p>\(\gamma\) </p>
 
 </div>
 </div>
@@ -838,7 +855,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p><picture><source srcset="form_5_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\rho_{infinity}$" src="form_5.png"/></picture> </p>
+<p>\(\rho_{infinity}\) </p>
 
 </div>
 </div>

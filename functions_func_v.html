@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -75,6 +92,7 @@ $(function() {
 <h3><a id="index_v" name="index_v"></a>- v -</h3><ul>
 <li>validate_array_value()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a7e8dacf0ae64116c1104160918f9e8c3">BoundaryCondition</a>, <a class="el" href="class_robin_boundary_condition.html#a78bf7f3df1a195623a405c533bdd90a9">RobinBoundaryCondition</a></li>
 <li>valM()&#160;:&#160;<a class="el" href="class_capping_surface.html#a3e9e871a83f2d94a9c174a13e963d073">CappingSurface</a></li>
+<li>visit()&#160;:&#160;<a class="el" href="class_ionic_model_factory.html#a7d5a04042e915d06920a683cea045729">IonicModelFactory</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -106,7 +123,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
-<div class="ttc" id="aclass_cep_mod_html"><div class="ttname"><a href="class_cep_mod.html">CepMod</a></div><div class="ttdef"><b>Definition</b> CepMod.h:205</div></div>
+<div class="ttc" id="aclass_cep_mod_html"><div class="ttname"><a href="class_cep_mod.html">CepMod</a></div><div class="ttdef"><b>Definition</b> CepMod.h:154</div></div>
 <div class="ttc" id="aclass_com_mod_html"><div class="ttname"><a href="class_com_mod.html">ComMod</a></div><div class="ttdoc">The ComMod class duplicates the data structures in the Fortran COMMOD module defined in MOD....</div><div class="ttdef"><b>Definition</b> ComMod.h:1545</div></div>
 <div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:24</div></div>
 <div class="ttc" id="aclassbc_type_html"><div class="ttname"><a href="classbc_type.html">bcType</a></div><div class="ttdoc">Boundary condition data type.</div><div class="ttdef"><b>Definition</b> ComMod.h:129</div></div>

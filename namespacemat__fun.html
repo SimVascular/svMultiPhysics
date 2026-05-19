@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -228,7 +245,7 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The classes defined here duplicate the data structures in the Fortran MATFUN module defined in MATFUN.f. </p>
 <p>This module defines data structures for generally performed matrix and tensor operations.</p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000005">Todo:</a></b></dt><dd>[TODO:DaveP] this should just be a namespace? </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000006">Todo:</a></b></dt><dd>[TODO:DaveP] this should just be a namespace? </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="abbbee355035575333a0beda4d7ddc577" name="abbbee355035575333a0beda4d7ddc577"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abbbee355035575333a0beda4d7ddc577">&#9670;&#160;</a></span>double_dot_product()</h2>
@@ -525,7 +542,7 @@ template&lt;int nsd&gt; </div>
 </div><div class="memdoc">
 
 <p>This function computes inverse of a square matrix using Gauss Elimination method. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd>[TODO:DaveP] The original version sometimes produced NaNs. </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000005">Todo:</a></b></dt><dd>[TODO:DaveP] The original version sometimes produced NaNs. </dd></dl>
 
 </div>
 </div>

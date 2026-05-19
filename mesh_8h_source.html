@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -101,7 +118,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="ttc" id="aclass_cep_mod_html"><div class="ttname"><a href="class_cep_mod.html">CepMod</a></div><div class="ttdef"><b>Definition</b> CepMod.h:205</div></div>
+<div class="ttc" id="aclass_cep_mod_html"><div class="ttname"><a href="class_cep_mod.html">CepMod</a></div><div class="ttdef"><b>Definition</b> CepMod.h:154</div></div>
 <div class="ttc" id="aclass_com_mod_html"><div class="ttname"><a href="class_com_mod.html">ComMod</a></div><div class="ttdoc">The ComMod class duplicates the data structures in the Fortran COMMOD module defined in MOD....</div><div class="ttdef"><b>Definition</b> ComMod.h:1545</div></div>
 <div class="ttc" id="aclassmsh_type_html"><div class="ttname"><a href="classmsh_type.html">mshType</a></div><div class="ttdoc">This is the container for a mesh or NURBS patch, those specific to NURBS are noted.</div><div class="ttdef"><b>Definition</b> ComMod.h:877</div></div>
 <div class="ttc" id="astruct_solution_states_html"><div class="ttname"><a href="struct_solution_states.html">SolutionStates</a></div><div class="ttdoc">Holds solution state at old, current, and intermediate time levels.</div><div class="ttdef"><b>Definition</b> SolutionStates.h:39</div></div>

@@ -6,11 +6,12 @@ var searchData=
   ['feexception_3',['FEException',['../classsvmp_1_1_f_e_1_1_f_e_exception.html',1,'svmp::FE']]],
   ['fiberreinforcementstressparameters_4',['FiberReinforcementStressParameters',['../class_fiber_reinforcement_stress_parameters.html',1,'']]],
   ['fibstrstype_5',['fibStrsType',['../classfib_strs_type.html',1,'']]],
-  ['fluidviscmodeltype_6',['fluidViscModelType',['../classfluid_visc_model_type.html',1,'']]],
-  ['fluidviscositycarreauyasudaparameters_7',['FluidViscosityCarreauYasudaParameters',['../class_fluid_viscosity_carreau_yasuda_parameters.html',1,'']]],
-  ['fluidviscositycassonsparameters_8',['FluidViscosityCassonsParameters',['../class_fluid_viscosity_cassons_parameters.html',1,'']]],
-  ['fluidviscositynewtonianparameters_9',['FluidViscosityNewtonianParameters',['../class_fluid_viscosity_newtonian_parameters.html',1,'']]],
-  ['fluidviscosityparameters_10',['FluidViscosityParameters',['../class_fluid_viscosity_parameters.html',1,'']]],
-  ['fsilslinearalgebra_11',['FsilsLinearAlgebra',['../class_fsils_linear_algebra.html',1,'']]],
-  ['fstype_12',['fsType',['../classfs_type.html',1,'']]]
+  ['fitzhughnagumo_6',['FitzHughNagumo',['../class_fitz_hugh_nagumo.html',1,'']]],
+  ['fluidviscmodeltype_7',['fluidViscModelType',['../classfluid_visc_model_type.html',1,'']]],
+  ['fluidviscositycarreauyasudaparameters_8',['FluidViscosityCarreauYasudaParameters',['../class_fluid_viscosity_carreau_yasuda_parameters.html',1,'']]],
+  ['fluidviscositycassonsparameters_9',['FluidViscosityCassonsParameters',['../class_fluid_viscosity_cassons_parameters.html',1,'']]],
+  ['fluidviscositynewtonianparameters_10',['FluidViscosityNewtonianParameters',['../class_fluid_viscosity_newtonian_parameters.html',1,'']]],
+  ['fluidviscosityparameters_11',['FluidViscosityParameters',['../class_fluid_viscosity_parameters.html',1,'']]],
+  ['fsilslinearalgebra_12',['FsilsLinearAlgebra',['../class_fsils_linear_algebra.html',1,'']]],
+  ['fstype_13',['fsType',['../classfs_type.html',1,'']]]
 ];

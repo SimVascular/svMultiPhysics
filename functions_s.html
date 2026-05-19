@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -82,13 +99,13 @@ $(function() {
 <li>saveName&#160;:&#160;<a class="el" href="class_com_mod.html#a11e77a62af35e601981a2b8b4c7bed0d">ComMod</a>, <a class="el" href="classcpl_b_c_type.html#a91548ec21e98e40e2a9952dc7ccdd606">cplBCType</a></li>
 <li>saveVTK&#160;:&#160;<a class="el" href="class_com_mod.html#a723ca0efe8d7e8a2d41db33e0181f090">ComMod</a></li>
 <li>sbc&#160;:&#160;<a class="el" href="classmsh_type.html#ab061d65780cbe161f2aefe35cc7e2929">mshType</a></li>
-<li>scatter()&#160;:&#160;<a class="el" href="classcm_type.html#ad08ead9f464f5cd90429732d0e9f3ee9">cmType</a></li>
+<li>scatter()&#160;:&#160;<a class="el" href="classcm_type.html#aa7ed7e3b02193b4de384558cf96c7e79">cmType</a></li>
 <li>scatterv()&#160;:&#160;<a class="el" href="classcm_type.html#a5faeaa793d615d608c012b7b6d44b0e3">cmType</a></li>
 <li>scF&#160;:&#160;<a class="el" href="classmsh_type.html#a767bb0060dcbdee48d3d0df0bee9b52b">mshType</a></li>
 <li>schm&#160;:&#160;<a class="el" href="classcpl_b_c_type.html#a04ba27d74406837d5ff665176a05535d">cplBCType</a></li>
 <li>sD&#160;:&#160;<a class="el" href="classls_type.html#ada8a6411cb226eb72dcff6a6da44ca47">lsType</a></li>
 <li>sepOutput&#160;:&#160;<a class="el" href="class_com_mod.html#ab1ab82c475b0e3475aa8c23366c300da">ComMod</a></li>
-<li>set()&#160;:&#160;<a class="el" href="class_parameter.html#a9e99b778c269b0382dddf5b3334274c2">Parameter&lt; T &gt;</a>, <a class="el" href="class_vector_parameter.html#a698947d103b7a4483f767e162a3da73d">VectorParameter&lt; T &gt;</a></li>
+<li>set()&#160;:&#160;<a class="el" href="class_parameter.html#ab93c6331f78f4e6e5e45ac2a066239a5">Parameter&lt; T &gt;</a>, <a class="el" href="class_vector_parameter.html#a698947d103b7a4483f767e162a3da73d">VectorParameter&lt; T &gt;</a></li>
 <li>set_assembly()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#aa74faa778eafb4065397133114173035">FsilsLinearAlgebra</a>, <a class="el" href="class_petsc_linear_algebra.html#a546947eea8c3250dd90ab3c1b98c6b06">PetscLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#a71700760880298327541e55cdf4a0821">TrilinosLinearAlgebra</a></li>
 <li>set_flowrate_mechanical_configurations()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#accf4b09c33542a27ec4afe4628b442a4">CoupledBoundaryCondition</a></li>
 <li>set_flowrates()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a42fc24c089160073d8522eb17ea85e98">CoupledBoundaryCondition</a></li>
@@ -100,12 +117,9 @@ $(function() {
 <li>set_preconditioner()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#a1cb68d41f662532925d84f555e7401be">FsilsLinearAlgebra</a>, <a class="el" href="class_petsc_linear_algebra.html#a4298c3290183b02ad2c02318ea142163">PetscLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#a1f0c13cd519933d7e0e08ec212546a69">TrilinosLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#aa64da0abc93d06d323989b21b65eaeeb">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>set_pressure()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a78d3305ae9e58258ff562b574bbeae1f">CoupledBoundaryCondition</a></li>
 <li>set_solution_ids()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#ad08f311b4323041ef0bf1f3b82caaa52">CoupledBoundaryCondition</a></li>
-<li>set_values()&#160;:&#160;<a class="el" href="class_array3.html#ab89c3a5d1fee2f4e664ff84a4376f59b">Array3&lt; T &gt;</a>, <a class="el" href="class_general_simulation_parameters.html#a57f3dd89adab9d8fcc5f719f6dad70a6">GeneralSimulationParameters</a></li>
+<li>set_values()&#160;:&#160;<a class="el" href="class_array3.html#ab89c3a5d1fee2f4e664ff84a4376f59b">Array3&lt; T &gt;</a>, <a class="el" href="class_general_simulation_parameters.html#a57f3dd89adab9d8fcc5f719f6dad70a6">GeneralSimulationParameters</a>, <a class="el" href="class_ionic_initial_state_parameters.html#a466572c1b64e9bb394bce5d8e63c2c76">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a598a9f106da8ef8c3ba7ce4e0c14e6d4">IonicModelParameters</a></li>
 <li>shlEq&#160;:&#160;<a class="el" href="class_com_mod.html#ab94d1b72bf24148fe48a1106731a4023">ComMod</a></li>
-<li>SL0&#160;:&#160;<a class="el" href="class_cep_mod_bo.html#aadbb065345d1379759137c3242f4c5fc">CepModBo</a>, <a class="el" href="class_cep_mod_ttp.html#a0a0dcb4e8d76e6f5727cd2b4dce88e93">CepModTtp</a></li>
 <li>slice()&#160;:&#160;<a class="el" href="class_array3.html#abdf611ce0e095b22299a9631a1342f66">Array3&lt; T &gt;</a></li>
-<li>SLmax&#160;:&#160;<a class="el" href="class_cep_mod_bo.html#a7bdc0d26e97cfec5f86d51ff3c3b9cea">CepModBo</a>, <a class="el" href="class_cep_mod_ttp.html#a1783731487b0512d11dd5102251bd332">CepModTtp</a></li>
-<li>SLmin&#160;:&#160;<a class="el" href="class_cep_mod_bo.html#afce95218b9060805887bdce8a404377a">CepModBo</a>, <a class="el" href="class_cep_mod_ttp.html#a760303aba37d78913140a5a190a01fa9">CepModTtp</a></li>
 <li>solve()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#ac44c1ff57aded7eba1bdee3fd0e47d11">FsilsLinearAlgebra</a>, <a class="el" href="class_petsc_linear_algebra.html#a5642b3ebd61d14577a44c19f8d35bf21">PetscLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#a115c007fa3def28077a5eac0629e6880">TrilinosLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#a615633468c07ec973ee47f7e1451d86b">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>solve_assembled()&#160;:&#160;<a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#ad9c0e37a84c07aca16b9837173daf105">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>spatially_variable&#160;:&#160;<a class="el" href="class_boundary_condition.html#a8db6c121cd41f8ebbe5ceadf77748e06">BoundaryCondition</a></li>
@@ -114,7 +128,7 @@ $(function() {
 <li>startTS&#160;:&#160;<a class="el" href="class_com_mod.html#aa91827f22658b0774defd2e6ad517014">ComMod</a></li>
 <li>status&#160;:&#160;<a class="el" href="classris_face_type.html#a509d3c61fa68b3cf3956f9027b8e913c">risFaceType</a></li>
 <li>std&#160;:&#160;<a class="el" href="class_com_mod.html#a16a488efaa1d9e2292a78d9e9aff0de9">ComMod</a></li>
-<li>step()&#160;:&#160;<a class="el" href="class_integrator.html#abfb6cb62626abbd866f3d6f710dc7bab">Integrator</a></li>
+<li>step()&#160;:&#160;<a class="el" href="class_bueno_orovio.html#ac35ddf84b1caaafba8a9c8a0694f66bc">BuenoOrovio</a>, <a class="el" href="class_integrator.html#abfb6cb62626abbd866f3d6f710dc7bab">Integrator</a></li>
 <li>stFileFlag&#160;:&#160;<a class="el" href="class_com_mod.html#aabff77506de319f5bd507a364e5e5d91">ComMod</a></li>
 <li>stFileIncr&#160;:&#160;<a class="el" href="class_com_mod.html#a0c046b187e15ed62371b205b55eb3292">ComMod</a></li>
 <li>stFileName&#160;:&#160;<a class="el" href="class_com_mod.html#a385cf82e70a3d06e177829eb918313f0">ComMod</a></li>
@@ -123,7 +137,7 @@ $(function() {
 <li>StringArrayMap&#160;:&#160;<a class="el" href="class_boundary_condition.html#af8f5e341a129a315054cb0a9141ad1f7">BoundaryCondition</a></li>
 <li>StVenantKirchhoffParameters()&#160;:&#160;<a class="el" href="class_st_venant_kirchhoff_parameters.html#aa8fdfd03805800a34392f4abfcf47b31">StVenantKirchhoffParameters</a></li>
 <li>suc&#160;:&#160;<a class="el" href="classls_type.html#a85cac07335a1be04e7af0d3fcfe0267b">lsType</a></li>
-<li>sV&#160;:&#160;<a class="el" href="class_cep_mod_ap.html#a04704a7bfbc96e5e376b277e87e1c474">CepModAp</a>, <a class="el" href="class_cep_mod_bo.html#ab2c5df41ef7cde5e4e7b757c68f834fa">CepModBo</a>, <a class="el" href="class_cep_mod_ttp.html#a3eb1e4b65c41edb8da2abc3106f04bf9">CepModTtp</a></li>
+<li>sV&#160;:&#160;<a class="el" href="class_t_t_p.html#a7e50c1700386e7f0adb6725a27872fd3">TTP</a></li>
 <li>svalue()&#160;:&#160;<a class="el" href="class_parameter.html#ad69299072fa6701f4c2843f7e6e0b6fe">Parameter&lt; T &gt;</a>, <a class="el" href="class_vector_parameter.html#ad9662a2f9a7a5cc7e6d771b5477fc963">VectorParameter&lt; T &gt;</a></li>
 <li>svZeroD_coupled_bc_idxs&#160;:&#160;<a class="el" href="classcpl_b_c_type.html#a5bd88a4dd1117d7a33cf7cdadf98af3a">cplBCType</a></li>
 <li>swap&#160;:&#160;<a class="el" href="class_boundary_condition.html#adf48cc97668c3e9feb3fd16068c3a956">BoundaryCondition</a></li>

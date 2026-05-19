@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,8 +90,11 @@ $(function() {
 <div class="textblock">Here is a list of all documented functions with links to the class documentation for each member:</div>
 
 <h3><a id="index_d" name="index_d"></a>- d -</h3><ul>
+<li>defined()&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#aa2597d0ea0c4d83adf6e3191d554cefc">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a43fd6d918dd7bc04b5d39b29f08b7dce">IonicModelParameters</a></li>
+<li>delta()&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a6505fc0e5db745a4b68a0a65306fe1bd">BuenoOrovio</a></li>
 <li>destroy()&#160;:&#160;<a class="el" href="classface_type.html#a960e2f03636f6a94beba1bff888cba88">faceType</a>, <a class="el" href="classfs_type.html#a9a44be997855630783ee7f73d5bf4f67">fsType</a></li>
 <li>distribute()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a7859d5d785d1411542d6d3137c823c37">BoundaryCondition</a>, <a class="el" href="class_coupled_boundary_condition.html#a95f637f4794b73e914ef5a87467ff874">CoupledBoundaryCondition</a></li>
+<li>distribute_parameters()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#ab6148986d0cacb730985b108c22218c5">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#aa28fd8951986a2e15b7536154f542ea2">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a8a37758a7af32985f4075e6ddf95009d">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#ac62ce48718ec2ed6f4af5a51cf4c2d3f">IonicModel</a>, <a class="el" href="class_t_t_p.html#a748499922d93e274a2e35ce6c9a04620">TTP</a></li>
 <li>dot()&#160;:&#160;<a class="el" href="class_vector.html#a5be8b64d660df6e59dc41305a3c5a2a1">Vector&lt; T &gt;</a></li>
 </ul>
 </div><!-- contents -->

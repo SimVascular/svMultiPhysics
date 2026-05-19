@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,6 +90,7 @@ $(function() {
 <div class="textblock">Here is a list of all documented class members with links to the class documentation for each member:</div>
 
 <h3><a id="index_l" name="index_l"></a>- l -</h3><ul>
+<li>label&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a4826188e7880fbc3f1377cf1c117654b">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a9fb03d350a7e623f8508fe6645e18803">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#ab8d440ee1bf115febfd73eec9a3b2454">FitzHughNagumo</a>, <a class="el" href="class_t_t_p.html#a5ac5bf1b9db0056659f3eace146a1146">TTP</a></li>
 <li>lFib&#160;:&#160;<a class="el" href="classmsh_type.html#a70121a417713b9525560db7a5ed9c97f">mshType</a></li>
 <li>lhs&#160;:&#160;<a class="el" href="class_com_mod.html#af14187558193c0e31d6b9b131176b60c">ComMod</a></li>
 <li>linear_algebra&#160;:&#160;<a class="el" href="classeq_type.html#a0904fcf8bbf2989983b8ae5ecde2e64c">eqType</a></li>

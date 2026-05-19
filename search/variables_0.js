@@ -1,19 +1,17 @@
 var searchData=
 [
-  ['a_0',['A',['../classstim_type.html#aa238651f2a4f6b211f533ea76b295018',1,'stimType']]],
+  ['a_0',['a',['../class_fitz_hugh_nagumo.html#a576d3cfb2d2d723cbf9fa0c4d78f5845',1,'FitzHughNagumo::a'],['../classstim_type.html#aa238651f2a4f6b211f533ea76b295018',1,'stimType::A'],['../class_aliev_panfilov.html#a5cf17c85050319cd6f21517dc77af321',1,'AlievPanfilov::a']]],
   ['a0_1',['A0',['../classrmsh_type.html#a7713ca9ef22ab1dbf118af318605f7f4',1,'rmshType']]],
-  ['abstol_2',['abstol',['../classode_type.html#a03243152e72ef43acfa97318cd8e122a',1,'odeType::absTol'],['../classls_type.html#a12ed37fb635049635a90cbdcbe9e4176',1,'lsType::absTol']]],
+  ['abstol_2',['abstol',['../classls_type.html#a12ed37fb635049635a90cbdcbe9e4176',1,'lsType::absTol'],['../classode_type.html#a03243152e72ef43acfa97318cd8e122a',1,'odeType::absTol']]],
   ['ad_3',['Ad',['../class_com_mod.html#a2ce2a9403ba5b438b995b618fe2128ca',1,'ComMod']]],
   ['af_4',['af',['../classeq_type.html#abb83ca2583ed26cfd4a4230386302786',1,'eqType']]],
-  ['alfa_5',['alfa',['../class_cep_mod_bo.html#aa7274de612091bc4870ec4f82a4e304a',1,'CepModBo::alFa'],['../class_cep_mod_ttp.html#a3e67a9a9ffa7793ae35e8264325fb954',1,'CepModTtp::alFa']]],
-  ['alpha_6',['alpha',['../class_cep_mod_ttp.html#a0f4a9872f08c2b35003f7708ed0c9569',1,'CepModTtp::alpha'],['../class_cep_mod_fn.html#aa52b823504287b6cbf3f161ff5aa4183',1,'CepModFn::alpha'],['../class_cep_mod_ap.html#a048b8058f5e9fbc1595f7f1857efca43',1,'CepModAp::alpha']]],
-  ['am_7',['am',['../classeq_type.html#a8615023d7532cdafc3a5fc78dc26de5d',1,'eqType']]],
-  ['ap_8',['ap',['../classcep_model_type.html#ab4f9daafc04e2c1a9743798555ffd2ed',1,'cepModelType::ap'],['../class_cep_mod.html#aa037fcfe2629d29605fc0b2c4d910bf5',1,'CepMod::ap']]],
-  ['array_5fnames_5f_9',['array_names_',['../class_boundary_condition.html#a843bd39be5f2e0c4243b1b75aaf806f8',1,'BoundaryCondition']]],
-  ['assmtls_10',['assmTLS',['../classeq_type.html#a28d811c9247012b1915cc919dfb1731f',1,'eqType']]],
-  ['astrain_11',['aStrain',['../classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7',1,'cemModelType']]],
-  ['astress_12',['aStress',['../classcem_model_type.html#a48e58483acb25db579e72221a9c16a87',1,'cemModelType']]],
-  ['auk_13',['Auk',['../classib_type.html#afaf3a23ec46848c6c41e493cc933fb4c',1,'ibType']]],
-  ['aun_14',['Aun',['../classib_type.html#a1e197fa7b5cf9dc0a92f8f8556b0bee5',1,'ibType']]],
-  ['auo_15',['Auo',['../classib_type.html#ac71646102acc375f85023e7d331c8d55',1,'ibType']]]
+  ['alpha_5',['alpha',['../class_fitz_hugh_nagumo.html#a221b11ef10448045c9982de4d8083fd0',1,'FitzHughNagumo::alpha'],['../class_t_t_p.html#a9468eddfc6bbe281bd8cb559ca47746c',1,'TTP::alpha'],['../class_aliev_panfilov.html#a41a42b2f9b3545b3f5c7c3a1c0767e51',1,'AlievPanfilov::alpha']]],
+  ['am_6',['am',['../classeq_type.html#a8615023d7532cdafc3a5fc78dc26de5d',1,'eqType']]],
+  ['array_5fnames_5f_7',['array_names_',['../class_boundary_condition.html#a843bd39be5f2e0c4243b1b75aaf806f8',1,'BoundaryCondition']]],
+  ['assmtls_8',['assmTLS',['../classeq_type.html#a28d811c9247012b1915cc919dfb1731f',1,'eqType']]],
+  ['astrain_9',['aStrain',['../classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7',1,'cemModelType']]],
+  ['astress_10',['aStress',['../classcem_model_type.html#a48e58483acb25db579e72221a9c16a87',1,'cemModelType']]],
+  ['auk_11',['Auk',['../classib_type.html#afaf3a23ec46848c6c41e493cc933fb4c',1,'ibType']]],
+  ['aun_12',['Aun',['../classib_type.html#a1e197fa7b5cf9dc0a92f8f8556b0bee5',1,'ibType']]],
+  ['auo_13',['Auo',['../classib_type.html#ac71646102acc375f85023e7d331c8d55',1,'ibType']]]
 ];

@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -71,6 +88,8 @@ $(function() {
 
 <div class="contents">
 <div class="textblock">Here is a list of all documented typedefs with links to the class documentation for each member:</div><ul>
+<li>InitialStates&#160;:&#160;<a class="el" href="class_ionic_model.html#a6b22b6ab1011997356a9f2424335dfff">IonicModel</a></li>
+<li>ModelParam&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a4e0fe5c4269cac9450c3023c42df8263">BuenoOrovio</a></li>
 <li>StringArrayMap&#160;:&#160;<a class="el" href="class_boundary_condition.html#af8f5e341a129a315054cb0a9141ad1f7">BoundaryCondition</a></li>
 </ul>
 </div><!-- contents -->

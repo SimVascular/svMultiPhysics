@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -74,19 +91,20 @@ $(function() {
 
 <h3><a id="index_v" name="index_v"></a>- v -</h3><ul>
 <li>v&#160;:&#160;<a class="el" href="classmsh_type.html#a72150ce1b1ab10e1c5d02ed7b2533786">mshType</a>, <a class="el" href="classutils_1_1stack_type.html#ae46d9507c4915b164ba364315d867661">utils::stackType</a></li>
-<li>V_c&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#ad7b4114d7846ff5cb6299abd28512ce1">CepModTtp</a></li>
-<li>V_leak&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a3fc89a77861222dc85063dd476012854">CepModTtp</a></li>
-<li>V_rel&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a10a62442c28506c9262344ec26299f1e">CepModTtp</a></li>
-<li>V_sr&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a47909b8c727e8e1ee0a41ba95d1d09a6">CepModTtp</a></li>
-<li>V_ss&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a7f58c5be044bd53f9e9ebd636601ac3b">CepModTtp</a></li>
-<li>V_xfer&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a40170495e7b216b92c63ec94ba9209f6">CepModTtp</a></li>
+<li>V_c&#160;:&#160;<a class="el" href="class_t_t_p.html#a3d9c8283f90921ed79971662a0caaeb5">TTP</a></li>
+<li>V_leak&#160;:&#160;<a class="el" href="class_t_t_p.html#a4d51080de1e01b06dcfc4c28f1a5afab">TTP</a></li>
+<li>V_rel&#160;:&#160;<a class="el" href="class_t_t_p.html#ae777cf7001e78eff48ef3698dfb4c960">TTP</a></li>
+<li>V_sr&#160;:&#160;<a class="el" href="class_t_t_p.html#afe496f4f2805eed4468e21eb31e948c5">TTP</a></li>
+<li>V_ss&#160;:&#160;<a class="el" href="class_t_t_p.html#aaf87121f10968b89562d5baba98f50c3">TTP</a></li>
+<li>V_xfer&#160;:&#160;<a class="el" href="class_t_t_p.html#a23784074772873ddde9b507bd7c5f1cc">TTP</a></li>
 <li>Val&#160;:&#160;<a class="el" href="class_com_mod.html#a671da6fe0a4c0aa3730446e1d2891db2">ComMod</a></li>
+<li>value_set&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#a652aea0bca29f9bf0a05766dae33df19">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a702b21328cfe4c355e7a7bfcd115db3c">IonicModelParameters</a></li>
 <li>varWallProps&#160;:&#160;<a class="el" href="class_com_mod.html#a1e5959af92d21d5889dd59cec725277f">ComMod</a></li>
-<li>Vcrit&#160;:&#160;<a class="el" href="class_cep_mod_ap.html#acaf3bd9c5c06e02c510bb7a9ffaf42b4">CepModAp</a>, <a class="el" href="class_cep_mod_bo.html#a85a58b877bc949b4f7e1fef519105c73">CepModBo</a></li>
-<li>Vmax_up&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#afdaf0d419331efa0a28897c3ad59317e">CepModTtp</a></li>
-<li>Voffset&#160;:&#160;<a class="el" href="class_cep_mod_ap.html#a76f3dada0b750646e596567eb41f2439">CepModAp</a>, <a class="el" href="class_cep_mod_bo.html#a5b39653c304fd69a52eaf8fd4f290a50">CepModBo</a>, <a class="el" href="class_cep_mod_fn.html#adfa2a6c58e0861ee0e972b810c5a7f19">CepModFn</a>, <a class="el" href="class_cep_mod_ttp.html#a406ed9e7f9afaec7af59bed3698a7ccd">CepModTtp</a></li>
-<li>Vrest&#160;:&#160;<a class="el" href="class_cep_mod_ap.html#afddd3e33c8a21c05361d588f5dcf768e">CepModAp</a>, <a class="el" href="class_cep_mod_bo.html#a8d01a23d23fd7691711167655a079ec8">CepModBo</a>, <a class="el" href="class_cep_mod_ttp.html#abdba874e3689cef9ad26328f8dfbcac7">CepModTtp</a></li>
-<li>Vscale&#160;:&#160;<a class="el" href="class_cep_mod_ap.html#abd12dedebc5d74162708b331f024872c">CepModAp</a>, <a class="el" href="class_cep_mod_bo.html#a8be6531040ef3fec3fe2ce77d3d22d25">CepModBo</a>, <a class="el" href="class_cep_mod_fn.html#a16bbb6ce832b66bd584cd91ff3536adf">CepModFn</a>, <a class="el" href="class_cep_mod_ttp.html#a5e65328fab9117bbda3b144759ef7028">CepModTtp</a></li>
+<li>vector_parameters&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#a21e5bdfa95dd2acb0df4942ba41e1110">IonicModelParameters</a></li>
+<li>Vmax_up&#160;:&#160;<a class="el" href="class_t_t_p.html#aaf88c15a643e882bbe00c31c7339f364">TTP</a></li>
+<li>Voffset&#160;:&#160;<a class="el" href="class_ionic_model.html#a9a7f2a6076c5b03f63dfe43ddc2889fb">IonicModel</a></li>
+<li>Vrest&#160;:&#160;<a class="el" href="class_ionic_model.html#a90b8d8b1d2505cb18852b38bf7e1bd03">IonicModel</a></li>
+<li>Vscale&#160;:&#160;<a class="el" href="class_ionic_model.html#a339a5b46ec747f5183f7547ad9f1063b">IonicModel</a></li>
 <li>vtkType&#160;:&#160;<a class="el" href="classmsh_type.html#ad5d6873e51103a2fcc15d506c70daef1">mshType</a></li>
 <li>vtp_data_&#160;:&#160;<a class="el" href="class_boundary_condition.html#a15dafd9983b07b69fead2ee878a79b58">BoundaryCondition</a></li>
 <li>vtp_file_path_&#160;:&#160;<a class="el" href="class_boundary_condition.html#ab425c6ed18051ed89437d35c1666586b">BoundaryCondition</a></li>

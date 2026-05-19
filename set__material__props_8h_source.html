@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -285,7 +302,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>} },</div>
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>};</div>
-<div class="ttc" id="aclass_domain_parameters_html"><div class="ttname"><a href="class_domain_parameters.html">DomainParameters</a></div><div class="ttdoc">The DomainParameters class stores parameters for the XML 'Domain' element to specify properties for s...</div><div class="ttdef"><b>Definition</b> Parameters.h:1273</div></div>
+<div class="ttc" id="aclass_domain_parameters_html"><div class="ttname"><a href="class_domain_parameters.html">DomainParameters</a></div><div class="ttdoc">The DomainParameters class stores parameters for the XML 'Domain' element to specify properties for s...</div><div class="ttdef"><b>Definition</b> Parameters.h:1335</div></div>
 <div class="ttc" id="aclassdmn_type_html"><div class="ttname"><a href="classdmn_type.html">dmnType</a></div><div class="ttdoc">Domain type is to keep track with element belong to which domain and also different physical quantiti...</div><div class="ttdef"><b>Definition</b> ComMod.h:435</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

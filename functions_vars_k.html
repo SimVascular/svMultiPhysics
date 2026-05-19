@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,23 +90,26 @@ $(function() {
 <div class="textblock">Here is a list of all documented variables with links to the class documentation for each member:</div>
 
 <h3><a id="index_k" name="index_k"></a>- k -</h3><ul>
-<li>k1p&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a1b4e8e6aa2abbd2c8b8dc797d0f519ad">CepModTtp</a></li>
-<li>k2p&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#adc7ea8669230f2d62efccee77fc10695">CepModTtp</a></li>
-<li>k3&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a672351abf75170984e72db5d37ae320c">CepModTtp</a></li>
-<li>k4&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#ace39ae2d1068a3316220c5e01aa627d1">CepModTtp</a></li>
-<li>K_bufc&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a277a47e7e940fd8442304c9a48cfaa71">CepModTtp</a></li>
-<li>K_bufsr&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a0c6eba3335bb0be1d09cbf6bb5baf927">CepModTtp</a></li>
-<li>K_bufss&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#afcabd1e6ba5fd303d166dff739cc4bae">CepModTtp</a></li>
-<li>K_mCa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a1ff72d0312b007abb01cf1afc6b9d72e">CepModTtp</a></li>
-<li>K_mK&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a40a9278fbf01ea3fbcf3cecda6d888b9">CepModTtp</a></li>
-<li>K_mNa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a73d2bb6708377c3208e929862f5603e3">CepModTtp</a></li>
-<li>K_mNai&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a55b7de5890900c492abb915c2d90e72b">CepModTtp</a></li>
-<li>K_NaCa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a26324fe0943fcfa943d2489bd1ac2aa4">CepModTtp</a></li>
-<li>K_o&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a079c5013d99d7e3ec4117892d3652503">CepModTtp</a></li>
-<li>K_pCa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#ae8895db43cbab14cc47838abe43c7a0a">CepModTtp</a></li>
-<li>K_sat&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#ae692183f8e44506a64c139b8ff6a113f">CepModTtp</a></li>
-<li>K_up&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#aa6e4282afc6cdb6b4a108d6348d76024">CepModTtp</a></li>
+<li>k1p&#160;:&#160;<a class="el" href="class_t_t_p.html#abbc09052fac1f9249bfea021335c7b99">TTP</a></li>
+<li>k2p&#160;:&#160;<a class="el" href="class_t_t_p.html#a1ebb9b0da34a45fb8ffbca7ae2516946">TTP</a></li>
+<li>k3&#160;:&#160;<a class="el" href="class_t_t_p.html#a293940e8795d704ef284eac6158f13cf">TTP</a></li>
+<li>k4&#160;:&#160;<a class="el" href="class_t_t_p.html#a9b7d7f0e2fa0987b87c78f0c718fdb83">TTP</a></li>
+<li>K_bufc&#160;:&#160;<a class="el" href="class_t_t_p.html#a6bf55848cf632f8237a4bb8d364ecbf2">TTP</a></li>
+<li>K_bufsr&#160;:&#160;<a class="el" href="class_t_t_p.html#ae2cb1d181f75ead3a73258682a303574">TTP</a></li>
+<li>K_bufss&#160;:&#160;<a class="el" href="class_t_t_p.html#a382836aa92e6f52cf22a7b55d6bf2101">TTP</a></li>
+<li>K_mCa&#160;:&#160;<a class="el" href="class_t_t_p.html#a7be17135a4068c0e2e2432c1c15517c8">TTP</a></li>
+<li>K_mK&#160;:&#160;<a class="el" href="class_t_t_p.html#a007ebacc92c6c254b61c431975183dc9">TTP</a></li>
+<li>K_mNa&#160;:&#160;<a class="el" href="class_t_t_p.html#ac4d8c3a70bcfbe3eefca8b37095d6174">TTP</a></li>
+<li>K_mNai&#160;:&#160;<a class="el" href="class_t_t_p.html#a032d4c65f5bece085596b37439e2ab56">TTP</a></li>
+<li>K_NaCa&#160;:&#160;<a class="el" href="class_t_t_p.html#a7e7a417e46100a3876b30b8a505e7749">TTP</a></li>
+<li>K_o&#160;:&#160;<a class="el" href="class_t_t_p.html#ad2219dd21594cf7a03558a0769e17e03">TTP</a></li>
+<li>K_pCa&#160;:&#160;<a class="el" href="class_t_t_p.html#ae5a4416bf42e5ac3fa76412fc384fd99">TTP</a></li>
+<li>k_s&#160;:&#160;<a class="el" href="class_bueno_orovio.html#ae8ad392726a15ce006346d2e871062a0">BuenoOrovio</a></li>
+<li>K_sat&#160;:&#160;<a class="el" href="class_t_t_p.html#a1fef4ef4186f467e751fba677f87159e">TTP</a></li>
+<li>k_so&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a636bfe0ab47351212c8728455f49d9af">BuenoOrovio</a></li>
+<li>K_up&#160;:&#160;<a class="el" href="class_t_t_p.html#a766fac9e8bb8e93dc485c83935f99db7">TTP</a></li>
 <li>Kd&#160;:&#160;<a class="el" href="class_com_mod.html#ad13b9d1c2d2cae2cae7d786034f092a1">ComMod</a></li>
+<li>km_w&#160;:&#160;<a class="el" href="class_bueno_orovio.html#ab863c036991b65b69a08948ec939214e">BuenoOrovio</a></li>
 <li>Ksac&#160;:&#160;<a class="el" href="classcep_model_type.html#a45d1393149113626952c1a8d982c77bf">cepModelType</a></li>
 <li>Ku&#160;:&#160;<a class="el" href="classib_type.html#a2564ddd020800cd323e81a144c933fe8">ibType</a></li>
 </ul>

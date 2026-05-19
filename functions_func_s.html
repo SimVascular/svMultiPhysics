@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -88,11 +105,11 @@ $(function() {
 <li>set_preconditioner()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#a1cb68d41f662532925d84f555e7401be">FsilsLinearAlgebra</a>, <a class="el" href="class_petsc_linear_algebra.html#a4298c3290183b02ad2c02318ea142163">PetscLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#a1f0c13cd519933d7e0e08ec212546a69">TrilinosLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#aa64da0abc93d06d323989b21b65eaeeb">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>set_pressure()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a78d3305ae9e58258ff562b574bbeae1f">CoupledBoundaryCondition</a></li>
 <li>set_solution_ids()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#ad08f311b4323041ef0bf1f3b82caaa52">CoupledBoundaryCondition</a></li>
-<li>set_values()&#160;:&#160;<a class="el" href="class_array3.html#ab89c3a5d1fee2f4e664ff84a4376f59b">Array3&lt; T &gt;</a>, <a class="el" href="class_general_simulation_parameters.html#a57f3dd89adab9d8fcc5f719f6dad70a6">GeneralSimulationParameters</a></li>
+<li>set_values()&#160;:&#160;<a class="el" href="class_array3.html#ab89c3a5d1fee2f4e664ff84a4376f59b">Array3&lt; T &gt;</a>, <a class="el" href="class_general_simulation_parameters.html#a57f3dd89adab9d8fcc5f719f6dad70a6">GeneralSimulationParameters</a>, <a class="el" href="class_ionic_initial_state_parameters.html#a466572c1b64e9bb394bce5d8e63c2c76">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a598a9f106da8ef8c3ba7ce4e0c14e6d4">IonicModelParameters</a></li>
 <li>slice()&#160;:&#160;<a class="el" href="class_array3.html#abdf611ce0e095b22299a9631a1342f66">Array3&lt; T &gt;</a></li>
 <li>solve()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#ac44c1ff57aded7eba1bdee3fd0e47d11">FsilsLinearAlgebra</a>, <a class="el" href="class_petsc_linear_algebra.html#a5642b3ebd61d14577a44c19f8d35bf21">PetscLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#a115c007fa3def28077a5eac0629e6880">TrilinosLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#a615633468c07ec973ee47f7e1451d86b">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>solve_assembled()&#160;:&#160;<a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#ad9c0e37a84c07aca16b9837173daf105">TrilinosLinearAlgebra::TrilinosImpl</a></li>
-<li>step()&#160;:&#160;<a class="el" href="class_integrator.html#abfb6cb62626abbd866f3d6f710dc7bab">Integrator</a></li>
+<li>step()&#160;:&#160;<a class="el" href="class_bueno_orovio.html#ac35ddf84b1caaafba8a9c8a0694f66bc">BuenoOrovio</a>, <a class="el" href="class_integrator.html#abfb6cb62626abbd866f3d6f710dc7bab">Integrator</a></li>
 <li>StVenantKirchhoffParameters()&#160;:&#160;<a class="el" href="class_st_venant_kirchhoff_parameters.html#aa8fdfd03805800a34392f4abfcf47b31">StVenantKirchhoffParameters</a></li>
 <li>svalue()&#160;:&#160;<a class="el" href="class_parameter.html#ad69299072fa6701f4c2843f7e6e0b6fe">Parameter&lt; T &gt;</a>, <a class="el" href="class_vector_parameter.html#ad9662a2f9a7a5cc7e6d771b5477fc963">VectorParameter&lt; T &gt;</a></li>
 </ul>

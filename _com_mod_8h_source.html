@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -2114,7 +2131,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclassbc_type_html"><div class="ttname"><a href="classbc_type.html">bcType</a></div><div class="ttdoc">Boundary condition data type.</div><div class="ttdef"><b>Definition</b> ComMod.h:129</div></div>
 <div class="ttc" id="aclassbf_type_html"><div class="ttname"><a href="classbf_type.html">bfType</a></div><div class="ttdef"><b>Definition</b> ComMod.h:287</div></div>
 <div class="ttc" id="aclassbs_type_html"><div class="ttname"><a href="classbs_type.html">bsType</a></div><div class="ttdoc">Class storing data for B-Splines.</div><div class="ttdef"><b>Definition</b> ComMod.h:212</div></div>
-<div class="ttc" id="aclasscep_model_type_html"><div class="ttname"><a href="classcep_model_type.html">cepModelType</a></div><div class="ttdoc">Cardiac electrophysiology model type.</div><div class="ttdef"><b>Definition</b> CepMod.h:131</div></div>
+<div class="ttc" id="aclasscep_model_type_html"><div class="ttname"><a href="classcep_model_type.html">cepModelType</a></div><div class="ttdoc">Cardiac electrophysiology model type.</div><div class="ttdef"><b>Definition</b> CepMod.h:89</div></div>
 <div class="ttc" id="aclasschnl_type_html"><div class="ttname"><a href="classchnl_type.html">chnlType</a></div><div class="ttdoc">Channel type, used in I/O.</div><div class="ttdef"><b>Definition</b> ChnlMod.h:19</div></div>
 <div class="ttc" id="aclasscm_type_html"><div class="ttname"><a href="classcm_type.html">cmType</a></div><div class="ttdoc">The cmType class stores data and defines methods used for mpi communication.</div><div class="ttdef"><b>Definition</b> CmMod.h:55</div></div>
 <div class="ttc" id="aclasscntct_model_type_html"><div class="ttname"><a href="classcntct_model_type.html">cntctModelType</a></div><div class="ttdoc">Contact model type.</div><div class="ttdef"><b>Definition</b> ComMod.h:721</div></div>
@@ -2323,7 +2340,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclassrmsh_type_html_afe01d3fba20254f640ae6796827b499e"><div class="ttname"><a href="classrmsh_type.html#afe01d3fba20254f640ae6796827b499e">rmshType::isReqd</a></div><div class="ttdeci">bool isReqd</div><div class="ttdoc">Whether remesh is required for problem or not.</div><div class="ttdef"><b>Definition</b> ComMod.h:1265</div></div>
 <div class="ttc" id="aclasssolid_visc_model_type_html"><div class="ttname"><a href="classsolid_visc_model_type.html">solidViscModelType</a></div><div class="ttdoc">Fluid viscosity model type.</div><div class="ttdef"><b>Definition</b> ComMod.h:421</div></div>
 <div class="ttc" id="aclassst_model_type_html"><div class="ttname"><a href="classst_model_type.html">stModelType</a></div><div class="ttdoc">Structural domain type.</div><div class="ttdef"><b>Definition</b> ComMod.h:343</div></div>
-<div class="ttc" id="aclasssv_zero_d_solver_interface_parameters_html"><div class="ttname"><a href="classsv_zero_d_solver_interface_parameters.html">svZeroDSolverInterfaceParameters</a></div><div class="ttdef"><b>Definition</b> Parameters.h:647</div></div>
+<div class="ttc" id="aclasssv_zero_d_solver_interface_parameters_html"><div class="ttname"><a href="classsv_zero_d_solver_interface_parameters.html">svZeroDSolverInterfaceParameters</a></div><div class="ttdef"><b>Definition</b> Parameters.h:662</div></div>
 <div class="ttc" id="aclasssv_zero_d_solver_interface_type_html"><div class="ttname"><a href="classsv_zero_d_solver_interface_type.html">svZeroDSolverInterfaceType</a></div><div class="ttdef"><b>Definition</b> ComMod.h:783</div></div>
 <div class="ttc" id="aclasstrace_type_html"><div class="ttname"><a href="classtrace_type.html">traceType</a></div><div class="ttdoc">Tracer type used for immersed boundaries. Identifies traces of nodes and integration points on backgr...</div><div class="ttdef"><b>Definition</b> ComMod.h:489</div></div>
 <div class="ttc" id="aclassuris_type_html"><div class="ttname"><a href="classuris_type.html">urisType</a></div><div class="ttdoc">Unfitted Resistive Immersed surface data type.</div><div class="ttdef"><b>Definition</b> ComMod.h:1454</div></div>

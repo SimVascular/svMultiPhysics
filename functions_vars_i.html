@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,22 +90,6 @@ $(function() {
 <div class="textblock">Here is a list of all documented variables with links to the class documentation for each member:</div>
 
 <h3><a id="index_i" name="index_i"></a>- i -</h3><ul>
-<li>I_bCa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a2f67f01195c37b77c07c3f4a99425c59">CepModTtp</a></li>
-<li>I_bNa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a22f32c9034857169d72d29f04bd49b9f">CepModTtp</a></li>
-<li>I_CaL&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#added2c3e87b915c2639281b3a494c387">CepModTtp</a></li>
-<li>I_K1&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a8543cb033726298418484a599b771e7a">CepModTtp</a></li>
-<li>I_Kr&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a6b0c17c4c5393c7ebb5c045b52adfa82">CepModTtp</a></li>
-<li>I_Ks&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#addce85c12cc3df60483c6723f6d2d140">CepModTtp</a></li>
-<li>I_leak&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#affa074d914347001aa3b940290e5ab28">CepModTtp</a></li>
-<li>I_Na&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a6dacf7e97e0b9f7e05d62ac76586283c">CepModTtp</a></li>
-<li>I_NaCa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a6b7e5efefd33dd3ad29ad6b346849887">CepModTtp</a></li>
-<li>I_NaK&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a01c372e547a3022823cf22c4c603411c">CepModTtp</a></li>
-<li>I_pCa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#afc8f96928491735fafab487eebcdbe69">CepModTtp</a></li>
-<li>I_pK&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#ab776ac440116b78eaa5e79ae510eef2f">CepModTtp</a></li>
-<li>I_rel&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a4603e5c781ba67fb36a65e8099d86a37">CepModTtp</a></li>
-<li>I_to&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a3a12caef4fff96ddc3c3fabe7813ef5b">CepModTtp</a></li>
-<li>I_up&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a1d1e584a0f60cdea63be3b5bfe2195ad">CepModTtp</a></li>
-<li>I_xfer&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a93a2c0ea418c423b2820e1a921ee8cbb">CepModTtp</a></li>
 <li>ib&#160;:&#160;<a class="el" href="class_com_mod.html#a0a17c8e0799b1f087322fd3de69d8d72">ComMod</a></li>
 <li>ibFlag&#160;:&#160;<a class="el" href="class_com_mod.html#a0f0ef34d97d343541dfa3c72b0614e9a">ComMod</a></li>
 <li>iblank&#160;:&#160;<a class="el" href="class_com_mod.html#ad0c1e2a845e0d327e51334d19a0ee14b">ComMod</a></li>
@@ -99,11 +100,16 @@ $(function() {
 <li>iGC&#160;:&#160;<a class="el" href="classmsh_type.html#a211ce02acf372820151822f7ac8d3486">mshType</a></li>
 <li>imyo&#160;:&#160;<a class="el" href="classcep_model_type.html#adf8dae39eb269c22c4d7cc52a4192588">cepModelType</a></li>
 <li>iniFilePath&#160;:&#160;<a class="el" href="class_com_mod.html#a53c58a3df16e853c9d0793abd3352390">ComMod</a></li>
+<li>initial_X&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a857f55970fe18af6a8787a4397494095">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a2d193850d8e249d7a46b0b47388f5267">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a3315fc4bbf2aef78a1fecf69ba114b01">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#aef059fff33668be7285b183b6fa1d46d">IonicModel</a>, <a class="el" href="class_t_t_p.html#a0a886fefd3ab86435e099304835fd5a4">TTP</a></li>
+<li>initial_X_parameters&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#a37dc44ef5407b11be3484a58bd0fa398">IonicModelParameters</a></li>
+<li>initial_Xg&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a86a1852c7eb8083ace0eb1673c897f28">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a8c0ce7dc837ad154d16c3e6911b17f68">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#abc5f68032dd3de81b9ac76dfe838e0d5">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#a29d9cfdcacd68081c789d24951b01ee8">IonicModel</a>, <a class="el" href="class_t_t_p.html#a34d41ae123dc3e5be52e8d2f27014808">TTP</a></li>
+<li>initial_Xg_parameters&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#a4d43613abdb902248060230c2512f02e">IonicModelParameters</a></li>
 <li>INN&#160;:&#160;<a class="el" href="classmsh_type.html#afed7c4978bdd5134780f568a1265c784">mshType</a></li>
 <li>iNorm&#160;:&#160;<a class="el" href="classeq_type.html#a8651a65d06d8ef4e6bec9fde9d2a585f">eqType</a>, <a class="el" href="classls_type.html#af2dd8facc342eb84b37054ba41db432d">lsType</a>, <a class="el" href="classrmsh_type.html#a2a038d5fbf669b3884da98be3466a7bb">rmshType</a></li>
 <li>intermediate&#160;:&#160;<a class="el" href="struct_solution_states.html#a49784e5ca1664a5fde436340e409e503">SolutionStates</a></li>
 <li>intrp&#160;:&#160;<a class="el" href="classib_type.html#a56cd65c9894d9ff296a4ce559c4394f4">ibType</a></li>
 <li>io&#160;:&#160;<a class="el" href="class_com_mod.html#a98eb9eedd63b102ba50e1492630aa54c">ComMod</a></li>
+<li>ionic_model&#160;:&#160;<a class="el" href="classcep_model_type.html#a88c28fd3839cb1634a3fa9de77b2e65c">cepModelType</a></li>
 <li>isReqd&#160;:&#160;<a class="el" href="classrmsh_type.html#afe01d3fba20254f640ae6796827b499e">rmshType</a></li>
 <li>Istim&#160;:&#160;<a class="el" href="classcep_model_type.html#ac017c20295f3b14715b7dbb3d0aeb15f">cepModelType</a></li>
 <li>itr&#160;:&#160;<a class="el" href="classeq_type.html#a729d8409204c2eca46848dfdf463e066">eqType</a>, <a class="el" href="classls_type.html#aa1fc30ce2b86d0aba12f67d208882903">lsType</a></li>

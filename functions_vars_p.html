@@ -12,6 +12,23 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  loader: {
+    load: ['[tex]/ams']
+  },
+  tex: {
+    macros: {},
+    packages: ['base','configmacros','ams']
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -73,8 +90,9 @@ $(function() {
 <div class="textblock">Here is a list of all documented variables with links to the class documentation for each member:</div>
 
 <h3><a id="index_p" name="index_p"></a>- p -</h3><ul>
-<li>p_KNa&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a861ec4bff000e5975c315312b99bda30">CepModTtp</a></li>
-<li>p_NaK&#160;:&#160;<a class="el" href="class_cep_mod_ttp.html#a6c7b910749350b8689cc09c6c7a55e6d">CepModTtp</a></li>
+<li>p_KNa&#160;:&#160;<a class="el" href="class_t_t_p.html#abb479aedee33fde848dc1b18619d4a36">TTP</a></li>
+<li>p_NaK&#160;:&#160;<a class="el" href="class_t_t_p.html#a0eb1bc9717cc4fb3c47268ef696b0929">TTP</a></li>
+<li>parameters&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#af88e0556bc4dcea73dd626ea5ed2ab79">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a5e200e57379a827fb5a0145488750cc8">IonicModelParameters</a></li>
 <li>params_map&#160;:&#160;<a class="el" href="class_parameter_lists.html#a6131758a550b2e63f34e7554933e27f8">ParameterLists</a></li>
 <li>partRIS&#160;:&#160;<a class="el" href="classmsh_type.html#a833f5a2d43f2a4137aca88ce42e6227e">mshType</a></li>
 <li>phys&#160;:&#160;<a class="el" href="classeq_type.html#ae11f68cd2d856517f7be3e1a184dcafa">eqType</a></li>
