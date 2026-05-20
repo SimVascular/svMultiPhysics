@@ -157,7 +157,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 
       if (msh.nFn != 0) {
         Vector<double> sA(msh.nNo);
-        post::fib_strech(simulation, iEq, msh, solutions, sA);
+        post::fib_stretch(simulation, iEq, msh, solutions, sA);
         for (int a = 0; a < msh.nNo; a++) {
           int Ac = msh.gN(a);
           I4f(Ac) = sA(a);

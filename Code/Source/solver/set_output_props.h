@@ -38,6 +38,8 @@ std::map<consts::OutputNameType, OutputProps> output_props_map =
   {OutputNameType::out_fibAlign,     std::make_tuple(OutputNameType::outGrp_fA,     0, 1,             "Fiber_alignment") },
   {OutputNameType::out_fibDir,       std::make_tuple(OutputNameType::outGrp_fN,     0, nsd,           "Fiber_direction") },
   {OutputNameType::out_fibStrn,      std::make_tuple(OutputNameType::outGrp_fS,     0, 1,             "Fiber_shortening") },
+  {OutputNameType::out_fibStretch,   std::make_tuple(OutputNameType::outGrp_I4f,    0, 1,             "Fiber_stretch") },
+  {OutputNameType::out_fibStretchRate, std::make_tuple(OutputNameType::outGrp_I4fRate, 0, 1,          "Fiber_stretch_rate") },
 
   {OutputNameType::out_heatFlux,     std::make_tuple(OutputNameType::outGrp_hFlx,   0, nsd,           "Heat_flux") },
   {OutputNameType::out_integ,        std::make_tuple(OutputNameType::outGrp_I,      0,   1, nsd == 2 ?  "Area" : "Volume") },

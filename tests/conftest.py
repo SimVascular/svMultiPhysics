@@ -33,6 +33,8 @@ RTOL = {
     "VonMises_stress": 1.0e-3,
     "Vorticity": 1.0e-7,
     "WSS": 1.0e-8,
+    "Fiber_stretch": 1.0e-10,
+    "Fiber_stretch_rate": 1.0e-10,
 }
 
 # Number of processors to test

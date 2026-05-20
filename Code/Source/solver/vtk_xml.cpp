@@ -1293,13 +1293,33 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
           break;
 
           case OutputNameType::outGrp_divV:
-            tmpV.resize(l,msh.nNo); 
+            tmpV.resize(l,msh.nNo);
             post::div_post(simulation, msh, tmpV, solutions, iEq);
             for (int a = 0; a < msh.nNo; a++) {
               d[iM].x(is,a) = tmpV(0,a);
             }
             tmpV.resize(consts::maxNSD,msh.nNo);
           break;
+
+          case OutputNameType::outGrp_I4f: {
+            Vector<double> res(msh.nNo);
+            if (msh.nFn != 0) {
+              post::fib_stretch(simulation, iEq, msh, solutions, res);
+            }
+            for (int a = 0; a < msh.nNo; a++) {
+              d[iM].x(is,a) = res(a);
+            }
+          } break;
+
+          case OutputNameType::outGrp_I4fRate: {
+            Vector<double> res(msh.nNo);
+            if (msh.nFn != 0) {
+              post::fib_stretch_rate(simulation, iEq, msh, solutions, res);
+            }
+            for (int a = 0; a < msh.nNo; a++) {
+              d[iM].x(is,a) = res(a);
+            }
+          } break;
 
           default:
             throw std::runtime_error("Undefined output");

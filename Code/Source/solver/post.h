@@ -22,7 +22,11 @@ void fib_algn_post(Simulation* simulation, const mshType& lM, Array<double>& res
 
 void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Array<double>& res, const SolutionStates& solutions, const int iEq);
 
-void fib_strech(Simulation* simulation, const int iEq, const mshType& lM, const SolutionStates& solutions, Vector<double>& res);
+void compute_fib_stretch(Simulation* simulation, const int iEq, const mshType& lM, const Array<double>& lD, Vector<double>& res);
+
+void fib_stretch(Simulation* simulation, const int iEq, const mshType& lM, const SolutionStates& solutions, Vector<double>& res);
+
+void fib_stretch_rate(Simulation* simulation, const int iEq, const mshType& lM, const SolutionStates& solutions, Vector<double>& res);
 
 void post(Simulation* simulation, const mshType& lM, Array<double>& res, const SolutionStates& solutions,
     consts::OutputNameType outGrp, const int iEq);
