@@ -2558,6 +2558,7 @@ GeneralSimulationParameters::GeneralSimulationParameters()
   set_parameter("Include_xml", "", !required, include_xml);
   set_parameter("Increment_in_saving_restart_files", 0, !required, increment_in_saving_restart_files);
   set_parameter("Increment_in_saving_VTK_files", 0, !required, increment_in_saving_vtk_files);
+  set_parameter("Initial_pressure_scalar", 0.0, !required, initial_pressure);
 
   set_parameter("Name_prefix_of_saved_VTK_files", "", !required, name_prefix_of_saved_vtk_files);
   set_parameter("Number_of_initialization_time_steps", 0, !required, number_of_initialization_time_steps, {0,int_inf});

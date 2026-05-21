@@ -60,6 +60,12 @@ void Simulation::set_module_parameters()
   com_mod.nITs = general.number_of_initialization_time_steps.value();
   com_mod.startTS = general.starting_time_step.value();
   com_mod.dt = general.time_step_size.value();
+  com_mod.have_initial_pressure = general.initial_pressure.defined(); // Set the flag to indicate whether initial pressure is provided in the input file
+  if (com_mod.have_initial_pressure) {
+    com_mod.initial_pressure = general.initial_pressure.value();
+  } else {
+    com_mod.initial_pressure = 0.0; // Default pressure value if not provided
+  }
 
   com_mod.stopTrigName = general.searched_file_name_to_trigger_stop.value();
   com_mod.ichckIEN = general.check_ien_order.value();

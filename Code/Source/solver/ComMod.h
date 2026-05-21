@@ -1668,6 +1668,9 @@ class ComMod {
     bool usePrecomp = false;
     //----- int members -----//
 
+    /// @brief scalar initial pressure is explicitly provided in the input file
+    bool have_initial_pressure = false;
+
     /// @brief Current domain
     int cDmn = 0;
 
@@ -1749,6 +1752,9 @@ class ComMod {
 
     /// @brief Time
     double time = 0.0;
+
+    /// @brief initial scalar pressure value
+    double initial_pressure = 0.0;
 
 
     //----- string members -----//

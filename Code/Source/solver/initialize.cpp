@@ -937,15 +937,22 @@ void zero_init(Simulation* simulation, SolutionStates& solutions)
      }
   }
 
-  if (com_mod.Pinit.size() != 0) {
+  if (com_mod.Pinit.size() != 0) {// read initial pressure from vtk file. nodewise pressure value
      #ifdef debug_zero_init
      dmsg << "Initialize Yo to provided P solution";
      #endif
      for (int a = 0; a < com_mod.tnNo; a++) {
-       for (int i = 0; i < nsd; i++) {
-         Yo(nsd,a) = com_mod.Pinit(a);
-       }
+       Yo(nsd,a) = com_mod.Pinit(a);
      }
+  } else if (com_mod.have_initial_pressure) {// read initial pressure from solver.xml. scalar initial pressure value
+     #ifdef debug_zero_init
+     dmsg << "Initialize Yo to scalar initial pressure from solver.xml";
+     #endif
+     for (int a = 0; a < com_mod.tnNo; a++) {
+       Yo(nsd,a) = com_mod.initial_pressure;
+     }
+     std::string msg = "Initialize Yo(nsd,a) to initial_pressure value from solver.xml: " + std::to_string(com_mod.initial_pressure);
+     std::cout << msg << std::endl;
   }
 
   if (com_mod.Dinit.size() != 0) {
