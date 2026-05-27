@@ -14,9 +14,7 @@ var searchData=
   ['urisactflag_11',['urisActFlag',['../class_com_mod.html#a8cb10e231ac4f7dc3f7b4f9b784953ed',1,'ComMod']]],
   ['urisflag_12',['urisFlag',['../class_com_mod.html#a329c98e1fc8079818b428e718dd5fe6f',1,'ComMod']]],
   ['urisfluidnodemask_13',['urisFluidNodeMask',['../class_com_mod.html#a6ee4397f29b232ef418235132f3bbc4a',1,'ComMod']]],
-  ['urisres_14',['urisRes',['../class_com_mod.html#a4ff010ae89015236fb87db8fa0e640ec',1,'ComMod']]],
-  ['urisresclose_15',['urisResClose',['../class_com_mod.html#aa5c8dca70d75c35b147bcbbadbac1e73',1,'ComMod']]],
-  ['usegenbc_16',['useGenBC',['../classcpl_b_c_type.html#a730f8b6f595d77b46516534f4687a5c4',1,'cplBCType']]],
-  ['useprecomp_17',['usePrecomp',['../class_com_mod.html#a949caadf37a65de770358a86798b0060',1,'ComMod']]],
-  ['usetls_18',['useTLS',['../classeq_type.html#a6e56218d0c32814aac1b24e011d48805',1,'eqType']]]
+  ['usegenbc_14',['useGenBC',['../classcpl_b_c_type.html#a730f8b6f595d77b46516534f4687a5c4',1,'cplBCType']]],
+  ['useprecomp_15',['usePrecomp',['../class_com_mod.html#a949caadf37a65de770358a86798b0060',1,'ComMod']]],
+  ['usetls_16',['useTLS',['../classeq_type.html#a6e56218d0c32814aac1b24e011d48805',1,'eqType']]]
 ];
