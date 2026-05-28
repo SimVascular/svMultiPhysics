@@ -217,15 +217,6 @@ double norm_squared(const Vector<double>& U)
   return norm_squared;
 }
 
-double dot(const Vector<double>& U, const Vector<double>& V)
-{
-  double dot = 0.0;
-  for (int i = 0; i < U.size(); i++) {
-    dot += U(i)*V(i);
-  }
-  return dot;
-}
-
 double norm_squared(const Array<double>& U)
 {
   int m = U.nrows();
@@ -267,6 +258,15 @@ double norm_squared(const Array<double>& U)
     }
 
   return norm_squared;
+}
+
+double dot(const Vector<double>& U, const Vector<double>& V)
+{
+  double dot = 0.0;
+  for (int i = 0; i < U.size(); i++) {
+    dot += U(i)*V(i);
+  }
+  return dot;
 }
 
 void print_mem(const std::string& type, const std::string& prefix, const double memory_in_use, const double memory_returned)
