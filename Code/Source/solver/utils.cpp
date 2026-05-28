@@ -204,69 +204,69 @@ double mem_usage(const bool print_usage, const std::string& prefix)
   return resident_set;
 }
 
-/// @brief This function will compute second NORM of a vector.
+/// @brief This function will compute the squared Euclidean norm of a vector.
 ///
 /// Replicates 'PURE FUNCTION NORMS(U, V)' defined in UTIL.f.
 //
-double norm(const Vector<double>& U)
+double norm_squared(const Vector<double>& U)
 {
-  double norm = 0.0;
+  double norm_squared = 0.0;
   for (int i = 0; i < U.size(); i++) {
-    norm += U(i)*U(i);
+    norm_squared += U(i)*U(i);
   }
-  return norm;
+  return norm_squared;
 }
 
-double norm(const Vector<double>& U, const Vector<double>& V)
+double norm_squared(const Vector<double>& U, const Vector<double>& V)
 {
-  double norm = 0.0;
+  double norm_squared = 0.0;
   for (int i = 0; i < U.size(); i++) {
-    norm += U(i)*V(i);
+    norm_squared += U(i)*V(i);
   }
-  return norm;
+  return norm_squared;
 }
 
-double norm(const Array<double>& U)
+double norm_squared(const Array<double>& U)
 {
   int m = U.nrows();
   int n = U.ncols();
-  double norm = 0.0;
+  double norm_squared = 0.0;
 
   switch (m) { 
     case 1:
       for (int i = 0; i < n; i++) {
-        norm = norm + U(0,i)*U(0,i);
+        norm_squared = norm_squared + U(0,i)*U(0,i);
       }
     break;
 
     case 2:
       for (int i = 0; i < n; i++) {
-        norm = norm + U(0,i)*U(0,i) + U(1,i)*U(1,i);
+        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i);
       }
     break;
 
     case 3:
       for (int i = 0; i < n; i++) {
-        norm = norm + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i);
+        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i);
       }
     break;
 
     case 4:
       for (int i = 0; i < n; i++) {
-        norm = norm + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i); + U(3,i)*U(3,i);
+        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i); + U(3,i)*U(3,i);
       }
     break;
 
     default: 
       for (int i = 0; i < n; i++) {
         for (int j = 0; i < m; i++) {
-          norm = norm + U(j,i)*U(j,i);
+          norm_squared = norm_squared + U(j,i)*U(j,i);
         }
       }
     break;
     }
 
-  return norm;
+  return norm_squared;
 }
 
 void print_mem(const std::string& type, const std::string& prefix, const double memory_in_use, const double memory_returned)
