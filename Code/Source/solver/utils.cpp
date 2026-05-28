@@ -217,13 +217,13 @@ double norm_squared(const Vector<double>& U)
   return norm_squared;
 }
 
-double norm_squared(const Vector<double>& U, const Vector<double>& V)
+double dot(const Vector<double>& U, const Vector<double>& V)
 {
-  double norm_squared = 0.0;
+  double dot = 0.0;
   for (int i = 0; i < U.size(); i++) {
-    norm_squared += U(i)*V(i);
+    dot += U(i)*V(i);
   }
-  return norm_squared;
+  return dot;
 }
 
 double norm_squared(const Array<double>& U)

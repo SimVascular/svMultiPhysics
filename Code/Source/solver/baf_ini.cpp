@@ -401,10 +401,10 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
      for (int a = 0; a < lFa.nNo; a++) {
        int Ac = lFa.gN(a);
        auto nV = com_mod.x.col(Ac) - center;
-       double maxN = norm_squared(nV, sVl.col(0));
+       double maxN = dot(nV, sVl.col(0));
        int i = 0;
        for (int b = 1; b < j; b++) {
-         double tmp = norm_squared(nV, sVl.col(b));
+         double tmp = dot(nV, sVl.col(b));
          if (tmp > maxN) {
            maxN = tmp;
            i = b;
@@ -621,7 +621,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
           v(i)  = xl(i,a) - xl(i,b);
         }
 
-        if (utils::norm_squared(nV,v) < 0.0) {
+        if (utils::dot(nV,v) < 0.0) {
           nV = -nV;
          }
 

@@ -222,10 +222,10 @@ void construct_contact_pnlty(ComMod& com_mod, CmMod& cm_mod, const SolutionState
 
       auto x12 = x1 - x2;
       double c = sqrt(utils::norm_squared(x12));
-      double al = sqrt(fabs(utils::norm_squared(nV1, nV2)));
+      double al = sqrt(fabs(utils::dot(nV1, nV2)));
 
       if (c <= cntctM.c && al >= cntctM.al) {
-        double d = utils::norm_squared(x12, nV2);
+        double d = utils::dot(x12, nV2);
         bool flag = false;
         double pk{0.0};
    

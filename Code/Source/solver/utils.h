@@ -48,7 +48,7 @@ bool is_zero(double value1, double value2=0.0);
 double mem_usage(const bool print_usage=false, const std::string& prefix="");
 
 double norm_squared(const Vector<double>& U);
-double norm_squared(const Vector<double>& U, const Vector<double>& V);
+double dot(const Vector<double>& U, const Vector<double>& V);
 double norm_squared(const Array<double>& U);
 
 void print_mem(const std::string& type, const std::string& prefix, const double memory_in_use, const double memory_returned);

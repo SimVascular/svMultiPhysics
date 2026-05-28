@@ -707,32 +707,32 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
   // a.gCnv (reference config)
   //
   Array<double> adg0(3,3);
-  adg0(0,0) = norm_squared(a0.col(3), aCnv0.col(0));    // xi_4
-  adg0(0,1) = norm_squared(a0.col(4), aCnv0.col(0));    // xi_5
-  adg0(0,2) = norm_squared(a0.col(5), aCnv0.col(0));    // xi_6
+  adg0(0,0) = dot(a0.col(3), aCnv0.col(0));    // xi_4
+  adg0(0,1) = dot(a0.col(4), aCnv0.col(0));    // xi_5
+  adg0(0,2) = dot(a0.col(5), aCnv0.col(0));    // xi_6
 
-  adg0(1,0) = norm_squared(a0.col(3), aCnv0.col(1));    // eta_4
-  adg0(1,1) = norm_squared(a0.col(4), aCnv0.col(1));    // eta_5
-  adg0(1,2) = norm_squared(a0.col(5), aCnv0.col(1));    // eta_6
+  adg0(1,0) = dot(a0.col(3), aCnv0.col(1));    // eta_4
+  adg0(1,1) = dot(a0.col(4), aCnv0.col(1));    // eta_5
+  adg0(1,2) = dot(a0.col(5), aCnv0.col(1));    // eta_6
 
-  adg0(2,0) = norm_squared(a0.col(3), nV0);        // z_4
-  adg0(2,1) = norm_squared(a0.col(4), nV0);        // z_5
-  adg0(2,2) = norm_squared(a0.col(5), nV0);        // z_6
+  adg0(2,0) = dot(a0.col(3), nV0);        // z_4
+  adg0(2,1) = dot(a0.col(4), nV0);        // z_5
+  adg0(2,2) = dot(a0.col(5), nV0);        // z_6
 
   // a.gCnv (current config)
   //
   Array<double> adg(3,3);
-  adg(0,0) = norm_squared(a.col(3), aCnv.col(0));   // xi_4
-  adg(0,1) = norm_squared(a.col(4), aCnv.col(0));   // xi_5
-  adg(0,2) = norm_squared(a.col(5), aCnv.col(0));   // xi_6
+  adg(0,0) = dot(a.col(3), aCnv.col(0));   // xi_4
+  adg(0,1) = dot(a.col(4), aCnv.col(0));   // xi_5
+  adg(0,2) = dot(a.col(5), aCnv.col(0));   // xi_6
 
-  adg(1,0) = norm_squared(a.col(3), aCnv.col(1));   // eta_4
-  adg(1,1) = norm_squared(a.col(4), aCnv.col(1));   // eta_5
-  adg(1,2) = norm_squared(a.col(5), aCnv.col(1));   // eta_6
+  adg(1,0) = dot(a.col(3), aCnv.col(1));   // eta_4
+  adg(1,1) = dot(a.col(4), aCnv.col(1));   // eta_5
+  adg(1,2) = dot(a.col(5), aCnv.col(1));   // eta_6
 
-  adg(2,0) = norm_squared(a.col(3), nV);        // z_4
-  adg(2,1) = norm_squared(a.col(4), nV);        // z_5
-  adg(2,2) = norm_squared(a.col(5), nV);        // z_6
+  adg(2,0) = dot(a.col(3), nV);        // z_4
+  adg(2,1) = dot(a.col(4), nV);        // z_5
+  adg(2,2) = dot(a.col(5), nV);        // z_6
 
   // Xi matrix (reference config)
   //
@@ -1000,7 +1000,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
         nI(1) = eI(2)*nV(0) - eI(0)*nV(2);
         nI(2) = eI(0)*nV(1) - eI(1)*nV(0);
 
-        cI = norm_squared(a.col(i),a.col(p))*aIi*aIi;
+        cI = dot(a.col(i),a.col(p))*aIi*aIi;
         nInI = mat_dyad_prod(nI, nI, 3);
         eIeI = mat_dyad_prod(eI, eI, 3);
         eIaP = mat_dyad_prod(eI, a.col(p), 3);
