@@ -226,7 +226,7 @@ void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], doubl
 // init_svZeroD
 //--------------
 //
-void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) 
+void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
   using namespace consts;
   
@@ -258,6 +258,11 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   int ids[2];
   double in_out;
 
+  const bool have_init_flow = solver_interface.have_initial_flows;
+  const double init_flow = solver_interface.initial_flows;
+  const bool have_init_press = solver_interface.have_initial_pressures;
+  const double init_press = solver_interface.initial_pressures;
+
   if (cm.mas(cm_mod)) {
     nsrflistCoupled.clear();
     svzd_blk_names.clear();
@@ -271,6 +276,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       throw std::runtime_error("ERROR: [init_svZeroD] svZeroDSolver interface data is missing.");
     }
 
+
 #ifdef debug_init_svZeroD
     dmsg << "#### Use XML data #### ";
 #endif
@@ -278,10 +284,6 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
     svzerod_library = solver_interface.solver_library;
     svzerod_file = solver_interface.configuration_file;
 
-    const bool have_init_flow = solver_interface.have_initial_flows;
-    const double init_flow = solver_interface.initial_flows;
-    const bool have_init_press = solver_interface.have_initial_pressures;
-    const double init_press = solver_interface.initial_pressures;
 
     for (int s = 0; s < numCoupledSrfs; ++s) {
       bcType* bc = nullptr;
@@ -330,6 +332,7 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       if (!nth_coupled_bc(com_mod, s, &bc)) {
         throw std::runtime_error("ERROR: [init_svZeroD] Internal error resolving Coupled BC for initialization.");
       }
+
       if (bc->coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Neu) {
         if (have_init_flow) {
           lpn_state_y[sol_IDs[2 * s]] = init_flow;
@@ -357,6 +360,26 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
       int flag = 0;
       write_svZeroD_solution(&svZeroDTime, lpn_state_y, &flag);
     }
+  }
+
+  for (int s = 0; s < numCoupledSrfs; ++s) {
+    bcType* bc = nullptr;
+    if (!nth_coupled_bc(com_mod, s, &bc)) {
+      throw std::runtime_error("ERROR: [init_svZeroD] Internal error resolving Coupled BC for initialization history.");
+    }
+
+    // For cap coupling in parallel, flow integration requires all ranks.
+    if (cm.seq() || !bc->coupled_bc.has_cap()) {
+      bc->coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
+    }
+    bc->coupled_bc.compute_pressures(com_mod, cm_mod, solutions);
+    const double Q_init = bc->coupled_bc.get_Qo();
+    const double P_init = bc->coupled_bc.get_Po();
+    bc->coupled_bc.set_Q_prev_sent(Q_init);
+    bc->coupled_bc.set_Q_input_prev(Q_init, Q_init);
+    bc->coupled_bc.set_P_prev_sent(P_init, P_init);
+    bc->coupled_bc.set_P_neu_prev(P_init);
+    bc->coupled_bc.set_pressure(P_init);
   }
 
   // Broadcast initial values to follower processes

@@ -12,7 +12,7 @@ namespace svOneD {
 
 /// @brief Initialize the 1D solver and populate the initial cplBC state.
 /// Called once from baf_ini() after the BC data structures are set up.
-void init_svOneD(ComMod& com_mod, const CmMod& cm_mod);
+void init_svOneD(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
 /// @brief Advance the 1D solver by one time step and update the coupled BC value.
 ///

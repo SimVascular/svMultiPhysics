@@ -63,6 +63,7 @@
 #include <vector>
 
 #include "ComMod.h"
+#include "all_fun.h"
 #include "consts.h"
 #include "utils.h"
 #include "svOneD_interface/OneDSolverInterface.h"
@@ -157,7 +158,7 @@ static std::string resolve_lib_path(const std::string& lib_base)
 // ---------------------------------------------------------------------------
 // init_svOneD
 // ---------------------------------------------------------------------------
-void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
+void init_svOneD(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions)
 {
   using namespace consts;
 
@@ -192,6 +193,19 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
       st.ramp_steps         = bc.coupled_bc.get_oned_ramp_steps();
       st.ramp_ref_pressure  = bc.coupled_bc.get_oned_ramp_ref_pressure();
       st.relax_factor       = bc.coupled_bc.get_oned_relax_factor();
+
+      const auto& face = com_mod.msh[bc.iM].fa[bc.iFa];
+      const double area = face.area;
+      if (area > 0.0) {
+        const auto& Yo = solutions.old.get_velocity();
+        const double P_init = all_fun::integ(com_mod, cm_mod, face, Yo, com_mod.nsd,
+                                             solutions, std::nullopt, false,
+                                             MechanicalConfigurationType::reference) / area;
+        st.P_prev_sent_old = P_init;
+        st.P_prev_sent_new = P_init;
+        st.P_neu_prev = P_init;
+      }
+
       oned_models.push_back(std::move(st));
     }
   }
@@ -250,8 +264,8 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
     st.solution.resize(system_size, 0.0);
     shared_lib_instance->return_solution(problem_id, st.solution.data(), system_size);
 
-    // Initial coupled value = 0; first calc_svOneD call sets the real value.
-    eq.bc[st.iBc].coupled_bc.set_pressure(0.0);
+    // Keep the BC pressure state consistent with the seeded pressure history.
+    eq.bc[st.iBc].coupled_bc.set_pressure(st.P_neu_prev);
   }
 
   // ----- Broadcast metadata for all models (Phase 2: batch exchange) -----
