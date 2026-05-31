@@ -14,6 +14,8 @@
 #include <fstream>
 #include <sys/resource.h>
 
+#include "FE/Common/FEException.h"
+
 /* MacOS
 #include <mach/task.h>
 #include <mach/mach_init.h>
@@ -272,6 +274,10 @@ double norm(const Array<double> &U)
 
 double dot(const Vector<double>& U, const Vector<double>& V)
 {
+  if (U.size() != V.size()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(SVMP_HERE, "Vectors must have the same size for dot product.");
+  }
+
   double dot = 0.0;
   for (int i = 0; i < U.size(); i++) {
     dot += U(i)*V(i);
