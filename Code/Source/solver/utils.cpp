@@ -260,6 +260,16 @@ double norm_squared(const Array<double>& U)
   return norm_squared;
 }
 
+double norm(const Vector<double> &U)
+{
+  return std::sqrt(norm_squared(U));
+}
+
+double norm(const Array<double> &U)
+{
+  return std::sqrt(norm_squared(U));
+}
+
 double dot(const Vector<double>& U, const Vector<double>& V)
 {
   double dot = 0.0;

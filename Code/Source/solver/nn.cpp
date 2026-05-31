@@ -443,7 +443,7 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
       }
     }
 
-    Jac = sqrt(utils::norm_squared(xXi)) + 1.E+3*eps;
+    Jac = utils::norm(xXi) + 1.E+3*eps;
     for (int a = 0; a < eNoN; a++) {
       Nx(0,a) = Nxi(0,a) / Jac;
     }
@@ -515,7 +515,7 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
 
 /// @brief This routine returns a surface normal vector at element "e" and Gauss point
 /// 'g' of face 'lFa' that is the normal weighted by Jac, i.e.
-/// Jac = sqrt(norm_squared(n)), the Jacobian of the mapping from parent surface element to
+/// Jac = norm(n), the Jacobian of the mapping from parent surface element to
 /// reference/old/new configuration.
 ///
 /// cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference
@@ -661,7 +661,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
 
     auto v = utils::cross(xXi);
     for (int i = 0; i < nsd; i++) {
-      v(i) = v(i) / sqrt(utils::norm_squared(v));
+      v(i) = v(i) / utils::norm(v);
     }
 
     // Face element surface deflation

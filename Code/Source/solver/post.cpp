@@ -589,7 +589,7 @@ void fib_algn_post(Simulation* simulation, const mshType& lM, Array<double>& res
         for (int i = 0; i < nsd; i++) {
           auto fN_col = fN.col(iFn);
           auto F_fN = mat_fun::mat_mul(F, fN_col);
-          fl.set_col(iFn, F_fN / sqrt(utils::norm_squared(F_fN)));
+          fl.set_col(iFn, F_fN / utils::norm(F_fN));
         }
       }
 
@@ -688,7 +688,7 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
         for (int i = 0; i < nsd; i++) {
           auto fN_col = fN.col(iFn);
           auto F_fN = mat_fun::mat_mul(F, fN_col);
-          fl.set_col(iFn, F_fN / sqrt(utils::norm_squared(F_fN)));
+          fl.set_col(iFn, F_fN / utils::norm(F_fN));
         }
       }
 
@@ -770,7 +770,7 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
 
       // Compute fiber stretch based on 4th invariant: I_{4,f} = F.fN.F.fN
       auto fl = mat_fun::mat_mul(F, lM.fN.rows(0,nsd-1,e));
-      double lambda = sqrt(utils::norm_squared(fl));
+      double lambda = utils::norm(fl);
 
       // L2 projection from integration points to nodes
       double w = lM.w(g)*Jac;
@@ -1369,12 +1369,12 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
         // Covariant and contravariant bases (ref. config.)
         //
         nn::gnns(nsd, eNoN, Nx, x0, nV0, aCov0, aCnv0);
-        auto Jac0 = sqrt(norm_squared(nV0));
+        auto Jac0 = norm(nV0);
         nV0 = nV0 / Jac0;
 
         // Covariant and contravariant bases (spatial config.)
         nn::gnns(nsd, eNoN, Nx, xc, nV, aCov, aCnv);
-        auto Jac = sqrt(norm_squared(nV));
+        auto Jac = norm(nV);
         nV = nV/Jac;
 
         // Second derivatives for curvature coeffs. (ref. config)
@@ -1445,7 +1445,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
         }
 
         nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV0, aCov0, aCnv0);
-        auto Jac0 = sqrt(norm_squared(nV0));
+        auto Jac0 = norm(nV0);
         nV0  = nV0 / Jac0;
 
         // Covariant and contravariant bases (spatial config.)
@@ -1457,7 +1457,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
         }
 
         nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV, aCov, aCnv);
-        auto Jac = sqrt(norm_squared(nV));
+        auto Jac = norm(nV);
         nV = nV / Jac;
 
         // Compute metric tensor (aa)

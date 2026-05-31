@@ -393,7 +393,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
        for (int i = 0; i < sV.nrows(); i++) {
          sV(i,a) = sV(i,a) - center(i);
        }
-       sVl.set_col(a, sV.col(a) / sqrt(norm_squared(sV.col(a))));
+       sVl.set_col(a, sV.col(a) / norm(sV.col(a)));
      }
 
      // "s" is going to keep the ew.e value
@@ -681,7 +681,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
   for (int a = 0; a < lFa.nNo; a++) {
     int Ac = lFa.gN(a);
     auto sV_col = sV.col(Ac);
-    double sln = sqrt(utils::norm_squared(sV_col));
+    double sln = utils::norm(sV_col);
 
     if (utils::is_zero(sln)) {
       if (flag) {
@@ -1014,7 +1014,7 @@ void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM)
       Array<double> tmpR(nsd,nsd-1);
       auto Nxi = lM.Nx.slice(g);
       nn::gnns(nsd, eNoN, Nxi, xl, nV, tmpR, tmpR);
-      double Jac = sqrt(norm_squared(nV));
+      double Jac = norm(nV);
 
       for (int a = 0; a < eNoN; a++) {
         int Ac = lM.IEN(a,e);
@@ -1032,7 +1032,7 @@ void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM)
 
   for (int a = 0; a < nNo; a++) {
     int Ac = lM.gN(a);
-    double Jac = sqrt(norm_squared(sV.col(Ac)));
+    double Jac = norm(sV.col(Ac));
 
     if (is_zero(Jac)) {
       if (flag) {

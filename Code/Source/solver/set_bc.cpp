@@ -1321,7 +1321,7 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
       nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
-      double Jac = sqrt(utils::norm_squared(nV));
+      double Jac = utils::norm(nV);
       nV = nV / Jac;
       double w = lFa.w(g) * Jac;
 
@@ -1587,7 +1587,7 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
       nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
-      double Jac = sqrt(utils::norm_squared(nV));
+      double Jac = utils::norm(nV);
       nV  = nV / Jac;
       double w = lFa.w(g) * Jac; 
       N = lFa.N.col(g);
@@ -1870,7 +1870,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
       nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
-      double Jac = sqrt(utils::norm_squared(nV));
+      double Jac = utils::norm(nV);
       double w = lFa.w(g)*Jac;
       N = lFa.N.col(g);
 

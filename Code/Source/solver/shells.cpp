@@ -248,7 +248,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   Array<double> aCov0(3,2), aCnv0(3,2);
   Vector<double> nV0(3);
   nn::gnns(nsd, lM.eNoN, Nx, x0, nV0, aCov0, aCnv0);
-  double Jac0 = sqrt(utils::norm_squared(nV0));
+  double Jac0 = utils::norm(nV0);
   nV0 = nV0 / Jac0;
 
   // Second derivatives for computing curvature coeffs. (ref. config)
@@ -300,7 +300,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   Array<double> aCov(3,2), aCnv(3,2);
   Vector<double> nV(3);
   nn::gnns(nsd, eNoN, Nx, xc, nV, aCov, aCnv);
-  double Jac = sqrt(utils::norm_squared(nV));
+  double Jac = utils::norm(nV);
   nV = nV / Jac;
 
   // Second derivatives for computing curvature coeffs. (cur. config)
@@ -609,7 +609,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
   Array<double> aCov0(3,2), aCnv0(3,2);
   Vector<double> nV0(3);
   nn::gnns(nsd, lM.eNoN, lM.Nx.rslice(0), tmpA, nV0, aCov0, aCnv0);
-  double Jac0 = sqrt(utils::norm_squared(nV0));
+  double Jac0 = utils::norm(nV0);
   nV0 = nV0 / Jac0;
 
   // Covariant and contravariant bases in current config
@@ -623,7 +623,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
   Array<double> aCov(3,2), aCnv(3,2);
   Vector<double> nV(3);
   nn::gnns(nsd, lM.eNoN, lM.Nx.rslice(0), tmpA, nV, aCov, aCnv);
-  double Jac = sqrt(norm_squared(nV));
+  double Jac = norm(nV);
   nV = nV / Jac;
 
   // Update the position vector of the `artificial' or `ghost' nodes
@@ -644,7 +644,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
       // Reference config
       // eI = eI0 = aI0/|aI0| (reference config)
       //
-      auto aIi = 1.0 / sqrt(norm_squared(a0.col(i)));
+      auto aIi = 1.0 / norm(a0.col(i));
       auto eI = a0.col(i) * aIi;
 
       // nI = nI0 = eI0 x n0 (reference config)
@@ -664,7 +664,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
       // Current config
       // eI = aI/|aI| (current config)
       //
-      aIi = 1.0 / sqrt(utils::norm_squared(a.col(i)));
+      aIi = 1.0 / utils::norm(a.col(i));
       eI = a.col(i)*aIi;
 
       // nI = eI x n (currnt config)
@@ -978,7 +978,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
 
       if (utils::btest(lM.sbc(i,e),enum_int(BoundaryConditionType::bType_fix))) {
         // eI = eI0 = aI0/|aI0| (reference config)
-        aIi = 1.0 / sqrt(norm_squared(a0.col(i)));
+        aIi = 1.0 / norm(a0.col(i));
         eI = a0.col(i) * aIi;
 
         // nI = nI0 = eI0 x n0 (reference config)
@@ -989,7 +989,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
 
       } else { 
         // eI = aI/|aI| (current config)
-        aIi = 1.0 / sqrt(norm_squared(a.col(i)));
+        aIi = 1.0 / norm(a.col(i));
         eI = a.col(i)*aIi;
 
         // nI = eI x n (currnt config)
@@ -1259,7 +1259,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV0, aCov0, aCnv0);
   //CALL GNNS(lM%eNoN, Nx, tmpX, nV0, aCov0, aCnv0)
 
-  double Jac0 = sqrt(utils::norm_squared(nV0));
+  double Jac0 = utils::norm(nV0);
   nV0 = nV0 / Jac0;
 
   // Covariant and contravariant bases in current config
@@ -1275,7 +1275,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
 
   nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV, aCov, aCnv);
 
-  double Jac = sqrt(utils::norm_squared(nV));
+  double Jac = utils::norm(nV);
   nV = nV / Jac;
 
   // Compute metric tensor in reference and current config

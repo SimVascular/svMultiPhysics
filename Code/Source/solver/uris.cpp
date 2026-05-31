@@ -1258,7 +1258,7 @@ void uris_face_unit_normal(const urisType& uris_obj, const int nsd, const int jM
   }
 
   unitNormal = utils::cross(xXi);
-  const auto Jac = sqrt(utils::norm_squared(unitNormal));
+  const auto Jac = utils::norm(unitNormal);
   if (uris_obj.invert_normal) {
     unitNormal = -unitNormal / Jac;
   } else {
