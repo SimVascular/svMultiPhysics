@@ -246,7 +246,7 @@ double norm_squared(const Array<double>& U)
 
     case 4:
       for (int i = 0; i < n; i++) {
-        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i); + U(3,i)*U(3,i);
+        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i) + U(3,i)*U(3,i);
       }
     break;
 
