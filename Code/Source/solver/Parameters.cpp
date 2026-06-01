@@ -2984,10 +2984,9 @@ URISMeshParameters::URISMeshParameters()
   // Parameters under Add_mesh element.
   //
   set_parameter("Mesh_scale_factor", 1.0,  !required, mesh_scale_factor);
-  set_parameter("Thickness", 0.04,  !required, thickness);
-  set_parameter("Closed_thickness", 0.25,  !required, close_thickness);
+  set_parameter("Thickness", 0.2,  !required, thickness);
+  set_parameter("Closed_thickness", 0.2,  !required, close_thickness);
   set_parameter("Resistance", 1.0e5,  !required, resistance);
-  set_parameter("Closed_resistance", 1.0e5,  !required, resistance_close);
   set_parameter("Valve_starts_as_closed", true,  !required, valve_starts_as_closed);
   set_parameter("Invert_normal", false,  !required, invert_normal);
   set_parameter("Positive_flow_normal_file_path", "",  !required, positive_flow_normal_file_path);

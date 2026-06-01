@@ -13,6 +13,7 @@
 #include "ustruct.h"
 #include "utils.h"
 #include "ris.h"
+#include "uris.h"
 
 #include <array>
 #include <iomanip>
@@ -80,7 +81,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
   //
   double struct_3d_time = 0.0;
   double fluid_3d_time = 0.0;
-  double DDir = 0.0;
 
   for (int e = 0; e < lM.nEl; e++) {
     // setting globals
@@ -165,6 +165,12 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     //
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
+    // Total resistance factor value of the RIS valves for the current element 
+    // at different quadrature points
+    Vector<double> risFactorTotalEl;
+    if (com_mod.urisFlag) {
+      uris::uris_compute_ris_factor(com_mod, lM, fs_1[0], e, risFactorTotalEl);
+    }
 
     for (int g = 0; g < fs_1[0].nG; g++) {
       if (g == 0 || !fs_1[1].lShpF) {
@@ -188,54 +194,18 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
       double w = fs_1[0].w(g) * Jac;
 
-      // Plot the coordinates of the quad point in the current configuration
-      if (com_mod.urisFlag) {
-        Vector<double> distSrf(com_mod.nUris);
-        distSrf = 0.0;
-        for (int a = 0; a < eNoN; a++) {
-          int Ac = lM.IEN(a,e);
-          for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
-            distSrf(iUris) += fs_1[0].N(a,g) * std::fabs(com_mod.uris[iUris].sdf(Ac));
-          }
-        }
-
-        DDir = 0.0;
-        double sdf_deps_temp = 0;
-        double DDirTmp = 0.0;
-        for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
-          // if (distSrf(iUris) <= com_mod.uris[iUris].sdf_deps) {
-          //   DDirTmp = (1 + cos(pi*distSrf(iUris)/com_mod.uris[iUris].sdf_deps))/
-          //             (2*com_mod.uris[iUris].sdf_deps*com_mod.uris[iUris].sdf_deps);
-          //   if (DDirTmp > DDir) {DDir = DDirTmp;}
-          // }
-
-          if (com_mod.uris[iUris].clsFlg) {
-            sdf_deps_temp = com_mod.uris[iUris].sdf_deps_close;
-          } else {
-            sdf_deps_temp = com_mod.uris[iUris].sdf_deps;
-          }
-          if (distSrf(iUris) <= sdf_deps_temp) {
-            DDirTmp = (1 + cos(pi*distSrf(iUris)/sdf_deps_temp))/
-                      (2*sdf_deps_temp*sdf_deps_temp);
-            if (DDirTmp > DDir) {DDir = DDirTmp;}
-          }
-        }
-
-        if (!com_mod.urisActFlag) {DDir = 0.0;}
-
-        // std::cout << "===== DDir: " << DDir << std::endl;
-      }
-
-
       if (nsd == 3) {
         switch (cPhys) {
           case Equation_fluid: {
             auto N0 = fs_1[0].N.col(g);
             auto N1 = fs_1[1].N.col(g);
+            double risFactorTotal = 0.0;
+            if (com_mod.urisFlag) {
+              risFactorTotal = risFactorTotalEl(g);
+            }
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            // fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
-            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, DDir);
+            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, risFactorTotal);
 
           } break;
 
@@ -283,6 +253,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       }
     } // g: loop
 
+    // If the number of quadrature points is different for the continuity and 
+    // momentum function spaces, recompute the RIS factor
+    if (com_mod.urisFlag) {
+      if (static_cast<int>(risFactorTotalEl.size()) != fs_2[1].nG) {
+        uris::uris_compute_ris_factor(com_mod, lM, fs_2[1], e, risFactorTotalEl);
+      }
+    }
+
     // Gauss integration 2
     //
     for (int g = 0; g < fs_2[1].nG; g++) {
@@ -310,10 +288,13 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_fluid: {
             auto N0 = fs_2[0].N.col(g);
             auto N1 = fs_2[1].N.col(g);
+            double risFactorTotal = 0.0;
+            if (com_mod.urisFlag) {
+              risFactorTotal = risFactorTotalEl(g);
+            }
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            //fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
-            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, DDir);
+            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, risFactorTotal);
           } break;
 
           case Equation_ustruct:

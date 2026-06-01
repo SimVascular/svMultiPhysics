@@ -1482,6 +1482,9 @@ class urisType
     // if the fully closed position alone is not able to prevent backflow.
     double sdf_deps_close;
 
+    // Resistance value of the valve.
+    double resistance;
+
     // Whether to invert the valve surface normal vector. Default is false.
     // 
     // Valve normal vectors are assumed to point downstream, so that the
@@ -1621,12 +1624,6 @@ class ComMod {
 
     /// @brief Number of URIS surfaces (uninitialized, to be set later)
     int nUris;
-
-    /// @brief URIS resistance
-    double urisRes;
-
-    /// @brief URIS resistance when the valve is closed
-    double urisResClose;
 
     /// @brief Fluid-related node mask for URIS SDF. Built once when
     /// consistent with tnNo; rebuilt automatically if tnNo changes.

@@ -46,6 +46,9 @@ double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
 
 void uris_build_fluid_node_mask(ComMod& com_mod);
 
+void uris_compute_ris_factor(const ComMod& com_mod, const mshType& lM, const fsType& fs, const int e, 
+  Vector<double>& ris_factor_total_el);
+
 }
 
 #endif

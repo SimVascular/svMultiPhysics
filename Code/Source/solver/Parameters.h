@@ -1783,7 +1783,6 @@ class URISMeshParameters : public ParameterLists
     Parameter<double> thickness; // Thickness of the valve
     Parameter<double> close_thickness; // Thickness of the valve when it is closed
     Parameter<double> resistance; // Resistance of the valve
-    Parameter<double> resistance_close; // Resistance of the valve when it is closed
     Parameter<bool> valve_starts_as_closed; // Whether the valve starts as closed
     Parameter<bool> invert_normal; // Whether to invert the valve surface normal vector
     Parameter<std::string> positive_flow_normal_file_path; // File path for the positive flow normal

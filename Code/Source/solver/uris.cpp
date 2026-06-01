@@ -4,6 +4,7 @@
 #include "uris.h"
 
 #include "all_fun.h"
+#include "consts.h"
 #include "lhsa.h"
 #include "mat_fun.h"
 #include "nn.h"
@@ -556,13 +557,6 @@ void uris_read_msh(Simulation* simulation) {
   com_mod.urisFlag = true;
   com_mod.urisActFlag = true;
 
-  auto param = simulation->parameters.URIS_mesh_parameters[0];
-  com_mod.urisRes = param->resistance();
-  com_mod.urisResClose = param->resistance_close();
-
-  std::cout << "URIS resistance: " << com_mod.urisRes << std::endl;
-  std::cout << "URIS resistance when the valve is closed: " << com_mod.urisResClose << std::endl;
-
   int nUris = simulation->parameters.URIS_mesh_parameters.size();
   com_mod.nUris = nUris;
 
@@ -603,6 +597,7 @@ void uris_read_msh(Simulation* simulation) {
     // Use large default value for the signed distance function to indicate that 
     // the fluid node is far away from the valve. 
     uris_obj.sdf_default = param->close_thickness() * 1e6;
+    uris_obj.resistance = param->resistance();
     uris_obj.clsFlg = param->valve_starts_as_closed();
     uris_obj.invert_normal = param->invert_normal();
 
@@ -1284,6 +1279,71 @@ double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
     return (dot_nrm < 0.0 && dotP < 0.0) ? -1.0 : 1.0;
   }
   return (dotP < 0.0) ? -1.0 : 1.0;
+}
+
+/// @brief Compute the RIS factor for the current element  at different quadrature points
+void uris_compute_ris_factor(const ComMod& com_mod, const mshType& lM, const fsType& fs, 
+  const int e, Vector<double>& ris_factor_total_el) {
+  #define n_dbg_uris_compute_ris_factor
+  #ifdef dbg_uris_compute_ris_factor
+    DebugMsg dmsg(__func__, 0);
+    dmsg.banner();
+    dmsg << "computing RIS factor";
+  #endif
+
+  const int nUris = com_mod.nUris;
+  ris_factor_total_el.resize(fs.nG);
+  ris_factor_total_el = 0.0;
+  Vector<double> dist_srf(nUris);
+
+  for (int g = 0; g < fs.nG; g++) {
+    dist_srf = 0.0;
+    for (int a = 0; a < fs.eNoN; a++) {
+      int Ac = lM.IEN(a,e);
+      for (int iUris = 0; iUris < nUris; iUris++) {
+        dist_srf(iUris) += fs.N(a,g) * std::fabs(com_mod.uris[iUris].sdf(Ac));
+      }
+    }
+
+    double sdf_deps;
+    double delta_eps;
+    for (int iUris = 0; iUris < nUris; iUris++) {
+      sdf_deps = 0.0;
+      delta_eps = 0.0;
+      double start_deps, end_deps;
+      int n_steps;
+      if (com_mod.uris[iUris].clsFlg) {
+        start_deps = com_mod.uris[iUris].sdf_deps;
+        end_deps   = com_mod.uris[iUris].sdf_deps_close;
+        n_steps  = com_mod.uris[iUris].DxClose.nrows();
+      } else {
+        start_deps = com_mod.uris[iUris].sdf_deps_close;
+        end_deps   = com_mod.uris[iUris].sdf_deps;
+        n_steps  = com_mod.uris[iUris].DxOpen.nrows();
+      }
+
+      if (n_steps <= 0) {
+        sdf_deps = end_deps;
+      } else if (com_mod.uris[iUris].cnt >= n_steps) {
+        sdf_deps = end_deps;
+      } else if (com_mod.uris[iUris].cnt <= 0) {
+        sdf_deps = start_deps;
+      } else {
+        // Linear ramping: start_deps -> end_deps over n_steps.
+        // This alleviates the sudden change in the resistance factor when the 
+        // valve status changes from open to close and reduces oscillations
+        double progress = static_cast<double>(com_mod.uris[iUris].cnt) / static_cast<double>(n_steps);
+        sdf_deps = start_deps + progress * (end_deps - start_deps);
+      }
+
+      if (dist_srf(iUris) < sdf_deps && sdf_deps > 0.0) {
+        delta_eps = (1 + cos(consts::pi*dist_srf(iUris)/sdf_deps))/(2*sdf_deps*sdf_deps);
+      }
+      ris_factor_total_el(g) += com_mod.uris[iUris].resistance * delta_eps;
+    } // iUris: loop
+
+    if (!com_mod.urisActFlag) {ris_factor_total_el(g) = 0.0;}
+  }
 }
 
 }
