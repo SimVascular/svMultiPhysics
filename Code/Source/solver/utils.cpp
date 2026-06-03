@@ -225,39 +225,11 @@ double norm_squared(const Array<double>& U)
   int n = U.ncols();
   double norm_squared = 0.0;
 
-  switch (m) { 
-    case 1:
-      for (int i = 0; i < n; i++) {
-        norm_squared = norm_squared + U(0,i)*U(0,i);
-      }
-    break;
-
-    case 2:
-      for (int i = 0; i < n; i++) {
-        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i);
-      }
-    break;
-
-    case 3:
-      for (int i = 0; i < n; i++) {
-        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i);
-      }
-    break;
-
-    case 4:
-      for (int i = 0; i < n; i++) {
-        norm_squared = norm_squared + U(0,i)*U(0,i) + U(1,i)*U(1,i) + U(2,i)*U(2,i) + U(3,i)*U(3,i);
-      }
-    break;
-
-    default: 
-      for (int i = 0; i < n; i++) {
-        for (int j = 0; i < m; i++) {
-          norm_squared = norm_squared + U(j,i)*U(j,i);
-        }
-      }
-    break;
-    }
+  // Array::operator(const int) allows linear access into the 2D array elements,
+  // so that we can compute the norm by using a single for loop.
+  for (int i = 0; i < U.size(); ++i) {
+    norm_squared += U(i) * U(i);
+  }
 
   return norm_squared;
 }
