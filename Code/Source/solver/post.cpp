@@ -593,7 +593,7 @@ void fib_algn_post(Simulation* simulation, const mshType& lM, Array<double>& res
         }
       }
 
-      double sHat = utils::dot(fl.col(0), fl.col(1));
+      double sHat = fl.rcol(0) * fl.rcol(1);
 
       for (int a = 0; a < eNoN; a++) {
         int Ac = lM.IEN(a,e);

@@ -272,19 +272,6 @@ double norm(const Array<double> &U)
   return std::sqrt(norm_squared(U));
 }
 
-double dot(const Vector<double>& U, const Vector<double>& V)
-{
-  if (U.size() != V.size()) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(SVMP_HERE, "Vectors must have the same size for dot product.");
-  }
-
-  double dot = 0.0;
-  for (int i = 0; i < U.size(); i++) {
-    dot += U(i)*V(i);
-  }
-  return dot;
-}
-
 void print_mem(const std::string& type, const std::string& prefix, const double memory_in_use, const double memory_returned)
 {
   double s = (1024.0);

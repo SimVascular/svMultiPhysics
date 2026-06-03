@@ -692,7 +692,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
       v(i) = lX(i,a) - v(i);
     }
 
-    if (utils::dot(n,v) < 0.0) {
+    if (n * v < 0.0) {
       n = -n;
     }
 
@@ -725,7 +725,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
     v(i) = lX(i,a) - lX(i,b);
   }
 
-  if (utils::dot(n,v) < 0.0) {
+  if (n * v < 0.0) {
     n = -n;
   }
 }

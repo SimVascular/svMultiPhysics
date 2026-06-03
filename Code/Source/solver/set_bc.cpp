@@ -1626,7 +1626,7 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
       h = ks_avg*u + cs_avg*ud;
 
       if (robin_bc.normal_direction_only()) {
-        h = utils::dot(h, nV) * nV;
+        h = (h * nV) * nV;
         for (int a = 0; a < nsd; a++) {
           for (int b = 0; b < nsd; b++) {
             nDn(a,b) = nV(a)*nV(b);

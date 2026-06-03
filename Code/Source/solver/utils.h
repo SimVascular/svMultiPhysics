@@ -73,14 +73,6 @@ double norm(const Vector<double> &U);
  */
 double norm(const Array<double> &U);
 
-/**
- * @brief Compute the dot product of two vectors.
- *
- * The vectors are assumed to have the same size, and an exception is thrown if
- * they do not.
- */
-double dot(const Vector<double>& U, const Vector<double>& V);
-
 void print_mem(const std::string& type, const std::string& prefix, const double memory_in_use, const double memory_returned);
 void print_stats(const std::string& type, const std::string& prefix, const int allocated, const int active);
 
