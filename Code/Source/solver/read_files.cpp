@@ -128,12 +128,15 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 {
   using namespace consts;
   auto bc_type = bc_params->type.value();
+  BoundaryConditionType coupled_bc_type = BoundaryConditionType::bType_Neu;
 
   if (std::set<std::string>{"Dirichlet", "Dir"}.count(bc_type)) {
-    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir)); 
+    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+    coupled_bc_type = BoundaryConditionType::bType_Dir; 
 
   } else if (std::set<std::string>{"Neumann", "Neu"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)); 
+    coupled_bc_type = BoundaryConditionType::bType_Neu;
     if ((lEq.phys == EquationType::phys_fluid) || (lEq.phys == EquationType::phys_FSI)) {
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
     }
