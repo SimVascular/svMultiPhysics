@@ -16,8 +16,6 @@
 // CoupledBoundaryCondition
 // =========================================================================
 
-const CmMod CoupledBoundaryCondition::cm_mod_{};
-
 CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryCondition& other)
     : face_(other.face_)
     , cap_face_vtp_file_(other.cap_face_vtp_file_)
