@@ -391,7 +391,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int iM, const Array<dou
         if (msh.lShl) {
           Vector<double> nV(nsd);
           nn::gnns(nsd, eNoN, Nxi, xl, nV, tmps, tmps);
-          Jac  = sqrt(utils::norm(nV));
+          Jac  = utils::norm(nV);
         } else { 
           nn::gnn(eNoN, nsd, insd, Nxi, xl, Nx, Jac, tmp);
         }
@@ -572,7 +572,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
             sl(a) = s(l,Ac);
           } else { 
             auto rows = s.col(Ac, {l,u});
-            sl(a) = sqrt(utils::norm(rows));
+            sl(a) = utils::norm(rows);
           }
           ibl = ibl + com_mod.iblank(Ac);
         }
@@ -590,7 +590,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
             if (msh.lShl) {
               Vector<double> nV(nsd);
               nn::gnns(nsd, eNoN, Nxi, xl, nV, tmps, tmps);
-              Jac  = sqrt(utils::norm(nV));
+              Jac  = utils::norm(nV);
             } else { 
               nn::gnn(eNoN, nsd, insd, Nxi, xl, Nx, Jac, tmp);
             }
@@ -646,7 +646,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, int dId, const Array<do
             sl(a) = s(l,Ac);
           } else { 
             auto rows = s.col(Ac, {l,u});
-            sl(a) = sqrt(utils::norm(rows));
+            sl(a) = utils::norm(rows);
           }
         }
 
@@ -815,7 +815,7 @@ double integ(const ComMod& com_mod, const CmMod& cm_mod, const faceType& lFa, co
       }
 
       // Calculating the Jacobian (encodes area of face element)
-      double Jac = sqrt(utils::norm(n));
+      double Jac = utils::norm(n);
 
       // Calculating the function value at Gauss point
       double sHat = 0.0;

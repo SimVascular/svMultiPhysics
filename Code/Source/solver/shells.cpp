@@ -248,7 +248,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   Array<double> aCov0(3,2), aCnv0(3,2);
   Vector<double> nV0(3);
   nn::gnns(nsd, lM.eNoN, Nx, x0, nV0, aCov0, aCnv0);
-  double Jac0 = sqrt(utils::norm(nV0));
+  double Jac0 = utils::norm(nV0);
   nV0 = nV0 / Jac0;
 
   // Second derivatives for computing curvature coeffs. (ref. config)
@@ -300,7 +300,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   Array<double> aCov(3,2), aCnv(3,2);
   Vector<double> nV(3);
   nn::gnns(nsd, eNoN, Nx, xc, nV, aCov, aCnv);
-  double Jac = sqrt(utils::norm(nV));
+  double Jac = utils::norm(nV);
   nV = nV / Jac;
 
   // Second derivatives for computing curvature coeffs. (cur. config)
@@ -609,7 +609,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
   Array<double> aCov0(3,2), aCnv0(3,2);
   Vector<double> nV0(3);
   nn::gnns(nsd, lM.eNoN, lM.Nx.rslice(0), tmpA, nV0, aCov0, aCnv0);
-  double Jac0 = sqrt(utils::norm(nV0));
+  double Jac0 = utils::norm(nV0);
   nV0 = nV0 / Jac0;
 
   // Covariant and contravariant bases in current config
@@ -623,7 +623,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
   Array<double> aCov(3,2), aCnv(3,2);
   Vector<double> nV(3);
   nn::gnns(nsd, lM.eNoN, lM.Nx.rslice(0), tmpA, nV, aCov, aCnv);
-  double Jac = sqrt(norm(nV));
+  double Jac = norm(nV);
   nV = nV / Jac;
 
   // Update the position vector of the `artificial' or `ghost' nodes
@@ -644,7 +644,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
       // Reference config
       // eI = eI0 = aI0/|aI0| (reference config)
       //
-      auto aIi = 1.0 / sqrt(norm(a0.col(i)));
+      auto aIi = 1.0 / norm(a0.col(i));
       auto eI = a0.col(i) * aIi;
 
       // nI = nI0 = eI0 x n0 (reference config)
@@ -664,7 +664,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
       // Current config
       // eI = aI/|aI| (current config)
       //
-      aIi = 1.0 / sqrt(utils::norm(a.col(i)));
+      aIi = 1.0 / utils::norm(a.col(i));
       eI = a.col(i)*aIi;
 
       // nI = eI x n (currnt config)
@@ -707,32 +707,32 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
   // a.gCnv (reference config)
   //
   Array<double> adg0(3,3);
-  adg0(0,0) = norm(a0.col(3), aCnv0.col(0));    // xi_4
-  adg0(0,1) = norm(a0.col(4), aCnv0.col(0));    // xi_5
-  adg0(0,2) = norm(a0.col(5), aCnv0.col(0));    // xi_6
+  adg0(0, 0) = a0.rcol(3) * aCnv0.rcol(0); // xi_4
+  adg0(0, 1) = a0.rcol(4) * aCnv0.rcol(0); // xi_5
+  adg0(0, 2) = a0.rcol(5) * aCnv0.rcol(0); // xi_6
 
-  adg0(1,0) = norm(a0.col(3), aCnv0.col(1));    // eta_4
-  adg0(1,1) = norm(a0.col(4), aCnv0.col(1));    // eta_5
-  adg0(1,2) = norm(a0.col(5), aCnv0.col(1));    // eta_6
+  adg0(1, 0) = a0.rcol(3) * aCnv0.rcol(1); // eta_4
+  adg0(1, 1) = a0.rcol(4) * aCnv0.rcol(1); // eta_5
+  adg0(1, 2) = a0.rcol(5) * aCnv0.rcol(1); // eta_6
 
-  adg0(2,0) = norm(a0.col(3), nV0);        // z_4
-  adg0(2,1) = norm(a0.col(4), nV0);        // z_5
-  adg0(2,2) = norm(a0.col(5), nV0);        // z_6
+  adg0(2, 0) = a0.rcol(3) * nV0; // z_4
+  adg0(2, 1) = a0.rcol(4) * nV0; // z_5
+  adg0(2, 2) = a0.rcol(5) * nV0; // z_6
 
   // a.gCnv (current config)
   //
   Array<double> adg(3,3);
-  adg(0,0) = norm(a.col(3), aCnv.col(0));   // xi_4
-  adg(0,1) = norm(a.col(4), aCnv.col(0));   // xi_5
-  adg(0,2) = norm(a.col(5), aCnv.col(0));   // xi_6
+  adg(0, 0) = a.rcol(3) * aCnv.rcol(0); // xi_4
+  adg(0, 1) = a.rcol(4) * aCnv.rcol(0); // xi_5
+  adg(0, 2) = a.rcol(5) * aCnv.rcol(0); // xi_6
 
-  adg(1,0) = norm(a.col(3), aCnv.col(1));   // eta_4
-  adg(1,1) = norm(a.col(4), aCnv.col(1));   // eta_5
-  adg(1,2) = norm(a.col(5), aCnv.col(1));   // eta_6
+  adg(1, 0) = a.rcol(3) * aCnv.rcol(1); // eta_4
+  adg(1, 1) = a.rcol(4) * aCnv.rcol(1); // eta_5
+  adg(1, 2) = a.rcol(5) * aCnv.rcol(1); // eta_6
 
-  adg(2,0) = norm(a.col(3), nV);        // z_4
-  adg(2,1) = norm(a.col(4), nV);        // z_5
-  adg(2,2) = norm(a.col(5), nV);        // z_6
+  adg(2, 0) = a.rcol(3) * nV; // z_4
+  adg(2, 1) = a.rcol(4) * nV; // z_5
+  adg(2, 2) = a.rcol(5) * nV; // z_6
 
   // Xi matrix (reference config)
   //
@@ -978,7 +978,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
 
       if (utils::btest(lM.sbc(i,e),enum_int(BoundaryConditionType::bType_fix))) {
         // eI = eI0 = aI0/|aI0| (reference config)
-        aIi = 1.0 / sqrt(norm(a0.col(i)));
+        aIi = 1.0 / norm(a0.col(i));
         eI = a0.col(i) * aIi;
 
         // nI = nI0 = eI0 x n0 (reference config)
@@ -989,7 +989,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
 
       } else { 
         // eI = aI/|aI| (current config)
-        aIi = 1.0 / sqrt(norm(a.col(i)));
+        aIi = 1.0 / norm(a.col(i));
         eI = a.col(i)*aIi;
 
         // nI = eI x n (currnt config)
@@ -1000,7 +1000,7 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
         nI(1) = eI(2)*nV(0) - eI(0)*nV(2);
         nI(2) = eI(0)*nV(1) - eI(1)*nV(0);
 
-        cI = norm(a.col(i),a.col(p))*aIi*aIi;
+        cI = (a.rcol(i) * a.rcol(p)) * aIi * aIi;
         nInI = mat_dyad_prod(nI, nI, 3);
         eIeI = mat_dyad_prod(eI, eI, 3);
         eIaP = mat_dyad_prod(eI, a.col(p), 3);
@@ -1259,7 +1259,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV0, aCov0, aCnv0);
   //CALL GNNS(lM%eNoN, Nx, tmpX, nV0, aCov0, aCnv0)
 
-  double Jac0 = sqrt(utils::norm(nV0));
+  double Jac0 = utils::norm(nV0);
   nV0 = nV0 / Jac0;
 
   // Covariant and contravariant bases in current config
@@ -1275,7 +1275,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
 
   nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV, aCov, aCnv);
 
-  double Jac = sqrt(utils::norm(nV));
+  double Jac = utils::norm(nV);
   nV = nV / Jac;
 
   // Compute metric tensor in reference and current config

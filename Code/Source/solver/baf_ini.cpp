@@ -393,7 +393,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
        for (int i = 0; i < sV.nrows(); i++) {
          sV(i,a) = sV(i,a) - center(i);
        }
-       sVl.set_col(a, sV.col(a) / sqrt(norm(sV.col(a))));
+       sVl.set_col(a, sV.col(a) / norm(sV.col(a)));
      }
 
      // "s" is going to keep the ew.e value
@@ -401,16 +401,16 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
      for (int a = 0; a < lFa.nNo; a++) {
        int Ac = lFa.gN(a);
        auto nV = com_mod.x.col(Ac) - center;
-       double maxN = norm(nV, sVl.col(0));
+       double maxN = nV * sVl.rcol(0);
        int i = 0;
        for (int b = 1; b < j; b++) {
-         double tmp = norm(nV, sVl.col(b));
+         const double tmp = nV * sVl.rcol(b);
          if (tmp > maxN) {
            maxN = tmp;
            i = b;
          }
        }
-       s(Ac) = 1.0 - norm(nV) / norm(sV.col(i));
+       s(Ac) = 1.0 - norm_squared(nV) / norm_squared(sV.col(i));
      }
 
   } else if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_ud))) { 
@@ -621,9 +621,9 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
           v(i)  = xl(i,a) - xl(i,b);
         }
 
-        if (utils::norm(nV,v) < 0.0) {
+        if (nV * v < 0.0) {
           nV = -nV;
-         }
+        }
 
         for (int a = 0; a < fs.eNoN; a++) {
           int Ac = lFa.IEN(a,e);
@@ -681,7 +681,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
   for (int a = 0; a < lFa.nNo; a++) {
     int Ac = lFa.gN(a);
     auto sV_col = sV.col(Ac);
-    double sln = sqrt(utils::norm(sV_col));
+    double sln = utils::norm(sV_col);
 
     if (utils::is_zero(sln)) {
       if (flag) {
@@ -1014,7 +1014,7 @@ void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM)
       Array<double> tmpR(nsd,nsd-1);
       auto Nxi = lM.Nx.slice(g);
       nn::gnns(nsd, eNoN, Nxi, xl, nV, tmpR, tmpR);
-      double Jac = sqrt(norm(nV));
+      double Jac = norm(nV);
 
       for (int a = 0; a < eNoN; a++) {
         int Ac = lM.IEN(a,e);
@@ -1032,7 +1032,7 @@ void shl_ini(const ComMod& com_mod, const CmMod& cm_mod, mshType& lM)
 
   for (int a = 0; a < nNo; a++) {
     int Ac = lM.gN(a);
-    double Jac = sqrt(norm(sV.col(Ac)));
+    double Jac = norm(sV.col(Ac));
 
     if (is_zero(Jac)) {
       if (flag) {

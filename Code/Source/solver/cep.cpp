@@ -167,7 +167,7 @@ void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
 
     // Compute fiber stretch
     for (int i = 0; i < nFn; i++) {
-      Ls(i) = sqrt(utils::norm(fN.col(i), mat_mul(C, fN.col(i))));
+      Ls(i) = sqrt(fN.rcol(i) * mat_mul(C, fN.rcol(i)));
       for (int j = 0; j < 2; j++) {
         fl(j,i) = fN(j,i) / Ls(i);
       }
@@ -320,7 +320,7 @@ void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
 
     // Compute fiber stretch
     for (int i = 0; i < nFn; i++) {
-      Ls(i) = sqrt(utils::norm(fN.col(i), mat_mul(C, fN.col(i))));
+      Ls(i) = sqrt(fN.rcol(i) * mat_mul(C, fN.rcol(i)));
       for (int j = 0; j < 3; j++) {
         fl(j,i) = fN(j,i) / Ls(i);
       }

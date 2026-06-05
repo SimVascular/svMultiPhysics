@@ -1081,7 +1081,7 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
     double Jac = 0.0;
     Vector<double> n(cap_nsd_);
     n = utils::cross(xXi);
-    Jac = sqrt(utils::norm(n));
+    Jac = utils::norm(n);
 
     if (utils::is_zero(Jac)) {
         throw CappingSurfaceBaseException("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
@@ -1098,7 +1098,7 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
             n0(i) = normals_(i, e);
         }
 
-        double n0_norm = sqrt(utils::norm(n0));
+        double n0_norm = utils::norm(n0);
         if (!utils::is_zero(n0_norm)) {
             n0 = n0 / n0_norm;
 
