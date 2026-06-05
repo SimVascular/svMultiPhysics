@@ -252,7 +252,7 @@ void bpost(Simulation* simulation, const mshType& lM, Array<double>& res, const 
       double Jac;
 
       for (int a = 0; a < eNoN; a++) {
-        if (utils::is_zero(utils::norm(lnV.col(a)))) {
+        if (utils::is_zero(utils::norm_squared(lnV.col(a)))) {
           lnV.set_col(a, nV);
         }
       }
@@ -589,11 +589,11 @@ void fib_algn_post(Simulation* simulation, const mshType& lM, Array<double>& res
         for (int i = 0; i < nsd; i++) {
           auto fN_col = fN.col(iFn);
           auto F_fN = mat_fun::mat_mul(F, fN_col);
-          fl.set_col(iFn, F_fN / sqrt(utils::norm(F_fN)));
+          fl.set_col(iFn, F_fN / utils::norm(F_fN));
         }
       }
 
-      double sHat = utils::norm(fl.col(0), fl.col(1));
+      double sHat = fl.rcol(0) * fl.rcol(1);
 
       for (int a = 0; a < eNoN; a++) {
         int Ac = lM.IEN(a,e);
@@ -688,7 +688,7 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
         for (int i = 0; i < nsd; i++) {
           auto fN_col = fN.col(iFn);
           auto F_fN = mat_fun::mat_mul(F, fN_col);
-          fl.set_col(iFn, F_fN / sqrt(utils::norm(F_fN)));
+          fl.set_col(iFn, F_fN / utils::norm(F_fN));
         }
       }
 
@@ -770,7 +770,7 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
 
       // Compute fiber stretch based on 4th invariant: I_{4,f} = F.fN.F.fN
       auto fl = mat_fun::mat_mul(F, lM.fN.rows(0,nsd-1,e));
-      double lambda = sqrt(utils::norm(fl));
+      double lambda = utils::norm(fl);
 
       // L2 projection from integration points to nodes
       double w = lM.w(g)*Jac;
@@ -861,7 +861,7 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
       double p  = lY(nsd,Ac);
 
       auto u  = lY.col(Ac, {0,nsd-1});
-      double unorm = utils::norm(u);
+      double unorm = utils::norm_squared(u);
       for (int i = 0; i < nsd; i++) {
         res(i,Ac) = (p + 0.5 * rho * unorm) * u(i);
       }
@@ -973,7 +973,7 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
             u(i) = u(i) + N(a)*yl(i,a);     
           }
         }
-        double unorm = utils::norm(u);
+        double unorm = utils::norm_squared(u);
 
         for (int i = 0; i < nsd; i++) {
           lRes(i) = (p + 0.5 * rho * unorm) * u(i);
@@ -1369,12 +1369,12 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
         // Covariant and contravariant bases (ref. config.)
         //
         nn::gnns(nsd, eNoN, Nx, x0, nV0, aCov0, aCnv0);
-        auto Jac0 = sqrt(norm(nV0));
+        auto Jac0 = norm(nV0);
         nV0 = nV0 / Jac0;
 
         // Covariant and contravariant bases (spatial config.)
         nn::gnns(nsd, eNoN, Nx, xc, nV, aCov, aCnv);
-        auto Jac = sqrt(norm(nV));
+        auto Jac = norm(nV);
         nV = nV/Jac;
 
         // Second derivatives for curvature coeffs. (ref. config)
@@ -1445,7 +1445,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
         }
 
         nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV0, aCov0, aCnv0);
-        auto Jac0 = sqrt(norm(nV0));
+        auto Jac0 = norm(nV0);
         nV0  = nV0 / Jac0;
 
         // Covariant and contravariant bases (spatial config.)
@@ -1457,7 +1457,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
         }
 
         nn::gnns(nsd, lM.eNoN, Nx, tmpX, nV, aCov, aCnv);
-        auto Jac = sqrt(norm(nV));
+        auto Jac = norm(nV);
         nV = nV / Jac;
 
         // Compute metric tensor (aa)

@@ -283,7 +283,7 @@ void cmm_b(ComMod& com_mod, const faceType& lFa, const int e, const Array<double
     Vector<double> nV(nsd);
     auto Nx = lFa.Nx.slice(g);
     nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, 3, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
-    double Jac = sqrt(utils::norm(nV));
+    double Jac = utils::norm(nV);
     nV = nV / Jac;
     double w = lFa.w(g)*Jac;
     auto N = lFa.N.col(g);
@@ -334,7 +334,7 @@ void bcmmi(ComMod& com_mod, const int eNoN, const int idof, const double w, cons
     }
 
   } else {
-    double wl = w * sqrt(utils::norm(nV));
+    double wl = w * utils::norm(nV);
     for (int a = 0; a < eNoN; a++) {
       lR(0,a) = lR(0,a) - wl*N(a)*tfn(0);
       lR(1,a) = lR(1,a) - wl*N(a)*tfn(1);
@@ -375,7 +375,7 @@ void cmmi(ComMod& com_mod, const mshType& lM, const Array<double>& al, const Arr
   }
 
   auto nV = utils::cross(xXi);
-  auto Jac = sqrt(utils::norm(nV));
+  auto Jac = utils::norm(nV);
   nV = nV / Jac;
 
   Array<double> lR(dof,3); 
@@ -540,13 +540,13 @@ void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double
   }
 
   auto nV = utils::cross(xXi);
-  double Jac = sqrt(utils::norm(nV));
+  double Jac = utils::norm(nV);
   nV = nV / Jac;
 
   //  Rotation matrix
   //
   Array<double> thet(3,3);
-  thet.set_row(0, xXi.col(0) / sqrt(utils::norm(xXi.col(0))));
+  thet.set_row(0, xXi.col(0) / utils::norm(xXi.col(0)));
   thet.set_row(2, nV);
 
   thet(1,0) = thet(2,1)*thet(0,2) - thet(2,2)*thet(0,1);

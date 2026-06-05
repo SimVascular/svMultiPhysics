@@ -1046,7 +1046,7 @@ void uris_calc_sdf(ComMod& com_mod) {
       Vector<double> unitNormal(nsd);
       uris_find_closest_face_centroid(uris_obj, xp, nsd, minS, Ec, jM, xb);
       uris_face_unit_normal(uris_obj, nsd, jM, Ec, unitNormal);
-      const double dotp = utils::norm(xp - xb, unitNormal);
+      const double dotp = (xp - xb) * unitNormal;
       double sdf_sign = uris_compute_sdf_sign(uris_obj, xp, xb, dotp);
 
       uris_obj.sdf[ca] = sdf_sign * minS;
@@ -1170,8 +1170,8 @@ bool same_side(const Vector<double>& v1, const Vector<double>& v2,
   V.set_col(1, v31);
 
   const Vector<double> N = utils::cross(V);
-  const double dotV4 = utils::norm(N, v4-v1);
-  const double dotP = utils::norm(N, p-v1);
+  const double dotV4 = N * (v4 - v1);
+  const double dotP = N * (p - v1);
 
   // P and v4 are on the same side if their dot products share a sign
   const bool sameside = (dotP >= 0.0) == (dotV4 >= 0.0);
@@ -1253,7 +1253,7 @@ void uris_face_unit_normal(const urisType& uris_obj, const int nsd, const int jM
   }
 
   unitNormal = utils::cross(xXi);
-  const auto Jac = sqrt(utils::norm(unitNormal));
+  const auto Jac = utils::norm(unitNormal);
   if (uris_obj.invert_normal) {
     unitNormal = -unitNormal / Jac;
   } else {
@@ -1275,7 +1275,7 @@ double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
   // sensitive to local face normal orientation inconsistency and more 
   // aligned with the intended physical flow direction
   if (uris_obj.clsFlg) {
-    auto dot_nrm = utils::norm(xp-xb, uris_obj.nrm);
+    auto dot_nrm = (xp - xb) * uris_obj.nrm;
     return (dot_nrm < 0.0 && dotP < 0.0) ? -1.0 : 1.0;
   }
   return (dotP < 0.0) ? -1.0 : 1.0;

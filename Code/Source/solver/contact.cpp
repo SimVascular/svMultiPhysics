@@ -79,7 +79,7 @@ void construct_contact_pnlty(ComMod& com_mod, CmMod& cm_mod, const SolutionState
 
       Vector<double> nV1(nsd);
       nn::gnns(nsd, eNoN, Nx, xl, nV1, gCov, gCnv);
-      double Jac = sqrt(utils::norm(nV1));
+      double Jac = utils::norm(nV1);
       nV1 = nV1 / Jac;
 
       for (int g = 0; g < msh.nG; g++) {
@@ -221,11 +221,11 @@ void construct_contact_pnlty(ComMod& com_mod, CmMod& cm_mod, const SolutionState
       auto nV2 = sF.rcol(Bc);
 
       auto x12 = x1 - x2;
-      double c = sqrt(utils::norm(x12));
-      double al = sqrt(fabs(utils::norm(nV1, nV2)));
+      double c = utils::norm(x12);
+      double al = sqrt(fabs(nV1 * nV2));
 
       if (c <= cntctM.c && al >= cntctM.al) {
-        double d = utils::norm(x12, nV2);
+        double d = x12 * nV2;
         bool flag = false;
         double pk{0.0};
    
