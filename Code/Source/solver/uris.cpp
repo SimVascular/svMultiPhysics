@@ -1348,11 +1348,11 @@ void uris_interp_valve_velocity(const urisType& uris_obj, const Vector<double>& 
   E2 = lX.rcol(2) - lX.rcol(0);
   v = xp_plane - lX.rcol(0);
 
-  auto g11 = utils::norm(E1, E1);
-  auto g12 = utils::norm(E1, E2); 
-  auto g22 = utils::norm(E2, E2);
-  auto b1 = utils::norm(v, E1);
-  auto b2 = utils::norm(v, E2);
+  auto g11 = E1 * E1;
+  auto g12 = E1 * E2; 
+  auto g22 = E2 * E2;
+  auto b1 = v * E1;
+  auto b2 = v * E2;
   double det = g11 * g22 - g12 * g12;
 
   double xi = (g22 * b1 - g12 * b2) / det;
