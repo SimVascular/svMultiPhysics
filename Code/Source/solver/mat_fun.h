@@ -11,6 +11,7 @@
 #include "Array.h"
 #include "Tensor4.h"
 #include "Vector.h"
+#include "FE/Common/FEException.h"
 
 /// @brief The classes defined here duplicate the data structures in the 
 /// Fortran MATFUN module defined in MATFUN.f. 
@@ -47,10 +48,19 @@ namespace mat_fun {
 
     // Function to convert a higher-dimensional array like Dm
     template <typename MatrixType>
-    void copy_Dm(const MatrixType& mat, Array<double>& dest, int rows, int cols) {
-        for (int i = 0; i < rows; ++i)
-            for (int j = 0; j < cols; ++j)
+    void copy_Dm(const MatrixType& mat, Array<double>& dest) {
+        if ((mat.rows() != dest.nrows()) || (mat.cols() != dest.ncols())) { 
+          auto mat_dims = (std::stringstream() << "(" << mat.rows()  << "x" << mat.cols() << ")").str();
+          auto dest_dims = (std::stringstream() << "(" << dest.nrows()  << "x" << dest.ncols() << ")").str();
+          svmp::raise<svmp::FE::InvalidArgumentException>( SVMP_HERE, "The 'mat" + mat_dims + "' and 'dest" + dest_dims + 
+              "' arrays have incompatible sizes.");
+        }
+
+        for (int i = 0; i < mat.rows(); ++i) {
+            for (int j = 0; j < mat.cols(); ++j) {
                 dest(i, j) = mat(i, j);
+            }
+        }
     }
 
     template <int nsd>

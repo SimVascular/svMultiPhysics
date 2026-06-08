@@ -103,7 +103,7 @@ void cc_to_voigt(const int nsd, const Tensor4<double>& CC, Array<double>& Dm)
 }
 
 template <int nsd>
-void cc_to_voigt_eigen(const Tensor<nsd>& CC, Matrix<2*nsd>& Dm)
+void cc_to_voigt_eigen(const Tensor<nsd>& CC, Matrix<3*(nsd-1)>& Dm)
 {
   if (nsd == 3) {
     Dm(0,0) = CC(0,0,0,0);
@@ -328,7 +328,7 @@ Eigen::Matrix<double, nsd, 1> compute_sheet_normal(const Eigen::Matrix<double, n
  */
 template<size_t nsd>
 void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& lDmn, const Matrix<nsd>& F, const int nfd,
-    const Eigen::Matrix<double, nsd, Eigen::Dynamic> fl, const double ya, Matrix<nsd>& S, Matrix<2*nsd>& Dm, double& Ja)
+    const Eigen::Matrix<double, nsd, Eigen::Dynamic> fl, const double ya, Matrix<nsd>& S, Matrix<3*(nsd-1)>& Dm, double& Ja)
 {
   using namespace consts;
   using namespace mat_fun;
@@ -480,6 +480,7 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
     case ConstitutiveModelType::stIso_nHook: {
       // Compute fictious stress and elasticity tensor
       Matrix<nsd> S_bar = 2.0 * stM.C10 * Idm;
+
       Tensor<nsd> CC_bar; 
       CC_bar.setZero();
 
@@ -885,14 +886,14 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
 
         // Initialize stress and elasticity tensors
         Eigen::Matrix2d S_2D = Eigen::Matrix2d::Zero();
-        Eigen::Matrix4d Dm_2D = Eigen::Matrix4d::Zero();
+        Eigen::Matrix3d Dm_2D = Eigen::Matrix3d::Zero();
 
         // Call templated function
         compute_pk2cc<2>(com_mod, cep_mod, lDmn, F_2D, nfd, fl_2D, ya, S_2D, Dm_2D, Ja);
 
         // Copy results back
         mat_fun::convert_to_array(S_2D, S);
-        mat_fun::copy_Dm(Dm_2D, Dm, 4, 4);
+        mat_fun::copy_Dm(Dm_2D, Dm);
 
     } else if (nsd == 3) {
         // Copy deformation gradient to Eigen matrix
@@ -916,7 +917,7 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
 
         // Copy results back
         mat_fun::convert_to_array(S_3D, S);
-        mat_fun::copy_Dm(Dm_3D, Dm, 6, 6);
+        mat_fun::copy_Dm(Dm_3D, Dm);
     }
 }
 

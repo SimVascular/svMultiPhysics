@@ -219,6 +219,9 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 
       for (int i = 0; i < nsd; i++) {
         xl(i,a) = com_mod.x(i,Ac);
+      }
+
+      for (int i = 0; i < tDof; i++) {
         dl(i,a) = Dg(i,Ac);
       }
     }
