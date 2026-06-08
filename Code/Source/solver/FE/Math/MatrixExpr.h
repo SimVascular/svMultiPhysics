@@ -11,10 +11,11 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <type_traits>
-#include <cmath>
-#include "ExpressionOps.h"
+
+#include "VectorExpr.h"
 
 namespace svmp {
 namespace FE {

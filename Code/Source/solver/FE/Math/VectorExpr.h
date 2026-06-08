@@ -10,14 +10,69 @@
  * of assignment, eliminating intermediate allocations and improving performance.
  */
 
+#include <cmath>
 #include <cstddef>
 #include <type_traits>
-#include <cmath>
-#include "ExpressionOps.h"
 
 namespace svmp {
 namespace FE {
 namespace math {
+namespace detail {
+namespace ops {
+
+struct Add {
+    template<typename T1, typename T2>
+    constexpr auto operator()(const T1& a, const T2& b) const {
+        return a + b;
+    }
+};
+
+struct Sub {
+    template<typename T1, typename T2>
+    constexpr auto operator()(const T1& a, const T2& b) const {
+        return a - b;
+    }
+};
+
+struct Mul {
+    template<typename T1, typename T2>
+    constexpr auto operator()(const T1& a, const T2& b) const {
+        return a * b;
+    }
+};
+
+struct Div {
+    template<typename T1, typename T2>
+    constexpr auto operator()(const T1& a, const T2& b) const {
+        return a / b;
+    }
+};
+
+struct Negate {
+    template<typename T>
+    constexpr auto operator()(const T& a) const {
+        return -a;
+    }
+};
+
+struct Abs {
+    template<typename T>
+    constexpr auto operator()(const T& a) const {
+        using std::abs;
+        return abs(a);
+    }
+};
+
+struct Sqrt {
+    template<typename T>
+    constexpr auto operator()(const T& a) const {
+        using std::sqrt;
+        return sqrt(a);
+    }
+};
+
+} // namespace ops
+} // namespace detail
 
 /**
  * @brief Base class for all vector expressions using CRTP

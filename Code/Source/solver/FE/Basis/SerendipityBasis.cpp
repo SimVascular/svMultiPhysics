@@ -9,7 +9,6 @@
 #include "LagrangeBasis.h"
 #include "NodeOrderingConventions.h"
 #include "Math/DenseLinearAlgebra.h"
-#include "Math/IntegerMath.h"
 
 #include <algorithm>
 #include <array>
@@ -20,8 +19,6 @@
 namespace svmp {
 namespace FE {
 namespace basis {
-
-using math::pow_int;
 
 namespace {
 using Vec3 = math::Vector<Real, 3>;
@@ -150,7 +147,7 @@ std::vector<Real> quad_serendipity_inverse_vandermonde(
         const Real y = nodes[static_cast<std::size_t>(row)][1];
         for (int col = 0; col < n; ++col) {
             const auto [ax, ay] = exponents[static_cast<std::size_t>(col)];
-            vandermonde[idx(row, col)] = pow_int(x, ax) * pow_int(y, ay);
+            vandermonde[idx(row, col)] = std::pow(x, ax) * std::pow(y, ay);
         }
     }
 
@@ -521,7 +518,7 @@ void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
         std::vector<Real> monomials(size_, Real(0));
         for (std::size_t j = 0; j < size_; ++j) {
             const auto [ax, ay] = quad_monomial_exponents_[j];
-            monomials[j] = pow_int(x, ax) * pow_int(y, ay);
+            monomials[j] = std::pow(x, ax) * std::pow(y, ay);
         }
 
         for (std::size_t i = 0; i < size_; ++i) {
@@ -609,8 +606,10 @@ void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
         std::vector<Real> dmon_dy(size_, Real(0));
         for (std::size_t j = 0; j < size_; ++j) {
             const auto [ax, ay] = quad_monomial_exponents_[j];
-            dmon_dx[j] = (ax > 0) ? Real(ax) * pow_int(x, ax - 1) * pow_int(y, ay) : Real(0);
-            dmon_dy[j] = (ay > 0) ? pow_int(x, ax) * Real(ay) * pow_int(y, ay - 1) : Real(0);
+            dmon_dx[j] =
+                (ax > 0) ? Real(ax) * std::pow(x, ax - 1) * std::pow(y, ay) : Real(0);
+            dmon_dy[j] =
+                (ay > 0) ? std::pow(x, ax) * Real(ay) * std::pow(y, ay - 1) : Real(0);
         }
 
         for (std::size_t i = 0; i < size_; ++i) {
@@ -747,9 +746,15 @@ void SerendipityBasis::evaluate_hessians(const math::Vector<Real, 3>& xi,
         std::vector<Real> dyy(size_, Real(0));
         for (std::size_t j = 0; j < size_; ++j) {
             const auto [ax, ay] = quad_monomial_exponents_[j];
-            dxx[j] = (ax > 1) ? Real(ax * (ax - 1)) * pow_int(x, ax - 2) * pow_int(y, ay) : Real(0);
-            dxy[j] = (ax > 0 && ay > 0) ? Real(ax * ay) * pow_int(x, ax - 1) * pow_int(y, ay - 1) : Real(0);
-            dyy[j] = (ay > 1) ? Real(ay * (ay - 1)) * pow_int(x, ax) * pow_int(y, ay - 2) : Real(0);
+            dxx[j] = (ax > 1)
+                         ? Real(ax * (ax - 1)) * std::pow(x, ax - 2) * std::pow(y, ay)
+                         : Real(0);
+            dxy[j] = (ax > 0 && ay > 0)
+                         ? Real(ax * ay) * std::pow(x, ax - 1) * std::pow(y, ay - 1)
+                         : Real(0);
+            dyy[j] = (ay > 1)
+                         ? Real(ay * (ay - 1)) * std::pow(x, ax) * std::pow(y, ay - 2)
+                         : Real(0);
         }
 
         for (std::size_t i = 0; i < size_; ++i) {
