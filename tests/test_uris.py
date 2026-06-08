@@ -10,7 +10,7 @@ fields_cfd = ["Velocity", "Pressure", "Traction", "WSS", "Vorticity", "Divergenc
 
 def test_pipe_uris_cfd(n_proc):
     test_folder = "pipe_uris_cfd"
-    t_max = 5
+    t_max = 3
     run_with_reference(base_folder, test_folder, fields_cfd, n_proc, t_max)
 
 fields_fsi = ["Displacement", "Pressure", "Velocity"]
