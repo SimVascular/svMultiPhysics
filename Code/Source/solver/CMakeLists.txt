@@ -348,11 +348,11 @@ if(ENABLE_UNIT_TEST)
 
   # install Google Test
   #if(NOT TARGET gtest_main AND NOT TARGET gtest)
-  include(FetchContent)
   FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/heads/main.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+          googletest
+          GIT_REPOSITORY https://github.com/google/googletest.git
+          GIT_TAG v1.17.0
+          DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   )
   FetchContent_MakeAvailable(googletest)
   #endif()
