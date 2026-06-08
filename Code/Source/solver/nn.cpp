@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-// The functions defined here replicate the Fortran functions defined in NN.f.
+// Solver-facing element setup, Gauss integration, FE Basis evaluation, and
+// shape-function bounds.
 //
 // The functions are used to 
 //
@@ -25,13 +26,8 @@
 
 #include "lapack_defs.h"
 
-#include <algorithm>
 #include <array>
-#include <cstdlib>
-#include <cctype>
-#include <exception>
 #include <functional>
-#include <iostream> 
 #include <math.h> 
 #include <memory>
 #include <optional>
@@ -51,12 +47,6 @@ using namespace consts;
 // Define maps used to set element Gauss integration data. 
 #include "nn_elem_gip.h"
 
-// Define maps used to set element shape function data. 
-#include "nn_elem_gnn.h"
-
-// Define maps used to get element shape function 2nd derivative data. 
-#include "nn_elem_gnnxx.h"
-
 // Define a map type used to set the bounds of element shape functions.
 #include "nn_elem_nn_bnds.h"
 
@@ -70,77 +60,6 @@ struct BasisSelection {
   fe::BasisType basis;
   int order;
 };
-
-enum class BasisMode {
-  Auto,
-  Legacy,
-  Fe
-};
-
-std::string normalize_basis_mode_name(std::string value)
-{
-  std::transform(value.begin(), value.end(), value.begin(),
-      [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-  return value;
-}
-
-BasisMode parse_basis_mode()
-{
-  const char* mode_env = std::getenv("SVMP_BASIS_MODE");
-  if (mode_env == nullptr || *mode_env == '\0') {
-    return BasisMode::Auto;
-  }
-
-  const std::string mode = normalize_basis_mode_name(mode_env);
-  if (mode == "auto") {
-    return BasisMode::Auto;
-  }
-  if (mode == "legacy") {
-    return BasisMode::Legacy;
-  }
-  if (mode == "fe") {
-    return BasisMode::Fe;
-  }
-
-  throw febasis::BasisConfigurationException(
-      "Invalid SVMP_BASIS_MODE='" + std::string(mode_env) +
-          "'. Expected one of: auto, legacy, fe",
-      __FILE__, __LINE__, __func__);
-}
-
-BasisMode active_basis_mode()
-{
-  static const BasisMode mode = parse_basis_mode();
-  return mode;
-}
-
-const char* basis_mode_name(BasisMode mode)
-{
-  switch (mode) {
-    case BasisMode::Auto:
-      return "auto";
-    case BasisMode::Legacy:
-      return "legacy";
-    case BasisMode::Fe:
-      return "fe";
-  }
-  return "unknown";
-}
-
-void log_basis_mode_once()
-{
-  static const bool logged = []() {
-    std::cout << "[svMultiPhysics] SVMP_BASIS_MODE="
-              << basis_mode_name(active_basis_mode()) << std::endl;
-    return true;
-  }();
-  (void)logged;
-}
-
-bool basis_mode_allows_fe_adapter()
-{
-  return active_basis_mode() != BasisMode::Legacy;
-}
 
 std::string solver_element_name(consts::ElementType eType)
 {
@@ -178,15 +97,11 @@ std::optional<BasisSelection> to_basis_selection(consts::ElementType eType)
 
 bool use_basis_adapter_for(consts::ElementType eType)
 {
-  return basis_mode_allows_fe_adapter() && to_basis_selection(eType).has_value();
+  return to_basis_selection(eType).has_value();
 }
 
 bool supports_face_basis_adapter_for(consts::ElementType eType)
 {
-  if (!basis_mode_allows_fe_adapter()) {
-    return false;
-  }
-
   switch (eType) {
     case consts::ElementType::LIN1:
     case consts::ElementType::LIN2:
@@ -464,73 +379,20 @@ void evaluate_basis_hessians(const int insd,
   copy_basis_hessians_to_solver_nxx(eType, eNoN, gaus_pt, basis->dimension(), hessians, Nxx);
 }
 
-void call_legacy_get_gnn(const int insd,
-                         consts::ElementType eType,
-                         const int eNoN,
-                         const int g,
-                         Array<double>& xi,
-                         Array<double>& N,
-                         Array3<double>& Nx,
-                         const std::string& basis_failure = "")
+void set_point_face_shape_data(const int gaus_pt, faceType& face)
 {
-  try {
-    get_element_shape_data[eType](insd, eNoN, g, xi, N, Nx);
-  } catch (const std::bad_function_call&) {
-    std::string message = "[get_gnn] No FE Basis or legacy shape support for element " +
-        solver_element_name(eType) + "; legacy fallback was attempted";
-    if (!basis_failure.empty()) {
-      message += " after FE Basis failure: " + basis_failure;
+  face.N(0, gaus_pt) = 1.0;
+  for (int row = 0; row < face.Nx.nrows(); ++row) {
+    for (int col = 0; col < face.Nx.ncols(); ++col) {
+      face.Nx(row, col, gaus_pt) = 0.0;
     }
-    throw fe::InvalidElementException(message, solver_element_name(eType),
-        __FILE__, __LINE__, __func__);
   }
-}
-
-void call_legacy_get_gn_nxx(const int insd,
-                            const int ind2,
-                            consts::ElementType eType,
-                            const int eNoN,
-                            const int gaus_pt,
-                            const Array<double>& xi,
-                            Array3<double>& Nxx,
-                            const std::string& basis_failure = "",
-                            const bool allow_missing_legacy_table = false)
-{
-  try {
-    get_element_2nd_derivs[eType](insd, ind2, eNoN, gaus_pt, xi, Nxx);
-  } catch (const std::bad_function_call&) {
-    if (allow_missing_legacy_table) {
-      return;
-    }
-
-    std::string message = "[get_gn_nxx] No FE Basis or legacy second-derivative support for element " +
-        solver_element_name(eType) + "; legacy fallback was attempted";
-    if (!basis_failure.empty()) {
-      message += " after FE Basis failure: " + basis_failure;
-    }
-    throw fe::InvalidElementException(message, solver_element_name(eType),
-        __FILE__, __LINE__, __func__);
-  }
-}
-
-void call_legacy_face_shape_data(const int gaus_pt, faceType& face)
-{
-  auto legacy_shape = set_face_shape_data.find(face.eType);
-  if (legacy_shape == set_face_shape_data.end()) {
-    throw fe::InvalidElementException(
-        "[get_gnn(face)] No FE Basis or legacy face shape support",
-        solver_element_name(face.eType), __FILE__, __LINE__, __func__);
-  }
-
-  legacy_shape->second(gaus_pt, face);
 }
 
 } // namespace
 
 void get_gip(const int insd, consts::ElementType eType, const int nG, Vector<double>& w, Array<double>& xi) 
 {
-  log_basis_mode_once();
-
   try {
     get_element_gauss_int_data[eType](insd, nG, w, xi);
   } catch (const std::bad_function_call& exception) {
@@ -546,8 +408,6 @@ void get_gip(const int insd, consts::ElementType eType, const int nG, Vector<dou
 //
 void get_gip(mshType& mesh)
 {
-  log_basis_mode_once();
-
   try {
     set_element_gauss_int_data[mesh.eType](mesh);
   } catch (const std::bad_function_call& exception) {
@@ -559,8 +419,6 @@ void get_gip(mshType& mesh)
 
 void get_gip(Simulation* simulation, faceType& face)
 {
-  log_basis_mode_once();
-
   try {
     set_face_gauss_int_data[face.eType](face);
   } catch (const std::bad_function_call& exception) {
@@ -575,30 +433,16 @@ void get_gip(Simulation* simulation, faceType& face)
 void get_gnn(const int insd, consts::ElementType eType, const int eNoN, const int g, Array<double>& xi, 
     Array<double>& N, Array3<double>& Nx)
 {
-  log_basis_mode_once();
-
-  if (use_basis_adapter_for(eType)) {
-    try {
-      evaluate_basis_values_and_gradients(insd, eType, eNoN, g, xi, N, Nx);
-      return;
-    } catch (const fe::NotImplementedException& exception) {
-      call_legacy_get_gnn(insd, eType, eNoN, g, xi, N, Nx, exception.what());
-      return;
-    } catch (const std::exception& exception) {
-      throw febasis::BasisEvaluationException(
-          "[get_gnn] FE Basis adapter failed for element " +
-              solver_element_name(eType) +
-              "; legacy fallback was not attempted for this approved element: " +
-              exception.what(),
-          __FILE__, __LINE__, __func__);
-    }
+  if (!use_basis_adapter_for(eType)) {
+    throw febasis::BasisElementCompatibilityException(
+        "[get_gnn] FE Basis does not support solver element " + solver_element_name(eType),
+        __FILE__, __LINE__, __func__);
   }
 
-  call_legacy_get_gnn(insd, eType, eNoN, g, xi, N, Nx);
+  evaluate_basis_values_and_gradients(insd, eType, eNoN, g, xi, N, Nx);
 }
 
-/// @brief A big fat hack because the Fortran GETNN() operates on primitive types but
-/// the C++ version does not, uses Array and Vector objects.
+/// @brief Adapter overload for vector-style callers.
 //
 void get_gnn(const int nsd, consts::ElementType eType, const int eNoN, Vector<double>& xi, 
     Vector<double>& N, Array<double>& Nx)
@@ -625,86 +469,48 @@ void get_gnn(Simulation* simulation, int gaus_pt, faceType& face)
 {
   using consts::ElementType;
 
-  log_basis_mode_once();
-
-  if (active_basis_mode() == BasisMode::Legacy) {
-    call_legacy_face_shape_data(gaus_pt, face);
-    return;
-  }
-
   if (face.eType == ElementType::NRB) {
     throw fe::NotImplementedException(
-        "[get_gnn(face)] NRB face shape functions remain unsupported by FE Basis and the legacy face table",
+        "[get_gnn(face)] NRB face shape functions are unsupported by FE Basis",
         __FILE__, __LINE__, __func__);
   }
 
-  if (supports_face_basis_adapter_for(face.eType)) {
-    try {
-      // FE Basis owns mapped face N/Nx formulas; faceType remains the solver-facing storage contract.
-      evaluate_face_basis_values_and_gradients(gaus_pt, face);
-      return;
-    } catch (const std::exception& exception) {
-      throw febasis::BasisEvaluationException(
-          "[get_gnn(face)] FE Basis face adapter failed for mapped face element " +
-              solver_element_name(face.eType) + "; legacy fallback was not attempted: " +
-              exception.what(),
-          __FILE__, __LINE__, __func__);
-    }
-  }
-
   if (face.eType == ElementType::PNT) {
-    // Point faces have no mapped FE Basis representation in this pass; keep the legacy scalar value path.
-    call_legacy_face_shape_data(gaus_pt, face);
+    set_point_face_shape_data(gaus_pt, face);
     return;
   }
 
-  // The legacy face table is retained only for explicitly unsupported paths and future cleanup.
-  call_legacy_face_shape_data(gaus_pt, face);
+  if (supports_face_basis_adapter_for(face.eType)) {
+    // FE Basis owns mapped face N/Nx formulas; faceType remains the solver-facing storage contract.
+    evaluate_face_basis_values_and_gradients(gaus_pt, face);
+    return;
+  }
+
+  throw febasis::BasisElementCompatibilityException(
+      "[get_gnn(face)] FE Basis does not support face element " + solver_element_name(face.eType),
+      __FILE__, __LINE__, __func__);
 }
 
-/// @brief Returns second order derivatives at given natural coords
-///
-/// Replicates 'SUBROUTINE GETGNNxx(insd, ind2, eType, eNoN, xi, Nxx)'.
+/// @brief Returns second order derivatives at given natural coords.
 //
 void get_gn_nxx(const int insd, const int ind2, consts::ElementType eType, const int eNoN, const int gaus_pt, 
     const Array<double>& xi, Array3<double>& Nxx)
 {
   using namespace consts;
 
-  log_basis_mode_once();
-
   // NRB/PNT and face-only Hessian paths remain intentionally unsupported here.
   if (eType == ElementType::NRB || eType == ElementType::PNT) {
     return;
   }
 
-  if (active_basis_mode() == BasisMode::Legacy) {
-    call_legacy_get_gn_nxx(
-        insd, ind2, eType, eNoN, gaus_pt, xi, Nxx, "", true);
-    return;
+  if (!use_basis_adapter_for(eType)) {
+    throw febasis::BasisElementCompatibilityException(
+        "[get_gn_nxx] FE Basis Hessian evaluation does not support solver element " +
+            solver_element_name(eType),
+        __FILE__, __LINE__, __func__);
   }
 
-  if (use_basis_adapter_for(eType)) {
-    try {
-      evaluate_basis_hessians(insd, ind2, eType, eNoN, gaus_pt, xi, Nxx);
-      return;
-    } catch (const fe::NotImplementedException& exception) {
-      throw fe::NotImplementedException(
-          "[get_gn_nxx] FE Basis Hessian support is required for mapped volume element " +
-              solver_element_name(eType) + " but is not implemented: " + exception.what(),
-          __FILE__, __LINE__, __func__);
-    } catch (const std::exception& exception) {
-      throw febasis::BasisEvaluationException(
-          "[get_gn_nxx] FE Basis Hessian adapter failed for element " +
-              solver_element_name(eType) +
-              "; legacy fallback was not attempted for this approved element: " +
-              exception.what(),
-          __FILE__, __LINE__, __func__);
-    }
-  }
-
-  // Legacy Hessian tables are reserved for intentionally unsupported families.
-  call_legacy_get_gn_nxx(insd, ind2, eType, eNoN, gaus_pt, xi, Nxx);
+  evaluate_basis_hessians(insd, ind2, eType, eNoN, gaus_pt, xi, Nxx);
 }
 
 /// @brief Sets bounds on Gauss integration points in parametric space and
