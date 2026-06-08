@@ -82,8 +82,8 @@ public:
 template<typename LHS, typename RHS, typename Op>
 class MatrixBinaryExpr : public MatrixExpr<MatrixBinaryExpr<LHS, RHS, Op>> {
 private:
-    const LHS& lhs_;
-    const RHS& rhs_;
+    LHS lhs_;
+    RHS rhs_;
     Op op_;
 
 public:
@@ -131,7 +131,7 @@ public:
 template<typename Expr, typename Op>
 class MatrixUnaryExpr : public MatrixExpr<MatrixUnaryExpr<Expr, Op>> {
 private:
-    const Expr& expr_;
+    Expr expr_;
     Op op_;
 
 public:
@@ -178,7 +178,7 @@ public:
 template<typename Expr, typename Scalar>
 class MatrixScalarExpr : public MatrixExpr<MatrixScalarExpr<Expr, Scalar>> {
 private:
-    const Expr& expr_;
+    Expr expr_;
     Scalar scalar_;
 
 public:
@@ -225,7 +225,7 @@ public:
 template<typename Expr, typename Scalar>
 class MatrixScalarDivExpr : public MatrixExpr<MatrixScalarDivExpr<Expr, Scalar>> {
 private:
-    const Expr& expr_;
+    Expr expr_;
     Scalar scalar_;
 
 public:
@@ -274,8 +274,8 @@ public:
 template<typename LHS, typename RHS>
 class MatrixMulExpr : public MatrixExpr<MatrixMulExpr<LHS, RHS>> {
 private:
-    const LHS& lhs_;
-    const RHS& rhs_;
+    LHS lhs_;
+    RHS rhs_;
 
 public:
     /**
@@ -326,7 +326,7 @@ public:
 template<typename Expr>
 class TransposeExpr : public MatrixExpr<TransposeExpr<Expr>> {
 private:
-    const Expr& expr_;
+    Expr expr_;
 
 public:
     /**
@@ -370,7 +370,7 @@ public:
 template<typename VecExpr>
 class DiagonalExpr : public MatrixExpr<DiagonalExpr<VecExpr>> {
 private:
-    const VecExpr& vec_;
+    VecExpr vec_;
     std::size_t n_;
 
 public:

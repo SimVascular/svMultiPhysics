@@ -72,8 +72,8 @@ public:
 template<typename LHS, typename RHS, typename Op>
 class VectorBinaryExpr : public VectorExpr<VectorBinaryExpr<LHS, RHS, Op>> {
 private:
-    const LHS& lhs_;
-    const RHS& rhs_;
+    LHS lhs_;
+    RHS rhs_;
     Op op_;
 
 public:
@@ -112,7 +112,7 @@ public:
 template<typename Expr, typename Op>
 class VectorUnaryExpr : public VectorExpr<VectorUnaryExpr<Expr, Op>> {
 private:
-    const Expr& expr_;
+    Expr expr_;
     Op op_;
 
 public:
@@ -150,7 +150,7 @@ public:
 template<typename Expr, typename Scalar>
 class VectorScalarExpr : public VectorExpr<VectorScalarExpr<Expr, Scalar>> {
 private:
-    const Expr& expr_;
+    Expr expr_;
     Scalar scalar_;
 
 public:
@@ -188,7 +188,7 @@ public:
 template<typename Expr, typename Scalar>
 class VectorScalarDivExpr : public VectorExpr<VectorScalarDivExpr<Expr, Scalar>> {
 private:
-    const Expr& expr_;
+    Expr expr_;
     Scalar scalar_;
 
 public:
