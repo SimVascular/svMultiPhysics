@@ -14,7 +14,6 @@
  */
 
 #include "BasisFunction.h"
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -41,12 +40,7 @@ struct BasisRequest {
 
 namespace basis_factory {
 
-using CustomFactory = std::function<std::shared_ptr<BasisFunction>(const BasisRequest&)>;
-
 [[nodiscard]] std::shared_ptr<BasisFunction> create(const BasisRequest& req);
-void register_custom(std::string custom_id, CustomFactory factory);
-void unregister_custom(const std::string& custom_id);
-void clear_custom_registry_for_tests();
 
 } // namespace basis_factory
 

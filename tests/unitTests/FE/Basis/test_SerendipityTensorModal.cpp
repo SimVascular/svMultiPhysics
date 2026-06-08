@@ -98,19 +98,9 @@ TEST(SerendipityBasis, Wedge15IsNodalAndPartitionsUnity) {
     expect_partition_of_unity(basis, {Real(0.2), Real(0.3), Real(0.1)});
 }
 
-TEST(SerendipityBasis, Pyramid13IsNodalAndPartitionsUnity) {
-    SerendipityBasis basis(ElementType::Pyramid13, 2);
-
-    EXPECT_EQ(basis.size(), 13u);
-    expect_nodal_delta(basis,
-                       reference_nodes(ElementType::Pyramid13, basis.size()),
-                       Real(1e-8));
-    expect_partition_of_unity(basis, {Real(0.1), Real(-0.2), Real(0.4)});
-}
-
 TEST(SerendipityBasis, RejectsUnsupportedSerendipityAliases) {
     EXPECT_THROW(SerendipityBasis(ElementType::Quad9, 2), FEException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Pyramid13, 2), FEException);
     EXPECT_THROW(SerendipityBasis(ElementType::Pyramid14, 2), FEException);
     EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 3), FEException);
 }
-

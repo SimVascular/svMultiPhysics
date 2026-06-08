@@ -11,17 +11,11 @@
 /**
  * @file SerendipityBasis.h
  * @brief Reduced-degree-of-freedom serendipity bases
- *
- * `Pyramid13` inherits its apex contract from the complete-family rational
- * pyramid basis: values remain exact at the apex, while exact-apex gradient
- * and Hessian queries throw because the inherited nodal derivative limit is
- * not unique.
  */
 
 #include "BasisFunction.h"
 
 #include <array>
-#include <cstdint>
 
 namespace svmp {
 namespace FE {
@@ -37,7 +31,6 @@ public:
     int order() const noexcept override { return order_; }
     std::size_t size() const noexcept override { return size_; }
     const std::vector<math::Vector<Real, 3>>& nodes() const noexcept { return nodes_; }
-    bool cache_identity_words(std::vector<std::uint64_t>& words) const override;
 
     void evaluate_values(const math::Vector<Real, 3>& xi,
                          std::vector<Real>& values) const override;

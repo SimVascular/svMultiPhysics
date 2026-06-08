@@ -11,6 +11,7 @@
 #include "Types.h"
 
 #include <cstddef>
+#include <limits>
 
 namespace svmp {
 namespace FE {
@@ -25,8 +26,38 @@ enum class BasisTopology {
     Tetrahedron,
     Hexahedron,
     Wedge,
-    Pyramid,
 };
+
+namespace detail {
+
+[[nodiscard]] constexpr Real basis_abs(Real value) noexcept {
+    return value < Real(0) ? -value : value;
+}
+
+[[nodiscard]] constexpr Real basis_max(Real lhs, Real rhs) noexcept {
+    return lhs < rhs ? rhs : lhs;
+}
+
+[[nodiscard]] constexpr Real basis_scaled_tolerance(Real scale = Real(1),
+                                                    Real multiplier = Real(64)) noexcept {
+    return multiplier * std::numeric_limits<Real>::epsilon() *
+           basis_max(Real(1), basis_abs(scale));
+}
+
+[[nodiscard]] constexpr bool basis_near_zero(Real value,
+                                             Real scale = Real(1),
+                                             Real multiplier = Real(64)) noexcept {
+    return basis_abs(value) <= basis_scaled_tolerance(scale, multiplier);
+}
+
+[[nodiscard]] constexpr bool basis_nearly_equal(Real a,
+                                                Real b,
+                                                Real multiplier = Real(64)) noexcept {
+    const Real scale = basis_max(Real(1), basis_max(basis_abs(a), basis_abs(b)));
+    return basis_abs(a - b) <= basis_scaled_tolerance(scale, multiplier);
+}
+
+} // namespace detail
 
 [[nodiscard]] constexpr bool is_point(ElementType type) noexcept {
     return type == ElementType::Point1;
@@ -60,8 +91,8 @@ enum class BasisTopology {
 }
 
 [[nodiscard]] constexpr bool is_pyramid(ElementType type) noexcept {
-    return type == ElementType::Pyramid5 || type == ElementType::Pyramid13 ||
-           type == ElementType::Pyramid14;
+    (void)type;
+    return false;
 }
 
 [[nodiscard]] constexpr bool is_simplex(ElementType type) noexcept {
@@ -98,9 +129,6 @@ enum class BasisTopology {
     if (is_wedge(type)) {
         return BasisTopology::Wedge;
     }
-    if (is_pyramid(type)) {
-        return BasisTopology::Pyramid;
-    }
     return BasisTopology::Unknown;
 }
 
@@ -124,9 +152,6 @@ enum class BasisTopology {
         case ElementType::Wedge6:
         case ElementType::Wedge18:
             return ElementType::Wedge6;
-        case ElementType::Pyramid5:
-        case ElementType::Pyramid14:
-            return ElementType::Pyramid5;
         default:
             return type;
     }
@@ -140,7 +165,6 @@ enum class BasisTopology {
         case ElementType::Tetra4:
         case ElementType::Hex8:
         case ElementType::Wedge6:
-        case ElementType::Pyramid5:
             return 1;
         case ElementType::Line3:
         case ElementType::Triangle6:
@@ -148,7 +172,6 @@ enum class BasisTopology {
         case ElementType::Tetra10:
         case ElementType::Hex27:
         case ElementType::Wedge18:
-        case ElementType::Pyramid14:
             return 2;
         default:
             return -1;
@@ -179,14 +202,6 @@ enum class BasisTopology {
     return triangle_lagrange_size(order) * line_lagrange_size(order);
 }
 
-[[nodiscard]] constexpr std::size_t pyramid_lagrange_size(int order) noexcept {
-    if (order < 0) {
-        return 0u;
-    }
-    const std::size_t p = static_cast<std::size_t>(order);
-    return (p + 1u) * (p + 2u) * (2u * p + 3u) / 6u;
-}
-
 [[nodiscard]] constexpr std::size_t complete_lagrange_alias_size(ElementType type) noexcept {
     const int order = complete_lagrange_alias_order(type);
     switch (canonical_lagrange_type(type)) {
@@ -204,8 +219,6 @@ enum class BasisTopology {
             return hex_lagrange_size(order);
         case ElementType::Wedge6:
             return wedge_lagrange_size(order);
-        case ElementType::Pyramid5:
-            return pyramid_lagrange_size(order);
         default:
             return 0u;
     }

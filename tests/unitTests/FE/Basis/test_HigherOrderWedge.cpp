@@ -1,6 +1,6 @@
 /**
- * @file test_HigherOrderWedgePyramid.cpp
- * @brief Focused higher-order wedge and pyramid checks for LagrangeBasis.
+ * @file test_HigherOrderWedge.cpp
+ * @brief Focused higher-order wedge checks for LagrangeBasis.
  */
 
 #include <gtest/gtest.h>
@@ -9,8 +9,6 @@
 #include "FE/Basis/NodeOrderingConventions.h"
 
 #include <cmath>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 using namespace svmp::FE;
@@ -107,28 +105,18 @@ void expect_all_entries_finite(const LagrangeBasis& basis,
 
 } // namespace
 
-TEST(HigherOrderWedgePyramid, CompleteAliasesMatchGeneratedNodeLayouts) {
-    const std::vector<std::tuple<ElementType, ElementType, int>> cases = {
-        {ElementType::Wedge18, ElementType::Wedge6, 2},
-        {ElementType::Pyramid14, ElementType::Pyramid5, 2},
-    };
+TEST(HigherOrderWedge, CompleteAliasMatchesGeneratedNodeLayout) {
+    LagrangeBasis alias_basis(ElementType::Wedge18, 1);
+    const auto generated =
+        ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Wedge6, 2);
 
-    for (const auto& [alias, canonical, order] : cases) {
-        LagrangeBasis alias_basis(alias, order);
-        const auto generated = ReferenceNodeLayout::get_lagrange_node_coords(canonical, order);
-        ASSERT_EQ(generated.size(), ReferenceNodeLayout::num_nodes(alias));
-        expect_nodes_close(alias_basis.nodes(), generated, Real(1e-14));
-
-        for (std::size_t i = 0; i < generated.size(); ++i) {
-            const auto public_node = ReferenceNodeLayout::get_node_coords(alias, i);
-            EXPECT_NEAR(public_node[0], generated[i][0], Real(1e-14)) << "node " << i;
-            EXPECT_NEAR(public_node[1], generated[i][1], Real(1e-14)) << "node " << i;
-            EXPECT_NEAR(public_node[2], generated[i][2], Real(1e-14)) << "node " << i;
-        }
-    }
+    ASSERT_EQ(generated.size(), ReferenceNodeLayout::num_nodes(ElementType::Wedge18));
+    EXPECT_EQ(alias_basis.element_type(), ElementType::Wedge6);
+    EXPECT_EQ(alias_basis.order(), 2);
+    expect_nodes_close(alias_basis.nodes(), generated, Real(1e-14));
 }
 
-TEST(HigherOrderWedgePyramid, WedgeOrderThreeIsNodalAndPartitionsUnity) {
+TEST(HigherOrderWedge, OrderThreeIsNodalAndPartitionsUnity) {
     LagrangeBasis wedge(ElementType::Wedge6, 3);
 
     expect_kronecker_at_nodes(wedge, Real(2e-10));
@@ -143,31 +131,9 @@ TEST(HigherOrderWedgePyramid, WedgeOrderThreeIsNodalAndPartitionsUnity) {
         Real(1e-9));
 }
 
-TEST(HigherOrderWedgePyramid, PyramidOrderThreeIsNodalAndPartitionsUnity) {
-    LagrangeBasis pyramid(ElementType::Pyramid5, 3);
+TEST(HigherOrderWedge, OrderFourEvaluationsRemainFinite) {
+    LagrangeBasis wedge(ElementType::Wedge6, 4);
 
-    expect_kronecker_at_nodes(pyramid, Real(5e-8));
-    expect_partition_gradient_hessian_sums(
-        pyramid,
-        {
-            {Real(0), Real(0), Real(0.2)},
-            {Real(0.12), Real(-0.08), Real(0.24)},
-            {Real(-0.08), Real(0.1), Real(0.55)},
-        },
-        Real(1e-11),
-        Real(5e-7));
-}
-
-TEST(HigherOrderWedgePyramid, PyramidNearApexDerivativeQueriesRemainFinite) {
-    const std::vector<std::pair<ElementType, int>> cases = {
-        {ElementType::Pyramid5, 1},
-        {ElementType::Pyramid14, 2},
-        {ElementType::Pyramid5, 4},
-    };
-
-    for (const auto& [type, order] : cases) {
-        LagrangeBasis basis(type, order);
-        expect_all_entries_finite(basis, {Real(0.01), Real(-0.005), Real(0.92)});
-        expect_all_entries_finite(basis, {Real(-0.004), Real(0.007), Real(0.98)});
-    }
+    expect_all_entries_finite(wedge, {Real(0.2), Real(0.1), Real(-0.6)});
+    expect_all_entries_finite(wedge, {Real(0.05), Real(0.8), Real(0.3)});
 }

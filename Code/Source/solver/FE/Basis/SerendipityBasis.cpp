@@ -157,13 +157,6 @@ std::vector<Real> quad_serendipity_inverse_vandermonde(
     const std::string label = "Quad order " + std::to_string(order);
     return invert_dense_matrix(std::move(vandermonde), n, label.c_str());
 }
-constexpr std::array<Real, 13> kPyramid13CenterRedistribution = {
-    Real(-0.25), Real(-0.25), Real(-0.25), Real(-0.25),
-    Real(0),
-    Real(0.5), Real(0.5), Real(0.5), Real(0.5),
-    Real(0), Real(0), Real(0), Real(0)
-};
-
 constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{0, 0, 0}},
     {{0, 0, 1}},
@@ -497,20 +490,8 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mo
                 "SerendipityBasis supports up to quadratic on wedge15",
                 __FILE__, __LINE__, __func__);
         }
-    } else if (type == ElementType::Pyramid13) {
-        dimension_ = 3;
-        if (order_ < 2) {
-            order_ = 2;
-        }
-        if (order_ == 2) {
-            size_ = 13;
-        } else {
-            throw BasisConfigurationException(
-                "SerendipityBasis supports up to quadratic on pyramid13",
-                __FILE__, __LINE__, __func__);
-        }
     } else {
-        throw BasisElementCompatibilityException("SerendipityBasis supports Quad4/Quad8, Hex8/Hex20, Wedge15, and Pyramid13 elements",
+        throw BasisElementCompatibilityException("SerendipityBasis supports Quad4/Quad8, Hex8/Hex20, and Wedge15 elements",
                                                  __FILE__, __LINE__, __func__);
     }
 
@@ -520,17 +501,6 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mo
             nodes_.push_back(ReferenceNodeLayout::get_node_coords(element_type_, i));
         }
     }
-}
-
-bool SerendipityBasis::cache_identity_words(std::vector<std::uint64_t>& words) const {
-    words.push_back(0x736572656e646970ULL);
-    words.push_back(static_cast<std::uint64_t>(basis_type()));
-    words.push_back(static_cast<std::uint64_t>(element_type_));
-    words.push_back(static_cast<std::uint64_t>(dimension_));
-    words.push_back(static_cast<std::uint64_t>(order_));
-    words.push_back(static_cast<std::uint64_t>(size_));
-    words.push_back(geometry_mode_ ? 1u : 0u);
-    return true;
 }
 
 void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
@@ -617,15 +587,6 @@ void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
         return;
     }
 
-    if (element_type_ == ElementType::Pyramid13) {
-        static const LagrangeBasis parent(ElementType::Pyramid14, 2);
-        std::array<Real, 14> parent_values{};
-        parent.evaluate_values_to(xi, parent_values.data());
-        for (std::size_t i = 0; i < 13; ++i) {
-            values[i] = parent_values[i] + kPyramid13CenterRedistribution[i] * parent_values[13];
-        }
-        return;
-    }
 }
 
 void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
@@ -762,25 +723,6 @@ void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
         return;
     }
 
-    if (element_type_ == ElementType::Pyramid13) {
-        static const LagrangeBasis parent(ElementType::Pyramid14, 2);
-        std::array<Real, 14u * 3u> parent_gradients{};
-        // Pyramid13 inherits the complete-family pyramid apex contract from the
-        // parent basis rather than introducing a separate regularized path.
-        parent.evaluate_gradients_to(xi, parent_gradients.data());
-        const auto parent_gradient = [&](std::size_t node, std::size_t component) {
-            return parent_gradients[node * 3u + component];
-        };
-        for (std::size_t i = 0; i < 13; ++i) {
-            for (std::size_t c = 0; c < 3u; ++c) {
-                gradients[i][c] =
-                    parent_gradient(i, c) +
-                    kPyramid13CenterRedistribution[i] * parent_gradient(13u, c);
-            }
-        }
-        return;
-    }
-
     throw BasisEvaluationException("SerendipityBasis::evaluate_gradients: unsupported serendipity configuration",
                                    __FILE__, __LINE__, __func__);
 }
@@ -856,20 +798,6 @@ void SerendipityBasis::evaluate_hessians(const math::Vector<Real, 3>& xi,
 
     if (element_type_ == ElementType::Wedge15 && order_ == 2) {
         eval_wedge15_polynomial(x, y, z, nullptr, nullptr, hessians.data());
-        return;
-    }
-
-    if (element_type_ == ElementType::Pyramid13) {
-        static const LagrangeBasis parent(ElementType::Pyramid14, 2);
-        std::array<Real, 14u * 9u> parent_hessians{};
-        // Pyramid13 inherits the complete-family pyramid apex contract from the
-        // parent basis rather than introducing a separate regularized path.
-        parent.evaluate_hessians_to(xi, parent_hessians.data());
-        const Hessian center_hessian = load_hessian(parent_hessians.data() + 13u * 9u);
-        for (std::size_t i = 0; i < 13; ++i) {
-            hessians[i] = load_hessian(parent_hessians.data() + i * 9u);
-            add_scaled_hessian(hessians[i], center_hessian, kPyramid13CenterRedistribution[i]);
-        }
         return;
     }
 

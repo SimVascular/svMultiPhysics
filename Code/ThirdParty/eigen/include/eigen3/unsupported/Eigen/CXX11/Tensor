@@ -34,7 +34,9 @@
   */
 
 #include <atomic>
+#ifdef EIGEN_USE_GPU
 #include <chrono>
+#endif
 #include <cmath>
 #include <cstddef>
 #include <cstring>

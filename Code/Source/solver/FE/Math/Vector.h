@@ -12,7 +12,7 @@
 
 #include "VectorExpr.h"
 #include "MathConstants.h"
-#include "../Common/Alignment.h"
+#include "../Common/Types.h"
 #include <algorithm>
 #include <array>
 #include <cmath>

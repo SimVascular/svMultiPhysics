@@ -4,7 +4,6 @@
 #include "utils.h"
 
 #include <bitset>
-#include <chrono>
 #include <cmath> 
 #include <limits>
 
@@ -13,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <sys/resource.h>
+#include <sys/time.h>
 
 /* MacOS
 #include <mach/task.h>
@@ -35,12 +35,10 @@ int CountBits(int n)
 
 double cput()
 {
-  auto now = std::chrono::system_clock::now();
-  auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-
-  auto value = now_ms.time_since_epoch();
-  auto duration = value.count() / 1000.0;
-  return static_cast<double>(duration);
+  timeval now{};
+  gettimeofday(&now, nullptr);
+  return static_cast<double>(now.tv_sec) +
+         static_cast<double>(now.tv_usec) * 1.0e-6;
 }
 
 Vector<double> 

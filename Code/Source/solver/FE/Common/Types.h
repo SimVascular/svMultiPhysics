@@ -70,8 +70,9 @@ enum class CellFamily {
 #endif
 } // namespace svmp
 #endif
-#include <cstdint>
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <type_traits>
 #include <limits>
@@ -173,6 +174,12 @@ constexpr BlockId INVALID_BLOCK_ID = std::numeric_limits<BlockId>::max();
  * with existing KernelIR encodings, but carries explicit semantic intent.
  */
 constexpr FieldId CURRENT_SOLUTION_FIELD_ID = std::numeric_limits<FieldId>::max();
+
+/// Preferred cache-line/SIMD alignment for performance-critical arrays.
+inline constexpr std::size_t kFEPreferredAlignmentBytes = 64u;
+
+/// Alignment for small fixed-size math objects that are commonly passed by value.
+inline constexpr std::size_t kFEFixedObjectAlignmentBytes = 32u;
 
 // ============================================================================
 // Field Value Entry (for point evaluation of field-dependent expressions)

@@ -355,6 +355,14 @@ if(ENABLE_UNIT_TEST)
           DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   )
   FetchContent_MakeAvailable(googletest)
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_STANDARD GREATER_EQUAL 20)
+    foreach(GTEST_TARGET gtest gtest_main gmock gmock_main)
+      if(TARGET ${GTEST_TARGET})
+        target_compile_options(${GTEST_TARGET} PRIVATE -std=gnu++17)
+      endif()
+    endforeach()
+  endif()
   #endif()
 
   enable_testing()

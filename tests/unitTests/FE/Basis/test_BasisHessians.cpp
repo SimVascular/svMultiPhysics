@@ -61,8 +61,6 @@ std::vector<math::Vector<Real, 3>> sample_points_for(ElementType type) {
             return {{Real(0.1), Real(-0.2), Real(0.3)}, {Real(-0.35), Real(0.25), Real(-0.15)}};
         case ElementType::Wedge6:
             return {{Real(0.18), Real(0.22), Real(-0.2)}, {Real(0.12), Real(0.16), Real(0.1)}};
-        case ElementType::Pyramid5:
-            return {{Real(0.0), Real(0.0), Real(0.2)}, {Real(0.12), Real(-0.08), Real(0.24)}};
         default:
             return {{Real(0), Real(0), Real(0)}};
     }
@@ -200,8 +198,6 @@ TEST(BasisHessians, LagrangeCanonicalTopologiesMatchNumericalHessians) {
         {ElementType::Tetra4, 2, Real(1e-6), Real(1e-5)},
         {ElementType::Hex8, 2, Real(1e-6), Real(1e-5)},
         {ElementType::Wedge6, 2, Real(1e-5), Real(1e-5)},
-        {ElementType::Pyramid5, 1, Real(2e-6), Real(1e-5)},
-        {ElementType::Pyramid5, 3, Real(4e-4), Real(2e-5)},
     };
 
     for (const auto& c : cases) {
@@ -223,32 +219,12 @@ TEST(BasisHessians, LagrangeHessiansSumToZeroAndAreSymmetric) {
         {ElementType::Tetra4, 2, {Real(0.15), Real(0.2), Real(0.1)}, Real(1e-10)},
         {ElementType::Hex8, 2, {Real(0.1), Real(-0.2), Real(0.3)}, Real(1e-12)},
         {ElementType::Wedge6, 2, {Real(0.2), Real(0.15), Real(-0.3)}, Real(1e-10)},
-        {ElementType::Pyramid5, 1, {Real(0.1), Real(-0.2), Real(0.3)}, Real(1e-8)},
     };
 
     for (const auto& c : cases) {
         LagrangeBasis basis(c.type, c.order);
         expect_partition_hessian_sum_zero(basis, c.xi, Real(10) * c.tol);
         expect_hessians_symmetric(basis, c.xi, c.tol);
-    }
-}
-
-TEST(BasisHessians, LagrangePyramidExactApexHessianThrows) {
-    const struct Case {
-        ElementType type;
-        int order;
-    } cases[] = {
-        {ElementType::Pyramid5, 1},
-        {ElementType::Pyramid14, 2},
-        {ElementType::Pyramid5, 4},
-    };
-
-    const math::Vector<Real, 3> apex{Real(0), Real(0), Real(1)};
-    for (const auto& c : cases) {
-        LagrangeBasis basis(c.type, c.order);
-        std::vector<Hessian> hessians;
-        EXPECT_THROW(basis.evaluate_hessians(apex, hessians), BasisEvaluationException)
-            << "order " << c.order;
     }
 }
 
@@ -262,7 +238,6 @@ TEST(BasisHessians, SerendipityHessiansSumToZeroAndAreSymmetric) {
         {ElementType::Quad8, 2, {Real(0.17), Real(-0.31), Real(0)}, Real(1e-10)},
         {ElementType::Hex20, 2, {Real(0.2), Real(-0.1), Real(0.3)}, Real(1e-10)},
         {ElementType::Wedge15, 2, {Real(0.2), Real(0.3), Real(0.1)}, Real(1e-10)},
-        {ElementType::Pyramid13, 2, {Real(0.1), Real(-0.2), Real(0.4)}, Real(1e-8)},
     };
 
     for (const auto& c : cases) {
@@ -270,13 +245,6 @@ TEST(BasisHessians, SerendipityHessiansSumToZeroAndAreSymmetric) {
         expect_partition_hessian_sum_zero(basis, c.xi, c.tol);
         expect_hessians_symmetric(basis, c.xi, c.tol);
     }
-}
-
-TEST(BasisHessians, SerendipityPyramidExactApexHessianThrows) {
-    SerendipityBasis basis(ElementType::Pyramid13, 2);
-    std::vector<Hessian> hessians;
-    EXPECT_THROW(basis.evaluate_hessians({Real(0), Real(0), Real(1)}, hessians),
-                 BasisEvaluationException);
 }
 
 TEST(BasisHessians, SolverMappedVolumeSelectionsSatisfyInvariants) {

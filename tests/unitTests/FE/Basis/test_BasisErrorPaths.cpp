@@ -21,7 +21,7 @@ namespace {
 
 class MinimalScalarBasis : public BasisFunction {
 public:
-    BasisType basis_type() const noexcept override { return BasisType::Custom; }
+    BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
     ElementType element_type() const noexcept override { return ElementType::Line2; }
     int dimension() const noexcept override { return 1; }
     int order() const noexcept override { return 1; }
@@ -36,7 +36,7 @@ public:
 
 class CompleteFallbackBasis : public BasisFunction {
 public:
-    BasisType basis_type() const noexcept override { return BasisType::Custom; }
+    BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
     ElementType element_type() const noexcept override { return ElementType::Triangle3; }
     int dimension() const noexcept override { return 2; }
     int order() const noexcept override { return 1; }
@@ -90,6 +90,8 @@ TEST(BasisErrorPaths, SerendipityInvalidRequestsThrowBasisExceptions) {
                  BasisElementCompatibilityException);
     EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 3),
                  BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Pyramid13, 2),
+                 BasisElementCompatibilityException);
     EXPECT_THROW(SerendipityBasis(ElementType::Pyramid14, 2),
                  BasisElementCompatibilityException);
 }
@@ -104,6 +106,13 @@ TEST(BasisErrorPaths, BasisFactoryInvalidRequestsThrowBasisExceptions) {
     EXPECT_THROW((void)basis_factory::create(
                      BasisRequest{ElementType::Line2, BasisType::Bernstein, 1}),
                  BasisConfigurationException);
+    EXPECT_THROW((void)basis_factory::create(
+                     BasisRequest{ElementType::Pyramid5, BasisType::Lagrange, 1}),
+                 BasisElementCompatibilityException);
+
+    BasisRequest vector_req{ElementType::Line2, BasisType::Lagrange, 1};
+    vector_req.field_type = FieldType::Vector;
+    EXPECT_THROW((void)basis_factory::create(vector_req), BasisConfigurationException);
 
     auto serendipity = basis_factory::create(
         BasisRequest{ElementType::Quad8, BasisType::Serendipity, 2});
@@ -130,6 +139,8 @@ TEST(BasisErrorPaths, NodeOrderingInvalidNodeThrows) {
                  BasisNodeOrderingException);
     EXPECT_THROW((void)ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Quad8, 2),
                  BasisNodeOrderingException);
+    EXPECT_THROW((void)ReferenceNodeLayout::num_nodes(ElementType::Pyramid5),
+                 BasisNodeOrderingException);
 }
 
 TEST(BasisErrorPaths, BasisFunctionDefaultsThrowForMissingDerivatives) {
@@ -142,25 +153,22 @@ TEST(BasisErrorPaths, BasisFunctionDefaultsThrowForMissingDerivatives) {
     EXPECT_THROW(basis.evaluate_hessians(xi, hessians), BasisEvaluationException);
 }
 
-TEST(BasisErrorPaths, BasisFunctionFallbackWritesFlatAndStridedLayouts) {
+TEST(BasisErrorPaths, BasisFunctionFallbackWritesRawLayouts) {
     CompleteFallbackBasis basis;
-    const std::vector<math::Vector<Real, 3>> points = {
-        {Real(0.25), Real(0.5), Real(-0.25)},
-        {Real(-0.5), Real(0.75), Real(0.125)}
-    };
-    prewarm_basis_function_scratch(basis.size(), points.size());
+    const math::Vector<Real, 3> point{Real(0.25), Real(0.5), Real(-0.25)};
+    prewarm_basis_function_scratch(basis.size());
 
     std::vector<Real> flat_values(basis.size());
     std::vector<Real> flat_gradients(basis.size() * 3u);
     std::vector<Real> flat_hessians(basis.size() * 9u);
-    basis.evaluate_values_to(points.front(), flat_values.data());
-    basis.evaluate_gradients_to(points.front(), flat_gradients.data());
-    basis.evaluate_hessians_to(points.front(), flat_hessians.data());
+    basis.evaluate_values_to(point, flat_values.data());
+    basis.evaluate_gradients_to(point, flat_gradients.data());
+    basis.evaluate_hessians_to(point, flat_hessians.data());
 
     std::vector<Real> expected_values;
     std::vector<Gradient> expected_gradients;
     std::vector<Hessian> expected_hessians;
-    basis.evaluate_all(points.front(), expected_values, expected_gradients, expected_hessians);
+    basis.evaluate_all(point, expected_values, expected_gradients, expected_hessians);
     for (std::size_t d = 0; d < basis.size(); ++d) {
         EXPECT_EQ(flat_values[d], expected_values[d]);
         for (std::size_t c = 0; c < 3u; ++c) {
@@ -171,33 +179,5 @@ TEST(BasisErrorPaths, BasisFunctionFallbackWritesFlatAndStridedLayouts) {
                 EXPECT_EQ(flat_hessians[d * 9u + r * 3u + c], expected_hessians[d](r, c));
             }
         }
-    }
-
-    constexpr std::size_t output_stride = 3u;
-    std::vector<Real> values(basis.size() * output_stride, Real(-99));
-    std::vector<Real> gradients(basis.size() * 3u * output_stride, Real(-99));
-    std::vector<Real> hessians(basis.size() * 9u * output_stride, Real(-99));
-    basis.evaluate_at_quadrature_points_strided(
-        points, output_stride, values.data(), gradients.data(), hessians.data());
-
-    for (std::size_t q = 0; q < points.size(); ++q) {
-        basis.evaluate_all(points[q], expected_values, expected_gradients, expected_hessians);
-        for (std::size_t d = 0; d < basis.size(); ++d) {
-            EXPECT_EQ(values[d * output_stride + q], expected_values[d]);
-            for (std::size_t c = 0; c < 3u; ++c) {
-                EXPECT_EQ(gradients[(d * 3u + c) * output_stride + q],
-                          expected_gradients[d][c]);
-            }
-            for (std::size_t r = 0; r < 3u; ++r) {
-                for (std::size_t c = 0; c < 3u; ++c) {
-                    EXPECT_EQ(hessians[(d * 9u + r * 3u + c) * output_stride + q],
-                              expected_hessians[d](r, c));
-                }
-            }
-        }
-    }
-
-    for (std::size_t d = 0; d < basis.size(); ++d) {
-        EXPECT_EQ(values[d * output_stride + 2u], Real(-99));
     }
 }
