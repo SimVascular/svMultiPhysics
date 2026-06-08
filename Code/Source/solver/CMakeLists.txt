@@ -345,7 +345,7 @@ if(ENABLE_UNIT_TEST)
 
   # link pthread on ubuntu20
   find_package(Threads REQUIRED)
-
+  include(FetchContent)
   # install Google Test
   #if(NOT TARGET gtest_main AND NOT TARGET gtest)
   FetchContent_Declare(
