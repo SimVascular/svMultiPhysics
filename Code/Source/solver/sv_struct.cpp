@@ -15,6 +15,7 @@
 #include "mat_models.h"
 #include "nn.h"
 #include "utils.h"
+#include "DebugMsg.h"
 
 namespace struct_ns {
 
@@ -27,8 +28,7 @@ void b_struct_2d(const ComMod& com_mod, const int eNoN, const double w, const Ve
   double dt = com_mod.dt;
   int dof = com_mod.dof;
 
-  double af = eq.af * eq.gam*dt;
-  double afm = af / eq.am;
+  double af = eq.af * eq.beta * dt *dt;
   int i = eq.s;
   int j = i + 1;
 
@@ -370,11 +370,11 @@ void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, 
   int i = eq.s;
   int j = i + 1;
   #ifdef debug_struct_2d 
-  debug << "i: " << i;
-  debug << "j: " << j;
-  debug << "amd: " << amd;
-  debug << "afl: " << afl;
-  debug << "w: " << w;
+  dmsg << "i: " << i;
+  dmsg << "j: " << j;
+  dmsg << "amd: " << amd;
+  dmsg << "afl: " << afl;
+  dmsg << "w: " << w;
   #endif
 
   // Inertia, body force and deformation tensor (F)
@@ -410,9 +410,9 @@ void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, 
     ya_g = ya_g + N(a)*ya_l(a);
   }
   #ifdef debug_struct_2d 
-  debug << "ud: " << ud(0) << " " << ud(1);
-  debug << "F: " << F(0,0);
-  debug << "ya_g: " << ya_g;
+  dmsg << "ud: " << ud(0) << " " << ud(1);
+  dmsg << "F: " << F(0,0);
+  dmsg << "ya_g: " << ya_g;
   #endif
 
   S0(1,0) = S0(0,1);
@@ -446,13 +446,13 @@ void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, 
   Array3<double> Bm(3,2,eNoN);
   P = mat_fun::mat_mul(F, S);
   #ifdef debug_struct_2d 
-  debug << "P: " << P(0,0) << " " << P(0,1);
-  debug << "   " << P(1,0) << " " << P(1,1);
+  dmsg << "P: " << P(0,0) << " " << P(0,1);
+  dmsg << "   " << P(1,0) << " " << P(1,1);
   #endif
 
   // Local residual
   for (int a = 0; a < eNoN; a++) {
-    lR(0,a) = lR(0,a) + w*(N(a)*ud(0) + Nx(0,a)*P(0,0) + Nx(2,a)*P(0,1));
+    lR(0,a) = lR(0,a) + w*(N(a)*ud(0) + Nx(0,a)*P(0,0) + Nx(1,a)*P(0,1));
     lR(1,a) = lR(1,a) + w*(N(a)*ud(1) + Nx(0,a)*P(1,0) + Nx(1,a)*P(1,1));
   }
 
@@ -471,8 +471,7 @@ void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, 
 
   Array<double> NxFi(2,eNoN), DdNx(2,eNoN), VxNx(2,eNoN);
 
-
-  //     Local stiffness tensor
+  // Local stiffness tensor
   double T1, NxNx, NxSNx, BmDBm;
 
   for (int b = 0; b < eNoN; b++) { 
@@ -519,6 +518,7 @@ void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, 
       lK(dof+1,a,b) = lK(dof+1,a,b) + w*( T1 + afu*(BmDBm + Kvis_u(3,a,b)) + afv*Kvis_v(3,a,b) );
     }
   }
+
 }
 
 /// @brief Reproduces Fortran 'STRUCT3D' subroutine.
@@ -529,7 +529,6 @@ void struct_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, 
 {
   using namespace consts;
   using namespace mat_fun;
-  // std::cout << "\n==================== struct_3d ===============" << std::endl;
 
   #define n_debug_struct_3d 
   #ifdef debug_struct_3d 
