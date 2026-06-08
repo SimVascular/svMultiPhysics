@@ -7,7 +7,6 @@
 #include "FE/Math/ExpressionOps.h"
 #include "FE/Math/Vector.h"
 #include "FE/Math/Matrix.h"
-#include "FE/Math/MathConstants.h"
 #include <limits>
 #include <cmath>
 #include <complex>

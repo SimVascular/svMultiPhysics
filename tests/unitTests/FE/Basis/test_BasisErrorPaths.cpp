@@ -156,7 +156,6 @@ TEST(BasisErrorPaths, BasisFunctionDefaultsThrowForMissingDerivatives) {
 TEST(BasisErrorPaths, BasisFunctionFallbackWritesRawLayouts) {
     CompleteFallbackBasis basis;
     const math::Vector<Real, 3> point{Real(0.25), Real(0.5), Real(-0.25)};
-    prewarm_basis_function_scratch(basis.size());
 
     std::vector<Real> flat_values(basis.size());
     std::vector<Real> flat_gradients(basis.size() * 3u);

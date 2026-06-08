@@ -19,12 +19,6 @@ struct BasisFunctionScratch {
     std::vector<Real> values;
     std::vector<Gradient> gradients;
     std::vector<Hessian> hessians;
-
-    void prewarm(std::size_t max_size) {
-        values.reserve(max_size);
-        gradients.reserve(max_size);
-        hessians.reserve(max_size);
-    }
 };
 
 BasisFunctionScratch& scratch() {
@@ -33,10 +27,6 @@ BasisFunctionScratch& scratch() {
 }
 
 } // namespace
-
-void prewarm_basis_function_scratch(std::size_t max_size) {
-    scratch().prewarm(max_size);
-}
 
 void BasisFunction::evaluate_gradients(const math::Vector<Real, 3>& xi,
                                        std::vector<Gradient>& gradients) const {

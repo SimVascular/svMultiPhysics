@@ -303,11 +303,6 @@ void store_gradient(const Gradient& gradient, Real* dst) {
 
 } // namespace
 
-void prewarm_lagrange_basis_scratch(int max_order, std::size_t max_qpts) {
-    const auto n = static_cast<std::size_t>(std::max(0, max_order) + 1);
-    prewarm_basis_function_scratch(std::max(n * n * n, max_qpts));
-}
-
 LagrangeBasis::LagrangeBasis(ElementType type, int order)
     : element_type_(type), order_(order) {
     const auto normalized = normalize_lagrange_request(element_type_, order_);

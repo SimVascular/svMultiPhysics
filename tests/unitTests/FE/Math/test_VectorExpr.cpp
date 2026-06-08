@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 #include "FE/Math/Vector.h"
 #include "FE/Math/VectorExpr.h"
-#include "FE/Math/MathConstants.h"
 #include <limits>
 #include <cmath>
 #include <memory>

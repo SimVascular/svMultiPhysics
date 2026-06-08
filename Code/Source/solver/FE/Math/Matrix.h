@@ -13,7 +13,6 @@
 
 #include "MatrixExpr.h"
 #include "Vector.h"
-#include "MathConstants.h"
 #include "../Common/Types.h"
 #include <algorithm>
 #include <array>

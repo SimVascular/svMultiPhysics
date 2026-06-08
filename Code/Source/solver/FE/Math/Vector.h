@@ -11,12 +11,12 @@
  */
 
 #include "VectorExpr.h"
-#include "MathConstants.h"
 #include "../Common/Types.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <initializer_list>
+#include <limits>
 #include <ostream>
 #include <stdexcept>
 #include <type_traits>
@@ -24,6 +24,23 @@
 namespace svmp {
 namespace FE {
 namespace math {
+
+template<typename T>
+inline constexpr T tolerance =
+    std::is_floating_point_v<T> ? T(1000) * std::numeric_limits<T>::epsilon() : T(0);
+
+template<typename T>
+inline bool approx_zero(T value, T tol = tolerance<T>) {
+    using std::abs;
+    return abs(value) <= tol;
+}
+
+template<typename T>
+inline bool approx_equal(T a, T b, T tol = tolerance<T>) {
+    using std::abs;
+    const T scale = std::max({abs(a), abs(b), T(1)});
+    return abs(a - b) <= tol * scale;
+}
 
 /**
  * @brief Fixed-size vector for element-level computations

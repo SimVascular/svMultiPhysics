@@ -35,6 +35,7 @@
 #include <math.h> 
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -152,44 +153,30 @@ std::string solver_element_name(consts::ElementType eType)
 
 std::optional<BasisSelection> to_basis_selection(consts::ElementType eType)
 {
-  switch (eType) {
-    case consts::ElementType::LIN1:
-      return BasisSelection{fe::ElementType::Line2, fe::BasisType::Lagrange, 1};
-    case consts::ElementType::LIN2:
-      return BasisSelection{fe::ElementType::Line3, fe::BasisType::Lagrange, 2};
-    case consts::ElementType::TRI3:
-      return BasisSelection{fe::ElementType::Triangle3, fe::BasisType::Lagrange, 1};
-    case consts::ElementType::TRI6:
-      return BasisSelection{fe::ElementType::Triangle6, fe::BasisType::Lagrange, 2};
-    case consts::ElementType::QUD4:
-      return BasisSelection{fe::ElementType::Quad4, fe::BasisType::Lagrange, 1};
-    case consts::ElementType::QUD8:
-      return BasisSelection{fe::ElementType::Quad8, fe::BasisType::Serendipity, 2};
-    case consts::ElementType::QUD9:
-      return BasisSelection{fe::ElementType::Quad9, fe::BasisType::Lagrange, 2};
-    case consts::ElementType::TET4:
-      return BasisSelection{fe::ElementType::Tetra4, fe::BasisType::Lagrange, 1};
-    case consts::ElementType::TET10:
-      return BasisSelection{fe::ElementType::Tetra10, fe::BasisType::Lagrange, 2};
-    case consts::ElementType::HEX8:
-      return BasisSelection{fe::ElementType::Hex8, fe::BasisType::Lagrange, 1};
-    case consts::ElementType::HEX20:
-      return BasisSelection{fe::ElementType::Hex20, fe::BasisType::Serendipity, 2};
-    case consts::ElementType::HEX27:
-      return BasisSelection{fe::ElementType::Hex27, fe::BasisType::Lagrange, 2};
-    case consts::ElementType::WDG:
-      return BasisSelection{fe::ElementType::Wedge6, fe::BasisType::Lagrange, 1};
-    default:
-      return std::nullopt;
+  static constexpr std::array supported{
+      BasisSelection{fe::ElementType::Line2,     fe::BasisType::Lagrange,    1},
+      BasisSelection{fe::ElementType::Line3,     fe::BasisType::Lagrange,    2},
+      BasisSelection{fe::ElementType::Triangle3, fe::BasisType::Lagrange,    1},
+      BasisSelection{fe::ElementType::Triangle6, fe::BasisType::Lagrange,    2},
+      BasisSelection{fe::ElementType::Quad4,     fe::BasisType::Lagrange,    1},
+      BasisSelection{fe::ElementType::Quad8,     fe::BasisType::Serendipity, 2},
+      BasisSelection{fe::ElementType::Quad9,     fe::BasisType::Lagrange,    2},
+      BasisSelection{fe::ElementType::Tetra4,    fe::BasisType::Lagrange,    1},
+      BasisSelection{fe::ElementType::Tetra10,   fe::BasisType::Lagrange,    2},
+      BasisSelection{fe::ElementType::Hex8,      fe::BasisType::Lagrange,    1},
+      BasisSelection{fe::ElementType::Hex20,     fe::BasisType::Serendipity, 2},
+      BasisSelection{fe::ElementType::Hex27,     fe::BasisType::Lagrange,    2},
+      BasisSelection{fe::ElementType::Wedge6,    fe::BasisType::Lagrange,    1},
+  };
+
+  const int index = static_cast<int>(eType) - static_cast<int>(consts::ElementType::LIN1);
+  if (index >= 0 && static_cast<std::size_t>(index) < supported.size()) {
+    return supported[static_cast<std::size_t>(index)];
   }
+  return std::nullopt;
 }
 
 bool use_basis_adapter_for(consts::ElementType eType)
-{
-  return basis_mode_allows_fe_adapter() && to_basis_selection(eType).has_value();
-}
-
-bool supports_basis_hessian_adapter_for(consts::ElementType eType)
 {
   return basis_mode_allows_fe_adapter() && to_basis_selection(eType).has_value();
 }
@@ -223,26 +210,36 @@ std::shared_ptr<febasis::BasisFunction> make_basis_for_solver_element(consts::El
         __FILE__, __LINE__, __func__);
   }
 
-  febasis::BasisRequest request;
-  request.element_type = selection->element;
-  request.basis_type = selection->basis;
-  request.order = selection->order;
-  return febasis::basis_factory::create(request);
+  return febasis::basis_factory::create(
+      {selection->element, selection->basis, selection->order});
 }
 
-template <std::size_t NumNodes>
-std::size_t mapped_basis_index(const std::array<std::size_t, NumNodes>& map,
-                               consts::ElementType eType,
-                               const int solver_node)
+std::span<const std::size_t> solver_to_basis_node_map(consts::ElementType eType)
 {
-  if (solver_node < 0 || static_cast<std::size_t>(solver_node) >= map.size()) {
-    throw febasis::BasisNodeOrderingException(
-        "Solver node " + std::to_string(solver_node) +
-            " is outside node map for " + solver_element_name(eType),
-        __FILE__, __LINE__, __func__);
-  }
+  static constexpr std::array<std::size_t, 3> tri3{1, 2, 0};
+  static constexpr std::array<std::size_t, 6> tri6{1, 2, 0, 4, 5, 3};
+  static constexpr std::array<std::size_t, 4> tet4{1, 2, 3, 0};
+  static constexpr std::array<std::size_t, 10> tet10{1, 2, 3, 0, 5, 9, 8, 4, 6, 7};
+  static constexpr std::array<std::size_t, 27> hex27{
+      0, 1, 2, 3, 4, 5, 6, 7,
+      8, 9, 10, 11, 12, 13, 14, 15,
+      16, 17, 18, 19, 25, 23, 22, 24, 20, 21, 26};
 
-  return map[static_cast<std::size_t>(solver_node)];
+  switch (eType) {
+    case consts::ElementType::TRI3:
+      return tri3;
+    case consts::ElementType::TRI6:
+    case consts::ElementType::WDG:
+      return tri6;
+    case consts::ElementType::TET4:
+      return tet4;
+    case consts::ElementType::TET10:
+      return tet10;
+    case consts::ElementType::HEX27:
+      return hex27;
+    default:
+      return {};
+  }
 }
 
 std::size_t basis_index_for_solver_node(consts::ElementType eType, const int solver_node)
@@ -255,40 +252,17 @@ std::size_t basis_index_for_solver_node(consts::ElementType eType, const int sol
   }
 
   const auto node = static_cast<std::size_t>(solver_node);
-
-  switch (eType) {
-    case consts::ElementType::TRI3: {
-      static constexpr std::array<std::size_t, 3> map{1, 2, 0};
-      return mapped_basis_index(map, eType, solver_node);
-    }
-    case consts::ElementType::TRI6: {
-      static constexpr std::array<std::size_t, 6> map{1, 2, 0, 4, 5, 3};
-      return mapped_basis_index(map, eType, solver_node);
-    }
-    case consts::ElementType::TET4: {
-      static constexpr std::array<std::size_t, 4> map{1, 2, 3, 0};
-      return mapped_basis_index(map, eType, solver_node);
-    }
-    case consts::ElementType::TET10: {
-      static constexpr std::array<std::size_t, 10> map{1, 2, 3, 0, 5, 9, 8, 4, 6, 7};
-      return mapped_basis_index(map, eType, solver_node);
-    }
-    case consts::ElementType::WDG: {
-      static constexpr std::array<std::size_t, 6> map{1, 2, 0, 4, 5, 3};
-      return mapped_basis_index(map, eType, solver_node);
-    }
-    case consts::ElementType::HEX27: {
-      static constexpr std::array<std::size_t, 27> map{
-        0, 1, 2, 3, 4, 5, 6, 7,
-        8, 9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19,
-        25, 23, 22, 24, 20, 21, 26
-      };
-      return mapped_basis_index(map, eType, solver_node);
-    }
-    default:
-      return node;
+  const auto map = solver_to_basis_node_map(eType);
+  if (map.empty()) {
+    return node;
   }
+  if (node < map.size()) {
+    return map[node];
+  }
+  throw febasis::BasisNodeOrderingException(
+      "Solver node " + std::to_string(solver_node) +
+          " is outside node map for " + solver_element_name(eType),
+      __FILE__, __LINE__, __func__);
 }
 
 fe::math::Vector<fe::Real, 3> make_basis_point(const febasis::BasisFunction& basis,
@@ -710,7 +684,7 @@ void get_gn_nxx(const int insd, const int ind2, consts::ElementType eType, const
     return;
   }
 
-  if (supports_basis_hessian_adapter_for(eType)) {
+  if (use_basis_adapter_for(eType)) {
     try {
       evaluate_basis_hessians(insd, ind2, eType, eNoN, gaus_pt, xi, Nxx);
       return;

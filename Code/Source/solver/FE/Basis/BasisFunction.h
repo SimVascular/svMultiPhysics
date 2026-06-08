@@ -23,8 +23,6 @@ namespace basis {
 using Gradient = math::Vector<Real, 3>;
 using Hessian  = math::Matrix<Real, 3, 3>;
 
-void prewarm_basis_function_scratch(std::size_t max_size);
-
 [[nodiscard]] inline Hessian make_symmetric_hessian(Real xx,
                                                     Real yy,
                                                     Real zz,

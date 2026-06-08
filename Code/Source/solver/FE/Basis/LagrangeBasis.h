@@ -18,8 +18,6 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
-void prewarm_lagrange_basis_scratch(int max_order, std::size_t max_qpts = 0);
-
 class LagrangeBasis : public BasisFunction {
 public:
     using TensorNodeIndex = std::array<std::size_t, 3>;
