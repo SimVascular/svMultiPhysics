@@ -61,7 +61,7 @@ namespace basis {
 /// Hex8 corner functions for geometry mapping and assigns zero contribution to
 /// the quadratic edge nodes. This preserves the public Hex20 node count while
 /// intentionally reducing the geometry interpolation order.
-class SerendipityBasis : public BasisFunction {
+class SerendipityBasis final : public BasisFunction {
 public:
     /// \brief Construct a serendipity basis for an element type and polynomial order.
     ///
@@ -81,19 +81,19 @@ public:
     SerendipityBasis(ElementType type, int order, bool geometry_mode = false);
 
     /// \copydoc BasisFunction::basis_type()
-    BasisType basis_type() const noexcept override { return BasisType::Serendipity; }
+    BasisType basis_type() const noexcept final { return BasisType::Serendipity; }
 
     /// \copydoc BasisFunction::element_type()
-    ElementType element_type() const noexcept override { return element_type_; }
+    ElementType element_type() const noexcept final { return element_type_; }
 
     /// \copydoc BasisFunction::dimension()
-    int dimension() const noexcept override { return dimension_; }
+    int dimension() const noexcept final { return dimension_; }
 
     /// \copydoc BasisFunction::order()
-    int order() const noexcept override { return order_; }
+    int order() const noexcept final { return order_; }
 
     /// \copydoc BasisFunction::size()
-    std::size_t size() const noexcept override { return size_; }
+    std::size_t size() const noexcept final { return size_; }
 
     /// \brief Return the reference interpolation nodes in basis ordering.
     ///
@@ -119,7 +119,7 @@ public:
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param values Receives one value per basis function.
     void evaluate_values(const math::Vector<Real, 3>& xi,
-                         std::vector<Real>& values) const override;
+                         std::vector<Real>& values) const final;
 
     /// \brief Evaluate analytical serendipity basis gradients at a reference coordinate.
     ///
@@ -134,7 +134,7 @@ public:
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param gradients Receives one three-component gradient per basis function.
     void evaluate_gradients(const math::Vector<Real, 3>& xi,
-                            std::vector<Gradient>& gradients) const override;
+                            std::vector<Gradient>& gradients) const final;
 
     /// \brief Evaluate analytical serendipity basis Hessians at a reference coordinate.
     ///
@@ -149,7 +149,40 @@ public:
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param hessians Receives one 3-by-3 Hessian per basis function.
     void evaluate_hessians(const math::Vector<Real, 3>& xi,
-                           std::vector<Hessian>& hessians) const override;
+                           std::vector<Hessian>& hessians) const final;
+
+    /// \brief Evaluate serendipity values, gradients, and Hessians together.
+    ///
+    /// \details This vector API is backed by the same flat-buffer evaluator as
+    /// the assembly-oriented `*_to` methods, so topology-specific polynomial
+    /// setup can be shared for a quadrature point.
+    ///
+    /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
+    /// \param values Receives one value per basis function.
+    /// \param gradients Receives one three-component gradient per basis function.
+    /// \param hessians Receives one 3-by-3 Hessian per basis function.
+    void evaluate_all(const math::Vector<Real, 3>& xi,
+                      std::vector<Real>& values,
+                      std::vector<Gradient>& gradients,
+                      std::vector<Hessian>& hessians) const final;
+
+    /// \brief Evaluate serendipity basis values into a flat caller-provided buffer.
+    /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
+    /// \param values_out Output buffer with at least size() entries.
+    void evaluate_values_to(const math::Vector<Real, 3>& xi,
+                            Real* SVMP_RESTRICT values_out) const final;
+
+    /// \brief Evaluate serendipity basis gradients into a flat caller-provided buffer.
+    /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
+    /// \param gradients_out Output buffer with node-major layout: node * 3 + component.
+    void evaluate_gradients_to(const math::Vector<Real, 3>& xi,
+                               Real* SVMP_RESTRICT gradients_out) const final;
+
+    /// \brief Evaluate serendipity basis Hessians into a flat caller-provided buffer.
+    /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
+    /// \param hessians_out Output buffer with node-major row-major layout: node * 9 + row * 3 + col.
+    void evaluate_hessians_to(const math::Vector<Real, 3>& xi,
+                              Real* SVMP_RESTRICT hessians_out) const final;
 
 private:
     ElementType element_type_;
@@ -164,6 +197,11 @@ private:
     // When true, this basis is used purely for geometry mapping and may use
     // reduced polynomial order (e.g., Hex20 geometry as Hex8).
     bool geometry_mode_;
+
+    void evaluate_all_to(const math::Vector<Real, 3>& xi,
+                         Real* SVMP_RESTRICT values_out,
+                         Real* SVMP_RESTRICT gradients_out,
+                         Real* SVMP_RESTRICT hessians_out) const;
 };
 
 /// @}

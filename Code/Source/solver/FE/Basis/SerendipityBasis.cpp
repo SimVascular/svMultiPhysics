@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "SerendipityBasis.h"
-#include "LagrangeBasis.h"
 #include "NodeOrderingConventions.h"
 #include "Math/DenseLinearAlgebra.h"
 
@@ -18,6 +17,61 @@ namespace basis {
 
 namespace {
 using Vec3 = math::Vector<Real, 3>;
+
+void store_gradient(const Gradient& gradient, Real* dst) {
+    dst[0] = gradient[0];
+    dst[1] = gradient[1];
+    dst[2] = gradient[2];
+}
+
+void evaluate_hex8_reference(Real r,
+                             Real s,
+                             Real t,
+                             Real* values,
+                             Real* gradients,
+                             Real* hessians) {
+    static constexpr int signs[8][3] = {
+        {-1, -1, -1},
+        { 1, -1, -1},
+        { 1,  1, -1},
+        {-1,  1, -1},
+        {-1, -1,  1},
+        { 1, -1,  1},
+        { 1,  1,  1},
+        {-1,  1,  1},
+    };
+
+    for (std::size_t i = 0; i < 8u; ++i) {
+        const Real a = Real(signs[i][0]);
+        const Real b = Real(signs[i][1]);
+        const Real c = Real(signs[i][2]);
+        const Real ar = Real(1) + a * r;
+        const Real bs = Real(1) + b * s;
+        const Real ct = Real(1) + c * t;
+
+        if (values) {
+            values[i] = Real(0.125) * ar * bs * ct;
+        }
+        if (gradients) {
+            Real* g = gradients + i * 3u;
+            g[0] = Real(0.125) * a * bs * ct;
+            g[1] = Real(0.125) * b * ar * ct;
+            g[2] = Real(0.125) * c * ar * bs;
+        }
+        if (hessians) {
+            Real* h = hessians + i * 9u;
+            h[0] = Real(0);
+            h[1] = Real(0.125) * a * b * ct;
+            h[2] = Real(0.125) * a * c * bs;
+            h[3] = h[1];
+            h[4] = Real(0);
+            h[5] = Real(0.125) * b * c * ar;
+            h[6] = h[2];
+            h[7] = h[5];
+            h[8] = Real(0);
+        }
+    }
+}
 
 int quad_serendipity_superlinear_degree(int ax, int ay) {
     return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0);
@@ -496,9 +550,24 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mo
     }
 }
 
-void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
-                                       std::vector<Real>& values) const {
-    values.assign(size_, Real(0));
+void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
+                                       Real* SVMP_RESTRICT values_out,
+                                       Real* SVMP_RESTRICT gradients_out,
+                                       Real* SVMP_RESTRICT hessians_out) const {
+    if (!values_out && !gradients_out && !hessians_out) {
+        return;
+    }
+
+    if (values_out) {
+        std::fill_n(values_out, size_, Real(0));
+    }
+    if (gradients_out) {
+        std::fill_n(gradients_out, size_ * 3u, Real(0));
+    }
+    if (hessians_out) {
+        std::fill_n(hessians_out, size_ * 9u, Real(0));
+    }
+
     const Real x = xi[0];
     const Real y = xi[1];
     const Real z = xi[2];
@@ -511,299 +580,170 @@ void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
                 __FILE__, __LINE__, __func__);
         }
 
-        std::vector<Real> monomials(size_, Real(0));
         for (std::size_t j = 0; j < size_; ++j) {
             const auto [ax, ay] = quad_monomial_exponents_[j];
-            monomials[j] = std::pow(x, ax) * std::pow(y, ay);
-        }
-
-        for (std::size_t i = 0; i < size_; ++i) {
-            Real value = Real(0);
-            for (std::size_t j = 0; j < size_; ++j) {
-                value += monomials[j] * quad_inv_vandermonde_[j * size_ + i];
-            }
-            values[i] = value;
-        }
-        return;
-    }
-
-    if (dimension_ == 3 && order_ == 1) {
-        // Hex8 trilinear shape functions
-        const Real r = x;
-        const Real s = y;
-        const Real t = z;
-        values[0] = Real(0.125) * (Real(1) - r) * (Real(1) - s) * (Real(1) - t);
-        values[1] = Real(0.125) * (Real(1) + r) * (Real(1) - s) * (Real(1) - t);
-        values[2] = Real(0.125) * (Real(1) + r) * (Real(1) + s) * (Real(1) - t);
-        values[3] = Real(0.125) * (Real(1) - r) * (Real(1) + s) * (Real(1) - t);
-        values[4] = Real(0.125) * (Real(1) - r) * (Real(1) - s) * (Real(1) + t);
-        values[5] = Real(0.125) * (Real(1) + r) * (Real(1) - s) * (Real(1) + t);
-        values[6] = Real(0.125) * (Real(1) + r) * (Real(1) + s) * (Real(1) + t);
-        values[7] = Real(0.125) * (Real(1) - r) * (Real(1) + s) * (Real(1) + t);
-        return;
-    }
-
-    const Real r = x;
-    const Real s = y;
-    const Real t = z;
-
-    if (geometry_mode_ && element_type_ == ElementType::Hex20) {
-        // Hex20 geometry mode: use trilinear Hex8 shape functions on corners, edges zero.
-        values[0] = Real(0.125) * (Real(1) - r) * (Real(1) - s) * (Real(1) - t);
-        values[1] = Real(0.125) * (Real(1) + r) * (Real(1) - s) * (Real(1) - t);
-        values[2] = Real(0.125) * (Real(1) + r) * (Real(1) + s) * (Real(1) - t);
-        values[3] = Real(0.125) * (Real(1) - r) * (Real(1) + s) * (Real(1) - t);
-        values[4] = Real(0.125) * (Real(1) - r) * (Real(1) - s) * (Real(1) + t);
-        values[5] = Real(0.125) * (Real(1) + r) * (Real(1) - s) * (Real(1) + t);
-        values[6] = Real(0.125) * (Real(1) + r) * (Real(1) + s) * (Real(1) + t);
-        values[7] = Real(0.125) * (Real(1) - r) * (Real(1) + s) * (Real(1) + t);
-        for (std::size_t i = 8; i < 20; ++i) {
-            values[i] = Real(0);
-        }
-        return;
-    }
-
-    if (element_type_ == ElementType::Hex20) {
-        Real internal_vals[20];
-        eval_hex20_internal(r, s, t, internal_vals);
-        const auto mesh_to_basis = ReferenceNodeLayout::mesh_to_basis_ordering(element_type_);
-        BASIS_CHECK_EVAL(mesh_to_basis.size() == size_,
-                         "Hex20 mesh-to-basis ordering is not registered");
-        for (std::size_t i = 0; i < 20; ++i) {
-            values[i] = internal_vals[mesh_to_basis[i]];
-        }
-        return;
-    }
-
-    if (element_type_ == ElementType::Wedge15) {
-        eval_wedge15_polynomial(r, s, t, values.data(), nullptr, nullptr);
-        return;
-    }
-
-}
-
-void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
-                                          std::vector<Gradient>& gradients) const {
-    gradients.assign(size_, Gradient{});
-
-    const Real x = xi[0];
-    const Real y = xi[1];
-    const Real z = xi[2];
-
-    if (dimension_ == 2) {
-        if (quad_monomial_exponents_.size() != size_ ||
-            quad_inv_vandermonde_.size() != size_ * size_) {
-            throw BasisEvaluationException(
-                "SerendipityBasis: quadrilateral interpolation tables are not initialized for gradient evaluation",
-                __FILE__, __LINE__, __func__);
-        }
-
-        std::vector<Real> dmon_dx(size_, Real(0));
-        std::vector<Real> dmon_dy(size_, Real(0));
-        for (std::size_t j = 0; j < size_; ++j) {
-            const auto [ax, ay] = quad_monomial_exponents_[j];
-            dmon_dx[j] =
+            const Real value = std::pow(x, ax) * std::pow(y, ay);
+            const Real dx =
                 (ax > 0) ? Real(ax) * std::pow(x, ax - 1) * std::pow(y, ay) : Real(0);
-            dmon_dy[j] =
+            const Real dy =
                 (ay > 0) ? std::pow(x, ax) * Real(ay) * std::pow(y, ay - 1) : Real(0);
-        }
+            const Real dxx =
+                (ax > 1) ? Real(ax * (ax - 1)) * std::pow(x, ax - 2) * std::pow(y, ay)
+                         : Real(0);
+            const Real dxy =
+                (ax > 0 && ay > 0)
+                    ? Real(ax * ay) * std::pow(x, ax - 1) * std::pow(y, ay - 1)
+                    : Real(0);
+            const Real dyy =
+                (ay > 1) ? Real(ay * (ay - 1)) * std::pow(x, ax) * std::pow(y, ay - 2)
+                         : Real(0);
 
-        for (std::size_t i = 0; i < size_; ++i) {
-            Real gx = Real(0);
-            Real gy = Real(0);
-            for (std::size_t j = 0; j < size_; ++j) {
+            for (std::size_t i = 0; i < size_; ++i) {
                 const Real coeff = quad_inv_vandermonde_[j * size_ + i];
-                gx += dmon_dx[j] * coeff;
-                gy += dmon_dy[j] * coeff;
-            }
-            gradients[i][0] = gx;
-            gradients[i][1] = gy;
-        }
-        return;
-    }
-
-    // 3D linear hex (Hex8)
-    if (dimension_ == 3 && order_ == 1) {
-        const Real r = x, s = y, t = z;
-        gradients[0][0] = -Real(0.125) * (Real(1) - s) * (Real(1) - t);
-        gradients[0][1] = -Real(0.125) * (Real(1) - r) * (Real(1) - t);
-        gradients[0][2] = -Real(0.125) * (Real(1) - r) * (Real(1) - s);
-
-        gradients[1][0] =  Real(0.125) * (Real(1) - s) * (Real(1) - t);
-        gradients[1][1] = -Real(0.125) * (Real(1) + r) * (Real(1) - t);
-        gradients[1][2] = -Real(0.125) * (Real(1) + r) * (Real(1) - s);
-
-        gradients[2][0] =  Real(0.125) * (Real(1) + s) * (Real(1) - t);
-        gradients[2][1] =  Real(0.125) * (Real(1) + r) * (Real(1) - t);
-        gradients[2][2] = -Real(0.125) * (Real(1) + r) * (Real(1) + s);
-
-        gradients[3][0] = -Real(0.125) * (Real(1) + s) * (Real(1) - t);
-        gradients[3][1] =  Real(0.125) * (Real(1) - r) * (Real(1) - t);
-        gradients[3][2] = -Real(0.125) * (Real(1) - r) * (Real(1) + s);
-
-        gradients[4][0] = -Real(0.125) * (Real(1) - s) * (Real(1) + t);
-        gradients[4][1] = -Real(0.125) * (Real(1) - r) * (Real(1) + t);
-        gradients[4][2] =  Real(0.125) * (Real(1) - r) * (Real(1) - s);
-
-        gradients[5][0] =  Real(0.125) * (Real(1) - s) * (Real(1) + t);
-        gradients[5][1] = -Real(0.125) * (Real(1) + r) * (Real(1) + t);
-        gradients[5][2] =  Real(0.125) * (Real(1) + r) * (Real(1) - s);
-
-        gradients[6][0] =  Real(0.125) * (Real(1) + s) * (Real(1) + t);
-        gradients[6][1] =  Real(0.125) * (Real(1) + r) * (Real(1) + t);
-        gradients[6][2] =  Real(0.125) * (Real(1) + r) * (Real(1) + s);
-
-        gradients[7][0] = -Real(0.125) * (Real(1) + s) * (Real(1) + t);
-        gradients[7][1] =  Real(0.125) * (Real(1) - r) * (Real(1) + t);
-        gradients[7][2] =  Real(0.125) * (Real(1) - r) * (Real(1) + s);
-        return;
-    }
-
-    // Hex20 geometry mode: use Hex8 gradients
-    if (dimension_ == 3 && order_ == 2 && geometry_mode_ &&
-        (element_type_ == ElementType::Hex20 || element_type_ == ElementType::Quad8)) {
-        const Real r = x, s = y, t = z;
-        gradients[0][0] = -Real(0.125) * (Real(1) - s) * (Real(1) - t);
-        gradients[0][1] = -Real(0.125) * (Real(1) - r) * (Real(1) - t);
-        gradients[0][2] = -Real(0.125) * (Real(1) - r) * (Real(1) - s);
-
-        gradients[1][0] =  Real(0.125) * (Real(1) - s) * (Real(1) - t);
-        gradients[1][1] = -Real(0.125) * (Real(1) + r) * (Real(1) - t);
-        gradients[1][2] = -Real(0.125) * (Real(1) + r) * (Real(1) - s);
-
-        gradients[2][0] =  Real(0.125) * (Real(1) + s) * (Real(1) - t);
-        gradients[2][1] =  Real(0.125) * (Real(1) + r) * (Real(1) - t);
-        gradients[2][2] = -Real(0.125) * (Real(1) + r) * (Real(1) + s);
-
-        gradients[3][0] = -Real(0.125) * (Real(1) + s) * (Real(1) - t);
-        gradients[3][1] =  Real(0.125) * (Real(1) - r) * (Real(1) - t);
-        gradients[3][2] = -Real(0.125) * (Real(1) - r) * (Real(1) + s);
-
-        gradients[4][0] = -Real(0.125) * (Real(1) - s) * (Real(1) + t);
-        gradients[4][1] = -Real(0.125) * (Real(1) - r) * (Real(1) + t);
-        gradients[4][2] =  Real(0.125) * (Real(1) - r) * (Real(1) - s);
-
-        gradients[5][0] =  Real(0.125) * (Real(1) - s) * (Real(1) + t);
-        gradients[5][1] = -Real(0.125) * (Real(1) + r) * (Real(1) + t);
-        gradients[5][2] =  Real(0.125) * (Real(1) + r) * (Real(1) - s);
-
-        gradients[6][0] =  Real(0.125) * (Real(1) + s) * (Real(1) + t);
-        gradients[6][1] =  Real(0.125) * (Real(1) + r) * (Real(1) + t);
-        gradients[6][2] =  Real(0.125) * (Real(1) + r) * (Real(1) + s);
-
-        gradients[7][0] = -Real(0.125) * (Real(1) + s) * (Real(1) + t);
-        gradients[7][1] =  Real(0.125) * (Real(1) - r) * (Real(1) + t);
-        gradients[7][2] =  Real(0.125) * (Real(1) - r) * (Real(1) + s);
-        // Edge-node gradients remain zero
-        return;
-    }
-
-    // Hex20 analytical gradients using monomial differentiation
-    if (element_type_ == ElementType::Hex20 && order_ == 2) {
-        const Real r = x, s = y, t = z;
-        Gradient internal_grads[20];
-        eval_hex20_grad_internal(r, s, t, internal_grads);
-        const auto mesh_to_basis = ReferenceNodeLayout::mesh_to_basis_ordering(element_type_);
-        BASIS_CHECK_EVAL(mesh_to_basis.size() == size_,
-                         "Hex20 mesh-to-basis ordering is not registered");
-        for (std::size_t i = 0; i < 20; ++i) {
-            gradients[i] = internal_grads[mesh_to_basis[i]];
-        }
-        return;
-    }
-
-    // Wedge15 analytical gradients using monomial differentiation
-    if (element_type_ == ElementType::Wedge15 && order_ == 2) {
-        eval_wedge15_polynomial(x, y, z, nullptr, gradients.data(), nullptr);
-        return;
-    }
-
-    throw BasisEvaluationException("SerendipityBasis::evaluate_gradients: unsupported serendipity configuration",
-                                   __FILE__, __LINE__, __func__);
-}
-
-void SerendipityBasis::evaluate_hessians(const math::Vector<Real, 3>& xi,
-                                         std::vector<Hessian>& hessians) const {
-    hessians.assign(size_, Hessian{});
-    const Real x = xi[0];
-    const Real y = xi[1];
-    const Real z = xi[2];
-
-    if (dimension_ == 2) {
-        if (quad_monomial_exponents_.size() != size_ ||
-            quad_inv_vandermonde_.size() != size_ * size_) {
-            throw BasisEvaluationException(
-                "SerendipityBasis: quadrilateral interpolation tables are not initialized for Hessian evaluation",
-                __FILE__, __LINE__, __func__);
-        }
-
-        std::vector<Real> dxx(size_, Real(0));
-        std::vector<Real> dxy(size_, Real(0));
-        std::vector<Real> dyy(size_, Real(0));
-        for (std::size_t j = 0; j < size_; ++j) {
-            const auto [ax, ay] = quad_monomial_exponents_[j];
-            dxx[j] = (ax > 1)
-                         ? Real(ax * (ax - 1)) * std::pow(x, ax - 2) * std::pow(y, ay)
-                         : Real(0);
-            dxy[j] = (ax > 0 && ay > 0)
-                         ? Real(ax * ay) * std::pow(x, ax - 1) * std::pow(y, ay - 1)
-                         : Real(0);
-            dyy[j] = (ay > 1)
-                         ? Real(ay * (ay - 1)) * std::pow(x, ax) * std::pow(y, ay - 2)
-                         : Real(0);
-        }
-
-        for (std::size_t i = 0; i < size_; ++i) {
-            for (std::size_t j = 0; j < size_; ++j) {
-                const Real coeff = quad_inv_vandermonde_[j * size_ + i];
-                hessians[i](0, 0) += dxx[j] * coeff;
-                hessians[i](0, 1) += dxy[j] * coeff;
-                hessians[i](1, 1) += dyy[j] * coeff;
-            }
-            hessians[i](1, 0) = hessians[i](0, 1);
-        }
-        return;
-    }
-
-    if (element_type_ == ElementType::Hex8 && order_ == 1) {
-        static const LagrangeBasis parent(ElementType::Hex8, 1);
-        parent.evaluate_hessians(xi, hessians);
-        return;
-    }
-
-    if (geometry_mode_ && element_type_ == ElementType::Hex20) {
-        static const LagrangeBasis parent(ElementType::Hex8, 1);
-        std::array<Real, 8u * 9u> parent_hessians{};
-        parent.evaluate_hessians_to(xi, parent_hessians.data());
-        for (std::size_t i = 0; i < 8; ++i) {
-            for (std::size_t r = 0; r < 3; ++r) {
-                for (std::size_t c = 0; c < 3; ++c) {
-                    hessians[i](r, c) = parent_hessians[i * 9u + r * 3u + c];
+                if (values_out) {
+                    values_out[i] += value * coeff;
+                }
+                if (gradients_out) {
+                    Real* g = gradients_out + i * 3u;
+                    g[0] += dx * coeff;
+                    g[1] += dy * coeff;
+                }
+                if (hessians_out) {
+                    Real* h = hessians_out + i * 9u;
+                    h[0] += dxx * coeff;
+                    h[1] += dxy * coeff;
+                    h[3] += dxy * coeff;
+                    h[4] += dyy * coeff;
                 }
             }
         }
         return;
     }
 
-    if (element_type_ == ElementType::Hex20 && order_ == 2) {
-        Hessian internal_hessians[20];
-        eval_hex20_hess_internal(x, y, z, internal_hessians);
+    if (dimension_ == 3 && order_ == 1) {
+        evaluate_hex8_reference(x, y, z, values_out, gradients_out, hessians_out);
+        return;
+    }
+
+    if (geometry_mode_ && element_type_ == ElementType::Hex20) {
+        evaluate_hex8_reference(x, y, z, values_out, gradients_out, hessians_out);
+        return;
+    }
+
+    if (element_type_ == ElementType::Hex20) {
         const auto mesh_to_basis = ReferenceNodeLayout::mesh_to_basis_ordering(element_type_);
         BASIS_CHECK_EVAL(mesh_to_basis.size() == size_,
                          "Hex20 mesh-to-basis ordering is not registered");
-        for (std::size_t i = 0; i < 20; ++i) {
-            hessians[i] = internal_hessians[mesh_to_basis[i]];
+
+        if (values_out) {
+            Real internal_vals[20];
+            eval_hex20_internal(x, y, z, internal_vals);
+            for (std::size_t i = 0; i < 20u; ++i) {
+                values_out[i] = internal_vals[mesh_to_basis[i]];
+            }
+        }
+        if (gradients_out) {
+            Gradient internal_grads[20];
+            eval_hex20_grad_internal(x, y, z, internal_grads);
+            for (std::size_t i = 0; i < 20u; ++i) {
+                store_gradient(internal_grads[mesh_to_basis[i]], gradients_out + i * 3u);
+            }
+        }
+        if (hessians_out) {
+            Hessian internal_hessians[20];
+            eval_hex20_hess_internal(x, y, z, internal_hessians);
+            for (std::size_t i = 0; i < 20u; ++i) {
+                store_hessian(internal_hessians[mesh_to_basis[i]], hessians_out + i * 9u);
+            }
         }
         return;
     }
 
-    if (element_type_ == ElementType::Wedge15 && order_ == 2) {
-        eval_wedge15_polynomial(x, y, z, nullptr, nullptr, hessians.data());
+    if (element_type_ == ElementType::Wedge15) {
+        std::array<Gradient, 15u> wedge_gradients{};
+        std::array<Hessian, 15u> wedge_hessians{};
+        eval_wedge15_polynomial(x,
+                                 y,
+                                 z,
+                                 values_out,
+                                 gradients_out ? wedge_gradients.data() : nullptr,
+                                 hessians_out ? wedge_hessians.data() : nullptr);
+        if (gradients_out) {
+            for (std::size_t i = 0; i < 15u; ++i) {
+                store_gradient(wedge_gradients[i], gradients_out + i * 3u);
+            }
+        }
+        if (hessians_out) {
+            for (std::size_t i = 0; i < 15u; ++i) {
+                store_hessian(wedge_hessians[i], hessians_out + i * 9u);
+            }
+        }
         return;
     }
 
-    throw BasisEvaluationException("SerendipityBasis::evaluate_hessians: unsupported serendipity configuration",
+    throw BasisEvaluationException("SerendipityBasis::evaluate_all_to: unsupported serendipity configuration",
                                    __FILE__, __LINE__, __func__);
+}
+
+void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
+                                       std::vector<Real>& values) const {
+    values.resize(size_);
+    evaluate_values_to(xi, values.data());
+}
+
+void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
+                                          std::vector<Gradient>& gradients) const {
+    gradients.resize(size_);
+    std::vector<Real> flat(size_ * 3u, Real(0));
+    evaluate_gradients_to(xi, flat.data());
+    for (std::size_t i = 0; i < size_; ++i) {
+        gradients[i][0] = flat[i * 3u + 0u];
+        gradients[i][1] = flat[i * 3u + 1u];
+        gradients[i][2] = flat[i * 3u + 2u];
+    }
+}
+
+void SerendipityBasis::evaluate_hessians(const math::Vector<Real, 3>& xi,
+                                         std::vector<Hessian>& hessians) const {
+    hessians.resize(size_);
+    std::vector<Real> flat(size_ * 9u, Real(0));
+    evaluate_hessians_to(xi, flat.data());
+    for (std::size_t i = 0; i < size_; ++i) {
+        hessians[i] = load_hessian(flat.data() + i * 9u);
+    }
+}
+
+void SerendipityBasis::evaluate_all(const math::Vector<Real, 3>& xi,
+                                    std::vector<Real>& values,
+                                    std::vector<Gradient>& gradients,
+                                    std::vector<Hessian>& hessians) const {
+    values.resize(size_);
+    gradients.resize(size_);
+    hessians.resize(size_);
+    std::vector<Real> flat_gradients(size_ * 3u, Real(0));
+    std::vector<Real> flat_hessians(size_ * 9u, Real(0));
+    evaluate_all_to(xi, values.data(), flat_gradients.data(), flat_hessians.data());
+    for (std::size_t i = 0; i < size_; ++i) {
+        gradients[i][0] = flat_gradients[i * 3u + 0u];
+        gradients[i][1] = flat_gradients[i * 3u + 1u];
+        gradients[i][2] = flat_gradients[i * 3u + 2u];
+        hessians[i] = load_hessian(flat_hessians.data() + i * 9u);
+    }
+}
+
+void SerendipityBasis::evaluate_values_to(const math::Vector<Real, 3>& xi,
+                                          Real* SVMP_RESTRICT values_out) const {
+    evaluate_all_to(xi, values_out, nullptr, nullptr);
+}
+
+void SerendipityBasis::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
+                                             Real* SVMP_RESTRICT gradients_out) const {
+    evaluate_all_to(xi, nullptr, gradients_out, nullptr);
+}
+
+void SerendipityBasis::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
+                                            Real* SVMP_RESTRICT hessians_out) const {
+    evaluate_all_to(xi, nullptr, nullptr, hessians_out);
 }
 
 } // namespace basis
