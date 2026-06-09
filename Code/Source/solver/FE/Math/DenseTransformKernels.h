@@ -6,17 +6,21 @@
 
 #include "Types.h"
 
-#include <algorithm>
-#include <array>
+#include <Eigen/Core>
+
 #include <cstddef>
 
 namespace svmp {
 namespace FE {
 namespace math {
 
-constexpr std::size_t dense_transform_blocked_min_rows() noexcept { return 32u; }
-constexpr std::size_t dense_transform_blocked_min_rhs() noexcept { return 4u; }
-
+/// \brief Apply a row-major dense matrix to a batch of right-hand sides.
+///
+/// Computes output = matrix * input where matrix is rows-by-cols (row-major),
+/// input holds cols rows of rhs_count values each (row stride
+/// input_row_stride), and output holds rows rows of rhs_count values each
+/// (row stride output_row_stride). Strides may exceed rhs_count for padded
+/// layouts; padding entries are left untouched.
 inline void dense_transform_batched_row_major(
     const Real* SVMP_RESTRICT matrix,
     std::size_t rows,
@@ -30,41 +34,29 @@ inline void dense_transform_batched_row_major(
         return;
     }
 
-    if (rows < dense_transform_blocked_min_rows() ||
-        rhs_count < dense_transform_blocked_min_rhs()) {
-        for (std::size_t row = 0; row < rows; ++row) {
-            const Real* matrix_row = matrix + row * cols;
-            Real* output_row = output + row * output_row_stride;
-            for (std::size_t rhs = 0; rhs < rhs_count; ++rhs) {
-                Real value = Real(0);
-                for (std::size_t col = 0; col < cols; ++col) {
-                    value += matrix_row[col] * input[col * input_row_stride + rhs];
-                }
-                output_row[rhs] = value;
-            }
-        }
-        return;
-    }
+    using RowMajorMatrix =
+        Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+    using ConstMap = Eigen::Map<const RowMajorMatrix>;
+    using ConstStridedMap =
+        Eigen::Map<const RowMajorMatrix, Eigen::Unaligned, Eigen::OuterStride<>>;
+    using StridedMap =
+        Eigen::Map<RowMajorMatrix, Eigen::Unaligned, Eigen::OuterStride<>>;
 
-    constexpr std::size_t kRhsBlock = 32u;
-    for (std::size_t row = 0; row < rows; ++row) {
-        const Real* matrix_row = matrix + row * cols;
-        Real* output_row = output + row * output_row_stride;
-        for (std::size_t rhs_base = 0; rhs_base < rhs_count; rhs_base += kRhsBlock) {
-            const std::size_t block_size = std::min(kRhsBlock, rhs_count - rhs_base);
-            std::array<Real, kRhsBlock> accum{};
-            for (std::size_t col = 0; col < cols; ++col) {
-                const Real coeff = matrix_row[col];
-                const Real* input_row = input + col * input_row_stride + rhs_base;
-                for (std::size_t rhs = 0; rhs < block_size; ++rhs) {
-                    accum[rhs] += coeff * input_row[rhs];
-                }
-            }
-            for (std::size_t rhs = 0; rhs < block_size; ++rhs) {
-                output_row[rhs_base + rhs] = accum[rhs];
-            }
-        }
-    }
+    const ConstMap matrix_map(matrix,
+                              static_cast<Eigen::Index>(rows),
+                              static_cast<Eigen::Index>(cols));
+    const ConstStridedMap input_map(
+        input,
+        static_cast<Eigen::Index>(cols),
+        static_cast<Eigen::Index>(rhs_count),
+        Eigen::OuterStride<>(static_cast<Eigen::Index>(input_row_stride)));
+    StridedMap output_map(
+        output,
+        static_cast<Eigen::Index>(rows),
+        static_cast<Eigen::Index>(rhs_count),
+        Eigen::OuterStride<>(static_cast<Eigen::Index>(output_row_stride)));
+
+    output_map.noalias() = matrix_map * input_map;
 }
 
 } // namespace math

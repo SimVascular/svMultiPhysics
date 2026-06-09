@@ -3,6 +3,7 @@
 
 #include "BasisFactory.h"
 
+#include "BasisTraits.h"
 #include "LagrangeBasis.h"
 #include "SerendipityBasis.h"
 
@@ -72,6 +73,32 @@ std::shared_ptr<BasisFunction> create(const BasisRequest& req) {
                 "BasisFactory: requested basis family is outside the scalar Lagrange/Serendipity scope",
                 __FILE__, __LINE__, __func__);
     }
+}
+
+BasisRequest default_basis_request(ElementType element_type) {
+    switch (element_type) {
+        // Reduced serendipity node layouts have no complete Lagrange basis at
+        // their node count; they always use the quadratic serendipity space.
+        case ElementType::Quad8:
+        case ElementType::Hex20:
+        case ElementType::Wedge15:
+            return BasisRequest{element_type, BasisType::Serendipity, 2};
+        case ElementType::Point1:
+            return BasisRequest{element_type, BasisType::Lagrange, 0};
+        default: {
+            const int order = complete_lagrange_alias_order(element_type);
+            if (order >= 0) {
+                return BasisRequest{element_type, BasisType::Lagrange, order};
+            }
+            throw BasisElementCompatibilityException(
+                "BasisFactory: no default basis is defined for the requested element type",
+                __FILE__, __LINE__, __func__);
+        }
+    }
+}
+
+std::shared_ptr<BasisFunction> create_default_for(ElementType element_type) {
+    return create(default_basis_request(element_type));
 }
 
 } // namespace basis_factory

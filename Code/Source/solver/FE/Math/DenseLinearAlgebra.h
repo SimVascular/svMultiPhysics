@@ -6,6 +6,8 @@
 
 #include "Types.h"
 
+#include <Eigen/Dense>
+
 #include <cstddef>
 #include <limits>
 #include <span>
@@ -18,7 +20,7 @@ namespace FE {
 namespace math {
 
 // Dense solve, inverse, rank, and pseudo-inverse support for FE construction
-// utilities. Matrices are row-major: matrix[row * cols + col].
+// utilities, backed by Eigen. Matrices are row-major: matrix[row * cols + col].
 [[nodiscard]] Real dense_matrix_max_abs(std::span<const Real> matrix) noexcept;
 
 [[nodiscard]] Real dense_matrix_pivot_tolerance(std::size_t rows,
@@ -57,9 +59,10 @@ struct DenseInverseResult {
 [[nodiscard]] Real dense_matrix_condition_error_threshold() noexcept;
 
 struct DenseLUSolver {
+    using DenseMatrix = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
+
     std::size_t n{0};
-    std::vector<Real> lu;
-    std::vector<std::size_t> pivots;
+    Eigen::PartialPivLU<DenseMatrix> lu;
     DenseMatrixDiagnostics diagnostics;
     Real pivot_tolerance{0};
     std::string label;

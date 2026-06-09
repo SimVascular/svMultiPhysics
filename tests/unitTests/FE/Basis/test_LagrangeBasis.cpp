@@ -10,6 +10,7 @@
 #include "FE/Basis/LagrangeBasis.h"
 #include "FE/Basis/NodeOrderingConventions.h"
 
+#include <algorithm>
 #include <array>
 #include <tuple>
 #include <vector>
@@ -90,8 +91,8 @@ void expect_partition_gradient_hessian_sums(const LagrangeBasis& basis,
         basis.evaluate_all(xi, values, gradients, hessians);
 
         Real value_sum = Real(0);
-        Gradient gradient_sum{};
-        Hessian hessian_sum{};
+        Gradient gradient_sum = Gradient::Zero();
+        Hessian hessian_sum = Hessian::Zero();
         for (std::size_t i = 0; i < values.size(); ++i) {
             value_sum += values[i];
             for (std::size_t d = 0; d < 3u; ++d) {
@@ -190,7 +191,7 @@ Real linear_function(const Point& p) {
 }
 
 Gradient linear_gradient() {
-    Gradient g{};
+    Gradient g = Gradient::Zero();
     g[0] = Real(3);
     g[1] = Real(-4);
     g[2] = Real(5);
@@ -202,6 +203,18 @@ Real quadratic_function(const Point& p) {
            p[0] * p[0] + Real(0.75) * p[1] * p[1] - Real(0.25) * p[2] * p[2] +
            Real(0.2) * p[0] * p[1] - Real(0.3) * p[0] * p[2] +
            Real(0.4) * p[1] * p[2];
+}
+
+// Total degree three, so it lies in both the P3 simplex space and the Q3
+// tensor-product space.
+Real cubic_function(const Point& p) {
+    return quadratic_function(p) +
+           Real(0.1) * p[0] * p[0] * p[0] -
+           Real(0.2) * p[1] * p[1] * p[1] +
+           Real(0.3) * p[2] * p[2] * p[2] +
+           Real(0.15) * p[0] * p[0] * p[1] -
+           Real(0.12) * p[0] * p[2] * p[2] +
+           Real(0.08) * p[0] * p[1] * p[2];
 }
 
 template<typename Function>
@@ -338,7 +351,7 @@ TEST(LagrangeBasis, LinearPolynomialReproductionAcrossLinearTopologies) {
             interpolate_value(basis, values, linear_function);
         EXPECT_NEAR(interpolated, linear_function(point), Real(1e-12));
 
-        Gradient interpolated_gradient{};
+        Gradient interpolated_gradient = Gradient::Zero();
         for (std::size_t i = 0; i < gradients.size(); ++i) {
             const Real nodal_value = linear_function(basis.nodes()[i]);
             for (int d = 0; d < basis.dimension(); ++d) {
@@ -374,6 +387,192 @@ TEST(LagrangeBasis, QuadraticPolynomialReproductionAcrossQuadraticAliases) {
         EXPECT_NEAR(interpolated, quadratic_function(point), Real(5e-12))
             << "element=" << static_cast<int>(type);
     }
+}
+
+// Tetra order >= 3 activates the face-interior node loops, tetra order >= 4
+// activates the volume-interior lattice, and hex order >= 3 activates the six
+// orientation-specific face traversals in NodeOrderingConventions. None of
+// those generation paths run at the orders covered elsewhere; the Kronecker
+// test is what validates the node lattice together with its llround-based
+// inverse index mapping (a duplicated or missing node makes the basis
+// non-nodal here).
+TEST(LagrangeBasis, HigherOrderLatticesAreNodalAndPartitionUnity) {
+    const struct Case {
+        ElementType type;
+        int order;
+        std::size_t size;
+        Real kronecker_tol;
+        Real derivative_tol;
+        std::vector<Point> points;
+    } cases[] = {
+        {ElementType::Tetra4, 3, 20u, Real(5e-10), Real(1e-8),
+         {{Real(0.12), Real(0.18), Real(0.16)}, {Real(0.3), Real(0.2), Real(0.25)}}},
+        {ElementType::Tetra4, 4, 35u, Real(1e-9), Real(1e-7),
+         {{Real(0.12), Real(0.18), Real(0.16)}, {Real(0.2), Real(0.1), Real(0.18)}}},
+        {ElementType::Hex8, 3, 64u, Real(5e-10), Real(1e-8),
+         {{Real(0.1), Real(-0.2), Real(0.3)}, {Real(-0.35), Real(0.25), Real(-0.15)}}},
+    };
+
+    for (const auto& c : cases) {
+        LagrangeBasis basis(c.type, c.order);
+        EXPECT_EQ(basis.size(), c.size);
+        expect_kronecker_at_nodes(basis, c.kronecker_tol);
+        expect_partition_gradient_hessian_sums(basis, c.points, c.derivative_tol);
+    }
+}
+
+TEST(LagrangeBasis, CubicPolynomialReproductionAtOrderThree) {
+    const std::vector<std::pair<ElementType, Point>> cases = {
+        {ElementType::Tetra4, {Real(0.15), Real(0.2), Real(0.25)}},
+        {ElementType::Hex8, {Real(0.15), Real(-0.2), Real(0.25)}},
+    };
+
+    for (const auto& [type, point] : cases) {
+        LagrangeBasis basis(type, 3);
+        std::vector<Real> values;
+        basis.evaluate_values(point, values);
+
+        const Real interpolated = interpolate_value(basis, values, cubic_function);
+        EXPECT_NEAR(interpolated, cubic_function(point), Real(1e-10))
+            << "element=" << static_cast<int>(type);
+    }
+}
+
+TEST(LagrangeBasis, PointTopologyEvaluatesConstantUnity) {
+    LagrangeBasis basis(ElementType::Point1, 0);
+
+    EXPECT_EQ(basis.element_type(), ElementType::Point1);
+    EXPECT_EQ(basis.size(), 1u);
+    EXPECT_EQ(basis.dimension(), 0);
+    ASSERT_EQ(basis.nodes().size(), 1u);
+
+    const Point xi{Real(0.3), Real(-0.4), Real(0.1)};
+    std::vector<Real> values;
+    std::vector<Gradient> gradients;
+    std::vector<Hessian> hessians;
+    basis.evaluate_all(xi, values, gradients, hessians);
+
+    ASSERT_EQ(values.size(), 1u);
+    EXPECT_EQ(values[0], Real(1));
+    for (std::size_t d = 0; d < 3u; ++d) {
+        EXPECT_EQ(gradients[0][d], Real(0));
+        for (std::size_t e = 0; e < 3u; ++e) {
+            EXPECT_EQ(hessians[0](d, e), Real(0));
+        }
+    }
+
+    Real flat_value = Real(-1);
+    Real flat_gradient[3] = {Real(-1), Real(-1), Real(-1)};
+    Real flat_hessian[9];
+    std::fill_n(flat_hessian, 9u, Real(-1));
+    basis.evaluate_values_to(xi, &flat_value);
+    basis.evaluate_gradients_to(xi, flat_gradient);
+    basis.evaluate_hessians_to(xi, flat_hessian);
+    EXPECT_EQ(flat_value, Real(1));
+    for (std::size_t d = 0; d < 3u; ++d) {
+        EXPECT_EQ(flat_gradient[d], Real(0));
+    }
+    for (std::size_t e = 0; e < 9u; ++e) {
+        EXPECT_EQ(flat_hessian[e], Real(0));
+    }
+}
+
+// P0 bases back piecewise-constant fields (e.g. pressure in mixed elements);
+// the order-zero branches in node generation and the simplex/tensor/wedge
+// evaluators have no other coverage.
+TEST(LagrangeBasis, OrderZeroBasesAreConstantUnity) {
+    const std::array<ElementType, 6> types = {
+        ElementType::Line2,
+        ElementType::Triangle3,
+        ElementType::Quad4,
+        ElementType::Tetra4,
+        ElementType::Hex8,
+        ElementType::Wedge6,
+    };
+
+    for (const auto type : types) {
+        LagrangeBasis basis(type, 0);
+        EXPECT_EQ(basis.order(), 0) << "element=" << static_cast<int>(type);
+        EXPECT_EQ(basis.size(), 1u) << "element=" << static_cast<int>(type);
+
+        for (const auto& xi : sample_points_for(type)) {
+            std::vector<Real> values;
+            std::vector<Gradient> gradients;
+            std::vector<Hessian> hessians;
+            basis.evaluate_all(xi, values, gradients, hessians);
+
+            ASSERT_EQ(values.size(), 1u);
+            EXPECT_NEAR(values[0], Real(1), Real(1e-14))
+                << "element=" << static_cast<int>(type);
+            for (std::size_t d = 0; d < 3u; ++d) {
+                EXPECT_NEAR(gradients[0][d], Real(0), Real(1e-14));
+                for (std::size_t e = 0; e < 3u; ++e) {
+                    EXPECT_NEAR(hessians[0](d, e), Real(0), Real(1e-14));
+                }
+            }
+        }
+    }
+}
+
+// Pins the default basis selection for every supported element type. The
+// solver adapter (nn.cpp) translates solver element names to ElementType and
+// delegates the family/order choice to default_basis_request; a silent change
+// here would change the discretization of every simulation using that element.
+TEST(BasisFactoryDefaults, SelectionsArePinnedForAllSupportedElements) {
+    struct Expected {
+        ElementType type;
+        BasisType family;
+        int order;
+        std::size_t size;
+    };
+    const std::vector<Expected> cases = {
+        {ElementType::Point1,    BasisType::Lagrange,    0, 1u},
+        {ElementType::Line2,     BasisType::Lagrange,    1, 2u},
+        {ElementType::Line3,     BasisType::Lagrange,    2, 3u},
+        {ElementType::Triangle3, BasisType::Lagrange,    1, 3u},
+        {ElementType::Triangle6, BasisType::Lagrange,    2, 6u},
+        {ElementType::Quad4,     BasisType::Lagrange,    1, 4u},
+        {ElementType::Quad8,     BasisType::Serendipity, 2, 8u},
+        {ElementType::Quad9,     BasisType::Lagrange,    2, 9u},
+        {ElementType::Tetra4,    BasisType::Lagrange,    1, 4u},
+        {ElementType::Tetra10,   BasisType::Lagrange,    2, 10u},
+        {ElementType::Hex8,      BasisType::Lagrange,    1, 8u},
+        {ElementType::Hex20,     BasisType::Serendipity, 2, 20u},
+        {ElementType::Hex27,     BasisType::Lagrange,    2, 27u},
+        {ElementType::Wedge6,    BasisType::Lagrange,    1, 6u},
+        {ElementType::Wedge15,   BasisType::Serendipity, 2, 15u},
+        {ElementType::Wedge18,   BasisType::Lagrange,    2, 18u},
+    };
+
+    for (const auto& expected : cases) {
+        const auto request = basis_factory::default_basis_request(expected.type);
+        EXPECT_EQ(request.element_type, expected.type)
+            << "element=" << static_cast<int>(expected.type);
+        EXPECT_EQ(request.basis_type, expected.family)
+            << "element=" << static_cast<int>(expected.type);
+        ASSERT_TRUE(request.order.has_value())
+            << "element=" << static_cast<int>(expected.type);
+        EXPECT_EQ(*request.order, expected.order)
+            << "element=" << static_cast<int>(expected.type);
+
+        auto basis = basis_factory::create_default_for(expected.type);
+        ASSERT_NE(basis, nullptr);
+        EXPECT_EQ(basis->basis_type(), expected.family)
+            << "element=" << static_cast<int>(expected.type);
+        EXPECT_EQ(basis->order(), expected.order)
+            << "element=" << static_cast<int>(expected.type);
+        EXPECT_EQ(basis->size(), expected.size)
+            << "element=" << static_cast<int>(expected.type);
+    }
+}
+
+TEST(BasisFactoryDefaults, RejectsElementsWithoutDefaultBasis) {
+    EXPECT_THROW((void)basis_factory::default_basis_request(ElementType::Pyramid5),
+                 BasisElementCompatibilityException);
+    EXPECT_THROW((void)basis_factory::default_basis_request(ElementType::Pyramid13),
+                 BasisElementCompatibilityException);
+    EXPECT_THROW((void)basis_factory::create_default_for(ElementType::Unknown),
+                 BasisElementCompatibilityException);
 }
 
 TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {

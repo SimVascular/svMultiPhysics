@@ -108,6 +108,132 @@ TEST(DenseLinearAlgebra, FactorizationSolvesDenseRightHandSideBlock) {
     }
 }
 
+// Every other matrix in this file already has its largest pivot on the
+// diagonal, so without these cases the row-exchange branch in
+// factor_dense_matrix and the permutation replay in solve_in_place never
+// execute. SerendipityBasis inverts its Vandermonde matrices through this
+// code in production.
+TEST(DenseLinearAlgebra, FactorizationPivotsThroughZeroLeadingDiagonal) {
+    const std::vector<Real> swap_2x2{
+        Real(0), Real(1),
+        Real(1), Real(0)
+    };
+
+    const auto solver = factor_dense_matrix(swap_2x2, 2u, "swap 2x2");
+    const std::vector<Real> rhs{Real(3), Real(7)};
+    const auto x = solver.solve(std::span<const Real>(rhs.data(), rhs.size()));
+    ASSERT_EQ(x.size(), 2u);
+    EXPECT_NEAR(x[0], Real(7), Real(1.0e-14));
+    EXPECT_NEAR(x[1], Real(3), Real(1.0e-14));
+
+    const auto inv = invert_dense_matrix(swap_2x2, 2u, "swap 2x2");
+    for (std::size_t row = 0; row < 2u; ++row) {
+        for (std::size_t col = 0; col < 2u; ++col) {
+            EXPECT_NEAR(inv[row * 2u + col], swap_2x2[row * 2u + col], Real(1.0e-14));
+        }
+    }
+
+    // Every column requires a row exchange during elimination.
+    const std::vector<Real> permuted_scaled{
+        Real(0), Real(0), Real(1), Real(0),
+        Real(1), Real(0), Real(0), Real(0),
+        Real(0), Real(0), Real(0), Real(2),
+        Real(0), Real(3), Real(0), Real(0)
+    };
+
+    const auto inv4 = invert_dense_matrix(permuted_scaled, 4u, "permuted scaled 4x4");
+    for (std::size_t row = 0; row < 4u; ++row) {
+        for (std::size_t col = 0; col < 4u; ++col) {
+            const Real expected = (row == col) ? Real(1) : Real(0);
+            EXPECT_NEAR(multiply_entry(permuted_scaled, inv4, 4u, row, col),
+                        expected,
+                        Real(1.0e-14));
+        }
+    }
+}
+
+TEST(DenseLinearAlgebra, WideMultiRhsSolveWithPivoting) {
+    // Requires a row swap in column 0 and uses a wide right-hand-side block to
+    // exercise the row-interleaved multi-RHS layout end to end.
+    const std::vector<Real> A{
+        Real(0), Real(2), Real(1),
+        Real(4), Real(1), Real(0),
+        Real(1), Real(0), Real(3)
+    };
+    constexpr std::size_t kRhsCount = 33u;
+
+    const auto solver = factor_dense_matrix(A, 3u, "pivoting 3x3");
+
+    std::vector<Real> rhs(3u * kRhsCount, Real(0));
+    for (std::size_t row = 0; row < 3u; ++row) {
+        for (std::size_t r = 0; r < kRhsCount; ++r) {
+            rhs[row * kRhsCount + r] =
+                Real(1) + static_cast<Real>(row) - Real(0.25) * static_cast<Real>(r % 7u);
+        }
+    }
+    const auto original_rhs = rhs;
+
+    solver.solve_in_place(std::span<Real>(rhs.data(), rhs.size()), kRhsCount);
+
+    for (std::size_t r = 0; r < kRhsCount; ++r) {
+        for (std::size_t row = 0; row < 3u; ++row) {
+            Real ax = Real(0);
+            for (std::size_t col = 0; col < 3u; ++col) {
+                ax += A[row * 3u + col] * rhs[col * kRhsCount + r];
+            }
+            EXPECT_NEAR(ax, original_rhs[row * kRhsCount + r], Real(1.0e-12))
+                << "rhs column " << r << ", row " << row;
+        }
+    }
+}
+
+TEST(DenseLinearAlgebra, SolveInPlaceValidatesInputs) {
+    const std::vector<Real> identity{
+        Real(1), Real(0),
+        Real(0), Real(1)
+    };
+    const auto solver = factor_dense_matrix(identity, 2u, "identity 2x2");
+
+    std::vector<Real> rhs{Real(1), Real(2)};
+    EXPECT_THROW(solver.solve_in_place(std::span<Real>(rhs.data(), rhs.size()), 0u),
+                 FEException);
+
+    std::vector<Real> wrong_size{Real(1), Real(2), Real(3)};
+    EXPECT_THROW(
+        solver.solve_in_place(std::span<Real>(wrong_size.data(), wrong_size.size()), 1u),
+        FEException);
+
+    DenseLUSolver unfactored;
+    unfactored.n = 2u;
+    unfactored.label = "unfactored";
+    EXPECT_FALSE(unfactored.empty());
+    EXPECT_THROW(unfactored.solve_in_place(std::span<Real>(rhs.data(), rhs.size()), 1u),
+                 FEException);
+}
+
+TEST(DenseLinearAlgebra, DiagnosticValidationRejectsRankMismatch) {
+    DenseInverseResult result;
+    result.diagnostics.rank = 1u;
+
+    EXPECT_THROW(validate_dense_inverse_diagnostics(result, 2u, "rank mismatch"),
+                 FEException);
+}
+
+TEST(DenseLinearAlgebra, RankHandlesNonSquareMatrices) {
+    const std::vector<Real> wide_full{
+        Real(1), Real(0), Real(2),
+        Real(0), Real(1), Real(-1)
+    };
+    EXPECT_EQ(dense_matrix_rank(wide_full, 2u, 3u), 2u);
+
+    const std::vector<Real> tall_rank_one{
+        Real(1), Real(2),
+        Real(2), Real(4),
+        Real(3), Real(6)
+    };
+    EXPECT_EQ(dense_matrix_rank(tall_rank_one, 3u, 2u), 1u);
+}
+
 TEST(DenseLinearAlgebra, HighConditionInverseUsesSvdFallback) {
     const std::vector<Real> high_condition{
         Real(1), Real(0),
@@ -117,13 +243,9 @@ TEST(DenseLinearAlgebra, HighConditionInverseUsesSvdFallback) {
     const auto result =
         invert_dense_matrix_with_diagnostics(high_condition, 2u, "high-condition diagonal");
     EXPECT_EQ(result.diagnostics.rank, 2u);
-#if defined(FE_HAS_EIGEN) && FE_HAS_EIGEN
     EXPECT_GT(result.diagnostics.condition_estimate,
               dense_matrix_condition_fallback_threshold());
     EXPECT_TRUE(result.used_svd_fallback);
-#else
-    EXPECT_FALSE(result.used_svd_fallback);
-#endif
 
     for (std::size_t row = 0; row < 2u; ++row) {
         for (std::size_t col = 0; col < 2u; ++col) {
@@ -136,9 +258,6 @@ TEST(DenseLinearAlgebra, HighConditionInverseUsesSvdFallback) {
 }
 
 TEST(DenseLinearAlgebra, DiagnosticValidationRejectsUnsupportedCondition) {
-#if !(defined(FE_HAS_EIGEN) && FE_HAS_EIGEN)
-    GTEST_SKIP() << "condition rejection requires FE_ENABLE_EIGEN diagnostics";
-#endif
     DenseInverseResult result;
     result.diagnostics.rank = 2u;
     result.diagnostics.condition_estimate =
@@ -193,13 +312,9 @@ TEST(DenseLinearAlgebra, DiagnosticsReportRankAndConditionEstimate) {
     const auto full =
         dense_matrix_diagnostics(diagonal, 2u, 2u, "diagonal 2x2");
     EXPECT_EQ(full.rank, 2u);
-#if defined(FE_HAS_EIGEN) && FE_HAS_EIGEN
     EXPECT_NEAR(full.largest_singular_value, Real(4), Real(1.0e-14));
     EXPECT_NEAR(full.smallest_retained_singular_value, Real(0.5), Real(1.0e-14));
     EXPECT_NEAR(full.condition_estimate, Real(8), Real(1.0e-14));
-#else
-    EXPECT_TRUE(std::isinf(full.condition_estimate));
-#endif
 
     const std::vector<Real> rank_one{
         Real(1), Real(2),
@@ -212,9 +327,6 @@ TEST(DenseLinearAlgebra, DiagnosticsReportRankAndConditionEstimate) {
 }
 
 TEST(DenseLinearAlgebra, PseudoInverseHandlesSingularMatrixWithoutNormalEquations) {
-#if !(defined(FE_HAS_EIGEN) && FE_HAS_EIGEN)
-    GTEST_SKIP() << "rank-revealing pseudo-inverse requires FE_ENABLE_EIGEN";
-#endif
     const std::vector<Real> rank_one{
         Real(1), Real(2),
         Real(2), Real(4)
@@ -246,9 +358,6 @@ TEST(DenseLinearAlgebra, PseudoInverseHandlesSingularMatrixWithoutNormalEquation
 }
 
 TEST(DenseLinearAlgebra, PseudoInverseDropsNearZeroSingularValues) {
-#if !(defined(FE_HAS_EIGEN) && FE_HAS_EIGEN)
-    GTEST_SKIP() << "rank-revealing pseudo-inverse requires FE_ENABLE_EIGEN";
-#endif
     const std::vector<Real> near_singular{
         Real(1), Real(0),
         Real(0), Real(1.0e-18)

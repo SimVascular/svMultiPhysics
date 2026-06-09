@@ -220,8 +220,8 @@ void evaluate_simplex(const Vec3& xi,
                       SimplexEval& out) {
     const std::size_t n = exponents.size();
     out.value.assign(n, Real(0));
-    out.gradient.assign(n, Gradient{});
-    out.hessian.assign(n, Hessian{});
+    out.gradient.assign(n, Gradient::Zero());
+    out.hessian.assign(n, Hessian::Zero());
 
     if (n == 1u && order == 0) {
         out.value[0] = Real(1);
@@ -230,7 +230,8 @@ void evaluate_simplex(const Vec3& xi,
 
     const int bary_count = top == BasisTopology::Triangle ? 3 : 4;
     std::array<Real, 4> lambda{Real(0), Real(0), Real(0), Real(0)};
-    std::array<Gradient, 4> lambda_grad{};
+    std::array<Gradient, 4> lambda_grad;
+    lambda_grad.fill(Gradient::Zero());
 
     lambda[1] = xi[0];
     lambda[2] = xi[1];

@@ -377,7 +377,7 @@ void eval_hex20_hess_internal(Real r, Real s, Real t, Hessian* internal_hessians
     }
 
     for (int i = 0; i < 20; ++i) {
-        Hessian H{};
+        Hessian H = Hessian::Zero();
         for (int j = 0; j < 20; ++j) {
             H(0, 0) += hex20_coeffs[j][i] * d2phi_drr[j];
             H(1, 1) += hex20_coeffs[j][i] * d2phi_dss[j];
@@ -450,7 +450,7 @@ void eval_wedge15_polynomial(Real r,
         Real gr = Real(0);
         Real gs = Real(0);
         Real gt = Real(0);
-        Hessian H{};
+        Hessian H = Hessian::Zero();
         for (int j = 0; j < 15; ++j) {
             const Real coefficient =
                 kWedge15Coefficients[static_cast<std::size_t>(j)][static_cast<std::size_t>(i)];

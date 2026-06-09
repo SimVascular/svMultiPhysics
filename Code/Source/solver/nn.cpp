@@ -28,8 +28,10 @@
 
 #include <array>
 #include <functional>
-#include <math.h> 
+#include <map>
+#include <math.h>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <span>
 #include <string>
@@ -55,12 +57,6 @@ namespace {
 namespace fe = svmp::FE;
 namespace febasis = svmp::FE::basis;
 
-struct BasisSelection {
-  fe::ElementType element;
-  fe::BasisType basis;
-  int order;
-};
-
 std::string solver_element_name(consts::ElementType eType)
 {
   auto it = consts::element_type_to_string.find(eType);
@@ -70,34 +66,42 @@ std::string solver_element_name(consts::ElementType eType)
   return "unknown (" + std::to_string(static_cast<int>(eType)) + ")";
 }
 
-std::optional<BasisSelection> to_basis_selection(consts::ElementType eType)
+/// Translate a solver element type into its FE library counterpart. This is a
+/// pure renaming between the two enum vocabularies: the FE library owns the
+/// choice of basis family and polynomial order for each element type
+/// (basis_factory::default_basis_request). The switch deliberately has no
+/// default case so that compilers building with -Wswitch flag any newly added
+/// solver element type that is missing a mapping here.
+std::optional<fe::ElementType> to_fe_element_type(consts::ElementType eType)
 {
-  static constexpr std::array supported{
-      BasisSelection{fe::ElementType::Line2,     fe::BasisType::Lagrange,    1},
-      BasisSelection{fe::ElementType::Line3,     fe::BasisType::Lagrange,    2},
-      BasisSelection{fe::ElementType::Triangle3, fe::BasisType::Lagrange,    1},
-      BasisSelection{fe::ElementType::Triangle6, fe::BasisType::Lagrange,    2},
-      BasisSelection{fe::ElementType::Quad4,     fe::BasisType::Lagrange,    1},
-      BasisSelection{fe::ElementType::Quad8,     fe::BasisType::Serendipity, 2},
-      BasisSelection{fe::ElementType::Quad9,     fe::BasisType::Lagrange,    2},
-      BasisSelection{fe::ElementType::Tetra4,    fe::BasisType::Lagrange,    1},
-      BasisSelection{fe::ElementType::Tetra10,   fe::BasisType::Lagrange,    2},
-      BasisSelection{fe::ElementType::Hex8,      fe::BasisType::Lagrange,    1},
-      BasisSelection{fe::ElementType::Hex20,     fe::BasisType::Serendipity, 2},
-      BasisSelection{fe::ElementType::Hex27,     fe::BasisType::Lagrange,    2},
-      BasisSelection{fe::ElementType::Wedge6,    fe::BasisType::Lagrange,    1},
-  };
+  switch (eType) {
+    case consts::ElementType::LIN1:  return fe::ElementType::Line2;
+    case consts::ElementType::LIN2:  return fe::ElementType::Line3;
+    case consts::ElementType::TRI3:  return fe::ElementType::Triangle3;
+    case consts::ElementType::TRI6:  return fe::ElementType::Triangle6;
+    case consts::ElementType::QUD4:  return fe::ElementType::Quad4;
+    case consts::ElementType::QUD8:  return fe::ElementType::Quad8;
+    case consts::ElementType::QUD9:  return fe::ElementType::Quad9;
+    case consts::ElementType::TET4:  return fe::ElementType::Tetra4;
+    case consts::ElementType::TET10: return fe::ElementType::Tetra10;
+    case consts::ElementType::HEX8:  return fe::ElementType::Hex8;
+    case consts::ElementType::HEX20: return fe::ElementType::Hex20;
+    case consts::ElementType::HEX27: return fe::ElementType::Hex27;
+    case consts::ElementType::WDG:   return fe::ElementType::Wedge6;
 
-  const int index = static_cast<int>(eType) - static_cast<int>(consts::ElementType::LIN1);
-  if (index >= 0 && static_cast<std::size_t>(index) < supported.size()) {
-    return supported[static_cast<std::size_t>(index)];
+    // No FE basis mapping: points use dedicated shape data in get_gnn and
+    // NURBS are outside the current FE Basis scope.
+    case consts::ElementType::NA:
+    case consts::ElementType::PNT:
+    case consts::ElementType::NRB:
+      return std::nullopt;
   }
   return std::nullopt;
 }
 
 bool use_basis_adapter_for(consts::ElementType eType)
 {
-  return to_basis_selection(eType).has_value();
+  return to_fe_element_type(eType).has_value();
 }
 
 bool supports_face_basis_adapter_for(consts::ElementType eType)
@@ -110,23 +114,36 @@ bool supports_face_basis_adapter_for(consts::ElementType eType)
     case consts::ElementType::QUD4:
     case consts::ElementType::QUD8:
     case consts::ElementType::QUD9:
-      return to_basis_selection(eType).has_value();
+      return use_basis_adapter_for(eType);
     default:
       return false;
   }
 }
 
-std::shared_ptr<febasis::BasisFunction> make_basis_for_solver_element(consts::ElementType eType)
+/// Return the shared FE basis for a solver element type, constructing it on
+/// first use. Basis construction is not free (node-lattice generation, and a
+/// Vandermonde inversion for quadrilateral serendipity), while callers invoke
+/// this per Gauss point or per probe point, so instances are cached per
+/// element type. Sharing is safe: bases are immutable after construction,
+/// evaluation is const, and BasisFunction scratch state is thread_local.
+const febasis::BasisFunction& basis_for_solver_element(consts::ElementType eType)
 {
-  auto selection = to_basis_selection(eType);
-  if (!selection) {
+  static std::mutex cache_mutex;
+  static std::map<consts::ElementType, std::shared_ptr<febasis::BasisFunction>> cache;
+
+  const auto fe_type = to_fe_element_type(eType);
+  if (!fe_type) {
     throw febasis::BasisElementCompatibilityException(
         "No FE Basis selection for solver element " + solver_element_name(eType),
         __FILE__, __LINE__, __func__);
   }
 
-  return febasis::basis_factory::create(
-      {selection->element, selection->basis, selection->order});
+  const std::lock_guard<std::mutex> lock(cache_mutex);
+  auto it = cache.find(eType);
+  if (it == cache.end()) {
+    it = cache.emplace(eType, febasis::basis_factory::create_default_for(*fe_type)).first;
+  }
+  return *it->second;
 }
 
 std::span<const std::size_t> solver_to_basis_node_map(consts::ElementType eType)
@@ -192,7 +209,9 @@ fe::math::Vector<fe::Real, 3> make_basis_point(const febasis::BasisFunction& bas
         __FILE__, __LINE__, __func__);
   }
 
-  fe::math::Vector<fe::Real, 3> point{};
+  // Inactive trailing components must be zero for lower-dimensional elements;
+  // Eigen-backed vectors are not zero-initialized by default construction.
+  fe::math::Vector<fe::Real, 3> point = fe::math::Vector<fe::Real, 3>::Zero();
   for (int d = 0; d < basis.dimension(); ++d) {
     point[static_cast<std::size_t>(d)] = xi(d, g);
   }
@@ -250,19 +269,19 @@ void evaluate_basis_values_and_gradients(const int insd,
                                          Array<double>& N,
                                          Array3<double>& Nx)
 {
-  auto basis = make_basis_for_solver_element(eType);
-  if (insd < basis->dimension()) {
+  const auto& basis = basis_for_solver_element(eType);
+  if (insd < basis.dimension()) {
     throw febasis::BasisConfigurationException(
         "solver insd " + std::to_string(insd) +
-            " is smaller than FE Basis reference dimension " + std::to_string(basis->dimension()),
+            " is smaller than FE Basis reference dimension " + std::to_string(basis.dimension()),
         __FILE__, __LINE__, __func__);
   }
 
-  const auto point = make_basis_point(*basis, g, xi);
+  const auto point = make_basis_point(basis, g, xi);
   std::vector<fe::Real> values;
   std::vector<febasis::Gradient> gradients;
-  basis->evaluate_values(point, values);
-  basis->evaluate_gradients(point, gradients);
+  basis.evaluate_values(point, values);
+  basis.evaluate_gradients(point, gradients);
 
   // FE Basis owns the formulas; fsType and mshType remain the solver-facing storage contract.
   copy_basis_values_to_solver_arrays(eType, eNoN, g, values, gradients, N, Nx);
@@ -355,15 +374,15 @@ void evaluate_basis_hessians(const int insd,
                              const Array<double>& xi,
                              Array3<double>& Nxx)
 {
-  auto basis = make_basis_for_solver_element(eType);
-  if (insd < basis->dimension()) {
+  const auto& basis = basis_for_solver_element(eType);
+  if (insd < basis.dimension()) {
     throw febasis::BasisConfigurationException(
         "solver insd " + std::to_string(insd) +
-            " is smaller than FE Basis reference dimension " + std::to_string(basis->dimension()),
+            " is smaller than FE Basis reference dimension " + std::to_string(basis.dimension()),
         __FILE__, __LINE__, __func__);
   }
 
-  const int required_components = required_nxx_components_for_dimension(basis->dimension());
+  const int required_components = required_nxx_components_for_dimension(basis.dimension());
   if (ind2 < required_components) {
     throw febasis::BasisConfigurationException(
         "solver ind2 " + std::to_string(ind2) +
@@ -371,12 +390,12 @@ void evaluate_basis_hessians(const int insd,
         __FILE__, __LINE__, __func__);
   }
 
-  const auto point = make_basis_point(*basis, gaus_pt, xi);
+  const auto point = make_basis_point(basis, gaus_pt, xi);
   std::vector<febasis::Hessian> hessians;
-  basis->evaluate_hessians(point, hessians);
+  basis.evaluate_hessians(point, hessians);
 
   // Solver Nxx packing is dxx, dyy, dxy in 2D and dxx, dyy, dzz, dxy, dyz, dxz in 3D.
-  copy_basis_hessians_to_solver_nxx(eType, eNoN, gaus_pt, basis->dimension(), hessians, Nxx);
+  copy_basis_hessians_to_solver_nxx(eType, eNoN, gaus_pt, basis.dimension(), hessians, Nxx);
 }
 
 void set_point_face_shape_data(const int gaus_pt, faceType& face)

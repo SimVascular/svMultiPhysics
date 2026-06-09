@@ -39,7 +39,7 @@ using Hessian  = math::Matrix<Real, 3, 3>;
                                                     Real xy,
                                                     Real xz,
                                                     Real yz) {
-    Hessian hessian{};
+    Hessian hessian = Hessian::Zero();
     hessian(0, 0) = xx;
     hessian(1, 1) = yy;
     hessian(2, 2) = zz;
@@ -62,7 +62,7 @@ inline void store_hessian(const Hessian& hessian, Real* dst) noexcept {
 }
 
 [[nodiscard]] inline Hessian load_hessian(const Real* src) noexcept {
-    Hessian hessian{};
+    Hessian hessian = Hessian::Zero();
     hessian(0, 0) = src[0];
     hessian(0, 1) = src[1];
     hessian(0, 2) = src[2];

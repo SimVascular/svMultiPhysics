@@ -84,7 +84,7 @@ void BasisFunction::numerical_gradient(const math::Vector<Real, 3>& xi,
                                        Real eps) const {
     std::vector<Real> base;
     evaluate_values(xi, base);
-    gradients.assign(base.size(), Gradient{});
+    gradients.assign(base.size(), Gradient::Zero());
 
     for (int d = 0; d < dimension(); ++d) {
         math::Vector<Real, 3> forward = xi;
@@ -109,7 +109,7 @@ void BasisFunction::numerical_hessian(const math::Vector<Real, 3>& xi,
                                       Real eps) const {
     std::vector<Gradient> base_grad;
     evaluate_gradients(xi, base_grad);
-    hessians.assign(base_grad.size(), Hessian{});
+    hessians.assign(base_grad.size(), Hessian::Zero());
 
     for (int d = 0; d < dimension(); ++d) {
         math::Vector<Real, 3> forward = xi;

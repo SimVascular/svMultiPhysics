@@ -57,8 +57,8 @@ void expect_partition_gradient_hessian_sums(const LagrangeBasis& basis,
         basis.evaluate_all(xi, values, gradients, hessians);
 
         Real value_sum = Real(0);
-        Gradient gradient_sum{};
-        Hessian hessian_sum{};
+        Gradient gradient_sum = Gradient::Zero();
+        Hessian hessian_sum = Hessian::Zero();
         for (std::size_t i = 0; i < values.size(); ++i) {
             value_sum += values[i];
             for (std::size_t d = 0; d < 3u; ++d) {
@@ -136,4 +136,22 @@ TEST(HigherOrderWedge, OrderFourEvaluationsRemainFinite) {
 
     expect_all_entries_finite(wedge, {Real(0.2), Real(0.1), Real(-0.6)});
     expect_all_entries_finite(wedge, {Real(0.05), Real(0.8), Real(0.3)});
+}
+
+// Finiteness alone cannot detect a wrong triangle-index or axis-index lookup;
+// the Kronecker property validates the order-four node lattice and its inverse
+// index mapping end to end.
+TEST(HigherOrderWedge, OrderFourIsNodalAndPartitionsUnity) {
+    LagrangeBasis wedge(ElementType::Wedge6, 4);
+
+    EXPECT_EQ(wedge.size(), 75u);
+    expect_kronecker_at_nodes(wedge, Real(1e-9));
+    expect_partition_gradient_hessian_sums(
+        wedge,
+        {
+            {Real(0.18), Real(0.22), Real(-0.2)},
+            {Real(0.25), Real(0.15), Real(0.45)},
+        },
+        Real(1e-12),
+        Real(1e-7));
 }
