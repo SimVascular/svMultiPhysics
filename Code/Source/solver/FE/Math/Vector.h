@@ -24,6 +24,19 @@
 #include <stdexcept>
 #include <type_traits>
 
+/// \defgroup FE_Math Math
+/// \ingroup FE
+/// \brief Fixed-size and dense linear algebra utilities for finite-element computations.
+///
+/// \details The Math module provides small fixed-size vector and matrix types
+/// used in element-level kernels, expression-template infrastructure for
+/// allocation-free algebraic expressions, and dense linear algebra utilities
+/// used by basis construction and local transforms.
+///
+/// \defgroup FE_VectorMath Vector
+/// \ingroup FE_Math
+/// \brief Fixed-size vector types and vector expression utilities.
+
 namespace svmp {
 namespace FE {
 namespace math {
@@ -47,6 +60,7 @@ inline bool approx_equal(T a, T b, T tol = tolerance<T>) {
 
 /**
  * @brief Fixed-size vector for element-level computations
+ * @ingroup FE_VectorMath
  * @tparam T Scalar type (float, double)
  * @tparam N Vector dimension
  *

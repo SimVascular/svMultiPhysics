@@ -16,6 +16,7 @@ namespace {
 
 using Vec3 = math::Vector<Real, 3>;
 
+// Return the equispaced 1D reference coordinate in [-1, 1].
 inline constexpr Real equispaced_pm_one_coord(int i, int order) {
     if (order <= 0) {
         return Real(0);
@@ -40,6 +41,7 @@ struct NormalizedLagrangeRequest {
     int order;
 };
 
+// Validate and return the supported basis topology for a Lagrange element type.
 BasisTopology supported_lagrange_topology(ElementType type) {
     const BasisTopology top = topology(type);
     if (top == BasisTopology::Unknown) {
@@ -49,6 +51,7 @@ BasisTopology supported_lagrange_topology(ElementType type) {
     return top;
 }
 
+// Normalize named higher-order element requests to base Lagrange topologies.
 NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, int order) {
     switch (element_type) {
         case ElementType::Line3:
@@ -79,13 +82,14 @@ NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, i
         case ElementType::Pyramid13:
         case ElementType::Pyramid14:
             throw BasisElementCompatibilityException(
-                "LagrangeBasis: pyramid support has been removed from the current solver basis scope",
+                "LagrangeBasis: pyramid support is not within the current solver basis scope",
                 __FILE__, __LINE__, __func__);
         default:
             return {element_type, order};
     }
 }
 
+// Convert a coordinate on [-1, 1] to an equispaced axis node index.
 std::size_t axis_index_pm_one(Real coord, int order) {
     if (order <= 0) {
         return 0u;
@@ -94,6 +98,7 @@ std::size_t axis_index_pm_one(Real coord, int order) {
     return static_cast<std::size_t>(std::llround(scaled));
 }
 
+// Convert a simplex barycentric coordinate to a lattice index.
 int simplex_lattice_index(Real value, int order) {
     if (order <= 0) {
         return 0;
@@ -101,6 +106,7 @@ int simplex_lattice_index(Real value, int order) {
     return static_cast<int>(std::llround(value * Real(order)));
 }
 
+// Compute simplex interpolation exponents from a reference node.
 LagrangeBasis::SimplexExponent simplex_exponent_from_point(const Vec3& p,
                                                            BasisTopology top,
                                                            int order) {
@@ -121,6 +127,7 @@ LagrangeBasis::SimplexExponent simplex_exponent_from_point(const Vec3& p,
     return e;
 }
 
+// Evaluate 1D Lagrange polynomials and derivatives at a point.
 void evaluate_1d_lagrange(Real x, const std::vector<Real>& nodes, AxisEval& out) {
     const std::size_t n = nodes.size();
     out.value.assign(n, Real(0));
@@ -185,6 +192,7 @@ void evaluate_1d_lagrange(Real x, const std::vector<Real>& nodes, AxisEval& out)
     }
 }
 
+// Evaluate one barycentric polynomial factor and derivatives.
 std::array<Real, 3> simplex_factor(int alpha, Real lambda, int order) {
     Real value = Real(1);
     Real first = Real(0);
@@ -204,6 +212,7 @@ std::array<Real, 3> simplex_factor(int alpha, Real lambda, int order) {
     return {value, first, second};
 }
 
+// Evaluate simplex Lagrange basis functions and derivatives.
 void evaluate_simplex(const Vec3& xi,
                       BasisTopology top,
                       int order,
@@ -291,6 +300,7 @@ void evaluate_simplex(const Vec3& xi,
     }
 }
 
+// Store a gradient in the flat buffer layout used by fast evaluators.
 void store_gradient(const Gradient& gradient, Real* dst) {
     dst[0] = gradient[0];
     dst[1] = gradient[1];
@@ -314,6 +324,7 @@ LagrangeBasis::LagrangeBasis(ElementType type, int order)
     init_nodes();
 }
 
+// Initialize equispaced 1D interpolation nodes for tensor-product axes.
 void LagrangeBasis::init_equispaced_1d_nodes() {
     nodes_1d_.resize(static_cast<std::size_t>(order_ + 1));
     for (int i = 0; i <= order_; ++i) {
@@ -322,6 +333,7 @@ void LagrangeBasis::init_equispaced_1d_nodes() {
     }
 }
 
+// Initialize reference nodes and topology-specific lookup data.
 void LagrangeBasis::init_nodes() {
     nodes_.clear();
     nodes_1d_.clear();
@@ -357,10 +369,12 @@ void LagrangeBasis::init_nodes() {
                                              __FILE__, __LINE__, __func__);
 }
 
+// Build the single reference node for a point basis.
 void LagrangeBasis::build_point_nodes() {
     nodes_.push_back(Vec3{Real(0), Real(0), Real(0)});
 }
 
+// Build nodes and axis indices for tensor-product elements.
 void LagrangeBasis::build_tensor_product_nodes(int dimensions) {
     init_equispaced_1d_nodes();
     nodes_ = ReferenceNodeLayout::get_lagrange_node_coords(element_type_, order_);
@@ -378,6 +392,7 @@ void LagrangeBasis::build_tensor_product_nodes(int dimensions) {
     }
 }
 
+// Build nodes and barycentric exponents for simplex elements.
 void LagrangeBasis::build_simplex_nodes() {
     nodes_ = ReferenceNodeLayout::get_lagrange_node_coords(element_type_, order_);
     simplex_exponents_.reserve(nodes_.size());
@@ -386,6 +401,7 @@ void LagrangeBasis::build_simplex_nodes() {
     }
 }
 
+// Build nodes and mixed triangle-axis lookup data for wedge elements.
 void LagrangeBasis::build_wedge_nodes() {
     init_equispaced_1d_nodes();
     nodes_ = ReferenceNodeLayout::get_lagrange_node_coords(element_type_, order_);
@@ -412,6 +428,7 @@ void LagrangeBasis::build_wedge_nodes() {
     }
 }
 
+// Evaluate requested basis quantities into caller-provided flat buffers.
 void LagrangeBasis::evaluate_all_to(const Vec3& xi,
                                     Real* SVMP_RESTRICT values_out,
                                     Real* SVMP_RESTRICT gradients_out,

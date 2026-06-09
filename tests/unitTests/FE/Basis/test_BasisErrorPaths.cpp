@@ -1,6 +1,6 @@
 /**
  * @file test_BasisErrorPaths.cpp
- * @brief Error-path coverage for the migrated Lagrange-focused Basis subset.
+ * @brief Error-path coverage for the Lagrange-focused Basis subset.
  */
 
 #include <gtest/gtest.h>

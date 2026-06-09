@@ -25,12 +25,21 @@
 #include <stdexcept>
 #include <type_traits>
 
+/// \defgroup FE_MatrixMath Matrix
+/// \ingroup FE_Math
+/// \brief Fixed-size matrix types, matrix expressions, and small-matrix operations.
+///
+/// \details The Matrix submodule contains row-major fixed-size matrices used
+/// by FE kernels, expression-template support for matrix algebra, and direct
+/// determinant/inverse implementations for common element-level sizes.
+
 namespace svmp {
 namespace FE {
 namespace math {
 
 /**
  * @brief Fixed-size matrix for element-level computations
+ * @ingroup FE_MatrixMath
  * @tparam T Scalar type (float, double)
  * @tparam M Number of rows
  * @tparam N Number of columns
@@ -770,7 +779,14 @@ inline Matrix<T, 3, 3> inverse_3x3(const Matrix<T, 3, 3>& m) {
     return adj * inv_det;
 }
 
-// Template specializations for 2x2 Matrix determinant and inverse
+/**
+ * @brief Specialized fixed-size 2-by-2 matrix for element-level computations.
+ * @ingroup FE_MatrixMath
+ * @tparam T Scalar type.
+ *
+ * This specialization preserves the Matrix API while using direct formulas for
+ * 2-by-2 determinant and inverse operations.
+ */
 template<typename T>
 class Matrix<T, 2, 2> : public MatrixExpr<Matrix<T, 2, 2>> {
     static constexpr std::size_t M = 2;
@@ -1006,7 +1022,14 @@ public:
     const T* end() const { return data_ + 4; }
 };
 
-// Template specialization for 3x3 Matrix
+/**
+ * @brief Specialized fixed-size 3-by-3 matrix for element-level computations.
+ * @ingroup FE_MatrixMath
+ * @tparam T Scalar type.
+ *
+ * This specialization preserves the Matrix API while using direct formulas for
+ * 3-by-3 determinant and inverse operations.
+ */
 template<typename T>
 class Matrix<T, 3, 3> : public MatrixExpr<Matrix<T, 3, 3>> {
     static constexpr std::size_t M = 3;
