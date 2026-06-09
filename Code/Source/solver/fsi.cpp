@@ -200,16 +200,15 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_fluid: {
             auto N0 = fs_1[0].N.col(g);
             auto N1 = fs_1[1].N.col(g);
-            double risFactorTotal = 0.0;
-            Vector<double> risValveVelTotal(nsd);
-            risValveVelTotal = 0.0;
+            double urisFactorTotal = 0.0;
+            Vector<double> urisValveVelTotal(nsd);
             if (com_mod.urisFlag) {
-              risFactorTotal = urisFactorTotalEl(g);
-              risValveVelTotal = urisValveVelTotalEl.rcol(g);
+              urisFactorTotal = urisFactorTotalEl(g);
+              urisValveVelTotal = urisValveVelTotalEl.rcol(g);
             }
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, risFactorTotal, risValveVelTotal);
+            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelTotal);
 
           } break;
 
@@ -292,16 +291,15 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_fluid: {
             auto N0 = fs_2[0].N.col(g);
             auto N1 = fs_2[1].N.col(g);
-            double risFactorTotal = 0.0;
-            Vector<double> risValveVelTotal(nsd);
-            risValveVelTotal = 0.0;
+            double urisFactorTotal = 0.0;
+            Vector<double> urisValveVelTotal(nsd);
             if (com_mod.urisFlag) {
-              risValveVelTotal = urisValveVelTotalEl.rcol(g);
-              risFactorTotal = urisFactorTotalEl(g);
+              urisValveVelTotal = urisValveVelTotalEl.rcol(g);
+              urisFactorTotal = urisFactorTotalEl(g);
             }
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, risFactorTotal, risValveVelTotal);
+            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelTotal);
           } break;
 
           case Equation_ustruct:
