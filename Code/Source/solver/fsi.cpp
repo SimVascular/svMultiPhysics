@@ -259,7 +259,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     // If the number of quadrature points is different for the continuity and 
     // momentum function spaces, recompute the RIS factor
     if (com_mod.urisFlag) {
-      if (static_cast<int>(urisFactorTotalEl.size()) != fs_2[1].nG) {
+      if (urisFactorTotalEl.size() != fs_2[1].nG) {
         uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs_2[1], e, urisFactorTotalEl, urisValveVelTotalEl);
       }
     }

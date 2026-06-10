@@ -589,6 +589,12 @@ void uris_read_msh(Simulation* simulation) {
     }
     for (int i = 0; i < nsd; i++) {
       file_stream >> uris_obj.nrm(i);
+      if (!file_stream) {
+        throw std::runtime_error(
+            "Failed to read positive flow normal (component=" + std::to_string(i)
+            + ") from positive flow normal file '"
+            + positive_flow_normal_file_path + "'.");
+      }
     }
     file_stream.close();
 
@@ -642,6 +648,11 @@ void uris_read_msh(Simulation* simulation) {
       }
       int dispNtOpen, dispNnOpen;
       file_stream >> dispNtOpen >> dispNnOpen;
+      if (!file_stream) {
+        throw std::runtime_error(
+            "Failed to read time steps and node numbers from open motion file '"
+            + open_motion_file_path + "'.");
+      }
       // std::cout << "dispNtOpen: " << dispNtOpen << std::endl;
       // std::cout << "dispNnOpen: " << dispNnOpen << std::endl;
 
@@ -654,6 +665,14 @@ void uris_read_msh(Simulation* simulation) {
         for (int j = 0; j < dispNnOpen; j++) {
           for (int i = 0; i < nsd; i++) {
             file_stream >> dispOpen(i,j,k);
+            if (!file_stream) {
+              throw std::runtime_error(
+                  "Failed to read displacement (time=" + std::to_string(k)
+                  + ", node=" + std::to_string(j)
+                  + ", component=" + std::to_string(i)
+                  + ") from open motion file '"
+                  + open_motion_file_path + "'.");
+            }
           }
         }
       }
@@ -668,6 +687,11 @@ void uris_read_msh(Simulation* simulation) {
       }
       int dispNtClose, dispNnClose;
       file_stream >> dispNtClose >> dispNnClose;
+      if (!file_stream) {
+        throw std::runtime_error(
+            "Failed to read time steps and node numbers from close motion file '"
+            + close_motion_file_path + "'.");
+      }
       // std::cout << "dispNtClose: " << dispNtClose << std::endl;
       // std::cout << "dispNnClose: " << dispNnClose << std::endl;
 
@@ -680,6 +704,14 @@ void uris_read_msh(Simulation* simulation) {
         for (int j = 0; j < dispNnClose; j++) {
           for (int i = 0; i < nsd; i++) {
             file_stream >> dispClose(i,j,k);
+            if (!file_stream) {
+              throw std::runtime_error(
+                  "Failed to read displacement (time=" + std::to_string(k)
+                  + ", node=" + std::to_string(j)
+                  + ", component=" + std::to_string(i)
+                  + ") from open motion file '"
+                  + close_motion_file_path + "'.");
+            }
           }
         }
       }
@@ -702,8 +734,7 @@ void uris_read_msh(Simulation* simulation) {
         }
 
         // Move data for open
-        Array3<double> tmpDxOpen(nsd, uris_obj.tnNo, dispNtOpen);
-        tmpDxOpen = uris_obj.DxOpen;
+        auto tmpDxOpen = uris_obj.DxOpen;
         uris_obj.DxOpen.resize(nsd, a, dispNtOpen);
         for (int i = 0; i < dispNtOpen; i++) {
           for (int j = 0; j < uris_obj.tnNo; j++) {
@@ -713,8 +744,7 @@ void uris_read_msh(Simulation* simulation) {
           }
         }
         // Move data for close
-        Array3<double> tmpDxClose(nsd, uris_obj.tnNo, dispNtClose);
-        tmpDxClose = uris_obj.DxClose;
+        auto tmpDxClose = uris_obj.DxClose;
         uris_obj.DxClose.resize(nsd, a, dispNtClose);
         for (int i = 0; i < dispNtClose; i++) {
           for (int j = 0; j < uris_obj.tnNo; j++) {

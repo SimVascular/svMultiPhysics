@@ -697,7 +697,7 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     // If the number of quadrature points is different for the continuity and 
     // momentum function spaces, recompute the RIS factor
     if (com_mod.urisFlag) {
-      if (static_cast<int>(urisFactorTotalEl.size()) != fs[1].nG) {
+      if (urisFactorTotalEl.size() != fs[1].nG) {
         uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs[1], e, urisFactorTotalEl, urisValveVelTotalEl);
       }
     }
