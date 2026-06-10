@@ -16,18 +16,26 @@
 
 #if defined(SVMP_FE_WITH_MESH) && SVMP_FE_WITH_MESH
 #  include "Mesh/Core/MeshTypes.h"
+/// Nonzero when FE shares scalar/index types with the Mesh library.
 #  define SVMP_FE_HAS_MESH_TYPES 1
 #else
 // Build FE without Mesh types unless explicitly enabled.
+/// Nonzero when FE shares scalar/index types with the Mesh library.
 #  define SVMP_FE_HAS_MESH_TYPES 0
 #endif
 
 #if !SVMP_FE_HAS_MESH_TYPES
 namespace svmp {
-// Minimal fallback when the Mesh library is not available.
-// Keeps FE compilation self-contained while preserving the same namespace.
 #ifndef SVMP_CELL_FAMILY_DEFINED
+/// Guard marking that svmp::CellFamily has been defined.
 #define SVMP_CELL_FAMILY_DEFINED 1
+/**
+ * @brief Minimal fallback for svmp::CellFamily when the Mesh library is unavailable
+ * @ingroup FE_CommonTypes
+ *
+ * Keeps FE compilation self-contained while preserving the same namespace
+ * and enumerator set as the Mesh library's cell-family classification.
+ */
 enum class CellFamily {
     Point,
     Line,
@@ -51,15 +59,39 @@ enum class CellFamily {
 #include <limits>
 
 #if defined(_MSC_VER)
+/// Portable restrict qualifier for aliasing-free pointer parameters.
 #  define SVMP_RESTRICT __restrict
 #elif defined(__clang__) || defined(__GNUC__)
+/// Portable restrict qualifier for aliasing-free pointer parameters.
 #  define SVMP_RESTRICT __restrict__
 #else
+/// Portable restrict qualifier for aliasing-free pointer parameters.
 #  define SVMP_RESTRICT
 #endif
 
+/// \defgroup FE_Common Common
+/// \ingroup FE
+/// \brief Shared vocabulary types, constants, and exception infrastructure used by every FE module.
+///
+/// \details The Common module collects the foundational definitions that the
+/// rest of the FE library builds on: index and scalar type aliases; element,
+/// basis, quadrature, and field enumerations; sentinel constants and strong
+/// type wrappers; and the FE exception hierarchy together with its
+/// argument-checking helpers.
+
 namespace svmp {
 namespace FE {
+
+/// \defgroup FE_CommonTypes Types
+/// \ingroup FE_Common
+/// \brief Core type aliases, enumerations, constants, geometric types, and compile-time traits.
+///
+/// \details This group documents the index and identifier types used for
+/// element-local and global numbering, the element/basis/quadrature/field
+/// enumerations shared across modules, sentinel constants, reference- and
+/// physical-space geometric aliases, and the strong-type utilities that
+/// prevent accidental mixing of conceptually distinct values.
+/// @{
 
 // ============================================================================
 // Index Types
@@ -88,10 +120,16 @@ using GlobalIndex = std::int64_t;
  * Provides type safety at compile time.
  */
 struct DofIndex {
-    GlobalIndex value;
+    GlobalIndex value;  ///< Underlying global DOF index; negative values are invalid.
 
+    /// @brief Construct a DOF index, defaulting to the invalid sentinel.
+    /// @param v Global DOF index value.
     constexpr explicit DofIndex(GlobalIndex v = -1) noexcept : value(v) {}
+    /// @brief Convert to the underlying global index value.
+    /// @return The stored global index.
     constexpr operator GlobalIndex() const noexcept { return value; }
+    /// @brief Check whether this index refers to a valid DOF.
+    /// @return True when the stored value is non-negative.
     constexpr bool is_valid() const noexcept { return value >= 0; }
 };
 
@@ -109,28 +147,32 @@ using BlockId = std::uint16_t;
 
 // Import mesh library scalar/index types when available (optional dependency).
 #if SVMP_FE_HAS_MESH_TYPES
-using MeshIndex = svmp::index_t;
-using MeshOffset = svmp::offset_t;
-using MeshGlobalId = svmp::gid_t;
-using Real = svmp::real_t;  // Use same precision as Mesh library
+using MeshIndex = svmp::index_t;        ///< Local mesh entity index, shared with the Mesh library.
+using MeshOffset = svmp::offset_t;      ///< Offset type for mesh connectivity arrays.
+using MeshGlobalId = svmp::gid_t;       ///< Global mesh entity identifier.
+using Real = svmp::real_t;              ///< Floating-point scalar type; same precision as the Mesh library.
 #else
-using MeshIndex = std::int32_t;
-using MeshOffset = std::int64_t;
-using MeshGlobalId = std::int64_t;
-using Real = double;
+using MeshIndex = std::int32_t;         ///< Local mesh entity index, shared with the Mesh library.
+using MeshOffset = std::int64_t;        ///< Offset type for mesh connectivity arrays.
+using MeshGlobalId = std::int64_t;      ///< Global mesh entity identifier.
+using Real = double;                    ///< Floating-point scalar type; same precision as the Mesh library.
 #endif
 
 // ============================================================================
 // Constants
 // ============================================================================
 
+/// Sentinel for an unset or out-of-range local index.
 constexpr LocalIndex INVALID_LOCAL_INDEX = std::numeric_limits<LocalIndex>::max();
+/// Sentinel for an unset or out-of-range global index.
 constexpr GlobalIndex INVALID_GLOBAL_INDEX = -1;
+/// Sentinel FieldId meaning "uninitialized / no field".
 constexpr FieldId INVALID_FIELD_ID = std::numeric_limits<FieldId>::max();
 /// Sentinel FieldId for geometry-only quantities (no DOF dependence).
 /// Uses first registered field's space for quadrature, but logically decoupled
 /// from any specific field's DOFs.
 constexpr FieldId GEOMETRY_FIELD_ID = std::numeric_limits<FieldId>::max() - 1;
+/// Sentinel for an unset or out-of-range block identifier.
 constexpr BlockId INVALID_BLOCK_ID = std::numeric_limits<BlockId>::max();
 
 /**
@@ -169,9 +211,9 @@ constexpr int MAX_FIELD_VALUE_COMPONENTS = 9;
  * Node-scoped auxiliary models with Lagrange Kronecker delta).
  */
 struct FieldValueEntry {
-    FieldId field{INVALID_FIELD_ID};
-    int n_components{0};
-    Real components[MAX_FIELD_VALUE_COMPONENTS]{};
+    FieldId field{INVALID_FIELD_ID};                  ///< Field this value belongs to.
+    int n_components{0};                              ///< Number of valid entries in components.
+    Real components[MAX_FIELD_VALUE_COMPONENTS]{};    ///< Component values, row-major for tensors.
 };
 
 // ============================================================================
@@ -186,115 +228,115 @@ struct FieldValueEntry {
  */
 enum class ElementType : std::uint8_t {
     // Linear elements
-    Line2      = 0,   // 2-node line
-    Triangle3  = 1,   // 3-node triangle
-    Quad4      = 2,   // 4-node quadrilateral
-    Tetra4     = 3,   // 4-node tetrahedron
-    Hex8       = 4,   // 8-node hexahedron
-    Wedge6     = 5,   // 6-node wedge/prism
-    Pyramid5   = 6,   // 5-node pyramid
+    Line2      = 0,   ///< 2-node line
+    Triangle3  = 1,   ///< 3-node triangle
+    Quad4      = 2,   ///< 4-node quadrilateral
+    Tetra4     = 3,   ///< 4-node tetrahedron
+    Hex8       = 4,   ///< 8-node hexahedron
+    Wedge6     = 5,   ///< 6-node wedge/prism
+    Pyramid5   = 6,   ///< 5-node pyramid
 
     // Quadratic elements
-    Line3      = 10,  // 3-node line
-    Triangle6  = 11,  // 6-node triangle
-    Quad9      = 12,  // 9-node quadrilateral (bi-quadratic)
-    Quad8      = 13,  // 8-node quadrilateral (serendipity)
-    Tetra10    = 14,  // 10-node tetrahedron
-    Hex27      = 15,  // 27-node hexahedron (tri-quadratic)
-    Hex20      = 16,  // 20-node hexahedron (serendipity)
-    Wedge15    = 17,  // 15-node wedge
-    Wedge18    = 18,  // 18-node wedge (complete quadratic)
-    Pyramid13  = 19,  // 13-node pyramid
-    Pyramid14  = 20,  // 14-node pyramid
+    Line3      = 10,  ///< 3-node line
+    Triangle6  = 11,  ///< 6-node triangle
+    Quad9      = 12,  ///< 9-node quadrilateral (bi-quadratic)
+    Quad8      = 13,  ///< 8-node quadrilateral (serendipity)
+    Tetra10    = 14,  ///< 10-node tetrahedron
+    Hex27      = 15,  ///< 27-node hexahedron (tri-quadratic)
+    Hex20      = 16,  ///< 20-node hexahedron (serendipity)
+    Wedge15    = 17,  ///< 15-node wedge
+    Wedge18    = 18,  ///< 18-node wedge (complete quadratic)
+    Pyramid13  = 19,  ///< 13-node pyramid
+    Pyramid14  = 20,  ///< 14-node pyramid
 
     // Special elements
-    Point1     = 30,  // 1-node point element
+    Point1     = 30,  ///< 1-node point element
 
-    Unknown    = 255
+    Unknown    = 255  ///< Unrecognized or uninitialized element type
 };
 
 /**
  * @brief Quadrature rule types
  */
 enum class QuadratureType : std::uint8_t {
-    GaussLegendre,     // Standard Gaussian quadrature
-    GaussLobatto,      // Includes endpoints (for spectral elements)
-    Newton,            // Newton-Cotes rules
-    Reduced,           // Order-based reduced integration for locking
-    PositionBased,     // Position-based reduced integration (legacy compatible)
-    Composite,         // Composite rules for adaptivity
-    Custom             // User-defined quadrature points
+    GaussLegendre,     ///< Standard Gaussian quadrature
+    GaussLobatto,      ///< Includes endpoints (for spectral elements)
+    Newton,            ///< Newton-Cotes rules
+    Reduced,           ///< Order-based reduced integration for locking
+    PositionBased,     ///< Position-based reduced integration (legacy compatible)
+    Composite,         ///< Composite rules for adaptivity
+    Custom             ///< User-defined quadrature points
 };
 
 /**
  * @brief Basis function families
  */
 enum class BasisType : std::uint8_t {
-    Lagrange,          // Standard nodal Lagrange basis
-    Hierarchical,      // Hierarchical/modal basis
-    Bernstein,         // Bernstein polynomials
-    NURBS,             // Non-uniform rational B-splines
-    BSpline,           // Non-rational B-spline basis
-    Spectral,          // Spectral element basis
-    Serendipity,       // Serendipity elements
-    Hermite,           // Hermite C1 continuity basis
-    RaviartThomas,     // H(div) Raviart-Thomas family
-    Nedelec,           // H(curl) Nedelec edge elements
-    BDM,               // H(div) Brezzi-Douglas-Marini family
-    Bubble,            // Interior bubble functions for enrichment
-    Custom             // User-defined basis
+    Lagrange,          ///< Standard nodal Lagrange basis
+    Hierarchical,      ///< Hierarchical/modal basis
+    Bernstein,         ///< Bernstein polynomials
+    NURBS,             ///< Non-uniform rational B-splines
+    BSpline,           ///< Non-rational B-spline basis
+    Spectral,          ///< Spectral element basis
+    Serendipity,       ///< Serendipity elements
+    Hermite,           ///< Hermite C1 continuity basis
+    RaviartThomas,     ///< H(div) Raviart-Thomas family
+    Nedelec,           ///< H(curl) Nedelec edge elements
+    BDM,               ///< H(div) Brezzi-Douglas-Marini family
+    Bubble,            ///< Interior bubble functions for enrichment
+    Custom             ///< User-defined basis
 };
 
 /**
  * @brief Field types for function spaces
  */
 enum class FieldType : std::uint8_t {
-    Scalar,            // Scalar field (temperature, pressure)
-    Vector,            // Vector field (velocity, displacement)
-    Tensor,            // Tensor field (stress, strain)
-    SymmetricTensor,   // Symmetric tensor field
-    Mixed              // Mixed/composite field
+    Scalar,            ///< Scalar field (temperature, pressure)
+    Vector,            ///< Vector field (velocity, displacement)
+    Tensor,            ///< Tensor field (stress, strain)
+    SymmetricTensor,   ///< Symmetric tensor field
+    Mixed              ///< Mixed/composite field
 };
 
 /**
  * @brief Continuity requirements for function spaces
  */
 enum class Continuity : std::uint8_t {
-    C0,                // Continuous (standard FEM)
-    C1,                // C1 continuous (for plates/shells)
-    L2,                // L2 (discontinuous)
-    H_div,             // H(div) conforming
-    H_curl,            // H(curl) conforming
-    Custom
+    C0,                ///< Continuous (standard FEM)
+    C1,                ///< C1 continuous (for plates/shells)
+    L2,                ///< L2 (discontinuous)
+    H_div,             ///< H(div) conforming
+    H_curl,            ///< H(curl) conforming
+    Custom             ///< User-defined continuity requirement
 };
 
 /**
  * @brief Assembly strategies
  */
 enum class AssemblyStrategy : std::uint8_t {
-    ElementByElement,  // Traditional element loop
-    Vectorized,        // SIMD vectorized assembly
-    MatrixFree,        // Matrix-free operators
-    Hybrid             // Mixed strategy
+    ElementByElement,  ///< Traditional element loop
+    Vectorized,        ///< SIMD vectorized assembly
+    MatrixFree,        ///< Matrix-free operators
+    Hybrid             ///< Mixed strategy
 };
 
 /**
  * @brief Status codes for FE operations
  */
 enum class FEStatus : std::uint8_t {
-    Success           = 0,
-    InvalidArgument   = 1,
-    InvalidElement    = 2,
-    SingularMapping   = 3,
-    QuadratureError   = 4,
-    AssemblyError     = 5,
-    BackendError      = 6,
-    NotImplemented    = 7,
-    ConvergenceError  = 8,
-    AllocationError   = 9,
-    MPIError          = 10,
-    IOError           = 11,
-    Unknown           = 255
+    Success           = 0,    ///< Operation completed successfully
+    InvalidArgument   = 1,    ///< An argument failed validation
+    InvalidElement    = 2,    ///< Unsupported or malformed element
+    SingularMapping   = 3,    ///< Element mapping Jacobian is singular
+    QuadratureError   = 4,    ///< Quadrature rule construction or evaluation failed
+    AssemblyError     = 5,    ///< Global assembly failure
+    BackendError      = 6,    ///< Linear-algebra backend failure
+    NotImplemented    = 7,    ///< Requested feature is not implemented
+    ConvergenceError  = 8,    ///< Iterative process failed to converge
+    AllocationError   = 9,    ///< Memory allocation failure
+    MPIError          = 10,   ///< MPI communication failure
+    IOError           = 11,   ///< File or stream I/O failure
+    Unknown           = 255   ///< Unclassified error
 };
 
 // ============================================================================
@@ -303,6 +345,7 @@ enum class FEStatus : std::uint8_t {
 
 /**
  * @brief Point in reference element coordinates
+ * @tparam Dim Reference-space dimension
  */
 template<int Dim>
 using ReferencePoint = std::array<Real, static_cast<std::size_t>(Dim)>;
@@ -314,6 +357,8 @@ using PhysicalPoint = std::array<Real, 3>;
 
 /**
  * @brief Jacobian matrix type
+ * @tparam SpatialDim Physical-space dimension (rows)
+ * @tparam ReferenceDim Reference-space dimension (columns)
  */
 template<int SpatialDim, int ReferenceDim = SpatialDim>
 using Jacobian = std::array<std::array<Real, static_cast<std::size_t>(ReferenceDim)>, static_cast<std::size_t>(SpatialDim)>;
@@ -327,31 +372,51 @@ using Jacobian = std::array<std::array<Real, static_cast<std::size_t>(ReferenceD
  *
  * Prevents accidental mixing of conceptually different types that have
  * the same underlying representation.
+ *
+ * @tparam T Underlying value type
+ * @tparam Tag Empty tag type that distinguishes otherwise identical wrappers
  */
 template<typename T, typename Tag>
 class StrongType {
 public:
+    /// @brief Underlying value type.
     using ValueType = T;
 
+    /// @brief Value-initialize the wrapped value.
     constexpr StrongType() noexcept(std::is_nothrow_default_constructible_v<T>)
         : value_{} {}
 
+    /// @brief Wrap an explicit value.
+    /// @param value Value to store.
     constexpr explicit StrongType(T value) noexcept(std::is_nothrow_move_constructible_v<T>)
         : value_(std::move(value)) {}
 
+    /// @brief Access the wrapped value.
+    /// @return Reference to the wrapped value.
     constexpr T& get() noexcept { return value_; }
+    /// @brief Access the wrapped value.
+    /// @return Reference to the wrapped value.
     constexpr const T& get() const noexcept { return value_; }
 
-    // Explicit conversion
+    /// @brief Explicitly convert back to the underlying type.
+    /// @return Copy of the wrapped value.
     constexpr explicit operator T() const noexcept { return value_; }
 
-    // Comparison operators
+    /// @brief Compare wrapped values for equality.
+    /// @param other Wrapper to compare against.
+    /// @return True when the wrapped values are equal.
     constexpr bool operator==(const StrongType& other) const noexcept {
         return value_ == other.value_;
     }
+    /// @brief Compare wrapped values for inequality.
+    /// @param other Wrapper to compare against.
+    /// @return True when the wrapped values differ.
     constexpr bool operator!=(const StrongType& other) const noexcept {
         return value_ != other.value_;
     }
+    /// @brief Order by wrapped value.
+    /// @param other Wrapper to compare against.
+    /// @return True when this wrapped value orders before the other.
     constexpr bool operator<(const StrongType& other) const noexcept {
         return value_ < other.value_;
     }
@@ -361,12 +426,14 @@ private:
 };
 
 // Specific strong types for common use cases
-struct QuadraturePointTag {};
-struct QuadratureWeightTag {};
-struct BasisValueTag {};
-struct BasisGradientTag {};
+struct QuadraturePointTag {};   ///< Tag type for quadrature-point indices.
+struct QuadratureWeightTag {};  ///< Tag type for quadrature weights.
+struct BasisValueTag {};        ///< Tag type for basis-function values.
+struct BasisGradientTag {};     ///< Tag type for basis-function gradients.
 
+/// Type-safe index of a quadrature point within a rule.
 using QuadraturePointIndex = StrongType<LocalIndex, QuadraturePointTag>;
+/// Type-safe quadrature weight value.
 using QuadratureWeight = StrongType<Real, QuadratureWeightTag>;
 
 // ============================================================================
@@ -388,6 +455,7 @@ struct is_index_type<GlobalIndex> : std::true_type {};
 template<>
 struct is_index_type<DofIndex> : std::true_type {};
 
+/// Convenience variable template for is_index_type.
 template<typename T>
 inline constexpr bool is_index_type_v = is_index_type<T>::value;
 
@@ -400,6 +468,7 @@ struct is_field_type : std::false_type {};
 template<>
 struct is_field_type<FieldType> : std::true_type {};
 
+/// Convenience variable template for is_field_type.
 template<typename T>
 inline constexpr bool is_field_type_v = is_field_type<T>::value;
 
@@ -409,6 +478,8 @@ inline constexpr bool is_field_type_v = is_field_type<T>::value;
 
 /**
  * @brief Convert FE ElementType to Mesh CellFamily
+ * @param elem Element type to classify.
+ * @return Cell family of the element's linear topology; Point for unknown types.
  */
 constexpr svmp::CellFamily to_mesh_family(ElementType elem) noexcept {
     switch(elem) {
@@ -454,6 +525,8 @@ constexpr svmp::CellFamily to_mesh_family(ElementType elem) noexcept {
 
 /**
  * @brief Get spatial dimension of element type
+ * @param elem Element type to query.
+ * @return Reference dimension from 0 (point) to 3 (volume); -1 for unknown types.
  */
 constexpr int element_dimension(ElementType elem) noexcept {
     switch(elem) {
@@ -487,6 +560,8 @@ constexpr int element_dimension(ElementType elem) noexcept {
 
 /**
  * @brief Convert status code to string for error reporting
+ * @param status Status code to describe.
+ * @return Static human-readable description of the status.
  */
 inline const char* status_to_string(FEStatus status) noexcept {
     switch(status) {
@@ -505,6 +580,8 @@ inline const char* status_to_string(FEStatus status) noexcept {
         default:                         return "Unknown error";
     }
 }
+
+/// @}
 
 } // namespace FE
 } // namespace svmp
