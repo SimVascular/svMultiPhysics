@@ -168,9 +168,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     // Total resistance factor value of the RIS valves for the current element 
     // at different quadrature points
     Vector<double> urisFactorTotalEl;
-    Array<double> urisValveVelTotalEl;
+    Array<double> urisValveVelFactorTotalEl;
     if (com_mod.urisFlag) {
-      uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs_1[0], e, urisFactorTotalEl, urisValveVelTotalEl);
+      uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs_1[0], e, urisFactorTotalEl, urisValveVelFactorTotalEl);
     }
 
     for (int g = 0; g < fs_1[0].nG; g++) {
@@ -201,14 +201,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             auto N1 = fs_1[1].N.col(g);
             double urisFactorTotal = 0.0;
-            Vector<double> urisValveVelTotal(nsd);
+            Vector<double> urisValveVelFactorTotal(nsd);
             if (com_mod.urisFlag) {
               urisFactorTotal = urisFactorTotalEl(g);
-              urisValveVelTotal = urisValveVelTotalEl.rcol(g);
+              urisValveVelFactorTotal = urisValveVelFactorTotalEl.rcol(g);
             }
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelTotal);
+            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelFactorTotal);
 
           } break;
 
@@ -260,7 +260,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     // momentum function spaces, recompute the RIS factor
     if (com_mod.urisFlag) {
       if (urisFactorTotalEl.size() != fs_2[1].nG) {
-        uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs_2[1], e, urisFactorTotalEl, urisValveVelTotalEl);
+        uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs_2[1], e, urisFactorTotalEl, urisValveVelFactorTotalEl);
       }
     }
 
@@ -292,14 +292,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_2[0].N.col(g);
             auto N1 = fs_2[1].N.col(g);
             double urisFactorTotal = 0.0;
-            Vector<double> urisValveVelTotal(nsd);
+            Vector<double> urisValveVelFactorTotal(nsd);
             if (com_mod.urisFlag) {
-              urisValveVelTotal = urisValveVelTotalEl.rcol(g);
               urisFactorTotal = urisFactorTotalEl(g);
+              urisValveVelFactorTotal = urisValveVelFactorTotalEl.rcol(g);
             }
             
             // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelTotal);
+            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelFactorTotal);
           } break;
 
           case Equation_ustruct:

@@ -1402,7 +1402,7 @@ void uris_interp_valve_velocity(const urisType& uris_obj, const Vector<double>& 
 
 /// @brief Evaluate total Brinkman factor and weighted valve velocity at element quadrature points.
 void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, const fsType& fs, 
-  const int e, Vector<double>& ris_factor_total_el, Array<double>& ris_valve_vel_total_el) {
+  const int e, Vector<double>& ris_factor_total_el, Array<double>& ris_valve_vel_factor_total_el) {
   #define n_dbg_eval_uris_ris_factors_quadrature
   #ifdef dbg_eval_uris_ris_factors_quadrature
     DebugMsg dmsg(__func__, 0);
@@ -1413,8 +1413,8 @@ void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, 
   const int nUris = com_mod.nUris;
   ris_factor_total_el.resize(fs.nG);
   ris_factor_total_el = 0.0;
-  ris_valve_vel_total_el.resize(com_mod.nsd, fs.nG);
-  ris_valve_vel_total_el = 0.0;
+  ris_valve_vel_factor_total_el.resize(com_mod.nsd, fs.nG);
+  ris_valve_vel_factor_total_el = 0.0;
 
   if (!com_mod.urisActFlag) {
     return;
@@ -1474,7 +1474,7 @@ void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, 
       ris_factor_total_el(g) += com_mod.uris[iUris].resistance * delta_eps;
 
       if (com_mod.uris[iUris].include_uris_velocity) {
-        ris_valve_vel_total_el.rcol(g) = ris_valve_vel_total_el.rcol(g) 
+        ris_valve_vel_factor_total_el.rcol(g) = ris_valve_vel_factor_total_el.rcol(g) 
           + com_mod.uris[iUris].resistance * delta_eps*valve_velocity.rcol(iUris);
       }
     } // iUris: loop
