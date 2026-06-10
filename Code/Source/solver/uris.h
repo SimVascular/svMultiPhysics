@@ -51,7 +51,7 @@ void uris_interp_valve_velocity(const urisType& uris_obj, const Vector<double>& 
                                 const Vector<double>& unitNormal, Vector<double>& interp_valve_vel);
 
 void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, const fsType& fs, const int e, 
-  Vector<double>& ris_factor_total_el, Array<double>& ris_valve_vel_total_el);
+  Vector<double>& uris_factor_total_el, Array<double>& uris_valve_vel_term_total_el);
 
 }
 
