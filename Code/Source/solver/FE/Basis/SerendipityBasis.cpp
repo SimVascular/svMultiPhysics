@@ -115,11 +115,9 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
         nodes.push_back(Vec3{Real(-1), Real(1) - Real(2 * i) * inv_order, Real(0)});
     }
 
-    if (nodes.size() > total_size) {
-        throw BasisConstructionException(
-            "SerendipityBasis: quadrilateral serendipity boundary nodes exceed requested size",
-            __FILE__, __LINE__, __func__);
-    }
+    FE::throw_if<BasisConstructionException>(
+        nodes.size() > total_size, SVMP_HERE,
+        "SerendipityBasis: quadrilateral serendipity boundary nodes exceed requested size");
 
     const std::size_t interior_count = total_size - nodes.size();
     if (interior_count == 0u) {
@@ -157,11 +155,9 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
                   return a[0] < b[0];
               });
 
-    if (interior_count > interior_candidates.size()) {
-        throw BasisConstructionException(
-            "SerendipityBasis: insufficient quadrilateral interior nodes for requested serendipity order",
-            __FILE__, __LINE__, __func__);
-    }
+    FE::throw_if<BasisConstructionException>(
+        interior_count > interior_candidates.size(), SVMP_HERE,
+        "SerendipityBasis: insufficient quadrilateral interior nodes for requested serendipity order");
 
     nodes.insert(nodes.end(),
                  interior_candidates.begin(),
@@ -181,11 +177,9 @@ std::vector<Real> quad_serendipity_inverse_vandermonde(
     std::span<const std::array<int, 2>> exponents,
     int order) {
     const int n = static_cast<int>(nodes.size());
-    if (n == 0 || exponents.size() != nodes.size()) {
-        throw BasisConstructionException(
-            "SerendipityBasis: invalid quadrilateral serendipity interpolation setup",
-            __FILE__, __LINE__, __func__);
-    }
+    FE::throw_if<BasisConstructionException>(
+        n == 0 || exponents.size() != nodes.size(), SVMP_HERE,
+        "SerendipityBasis: invalid quadrilateral serendipity interpolation setup");
 
     std::vector<Real> vandermonde(static_cast<std::size_t>(n * n), Real(0));
     auto idx = [n](int row, int col) -> std::size_t {
@@ -499,19 +493,15 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mo
         if (order_ < 1) {
             order_ = 1;
         }
-        if (type == ElementType::Quad8 && order_ != 2) {
-            throw BasisConfigurationException(
-                "SerendipityBasis: Quad8 is only valid for quadratic order 2; use Quad4 for higher-order quadrilateral serendipity",
-                __FILE__, __LINE__, __func__);
-        }
+        FE::throw_if<BasisConfigurationException>(
+            type == ElementType::Quad8 && order_ != 2, SVMP_HERE,
+            "SerendipityBasis: Quad8 is only valid for quadratic order 2; use Quad4 for higher-order quadrilateral serendipity");
         quad_monomial_exponents_ = quad_serendipity_exponents(order_);
         size_ = quad_monomial_exponents_.size();
         nodes_ = quad_serendipity_nodes(order_, size_);
-        if (nodes_.size() != size_) {
-            throw BasisConstructionException(
-                "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes",
-                __FILE__, __LINE__, __func__);
-        }
+        FE::throw_if<BasisConstructionException>(
+            nodes_.size() != size_, SVMP_HERE,
+            "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
         quad_inv_vandermonde_ = quad_serendipity_inverse_vandermonde(nodes_, quad_monomial_exponents_, order_);
     } else if (type == ElementType::Hex8 || type == ElementType::Hex20) {
         dimension_ = 3;
@@ -521,9 +511,8 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mo
         } else if (order_ == 2) {
             size_ = 20;
         } else {
-            throw BasisConfigurationException(
-                "SerendipityBasis supports up to quadratic on hexahedra",
-                __FILE__, __LINE__, __func__);
+            FE::raise<BasisConfigurationException>(SVMP_HERE,
+                "SerendipityBasis supports up to quadratic on hexahedra");
         }
     } else if (type == ElementType::Wedge15) {
         dimension_ = 3;
@@ -533,13 +522,12 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mo
         if (order_ == 2) {
             size_ = 15;
         } else {
-            throw BasisConfigurationException(
-                "SerendipityBasis supports up to quadratic on wedge15",
-                __FILE__, __LINE__, __func__);
+            FE::raise<BasisConfigurationException>(SVMP_HERE,
+                "SerendipityBasis supports up to quadratic on wedge15");
         }
     } else {
-        throw BasisElementCompatibilityException("SerendipityBasis supports Quad4/Quad8, Hex8/Hex20, and Wedge15 elements",
-                                                 __FILE__, __LINE__, __func__);
+        FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+            "SerendipityBasis supports Quad4/Quad8, Hex8/Hex20, and Wedge15 elements");
     }
 
     if (nodes_.empty()) {
@@ -573,12 +561,11 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
     const Real z = xi[2];
 
     if (dimension_ == 2) {
-        if (quad_monomial_exponents_.size() != size_ ||
-            quad_inv_vandermonde_.size() != size_ * size_) {
-            throw BasisEvaluationException(
-                "SerendipityBasis: quadrilateral interpolation tables are not initialized for value evaluation",
-                __FILE__, __LINE__, __func__);
-        }
+        FE::throw_if<BasisEvaluationException>(
+            quad_monomial_exponents_.size() != size_ ||
+                quad_inv_vandermonde_.size() != size_ * size_,
+            SVMP_HERE,
+            "SerendipityBasis: quadrilateral interpolation tables are not initialized for value evaluation");
 
         for (std::size_t j = 0; j < size_; ++j) {
             const auto [ax, ay] = quad_monomial_exponents_[j];
@@ -632,8 +619,8 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
 
     if (element_type_ == ElementType::Hex20) {
         const auto mesh_to_basis = ReferenceNodeLayout::mesh_to_basis_ordering(element_type_);
-        BASIS_CHECK_EVAL(mesh_to_basis.size() == size_,
-                         "Hex20 mesh-to-basis ordering is not registered");
+        FE::throw_if<BasisEvaluationException>(mesh_to_basis.size() != size_, SVMP_HERE,
+                                               "Hex20 mesh-to-basis ordering is not registered");
 
         if (values_out) {
             Real internal_vals[20];
@@ -681,8 +668,8 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
         return;
     }
 
-    throw BasisEvaluationException("SerendipityBasis::evaluate_all_to: unsupported serendipity configuration",
-                                   __FILE__, __LINE__, __func__);
+    FE::raise<BasisEvaluationException>(SVMP_HERE,
+        "SerendipityBasis::evaluate_all_to: unsupported serendipity configuration");
 }
 
 void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,

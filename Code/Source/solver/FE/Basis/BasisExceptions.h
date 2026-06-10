@@ -83,46 +83,6 @@ public:
         : BasisException(message, file, line, function, StatusCode::InternalError) {}
 };
 
-#define BASIS_CHECK_CONFIG(condition, message)                                                 \
-    do {                                                                                       \
-        if (!(condition)) {                                                                    \
-            throw ::svmp::FE::basis::BasisConfigurationException((message),                    \
-                                                                  __FILE__, __LINE__, __func__); \
-        }                                                                                      \
-    } while (false)
-
-#define BASIS_CHECK_COMPAT(condition, message)                                                 \
-    do {                                                                                       \
-        if (!(condition)) {                                                                    \
-            throw ::svmp::FE::basis::BasisElementCompatibilityException((message),             \
-                                                                         __FILE__, __LINE__, __func__); \
-        }                                                                                      \
-    } while (false)
-
-#define BASIS_CHECK_EVAL(condition, message)                                                   \
-    do {                                                                                       \
-        if (!(condition)) {                                                                    \
-            throw ::svmp::FE::basis::BasisEvaluationException((message),                       \
-                                                               __FILE__, __LINE__, __func__);  \
-        }                                                                                      \
-    } while (false)
-
-#define BASIS_CHECK_NODE_ORDER(condition, message)                                             \
-    do {                                                                                       \
-        if (!(condition)) {                                                                    \
-            throw ::svmp::FE::basis::BasisNodeOrderingException((message),                     \
-                                                                 __FILE__, __LINE__, __func__); \
-        }                                                                                      \
-    } while (false)
-
-#define BASIS_CHECK_CONSTRUCTION(condition, message)                                           \
-    do {                                                                                       \
-        if (!(condition)) {                                                                    \
-            throw ::svmp::FE::basis::BasisConstructionException((message),                     \
-                                                                 __FILE__, __LINE__, __func__); \
-        }                                                                                      \
-    } while (false)
-
 } // namespace basis
 } // namespace FE
 } // namespace svmp

@@ -28,16 +28,16 @@ void BasisFunction::evaluate_gradients(const math::Vector<Real, 3>& xi,
                                        std::vector<Gradient>& gradients) const {
     (void)xi;
     (void)gradients;
-    throw BasisEvaluationException("Analytic gradient evaluation is not implemented for this basis",
-                                   __FILE__, __LINE__, __func__);
+    FE::raise<BasisEvaluationException>(SVMP_HERE,
+        "Analytic gradient evaluation is not implemented for this basis");
 }
 
 void BasisFunction::evaluate_hessians(const math::Vector<Real, 3>& xi,
                                       std::vector<Hessian>& hessians) const {
     (void)xi;
     (void)hessians;
-    throw BasisEvaluationException("Analytic Hessian evaluation is not implemented for this basis",
-                                   __FILE__, __LINE__, __func__);
+    FE::raise<BasisEvaluationException>(SVMP_HERE,
+        "Analytic Hessian evaluation is not implemented for this basis");
 }
 
 void BasisFunction::evaluate_all(const math::Vector<Real, 3>& xi,

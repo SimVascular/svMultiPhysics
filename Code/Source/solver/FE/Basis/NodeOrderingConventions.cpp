@@ -318,10 +318,8 @@ std::vector<Point> generate_wedge_nodes(int order) {
 }
 
 std::vector<Point> complete_lagrange_nodes(ElementType canonical_type, int order) {
-    if (order < 0) {
-        throw BasisNodeOrderingException("ReferenceNodeLayout requires non-negative Lagrange order",
-                                         __FILE__, __LINE__, __func__);
-    }
+    FE::throw_if<BasisNodeOrderingException>(order < 0, SVMP_HERE,
+                                             "ReferenceNodeLayout requires non-negative Lagrange order");
     const ElementType type = canonical_lagrange_type(canonical_type);
     switch (type) {
         case ElementType::Point1:
@@ -339,11 +337,11 @@ std::vector<Point> complete_lagrange_nodes(ElementType canonical_type, int order
         case ElementType::Wedge6:
             return generate_wedge_nodes(order);
         case ElementType::Pyramid5:
-            throw BasisNodeOrderingException("ReferenceNodeLayout: pyramid node ordering is disabled",
-                                             __FILE__, __LINE__, __func__);
+            FE::raise<BasisNodeOrderingException>(SVMP_HERE,
+                "ReferenceNodeLayout: pyramid node ordering is disabled");
         default:
-            throw BasisNodeOrderingException("ReferenceNodeLayout: unsupported Lagrange topology",
-                                             __FILE__, __LINE__, __func__);
+            FE::raise<BasisNodeOrderingException>(SVMP_HERE,
+                "ReferenceNodeLayout: unsupported Lagrange topology");
     }
 }
 
@@ -370,11 +368,11 @@ std::vector<Point> element_nodes(ElementType elem_type) {
             return nodes;
         }
         case ElementType::Pyramid13:
-            throw BasisNodeOrderingException("ReferenceNodeLayout: pyramid node ordering is disabled",
-                                             __FILE__, __LINE__, __func__);
+            FE::raise<BasisNodeOrderingException>(SVMP_HERE,
+                "ReferenceNodeLayout: pyramid node ordering is disabled");
         default:
-            throw BasisNodeOrderingException("ReferenceNodeLayout: unknown element type",
-                                             __FILE__, __LINE__, __func__);
+            FE::raise<BasisNodeOrderingException>(SVMP_HERE,
+                "ReferenceNodeLayout: unknown element type");
     }
 }
 
@@ -383,10 +381,8 @@ std::vector<Point> element_nodes(ElementType elem_type) {
 math::Vector<Real, 3> ReferenceNodeLayout::get_node_coords(ElementType elem_type,
                                                            std::size_t local_node) {
     const auto nodes = element_nodes(elem_type);
-    if (local_node >= nodes.size()) {
-        throw BasisNodeOrderingException("ReferenceNodeLayout::get_node_coords: node index out of range",
-                                         __FILE__, __LINE__, __func__);
-    }
+    FE::throw_if<BasisNodeOrderingException>(local_node >= nodes.size(), SVMP_HERE,
+                                             "ReferenceNodeLayout::get_node_coords: node index out of range");
     return nodes[local_node];
 }
 
