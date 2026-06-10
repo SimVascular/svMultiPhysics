@@ -218,7 +218,7 @@ private:
 
     void init_nodes();
     void build_point_nodes();
-    void build_tensor_product_nodes(int dimensions);
+    void build_tensor_product_nodes();
     void build_simplex_nodes();
     void build_wedge_nodes();
     void init_equispaced_1d_nodes();
@@ -227,6 +227,21 @@ private:
                          Real* SVMP_RESTRICT values_out,
                          Real* SVMP_RESTRICT gradients_out,
                          Real* SVMP_RESTRICT hessians_out) const;
+    void evaluate_point_to(Real* SVMP_RESTRICT values_out,
+                           Real* SVMP_RESTRICT gradients_out,
+                           Real* SVMP_RESTRICT hessians_out) const;
+    void evaluate_tensor_product_to(const math::Vector<Real, 3>& xi,
+                                    Real* SVMP_RESTRICT values_out,
+                                    Real* SVMP_RESTRICT gradients_out,
+                                    Real* SVMP_RESTRICT hessians_out) const;
+    void evaluate_simplex_to(const math::Vector<Real, 3>& xi,
+                             Real* SVMP_RESTRICT values_out,
+                             Real* SVMP_RESTRICT gradients_out,
+                             Real* SVMP_RESTRICT hessians_out) const;
+    void evaluate_wedge_to(const math::Vector<Real, 3>& xi,
+                           Real* SVMP_RESTRICT values_out,
+                           Real* SVMP_RESTRICT gradients_out,
+                           Real* SVMP_RESTRICT hessians_out) const;
 };
 
 /// @}

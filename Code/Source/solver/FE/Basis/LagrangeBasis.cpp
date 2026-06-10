@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 
 namespace svmp {
 namespace FE {
@@ -121,6 +122,9 @@ LagrangeBasis::SimplexExponent simplex_exponent_from_point(const Vec3& p,
     return e;
 }
 
+// Sentinel node index meaning "skip nothing" in product_excluding below.
+constexpr std::size_t kNoSkip = std::numeric_limits<std::size_t>::max();
+
 // Evaluate 1D Lagrange polynomials and derivatives at a point.
 void evaluate_1d_lagrange(Real x, const std::vector<Real>& nodes, AxisEval& out) {
     const std::size_t n = nodes.size();
@@ -134,6 +138,19 @@ void evaluate_1d_lagrange(Real x, const std::vector<Real>& nodes, AxisEval& out)
     }
 
     for (std::size_t i = 0; i < n; ++i) {
+        // Product of (x - nodes[j]) over all j except i and the listed skips.
+        // Each derivative order drops one additional factor from the product.
+        const auto product_excluding = [&](std::size_t skip1 = kNoSkip,
+                                           std::size_t skip2 = kNoSkip) {
+            Real product = Real(1);
+            for (std::size_t j = 0; j < n; ++j) {
+                if (j != i && j != skip1 && j != skip2) {
+                    product *= x - nodes[j];
+                }
+            }
+            return product;
+        };
+
         Real denom = Real(1);
         for (std::size_t j = 0; j < n; ++j) {
             if (j != i) {
@@ -141,26 +158,13 @@ void evaluate_1d_lagrange(Real x, const std::vector<Real>& nodes, AxisEval& out)
             }
         }
 
-        Real value = Real(1);
-        for (std::size_t j = 0; j < n; ++j) {
-            if (j != i) {
-                value *= x - nodes[j];
-            }
-        }
-        out.value[i] = value / denom;
+        out.value[i] = product_excluding() / denom;
 
         Real first = Real(0);
         for (std::size_t m = 0; m < n; ++m) {
-            if (m == i) {
-                continue;
+            if (m != i) {
+                first += product_excluding(m);
             }
-            Real product = Real(1);
-            for (std::size_t j = 0; j < n; ++j) {
-                if (j != i && j != m) {
-                    product *= x - nodes[j];
-                }
-            }
-            first += product;
         }
         out.first[i] = first / denom;
 
@@ -170,16 +174,9 @@ void evaluate_1d_lagrange(Real x, const std::vector<Real>& nodes, AxisEval& out)
                 continue;
             }
             for (std::size_t l = 0; l < n; ++l) {
-                if (l == i || l == m) {
-                    continue;
+                if (l != i && l != m) {
+                    second += product_excluding(m, l);
                 }
-                Real product = Real(1);
-                for (std::size_t j = 0; j < n; ++j) {
-                    if (j != i && j != m && j != l) {
-                        product *= x - nodes[j];
-                    }
-                }
-                second += product;
             }
         }
         out.second[i] = second / denom;
@@ -222,7 +219,7 @@ void evaluate_simplex(const Vec3& xi,
         return;
     }
 
-    const int bary_count = top == BasisTopology::Triangle ? 3 : 4;
+    const std::size_t bary_count = top == BasisTopology::Triangle ? 3u : 4u;
     std::array<Real, 4> lambda{Real(0), Real(0), Real(0), Real(0)};
     std::array<Gradient, 4> lambda_grad;
     lambda_grad.fill(Gradient::Zero());
@@ -246,60 +243,45 @@ void evaluate_simplex(const Vec3& xi,
 
     for (std::size_t i = 0; i < n; ++i) {
         std::array<std::array<Real, 3>, 4> f{};
-        for (int a = 0; a < bary_count; ++a) {
-            f[static_cast<std::size_t>(a)] =
-                simplex_factor(exponents[i][static_cast<std::size_t>(a)],
-                               lambda[static_cast<std::size_t>(a)],
-                               order);
+        for (std::size_t a = 0; a < bary_count; ++a) {
+            f[a] = simplex_factor(exponents[i][a], lambda[a], order);
         }
 
         Real value = Real(1);
-        for (int a = 0; a < bary_count; ++a) {
-            value *= f[static_cast<std::size_t>(a)][0];
+        for (std::size_t a = 0; a < bary_count; ++a) {
+            value *= f[a][0];
         }
         out.value[i] = value;
 
-        for (int a = 0; a < bary_count; ++a) {
-            Real product = f[static_cast<std::size_t>(a)][1];
-            for (int b = 0; b < bary_count; ++b) {
+        for (std::size_t a = 0; a < bary_count; ++a) {
+            Real product = f[a][1];
+            for (std::size_t b = 0; b < bary_count; ++b) {
                 if (b != a) {
-                    product *= f[static_cast<std::size_t>(b)][0];
+                    product *= f[b][0];
                 }
             }
             for (std::size_t c = 0; c < 3u; ++c) {
-                out.gradient[i][c] += product * lambda_grad[static_cast<std::size_t>(a)][c];
+                out.gradient[i][c] += product * lambda_grad[a][c];
             }
         }
 
-        for (int a = 0; a < bary_count; ++a) {
-            for (int b = 0; b < bary_count; ++b) {
-                Real product = (a == b)
-                    ? f[static_cast<std::size_t>(a)][2]
-                    : f[static_cast<std::size_t>(a)][1] *
-                      f[static_cast<std::size_t>(b)][1];
-                for (int c = 0; c < bary_count; ++c) {
-                    if (c != a && c != b) {
-                        product *= f[static_cast<std::size_t>(c)][0];
+        for (std::size_t a = 0; a < bary_count; ++a) {
+            for (std::size_t b = 0; b < bary_count; ++b) {
+                Real product = (a == b) ? f[a][2] : f[a][1] * f[b][1];
+                for (std::size_t k = 0; k < bary_count; ++k) {
+                    if (k != a && k != b) {
+                        product *= f[k][0];
                     }
                 }
                 for (std::size_t r = 0; r < 3u; ++r) {
                     for (std::size_t c = 0; c < 3u; ++c) {
                         out.hessian[i](r, c) +=
-                            product *
-                            lambda_grad[static_cast<std::size_t>(a)][r] *
-                            lambda_grad[static_cast<std::size_t>(b)][c];
+                            product * lambda_grad[a][r] * lambda_grad[b][c];
                     }
                 }
             }
         }
     }
-}
-
-// Store a gradient in the flat buffer layout used by fast evaluators.
-void store_gradient(const Gradient& gradient, Real* dst) {
-    dst[0] = gradient[0];
-    dst[1] = gradient[1];
-    dst[2] = gradient[2];
 }
 
 } // namespace
@@ -339,13 +321,9 @@ void LagrangeBasis::init_nodes() {
             build_point_nodes();
             return;
         case BasisTopology::Line:
-            build_tensor_product_nodes(1);
-            return;
         case BasisTopology::Quadrilateral:
-            build_tensor_product_nodes(2);
-            return;
         case BasisTopology::Hexahedron:
-            build_tensor_product_nodes(3);
+            build_tensor_product_nodes();
             return;
         case BasisTopology::Triangle:
         case BasisTopology::Tetrahedron:
@@ -368,17 +346,17 @@ void LagrangeBasis::build_point_nodes() {
 }
 
 // Build nodes and axis indices for tensor-product elements.
-void LagrangeBasis::build_tensor_product_nodes(int dimensions) {
+void LagrangeBasis::build_tensor_product_nodes() {
     init_equispaced_1d_nodes();
     nodes_ = ReferenceNodeLayout::get_lagrange_node_coords(element_type_, order_);
     tensor_indices_.reserve(nodes_.size());
     for (const auto& node : nodes_) {
         TensorNodeIndex idx{0u, 0u, 0u};
         idx[0] = axis_index_pm_one(node[0], order_);
-        if (dimensions >= 2) {
+        if (dimension_ >= 2) {
             idx[1] = axis_index_pm_one(node[1], order_);
         }
-        if (dimensions >= 3) {
+        if (dimension_ >= 3) {
             idx[2] = axis_index_pm_one(node[2], order_);
         }
         tensor_indices_.push_back(idx);
@@ -419,130 +397,159 @@ void LagrangeBasis::build_wedge_nodes() {
     }
 }
 
+// Evaluate the constant point basis.
+void LagrangeBasis::evaluate_point_to(Real* SVMP_RESTRICT values_out,
+                                      Real* SVMP_RESTRICT gradients_out,
+                                      Real* SVMP_RESTRICT hessians_out) const {
+    if (values_out) {
+        values_out[0] = Real(1);
+    }
+    if (gradients_out) {
+        gradients_out[0] = gradients_out[1] = gradients_out[2] = Real(0);
+    }
+    if (hessians_out) {
+        std::fill_n(hessians_out, 9u, Real(0));
+    }
+}
+
+// Evaluate line, quadrilateral, and hexahedron bases as axis-polynomial products.
+void LagrangeBasis::evaluate_tensor_product_to(const Vec3& xi,
+                                               Real* SVMP_RESTRICT values_out,
+                                               Real* SVMP_RESTRICT gradients_out,
+                                               Real* SVMP_RESTRICT hessians_out) const {
+    AxisEval ax;
+    AxisEval ay;
+    AxisEval az;
+    evaluate_1d_lagrange(xi[0], nodes_1d_, ax);
+    if (dimension_ >= 2) {
+        evaluate_1d_lagrange(xi[1], nodes_1d_, ay);
+    }
+    if (dimension_ >= 3) {
+        evaluate_1d_lagrange(xi[2], nodes_1d_, az);
+    }
+
+    for (std::size_t node = 0; node < tensor_indices_.size(); ++node) {
+        const auto& idx = tensor_indices_[node];
+        const Real vx = ax.value[idx[0]];
+        const Real dx = ax.first[idx[0]];
+        const Real d2x = ax.second[idx[0]];
+        const Real vy = dimension_ >= 2 ? ay.value[idx[1]] : Real(1);
+        const Real dy = dimension_ >= 2 ? ay.first[idx[1]] : Real(0);
+        const Real d2y = dimension_ >= 2 ? ay.second[idx[1]] : Real(0);
+        const Real vz = dimension_ >= 3 ? az.value[idx[2]] : Real(1);
+        const Real dz = dimension_ >= 3 ? az.first[idx[2]] : Real(0);
+        const Real d2z = dimension_ >= 3 ? az.second[idx[2]] : Real(0);
+
+        if (values_out) {
+            values_out[node] = vx * vy * vz;
+        }
+        if (gradients_out) {
+            Real* g = gradients_out + node * 3u;
+            g[0] = dx * vy * vz;
+            g[1] = vx * dy * vz;
+            g[2] = vx * vy * dz;
+        }
+        if (hessians_out) {
+            Real* h = hessians_out + node * 9u;
+            h[0] = d2x * vy * vz;
+            h[1] = dx * dy * vz;
+            h[2] = dx * vy * dz;
+            h[3] = h[1];
+            h[4] = vx * d2y * vz;
+            h[5] = vx * dy * dz;
+            h[6] = h[2];
+            h[7] = h[5];
+            h[8] = vx * vy * d2z;
+        }
+    }
+}
+
+// Evaluate triangle and tetrahedron bases from barycentric factors.
+void LagrangeBasis::evaluate_simplex_to(const Vec3& xi,
+                                        Real* SVMP_RESTRICT values_out,
+                                        Real* SVMP_RESTRICT gradients_out,
+                                        Real* SVMP_RESTRICT hessians_out) const {
+    SimplexEval simplex;
+    evaluate_simplex(xi, topology_, order_, simplex_exponents_, simplex);
+    for (std::size_t i = 0; i < simplex.value.size(); ++i) {
+        if (values_out) {
+            values_out[i] = simplex.value[i];
+        }
+        if (gradients_out) {
+            store_gradient(simplex.gradient[i], gradients_out + i * 3u);
+        }
+        if (hessians_out) {
+            store_hessian(simplex.hessian[i], hessians_out + i * 9u);
+        }
+    }
+}
+
+// Evaluate wedge bases as triangle/through-axis products.
+void LagrangeBasis::evaluate_wedge_to(const Vec3& xi,
+                                      Real* SVMP_RESTRICT values_out,
+                                      Real* SVMP_RESTRICT gradients_out,
+                                      Real* SVMP_RESTRICT hessians_out) const {
+    SimplexEval tri;
+    AxisEval z_axis;
+    evaluate_simplex(xi, BasisTopology::Triangle, order_, simplex_exponents_, tri);
+    evaluate_1d_lagrange(xi[2], nodes_1d_, z_axis);
+
+    for (std::size_t node = 0; node < wedge_indices_.size(); ++node) {
+        const auto [tri_idx, z_idx] = wedge_indices_[node];
+        const Real tv = tri.value[tri_idx];
+        const Real zv = z_axis.value[z_idx];
+        const Real dz = z_axis.first[z_idx];
+        const Real d2z = z_axis.second[z_idx];
+
+        if (values_out) {
+            values_out[node] = tv * zv;
+        }
+        if (gradients_out) {
+            Real* g = gradients_out + node * 3u;
+            g[0] = tri.gradient[tri_idx][0] * zv;
+            g[1] = tri.gradient[tri_idx][1] * zv;
+            g[2] = tv * dz;
+        }
+        if (hessians_out) {
+            Real* h = hessians_out + node * 9u;
+            const Hessian& th = tri.hessian[tri_idx];
+            const Gradient& tg = tri.gradient[tri_idx];
+            h[0] = th(0, 0) * zv;
+            h[1] = th(0, 1) * zv;
+            h[2] = tg[0] * dz;
+            h[3] = h[1];
+            h[4] = th(1, 1) * zv;
+            h[5] = tg[1] * dz;
+            h[6] = h[2];
+            h[7] = h[5];
+            h[8] = tv * d2z;
+        }
+    }
+}
+
 // Evaluate requested basis quantities into caller-provided flat buffers.
 void LagrangeBasis::evaluate_all_to(const Vec3& xi,
                                     Real* SVMP_RESTRICT values_out,
                                     Real* SVMP_RESTRICT gradients_out,
                                     Real* SVMP_RESTRICT hessians_out) const {
-    if (topology_ == BasisTopology::Point) {
-        if (values_out) {
-            values_out[0] = Real(1);
-        }
-        if (gradients_out) {
-            gradients_out[0] = gradients_out[1] = gradients_out[2] = Real(0);
-        }
-        if (hessians_out) {
-            std::fill_n(hessians_out, 9u, Real(0));
-        }
-        return;
-    }
-
-    if (topology_ == BasisTopology::Line ||
-        topology_ == BasisTopology::Quadrilateral ||
-        topology_ == BasisTopology::Hexahedron) {
-        AxisEval ax;
-        AxisEval ay;
-        AxisEval az;
-        evaluate_1d_lagrange(xi[0], nodes_1d_, ax);
-        if (dimension_ >= 2) {
-            evaluate_1d_lagrange(xi[1], nodes_1d_, ay);
-        }
-        if (dimension_ >= 3) {
-            evaluate_1d_lagrange(xi[2], nodes_1d_, az);
-        }
-
-        for (std::size_t node = 0; node < tensor_indices_.size(); ++node) {
-            const auto& idx = tensor_indices_[node];
-            const Real vx = ax.value[idx[0]];
-            const Real dx = ax.first[idx[0]];
-            const Real d2x = ax.second[idx[0]];
-            const Real vy = dimension_ >= 2 ? ay.value[idx[1]] : Real(1);
-            const Real dy = dimension_ >= 2 ? ay.first[idx[1]] : Real(0);
-            const Real d2y = dimension_ >= 2 ? ay.second[idx[1]] : Real(0);
-            const Real vz = dimension_ >= 3 ? az.value[idx[2]] : Real(1);
-            const Real dz = dimension_ >= 3 ? az.first[idx[2]] : Real(0);
-            const Real d2z = dimension_ >= 3 ? az.second[idx[2]] : Real(0);
-
-            if (values_out) {
-                values_out[node] = vx * vy * vz;
-            }
-            if (gradients_out) {
-                Real* g = gradients_out + node * 3u;
-                g[0] = dx * vy * vz;
-                g[1] = vx * dy * vz;
-                g[2] = vx * vy * dz;
-            }
-            if (hessians_out) {
-                Real* h = hessians_out + node * 9u;
-                h[0] = d2x * vy * vz;
-                h[1] = dx * dy * vz;
-                h[2] = dx * vy * dz;
-                h[3] = h[1];
-                h[4] = vx * d2y * vz;
-                h[5] = vx * dy * dz;
-                h[6] = h[2];
-                h[7] = h[5];
-                h[8] = vx * vy * d2z;
-            }
-        }
-        return;
-    }
-
-    if (topology_ == BasisTopology::Triangle || topology_ == BasisTopology::Tetrahedron) {
-        SimplexEval simplex;
-        evaluate_simplex(xi, topology_, order_, simplex_exponents_, simplex);
-        for (std::size_t i = 0; i < simplex.value.size(); ++i) {
-            if (values_out) {
-                values_out[i] = simplex.value[i];
-            }
-            if (gradients_out) {
-                store_gradient(simplex.gradient[i], gradients_out + i * 3u);
-            }
-            if (hessians_out) {
-                store_hessian(simplex.hessian[i], hessians_out + i * 9u);
-            }
-        }
-        return;
-    }
-
-    if (topology_ == BasisTopology::Wedge) {
-        SimplexEval tri;
-        AxisEval z_axis;
-        evaluate_simplex(xi, BasisTopology::Triangle, order_, simplex_exponents_, tri);
-        evaluate_1d_lagrange(xi[2], nodes_1d_, z_axis);
-
-        for (std::size_t node = 0; node < wedge_indices_.size(); ++node) {
-            const auto [tri_idx, z_idx] = wedge_indices_[node];
-            const Real tv = tri.value[tri_idx];
-            const Real zv = z_axis.value[z_idx];
-            const Real dz = z_axis.first[z_idx];
-            const Real d2z = z_axis.second[z_idx];
-
-            if (values_out) {
-                values_out[node] = tv * zv;
-            }
-            if (gradients_out) {
-                Real* g = gradients_out + node * 3u;
-                g[0] = tri.gradient[tri_idx][0] * zv;
-                g[1] = tri.gradient[tri_idx][1] * zv;
-                g[2] = tv * dz;
-            }
-            if (hessians_out) {
-                Real* h = hessians_out + node * 9u;
-                const Hessian& th = tri.hessian[tri_idx];
-                const Gradient& tg = tri.gradient[tri_idx];
-                h[0] = th(0, 0) * zv;
-                h[1] = th(0, 1) * zv;
-                h[2] = tg[0] * dz;
-                h[3] = h[1];
-                h[4] = th(1, 1) * zv;
-                h[5] = tg[1] * dz;
-                h[6] = h[2];
-                h[7] = h[5];
-                h[8] = tv * d2z;
-            }
-        }
-        return;
+    switch (topology_) {
+        case BasisTopology::Point:
+            evaluate_point_to(values_out, gradients_out, hessians_out);
+            return;
+        case BasisTopology::Line:
+        case BasisTopology::Quadrilateral:
+        case BasisTopology::Hexahedron:
+            evaluate_tensor_product_to(xi, values_out, gradients_out, hessians_out);
+            return;
+        case BasisTopology::Triangle:
+        case BasisTopology::Tetrahedron:
+            evaluate_simplex_to(xi, values_out, gradients_out, hessians_out);
+            return;
+        case BasisTopology::Wedge:
+            evaluate_wedge_to(xi, values_out, gradients_out, hessians_out);
+            return;
+        default:
+            break;
     }
 
     FE::raise<BasisEvaluationException>(SVMP_HERE,
@@ -561,9 +568,7 @@ void LagrangeBasis::evaluate_gradients(const Vec3& xi,
     std::vector<Real> flat(size() * 3u, Real(0));
     evaluate_gradients_to(xi, flat.data());
     for (std::size_t i = 0; i < size(); ++i) {
-        gradients[i][0] = flat[i * 3u + 0u];
-        gradients[i][1] = flat[i * 3u + 1u];
-        gradients[i][2] = flat[i * 3u + 2u];
+        gradients[i] = load_gradient(flat.data() + i * 3u);
     }
 }
 
@@ -588,9 +593,7 @@ void LagrangeBasis::evaluate_all(const Vec3& xi,
     std::vector<Real> flat_h(size() * 9u, Real(0));
     evaluate_all_to(xi, values.data(), flat_g.data(), flat_h.data());
     for (std::size_t i = 0; i < size(); ++i) {
-        gradients[i][0] = flat_g[i * 3u + 0u];
-        gradients[i][1] = flat_g[i * 3u + 1u];
-        gradients[i][2] = flat_g[i * 3u + 2u];
+        gradients[i] = load_gradient(flat_g.data() + i * 3u);
         hessians[i] = load_hessian(flat_h.data() + i * 9u);
     }
 }

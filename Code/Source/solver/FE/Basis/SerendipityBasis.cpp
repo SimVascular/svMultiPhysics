@@ -18,12 +18,6 @@ namespace basis {
 namespace {
 using Vec3 = math::Vector<Real, 3>;
 
-void store_gradient(const Gradient& gradient, Real* dst) {
-    dst[0] = gradient[0];
-    dst[1] = gradient[1];
-    dst[2] = gradient[2];
-}
-
 void evaluate_hex8_reference(Real r,
                              Real s,
                              Real t,
@@ -684,9 +678,7 @@ void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
     std::vector<Real> flat(size_ * 3u, Real(0));
     evaluate_gradients_to(xi, flat.data());
     for (std::size_t i = 0; i < size_; ++i) {
-        gradients[i][0] = flat[i * 3u + 0u];
-        gradients[i][1] = flat[i * 3u + 1u];
-        gradients[i][2] = flat[i * 3u + 2u];
+        gradients[i] = load_gradient(flat.data() + i * 3u);
     }
 }
 
@@ -711,9 +703,7 @@ void SerendipityBasis::evaluate_all(const math::Vector<Real, 3>& xi,
     std::vector<Real> flat_hessians(size_ * 9u, Real(0));
     evaluate_all_to(xi, values.data(), flat_gradients.data(), flat_hessians.data());
     for (std::size_t i = 0; i < size_; ++i) {
-        gradients[i][0] = flat_gradients[i * 3u + 0u];
-        gradients[i][1] = flat_gradients[i * 3u + 1u];
-        gradients[i][2] = flat_gradients[i * 3u + 2u];
+        gradients[i] = load_gradient(flat_gradients.data() + i * 3u);
         hessians[i] = load_hessian(flat_hessians.data() + i * 9u);
     }
 }

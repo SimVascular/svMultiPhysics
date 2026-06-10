@@ -49,6 +49,20 @@ using Hessian  = math::Matrix<Real, 3, 3>;
     return hessian;
 }
 
+inline void store_gradient(const Gradient& gradient, Real* dst) noexcept {
+    dst[0] = gradient[0];
+    dst[1] = gradient[1];
+    dst[2] = gradient[2];
+}
+
+[[nodiscard]] inline Gradient load_gradient(const Real* src) noexcept {
+    Gradient gradient;
+    gradient[0] = src[0];
+    gradient[1] = src[1];
+    gradient[2] = src[2];
+    return gradient;
+}
+
 inline void store_hessian(const Hessian& hessian, Real* dst) noexcept {
     dst[0] = hessian(0, 0);
     dst[1] = hessian(0, 1);

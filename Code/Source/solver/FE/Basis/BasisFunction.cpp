@@ -63,9 +63,7 @@ void BasisFunction::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
     tmp.resize(size());
     evaluate_gradients(xi, tmp);
     for (std::size_t i = 0; i < tmp.size(); ++i) {
-        gradients_out[i * 3u + 0u] = tmp[i][0];
-        gradients_out[i * 3u + 1u] = tmp[i][1];
-        gradients_out[i * 3u + 2u] = tmp[i][2];
+        store_gradient(tmp[i], gradients_out + i * 3u);
     }
 }
 
