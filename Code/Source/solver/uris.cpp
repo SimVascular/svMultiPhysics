@@ -135,7 +135,7 @@ void uris_meanp(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   }
 
   //  If the uris has passed the closing state
-  if (uris_obj.cnt > uris_obj.DxClose.nrows()) {
+  if (uris_obj.cnt > uris_obj.DxClose.nslices()) {
     if (uris_obj.meanPU > uris_obj.meanPD) {
       uris_obj.cnt = 1;
       uris_obj.clsFlg = false;
@@ -226,7 +226,7 @@ void uris_meanv(ComMod& com_mod, CmMod& cm_mod, const int iUris, const SolutionS
   }
 
   // If the uris has passed the open state
-  if (uris_obj.cnt > uris_obj.DxOpen.nrows()) {
+  if (uris_obj.cnt > uris_obj.DxOpen.nslices()) {
     if (meanV < 0.0) {
       uris_obj.cnt = 1;
       uris_obj.clsFlg = true;
@@ -365,9 +365,9 @@ void uris_find_tetra(ComMod& com_mod, CmMod& cm_mod, const int iUris) {
   // We need to check if the valve needs to move
   int cnt;
   if (!uris_obj.clsFlg) {
-    cnt = std::min(uris_obj.cnt, uris_obj.DxOpen.nrows());
+    cnt = std::min(uris_obj.cnt, uris_obj.DxOpen.nslices());
   } else {
-    cnt = std::min(uris_obj.cnt, uris_obj.DxClose.nrows());
+    cnt = std::min(uris_obj.cnt, uris_obj.DxClose.nslices());
   }
 
   if (uris_obj.elemId.allocated() && cnt < uris_obj.cnt) {
@@ -589,6 +589,12 @@ void uris_read_msh(Simulation* simulation) {
     }
     for (int i = 0; i < nsd; i++) {
       file_stream >> uris_obj.nrm(i);
+      if (!file_stream) {
+        throw std::runtime_error(
+            "Failed to read positive flow normal (component=" + std::to_string(i)
+            + ") from positive flow normal file '"
+            + positive_flow_normal_file_path + "'.");
+      }
     }
     file_stream.close();
 
@@ -600,6 +606,7 @@ void uris_read_msh(Simulation* simulation) {
     uris_obj.resistance = param->resistance();
     uris_obj.clsFlg = param->valve_starts_as_closed();
     uris_obj.invert_normal = param->invert_normal();
+    uris_obj.include_uris_velocity = param->include_uris_velocity();
 
     // uris_obj.tnNo = 0;
     for (int iM = 0; iM < uris_obj.nFa; iM++) {
@@ -641,6 +648,11 @@ void uris_read_msh(Simulation* simulation) {
       }
       int dispNtOpen, dispNnOpen;
       file_stream >> dispNtOpen >> dispNnOpen;
+      if (!file_stream) {
+        throw std::runtime_error(
+            "Failed to read time steps and node numbers from open motion file '"
+            + open_motion_file_path + "'.");
+      }
       // std::cout << "dispNtOpen: " << dispNtOpen << std::endl;
       // std::cout << "dispNnOpen: " << dispNnOpen << std::endl;
 
@@ -648,11 +660,19 @@ void uris_read_msh(Simulation* simulation) {
         throw std::runtime_error("Mismatch in node numbers between URIS mesh and displacements.");
       }
 
-      Array3<double> dispOpen(dispNtOpen, nsd, dispNnOpen);
-      for (int t = 0; t < dispNtOpen; t++) {
-        for (int a = 0; a < dispNnOpen; a++) {
+      Array3<double> dispOpen(nsd, dispNnOpen, dispNtOpen);
+      for (int k = 0; k < dispNtOpen; k++) {
+        for (int j = 0; j < dispNnOpen; j++) {
           for (int i = 0; i < nsd; i++) {
-            file_stream >> dispOpen(t,i,a);
+            file_stream >> dispOpen(i,j,k);
+            if (!file_stream) {
+              throw std::runtime_error(
+                  "Failed to read displacement (time=" + std::to_string(k)
+                  + ", node=" + std::to_string(j)
+                  + ", component=" + std::to_string(i)
+                  + ") from open motion file '"
+                  + open_motion_file_path + "'.");
+            }
           }
         }
       }
@@ -667,6 +687,11 @@ void uris_read_msh(Simulation* simulation) {
       }
       int dispNtClose, dispNnClose;
       file_stream >> dispNtClose >> dispNnClose;
+      if (!file_stream) {
+        throw std::runtime_error(
+            "Failed to read time steps and node numbers from close motion file '"
+            + close_motion_file_path + "'.");
+      }
       // std::cout << "dispNtClose: " << dispNtClose << std::endl;
       // std::cout << "dispNnClose: " << dispNnClose << std::endl;
 
@@ -674,11 +699,19 @@ void uris_read_msh(Simulation* simulation) {
         throw std::runtime_error("Mismatch in node numbers between URIS mesh and displacements.");
       }
 
-      Array3<double> dispClose(dispNtClose, nsd, dispNnClose);
-      for (int t = 0; t < dispNtClose; t++) {
-        for (int a = 0; a < dispNnClose; a++) {
+      Array3<double> dispClose(nsd, dispNnClose, dispNtClose);
+      for (int k = 0; k < dispNtClose; k++) {
+        for (int j = 0; j < dispNnClose; j++) {
           for (int i = 0; i < nsd; i++) {
-            file_stream >> dispClose(t,i,a);
+            file_stream >> dispClose(i,j,k);
+            if (!file_stream) {
+              throw std::runtime_error(
+                  "Failed to read displacement (time=" + std::to_string(k)
+                  + ", node=" + std::to_string(j)
+                  + ", component=" + std::to_string(i)
+                  + ") from open motion file '"
+                  + close_motion_file_path + "'.");
+            }
           }
         }
       }
@@ -686,15 +719,12 @@ void uris_read_msh(Simulation* simulation) {
 
       // To scale the mesh, while attaching x to gX
       int a = uris_obj.tnNo + mesh.gnNo;
-      // std::cout << "uris obj tnNo: " << uris_obj.tnNo << std::endl;
-      // std::cout << "mesh gnNo: " << mesh.gnNo << std::endl;
-      // std::cout << "mesh x size: " << mesh.x.nrows() << ", " << mesh.x.ncols() << std::endl;
 
       if (iM == 0) {
         gX.resize(nsd, a);
         gX = 0.0;
-        uris_obj.DxOpen.resize(dispNtOpen, nsd, a);
-        uris_obj.DxClose.resize(dispNtClose, nsd, a);
+        uris_obj.DxOpen.resize(nsd, a, dispNtOpen);
+        uris_obj.DxClose.resize(nsd, a, dispNtClose);
       } else{
         Array<double> tmpX(nsd, uris_obj.tnNo);
         tmpX = gX;
@@ -704,18 +734,24 @@ void uris_read_msh(Simulation* simulation) {
         }
 
         // Move data for open
-        Array3<double> tmpDxOpen(dispNtOpen, nsd, uris_obj.tnNo);
-        tmpDxOpen = uris_obj.DxOpen;
-        uris_obj.DxOpen.resize(dispNtOpen, nsd, a);
-        for (int i = 0; i < uris_obj.tnNo; i++) {
-          uris_obj.DxOpen.rslice(i) = tmpDxOpen.rslice(i);
+        auto tmpDxOpen = uris_obj.DxOpen;
+        uris_obj.DxOpen.resize(nsd, a, dispNtOpen);
+        for (int i = 0; i < dispNtOpen; i++) {
+          for (int j = 0; j < uris_obj.tnNo; j++) {
+            for (int k = 0; k < nsd; k++) {
+              uris_obj.DxOpen(k,j,i) = tmpDxOpen(k,j,i);
+            }
+          }
         }
-        // Move data for open
-        Array3<double> tmpDxClose(dispNtClose, nsd, uris_obj.tnNo);
-        tmpDxClose = uris_obj.DxClose;
-        uris_obj.DxClose.resize(dispNtClose, nsd, a);
-        for (int i = 0; i < uris_obj.tnNo; i++) {
-          uris_obj.DxClose.rslice(i) = tmpDxClose.rslice(i);
+        // Move data for close
+        auto tmpDxClose = uris_obj.DxClose;
+        uris_obj.DxClose.resize(nsd, a, dispNtClose);
+        for (int i = 0; i < dispNtClose; i++) {
+          for (int j = 0; j < uris_obj.tnNo; j++) {
+            for (int k = 0; k < nsd; k++) {
+              uris_obj.DxClose(k,j,i) = tmpDxClose(k,j,i);
+            }
+          }
         }
       }
 
@@ -723,21 +759,43 @@ void uris_read_msh(Simulation* simulation) {
         gX.rcol(i) = mesh.x.rcol(i-uris_obj.tnNo) * uris_obj.scF;
       }
 
-      for (int i = uris_obj.tnNo; i < a; i++) {
-        uris_obj.DxOpen.rslice(i) = dispOpen.rslice(i-uris_obj.tnNo) * uris_obj.scF;
+      for (int k = 0; k < dispNtOpen; k++) {
+        for (int j = uris_obj.tnNo; j < a; j++) {
+          for (int i = 0; i < nsd; i++) {
+            uris_obj.DxOpen(i,j,k) = dispOpen(i,j-uris_obj.tnNo,k) * uris_obj.scF;
+          }
+        }
       }
 
-      for (int i = uris_obj.tnNo; i < a; i++) {
-        uris_obj.DxClose.rslice(i) = dispClose.rslice(i-uris_obj.tnNo) * uris_obj.scF;
+      for (int k = 0; k < dispNtClose; k++) {
+        for (int j = uris_obj.tnNo; j < a; j++) {
+          for (int i = 0; i < nsd; i++) {
+            uris_obj.DxClose(i,j,k) = dispClose(i,j-uris_obj.tnNo,k) * uris_obj.scF;
+          }
+        }
       }
+
       uris_obj.tnNo = a;
     }
-    
+
     uris_obj.x.resize(nsd, uris_obj.tnNo);
-    uris_obj.x = gX;
+    // Set the valve position in the initial position
+    if (uris_obj.clsFlg) {
+      int dispNtClose = uris_obj.DxClose.nslices();
+      uris_obj.x = uris_obj.DxClose.rslice(dispNtClose-1);
+    } else {
+      int dispNtOpen = uris_obj.DxOpen.nslices();
+      uris_obj.x = uris_obj.DxOpen.rslice(dispNtOpen-1);
+    }
     uris_obj.Yd.resize(nsd, uris_obj.tnNo);
     uris_obj.Yd = 0.0;
-    // gX.clear();
+
+    if (uris_obj.include_uris_velocity) {
+      uris_obj.x_prev.resize(nsd, uris_obj.tnNo);
+      uris_obj.x_prev = uris_obj.x;
+      uris_obj.valve_velocity.resize(nsd, uris_obj.tnNo);
+      uris_obj.valve_velocity = 0.0;
+    }
 
     // Setting mesh.gN, mesh.lN parameter
     int b = 0;
@@ -955,36 +1013,38 @@ void uris_calc_sdf(ComMod& com_mod) {
   }
 
   for (int iUris = 0; iUris < nUris; iUris++) {
-    // We need to check if the valve needs to move 
+    // First check if the valve needs to move 
     auto& uris_obj = uris[iUris];
-    int cnt = 0;
-    if (!uris_obj.clsFlg) {
-      cnt = std::min(uris_obj.cnt, uris_obj.DxOpen.nrows());
-      for (int i = 0; i < uris_obj.x.nrows(); i++) {
-        for (int j = 0; j < uris_obj.x.ncols(); j++) {
-          uris_obj.x(i,j) = uris_obj.DxOpen(cnt-1,i,j);
-        }
-      }
-    } else {
-      cnt = std::min(uris_obj.cnt, uris_obj.DxClose.nrows());
-      for (int i = 0; i < uris_obj.x.nrows(); i++) {
-        for (int j = 0; j < uris_obj.x.ncols(); j++) {
-          uris_obj.x(i,j) = uris_obj.DxClose(cnt-1,i,j);
-        }
-      }
-    }
-    
-    if (uris_obj.sdf.size() > 0 && cnt < uris_obj.cnt) {continue;}
 
-    if (uris_obj.sdf.size() <= 0) {
-      uris_obj.sdf.resize(com_mod.tnNo);
-      uris_obj.sdf = 0.0;
+    const Array3<double>& Dx = uris_obj.clsFlg ? uris_obj.DxClose : uris_obj.DxOpen;
+    int cnt = std::min(uris_obj.cnt, Dx.nslices());
+    uris_obj.x = Dx.rslice(cnt - 1);
+
+    if (uris_obj.include_uris_velocity) {
+      if (cnt < uris_obj.cnt) {
+        // Frozen at last frame: valve not changing
+        uris_obj.x_prev = uris_obj.x;
+      } else if (cnt > 1) {
+        // Mid-motion: previous prescribed frame
+        uris_obj.x_prev = Dx.rslice(cnt - 2);
+      } else {
+        // cnt == 1: first frame of sequence
+        uris_obj.x_prev = uris_obj.x;
+      }
+      for (int i = 0; i < uris_obj.tnNo; i++) {
+        uris_obj.valve_velocity.rcol(i) = (uris_obj.x.rcol(i) - uris_obj.x_prev.rcol(i)) / com_mod.dt;
+      }
+      uris_obj.valve_velocity_fluid = 0.0;
     }
 
+    if (cnt < uris_obj.cnt && uris_obj.sdf_computed) {
+      continue;
+    }
+    uris_obj.sdf = uris_obj.sdf_default;
+  
     if (cm.idcm() == 0) {
       std::cout << "Recomputing SDF for " << uris_obj.name << std::endl;
     }
-    uris_obj.sdf = uris_obj.sdf_default;
 
     // Each time when the URIS moves (open/close), we need to 
     // recompute the signed distance function.
@@ -1051,8 +1111,16 @@ void uris_calc_sdf(ComMod& com_mod) {
 
       uris_obj.sdf[ca] = sdf_sign * minS;
 
-    }
-  }
+      if (uris_obj.include_uris_velocity) {
+        Vector<double> interp_valve_vel(nsd);
+        uris_interp_valve_velocity(uris_obj, xp, nsd, jM, Ec, dotp, unitNormal, interp_valve_vel);
+        uris_obj.valve_velocity_fluid.rcol(ca) = interp_valve_vel;
+      }
+
+    } // ca: loop
+    uris_obj.sdf_computed = true;
+  } // iUris: loop
+
 }
 
 
@@ -1281,27 +1349,91 @@ double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
   return (dotP < 0.0) ? -1.0 : 1.0;
 }
 
-/// @brief Compute the RIS factor for the current element  at different quadrature points
-void uris_compute_ris_factor(const ComMod& com_mod, const mshType& lM, const fsType& fs, 
-  const int e, Vector<double>& ris_factor_total_el) {
-  #define n_dbg_uris_compute_ris_factor
-  #ifdef dbg_uris_compute_ris_factor
+
+/// @brief Interpolate valve velocity to fluid node at the given point xp
+void uris_interp_valve_velocity(const urisType& uris_obj, const Vector<double>& xp, const int nsd, 
+                                const int jM, const int Ec, const double dotP, 
+                                const Vector<double>& unitNormal, Vector<double>& interp_valve_vel) {
+  #define n_dbg_uris_interp_valve_velocity
+  #ifdef dbg_uris_interp_valve_velocity
+    DebugMsg dmsg(__func__, 0);
+    dmsg.banner();
+    dmsg << "interpolating valve velocity";
+  #endif
+
+  const auto& mesh = uris_obj.msh[jM];                          
+  Vector<double> xp_plane(nsd), E1(nsd), E2(nsd), v(nsd);
+  Array<double> lX(nsd, mesh.eNoN);
+
+  for (int a = 0; a < mesh.eNoN; a++) {
+    const int Ac = mesh.IEN(a, Ec);
+    lX.rcol(a) = uris_obj.x.rcol(Ac);
+  }
+  
+  // project xp onto the triangle plane
+  xp_plane = xp - dotP * unitNormal;
+  
+  // compute barycentric coordinates (xi, eta)
+  E1 = lX.rcol(1) - lX.rcol(0);
+  E2 = lX.rcol(2) - lX.rcol(0);
+  v = xp_plane - lX.rcol(0);
+
+  auto g11 = E1 * E1;
+  auto g12 = E1 * E2; 
+  auto g22 = E2 * E2;
+  auto b1 = v * E1;
+  auto b2 = v * E2;
+  double det = g11 * g22 - g12 * g12;
+
+  double xi = (g22 * b1 - g12 * b2) / det;
+  double eta = (g11 * b2 - g12 * b1) / det;
+
+  // shape functions:
+  double N1 = 1.0 - xi - eta;
+  double N2 = xi;
+  double N3 = eta;
+
+  // interpolate the valve velocity:
+  interp_valve_vel = N1 * uris_obj.valve_velocity.rcol(mesh.IEN(0,Ec)) +
+                     N2 * uris_obj.valve_velocity.rcol(mesh.IEN(1,Ec)) +
+                     N3 * uris_obj.valve_velocity.rcol(mesh.IEN(2,Ec));
+  
+}
+
+/// @brief Evaluate total Brinkman factor and weighted valve velocity at element quadrature points.
+void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, const fsType& fs, 
+  const int e, Vector<double>& uris_factor_total_el, Array<double>& uris_valve_vel_term_total_el) {
+  #define n_dbg_eval_uris_ris_factors_quadrature
+  #ifdef dbg_eval_uris_ris_factors_quadrature
     DebugMsg dmsg(__func__, 0);
     dmsg.banner();
     dmsg << "computing RIS factor";
   #endif
 
   const int nUris = com_mod.nUris;
-  ris_factor_total_el.resize(fs.nG);
-  ris_factor_total_el = 0.0;
+  uris_factor_total_el.resize(fs.nG);
+  uris_factor_total_el = 0.0;
+  uris_valve_vel_term_total_el.resize(com_mod.nsd, fs.nG);
+  uris_valve_vel_term_total_el = 0.0;
+
+  if (!com_mod.urisActFlag) {
+    return;
+  }
+
   Vector<double> dist_srf(nUris);
+  Array<double> valve_velocity(com_mod.nsd, nUris);
 
   for (int g = 0; g < fs.nG; g++) {
     dist_srf = 0.0;
+    valve_velocity = 0.0;
     for (int a = 0; a < fs.eNoN; a++) {
       int Ac = lM.IEN(a,e);
       for (int iUris = 0; iUris < nUris; iUris++) {
         dist_srf(iUris) += fs.N(a,g) * std::fabs(com_mod.uris[iUris].sdf(Ac));
+        if (com_mod.uris[iUris].include_uris_velocity) {
+          valve_velocity.rcol(iUris) = valve_velocity.rcol(iUris) +
+              fs.N(a,g) * com_mod.uris[iUris].valve_velocity_fluid.rcol(Ac);
+        }
       }
     }
 
@@ -1315,11 +1447,11 @@ void uris_compute_ris_factor(const ComMod& com_mod, const mshType& lM, const fsT
       if (com_mod.uris[iUris].clsFlg) {
         start_deps = com_mod.uris[iUris].sdf_deps;
         end_deps   = com_mod.uris[iUris].sdf_deps_close;
-        n_steps  = com_mod.uris[iUris].DxClose.nrows();
+        n_steps  = com_mod.uris[iUris].DxClose.nslices();
       } else {
         start_deps = com_mod.uris[iUris].sdf_deps_close;
         end_deps   = com_mod.uris[iUris].sdf_deps;
-        n_steps  = com_mod.uris[iUris].DxOpen.nrows();
+        n_steps  = com_mod.uris[iUris].DxOpen.nslices();
       }
 
       if (n_steps <= 0) {
@@ -1339,11 +1471,14 @@ void uris_compute_ris_factor(const ComMod& com_mod, const mshType& lM, const fsT
       if (dist_srf(iUris) < sdf_deps && sdf_deps > 0.0) {
         delta_eps = (1 + cos(consts::pi*dist_srf(iUris)/sdf_deps))/(2*sdf_deps*sdf_deps);
       }
-      ris_factor_total_el(g) += com_mod.uris[iUris].resistance * delta_eps;
-    } // iUris: loop
+      uris_factor_total_el(g) += com_mod.uris[iUris].resistance * delta_eps;
 
-    if (!com_mod.urisActFlag) {ris_factor_total_el(g) = 0.0;}
-  }
+      if (com_mod.uris[iUris].include_uris_velocity) {
+        uris_valve_vel_term_total_el.rcol(g) = uris_valve_vel_term_total_el.rcol(g) 
+          + com_mod.uris[iUris].resistance * delta_eps*valve_velocity.rcol(iUris);
+      }
+    } // iUris: loop
+  } // g: loop
 }
 
 }

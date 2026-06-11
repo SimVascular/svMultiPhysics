@@ -2990,6 +2990,7 @@ URISMeshParameters::URISMeshParameters()
   set_parameter("Valve_starts_as_closed", true,  !required, valve_starts_as_closed);
   set_parameter("Invert_normal", false,  !required, invert_normal);
   set_parameter("Positive_flow_normal_file_path", "",  !required, positive_flow_normal_file_path);
+  set_parameter("Include_URIS_velocity", false,  !required, include_uris_velocity);
 }
 
 void URISMeshParameters::print_parameters()

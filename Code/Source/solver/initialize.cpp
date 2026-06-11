@@ -882,6 +882,19 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   std::fill(com_mod.rmsh.flag.begin(), com_mod.rmsh.flag.end(), false);
   com_mod.resetSim = false;
 
+  if (com_mod.urisFlag) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      auto& uris_obj = com_mod.uris[iUris];
+      uris_obj.sdf.resize(com_mod.tnNo);
+      uris_obj.sdf = uris_obj.sdf_default;
+      uris_obj.sdf_computed = false;
+      if (uris_obj.include_uris_velocity && !uris_obj.valve_velocity_fluid.allocated()) {
+        uris_obj.valve_velocity_fluid.resize(nsd, com_mod.tnNo);
+        uris_obj.valve_velocity_fluid = 0.0;
+      }
+    }
+  }
+
   // Create Integrator now that initial_solutions (Ao, Do, Yo) are fully initialized
   // The Integrator takes ownership via move semantics
   simulation->initialize_integrator(std::move(initial_solutions));

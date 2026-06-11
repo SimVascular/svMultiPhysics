@@ -1469,6 +1469,12 @@ class urisType
     // Valve surface position coordinates.
     Array<double> x;
 
+    // Valve position coordinates at the previous time step.
+    Array<double> x_prev;
+
+    // Valve velocity on the valve surface nodes.
+    Array<double> valve_velocity;
+
     // Valve displacement.
     Array<double> Yd;
 
@@ -1493,6 +1499,9 @@ class urisType
     // this assumption, this flag should be set to true to flip the normals.
     bool invert_normal;
 
+    // Whether to include the valve velocity in the RIS implementation. Default is false.
+    bool include_uris_velocity = false;
+
     // Opening positions of the valve surfaces.
     Array3<double> DxOpen;
 
@@ -1508,8 +1517,14 @@ class urisType
     // Iteration count.
     int cnt = 1000000;
 
-    // Signed distance function indexed by fluid/background mesh node.
+    // Flag to indicate if the SDF is computed.
+    bool sdf_computed = false;
+
+    // Signed distance function indexed by backgroundfluid mesh node.
     Vector<double> sdf;
+
+    // Valve velocity interpolated on background fluid mesh nodes.
+    Array<double> valve_velocity_fluid;
 
     // Mesh scale factor.
     double scF;

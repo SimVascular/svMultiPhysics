@@ -46,8 +46,12 @@ double uris_compute_sdf_sign(const urisType& uris_obj, const Vector<double>& xp,
 
 void uris_build_fluid_node_mask(ComMod& com_mod);
 
-void uris_compute_ris_factor(const ComMod& com_mod, const mshType& lM, const fsType& fs, const int e, 
-  Vector<double>& ris_factor_total_el);
+void uris_interp_valve_velocity(const urisType& uris_obj, const Vector<double>& xp, const int nsd, 
+                                const int jM, const int Ec, const double dotP, 
+                                const Vector<double>& unitNormal, Vector<double>& interp_valve_vel);
+
+void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, const fsType& fs, const int e, 
+  Vector<double>& uris_factor_total_el, Array<double>& uris_valve_vel_term_total_el);
 
 }
 
