@@ -12,16 +12,115 @@
 #include <cstddef>
 #include <vector>
 
-/// \defgroup FE FE Library
-/// \brief Finite-element interfaces and utilities used by the solver.
-///
-/// The FE library groups basis functions, math utilities, assembly interfaces,
-/// and related support code that can be built and consumed as a coherent
-/// finite-element component.
-
 /// \defgroup FE_Basis Basis
 /// \ingroup FE
 /// \brief Basis-function interfaces, concrete basis families, and reference-node conventions.
+///
+/// \details
+/// ## Scope
+///
+/// The Basis module owns reference-element shape functions. It provides the
+/// number of basis functions and the values and derivatives,
+/// \f$N_i\f$, \f$\partial N_i / \partial \xi_j\f$, and
+/// \f$\partial^2 N_i / \partial \xi_j \partial \xi_k\f$ at reference
+/// points. It does not own mesh storage, quadrature selection, field
+/// formulation policy, or transformation of derivatives to physical
+/// coordinates. Those decisions stay with the solver layer that has the mesh,
+/// material model, and equation context.
+///
+/// The main pieces are:
+/// - BasisFunction (BasisFunction.h): the abstract query and evaluation
+///   contract for code that does not need to know the concrete family.
+/// - \ref FE_LagrangeBasis "LagrangeBasis" and
+///   \ref FE_SerendipityBasis "SerendipityBasis": the implemented nodal
+///   families, including analytical first and second derivatives in reference
+///   coordinates.
+/// - basis_factory (BasisFactory.h): runtime construction from a BasisRequest.
+///   basis_factory::default_basis_request() centralizes the family/order that
+///   matches each supported element's public node layout.
+/// - ReferenceNodeLayout (NodeOrderingConventions.h): canonical reference-node
+///   coordinates and the output ordering used by every basis evaluator.
+/// - BasisTraits.h and BasisExceptions.h: topology classification,
+///   compile-time helpers, and module-specific exception types.
+///
+/// ## Object and evaluation contract
+///
+/// A basis object is immutable after construction. It represents one reference
+/// topology, basis family, and effective polynomial order, and can be shared
+/// safely across evaluations. Construction may build node lattices or invert
+/// interpolation matrices, so callers should construct through basis_factory
+/// and cache one instance for each distinct basis request instead of rebuilding
+/// inside element loops.
+///
+/// Every evaluator takes a three-component reference coordinate. For
+/// lower-dimensional elements, only the first dimension() components are
+/// active. Returned gradients always have three components and Hessians are
+/// always 3-by-3 matrices; inactive reference directions are expected to be
+/// zero for conforming lower-dimensional bases. The std::vector overloads are
+/// convenient for setup, tests, and adapter code. The *_to overloads write to
+/// caller-owned flat buffers and are the allocation-free path for assembly.
+///
+/// Outputs are in ReferenceNodeLayout basis order, not necessarily the mesh or
+/// solver's native node order. A caller that stores elements in another local
+/// ordering must apply the appropriate permutation at the boundary between the
+/// basis module and that storage format.
+///
+/// ## Inputs and ownership
+///
+/// Constructing and evaluating a basis combines several independent choices:
+///
+/// - **Element topology comes from the mesh.** The mesh cell type is translated
+///   to ElementType, which defines the reference topology and public node
+///   layout. This is structural information, not a complete discretization
+///   policy.
+/// - **Geometry interpolation follows the mesh nodes.** The basis used for the
+///   reference-to-physical map must be compatible with the element's node
+///   count and ordering. For that case, callers normally use
+///   basis_factory::create_default_for(element_type), which selects the
+///   Lagrange or serendipity space associated with that element layout. A
+///   Tetra10 mesh therefore implies a quadratic geometry map; a Hex20 mesh
+///   implies the supported Hex20 serendipity geometry basis.
+/// - **Field approximation is chosen by the formulation.** Field bases do not
+///   have to match the geometry map. Mixed formulations, stabilized methods,
+///   enrichment, and convergence studies may use different families or orders
+///   for different fields on the same mesh topology. Those bases should be
+///   requested explicitly with basis_factory::create() and a BasisRequest
+///   naming the desired family and order.
+/// - **Evaluation points come from the caller.** Quadrature rules, probe
+///   points, interpolation targets, and error-sampling locations are outside
+///   this module. The basis only evaluates at the reference coordinates it is
+///   given.
+///
+/// \dot "Basis inputs and responsibilities"
+/// digraph fe_basis_information_flow {
+///   rankdir=LR;
+///   node [shape=box, fontname=Helvetica, fontsize=10];
+///   mesh     [label="Mesh element type"];
+///   request  [label="BasisRequest\nfamily + order"];
+///   topology [label="Reference topology\nand node layout"];
+///   basis    [label="Basis object", style=filled, fillcolor=lightgray];
+///   points   [label="Reference points"];
+///   outputs  [label="Reference values\nand derivatives"];
+///   mesh -> topology;
+///   request -> basis;
+///   topology -> basis;
+///   basis -> outputs;
+///   points -> outputs;
+/// }
+/// \enddot
+///
+/// ## Reference scope and the solver adapter
+///
+/// The solver-facing adapter in nn.cpp is the boundary between this reference
+/// basis contract and legacy solver storage. It translates solver element
+/// enums to ElementType, obtains cached default bases for mesh/face shape
+/// tables, permutes from ReferenceNodeLayout order into solver node order, and
+/// stores N, Nx, and, where needed, packed Nxx at Gauss points. At that stage
+/// Nx and Nxx are still derivatives with respect to reference coordinates.
+/// Physical-coordinate derivatives are formed later, for a particular
+/// configuration and element geometry, by composing the cached reference data
+/// with the mapping Jacobian (nn::gnn for first derivatives and nn::gn_nxx for
+/// second derivatives).
 
 namespace svmp {
 namespace FE {
@@ -105,7 +204,10 @@ inline void add_scaled_hessian(Hessian& target,
 /// BasisFunction defines the common query and evaluation API used by solver
 /// code that does not need to know the concrete basis implementation. Derived
 /// classes provide values at minimum and can override analytical gradients,
-/// Hessians, combined evaluation, and flat-buffer output paths.
+/// Hessians, combined evaluation, and flat-buffer output paths. The interface
+/// is deliberately limited to reference-space quantities; callers own node
+/// ordering translation, physical mapping, and any field-level discretization
+/// policy.
 class BasisFunction {
 public:
     /// \brief Destroy a basis function through the abstract interface.
