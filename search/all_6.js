@@ -20,7 +20,7 @@ var searchData=
   ['distribute_5fparameters_17',['distribute_parameters',['../class_bueno_orovio.html#aa28fd8951986a2e15b7536154f542ea2',1,'BuenoOrovio::distribute_parameters()'],['../class_t_t_p.html#a748499922d93e274a2e35ce6c9a04620',1,'TTP::distribute_parameters()'],['../class_ionic_model.html#ac62ce48718ec2ed6f4af5a51cf4c2d3f',1,'IonicModel::distribute_parameters()'],['../class_aliev_panfilov.html#ab6148986d0cacb730985b108c22218c5',1,'AlievPanfilov::distribute_parameters()'],['../class_fitz_hugh_nagumo.html#a8a37758a7af32985f4075e6ddf95009d',1,'FitzHughNagumo::distribute_parameters()']]],
   ['dmn_18',['dmn',['../classeq_type.html#a8444f77be8c6f85297aca3c3ce9eb1ec',1,'eqType']]],
   ['dmnib_19',['dmnIB',['../classeq_type.html#ac9596dcfa3a9f0e7505758df1783bcb0',1,'eqType']]],
-  ['dmnid_20',['dmnid',['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID'],['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId']]],
+  ['dmnid_20',['dmnid',['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId'],['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID']]],
   ['dmntype_21',['dmnType',['../classdmn_type.html',1,'']]],
   ['dof_22',['dof',['../classeq_type.html#ad256e1ab17832d3c425de3925678a742',1,'eqType::dof'],['../class_com_mod.html#a2e33f05e98147d2b0e32c410fe24265f',1,'ComMod::dof']]],
   ['dof_20ordering_23',['DOF Ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md35',1,'']]],
