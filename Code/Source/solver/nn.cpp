@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-// The functions defined here replicate the Fortran functions defined in NN.f.
+// Solver-facing element setup, Gauss integration, FE Basis evaluation, and
+// shape-function bounds.
 //
 // The functions are used to 
 //
@@ -15,15 +16,26 @@
 #include "Array.h"
 #include "Vector.h"
 
+#include "FE/Basis/BasisExceptions.h"
+#include "FE/Basis/BasisFactory.h"
+#include "FE/Common/FEException.h"
+
 #include "consts.h"
 #include "mat_fun.h"
 #include "utils.h"
 
 #include "lapack_defs.h"
 
+#include <array>
 #include <functional>
-#include <iostream> 
-#include <math.h> 
+#include <map>
+#include <math.h>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <span>
+#include <string>
+#include <vector>
 
 namespace nn {
 
@@ -37,22 +49,361 @@ using namespace consts;
 // Define maps used to set element Gauss integration data. 
 #include "nn_elem_gip.h"
 
-// Define maps used to set element shape function data. 
-#include "nn_elem_gnn.h"
-
-// Define maps used to get element shape function 2nd derivative data. 
-#include "nn_elem_gnnxx.h"
-
 // Define a map type used to set the bounds of element shape functions.
 #include "nn_elem_nn_bnds.h"
+
+namespace {
+
+namespace fe = svmp::FE;
+namespace febasis = svmp::FE::basis;
+
+std::string solver_element_name(consts::ElementType eType)
+{
+  auto it = consts::element_type_to_string.find(eType);
+  if (it != consts::element_type_to_string.end()) {
+    return it->second + " (" + std::to_string(static_cast<int>(eType)) + ")";
+  }
+  return "unknown (" + std::to_string(static_cast<int>(eType)) + ")";
+}
+
+/// Translate a solver element type into its FE library counterpart. This is a
+/// pure renaming between the two enum vocabularies: the FE library owns the
+/// choice of basis family and polynomial order for each element type
+/// (basis_factory::default_basis_request). The switch deliberately has no
+/// default case so that compilers building with -Wswitch flag any newly added
+/// solver element type that is missing a mapping here.
+std::optional<fe::ElementType> to_fe_element_type(consts::ElementType eType)
+{
+  switch (eType) {
+    case consts::ElementType::LIN1:  return fe::ElementType::Line2;
+    case consts::ElementType::LIN2:  return fe::ElementType::Line3;
+    case consts::ElementType::TRI3:  return fe::ElementType::Triangle3;
+    case consts::ElementType::TRI6:  return fe::ElementType::Triangle6;
+    case consts::ElementType::QUD4:  return fe::ElementType::Quad4;
+    case consts::ElementType::QUD8:  return fe::ElementType::Quad8;
+    case consts::ElementType::QUD9:  return fe::ElementType::Quad9;
+    case consts::ElementType::TET4:  return fe::ElementType::Tetra4;
+    case consts::ElementType::TET10: return fe::ElementType::Tetra10;
+    case consts::ElementType::HEX8:  return fe::ElementType::Hex8;
+    case consts::ElementType::HEX20: return fe::ElementType::Hex20;
+    case consts::ElementType::HEX27: return fe::ElementType::Hex27;
+    case consts::ElementType::WDG:   return fe::ElementType::Wedge6;
+
+    // No FE basis mapping: points use dedicated shape data in get_gnn and
+    // NURBS are outside the current FE Basis scope.
+    case consts::ElementType::NA:
+    case consts::ElementType::PNT:
+    case consts::ElementType::NRB:
+      return std::nullopt;
+  }
+  return std::nullopt;
+}
+
+bool use_basis_adapter_for(consts::ElementType eType)
+{
+  return to_fe_element_type(eType).has_value();
+}
+
+bool supports_face_basis_adapter_for(consts::ElementType eType)
+{
+  switch (eType) {
+    case consts::ElementType::LIN1:
+    case consts::ElementType::LIN2:
+    case consts::ElementType::TRI3:
+    case consts::ElementType::TRI6:
+    case consts::ElementType::QUD4:
+    case consts::ElementType::QUD8:
+    case consts::ElementType::QUD9:
+      return use_basis_adapter_for(eType);
+    default:
+      return false;
+  }
+}
+
+/// Return the shared FE basis for a solver element type, constructing it on
+/// first use. Basis construction is not free (node-lattice generation, and a
+/// Vandermonde inversion for quadrilateral serendipity), while callers invoke
+/// this per Gauss point or per probe point, so instances are cached per
+/// element type. Sharing is safe: bases are immutable after construction,
+/// evaluation is const, and BasisFunction scratch state is thread_local.
+const febasis::BasisFunction& basis_for_solver_element(consts::ElementType eType)
+{
+  static std::mutex cache_mutex;
+  static std::map<consts::ElementType, std::shared_ptr<febasis::BasisFunction>> cache;
+
+  const auto fe_type = to_fe_element_type(eType);
+  if (!fe_type) {
+    fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+        "No FE Basis selection for solver element " + solver_element_name(eType));
+  }
+
+  const std::lock_guard<std::mutex> lock(cache_mutex);
+  auto it = cache.find(eType);
+  if (it == cache.end()) {
+    it = cache.emplace(eType, febasis::basis_factory::create_default_for(*fe_type)).first;
+  }
+  return *it->second;
+}
+
+std::span<const std::size_t> solver_to_basis_node_map(consts::ElementType eType)
+{
+  static constexpr std::array<std::size_t, 3> tri3{1, 2, 0};
+  static constexpr std::array<std::size_t, 6> tri6{1, 2, 0, 4, 5, 3};
+  static constexpr std::array<std::size_t, 4> tet4{1, 2, 3, 0};
+  static constexpr std::array<std::size_t, 10> tet10{1, 2, 3, 0, 5, 9, 8, 4, 6, 7};
+  static constexpr std::array<std::size_t, 27> hex27{
+      0, 1, 2, 3, 4, 5, 6, 7,
+      8, 9, 10, 11, 12, 13, 14, 15,
+      16, 17, 18, 19, 25, 23, 22, 24, 20, 21, 26};
+
+  switch (eType) {
+    case consts::ElementType::TRI3:
+      return tri3;
+    case consts::ElementType::TRI6:
+    case consts::ElementType::WDG:
+      return tri6;
+    case consts::ElementType::TET4:
+      return tet4;
+    case consts::ElementType::TET10:
+      return tet10;
+    case consts::ElementType::HEX27:
+      return hex27;
+    default:
+      return {};
+  }
+}
+
+std::size_t basis_index_for_solver_node(consts::ElementType eType, const int solver_node)
+{
+  if (solver_node < 0) {
+    fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+        "Solver node " + std::to_string(solver_node) +
+            " is outside node map for " + solver_element_name(eType));
+  }
+
+  const auto node = static_cast<std::size_t>(solver_node);
+  const auto map = solver_to_basis_node_map(eType);
+  if (map.empty()) {
+    return node;
+  }
+  if (node < map.size()) {
+    return map[node];
+  }
+  fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+      "Solver node " + std::to_string(solver_node) +
+          " is outside node map for " + solver_element_name(eType));
+}
+
+fe::math::Vector<fe::Real, 3> make_basis_point(const febasis::BasisFunction& basis,
+                                               const int g,
+                                               const Array<double>& xi)
+{
+  if (xi.nrows() < basis.dimension()) {
+    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+        "xi has " + std::to_string(xi.nrows()) +
+            " rows but FE Basis element requires " + std::to_string(basis.dimension()) +
+            " reference coordinates");
+  }
+
+  // Inactive trailing components must be zero for lower-dimensional elements;
+  // Eigen-backed vectors are not zero-initialized by default construction.
+  fe::math::Vector<fe::Real, 3> point = fe::math::Vector<fe::Real, 3>::Zero();
+  for (int d = 0; d < basis.dimension(); ++d) {
+    point[static_cast<std::size_t>(d)] = xi(d, g);
+  }
+  return point;
+}
+
+void copy_basis_values_to_solver_arrays(consts::ElementType eType,
+                                        const int eNoN,
+                                        const int g,
+                                        const std::vector<fe::Real>& values,
+                                        const std::vector<febasis::Gradient>& gradients,
+                                        Array<double>& N,
+                                        Array3<double>& Nx)
+{
+  if (values.size() != static_cast<std::size_t>(eNoN)) {
+    fe::raise<febasis::BasisEvaluationException>(SVMP_HERE,
+        "FE Basis value count " + std::to_string(values.size()) +
+            " does not match solver eNoN " + std::to_string(eNoN));
+  }
+  if (gradients.size() != static_cast<std::size_t>(eNoN)) {
+    fe::raise<febasis::BasisEvaluationException>(SVMP_HERE,
+        "FE Basis gradient count " + std::to_string(gradients.size()) +
+            " does not match solver eNoN " + std::to_string(eNoN));
+  }
+
+  for (int a = 0; a < eNoN; ++a) {
+    const auto basis_index = basis_index_for_solver_node(eType, a);
+    if (basis_index >= values.size() || basis_index >= gradients.size()) {
+      fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+          "Solver node " + std::to_string(a) + " maps to FE Basis node " +
+              std::to_string(basis_index) + " outside basis output for " +
+              solver_element_name(eType));
+    }
+
+    N(a, g) = values[basis_index];
+
+    for (int d = 0; d < Nx.nrows(); ++d) {
+      Nx(d, a, g) = 0.0;
+    }
+    const int ndim = std::min<int>(Nx.nrows(), 3);
+    for (int d = 0; d < ndim; ++d) {
+      Nx(d, a, g) = gradients[basis_index][static_cast<std::size_t>(d)];
+    }
+  }
+}
+
+void evaluate_basis_values_and_gradients(const int insd,
+                                         consts::ElementType eType,
+                                         const int eNoN,
+                                         const int g,
+                                         Array<double>& xi,
+                                         Array<double>& N,
+                                         Array3<double>& Nx)
+{
+  const auto& basis = basis_for_solver_element(eType);
+  if (insd < basis.dimension()) {
+    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+        "solver insd " + std::to_string(insd) +
+            " is smaller than FE Basis reference dimension " + std::to_string(basis.dimension()));
+  }
+
+  const auto point = make_basis_point(basis, g, xi);
+  std::vector<fe::Real> values;
+  std::vector<febasis::Gradient> gradients;
+  basis.evaluate_values(point, values);
+  basis.evaluate_gradients(point, gradients);
+
+  // FE Basis owns the formulas; fsType and mshType remain the solver-facing storage contract.
+  copy_basis_values_to_solver_arrays(eType, eNoN, g, values, gradients, N, Nx);
+}
+
+void evaluate_face_basis_values_and_gradients(const int gaus_pt, faceType& face)
+{
+  evaluate_basis_values_and_gradients(
+      face.xi.nrows(),
+      face.eType,
+      face.eNoN,
+      gaus_pt,
+      face.xi,
+      face.N,
+      face.Nx);
+}
+
+int required_nxx_components_for_dimension(const int dimension)
+{
+  switch (dimension) {
+    case 1:
+      return 1;
+    case 2:
+      return 3;
+    case 3:
+      return 6;
+    default:
+      fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+          "Unsupported FE Basis reference dimension " + std::to_string(dimension));
+  }
+}
+
+void copy_basis_hessians_to_solver_nxx(consts::ElementType eType,
+                                       const int eNoN,
+                                       const int g,
+                                       const int dimension,
+                                       const std::vector<febasis::Hessian>& hessians,
+                                       Array3<double>& Nxx)
+{
+  if (hessians.size() != static_cast<std::size_t>(eNoN)) {
+    fe::raise<febasis::BasisEvaluationException>(SVMP_HERE,
+        "FE Basis Hessian count " + std::to_string(hessians.size()) +
+            " does not match solver eNoN " + std::to_string(eNoN));
+  }
+
+  const int required_components = required_nxx_components_for_dimension(dimension);
+  if (Nxx.nrows() < required_components) {
+    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+        "solver Nxx has " + std::to_string(Nxx.nrows()) +
+            " rows but FE Basis Hessian packing requires " + std::to_string(required_components));
+  }
+
+  for (int a = 0; a < eNoN; ++a) {
+    for (int i = 0; i < Nxx.nrows(); ++i) {
+      Nxx(i, a, g) = 0.0;
+    }
+
+    const auto basis_index = basis_index_for_solver_node(eType, a);
+    if (basis_index >= hessians.size()) {
+      fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+          "Solver node " + std::to_string(a) + " maps to FE Basis Hessian node " +
+              std::to_string(basis_index) + " outside basis output for " +
+              solver_element_name(eType));
+    }
+
+    const auto& hessian = hessians[basis_index];
+    Nxx(0, a, g) = hessian(0, 0);
+    if (dimension >= 2) {
+      Nxx(1, a, g) = hessian(1, 1);
+      Nxx(2, a, g) = hessian(0, 1);
+    }
+    if (dimension >= 3) {
+      Nxx(2, a, g) = hessian(2, 2);
+      Nxx(3, a, g) = hessian(0, 1);
+      Nxx(4, a, g) = hessian(1, 2);
+      Nxx(5, a, g) = hessian(0, 2);
+    }
+  }
+}
+
+void evaluate_basis_hessians(const int insd,
+                             const int ind2,
+                             consts::ElementType eType,
+                             const int eNoN,
+                             const int gaus_pt,
+                             const Array<double>& xi,
+                             Array3<double>& Nxx)
+{
+  const auto& basis = basis_for_solver_element(eType);
+  if (insd < basis.dimension()) {
+    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+        "solver insd " + std::to_string(insd) +
+            " is smaller than FE Basis reference dimension " + std::to_string(basis.dimension()));
+  }
+
+  const int required_components = required_nxx_components_for_dimension(basis.dimension());
+  if (ind2 < required_components) {
+    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+        "solver ind2 " + std::to_string(ind2) +
+            " is smaller than packed Hessian component count " + std::to_string(required_components));
+  }
+
+  const auto point = make_basis_point(basis, gaus_pt, xi);
+  std::vector<febasis::Hessian> hessians;
+  basis.evaluate_hessians(point, hessians);
+
+  // Solver Nxx packing is dxx, dyy, dxy in 2D and dxx, dyy, dzz, dxy, dyz, dxz in 3D.
+  copy_basis_hessians_to_solver_nxx(eType, eNoN, gaus_pt, basis.dimension(), hessians, Nxx);
+}
+
+void set_point_face_shape_data(const int gaus_pt, faceType& face)
+{
+  face.N(0, gaus_pt) = 1.0;
+  for (int row = 0; row < face.Nx.nrows(); ++row) {
+    for (int col = 0; col < face.Nx.ncols(); ++col) {
+      face.Nx(row, col, gaus_pt) = 0.0;
+    }
+  }
+}
+
+} // namespace
 
 void get_gip(const int insd, consts::ElementType eType, const int nG, Vector<double>& w, Array<double>& xi) 
 {
   try {
     get_element_gauss_int_data[eType](insd, nG, w, xi);
   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("No support for element etype " + std::to_string(static_cast<int>(eType)) + 
-        " in 'get_element_gauss_int_data'.");
+    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+        "No support in 'get_element_gauss_int_data'",
+        solver_element_name(eType));
   }
 }
 
@@ -65,7 +416,9 @@ void get_gip(mshType& mesh)
   try {
     set_element_gauss_int_data[mesh.eType](mesh);
   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("No support for mesh etype " + std::to_string(static_cast<int>(mesh.eType)) + " in 'set_element_gauss_int_data'.");
+    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+        "No support in 'set_element_gauss_int_data'",
+        solver_element_name(mesh.eType));
   }
 }
 
@@ -74,7 +427,9 @@ void get_gip(Simulation* simulation, faceType& face)
   try {
     set_face_gauss_int_data[face.eType](face);
   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("No support for face type " + std::to_string(static_cast<int>(face.eType)) + " in 'set_face_gauss_int_data'.");
+    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+        "No support in 'set_face_gauss_int_data'",
+        solver_element_name(face.eType));
   }
 }
 
@@ -83,15 +438,15 @@ void get_gip(Simulation* simulation, faceType& face)
 void get_gnn(const int insd, consts::ElementType eType, const int eNoN, const int g, Array<double>& xi, 
     Array<double>& N, Array3<double>& Nx)
 {
-  try {
-    get_element_shape_data[eType](insd, eNoN, g, xi, N, Nx);
-  } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("[get_gnn] No support for element type " + std::to_string(static_cast<int>(eType)) + " in 'get_element_shape_data'.");
+  if (!use_basis_adapter_for(eType)) {
+    fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+        "[get_gnn] FE Basis does not support solver element " + solver_element_name(eType));
   }
+
+  evaluate_basis_values_and_gradients(insd, eType, eNoN, g, xi, N, Nx);
 }
 
-/// @brief A big fat hack because the Fortran GETNN() operates on primitive types but
-/// the C++ version does not, uses Array and Vector objects.
+/// @brief Adapter overload for vector-style callers.
 //
 void get_gnn(const int nsd, consts::ElementType eType, const int eNoN, Vector<double>& xi, 
     Vector<double>& N, Array<double>& Nx)
@@ -111,44 +466,50 @@ void get_gnn(const int nsd, consts::ElementType eType, const int eNoN, Vector<do
 
 void get_gnn(int gaus_pt, mshType& mesh)
 {
-  try {
-    set_element_shape_data[mesh.eType](gaus_pt, mesh);
-  } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("[get_gnn] No support for element type " + std::to_string(static_cast<int>(mesh.eType)) + " in 'set_element_shape_data'.");
-  }
+  nn::get_gnn(mesh.xi.nrows(), mesh.eType, mesh.eNoN, gaus_pt, mesh.xi, mesh.N, mesh.Nx);
 }
 
 void get_gnn(Simulation* simulation, int gaus_pt, faceType& face)
 {
-  try {
-    set_face_shape_data[face.eType](gaus_pt, face);
-  } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("No support for face type " + std::to_string(static_cast<int>(face.eType)) + " in 'set_face_shape_data'.");
+  using consts::ElementType;
+
+  fe::throw_if<fe::NotImplementedException>(face.eType == ElementType::NRB, SVMP_HERE,
+      "[get_gnn(face)] NRB face shape functions are unsupported by FE Basis");
+
+  if (face.eType == ElementType::PNT) {
+    set_point_face_shape_data(gaus_pt, face);
+    return;
   }
+
+  if (supports_face_basis_adapter_for(face.eType)) {
+    // FE Basis owns mapped face N/Nx formulas; faceType remains the solver-facing storage contract.
+    evaluate_face_basis_values_and_gradients(gaus_pt, face);
+    return;
+  }
+
+  fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+      "[get_gnn(face)] FE Basis does not support face element " + solver_element_name(face.eType));
 }
 
-/// @brief Returns second order derivatives at given natural coords
-///
-/// Replicates 'SUBROUTINE GETGNNxx(insd, ind2, eType, eNoN, xi, Nxx)'.
+/// @brief Returns second order derivatives at given natural coords.
 //
 void get_gn_nxx(const int insd, const int ind2, consts::ElementType eType, const int eNoN, const int gaus_pt, 
     const Array<double>& xi, Array3<double>& Nxx)
 {
   using namespace consts;
 
-  // Element types that don't have 2nd derivatives computed for them.
-  static std::set<ElementType> no_derivs{ElementType::NRB, ElementType::QUD4, ElementType::HEX8, 
-                                         ElementType::HEX20, ElementType::HEX27};
-
-  if (no_derivs.count(eType) != 0) {
+  // NRB/PNT and face-only Hessian paths remain intentionally unsupported here.
+  if (eType == ElementType::NRB || eType == ElementType::PNT) {
     return;
   }
 
-  try {
-    get_element_2nd_derivs[eType](insd, ind2, eNoN, gaus_pt, xi, Nxx);
-  } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("[get_gn_nxx] No support for element type " + std::to_string(static_cast<int>(eType)) + " in 'get_element_2nd_derivs'.");
+  if (!use_basis_adapter_for(eType)) {
+    fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+        "[get_gn_nxx] FE Basis Hessian evaluation does not support solver element " +
+            solver_element_name(eType));
   }
+
+  evaluate_basis_hessians(insd, ind2, eType, eNoN, gaus_pt, xi, Nxx);
 }
 
 /// @brief Sets bounds on Gauss integration points in parametric space and
@@ -332,9 +693,8 @@ void get_nnx(const int nsd, const consts::ElementType eType, const int eNoN, con
 
   l1 = (l1 && l2 && l3 && l4);
 
-  if (!l1) {
-    throw std::runtime_error("Error in computing shape functions");
-  }
+  fe::throw_if<fe::InvalidArgumentException>(!l1, SVMP_HERE,
+      "Error in computing shape functions");
 }
 
 /// @brief Inverse maps {xp} to {$\xi$} in an element with coordinates {xl} using Newton's method
@@ -582,8 +942,10 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
     }
 
     if (!found_node) {
-      throw std::runtime_error("[svMultiPhysics::gnnb] ERROR: The '" + lFa.name + "' face node " + std::to_string(Ac) + 
-          " could not be matched to a node in the '" + msh.name + "' volume mesh.");
+      fe::raise<fe::InvalidArgumentException>(SVMP_HERE,
+          "[svMultiPhysics::gnnb] ERROR: The '" + lFa.name + "' face node " +
+              std::to_string(Ac) + " could not be matched to a node in the '" +
+              msh.name + "' volume mesh.");
     }
 
     ptr(a) = b;
@@ -632,7 +994,8 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
           }
           break;
         default:
-          throw std::runtime_error("gnnb: invalid MechanicalConfigurationType provided");
+          fe::raise<fe::InvalidArgumentException>(SVMP_HERE,
+              "gnnb: invalid MechanicalConfigurationType provided");
       }
     }
   }
@@ -820,9 +1183,8 @@ void gn_nxx(const int l, const int eNoN, const int nsd, const int insd, Array<do
 
     dgesv_(&l, &eNoN, K.data(), &l, IPIV.data(), B.data(), &l, &INFO);
 
-    if (INFO != 0) {
-      throw std::runtime_error("[gn_nxx] Error in Lapack");
-    }
+    fe::throw_if<fe::BackendException>(INFO != 0, SVMP_HERE,
+        "[gn_nxx] Error in Lapack", "LAPACK dgesv", INFO);
 
     Nxx = B;
 
@@ -891,9 +1253,8 @@ void gn_nxx(const int l, const int eNoN, const int nsd, const int insd, Array<do
 
     dgesv_(&l, &eNoN, K.data(), &l, IPIV.data(), B.data(), &l, &INFO);
 
-    if (INFO != 0) {
-      throw std::runtime_error("[gn_nxx] Error in Lapack");
-    }
+    fe::throw_if<fe::BackendException>(INFO != 0, SVMP_HERE,
+        "[gn_nxx] Error in Lapack", "LAPACK dgesv", INFO);
 
     Nxx = B;
   }
@@ -940,8 +1301,10 @@ void select_ele(const ComMod& com_mod, mshType& mesh)
       set_1d_element_props[mesh.eNoN](insd, mesh);
     }
   } catch (const std::bad_function_call& exception) {
-      throw std::runtime_error("[select_ele] No support for " + std::to_string(mesh.eNoN) + " noded " + 
-          std::to_string(insd) + "D elements.");
+      fe::raise<fe::InvalidElementException>(SVMP_HERE,
+          "[select_ele] No support for " + std::to_string(mesh.eNoN) +
+              " noded " + std::to_string(insd) + "D elements.",
+          solver_element_name(mesh.eType));
   }
 
   // Set mesh 'w' and 'xi' arrays used for Gauss integration.
@@ -997,8 +1360,10 @@ void select_eleb(Simulation* simulation, mshType& mesh, faceType& face)
   try {
     set_face_element_props[face.eNoN](insd, face);
   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("No support for " + std::to_string(face.eNoN) + " noded " +
-      std::to_string(insd) + "D elements in 'set_face_element_props'.");
+    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+        "No support for " + std::to_string(face.eNoN) + " noded " +
+            std::to_string(insd) + "D elements in 'set_face_element_props'.",
+        solver_element_name(face.eType));
   }
 
   // Set face 'w' and 'xi' arrays used for Gauss integration.
@@ -1015,4 +1380,3 @@ void select_eleb(Simulation* simulation, mshType& mesh, faceType& face)
 }
 
 };
-

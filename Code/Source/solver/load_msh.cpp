@@ -13,7 +13,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <chrono>
 #include <unordered_map>
 #include <string>
 #include <iomanip>
@@ -300,4 +299,3 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
         }
     }
 };
-
