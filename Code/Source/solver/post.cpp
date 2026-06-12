@@ -5,6 +5,7 @@
 
 #include "FE/Common/FEException.h"
 #include "all_fun.h"
+#include <unordered_map>
 #include "fluid.h"
 #include "fs.h"
 #include "initialize.h"
@@ -2086,6 +2087,150 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
       }
     }
   }
+}
+
+//----------------------------------------------------------------------
+// compute_face_traction — consistent nodal forces at a fluid face
+//----------------------------------------------------------------------
+// Computes f(i,a) = integral(sigma_ij * n_j * N_a dGamma) at each face
+// node.  Returns the force that the fluid exerts ON the solid.
+// Adapts the stress computation from bpost() but integrates over the
+// face using face Gauss quadrature.
+//
+Array<double> compute_face_traction(
+    ComMod& com_mod, const CmMod& cm_mod,
+    const mshType& lM, const faceType& lFa,
+    const eqType& eq,
+    const SolutionStates& solutions)
+{
+  const auto& Yg = solutions.intermediate.get_velocity();
+  const auto& Dg = solutions.intermediate.get_displacement();
+
+  const int nsd = com_mod.nsd;
+  const int eNoN = lM.eNoN;
+
+  // Pressure function space (P1-P1 or Taylor-Hood P2-P1)
+  fsType fsP;
+  if (lM.nFs == 1) {
+    fsP.eNoN = lM.fs[0].eNoN;
+    fsP.N = lM.fs[0].N;
+  } else {
+    fsP.eNoN = lM.fs[1].eNoN;
+    fsP.nG = lM.fs[0].nG;
+    fsP.eType = lM.fs[1].eType;
+    fs::alloc_fs(fsP, nsd, nsd);
+    fsP.xi = lM.fs[0].xi;
+    for (int g = 0; g < fsP.nG; g++) {
+      nn::get_gnn(nsd, fsP.eType, fsP.eNoN, g, fsP.xi, fsP.N, fsP.Nx);
+    }
+  }
+
+  Array<double> result(nsd, lFa.nNo);
+
+  std::unordered_map<int, int> global_to_face;
+  global_to_face.reserve(lFa.nNo);
+  for (int a = 0; a < lFa.nNo; a++) {
+    global_to_face[lFa.gN(a)] = a;
+  }
+
+  Array<double> xl(nsd, eNoN);
+  Array<double> ul(nsd, eNoN);
+  Vector<double> pl(fsP.eNoN);
+  Array<double> Nx(nsd, eNoN);
+  Array<double> ks(nsd, nsd);
+
+  for (int e = 0; e < lFa.nEl; e++) {
+    int Ec = lFa.gE(e);
+    int cEq = com_mod.cEq;
+    int cDmn = all_fun::domain(com_mod, lM, cEq, Ec);
+    if (cDmn == -1) continue;
+
+    for (int a = 0; a < eNoN; a++) {
+      int Ac = lM.IEN(a, Ec);
+      for (int i = 0; i < nsd; i++) {
+        xl(i, a) = com_mod.x(i, Ac);
+        ul(i, a) = Yg(i, Ac);
+      }
+    }
+    for (int a = 0; a < fsP.eNoN; a++) {
+      int Ac = lM.IEN(a, Ec);
+      pl(a) = Yg(nsd, Ac);
+    }
+
+    Array<double> sigma_avg(nsd, nsd);
+    double Jac_vol;
+
+    for (int g = 0; g < lM.nG; g++) {
+      if (g == 0 || !lM.lShpF) {
+        auto lM_Nx = lM.Nx.slice(g);
+        nn::gnn(eNoN, nsd, nsd, lM_Nx, xl, Nx, Jac_vol, ks);
+      }
+
+      Array<double> ux(nsd, nsd);
+      for (int a = 0; a < eNoN; a++)
+        for (int i = 0; i < nsd; i++)
+          for (int j = 0; j < nsd; j++)
+            ux(i, j) += Nx(i, a) * ul(j, a);
+
+      double p = 0.0;
+      for (int a = 0; a < fsP.eNoN; a++)
+        p += fsP.N(a, g) * pl(a);
+
+      double gam = 0.0;
+      for (int i = 0; i < nsd; i++)
+        for (int j = 0; j < nsd; j++)
+          gam += (ux(i, j) + ux(j, i)) * (ux(i, j) + ux(j, i));
+      gam = sqrt(0.5 * gam);
+
+      double mu, mu_s;
+      fluid::get_viscosity(com_mod, eq.dmn[cDmn], gam, mu, mu_s, mu_s);
+
+      for (int i = 0; i < nsd; i++)
+        for (int j = 0; j < nsd; j++)
+          sigma_avg(i, j) += (-p * (i == j ? 1.0 : 0.0)
+                             + mu * (ux(i, j) + ux(j, i)))
+                             / static_cast<double>(lM.nG);
+    }
+
+    for (int gf = 0; gf < lFa.nG; gf++) {
+      Vector<double> nV(nsd);
+      auto face_Nx = lFa.Nx.slice(gf);
+      nn::gnnb(com_mod, lFa, e, gf, nsd, nsd - 1, lFa.eNoN, face_Nx, nV,
+               solutions, consts::MechanicalConfigurationType::reference);
+      double Jac_face = sqrt(utils::norm(nV));
+      double w = lFa.w(gf) * Jac_face;
+      for (int i = 0; i < nsd; i++) nV(i) /= Jac_face;
+
+      Vector<double> trac(nsd);
+      for (int i = 0; i < nsd; i++)
+        for (int j = 0; j < nsd; j++)
+          trac(i) += sigma_avg(i, j) * nV(j);
+
+      auto N = lFa.N.col(gf);
+      for (int a = 0; a < lFa.eNoN; a++) {
+        int Ac = lFa.IEN(a, e);
+        int a_local = global_to_face[Ac];
+        for (int i = 0; i < nsd; i++)
+          result(i, a_local) -= w * N(a) * trac(i);
+      }
+    }
+  }
+
+  // MPI communication
+  Array<double> gResult(nsd, com_mod.tnNo);
+  for (int a = 0; a < lFa.nNo; a++) {
+    int Ac = lFa.gN(a);
+    for (int i = 0; i < nsd; i++)
+      gResult(i, Ac) = result(i, a);
+  }
+  all_fun::commu(com_mod, gResult);
+  for (int a = 0; a < lFa.nNo; a++) {
+    int Ac = lFa.gN(a);
+    for (int i = 0; i < nsd; i++)
+      result(i, a) = gResult(i, Ac);
+  }
+
+  return result;
 }
 
 };

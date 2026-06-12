@@ -45,9 +45,12 @@ void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const S
   auto& pSa = com_mod.pSa;
   bool pstEq = com_mod.pstEq;
 
-  // Start and end DOF
-  int is = nsd + 1;
-  int ie = 2*nsd;
+  // Start and end DOF for mesh equation in the global solution arrays.
+  // Use eq.s (DOF offset) instead of hardcoded nsd+1, so this works both
+  // in monolithic FSI (where mesh is the 3rd equation) and in partitioned
+  // FSI (where mesh is the only equation with eq.s=0).
+  int is = eq.s;
+  int ie = eq.s + nsd - 1;
   int eNoN = lM.eNoN;
   #ifdef debug_construct_mesh
   dmsg << "cEq: " << cEq;

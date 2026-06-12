@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svMultiPhysicsFile version="0.1">
+
+<!-- Standalone fluid solve on the lumen mesh with no-slip wall -->
+
+<GeneralSimulationParameters>
+  <Continue_previous_simulation> 0 </Continue_previous_simulation>
+  <Number_of_spatial_dimensions> 3 </Number_of_spatial_dimensions>
+  <Number_of_time_steps> 5 </Number_of_time_steps>
+  <Time_step_size> 1e-4 </Time_step_size>
+  <Spectral_radius_of_infinite_time_step> 0.50 </Spectral_radius_of_infinite_time_step>
+  <Save_results_to_VTK_format> true </Save_results_to_VTK_format>
+  <Name_prefix_of_saved_VTK_files> result_fluid </Name_prefix_of_saved_VTK_files>
+  <Increment_in_saving_VTK_files> 5 </Increment_in_saving_VTK_files>
+  <Start_saving_after_time_step> 1 </Start_saving_after_time_step>
+  <Increment_in_saving_restart_files> 5 </Increment_in_saving_restart_files>
+  <Verbose> 1 </Verbose>
+  <Warning> 0 </Warning>
+  <Debug> 0 </Debug>
+</GeneralSimulationParameters>
+
+<Add_mesh name="lumen" >
+  <Mesh_file_path> mesh/fluid/mesh-complete.mesh.vtu </Mesh_file_path>
+  <Add_face name="lumen_inlet">
+      <Face_file_path> mesh/fluid/mesh-surfaces/start.vtp </Face_file_path>
+  </Add_face>
+  <Add_face name="lumen_outlet">
+      <Face_file_path> mesh/fluid/mesh-surfaces/end.vtp </Face_file_path>
+  </Add_face>
+  <Add_face name="lumen_wall">
+      <Face_file_path> mesh/fluid/mesh-surfaces/interface.vtp </Face_file_path>
+  </Add_face>
+  <Domain> 0 </Domain>
+</Add_mesh>
+
+<Add_equation type="fluid" >
+   <Coupled> false </Coupled>
+   <Min_iterations> 1 </Min_iterations>
+   <Max_iterations> 10 </Max_iterations>
+   <Tolerance> 1e-6 </Tolerance>
+
+   <Domain id="0" >
+      <Equation> fluid </Equation>
+      <Density> 1.0 </Density>
+      <Viscosity model="Constant" >
+         <Value> 0.04 </Value>
+      </Viscosity>
+      <Backflow_stabilization_coefficient> 0.2 </Backflow_stabilization_coefficient>
+   </Domain>
+
+   <LS type="GMRES" >
+      <Linear_algebra type="fsils" >
+         <Preconditioner> fsils </Preconditioner>
+      </Linear_algebra>
+      <Tolerance> 1e-14 </Tolerance>
+      <Max_iterations> 200 </Max_iterations>
+      <Krylov_space_dimension> 100 </Krylov_space_dimension>
+   </LS>
+
+   <Output type="Spatial" >
+     <Velocity> true </Velocity>
+     <Pressure> true </Pressure>
+   </Output>
+
+   <Add_BC name="lumen_inlet" >
+      <Type> Neu </Type>
+      <Value> 5.0e4 </Value>
+   </Add_BC>
+
+   <Add_BC name="lumen_wall" >
+      <Type> Dir </Type>
+      <Value> 0.0 </Value>
+   </Add_BC>
+
+</Add_equation>
+
+</svMultiPhysicsFile>

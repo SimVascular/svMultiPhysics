@@ -1816,12 +1816,18 @@ void read_files(Simulation* simulation, const std::string& file_name)
       }
     }     
 
-    if (eq.phys == EquationType::phys_mesh) {   
-      if (!com_mod.mvMsh) {
-        throw std::runtime_error("mesh equation can only be specified after FSI equation");
+    if (eq.phys == EquationType::phys_mesh) {
+      // For partitioned FSI, mvMsh is set when Partitioned_coupling is configured
+      if (!com_mod.mvMsh && simulation->parameters.partitioned_coupling_parameters.defined()) {
+        com_mod.mvMsh = true;
       }
-      // Use the explicit geometry coupling flag of the FSI equation.
-      eq.expl_geom_cpl = com_mod.eq[0].expl_geom_cpl; 
+      if (!com_mod.mvMsh) {
+        throw std::runtime_error("mesh equation can only be specified after FSI or with Partitioned_coupling");
+      }
+      if (com_mod.nEq > 0 && com_mod.eq[0].phys == EquationType::phys_FSI) {
+        // Use the explicit geometry coupling flag of the FSI equation.
+        eq.expl_geom_cpl = com_mod.eq[0].expl_geom_cpl;
+      }
     }     
   }
   #ifdef debug_read_files

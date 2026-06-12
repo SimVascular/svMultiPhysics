@@ -45,6 +45,13 @@ void set_bc_undef_neu(ComMod& com_mod);
 
 void set_bc_undef_neu_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa);
 
+/// @brief Enforce Dirichlet BC at all DOFs of face nodes in assembled system.
+void enforce_dirichlet_on_face(ComMod& com_mod, const faceType& lFa, int nsd);
+
+/// @brief Enforce Dirichlet BC for DOFs [dof_start, dof_start+num_dofs) at face nodes.
+void enforce_dirichlet_dofs_on_face(ComMod& com_mod, const faceType& lFa,
+                                    int dof_start, int num_dofs);
+
 };
 
 #endif

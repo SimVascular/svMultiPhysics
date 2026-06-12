@@ -33,6 +33,8 @@ class SimulationLogger {
 
     bool is_initialized() const { return log_file_.is_open(); }
 
+    void set_cout_write(bool v) const { cout_write_ = v; }
+
     ~SimulationLogger() 
     {
       log_file_.close();

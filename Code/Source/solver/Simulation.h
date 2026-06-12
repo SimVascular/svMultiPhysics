@@ -13,8 +13,11 @@
 #include <string>
 #include <memory>
 
-// Forward declaration
+// Forward declarations
 class Integrator;
+class PartitionedFSI;
+
+void add_eq_linear_algebra(ComMod& com_mod, eqType& lEq);
 
 class Simulation {
 
@@ -28,6 +31,8 @@ class Simulation {
     ChnlMod& get_chnl_mod() { return chnl_mod; };
     ComMod& get_com_mod() { return com_mod; };
     Integrator& get_integrator();
+    PartitionedFSI* get_partitioned_fsi();
+    void initialize_partitioned_fsi(const std::string& xml_file_path);
 
     // Initialize the Integrator object after simulation setup is complete
     // Takes ownership of solution states via move semantics
@@ -75,6 +80,9 @@ class Simulation {
   private:
     // Time integrator for Newton iteration loop
     std::unique_ptr<Integrator> integrator_;
+
+    // Partitioned FSI coupling (null if not configured)
+    std::unique_ptr<PartitionedFSI> partitioned_fsi_;
 };
 
 #endif
