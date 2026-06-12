@@ -1185,6 +1185,8 @@ void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm) {
     cm.bcast(cm_mod, &uris[iUris].resistance);
     cm.bcast(cm_mod, &uris[iUris].clsFlg);
     cm.bcast(cm_mod, &uris[iUris].invert_normal);
+    cm.bcast(cm_mod, &uris[iUris].sdf_computed);
+    cm.bcast(cm_mod, &uris[iUris].include_uris_velocity);
     cm.bcast(cm_mod, &uris[iUris].cnt);
     cm.bcast(cm_mod, &uris[iUris].scF);
     cm.bcast(cm_mod, uris[iUris].nrm);
@@ -1306,8 +1308,8 @@ void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm) {
   int n;
   if (cm.mas(cm_mod)) {
     for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
-      OpenN(iUris) = uris[iUris].DxOpen.nrows();
-      CloseN(iUris) = uris[iUris].DxClose.nrows();
+      OpenN(iUris) = uris[iUris].DxOpen.nslices();
+      CloseN(iUris) = uris[iUris].DxClose.nslices();
       DxOpenFlatSize(iUris) = uris[iUris].DxOpen.size();
       DxCloseFlatSize(iUris) = uris[iUris].DxClose.size();
       DxOpenFlat[iUris].resize(DxOpenFlatSize(iUris));
@@ -1340,12 +1342,16 @@ void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm) {
 
   if (cm.slv(cm_mod)) {
     for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
-      uris[iUris].DxOpen.resize(OpenN(iUris), com_mod.nsd, uris[iUris].tnNo);
-      uris[iUris].DxClose.resize(CloseN(iUris), com_mod.nsd, uris[iUris].tnNo);
+      uris[iUris].DxOpen.resize(com_mod.nsd, uris[iUris].tnNo, OpenN(iUris));
+      uris[iUris].DxClose.resize(com_mod.nsd, uris[iUris].tnNo, CloseN(iUris));
       uris[iUris].x.resize(com_mod.nsd, uris[iUris].tnNo);
       uris[iUris].Yd.resize(com_mod.nsd, uris[iUris].tnNo);
       DxOpenFlat[iUris].resize(DxOpenFlatSize(iUris));
       DxCloseFlat[iUris].resize(DxCloseFlatSize(iUris));
+      if (uris[iUris].include_uris_velocity) {
+        uris[iUris].x_prev.resize(com_mod.nsd, uris[iUris].tnNo);
+        uris[iUris].valve_velocity.resize(com_mod.nsd, uris[iUris].tnNo);
+      }
     }
   }
 
@@ -1354,6 +1360,10 @@ void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm) {
     cm.bcast(cm_mod, uris[iUris].Yd);
     cm.bcast(cm_mod, DxOpenFlat[iUris]);
     cm.bcast(cm_mod, DxCloseFlat[iUris]);
+    if (uris[iUris].include_uris_velocity) {
+      cm.bcast(cm_mod, uris[iUris].x_prev);
+      cm.bcast(cm_mod, uris[iUris].valve_velocity);
+    }
   }
 
   if (cm.slv(cm_mod)) {

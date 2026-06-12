@@ -1005,6 +1005,12 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   if (com_mod.urisFlag) {
     nOut = nOut + com_mod.nUris;
     outDof = outDof + com_mod.nUris;
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      if (com_mod.uris[iUris].include_uris_velocity) {
+        nOut = nOut + 1;
+        outDof = outDof + nsd;
+      }
+    }
   }
 
   std::vector<std::string> outNames(nOut); 
@@ -1349,7 +1355,6 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
     if (com_mod.urisFlag) {
       for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
         cOut = cOut + 1;
-        // std::cout << "uris cOut:" << cOut << std::endl;
         int is = outS[cOut];
         int ie = is;
         outS[cOut+1] = ie + 1;
@@ -1359,8 +1364,25 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
           int Ac = msh.gN(a);
           d[iM].x(is,a) = static_cast<double>(com_mod.uris[iUris].sdf(Ac));
         }
-      } 
-    } 
+      }
+
+      for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+        if (com_mod.uris[iUris].include_uris_velocity) {
+          cOut = cOut + 1;
+          int is = outS[cOut];
+          int ie = is + nsd - 1;
+          outS[cOut+1] = ie + 1;
+          outNames[cOut] = "URIS_VEL_" + com_mod.uris[iUris].name;
+          for (int a = 0; a < msh.nNo; a++) {
+            int Ac = msh.gN(a);
+            for (int b = is; b <= ie; b++) {
+              d[iM].x(b,a) = static_cast<double>(com_mod.uris[iUris].valve_velocity_fluid(b-is, Ac));
+            }
+          }
+        }
+      }
+
+    }
 
   } // iM for loop 
 
