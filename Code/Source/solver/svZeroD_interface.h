@@ -17,7 +17,7 @@ void get_coupled_QP(ComMod& com_mod, double QCoupled[], double QnCoupled[], doub
 
 void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], double P[]);
 
-void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod);
+void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
 void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag);
 
