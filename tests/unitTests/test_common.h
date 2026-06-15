@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <random>
+#include <chrono>
 #include "CepMod.h"
 #include "ComMod.h"
 #include "gtest/gtest.h"

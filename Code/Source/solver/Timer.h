@@ -4,7 +4,7 @@
 #ifndef TIMER_H 
 #define TIMER_H 
 
-#include <sys/time.h>
+#include <chrono>
 
 /// @brief Keep track of time
 class Timer 
@@ -18,10 +18,8 @@ class Timer
 
     double get_time() const
     {
-      timeval now{};
-      gettimeofday(&now, nullptr);
-      return static_cast<double>(now.tv_sec) +
-             static_cast<double>(now.tv_usec) * 1.0e-6;
+      const auto now = std::chrono::steady_clock::now();
+      return std::chrono::duration<double>(now.time_since_epoch()).count();
     }
 
     void set_time()
