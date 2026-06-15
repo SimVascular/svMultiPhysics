@@ -1235,7 +1235,7 @@ protected:
   bool value_set = false;
 };
 
-/// @brief Initial conditions parameters for a generic ionic model.
+/// @brief Parameters for a generic ionic model.
 ///
 /// Bundles initial conditions for the model's ionic concentrations and gating
 /// variables, represented by two instances of IonicInitialStateParameters.
