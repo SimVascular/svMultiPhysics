@@ -136,16 +136,11 @@ class cemModelType
     bool cpld = false;
     //bool cpld = .FALSE.
 
-    /// @brief  Whether active stress formulation is employed
-    bool aStress = false;
-    //bool aStress = .FALSE.
-
     /// @brief  Whether active strain formulation is employed
     bool aStrain = false;
     //bool aStrain = .FALSE.
 
     /// @brief  Local variable integrated in time
-    ///    := activation force for active stress model
     ///    := fiber stretch for active strain model
     Vector<double> Ya;
 };

@@ -21,8 +21,8 @@ void cep_init(Simulation* simulation);
 void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionStates& solutions);
 
 void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
-                 Vector<double> &Xg, const double t1, double &yl,
-                 const double I4f, const double dt);
+                 Vector<double> &Xg, const double t1, const double I4f,
+                 const double dt);
 };
 
 #endif
