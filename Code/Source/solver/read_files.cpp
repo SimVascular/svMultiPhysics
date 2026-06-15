@@ -6,6 +6,7 @@
 #include "read_files.h"
 
 #include "FE/Common/FEException.h"
+#include "active_stress.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "fft.h"
@@ -1205,6 +1206,13 @@ void read_cep_equation(CepMod* cep_mod, Simulation* simulation, EquationParamete
   }
 }
 
+/**
+ * @brief Read parameters related to active stress.
+ */
+void read_active_stress(dmnType &lDmn) {
+  lDmn.active_stress = std::make_shared<UniformActiveStress>(4.9875);
+}
+
 //-------------
 // read_domain
 //-------------
@@ -1374,14 +1382,19 @@ void read_domain(Simulation* simulation, EquationParameters* eq_params, eqType& 
      // Read material/constitutive model parameters for nonlinear
      // elastodynamics simulations (both solids and shells)
      //
-     if ( (lEq.dmn[iDmn].phys == EquationType::phys_shell) || 
-          (lEq.dmn[iDmn].phys == EquationType::phys_struct) || 
-          (lEq.dmn[iDmn].phys == EquationType::phys_ustruct)) { 
-        read_mat_model(simulation, eq_params, domain_params, lEq.dmn[iDmn]);
-        if (utils::is_zero(lEq.dmn[iDmn].stM.Kpen) && lEq.dmn[iDmn].phys == EquationType::phys_struct) { 
-          //err = "Incompressible struct is not allowed. Use "//  "penalty method or ustruct"
-          throw std::runtime_error("An incompressible material model is not allowed for 'struct' physics; use penalty method or ustruct."); 
-        }
+     if ((lEq.dmn[iDmn].phys == EquationType::phys_shell) ||
+         (lEq.dmn[iDmn].phys == EquationType::phys_struct) ||
+         (lEq.dmn[iDmn].phys == EquationType::phys_ustruct)) {
+       read_active_stress(lEq.dmn[iDmn]);
+       read_mat_model(simulation, eq_params, domain_params, lEq.dmn[iDmn]);
+       if (utils::is_zero(lEq.dmn[iDmn].stM.Kpen) &&
+           lEq.dmn[iDmn].phys == EquationType::phys_struct) {
+         // err = "Incompressible struct is not allowed. Use "//  "penalty
+         // method or ustruct"
+         throw std::runtime_error(
+             "An incompressible material model is not allowed for 'struct' "
+             "physics; use penalty method or ustruct.");
+       }
      }
 
      // Set parameters for a fluid viscosity model.
@@ -1860,9 +1873,8 @@ void read_files(Simulation* simulation, const std::string& file_name)
       throw std::runtime_error("Both electrophysiology and struct have to be solved for electro-mechanics");
     }
 
-    if (cep_mod.cem.aStress &&  cep_mod.cem.aStrain) {
-      throw std::runtime_error("Cannot set both active strain and active stress coupling");
-    }
+    // @todo[michelebucelli] Restore check that active strain and active stress
+    // are not activated at the same time.
 
     if (cep_mod.cem.aStrain) {
       if (com_mod.nsd != 3) {

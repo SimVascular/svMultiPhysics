@@ -289,8 +289,8 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         }
       }
 
-      if (cem.cpld) {
-        ya_l(a) = cem.Ya(Ac);
+      if (eq.dmn[cDmn].active_stress != nullptr) {
+        ya_l(a) = (*eq.dmn[cDmn].active_stress)(Ac);
       }
     }
 

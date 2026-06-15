@@ -7,20 +7,21 @@
 // All of the data structures used for the mesh, boundarsy conditions and solver parameters, etc. 
 // are defined here.
 
-#ifndef COMMOD_H 
-#define COMMOD_H 
+#ifndef COMMOD_H
+#define COMMOD_H
 
 #include "Array.h"
 #include "Array3.h"
-#include "SolutionStates.h"
 #include "CepMod.h"
 #include "ChnlMod.h"
 #include "CmMod.h"
+#include "CoupledBoundaryCondition.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
-#include "CoupledBoundaryCondition.h"
+#include "SolutionStates.h"
 #include "Timer.h"
 #include "Vector.h"
+#include "active_stress.h"
 
 #include "DebugMsg.h"
 
@@ -453,6 +454,9 @@ class dmnType
 
     // Electrophysiology model
     cepModelType cep;
+
+    /// Active stress model.
+    std::shared_ptr<ActiveStress> active_stress;
 
     // Structure material model
     stModelType stM;

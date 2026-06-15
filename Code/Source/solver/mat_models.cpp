@@ -399,9 +399,7 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
   }
 
   // Electromechanics coupling - active stress
-  if (cep_mod.cem.aStress) {
-    Tfa = Tfa + ya;
-  }
+  Tfa = Tfa + ya;
 
   // Electromechanics coupling - active strain
   Matrix<nsd> Fe  = F;

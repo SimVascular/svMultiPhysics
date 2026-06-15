@@ -686,6 +686,15 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     }
   }
 
+  // Setup the initial conditions for the active stress models.
+  for (auto &eq : com_mod.eq) {
+    for (auto &dmn : eq.dmn) {
+      if (dmn.active_stress != nullptr) {
+        dmn.active_stress->init(tnNo);
+      }
+    }
+  }
+
   // Setup data for remeshing.
   //
   auto& rmsh = com_mod.rmsh;

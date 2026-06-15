@@ -484,6 +484,13 @@ void Integrator::predictor()
       cep_ion::cep_integ(simulation_, iEq, e, solutions_);
     }
 
+    // active stress
+    for (auto &dmn : eq.dmn) {
+      if (dmn.active_stress != nullptr) {
+        dmn.active_stress->advance_time_step(com_mod.time, com_mod.dt);
+      }
+    }
+
     // eqn 86 of Bazilevs 2007
     Yn.set_rows(s,e, Yo.rows(s,e));
 

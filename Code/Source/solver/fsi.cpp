@@ -126,8 +126,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         pS0l.set_col(a, pS0.col(Ac));
       }
 
-      if (cem.cpld) {
-        ya_l(a) = cem.Ya(Ac);
+      if (eq.dmn[cDmn].active_stress != nullptr) {
+        ya_l(a) = (*eq.dmn[cDmn].active_stress)(Ac);
       }
     }
 
