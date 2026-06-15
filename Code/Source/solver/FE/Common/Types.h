@@ -58,17 +58,6 @@ enum class CellFamily {
 #include <type_traits>
 #include <limits>
 
-#if defined(_MSC_VER)
-/// Portable restrict qualifier for aliasing-free pointer parameters.
-#  define SVMP_RESTRICT __restrict
-#elif defined(__clang__) || defined(__GNUC__)
-/// Portable restrict qualifier for aliasing-free pointer parameters.
-#  define SVMP_RESTRICT __restrict__
-#else
-/// Portable restrict qualifier for aliasing-free pointer parameters.
-#  define SVMP_RESTRICT
-#endif
-
 /// \defgroup FE_Common Common
 /// \ingroup FE
 /// \brief Shared vocabulary types, constants, and exception infrastructure used by every FE module.

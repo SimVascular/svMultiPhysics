@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <array>
+#include <span>
 #include <tuple>
 #include <vector>
 
@@ -116,27 +117,27 @@ void expect_partition_gradient_hessian_sums(const LagrangeBasis& basis,
     }
 }
 
-void expect_raw_sinks_match_vector_evaluation(const LagrangeBasis& basis,
-                                              const Point& xi)
+void expect_span_sinks_match_vector_evaluation(const LagrangeBasis& basis,
+                                               const Point& xi)
 {
     std::vector<Real> values;
     std::vector<Gradient> gradients;
     std::vector<Hessian> hessians;
     basis.evaluate_all(xi, values, gradients, hessians);
 
-    std::vector<Real> flat_values(basis.size());
-    std::vector<Real> flat_gradients(basis.size() * 3u);
-    std::vector<Real> flat_hessians(basis.size() * 9u);
-    basis.evaluate_values_to(xi, flat_values.data());
-    basis.evaluate_gradients_to(xi, flat_gradients.data());
-    basis.evaluate_hessians_to(xi, flat_hessians.data());
+    std::vector<Real> span_values(basis.size());
+    std::vector<Gradient> span_gradients(basis.size());
+    std::vector<Hessian> span_hessians(basis.size());
+    basis.evaluate_values_to(xi, span_values);
+    basis.evaluate_gradients_to(xi, span_gradients);
+    basis.evaluate_hessians_to(xi, span_hessians);
 
     for (std::size_t i = 0; i < basis.size(); ++i) {
-        EXPECT_NEAR(flat_values[i], values[i], Real(1e-14));
+        EXPECT_NEAR(span_values[i], values[i], Real(1e-14));
         for (std::size_t d = 0; d < 3u; ++d) {
-            EXPECT_NEAR(flat_gradients[i * 3u + d], gradients[i][d], Real(1e-14));
+            EXPECT_NEAR(span_gradients[i][d], gradients[i][d], Real(1e-14));
             for (std::size_t e = 0; e < 3u; ++e) {
-                EXPECT_NEAR(flat_hessians[i * 9u + d * 3u + e],
+                EXPECT_NEAR(span_hessians[i](d, e),
                             hessians[i](d, e),
                             Real(1e-14));
             }
@@ -251,10 +252,10 @@ TEST(LagrangeBasis, CanonicalTopologiesAreNodalAndPartitionUnity) {
     }
 }
 
-TEST(LagrangeBasis, RawOutputSinksMatchVectorEvaluationAcrossTopologies) {
+TEST(LagrangeBasis, SpanOutputSinksMatchVectorEvaluationAcrossTopologies) {
     for (const auto& c : canonical_cases()) {
         LagrangeBasis basis(c.type, c.order);
-        expect_raw_sinks_match_vector_evaluation(basis, c.points.front());
+        expect_span_sinks_match_vector_evaluation(basis, c.points.front());
     }
 }
 
@@ -461,19 +462,26 @@ TEST(LagrangeBasis, PointTopologyEvaluatesConstantUnity) {
         }
     }
 
-    Real flat_value = Real(-1);
-    Real flat_gradient[3] = {Real(-1), Real(-1), Real(-1)};
-    Real flat_hessian[9];
-    std::fill_n(flat_hessian, 9u, Real(-1));
-    basis.evaluate_values_to(xi, &flat_value);
-    basis.evaluate_gradients_to(xi, flat_gradient);
-    basis.evaluate_hessians_to(xi, flat_hessian);
-    EXPECT_EQ(flat_value, Real(1));
+    Real span_value = Real(-1);
+    Gradient span_gradient;
+    span_gradient[0] = span_gradient[1] = span_gradient[2] = Real(-1);
+    Hessian span_hessian;
     for (std::size_t d = 0; d < 3u; ++d) {
-        EXPECT_EQ(flat_gradient[d], Real(0));
+        for (std::size_t e = 0; e < 3u; ++e) {
+            span_hessian(d, e) = Real(-1);
+        }
     }
-    for (std::size_t e = 0; e < 9u; ++e) {
-        EXPECT_EQ(flat_hessian[e], Real(0));
+    basis.evaluate_values_to(xi, std::span<Real>(&span_value, 1u));
+    basis.evaluate_gradients_to(xi, std::span<Gradient>(&span_gradient, 1u));
+    basis.evaluate_hessians_to(xi, std::span<Hessian>(&span_hessian, 1u));
+    EXPECT_EQ(span_value, Real(1));
+    for (std::size_t d = 0; d < 3u; ++d) {
+        EXPECT_EQ(span_gradient[d], Real(0));
+    }
+    for (std::size_t d = 0; d < 3u; ++d) {
+        for (std::size_t e = 0; e < 3u; ++e) {
+            EXPECT_EQ(span_hessian(d, e), Real(0));
+        }
     }
 }
 

@@ -255,29 +255,29 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
     }
 }
 
-TEST(BasisErrorPaths, BasisFunctionFallbackWritesRawLayouts) {
+TEST(BasisErrorPaths, BasisFunctionFallbackWritesSpanOutputs) {
     CompleteFallbackBasis basis;
     const math::Vector<Real, 3> point{Real(0.25), Real(0.5), Real(-0.25)};
 
-    std::vector<Real> flat_values(basis.size());
-    std::vector<Real> flat_gradients(basis.size() * 3u);
-    std::vector<Real> flat_hessians(basis.size() * 9u);
-    basis.evaluate_values_to(point, flat_values.data());
-    basis.evaluate_gradients_to(point, flat_gradients.data());
-    basis.evaluate_hessians_to(point, flat_hessians.data());
+    std::vector<Real> span_values(basis.size());
+    std::vector<Gradient> span_gradients(basis.size());
+    std::vector<Hessian> span_hessians(basis.size());
+    basis.evaluate_values_to(point, span_values);
+    basis.evaluate_gradients_to(point, span_gradients);
+    basis.evaluate_hessians_to(point, span_hessians);
 
     std::vector<Real> expected_values;
     std::vector<Gradient> expected_gradients;
     std::vector<Hessian> expected_hessians;
     basis.evaluate_all(point, expected_values, expected_gradients, expected_hessians);
     for (std::size_t d = 0; d < basis.size(); ++d) {
-        EXPECT_EQ(flat_values[d], expected_values[d]);
+        EXPECT_EQ(span_values[d], expected_values[d]);
         for (std::size_t c = 0; c < 3u; ++c) {
-            EXPECT_EQ(flat_gradients[d * 3u + c], expected_gradients[d][c]);
+            EXPECT_EQ(span_gradients[d][c], expected_gradients[d][c]);
         }
         for (std::size_t r = 0; r < 3u; ++r) {
             for (std::size_t c = 0; c < 3u; ++c) {
-                EXPECT_EQ(flat_hessians[d * 9u + r * 3u + c], expected_hessians[d](r, c));
+                EXPECT_EQ(span_hessians[d](r, c), expected_hessians[d](r, c));
             }
         }
     }

@@ -8,6 +8,8 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <span>
+#include <string>
 
 namespace svmp {
 namespace FE {
@@ -284,6 +286,22 @@ void evaluate_simplex(const Vec3& xi,
     }
 }
 
+void require_output_span_size(std::size_t actual,
+                              std::size_t expected,
+                              const char* label) {
+    FE::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
+        std::string(label) + ": output span is smaller than basis size");
+}
+
+template<typename T>
+void require_requested_span_size(std::span<T> output,
+                                 std::size_t expected,
+                                 const char* label) {
+    if (!output.empty()) {
+        require_output_span_size(output.size(), expected, label);
+    }
+}
+
 } // namespace
 
 LagrangeBasis::LagrangeBasis(ElementType type, int order)
@@ -398,25 +416,25 @@ void LagrangeBasis::build_wedge_nodes() {
 }
 
 // Evaluate the constant point basis.
-void LagrangeBasis::evaluate_point_to(Real* SVMP_RESTRICT values_out,
-                                      Real* SVMP_RESTRICT gradients_out,
-                                      Real* SVMP_RESTRICT hessians_out) const {
-    if (values_out) {
+void LagrangeBasis::evaluate_point_to(std::span<Real> values_out,
+                                      std::span<Gradient> gradients_out,
+                                      std::span<Hessian> hessians_out) const {
+    if (!values_out.empty()) {
         values_out[0] = Real(1);
     }
-    if (gradients_out) {
-        gradients_out[0] = gradients_out[1] = gradients_out[2] = Real(0);
+    if (!gradients_out.empty()) {
+        gradients_out[0] = Gradient::Zero();
     }
-    if (hessians_out) {
-        std::fill_n(hessians_out, 9u, Real(0));
+    if (!hessians_out.empty()) {
+        hessians_out[0] = Hessian::Zero();
     }
 }
 
 // Evaluate line, quadrilateral, and hexahedron bases as axis-polynomial products.
 void LagrangeBasis::evaluate_tensor_product_to(const Vec3& xi,
-                                               Real* SVMP_RESTRICT values_out,
-                                               Real* SVMP_RESTRICT gradients_out,
-                                               Real* SVMP_RESTRICT hessians_out) const {
+                                               std::span<Real> values_out,
+                                               std::span<Gradient> gradients_out,
+                                               std::span<Hessian> hessians_out) const {
     AxisEval ax;
     AxisEval ay;
     AxisEval az;
@@ -440,55 +458,55 @@ void LagrangeBasis::evaluate_tensor_product_to(const Vec3& xi,
         const Real dz = dimension_ >= 3 ? az.first[idx[2]] : Real(0);
         const Real d2z = dimension_ >= 3 ? az.second[idx[2]] : Real(0);
 
-        if (values_out) {
+        if (!values_out.empty()) {
             values_out[node] = vx * vy * vz;
         }
-        if (gradients_out) {
-            Real* g = gradients_out + node * 3u;
+        if (!gradients_out.empty()) {
+            Gradient& g = gradients_out[node];
             g[0] = dx * vy * vz;
             g[1] = vx * dy * vz;
             g[2] = vx * vy * dz;
         }
-        if (hessians_out) {
-            Real* h = hessians_out + node * 9u;
-            h[0] = d2x * vy * vz;
-            h[1] = dx * dy * vz;
-            h[2] = dx * vy * dz;
-            h[3] = h[1];
-            h[4] = vx * d2y * vz;
-            h[5] = vx * dy * dz;
-            h[6] = h[2];
-            h[7] = h[5];
-            h[8] = vx * vy * d2z;
+        if (!hessians_out.empty()) {
+            Hessian& h = hessians_out[node];
+            h(0, 0) = d2x * vy * vz;
+            h(0, 1) = dx * dy * vz;
+            h(0, 2) = dx * vy * dz;
+            h(1, 0) = h(0, 1);
+            h(1, 1) = vx * d2y * vz;
+            h(1, 2) = vx * dy * dz;
+            h(2, 0) = h(0, 2);
+            h(2, 1) = h(1, 2);
+            h(2, 2) = vx * vy * d2z;
         }
     }
 }
 
 // Evaluate triangle and tetrahedron bases from barycentric factors.
 void LagrangeBasis::evaluate_simplex_to(const Vec3& xi,
-                                        Real* SVMP_RESTRICT values_out,
-                                        Real* SVMP_RESTRICT gradients_out,
-                                        Real* SVMP_RESTRICT hessians_out) const {
+                                        std::span<Real> values_out,
+                                        std::span<Gradient> gradients_out,
+                                        std::span<Hessian> hessians_out) const {
     SimplexEval simplex;
     evaluate_simplex(xi, topology_, order_, simplex_exponents_, simplex);
     for (std::size_t i = 0; i < simplex.value.size(); ++i) {
-        if (values_out) {
+        if (!values_out.empty()) {
             values_out[i] = simplex.value[i];
         }
-        if (gradients_out) {
-            store_gradient(simplex.gradient[i], gradients_out + i * 3u);
+        if (!gradients_out.empty()) {
+            gradients_out[i] = simplex.gradient[i];
         }
-        if (hessians_out) {
-            store_hessian(simplex.hessian[i], hessians_out + i * 9u);
+        if (!hessians_out.empty()) {
+            hessians_out[i] = simplex.hessian[i];
         }
     }
 }
 
 // Evaluate wedge bases as triangle/through-axis products.
 void LagrangeBasis::evaluate_wedge_to(const Vec3& xi,
-                                      Real* SVMP_RESTRICT values_out,
-                                      Real* SVMP_RESTRICT gradients_out,
-                                      Real* SVMP_RESTRICT hessians_out) const {
+                                      std::span<Real> values_out,
+                                      std::span<Gradient> gradients_out,
+                                      std::span<Hessian> hessians_out) const {
     SimplexEval tri;
     AxisEval z_axis;
     evaluate_simplex(xi, BasisTopology::Triangle, order_, simplex_exponents_, tri);
@@ -501,37 +519,45 @@ void LagrangeBasis::evaluate_wedge_to(const Vec3& xi,
         const Real dz = z_axis.first[z_idx];
         const Real d2z = z_axis.second[z_idx];
 
-        if (values_out) {
+        if (!values_out.empty()) {
             values_out[node] = tv * zv;
         }
-        if (gradients_out) {
-            Real* g = gradients_out + node * 3u;
+        if (!gradients_out.empty()) {
+            Gradient& g = gradients_out[node];
             g[0] = tri.gradient[tri_idx][0] * zv;
             g[1] = tri.gradient[tri_idx][1] * zv;
             g[2] = tv * dz;
         }
-        if (hessians_out) {
-            Real* h = hessians_out + node * 9u;
+        if (!hessians_out.empty()) {
+            Hessian& h = hessians_out[node];
             const Hessian& th = tri.hessian[tri_idx];
             const Gradient& tg = tri.gradient[tri_idx];
-            h[0] = th(0, 0) * zv;
-            h[1] = th(0, 1) * zv;
-            h[2] = tg[0] * dz;
-            h[3] = h[1];
-            h[4] = th(1, 1) * zv;
-            h[5] = tg[1] * dz;
-            h[6] = h[2];
-            h[7] = h[5];
-            h[8] = tv * d2z;
+            h(0, 0) = th(0, 0) * zv;
+            h(0, 1) = th(0, 1) * zv;
+            h(0, 2) = tg[0] * dz;
+            h(1, 0) = h(0, 1);
+            h(1, 1) = th(1, 1) * zv;
+            h(1, 2) = tg[1] * dz;
+            h(2, 0) = h(0, 2);
+            h(2, 1) = h(1, 2);
+            h(2, 2) = tv * d2z;
         }
     }
 }
 
-// Evaluate requested basis quantities into caller-provided flat buffers.
+// Evaluate requested basis quantities into caller-provided spans.
 void LagrangeBasis::evaluate_all_to(const Vec3& xi,
-                                    Real* SVMP_RESTRICT values_out,
-                                    Real* SVMP_RESTRICT gradients_out,
-                                    Real* SVMP_RESTRICT hessians_out) const {
+                                    std::span<Real> values_out,
+                                    std::span<Gradient> gradients_out,
+                                    std::span<Hessian> hessians_out) const {
+    require_requested_span_size(values_out, size(), "LagrangeBasis::evaluate_all_to values");
+    require_requested_span_size(gradients_out, size(), "LagrangeBasis::evaluate_all_to gradients");
+    require_requested_span_size(hessians_out, size(), "LagrangeBasis::evaluate_all_to hessians");
+
+    if (values_out.empty() && gradients_out.empty() && hessians_out.empty()) {
+        return;
+    }
+
     switch (topology_) {
         case BasisTopology::Point:
             evaluate_point_to(values_out, gradients_out, hessians_out);
@@ -559,27 +585,19 @@ void LagrangeBasis::evaluate_all_to(const Vec3& xi,
 void LagrangeBasis::evaluate_values(const Vec3& xi,
                                     std::vector<Real>& values) const {
     values.resize(size());
-    evaluate_values_to(xi, values.data());
+    evaluate_values_to(xi, std::span<Real>(values.data(), values.size()));
 }
 
 void LagrangeBasis::evaluate_gradients(const Vec3& xi,
                                        std::vector<Gradient>& gradients) const {
     gradients.resize(size());
-    std::vector<Real> flat(size() * 3u, Real(0));
-    evaluate_gradients_to(xi, flat.data());
-    for (std::size_t i = 0; i < size(); ++i) {
-        gradients[i] = load_gradient(flat.data() + i * 3u);
-    }
+    evaluate_gradients_to(xi, std::span<Gradient>(gradients.data(), gradients.size()));
 }
 
 void LagrangeBasis::evaluate_hessians(const Vec3& xi,
                                       std::vector<Hessian>& hessians) const {
     hessians.resize(size());
-    std::vector<Real> flat(size() * 9u, Real(0));
-    evaluate_hessians_to(xi, flat.data());
-    for (std::size_t i = 0; i < size(); ++i) {
-        hessians[i] = load_hessian(flat.data() + i * 9u);
-    }
+    evaluate_hessians_to(xi, std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
 void LagrangeBasis::evaluate_all(const Vec3& xi,
@@ -589,28 +607,28 @@ void LagrangeBasis::evaluate_all(const Vec3& xi,
     values.resize(size());
     gradients.resize(size());
     hessians.resize(size());
-    std::vector<Real> flat_g(size() * 3u, Real(0));
-    std::vector<Real> flat_h(size() * 9u, Real(0));
-    evaluate_all_to(xi, values.data(), flat_g.data(), flat_h.data());
-    for (std::size_t i = 0; i < size(); ++i) {
-        gradients[i] = load_gradient(flat_g.data() + i * 3u);
-        hessians[i] = load_hessian(flat_h.data() + i * 9u);
-    }
+    evaluate_all_to(xi,
+                    std::span<Real>(values.data(), values.size()),
+                    std::span<Gradient>(gradients.data(), gradients.size()),
+                    std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
 void LagrangeBasis::evaluate_values_to(const Vec3& xi,
-                                       Real* SVMP_RESTRICT values_out) const {
-    evaluate_all_to(xi, values_out, nullptr, nullptr);
+                                       std::span<Real> values_out) const {
+    require_output_span_size(values_out.size(), size(), "LagrangeBasis::evaluate_values_to");
+    evaluate_all_to(xi, values_out, std::span<Gradient>{}, std::span<Hessian>{});
 }
 
 void LagrangeBasis::evaluate_gradients_to(const Vec3& xi,
-                                          Real* SVMP_RESTRICT gradients_out) const {
-    evaluate_all_to(xi, nullptr, gradients_out, nullptr);
+                                          std::span<Gradient> gradients_out) const {
+    require_output_span_size(gradients_out.size(), size(), "LagrangeBasis::evaluate_gradients_to");
+    evaluate_all_to(xi, std::span<Real>{}, gradients_out, std::span<Hessian>{});
 }
 
 void LagrangeBasis::evaluate_hessians_to(const Vec3& xi,
-                                         Real* SVMP_RESTRICT hessians_out) const {
-    evaluate_all_to(xi, nullptr, nullptr, hessians_out);
+                                         std::span<Hessian> hessians_out) const {
+    require_output_span_size(hessians_out.size(), size(), "LagrangeBasis::evaluate_hessians_to");
+    evaluate_all_to(xi, std::span<Real>{}, std::span<Gradient>{}, hessians_out);
 }
 
 } // namespace basis

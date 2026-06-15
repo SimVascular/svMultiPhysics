@@ -4,11 +4,13 @@
 #ifndef SVMP_FE_MATH_DENSETRANSFORMKERNELS_H
 #define SVMP_FE_MATH_DENSETRANSFORMKERNELS_H
 
+#include "FEException.h"
 #include "Types.h"
 
 #include <Eigen/Core>
 
 #include <cstddef>
+#include <span>
 
 namespace svmp {
 namespace FE {
@@ -22,17 +24,30 @@ namespace math {
 /// (row stride output_row_stride). Strides may exceed rhs_count for padded
 /// layouts; padding entries are left untouched.
 inline void dense_transform_batched_row_major(
-    const Real* SVMP_RESTRICT matrix,
+    std::span<const Real> matrix,
     std::size_t rows,
     std::size_t cols,
-    const Real* SVMP_RESTRICT input,
+    std::span<const Real> input,
     std::size_t input_row_stride,
-    Real* SVMP_RESTRICT output,
+    std::span<Real> output,
     std::size_t output_row_stride,
     std::size_t rhs_count) {
     if (rows == 0u || cols == 0u || rhs_count == 0u) {
         return;
     }
+
+    FE::throw_if<FEException>(matrix.size() < rows * cols, SVMP_HERE,
+                              "dense_transform_batched_row_major: matrix span is too small");
+    FE::throw_if<FEException>(input_row_stride < rhs_count, SVMP_HERE,
+                              "dense_transform_batched_row_major: input stride is smaller than RHS count");
+    FE::throw_if<FEException>(output_row_stride < rhs_count, SVMP_HERE,
+                              "dense_transform_batched_row_major: output stride is smaller than RHS count");
+    FE::throw_if<FEException>(
+        input.size() < (cols - 1u) * input_row_stride + rhs_count, SVMP_HERE,
+        "dense_transform_batched_row_major: input span is too small");
+    FE::throw_if<FEException>(
+        output.size() < (rows - 1u) * output_row_stride + rhs_count, SVMP_HERE,
+        "dense_transform_batched_row_major: output span is too small");
 
     using RowMajorMatrix =
         Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
@@ -42,16 +57,16 @@ inline void dense_transform_batched_row_major(
     using StridedMap =
         Eigen::Map<RowMajorMatrix, Eigen::Unaligned, Eigen::OuterStride<>>;
 
-    const ConstMap matrix_map(matrix,
+    const ConstMap matrix_map(matrix.data(),
                               static_cast<Eigen::Index>(rows),
                               static_cast<Eigen::Index>(cols));
     const ConstStridedMap input_map(
-        input,
+        input.data(),
         static_cast<Eigen::Index>(cols),
         static_cast<Eigen::Index>(rhs_count),
         Eigen::OuterStride<>(static_cast<Eigen::Index>(input_row_stride)));
     StridedMap output_map(
-        output,
+        output.data(),
         static_cast<Eigen::Index>(rows),
         static_cast<Eigen::Index>(rhs_count),
         Eigen::OuterStride<>(static_cast<Eigen::Index>(output_row_stride)));

@@ -12,6 +12,7 @@
 #include "BasisFunction.h"
 
 #include <array>
+#include <span>
 
 namespace svmp {
 namespace FE {
@@ -153,7 +154,7 @@ public:
 
     /// \brief Evaluate serendipity values, gradients, and Hessians together.
     ///
-    /// \details This vector API is backed by the same flat-buffer evaluator as
+    /// \details This vector API is backed by the same span-based evaluator as
     /// the assembly-oriented `*_to` methods, so topology-specific polynomial
     /// setup can be shared for a quadrature point.
     ///
@@ -166,23 +167,23 @@ public:
                       std::vector<Gradient>& gradients,
                       std::vector<Hessian>& hessians) const final;
 
-    /// \brief Evaluate serendipity basis values into a flat caller-provided buffer.
+    /// \brief Evaluate serendipity basis values into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param values_out Output buffer with at least size() entries.
+    /// \param values_out Output span with at least size() entries.
     void evaluate_values_to(const math::Vector<Real, 3>& xi,
-                            Real* SVMP_RESTRICT values_out) const final;
+                            std::span<Real> values_out) const final;
 
-    /// \brief Evaluate serendipity basis gradients into a flat caller-provided buffer.
+    /// \brief Evaluate serendipity basis gradients into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param gradients_out Output buffer with node-major layout: node * 3 + component.
+    /// \param gradients_out Output span with at least size() entries.
     void evaluate_gradients_to(const math::Vector<Real, 3>& xi,
-                               Real* SVMP_RESTRICT gradients_out) const final;
+                               std::span<Gradient> gradients_out) const final;
 
-    /// \brief Evaluate serendipity basis Hessians into a flat caller-provided buffer.
+    /// \brief Evaluate serendipity basis Hessians into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param hessians_out Output buffer with node-major row-major layout: node * 9 + row * 3 + col.
+    /// \param hessians_out Output span with at least size() entries.
     void evaluate_hessians_to(const math::Vector<Real, 3>& xi,
-                              Real* SVMP_RESTRICT hessians_out) const final;
+                              std::span<Hessian> hessians_out) const final;
 
 private:
     ElementType element_type_;
@@ -199,9 +200,9 @@ private:
     bool geometry_mode_;
 
     void evaluate_all_to(const math::Vector<Real, 3>& xi,
-                         Real* SVMP_RESTRICT values_out,
-                         Real* SVMP_RESTRICT gradients_out,
-                         Real* SVMP_RESTRICT hessians_out) const;
+                         std::span<Real> values_out,
+                         std::span<Gradient> gradients_out,
+                         std::span<Hessian> hessians_out) const;
 };
 
 /// @}

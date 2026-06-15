@@ -10,6 +10,7 @@
 #include "Types.h"
 
 #include <cstddef>
+#include <span>
 #include <vector>
 
 /// \defgroup FE_Basis Basis
@@ -58,7 +59,7 @@
 /// always 3-by-3 matrices; inactive reference directions are expected to be
 /// zero for conforming lower-dimensional bases. The std::vector overloads are
 /// convenient for setup, tests, and adapter code. The *_to overloads write to
-/// caller-owned flat buffers and are the allocation-free path for assembly.
+/// caller-owned spans and are the allocation-free path for assembly.
 ///
 /// Outputs are in ReferenceNodeLayout basis order, not necessarily the mesh or
 /// solver's native node order. A caller that stores elements in another local
@@ -148,46 +149,6 @@ using Hessian  = math::Matrix<Real, 3, 3>;
     return hessian;
 }
 
-inline void store_gradient(const Gradient& gradient, Real* dst) noexcept {
-    dst[0] = gradient[0];
-    dst[1] = gradient[1];
-    dst[2] = gradient[2];
-}
-
-[[nodiscard]] inline Gradient load_gradient(const Real* src) noexcept {
-    Gradient gradient;
-    gradient[0] = src[0];
-    gradient[1] = src[1];
-    gradient[2] = src[2];
-    return gradient;
-}
-
-inline void store_hessian(const Hessian& hessian, Real* dst) noexcept {
-    dst[0] = hessian(0, 0);
-    dst[1] = hessian(0, 1);
-    dst[2] = hessian(0, 2);
-    dst[3] = hessian(1, 0);
-    dst[4] = hessian(1, 1);
-    dst[5] = hessian(1, 2);
-    dst[6] = hessian(2, 0);
-    dst[7] = hessian(2, 1);
-    dst[8] = hessian(2, 2);
-}
-
-[[nodiscard]] inline Hessian load_hessian(const Real* src) noexcept {
-    Hessian hessian = Hessian::Zero();
-    hessian(0, 0) = src[0];
-    hessian(0, 1) = src[1];
-    hessian(0, 2) = src[2];
-    hessian(1, 0) = src[3];
-    hessian(1, 1) = src[4];
-    hessian(1, 2) = src[5];
-    hessian(2, 0) = src[6];
-    hessian(2, 1) = src[7];
-    hessian(2, 2) = src[8];
-    return hessian;
-}
-
 inline void add_scaled_hessian(Hessian& target,
                                const Hessian& source,
                                Real scale) noexcept {
@@ -204,7 +165,7 @@ inline void add_scaled_hessian(Hessian& target,
 /// BasisFunction defines the common query and evaluation API used by solver
 /// code that does not need to know the concrete basis implementation. Derived
 /// classes provide values at minimum and can override analytical gradients,
-/// Hessians, combined evaluation, and flat-buffer output paths. The interface
+/// Hessians, combined evaluation, and span output paths. The interface
 /// is deliberately limited to reference-space quantities; callers own node
 /// ordering translation, physical mapping, and any field-level discretization
 /// policy.
@@ -263,23 +224,23 @@ public:
                               std::vector<Gradient>& gradients,
                               std::vector<Hessian>& hessians) const;
 
-    /// \brief Evaluate basis values into a flat caller-provided buffer.
+    /// \brief Evaluate basis values into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param values_out Output buffer with at least size() entries.
+    /// \param values_out Output span with at least size() entries.
     virtual void evaluate_values_to(const math::Vector<Real, 3>& xi,
-                                    Real* SVMP_RESTRICT values_out) const;
+                                    std::span<Real> values_out) const;
 
-    /// \brief Evaluate basis gradients into a flat caller-provided buffer.
+    /// \brief Evaluate basis gradients into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param gradients_out Output buffer with node-major layout: node * 3 + component.
+    /// \param gradients_out Output span with at least size() entries.
     virtual void evaluate_gradients_to(const math::Vector<Real, 3>& xi,
-                                       Real* SVMP_RESTRICT gradients_out) const;
+                                       std::span<Gradient> gradients_out) const;
 
-    /// \brief Evaluate basis Hessians into a flat caller-provided buffer.
+    /// \brief Evaluate basis Hessians into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param hessians_out Output buffer with node-major row-major layout: node * 9 + row * 3 + col.
+    /// \param hessians_out Output span with at least size() entries.
     virtual void evaluate_hessians_to(const math::Vector<Real, 3>& xi,
-                                      Real* SVMP_RESTRICT hessians_out) const;
+                                      std::span<Hessian> hessians_out) const;
 
 protected:
     /// \brief Approximate gradients by centered finite differences of values.

@@ -21,9 +21,9 @@ using Vec3 = math::Vector<Real, 3>;
 void evaluate_hex8_reference(Real r,
                              Real s,
                              Real t,
-                             Real* values,
-                             Real* gradients,
-                             Real* hessians) {
+                             std::span<Real> values,
+                             std::span<Gradient> gradients,
+                             std::span<Hessian> hessians) {
     static constexpr int signs[8][3] = {
         {-1, -1, -1},
         { 1, -1, -1},
@@ -43,26 +43,26 @@ void evaluate_hex8_reference(Real r,
         const Real bs = Real(1) + b * s;
         const Real ct = Real(1) + c * t;
 
-        if (values) {
+        if (!values.empty()) {
             values[i] = Real(0.125) * ar * bs * ct;
         }
-        if (gradients) {
-            Real* g = gradients + i * 3u;
+        if (!gradients.empty()) {
+            Gradient& g = gradients[i];
             g[0] = Real(0.125) * a * bs * ct;
             g[1] = Real(0.125) * b * ar * ct;
             g[2] = Real(0.125) * c * ar * bs;
         }
-        if (hessians) {
-            Real* h = hessians + i * 9u;
-            h[0] = Real(0);
-            h[1] = Real(0.125) * a * b * ct;
-            h[2] = Real(0.125) * a * c * bs;
-            h[3] = h[1];
-            h[4] = Real(0);
-            h[5] = Real(0.125) * b * c * ar;
-            h[6] = h[2];
-            h[7] = h[5];
-            h[8] = Real(0);
+        if (!hessians.empty()) {
+            Hessian& h = hessians[i];
+            h(0, 0) = Real(0);
+            h(0, 1) = Real(0.125) * a * b * ct;
+            h(0, 2) = Real(0.125) * a * c * bs;
+            h(1, 0) = h(0, 1);
+            h(1, 1) = Real(0);
+            h(1, 2) = Real(0.125) * b * c * ar;
+            h(2, 0) = h(0, 2);
+            h(2, 1) = h(1, 2);
+            h(2, 2) = Real(0);
         }
     }
 }
@@ -262,7 +262,7 @@ inline std::array<Real, 3> quadratic_powers(Real x) {
     return {Real(1), x, x * x};
 }
 
-void eval_hex20_internal(Real r, Real s, Real t, Real* internal_vals) {
+void eval_hex20_internal(Real r, Real s, Real t, std::span<Real> internal_vals) {
     const auto rp = quadratic_powers(r);
     const auto sp = quadratic_powers(s);
     const auto tp = quadratic_powers(t);
@@ -284,7 +284,7 @@ void eval_hex20_internal(Real r, Real s, Real t, Real* internal_vals) {
     }
 }
 
-void eval_hex20_grad_internal(Real r, Real s, Real t, Gradient* internal_grads) {
+void eval_hex20_grad_internal(Real r, Real s, Real t, std::span<Gradient> internal_grads) {
     const auto rp = quadratic_powers(r);
     const auto sp = quadratic_powers(s);
     const auto tp = quadratic_powers(t);
@@ -321,7 +321,7 @@ void eval_hex20_grad_internal(Real r, Real s, Real t, Gradient* internal_grads) 
     }
 }
 
-void eval_hex20_hess_internal(Real r, Real s, Real t, Hessian* internal_hessians) {
+void eval_hex20_hess_internal(Real r, Real s, Real t, std::span<Hessian> internal_hessians) {
     const auto rp = quadratic_powers(r);
     const auto sp = quadratic_powers(s);
     const auto tp = quadratic_powers(t);
@@ -384,9 +384,9 @@ void eval_hex20_hess_internal(Real r, Real s, Real t, Hessian* internal_hessians
 void eval_wedge15_polynomial(Real r,
                              Real s,
                              Real t,
-                             Real* values,
-                             Gradient* gradients,
-                             Hessian* hessians) {
+                             std::span<Real> values,
+                             std::span<Gradient> gradients,
+                             std::span<Hessian> hessians) {
     Real phi[15]{};
     Real dr[15]{};
     Real ds[15]{};
@@ -415,15 +415,15 @@ void eval_wedge15_polynomial(Real r,
         const Real sb = sp[bs];
         const Real tc = tp[ct];
 
-        if (values) {
+        if (!values.empty()) {
             phi[j] = ra * sb * tc;
         }
-        if (gradients) {
+        if (!gradients.empty()) {
             dr[j] = (a > 0) ? Real(a) * rp[ar - 1u] * sb * tc : Real(0);
             ds[j] = (b > 0) ? ra * Real(b) * sp[bs - 1u] * tc : Real(0);
             dt[j] = (c > 0) ? ra * sb * Real(c) * tp[ct - 1u] : Real(0);
         }
-        if (hessians) {
+        if (!hessians.empty()) {
             drr[j] = (a > 1) ? Real(a * (a - 1)) * rp[ar - 2u] * sb * tc : Real(0);
             dss[j] = (b > 1) ? ra * Real(b * (b - 1)) * sp[bs - 2u] * tc : Real(0);
             dtt[j] = (c > 1) ? ra * sb * Real(c * (c - 1)) * tp[ct - 2u] : Real(0);
@@ -442,15 +442,15 @@ void eval_wedge15_polynomial(Real r,
         for (int j = 0; j < 15; ++j) {
             const Real coefficient =
                 kWedge15Coefficients[static_cast<std::size_t>(j)][static_cast<std::size_t>(i)];
-            if (values) {
+            if (!values.empty()) {
                 value += coefficient * phi[j];
             }
-            if (gradients) {
+            if (!gradients.empty()) {
                 gr += coefficient * dr[j];
                 gs += coefficient * ds[j];
                 gt += coefficient * dt[j];
             }
-            if (hessians) {
+            if (!hessians.empty()) {
                 H(0, 0) += coefficient * drr[j];
                 H(1, 1) += coefficient * dss[j];
                 H(2, 2) += coefficient * dtt[j];
@@ -461,20 +461,36 @@ void eval_wedge15_polynomial(Real r,
         }
 
         const std::size_t index = static_cast<std::size_t>(i);
-        if (values) {
+        if (!values.empty()) {
             values[index] = value;
         }
-        if (gradients) {
+        if (!gradients.empty()) {
             gradients[index][0] = gr;
             gradients[index][1] = gs;
             gradients[index][2] = gt;
         }
-        if (hessians) {
+        if (!hessians.empty()) {
             H(1, 0) = H(0, 1);
             H(2, 0) = H(0, 2);
             H(2, 1) = H(1, 2);
             hessians[index] = H;
         }
+    }
+}
+
+void require_output_span_size(std::size_t actual,
+                              std::size_t expected,
+                              const char* label) {
+    FE::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
+        std::string(label) + ": output span is smaller than basis size");
+}
+
+template<typename T>
+void require_requested_span_size(std::span<T> output,
+                                 std::size_t expected,
+                                 const char* label) {
+    if (!output.empty()) {
+        require_output_span_size(output.size(), expected, label);
     }
 }
 
@@ -533,21 +549,25 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mo
 }
 
 void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
-                                       Real* SVMP_RESTRICT values_out,
-                                       Real* SVMP_RESTRICT gradients_out,
-                                       Real* SVMP_RESTRICT hessians_out) const {
-    if (!values_out && !gradients_out && !hessians_out) {
+                                       std::span<Real> values_out,
+                                       std::span<Gradient> gradients_out,
+                                       std::span<Hessian> hessians_out) const {
+    require_requested_span_size(values_out, size_, "SerendipityBasis::evaluate_all_to values");
+    require_requested_span_size(gradients_out, size_, "SerendipityBasis::evaluate_all_to gradients");
+    require_requested_span_size(hessians_out, size_, "SerendipityBasis::evaluate_all_to hessians");
+
+    if (values_out.empty() && gradients_out.empty() && hessians_out.empty()) {
         return;
     }
 
-    if (values_out) {
-        std::fill_n(values_out, size_, Real(0));
+    if (!values_out.empty()) {
+        std::fill(values_out.begin(), values_out.end(), Real(0));
     }
-    if (gradients_out) {
-        std::fill_n(gradients_out, size_ * 3u, Real(0));
+    if (!gradients_out.empty()) {
+        std::fill(gradients_out.begin(), gradients_out.end(), Gradient::Zero());
     }
-    if (hessians_out) {
-        std::fill_n(hessians_out, size_ * 9u, Real(0));
+    if (!hessians_out.empty()) {
+        std::fill(hessians_out.begin(), hessians_out.end(), Hessian::Zero());
     }
 
     const Real x = xi[0];
@@ -581,20 +601,20 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
 
             for (std::size_t i = 0; i < size_; ++i) {
                 const Real coeff = quad_inv_vandermonde_[j * size_ + i];
-                if (values_out) {
+                if (!values_out.empty()) {
                     values_out[i] += value * coeff;
                 }
-                if (gradients_out) {
-                    Real* g = gradients_out + i * 3u;
+                if (!gradients_out.empty()) {
+                    Gradient& g = gradients_out[i];
                     g[0] += dx * coeff;
                     g[1] += dy * coeff;
                 }
-                if (hessians_out) {
-                    Real* h = hessians_out + i * 9u;
-                    h[0] += dxx * coeff;
-                    h[1] += dxy * coeff;
-                    h[3] += dxy * coeff;
-                    h[4] += dyy * coeff;
+                if (!hessians_out.empty()) {
+                    Hessian& h = hessians_out[i];
+                    h(0, 0) += dxx * coeff;
+                    h(0, 1) += dxy * coeff;
+                    h(1, 0) += dxy * coeff;
+                    h(1, 1) += dyy * coeff;
                 }
             }
         }
@@ -616,49 +636,37 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
         FE::throw_if<BasisEvaluationException>(mesh_to_basis.size() != size_, SVMP_HERE,
                                                "Hex20 mesh-to-basis ordering is not registered");
 
-        if (values_out) {
-            Real internal_vals[20];
+        if (!values_out.empty()) {
+            std::array<Real, 20u> internal_vals{};
             eval_hex20_internal(x, y, z, internal_vals);
             for (std::size_t i = 0; i < 20u; ++i) {
                 values_out[i] = internal_vals[mesh_to_basis[i]];
             }
         }
-        if (gradients_out) {
-            Gradient internal_grads[20];
+        if (!gradients_out.empty()) {
+            std::array<Gradient, 20u> internal_grads{};
             eval_hex20_grad_internal(x, y, z, internal_grads);
             for (std::size_t i = 0; i < 20u; ++i) {
-                store_gradient(internal_grads[mesh_to_basis[i]], gradients_out + i * 3u);
+                gradients_out[i] = internal_grads[mesh_to_basis[i]];
             }
         }
-        if (hessians_out) {
-            Hessian internal_hessians[20];
+        if (!hessians_out.empty()) {
+            std::array<Hessian, 20u> internal_hessians{};
             eval_hex20_hess_internal(x, y, z, internal_hessians);
             for (std::size_t i = 0; i < 20u; ++i) {
-                store_hessian(internal_hessians[mesh_to_basis[i]], hessians_out + i * 9u);
+                hessians_out[i] = internal_hessians[mesh_to_basis[i]];
             }
         }
         return;
     }
 
     if (element_type_ == ElementType::Wedge15) {
-        std::array<Gradient, 15u> wedge_gradients{};
-        std::array<Hessian, 15u> wedge_hessians{};
         eval_wedge15_polynomial(x,
                                  y,
                                  z,
                                  values_out,
-                                 gradients_out ? wedge_gradients.data() : nullptr,
-                                 hessians_out ? wedge_hessians.data() : nullptr);
-        if (gradients_out) {
-            for (std::size_t i = 0; i < 15u; ++i) {
-                store_gradient(wedge_gradients[i], gradients_out + i * 3u);
-            }
-        }
-        if (hessians_out) {
-            for (std::size_t i = 0; i < 15u; ++i) {
-                store_hessian(wedge_hessians[i], hessians_out + i * 9u);
-            }
-        }
+                                 gradients_out,
+                                 hessians_out);
         return;
     }
 
@@ -669,27 +677,19 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
 void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
                                        std::vector<Real>& values) const {
     values.resize(size_);
-    evaluate_values_to(xi, values.data());
+    evaluate_values_to(xi, std::span<Real>(values.data(), values.size()));
 }
 
 void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
                                           std::vector<Gradient>& gradients) const {
     gradients.resize(size_);
-    std::vector<Real> flat(size_ * 3u, Real(0));
-    evaluate_gradients_to(xi, flat.data());
-    for (std::size_t i = 0; i < size_; ++i) {
-        gradients[i] = load_gradient(flat.data() + i * 3u);
-    }
+    evaluate_gradients_to(xi, std::span<Gradient>(gradients.data(), gradients.size()));
 }
 
 void SerendipityBasis::evaluate_hessians(const math::Vector<Real, 3>& xi,
                                          std::vector<Hessian>& hessians) const {
     hessians.resize(size_);
-    std::vector<Real> flat(size_ * 9u, Real(0));
-    evaluate_hessians_to(xi, flat.data());
-    for (std::size_t i = 0; i < size_; ++i) {
-        hessians[i] = load_hessian(flat.data() + i * 9u);
-    }
+    evaluate_hessians_to(xi, std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
 void SerendipityBasis::evaluate_all(const math::Vector<Real, 3>& xi,
@@ -699,28 +699,28 @@ void SerendipityBasis::evaluate_all(const math::Vector<Real, 3>& xi,
     values.resize(size_);
     gradients.resize(size_);
     hessians.resize(size_);
-    std::vector<Real> flat_gradients(size_ * 3u, Real(0));
-    std::vector<Real> flat_hessians(size_ * 9u, Real(0));
-    evaluate_all_to(xi, values.data(), flat_gradients.data(), flat_hessians.data());
-    for (std::size_t i = 0; i < size_; ++i) {
-        gradients[i] = load_gradient(flat_gradients.data() + i * 3u);
-        hessians[i] = load_hessian(flat_hessians.data() + i * 9u);
-    }
+    evaluate_all_to(xi,
+                    std::span<Real>(values.data(), values.size()),
+                    std::span<Gradient>(gradients.data(), gradients.size()),
+                    std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
 void SerendipityBasis::evaluate_values_to(const math::Vector<Real, 3>& xi,
-                                          Real* SVMP_RESTRICT values_out) const {
-    evaluate_all_to(xi, values_out, nullptr, nullptr);
+                                          std::span<Real> values_out) const {
+    require_output_span_size(values_out.size(), size_, "SerendipityBasis::evaluate_values_to");
+    evaluate_all_to(xi, values_out, std::span<Gradient>{}, std::span<Hessian>{});
 }
 
 void SerendipityBasis::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
-                                             Real* SVMP_RESTRICT gradients_out) const {
-    evaluate_all_to(xi, nullptr, gradients_out, nullptr);
+                                             std::span<Gradient> gradients_out) const {
+    require_output_span_size(gradients_out.size(), size_, "SerendipityBasis::evaluate_gradients_to");
+    evaluate_all_to(xi, std::span<Real>{}, gradients_out, std::span<Hessian>{});
 }
 
 void SerendipityBasis::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
-                                            Real* SVMP_RESTRICT hessians_out) const {
-    evaluate_all_to(xi, nullptr, nullptr, hessians_out);
+                                            std::span<Hessian> hessians_out) const {
+    require_output_span_size(hessians_out.size(), size_, "SerendipityBasis::evaluate_hessians_to");
+    evaluate_all_to(xi, std::span<Real>{}, std::span<Gradient>{}, hessians_out);
 }
 
 } // namespace basis

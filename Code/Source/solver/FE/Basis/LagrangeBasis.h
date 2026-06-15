@@ -9,6 +9,7 @@
 
 #include <array>
 #include <cstddef>
+#include <span>
 
 namespace svmp {
 namespace FE {
@@ -58,8 +59,8 @@ namespace basis {
 /// \f$N_{a k}(r,s,t) = T_a(r,s)l_k(t)\f$.
 ///
 /// The vector-returning evaluators are convenient API wrappers. The `*_to`
-/// methods write to caller-provided flat buffers and are intended for assembly
-/// paths that avoid temporary allocations.
+/// methods write to caller-provided spans and are intended for assembly paths
+/// that avoid temporary allocations.
 class LagrangeBasis : public BasisFunction {
 public:
     /// \brief Axis-index tuple for tensor-product reference nodes.
@@ -171,38 +172,36 @@ public:
                       std::vector<Gradient>& gradients,
                       std::vector<Hessian>& hessians) const final;
 
-    /// \brief Evaluate Lagrange basis values into a flat caller-provided buffer.
+    /// \brief Evaluate Lagrange basis values into caller-provided storage.
     ///
     /// \details This is the low-allocation API intended for element assembly
-    /// loops. The buffer is filled in basis-node order and no vector resizing
-    /// is performed.
+    /// loops. The span is filled in basis-node order and no vector resizing is
+    /// performed.
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param values_out Output buffer with at least size() entries.
+    /// \param values_out Output span with at least size() entries.
     void evaluate_values_to(const math::Vector<Real, 3>& xi,
-                            Real* SVMP_RESTRICT values_out) const final;
+                            std::span<Real> values_out) const final;
 
-    /// \brief Evaluate Lagrange basis gradients into a flat caller-provided buffer.
+    /// \brief Evaluate Lagrange basis gradients into caller-provided storage.
     ///
-    /// \details Gradients are written in node-major order with three
-    /// reference-coordinate components per node. For node \f$i\f$ and component
-    /// \f$c\f$, the entry is `gradients_out[i * 3 + c]`.
+    /// \details Gradients are written in basis-node order with one
+    /// three-component gradient per node.
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param gradients_out Output buffer with node-major layout: node * 3 + component.
+    /// \param gradients_out Output span with at least size() entries.
     void evaluate_gradients_to(const math::Vector<Real, 3>& xi,
-                               Real* SVMP_RESTRICT gradients_out) const final;
+                               std::span<Gradient> gradients_out) const final;
 
-    /// \brief Evaluate Lagrange basis Hessians into a flat caller-provided buffer.
+    /// \brief Evaluate Lagrange basis Hessians into caller-provided storage.
     ///
-    /// \details Hessians are written in node-major row-major order. For node
-    /// \f$i\f$ and Hessian component \f$(r,c)\f$, the entry is
-    /// `hessians_out[i * 9 + r * 3 + c]`.
+    /// \details Hessians are written in basis-node order with one 3-by-3
+    /// Hessian per node.
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-    /// \param hessians_out Output buffer with node-major row-major layout: node * 9 + row * 3 + col.
+    /// \param hessians_out Output span with at least size() entries.
     void evaluate_hessians_to(const math::Vector<Real, 3>& xi,
-                              Real* SVMP_RESTRICT hessians_out) const final;
+                              std::span<Hessian> hessians_out) const final;
 
 private:
     ElementType element_type_;
@@ -224,24 +223,24 @@ private:
     void init_equispaced_1d_nodes();
 
     void evaluate_all_to(const math::Vector<Real, 3>& xi,
-                         Real* SVMP_RESTRICT values_out,
-                         Real* SVMP_RESTRICT gradients_out,
-                         Real* SVMP_RESTRICT hessians_out) const;
-    void evaluate_point_to(Real* SVMP_RESTRICT values_out,
-                           Real* SVMP_RESTRICT gradients_out,
-                           Real* SVMP_RESTRICT hessians_out) const;
+                         std::span<Real> values_out,
+                         std::span<Gradient> gradients_out,
+                         std::span<Hessian> hessians_out) const;
+    void evaluate_point_to(std::span<Real> values_out,
+                           std::span<Gradient> gradients_out,
+                           std::span<Hessian> hessians_out) const;
     void evaluate_tensor_product_to(const math::Vector<Real, 3>& xi,
-                                    Real* SVMP_RESTRICT values_out,
-                                    Real* SVMP_RESTRICT gradients_out,
-                                    Real* SVMP_RESTRICT hessians_out) const;
+                                    std::span<Real> values_out,
+                                    std::span<Gradient> gradients_out,
+                                    std::span<Hessian> hessians_out) const;
     void evaluate_simplex_to(const math::Vector<Real, 3>& xi,
-                             Real* SVMP_RESTRICT values_out,
-                             Real* SVMP_RESTRICT gradients_out,
-                             Real* SVMP_RESTRICT hessians_out) const;
+                             std::span<Real> values_out,
+                             std::span<Gradient> gradients_out,
+                             std::span<Hessian> hessians_out) const;
     void evaluate_wedge_to(const math::Vector<Real, 3>& xi,
-                           Real* SVMP_RESTRICT values_out,
-                           Real* SVMP_RESTRICT gradients_out,
-                           Real* SVMP_RESTRICT hessians_out) const;
+                           std::span<Real> values_out,
+                           std::span<Gradient> gradients_out,
+                           std::span<Hessian> hessians_out) const;
 };
 
 /// @}
