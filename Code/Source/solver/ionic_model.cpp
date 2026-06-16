@@ -256,27 +256,3 @@ std::vector<outputType> IonicModel::get_registered_outputs() const {
 
   return result;
 }
-
-std::unique_ptr<IonicModel>
-IonicModelFactory::create_model(const std::string &name) {
-  const auto &factory_instance = get_instance();
-
-  auto iter = factory_instance.children.find(name);
-  if (iter == factory_instance.children.end()) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        SVMP_HERE, "No model with name '" + name +
-                       "' was registered in the ionic model factory.");
-  }
-
-  return iter->second();
-}
-
-void IonicModelFactory::visit(
-    const std::function<void(const std::string &, const IonicModel &)> &f) {
-  const auto &factory_instance = get_instance();
-
-  for (auto &[name, builder] : factory_instance.children) {
-    std::unique_ptr<IonicModel> dummy = builder();
-    f(name, *dummy);
-  }
-}

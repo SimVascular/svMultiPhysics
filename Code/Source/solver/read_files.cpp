@@ -1033,7 +1033,7 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   {
     const std::string model_name = cep_model_type_to_name.at(model_type);
 
-    lDmn.cep.ionic_model = IonicModelFactory::create_model(model_name);
+    lDmn.cep.ionic_model = IonicModelFactory::create(model_name);
     lDmn.cep.ionic_model->read_parameters(
         *domain_params->ionic_models.at(model_name));
 
