@@ -3,4 +3,16 @@
 
 #include "active_stress_uniform.h"
 
-REGISTER_ACTIVE_STRESS_MODEL("uniform", UniformActiveStress);
+void UniformActiveStress::read_parameters(
+    const ActiveStressModelParameters &params) {
+  value = params.get_scalar("Value");
+}
+
+void UniformActiveStress::distribute_parameters(const CmMod &cm_mod,
+                                                const cmType &cm) {
+  cm.bcast(cm_mod, &value);
+}
+
+double UniformActiveStress::operator()(const int idx) const { return value; }
+
+REGISTER_ACTIVE_STRESS_MODEL("Uniform", UniformActiveStress);

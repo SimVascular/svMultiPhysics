@@ -57,6 +57,8 @@
 #include <limits>
 #include <math.h>
 
+#include "FE/Common/FEException.h"
+
 namespace {
 
 std::string uppercase_xml_name(const std::string& value)
@@ -1731,6 +1733,123 @@ void IonicModelParameters::set_values(const tinyxml2::XMLElement *xml_elem) {
 }
 
 //////////////////////////////////////////////////////////
+//              ActiveStressModelParameters             //
+//////////////////////////////////////////////////////////
+
+ActiveStressModelParameters::ActiveStressModelParameters(
+    const std::string &xml_element_name_)
+    : xml_element_name(xml_element_name_) {
+  set_xml_element_name(xml_element_name_);
+}
+
+void ActiveStressModelParameters::print_parameters() const {
+  if (value_set) {
+    std::cout << "\n"
+              << xml_element_name << "\n"
+              << "---------------------------------\n";
+
+    if (!parameters.empty()) {
+      std::cout << "Model parameters:" << std::endl;
+      for (const auto &[name, param] : parameters) {
+        std::cout << "  " << name << ": " << param.value() << std::endl;
+      }
+    }
+  }
+}
+
+void ActiveStressModelParameters::set_values(
+    const tinyxml2::XMLElement *xml_elem) {
+  using namespace tinyxml2;
+
+  for (const XMLElement *item = xml_elem->FirstChildElement(); item != nullptr;
+       item = item->NextSiblingElement()) {
+    const std::string name = item->Value();
+
+    const std::string text = item->GetText() ? item->GetText() : "";
+    set_parameter_value(name, text);
+    value_set = true;
+  }
+
+  check_required();
+}
+
+//////////////////////////////////////////////////////////
+//                ActiveStressParameters                //
+//////////////////////////////////////////////////////////
+
+const std::string ActiveStressParameters::xml_element_name = "Active_stress";
+
+ActiveStressParameters::ActiveStressParameters() {
+  model_name = Parameter<std::string>("Model", "", true);
+
+  set_parameter("Model", "", /* required = */ true, model_name);
+
+  ActiveStressFactory::visit(
+      [this](const std::string &name, const ActiveStress &model) {
+        active_stress_models.emplace(name, model.get_parameters());
+      });
+}
+
+void ActiveStressParameters::print_parameters() const {
+  if (value_set) {
+    std::cout << "\n"
+              << xml_element_name << "\n"
+              << "---------------------------------\n";
+
+    for (const auto &[name, params] : active_stress_models) {
+      params->print_parameters();
+    }
+  }
+}
+
+void ActiveStressParameters::set_values(const tinyxml2::XMLElement *xml_elem) {
+  using namespace tinyxml2;
+
+  for (const XMLElement *item = xml_elem->FirstChildElement(); item != nullptr;
+       item = item->NextSiblingElement()) {
+    const std::string name = item->Value();
+
+    if (active_stress_models.count(name) > 0) {
+      active_stress_models.at(name)->set_values(item);
+    } else if (item->GetText() != nullptr) {
+      auto value = item->GetText();
+      try {
+        set_parameter_value(name, value);
+      } catch (const std::bad_function_call &exception) {
+        svmp::raise<svmp::ParseException>(SVMP_HERE,
+                                          "Unknown " + xml_element_name +
+                                              " XML element '" + name + "'.");
+      }
+    } else {
+      svmp::raise<svmp::ParseException>(SVMP_HERE,
+                                        "Unknown " + xml_element_name +
+                                            " XML element '" + name + "'.");
+    }
+  }
+
+  check_required();
+
+  value_set = true;
+}
+
+std::string ActiveStressParameters::get_model_name() const {
+  if (!model_name.defined())
+    svmp::raise<svmp::ParseException>(
+        SVMP_HERE, "Active stress model name is not defined.");
+
+  return model_name.value();
+}
+
+const ActiveStressModelParameters &
+ActiveStressParameters::get_parameters(const std::string &model_name) const {
+  if (active_stress_models.count(model_name) == 0)
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Active stress model '" + model_name + "' is not defined.");
+
+  return *active_stress_models.at(model_name);
+}
+
+//////////////////////////////////////////////////////////
 //                  DomainParameters                    //
 //////////////////////////////////////////////////////////
 
@@ -1816,9 +1935,11 @@ void DomainParameters::print_parameters()
 
   stimulus.print_parameters();
 
-  for (const auto &[cepType, params] : ionic_models) {
+  for (const auto &[name, params] : ionic_models) {
     params->print_parameters();
   }
+
+  active_stress.print_parameters();
 
   fluid_viscosity.print_parameters();
 
@@ -1873,6 +1994,11 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
         params->set_values(item);
         item_found = true;
       }
+
+    if (name == ActiveStressParameters::xml_element_name) {
+      active_stress.set_values(item);
+      item_found = true;
+    }
 
     if (name == FluidViscosityParameters::xml_element_name_ ||
         name == SolidViscosityParameters::xml_element_name_) {
@@ -2423,6 +2549,11 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
     } else if (name == FiberReinforcementStressParameters::xml_element_name_) {
       domain->fiber_reinforcement_stress.set_values(item);
 
+    } else if (name == ActiveStressParameters::xml_element_name) {
+      // @todo[michelebucelli] The need to manually fall back onto the domain
+      // parameters might be avoided with a bit of refactoring.
+      domain->active_stress.set_values(item);
+
     } else if (name == LinearSolverParameters::xml_element_name_) {
       linear_solver.set_values(item);
 
@@ -2437,7 +2568,7 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
     } else if (name == StimulusParameters::xml_element_name_) {
       domain->stimulus.set_values(item);
 
-    } else if (viscosity_names.count(name)) { 
+    } else if (viscosity_names.count(name)) {
       auto eq_type = require_map_value(consts::equation_name_to_type, type.value(),
           SVMP_HERE, "Unknown equation type '" + type.value() + "' while parsing viscosity model.");
 
@@ -2455,7 +2586,7 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
     } else if (name == VariableWallPropsParameters::xml_element_name_) {
       variable_wall_properties.set_values(item);
 
-    } else if (name == include_xml.name()) { 
+    } else if (name == include_xml.name()) {
       auto value = require_xml_text(item, SVMP_HERE,
           "Equation Include_xml requires a file name.");
       IncludeParametersFile include_parameters(value);
@@ -2476,7 +2607,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
           svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name_ + " XML element '" + name + "'.");
         }
       }
-
 
     } else {
       svmp::raise<svmp::ParseException>(SVMP_HERE, "[Equation] Unknown " + xml_element_name_ + " XML element '" + name + "'.");

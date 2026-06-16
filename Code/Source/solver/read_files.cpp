@@ -1209,8 +1209,13 @@ void read_cep_equation(CepMod* cep_mod, Simulation* simulation, EquationParamete
 /**
  * @brief Read parameters related to active stress.
  */
-void read_active_stress(dmnType &lDmn) {
-  lDmn.active_stress = ActiveStressFactory::create("uniform");
+void read_active_stress(dmnType &lDmn, DomainParameters *domain_params) {
+  const std::string active_stress_model_name =
+      domain_params->active_stress.get_model_name();
+
+  lDmn.active_stress = ActiveStressFactory::create(active_stress_model_name);
+  lDmn.active_stress->read_parameters(
+      domain_params->active_stress.get_parameters(active_stress_model_name));
 }
 
 //-------------
@@ -1385,7 +1390,7 @@ void read_domain(Simulation* simulation, EquationParameters* eq_params, eqType& 
      if ((lEq.dmn[iDmn].phys == EquationType::phys_shell) ||
          (lEq.dmn[iDmn].phys == EquationType::phys_struct) ||
          (lEq.dmn[iDmn].phys == EquationType::phys_ustruct)) {
-       read_active_stress(lEq.dmn[iDmn]);
+       read_active_stress(lEq.dmn[iDmn], domain_params);
        read_mat_model(simulation, eq_params, domain_params, lEq.dmn[iDmn]);
        if (utils::is_zero(lEq.dmn[iDmn].stM.Kpen) &&
            lEq.dmn[iDmn].phys == EquationType::phys_struct) {

@@ -5,8 +5,13 @@
 #define ACTIVE_STRESS_H
 
 #include "Array.h"
+#include "Parameters.h"
 #include "Vector.h"
 #include "factory.h"
+
+#include "CmMod.h"
+
+#include <memory>
 
 /**
  * @brief Abstract active stress class.
@@ -26,6 +31,22 @@ public:
    * @brief Virtual destructor.
    */
   virtual ~ActiveStress() = default;
+
+  /**
+   * @brief Construct an instance of model parameters for this model.
+   */
+  virtual std::unique_ptr<ActiveStressModelParameters>
+  get_parameters() const = 0;
+
+  /**
+   * @brief Read model parameters from a parameter object.
+   */
+  virtual void read_parameters(const ActiveStressModelParameters &params) = 0;
+
+  /**
+   * @brief Distribute model parameters to all parallel processes.
+   */
+  virtual void distribute_parameters(const CmMod &cm_mod, const cmType &cm) = 0;
 
   /**
    * @brief Evaluate the active stress at a given point.
