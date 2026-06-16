@@ -6,6 +6,7 @@
 
 #include "Array.h"
 #include "Vector.h"
+#include "factory.h"
 
 /**
  * @brief Abstract active stress class.
@@ -93,48 +94,16 @@ protected:
 };
 
 /**
- * @brief Uniform active stress model.
+ * @brief Alias for the active stress model factory.
  *
- * Returns an active tension value constant in space and in time, provided at
- * construction.
+ * See the documentation for @ref Factory for more details on how this works.
  */
-class UniformActiveStress : public ActiveStress {
-public:
-  /**
-   * @brief Constructor.
-   *
-   * @param g_ Active tension value.
-   */
-  UniformActiveStress(const double g_)
-      : ActiveStress(/* n_states = */ 0), g(g_) {}
+using ActiveStressFactory = Factory<ActiveStress>;
 
-  /**
-   * @brief Evaluate the active stress at a given point.
-   */
-  virtual double operator()(const int idx) const override { return g; }
-
-protected:
-  /**
-   * @brief Initialize the state vector for a single node.
-   *
-   * This model has no states, so this function does nothing.
-   */
-  virtual void init_local(Vector<double> &state) const override {}
-
-  /**
-   * @brief Advance in time for a single node.
-   *
-   * This model has no states, so this function does nothing.
-   */
-  virtual void advance_time_step_local(const double t, const double dt,
-                                       const double calcium,
-                                       const double fiber_stretch,
-                                       const double fiber_stretch_rate,
-                                       Vector<double> &state) const override {}
-
-  /// Active tension value.
-  /// @todo[michelebucelli] Document unit of measure.
-  double g;
-};
+/**
+ * @brief Macro to register an active stress model in the factory.
+ */
+#define REGISTER_ACTIVE_STRESS_MODEL(name, type)                               \
+  REGISTER_IN_FACTORY(ActiveStress, type, name)
 
 #endif

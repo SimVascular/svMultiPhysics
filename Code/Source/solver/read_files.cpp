@@ -1210,7 +1210,7 @@ void read_cep_equation(CepMod* cep_mod, Simulation* simulation, EquationParamete
  * @brief Read parameters related to active stress.
  */
 void read_active_stress(dmnType &lDmn) {
-  lDmn.active_stress = std::make_shared<UniformActiveStress>(4.9875);
+  lDmn.active_stress = ActiveStressFactory::create("uniform");
 }
 
 //-------------

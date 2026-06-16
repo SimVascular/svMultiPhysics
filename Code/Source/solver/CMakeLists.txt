@@ -226,6 +226,7 @@ set(CSRCS
   ionic_ttp.cpp
 
   active_stress.cpp
+  active_stress_uniform.cpp
   
   SPLIT.c
 
