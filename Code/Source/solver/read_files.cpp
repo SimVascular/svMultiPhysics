@@ -1210,12 +1210,14 @@ void read_cep_equation(CepMod* cep_mod, Simulation* simulation, EquationParamete
  * @brief Read parameters related to active stress.
  */
 void read_active_stress(dmnType &lDmn, DomainParameters *domain_params) {
-  const std::string name = domain_params->active_stress.get_model_name();
+  if (domain_params->active_stress.defined()) {
+    const std::string name = domain_params->active_stress.get_model_name();
 
-  lDmn.active_stress_model_name = name;
-  lDmn.active_stress = ActiveStressFactory::create(name);
-  lDmn.active_stress->read_parameters(
-      domain_params->active_stress.get_parameters(name));
+    lDmn.active_stress_model_name = name;
+    lDmn.active_stress = ActiveStressFactory::create(name);
+    lDmn.active_stress->read_parameters(
+        domain_params->active_stress.get_parameters(name));
+  }
 }
 
 //-------------

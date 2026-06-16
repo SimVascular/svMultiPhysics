@@ -1592,13 +1592,15 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
         (lEq.dmn[iDmn].phys == EquationType::phys_ustruct)) {
       cm.bcast(cm_mod, dmn.active_stress_model_name);
 
-      // All ranks but the master need to allocate the active stress instance.
-      if (!cm.mas(cm_mod)) {
-        dmn.active_stress =
-            ActiveStressFactory::create(dmn.active_stress_model_name);
-      }
+      if (dmn.active_stress_model_name != "") {
+        // All ranks but the master need to allocate the active stress instance.
+        if (!cm.mas(cm_mod)) {
+          dmn.active_stress =
+              ActiveStressFactory::create(dmn.active_stress_model_name);
+        }
 
-      dmn.active_stress->distribute_parameters(cm_mod, cm);
+        dmn.active_stress->distribute_parameters(cm_mod, cm);
+      }
     }
 
     if ((dmn.phys == EquationType::phys_struct) || (dmn.phys == EquationType::phys_ustruct)) {
