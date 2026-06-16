@@ -455,6 +455,9 @@ class dmnType
     // Electrophysiology model
     cepModelType cep;
 
+    /// Active stress model name.
+    std::string active_stress_model_name;
+
     /// Active stress model.
     std::shared_ptr<ActiveStress> active_stress;
 
