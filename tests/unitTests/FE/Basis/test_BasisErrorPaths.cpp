@@ -12,6 +12,7 @@
 #include "FE/Basis/NodeOrderingConventions.h"
 #include "FE/Basis/SerendipityBasis.h"
 
+#include <string>
 #include <vector>
 
 using namespace svmp::FE;
@@ -129,6 +130,24 @@ public:
     }
 };
 
+void expect_source_location(const FEException& e)
+{
+    EXPECT_NE(e.context().file().find("test_BasisErrorPaths.cpp"), std::string::npos);
+    EXPECT_GT(e.context().line(), 0);
+    EXPECT_FALSE(e.context().function().empty());
+}
+
+template <class Thrower>
+void expect_fe_helper_preserves_source_location(Thrower&& thrower)
+{
+    try {
+        thrower();
+        FAIL() << "Expected an FEException";
+    } catch (const FEException& e) {
+        expect_source_location(e);
+    }
+}
+
 } // namespace
 
 TEST(BasisErrorPaths, LagrangeInvalidRequestsThrowBasisExceptions) {
@@ -187,16 +206,46 @@ TEST(BasisErrorPaths, BasisFactoryInvalidRequestsThrowBasisExceptions) {
 
 TEST(BasisErrorPaths, BasisExceptionsUseCommonStatusCodes) {
     try {
-        throw BasisConfigurationException("invalid config", __FILE__, __LINE__, __func__);
+        svmp::FE::raise<BasisConfigurationException>(SVMP_HERE, "invalid config");
     } catch (const FEException& e) {
         EXPECT_EQ(e.status(), svmp::StatusCode::InvalidArgument);
     }
 
     try {
-        throw BasisConstructionException("construction failure", __FILE__, __LINE__, __func__);
+        svmp::FE::raise<BasisConstructionException>(SVMP_HERE, "construction failure");
     } catch (const FEException& e) {
         EXPECT_EQ(e.status(), svmp::StatusCode::InternalError);
     }
+}
+
+TEST(BasisErrorPaths, FEHelpersPreserveSourceLocation) {
+    expect_fe_helper_preserves_source_location([] {
+        svmp::FE::raise<BasisEvaluationException>(SVMP_HERE, "raise location");
+    });
+
+    expect_fe_helper_preserves_source_location([] {
+        svmp::FE::throw_if<BasisEvaluationException>(
+            true, SVMP_HERE, "throw_if location");
+    });
+
+    expect_fe_helper_preserves_source_location([] {
+        svmp::FE::check_arg<BasisEvaluationException>(
+            false, SVMP_HERE, "check_arg location");
+    });
+
+    expect_fe_helper_preserves_source_location([] {
+        const int* ptr = nullptr;
+        svmp::FE::check_not_null<BasisEvaluationException>(
+            ptr, SVMP_HERE, "check_not_null location");
+    });
+
+    expect_fe_helper_preserves_source_location([] {
+        svmp::FE::check_index<BasisEvaluationException>(1, 1, SVMP_HERE);
+    });
+
+    expect_fe_helper_preserves_source_location([] {
+        svmp::FE::not_implemented("test feature", SVMP_HERE);
+    });
 }
 
 TEST(BasisErrorPaths, NodeOrderingInvalidNodeThrows) {

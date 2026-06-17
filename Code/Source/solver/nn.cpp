@@ -498,8 +498,10 @@ void get_gn_nxx(const int insd, const int ind2, consts::ElementType eType, const
 {
   using namespace consts;
 
-  // NRB/PNT and face-only Hessian paths remain intentionally unsupported here.
-  if (eType == ElementType::NRB || eType == ElementType::PNT) {
+  // NA/NRB/PNT have no FE Basis Hessian support (NA is unassigned; NRB/PNT are
+  // outside the current FE Basis scope). Leave Nxx at its zero-initialized
+  // state so callers may invoke this for every element type unconditionally.
+  if (eType == ElementType::NA || eType == ElementType::NRB || eType == ElementType::PNT) {
     return;
   }
 

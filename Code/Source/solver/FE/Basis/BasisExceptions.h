@@ -16,9 +16,9 @@ namespace basis {
 class BasisException : public FEException {
 public:
     BasisException(const std::string& message,
-                   const char* file = "",
-                   int line = 0,
-                   const char* function = "",
+                   const char* file,
+                   int line,
+                   const char* function,
                    StatusCode status = StatusCode::Unknown)
         : FEException(message, status, file, line, function) {}
 };
@@ -29,9 +29,9 @@ public:
 class BasisConfigurationException : public BasisException {
 public:
     BasisConfigurationException(const std::string& message,
-                                const char* file = "",
-                                int line = 0,
-                                const char* function = "")
+                                const char* file,
+                                int line,
+                                const char* function)
         : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
 };
 
@@ -41,9 +41,9 @@ public:
 class BasisElementCompatibilityException : public BasisException {
 public:
     BasisElementCompatibilityException(const std::string& message,
-                                       const char* file = "",
-                                       int line = 0,
-                                       const char* function = "")
+                                       const char* file,
+                                       int line,
+                                       const char* function)
         : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
 };
 
@@ -53,9 +53,9 @@ public:
 class BasisEvaluationException : public BasisException {
 public:
     BasisEvaluationException(const std::string& message,
-                             const char* file = "",
-                             int line = 0,
-                             const char* function = "")
+                             const char* file,
+                             int line,
+                             const char* function)
         : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
 };
 
@@ -65,9 +65,9 @@ public:
 class BasisNodeOrderingException : public BasisException {
 public:
     BasisNodeOrderingException(const std::string& message,
-                               const char* file = "",
-                               int line = 0,
-                               const char* function = "")
+                               const char* file,
+                               int line,
+                               const char* function)
         : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
 };
 
@@ -77,9 +77,9 @@ public:
 class BasisConstructionException : public BasisException {
 public:
     BasisConstructionException(const std::string& message,
-                               const char* file = "",
-                               int line = 0,
-                               const char* function = "")
+                               const char* file,
+                               int line,
+                               const char* function)
         : BasisException(message, file, line, function, StatusCode::InternalError) {}
 };
 

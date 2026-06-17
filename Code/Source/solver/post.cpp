@@ -804,13 +804,13 @@ void fib_stretch_rate(const ComMod& com_mod, const int iEq, const mshType& lM, c
   int nNo = lM.nNo;
 
   if (dt <= 0.0) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
+    svmp::FE::raise<svmp::FE::InvalidArgumentException>(
         SVMP_HERE,
         "[fib_stretch_rate] Expected com_mod.dt > 0, but got " + std::to_string(dt) + ".");
   }
 
   if (res.size() != nNo) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
+    svmp::FE::raise<svmp::FE::InvalidArgumentException>(
         SVMP_HERE,
         "[fib_stretch_rate] Expected res size " + std::to_string(nNo) + ", but got " + std::to_string(res.size()) + ".");
   }

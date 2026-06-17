@@ -33,6 +33,21 @@ namespace FE {
 /// actionable diagnostics. The free helper templates raise(), throw_if(),
 /// check_arg(), check_not_null(), and check_index() wrap common validation
 /// patterns with source-location capture.
+///
+/// Canonical FE code should throw through this helper layer instead of calling
+/// the core ::svmp helpers or constructing exceptions directly:
+///
+/// \code
+/// FE::raise<ExceptionT>(SVMP_HERE, message);
+/// FE::throw_if<ExceptionT>(failure_condition, SVMP_HERE, message);
+/// FE::check_arg<ExceptionT>(valid_condition, SVMP_HERE, message);
+/// FE::check_not_null<ExceptionT>(ptr, SVMP_HERE, message);
+/// FE::check_index<ExceptionT>(index, size, SVMP_HERE);
+/// FE::not_implemented(feature, SVMP_HERE);
+/// \endcode
+///
+/// throw_if() is failure-condition based. check_arg() is
+/// success-condition based.
 /// @{
 
 /**
@@ -466,8 +481,9 @@ inline void throw_if(bool condition, SourceLocation location, Args&&... args)
 template <class ExceptionT = InvalidArgumentException, class... Args>
 inline void check_arg(bool condition, SourceLocation location, Args&&... args)
 {
-    ::svmp::check_arg<ExceptionT>(condition, location,
-                                  std::forward<Args>(args)...);
+    if (!condition) {
+        ::svmp::FE::raise<ExceptionT>(location, std::forward<Args>(args)...);
+    }
 }
 
 /**
@@ -484,7 +500,9 @@ template <class ExceptionT = InvalidArgumentException, class PointerT,
 inline void check_not_null(PointerT ptr, SourceLocation location,
                            Args&&... args)
 {
-    ::svmp::check_not_null<ExceptionT>(ptr, location, std::forward<Args>(args)...);
+    if (ptr == nullptr) {
+        ::svmp::FE::raise<ExceptionT>(location, std::forward<Args>(args)...);
+    }
 }
 
 /**

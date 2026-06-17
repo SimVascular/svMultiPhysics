@@ -13,9 +13,6 @@
 #include <string>
 #include <utility>
 
-#define DENSE_LINALG_CHECK(condition, message) \
-    ::svmp::FE::throw_if<::svmp::FE::FEException>(!(condition), SVMP_HERE, (message))
-
 namespace svmp {
 namespace FE {
 namespace math {
@@ -86,12 +83,15 @@ void DenseLUSolver::solve_in_place(std::span<Real> rhs) const {
 
 void DenseLUSolver::solve_in_place(std::span<Real> rhs,
                                    std::size_t rhs_count) const {
-    DENSE_LINALG_CHECK(rhs_count > 0,
-                             label + ": dense solve requires at least one right-hand side");
-    DENSE_LINALG_CHECK(rhs.size() == n * rhs_count,
-                             label + ": dense multi-RHS solve size mismatch");
-    DENSE_LINALG_CHECK(lu.rows() == static_cast<Eigen::Index>(n),
-                             label + ": dense solver is not factorized");
+    ::svmp::FE::check_arg<FEException>(
+        rhs_count > 0, SVMP_HERE,
+        label + ": dense solve requires at least one right-hand side");
+    ::svmp::FE::check_arg<FEException>(
+        rhs.size() == n * rhs_count, SVMP_HERE,
+        label + ": dense multi-RHS solve size mismatch");
+    ::svmp::FE::check_arg<FEException>(
+        lu.rows() == static_cast<Eigen::Index>(n), SVMP_HERE,
+        label + ": dense solver is not factorized");
     if (n == 0) {
         return;
     }
@@ -115,10 +115,12 @@ DenseMatrixDiagnostics dense_matrix_diagnostics(
     std::size_t rows,
     std::size_t cols,
     std::string_view label) {
-    DENSE_LINALG_CHECK(matrix.size() == rows * cols,
-                             std::string(label) + ": diagnostic size mismatch");
-    DENSE_LINALG_CHECK(rows > 0 && cols > 0,
-                             std::string(label) + ": diagnostics require a nonempty matrix");
+    ::svmp::FE::check_arg<FEException>(
+        matrix.size() == rows * cols, SVMP_HERE,
+        std::string(label) + ": diagnostic size mismatch");
+    ::svmp::FE::check_arg<FEException>(
+        rows > 0 && cols > 0, SVMP_HERE,
+        std::string(label) + ": diagnostics require a nonempty matrix");
 
     const DenseMatrix dense = map_row_major(matrix, rows, cols);
     Eigen::JacobiSVD<DenseMatrix> svd(dense);
@@ -153,8 +155,9 @@ DenseMatrixDiagnostics dense_matrix_diagnostics(
 DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
                                   std::size_t n,
                                   std::string_view label) {
-    DENSE_LINALG_CHECK(matrix.size() == n * n,
-                             std::string(label) + ": dense factorization size mismatch");
+    ::svmp::FE::check_arg<FEException>(
+        matrix.size() == n * n, SVMP_HERE,
+        std::string(label) + ": dense factorization size mismatch");
 
     DenseLUSolver solver;
     solver.n = n;
@@ -172,8 +175,8 @@ DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
     const auto diagonal = solver.lu.matrixLU().diagonal();
     for (Eigen::Index col = 0; col < diagonal.size(); ++col) {
         const Real pivot_magnitude = std::abs(diagonal[col]);
-        DENSE_LINALG_CHECK(
-            pivot_magnitude > solver.pivot_tolerance,
+        ::svmp::FE::check_arg<FEException>(
+            pivot_magnitude > solver.pivot_tolerance, SVMP_HERE,
             solver.label + ": rank-deficient matrix (rank " +
                 std::to_string(col) + " of " + std::to_string(n) +
                 ", pivot below scale-aware tolerance " +
@@ -198,8 +201,9 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
     std::vector<Real> matrix,
     std::size_t n,
     std::string_view label) {
-    DENSE_LINALG_CHECK(matrix.size() == n * n,
-                             std::string(label) + ": dense inverse size mismatch");
+    ::svmp::FE::check_arg<FEException>(
+        matrix.size() == n * n, SVMP_HERE,
+        std::string(label) + ": dense inverse size mismatch");
     std::vector<Real> matrix_for_lu = matrix;
     const DenseLUSolver solver =
         factor_dense_matrix(std::move(matrix_for_lu), n, label);
@@ -219,8 +223,8 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
                                                       static_cast<Eigen::Index>(n));
         const auto& singular_values = svd.singularValues();
         for (Eigen::Index i = 0; i < singular_values.size(); ++i) {
-            DENSE_LINALG_CHECK(
-                singular_values[i] > solver.diagnostics.tolerance,
+            ::svmp::FE::check_arg<FEException>(
+                singular_values[i] > solver.diagnostics.tolerance, SVMP_HERE,
                 std::string(label) + ": high-condition SVD fallback encountered a dropped singular value");
             sigma_inverse(i, i) = Real(1) / singular_values[i];
         }
@@ -240,8 +244,8 @@ void validate_dense_inverse_diagnostics(
     std::size_t expected_rank,
     std::string_view label,
     Real max_condition) {
-    DENSE_LINALG_CHECK(
-        result.diagnostics.rank == expected_rank,
+    ::svmp::FE::check_arg<FEException>(
+        result.diagnostics.rank == expected_rank, SVMP_HERE,
         std::string(label) + ": rank-deficient matrix (rank " +
             std::to_string(result.diagnostics.rank) + " of " +
             std::to_string(expected_rank) + ")");
@@ -250,8 +254,8 @@ void validate_dense_inverse_diagnostics(
         return;
     }
 
-    DENSE_LINALG_CHECK(
-        result.diagnostics.condition_estimate <= max_condition,
+    ::svmp::FE::check_arg<FEException>(
+        result.diagnostics.condition_estimate <= max_condition, SVMP_HERE,
         std::string(label) + ": condition estimate " +
             std::to_string(result.diagnostics.condition_estimate) +
             " exceeds supported threshold " + std::to_string(max_condition));
@@ -270,8 +274,9 @@ std::vector<Real> invert_dense_matrix(std::vector<Real> matrix,
 std::size_t dense_matrix_rank(std::vector<Real> matrix,
                               std::size_t rows,
                               std::size_t cols) {
-    DENSE_LINALG_CHECK(matrix.size() == rows * cols,
-                             "dense_matrix_rank: size mismatch");
+    ::svmp::FE::check_arg<FEException>(
+        matrix.size() == rows * cols, SVMP_HERE,
+        "dense_matrix_rank: size mismatch");
 
     const DenseMatrix dense =
         map_row_major(std::span<const Real>(matrix.data(), matrix.size()), rows, cols);
@@ -297,10 +302,12 @@ DensePseudoInverseResult rank_revealing_pseudo_inverse(
     std::size_t rows,
     std::size_t cols,
     std::string_view label) {
-    DENSE_LINALG_CHECK(matrix.size() == rows * cols,
-                             std::string(label) + ": pseudo-inverse size mismatch");
-    DENSE_LINALG_CHECK(rows > 0 && cols > 0,
-                             std::string(label) + ": pseudo-inverse requires a nonempty matrix");
+    ::svmp::FE::check_arg<FEException>(
+        matrix.size() == rows * cols, SVMP_HERE,
+        std::string(label) + ": pseudo-inverse size mismatch");
+    ::svmp::FE::check_arg<FEException>(
+        rows > 0 && cols > 0, SVMP_HERE,
+        std::string(label) + ": pseudo-inverse requires a nonempty matrix");
 
     const DenseMatrix dense = map_row_major(matrix, rows, cols);
     Eigen::JacobiSVD<DenseMatrix> svd(dense, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -334,5 +341,3 @@ DensePseudoInverseResult rank_revealing_pseudo_inverse(
 } // namespace math
 } // namespace FE
 } // namespace svmp
-
-#undef DENSE_LINALG_CHECK
