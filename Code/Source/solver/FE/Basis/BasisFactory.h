@@ -20,8 +20,8 @@ namespace FE {
 namespace basis {
 
 struct BasisRequest {
-    ElementType element_type;
-    BasisType basis_type;
+    ElementType element_type{ElementType::Unknown};
+    BasisType basis_type{BasisType::Lagrange};
     std::optional<int> order{};
     Continuity continuity{Continuity::C0};
     FieldType field_type{FieldType::Scalar};

@@ -12,17 +12,6 @@ namespace basis {
 
 namespace {
 
-struct BasisFunctionScratch {
-    std::vector<Real> values;
-    std::vector<Gradient> gradients;
-    std::vector<Hessian> hessians;
-};
-
-BasisFunctionScratch& scratch() {
-    static thread_local BasisFunctionScratch data;
-    return data;
-}
-
 void require_span_size(std::size_t actual,
                        std::size_t expected,
                        const char* label) {
@@ -67,8 +56,7 @@ void BasisFunction::evaluate_all(const math::Vector<Real, 3>& xi,
 void BasisFunction::evaluate_values_to(const math::Vector<Real, 3>& xi,
                                        std::span<Real> values_out) const {
     require_span_size(values_out.size(), size(), "evaluate_values_to");
-    auto& tmp = scratch().values;
-    tmp.resize(size());
+    std::vector<Real> tmp(size());
     evaluate_values(xi, tmp);
     std::copy_n(tmp.begin(), tmp.size(), values_out.begin());
 }
@@ -76,8 +64,7 @@ void BasisFunction::evaluate_values_to(const math::Vector<Real, 3>& xi,
 void BasisFunction::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
                                           std::span<Gradient> gradients_out) const {
     require_span_size(gradients_out.size(), size(), "evaluate_gradients_to");
-    auto& tmp = scratch().gradients;
-    tmp.resize(size());
+    std::vector<Gradient> tmp(size());
     evaluate_gradients(xi, tmp);
     std::copy_n(tmp.begin(), tmp.size(), gradients_out.begin());
 }
@@ -85,8 +72,7 @@ void BasisFunction::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
 void BasisFunction::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
                                          std::span<Hessian> hessians_out) const {
     require_span_size(hessians_out.size(), size(), "evaluate_hessians_to");
-    auto& tmp = scratch().hessians;
-    tmp.resize(size());
+    std::vector<Hessian> tmp(size());
     evaluate_hessians(xi, tmp);
     std::copy_n(tmp.begin(), tmp.size(), hessians_out.begin());
 }

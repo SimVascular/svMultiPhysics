@@ -92,7 +92,13 @@ std::size_t axis_index_pm_one(Real coord, int order) {
         return 0u;
     }
     const Real scaled = (coord + Real(1)) * Real(order) / Real(2);
-    return static_cast<std::size_t>(std::llround(scaled));
+    const long long rounded = std::llround(scaled);
+    FE::throw_if<BasisConstructionException>(
+        rounded < 0 || rounded > static_cast<long long>(order) ||
+            !detail::basis_nearly_equal(scaled, static_cast<Real>(rounded)),
+        SVMP_HERE,
+        "LagrangeBasis: tensor-product node coordinate is off the equispaced lattice");
+    return static_cast<std::size_t>(rounded);
 }
 
 // Convert a simplex barycentric coordinate to a lattice index.
@@ -100,7 +106,14 @@ int simplex_lattice_index(Real value, int order) {
     if (order <= 0) {
         return 0;
     }
-    return static_cast<int>(std::llround(value * Real(order)));
+    const Real scaled = value * Real(order);
+    const long long rounded = std::llround(scaled);
+    FE::throw_if<BasisConstructionException>(
+        rounded < 0 || rounded > static_cast<long long>(order) ||
+            !detail::basis_nearly_equal(scaled, static_cast<Real>(rounded)),
+        SVMP_HERE,
+        "LagrangeBasis: simplex node coordinate is off the lattice");
+    return static_cast<int>(rounded);
 }
 
 // Compute simplex interpolation exponents from a reference node.
@@ -121,6 +134,11 @@ LagrangeBasis::SimplexExponent simplex_exponent_from_point(const Vec3& p,
         e[3] = simplex_lattice_index(p[2], order);
         e[0] = order - e[1] - e[2] - e[3];
     }
+    // e[0] is order minus the other exponents, so the exponents sum to order by
+    // construction; a negative e[0] means the node coordinates are off-lattice.
+    FE::throw_if<BasisConstructionException>(
+        e[0] < 0, SVMP_HERE,
+        "LagrangeBasis: simplex node coordinate yields a negative implied exponent");
     return e;
 }
 
