@@ -13,6 +13,4 @@ void UniformActiveStress::distribute_parameters(const CmMod &cm_mod,
   cm.bcast(cm_mod, &value);
 }
 
-double UniformActiveStress::operator()(const int idx) const { return value; }
-
 REGISTER_ACTIVE_STRESS_MODEL("Uniform", UniformActiveStress);

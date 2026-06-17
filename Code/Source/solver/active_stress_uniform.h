@@ -52,11 +52,6 @@ public:
   virtual void distribute_parameters(const CmMod &cm_mod,
                                      const cmType &cm) override;
 
-  /**
-   * @brief Evaluate the active stress at a given point.
-   */
-  virtual double operator()(const int idx) const override;
-
 protected:
   /**
    * @brief Initialize the state vector for a single node.
@@ -75,6 +70,14 @@ protected:
                                        const double fiber_stretch,
                                        const double fiber_stretch_rate,
                                        Vector<double> &state) const override {}
+
+  /**
+   * @brief Compute the active tension for a single node.
+   */
+  virtual double
+  compute_active_tension_local(const Vector<double> &state) const override {
+    return value;
+  }
 
   /// Active tension value.
   /// @todo[michelebucelli] Document unit of measure.

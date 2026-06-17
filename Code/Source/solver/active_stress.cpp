@@ -14,6 +14,8 @@ void ActiveStress::init(const unsigned int tnNo) {
       for (unsigned int j = 0; j < n_states; ++j)
         states(j, i) = state_loc(j);
   }
+
+  active_tension.resize(tnNo);
 }
 
 void ActiveStress::advance_time_step(const double t, const double dt) {
@@ -24,5 +26,7 @@ void ActiveStress::advance_time_step(const double t, const double dt) {
                             /* fiber_stretch = */ 0.0,
                             /* fiber_stretch_rate = */ 0.0, state_loc);
     states.set_col(i, state_loc);
+
+    active_tension[i] = compute_active_tension_local(state_loc);
   }
 }

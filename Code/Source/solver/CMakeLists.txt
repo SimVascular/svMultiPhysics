@@ -227,6 +227,8 @@ set(CSRCS
 
   active_stress.cpp
   active_stress_uniform.cpp
+  active_stress_ode.cpp
+  active_stress_nash_panfilov.cpp
   
   SPLIT.c
 

@@ -54,10 +54,10 @@ public:
    * @param[in] idx Index of the degree of freedom for which the active stress
    *   must be returned.
    *
-   * @return Active stress value at the given point.
+   * @return Active tension value at the given point.
    * @todo[michelebucelli] Document the unit of measure.
    */
-  virtual double operator()(const int idx) const = 0;
+  virtual double operator()(const int idx) const { return active_tension[idx]; }
 
   /**
    * @brief Initialize the model.
@@ -71,7 +71,7 @@ public:
    *   here (as opposed to e.g. the number of nodes in the domain where this
    *   model is defined).
    */
-  void init(const unsigned int tnNo);
+  virtual void init(const unsigned int tnNo);
 
   /**
    * @brief Advance in time.
@@ -89,7 +89,7 @@ protected:
    * @brief Initialize the state vector for a single node.
    *
    * @param[out] state State vector for a single node, to be initialized by
-   *   this function.ß
+   *   this function.
    */
   virtual void init_local(Vector<double> &state) const = 0;
 
@@ -110,8 +110,17 @@ protected:
                                        const double fiber_stretch_rate,
                                        Vector<double> &state) const = 0;
 
+  /**
+   * @brief Compute the active tension for a single node.
+   */
+  virtual double
+  compute_active_tension_local(const Vector<double> &state) const = 0;
+
   /// State variables for the model.
   Array<double> states;
+
+  /// Active tension at every node.
+  Vector<double> active_tension;
 };
 
 /**
