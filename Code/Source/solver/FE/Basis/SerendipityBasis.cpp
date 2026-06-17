@@ -258,222 +258,108 @@ constexpr std::array<std::array<Real, 20>, 20> kHex20Coefficients = {{
     {{0.125, 0.125, -0.125, -0.125, -0.125, -0.125, 0.125, 0.125, -0.25, 0.25, 0.25, -0.25, 0, 0, 0, 0, 0, 0, 0, 0}}
 }};
 
-inline std::array<Real, 3> quadratic_powers(Real x) {
-    return {Real(1), x, x * x};
+// Value and first/second derivatives of the 1D monomial x^a. The derivative of
+// a constant or linear term collapses to zero, so negative powers never arise.
+struct MonomialAxis {
+    Real value;   ///< x^a
+    Real first;   ///< d/dx (x^a)     = a x^(a-1)
+    Real second;  ///< d^2/dx^2 (x^a) = a (a-1) x^(a-2)
+};
+
+inline Real integer_power(Real base, int exponent) {
+    Real result = Real(1);
+    for (int k = 0; k < exponent; ++k) {
+        result *= base;
+    }
+    return result;
 }
 
-void eval_hex20_internal(Real r, Real s, Real t, std::span<Real> internal_vals) {
-    const auto rp = quadratic_powers(r);
-    const auto sp = quadratic_powers(s);
-    const auto tp = quadratic_powers(t);
-    Real phi[20];
-    for (int j = 0; j < 20; ++j) {
-        const int a = kHex20MonomialExponents[j][0];
-        const int b = kHex20MonomialExponents[j][1];
-        const int c = kHex20MonomialExponents[j][2];
-        phi[j] = rp[static_cast<std::size_t>(a)] *
-                 sp[static_cast<std::size_t>(b)] *
-                 tp[static_cast<std::size_t>(c)];
-    }
-    for (int i = 0; i < 20; ++i) {
-        Real v = Real(0);
-        for (int j = 0; j < 20; ++j) {
-            v += kHex20Coefficients[j][i] * phi[j];
-        }
-        internal_vals[i] = v;
-    }
+inline MonomialAxis monomial_axis(Real x, int exponent) {
+    MonomialAxis axis;
+    axis.value = integer_power(x, exponent);
+    axis.first = (exponent > 0) ? Real(exponent) * integer_power(x, exponent - 1) : Real(0);
+    axis.second = (exponent > 1)
+                      ? Real(exponent * (exponent - 1)) * integer_power(x, exponent - 2)
+                      : Real(0);
+    return axis;
 }
 
-void eval_hex20_grad_internal(Real r, Real s, Real t, std::span<Gradient> internal_grads) {
-    const auto rp = quadratic_powers(r);
-    const auto sp = quadratic_powers(s);
-    const auto tp = quadratic_powers(t);
-    Real dphi_dr[20], dphi_ds[20], dphi_dt[20];
-    for (int j = 0; j < 20; ++j) {
-        const int a = kHex20MonomialExponents[j][0];
-        const int b = kHex20MonomialExponents[j][1];
-        const int c = kHex20MonomialExponents[j][2];
+// Evaluate a nodal basis defined by a monomial coefficient table at one
+// reference point. For each monomial j the routine forms x^a y^b z^c and the
+// requested derivatives, then accumulates the coefficient-weighted sum into the
+// output slots. `count` is both the number of monomials and the number of basis
+// functions (the coefficient table is square). Outputs are assumed pre-zeroed by
+// the caller; an empty span skips that quantity.
+//
+// `table_to_output_order` maps each output slot to the basis column of the
+// coefficient table. An empty span means the table is already in output (public
+// node) order, i.e. the identity permutation: Hex20 supplies a real permutation
+// because its table is authored in an internal node order, while Wedge15 and the
+// quadrilateral serendipity tables are authored directly in public order.
+template <typename ExponentFn, typename CoeffFn>
+void eval_monomial_basis(Real r, Real s, Real t,
+                         std::size_t count,
+                         ExponentFn&& exponent,
+                         CoeffFn&& coeff,
+                         std::span<const std::size_t> table_to_output_order,
+                         std::span<Real> values,
+                         std::span<Gradient> gradients,
+                         std::span<Hessian> hessians) {
+    const bool want_values = !values.empty();
+    const bool want_gradients = !gradients.empty();
+    const bool want_hessians = !hessians.empty();
 
-        dphi_dr[j] = (a > 0) ? Real(a) * rp[static_cast<std::size_t>(a - 1)] *
-                                    sp[static_cast<std::size_t>(b)] *
-                                    tp[static_cast<std::size_t>(c)]
-                              : Real(0);
-        dphi_ds[j] = (b > 0) ? rp[static_cast<std::size_t>(a)] *
-                                    Real(b) * sp[static_cast<std::size_t>(b - 1)] *
-                                    tp[static_cast<std::size_t>(c)]
-                              : Real(0);
-        dphi_dt[j] = (c > 0) ? rp[static_cast<std::size_t>(a)] *
-                                    sp[static_cast<std::size_t>(b)] *
-                                    Real(c) * tp[static_cast<std::size_t>(c - 1)]
-                              : Real(0);
-    }
+    for (std::size_t j = 0; j < count; ++j) {
+        const std::array<int, 3> e = exponent(j);
+        const MonomialAxis ax = monomial_axis(r, e[0]);
+        const MonomialAxis ay = monomial_axis(s, e[1]);
+        const MonomialAxis az = monomial_axis(t, e[2]);
 
-    for (int i = 0; i < 20; ++i) {
-        Real gr = Real(0), gs = Real(0), gt = Real(0);
-        for (int j = 0; j < 20; ++j) {
-            gr += kHex20Coefficients[j][i] * dphi_dr[j];
-            gs += kHex20Coefficients[j][i] * dphi_ds[j];
-            gt += kHex20Coefficients[j][i] * dphi_dt[j];
+        const Real phi = ax.value * ay.value * az.value;
+
+        Real d_dr = Real(0), d_ds = Real(0), d_dt = Real(0);
+        if (want_gradients || want_hessians) {
+            d_dr = ax.first * ay.value * az.value;
+            d_ds = ax.value * ay.first * az.value;
+            d_dt = ax.value * ay.value * az.first;
         }
-        internal_grads[i][0] = gr;
-        internal_grads[i][1] = gs;
-        internal_grads[i][2] = gt;
-    }
-}
 
-void eval_hex20_hess_internal(Real r, Real s, Real t, std::span<Hessian> internal_hessians) {
-    const auto rp = quadratic_powers(r);
-    const auto sp = quadratic_powers(s);
-    const auto tp = quadratic_powers(t);
-    Real d2phi_drr[20], d2phi_dss[20], d2phi_dtt[20];
-    Real d2phi_drs[20], d2phi_drt[20], d2phi_dst[20];
-    for (int j = 0; j < 20; ++j) {
-        const int a = kHex20MonomialExponents[j][0];
-        const int b = kHex20MonomialExponents[j][1];
-        const int c = kHex20MonomialExponents[j][2];
-
-        d2phi_drr[j] = (a > 1) ? Real(a * (a - 1)) *
-                                      rp[static_cast<std::size_t>(a - 2)] *
-                                      sp[static_cast<std::size_t>(b)] *
-                                      tp[static_cast<std::size_t>(c)]
-                                : Real(0);
-        d2phi_dss[j] = (b > 1) ? rp[static_cast<std::size_t>(a)] *
-                                      Real(b * (b - 1)) *
-                                      sp[static_cast<std::size_t>(b - 2)] *
-                                      tp[static_cast<std::size_t>(c)]
-                                : Real(0);
-        d2phi_dtt[j] = (c > 1) ? rp[static_cast<std::size_t>(a)] *
-                                      sp[static_cast<std::size_t>(b)] *
-                                      Real(c * (c - 1)) *
-                                      tp[static_cast<std::size_t>(c - 2)]
-                                : Real(0);
-        d2phi_drs[j] = (a > 0 && b > 0) ? Real(a * b) *
-                                              rp[static_cast<std::size_t>(a - 1)] *
-                                              sp[static_cast<std::size_t>(b - 1)] *
-                                              tp[static_cast<std::size_t>(c)]
-                                        : Real(0);
-        d2phi_drt[j] = (a > 0 && c > 0) ? Real(a * c) *
-                                              rp[static_cast<std::size_t>(a - 1)] *
-                                              sp[static_cast<std::size_t>(b)] *
-                                              tp[static_cast<std::size_t>(c - 1)]
-                                        : Real(0);
-        d2phi_dst[j] = (b > 0 && c > 0) ? rp[static_cast<std::size_t>(a)] *
-                                              Real(b * c) *
-                                              sp[static_cast<std::size_t>(b - 1)] *
-                                              tp[static_cast<std::size_t>(c - 1)]
-                                        : Real(0);
-    }
-
-    for (int i = 0; i < 20; ++i) {
-        Hessian H = Hessian::Zero();
-        for (int j = 0; j < 20; ++j) {
-            H(0, 0) += kHex20Coefficients[j][i] * d2phi_drr[j];
-            H(1, 1) += kHex20Coefficients[j][i] * d2phi_dss[j];
-            H(2, 2) += kHex20Coefficients[j][i] * d2phi_dtt[j];
-            H(0, 1) += kHex20Coefficients[j][i] * d2phi_drs[j];
-            H(0, 2) += kHex20Coefficients[j][i] * d2phi_drt[j];
-            H(1, 2) += kHex20Coefficients[j][i] * d2phi_dst[j];
+        Real d_drr = Real(0), d_dss = Real(0), d_dtt = Real(0);
+        Real d_drs = Real(0), d_drt = Real(0), d_dst = Real(0);
+        if (want_hessians) {
+            d_drr = ax.second * ay.value * az.value;
+            d_dss = ax.value * ay.second * az.value;
+            d_dtt = ax.value * ay.value * az.second;
+            d_drs = ax.first * ay.first * az.value;
+            d_drt = ax.first * ay.value * az.first;
+            d_dst = ax.value * ay.first * az.first;
         }
-        H(1, 0) = H(0, 1);
-        H(2, 0) = H(0, 2);
-        H(2, 1) = H(1, 2);
-        internal_hessians[i] = H;
-    }
-}
 
-void eval_wedge15_polynomial(Real r,
-                             Real s,
-                             Real t,
-                             std::span<Real> values,
-                             std::span<Gradient> gradients,
-                             std::span<Hessian> hessians) {
-    Real phi[15]{};
-    Real dr[15]{};
-    Real ds[15]{};
-    Real dt[15]{};
-    Real drr[15]{};
-    Real dss[15]{};
-    Real dtt[15]{};
-    Real drs[15]{};
-    Real drt[15]{};
-    Real dst[15]{};
-
-    const auto rp = quadratic_powers(r);
-    const auto sp = quadratic_powers(s);
-    const auto tp = quadratic_powers(t);
-
-    for (int j = 0; j < 15; ++j) {
-        const auto& exponent = kWedge15MonomialExponents[static_cast<std::size_t>(j)];
-        const int a = exponent[0];
-        const int b = exponent[1];
-        const int c = exponent[2];
-        const auto ar = static_cast<std::size_t>(a);
-        const auto bs = static_cast<std::size_t>(b);
-        const auto ct = static_cast<std::size_t>(c);
-
-        const Real ra = rp[ar];
-        const Real sb = sp[bs];
-        const Real tc = tp[ct];
-
-        if (!values.empty()) {
-            phi[j] = ra * sb * tc;
-        }
-        if (!gradients.empty()) {
-            dr[j] = (a > 0) ? Real(a) * rp[ar - 1u] * sb * tc : Real(0);
-            ds[j] = (b > 0) ? ra * Real(b) * sp[bs - 1u] * tc : Real(0);
-            dt[j] = (c > 0) ? ra * sb * Real(c) * tp[ct - 1u] : Real(0);
-        }
-        if (!hessians.empty()) {
-            drr[j] = (a > 1) ? Real(a * (a - 1)) * rp[ar - 2u] * sb * tc : Real(0);
-            dss[j] = (b > 1) ? ra * Real(b * (b - 1)) * sp[bs - 2u] * tc : Real(0);
-            dtt[j] = (c > 1) ? ra * sb * Real(c * (c - 1)) * tp[ct - 2u] : Real(0);
-            drs[j] = (a > 0 && b > 0) ? Real(a * b) * rp[ar - 1u] * sp[bs - 1u] * tc : Real(0);
-            drt[j] = (a > 0 && c > 0) ? Real(a * c) * rp[ar - 1u] * sb * tp[ct - 1u] : Real(0);
-            dst[j] = (b > 0 && c > 0) ? ra * Real(b * c) * sp[bs - 1u] * tp[ct - 1u] : Real(0);
-        }
-    }
-
-    for (int i = 0; i < 15; ++i) {
-        Real value = Real(0);
-        Real gr = Real(0);
-        Real gs = Real(0);
-        Real gt = Real(0);
-        Hessian H = Hessian::Zero();
-        for (int j = 0; j < 15; ++j) {
-            const Real coefficient =
-                kWedge15Coefficients[static_cast<std::size_t>(j)][static_cast<std::size_t>(i)];
-            if (!values.empty()) {
-                value += coefficient * phi[j];
+        for (std::size_t slot = 0; slot < count; ++slot) {
+            const std::size_t basis_index =
+                table_to_output_order.empty() ? slot : table_to_output_order[slot];
+            const Real c = coeff(j, basis_index);
+            if (want_values) {
+                values[slot] += c * phi;
             }
-            if (!gradients.empty()) {
-                gr += coefficient * dr[j];
-                gs += coefficient * ds[j];
-                gt += coefficient * dt[j];
+            if (want_gradients) {
+                Gradient& g = gradients[slot];
+                g[0] += c * d_dr;
+                g[1] += c * d_ds;
+                g[2] += c * d_dt;
             }
-            if (!hessians.empty()) {
-                H(0, 0) += coefficient * drr[j];
-                H(1, 1) += coefficient * dss[j];
-                H(2, 2) += coefficient * dtt[j];
-                H(0, 1) += coefficient * drs[j];
-                H(0, 2) += coefficient * drt[j];
-                H(1, 2) += coefficient * dst[j];
+            if (want_hessians) {
+                Hessian& h = hessians[slot];
+                h(0, 0) += c * d_drr;
+                h(1, 1) += c * d_dss;
+                h(2, 2) += c * d_dtt;
+                h(0, 1) += c * d_drs;
+                h(1, 0) += c * d_drs;
+                h(0, 2) += c * d_drt;
+                h(2, 0) += c * d_drt;
+                h(1, 2) += c * d_dst;
+                h(2, 1) += c * d_dst;
             }
-        }
-
-        const std::size_t index = static_cast<std::size_t>(i);
-        if (!values.empty()) {
-            values[index] = value;
-        }
-        if (!gradients.empty()) {
-            gradients[index][0] = gr;
-            gradients[index][1] = gs;
-            gradients[index][2] = gt;
-        }
-        if (!hessians.empty()) {
-            H(1, 0) = H(0, 1);
-            H(2, 0) = H(0, 2);
-            H(2, 1) = H(1, 2);
-            hessians[index] = H;
         }
     }
 }
@@ -581,43 +467,20 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
             SVMP_HERE,
             "SerendipityBasis: quadrilateral interpolation tables are not initialized for value evaluation");
 
-        for (std::size_t j = 0; j < size_; ++j) {
-            const auto [ax, ay] = quad_monomial_exponents_[j];
-            const Real value = std::pow(x, ax) * std::pow(y, ay);
-            const Real dx =
-                (ax > 0) ? Real(ax) * std::pow(x, ax - 1) * std::pow(y, ay) : Real(0);
-            const Real dy =
-                (ay > 0) ? std::pow(x, ax) * Real(ay) * std::pow(y, ay - 1) : Real(0);
-            const Real dxx =
-                (ax > 1) ? Real(ax * (ax - 1)) * std::pow(x, ax - 2) * std::pow(y, ay)
-                         : Real(0);
-            const Real dxy =
-                (ax > 0 && ay > 0)
-                    ? Real(ax * ay) * std::pow(x, ax - 1) * std::pow(y, ay - 1)
-                    : Real(0);
-            const Real dyy =
-                (ay > 1) ? Real(ay * (ay - 1)) * std::pow(x, ax) * std::pow(y, ay - 2)
-                         : Real(0);
-
-            for (std::size_t i = 0; i < size_; ++i) {
-                const Real coeff = quad_inv_vandermonde_[j * size_ + i];
-                if (!values_out.empty()) {
-                    values_out[i] += value * coeff;
-                }
-                if (!gradients_out.empty()) {
-                    Gradient& g = gradients_out[i];
-                    g[0] += dx * coeff;
-                    g[1] += dy * coeff;
-                }
-                if (!hessians_out.empty()) {
-                    Hessian& h = hessians_out[i];
-                    h(0, 0) += dxx * coeff;
-                    h(0, 1) += dxy * coeff;
-                    h(1, 0) += dxy * coeff;
-                    h(1, 1) += dyy * coeff;
-                }
-            }
-        }
+        // Quadrilateral serendipity monomials are planar; the through-axis
+        // exponent is zero, so all z derivatives vanish. The inverse Vandermonde
+        // is already in public node order (identity output ordering).
+        eval_monomial_basis(
+            x, y, z, size_,
+            [this](std::size_t j) {
+                const auto& e = quad_monomial_exponents_[j];
+                return std::array<int, 3>{e[0], e[1], 0};
+            },
+            [this](std::size_t j, std::size_t i) {
+                return quad_inv_vandermonde_[j * size_ + i];
+            },
+            std::span<const std::size_t>{},
+            values_out, gradients_out, hessians_out);
         return;
     }
 
@@ -627,41 +490,29 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
     }
 
     if (element_type_ == ElementType::Hex20) {
+        // The Hex20 coefficient table is authored in an internal node order, so
+        // results are remapped into the public node layout through mesh_to_basis.
         const auto mesh_to_basis = ReferenceNodeLayout::mesh_to_basis_ordering(element_type_);
         FE::throw_if<BasisEvaluationException>(mesh_to_basis.size() != size_, SVMP_HERE,
                                                "Hex20 mesh-to-basis ordering is not registered");
-
-        if (!values_out.empty()) {
-            std::array<Real, 20u> internal_vals{};
-            eval_hex20_internal(x, y, z, internal_vals);
-            for (std::size_t i = 0; i < 20u; ++i) {
-                values_out[i] = internal_vals[mesh_to_basis[i]];
-            }
-        }
-        if (!gradients_out.empty()) {
-            std::array<Gradient, 20u> internal_grads{};
-            eval_hex20_grad_internal(x, y, z, internal_grads);
-            for (std::size_t i = 0; i < 20u; ++i) {
-                gradients_out[i] = internal_grads[mesh_to_basis[i]];
-            }
-        }
-        if (!hessians_out.empty()) {
-            std::array<Hessian, 20u> internal_hessians{};
-            eval_hex20_hess_internal(x, y, z, internal_hessians);
-            for (std::size_t i = 0; i < 20u; ++i) {
-                hessians_out[i] = internal_hessians[mesh_to_basis[i]];
-            }
-        }
+        eval_monomial_basis(
+            x, y, z, size_,
+            [](std::size_t j) { return kHex20MonomialExponents[j]; },
+            [](std::size_t j, std::size_t i) { return kHex20Coefficients[j][i]; },
+            mesh_to_basis,
+            values_out, gradients_out, hessians_out);
         return;
     }
 
     if (element_type_ == ElementType::Wedge15) {
-        eval_wedge15_polynomial(x,
-                                 y,
-                                 z,
-                                 values_out,
-                                 gradients_out,
-                                 hessians_out);
+        // The Wedge15 coefficient table is authored directly in public node
+        // order, so no output reordering is applied (identity permutation).
+        eval_monomial_basis(
+            x, y, z, size_,
+            [](std::size_t j) { return kWedge15MonomialExponents[j]; },
+            [](std::size_t j, std::size_t i) { return kWedge15Coefficients[j][i]; },
+            std::span<const std::size_t>{},
+            values_out, gradients_out, hessians_out);
         return;
     }
 
