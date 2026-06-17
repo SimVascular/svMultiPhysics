@@ -100,7 +100,7 @@ public:
     /// ReferenceNodeLayout.
     ///
     /// \return Reference node coordinates, one per basis function.
-    const std::vector<math::Vector<Real, 3>>& nodes() const noexcept { return nodes_; }
+    const std::vector<math::Vector<Real, 3>>& nodes() const noexcept final { return nodes_; }
 
     /// \brief Evaluate serendipity basis function values at a reference coordinate.
     ///

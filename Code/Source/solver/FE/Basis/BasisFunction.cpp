@@ -32,6 +32,13 @@ void require_span_size(std::size_t actual,
 
 } // namespace
 
+const std::vector<math::Vector<Real, 3>>& BasisFunction::nodes() const noexcept {
+    // Default for bases that do not expose interpolation nodes; nodal families
+    // (LagrangeBasis, SerendipityBasis) override this to return their layout.
+    static const std::vector<math::Vector<Real, 3>> kNoNodes;
+    return kNoNodes;
+}
+
 void BasisFunction::evaluate_gradients(const math::Vector<Real, 3>& xi,
                                        std::vector<Gradient>& gradients) const {
     (void)xi;

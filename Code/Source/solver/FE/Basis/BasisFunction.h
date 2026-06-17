@@ -194,6 +194,18 @@ public:
     /// \return Basis function count.
     virtual std::size_t size() const noexcept = 0;
 
+    /// \brief Return the reference interpolation nodes in basis ordering.
+    ///
+    /// \details Nodal families return one reference-element coordinate per basis
+    /// function, in the same order as the evaluator outputs. Bases that do not
+    /// define interpolation nodes (non-nodal families, or abstract base usage)
+    /// return an empty vector. The returned reference is valid for the lifetime
+    /// of the basis object.
+    ///
+    /// \return Reference node coordinates: size() entries for nodal families,
+    ///         empty otherwise.
+    virtual const std::vector<math::Vector<Real, 3>>& nodes() const noexcept;
+
     /// \brief Evaluate basis function values at a reference coordinate.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param values Receives one value per basis function.

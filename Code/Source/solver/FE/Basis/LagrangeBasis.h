@@ -61,7 +61,7 @@ namespace basis {
 /// The vector-returning evaluators are convenient API wrappers. The `*_to`
 /// methods write to caller-provided spans and are intended for assembly paths
 /// that avoid temporary allocations.
-class LagrangeBasis : public BasisFunction {
+class LagrangeBasis final : public BasisFunction {
 public:
     /// \brief Axis-index tuple for tensor-product reference nodes.
     using TensorNodeIndex = std::array<std::size_t, 3>;
@@ -88,19 +88,19 @@ public:
     LagrangeBasis(ElementType type, int order);
 
     /// \copydoc BasisFunction::basis_type()
-    BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
+    BasisType basis_type() const noexcept final { return BasisType::Lagrange; }
 
     /// \copydoc BasisFunction::element_type()
-    ElementType element_type() const noexcept override { return element_type_; }
+    ElementType element_type() const noexcept final { return element_type_; }
 
     /// \copydoc BasisFunction::dimension()
-    int dimension() const noexcept override { return dimension_; }
+    int dimension() const noexcept final { return dimension_; }
 
     /// \copydoc BasisFunction::order()
-    int order() const noexcept override { return order_; }
+    int order() const noexcept final { return order_; }
 
     /// \copydoc BasisFunction::size()
-    std::size_t size() const noexcept override { return nodes_.size(); }
+    std::size_t size() const noexcept final { return nodes_.size(); }
 
     /// \brief Return the reference interpolation nodes in basis ordering.
     ///
@@ -111,7 +111,7 @@ public:
     /// reference coordinates with a \f$[-1,1]\f$ through-axis coordinate.
     ///
     /// \return Reference node coordinates, one per basis function.
-    const std::vector<math::Vector<Real, 3>>& nodes() const noexcept { return nodes_; }
+    const std::vector<math::Vector<Real, 3>>& nodes() const noexcept final { return nodes_; }
 
     /// \brief Evaluate Lagrange basis function values at a reference coordinate.
     ///
