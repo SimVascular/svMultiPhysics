@@ -174,52 +174,6 @@ namespace detail {
     }
 }
 
-[[nodiscard]] constexpr std::size_t line_lagrange_size(int order) noexcept {
-    return order >= 0 ? static_cast<std::size_t>(order + 1) : 0u;
-}
-
-[[nodiscard]] constexpr std::size_t triangle_lagrange_size(int order) noexcept {
-    return order >= 0 ? static_cast<std::size_t>((order + 1) * (order + 2) / 2) : 0u;
-}
-
-[[nodiscard]] constexpr std::size_t quad_lagrange_size(int order) noexcept {
-    return order >= 0 ? static_cast<std::size_t>((order + 1) * (order + 1)) : 0u;
-}
-
-[[nodiscard]] constexpr std::size_t tetra_lagrange_size(int order) noexcept {
-    return order >= 0 ? static_cast<std::size_t>((order + 1) * (order + 2) * (order + 3) / 6) : 0u;
-}
-
-[[nodiscard]] constexpr std::size_t hex_lagrange_size(int order) noexcept {
-    return order >= 0 ? static_cast<std::size_t>((order + 1) * (order + 1) * (order + 1)) : 0u;
-}
-
-[[nodiscard]] constexpr std::size_t wedge_lagrange_size(int order) noexcept {
-    return triangle_lagrange_size(order) * line_lagrange_size(order);
-}
-
-[[nodiscard]] constexpr std::size_t complete_lagrange_alias_size(ElementType type) noexcept {
-    const int order = complete_lagrange_alias_order(type);
-    switch (canonical_lagrange_type(type)) {
-        case ElementType::Point1:
-            return 1u;
-        case ElementType::Line2:
-            return line_lagrange_size(order);
-        case ElementType::Triangle3:
-            return triangle_lagrange_size(order);
-        case ElementType::Quad4:
-            return quad_lagrange_size(order);
-        case ElementType::Tetra4:
-            return tetra_lagrange_size(order);
-        case ElementType::Hex8:
-            return hex_lagrange_size(order);
-        case ElementType::Wedge6:
-            return wedge_lagrange_size(order);
-        default:
-            return 0u;
-    }
-}
-
 } // namespace basis
 } // namespace FE
 } // namespace svmp
