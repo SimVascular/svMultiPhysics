@@ -496,8 +496,8 @@ void require_requested_span_size(std::span<T> output,
 
 } // namespace
 
-SerendipityBasis::SerendipityBasis(ElementType type, int order, bool geometry_mode)
-    : element_type_(type), dimension_(0), order_(order), size_(0), geometry_mode_(geometry_mode) {
+SerendipityBasis::SerendipityBasis(ElementType type, int order)
+    : element_type_(type), dimension_(0), order_(order), size_(0) {
     if (type == ElementType::Quad4 || type == ElementType::Quad8) {
         dimension_ = 2;
         if (order_ < 1) {
@@ -622,11 +622,6 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
     }
 
     if (dimension_ == 3 && order_ == 1) {
-        evaluate_hex8_reference(x, y, z, values_out, gradients_out, hessians_out);
-        return;
-    }
-
-    if (geometry_mode_ && element_type_ == ElementType::Hex20) {
         evaluate_hex8_reference(x, y, z, values_out, gradients_out, hessians_out);
         return;
     }

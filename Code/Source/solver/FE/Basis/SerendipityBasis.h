@@ -57,11 +57,6 @@ namespace basis {
 /// Hessians are obtained by differentiating those monomials. Hex20 evaluation
 /// is reordered through ReferenceNodeLayout so the output matches the public
 /// basis ordering.
-///
-/// When `geometry_mode` is enabled for Hex20, the basis uses the trilinear
-/// Hex8 corner functions for geometry mapping and assigns zero contribution to
-/// the quadratic edge nodes. This preserves the public Hex20 node count while
-/// intentionally reducing the geometry interpolation order.
 class SerendipityBasis final : public BasisFunction {
 public:
     /// \brief Construct a serendipity basis for an element type and polynomial order.
@@ -76,10 +71,9 @@ public:
     ///
     /// \param type Element type used to determine topology and reference-node layout.
     /// \param order Requested polynomial order.
-    /// \param geometry_mode When true, allow reduced geometry-mapping behavior for supported elements.
-    /// \throws BasisConfigurationException If the requested order or mode is invalid.
+    /// \throws BasisConfigurationException If the requested order is invalid.
     /// \throws BasisElementCompatibilityException If the element type is unsupported.
-    SerendipityBasis(ElementType type, int order, bool geometry_mode = false);
+    SerendipityBasis(ElementType type, int order);
 
     /// \copydoc BasisFunction::basis_type()
     BasisType basis_type() const noexcept final { return BasisType::Serendipity; }
@@ -114,8 +108,7 @@ public:
     /// monomial vector and multiplies by the inverse Vandermonde matrix to
     /// obtain nodal shape-function values. For Hex8, values are the standard
     /// trilinear corner products. For Hex20 and Wedge15, values are evaluated
-    /// from the stored polynomial coefficient tables. In Hex20 geometry mode,
-    /// only the first eight corner values are nonzero and they match Hex8.
+    /// from the stored polynomial coefficient tables.
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param values Receives one value per basis function.
@@ -129,8 +122,7 @@ public:
     /// before applying the inverse Vandermonde coefficients. Hex8 gradients are
     /// direct derivatives of the trilinear corner products. Hex20 and Wedge15
     /// gradients are computed by differentiating the tabulated monomial
-    /// expansions. In Hex20 geometry mode, edge-node gradients are zero and the
-    /// corner gradients match Hex8.
+    /// expansions.
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param gradients Receives one three-component gradient per basis function.
@@ -144,8 +136,7 @@ public:
     /// derivatives of the monomial vector and inverse Vandermonde coefficients.
     /// Hex8 Hessians are delegated to the linear Lagrange Hex8 basis. Hex20 and
     /// Wedge15 Hessians are computed by differentiating their polynomial
-    /// coefficient tables twice. In Hex20 geometry mode, only the corner
-    /// Hessians from the Hex8 geometry mapping are populated.
+    /// coefficient tables twice.
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param hessians Receives one 3-by-3 Hessian per basis function.
@@ -194,10 +185,6 @@ private:
     std::vector<std::array<int, 2>> quad_monomial_exponents_;
     // Row-major inverse Vandermonde, indexed as [monomial, basis].
     std::vector<Real> quad_inv_vandermonde_;
-
-    // When true, this basis is used purely for geometry mapping and may use
-    // reduced polynomial order (e.g., Hex20 geometry as Hex8).
-    bool geometry_mode_;
 
     void evaluate_all_to(const math::Vector<Real, 3>& xi,
                          std::span<Real> values_out,
