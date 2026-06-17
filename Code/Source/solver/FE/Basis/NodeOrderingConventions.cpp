@@ -211,34 +211,46 @@ std::vector<Point> generate_hex_nodes(int order) {
         }
     }
 
-    for (int j = 1; j < order; ++j) {
-        for (int i = 1; i < order; ++i) {
-            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), Real(-1)});
-        }
-    }
-    for (int j = 1; j < order; ++j) {
-        for (int i = 1; i < order; ++i) {
-            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), Real(1)});
-        }
-    }
+    // Face-interior nodes, emitted in VTK face order so the layout matches the
+    // VTK cell node numbering the solver ingests from .vtu meshes:
+    //   -X, +X, -Y, +Y, -Z, +Z  (e.g. Hex27 face centers become nodes 20..25).
+    // For order >= 3 the within-face node sequence follows the loops below; only
+    // the face order is normalized to VTK, which is all the supported Hex8/20/27
+    // elements require.
+    // -X face (x = -1)
     for (int k = 1; k < order; ++k) {
-        for (int i = 1; i < order; ++i) {
-            nodes.push_back(Point{line_coord_pm_one(i, order), Real(-1), line_coord_pm_one(k, order)});
+        for (int j = order - 1; j >= 1; --j) {
+            nodes.push_back(Point{Real(-1), line_coord_pm_one(j, order), line_coord_pm_one(k, order)});
         }
     }
+    // +X face (x = +1)
     for (int k = 1; k < order; ++k) {
         for (int j = 1; j < order; ++j) {
             nodes.push_back(Point{Real(1), line_coord_pm_one(j, order), line_coord_pm_one(k, order)});
         }
     }
+    // -Y face (y = -1)
+    for (int k = 1; k < order; ++k) {
+        for (int i = 1; i < order; ++i) {
+            nodes.push_back(Point{line_coord_pm_one(i, order), Real(-1), line_coord_pm_one(k, order)});
+        }
+    }
+    // +Y face (y = +1)
     for (int k = 1; k < order; ++k) {
         for (int i = order - 1; i >= 1; --i) {
             nodes.push_back(Point{line_coord_pm_one(i, order), Real(1), line_coord_pm_one(k, order)});
         }
     }
-    for (int k = 1; k < order; ++k) {
-        for (int j = order - 1; j >= 1; --j) {
-            nodes.push_back(Point{Real(-1), line_coord_pm_one(j, order), line_coord_pm_one(k, order)});
+    // -Z face (z = -1)
+    for (int j = 1; j < order; ++j) {
+        for (int i = 1; i < order; ++i) {
+            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), Real(-1)});
+        }
+    }
+    // +Z face (z = +1)
+    for (int j = 1; j < order; ++j) {
+        for (int i = 1; i < order; ++i) {
+            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), Real(1)});
         }
     }
     for (int k = 1; k < order; ++k) {

@@ -154,9 +154,12 @@ const febasis::BasisFunction& basis_for_solver_element(consts::ElementType eType
 /// library number element nodes with different conventions, so this table
 /// reconciles them at the adapter boundary. An empty span means the two
 /// orderings already coincide (identity) and no permutation is applied, which
-/// holds for every element type not listed below (lines, Quad4/8/9, Hex8/20).
-/// Wedge6 (WDG) reuses the Triangle6 table: its two triangular node triples are
-/// reordered exactly like a 6-node triangle.
+/// holds for the line, Quad4/8/9, and the entire hex family (Hex8/20/27): the FE
+/// Basis exposes those in the same VTK-based ordering the solver ingests from
+/// .vtu meshes. Only the simplex families need a permutation, because the solver
+/// labels simplex corners origin-last while the FE Basis lattice is origin-first;
+/// Wedge6 (WDG) reuses the Triangle6 table, since its two triangular node triples
+/// are reordered exactly like a 6-node triangle.
 /// \note These tables must stay consistent with the FE Basis lattice ordering;
 /// a mismatch would silently assign shape functions to the wrong nodes.
 std::span<const std::size_t> solver_to_basis_node_map(consts::ElementType eType)
@@ -165,10 +168,6 @@ std::span<const std::size_t> solver_to_basis_node_map(consts::ElementType eType)
   static constexpr std::array<std::size_t, 6> tri6{1, 2, 0, 4, 5, 3};
   static constexpr std::array<std::size_t, 4> tet4{1, 2, 3, 0};
   static constexpr std::array<std::size_t, 10> tet10{1, 2, 3, 0, 5, 9, 8, 4, 6, 7};
-  static constexpr std::array<std::size_t, 27> hex27{
-      0, 1, 2, 3, 4, 5, 6, 7,
-      8, 9, 10, 11, 12, 13, 14, 15,
-      16, 17, 18, 19, 25, 23, 22, 24, 20, 21, 26};
 
   switch (eType) {
     case consts::ElementType::TRI3:
@@ -180,8 +179,6 @@ std::span<const std::size_t> solver_to_basis_node_map(consts::ElementType eType)
       return tet4;
     case consts::ElementType::TET10:
       return tet10;
-    case consts::ElementType::HEX27:
-      return hex27;
     default:
       return {};
   }
