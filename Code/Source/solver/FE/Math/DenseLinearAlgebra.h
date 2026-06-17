@@ -65,6 +65,8 @@ struct DenseLUSolver {
     Eigen::PartialPivLU<DenseMatrix> lu;
     DenseMatrixDiagnostics diagnostics;
     Real pivot_tolerance{0};
+    Real min_pivot{0};
+    Real max_pivot{0};
     std::string label;
 
     [[nodiscard]] bool empty() const noexcept { return n == 0; }

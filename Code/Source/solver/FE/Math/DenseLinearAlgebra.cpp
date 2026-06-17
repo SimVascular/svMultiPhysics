@@ -185,15 +185,13 @@ DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
         min_pivot_abs = std::min(min_pivot_abs, pivot_magnitude);
     }
 
+    // PartialPivLU is not rank-revealing, so expose only what the pivots
+    // legitimately convey: the factorization passed the pivot-tolerance check
+    // above (full rank) and the pivot magnitudes.
     solver.diagnostics.rank = n;
     solver.diagnostics.tolerance = solver.pivot_tolerance;
-    solver.diagnostics.largest_singular_value = max_abs;
-    solver.diagnostics.smallest_retained_singular_value =
-        std::isfinite(min_pivot_abs) ? min_pivot_abs : Real(0);
-    if (solver.diagnostics.smallest_retained_singular_value > Real(0)) {
-        solver.diagnostics.condition_estimate =
-            max_pivot_abs / solver.diagnostics.smallest_retained_singular_value;
-    }
+    solver.max_pivot = max_pivot_abs;
+    solver.min_pivot = std::isfinite(min_pivot_abs) ? min_pivot_abs : Real(0);
     return solver;
 }
 
@@ -213,8 +211,7 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
         dense_matrix_diagnostics(std::span<const Real>(matrix.data(), matrix.size()),
                                  n, n, label);
 
-    if (std::isfinite(solver.diagnostics.condition_estimate) &&
-        std::isfinite(result.diagnostics.condition_estimate) &&
+    if (std::isfinite(result.diagnostics.condition_estimate) &&
         result.diagnostics.condition_estimate > dense_matrix_condition_fallback_threshold()) {
         const DenseMatrix dense = map_row_major(matrix, n, n);
         Eigen::JacobiSVD<DenseMatrix> svd(dense,
@@ -224,7 +221,7 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
         const auto& singular_values = svd.singularValues();
         for (Eigen::Index i = 0; i < singular_values.size(); ++i) {
             ::svmp::FE::check_arg<FEException>(
-                singular_values[i] > solver.diagnostics.tolerance, SVMP_HERE,
+                singular_values[i] > result.diagnostics.tolerance, SVMP_HERE,
                 std::string(label) + ": high-condition SVD fallback encountered a dropped singular value");
             sigma_inverse(i, i) = Real(1) / singular_values[i];
         }

@@ -1,6 +1,6 @@
 /**
- * @file test_SerendipityTensorModal.cpp
- * @brief Tests for the migrated Serendipity basis subset.
+ * @file test_SerendipityBasis.cpp
+ * @brief Nodal-delta, partition-of-unity, and polynomial-reproduction tests for SerendipityBasis.
  */
 
 #include <gtest/gtest.h>

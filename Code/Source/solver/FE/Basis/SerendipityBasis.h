@@ -134,9 +134,9 @@ public:
     /// \details Hessians are second derivatives in reference coordinates and
     /// are stored as 3-by-3 matrices. Quadrilateral Hessians use second
     /// derivatives of the monomial vector and inverse Vandermonde coefficients.
-    /// Hex8 Hessians are delegated to the linear Lagrange Hex8 basis. Hex20 and
-    /// Wedge15 Hessians are computed by differentiating their polynomial
-    /// coefficient tables twice.
+    /// Hex8 Hessians are computed directly from the trilinear corner products.
+    /// Hex20 and Wedge15 Hessians are computed by differentiating their
+    /// polynomial coefficient tables twice.
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param hessians Receives one 3-by-3 Hessian per basis function.
