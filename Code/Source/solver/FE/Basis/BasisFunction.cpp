@@ -10,16 +10,12 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
-namespace {
-
 void require_span_size(std::size_t actual,
                        std::size_t expected,
                        const char* label) {
     FE::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
-        std::string("BasisFunction::") + label + ": output span is smaller than basis size");
+        std::string(label) + ": output span is smaller than basis size");
 }
-
-} // namespace
 
 const std::vector<math::Vector<Real, 3>>& BasisFunction::nodes() const noexcept {
     // Default for bases that do not expose interpolation nodes; nodal families
@@ -55,7 +51,7 @@ void BasisFunction::evaluate_all(const math::Vector<Real, 3>& xi,
 
 void BasisFunction::evaluate_values_to(const math::Vector<Real, 3>& xi,
                                        std::span<Real> values_out) const {
-    require_span_size(values_out.size(), size(), "evaluate_values_to");
+    require_span_size(values_out.size(), size(), "BasisFunction::evaluate_values_to");
     std::vector<Real> tmp(size());
     evaluate_values(xi, tmp);
     std::copy_n(tmp.begin(), tmp.size(), values_out.begin());
@@ -63,7 +59,7 @@ void BasisFunction::evaluate_values_to(const math::Vector<Real, 3>& xi,
 
 void BasisFunction::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
                                           std::span<Gradient> gradients_out) const {
-    require_span_size(gradients_out.size(), size(), "evaluate_gradients_to");
+    require_span_size(gradients_out.size(), size(), "BasisFunction::evaluate_gradients_to");
     std::vector<Gradient> tmp(size());
     evaluate_gradients(xi, tmp);
     std::copy_n(tmp.begin(), tmp.size(), gradients_out.begin());
@@ -71,7 +67,7 @@ void BasisFunction::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
 
 void BasisFunction::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
                                          std::span<Hessian> hessians_out) const {
-    require_span_size(hessians_out.size(), size(), "evaluate_hessians_to");
+    require_span_size(hessians_out.size(), size(), "BasisFunction::evaluate_hessians_to");
     std::vector<Hessian> tmp(size());
     evaluate_hessians(xi, tmp);
     std::copy_n(tmp.begin(), tmp.size(), hessians_out.begin());

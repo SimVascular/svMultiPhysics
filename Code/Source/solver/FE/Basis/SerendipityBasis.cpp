@@ -364,22 +364,6 @@ void eval_monomial_basis(Real r, Real s, Real t,
     }
 }
 
-void require_output_span_size(std::size_t actual,
-                              std::size_t expected,
-                              const char* label) {
-    FE::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
-        std::string(label) + ": output span is smaller than basis size");
-}
-
-template<typename T>
-void require_requested_span_size(std::span<T> output,
-                                 std::size_t expected,
-                                 const char* label) {
-    if (!output.empty()) {
-        require_output_span_size(output.size(), expected, label);
-    }
-}
-
 } // namespace
 
 SerendipityBasis::SerendipityBasis(ElementType type, int order)
@@ -553,19 +537,19 @@ void SerendipityBasis::evaluate_all(const math::Vector<Real, 3>& xi,
 
 void SerendipityBasis::evaluate_values_to(const math::Vector<Real, 3>& xi,
                                           std::span<Real> values_out) const {
-    require_output_span_size(values_out.size(), size_, "SerendipityBasis::evaluate_values_to");
+    require_span_size(values_out.size(), size_, "SerendipityBasis::evaluate_values_to");
     evaluate_all_to(xi, values_out, std::span<Gradient>{}, std::span<Hessian>{});
 }
 
 void SerendipityBasis::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
                                              std::span<Gradient> gradients_out) const {
-    require_output_span_size(gradients_out.size(), size_, "SerendipityBasis::evaluate_gradients_to");
+    require_span_size(gradients_out.size(), size_, "SerendipityBasis::evaluate_gradients_to");
     evaluate_all_to(xi, std::span<Real>{}, gradients_out, std::span<Hessian>{});
 }
 
 void SerendipityBasis::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
                                             std::span<Hessian> hessians_out) const {
-    require_output_span_size(hessians_out.size(), size_, "SerendipityBasis::evaluate_hessians_to");
+    require_span_size(hessians_out.size(), size_, "SerendipityBasis::evaluate_hessians_to");
     evaluate_all_to(xi, std::span<Real>{}, std::span<Gradient>{}, hessians_out);
 }
 

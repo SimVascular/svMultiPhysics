@@ -22,13 +22,6 @@ constexpr std::array<std::size_t, 20> kHex20MeshToBasisOrder = {
     16, 17, 19, 18
 };
 
-Real line_coord_pm_one(int i, int order) {
-    if (order <= 0) {
-        return Real(0);
-    }
-    return Real(-1) + Real(2) * static_cast<Real>(i) / static_cast<Real>(order);
-}
-
 Real line_coord_zero_one(int i, int order) {
     if (order <= 0) {
         return Real(0);

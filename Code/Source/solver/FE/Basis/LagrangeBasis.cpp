@@ -19,14 +19,6 @@ namespace {
 
 using Vec3 = math::Vector<Real, 3>;
 
-// Return the equispaced 1D reference coordinate in [-1, 1].
-inline constexpr Real equispaced_pm_one_coord(int i, int order) {
-    if (order <= 0) {
-        return Real(0);
-    }
-    return Real(-1) + Real(2) * static_cast<Real>(i) / static_cast<Real>(order);
-}
-
 struct AxisEval {
     std::vector<Real> value;
     std::vector<Real> first;
@@ -53,20 +45,16 @@ BasisTopology supported_lagrange_topology(ElementType type) {
 }
 
 // Normalize named higher-order element requests to base Lagrange topologies.
+//
+// This function only adds the LagrangeBasis routing policy: serendipity
+// layouts and pyramids are rejected, and a named quadratic alias
+// (Line3, Triangle6, Quad9, Tetra10, Hex27, Wedge18) is floored
+// to at least quadratic order. The floor only raises the
+// order: a higher requested order on an alias is honored, so
+// LagrangeBasis(Hex27, 5) yields an order-5 basis on the Hex8 topology rather
+// than rejecting the over-specified order.
 NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, int order) {
     switch (element_type) {
-        case ElementType::Line3:
-            return {ElementType::Line2, std::max(order, 2)};
-        case ElementType::Triangle6:
-            return {ElementType::Triangle3, std::max(order, 2)};
-        case ElementType::Quad9:
-            return {ElementType::Quad4, std::max(order, 2)};
-        case ElementType::Tetra10:
-            return {ElementType::Tetra4, std::max(order, 2)};
-        case ElementType::Hex27:
-            return {ElementType::Hex8, std::max(order, 2)};
-        case ElementType::Wedge18:
-            return {ElementType::Wedge6, std::max(order, 2)};
         case ElementType::Quad8:
             FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "LagrangeBasis: Quad8 is serendipity; use SerendipityBasis");
@@ -82,8 +70,13 @@ NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, i
             FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "LagrangeBasis: pyramid support is not within the current solver basis scope");
         default:
-            return {element_type, order};
+            break;
     }
+
+    const ElementType canonical = canonical_lagrange_type(element_type);
+    const bool is_quadratic_alias = canonical != element_type;
+    const int normalized_order = is_quadratic_alias ? std::max(order, 2) : order;
+    return {canonical, normalized_order};
 }
 
 // Convert a coordinate on [-1, 1] to an equispaced axis node index.
@@ -304,22 +297,6 @@ void evaluate_simplex(const Vec3& xi,
     }
 }
 
-void require_output_span_size(std::size_t actual,
-                              std::size_t expected,
-                              const char* label) {
-    FE::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
-        std::string(label) + ": output span is smaller than basis size");
-}
-
-template<typename T>
-void require_requested_span_size(std::span<T> output,
-                                 std::size_t expected,
-                                 const char* label) {
-    if (!output.empty()) {
-        require_output_span_size(output.size(), expected, label);
-    }
-}
-
 } // namespace
 
 LagrangeBasis::LagrangeBasis(ElementType type, int order)
@@ -340,7 +317,7 @@ void LagrangeBasis::init_equispaced_1d_nodes() {
     nodes_1d_.resize(static_cast<std::size_t>(order_ + 1));
     for (int i = 0; i <= order_; ++i) {
         nodes_1d_[static_cast<std::size_t>(i)] =
-            equispaced_pm_one_coord(i, order_);
+            line_coord_pm_one(i, order_);
     }
 }
 
@@ -633,19 +610,19 @@ void LagrangeBasis::evaluate_all(const Vec3& xi,
 
 void LagrangeBasis::evaluate_values_to(const Vec3& xi,
                                        std::span<Real> values_out) const {
-    require_output_span_size(values_out.size(), size(), "LagrangeBasis::evaluate_values_to");
+    require_span_size(values_out.size(), size(), "LagrangeBasis::evaluate_values_to");
     evaluate_all_to(xi, values_out, std::span<Gradient>{}, std::span<Hessian>{});
 }
 
 void LagrangeBasis::evaluate_gradients_to(const Vec3& xi,
                                           std::span<Gradient> gradients_out) const {
-    require_output_span_size(gradients_out.size(), size(), "LagrangeBasis::evaluate_gradients_to");
+    require_span_size(gradients_out.size(), size(), "LagrangeBasis::evaluate_gradients_to");
     evaluate_all_to(xi, std::span<Real>{}, gradients_out, std::span<Hessian>{});
 }
 
 void LagrangeBasis::evaluate_hessians_to(const Vec3& xi,
                                          std::span<Hessian> hessians_out) const {
-    require_output_span_size(hessians_out.size(), size(), "LagrangeBasis::evaluate_hessians_to");
+    require_span_size(hessians_out.size(), size(), "LagrangeBasis::evaluate_hessians_to");
     evaluate_all_to(xi, std::span<Real>{}, std::span<Gradient>{}, hessians_out);
 }
 

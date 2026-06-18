@@ -159,6 +159,22 @@ inline void add_scaled_hessian(Hessian& target,
     }
 }
 
+/// \brief Throw BasisEvaluationException when an output span is smaller than the
+/// basis size. \p label is the full "Class::method" context used in the message,
+/// so each basis family passes its own qualified name.
+void require_span_size(std::size_t actual, std::size_t expected, const char* label);
+
+/// \brief Check a requested output span unless it is empty, following the
+/// "skip this output" convention used by the combined evaluators.
+template <typename T>
+void require_requested_span_size(std::span<T> output,
+                                 std::size_t expected,
+                                 const char* label) {
+    if (!output.empty()) {
+        require_span_size(output.size(), expected, label);
+    }
+}
+
 /// \brief Abstract interface for finite-element basis-function families.
 /// \ingroup FE_Basis
 ///

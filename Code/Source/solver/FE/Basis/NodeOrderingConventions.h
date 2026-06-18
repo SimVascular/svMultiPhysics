@@ -15,6 +15,17 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
+/// \brief Equispaced 1D reference coordinate on [-1, 1]: -1 + 2 i / order.
+///
+/// Shared by the reference-node layout generators and the Lagrange tensor-axis
+/// node initialization so the lattice formula lives in a single place.
+[[nodiscard]] inline constexpr Real line_coord_pm_one(int i, int order) noexcept {
+    if (order <= 0) {
+        return Real(0);
+    }
+    return Real(-1) + Real(2) * static_cast<Real>(i) / static_cast<Real>(order);
+}
+
 class ReferenceNodeLayout {
 public:
     static math::Vector<Real, 3> get_node_coords(ElementType elem_type,
