@@ -211,6 +211,11 @@ constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{2, 0, 1}}
 }};
 
+// Coefficients for the quadratic Wedge15 nodal serendipity basis. Rows are
+// monomials in kWedge15MonomialExponents order; columns are basis functions in
+// public Wedge15 node order. The table is the inverse of
+// V[node][monomial] = r^a s^b t^c evaluated at ReferenceNodeLayout Wedge15
+// nodes, so V * kWedge15Coefficients is the identity.
 constexpr std::array<std::array<Real, 15>, 15> kWedge15Coefficients = {{
     {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
     {{-0.5, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
@@ -236,6 +241,12 @@ constexpr std::array<std::array<int, 3>, 20> kHex20MonomialExponents = {{
     {{1, 2, 1}}, {{2, 0, 0}}, {{2, 0, 1}}, {{2, 1, 0}}, {{2, 1, 1}}
 }};
 
+// Coefficients for the quadratic Hex20 nodal serendipity basis. Rows are
+// monomials in kHex20MonomialExponents order; columns are basis functions in
+// the internal Hex20 coefficient-table order. The table is the inverse of
+// V[node][monomial] = r^a s^b t^c evaluated at the corresponding Hex20
+// reference nodes, so V * kHex20Coefficients is the identity. Evaluation
+// remaps public output slots through ReferenceNodeLayout::mesh_to_basis_ordering.
 constexpr std::array<std::array<Real, 20>, 20> kHex20Coefficients = {{
     {{-0.25, -0.25, -0.25, -0.25, -0.25, -0.25, -0.25, -0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}},
     {{0.125, 0.125, 0.125, 0.125, -0.125, -0.125, -0.125, -0.125, -0.25, 0.25, -0.25, 0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0, 0}},

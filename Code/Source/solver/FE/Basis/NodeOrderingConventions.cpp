@@ -15,6 +15,10 @@ namespace {
 
 using Point = math::Vector<Real, 3>;
 
+// Maps public Hex20 ReferenceNodeLayout slots to the internal coefficient-table
+// basis columns used by kHex20Coefficients. Wedge15 and quadrilateral
+// serendipity tables are stored directly in public node order and need no
+// equivalent permutation.
 constexpr std::array<std::size_t, 20> kHex20MeshToBasisOrder = {
     0, 1, 2, 3, 4, 5, 6, 7,
     8, 13, 10, 12,
