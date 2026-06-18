@@ -720,6 +720,7 @@ class svOneDSolverInterfaceParameters : public ParameterLists
     bool value_set = false;
 };
 
+/// @brief Body force over a mesh using the "Add_BF" command.
 ///
 /// \code {.xml}
 /// <Add_BF mesh="msh" >
@@ -785,10 +786,12 @@ class BoundaryConditionRCRParameters : public ParameterLists
 /// @brief svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled).
 ///
 /// \code {.xml}
-/// <Coupling_interface>
-///   <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
-///   <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
-/// </Coupling_interface>
+//  <Coupling_interface>
+//    <svOneDSolver_input_file> OneDfilename.in </svOneDSolver_input_file>
+//		<Ramp_steps> 100 </Ramp_steps>
+//   	<Ramp_ref_pressure> 0.0 </Ramp_ref_pressure>
+//		<Relax_factor> 0.3 </Relax_factor>
+//  </Coupling_interface>
 /// \endcode
 class CouplingInterfaceParameters : public ParameterLists
 {
@@ -810,7 +813,7 @@ class CouplingInterfaceParameters : public ParameterLists
     // Over the first Coupling_ramp_steps committed time steps the value passed
     // to the 1D solver is linearly ramped:
     //   DIR: pressure P ramped from Coupling_ramp_ref_pressure to actual 3D P.
-    //   NEU: flow rate Q ramped from 0 to actual 3D Q (ref pressure not used).
+    //   NEU: output pressure P is ramped before being applied to the 3D domain.
     // Set Coupling_ramp_steps = 0 (default) to disable.
     Parameter<int>    coupling_ramp_steps;
     Parameter<double> coupling_ramp_ref_pressure;

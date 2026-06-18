@@ -784,12 +784,12 @@ class cplFaceType
 };
 
 //----------------------------
-// svZeroDSolverInterfaceType
+// svZeroDSolverInterfaceData
 //----------------------------
 // This class stores information used to interface to
 // the svZeroDSolver.
 //
-class svZeroDSolverInterfaceType
+class svZeroDSolverInterfaceData
 {
   public:
 
@@ -818,11 +818,11 @@ class svZeroDSolverInterfaceType
 };
 
 //----------------------------
-// svOneDSolverInterfaceType
+// svOneDSolverInterfaceData
 //----------------------------
 // This class stores information used to interface to the svOneDSolver.
 //
-class svOneDSolverInterfaceType
+class svOneDSolverInterfaceData
 {
   public:
     // Path to the 1D solver shared library (without .so/.dylib extension,
@@ -834,6 +834,7 @@ class svOneDSolverInterfaceType
     // Note: the per-face input files are stored in cplFaceType::oned_input_file.
     bool has_data = false;
 
+    // Read svOneDSolver interface information from parameters.
     void set_data(const svOneDSolverInterfaceParameters& params);
 };
 
@@ -853,7 +854,7 @@ class cplBCType
     bool useSvZeroD = false;
 
     //  Whether to use svOneD (svOneDSolver)
-    bool useSv1D = false;
+    bool useSvOneD = false;
 
     //  Whether to initialize RCR from flow data
     bool initRCR = false;
@@ -884,9 +885,11 @@ class cplBCType
     std::string commuName;
     //std::string commuName = ".CPLBC_0D_3D.tmp";
 
-    svZeroDSolverInterfaceType svzerod_solver_interface;
+    /// @brief Data structure used for coupling with svZeroD code
+    svZeroDSolverInterfaceData svzerod_solver_interface;
 
-    svOneDSolverInterfaceType sv1d_solver_interface;
+    /// @brief Data structure used for coupling with svOneD code
+    svOneDSolverInterfaceData svOneD_solver_interface;
 
     /// @brief The name of history file containing "X"
     std::string saveName;

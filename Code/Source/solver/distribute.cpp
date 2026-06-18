@@ -550,7 +550,7 @@ void distribute(Simulation* simulation)
   cm.bcast_enum(cm_mod, &cplBC.schm);
   cm.bcast(cm_mod, &cplBC.useGenBC);
   cm.bcast(cm_mod, &cplBC.useSvZeroD);
-  cm.bcast(cm_mod, &cplBC.useSv1D);
+  cm.bcast(cm_mod, &cplBC.useSvOneD);
 
   if (cplBC.useGenBC) {   
     if (cm.slv(cm_mod)) {   
@@ -559,13 +559,13 @@ void distribute(Simulation* simulation)
     }
   }
 
-  if (cplBC.useSv1D) {
-    // Broadcast the sv1D solver interface data so that ALL ranks can call
+  if (cplBC.useSvOneD) {
+    // Broadcast the svOneD solver interface data so that ALL ranks can call
     // init_svOneD / calc_svOneD (which use MPI_Bcast collectives that require
     // every rank to participate). Without this, slave processes have
     // has_data = false and throw immediately inside init_svOneD.
-    cm.bcast(cm_mod, &cplBC.sv1d_solver_interface.has_data);
-    cm.bcast(cm_mod, cplBC.sv1d_solver_interface.solver_library);
+    cm.bcast(cm_mod, &cplBC.svOneD_solver_interface.has_data);
+    cm.bcast(cm_mod, cplBC.svOneD_solver_interface.solver_library);
   }
 
   if (!cplBC.useGenBC) {

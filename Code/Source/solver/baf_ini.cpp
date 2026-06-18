@@ -12,7 +12,7 @@
 #include "set_bc.h"
 #include "utils.h"
 #include "svZeroD_interface.h"
-#include "svOneD_subroutines.h"
+#include "svOneD_interface.h"
 
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
@@ -123,7 +123,6 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
         com_mod.cplBC.fa[i].name = com_mod.msh[iM].fa[iFa].name;
         com_mod.cplBC.fa[i].y = 0.0;
 
-        // Copy per-face 1D input file if present (svOneD coupling).
         if (!bc.oned_input_file.empty()) {
           com_mod.cplBC.fa[i].oned_input_file = bc.oned_input_file;
         }
@@ -171,7 +170,7 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
       svZeroD::init_svZeroD(com_mod, cm_mod);
     }
 
-    if (com_mod.cplBC.useSv1D) {
+    if (com_mod.cplBC.useSvOneD) {
       svOneD::init_svOneD(com_mod, cm_mod);
     }
 
@@ -789,8 +788,8 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       sVl = 0.0;
       fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl);
 
-    // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
     } else if (btest(lBc.bType, iBC_res)) {
+      // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
       sV = 0.0;
       for (int e = 0; e < lFa.nEl; e++) {
         if (lFa.eType == ElementType::NRB) {

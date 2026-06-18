@@ -152,7 +152,7 @@ class CappingSurface {
         double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
             consts::MechanicalConfigurationType cfg);
         
-            /// @brief Compute the cap contribution to the linear solver face (fills \ref valM_; safe under \c const *this).
+        /// @brief Compute the cap contribution to the linear solver face (fills \ref valM_; safe under \c const *this).
         void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
 
         /// @brief Get the cap face.
@@ -210,11 +210,11 @@ private:
     std::string face_name_;                  ///< Face name from the mesh
     /// @brief svOneD coupling data
     std::string oned_input_file_;            ///< Path to svOneDSolver input file (empty for svZeroD BCs)
-    /// @brief Pressure ramp parameters for 1D coupling initialization (DIR coupling only).
+    /// @brief Pressure ramp parameters for 1D coupling initialization.
     int    oned_ramp_steps_ = 0;             ///< Number of ramp steps (0 = disabled)
-    double oned_ramp_ref_pressure_ = 0.0;   ///< Reference pressure at step 0
+    double oned_ramp_ref_pressure_ = 0.0;   ///< Reference pressure at step used for ramping pressure
 
-    /// @brief Under-relaxation factor for pressure passed to the 1D solver (DIR coupling only).
+    /// @brief Under-relaxation factor for pressure or flowrate passed to the 1D solver.
     /// Applied as: P_sent = omega * P_new + (1 - omega) * P_prev_sent.
     /// Range: (0, 1].  Default 1.0 = no relaxation.
     double oned_relax_factor_ = 1.0;
@@ -333,7 +333,7 @@ public:
     /// @brief Set the svOneD input file path
     void set_oned_input_file(const std::string& path);
 
-    bool is_sv1d_face() const { return !oned_input_file_.empty(); }
+    bool is_svOneD_face() const { return !oned_input_file_.empty(); }
 
     /// @brief Get the pressure ramp step count (0 = disabled).
     int get_oned_ramp_steps() const { return oned_ramp_steps_; }

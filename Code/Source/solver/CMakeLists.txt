@@ -204,7 +204,7 @@ set(CSRCS
   stokes.h stokes.cpp
   sv_struct.h sv_struct.cpp
   svZeroD_interface.h svZeroD_interface.cpp
-  svOneD_subroutines.h svOneD_subroutines.cpp
+  svOneD_interface.h svOneD_interface.cpp
   txt.h txt.cpp
   utils.h utils.cpp
   ustruct.h ustruct.cpp

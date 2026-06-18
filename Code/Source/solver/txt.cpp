@@ -13,7 +13,7 @@
 #include "utils.h"
 #include <math.h>
 #include "svZeroD_interface.h"
-#include "svOneD_subroutines.h"
+#include "svOneD_interface.h"
 
 namespace txt_ns {
 
@@ -175,14 +175,14 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
       if (!init_write) {
         if (cplBC.useGenBC) {
           set_bc::genBC_Integ_X(com_mod, cm_mod, "L");
-         } else {
-          // In mixed-coupling simulations both useSvZeroD and useSv1D can be true.
+        } else {
+          // In mixed-coupling simulations both useSvZeroD and useSvOneD can be true.
           // Call each active solver independently.
           if (cplBC.useSvZeroD) {
             svZeroD::calc_svZeroD(com_mod, cm_mod, 'L');
           }
 
-        if (cplBC.useSv1D) {
+          if (cplBC.useSvOneD) {
             // Update NEU coupling flowrates from the final converged velocity
             // field (Yn) before committing the 1D solution.  During the Newton
             // loop, compute_flowrates() is called at the *start* of each
@@ -193,16 +193,16 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
             // B_NS_Velocity_flux.txt.
             for (auto& bc : com_mod.eq[0].bc) {
               if (utils::btest(bc.bType, iBC_Coupled) &&
-                  bc.coupled_bc.is_sv1d_face() &&
+                  bc.coupled_bc.is_svOneD_face() &&
                   bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
                 bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
               }
             }
-          svOneD::calc_svOneD(com_mod, cm_mod, 'L');
+            svOneD::calc_svOneD(com_mod, cm_mod, 'L');
           }
 
-        // Also integrate any RCR faces coexisting with svZeroD/svOneD faces.
-          if (cplBC.useSvZeroD || cplBC.useSv1D) {
+          // Also integrate any RCR faces coexisting with svZeroD/svOneD faces.
+          if (cplBC.useSvZeroD || cplBC.useSvOneD) {
             for (auto& bc : com_mod.eq[0].bc) {
               if (utils::btest(bc.bType, iBC_RCR)) {
                 ltmp = true;

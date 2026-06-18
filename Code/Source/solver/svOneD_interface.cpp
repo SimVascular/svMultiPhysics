@@ -38,7 +38,7 @@
 //
 //   Time-stepping (calc_svOneD):
 //     Phase 1 – parallel solve:
-//       - Each rank runs run_step() for its owned model(s) with no MPI
+//       - Each rank runs run_simulation() for its owned model(s) with no MPI
 //         calls, so model k on rank A and model k+1 on rank B truly run
 //         concurrently.
 //     Phase 2 – batch result exchange:
@@ -53,7 +53,7 @@
 //   params[3] = BC_val_old    (Q or P at t_old)
 //   params[4] = BC_val_new    (Q or P at t_new)
 
-#include "svOneD_subroutines.h"
+#include "svOneD_interface.h"
 
 #include <fstream>
 #include <iomanip>
@@ -61,11 +61,13 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include "ComMod.h"
 #include "consts.h"
 #include "utils.h"
 #include "svOneD_interface/OneDSolverInterface.h"
+#include "Core/Exception.h"
 
 #include "mpi.h"
 
@@ -149,8 +151,13 @@ static double svOneDTime = 0.0;
 // ---------------------------------------------------------------------------
 static std::string resolve_lib_path(const std::string& lib_base)
 {
-  if (std::ifstream(lib_base + ".so").good())  return lib_base + ".so";
-  if (std::ifstream(lib_base + ".dylib").good()) return lib_base + ".dylib";
+  if (std::filesystem::is_regular_file(lib_base + ".so")) {
+    return lib_base + ".so";
+  }
+
+  if (std::filesystem::is_regular_file(lib_base + ".dylib")) {
+    return lib_base + ".dylib";
+  }
   return lib_base;  // already has extension, or will fail at dlopen time
 }
 
@@ -162,13 +169,18 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   using namespace consts;
 
   auto& cplBC    = com_mod.cplBC;
-  auto& solver_if = cplBC.sv1d_solver_interface;
+  auto& solver_if = cplBC.svOneD_solver_interface;
   auto& cm       = com_mod.cm;
   const int nProcs = cm.nProcs;
   const int myRank = cm.taskId;
 
   if (!solver_if.has_data) {
-    throw std::runtime_error("[svOneD::init_svOneD] svOneD solver interface data is missing.");
+  throw svmp::CoreException(
+      "[svOneD::init_svOneD] svOneD solver interface data is missing.",
+      svmp::StatusCode::InvalidState,
+      __FILE__,
+      __LINE__,
+      __func__);
   }
 
   // Initialize the 1D simulation clock from the 3D solver's current time so
@@ -197,7 +209,12 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   }
 
   if (oned_models.empty()) {
-    throw std::runtime_error("[svOneD::init_svOneD] No svOneD-coupled faces with input files found.");
+  throw svmp::CoreException(
+      "[svOneD::init_svOneD] No svOneD-coupled faces with input files found.",
+      svmp::StatusCode::InvalidState,
+      __FILE__,
+      __LINE__,
+      __func__);
   }
 
   // ----- Guard: require at least one MPI rank per 1D model -----
@@ -206,12 +223,16 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   // more than once, corrupting the static problem-ID state inside the shared library.
   const int nTotalModels = static_cast<int>(oned_models.size());
   if (nProcs < nTotalModels) {
-    throw std::runtime_error(
-        "[svOneD::init_svOneD] Number of MPI processes (" + std::to_string(nProcs) +
-        ") is less than the number of svOneD-coupled faces (" +
-        std::to_string(nTotalModels) +
-        ").  Please run with at least " + std::to_string(nTotalModels) +
-        " MPI processes.");
+  throw svmp::CoreException(
+      "[svOneD::init_svOneD] Number of MPI processes (" + std::to_string(nProcs) +
+      ") is less than the number of svOneD-coupled faces (" +
+      std::to_string(nTotalModels) +
+      "). Please run with at least " + std::to_string(nTotalModels) +
+      " MPI processes.",
+      svmp::StatusCode::InvalidState,
+      __FILE__,
+      __LINE__,
+      __func__);
   }
 
   // ----- Load shared library (once per process) -----
@@ -345,12 +366,13 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     int save_incr  = com_mod.saveIncr;
     int error_code = 0;
 
-    st.interface->run_step(st.problem_id, t_old, save_incr,
-                           st.coupling_type, params,
-                           work_sol.data(), cpl_values[k], BCFlag, error_code);
+    st.interface->run_simulation(st.problem_id, t_old, save_incr,
+                                 st.coupling_type, params,
+                                 work_sol.data(), cpl_values[k], BCFlag, error_code);
 
     if (error_code != 0) {
-      throw std::runtime_error(
+      svmp::raise<svmp::DependencyException>(
+          SVMP_HERE,
           "[svOneD::calc_svOneD] 1D solver step for face '" +
           bc.coupled_bc.get_oned_input_file() + "' failed with error code " +
           std::to_string(error_code));

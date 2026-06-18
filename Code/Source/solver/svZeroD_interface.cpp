@@ -29,11 +29,11 @@ static void build_svzero_coupled_bc_idxs(ComMod& com_mod)
     for (int iBc = 0; iBc < com_mod.eq[iEq].nBc; iBc++) {
       const auto& bc = com_mod.eq[iEq].bc[iBc];
       // A Coupled face belongs to svZeroD only when it is not a 1D face.
-      // The is_sv1d_face() helper encapsulates the routing invariant:
+      // The is_svOneD_face() helper encapsulates the routing invariant:
       //   1D face → oned_input_file_ non-empty, block_name_ empty
       //   0D face → block_name_ non-empty, oned_input_file_ empty
       if (utils::btest(bc.bType, consts::iBC_Coupled) &&
-          !bc.coupled_bc.is_sv1d_face()) {
+          !bc.coupled_bc.is_svOneD_face()) {
         cpl.svZeroD_coupled_bc_idxs.emplace_back(iEq, iBc);
       }
     }
@@ -463,7 +463,7 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
           double Q_target_old, Q_target_new;
           if (ramp_steps > 0) {
             double ramp_factor = std::min(1.0, static_cast<double>(bc->coupled_bc.get_ramp_step_count()) / ramp_steps);
-            double Q_ref = bc->coupled_bc.get_oned_ramp_ref_pressure();  // ref value (0.0 by default)
+            double Q_ref = 0.0;  // ref value (0.0 by default)
             Q_target_old = Q_ref + ramp_factor * (raw_Q_old - Q_ref);
             Q_target_new = Q_ref + ramp_factor * (raw_Q_new - Q_ref);
           } else {

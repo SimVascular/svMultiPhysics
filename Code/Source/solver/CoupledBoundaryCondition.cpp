@@ -937,27 +937,8 @@ CappingSurface::CappingSurface(const CappingSurface& other)
     , valM_(other.valM_)
     , normals_(other.normals_)
 {
-    if (other.face_ != nullptr) {
-        try {
-            face_ = std::make_unique<faceType>(*other.face_);
-        } catch (const std::exception& e) {
-            throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Failed to copy face_: " +
-                                             std::string(e.what()));
-        }
-        if (face_ != nullptr) {
-            if (face_->nNo > 0 && face_->gN.size() != face_->nNo) {
-                throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Invalid face_: gN.size()=" +
-                                                std::to_string(face_->gN.size()) + " != nNo=" +
-                                                std::to_string(face_->nNo));
-            }
-            if (face_->nEl > 0 && face_->IEN.ncols() != face_->nEl) {
-                throw CappingSurfaceCopyException("[CappingSurface::copy constructor] Invalid face_: IEN.ncols()=" +
-                                                std::to_string(face_->IEN.ncols()) + " != nEl=" +
-                                                std::to_string(face_->nEl));
-            }
-        }
-    } else {
-        face_.reset();
+    if (other.face_) {
+        face_ = std::make_unique<faceType>(*other.face_);
     }
 }
 
@@ -967,13 +948,8 @@ CappingSurface& CappingSurface::operator=(const CappingSurface& other)
         global_node_ids_ = other.global_node_ids_;
         valM_ = other.valM_;
         normals_ = other.normals_;
-        if (other.face_ != nullptr) {
-            try {
-                face_ = std::make_unique<faceType>(*other.face_);
-            } catch (const std::exception& e) {
-                throw CappingSurfaceCopyException("[CappingSurface::operator=] Failed to copy face_: " +
-                                                  std::string(e.what()));
-            }
+        if (other.face_) {
+            face_ = std::make_unique<faceType>(*other.face_);
         } else {
             face_.reset();
         }
@@ -1120,10 +1096,6 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
 {
     using namespace consts;
 
-    if (mesh_x.nrows() < cap_nsd_ || mesh_Do.nrows() < cap_nsd_ || mesh_Dn.nrows() < cap_nsd_) {
-        throw CappingSurfaceGeometryException(
-            "[CappingSurface::update_element_position_global] Mesh arrays must have at least 3 rows.");
-    }
     Array<double> xl(cap_nsd_, face_->eNoN);
 
     for (int a = 0; a < face_->eNoN; a++) {
@@ -1153,13 +1125,6 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
 /// @return The Jacobian and normal vector.
 std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const
 {
-    if (xl.nrows() != cap_nsd_ || xl.ncols() != face_->eNoN) {
-        throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] xl has wrong dimensions: " +
-                                              std::to_string(xl.nrows()) + "x" + std::to_string(xl.ncols()) +
-                                              " (expected " + std::to_string(cap_nsd_) + "x" +
-                                              std::to_string(face_->eNoN) + ").");
-    }
-
     // Get the shape function derivatives for the Gauss point.
     Array<double> Nx_g = face_->Nx.rslice(g);
     Array<double> xXi(cap_nsd_, cap_insd_);
@@ -1189,11 +1154,6 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
 
     // Check if the initial normals are provided and if they are valid.
     if (normals_.ncols() > 0 && normals_.nrows() == cap_nsd_) {
-        if (e < 0 || e >= normals_.ncols()) {
-            throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] Element index e=" +
-                                                std::to_string(e) + " is out of bounds for normals_ (ncols=" +
-                                                std::to_string(normals_.ncols()) + ").");
-        }
 
         Vector<double> n0(cap_nsd_);
         for (int i = 0; i < cap_nsd_; i++) {
@@ -1277,19 +1237,7 @@ void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const
             auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
             for (int a = 0; a < face_->eNoN; a++) {
                 int gnNo_idx = face_->IEN(a, e);
-                auto it = gnNo_to_cap_local.find(gnNo_idx);
-                if (it == gnNo_to_cap_local.end()) {
-                    throw CappingSurfaceAssemblyException("[CappingSurface::compute_valM] IEN entry (element " +
-                                                          std::to_string(e) + ", node " + std::to_string(a) +
-                                                          ") contains invalid gnNo index " + std::to_string(gnNo_idx) +
-                                                          " not found in cap face nodes.");
-                }
-                int cap_a = it->second;
-                if (cap_a < 0 || cap_a >= cap_nNo) {
-                    throw CappingSurfaceAssemblyException("[CappingSurface::compute_valM] Invalid cap face-local index cap_a=" +
-                                                          std::to_string(cap_a) + " (cap_nNo=" + std::to_string(cap_nNo) +
-                                                          ")");
-                }
+                int cap_a = gnNo_to_cap_local.at(gnNo_idx);
                 for (int i = 0; i < cap_nsd_; i++) {
                     valM_(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);
                 }
