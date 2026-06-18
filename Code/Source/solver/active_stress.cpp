@@ -18,13 +18,14 @@ void ActiveStress::init(const unsigned int tnNo) {
   active_tension.resize(tnNo);
 }
 
-void ActiveStress::advance_time_step(const double t, const double dt) {
+void ActiveStress::advance_time_step(const double t, const double dt,
+                                     const Vector<double> &calcium,
+                                     const Vector<double> &fiber_stretch,
+                                     const Vector<double> &fiber_stretch_rate) {
   for (unsigned int i = 0; i < states.ncols(); ++i) {
     Vector<double> state_loc = states.col(i);
-    advance_time_step_local(t, dt,
-                            /* calcium = */ 0.0,
-                            /* fiber_stretch = */ 0.0,
-                            /* fiber_stretch_rate = */ 0.0, state_loc);
+    advance_time_step_local(t, dt, calcium[i], fiber_stretch[i],
+                            fiber_stretch_rate[i], state_loc);
     states.set_col(i, state_loc);
 
     active_tension[i] = compute_active_tension_local(state_loc);

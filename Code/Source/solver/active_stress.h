@@ -78,8 +78,16 @@ public:
    *
    * @param[in] t Current time (i.e. the time instant being advanced to).
    * @param[in] dt Time step size.
+   * @param[in] calcium Calcium concentration at every node.
+   * @param[in] fiber_stretch Fiber stretch at every node. This is usually
+   *   computed with post::fib_stretch.
+   * @param[in] fiber_stretch_rate Fiber stretch rate at every node. This is
+   *   usually computed with post::fib_stretch_rate.
    */
-  virtual void advance_time_step(const double t, const double dt);
+  virtual void advance_time_step(const double t, const double dt,
+                                 const Vector<double> &calcium,
+                                 const Vector<double> &fiber_stretch,
+                                 const Vector<double> &fiber_stretch_rate);
 
   /// Number of state variables for this model.
   const unsigned int n_states;

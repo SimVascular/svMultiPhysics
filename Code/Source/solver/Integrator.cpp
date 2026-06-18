@@ -393,6 +393,7 @@ void Integrator::predictor()
   using namespace consts;
 
   auto& com_mod = simulation_->com_mod;
+  auto& cep_mod = simulation_->cep_mod;
 
   #define n_debug_picp
   #ifdef debug_picp
@@ -485,9 +486,16 @@ void Integrator::predictor()
     }
 
     // active stress
-    for (auto &dmn : eq.dmn) {
-      if (dmn.active_stress != nullptr) {
-        dmn.active_stress->advance_time_step(com_mod.time, com_mod.dt);
+    {
+      Vector<double> fiber_stretch(com_mod.tnNo);
+      Vector<double> fiber_stretch_rate(com_mod.tnNo);
+
+      for (auto &dmn : eq.dmn) {
+        if (dmn.active_stress != nullptr) {
+          dmn.active_stress->advance_time_step(com_mod.time, com_mod.dt,
+                                               cep_mod.calcium, fiber_stretch,
+                                               fiber_stretch_rate);
+        }
       }
     }
 
