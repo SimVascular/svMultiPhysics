@@ -220,6 +220,11 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
                                                       static_cast<Eigen::Index>(n));
         const auto& singular_values = svd.singularValues();
         for (Eigen::Index i = 0; i < singular_values.size(); ++i) {
+            // Defensive: this branch runs only when condition_estimate is finite,
+            // and dense_matrix_diagnostics leaves it infinite whenever it drops a
+            // singular value (rank < full_rank). A sub-tolerance singular value
+            // therefore cannot reach here in current code; the guard protects
+            // against future refactors that derive the fallback condition differently.
             ::svmp::check_arg<FEException>(
                 singular_values[i] > result.diagnostics.tolerance, SVMP_HERE,
                 std::string(label) + ": high-condition SVD fallback encountered a dropped singular value");

@@ -285,6 +285,16 @@ TEST(LagrangeBasis, CompleteAliasesNormalizeToCanonicalBases) {
     }
 }
 
+// CompleteAliasesNormalizeToCanonicalBases pins the alias floor (a named
+// quadratic alias requested below order 2 is raised to 2). This pins the
+// complementary direction documented in normalize_lagrange_request: a higher
+// requested order on an alias is honored, not clamped to the alias order.
+TEST(LagrangeBasis, QuadraticAliasHonorsHigherRequestedOrder) {
+    const LagrangeBasis basis(ElementType::Hex27, 3);
+    EXPECT_EQ(basis.element_type(), ElementType::Hex8);
+    EXPECT_EQ(basis.order(), 3);
+}
+
 TEST(LagrangeBasis, NodeOrderingMatchesPublicAliasLayouts) {
     const std::vector<std::tuple<ElementType, ElementType, int>> aliases = {
         {ElementType::Line2, ElementType::Line2, 1},
@@ -330,6 +340,11 @@ TEST(LagrangeBasis, RemovedOrSerendipityFamiliesAreRejected) {
     }
 }
 
+// The polynomial-reproduction and higher-order-lattice tests here validate
+// VALUES and derivative invariants (gradient/Hessian sums). The authoritative
+// finite-difference checks of gradient and Hessian *values* live in
+// test_BasisHessians.cpp (BasisGradients/BasisHessians suites), covering the
+// canonical Lagrange topologies and the serendipity families.
 TEST(LagrangeBasis, LinearPolynomialReproductionAcrossLinearTopologies) {
     const std::vector<std::pair<ElementType, Point>> cases = {
         {ElementType::Line2, {Real(-0.2), Real(0), Real(0)}},
@@ -379,7 +394,7 @@ TEST(LagrangeBasis, QuadraticPolynomialReproductionAcrossQuadraticAliases) {
     };
 
     for (const auto& [type, point] : cases) {
-        LagrangeBasis basis(type, 1);
+        LagrangeBasis basis(type, 2);
         std::vector<Real> values;
         basis.evaluate_values(point, values);
 
@@ -419,6 +434,42 @@ TEST(LagrangeBasis, HigherOrderLatticesAreNodalAndPartitionUnity) {
         EXPECT_EQ(basis.size(), c.size);
         expect_kronecker_at_nodes(basis, c.kronecker_tol);
         expect_partition_gradient_hessian_sums(basis, c.points, c.derivative_tol);
+    }
+}
+
+// The Kronecker test above proves the order-3 hex lattice is nodal, but a
+// permuted-yet-consistent face ordering would also pass it. This pins the
+// load-bearing external contract of the order>=3 face-interior emission: the
+// six face-interior blocks appear in VTK face order (-X, +X, -Y, +Y, -Z, +Z)
+// and lie on the correct face. (The within-face traversal is an internal
+// convention and is not separately pinned here.)
+TEST(LagrangeBasis, HigherOrderHexFaceInteriorFollowsVtkFaceOrder) {
+    // Order-3 hex (64 nodes): 8 vertices + 24 edge nodes + 24 face-interior
+    // (6 faces x (order-1)^2 = 4 each) + 8 volume. Face-interior block at [32, 56).
+    const auto nodes = ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Hex8, 3);
+    ASSERT_EQ(nodes.size(), 64u);
+
+    struct FaceBlock {
+        std::size_t axis;  // constant axis: 0=x, 1=y, 2=z
+        Real value;        // constant coordinate on the face
+    };
+    const FaceBlock blocks[] = {
+        {0u, Real(-1)},  // -X
+        {0u, Real(1)},   // +X
+        {1u, Real(-1)},  // -Y
+        {1u, Real(1)},   // +Y
+        {2u, Real(-1)},  // -Z
+        {2u, Real(1)},   // +Z
+    };
+
+    constexpr std::size_t kFaceStart = 32u;
+    constexpr std::size_t kPerFace = 4u;  // (order-1)^2 at order 3
+    for (std::size_t f = 0; f < 6u; ++f) {
+        for (std::size_t m = 0; m < kPerFace; ++m) {
+            const auto& node = nodes[kFaceStart + f * kPerFace + m];
+            EXPECT_NEAR(node[blocks[f].axis], blocks[f].value, Real(1e-14))
+                << "face block " << f << ", node " << m;
+        }
     }
 }
 

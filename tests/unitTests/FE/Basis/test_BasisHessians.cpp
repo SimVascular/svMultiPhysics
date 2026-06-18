@@ -144,51 +144,6 @@ void expect_hessians_match_numerical(const BasisFunction& basis,
     }
 }
 
-void expect_partition_hessian_sum_zero(const LagrangeBasis& basis,
-                                       const math::Vector<Real, 3>& xi,
-                                       Real tol)
-{
-    std::vector<Hessian> hessians;
-    basis.evaluate_hessians(xi, hessians);
-
-    Hessian sum = Hessian::Zero();
-    for (const auto& hessian : hessians) {
-        for (std::size_t r = 0; r < 3u; ++r) {
-            for (std::size_t c = 0; c < 3u; ++c) {
-                sum(r, c) += hessian(r, c);
-            }
-        }
-    }
-
-    for (int r = 0; r < basis.dimension(); ++r) {
-        for (int c = 0; c < basis.dimension(); ++c) {
-            EXPECT_NEAR(sum(static_cast<std::size_t>(r), static_cast<std::size_t>(c)),
-                        Real(0),
-                        tol)
-                << "element " << static_cast<int>(basis.element_type())
-                << ", order " << basis.order();
-        }
-    }
-}
-
-void expect_hessians_symmetric(const LagrangeBasis& basis,
-                               const math::Vector<Real, 3>& xi,
-                               Real tol)
-{
-    std::vector<Hessian> hessians;
-    basis.evaluate_hessians(xi, hessians);
-
-    for (const auto& hessian : hessians) {
-        for (int r = 0; r < basis.dimension(); ++r) {
-            for (int c = r + 1; c < basis.dimension(); ++c) {
-                const std::size_t sr = static_cast<std::size_t>(r);
-                const std::size_t sc = static_cast<std::size_t>(c);
-                EXPECT_NEAR(hessian(sr, sc), hessian(sc, sr), tol);
-            }
-        }
-    }
-}
-
 void expect_partition_hessian_sum_zero(const BasisFunction& basis,
                                        const math::Vector<Real, 3>& xi,
                                        Real tol)
@@ -331,15 +286,11 @@ TEST(BasisHessians, SolverMappedVolumeSelectionsSatisfyInvariants) {
         {ElementType::Wedge6, BasisType::Lagrange, 1, {Real(0.2), Real(0.15), Real(-0.3)}, Real(1e-12)},
     };
 
-    int covered = 0;
     for (const auto& c : cases) {
         auto basis = basis_factory::create(BasisRequest{c.type, c.basis_type, c.order});
         expect_partition_hessian_sum_zero(*basis, c.xi, c.tol);
         expect_hessians_symmetric(*basis, c.xi, c.tol);
-        ++covered;
     }
-
-    EXPECT_EQ(covered, 13);
 }
 
 // Gradients must match centered finite differences of values. This is the only

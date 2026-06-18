@@ -144,7 +144,8 @@ TEST(HigherOrderWedge, OrderFourEvaluationsRemainFinite) {
 TEST(HigherOrderWedge, OrderFourIsNodalAndPartitionsUnity) {
     LagrangeBasis wedge(ElementType::Wedge6, 4);
 
-    EXPECT_EQ(wedge.size(), 75u);
+    // Order-4 wedge = triangle(order 4) x line(order 4) = 15 x 5 nodes.
+    EXPECT_EQ(wedge.size(), 15u * 5u);
     expect_kronecker_at_nodes(wedge, Real(1e-9));
     expect_partition_gradient_hessian_sums(
         wedge,

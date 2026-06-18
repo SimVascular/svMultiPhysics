@@ -41,10 +41,10 @@ static_assert(complete_lagrange_alias_order(ElementType::Wedge18) == 2);
 static_assert(complete_lagrange_alias_order(ElementType::Pyramid14) == -1);
 static_assert(detail::basis_abs(Real(-2)) == Real(2));
 static_assert(detail::basis_max(Real(2), Real(3)) == Real(3));
-static_assert(detail::basis_near_zero(std::numeric_limits<Real>::epsilon() * Real(32)));
+static_assert(detail::basis_near_zero(detail::basis_scaled_tolerance() * Real(0.5)));
 static_assert(detail::basis_nearly_equal(
     Real(1),
-    Real(1) + std::numeric_limits<Real>::epsilon() * Real(32)));
+    Real(1) + detail::basis_scaled_tolerance() * Real(0.5)));
 
 TEST(ConstexprBasis, FixedNodeTableSizesForSupportedLayouts) {
     const std::vector<std::pair<ElementType, std::size_t>> expected = {
@@ -72,11 +72,14 @@ TEST(ConstexprBasis, FixedNodeTableSizesForSupportedLayouts) {
 
 TEST(ConstexprBasis, TraitToleranceScalesWithRealPrecision) {
     const Real eps = std::numeric_limits<Real>::epsilon();
-    EXPECT_GT(detail::basis_scaled_tolerance(), eps);
-    EXPECT_TRUE(detail::basis_near_zero(eps * Real(32)));
-    EXPECT_FALSE(detail::basis_near_zero(eps * Real(128)));
-    EXPECT_TRUE(detail::basis_nearly_equal(Real(1), Real(1) + eps * Real(32)));
-    EXPECT_FALSE(detail::basis_nearly_equal(Real(1), Real(1) + eps * Real(128)));
+    const Real tol = detail::basis_scaled_tolerance();
+    // Probes straddle the tolerance itself rather than hardcoding the multiplier,
+    // so retuning basis_scaled_tolerance cannot silently invalidate them.
+    EXPECT_GT(tol, eps);
+    EXPECT_TRUE(detail::basis_near_zero(tol * Real(0.5)));
+    EXPECT_FALSE(detail::basis_near_zero(tol * Real(2)));
+    EXPECT_TRUE(detail::basis_nearly_equal(Real(1), Real(1) + tol * Real(0.5)));
+    EXPECT_FALSE(detail::basis_nearly_equal(Real(1), Real(1) + tol * Real(2)));
 }
 
 TEST(ConstexprBasis, CompleteAliasTablesMatchGeneratedLagrangeNodes) {
