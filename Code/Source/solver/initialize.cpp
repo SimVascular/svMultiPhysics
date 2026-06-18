@@ -686,6 +686,14 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     }
   }
 
+  // Calcium is always resized to zero, regardless of whether there is an
+  // electrophysiology equation. This way, if solving mechanics only, the
+  // calcium variable is still available (even if zeroed out).
+  // @todo[michelebucelli] Maybe there's a better solution, e.g. putting the
+  //   calcium evaluation behind a getter, that returns zero if the vector has
+  //   not been initialized.
+  cep_mod.calcium.resize(tnNo);
+
   // Setup the initial conditions for the active stress models.
   for (auto &eq : com_mod.eq) {
     for (auto &dmn : eq.dmn) {

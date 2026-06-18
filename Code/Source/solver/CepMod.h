@@ -158,6 +158,9 @@ class CepMod
     /// @brief Unknowns stored at all nodes
     Array<double> Xion;
 
+    /// @brief Calcium vector at all nodes.
+    Vector<double> calcium;
+
     /// @brief Cardiac electromechanics type
     cemModelType cem;
 

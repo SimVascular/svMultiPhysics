@@ -218,6 +218,13 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 
         cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, I4f(Ac), dt);
 
+        // @todo[michelebucelli] Calcium here should be averaged over domains,
+        //   as done for Xion below (although I'd argue it makes relatively
+        //   little sense for Xion, because if the models are heterogeneous the
+        //   average have no physical meaning... But it does make sense for
+        //   calcium).
+        cep_mod.calcium[Ac] = Xl[dmn.cep.ionic_model->get_calcium_index()];
+
         sA(Ac) = sA(Ac) + 1.0;
         for (int i = 0; i < nX; i++) {
           sF(i,Ac) += Xl(i);
@@ -254,6 +261,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
       auto Xgl = Xion.rows(nX,nX+nG-1,Ac);
 
       cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, I4f(Ac), dt);
+      cep_mod.calcium[Ac] = Xl[eq.dmn[0].cep.ionic_model->get_calcium_index()];
 
       for (int i = 0; i < nX; i++) {
         Xion(i,Ac) = Xl(i);
