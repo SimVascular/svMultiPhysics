@@ -55,37 +55,59 @@ namespace detail {
 
 } // namespace detail
 
+// Reference-cell topology is derived from the single mesh cell-family
+// classification (to_mesh_family) so the basis layer never maintains a parallel
+// ElementType->shape switch; adding an ElementType updates only to_mesh_family.
+// ElementType::Unknown must stay Unknown here: CellFamily has no "unknown"
+// member, so to_mesh_family() falls back to Point for unrecognized types.
+[[nodiscard]] constexpr BasisTopology topology(ElementType type) noexcept {
+    if (type == ElementType::Unknown) {
+        return BasisTopology::Unknown;
+    }
+    switch (to_mesh_family(type)) {
+        case CellFamily::Point:    return BasisTopology::Point;
+        case CellFamily::Line:     return BasisTopology::Line;
+        case CellFamily::Triangle: return BasisTopology::Triangle;
+        case CellFamily::Quad:     return BasisTopology::Quadrilateral;
+        case CellFamily::Tetra:    return BasisTopology::Tetrahedron;
+        case CellFamily::Hex:      return BasisTopology::Hexahedron;
+        case CellFamily::Wedge:    return BasisTopology::Wedge;
+        // Pyramid/Polygon/Polyhedron are outside the current basis scope.
+        default:                   return BasisTopology::Unknown;
+    }
+}
+
+// The shape predicates derive from topology() so they share its single source.
 [[nodiscard]] constexpr bool is_point(ElementType type) noexcept {
-    return type == ElementType::Point1;
+    return topology(type) == BasisTopology::Point;
 }
 
 [[nodiscard]] constexpr bool is_line(ElementType type) noexcept {
-    return type == ElementType::Line2 || type == ElementType::Line3;
+    return topology(type) == BasisTopology::Line;
 }
 
 [[nodiscard]] constexpr bool is_triangle(ElementType type) noexcept {
-    return type == ElementType::Triangle3 || type == ElementType::Triangle6;
+    return topology(type) == BasisTopology::Triangle;
 }
 
 [[nodiscard]] constexpr bool is_quadrilateral(ElementType type) noexcept {
-    return type == ElementType::Quad4 || type == ElementType::Quad8 ||
-           type == ElementType::Quad9;
+    return topology(type) == BasisTopology::Quadrilateral;
 }
 
 [[nodiscard]] constexpr bool is_tetrahedron(ElementType type) noexcept {
-    return type == ElementType::Tetra4 || type == ElementType::Tetra10;
+    return topology(type) == BasisTopology::Tetrahedron;
 }
 
 [[nodiscard]] constexpr bool is_hexahedron(ElementType type) noexcept {
-    return type == ElementType::Hex8 || type == ElementType::Hex20 ||
-           type == ElementType::Hex27;
+    return topology(type) == BasisTopology::Hexahedron;
 }
 
 [[nodiscard]] constexpr bool is_wedge(ElementType type) noexcept {
-    return type == ElementType::Wedge6 || type == ElementType::Wedge15 ||
-           type == ElementType::Wedge18;
+    return topology(type) == BasisTopology::Wedge;
 }
 
+// Pyramids are outside the current basis scope, so topology() maps them to
+// Unknown and there is no BasisTopology::Pyramid to test against here.
 [[nodiscard]] constexpr bool is_pyramid(ElementType type) noexcept {
     (void)type;
     return false;
@@ -101,31 +123,6 @@ namespace detail {
 
 [[nodiscard]] constexpr int reference_dimension(ElementType type) noexcept {
     return element_dimension(type);
-}
-
-[[nodiscard]] constexpr BasisTopology topology(ElementType type) noexcept {
-    if (is_point(type)) {
-        return BasisTopology::Point;
-    }
-    if (is_line(type)) {
-        return BasisTopology::Line;
-    }
-    if (is_triangle(type)) {
-        return BasisTopology::Triangle;
-    }
-    if (is_quadrilateral(type)) {
-        return BasisTopology::Quadrilateral;
-    }
-    if (is_tetrahedron(type)) {
-        return BasisTopology::Tetrahedron;
-    }
-    if (is_hexahedron(type)) {
-        return BasisTopology::Hexahedron;
-    }
-    if (is_wedge(type)) {
-        return BasisTopology::Wedge;
-    }
-    return BasisTopology::Unknown;
 }
 
 [[nodiscard]] constexpr ElementType canonical_lagrange_type(ElementType type) noexcept {
