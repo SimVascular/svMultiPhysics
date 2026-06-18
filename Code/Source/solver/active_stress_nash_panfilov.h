@@ -22,7 +22,12 @@ public:
     Parameters() : ActiveStressModelParameters(label) {
       constexpr bool required = true;
 
-      add_parameter("Rate", 1.0, required);
+      add_parameter("epsilon_0", 1.0, required);
+      add_parameter("epsilon_i", 1.0, required);
+      add_parameter("xi_T", 1.0, required);
+      add_parameter("calcium_rest", 1.0, required);
+      add_parameter("calcium_crit", 1.0, required);
+      add_parameter("eta_T", 1.0, required);
     }
   };
 
@@ -73,8 +78,30 @@ protected:
   virtual double
   compute_active_tension_local(const Vector<double> &state) const override;
 
-  /// Rate of change.
-  double rate;
+  /// @name Model parameters.
+  /// @todo[michelebucelli] Document meaning and units of measure for all
+  /// parameters.
+  /// @{
+
+  /// @f$\varepsilon_0@f$.
+  double epsilon_0;
+
+  /// @f$\varepsilon_i@f$.
+  double epsilon_i;
+
+  /// @f$\xi_T@f$.
+  double xi_T;
+
+  /// Resting calcium value.
+  double calcium_rest;
+
+  /// Critical calcium value.
+  double calcium_crit;
+
+  /// @f$\eta_T@f$.
+  double eta_T;
+
+  /// @}
 };
 
 #endif

@@ -4,12 +4,22 @@
 #include "active_stress_nash_panfilov.h"
 
 void NashPanfilov::read_parameters(const ActiveStressModelParameters &params) {
-  rate = params.get_scalar("Rate");
+  epsilon_0 = params.get_scalar("epsilon_0");
+  epsilon_i = params.get_scalar("epsilon_i");
+  xi_T = params.get_scalar("xi_T");
+  calcium_rest = params.get_scalar("calcium_rest");
+  calcium_crit = params.get_scalar("calcium_crit");
+  eta_T = params.get_scalar("eta_T");
 }
 
 void NashPanfilov::distribute_parameters(const CmMod &cm_mod,
                                          const cmType &cm) {
-  cm.bcast(cm_mod, &rate);
+  cm.bcast(cm_mod, &epsilon_0);
+  cm.bcast(cm_mod, &epsilon_i);
+  cm.bcast(cm_mod, &xi_T);
+  cm.bcast(cm_mod, &calcium_rest);
+  cm.bcast(cm_mod, &calcium_crit);
+  cm.bcast(cm_mod, &eta_T);
 }
 
 void NashPanfilov::init_local(Vector<double> &state) const { state[0] = 0.0; }
@@ -20,8 +30,11 @@ Vector<double> NashPanfilov::getf(const double t, const Vector<double> &state,
                                   const double fiber_stretch_rate) const {
   Vector<double> f(1);
 
-  // @todo[michelebucelli] Implement the actual model here.
-  f[0] = rate;
+  const double epsilon =
+      epsilon_0 + (epsilon_i - epsilon_0) *
+                      std::exp(-std::exp(-xi_T * (calcium - calcium_crit)));
+
+  f[0] = epsilon * (eta_T * (calcium - calcium_rest) - state[0]);
 
   return f;
 }
