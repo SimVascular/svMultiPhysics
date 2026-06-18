@@ -109,10 +109,9 @@ TEST(DenseLinearAlgebra, FactorizationSolvesDenseRightHandSideBlock) {
 }
 
 // Every other matrix in this file already has its largest pivot on the
-// diagonal, so without these cases the row-exchange branch in
-// factor_dense_matrix and the permutation replay in solve_in_place never
-// execute. SerendipityBasis inverts its Vandermonde matrices through this
-// code in production.
+// diagonal, so these cases cover the row-exchange branch in factor_dense_matrix,
+// the inverse path used by SerendipityBasis, and the permutation replay in
+// solve_in_place.
 TEST(DenseLinearAlgebra, FactorizationPivotsThroughZeroLeadingDiagonal) {
     const std::vector<Real> swap_2x2{
         Real(0), Real(1),

@@ -412,14 +412,6 @@ std::span<const std::size_t> ReferenceNodeLayout::mesh_to_basis_ordering(Element
     return {};
 }
 
-bool ReferenceNodeLayout::is_simplex(ElementType elem_type) {
-    return svmp::FE::basis::is_simplex(elem_type);
-}
-
-bool ReferenceNodeLayout::is_tensor_product(ElementType elem_type) {
-    return svmp::FE::basis::is_tensor_product(elem_type);
-}
-
 } // namespace basis
 } // namespace FE
 } // namespace svmp

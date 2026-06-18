@@ -36,8 +36,6 @@ public:
     get_lagrange_node_coords(ElementType canonical_type, int order);
 
     static std::span<const std::size_t> mesh_to_basis_ordering(ElementType elem_type);
-    static bool is_simplex(ElementType elem_type);
-    static bool is_tensor_product(ElementType elem_type);
 };
 
 } // namespace basis

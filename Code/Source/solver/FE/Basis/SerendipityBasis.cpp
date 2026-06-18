@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <span>
 #include <string>
 
@@ -69,6 +68,14 @@ void evaluate_hex8_reference(Real r,
 
 int quad_serendipity_superlinear_degree(int ax, int ay) {
     return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0);
+}
+
+inline Real integer_power(Real base, int exponent) {
+    Real result = Real(1);
+    for (int k = 0; k < exponent; ++k) {
+        result *= base;
+    }
+    return result;
 }
 
 std::vector<std::array<int, 2>> quad_serendipity_exponents(int order) {
@@ -182,7 +189,7 @@ std::vector<Real> quad_serendipity_inverse_vandermonde(
         const Real y = nodes[static_cast<std::size_t>(row)][1];
         for (int col = 0; col < n; ++col) {
             const auto [ax, ay] = exponents[static_cast<std::size_t>(col)];
-            vandermonde[idx(row, col)] = std::pow(x, ax) * std::pow(y, ay);
+            vandermonde[idx(row, col)] = integer_power(x, ax) * integer_power(y, ay);
         }
     }
 
@@ -277,14 +284,6 @@ struct MonomialAxis {
     Real first;   ///< d/dx (x^a)     = a x^(a-1)
     Real second;  ///< d^2/dx^2 (x^a) = a (a-1) x^(a-2)
 };
-
-inline Real integer_power(Real base, int exponent) {
-    Real result = Real(1);
-    for (int k = 0; k < exponent; ++k) {
-        result *= base;
-    }
-    return result;
-}
 
 inline MonomialAxis monomial_axis(Real x, int exponent) {
     MonomialAxis axis;
