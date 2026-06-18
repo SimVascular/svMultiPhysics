@@ -326,11 +326,6 @@ protected:
                               const Vector<double> &X, const Vector<double> &Xg,
                               const double I_stim,
                               const double I_sac) const override;
-
-  /// Model jacobian.
-  virtual Array<double> getj(const unsigned int zone_id,
-                             const Vector<double> &X, const Vector<double> &Xg,
-                             const double Ksac) const override;
 };
 
 #endif
