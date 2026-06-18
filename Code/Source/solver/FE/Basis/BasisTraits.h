@@ -106,11 +106,12 @@ namespace detail {
     return topology(type) == BasisTopology::Wedge;
 }
 
-// Pyramids are outside the current basis scope, so topology() maps them to
-// Unknown and there is no BasisTopology::Pyramid to test against here.
+// Pyramids are a valid mesh cell family but not a supported basis topology, so
+// this classifier reads the mesh family directly: topology() maps pyramids to
+// Unknown, yet a truthful is_pyramid keeps the predicate set complete and ready
+// for future pyramid support.
 [[nodiscard]] constexpr bool is_pyramid(ElementType type) noexcept {
-    (void)type;
-    return false;
+    return to_mesh_family(type) == CellFamily::Pyramid;
 }
 
 [[nodiscard]] constexpr bool is_simplex(ElementType type) noexcept {

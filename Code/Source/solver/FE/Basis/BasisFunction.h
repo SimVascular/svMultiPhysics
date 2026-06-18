@@ -149,16 +149,6 @@ using Hessian  = math::Matrix<Real, 3, 3>;
     return hessian;
 }
 
-inline void add_scaled_hessian(Hessian& target,
-                               const Hessian& source,
-                               Real scale) noexcept {
-    for (std::size_t r = 0; r < 3u; ++r) {
-        for (std::size_t c = 0; c < 3u; ++c) {
-            target(r, c) += scale * source(r, c);
-        }
-    }
-}
-
 /// \brief Throw BasisEvaluationException when an output span is smaller than the
 /// basis size. \p label is the full "Class::method" context used in the message,
 /// so each basis family passes its own qualified name.
