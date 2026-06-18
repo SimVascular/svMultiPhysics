@@ -2384,7 +2384,7 @@ void read_outputs(Simulation* simulation, EquationParameters* eq_params, eqType&
         if (dmn.phys != consts::EquationType::phys_CEP)
           continue;
 
-        svmp::FE::check_not_null<svmp::FE::NotInitializedException>(
+        svmp::check_not_null<svmp::FE::NotInitializedException>(
             dmn.cep.ionic_model, SVMP_HERE, "ionic model was not constructed.");
 
         const auto registered_outputs =

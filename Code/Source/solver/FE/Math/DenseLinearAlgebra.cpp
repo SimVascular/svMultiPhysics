@@ -83,13 +83,13 @@ void DenseLUSolver::solve_in_place(std::span<Real> rhs) const {
 
 void DenseLUSolver::solve_in_place(std::span<Real> rhs,
                                    std::size_t rhs_count) const {
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         rhs_count > 0, SVMP_HERE,
         label + ": dense solve requires at least one right-hand side");
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         rhs.size() == n * rhs_count, SVMP_HERE,
         label + ": dense multi-RHS solve size mismatch");
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         lu.rows() == static_cast<Eigen::Index>(n), SVMP_HERE,
         label + ": dense solver is not factorized");
     if (n == 0) {
@@ -115,10 +115,10 @@ DenseMatrixDiagnostics dense_matrix_diagnostics(
     std::size_t rows,
     std::size_t cols,
     std::string_view label) {
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         matrix.size() == rows * cols, SVMP_HERE,
         std::string(label) + ": diagnostic size mismatch");
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         rows > 0 && cols > 0, SVMP_HERE,
         std::string(label) + ": diagnostics require a nonempty matrix");
 
@@ -155,7 +155,7 @@ DenseMatrixDiagnostics dense_matrix_diagnostics(
 DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
                                   std::size_t n,
                                   std::string_view label) {
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         matrix.size() == n * n, SVMP_HERE,
         std::string(label) + ": dense factorization size mismatch");
 
@@ -175,7 +175,7 @@ DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
     const auto diagonal = solver.lu.matrixLU().diagonal();
     for (Eigen::Index col = 0; col < diagonal.size(); ++col) {
         const Real pivot_magnitude = std::abs(diagonal[col]);
-        ::svmp::FE::check_arg<FEException>(
+        ::svmp::check_arg<FEException>(
             pivot_magnitude > solver.pivot_tolerance, SVMP_HERE,
             solver.label + ": rank-deficient matrix (rank " +
                 std::to_string(col) + " of " + std::to_string(n) +
@@ -199,7 +199,7 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
     std::vector<Real> matrix,
     std::size_t n,
     std::string_view label) {
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         matrix.size() == n * n, SVMP_HERE,
         std::string(label) + ": dense inverse size mismatch");
     std::vector<Real> matrix_for_lu = matrix;
@@ -220,7 +220,7 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
                                                       static_cast<Eigen::Index>(n));
         const auto& singular_values = svd.singularValues();
         for (Eigen::Index i = 0; i < singular_values.size(); ++i) {
-            ::svmp::FE::check_arg<FEException>(
+            ::svmp::check_arg<FEException>(
                 singular_values[i] > result.diagnostics.tolerance, SVMP_HERE,
                 std::string(label) + ": high-condition SVD fallback encountered a dropped singular value");
             sigma_inverse(i, i) = Real(1) / singular_values[i];
@@ -241,7 +241,7 @@ void validate_dense_inverse_diagnostics(
     std::size_t expected_rank,
     std::string_view label,
     Real max_condition) {
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         result.diagnostics.rank == expected_rank, SVMP_HERE,
         std::string(label) + ": rank-deficient matrix (rank " +
             std::to_string(result.diagnostics.rank) + " of " +
@@ -251,7 +251,7 @@ void validate_dense_inverse_diagnostics(
         return;
     }
 
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         result.diagnostics.condition_estimate <= max_condition, SVMP_HERE,
         std::string(label) + ": condition estimate " +
             std::to_string(result.diagnostics.condition_estimate) +
@@ -271,7 +271,7 @@ std::vector<Real> invert_dense_matrix(std::vector<Real> matrix,
 std::size_t dense_matrix_rank(std::vector<Real> matrix,
                               std::size_t rows,
                               std::size_t cols) {
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         matrix.size() == rows * cols, SVMP_HERE,
         "dense_matrix_rank: size mismatch");
 
@@ -299,10 +299,10 @@ DensePseudoInverseResult rank_revealing_pseudo_inverse(
     std::size_t rows,
     std::size_t cols,
     std::string_view label) {
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         matrix.size() == rows * cols, SVMP_HERE,
         std::string(label) + ": pseudo-inverse size mismatch");
-    ::svmp::FE::check_arg<FEException>(
+    ::svmp::check_arg<FEException>(
         rows > 0 && cols > 0, SVMP_HERE,
         std::string(label) + ": pseudo-inverse requires a nonempty matrix");
 

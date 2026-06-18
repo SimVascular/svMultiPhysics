@@ -40,7 +40,7 @@ void IonicModel::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
 
 void IonicModel::init(Vector<double> &X, Vector<double> &Xg) const {
   if (initial_X.size() != X.size()) {
-    svmp::FE::raise<svmp::FE::InvalidArgumentException>(
+    svmp::raise<svmp::FE::InvalidArgumentException>(
         SVMP_HERE, "Initial conditions size for X does not match vector size.");
   }
 
@@ -48,7 +48,7 @@ void IonicModel::init(Vector<double> &X, Vector<double> &Xg) const {
     X[i] = initial_X[i].second;
 
   if (initial_Xg.size() != Xg.size()) {
-    svmp::FE::raise<svmp::FE::InvalidArgumentException>(
+    svmp::raise<svmp::FE::InvalidArgumentException>(
         SVMP_HERE,
         "Initial conditions size for Xg does not match vector size.");
   }
@@ -76,7 +76,7 @@ void IonicModel::integ(const odeType &ode_solver_params, const int zone_id,
     break;
 
   default:
-    svmp::FE::raise<svmp::FE::InvalidArgumentException>(
+    svmp::raise<svmp::FE::InvalidArgumentException>(
         SVMP_HERE,
         "Unknown time integration type: " +
             std::to_string(static_cast<int>(ode_solver_params.tIntType)));
@@ -263,7 +263,7 @@ IonicModelFactory::create_model(const std::string &name) {
 
   auto iter = factory_instance.children.find(name);
   if (iter == factory_instance.children.end()) {
-    svmp::FE::raise<svmp::FE::InvalidArgumentException>(
+    svmp::raise<svmp::FE::InvalidArgumentException>(
         SVMP_HERE, "No model with name '" + name +
                        "' was registered in the ionic model factory.");
   }

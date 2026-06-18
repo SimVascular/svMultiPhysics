@@ -109,7 +109,7 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
         nodes.push_back(Vec3{Real(-1), Real(1) - Real(2 * i) * inv_order, Real(0)});
     }
 
-    FE::throw_if<BasisConstructionException>(
+    svmp::throw_if<BasisConstructionException>(
         nodes.size() > total_size, SVMP_HERE,
         "SerendipityBasis: quadrilateral serendipity boundary nodes exceed requested size");
 
@@ -149,7 +149,7 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
                   return a[0] < b[0];
               });
 
-    FE::throw_if<BasisConstructionException>(
+    svmp::throw_if<BasisConstructionException>(
         interior_count > interior_candidates.size(), SVMP_HERE,
         "SerendipityBasis: insufficient quadrilateral interior nodes for requested serendipity order");
 
@@ -171,7 +171,7 @@ std::vector<Real> quad_serendipity_inverse_vandermonde(
     std::span<const std::array<int, 2>> exponents,
     int order) {
     const int n = static_cast<int>(nodes.size());
-    FE::throw_if<BasisConstructionException>(
+    svmp::throw_if<BasisConstructionException>(
         n == 0 || exponents.size() != nodes.size(), SVMP_HERE,
         "SerendipityBasis: invalid quadrilateral serendipity interpolation setup");
 
@@ -373,13 +373,13 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
         if (order_ < 1) {
             order_ = 1;
         }
-        FE::throw_if<BasisConfigurationException>(
+        svmp::throw_if<BasisConfigurationException>(
             type == ElementType::Quad8 && order_ != 2, SVMP_HERE,
             "SerendipityBasis: Quad8 is only valid for quadratic order 2; use Quad4 for higher-order quadrilateral serendipity");
         quad_monomial_exponents_ = quad_serendipity_exponents(order_);
         size_ = quad_monomial_exponents_.size();
         nodes_ = quad_serendipity_nodes(order_, size_);
-        FE::throw_if<BasisConstructionException>(
+        svmp::throw_if<BasisConstructionException>(
             nodes_.size() != size_, SVMP_HERE,
             "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
         quad_inv_vandermonde_ = quad_serendipity_inverse_vandermonde(nodes_, quad_monomial_exponents_, order_);
@@ -391,7 +391,7 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
         } else if (order_ == 2) {
             size_ = 20;
         } else {
-            FE::raise<BasisConfigurationException>(SVMP_HERE,
+            svmp::raise<BasisConfigurationException>(SVMP_HERE,
                 "SerendipityBasis supports up to quadratic on hexahedra");
         }
     } else if (type == ElementType::Wedge15) {
@@ -402,11 +402,11 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
         if (order_ == 2) {
             size_ = 15;
         } else {
-            FE::raise<BasisConfigurationException>(SVMP_HERE,
+            svmp::raise<BasisConfigurationException>(SVMP_HERE,
                 "SerendipityBasis supports up to quadratic on wedge15");
         }
     } else {
-        FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+        svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
             "SerendipityBasis supports Quad4/Quad8, Hex8/Hex20, and Wedge15 elements");
     }
 
@@ -445,7 +445,7 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
     const Real z = xi[2];
 
     if (dimension_ == 2) {
-        FE::throw_if<BasisEvaluationException>(
+        svmp::throw_if<BasisEvaluationException>(
             quad_monomial_exponents_.size() != size_ ||
                 quad_inv_vandermonde_.size() != size_ * size_,
             SVMP_HERE,
@@ -477,7 +477,7 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
         // The Hex20 coefficient table is authored in an internal node order, so
         // results are remapped into the public node layout through mesh_to_basis.
         const auto mesh_to_basis = ReferenceNodeLayout::mesh_to_basis_ordering(element_type_);
-        FE::throw_if<BasisEvaluationException>(mesh_to_basis.size() != size_, SVMP_HERE,
+        svmp::throw_if<BasisEvaluationException>(mesh_to_basis.size() != size_, SVMP_HERE,
                                                "Hex20 mesh-to-basis ordering is not registered");
         eval_monomial_basis(
             x, y, z, size_,
@@ -500,7 +500,7 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
         return;
     }
 
-    FE::raise<BasisEvaluationException>(SVMP_HERE,
+    svmp::raise<BasisEvaluationException>(SVMP_HERE,
         "SerendipityBasis::evaluate_all_to: unsupported serendipity configuration");
 }
 

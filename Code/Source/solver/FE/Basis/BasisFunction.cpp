@@ -13,7 +13,7 @@ namespace basis {
 void require_span_size(std::size_t actual,
                        std::size_t expected,
                        const char* label) {
-    FE::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
+    svmp::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
         std::string(label) + ": output span is smaller than basis size");
 }
 
@@ -28,7 +28,7 @@ void BasisFunction::evaluate_gradients(const math::Vector<Real, 3>& xi,
                                        std::vector<Gradient>& gradients) const {
     (void)xi;
     (void)gradients;
-    FE::raise<BasisEvaluationException>(SVMP_HERE,
+    svmp::raise<BasisEvaluationException>(SVMP_HERE,
         "Analytic gradient evaluation is not implemented for this basis");
 }
 
@@ -36,7 +36,7 @@ void BasisFunction::evaluate_hessians(const math::Vector<Real, 3>& xi,
                                       std::vector<Hessian>& hessians) const {
     (void)xi;
     (void)hessians;
-    FE::raise<BasisEvaluationException>(SVMP_HERE,
+    svmp::raise<BasisEvaluationException>(SVMP_HERE,
         "Analytic Hessian evaluation is not implemented for this basis");
 }
 

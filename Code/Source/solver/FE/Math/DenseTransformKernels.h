@@ -36,16 +36,16 @@ inline void dense_transform_batched_row_major(
         return;
     }
 
-    FE::throw_if<FEException>(matrix.size() < rows * cols, SVMP_HERE,
+    svmp::throw_if<FEException>(matrix.size() < rows * cols, SVMP_HERE,
                               "dense_transform_batched_row_major: matrix span is too small");
-    FE::throw_if<FEException>(input_row_stride < rhs_count, SVMP_HERE,
+    svmp::throw_if<FEException>(input_row_stride < rhs_count, SVMP_HERE,
                               "dense_transform_batched_row_major: input stride is smaller than RHS count");
-    FE::throw_if<FEException>(output_row_stride < rhs_count, SVMP_HERE,
+    svmp::throw_if<FEException>(output_row_stride < rhs_count, SVMP_HERE,
                               "dense_transform_batched_row_major: output stride is smaller than RHS count");
-    FE::throw_if<FEException>(
+    svmp::throw_if<FEException>(
         input.size() < (cols - 1u) * input_row_stride + rhs_count, SVMP_HERE,
         "dense_transform_batched_row_major: input span is too small");
-    FE::throw_if<FEException>(
+    svmp::throw_if<FEException>(
         output.size() < (rows - 1u) * output_row_stride + rhs_count, SVMP_HERE,
         "dense_transform_batched_row_major: output span is too small");
 

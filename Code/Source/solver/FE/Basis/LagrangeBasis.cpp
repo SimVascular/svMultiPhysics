@@ -39,7 +39,7 @@ struct NormalizedLagrangeRequest {
 // Validate and return the supported basis topology for a Lagrange element type.
 BasisTopology supported_lagrange_topology(ElementType type) {
     const BasisTopology top = topology(type);
-    FE::throw_if<BasisElementCompatibilityException>(top == BasisTopology::Unknown, SVMP_HERE,
+    svmp::throw_if<BasisElementCompatibilityException>(top == BasisTopology::Unknown, SVMP_HERE,
                                                      "LagrangeBasis: unsupported element type");
     return top;
 }
@@ -56,18 +56,18 @@ BasisTopology supported_lagrange_topology(ElementType type) {
 NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, int order) {
     switch (element_type) {
         case ElementType::Quad8:
-            FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "LagrangeBasis: Quad8 is serendipity; use SerendipityBasis");
         case ElementType::Hex20:
-            FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "LagrangeBasis: Hex20 is serendipity; use SerendipityBasis");
         case ElementType::Wedge15:
-            FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "LagrangeBasis: Wedge15 is serendipity; use SerendipityBasis");
         case ElementType::Pyramid5:
         case ElementType::Pyramid13:
         case ElementType::Pyramid14:
-            FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "LagrangeBasis: pyramid support is not within the current solver basis scope");
         default:
             break;
@@ -86,7 +86,7 @@ std::size_t axis_index_pm_one(Real coord, int order) {
     }
     const Real scaled = (coord + Real(1)) * Real(order) / Real(2);
     const long long rounded = std::llround(scaled);
-    FE::throw_if<BasisConstructionException>(
+    svmp::throw_if<BasisConstructionException>(
         rounded < 0 || rounded > static_cast<long long>(order) ||
             !detail::basis_nearly_equal(scaled, static_cast<Real>(rounded)),
         SVMP_HERE,
@@ -101,7 +101,7 @@ int simplex_lattice_index(Real value, int order) {
     }
     const Real scaled = value * Real(order);
     const long long rounded = std::llround(scaled);
-    FE::throw_if<BasisConstructionException>(
+    svmp::throw_if<BasisConstructionException>(
         rounded < 0 || rounded > static_cast<long long>(order) ||
             !detail::basis_nearly_equal(scaled, static_cast<Real>(rounded)),
         SVMP_HERE,
@@ -129,7 +129,7 @@ LagrangeBasis::SimplexExponent simplex_exponent_from_point(const Vec3& p,
     }
     // e[0] is order minus the other exponents, so the exponents sum to order by
     // construction; a negative e[0] means the node coordinates are off-lattice.
-    FE::throw_if<BasisConstructionException>(
+    svmp::throw_if<BasisConstructionException>(
         e[0] < 0, SVMP_HERE,
         "LagrangeBasis: simplex node coordinate yields a negative implied exponent");
     return e;
@@ -304,7 +304,7 @@ LagrangeBasis::LagrangeBasis(ElementType type, int order)
     const auto normalized = normalize_lagrange_request(element_type_, order_);
     element_type_ = normalized.element_type;
     order_ = normalized.order;
-    FE::throw_if<BasisConfigurationException>(order_ < 0, SVMP_HERE,
+    svmp::throw_if<BasisConfigurationException>(order_ < 0, SVMP_HERE,
                                               "LagrangeBasis requires non-negative polynomial order");
 
     topology_ = supported_lagrange_topology(element_type_);
@@ -349,7 +349,7 @@ void LagrangeBasis::init_nodes() {
             break;
     }
 
-    FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+    svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
         "Unsupported element type in LagrangeBasis::init_nodes");
 }
 
@@ -402,7 +402,7 @@ void LagrangeBasis::build_wedge_nodes() {
         const auto tri_exp =
             simplex_exponent_from_point(node, BasisTopology::Triangle, order_);
         auto it = std::find(simplex_exponents_.begin(), simplex_exponents_.end(), tri_exp);
-        FE::throw_if<BasisConstructionException>(it == simplex_exponents_.end(), SVMP_HERE,
+        svmp::throw_if<BasisConstructionException>(it == simplex_exponents_.end(), SVMP_HERE,
                                                  "LagrangeBasis: wedge node triangle index lookup failed");
         const std::size_t tri_index =
             static_cast<std::size_t>(std::distance(simplex_exponents_.begin(), it));
@@ -573,7 +573,7 @@ void LagrangeBasis::evaluate_all_to(const Vec3& xi,
             break;
     }
 
-    FE::raise<BasisEvaluationException>(SVMP_HERE,
+    svmp::raise<BasisEvaluationException>(SVMP_HERE,
         "Unsupported element in LagrangeBasis evaluation");
 }
 

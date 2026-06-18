@@ -330,7 +330,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
   dmsg << "cep.odes.tIntTyp: " << cep.odes.tIntType;
   #endif
 
-  svmp::FE::check_not_null<svmp::FE::NotInitializedException>(
+  svmp::check_not_null<svmp::FE::NotInitializedException>(
       cep.ionic_model, SVMP_HERE, "ionic model was not constructed.");
 
   const double eps = std::numeric_limits<double>::epsilon();

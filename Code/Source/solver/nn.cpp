@@ -136,7 +136,7 @@ const febasis::BasisFunction& basis_for_solver_element(consts::ElementType eType
 
   const auto fe_type = to_fe_element_type(eType);
   if (!fe_type) {
-    fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+    svmp::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
         "No FE Basis selection for solver element " + solver_element_name(eType));
   }
 
@@ -191,7 +191,7 @@ std::span<const std::size_t> solver_to_basis_node_map(consts::ElementType eType)
 std::size_t basis_index_for_solver_node(consts::ElementType eType, const int solver_node)
 {
   if (solver_node < 0) {
-    fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+    svmp::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
         "Solver node " + std::to_string(solver_node) +
             " is outside node map for " + solver_element_name(eType));
   }
@@ -204,7 +204,7 @@ std::size_t basis_index_for_solver_node(consts::ElementType eType, const int sol
   if (node < map.size()) {
     return map[node];
   }
-  fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+  svmp::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
       "Solver node " + std::to_string(solver_node) +
           " is outside node map for " + solver_element_name(eType));
 }
@@ -218,7 +218,7 @@ fe::math::Vector<fe::Real, 3> make_basis_point(const febasis::BasisFunction& bas
                                                const Array<double>& xi)
 {
   if (xi.nrows() < basis.dimension()) {
-    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisConfigurationException>(SVMP_HERE,
         "xi has " + std::to_string(xi.nrows()) +
             " rows but FE Basis element requires " + std::to_string(basis.dimension()) +
             " reference coordinates");
@@ -246,12 +246,12 @@ void copy_basis_values_to_solver_arrays(consts::ElementType eType,
                                         Array3<double>& Nx)
 {
   if (values.size() != static_cast<std::size_t>(eNoN)) {
-    fe::raise<febasis::BasisEvaluationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisEvaluationException>(SVMP_HERE,
         "FE Basis value count " + std::to_string(values.size()) +
             " does not match solver eNoN " + std::to_string(eNoN));
   }
   if (gradients.size() != static_cast<std::size_t>(eNoN)) {
-    fe::raise<febasis::BasisEvaluationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisEvaluationException>(SVMP_HERE,
         "FE Basis gradient count " + std::to_string(gradients.size()) +
             " does not match solver eNoN " + std::to_string(eNoN));
   }
@@ -259,7 +259,7 @@ void copy_basis_values_to_solver_arrays(consts::ElementType eType,
   for (int a = 0; a < eNoN; ++a) {
     const auto basis_index = basis_index_for_solver_node(eType, a);
     if (basis_index >= values.size() || basis_index >= gradients.size()) {
-      fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+      svmp::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
           "Solver node " + std::to_string(a) + " maps to FE Basis node " +
               std::to_string(basis_index) + " outside basis output for " +
               solver_element_name(eType));
@@ -290,7 +290,7 @@ void evaluate_basis_values_and_gradients(const int insd,
 {
   const auto& basis = basis_for_solver_element(eType);
   if (insd < basis.dimension()) {
-    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisConfigurationException>(SVMP_HERE,
         "solver insd " + std::to_string(insd) +
             " is smaller than FE Basis reference dimension " + std::to_string(basis.dimension()));
   }
@@ -332,7 +332,7 @@ int required_nxx_components_for_dimension(const int dimension)
     case 3:
       return 6;
     default:
-      fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+      svmp::raise<febasis::BasisConfigurationException>(SVMP_HERE,
           "Unsupported FE Basis reference dimension " + std::to_string(dimension));
   }
 }
@@ -349,14 +349,14 @@ void copy_basis_hessians_to_solver_nxx(consts::ElementType eType,
                                        Array3<double>& Nxx)
 {
   if (hessians.size() != static_cast<std::size_t>(eNoN)) {
-    fe::raise<febasis::BasisEvaluationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisEvaluationException>(SVMP_HERE,
         "FE Basis Hessian count " + std::to_string(hessians.size()) +
             " does not match solver eNoN " + std::to_string(eNoN));
   }
 
   const int required_components = required_nxx_components_for_dimension(dimension);
   if (Nxx.nrows() < required_components) {
-    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisConfigurationException>(SVMP_HERE,
         "solver Nxx has " + std::to_string(Nxx.nrows()) +
             " rows but FE Basis Hessian packing requires " + std::to_string(required_components));
   }
@@ -368,7 +368,7 @@ void copy_basis_hessians_to_solver_nxx(consts::ElementType eType,
 
     const auto basis_index = basis_index_for_solver_node(eType, a);
     if (basis_index >= hessians.size()) {
-      fe::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
+      svmp::raise<febasis::BasisNodeOrderingException>(SVMP_HERE,
           "Solver node " + std::to_string(a) + " maps to FE Basis Hessian node " +
               std::to_string(basis_index) + " outside basis output for " +
               solver_element_name(eType));
@@ -402,14 +402,14 @@ void evaluate_basis_hessians(const int insd,
 {
   const auto& basis = basis_for_solver_element(eType);
   if (insd < basis.dimension()) {
-    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisConfigurationException>(SVMP_HERE,
         "solver insd " + std::to_string(insd) +
             " is smaller than FE Basis reference dimension " + std::to_string(basis.dimension()));
   }
 
   const int required_components = required_nxx_components_for_dimension(basis.dimension());
   if (ind2 < required_components) {
-    fe::raise<febasis::BasisConfigurationException>(SVMP_HERE,
+    svmp::raise<febasis::BasisConfigurationException>(SVMP_HERE,
         "solver ind2 " + std::to_string(ind2) +
             " is smaller than packed Hessian component count " + std::to_string(required_components));
   }
@@ -441,7 +441,7 @@ void get_gip(const int insd, consts::ElementType eType, const int nG, Vector<dou
   try {
     get_element_gauss_int_data[eType](insd, nG, w, xi);
   } catch (const std::bad_function_call& exception) {
-    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+    svmp::raise<fe::InvalidElementException>(SVMP_HERE,
         "No support in 'get_element_gauss_int_data'",
         solver_element_name(eType));
   }
@@ -456,7 +456,7 @@ void get_gip(mshType& mesh)
   try {
     set_element_gauss_int_data[mesh.eType](mesh);
   } catch (const std::bad_function_call& exception) {
-    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+    svmp::raise<fe::InvalidElementException>(SVMP_HERE,
         "No support in 'set_element_gauss_int_data'",
         solver_element_name(mesh.eType));
   }
@@ -467,7 +467,7 @@ void get_gip(Simulation* simulation, faceType& face)
   try {
     set_face_gauss_int_data[face.eType](face);
   } catch (const std::bad_function_call& exception) {
-    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+    svmp::raise<fe::InvalidElementException>(SVMP_HERE,
         "No support in 'set_face_gauss_int_data'",
         solver_element_name(face.eType));
   }
@@ -479,7 +479,7 @@ void get_gnn(const int insd, consts::ElementType eType, const int eNoN, const in
     Array<double>& N, Array3<double>& Nx)
 {
   if (!to_fe_element_type(eType).has_value()) {
-    fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+    svmp::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
         "[get_gnn] FE Basis does not support solver element " + solver_element_name(eType));
   }
 
@@ -513,7 +513,7 @@ void get_gnn(Simulation* simulation, int gaus_pt, faceType& face)
 {
   using consts::ElementType;
 
-  fe::throw_if<fe::NotImplementedException>(face.eType == ElementType::NRB, SVMP_HERE,
+  svmp::throw_if<fe::NotImplementedException>(face.eType == ElementType::NRB, SVMP_HERE,
       "[get_gnn(face)] NRB face shape functions are unsupported by FE Basis");
 
   if (face.eType == ElementType::PNT) {
@@ -527,7 +527,7 @@ void get_gnn(Simulation* simulation, int gaus_pt, faceType& face)
     return;
   }
 
-  fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+  svmp::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
       "[get_gnn(face)] FE Basis does not support face element " + solver_element_name(face.eType));
 }
 
@@ -546,7 +546,7 @@ void get_gn_nxx(const int insd, const int ind2, consts::ElementType eType, const
   }
 
   if (!to_fe_element_type(eType).has_value()) {
-    fe::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+    svmp::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
         "[get_gn_nxx] FE Basis Hessian evaluation does not support solver element " +
             solver_element_name(eType));
   }
@@ -735,7 +735,7 @@ void get_nnx(const int nsd, const consts::ElementType eType, const int eNoN, con
 
   l1 = (l1 && l2 && l3 && l4);
 
-  fe::throw_if<fe::InvalidArgumentException>(!l1, SVMP_HERE,
+  svmp::throw_if<fe::InvalidArgumentException>(!l1, SVMP_HERE,
       "Error in computing shape functions");
 }
 
@@ -984,7 +984,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
     }
 
     if (!found_node) {
-      fe::raise<fe::InvalidArgumentException>(SVMP_HERE,
+      svmp::raise<fe::InvalidArgumentException>(SVMP_HERE,
           "[svMultiPhysics::gnnb] ERROR: The '" + lFa.name + "' face node " +
               std::to_string(Ac) + " could not be matched to a node in the '" +
               msh.name + "' volume mesh.");
@@ -1036,7 +1036,7 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
           }
           break;
         default:
-          fe::raise<fe::InvalidArgumentException>(SVMP_HERE,
+          svmp::raise<fe::InvalidArgumentException>(SVMP_HERE,
               "gnnb: invalid MechanicalConfigurationType provided");
       }
     }
@@ -1225,7 +1225,7 @@ void gn_nxx(const int l, const int eNoN, const int nsd, const int insd, Array<do
 
     dgesv_(&l, &eNoN, K.data(), &l, IPIV.data(), B.data(), &l, &INFO);
 
-    fe::throw_if<fe::BackendException>(INFO != 0, SVMP_HERE,
+    svmp::throw_if<fe::BackendException>(INFO != 0, SVMP_HERE,
         "[gn_nxx] Error in Lapack", "LAPACK dgesv", INFO);
 
     Nxx = B;
@@ -1295,7 +1295,7 @@ void gn_nxx(const int l, const int eNoN, const int nsd, const int insd, Array<do
 
     dgesv_(&l, &eNoN, K.data(), &l, IPIV.data(), B.data(), &l, &INFO);
 
-    fe::throw_if<fe::BackendException>(INFO != 0, SVMP_HERE,
+    svmp::throw_if<fe::BackendException>(INFO != 0, SVMP_HERE,
         "[gn_nxx] Error in Lapack", "LAPACK dgesv", INFO);
 
     Nxx = B;
@@ -1343,7 +1343,7 @@ void select_ele(const ComMod& com_mod, mshType& mesh)
       set_1d_element_props[mesh.eNoN](insd, mesh);
     }
   } catch (const std::bad_function_call& exception) {
-      fe::raise<fe::InvalidElementException>(SVMP_HERE,
+      svmp::raise<fe::InvalidElementException>(SVMP_HERE,
           "[select_ele] No support for " + std::to_string(mesh.eNoN) +
               " noded " + std::to_string(insd) + "D elements.",
           solver_element_name(mesh.eType));
@@ -1402,7 +1402,7 @@ void select_eleb(Simulation* simulation, mshType& mesh, faceType& face)
   try {
     set_face_element_props[face.eNoN](insd, face);
   } catch (const std::bad_function_call& exception) {
-    fe::raise<fe::InvalidElementException>(SVMP_HERE,
+    svmp::raise<fe::InvalidElementException>(SVMP_HERE,
         "No support for " + std::to_string(face.eNoN) + " noded " +
             std::to_string(insd) + "D elements in 'set_face_element_props'.",
         solver_element_name(face.eType));

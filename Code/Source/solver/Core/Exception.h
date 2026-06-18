@@ -397,6 +397,38 @@ void check_not_null(PointerT ptr, SourceLocation location, Args&&... args)
     }
 }
 
+template <class ExceptionT, class... Args>
+void throw_if(bool condition, SourceLocation location, Args&&... args)
+{
+    if (condition) {
+        raise<ExceptionT>(location, std::forward<Args>(args)...);
+    }
+}
+
+template <class ExceptionT, class IndexT, class SizeT>
+void check_index(IndexT index, SizeT size, SourceLocation location)
+{
+    const long long index_value = static_cast<long long>(index);
+    const long long size_value = static_cast<long long>(size);
+    check_arg<ExceptionT>(
+        index_value >= 0 && index_value < size_value,
+        location,
+        "Index " + std::to_string(index_value) + " out of bounds [0, " +
+            std::to_string(size_value) + ")");
+}
+
+template <class ExceptionT, class... Args>
+[[noreturn]] void not_implemented(SourceLocation location, Args&&... args)
+{
+    raise<ExceptionT>(location, std::forward<Args>(args)...);
+}
+
+template <class ExceptionT, class FeatureT>
+[[noreturn]] void not_implemented(FeatureT&& feature, SourceLocation location)
+{
+    raise<ExceptionT>(location, std::forward<FeatureT>(feature));
+}
+
 } // namespace svmp
 
 #define SVMP_HERE ::svmp::SourceLocation{__FILE__, __LINE__, __func__}

@@ -16,18 +16,18 @@ namespace {
 int require_basis_order(const BasisRequest& req,
                         const char* missing_message,
                         const char* negative_message) {
-    FE::throw_if<BasisConfigurationException>(!req.order.has_value(), SVMP_HERE,
+    svmp::throw_if<BasisConfigurationException>(!req.order.has_value(), SVMP_HERE,
                                               missing_message);
-    FE::throw_if<BasisConfigurationException>(*req.order < 0, SVMP_HERE,
+    svmp::throw_if<BasisConfigurationException>(*req.order < 0, SVMP_HERE,
                                               negative_message);
     return *req.order;
 }
 
 void require_scalar_c0_request(const BasisRequest& req) {
-    FE::throw_if<BasisConfigurationException>(
+    svmp::throw_if<BasisConfigurationException>(
         req.field_type != FieldType::Scalar, SVMP_HERE,
         "BasisFactory: Lagrange/Serendipity bases support scalar fields only");
-    FE::throw_if<BasisConfigurationException>(
+    svmp::throw_if<BasisConfigurationException>(
         req.continuity != Continuity::C0, SVMP_HERE,
         "BasisFactory: Lagrange/Serendipity bases support C0 continuity only");
 }
@@ -61,7 +61,7 @@ std::shared_ptr<BasisFunction> create(const BasisRequest& req) {
         case BasisType::Serendipity:
             return create_serendipity(req);
         default:
-            FE::raise<BasisConfigurationException>(SVMP_HERE,
+            svmp::raise<BasisConfigurationException>(SVMP_HERE,
                 "BasisFactory: requested basis family is outside the scalar Lagrange/Serendipity scope");
     }
 }
@@ -81,7 +81,7 @@ BasisRequest default_basis_request(ElementType element_type) {
             if (order >= 0) {
                 return BasisRequest{element_type, BasisType::Lagrange, order};
             }
-            FE::raise<BasisElementCompatibilityException>(SVMP_HERE,
+            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "BasisFactory: no default basis is defined for the requested element type");
         }
     }

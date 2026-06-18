@@ -24,30 +24,28 @@ namespace FE {
 
 /// \defgroup FE_CommonExceptions Exceptions
 /// \ingroup FE_Common
-/// \brief FE exception hierarchy and throw/check helper functions.
+/// \brief FE exception hierarchy.
 ///
 /// \details All FE-specific exceptions derive from FEException, which itself
 /// derives from the shared solver ExceptionBase. Specialized subclasses carry
 /// structured context (element type, DOF index, backend name and error code,
 /// iteration counts, Jacobian determinants) so call sites can report
-/// actionable diagnostics. The free helper templates raise(), throw_if(),
-/// check_arg(), check_not_null(), and check_index() wrap common validation
-/// patterns with source-location capture.
+/// actionable diagnostics.
 ///
-/// Canonical FE code should throw through this helper layer instead of calling
-/// the core ::svmp helpers or constructing exceptions directly:
+/// Throw FE exceptions through the canonical core helpers in Core/Exception.h:
 ///
 /// \code
-/// FE::raise<ExceptionT>(SVMP_HERE, message);
-/// FE::throw_if<ExceptionT>(failure_condition, SVMP_HERE, message);
-/// FE::check_arg<ExceptionT>(valid_condition, SVMP_HERE, message);
-/// FE::check_not_null<ExceptionT>(ptr, SVMP_HERE, message);
-/// FE::check_index<ExceptionT>(index, size, SVMP_HERE);
-/// FE::not_implemented(feature, SVMP_HERE);
+/// svmp::raise<ExceptionT>(SVMP_HERE, message);
+/// svmp::throw_if<ExceptionT>(failure_condition, SVMP_HERE, message);
+/// svmp::check_arg<ExceptionT>(valid_condition, SVMP_HERE, message);
+/// svmp::check_not_null<ExceptionT>(ptr, SVMP_HERE, message);
+/// svmp::check_index<ExceptionT>(index, size, SVMP_HERE);
+/// svmp::not_implemented<ExceptionT>(feature, SVMP_HERE);
 /// \endcode
 ///
 /// throw_if() is failure-condition based. check_arg() is
-/// success-condition based.
+/// success-condition based. FE owns exception types; helper spelling is owned
+/// by the core layer.
 /// @{
 
 /**
@@ -440,105 +438,6 @@ private:
 
     double jacobian_det_ = 0.0;
 };
-
-/**
- * @brief Throw an FE exception with source-location capture
- * @tparam ExceptionT Exception type to throw.
- * @tparam Args Constructor argument types forwarded to the exception.
- * @param location Source location to record in the exception.
- * @param args Arguments forwarded to the exception constructor.
- */
-template <class ExceptionT, class... Args>
-[[noreturn]] inline void raise(SourceLocation location, Args&&... args)
-{
-    ::svmp::raise<ExceptionT>(location, std::forward<Args>(args)...);
-}
-
-/**
- * @brief Throw an FE exception when a condition holds
- * @tparam ExceptionT Exception type to throw; defaults to FEException.
- * @tparam Args Constructor argument types forwarded to the exception.
- * @param condition Condition that triggers the throw when true.
- * @param location Source location to record in the exception.
- * @param args Arguments forwarded to the exception constructor.
- */
-template <class ExceptionT = FEException, class... Args>
-inline void throw_if(bool condition, SourceLocation location, Args&&... args)
-{
-    if (condition) {
-        ::svmp::FE::raise<ExceptionT>(location, std::forward<Args>(args)...);
-    }
-}
-
-/**
- * @brief Validate an argument condition, throwing when it fails
- * @tparam ExceptionT Exception type to throw; defaults to InvalidArgumentException.
- * @tparam Args Constructor argument types forwarded to the exception.
- * @param condition Condition that must hold for the argument to be valid.
- * @param location Source location to record in the exception.
- * @param args Arguments forwarded to the exception constructor.
- */
-template <class ExceptionT = InvalidArgumentException, class... Args>
-inline void check_arg(bool condition, SourceLocation location, Args&&... args)
-{
-    if (!condition) {
-        ::svmp::FE::raise<ExceptionT>(location, std::forward<Args>(args)...);
-    }
-}
-
-/**
- * @brief Validate that a pointer is non-null, throwing when it is null
- * @tparam ExceptionT Exception type to throw; defaults to InvalidArgumentException.
- * @tparam PointerT Pointer-like type being checked.
- * @tparam Args Constructor argument types forwarded to the exception.
- * @param ptr Pointer to validate.
- * @param location Source location to record in the exception.
- * @param args Arguments forwarded to the exception constructor.
- */
-template <class ExceptionT = InvalidArgumentException, class PointerT,
-          class... Args>
-inline void check_not_null(PointerT ptr, SourceLocation location,
-                           Args&&... args)
-{
-    if (ptr == nullptr) {
-        ::svmp::FE::raise<ExceptionT>(location, std::forward<Args>(args)...);
-    }
-}
-
-/**
- * @brief Validate that an index lies in [0, size), throwing when out of bounds
- * @tparam ExceptionT Exception type to throw; defaults to InvalidArgumentException.
- * @tparam IndexT Integral index type.
- * @tparam SizeT Integral size type.
- * @param index Index to validate.
- * @param size Exclusive upper bound for the index.
- * @param location Source location to record in the exception.
- */
-template <class ExceptionT = InvalidArgumentException, class IndexT,
-          class SizeT>
-inline void check_index(IndexT index, SizeT size, SourceLocation location)
-{
-    const long long fe_check_index_value = static_cast<long long>(index);
-    const long long fe_check_size_value = static_cast<long long>(size);
-
-    ::svmp::FE::check_arg<ExceptionT>(
-        fe_check_index_value >= 0 &&
-            fe_check_index_value < fe_check_size_value,
-        location,
-        "Index " + std::to_string(fe_check_index_value) +
-            " out of bounds [0, " + std::to_string(fe_check_size_value) + ")");
-}
-
-/**
- * @brief Throw NotImplementedException for a missing feature
- * @param feature Description of the unimplemented feature.
- * @param location Source location to record in the exception.
- */
-[[noreturn]] inline void not_implemented(const std::string& feature,
-                                         SourceLocation location)
-{
-    ::svmp::FE::raise<NotImplementedException>(location, feature);
-}
 
 /// @}
 

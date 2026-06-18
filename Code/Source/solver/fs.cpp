@@ -377,7 +377,7 @@ void set_thood_fs(fsType& fs, consts::ElementType eType)
     break;
 
     default:
-      fe::raise<fe::InvalidElementException>(
+      svmp::raise<fe::InvalidElementException>(
           SVMP_HERE, "Cannot choose Taylor-Hood basis", element_name(eType));
   }
 }
