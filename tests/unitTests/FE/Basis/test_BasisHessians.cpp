@@ -189,6 +189,38 @@ void expect_hessians_symmetric(const BasisFunction& basis,
     }
 }
 
+void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
+                                        const std::vector<math::Vector<Real, 3>>& points,
+                                        Real tol)
+{
+    ASSERT_EQ(basis.dimension(), 2);
+    for (const auto& xi : points) {
+        std::vector<Gradient> gradients;
+        std::vector<Hessian> hessians;
+        basis.evaluate_gradients(xi, gradients);
+        basis.evaluate_hessians(xi, hessians);
+
+        ASSERT_EQ(gradients.size(), basis.size());
+        ASSERT_EQ(hessians.size(), basis.size());
+        for (std::size_t n = 0; n < basis.size(); ++n) {
+            EXPECT_NEAR(gradients[n][2], Real(0), tol)
+                << "basis " << n << ", element "
+                << static_cast<int>(basis.element_type())
+                << ", order " << basis.order();
+            for (std::size_t d = 0; d < 3u; ++d) {
+                EXPECT_NEAR(hessians[n](2, d), Real(0), tol)
+                    << "basis " << n << ", component (2," << d
+                    << "), element " << static_cast<int>(basis.element_type())
+                    << ", order " << basis.order();
+                EXPECT_NEAR(hessians[n](d, 2), Real(0), tol)
+                    << "basis " << n << ", component (" << d
+                    << ",2), element " << static_cast<int>(basis.element_type())
+                    << ", order " << basis.order();
+            }
+        }
+    }
+}
+
 std::vector<math::Vector<Real, 3>> serendipity_sample_points(ElementType type) {
     if (type == ElementType::Quad4 || type == ElementType::Quad8) {
         return {{Real(0.17), Real(-0.31), Real(0)}, {Real(-0.45), Real(0.25), Real(0)}};
@@ -333,6 +365,7 @@ TEST(BasisGradients, SerendipityFamiliesMatchNumericalGradients) {
         {ElementType::Quad8, 2, Real(1e-7)},
         {ElementType::Quad4, 3, Real(1e-7)},
         {ElementType::Quad4, 4, Real(5e-7)},
+        {ElementType::Quad4, 6, Real(2e-6)},
         {ElementType::Hex8, 1, Real(1e-8)},
         {ElementType::Hex20, 2, Real(1e-7)},
         {ElementType::Wedge15, 2, Real(1e-7)},
@@ -341,6 +374,27 @@ TEST(BasisGradients, SerendipityFamiliesMatchNumericalGradients) {
     for (const auto& c : cases) {
         SerendipityBasis basis(c.type, c.order);
         expect_gradients_match_numerical(basis, serendipity_sample_points(c.type), c.tol);
+    }
+}
+
+TEST(BasisGradients, QuadrilateralSerendipityInactiveZDerivativesRemainZero) {
+    const struct Case {
+        ElementType type;
+        int order;
+    } cases[] = {
+        {ElementType::Quad4, 1},
+        {ElementType::Quad8, 2},
+        {ElementType::Quad4, 4},
+        {ElementType::Quad4, 6},
+        {ElementType::Quad4, 10},
+    };
+
+    for (const auto& c : cases) {
+        SerendipityBasis basis(c.type, c.order);
+        expect_inactive_z_derivatives_zero(
+            basis,
+            serendipity_sample_points(c.type),
+            Real(1e-12));
     }
 }
 
@@ -354,6 +408,7 @@ TEST(BasisHessians, SerendipityFamiliesMatchNumericalHessians) {
         {ElementType::Quad8, 2, Real(1e-6)},
         {ElementType::Quad4, 3, Real(1e-6)},
         {ElementType::Quad4, 4, Real(5e-6)},
+        {ElementType::Quad4, 6, Real(2e-5)},
         {ElementType::Hex8, 1, Real(1e-6)},
         {ElementType::Hex20, 2, Real(1e-6)},
         {ElementType::Wedge15, 2, Real(1e-6)},

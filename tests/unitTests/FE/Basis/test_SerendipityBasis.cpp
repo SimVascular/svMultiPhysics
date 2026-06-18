@@ -8,7 +8,10 @@
 #include "FE/Basis/LagrangeBasis.h"
 #include "FE/Basis/NodeOrderingConventions.h"
 #include "FE/Basis/SerendipityBasis.h"
+#include "FE/Math/DenseLinearAlgebra.h"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <vector>
 
@@ -86,6 +89,87 @@ Real interpolate_nodal_function(const SerendipityBasis& basis,
     return result;
 }
 
+int quad_serendipity_superlinear_degree_for_test(int ax, int ay) {
+    return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0);
+}
+
+std::vector<std::array<int, 2>> quad_serendipity_exponents_for_test(int order) {
+    std::vector<std::array<int, 2>> exponents;
+    for (int ay = 0; ay <= order; ++ay) {
+        for (int ax = 0; ax <= order; ++ax) {
+            if (quad_serendipity_superlinear_degree_for_test(ax, ay) <= order) {
+                exponents.push_back({ax, ay});
+            }
+        }
+    }
+    return exponents;
+}
+
+std::size_t expected_quad_serendipity_size(int order) {
+    const auto p = static_cast<std::size_t>(order);
+    const std::size_t boundary = 4u * p;
+    if (order < 4) {
+        return boundary;
+    }
+    const auto m = static_cast<std::size_t>(order - 4);
+    return boundary + (m + 1u) * (m + 2u) / 2u;
+}
+
+Real integer_power_for_test(Real base, int exponent) {
+    Real result = Real(1);
+    for (int k = 0; k < exponent; ++k) {
+        result *= base;
+    }
+    return result;
+}
+
+Real monomial_value_for_test(const math::Vector<Real, 3>& p,
+                             const std::array<int, 2>& exponent) {
+    return integer_power_for_test(p[0], exponent[0]) *
+           integer_power_for_test(p[1], exponent[1]);
+}
+
+std::vector<Real> quadrilateral_vandermonde_for_test(
+    const std::vector<math::Vector<Real, 3>>& nodes,
+    const std::vector<std::array<int, 2>>& exponents)
+{
+    const std::size_t n = nodes.size();
+    std::vector<Real> vandermonde(n * n, Real(0));
+    for (std::size_t row = 0; row < n; ++row) {
+        for (std::size_t col = 0; col < n; ++col) {
+            vandermonde[row * n + col] =
+                monomial_value_for_test(nodes[row], exponents[col]);
+        }
+    }
+    return vandermonde;
+}
+
+void expect_no_duplicate_nodes(const std::vector<math::Vector<Real, 3>>& nodes,
+                               Real tolerance)
+{
+    for (std::size_t a = 0; a < nodes.size(); ++a) {
+        for (std::size_t b = a + 1u; b < nodes.size(); ++b) {
+            const Real dx = std::abs(nodes[a][0] - nodes[b][0]);
+            const Real dy = std::abs(nodes[a][1] - nodes[b][1]);
+            EXPECT_GT(std::max(dx, dy), tolerance)
+                << "duplicate nodes " << a << " and " << b;
+        }
+    }
+}
+
+void expect_nodes_near(const std::vector<math::Vector<Real, 3>>& actual,
+                       const std::vector<math::Vector<Real, 3>>& expected,
+                       Real tolerance)
+{
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t i = 0; i < actual.size(); ++i) {
+        for (std::size_t d = 0; d < 3u; ++d) {
+            EXPECT_NEAR(actual[i][d], expected[i][d], tolerance)
+                << "node=" << i << " component=" << d;
+        }
+    }
+}
+
 // Every monomial here has superlinear degree at most three, so it lies in the
 // order-three quadrilateral serendipity space.
 Real cubic_serendipity_function(const math::Vector<Real, 3>& p) {
@@ -104,8 +188,10 @@ Real bilinear_function(const math::Vector<Real, 3>& p) {
 
 TEST(SerendipityBasis, Quad8IsNodalAndPartitionsUnity) {
     SerendipityBasis basis(ElementType::Quad8, 2);
+    SerendipityBasis explicit_quad4_basis(ElementType::Quad4, 2);
 
     EXPECT_EQ(basis.size(), 8u);
+    expect_nodes_near(basis.nodes(), explicit_quad4_basis.nodes(), Real(1e-14));
     expect_nodal_delta(basis, basis.nodes(), Real(1e-10));
     expect_partition_of_unity(basis, {Real(0.17), Real(-0.31), Real(0)});
 }
@@ -135,12 +221,21 @@ TEST(SerendipityBasis, RejectsUnsupportedSerendipityAliases) {
     EXPECT_THROW(SerendipityBasis(ElementType::Pyramid13, 2), FEException);
     EXPECT_THROW(SerendipityBasis(ElementType::Pyramid14, 2), FEException);
     EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 3), FEException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 1), FEException);
 }
 
-// Orders other than two run the generic quadrilateral path: serendipity
-// monomial selection, boundary plus interior node placement, and a runtime
-// Vandermonde inversion whose unisolvence is assumed rather than tabulated.
-// Order four is the first order that selects an interior node.
+TEST(SerendipityBasis, QuadrilateralOrderZeroNormalizesToLinear) {
+    SerendipityBasis basis(ElementType::Quad4, 0);
+
+    EXPECT_EQ(basis.order(), 1);
+    EXPECT_EQ(basis.size(), 4u);
+    expect_nodal_delta(basis, basis.nodes(), Real(1e-12));
+}
+
+// Explicit Quad4 serendipity orders run the documented monomial selection,
+// boundary plus triangular interior node placement, and runtime Vandermonde
+// inversion. Order four is the first order with an interior residual
+// polynomial, so it is the first order that appends an interior node.
 TEST(SerendipityBasis, QuadrilateralOrdersOneThreeFourAreNodalAndPartitionUnity) {
     const struct Case {
         int order;
@@ -169,6 +264,68 @@ TEST(SerendipityBasis, QuadrilateralOrdersOneThreeFourAreNodalAndPartitionUnity)
     }
 }
 
+TEST(SerendipityBasis, QuadrilateralNodesFollowDocumentedConstructionThroughOrderTen) {
+    constexpr Real kTol = Real(1e-14);
+
+    for (int order = 1; order <= 10; ++order) {
+        SerendipityBasis basis(ElementType::Quad4, order);
+        const auto& nodes = basis.nodes();
+        const std::size_t expected_size = expected_quad_serendipity_size(order);
+        const std::size_t boundary_count = static_cast<std::size_t>(4 * order);
+
+        ASSERT_EQ(basis.size(), expected_size) << "order=" << order;
+        ASSERT_EQ(nodes.size(), expected_size) << "order=" << order;
+        EXPECT_EQ(quad_serendipity_exponents_for_test(order).size(),
+                  expected_size) << "order=" << order;
+        expect_no_duplicate_nodes(nodes, kTol);
+
+        for (std::size_t i = 0; i < nodes.size(); ++i) {
+            EXPECT_NEAR(nodes[i][2], Real(0), kTol) << "order=" << order
+                                                    << " node=" << i;
+            EXPECT_LE(std::abs(nodes[i][0]), Real(1)) << "order=" << order
+                                                       << " node=" << i;
+            EXPECT_LE(std::abs(nodes[i][1]), Real(1)) << "order=" << order
+                                                       << " node=" << i;
+
+            const bool on_boundary =
+                std::abs(std::abs(nodes[i][0]) - Real(1)) <= kTol ||
+                std::abs(std::abs(nodes[i][1]) - Real(1)) <= kTol;
+            if (i < boundary_count) {
+                EXPECT_TRUE(on_boundary) << "order=" << order << " node=" << i;
+            } else {
+                EXPECT_FALSE(on_boundary) << "order=" << order << " node=" << i;
+                EXPECT_LT(std::abs(nodes[i][0]), Real(1)) << "order=" << order
+                                                           << " node=" << i;
+                EXPECT_LT(std::abs(nodes[i][1]), Real(1)) << "order=" << order
+                                                           << " node=" << i;
+            }
+        }
+
+        std::size_t index = boundary_count;
+        if (order >= 4) {
+            const int m = order - 4;
+            const Real y_denominator = Real(m + 2);
+            for (int row = 0; row <= m; ++row) {
+                const int row_count = m + 1 - row;
+                const Real expected_y =
+                    Real(-1) + Real(2) * Real(row + 1) / y_denominator;
+                const Real x_denominator = Real(row_count + 1);
+                for (int col = 0; col < row_count; ++col) {
+                    ASSERT_LT(index, nodes.size());
+                    const Real expected_x =
+                        Real(-1) + Real(2) * Real(col + 1) / x_denominator;
+                    EXPECT_NEAR(nodes[index][0], expected_x, kTol)
+                        << "order=" << order << " row=" << row << " col=" << col;
+                    EXPECT_NEAR(nodes[index][1], expected_y, kTol)
+                        << "order=" << order << " row=" << row << " col=" << col;
+                    ++index;
+                }
+            }
+        }
+        EXPECT_EQ(index, nodes.size()) << "order=" << order;
+    }
+}
+
 TEST(SerendipityBasis, QuadrilateralOrderOneReproducesBilinearFunctions) {
     SerendipityBasis basis(ElementType::Quad4, 1);
 
@@ -194,6 +351,53 @@ TEST(SerendipityBasis, QuadrilateralOrderThreeReproducesSerendipityCubics) {
         EXPECT_NEAR(interpolate_nodal_function(basis, xi, cubic_serendipity_function),
                     cubic_serendipity_function(xi),
                     Real(1e-11));
+    }
+}
+
+TEST(SerendipityBasis, QuadrilateralOrdersReproduceEverySerendipityMonomial) {
+    const std::vector<math::Vector<Real, 3>> points = {
+        {Real(0.25), Real(-0.4), Real(0)},
+        {Real(-0.7), Real(0.6), Real(0)},
+        {Real(0.11), Real(0.23), Real(0)},
+    };
+
+    for (int order = 1; order <= 10; ++order) {
+        SerendipityBasis basis(ElementType::Quad4, order);
+        const auto exponents = quad_serendipity_exponents_for_test(order);
+        ASSERT_EQ(exponents.size(), basis.size()) << "order=" << order;
+
+        const Real tolerance = (order <= 7) ? Real(1e-10) : Real(2e-8);
+        for (const auto& exponent : exponents) {
+            for (const auto& xi : points) {
+                const Real interpolated =
+                    interpolate_nodal_function(
+                        basis,
+                        xi,
+                        [&exponent](const math::Vector<Real, 3>& node) {
+                            return monomial_value_for_test(node, exponent);
+                        });
+                const Real expected = monomial_value_for_test(xi, exponent);
+                EXPECT_NEAR(interpolated, expected, tolerance)
+                    << "order=" << order << " ax=" << exponent[0]
+                    << " ay=" << exponent[1] << " xi=(" << xi[0] << ","
+                    << xi[1] << ")";
+            }
+        }
+    }
+}
+
+TEST(SerendipityBasis, QuadrilateralVandermondeHasFullRankThroughOrderTen) {
+    for (int order = 1; order <= 10; ++order) {
+        SerendipityBasis basis(ElementType::Quad4, order);
+        const auto exponents = quad_serendipity_exponents_for_test(order);
+        const auto vandermonde =
+            quadrilateral_vandermonde_for_test(basis.nodes(), exponents);
+        const std::size_t n = basis.size();
+
+        ASSERT_EQ(exponents.size(), n) << "order=" << order;
+        ASSERT_EQ(vandermonde.size(), n * n) << "order=" << order;
+        EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n)
+            << "order=" << order;
     }
 }
 

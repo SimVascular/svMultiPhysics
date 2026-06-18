@@ -83,6 +83,40 @@ std::vector<std::array<int, 2>> quad_serendipity_exponents(int order) {
     return exponents;
 }
 
+std::size_t quad_serendipity_interior_count(int order) {
+    if (order < 4) {
+        return 0u;
+    }
+    const auto m = static_cast<std::size_t>(order - 4);
+    return (m + 1u) * (m + 2u) / 2u;
+}
+
+// Interior nodes are a triangular row set for P_m, m = order - 4. If a
+// serendipity polynomial vanishes at the p + 1 boundary nodes on each edge,
+// each edge restriction is identically zero and the polynomial factors as
+// (1 - x^2)(1 - y^2) q with q in P_m. Row 0 has m + 1 distinct x-values; if q
+// vanishes there, q(x, y_0) is the zero one-variable polynomial and
+// q = (y - y_0) q_1 with q_1 in P_{m-1}. Repeating over the remaining rows
+// proves q = 0, so the full quadrilateral serendipity Vandermonde is
+// nonsingular for this node set.
+void append_quad_serendipity_interior_nodes(std::vector<Vec3>& nodes, int order) {
+    if (order < 4) {
+        return;
+    }
+
+    const int m = order - 4;
+    const Real y_denominator = Real(m + 2);
+    for (int row = 0; row <= m; ++row) {
+        const int row_count = m + 1 - row;
+        const Real y = Real(-1) + Real(2) * Real(row + 1) / y_denominator;
+        const Real x_denominator = Real(row_count + 1);
+        for (int col = 0; col < row_count; ++col) {
+            const Real x = Real(-1) + Real(2) * Real(col + 1) / x_denominator;
+            nodes.push_back(Vec3{x, y, Real(0)});
+        }
+    }
+}
+
 std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
     std::vector<Vec3> nodes;
     if (order <= 0) {
@@ -113,49 +147,12 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
         nodes.size() > total_size, SVMP_HERE,
         "SerendipityBasis: quadrilateral serendipity boundary nodes exceed requested size");
 
-    const std::size_t interior_count = total_size - nodes.size();
-    if (interior_count == 0u) {
-        return nodes;
-    }
-
-    std::vector<Vec3> interior_candidates;
-    interior_candidates.reserve(static_cast<std::size_t>((order - 1) * (order - 1)));
-    for (int j = 1; j < order; ++j) {
-        for (int i = 1; i < order; ++i) {
-            interior_candidates.push_back(
-                Vec3{Real(-1) + Real(2 * i) * inv_order,
-                     Real(-1) + Real(2 * j) * inv_order,
-                     Real(0)});
-        }
-    }
-
-    std::sort(interior_candidates.begin(), interior_candidates.end(),
-              [](const Vec3& a, const Vec3& b) {
-                  const Real a_linf = std::max(std::abs(a[0]), std::abs(a[1]));
-                  const Real b_linf = std::max(std::abs(b[0]), std::abs(b[1]));
-                  if (a_linf != b_linf) {
-                      return a_linf < b_linf;
-                  }
-
-                  const Real a_l1 = std::abs(a[0]) + std::abs(a[1]);
-                  const Real b_l1 = std::abs(b[0]) + std::abs(b[1]);
-                  if (a_l1 != b_l1) {
-                      return a_l1 < b_l1;
-                  }
-
-                  if (a[1] != b[1]) {
-                      return a[1] < b[1];
-                  }
-                  return a[0] < b[0];
-              });
-
+    const std::size_t interior_count = quad_serendipity_interior_count(order);
     svmp::throw_if<BasisConstructionException>(
-        interior_count > interior_candidates.size(), SVMP_HERE,
-        "SerendipityBasis: insufficient quadrilateral interior nodes for requested serendipity order");
+        nodes.size() + interior_count != total_size, SVMP_HERE,
+        "SerendipityBasis: quadrilateral serendipity monomial/node count mismatch");
 
-    nodes.insert(nodes.end(),
-                 interior_candidates.begin(),
-                 interior_candidates.begin() + static_cast<std::ptrdiff_t>(interior_count));
+    append_quad_serendipity_interior_nodes(nodes, order);
     return nodes;
 }
 

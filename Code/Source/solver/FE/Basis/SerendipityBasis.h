@@ -50,6 +50,35 @@ namespace basis {
 /// matrix at the selected reference nodes. Values, gradients, and Hessians are
 /// then evaluated by differentiating the monomial vector and applying the
 /// inverse Vandermonde coefficients.
+/// For order \f$p \ge 1\f$, this space has \f$4p\f$ boundary modes for
+/// \f$p \le 3\f$ and
+/// \f[
+///   4p + \frac{(p - 3)(p - 2)}{2}
+/// \f]
+/// modes for \f$p \ge 4\f$.
+///
+/// The quadrilateral node set is unisolvent by construction. If
+/// \f$s(x,y)\f$ in this space vanishes at the \f$p + 1\f$ distinct nodes on
+/// every edge, each edge restriction is a degree-\f$p\f$ one-variable
+/// polynomial with \f$p + 1\f$ roots, so all edge restrictions vanish. Thus
+/// \f$s\f$ is divisible by the boundary bubble
+/// \f$(1 - x^2)(1 - y^2)\f$, and the quotient lies in
+/// \f$P_{p-4}\f$ (with no quotient for \f$p < 4\f$). For \f$p \ge 4\f$, the
+/// interior nodes form triangular rows for \f$P_{p-4}\f$: the first row has
+/// \f$m + 1\f$ distinct \f$x\f$ values, the next row has \f$m\f$, and so on
+/// for \f$m = p - 4\f$. A total-degree polynomial that vanishes on those rows
+/// is zero by induction over rows, because each vanished row factors out one
+/// linear term in \f$y\f$. The interpolation Vandermonde is therefore
+/// nonsingular for the implemented quadrilateral serendipity space.
+///
+/// `SerendipityBasis(ElementType::Quad4, p)` supports explicit
+/// arbitrary-order quadrilateral serendipity requests for \f$p \ge 1\f$
+/// (requests below one are normalized to one). `ElementType::Quad8` remains
+/// the standard quadratic eight-node layout and is valid only with order 2.
+/// Solver-default basis selection remains separate: `basis_factory` maps the
+/// complete Quad4 layout to the default linear Lagrange basis and maps Quad8 to
+/// quadratic serendipity unless a caller explicitly requests a different
+/// supported basis.
 ///
 /// Hex8 uses the standard trilinear corner basis
 /// \f$(1 \pm r)(1 \pm s)(1 \pm t)/8\f$. Hex20 and Wedge15 use tabulated
@@ -67,7 +96,9 @@ public:
     /// invert a Vandermonde matrix for the selected serendipity monomials.
     /// Hex20 and Wedge15 use fixed coefficient tables. For hexahedra, only
     /// linear Hex8 and quadratic Hex20 serendipity spaces are supported. For
-    /// wedges, only quadratic Wedge15 is supported.
+    /// wedges, only quadratic Wedge15 is supported. Quad4 supports explicit
+    /// quadrilateral serendipity requests of any order \f$p \ge 1\f$; Quad8 is
+    /// restricted to order 2.
     ///
     /// \param type Element type used to determine topology and reference-node layout.
     /// \param order Requested polynomial order.
@@ -97,7 +128,11 @@ public:
     /// placed first on the boundary and then, for higher order requests, at the
     /// selected interior points needed to make the reduced monomial space
     /// unisolvent. Hexahedral and wedge nodes are taken from
-    /// ReferenceNodeLayout.
+    /// ReferenceNodeLayout. For high-order Quad4 serendipity, the deterministic
+    /// interior row ordering is an implementation convention; callers should
+    /// pair it with basis values from the same object rather than assume an
+    /// external mesh ordering contract beyond the supported Quad4/Quad8
+    /// production layouts.
     ///
     /// \return Reference node coordinates, one per basis function.
     const std::vector<math::Vector<Real, 3>>& nodes() const noexcept final { return nodes_; }
