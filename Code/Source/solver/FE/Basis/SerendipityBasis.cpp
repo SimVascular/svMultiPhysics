@@ -189,6 +189,10 @@ std::vector<Real> quad_serendipity_inverse_vandermonde(
         }
     }
 
+    // Quadrilateral serendipity bases are generated from the requested
+    // monomial space, so a small dense inverse produces the nodal coefficient
+    // table at construction time. Hex20 and Wedge15 use fixed tables because
+    // only their quadratic layouts are supported here.
     const std::string label = "Quad order " + std::to_string(order);
     return invert_dense_matrix(std::move(vandermonde), n, label.c_str());
 }

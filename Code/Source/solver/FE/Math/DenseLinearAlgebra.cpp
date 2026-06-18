@@ -19,7 +19,7 @@ namespace math {
 
 namespace {
 
-using DenseMatrix = DenseLUSolver::DenseMatrix;
+using DenseMatrix = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 using RowMajorMatrix =
     Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 using ConstRowMajorMap = Eigen::Map<const RowMajorMatrix>;
@@ -40,6 +40,15 @@ void copy_to_row_major(const DenseMatrix& source, std::vector<Real>& dest) {
 }
 
 } // namespace
+
+struct DenseLUSolver::Impl {
+    Eigen::PartialPivLU<DenseMatrix> lu;
+};
+
+DenseLUSolver::DenseLUSolver() = default;
+DenseLUSolver::~DenseLUSolver() = default;
+DenseLUSolver::DenseLUSolver(DenseLUSolver&&) noexcept = default;
+DenseLUSolver& DenseLUSolver::operator=(DenseLUSolver&&) noexcept = default;
 
 Real dense_matrix_max_abs(std::span<const Real> matrix) noexcept {
     Real max_abs = Real(0);
@@ -90,7 +99,7 @@ void DenseLUSolver::solve_in_place(std::span<Real> rhs,
         rhs.size() == n * rhs_count, SVMP_HERE,
         label + ": dense multi-RHS solve size mismatch");
     ::svmp::check_arg<FEException>(
-        lu.rows() == static_cast<Eigen::Index>(n), SVMP_HERE,
+        impl && impl->lu.rows() == static_cast<Eigen::Index>(n), SVMP_HERE,
         label + ": dense solver is not factorized");
     if (n == 0) {
         return;
@@ -100,7 +109,7 @@ void DenseLUSolver::solve_in_place(std::span<Real> rhs,
                                        static_cast<Eigen::Index>(n),
                                        static_cast<Eigen::Index>(rhs_count));
     // Evaluate into a temporary: lu.solve cannot alias its argument.
-    const DenseMatrix solution = lu.solve(rhs_map);
+    const DenseMatrix solution = impl->lu.solve(rhs_map);
     rhs_map = solution;
 }
 
@@ -166,13 +175,14 @@ DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
         dense_matrix_max_abs(std::span<const Real>(matrix.data(), matrix.size()));
     solver.pivot_tolerance = dense_matrix_pivot_tolerance(n, n, max_abs);
 
-    solver.lu.compute(map_row_major(matrix, n, n));
+    solver.impl = std::make_unique<DenseLUSolver::Impl>();
+    solver.impl->lu.compute(map_row_major(matrix, n, n));
 
     // Partial pivoting leaves the pivots on the diagonal of the packed LU
     // factor; a pivot below the scale-aware tolerance marks rank deficiency.
     Real max_pivot_abs = Real(0);
     Real min_pivot_abs = std::numeric_limits<Real>::infinity();
-    const auto diagonal = solver.lu.matrixLU().diagonal();
+    const auto diagonal = solver.impl->lu.matrixLU().diagonal();
     for (Eigen::Index col = 0; col < diagonal.size(); ++col) {
         const Real pivot_magnitude = std::abs(diagonal[col]);
         ::svmp::check_arg<FEException>(
@@ -236,7 +246,7 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
         return result;
     }
 
-    const DenseMatrix inverse = solver.lu.inverse();
+    const DenseMatrix inverse = solver.impl->lu.inverse();
     copy_to_row_major(inverse, result.inverse);
     return result;
 }
@@ -267,7 +277,7 @@ std::vector<Real> invert_dense_matrix(std::vector<Real> matrix,
                                       std::size_t n,
                                       std::string_view label) {
     const DenseLUSolver solver = factor_dense_matrix(std::move(matrix), n, label);
-    const DenseMatrix inverse = solver.lu.inverse();
+    const DenseMatrix inverse = solver.impl->lu.inverse();
     std::vector<Real> result;
     copy_to_row_major(inverse, result);
     return result;

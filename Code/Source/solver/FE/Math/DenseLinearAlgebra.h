@@ -6,10 +6,9 @@
 
 #include "Types.h"
 
-#include <Eigen/Dense>
-
 #include <cstddef>
 #include <limits>
+#include <memory>
 #include <span>
 #include <string>
 #include <string_view>
@@ -20,7 +19,7 @@ namespace FE {
 namespace math {
 
 // Dense solve, inverse, rank, and pseudo-inverse support for FE construction
-// utilities, backed by Eigen. Matrices are row-major: matrix[row * cols + col].
+// utilities. Matrices are row-major: matrix[row * cols + col].
 [[nodiscard]] Real dense_matrix_max_abs(std::span<const Real> matrix) noexcept;
 
 [[nodiscard]] Real dense_matrix_pivot_tolerance(std::size_t rows,
@@ -59,15 +58,22 @@ struct DenseInverseResult {
 [[nodiscard]] Real dense_matrix_condition_error_threshold() noexcept;
 
 struct DenseLUSolver {
-    using DenseMatrix = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
+    struct Impl;
+
+    DenseLUSolver();
+    ~DenseLUSolver();
+    DenseLUSolver(DenseLUSolver&&) noexcept;
+    DenseLUSolver& operator=(DenseLUSolver&&) noexcept;
+    DenseLUSolver(const DenseLUSolver&) = delete;
+    DenseLUSolver& operator=(const DenseLUSolver&) = delete;
 
     std::size_t n{0};
-    Eigen::PartialPivLU<DenseMatrix> lu;
     DenseMatrixDiagnostics diagnostics;
     Real pivot_tolerance{0};
     Real min_pivot{0};
     Real max_pivot{0};
     std::string label;
+    std::unique_ptr<Impl> impl;
 
     [[nodiscard]] bool empty() const noexcept { return n == 0; }
 
