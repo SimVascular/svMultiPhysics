@@ -12,7 +12,6 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script type="text/javascript">
 window.MathJax = {
   options: {
@@ -181,10 +180,10 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:ab3c64eb056edc58abbe44e9b89bd3cf2" id="r_ab3c64eb056edc58abbe44e9b89bd3cf2"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_t_t_p.html#ab3c64eb056edc58abbe44e9b89bd3cf2">getf</a> (const unsigned int zone_id, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, const double I_stim, const double I_sac) const override</td></tr>
 <tr class="memdesc:ab3c64eb056edc58abbe44e9b89bd3cf2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Model right-hand side.  <br /></td></tr>
 <tr class="separator:ab3c64eb056edc58abbe44e9b89bd3cf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d3e77d4b895caf0eb7906652e80d3cc" id="r_a8d3e77d4b895caf0eb7906652e80d3cc"><td class="memItemLeft" align="right" valign="top">virtual Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_t_t_p.html#a8d3e77d4b895caf0eb7906652e80d3cc">getj</a> (const unsigned int zone_id, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, const double Ksac) const override</td></tr>
-<tr class="memdesc:a8d3e77d4b895caf0eb7906652e80d3cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Model jacobian.  <br /></td></tr>
-<tr class="separator:a8d3e77d4b895caf0eb7906652e80d3cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_ionic_model"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_ionic_model')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_ionic_model.html">IonicModel</a></td></tr>
+<tr class="memitem:a7f57bcae4207a8b1e79d5d2800952a66 inherit pro_methods_class_ionic_model" id="r_a7f57bcae4207a8b1e79d5d2800952a66"><td class="memItemLeft" align="right" valign="top">virtual Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_ionic_model.html#a7f57bcae4207a8b1e79d5d2800952a66">getj</a> (const unsigned int zone_id, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, const double Ksac) const</td></tr>
+<tr class="memdesc:a7f57bcae4207a8b1e79d5d2800952a66 inherit pro_methods_class_ionic_model"><td class="mdescLeft">&#160;</td><td class="mdescRight">Model jacobian.  <br /></td></tr>
+<tr class="separator:a7f57bcae4207a8b1e79d5d2800952a66 inherit pro_methods_class_ionic_model"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c0a61e7c9d815eb19fad5e111f1b643 inherit pro_methods_class_ionic_model" id="r_a3c0a61e7c9d815eb19fad5e111f1b643"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_ionic_model.html#a3c0a61e7c9d815eb19fad5e111f1b643">integ_fe</a> (const unsigned int zone_id, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;X, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;Xg, const double Ts, const double Ti, const double Istim, const double Ksac) const</td></tr>
 <tr class="memdesc:a3c0a61e7c9d815eb19fad5e111f1b643 inherit pro_methods_class_ionic_model"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integrate the model with the forward Euler method.  <br /></td></tr>
 <tr class="separator:a3c0a61e7c9d815eb19fad5e111f1b643 inherit pro_methods_class_ionic_model"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -566,58 +565,6 @@ Additional Inherited Members</h2></td></tr>
 <p>Model right-hand side. </p>
 
 <p>Implements <a class="el" href="class_ionic_model.html#ab5f1998a3bb13a68c731e32d1785160d">IonicModel</a>.</p>
-
-</div>
-</div>
-<a id="a8d3e77d4b895caf0eb7906652e80d3cc" name="a8d3e77d4b895caf0eb7906652e80d3cc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8d3e77d4b895caf0eb7906652e80d3cc">&#9670;&#160;</a></span>getj()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Array&lt; double &gt; TTP::getj </td>
-          <td>(</td>
-          <td class="paramtype">const unsigned int&#160;</td>
-          <td class="paramname"><em>zone_id</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>X</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>Xg</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const double&#160;</td>
-          <td class="paramname"><em>Ksac</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Model jacobian. </p>
-
-<p>Reimplemented from <a class="el" href="class_ionic_model.html#a7f57bcae4207a8b1e79d5d2800952a66">IonicModel</a>.</p>
 
 </div>
 </div>

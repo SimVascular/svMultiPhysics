@@ -12,7 +12,6 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script type="text/javascript">
 window.MathJax = {
   options: {
@@ -440,15 +439,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>                              <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> &amp;X, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> &amp;Xg,</div>
 <div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>                              <span class="keyword">const</span> <span class="keywordtype">double</span> I_stim,</div>
 <div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>                              <span class="keyword">const</span> <span class="keywordtype">double</span> I_sac) <span class="keyword">const override</span>;</div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span><span class="comment"></span> </div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span><span class="comment">  /// Model jacobian.</span></div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span><span class="comment"></span>  <span class="keyword">virtual</span> Array&lt;double&gt; <a class="code hl_function" href="class_t_t_p.html#a8d3e77d4b895caf0eb7906652e80d3cc">getj</a>(<span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> zone_id,</div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>                             <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> &amp;X, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> &amp;Xg,</div>
-<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>                             <span class="keyword">const</span> <span class="keywordtype">double</span> Ksac) <span class="keyword">const override</span>;</div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>};</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>};</div>
 </div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span> </div>
-<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span> </div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aclass_cm_mod_html"><div class="ttname"><a href="class_cm_mod.html">CmMod</a></div><div class="ttdoc">The CmMod class duplicates the data structures in the Fortran CMMOD module defined in COMU....</div><div class="ttdef"><b>Definition</b> CmMod.h:35</div></div>
 <div class="ttc" id="aclass_ionic_model_html"><div class="ttname"><a href="class_ionic_model.html">IonicModel</a></div><div class="ttdoc">Abstract ionic model class.</div><div class="ttdef"><b>Definition</b> ionic_model.h:127</div></div>
 <div class="ttc" id="aclass_ionic_model_html_a6b22b6ab1011997356a9f2424335dfff"><div class="ttname"><a href="class_ionic_model.html#a6b22b6ab1011997356a9f2424335dfff">IonicModel::InitialStates</a></div><div class="ttdeci">std::vector&lt; std::pair&lt; std::string, double &gt; &gt; InitialStates</div><div class="ttdef"><b>Definition</b> ionic_model.h:133</div></div>
@@ -496,7 +490,6 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclass_t_t_p_html_a8365eb81c4e3aa87f12563cb2516dfd6"><div class="ttname"><a href="class_t_t_p.html#a8365eb81c4e3aa87f12563cb2516dfd6">TTP::min_sr</a></div><div class="ttdeci">double min_sr</div><div class="ttdoc">Minimum value of k_casr [-].</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:268</div></div>
 <div class="ttc" id="aclass_t_t_p_html_a84d16f197d14904b63aeb22c6bc6734a"><div class="ttname"><a href="class_t_t_p.html#a84d16f197d14904b63aeb22c6bc6734a">TTP::G_CaL</a></div><div class="ttdeci">double G_CaL</div><div class="ttdoc">Maximal I_CaL conductance [cm^{3}/uF/ms].</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:196</div></div>
 <div class="ttc" id="aclass_t_t_p_html_a88767bdc20c4b90b25bcd3b8a89ea8a6"><div class="ttname"><a href="class_t_t_p.html#a88767bdc20c4b90b25bcd3b8a89ea8a6">TTP::Buf_ss</a></div><div class="ttdeci">double Buf_ss</div><div class="ttdoc">Total subspace buffer concentration [mM].</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:289</div></div>
-<div class="ttc" id="aclass_t_t_p_html_a8d3e77d4b895caf0eb7906652e80d3cc"><div class="ttname"><a href="class_t_t_p.html#a8d3e77d4b895caf0eb7906652e80d3cc">TTP::getj</a></div><div class="ttdeci">virtual Array&lt; double &gt; getj(const unsigned int zone_id, const Vector&lt; double &gt; &amp;X, const Vector&lt; double &gt; &amp;Xg, const double Ksac) const override</div><div class="ttdoc">Model jacobian.</div><div class="ttdef"><b>Definition</b> ionic_ttp.cpp:459</div></div>
 <div class="ttc" id="aclass_t_t_p_html_a9468eddfc6bbe281bd8cb559ca47746c"><div class="ttname"><a href="class_t_t_p.html#a9468eddfc6bbe281bd8cb559ca47746c">TTP::alpha</a></div><div class="ttdeci">double alpha</div><div class="ttdoc">Factor enhancing outward nature of I_NaCa [-].</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:214</div></div>
 <div class="ttc" id="aclass_t_t_p_html_a9b7d7f0e2fa0987b87c78f0c718fdb83"><div class="ttname"><a href="class_t_t_p.html#a9b7d7f0e2fa0987b87c78f0c718fdb83">TTP::k4</a></div><div class="ttdeci">double k4</div><div class="ttdoc">I to O and Ri to I, I_rel transition rate [ms^{-1}].</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:259</div></div>
 <div class="ttc" id="aclass_t_t_p_html_aaf87121f10968b89562d5baba98f50c3"><div class="ttname"><a href="class_t_t_p.html#aaf87121f10968b89562d5baba98f50c3">TTP::V_ss</a></div><div class="ttdeci">double V_ss</div><div class="ttdoc">Subspace volume [um^{3}].</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:166</div></div>
