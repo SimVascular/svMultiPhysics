@@ -138,8 +138,13 @@ LagrangeBasis::SimplexExponent simplex_exponent_from_point(const Vec3& p,
 // Sentinel node index meaning "skip nothing" in product_excluding below.
 constexpr std::size_t kNoSkip = std::numeric_limits<std::size_t>::max();
 
-// Evaluate 1D Lagrange polynomials and derivatives at a point.
-void evaluate_1d_lagrange(double x, const std::vector<double>& nodes, AxisEval& out) {
+// Evaluate 1D Lagrange polynomials and derivatives at a point. `level` selects
+// how many derivative orders to compute: 0 for values only, 1 to also fill the
+// first derivative, and 2 to also fill the second. The output arrays stay sized
+// at n regardless of level so the tensor-product assembly can index them
+// unconditionally; only the higher-order computation loops are skipped.
+void evaluate_1d_lagrange(double x, const std::vector<double>& nodes, AxisEval& out,
+                          int level) {
     const std::size_t n = nodes.size();
     out.value.assign(n, double(0));
     out.first.assign(n, double(0));
@@ -173,31 +178,37 @@ void evaluate_1d_lagrange(double x, const std::vector<double>& nodes, AxisEval& 
 
         out.value[i] = product_excluding() / denom;
 
-        double first = double(0);
-        for (std::size_t m = 0; m < n; ++m) {
-            if (m != i) {
-                first += product_excluding(m);
-            }
-        }
-        out.first[i] = first / denom;
-
-        double second = double(0);
-        for (std::size_t m = 0; m < n; ++m) {
-            if (m == i) {
-                continue;
-            }
-            for (std::size_t l = 0; l < n; ++l) {
-                if (l != i && l != m) {
-                    second += product_excluding(m, l);
+        if (level >= 1) {
+            double first = double(0);
+            for (std::size_t m = 0; m < n; ++m) {
+                if (m != i) {
+                    first += product_excluding(m);
                 }
             }
+            out.first[i] = first / denom;
         }
-        out.second[i] = second / denom;
+
+        if (level >= 2) {
+            double second = double(0);
+            for (std::size_t m = 0; m < n; ++m) {
+                if (m == i) {
+                    continue;
+                }
+                for (std::size_t l = 0; l < n; ++l) {
+                    if (l != i && l != m) {
+                        second += product_excluding(m, l);
+                    }
+                }
+            }
+            out.second[i] = second / denom;
+        }
     }
 }
 
-// Evaluate one barycentric polynomial factor and derivatives.
-std::array<double, 3> simplex_factor(int alpha, double lambda, int order) {
+// Evaluate one barycentric polynomial factor and its derivatives. `level`
+// selects how far the recurrence runs: 0 for the value only, 1 to also produce
+// the first derivative, and 2 to also produce the second.
+std::array<double, 3> simplex_factor(int alpha, double lambda, int order, int level) {
     double value = double(1);
     double first = double(0);
     double second = double(0);
@@ -209,28 +220,41 @@ std::array<double, 3> simplex_factor(int alpha, double lambda, int order) {
         const double old_first = first;
         const double old_second = second;
         value = old_value * factor * inv;
-        first = (old_first * factor + old_value * double(order)) * inv;
-        second = (old_second * factor + double(2) * old_first * double(order)) * inv;
+        if (level >= 1) {
+            first = (old_first * factor + old_value * double(order)) * inv;
+        }
+        if (level >= 2) {
+            second = (old_second * factor + double(2) * old_first * double(order)) * inv;
+        }
     }
 
     return {value, first, second};
 }
 
-// Evaluate simplex Lagrange basis functions and derivatives.
+// Evaluate simplex Lagrange basis functions and the requested derivatives.
+// Gradients and Hessians are assembled only when asked for; `out.gradient` and
+// `out.hessian` are left empty otherwise so a values-only request neither
+// allocates those buffers nor runs the derivative loops.
 void evaluate_simplex(const Vec3& xi,
                       BasisTopology top,
                       int order,
                       const std::vector<LagrangeBasis::SimplexExponent>& exponents,
-                      SimplexEval& out) {
+                      SimplexEval& out,
+                      bool want_gradient,
+                      bool want_hessian) {
     const std::size_t n = exponents.size();
     out.value.assign(n, double(0));
-    out.gradient.assign(n, Gradient::Zero());
-    out.hessian.assign(n, Hessian::Zero());
+    out.gradient.assign(want_gradient ? n : std::size_t{0}, Gradient::Zero());
+    out.hessian.assign(want_hessian ? n : std::size_t{0}, Hessian::Zero());
 
     if (n == 1u && order == 0) {
         out.value[0] = double(1);
         return;
     }
+
+    // A Hessian factor also needs the first-derivative recurrence, so the
+    // per-factor work runs to the highest requested order.
+    const int factor_level = want_hessian ? 2 : (want_gradient ? 1 : 0);
 
     const std::size_t bary_count = top == BasisTopology::Triangle ? 3u : 4u;
     std::array<double, 4> lambda{double(0), double(0), double(0), double(0)};
@@ -257,7 +281,7 @@ void evaluate_simplex(const Vec3& xi,
     for (std::size_t i = 0; i < n; ++i) {
         std::array<std::array<double, 3>, 4> f{};
         for (std::size_t a = 0; a < bary_count; ++a) {
-            f[a] = simplex_factor(exponents[i][a], lambda[a], order);
+            f[a] = simplex_factor(exponents[i][a], lambda[a], order, factor_level);
         }
 
         double value = double(1);
@@ -266,30 +290,34 @@ void evaluate_simplex(const Vec3& xi,
         }
         out.value[i] = value;
 
-        for (std::size_t a = 0; a < bary_count; ++a) {
-            double product = f[a][1];
-            for (std::size_t b = 0; b < bary_count; ++b) {
-                if (b != a) {
-                    product *= f[b][0];
+        if (want_gradient) {
+            for (std::size_t a = 0; a < bary_count; ++a) {
+                double product = f[a][1];
+                for (std::size_t b = 0; b < bary_count; ++b) {
+                    if (b != a) {
+                        product *= f[b][0];
+                    }
                 }
-            }
-            for (std::size_t c = 0; c < 3u; ++c) {
-                out.gradient[i][c] += product * lambda_grad[a][c];
+                for (std::size_t c = 0; c < 3u; ++c) {
+                    out.gradient[i][c] += product * lambda_grad[a][c];
+                }
             }
         }
 
-        for (std::size_t a = 0; a < bary_count; ++a) {
-            for (std::size_t b = 0; b < bary_count; ++b) {
-                double product = (a == b) ? f[a][2] : f[a][1] * f[b][1];
-                for (std::size_t k = 0; k < bary_count; ++k) {
-                    if (k != a && k != b) {
-                        product *= f[k][0];
+        if (want_hessian) {
+            for (std::size_t a = 0; a < bary_count; ++a) {
+                for (std::size_t b = 0; b < bary_count; ++b) {
+                    double product = (a == b) ? f[a][2] : f[a][1] * f[b][1];
+                    for (std::size_t k = 0; k < bary_count; ++k) {
+                        if (k != a && k != b) {
+                            product *= f[k][0];
+                        }
                     }
-                }
-                for (std::size_t r = 0; r < 3u; ++r) {
-                    for (std::size_t c = 0; c < 3u; ++c) {
-                        out.hessian[i](r, c) +=
-                            product * lambda_grad[a][r] * lambda_grad[b][c];
+                    for (std::size_t r = 0; r < 3u; ++r) {
+                        for (std::size_t c = 0; c < 3u; ++c) {
+                            out.hessian[i](r, c) +=
+                                product * lambda_grad[a][r] * lambda_grad[b][c];
+                        }
                     }
                 }
             }
@@ -430,15 +458,17 @@ void LagrangeBasis::evaluate_tensor_product_to(const Vec3& xi,
                                                std::span<double> values_out,
                                                std::span<Gradient> gradients_out,
                                                std::span<Hessian> hessians_out) const {
+    const int level = !hessians_out.empty() ? 2 : (!gradients_out.empty() ? 1 : 0);
+
     AxisEval ax;
     AxisEval ay;
     AxisEval az;
-    evaluate_1d_lagrange(xi[0], nodes_1d_, ax);
+    evaluate_1d_lagrange(xi[0], nodes_1d_, ax, level);
     if (dimension_ >= 2) {
-        evaluate_1d_lagrange(xi[1], nodes_1d_, ay);
+        evaluate_1d_lagrange(xi[1], nodes_1d_, ay, level);
     }
     if (dimension_ >= 3) {
-        evaluate_1d_lagrange(xi[2], nodes_1d_, az);
+        evaluate_1d_lagrange(xi[2], nodes_1d_, az, level);
     }
 
     for (std::size_t node = 0; node < tensor_indices_.size(); ++node) {
@@ -482,16 +512,21 @@ void LagrangeBasis::evaluate_simplex_to(const Vec3& xi,
                                         std::span<double> values_out,
                                         std::span<Gradient> gradients_out,
                                         std::span<Hessian> hessians_out) const {
+    const bool want_values = !values_out.empty();
+    const bool want_gradients = !gradients_out.empty();
+    const bool want_hessians = !hessians_out.empty();
+
     SimplexEval simplex;
-    evaluate_simplex(xi, topology_, order_, simplex_exponents_, simplex);
+    evaluate_simplex(xi, topology_, order_, simplex_exponents_, simplex,
+                     want_gradients, want_hessians);
     for (std::size_t i = 0; i < simplex.value.size(); ++i) {
-        if (!values_out.empty()) {
+        if (want_values) {
             values_out[i] = simplex.value[i];
         }
-        if (!gradients_out.empty()) {
+        if (want_gradients) {
             gradients_out[i] = simplex.gradient[i];
         }
-        if (!hessians_out.empty()) {
+        if (want_hessians) {
             hessians_out[i] = simplex.hessian[i];
         }
     }
@@ -502,28 +537,41 @@ void LagrangeBasis::evaluate_wedge_to(const Vec3& xi,
                                       std::span<double> values_out,
                                       std::span<Gradient> gradients_out,
                                       std::span<Hessian> hessians_out) const {
+    const bool want_values = !values_out.empty();
+    const bool want_gradients = !gradients_out.empty();
+    const bool want_hessians = !hessians_out.empty();
+
+    // The wedge gradient pairs the triangle gradient with the through-axis value,
+    // and the wedge Hessian reuses the triangle gradient for its mixed terms, so
+    // the triangle factor must supply gradients whenever the wedge needs either
+    // gradients or Hessians.
+    const bool want_tri_gradient = want_gradients || want_hessians;
+    const int z_level = want_hessians ? 2 : (want_gradients ? 1 : 0);
+
     SimplexEval tri;
     AxisEval z_axis;
-    evaluate_simplex(xi, BasisTopology::Triangle, order_, simplex_exponents_, tri);
-    evaluate_1d_lagrange(xi[2], nodes_1d_, z_axis);
+    evaluate_simplex(xi, BasisTopology::Triangle, order_, simplex_exponents_, tri,
+                     want_tri_gradient, want_hessians);
+    evaluate_1d_lagrange(xi[2], nodes_1d_, z_axis, z_level);
 
     for (std::size_t node = 0; node < wedge_indices_.size(); ++node) {
         const auto [tri_idx, z_idx] = wedge_indices_[node];
         const double tv = tri.value[tri_idx];
         const double zv = z_axis.value[z_idx];
-        const double dz = z_axis.first[z_idx];
-        const double d2z = z_axis.second[z_idx];
 
-        if (!values_out.empty()) {
+        if (want_values) {
             values_out[node] = tv * zv;
         }
-        if (!gradients_out.empty()) {
+        if (want_gradients) {
+            const double dz = z_axis.first[z_idx];
             Gradient& g = gradients_out[node];
             g[0] = tri.gradient[tri_idx][0] * zv;
             g[1] = tri.gradient[tri_idx][1] * zv;
             g[2] = tv * dz;
         }
-        if (!hessians_out.empty()) {
+        if (want_hessians) {
+            const double dz = z_axis.first[z_idx];
+            const double d2z = z_axis.second[z_idx];
             Hessian& h = hessians_out[node];
             const Hessian& th = tri.hessian[tri_idx];
             const Gradient& tg = tri.gradient[tri_idx];
