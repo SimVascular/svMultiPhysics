@@ -1120,11 +1120,6 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   }
   lDmn.cep.odes.tIntType = time_integration_type;
 
-  if ((lDmn.cep.odes.tIntType == TimeIntegrationType::CN2) &&
-      (lDmn.cep.cepType == ElectrophysiologyModelType::TTP)) {
-    throw std::runtime_error("[read_cep_domain] Implicit time integration for tenTusscher-Panfilov model can give unexpected results. Use FE or RK4 instead");
-  }
-
   if (lDmn.cep.odes.tIntType == TimeIntegrationType::CN2) {
     lDmn.cep.odes.maxItr = 5;
     lDmn.cep.odes.absTol = 1e-8;
