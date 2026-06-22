@@ -19,12 +19,12 @@ namespace math {
 
 namespace {
 
-using DenseMatrix = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
+using DenseMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 using RowMajorMatrix =
-    Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 using ConstRowMajorMap = Eigen::Map<const RowMajorMatrix>;
 
-ConstRowMajorMap map_row_major(std::span<const Real> matrix,
+ConstRowMajorMap map_row_major(std::span<const double> matrix,
                                std::size_t rows,
                                std::size_t cols) {
     return ConstRowMajorMap(matrix.data(),
@@ -32,7 +32,7 @@ ConstRowMajorMap map_row_major(std::span<const Real> matrix,
                             static_cast<Eigen::Index>(cols));
 }
 
-void copy_to_row_major(const DenseMatrix& source, std::vector<Real>& dest) {
+void copy_to_row_major(const DenseMatrix& source, std::vector<double>& dest) {
     const auto rows = static_cast<std::size_t>(source.rows());
     const auto cols = static_cast<std::size_t>(source.cols());
     dest.resize(rows * cols);
@@ -50,47 +50,47 @@ DenseLUSolver::~DenseLUSolver() = default;
 DenseLUSolver::DenseLUSolver(DenseLUSolver&&) noexcept = default;
 DenseLUSolver& DenseLUSolver::operator=(DenseLUSolver&&) noexcept = default;
 
-Real dense_matrix_max_abs(std::span<const Real> matrix) noexcept {
-    Real max_abs = Real(0);
-    for (const Real value : matrix) {
+double dense_matrix_max_abs(std::span<const double> matrix) noexcept {
+    double max_abs = double(0);
+    for (const double value : matrix) {
         max_abs = std::max(max_abs, std::abs(value));
     }
     return max_abs;
 }
 
-Real dense_matrix_pivot_tolerance(std::size_t rows,
+double dense_matrix_pivot_tolerance(std::size_t rows,
                                   std::size_t cols,
-                                  Real max_abs,
-                                  Real multiplier) noexcept {
-    const Real size_scale = static_cast<Real>(std::max<std::size_t>(rows, cols));
-    const Real value_scale = std::max(Real(1), max_abs);
-    return multiplier * std::numeric_limits<Real>::epsilon() *
-           std::max(Real(1), size_scale) * value_scale;
+                                  double max_abs,
+                                  double multiplier) noexcept {
+    const double size_scale = static_cast<double>(std::max<std::size_t>(rows, cols));
+    const double value_scale = std::max(double(1), max_abs);
+    return multiplier * std::numeric_limits<double>::epsilon() *
+           std::max(double(1), size_scale) * value_scale;
 }
 
-Real dense_matrix_singular_value_tolerance(std::size_t rows,
+double dense_matrix_singular_value_tolerance(std::size_t rows,
                                            std::size_t cols,
-                                           Real largest_singular_value,
-                                           Real multiplier) noexcept {
-    const Real size_scale = static_cast<Real>(std::max<std::size_t>(rows, cols));
-    return multiplier * std::numeric_limits<Real>::epsilon() *
-           std::max(Real(1), size_scale) *
-           std::max(Real(1), largest_singular_value);
+                                           double largest_singular_value,
+                                           double multiplier) noexcept {
+    const double size_scale = static_cast<double>(std::max<std::size_t>(rows, cols));
+    return multiplier * std::numeric_limits<double>::epsilon() *
+           std::max(double(1), size_scale) *
+           std::max(double(1), largest_singular_value);
 }
 
-Real dense_matrix_condition_fallback_threshold() noexcept {
-    return Real(1.0e12);
+double dense_matrix_condition_fallback_threshold() noexcept {
+    return double(1.0e12);
 }
 
-Real dense_matrix_condition_error_threshold() noexcept {
-    return Real(1.0e14);
+double dense_matrix_condition_error_threshold() noexcept {
+    return double(1.0e14);
 }
 
-void DenseLUSolver::solve_in_place(std::span<Real> rhs) const {
+void DenseLUSolver::solve_in_place(std::span<double> rhs) const {
     solve_in_place(rhs, 1u);
 }
 
-void DenseLUSolver::solve_in_place(std::span<Real> rhs,
+void DenseLUSolver::solve_in_place(std::span<double> rhs,
                                    std::size_t rhs_count) const {
     ::svmp::check_arg<FEException>(
         rhs_count > 0, SVMP_HERE,
@@ -113,14 +113,14 @@ void DenseLUSolver::solve_in_place(std::span<Real> rhs,
     rhs_map = solution;
 }
 
-std::vector<Real> DenseLUSolver::solve(std::span<const Real> rhs) const {
-    std::vector<Real> x(rhs.begin(), rhs.end());
-    solve_in_place(std::span<Real>(x.data(), x.size()));
+std::vector<double> DenseLUSolver::solve(std::span<const double> rhs) const {
+    std::vector<double> x(rhs.begin(), rhs.end());
+    solve_in_place(std::span<double>(x.data(), x.size()));
     return x;
 }
 
 DenseMatrixDiagnostics dense_matrix_diagnostics(
-    std::span<const Real> matrix,
+    std::span<const double> matrix,
     std::size_t rows,
     std::size_t cols,
     std::string_view label) {
@@ -137,13 +137,13 @@ DenseMatrixDiagnostics dense_matrix_diagnostics(
     DenseMatrixDiagnostics diagnostics;
     const auto& singular_values = svd.singularValues();
     diagnostics.largest_singular_value =
-        (singular_values.size() > 0) ? singular_values[0] : Real(0);
+        (singular_values.size() > 0) ? singular_values[0] : double(0);
     diagnostics.tolerance =
         dense_matrix_singular_value_tolerance(rows, cols,
                                               diagnostics.largest_singular_value);
 
     for (Eigen::Index i = 0; i < singular_values.size(); ++i) {
-        const Real sigma = singular_values[i];
+        const double sigma = singular_values[i];
         if (sigma <= diagnostics.tolerance) {
             continue;
         }
@@ -153,7 +153,7 @@ DenseMatrixDiagnostics dense_matrix_diagnostics(
 
     const std::size_t full_rank = std::min(rows, cols);
     if (diagnostics.rank == full_rank &&
-        diagnostics.smallest_retained_singular_value > Real(0)) {
+        diagnostics.smallest_retained_singular_value > double(0)) {
         diagnostics.condition_estimate =
             diagnostics.largest_singular_value /
             diagnostics.smallest_retained_singular_value;
@@ -161,7 +161,7 @@ DenseMatrixDiagnostics dense_matrix_diagnostics(
     return diagnostics;
 }
 
-DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
+DenseLUSolver factor_dense_matrix(std::vector<double> matrix,
                                   std::size_t n,
                                   std::string_view label) {
     ::svmp::check_arg<FEException>(
@@ -171,8 +171,8 @@ DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
     DenseLUSolver solver;
     solver.n = n;
     solver.label = std::string(label);
-    const Real max_abs =
-        dense_matrix_max_abs(std::span<const Real>(matrix.data(), matrix.size()));
+    const double max_abs =
+        dense_matrix_max_abs(std::span<const double>(matrix.data(), matrix.size()));
     solver.pivot_tolerance = dense_matrix_pivot_tolerance(n, n, max_abs);
 
     solver.impl = std::make_unique<DenseLUSolver::Impl>();
@@ -180,11 +180,11 @@ DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
 
     // Partial pivoting leaves the pivots on the diagonal of the packed LU
     // factor; a pivot below the scale-aware tolerance marks rank deficiency.
-    Real max_pivot_abs = Real(0);
-    Real min_pivot_abs = std::numeric_limits<Real>::infinity();
+    double max_pivot_abs = double(0);
+    double min_pivot_abs = std::numeric_limits<double>::infinity();
     const auto diagonal = solver.impl->lu.matrixLU().diagonal();
     for (Eigen::Index col = 0; col < diagonal.size(); ++col) {
-        const Real pivot_magnitude = std::abs(diagonal[col]);
+        const double pivot_magnitude = std::abs(diagonal[col]);
         ::svmp::check_arg<FEException>(
             pivot_magnitude > solver.pivot_tolerance, SVMP_HERE,
             solver.label + ": rank-deficient matrix (rank " +
@@ -201,24 +201,24 @@ DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
     solver.diagnostics.rank = n;
     solver.diagnostics.tolerance = solver.pivot_tolerance;
     solver.max_pivot = max_pivot_abs;
-    solver.min_pivot = std::isfinite(min_pivot_abs) ? min_pivot_abs : Real(0);
+    solver.min_pivot = std::isfinite(min_pivot_abs) ? min_pivot_abs : double(0);
     return solver;
 }
 
 DenseInverseResult invert_dense_matrix_with_diagnostics(
-    std::vector<Real> matrix,
+    std::vector<double> matrix,
     std::size_t n,
     std::string_view label) {
     ::svmp::check_arg<FEException>(
         matrix.size() == n * n, SVMP_HERE,
         std::string(label) + ": dense inverse size mismatch");
-    std::vector<Real> matrix_for_lu = matrix;
+    std::vector<double> matrix_for_lu = matrix;
     const DenseLUSolver solver =
         factor_dense_matrix(std::move(matrix_for_lu), n, label);
 
     DenseInverseResult result;
     result.diagnostics =
-        dense_matrix_diagnostics(std::span<const Real>(matrix.data(), matrix.size()),
+        dense_matrix_diagnostics(std::span<const double>(matrix.data(), matrix.size()),
                                  n, n, label);
 
     if (std::isfinite(result.diagnostics.condition_estimate) &&
@@ -238,7 +238,7 @@ DenseInverseResult invert_dense_matrix_with_diagnostics(
             ::svmp::check_arg<FEException>(
                 singular_values[i] > result.diagnostics.tolerance, SVMP_HERE,
                 std::string(label) + ": high-condition SVD fallback encountered a dropped singular value");
-            sigma_inverse(i, i) = Real(1) / singular_values[i];
+            sigma_inverse(i, i) = double(1) / singular_values[i];
         }
         const DenseMatrix inverse = svd.matrixV() * sigma_inverse * svd.matrixU().transpose();
         copy_to_row_major(inverse, result.inverse);
@@ -255,7 +255,7 @@ void validate_dense_inverse_diagnostics(
     const DenseInverseResult& result,
     std::size_t expected_rank,
     std::string_view label,
-    Real max_condition) {
+    double max_condition) {
     ::svmp::check_arg<FEException>(
         result.diagnostics.rank == expected_rank, SVMP_HERE,
         std::string(label) + ": rank-deficient matrix (rank " +
@@ -273,17 +273,17 @@ void validate_dense_inverse_diagnostics(
             " exceeds supported threshold " + std::to_string(max_condition));
 }
 
-std::vector<Real> invert_dense_matrix(std::vector<Real> matrix,
+std::vector<double> invert_dense_matrix(std::vector<double> matrix,
                                       std::size_t n,
                                       std::string_view label) {
     const DenseLUSolver solver = factor_dense_matrix(std::move(matrix), n, label);
     const DenseMatrix inverse = solver.impl->lu.inverse();
-    std::vector<Real> result;
+    std::vector<double> result;
     copy_to_row_major(inverse, result);
     return result;
 }
 
-std::size_t dense_matrix_rank(std::vector<Real> matrix,
+std::size_t dense_matrix_rank(std::vector<double> matrix,
                               std::size_t rows,
                               std::size_t cols) {
     ::svmp::check_arg<FEException>(
@@ -291,13 +291,13 @@ std::size_t dense_matrix_rank(std::vector<Real> matrix,
         "dense_matrix_rank: size mismatch");
 
     const DenseMatrix dense =
-        map_row_major(std::span<const Real>(matrix.data(), matrix.size()), rows, cols);
+        map_row_major(std::span<const double>(matrix.data(), matrix.size()), rows, cols);
     Eigen::JacobiSVD<DenseMatrix> svd(dense);
 
     const auto& singular_values = svd.singularValues();
-    const Real largest =
-        (singular_values.size() > 0) ? singular_values[0] : Real(0);
-    const Real tolerance =
+    const double largest =
+        (singular_values.size() > 0) ? singular_values[0] : double(0);
+    const double tolerance =
         dense_matrix_singular_value_tolerance(rows, cols, largest);
 
     std::size_t rank = 0;
@@ -310,7 +310,7 @@ std::size_t dense_matrix_rank(std::vector<Real> matrix,
 }
 
 DensePseudoInverseResult rank_revealing_pseudo_inverse(
-    std::span<const Real> matrix,
+    std::span<const double> matrix,
     std::size_t rows,
     std::size_t cols,
     std::string_view label) {
@@ -328,18 +328,18 @@ DensePseudoInverseResult rank_revealing_pseudo_inverse(
 
     const auto& singular_values = svd.singularValues();
     result.largest_singular_value =
-        (singular_values.size() > 0) ? singular_values[0] : Real(0);
+        (singular_values.size() > 0) ? singular_values[0] : double(0);
     result.tolerance =
         dense_matrix_singular_value_tolerance(rows, cols, result.largest_singular_value);
 
     DenseMatrix sigma_inverse = DenseMatrix::Zero(static_cast<Eigen::Index>(cols),
                                                   static_cast<Eigen::Index>(rows));
     for (Eigen::Index i = 0; i < singular_values.size(); ++i) {
-        const Real sigma = singular_values[i];
+        const double sigma = singular_values[i];
         if (sigma <= result.tolerance) {
             continue;
         }
-        sigma_inverse(i, i) = Real(1) / sigma;
+        sigma_inverse(i, i) = double(1) / sigma;
         ++result.rank;
         result.smallest_retained_singular_value = sigma;
     }

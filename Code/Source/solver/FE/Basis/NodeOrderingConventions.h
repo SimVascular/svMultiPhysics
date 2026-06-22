@@ -19,20 +19,20 @@ namespace basis {
 ///
 /// Shared by the reference-node layout generators and the Lagrange tensor-axis
 /// node initialization so the lattice formula lives in a single place.
-[[nodiscard]] inline constexpr Real line_coord_pm_one(int i, int order) noexcept {
+[[nodiscard]] inline constexpr double line_coord_pm_one(int i, int order) noexcept {
     if (order <= 0) {
-        return Real(0);
+        return double(0);
     }
-    return Real(-1) + Real(2) * static_cast<Real>(i) / static_cast<Real>(order);
+    return double(-1) + double(2) * static_cast<double>(i) / static_cast<double>(order);
 }
 
 class ReferenceNodeLayout {
 public:
-    static math::Vector<Real, 3> get_node_coords(ElementType elem_type,
+    static math::Vector<double, 3> get_node_coords(ElementType elem_type,
                                                  std::size_t local_node);
     static std::size_t num_nodes(ElementType elem_type);
 
-    static std::vector<math::Vector<Real, 3>>
+    static std::vector<math::Vector<double, 3>>
     get_lagrange_node_coords(ElementType canonical_type, int order);
 
     static std::span<const std::size_t> mesh_to_basis_ordering(ElementType elem_type);

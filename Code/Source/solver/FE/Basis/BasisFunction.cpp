@@ -17,14 +17,14 @@ void require_span_size(std::size_t actual,
         std::string(label) + ": output span is smaller than basis size");
 }
 
-const std::vector<math::Vector<Real, 3>>& BasisFunction::nodes() const noexcept {
+const std::vector<math::Vector<double, 3>>& BasisFunction::nodes() const noexcept {
     // Default for bases that do not expose interpolation nodes; nodal families
     // (LagrangeBasis, SerendipityBasis) override this to return their layout.
-    static const std::vector<math::Vector<Real, 3>> kNoNodes;
+    static const std::vector<math::Vector<double, 3>> kNoNodes;
     return kNoNodes;
 }
 
-void BasisFunction::evaluate_gradients(const math::Vector<Real, 3>& xi,
+void BasisFunction::evaluate_gradients(const math::Vector<double, 3>& xi,
                                        std::vector<Gradient>& gradients) const {
     (void)xi;
     (void)gradients;
@@ -32,7 +32,7 @@ void BasisFunction::evaluate_gradients(const math::Vector<Real, 3>& xi,
         "Analytic gradient evaluation is not implemented for this basis");
 }
 
-void BasisFunction::evaluate_hessians(const math::Vector<Real, 3>& xi,
+void BasisFunction::evaluate_hessians(const math::Vector<double, 3>& xi,
                                       std::vector<Hessian>& hessians) const {
     (void)xi;
     (void)hessians;
@@ -40,8 +40,8 @@ void BasisFunction::evaluate_hessians(const math::Vector<Real, 3>& xi,
         "Analytic Hessian evaluation is not implemented for this basis");
 }
 
-void BasisFunction::evaluate_all(const math::Vector<Real, 3>& xi,
-                                 std::vector<Real>& values,
+void BasisFunction::evaluate_all(const math::Vector<double, 3>& xi,
+                                 std::vector<double>& values,
                                  std::vector<Gradient>& gradients,
                                  std::vector<Hessian>& hessians) const {
     evaluate_values(xi, values);
@@ -49,15 +49,15 @@ void BasisFunction::evaluate_all(const math::Vector<Real, 3>& xi,
     evaluate_hessians(xi, hessians);
 }
 
-void BasisFunction::evaluate_values_to(const math::Vector<Real, 3>& xi,
-                                       std::span<Real> values_out) const {
+void BasisFunction::evaluate_values_to(const math::Vector<double, 3>& xi,
+                                       std::span<double> values_out) const {
     require_span_size(values_out.size(), size(), "BasisFunction::evaluate_values_to");
-    std::vector<Real> tmp(size());
+    std::vector<double> tmp(size());
     evaluate_values(xi, tmp);
     std::copy_n(tmp.begin(), tmp.size(), values_out.begin());
 }
 
-void BasisFunction::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
+void BasisFunction::evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                           std::span<Gradient> gradients_out) const {
     require_span_size(gradients_out.size(), size(), "BasisFunction::evaluate_gradients_to");
     std::vector<Gradient> tmp(size());
@@ -65,7 +65,7 @@ void BasisFunction::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
     std::copy_n(tmp.begin(), tmp.size(), gradients_out.begin());
 }
 
-void BasisFunction::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
+void BasisFunction::evaluate_hessians_to(const math::Vector<double, 3>& xi,
                                          std::span<Hessian> hessians_out) const {
     require_span_size(hessians_out.size(), size(), "BasisFunction::evaluate_hessians_to");
     std::vector<Hessian> tmp(size());
@@ -73,41 +73,41 @@ void BasisFunction::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
     std::copy_n(tmp.begin(), tmp.size(), hessians_out.begin());
 }
 
-void BasisFunction::numerical_gradient(const math::Vector<Real, 3>& xi,
+void BasisFunction::numerical_gradient(const math::Vector<double, 3>& xi,
                                        std::vector<Gradient>& gradients,
-                                       Real eps) const {
-    std::vector<Real> base;
+                                       double eps) const {
+    std::vector<double> base;
     evaluate_values(xi, base);
     gradients.assign(base.size(), Gradient::Zero());
 
     for (int d = 0; d < dimension(); ++d) {
-        math::Vector<Real, 3> forward = xi;
-        math::Vector<Real, 3> backward = xi;
+        math::Vector<double, 3> forward = xi;
+        math::Vector<double, 3> backward = xi;
         const auto idx = static_cast<std::size_t>(d);
         forward[idx] += eps;
         backward[idx] -= eps;
 
-        std::vector<Real> fwd;
-        std::vector<Real> bwd;
+        std::vector<double> fwd;
+        std::vector<double> bwd;
         evaluate_values(forward, fwd);
         evaluate_values(backward, bwd);
 
         for (std::size_t i = 0; i < base.size(); ++i) {
-            gradients[i][idx] = (fwd[i] - bwd[i]) / (Real(2) * eps);
+            gradients[i][idx] = (fwd[i] - bwd[i]) / (double(2) * eps);
         }
     }
 }
 
-void BasisFunction::numerical_hessian(const math::Vector<Real, 3>& xi,
+void BasisFunction::numerical_hessian(const math::Vector<double, 3>& xi,
                                       std::vector<Hessian>& hessians,
-                                      Real eps) const {
+                                      double eps) const {
     std::vector<Gradient> base_grad;
     evaluate_gradients(xi, base_grad);
     hessians.assign(base_grad.size(), Hessian::Zero());
 
     for (int d = 0; d < dimension(); ++d) {
-        math::Vector<Real, 3> forward = xi;
-        math::Vector<Real, 3> backward = xi;
+        math::Vector<double, 3> forward = xi;
+        math::Vector<double, 3> backward = xi;
         const auto col = static_cast<std::size_t>(d);
         forward[col] += eps;
         backward[col] -= eps;
@@ -121,7 +121,7 @@ void BasisFunction::numerical_hessian(const math::Vector<Real, 3>& xi,
             for (int k = 0; k < dimension(); ++k) {
                 const auto row = static_cast<std::size_t>(k);
                 hessians[i](row, col) =
-                    (g_forward[i][row] - g_backward[i][row]) / (Real(2) * eps);
+                    (g_forward[i][row] - g_backward[i][row]) / (double(2) * eps);
             }
         }
     }

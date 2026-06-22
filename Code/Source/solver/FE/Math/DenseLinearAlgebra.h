@@ -20,42 +20,42 @@ namespace math {
 
 // Dense solve, inverse, rank, and pseudo-inverse support for FE construction
 // utilities. Matrices are row-major: matrix[row * cols + col].
-[[nodiscard]] Real dense_matrix_max_abs(std::span<const Real> matrix) noexcept;
+[[nodiscard]] double dense_matrix_max_abs(std::span<const double> matrix) noexcept;
 
-[[nodiscard]] Real dense_matrix_pivot_tolerance(std::size_t rows,
+[[nodiscard]] double dense_matrix_pivot_tolerance(std::size_t rows,
                                                 std::size_t cols,
-                                                Real max_abs,
-                                                Real multiplier = Real(64)) noexcept;
+                                                double max_abs,
+                                                double multiplier = double(64)) noexcept;
 
-[[nodiscard]] Real dense_matrix_singular_value_tolerance(std::size_t rows,
+[[nodiscard]] double dense_matrix_singular_value_tolerance(std::size_t rows,
                                                          std::size_t cols,
-                                                         Real largest_singular_value,
-                                                         Real multiplier = Real(64)) noexcept;
+                                                         double largest_singular_value,
+                                                         double multiplier = double(64)) noexcept;
 
 struct DensePseudoInverseResult {
-    std::vector<Real> inverse;
+    std::vector<double> inverse;
     std::size_t rank{0};
-    Real tolerance{0};
-    Real largest_singular_value{0};
-    Real smallest_retained_singular_value{0};
+    double tolerance{0};
+    double largest_singular_value{0};
+    double smallest_retained_singular_value{0};
 };
 
 struct DenseMatrixDiagnostics {
     std::size_t rank{0};
-    Real tolerance{0};
-    Real largest_singular_value{0};
-    Real smallest_retained_singular_value{0};
-    Real condition_estimate{std::numeric_limits<Real>::infinity()};
+    double tolerance{0};
+    double largest_singular_value{0};
+    double smallest_retained_singular_value{0};
+    double condition_estimate{std::numeric_limits<double>::infinity()};
 };
 
 struct DenseInverseResult {
-    std::vector<Real> inverse;
+    std::vector<double> inverse;
     DenseMatrixDiagnostics diagnostics;
     bool used_svd_fallback{false};
 };
 
-[[nodiscard]] Real dense_matrix_condition_fallback_threshold() noexcept;
-[[nodiscard]] Real dense_matrix_condition_error_threshold() noexcept;
+[[nodiscard]] double dense_matrix_condition_fallback_threshold() noexcept;
+[[nodiscard]] double dense_matrix_condition_error_threshold() noexcept;
 
 struct DenseLUSolver {
     struct Impl;
@@ -69,37 +69,37 @@ struct DenseLUSolver {
 
     std::size_t n{0};
     DenseMatrixDiagnostics diagnostics;
-    Real pivot_tolerance{0};
-    Real min_pivot{0};
-    Real max_pivot{0};
+    double pivot_tolerance{0};
+    double min_pivot{0};
+    double max_pivot{0};
     std::string label;
     std::unique_ptr<Impl> impl;
 
     [[nodiscard]] bool empty() const noexcept { return n == 0; }
 
-    void solve_in_place(std::span<Real> rhs) const;
-    void solve_in_place(std::span<Real> rhs, std::size_t rhs_count) const;
-    [[nodiscard]] std::vector<Real> solve(std::span<const Real> rhs) const;
+    void solve_in_place(std::span<double> rhs) const;
+    void solve_in_place(std::span<double> rhs, std::size_t rhs_count) const;
+    [[nodiscard]] std::vector<double> solve(std::span<const double> rhs) const;
 };
 
 // Inverses and pseudo-inverses keep the same row-major convention for their
 // returned dimensions.
 [[nodiscard]] DenseMatrixDiagnostics dense_matrix_diagnostics(
-    std::span<const Real> matrix,
+    std::span<const double> matrix,
     std::size_t rows,
     std::size_t cols,
     std::string_view label = "dense matrix");
 
-[[nodiscard]] DenseLUSolver factor_dense_matrix(std::vector<Real> matrix,
+[[nodiscard]] DenseLUSolver factor_dense_matrix(std::vector<double> matrix,
                                                 std::size_t n,
                                                 std::string_view label = "dense matrix");
 
-[[nodiscard]] std::vector<Real> invert_dense_matrix(std::vector<Real> matrix,
+[[nodiscard]] std::vector<double> invert_dense_matrix(std::vector<double> matrix,
                                                     std::size_t n,
                                                     std::string_view label = "dense matrix");
 
 [[nodiscard]] DenseInverseResult invert_dense_matrix_with_diagnostics(
-    std::vector<Real> matrix,
+    std::vector<double> matrix,
     std::size_t n,
     std::string_view label = "dense matrix");
 
@@ -107,14 +107,14 @@ void validate_dense_inverse_diagnostics(
     const DenseInverseResult& result,
     std::size_t expected_rank,
     std::string_view label = "dense matrix",
-    Real max_condition = dense_matrix_condition_error_threshold());
+    double max_condition = dense_matrix_condition_error_threshold());
 
-[[nodiscard]] std::size_t dense_matrix_rank(std::vector<Real> matrix,
+[[nodiscard]] std::size_t dense_matrix_rank(std::vector<double> matrix,
                                             std::size_t rows,
                                             std::size_t cols);
 
 [[nodiscard]] DensePseudoInverseResult rank_revealing_pseudo_inverse(
-    std::span<const Real> matrix,
+    std::span<const double> matrix,
     std::size_t rows,
     std::size_t cols,
     std::string_view label = "dense matrix");

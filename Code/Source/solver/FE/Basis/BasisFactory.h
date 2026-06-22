@@ -25,11 +25,11 @@ struct BasisRequest {
     std::optional<int> order{};
     Continuity continuity{Continuity::C0};
     FieldType field_type{FieldType::Scalar};
-    std::vector<Real> knot_vector{};
-    std::vector<Real> weights{};
+    std::vector<double> knot_vector{};
+    std::vector<double> weights{};
     std::vector<int> axis_orders{};
-    std::vector<std::vector<Real>> axis_knot_vectors{};
-    std::vector<std::vector<Real>> axis_weights{};
+    std::vector<std::vector<double>> axis_knot_vectors{};
+    std::vector<std::vector<double>> axis_weights{};
     std::vector<int> tensor_extents{};
     std::string custom_id{};
 };

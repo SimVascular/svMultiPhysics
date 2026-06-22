@@ -213,7 +213,7 @@ std::size_t basis_index_for_solver_node(consts::ElementType eType, const int sol
 /// xi array, zero-filling the trailing components that are inactive for
 /// lower-dimensional elements. Throws BasisConfigurationException when xi has
 /// fewer rows than the basis reference dimension.
-fe::math::Vector<fe::Real, 3> make_basis_point(const febasis::BasisFunction& basis,
+fe::math::Vector<double, 3> make_basis_point(const febasis::BasisFunction& basis,
                                                const int g,
                                                const Array<double>& xi)
 {
@@ -226,7 +226,7 @@ fe::math::Vector<fe::Real, 3> make_basis_point(const febasis::BasisFunction& bas
 
   // Inactive trailing components must be zero for lower-dimensional elements;
   // Eigen-backed vectors are not zero-initialized by default construction.
-  fe::math::Vector<fe::Real, 3> point = fe::math::Vector<fe::Real, 3>::Zero();
+  fe::math::Vector<double, 3> point = fe::math::Vector<double, 3>::Zero();
   for (int d = 0; d < basis.dimension(); ++d) {
     point[static_cast<std::size_t>(d)] = xi(d, g);
   }
@@ -240,7 +240,7 @@ fe::math::Vector<fe::Real, 3> make_basis_point(const febasis::BasisFunction& bas
 void copy_basis_values_to_solver_arrays(consts::ElementType eType,
                                         const int eNoN,
                                         const int g,
-                                        const std::vector<fe::Real>& values,
+                                        const std::vector<double>& values,
                                         const std::vector<febasis::Gradient>& gradients,
                                         Array<double>& N,
                                         Array3<double>& Nx)
@@ -296,7 +296,7 @@ void evaluate_basis_values_and_gradients(const int insd,
   }
 
   const auto point = make_basis_point(basis, g, xi);
-  std::vector<fe::Real> values;
+  std::vector<double> values;
   std::vector<febasis::Gradient> gradients;
   basis.evaluate_values(point, values);
   basis.evaluate_gradients(point, gradients);

@@ -15,12 +15,12 @@ namespace FE {
 namespace basis {
 
 namespace {
-using Vec3 = math::Vector<Real, 3>;
+using Vec3 = math::Vector<double, 3>;
 
-void evaluate_hex8_reference(Real r,
-                             Real s,
-                             Real t,
-                             std::span<Real> values,
+void evaluate_hex8_reference(double r,
+                             double s,
+                             double t,
+                             std::span<double> values,
                              std::span<Gradient> gradients,
                              std::span<Hessian> hessians) {
     static constexpr int signs[8][3] = {
@@ -35,33 +35,33 @@ void evaluate_hex8_reference(Real r,
     };
 
     for (std::size_t i = 0; i < 8u; ++i) {
-        const Real a = Real(signs[i][0]);
-        const Real b = Real(signs[i][1]);
-        const Real c = Real(signs[i][2]);
-        const Real ar = Real(1) + a * r;
-        const Real bs = Real(1) + b * s;
-        const Real ct = Real(1) + c * t;
+        const double a = double(signs[i][0]);
+        const double b = double(signs[i][1]);
+        const double c = double(signs[i][2]);
+        const double ar = double(1) + a * r;
+        const double bs = double(1) + b * s;
+        const double ct = double(1) + c * t;
 
         if (!values.empty()) {
-            values[i] = Real(0.125) * ar * bs * ct;
+            values[i] = double(0.125) * ar * bs * ct;
         }
         if (!gradients.empty()) {
             Gradient& g = gradients[i];
-            g[0] = Real(0.125) * a * bs * ct;
-            g[1] = Real(0.125) * b * ar * ct;
-            g[2] = Real(0.125) * c * ar * bs;
+            g[0] = double(0.125) * a * bs * ct;
+            g[1] = double(0.125) * b * ar * ct;
+            g[2] = double(0.125) * c * ar * bs;
         }
         if (!hessians.empty()) {
             Hessian& h = hessians[i];
-            h(0, 0) = Real(0);
-            h(0, 1) = Real(0.125) * a * b * ct;
-            h(0, 2) = Real(0.125) * a * c * bs;
+            h(0, 0) = double(0);
+            h(0, 1) = double(0.125) * a * b * ct;
+            h(0, 2) = double(0.125) * a * c * bs;
             h(1, 0) = h(0, 1);
-            h(1, 1) = Real(0);
-            h(1, 2) = Real(0.125) * b * c * ar;
+            h(1, 1) = double(0);
+            h(1, 2) = double(0.125) * b * c * ar;
             h(2, 0) = h(0, 2);
             h(2, 1) = h(1, 2);
-            h(2, 2) = Real(0);
+            h(2, 2) = double(0);
         }
     }
 }
@@ -70,8 +70,8 @@ int quad_serendipity_superlinear_degree(int ax, int ay) {
     return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0);
 }
 
-inline Real integer_power(Real base, int exponent) {
-    Real result = Real(1);
+inline double integer_power(double base, int exponent) {
+    double result = double(1);
     for (int k = 0; k < exponent; ++k) {
         result *= base;
     }
@@ -112,14 +112,14 @@ void append_quad_serendipity_interior_nodes(std::vector<Vec3>& nodes, int order)
     }
 
     const int m = order - 4;
-    const Real y_denominator = Real(m + 2);
+    const double y_denominator = double(m + 2);
     for (int row = 0; row <= m; ++row) {
         const int row_count = m + 1 - row;
-        const Real y = Real(-1) + Real(2) * Real(row + 1) / y_denominator;
-        const Real x_denominator = Real(row_count + 1);
+        const double y = double(-1) + double(2) * double(row + 1) / y_denominator;
+        const double x_denominator = double(row_count + 1);
         for (int col = 0; col < row_count; ++col) {
-            const Real x = Real(-1) + Real(2) * Real(col + 1) / x_denominator;
-            nodes.push_back(Vec3{x, y, Real(0)});
+            const double x = double(-1) + double(2) * double(col + 1) / x_denominator;
+            nodes.push_back(Vec3{x, y, double(0)});
         }
     }
 }
@@ -130,24 +130,24 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
         return nodes;
     }
 
-    const Real inv_order = Real(1) / Real(order);
+    const double inv_order = double(1) / double(order);
 
-    nodes.push_back(Vec3{Real(-1), Real(-1), Real(0)});
-    nodes.push_back(Vec3{Real(1),  Real(-1), Real(0)});
-    nodes.push_back(Vec3{Real(1),  Real(1),  Real(0)});
-    nodes.push_back(Vec3{Real(-1), Real(1),  Real(0)});
+    nodes.push_back(Vec3{double(-1), double(-1), double(0)});
+    nodes.push_back(Vec3{double(1),  double(-1), double(0)});
+    nodes.push_back(Vec3{double(1),  double(1),  double(0)});
+    nodes.push_back(Vec3{double(-1), double(1),  double(0)});
 
     for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{Real(-1) + Real(2 * i) * inv_order, Real(-1), Real(0)});
+        nodes.push_back(Vec3{double(-1) + double(2 * i) * inv_order, double(-1), double(0)});
     }
     for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{Real(1), Real(-1) + Real(2 * i) * inv_order, Real(0)});
+        nodes.push_back(Vec3{double(1), double(-1) + double(2 * i) * inv_order, double(0)});
     }
     for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{Real(1) - Real(2 * i) * inv_order, Real(1), Real(0)});
+        nodes.push_back(Vec3{double(1) - double(2 * i) * inv_order, double(1), double(0)});
     }
     for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{Real(-1), Real(1) - Real(2 * i) * inv_order, Real(0)});
+        nodes.push_back(Vec3{double(-1), double(1) - double(2 * i) * inv_order, double(0)});
     }
 
     svmp::throw_if<BasisConstructionException>(
@@ -163,14 +163,14 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
     return nodes;
 }
 
-std::vector<Real> invert_dense_matrix(std::vector<Real> matrix, int n, const char* label) {
+std::vector<double> invert_dense_matrix(std::vector<double> matrix, int n, const char* label) {
     return math::invert_dense_matrix(
         std::move(matrix),
         static_cast<std::size_t>(n),
         std::string("SerendipityBasis interpolation matrix for ") + label);
 }
 
-std::vector<Real> quad_serendipity_inverse_vandermonde(
+std::vector<double> quad_serendipity_inverse_vandermonde(
     std::span<const Vec3> nodes,
     std::span<const std::array<int, 2>> exponents,
     int order) {
@@ -179,14 +179,14 @@ std::vector<Real> quad_serendipity_inverse_vandermonde(
         n == 0 || exponents.size() != nodes.size(), SVMP_HERE,
         "SerendipityBasis: invalid quadrilateral serendipity interpolation setup");
 
-    std::vector<Real> vandermonde(static_cast<std::size_t>(n * n), Real(0));
+    std::vector<double> vandermonde(static_cast<std::size_t>(n * n), double(0));
     auto idx = [n](int row, int col) -> std::size_t {
         return static_cast<std::size_t>(row * n + col);
     };
 
     for (int row = 0; row < n; ++row) {
-        const Real x = nodes[static_cast<std::size_t>(row)][0];
-        const Real y = nodes[static_cast<std::size_t>(row)][1];
+        const double x = nodes[static_cast<std::size_t>(row)][0];
+        const double y = nodes[static_cast<std::size_t>(row)][1];
         for (int col = 0; col < n; ++col) {
             const auto [ax, ay] = exponents[static_cast<std::size_t>(col)];
             vandermonde[idx(row, col)] = integer_power(x, ax) * integer_power(y, ay);
@@ -223,7 +223,7 @@ constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
 // public Wedge15 node order. The table is the inverse of
 // V[node][monomial] = r^a s^b t^c evaluated at ReferenceNodeLayout Wedge15
 // nodes, so V * kWedge15Coefficients is the identity.
-constexpr std::array<std::array<Real, 15>, 15> kWedge15Coefficients = {{
+constexpr std::array<std::array<double, 15>, 15> kWedge15Coefficients = {{
     {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
     {{-0.5, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
     {{0.5, -0, -0, 0.5, -0, -0, -0, -0, -0, -0, -0, -0, -1, -0, -0}},
@@ -254,7 +254,7 @@ constexpr std::array<std::array<int, 3>, 20> kHex20MonomialExponents = {{
 // V[node][monomial] = r^a s^b t^c evaluated at the corresponding Hex20
 // reference nodes, so V * kHex20Coefficients is the identity. Evaluation
 // remaps public output slots through ReferenceNodeLayout::mesh_to_basis_ordering.
-constexpr std::array<std::array<Real, 20>, 20> kHex20Coefficients = {{
+constexpr std::array<std::array<double, 20>, 20> kHex20Coefficients = {{
     {{-0.25, -0.25, -0.25, -0.25, -0.25, -0.25, -0.25, -0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}},
     {{0.125, 0.125, 0.125, 0.125, -0.125, -0.125, -0.125, -0.125, -0.25, 0.25, -0.25, 0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0, 0}},
     {{0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0, 0, 0, 0, 0, 0, 0, 0, -0.25, -0.25, -0.25, -0.25}},
@@ -280,18 +280,18 @@ constexpr std::array<std::array<Real, 20>, 20> kHex20Coefficients = {{
 // Value and first/second derivatives of the 1D monomial x^a. The derivative of
 // a constant or linear term collapses to zero, so negative powers never arise.
 struct MonomialAxis {
-    Real value;   ///< x^a
-    Real first;   ///< d/dx (x^a)     = a x^(a-1)
-    Real second;  ///< d^2/dx^2 (x^a) = a (a-1) x^(a-2)
+    double value;   ///< x^a
+    double first;   ///< d/dx (x^a)     = a x^(a-1)
+    double second;  ///< d^2/dx^2 (x^a) = a (a-1) x^(a-2)
 };
 
-inline MonomialAxis monomial_axis(Real x, int exponent) {
+inline MonomialAxis monomial_axis(double x, int exponent) {
     MonomialAxis axis;
     axis.value = integer_power(x, exponent);
-    axis.first = (exponent > 0) ? Real(exponent) * integer_power(x, exponent - 1) : Real(0);
+    axis.first = (exponent > 0) ? double(exponent) * integer_power(x, exponent - 1) : double(0);
     axis.second = (exponent > 1)
-                      ? Real(exponent * (exponent - 1)) * integer_power(x, exponent - 2)
-                      : Real(0);
+                      ? double(exponent * (exponent - 1)) * integer_power(x, exponent - 2)
+                      : double(0);
     return axis;
 }
 
@@ -308,12 +308,12 @@ inline MonomialAxis monomial_axis(Real x, int exponent) {
 // because its table is authored in an internal node order, while Wedge15 and the
 // quadrilateral serendipity tables are authored directly in public order.
 template <typename ExponentFn, typename CoeffFn>
-void eval_monomial_basis(Real r, Real s, Real t,
+void eval_monomial_basis(double r, double s, double t,
                          std::size_t count,
                          ExponentFn&& exponent,
                          CoeffFn&& coeff,
                          std::span<const std::size_t> table_to_output_order,
-                         std::span<Real> values,
+                         std::span<double> values,
                          std::span<Gradient> gradients,
                          std::span<Hessian> hessians) {
     const bool want_values = !values.empty();
@@ -326,17 +326,17 @@ void eval_monomial_basis(Real r, Real s, Real t,
         const MonomialAxis ay = monomial_axis(s, e[1]);
         const MonomialAxis az = monomial_axis(t, e[2]);
 
-        const Real phi = ax.value * ay.value * az.value;
+        const double phi = ax.value * ay.value * az.value;
 
-        Real d_dr = Real(0), d_ds = Real(0), d_dt = Real(0);
+        double d_dr = double(0), d_ds = double(0), d_dt = double(0);
         if (want_gradients || want_hessians) {
             d_dr = ax.first * ay.value * az.value;
             d_ds = ax.value * ay.first * az.value;
             d_dt = ax.value * ay.value * az.first;
         }
 
-        Real d_drr = Real(0), d_dss = Real(0), d_dtt = Real(0);
-        Real d_drs = Real(0), d_drt = Real(0), d_dst = Real(0);
+        double d_drr = double(0), d_dss = double(0), d_dtt = double(0);
+        double d_drs = double(0), d_drt = double(0), d_dst = double(0);
         if (want_hessians) {
             d_drr = ax.second * ay.value * az.value;
             d_dss = ax.value * ay.second * az.value;
@@ -349,7 +349,7 @@ void eval_monomial_basis(Real r, Real s, Real t,
         for (std::size_t slot = 0; slot < count; ++slot) {
             const std::size_t basis_index =
                 table_to_output_order.empty() ? slot : table_to_output_order[slot];
-            const Real c = coeff(j, basis_index);
+            const double c = coeff(j, basis_index);
             if (want_values) {
                 values[slot] += c * phi;
             }
@@ -429,8 +429,8 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
     }
 }
 
-void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
-                                       std::span<Real> values_out,
+void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
+                                       std::span<double> values_out,
                                        std::span<Gradient> gradients_out,
                                        std::span<Hessian> hessians_out) const {
     require_requested_span_size(values_out, size_, "SerendipityBasis::evaluate_all_to values");
@@ -442,7 +442,7 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
     }
 
     if (!values_out.empty()) {
-        std::fill(values_out.begin(), values_out.end(), Real(0));
+        std::fill(values_out.begin(), values_out.end(), double(0));
     }
     if (!gradients_out.empty()) {
         std::fill(gradients_out.begin(), gradients_out.end(), Gradient::Zero());
@@ -451,9 +451,9 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
         std::fill(hessians_out.begin(), hessians_out.end(), Hessian::Zero());
     }
 
-    const Real x = xi[0];
-    const Real y = xi[1];
-    const Real z = xi[2];
+    const double x = xi[0];
+    const double y = xi[1];
+    const double z = xi[2];
 
     if (dimension_ == 2) {
         svmp::throw_if<BasisEvaluationException>(
@@ -515,53 +515,53 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<Real, 3>& xi,
         "SerendipityBasis::evaluate_all_to: unsupported serendipity configuration");
 }
 
-void SerendipityBasis::evaluate_values(const math::Vector<Real, 3>& xi,
-                                       std::vector<Real>& values) const {
+void SerendipityBasis::evaluate_values(const math::Vector<double, 3>& xi,
+                                       std::vector<double>& values) const {
     values.resize(size_);
-    evaluate_values_to(xi, std::span<Real>(values.data(), values.size()));
+    evaluate_values_to(xi, std::span<double>(values.data(), values.size()));
 }
 
-void SerendipityBasis::evaluate_gradients(const math::Vector<Real, 3>& xi,
+void SerendipityBasis::evaluate_gradients(const math::Vector<double, 3>& xi,
                                           std::vector<Gradient>& gradients) const {
     gradients.resize(size_);
     evaluate_gradients_to(xi, std::span<Gradient>(gradients.data(), gradients.size()));
 }
 
-void SerendipityBasis::evaluate_hessians(const math::Vector<Real, 3>& xi,
+void SerendipityBasis::evaluate_hessians(const math::Vector<double, 3>& xi,
                                          std::vector<Hessian>& hessians) const {
     hessians.resize(size_);
     evaluate_hessians_to(xi, std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
-void SerendipityBasis::evaluate_all(const math::Vector<Real, 3>& xi,
-                                    std::vector<Real>& values,
+void SerendipityBasis::evaluate_all(const math::Vector<double, 3>& xi,
+                                    std::vector<double>& values,
                                     std::vector<Gradient>& gradients,
                                     std::vector<Hessian>& hessians) const {
     values.resize(size_);
     gradients.resize(size_);
     hessians.resize(size_);
     evaluate_all_to(xi,
-                    std::span<Real>(values.data(), values.size()),
+                    std::span<double>(values.data(), values.size()),
                     std::span<Gradient>(gradients.data(), gradients.size()),
                     std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
-void SerendipityBasis::evaluate_values_to(const math::Vector<Real, 3>& xi,
-                                          std::span<Real> values_out) const {
+void SerendipityBasis::evaluate_values_to(const math::Vector<double, 3>& xi,
+                                          std::span<double> values_out) const {
     require_span_size(values_out.size(), size_, "SerendipityBasis::evaluate_values_to");
     evaluate_all_to(xi, values_out, std::span<Gradient>{}, std::span<Hessian>{});
 }
 
-void SerendipityBasis::evaluate_gradients_to(const math::Vector<Real, 3>& xi,
+void SerendipityBasis::evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                              std::span<Gradient> gradients_out) const {
     require_span_size(gradients_out.size(), size_, "SerendipityBasis::evaluate_gradients_to");
-    evaluate_all_to(xi, std::span<Real>{}, gradients_out, std::span<Hessian>{});
+    evaluate_all_to(xi, std::span<double>{}, gradients_out, std::span<Hessian>{});
 }
 
-void SerendipityBasis::evaluate_hessians_to(const math::Vector<Real, 3>& xi,
+void SerendipityBasis::evaluate_hessians_to(const math::Vector<double, 3>& xi,
                                             std::span<Hessian> hessians_out) const {
     require_span_size(hessians_out.size(), size_, "SerendipityBasis::evaluate_hessians_to");
-    evaluate_all_to(xi, std::span<Real>{}, std::span<Gradient>{}, hessians_out);
+    evaluate_all_to(xi, std::span<double>{}, std::span<Gradient>{}, hessians_out);
 }
 
 } // namespace basis

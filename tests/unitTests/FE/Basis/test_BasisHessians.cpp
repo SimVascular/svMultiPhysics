@@ -19,44 +19,44 @@ using namespace svmp::FE::basis;
 namespace {
 
 void numerical_gradient_helper(const BasisFunction& basis,
-                               const math::Vector<Real, 3>& xi,
+                               const math::Vector<double, 3>& xi,
                                std::vector<Gradient>& gradients,
-                               Real eps = Real(1e-6))
+                               double eps = double(1e-6))
 {
-    std::vector<Real> base;
+    std::vector<double> base;
     basis.evaluate_values(xi, base);
     gradients.assign(base.size(), Gradient::Zero());
 
     for (int d = 0; d < basis.dimension(); ++d) {
         const std::size_t sd = static_cast<std::size_t>(d);
-        math::Vector<Real, 3> xi_p = xi;
-        math::Vector<Real, 3> xi_m = xi;
+        math::Vector<double, 3> xi_p = xi;
+        math::Vector<double, 3> xi_m = xi;
         xi_p[sd] += eps;
         xi_m[sd] -= eps;
 
-        std::vector<Real> v_p;
-        std::vector<Real> v_m;
+        std::vector<double> v_p;
+        std::vector<double> v_m;
         basis.evaluate_values(xi_p, v_p);
         basis.evaluate_values(xi_m, v_m);
 
         for (std::size_t n = 0; n < base.size(); ++n) {
-            gradients[n][sd] = (v_p[n] - v_m[n]) / (Real(2) * eps);
+            gradients[n][sd] = (v_p[n] - v_m[n]) / (double(2) * eps);
         }
     }
 }
 
 void numerical_hessian_helper(const BasisFunction& basis,
-                              const math::Vector<Real, 3>& xi,
+                              const math::Vector<double, 3>& xi,
                               std::vector<Hessian>& hessians,
-                              Real eps = Real(1e-5))
+                              double eps = double(1e-5))
 {
     hessians.assign(basis.size(), Hessian::Zero());
     const int dim = basis.dimension();
 
     for (int i = 0; i < dim; ++i) {
         for (int j = 0; j < dim; ++j) {
-            math::Vector<Real, 3> xi_p = xi;
-            math::Vector<Real, 3> xi_m = xi;
+            math::Vector<double, 3> xi_p = xi;
+            math::Vector<double, 3> xi_m = xi;
             const std::size_t sj = static_cast<std::size_t>(j);
             xi_p[sj] += eps;
             xi_m[sj] -= eps;
@@ -68,35 +68,35 @@ void numerical_hessian_helper(const BasisFunction& basis,
 
             for (std::size_t n = 0; n < basis.size(); ++n) {
                 const std::size_t si = static_cast<std::size_t>(i);
-                hessians[n](si, sj) = (g_p[n][si] - g_m[n][si]) / (Real(2) * eps);
+                hessians[n](si, sj) = (g_p[n][si] - g_m[n][si]) / (double(2) * eps);
             }
         }
     }
 }
 
-std::vector<math::Vector<Real, 3>> sample_points_for(ElementType type) {
+std::vector<math::Vector<double, 3>> sample_points_for(ElementType type) {
     switch (type) {
         case ElementType::Line2:
-            return {{Real(-0.35), Real(0), Real(0)}, {Real(0.2), Real(0), Real(0)}};
+            return {{double(-0.35), double(0), double(0)}, {double(0.2), double(0), double(0)}};
         case ElementType::Triangle3:
-            return {{Real(0.15), Real(0.2), Real(0)}, {Real(0.25), Real(0.1), Real(0)}};
+            return {{double(0.15), double(0.2), double(0)}, {double(0.25), double(0.1), double(0)}};
         case ElementType::Quad4:
-            return {{Real(0.2), Real(-0.3), Real(0)}, {Real(-0.45), Real(0.25), Real(0)}};
+            return {{double(0.2), double(-0.3), double(0)}, {double(-0.45), double(0.25), double(0)}};
         case ElementType::Tetra4:
-            return {{Real(0.12), Real(0.18), Real(0.16)}, {Real(0.2), Real(0.1), Real(0.18)}};
+            return {{double(0.12), double(0.18), double(0.16)}, {double(0.2), double(0.1), double(0.18)}};
         case ElementType::Hex8:
-            return {{Real(0.1), Real(-0.2), Real(0.3)}, {Real(-0.35), Real(0.25), Real(-0.15)}};
+            return {{double(0.1), double(-0.2), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}};
         case ElementType::Wedge6:
-            return {{Real(0.18), Real(0.22), Real(-0.2)}, {Real(0.12), Real(0.16), Real(0.1)}};
+            return {{double(0.18), double(0.22), double(-0.2)}, {double(0.12), double(0.16), double(0.1)}};
         default:
-            return {{Real(0), Real(0), Real(0)}};
+            return {{double(0), double(0), double(0)}};
     }
 }
 
 void expect_gradients_match_numerical(const BasisFunction& basis,
-                                      const std::vector<math::Vector<Real, 3>>& points,
-                                      Real tol,
-                                      Real eps = Real(1e-6))
+                                      const std::vector<math::Vector<double, 3>>& points,
+                                      double tol,
+                                      double eps = double(1e-6))
 {
     for (const auto& xi : points) {
         std::vector<Gradient> analytical;
@@ -118,9 +118,9 @@ void expect_gradients_match_numerical(const BasisFunction& basis,
 }
 
 void expect_hessians_match_numerical(const BasisFunction& basis,
-                                     const std::vector<math::Vector<Real, 3>>& points,
-                                     Real tol,
-                                     Real eps = Real(1e-5))
+                                     const std::vector<math::Vector<double, 3>>& points,
+                                     double tol,
+                                     double eps = double(1e-5))
 {
     for (const auto& xi : points) {
         std::vector<Hessian> analytical;
@@ -145,8 +145,8 @@ void expect_hessians_match_numerical(const BasisFunction& basis,
 }
 
 void expect_partition_hessian_sum_zero(const BasisFunction& basis,
-                                       const math::Vector<Real, 3>& xi,
-                                       Real tol)
+                                       const math::Vector<double, 3>& xi,
+                                       double tol)
 {
     std::vector<Hessian> hessians;
     basis.evaluate_hessians(xi, hessians);
@@ -163,7 +163,7 @@ void expect_partition_hessian_sum_zero(const BasisFunction& basis,
     for (int r = 0; r < basis.dimension(); ++r) {
         for (int c = 0; c < basis.dimension(); ++c) {
             EXPECT_NEAR(sum(static_cast<std::size_t>(r), static_cast<std::size_t>(c)),
-                        Real(0),
+                        double(0),
                         tol)
                 << "element " << static_cast<int>(basis.element_type())
                 << ", order " << basis.order();
@@ -172,8 +172,8 @@ void expect_partition_hessian_sum_zero(const BasisFunction& basis,
 }
 
 void expect_hessians_symmetric(const BasisFunction& basis,
-                               const math::Vector<Real, 3>& xi,
-                               Real tol)
+                               const math::Vector<double, 3>& xi,
+                               double tol)
 {
     std::vector<Hessian> hessians;
     basis.evaluate_hessians(xi, hessians);
@@ -190,8 +190,8 @@ void expect_hessians_symmetric(const BasisFunction& basis,
 }
 
 void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
-                                        const std::vector<math::Vector<Real, 3>>& points,
-                                        Real tol)
+                                        const std::vector<math::Vector<double, 3>>& points,
+                                        double tol)
 {
     ASSERT_EQ(basis.dimension(), 2);
     for (const auto& xi : points) {
@@ -203,16 +203,16 @@ void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
         ASSERT_EQ(gradients.size(), basis.size());
         ASSERT_EQ(hessians.size(), basis.size());
         for (std::size_t n = 0; n < basis.size(); ++n) {
-            EXPECT_NEAR(gradients[n][2], Real(0), tol)
+            EXPECT_NEAR(gradients[n][2], double(0), tol)
                 << "basis " << n << ", element "
                 << static_cast<int>(basis.element_type())
                 << ", order " << basis.order();
             for (std::size_t d = 0; d < 3u; ++d) {
-                EXPECT_NEAR(hessians[n](2, d), Real(0), tol)
+                EXPECT_NEAR(hessians[n](2, d), double(0), tol)
                     << "basis " << n << ", component (2," << d
                     << "), element " << static_cast<int>(basis.element_type())
                     << ", order " << basis.order();
-                EXPECT_NEAR(hessians[n](d, 2), Real(0), tol)
+                EXPECT_NEAR(hessians[n](d, 2), double(0), tol)
                     << "basis " << n << ", component (" << d
                     << ",2), element " << static_cast<int>(basis.element_type())
                     << ", order " << basis.order();
@@ -221,14 +221,14 @@ void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
     }
 }
 
-std::vector<math::Vector<Real, 3>> serendipity_sample_points(ElementType type) {
+std::vector<math::Vector<double, 3>> serendipity_sample_points(ElementType type) {
     if (type == ElementType::Quad4 || type == ElementType::Quad8) {
-        return {{Real(0.17), Real(-0.31), Real(0)}, {Real(-0.45), Real(0.25), Real(0)}};
+        return {{double(0.17), double(-0.31), double(0)}, {double(-0.45), double(0.25), double(0)}};
     }
     if (type == ElementType::Hex8 || type == ElementType::Hex20) {
-        return {{Real(0.2), Real(-0.1), Real(0.3)}, {Real(-0.35), Real(0.25), Real(-0.15)}};
+        return {{double(0.2), double(-0.1), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}};
     }
-    return {{Real(0.2), Real(0.3), Real(0.1)}, {Real(0.12), Real(0.16), Real(-0.2)}};
+    return {{double(0.2), double(0.3), double(0.1)}, {double(0.12), double(0.16), double(-0.2)}};
 }
 
 } // namespace
@@ -237,15 +237,15 @@ TEST(BasisHessians, LagrangeCanonicalTopologiesMatchNumericalHessians) {
     const struct Case {
         ElementType type;
         int order;
-        Real tol;
-        Real eps;
+        double tol;
+        double eps;
     } cases[] = {
-        {ElementType::Line2, 3, Real(1e-7), Real(1e-5)},
-        {ElementType::Triangle3, 3, Real(2e-6), Real(1e-5)},
-        {ElementType::Quad4, 3, Real(1e-6), Real(1e-5)},
-        {ElementType::Tetra4, 2, Real(1e-6), Real(1e-5)},
-        {ElementType::Hex8, 2, Real(1e-6), Real(1e-5)},
-        {ElementType::Wedge6, 2, Real(1e-5), Real(1e-5)},
+        {ElementType::Line2, 3, double(1e-7), double(1e-5)},
+        {ElementType::Triangle3, 3, double(2e-6), double(1e-5)},
+        {ElementType::Quad4, 3, double(1e-6), double(1e-5)},
+        {ElementType::Tetra4, 2, double(1e-6), double(1e-5)},
+        {ElementType::Hex8, 2, double(1e-6), double(1e-5)},
+        {ElementType::Wedge6, 2, double(1e-5), double(1e-5)},
     };
 
     for (const auto& c : cases) {
@@ -258,20 +258,20 @@ TEST(BasisHessians, LagrangeHessiansSumToZeroAndAreSymmetric) {
     const struct Case {
         ElementType type;
         int order;
-        math::Vector<Real, 3> xi;
-        Real tol;
+        math::Vector<double, 3> xi;
+        double tol;
     } cases[] = {
-        {ElementType::Line2, 3, {Real(0.15), Real(0), Real(0)}, Real(1e-12)},
-        {ElementType::Triangle3, 3, {Real(0.2), Real(0.25), Real(0)}, Real(1e-10)},
-        {ElementType::Quad4, 3, {Real(0.3), Real(-0.2), Real(0)}, Real(1e-12)},
-        {ElementType::Tetra4, 2, {Real(0.15), Real(0.2), Real(0.1)}, Real(1e-10)},
-        {ElementType::Hex8, 2, {Real(0.1), Real(-0.2), Real(0.3)}, Real(1e-12)},
-        {ElementType::Wedge6, 2, {Real(0.2), Real(0.15), Real(-0.3)}, Real(1e-10)},
+        {ElementType::Line2, 3, {double(0.15), double(0), double(0)}, double(1e-12)},
+        {ElementType::Triangle3, 3, {double(0.2), double(0.25), double(0)}, double(1e-10)},
+        {ElementType::Quad4, 3, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
+        {ElementType::Tetra4, 2, {double(0.15), double(0.2), double(0.1)}, double(1e-10)},
+        {ElementType::Hex8, 2, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
+        {ElementType::Wedge6, 2, {double(0.2), double(0.15), double(-0.3)}, double(1e-10)},
     };
 
     for (const auto& c : cases) {
         LagrangeBasis basis(c.type, c.order);
-        expect_partition_hessian_sum_zero(basis, c.xi, Real(10) * c.tol);
+        expect_partition_hessian_sum_zero(basis, c.xi, double(10) * c.tol);
         expect_hessians_symmetric(basis, c.xi, c.tol);
     }
 }
@@ -280,12 +280,12 @@ TEST(BasisHessians, SerendipityHessiansSumToZeroAndAreSymmetric) {
     const struct Case {
         ElementType type;
         int order;
-        math::Vector<Real, 3> xi;
-        Real tol;
+        math::Vector<double, 3> xi;
+        double tol;
     } cases[] = {
-        {ElementType::Quad8, 2, {Real(0.17), Real(-0.31), Real(0)}, Real(1e-10)},
-        {ElementType::Hex20, 2, {Real(0.2), Real(-0.1), Real(0.3)}, Real(1e-10)},
-        {ElementType::Wedge15, 2, {Real(0.2), Real(0.3), Real(0.1)}, Real(1e-10)},
+        {ElementType::Quad8, 2, {double(0.17), double(-0.31), double(0)}, double(1e-10)},
+        {ElementType::Hex20, 2, {double(0.2), double(-0.1), double(0.3)}, double(1e-10)},
+        {ElementType::Wedge15, 2, {double(0.2), double(0.3), double(0.1)}, double(1e-10)},
     };
 
     for (const auto& c : cases) {
@@ -300,22 +300,22 @@ TEST(BasisHessians, SolverMappedVolumeSelectionsSatisfyInvariants) {
         ElementType type;
         BasisType basis_type;
         int order;
-        math::Vector<Real, 3> xi;
-        Real tol;
+        math::Vector<double, 3> xi;
+        double tol;
     } cases[] = {
-        {ElementType::Line2, BasisType::Lagrange, 1, {Real(0.15), Real(0), Real(0)}, Real(1e-12)},
-        {ElementType::Line3, BasisType::Lagrange, 2, {Real(-0.25), Real(0), Real(0)}, Real(1e-12)},
-        {ElementType::Triangle3, BasisType::Lagrange, 1, {Real(0.2), Real(0.25), Real(0)}, Real(1e-12)},
-        {ElementType::Triangle6, BasisType::Lagrange, 2, {Real(0.2), Real(0.25), Real(0)}, Real(1e-12)},
-        {ElementType::Quad4, BasisType::Lagrange, 1, {Real(0.3), Real(-0.2), Real(0)}, Real(1e-12)},
-        {ElementType::Quad8, BasisType::Serendipity, 2, {Real(0.17), Real(-0.31), Real(0)}, Real(1e-10)},
-        {ElementType::Quad9, BasisType::Lagrange, 2, {Real(0.3), Real(-0.2), Real(0)}, Real(1e-12)},
-        {ElementType::Tetra4, BasisType::Lagrange, 1, {Real(0.15), Real(0.2), Real(0.1)}, Real(1e-12)},
-        {ElementType::Tetra10, BasisType::Lagrange, 2, {Real(0.15), Real(0.2), Real(0.1)}, Real(1e-10)},
-        {ElementType::Hex8, BasisType::Lagrange, 1, {Real(0.1), Real(-0.2), Real(0.3)}, Real(1e-12)},
-        {ElementType::Hex20, BasisType::Serendipity, 2, {Real(0.2), Real(-0.1), Real(0.3)}, Real(1e-10)},
-        {ElementType::Hex27, BasisType::Lagrange, 2, {Real(0.1), Real(-0.2), Real(0.3)}, Real(1e-12)},
-        {ElementType::Wedge6, BasisType::Lagrange, 1, {Real(0.2), Real(0.15), Real(-0.3)}, Real(1e-12)},
+        {ElementType::Line2, BasisType::Lagrange, 1, {double(0.15), double(0), double(0)}, double(1e-12)},
+        {ElementType::Line3, BasisType::Lagrange, 2, {double(-0.25), double(0), double(0)}, double(1e-12)},
+        {ElementType::Triangle3, BasisType::Lagrange, 1, {double(0.2), double(0.25), double(0)}, double(1e-12)},
+        {ElementType::Triangle6, BasisType::Lagrange, 2, {double(0.2), double(0.25), double(0)}, double(1e-12)},
+        {ElementType::Quad4, BasisType::Lagrange, 1, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
+        {ElementType::Quad8, BasisType::Serendipity, 2, {double(0.17), double(-0.31), double(0)}, double(1e-10)},
+        {ElementType::Quad9, BasisType::Lagrange, 2, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
+        {ElementType::Tetra4, BasisType::Lagrange, 1, {double(0.15), double(0.2), double(0.1)}, double(1e-12)},
+        {ElementType::Tetra10, BasisType::Lagrange, 2, {double(0.15), double(0.2), double(0.1)}, double(1e-10)},
+        {ElementType::Hex8, BasisType::Lagrange, 1, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
+        {ElementType::Hex20, BasisType::Serendipity, 2, {double(0.2), double(-0.1), double(0.3)}, double(1e-10)},
+        {ElementType::Hex27, BasisType::Lagrange, 2, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
+        {ElementType::Wedge6, BasisType::Lagrange, 1, {double(0.2), double(0.15), double(-0.3)}, double(1e-12)},
     };
 
     for (const auto& c : cases) {
@@ -333,14 +333,14 @@ TEST(BasisGradients, LagrangeCanonicalTopologiesMatchNumericalGradients) {
     const struct Case {
         ElementType type;
         int order;
-        Real tol;
+        double tol;
     } cases[] = {
-        {ElementType::Line2, 3, Real(1e-8)},
-        {ElementType::Triangle3, 3, Real(1e-7)},
-        {ElementType::Quad4, 3, Real(1e-7)},
-        {ElementType::Tetra4, 2, Real(1e-7)},
-        {ElementType::Hex8, 2, Real(1e-7)},
-        {ElementType::Wedge6, 2, Real(1e-7)},
+        {ElementType::Line2, 3, double(1e-8)},
+        {ElementType::Triangle3, 3, double(1e-7)},
+        {ElementType::Quad4, 3, double(1e-7)},
+        {ElementType::Tetra4, 2, double(1e-7)},
+        {ElementType::Hex8, 2, double(1e-7)},
+        {ElementType::Wedge6, 2, double(1e-7)},
     };
 
     for (const auto& c : cases) {
@@ -359,16 +359,16 @@ TEST(BasisGradients, SerendipityFamiliesMatchNumericalGradients) {
     const struct Case {
         ElementType type;
         int order;
-        Real tol;
+        double tol;
     } cases[] = {
-        {ElementType::Quad4, 1, Real(1e-8)},
-        {ElementType::Quad8, 2, Real(1e-7)},
-        {ElementType::Quad4, 3, Real(1e-7)},
-        {ElementType::Quad4, 4, Real(5e-7)},
-        {ElementType::Quad4, 6, Real(2e-6)},
-        {ElementType::Hex8, 1, Real(1e-8)},
-        {ElementType::Hex20, 2, Real(1e-7)},
-        {ElementType::Wedge15, 2, Real(1e-7)},
+        {ElementType::Quad4, 1, double(1e-8)},
+        {ElementType::Quad8, 2, double(1e-7)},
+        {ElementType::Quad4, 3, double(1e-7)},
+        {ElementType::Quad4, 4, double(5e-7)},
+        {ElementType::Quad4, 6, double(2e-6)},
+        {ElementType::Hex8, 1, double(1e-8)},
+        {ElementType::Hex20, 2, double(1e-7)},
+        {ElementType::Wedge15, 2, double(1e-7)},
     };
 
     for (const auto& c : cases) {
@@ -394,7 +394,7 @@ TEST(BasisGradients, QuadrilateralSerendipityInactiveZDerivativesRemainZero) {
         expect_inactive_z_derivatives_zero(
             basis,
             serendipity_sample_points(c.type),
-            Real(1e-12));
+            double(1e-12));
     }
 }
 
@@ -402,16 +402,16 @@ TEST(BasisHessians, SerendipityFamiliesMatchNumericalHessians) {
     const struct Case {
         ElementType type;
         int order;
-        Real tol;
+        double tol;
     } cases[] = {
-        {ElementType::Quad4, 1, Real(1e-6)},
-        {ElementType::Quad8, 2, Real(1e-6)},
-        {ElementType::Quad4, 3, Real(1e-6)},
-        {ElementType::Quad4, 4, Real(5e-6)},
-        {ElementType::Quad4, 6, Real(2e-5)},
-        {ElementType::Hex8, 1, Real(1e-6)},
-        {ElementType::Hex20, 2, Real(1e-6)},
-        {ElementType::Wedge15, 2, Real(1e-6)},
+        {ElementType::Quad4, 1, double(1e-6)},
+        {ElementType::Quad8, 2, double(1e-6)},
+        {ElementType::Quad4, 3, double(1e-6)},
+        {ElementType::Quad4, 4, double(5e-6)},
+        {ElementType::Quad4, 6, double(2e-5)},
+        {ElementType::Hex8, 1, double(1e-6)},
+        {ElementType::Hex20, 2, double(1e-6)},
+        {ElementType::Wedge15, 2, double(1e-6)},
     };
 
     for (const auto& c : cases) {

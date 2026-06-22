@@ -135,7 +135,7 @@ public:
     /// production layouts.
     ///
     /// \return Reference node coordinates, one per basis function.
-    const std::vector<math::Vector<Real, 3>>& nodes() const noexcept final { return nodes_; }
+    const std::vector<math::Vector<double, 3>>& nodes() const noexcept final { return nodes_; }
 
     /// \brief Evaluate serendipity basis function values at a reference coordinate.
     ///
@@ -147,8 +147,8 @@ public:
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param values Receives one value per basis function.
-    void evaluate_values(const math::Vector<Real, 3>& xi,
-                         std::vector<Real>& values) const final;
+    void evaluate_values(const math::Vector<double, 3>& xi,
+                         std::vector<double>& values) const final;
 
     /// \brief Evaluate analytical serendipity basis gradients at a reference coordinate.
     ///
@@ -161,7 +161,7 @@ public:
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param gradients Receives one three-component gradient per basis function.
-    void evaluate_gradients(const math::Vector<Real, 3>& xi,
+    void evaluate_gradients(const math::Vector<double, 3>& xi,
                             std::vector<Gradient>& gradients) const final;
 
     /// \brief Evaluate analytical serendipity basis Hessians at a reference coordinate.
@@ -175,7 +175,7 @@ public:
     ///
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param hessians Receives one 3-by-3 Hessian per basis function.
-    void evaluate_hessians(const math::Vector<Real, 3>& xi,
+    void evaluate_hessians(const math::Vector<double, 3>& xi,
                            std::vector<Hessian>& hessians) const final;
 
     /// \brief Evaluate serendipity values, gradients, and Hessians together.
@@ -188,27 +188,27 @@ public:
     /// \param values Receives one value per basis function.
     /// \param gradients Receives one three-component gradient per basis function.
     /// \param hessians Receives one 3-by-3 Hessian per basis function.
-    void evaluate_all(const math::Vector<Real, 3>& xi,
-                      std::vector<Real>& values,
+    void evaluate_all(const math::Vector<double, 3>& xi,
+                      std::vector<double>& values,
                       std::vector<Gradient>& gradients,
                       std::vector<Hessian>& hessians) const final;
 
     /// \brief Evaluate serendipity basis values into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param values_out Output span with at least size() entries.
-    void evaluate_values_to(const math::Vector<Real, 3>& xi,
-                            std::span<Real> values_out) const final;
+    void evaluate_values_to(const math::Vector<double, 3>& xi,
+                            std::span<double> values_out) const final;
 
     /// \brief Evaluate serendipity basis gradients into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param gradients_out Output span with at least size() entries.
-    void evaluate_gradients_to(const math::Vector<Real, 3>& xi,
+    void evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                std::span<Gradient> gradients_out) const final;
 
     /// \brief Evaluate serendipity basis Hessians into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param hessians_out Output span with at least size() entries.
-    void evaluate_hessians_to(const math::Vector<Real, 3>& xi,
+    void evaluate_hessians_to(const math::Vector<double, 3>& xi,
                               std::span<Hessian> hessians_out) const final;
 
 private:
@@ -216,13 +216,13 @@ private:
     int dimension_;
     int order_;
     std::size_t size_;
-    std::vector<math::Vector<Real, 3>> nodes_;
+    std::vector<math::Vector<double, 3>> nodes_;
     std::vector<std::array<int, 2>> quad_monomial_exponents_;
     // Row-major inverse Vandermonde, indexed as [monomial, basis].
-    std::vector<Real> quad_inv_vandermonde_;
+    std::vector<double> quad_inv_vandermonde_;
 
-    void evaluate_all_to(const math::Vector<Real, 3>& xi,
-                         std::span<Real> values_out,
+    void evaluate_all_to(const math::Vector<double, 3>& xi,
+                         std::span<double> values_out,
                          std::span<Gradient> gradients_out,
                          std::span<Hessian> hessians_out) const;
 };

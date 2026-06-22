@@ -128,17 +128,17 @@ namespace FE {
 namespace basis {
 
 /// \brief Gradient vector type used by basis evaluators.
-using Gradient = math::Vector<Real, 3>;
+using Gradient = math::Vector<double, 3>;
 
 /// \brief Hessian matrix type used by basis evaluators.
-using Hessian  = math::Matrix<Real, 3, 3>;
+using Hessian  = math::Matrix<double, 3, 3>;
 
-[[nodiscard]] inline Hessian make_symmetric_hessian(Real xx,
-                                                    Real yy,
-                                                    Real zz,
-                                                    Real xy,
-                                                    Real xz,
-                                                    Real yz) {
+[[nodiscard]] inline Hessian make_symmetric_hessian(double xx,
+                                                    double yy,
+                                                    double zz,
+                                                    double xy,
+                                                    double xz,
+                                                    double yz) {
     Hessian hessian = Hessian::Zero();
     hessian(0, 0) = xx;
     hessian(1, 1) = yy;
@@ -210,26 +210,26 @@ public:
     ///
     /// \return Reference node coordinates: size() entries for nodal families,
     ///         empty otherwise.
-    virtual const std::vector<math::Vector<Real, 3>>& nodes() const noexcept;
+    virtual const std::vector<math::Vector<double, 3>>& nodes() const noexcept;
 
     /// \brief Evaluate basis function values at a reference coordinate.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param values Receives one value per basis function.
-    virtual void evaluate_values(const math::Vector<Real, 3>& xi,
-                                 std::vector<Real>& values) const = 0;
+    virtual void evaluate_values(const math::Vector<double, 3>& xi,
+                                 std::vector<double>& values) const = 0;
 
     /// \brief Evaluate basis gradients at a reference coordinate.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param gradients Receives one three-component gradient per basis function.
     /// \throws BasisEvaluationException If gradients are not available for the basis.
-    virtual void evaluate_gradients(const math::Vector<Real, 3>& xi,
+    virtual void evaluate_gradients(const math::Vector<double, 3>& xi,
                                     std::vector<Gradient>& gradients) const;
 
     /// \brief Evaluate basis Hessians at a reference coordinate.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param hessians Receives one 3-by-3 Hessian per basis function.
     /// \throws BasisEvaluationException If Hessians are not available for the basis.
-    virtual void evaluate_hessians(const math::Vector<Real, 3>& xi,
+    virtual void evaluate_hessians(const math::Vector<double, 3>& xi,
                                    std::vector<Hessian>& hessians) const;
 
     /// \brief Evaluate values, gradients, and Hessians together.
@@ -237,27 +237,27 @@ public:
     /// \param values Receives one value per basis function.
     /// \param gradients Receives one three-component gradient per basis function.
     /// \param hessians Receives one 3-by-3 Hessian per basis function.
-    virtual void evaluate_all(const math::Vector<Real, 3>& xi,
-                              std::vector<Real>& values,
+    virtual void evaluate_all(const math::Vector<double, 3>& xi,
+                              std::vector<double>& values,
                               std::vector<Gradient>& gradients,
                               std::vector<Hessian>& hessians) const;
 
     /// \brief Evaluate basis values into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param values_out Output span with at least size() entries.
-    virtual void evaluate_values_to(const math::Vector<Real, 3>& xi,
-                                    std::span<Real> values_out) const;
+    virtual void evaluate_values_to(const math::Vector<double, 3>& xi,
+                                    std::span<double> values_out) const;
 
     /// \brief Evaluate basis gradients into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param gradients_out Output span with at least size() entries.
-    virtual void evaluate_gradients_to(const math::Vector<Real, 3>& xi,
+    virtual void evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                        std::span<Gradient> gradients_out) const;
 
     /// \brief Evaluate basis Hessians into caller-provided storage.
     /// \param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
     /// \param hessians_out Output span with at least size() entries.
-    virtual void evaluate_hessians_to(const math::Vector<Real, 3>& xi,
+    virtual void evaluate_hessians_to(const math::Vector<double, 3>& xi,
                                       std::span<Hessian> hessians_out) const;
 
 protected:
@@ -270,9 +270,9 @@ protected:
     /// analytical gradients when available because finite differences introduce
     /// truncation/roundoff sensitivity and require multiple value evaluations
     /// per reference coordinate.
-    void numerical_gradient(const math::Vector<Real, 3>& xi,
+    void numerical_gradient(const math::Vector<double, 3>& xi,
                             std::vector<Gradient>& gradients,
-                            Real eps = Real(1e-6)) const;
+                            double eps = double(1e-6)) const;
 
     /// \brief Approximate Hessians by centered finite differences of gradients.
     ///
@@ -284,9 +284,9 @@ protected:
     /// Hessians should be used in performance-sensitive solver paths because
     /// finite-difference Hessians amplify numerical error and require repeated
     /// gradient evaluations.
-    void numerical_hessian(const math::Vector<Real, 3>& xi,
+    void numerical_hessian(const math::Vector<double, 3>& xi,
                            std::vector<Hessian>& hessians,
-                           Real eps = Real(1e-5)) const;
+                           double eps = double(1e-5)) const;
 };
 
 } // namespace basis

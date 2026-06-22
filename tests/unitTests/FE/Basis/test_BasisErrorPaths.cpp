@@ -28,10 +28,10 @@ public:
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values(const math::Vector<Real, 3>&,
-                         std::vector<Real>& values) const override
+    void evaluate_values(const math::Vector<double, 3>&,
+                         std::vector<double>& values) const override
     {
-        values.assign(size(), Real(0));
+        values.assign(size(), double(0));
     }
 };
 
@@ -50,43 +50,43 @@ public:
     int order() const noexcept override { return 2; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values(const math::Vector<Real, 3>& xi,
-                         std::vector<Real>& values) const override
+    void evaluate_values(const math::Vector<double, 3>& xi,
+                         std::vector<double>& values) const override
     {
-        const Real x = xi[0];
-        const Real y = xi[1];
-        const Real z = xi[2];
+        const double x = xi[0];
+        const double y = xi[1];
+        const double z = xi[2];
         values.resize(size());
-        values[0] = Real(1) + Real(2) * x - y + Real(0.5) * z +
-                    x * x + Real(0.75) * y * y - Real(0.25) * z * z +
-                    Real(0.2) * x * y - Real(0.3) * x * z + Real(0.4) * y * z;
-        values[1] = Real(3) - x + Real(2) * y + z +
-                    Real(0.5) * x * x - y * y + z * z +
+        values[0] = double(1) + double(2) * x - y + double(0.5) * z +
+                    x * x + double(0.75) * y * y - double(0.25) * z * z +
+                    double(0.2) * x * y - double(0.3) * x * z + double(0.4) * y * z;
+        values[1] = double(3) - x + double(2) * y + z +
+                    double(0.5) * x * x - y * y + z * z +
                     x * y + x * z - y * z;
     }
 
-    void evaluate_gradients(const math::Vector<Real, 3>& xi,
+    void evaluate_gradients(const math::Vector<double, 3>& xi,
                             std::vector<Gradient>& gradients) const override
     {
-        const Real x = xi[0];
-        const Real y = xi[1];
-        const Real z = xi[2];
+        const double x = xi[0];
+        const double y = xi[1];
+        const double z = xi[2];
         gradients.assign(size(), Gradient::Zero());
-        gradients[0][0] = Real(2) + Real(2) * x + Real(0.2) * y - Real(0.3) * z;
-        gradients[0][1] = Real(-1) + Real(1.5) * y + Real(0.2) * x + Real(0.4) * z;
-        gradients[0][2] = Real(0.5) - Real(0.5) * z - Real(0.3) * x + Real(0.4) * y;
-        gradients[1][0] = Real(-1) + x + y + z;
-        gradients[1][1] = Real(2) - Real(2) * y + x - z;
-        gradients[1][2] = Real(1) + Real(2) * z + x - y;
+        gradients[0][0] = double(2) + double(2) * x + double(0.2) * y - double(0.3) * z;
+        gradients[0][1] = double(-1) + double(1.5) * y + double(0.2) * x + double(0.4) * z;
+        gradients[0][2] = double(0.5) - double(0.5) * z - double(0.3) * x + double(0.4) * y;
+        gradients[1][0] = double(-1) + x + y + z;
+        gradients[1][1] = double(2) - double(2) * y + x - z;
+        gradients[1][2] = double(1) + double(2) * z + x - y;
     }
 
     void exact_hessians(std::vector<Hessian>& hessians) const
     {
         hessians.assign(size(), Hessian::Zero());
-        hessians[0] = make_symmetric_hessian(Real(2), Real(1.5), Real(-0.5),
-                                             Real(0.2), Real(-0.3), Real(0.4));
-        hessians[1] = make_symmetric_hessian(Real(1), Real(-2), Real(2),
-                                             Real(1), Real(1), Real(-1));
+        hessians[0] = make_symmetric_hessian(double(2), double(1.5), double(-0.5),
+                                             double(0.2), double(-0.3), double(0.4));
+        hessians[1] = make_symmetric_hessian(double(1), double(-2), double(2),
+                                             double(1), double(1), double(-1));
     }
 };
 
@@ -98,32 +98,32 @@ public:
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values(const math::Vector<Real, 3>& xi,
-                         std::vector<Real>& values) const override
+    void evaluate_values(const math::Vector<double, 3>& xi,
+                         std::vector<double>& values) const override
     {
         values.resize(size());
-        values[0] = Real(1) + xi[0];
-        values[1] = Real(2) + xi[1];
+        values[0] = double(1) + xi[0];
+        values[1] = double(2) + xi[1];
     }
 
-    void evaluate_gradients(const math::Vector<Real, 3>&,
+    void evaluate_gradients(const math::Vector<double, 3>&,
                             std::vector<Gradient>& gradients) const override
     {
         gradients.assign(size(), Gradient::Zero());
-        gradients[0][0] = Real(1);
-        gradients[1][1] = Real(1);
+        gradients[0][0] = double(1);
+        gradients[1][1] = double(1);
     }
 
-    void evaluate_hessians(const math::Vector<Real, 3>& xi,
+    void evaluate_hessians(const math::Vector<double, 3>& xi,
                            std::vector<Hessian>& hessians) const override
     {
         hessians.assign(size(), Hessian::Zero());
         for (std::size_t d = 0; d < hessians.size(); ++d) {
             for (std::size_t r = 0; r < 3u; ++r) {
                 for (std::size_t c = 0; c < 3u; ++c) {
-                    hessians[d](r, c) = Real(100) * static_cast<Real>(d + 1u) +
-                                        Real(10) * static_cast<Real>(r) +
-                                        static_cast<Real>(c) + xi[2];
+                    hessians[d](r, c) = double(100) * static_cast<double>(d + 1u) +
+                                        double(10) * static_cast<double>(r) +
+                                        static_cast<double>(c) + xi[2];
                 }
             }
         }
@@ -260,7 +260,7 @@ TEST(BasisErrorPaths, NodeOrderingInvalidNodeThrows) {
 
 TEST(BasisErrorPaths, BasisFunctionDefaultsThrowForMissingDerivatives) {
     MinimalScalarBasis basis;
-    const math::Vector<Real, 3> xi{Real(0), Real(0), Real(0)};
+    const math::Vector<double, 3> xi{double(0), double(0), double(0)};
     std::vector<Gradient> gradients;
     std::vector<Hessian> hessians;
 
@@ -270,7 +270,7 @@ TEST(BasisErrorPaths, BasisFunctionDefaultsThrowForMissingDerivatives) {
 
 TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
     ExactQuadraticBasis basis;
-    const math::Vector<Real, 3> xi{Real(0.2), Real(-0.35), Real(0.4)};
+    const math::Vector<double, 3> xi{double(0.2), double(-0.35), double(0.4)};
 
     std::vector<Gradient> exact_gradients;
     basis.evaluate_gradients(xi, exact_gradients);
@@ -281,7 +281,7 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
     for (std::size_t n = 0; n < basis.size(); ++n) {
         for (int d = 0; d < basis.dimension(); ++d) {
             const std::size_t sd = static_cast<std::size_t>(d);
-            EXPECT_NEAR(approx_gradients[n][sd], exact_gradients[n][sd], Real(1e-8))
+            EXPECT_NEAR(approx_gradients[n][sd], exact_gradients[n][sd], double(1e-8))
                 << "basis=" << n << " component=" << d;
         }
     }
@@ -298,7 +298,7 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
                 const std::size_t sr = static_cast<std::size_t>(r);
                 const std::size_t sc = static_cast<std::size_t>(c);
                 EXPECT_NEAR(approx_hessians[n](sr, sc), exact_hessians[n](sr, sc),
-                            Real(1e-8))
+                            double(1e-8))
                     << "basis=" << n << " component=(" << r << "," << c << ")";
             }
         }
@@ -307,16 +307,16 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
 
 TEST(BasisErrorPaths, BasisFunctionFallbackWritesSpanOutputs) {
     CompleteFallbackBasis basis;
-    const math::Vector<Real, 3> point{Real(0.25), Real(0.5), Real(-0.25)};
+    const math::Vector<double, 3> point{double(0.25), double(0.5), double(-0.25)};
 
-    std::vector<Real> span_values(basis.size());
+    std::vector<double> span_values(basis.size());
     std::vector<Gradient> span_gradients(basis.size());
     std::vector<Hessian> span_hessians(basis.size());
     basis.evaluate_values_to(point, span_values);
     basis.evaluate_gradients_to(point, span_gradients);
     basis.evaluate_hessians_to(point, span_hessians);
 
-    std::vector<Real> expected_values;
+    std::vector<double> expected_values;
     std::vector<Gradient> expected_gradients;
     std::vector<Hessian> expected_hessians;
     basis.evaluate_all(point, expected_values, expected_gradients, expected_hessians);

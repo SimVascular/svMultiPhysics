@@ -139,12 +139,10 @@ using BlockId = std::uint16_t;
 using MeshIndex = svmp::index_t;        ///< Local mesh entity index, shared with the Mesh library.
 using MeshOffset = svmp::offset_t;      ///< Offset type for mesh connectivity arrays.
 using MeshGlobalId = svmp::gid_t;       ///< Global mesh entity identifier.
-using Real = svmp::real_t;              ///< Floating-point scalar type; same precision as the Mesh library.
 #else
 using MeshIndex = std::int32_t;         ///< Local mesh entity index, shared with the Mesh library.
 using MeshOffset = std::int64_t;        ///< Offset type for mesh connectivity arrays.
 using MeshGlobalId = std::int64_t;      ///< Global mesh entity identifier.
-using Real = double;                    ///< Floating-point scalar type; same precision as the Mesh library.
 #endif
 
 // ============================================================================
@@ -202,7 +200,7 @@ constexpr int MAX_FIELD_VALUE_COMPONENTS = 9;
 struct FieldValueEntry {
     FieldId field{INVALID_FIELD_ID};                  ///< Field this value belongs to.
     int n_components{0};                              ///< Number of valid entries in components.
-    Real components[MAX_FIELD_VALUE_COMPONENTS]{};    ///< Component values, row-major for tensors.
+    double components[MAX_FIELD_VALUE_COMPONENTS]{};    ///< Component values, row-major for tensors.
 };
 
 // ============================================================================
@@ -337,12 +335,12 @@ enum class FEStatus : std::uint8_t {
  * @tparam Dim Reference-space dimension
  */
 template<int Dim>
-using ReferencePoint = std::array<Real, static_cast<std::size_t>(Dim)>;
+using ReferencePoint = std::array<double, static_cast<std::size_t>(Dim)>;
 
 /**
  * @brief Point in physical coordinates
  */
-using PhysicalPoint = std::array<Real, 3>;
+using PhysicalPoint = std::array<double, 3>;
 
 /**
  * @brief Jacobian matrix type
@@ -350,7 +348,7 @@ using PhysicalPoint = std::array<Real, 3>;
  * @tparam ReferenceDim Reference-space dimension (columns)
  */
 template<int SpatialDim, int ReferenceDim = SpatialDim>
-using Jacobian = std::array<std::array<Real, static_cast<std::size_t>(ReferenceDim)>, static_cast<std::size_t>(SpatialDim)>;
+using Jacobian = std::array<std::array<double, static_cast<std::size_t>(ReferenceDim)>, static_cast<std::size_t>(SpatialDim)>;
 
 // ============================================================================
 // Strong Type Wrappers (C++17 idiom for type safety)
@@ -423,7 +421,7 @@ struct BasisGradientTag {};     ///< Tag type for basis-function gradients.
 /// Type-safe index of a quadrature point within a rule.
 using QuadraturePointIndex = StrongType<LocalIndex, QuadraturePointTag>;
 /// Type-safe quadrature weight value.
-using QuadratureWeight = StrongType<Real, QuadratureWeightTag>;
+using QuadratureWeight = StrongType<double, QuadratureWeightTag>;
 
 // ============================================================================
 // Type Traits

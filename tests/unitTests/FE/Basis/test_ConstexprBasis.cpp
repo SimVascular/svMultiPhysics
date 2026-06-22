@@ -39,12 +39,12 @@ static_assert(canonical_lagrange_type(ElementType::Hex27) == ElementType::Hex8);
 static_assert(canonical_lagrange_type(ElementType::Pyramid13) == ElementType::Pyramid13);
 static_assert(complete_lagrange_alias_order(ElementType::Wedge18) == 2);
 static_assert(complete_lagrange_alias_order(ElementType::Pyramid14) == -1);
-static_assert(detail::basis_abs(Real(-2)) == Real(2));
-static_assert(detail::basis_max(Real(2), Real(3)) == Real(3));
-static_assert(detail::basis_near_zero(detail::basis_scaled_tolerance() * Real(0.5)));
+static_assert(detail::basis_abs(double(-2)) == double(2));
+static_assert(detail::basis_max(double(2), double(3)) == double(3));
+static_assert(detail::basis_near_zero(detail::basis_scaled_tolerance() * double(0.5)));
 static_assert(detail::basis_nearly_equal(
-    Real(1),
-    Real(1) + detail::basis_scaled_tolerance() * Real(0.5)));
+    double(1),
+    double(1) + detail::basis_scaled_tolerance() * double(0.5)));
 
 TEST(ConstexprBasis, FixedNodeTableSizesForSupportedLayouts) {
     const std::vector<std::pair<ElementType, std::size_t>> expected = {
@@ -70,16 +70,16 @@ TEST(ConstexprBasis, FixedNodeTableSizesForSupportedLayouts) {
     }
 }
 
-TEST(ConstexprBasis, TraitToleranceScalesWithRealPrecision) {
-    const Real eps = std::numeric_limits<Real>::epsilon();
-    const Real tol = detail::basis_scaled_tolerance();
+TEST(ConstexprBasis, TraitToleranceScalesWithDoublePrecision) {
+    const double eps = std::numeric_limits<double>::epsilon();
+    const double tol = detail::basis_scaled_tolerance();
     // Probes straddle the tolerance itself rather than hardcoding the multiplier,
     // so retuning basis_scaled_tolerance cannot silently invalidate them.
     EXPECT_GT(tol, eps);
-    EXPECT_TRUE(detail::basis_near_zero(tol * Real(0.5)));
-    EXPECT_FALSE(detail::basis_near_zero(tol * Real(2)));
-    EXPECT_TRUE(detail::basis_nearly_equal(Real(1), Real(1) + tol * Real(0.5)));
-    EXPECT_FALSE(detail::basis_nearly_equal(Real(1), Real(1) + tol * Real(2)));
+    EXPECT_TRUE(detail::basis_near_zero(tol * double(0.5)));
+    EXPECT_FALSE(detail::basis_near_zero(tol * double(2)));
+    EXPECT_TRUE(detail::basis_nearly_equal(double(1), double(1) + tol * double(0.5)));
+    EXPECT_FALSE(detail::basis_nearly_equal(double(1), double(1) + tol * double(2)));
 }
 
 TEST(ConstexprBasis, CompleteAliasTablesMatchGeneratedLagrangeNodes) {

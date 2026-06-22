@@ -13,7 +13,7 @@ namespace basis {
 
 namespace {
 
-using Point = math::Vector<Real, 3>;
+using Point = math::Vector<double, 3>;
 
 // Maps public Hex20 ReferenceNodeLayout slots to the internal coefficient-table
 // basis columns used by kHex20Coefficients. Wedge15 and quadrilateral
@@ -26,11 +26,11 @@ constexpr std::array<std::size_t, 20> kHex20MeshToBasisOrder = {
     16, 17, 19, 18
 };
 
-Real line_coord_zero_one(int i, int order) {
+double line_coord_zero_one(int i, int order) {
     if (order <= 0) {
-        return Real(0);
+        return double(0);
     }
-    return static_cast<Real>(i) / static_cast<Real>(order);
+    return static_cast<double>(i) / static_cast<double>(order);
 }
 
 void append_triangle_face_interior(std::vector<Point>& nodes,
@@ -41,87 +41,87 @@ void append_triangle_face_interior(std::vector<Point>& nodes,
     for (int c = 1; c <= order - 2; ++c) {
         for (int b = 1; b <= order - c - 1; ++b) {
             const int a = order - b - c;
-            const Real inv = Real(1) / Real(order);
-            nodes.push_back(v0 * (Real(a) * inv) +
-                            v1 * (Real(b) * inv) +
-                            v2 * (Real(c) * inv));
+            const double inv = double(1) / double(order);
+            nodes.push_back(v0 * (double(a) * inv) +
+                            v1 * (double(b) * inv) +
+                            v2 * (double(c) * inv));
         }
     }
 }
 
 std::vector<Point> generate_line_nodes(int order) {
     if (order == 0) {
-        return {Point{Real(0), Real(0), Real(0)}};
+        return {Point{double(0), double(0), double(0)}};
     }
 
     std::vector<Point> nodes;
     nodes.reserve(static_cast<std::size_t>(order + 1));
-    nodes.push_back(Point{Real(-1), Real(0), Real(0)});
-    nodes.push_back(Point{Real(1), Real(0), Real(0)});
+    nodes.push_back(Point{double(-1), double(0), double(0)});
+    nodes.push_back(Point{double(1), double(0), double(0)});
     for (int i = 1; i < order; ++i) {
-        nodes.push_back(Point{line_coord_pm_one(i, order), Real(0), Real(0)});
+        nodes.push_back(Point{line_coord_pm_one(i, order), double(0), double(0)});
     }
     return nodes;
 }
 
 std::vector<Point> generate_triangle_nodes(int order) {
     if (order == 0) {
-        return {Point{Real(1) / Real(3), Real(1) / Real(3), Real(0)}};
+        return {Point{double(1) / double(3), double(1) / double(3), double(0)}};
     }
 
     std::vector<Point> nodes;
     nodes.reserve(static_cast<std::size_t>((order + 1) * (order + 2) / 2));
-    nodes.push_back(Point{Real(0), Real(0), Real(0)});
-    nodes.push_back(Point{Real(1), Real(0), Real(0)});
-    nodes.push_back(Point{Real(0), Real(1), Real(0)});
+    nodes.push_back(Point{double(0), double(0), double(0)});
+    nodes.push_back(Point{double(1), double(0), double(0)});
+    nodes.push_back(Point{double(0), double(1), double(0)});
 
     for (int m = 1; m < order; ++m) {
-        nodes.push_back(Point{line_coord_zero_one(m, order), Real(0), Real(0)});
+        nodes.push_back(Point{line_coord_zero_one(m, order), double(0), double(0)});
     }
     for (int m = 1; m < order; ++m) {
         nodes.push_back(Point{line_coord_zero_one(order - m, order),
-                              line_coord_zero_one(m, order), Real(0)});
+                              line_coord_zero_one(m, order), double(0)});
     }
     for (int m = 1; m < order; ++m) {
-        nodes.push_back(Point{Real(0), line_coord_zero_one(order - m, order), Real(0)});
+        nodes.push_back(Point{double(0), line_coord_zero_one(order - m, order), double(0)});
     }
 
     append_triangle_face_interior(nodes,
-                                  Point{Real(0), Real(0), Real(0)},
-                                  Point{Real(1), Real(0), Real(0)},
-                                  Point{Real(0), Real(1), Real(0)},
+                                  Point{double(0), double(0), double(0)},
+                                  Point{double(1), double(0), double(0)},
+                                  Point{double(0), double(1), double(0)},
                                   order);
     return nodes;
 }
 
 std::vector<Point> generate_quad_nodes(int order) {
     if (order == 0) {
-        return {Point{Real(0), Real(0), Real(0)}};
+        return {Point{double(0), double(0), double(0)}};
     }
 
     std::vector<Point> nodes;
     nodes.reserve(static_cast<std::size_t>((order + 1) * (order + 1)));
-    nodes.push_back(Point{Real(-1), Real(-1), Real(0)});
-    nodes.push_back(Point{Real(1), Real(-1), Real(0)});
-    nodes.push_back(Point{Real(1), Real(1), Real(0)});
-    nodes.push_back(Point{Real(-1), Real(1), Real(0)});
+    nodes.push_back(Point{double(-1), double(-1), double(0)});
+    nodes.push_back(Point{double(1), double(-1), double(0)});
+    nodes.push_back(Point{double(1), double(1), double(0)});
+    nodes.push_back(Point{double(-1), double(1), double(0)});
 
     for (int i = 1; i < order; ++i) {
-        nodes.push_back(Point{line_coord_pm_one(i, order), Real(-1), Real(0)});
+        nodes.push_back(Point{line_coord_pm_one(i, order), double(-1), double(0)});
     }
     for (int j = 1; j < order; ++j) {
-        nodes.push_back(Point{Real(1), line_coord_pm_one(j, order), Real(0)});
+        nodes.push_back(Point{double(1), line_coord_pm_one(j, order), double(0)});
     }
     for (int i = order - 1; i >= 1; --i) {
-        nodes.push_back(Point{line_coord_pm_one(i, order), Real(1), Real(0)});
+        nodes.push_back(Point{line_coord_pm_one(i, order), double(1), double(0)});
     }
     for (int j = order - 1; j >= 1; --j) {
-        nodes.push_back(Point{Real(-1), line_coord_pm_one(j, order), Real(0)});
+        nodes.push_back(Point{double(-1), line_coord_pm_one(j, order), double(0)});
     }
     for (int j = 1; j < order; ++j) {
         for (int i = 1; i < order; ++i) {
             nodes.push_back(Point{line_coord_pm_one(i, order),
-                                  line_coord_pm_one(j, order), Real(0)});
+                                  line_coord_pm_one(j, order), double(0)});
         }
     }
     return nodes;
@@ -129,14 +129,14 @@ std::vector<Point> generate_quad_nodes(int order) {
 
 std::vector<Point> generate_tetra_nodes(int order) {
     if (order == 0) {
-        return {Point{Real(0.25), Real(0.25), Real(0.25)}};
+        return {Point{double(0.25), double(0.25), double(0.25)}};
     }
 
     const Point verts[] = {
-        Point{Real(0), Real(0), Real(0)},
-        Point{Real(1), Real(0), Real(0)},
-        Point{Real(0), Real(1), Real(0)},
-        Point{Real(0), Real(0), Real(1)},
+        Point{double(0), double(0), double(0)},
+        Point{double(1), double(0), double(0)},
+        Point{double(0), double(1), double(0)},
+        Point{double(0), double(0), double(1)},
     };
 
     std::vector<Point> nodes;
@@ -148,8 +148,8 @@ std::vector<Point> generate_tetra_nodes(int order) {
     const int edges[6][2] = {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {1, 3}, {2, 3}};
     for (const auto& edge : edges) {
         for (int m = 1; m < order; ++m) {
-            const Real t = static_cast<Real>(m) / static_cast<Real>(order);
-            nodes.push_back(verts[edge[0]] * (Real(1) - t) + verts[edge[1]] * t);
+            const double t = static_cast<double>(m) / static_cast<double>(order);
+            nodes.push_back(verts[edge[0]] * (double(1) - t) + verts[edge[1]] * t);
         }
     }
 
@@ -165,9 +165,9 @@ std::vector<Point> generate_tetra_nodes(int order) {
     for (int l = 1; l <= order - 3; ++l) {
         for (int k = 1; k <= order - l - 2; ++k) {
             for (int j = 1; j <= order - l - k - 1; ++j) {
-                nodes.push_back(Point{Real(j) / Real(order),
-                                      Real(k) / Real(order),
-                                      Real(l) / Real(order)});
+                nodes.push_back(Point{double(j) / double(order),
+                                      double(k) / double(order),
+                                      double(l) / double(order)});
             }
         }
     }
@@ -176,18 +176,18 @@ std::vector<Point> generate_tetra_nodes(int order) {
 
 std::vector<Point> generate_hex_nodes(int order) {
     if (order == 0) {
-        return {Point{Real(0), Real(0), Real(0)}};
+        return {Point{double(0), double(0), double(0)}};
     }
 
     const Point verts[] = {
-        Point{Real(-1), Real(-1), Real(-1)},
-        Point{Real(1), Real(-1), Real(-1)},
-        Point{Real(1), Real(1), Real(-1)},
-        Point{Real(-1), Real(1), Real(-1)},
-        Point{Real(-1), Real(-1), Real(1)},
-        Point{Real(1), Real(-1), Real(1)},
-        Point{Real(1), Real(1), Real(1)},
-        Point{Real(-1), Real(1), Real(1)},
+        Point{double(-1), double(-1), double(-1)},
+        Point{double(1), double(-1), double(-1)},
+        Point{double(1), double(1), double(-1)},
+        Point{double(-1), double(1), double(-1)},
+        Point{double(-1), double(-1), double(1)},
+        Point{double(1), double(-1), double(1)},
+        Point{double(1), double(1), double(1)},
+        Point{double(-1), double(1), double(1)},
     };
 
     std::vector<Point> nodes;
@@ -203,8 +203,8 @@ std::vector<Point> generate_hex_nodes(int order) {
     };
     for (const auto& edge : edges) {
         for (int m = 1; m < order; ++m) {
-            const Real t = static_cast<Real>(m) / static_cast<Real>(order);
-            nodes.push_back(verts[edge[0]] * (Real(1) - t) + verts[edge[1]] * t);
+            const double t = static_cast<double>(m) / static_cast<double>(order);
+            nodes.push_back(verts[edge[0]] * (double(1) - t) + verts[edge[1]] * t);
         }
     }
 
@@ -217,37 +217,37 @@ std::vector<Point> generate_hex_nodes(int order) {
     // -X face (x = -1)
     for (int k = 1; k < order; ++k) {
         for (int j = order - 1; j >= 1; --j) {
-            nodes.push_back(Point{Real(-1), line_coord_pm_one(j, order), line_coord_pm_one(k, order)});
+            nodes.push_back(Point{double(-1), line_coord_pm_one(j, order), line_coord_pm_one(k, order)});
         }
     }
     // +X face (x = +1)
     for (int k = 1; k < order; ++k) {
         for (int j = 1; j < order; ++j) {
-            nodes.push_back(Point{Real(1), line_coord_pm_one(j, order), line_coord_pm_one(k, order)});
+            nodes.push_back(Point{double(1), line_coord_pm_one(j, order), line_coord_pm_one(k, order)});
         }
     }
     // -Y face (y = -1)
     for (int k = 1; k < order; ++k) {
         for (int i = 1; i < order; ++i) {
-            nodes.push_back(Point{line_coord_pm_one(i, order), Real(-1), line_coord_pm_one(k, order)});
+            nodes.push_back(Point{line_coord_pm_one(i, order), double(-1), line_coord_pm_one(k, order)});
         }
     }
     // +Y face (y = +1)
     for (int k = 1; k < order; ++k) {
         for (int i = order - 1; i >= 1; --i) {
-            nodes.push_back(Point{line_coord_pm_one(i, order), Real(1), line_coord_pm_one(k, order)});
+            nodes.push_back(Point{line_coord_pm_one(i, order), double(1), line_coord_pm_one(k, order)});
         }
     }
     // -Z face (z = -1)
     for (int j = 1; j < order; ++j) {
         for (int i = 1; i < order; ++i) {
-            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), Real(-1)});
+            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), double(-1)});
         }
     }
     // +Z face (z = +1)
     for (int j = 1; j < order; ++j) {
         for (int i = 1; i < order; ++i) {
-            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), Real(1)});
+            nodes.push_back(Point{line_coord_pm_one(i, order), line_coord_pm_one(j, order), double(1)});
         }
     }
     for (int k = 1; k < order; ++k) {
@@ -264,16 +264,16 @@ std::vector<Point> generate_hex_nodes(int order) {
 
 std::vector<Point> generate_wedge_nodes(int order) {
     if (order == 0) {
-        return {Point{Real(1) / Real(3), Real(1) / Real(3), Real(0)}};
+        return {Point{double(1) / double(3), double(1) / double(3), double(0)}};
     }
 
     const Point verts[] = {
-        Point{Real(0), Real(0), Real(-1)},
-        Point{Real(1), Real(0), Real(-1)},
-        Point{Real(0), Real(1), Real(-1)},
-        Point{Real(0), Real(0), Real(1)},
-        Point{Real(1), Real(0), Real(1)},
-        Point{Real(0), Real(1), Real(1)},
+        Point{double(0), double(0), double(-1)},
+        Point{double(1), double(0), double(-1)},
+        Point{double(0), double(1), double(-1)},
+        Point{double(0), double(0), double(1)},
+        Point{double(1), double(0), double(1)},
+        Point{double(0), double(1), double(1)},
     };
 
     std::vector<Point> nodes;
@@ -289,8 +289,8 @@ std::vector<Point> generate_wedge_nodes(int order) {
     };
     for (const auto& edge : edges) {
         for (int m = 1; m < order; ++m) {
-            const Real t = static_cast<Real>(m) / static_cast<Real>(order);
-            nodes.push_back(verts[edge[0]] * (Real(1) - t) + verts[edge[1]] * t);
+            const double t = static_cast<double>(m) / static_cast<double>(order);
+            nodes.push_back(verts[edge[0]] * (double(1) - t) + verts[edge[1]] * t);
         }
     }
 
@@ -298,27 +298,27 @@ std::vector<Point> generate_wedge_nodes(int order) {
     append_triangle_face_interior(nodes, verts[3], verts[4], verts[5], order);
 
     for (int r = 1; r < order; ++r) {
-        const Real z = line_coord_pm_one(r, order);
+        const double z = line_coord_pm_one(r, order);
         for (int m = 1; m < order; ++m) {
-            const Real t = static_cast<Real>(m) / static_cast<Real>(order);
-            nodes.push_back(Point{t, Real(0), z});
+            const double t = static_cast<double>(m) / static_cast<double>(order);
+            nodes.push_back(Point{t, double(0), z});
         }
         for (int m = 1; m < order; ++m) {
-            const Real t = static_cast<Real>(m) / static_cast<Real>(order);
-            nodes.push_back(Point{Real(1) - t, t, z});
+            const double t = static_cast<double>(m) / static_cast<double>(order);
+            nodes.push_back(Point{double(1) - t, t, z});
         }
         for (int m = 1; m < order; ++m) {
-            const Real t = static_cast<Real>(m) / static_cast<Real>(order);
-            nodes.push_back(Point{Real(0), Real(1) - t, z});
+            const double t = static_cast<double>(m) / static_cast<double>(order);
+            nodes.push_back(Point{double(0), double(1) - t, z});
         }
     }
 
     for (int r = 1; r < order; ++r) {
-        const Real z = line_coord_pm_one(r, order);
+        const double z = line_coord_pm_one(r, order);
         for (int c = 1; c <= order - 2; ++c) {
             for (int b = 1; b <= order - c - 1; ++b) {
-                nodes.push_back(Point{Real(b) / Real(order),
-                                      Real(c) / Real(order),
+                nodes.push_back(Point{double(b) / double(order),
+                                      double(c) / double(order),
                                       z});
             }
         }
@@ -332,7 +332,7 @@ std::vector<Point> complete_lagrange_nodes(ElementType canonical_type, int order
     const ElementType type = canonical_lagrange_type(canonical_type);
     switch (type) {
         case ElementType::Point1:
-            return {Point{Real(0), Real(0), Real(0)}};
+            return {Point{double(0), double(0), double(0)}};
         case ElementType::Line2:
             return generate_line_nodes(order);
         case ElementType::Triangle3:
@@ -387,7 +387,7 @@ std::vector<Point> element_nodes(ElementType elem_type) {
 
 } // namespace
 
-math::Vector<Real, 3> ReferenceNodeLayout::get_node_coords(ElementType elem_type,
+math::Vector<double, 3> ReferenceNodeLayout::get_node_coords(ElementType elem_type,
                                                            std::size_t local_node) {
     const auto nodes = element_nodes(elem_type);
     svmp::throw_if<BasisNodeOrderingException>(local_node >= nodes.size(), SVMP_HERE,
@@ -399,7 +399,7 @@ std::size_t ReferenceNodeLayout::num_nodes(ElementType elem_type) {
     return element_nodes(elem_type).size();
 }
 
-std::vector<math::Vector<Real, 3>>
+std::vector<math::Vector<double, 3>>
 ReferenceNodeLayout::get_lagrange_node_coords(ElementType canonical_type, int order) {
     return complete_lagrange_nodes(canonical_type, order);
 }

@@ -26,30 +26,30 @@ enum class BasisTopology {
 
 namespace detail {
 
-[[nodiscard]] constexpr Real basis_abs(Real value) noexcept {
-    return value < Real(0) ? -value : value;
+[[nodiscard]] constexpr double basis_abs(double value) noexcept {
+    return value < double(0) ? -value : value;
 }
 
-[[nodiscard]] constexpr Real basis_max(Real lhs, Real rhs) noexcept {
+[[nodiscard]] constexpr double basis_max(double lhs, double rhs) noexcept {
     return lhs < rhs ? rhs : lhs;
 }
 
-[[nodiscard]] constexpr Real basis_scaled_tolerance(Real scale = Real(1),
-                                                    Real multiplier = Real(64)) noexcept {
-    return multiplier * std::numeric_limits<Real>::epsilon() *
-           basis_max(Real(1), basis_abs(scale));
+[[nodiscard]] constexpr double basis_scaled_tolerance(double scale = double(1),
+                                                    double multiplier = double(64)) noexcept {
+    return multiplier * std::numeric_limits<double>::epsilon() *
+           basis_max(double(1), basis_abs(scale));
 }
 
-[[nodiscard]] constexpr bool basis_near_zero(Real value,
-                                             Real scale = Real(1),
-                                             Real multiplier = Real(64)) noexcept {
+[[nodiscard]] constexpr bool basis_near_zero(double value,
+                                             double scale = double(1),
+                                             double multiplier = double(64)) noexcept {
     return basis_abs(value) <= basis_scaled_tolerance(scale, multiplier);
 }
 
-[[nodiscard]] constexpr bool basis_nearly_equal(Real a,
-                                                Real b,
-                                                Real multiplier = Real(64)) noexcept {
-    const Real scale = basis_max(Real(1), basis_max(basis_abs(a), basis_abs(b)));
+[[nodiscard]] constexpr bool basis_nearly_equal(double a,
+                                                double b,
+                                                double multiplier = double(64)) noexcept {
+    const double scale = basis_max(double(1), basis_max(basis_abs(a), basis_abs(b)));
     return basis_abs(a - b) <= basis_scaled_tolerance(scale, multiplier);
 }
 
