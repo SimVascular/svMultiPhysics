@@ -115,8 +115,8 @@ void cep_init(Simulation* simulation)
 //-----------
 // State variable integration.
 //
-void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionStates& solutions)
-{
+void cep_integ(Simulation *simulation, const int iEq, const int iDof,
+               SolutionStates &solutions, const Vector<double> &I4f) {
   auto& Yo = solutions.old.get_velocity();
   static bool IPASS = true;
 
@@ -142,29 +142,10 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
   auto& Xion = cep_mod.Xion;
   int nXion = cep_mod.nXion;
 
-  Vector<double> I4f(tnNo);
-
-  #ifdef debug_cep_integ
+#ifdef debug_cep_integ
   dmsg << "cem.cpld: " << cem.cpld;
   dmsg << "time: " << time;
   #endif
-
-  // Electromechanics: get fiber stretch for stretch activated currents
-  //
-  if (cem.cpld) {
-    for (int iM = 0; iM < com_mod.nMsh; iM++) {
-      auto& msh = com_mod.msh[iM];
-
-      if (msh.nFn != 0) {
-        Vector<double> sA(msh.nNo);
-        post::fib_stretch(com_mod, iEq, msh, solutions.current.get_displacement(), sA);
-        for (int a = 0; a < msh.nNo; a++) {
-          int Ac = msh.gN(a);
-          I4f(Ac) = sA(a);
-        }
-      }
-    }
-  }
 
   //  Ignore first pass as Xion is already initialized
   if (IPASS) {

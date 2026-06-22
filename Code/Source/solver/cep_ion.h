@@ -18,7 +18,8 @@ namespace cep_ion {
 
 void cep_init(Simulation* simulation);
 
-void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionStates& solutions);
+void cep_integ(Simulation *simulation, const int iEq, const int iDof,
+               SolutionStates &solutions, const Vector<double> &I4f);
 
 void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
                  Vector<double> &Xg, const double t1, const double I4f,
