@@ -11,7 +11,5 @@ void ActiveStressODE::advance_time_step_local(const double t, const double dt,
   // Forward Euler time stepping.
   Vector<double> f = getf(t, state, calcium, fiber_stretch, fiber_stretch_rate);
 
-  // @todo[michelebucelli] Implement increment function for Vector to avoid the
-  // temporaries here.
-  state = state + dt * f;
+  state.add(dt, f);
 }

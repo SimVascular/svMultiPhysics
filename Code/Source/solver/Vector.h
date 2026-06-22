@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "FE/Common/FEException.h"
+
 std::string build_file_prefix(const std::string& label);
 
 #ifdef ENABLE_ARRAY_INDEX_CHECKING
@@ -338,6 +340,26 @@ class Vector
         result(i) = data_[i] + vec[i];
       }
       return result;
+    }
+
+    /// @brief Increment by a rescaled vector.
+    ///
+    /// This is equivalent to <kbd>*this = *this + c * vec</kbd> but avoids the
+    /// temporary vector created by the operator+ and operator*.
+    Vector<T> &add(const double &c, const Vector<T> &vec)
+    {
+      if (size_ != vec.size()) {
+        svmp::raise<svmp::FE::InvalidArgumentException>(
+            SVMP_HERE,
+            "Vectors have diffrenct sizes: " + std::to_string(size_) +
+                " != " + std::to_string(vec.size()));
+      }
+
+      for (int i = 0; i < size_; i++) {
+        data_[i] += c * vec[i];
+      }
+
+      return *this;
     }
 
     Vector<T> operator-(const Vector<T>& x) const
