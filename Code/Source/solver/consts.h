@@ -347,6 +347,7 @@ enum class OutputNameType
   outGrp_ionicState = 526,
   outGrp_fibStretch = 527,
   outGrp_fibStretchRate = 528,
+  outGrp_activeTension = 529,
 
   out_velocity = 599,
   out_pressure = 598, 
@@ -377,7 +378,8 @@ enum class OutputNameType
   out_CGstrain = 573,
   out_CGInv1 = 572,
   out_fibStretch = 571,
-  out_fibStretchRate = 570
+  out_fibStretchRate = 570,
+  out_activeTension = 569
 };
 
 /// @brief Simulation output file types. 

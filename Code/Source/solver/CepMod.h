@@ -141,6 +141,7 @@ class cemModelType
     //bool aStrain = .FALSE.
 
     /// @brief  Local variable integrated in time
+    ///    := active tension for active stress model
     ///    := fiber stretch for active strain model
     Vector<double> Ya;
 };

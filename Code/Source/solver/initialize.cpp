@@ -679,20 +679,17 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   if (cep_mod.cepEq) {
     cep_mod.Xion.resize(cep_mod.nXion,tnNo);
     cep_ion::cep_init(simulation);
-
-    // Electro-Mechanics
-    if (cep_mod.cem.cpld) {
-      cep_mod.cem.Ya.resize(tnNo);
-    }
   }
 
-  // Calcium is always resized to zero, regardless of whether there is an
-  // electrophysiology equation. This way, if solving mechanics only, the
-  // calcium variable is still available (even if zeroed out).
-  // @todo[michelebucelli] Maybe there's a better solution, e.g. putting the
-  //   calcium evaluation behind a getter, that returns zero if the vector has
-  //   not been initialized.
-  cep_mod.calcium.resize(tnNo);
+  // Electromechanics.
+  // @todo[michelebucelli] There's probably a better solution than initializing
+  //   these two vectors all the time. E.g. we could put the calcium evaluation
+  //   behind a getter, that returns zero if the vector has not been
+  //   initialized.
+  {
+    cep_mod.calcium.resize(tnNo);
+    cep_mod.cem.Ya.resize(tnNo);
+  }
 
   // Setup the initial conditions for the active stress models.
   for (auto &eq : com_mod.eq) {

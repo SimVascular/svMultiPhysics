@@ -1327,6 +1327,13 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
             }
           } break;
 
+          case OutputNameType::outGrp_activeTension: {
+            for (int a = 0; a < msh.nNo; a++) {
+              int Ac = msh.gN(a);
+              d[iM].x(is, a) = simulation->cep_mod.cem.Ya[Ac];
+            }
+          } break;
+
           default:
             throw std::runtime_error("Undefined output");
           break;

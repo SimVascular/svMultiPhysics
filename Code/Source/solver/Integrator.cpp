@@ -497,6 +497,32 @@ void Integrator::predictor()
                                                fiber_stretch_rate);
         }
       }
+
+      // Fill in the active tension vector.
+      // We go through all mesh nodes, find the domain they are associated with,
+      // and get the active stress from that domain. If a point is associated to
+      // multiple domains (which happens for points on domain interfaces), we
+      // average the active stresses from the domains.
+      for (int Ac = 0; Ac < com_mod.tnNo; Ac++) {
+        double active_stress = 0.0;
+        unsigned int n_domains = 0;
+
+        for (auto &dmn : eq.dmn) {
+          // Skip domains that are not structural, ustruct or shell.
+          // @todo[michelebucelli] This kind of check should be abstracted away
+          //   in a function, e.g. can_have_active_stress(equation).
+          if (dmn.phys != Equation_struct && dmn.phys != Equation_ustruct &&
+              dmn.phys != Equation_shell)
+            continue;
+
+          if (dmn.active_stress != nullptr)
+            active_stress += (*dmn.active_stress)(Ac);
+
+          n_domains++;
+        }
+
+        cep_mod.cem.Ya[Ac] = (n_domains > 0) ? active_stress / n_domains : 0.0;
+      }
     }
 
     // eqn 86 of Bazilevs 2007
