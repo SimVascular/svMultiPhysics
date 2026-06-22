@@ -3,6 +3,13 @@
 
 #include "active_stress.h"
 
+bool supports_active_stress(const consts::EquationType eq_type) {
+  return eq_type == consts::EquationType::phys_shell ||
+         eq_type == consts::EquationType::phys_struct ||
+         eq_type == consts::EquationType::phys_ustruct ||
+         eq_type == consts::EquationType::phys_FSI;
+}
+
 void ActiveStress::init(const unsigned int tnNo) {
   states.resize(n_states, tnNo);
 

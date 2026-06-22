@@ -7,11 +7,18 @@
 #include "Array.h"
 #include "Parameters.h"
 #include "Vector.h"
+#include "consts.h"
 #include "factory.h"
 
 #include "CmMod.h"
 
 #include <memory>
+
+/**
+ * @brief Return whether a certain equation type can be solved with active
+ * stress.
+ */
+bool supports_active_stress(const consts::EquationType eq_type);
 
 /**
  * @brief Abstract active stress class.

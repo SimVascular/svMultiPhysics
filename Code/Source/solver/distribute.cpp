@@ -1587,9 +1587,7 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       cep.ionic_model->distribute_parameters(cm_mod, cm);
     }
 
-    if ((lEq.dmn[iDmn].phys == EquationType::phys_shell) ||
-        (lEq.dmn[iDmn].phys == EquationType::phys_struct) ||
-        (lEq.dmn[iDmn].phys == EquationType::phys_ustruct)) {
+    if (supports_active_stress(lEq.dmn[iDmn].phys)) {
       cm.bcast(cm_mod, dmn.active_stress_model_name);
 
       if (dmn.active_stress_model_name != "") {

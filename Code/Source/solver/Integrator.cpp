@@ -508,11 +508,11 @@ void Integrator::predictor()
         unsigned int n_domains = 0;
 
         for (auto &dmn : eq.dmn) {
-          // Skip domains that are not structural, ustruct or shell.
-          // @todo[michelebucelli] This kind of check should be abstracted away
-          //   in a function, e.g. can_have_active_stress(equation).
-          if (dmn.phys != Equation_struct && dmn.phys != Equation_ustruct &&
-              dmn.phys != Equation_shell)
+          // Domains whose equations do not allow for active stress (e.g. fluid
+          // domains) do not contribute to the average, but domains that do
+          // allow for active stress (e.g. struct) for which active stress is
+          // not enabled contribute a zero value to the average.
+          if (!supports_active_stress(dmn.phys))
             continue;
 
           if (dmn.active_stress != nullptr)
