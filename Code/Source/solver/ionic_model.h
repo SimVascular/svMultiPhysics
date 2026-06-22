@@ -85,11 +85,8 @@ public:
  * specified by classes derived from this.
  *
  * **References**:
- *  - Colli Franzone, Pavarino, Scacchi. Mathematical Cardiac Electrophysiology.
- *    Springer, 2014.
- *  - Goktepe, Kuhl. Computational Modeling of Cardiac Electrophysiology: a
- *    Novel Finite Element Approach. International Journal for Numerical Methods
- *    in Biomedical Engineering, 2009.
+ *  - [Colli Franzone, Pavarino, Scacchi (2014)](https://doi.org/10.1007/978-3-319-04801-7)
+ *  - [Goktepe, Kuhl (2009)](https://doi.org/10.1007/s00466-009-0434-z)
  *
  * ### Numerical methods
  *

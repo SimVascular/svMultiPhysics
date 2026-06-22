@@ -16,7 +16,49 @@
 /**
  * @brief Abstract active stress class.
  *
- * @todo Detailed documentation.
+ * This class provides an interface for defining active stress models, i.e.
+ * models that, in the context of structural mechanics of muscular tissue,
+ * compute an active tension representing the contribution of muscular
+ * contraction to the constitiutive law.
+ *
+ * The class assumes that the active tension can be expressed as
+ * @f[
+ *   \Tact = \Tact(t, \calcium, \fiberstretch, \fiberstretchrate,
+ *                 \astressstate),
+ * @f]
+ * where @f$\calcium@f$ is the intracellular calcium concentration,
+ * @f$\fiberstretch@f$ is the fiber stretch, @f$\fiberstretchrate@f$ is the
+ * fiber stretch rate, and @f$\astressstate@f$ is a vector of internal state
+ * variables, representing the state of contraction.
+ *
+ * The expression assumed above implies that the active tension is a local
+ * function of the variables it depends on, that is the active tension at a
+ * given point only depends on the value of other variables at that same point.
+ * Accordingly, this class works nodally, by evaluating the active tension at
+ * every mesh node and storing it in a vector, whose values can be accessed
+ * through @ref ActiveStress::operator().
+ *
+ * ### Implementing concrete active stress models
+ *
+ * To implement a new active stress model, the following steps need to be taken:
+ *
+ * 1. Create a new class derived from @ref ActiveStress.
+ * 2. Override the methods @ref init_local, @ref advance_time_step_local and
+ *    @ref compute_active_tension_local, defining the initial condition,
+ *    time evolution and active tension computation, respectively, for a single
+ *    node.
+ * 3. Create a new class derived from @ref ActiveStressModelParameters to store
+ *    the parameters specific to the new active stress model.
+ * 4. Override the methods @ref get_parameters, @ref read_parameters and
+ *    @ref distribute_parameters to manage the parameters of the new active
+ *    stress model.
+ * 5. Register the new class into the active stress model factory by using the
+ *    macro @ref REGISTER_ACTIVE_STRESS_MODEL. The macro should be called in a
+ *    `.cpp` file, not in a header file.
+ *
+ * Notice that if the model is expressed in terms of a system of ODEs, it can
+ * be implemented by deriving from @ref ActiveStressODE, which already addresses
+ * some of the points above.
  */
 class ActiveStress {
 public:
@@ -55,7 +97,6 @@ public:
    *   must be returned.
    *
    * @return Active tension value at the given point.
-   * @todo[michelebucelli] Document the unit of measure.
    */
   virtual double operator()(const int idx) const { return active_tension[idx]; }
 
@@ -66,10 +107,6 @@ public:
    * initial conditions.
    *
    * @param[in] tnNo Total number of mesh nodes for the current rank.
-   *
-   * @todo[michelebucelli] Double check that tnNo is the right number to pass
-   *   here (as opposed to e.g. the number of nodes in the domain where this
-   *   model is defined).
    */
   virtual void init(const unsigned int tnNo);
 

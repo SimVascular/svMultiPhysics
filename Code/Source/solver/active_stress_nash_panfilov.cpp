@@ -41,7 +41,6 @@ Vector<double> NashPanfilov::getf(const double t, const Vector<double> &state,
 
 double
 NashPanfilov::compute_active_tension_local(const Vector<double> &state) const {
-  // @todo[michelebucelli] Implement the actual model here.
   return state[0];
 }
 

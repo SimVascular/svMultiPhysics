@@ -9,7 +9,32 @@
 /**
  * @brief Nash-Panfilov active stress model.
  *
- * @todo[michelebucelli] Detailed documentation, with reference.
+ * This class implements the Nash-Panfilov active stress model [1], with the
+ * modifications introduced by Goktepe and Kuhl [2].
+ *
+ * The model equations are the following:
+ * @f[ \begin{aligned}
+ * \dv{\Tact}{t} &= \varepsilon(\calcium)(
+ *   \eta_\text{T} (\calcium - \calcium_\text{rest}) - \Tact)\;, \\
+ * \varepsilon(\calcium) &=
+ *   \varepsilon_0 + (\varepsilon_i - \varepsilon_0)
+ *   \exp(-\exp(-\xi_T (\calcium - \calcium_\text{crit})))\;,
+ * \end{aligned} @f]
+ * where @f$\eta_\text{T}@f$, @f$\calcium_\text{rest}@f$,
+ * @f$\calcium_\text{crit}@f$, @f$\varepsilon_0@f$, @f$\varepsilon_i@f$ and
+ * @f$\xi_T@f$ are user-defined model parameters. The function
+ * @f$\varepsilon(\calcium)@f$ is a sigmoidal-shaped calcium-dependent time
+ * constant (see Figure 3 in [2] for more details).
+ *
+ * @note The sensitivity of the model to calcium is controlled by the paramter
+ * @f$\eta_\text{T}@f$, which has the same units of active tension over calcium.
+ * Therefore, if the ionic model providing the calcium is phenomenological (see
+ * @ref IonicModel) and calcium is non-dimensional, this parameter may need to
+ * be rescaled as well. Similar considerations apply to @f$\xi_T@f$.
+ *
+ * **References**:
+ * 1. [Nash, Panfilov (2004)](https://doi.org/10.1016/j.pbiomolbio.2004.01.016)
+ * 2. [Goktepe, Kuhl (2009)](https://doi.org/10.1007/s00466-009-0434-z)
  */
 class NashPanfilov : public ActiveStressODE {
 public:
@@ -79,26 +104,31 @@ protected:
   compute_active_tension_local(const Vector<double> &state) const override;
 
   /// @name Model parameters.
-  /// @todo[michelebucelli] Document meaning and units of measure for all
-  /// parameters.
   /// @{
 
-  /// @f$\varepsilon_0@f$.
+  /// Minimum time constant @f$\varepsilon_0@f$. The unit of measure for this
+  /// parameter must be the inverse of the unit of measure for time.
   double epsilon_0;
 
-  /// @f$\varepsilon_i@f$.
+  /// Maximum time constant @f$\varepsilon_i@f$. The unit of measure for this
+  /// parameter must be the inverse of the unit of measure for time.
   double epsilon_i;
 
-  /// @f$\xi_T@f$.
+  /// Sigmoidal function steepness @f$\xi_T@f$. The unit of measure for this
+  /// parameter must be the inverse of the unit of measure for calcium
+  /// concentration.
   double xi_T;
 
-  /// Resting calcium value.
+  /// Resting calcium value. Active tension will increase if calcium is above
+  /// this value.
   double calcium_rest;
 
-  /// Critical calcium value.
+  /// Critical calcium value, i.e. the threshold value for switching between
+  /// minimum and maximum time constant.
   double calcium_crit;
 
-  /// @f$\eta_T@f$.
+  /// @f$\eta_T@f$. The unit of measure for this parameter must be the ratio of
+  /// the unit for tension and the unit for calcium concentration.
   double eta_T;
 
   /// @}

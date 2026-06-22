@@ -9,8 +9,11 @@
 /**
  * @brief Uniform active stress model.
  *
- * Returns an active tension value constant in space and in time, provided at
- * construction.
+ * Defines an active tension that is constant in space and time, i.e.
+ * @f[
+ *   \Tact(t, \calcium, \fiberstretch, \fiberstretchrate, \astressstate) = g\;,
+ * @f]
+ * where @f$g@f$ is a user-defined constant value.
  */
 class UniformActiveStress : public ActiveStress {
 public:
@@ -80,7 +83,6 @@ protected:
   }
 
   /// Active tension value.
-  /// @todo[michelebucelli] Document unit of measure.
   double value;
 };
 
