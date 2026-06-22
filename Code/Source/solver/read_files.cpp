@@ -1873,9 +1873,6 @@ void read_files(Simulation* simulation, const std::string& file_name)
       throw std::runtime_error("Both electrophysiology and struct have to be solved for electro-mechanics");
     }
 
-    // @todo[michelebucelli] Restore check that active strain and active stress
-    // are not activated at the same time.
-
     if (cep_mod.cem.aStrain) {
       if (com_mod.nsd != 3) {
         throw std::runtime_error("Active strain coupling is allowed only for 3D bodies");
@@ -1885,9 +1882,17 @@ void read_files(Simulation* simulation, const std::string& file_name)
         auto& eq = com_mod.eq[iEq];
         for (int i = 0; i < eq.nDmn; i++) {
           auto& dmn = eq.dmn[i];
+
           if ((dmn.phys != EquationType::phys_ustruct) && (dmn.phys != EquationType::phys_struct)) { 
             continue; 
           }
+
+          if (dmn.active_stress != nullptr) {
+            svmp::raise<svmp::FE::InvalidArgumentException>(
+                SVMP_HERE,
+                "Active strain and active stress cannot be used together.");
+          }
+
           if ((dmn.stM.isoType != ConstitutiveModelType::stIso_HO)) {
             throw std::runtime_error("Active strain is allowed with Holzapfel-Ogden passive constitutive model only");
           }
