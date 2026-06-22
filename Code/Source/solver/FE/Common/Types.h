@@ -307,25 +307,6 @@ enum class AssemblyStrategy : std::uint8_t {
     Hybrid             ///< Mixed strategy
 };
 
-/**
- * @brief Status codes for FE operations
- */
-enum class FEStatus : std::uint8_t {
-    Success           = 0,    ///< Operation completed successfully
-    InvalidArgument   = 1,    ///< An argument failed validation
-    InvalidElement    = 2,    ///< Unsupported or malformed element
-    SingularMapping   = 3,    ///< Element mapping Jacobian is singular
-    QuadratureError   = 4,    ///< Quadrature rule construction or evaluation failed
-    AssemblyError     = 5,    ///< Global assembly failure
-    BackendError      = 6,    ///< Linear-algebra backend failure
-    NotImplemented    = 7,    ///< Requested feature is not implemented
-    ConvergenceError  = 8,    ///< Iterative process failed to converge
-    AllocationError   = 9,    ///< Memory allocation failure
-    MPIError          = 10,   ///< MPI communication failure
-    IOError           = 11,   ///< File or stream I/O failure
-    Unknown           = 255   ///< Unclassified error
-};
-
 // ============================================================================
 // Geometric Types
 // ============================================================================
@@ -542,29 +523,6 @@ constexpr int element_dimension(ElementType elem) noexcept {
             return 3;
         default:
             return -1;
-    }
-}
-
-/**
- * @brief Convert status code to string for error reporting
- * @param status Status code to describe.
- * @return Static human-readable description of the status.
- */
-inline const char* status_to_string(FEStatus status) noexcept {
-    switch(status) {
-        case FEStatus::Success:          return "Success";
-        case FEStatus::InvalidArgument:  return "Invalid argument";
-        case FEStatus::InvalidElement:   return "Invalid element";
-        case FEStatus::SingularMapping:  return "Singular mapping";
-        case FEStatus::QuadratureError:  return "Quadrature error";
-        case FEStatus::AssemblyError:    return "Assembly error";
-        case FEStatus::BackendError:     return "Backend error";
-        case FEStatus::NotImplemented:   return "Not implemented";
-        case FEStatus::ConvergenceError: return "Convergence error";
-        case FEStatus::AllocationError:  return "Allocation error";
-        case FEStatus::MPIError:         return "MPI error";
-        case FEStatus::IOError:          return "I/O error";
-        default:                         return "Unknown error";
     }
 }
 

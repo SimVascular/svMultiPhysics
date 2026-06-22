@@ -20,6 +20,24 @@ using namespace svmp::FE::basis;
 
 namespace {
 
+// Build a symmetric 3x3 Hessian from its six independent components. Local to
+// this test; the production basis evaluators fill Hessians directly.
+[[nodiscard]] Hessian make_symmetric_hessian(double xx,
+                                             double yy,
+                                             double zz,
+                                             double xy,
+                                             double xz,
+                                             double yz) {
+    Hessian hessian = Hessian::Zero();
+    hessian(0, 0) = xx;
+    hessian(1, 1) = yy;
+    hessian(2, 2) = zz;
+    hessian(0, 1) = hessian(1, 0) = xy;
+    hessian(0, 2) = hessian(2, 0) = xz;
+    hessian(1, 2) = hessian(2, 1) = yz;
+    return hessian;
+}
+
 class MinimalScalarBasis : public BasisFunction {
 public:
     BasisType basis_type() const noexcept override { return BasisType::Lagrange; }

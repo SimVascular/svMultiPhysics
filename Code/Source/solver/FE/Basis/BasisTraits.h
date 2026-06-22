@@ -106,22 +106,6 @@ namespace detail {
     return topology(type) == BasisTopology::Wedge;
 }
 
-// Pyramids are a valid mesh cell family but not a supported basis topology, so
-// this classifier reads the mesh family directly: topology() maps pyramids to
-// Unknown, yet a truthful is_pyramid keeps the predicate set complete and ready
-// for future pyramid support.
-[[nodiscard]] constexpr bool is_pyramid(ElementType type) noexcept {
-    return to_mesh_family(type) == CellFamily::Pyramid;
-}
-
-[[nodiscard]] constexpr bool is_simplex(ElementType type) noexcept {
-    return is_triangle(type) || is_tetrahedron(type);
-}
-
-[[nodiscard]] constexpr bool is_tensor_product(ElementType type) noexcept {
-    return is_line(type) || is_quadrilateral(type) || is_hexahedron(type);
-}
-
 [[nodiscard]] constexpr int reference_dimension(ElementType type) noexcept {
     return element_dimension(type);
 }

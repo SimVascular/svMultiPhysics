@@ -133,22 +133,6 @@ using Gradient = math::Vector<double, 3>;
 /// \brief Hessian matrix type used by basis evaluators.
 using Hessian  = math::Matrix<double, 3, 3>;
 
-[[nodiscard]] inline Hessian make_symmetric_hessian(double xx,
-                                                    double yy,
-                                                    double zz,
-                                                    double xy,
-                                                    double xz,
-                                                    double yz) {
-    Hessian hessian = Hessian::Zero();
-    hessian(0, 0) = xx;
-    hessian(1, 1) = yy;
-    hessian(2, 2) = zz;
-    hessian(0, 1) = hessian(1, 0) = xy;
-    hessian(0, 2) = hessian(2, 0) = xz;
-    hessian(1, 2) = hessian(2, 1) = yz;
-    return hessian;
-}
-
 /// \brief Throw BasisEvaluationException when an output span is smaller than the
 /// basis size. \p label is the full "Class::method" context used in the message,
 /// so each basis family passes its own qualified name.
