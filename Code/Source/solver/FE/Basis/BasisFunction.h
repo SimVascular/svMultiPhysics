@@ -263,27 +263,29 @@ public:
 protected:
     /// \brief Approximate gradients by centered finite differences of values.
     ///
-    /// \details This helper exists as a development and fallback utility for
-    /// basis implementations that do not yet provide analytical gradients. It
-    /// is useful for prototyping new basis families and for checking analytical
-    /// derivative formulas in tests. Production element assembly should prefer
-    /// analytical gradients when available because finite differences introduce
+    /// \details This helper is primarily a verification utility for tests: it
+    /// provides a basis-independent reference that checks a concrete basis's
+    /// analytical evaluate_gradients() against centered finite differences of
+    /// evaluate_values(). It lives on the base class so any BasisFunction can be
+    /// checked uniformly, and having no production caller is by design — every
+    /// shipped basis supplies analytical gradients. Centered differences add
     /// truncation/roundoff sensitivity and require multiple value evaluations
-    /// per reference coordinate.
+    /// per reference coordinate, so analytical gradients are always preferred
+    /// outside this testing context.
     void numerical_gradient(const math::Vector<double, 3>& xi,
                             std::vector<Gradient>& gradients,
                             double eps = double(1e-6)) const;
 
     /// \brief Approximate Hessians by centered finite differences of gradients.
     ///
-    /// \details This helper exists for the same reason as numerical_gradient:
-    /// it provides a simple reference implementation for prototyping and
-    /// derivative verification when analytical second derivatives are not yet
-    /// implemented. It depends on evaluate_gradients(), so it is only available
-    /// for basis implementations that can already provide gradients. Analytical
-    /// Hessians should be used in performance-sensitive solver paths because
+    /// \details Companion verification utility to numerical_gradient: it checks
+    /// a basis's analytical evaluate_hessians() against centered finite
+    /// differences of evaluate_gradients(). Because it differentiates gradients,
+    /// it is only meaningful for bases that already provide them. Like
+    /// numerical_gradient it is test-support rather than a production fallback —
     /// finite-difference Hessians amplify numerical error and require repeated
-    /// gradient evaluations.
+    /// gradient evaluations, so analytical Hessians are used everywhere outside
+    /// tests.
     void numerical_hessian(const math::Vector<double, 3>& xi,
                            std::vector<Hessian>& hessians,
                            double eps = double(1e-5)) const;
