@@ -15,10 +15,12 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
-/// \brief Equispaced 1D reference coordinate on [-1, 1]: -1 + 2 i / order.
-///
-/// Shared by the reference-node layout generators and the Lagrange tensor-axis
-/// node initialization so the lattice formula lives in a single place.
+/**
+ * @brief Equispaced 1D reference coordinate on [-1, 1]: -1 + 2 i / order.
+ *
+ * Shared by the reference-node layout generators and the Lagrange tensor-axis
+ * node initialization so the lattice formula lives in a single place.
+ */
 [[nodiscard]] inline constexpr double line_coord_pm_one(int i, int order) noexcept {
     if (order <= 0) {
         return double(0);

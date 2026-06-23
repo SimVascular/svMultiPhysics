@@ -22,9 +22,11 @@
 
 #include <cstddef>
 
-/// \defgroup FE_MatrixMath Matrix
-/// \ingroup FE_Math
-/// \brief Fixed-size matrix type aliases.
+/**
+ * @defgroup FE_MatrixMath Matrix
+ * @ingroup FE_Math
+ * @brief Fixed-size matrix type aliases.
+ */
 
 namespace svmp {
 namespace FE {

@@ -16,18 +16,18 @@
 
 #if defined(SVMP_FE_WITH_MESH) && SVMP_FE_WITH_MESH
 #  include "Mesh/Core/MeshTypes.h"
-/// Nonzero when FE shares scalar/index types with the Mesh library.
+/** Nonzero when FE shares scalar/index types with the Mesh library. */
 #  define SVMP_FE_HAS_MESH_TYPES 1
 #else
 // Build FE without Mesh types unless explicitly enabled.
-/// Nonzero when FE shares scalar/index types with the Mesh library.
+/** Nonzero when FE shares scalar/index types with the Mesh library. */
 #  define SVMP_FE_HAS_MESH_TYPES 0
 #endif
 
 #if !SVMP_FE_HAS_MESH_TYPES
 namespace svmp {
 #ifndef SVMP_CELL_FAMILY_DEFINED
-/// Guard marking that svmp::CellFamily has been defined.
+/** Guard marking that svmp::CellFamily has been defined. */
 #define SVMP_CELL_FAMILY_DEFINED 1
 /**
  * @brief Minimal fallback for svmp::CellFamily when the Mesh library is unavailable
@@ -58,29 +58,33 @@ enum class CellFamily {
 #include <type_traits>
 #include <limits>
 
-/// \defgroup FE_Common Common
-/// \ingroup FE
-/// \brief Shared vocabulary types, constants, and exception infrastructure used by every FE module.
-///
-/// \details The Common module collects the foundational definitions that the
-/// rest of the FE library builds on: index and scalar type aliases; element,
-/// basis, quadrature, and field enumerations; sentinel constants and strong
-/// type wrappers; and the FE exception hierarchy together with its
-/// argument-checking helpers.
+/**
+ * @defgroup FE_Common Common
+ * @ingroup FE
+ * @brief Shared vocabulary types, constants, and exception infrastructure used by every FE module.
+ *
+ * @details The Common module collects the foundational definitions that the
+ * rest of the FE library builds on: index and scalar type aliases; element,
+ * basis, quadrature, and field enumerations; sentinel constants and strong
+ * type wrappers; and the FE exception hierarchy together with its
+ * argument-checking helpers.
+ */
 
 namespace svmp {
 namespace FE {
 
-/// \defgroup FE_CommonTypes Types
-/// \ingroup FE_Common
-/// \brief Core type aliases, enumerations, constants, geometric types, and compile-time traits.
-///
-/// \details This group documents the index and identifier types used for
-/// element-local and global numbering, the element/basis/quadrature/field
-/// enumerations shared across modules, sentinel constants, reference- and
-/// physical-space geometric aliases, and the strong-type utilities that
-/// prevent accidental mixing of conceptually distinct values.
-/// @{
+/**
+ * @defgroup FE_CommonTypes Types
+ * @ingroup FE_Common
+ * @brief Core type aliases, enumerations, constants, geometric types, and compile-time traits.
+ *
+ * @details This group documents the index and identifier types used for
+ * element-local and global numbering, the element/basis/quadrature/field
+ * enumerations shared across modules, sentinel constants, reference- and
+ * physical-space geometric aliases, and the strong-type utilities that
+ * prevent accidental mixing of conceptually distinct values.
+ * @{
+ */
 
 // ============================================================================
 // Index Types
@@ -111,14 +115,20 @@ using GlobalIndex = std::int64_t;
 struct DofIndex {
     GlobalIndex value;  ///< Underlying global DOF index; negative values are invalid.
 
-    /// @brief Construct a DOF index, defaulting to the invalid sentinel.
-    /// @param v Global DOF index value.
+    /**
+     * @brief Construct a DOF index, defaulting to the invalid sentinel.
+     * @param v Global DOF index value.
+     */
     constexpr explicit DofIndex(GlobalIndex v = -1) noexcept : value(v) {}
-    /// @brief Convert to the underlying global index value.
-    /// @return The stored global index.
+    /**
+     * @brief Convert to the underlying global index value.
+     * @return The stored global index.
+     */
     constexpr operator GlobalIndex() const noexcept { return value; }
-    /// @brief Check whether this index refers to a valid DOF.
-    /// @return True when the stored value is non-negative.
+    /**
+     * @brief Check whether this index refers to a valid DOF.
+     * @return True when the stored value is non-negative.
+     */
     constexpr bool is_valid() const noexcept { return value >= 0; }
 };
 
@@ -149,17 +159,19 @@ using MeshGlobalId = std::int64_t;      ///< Global mesh entity identifier.
 // Constants
 // ============================================================================
 
-/// Sentinel for an unset or out-of-range local index.
+/** Sentinel for an unset or out-of-range local index. */
 constexpr LocalIndex INVALID_LOCAL_INDEX = std::numeric_limits<LocalIndex>::max();
-/// Sentinel for an unset or out-of-range global index.
+/** Sentinel for an unset or out-of-range global index. */
 constexpr GlobalIndex INVALID_GLOBAL_INDEX = -1;
-/// Sentinel FieldId meaning "uninitialized / no field".
+/** Sentinel FieldId meaning "uninitialized / no field". */
 constexpr FieldId INVALID_FIELD_ID = std::numeric_limits<FieldId>::max();
-/// Sentinel FieldId for geometry-only quantities (no DOF dependence).
-/// Uses first registered field's space for quadrature, but logically decoupled
-/// from any specific field's DOFs.
+/**
+ * Sentinel FieldId for geometry-only quantities (no DOF dependence).
+ * Uses first registered field's space for quadrature, but logically decoupled
+ * from any specific field's DOFs.
+ */
 constexpr FieldId GEOMETRY_FIELD_ID = std::numeric_limits<FieldId>::max() - 1;
-/// Sentinel for an unset or out-of-range block identifier.
+/** Sentinel for an unset or out-of-range block identifier. */
 constexpr BlockId INVALID_BLOCK_ID = std::numeric_limits<BlockId>::max();
 
 /**
@@ -177,17 +189,17 @@ constexpr BlockId INVALID_BLOCK_ID = std::numeric_limits<BlockId>::max();
  */
 constexpr FieldId CURRENT_SOLUTION_FIELD_ID = std::numeric_limits<FieldId>::max();
 
-/// Preferred cache-line/SIMD alignment for performance-critical arrays.
+/** Preferred cache-line/SIMD alignment for performance-critical arrays. */
 inline constexpr std::size_t kFEPreferredAlignmentBytes = 64u;
 
-/// Alignment for small fixed-size math objects that are commonly passed by value.
+/** Alignment for small fixed-size math objects that are commonly passed by value. */
 inline constexpr std::size_t kFEFixedObjectAlignmentBytes = 32u;
 
 // ============================================================================
 // Field Value Entry (for point evaluation of field-dependent expressions)
 // ============================================================================
 
-/// Maximum number of components in a FieldValueEntry (3x3 tensor).
+/** Maximum number of components in a FieldValueEntry (3x3 tensor). */
 constexpr int MAX_FIELD_VALUE_COMPONENTS = 9;
 
 /**
@@ -347,44 +359,58 @@ using Jacobian = std::array<std::array<double, static_cast<std::size_t>(Referenc
 template<typename T, typename Tag>
 class StrongType {
 public:
-    /// @brief Underlying value type.
+    /** @brief Underlying value type. */
     using ValueType = T;
 
-    /// @brief Value-initialize the wrapped value.
+    /** @brief Value-initialize the wrapped value. */
     constexpr StrongType() noexcept(std::is_nothrow_default_constructible_v<T>)
         : value_{} {}
 
-    /// @brief Wrap an explicit value.
-    /// @param value Value to store.
+    /**
+     * @brief Wrap an explicit value.
+     * @param value Value to store.
+     */
     constexpr explicit StrongType(T value) noexcept(std::is_nothrow_move_constructible_v<T>)
         : value_(std::move(value)) {}
 
-    /// @brief Access the wrapped value.
-    /// @return Reference to the wrapped value.
+    /**
+     * @brief Access the wrapped value.
+     * @return Reference to the wrapped value.
+     */
     constexpr T& get() noexcept { return value_; }
-    /// @brief Access the wrapped value.
-    /// @return Reference to the wrapped value.
+    /**
+     * @brief Access the wrapped value.
+     * @return Reference to the wrapped value.
+     */
     constexpr const T& get() const noexcept { return value_; }
 
-    /// @brief Explicitly convert back to the underlying type.
-    /// @return Copy of the wrapped value.
+    /**
+     * @brief Explicitly convert back to the underlying type.
+     * @return Copy of the wrapped value.
+     */
     constexpr explicit operator T() const noexcept { return value_; }
 
-    /// @brief Compare wrapped values for equality.
-    /// @param other Wrapper to compare against.
-    /// @return True when the wrapped values are equal.
+    /**
+     * @brief Compare wrapped values for equality.
+     * @param other Wrapper to compare against.
+     * @return True when the wrapped values are equal.
+     */
     constexpr bool operator==(const StrongType& other) const noexcept {
         return value_ == other.value_;
     }
-    /// @brief Compare wrapped values for inequality.
-    /// @param other Wrapper to compare against.
-    /// @return True when the wrapped values differ.
+    /**
+     * @brief Compare wrapped values for inequality.
+     * @param other Wrapper to compare against.
+     * @return True when the wrapped values differ.
+     */
     constexpr bool operator!=(const StrongType& other) const noexcept {
         return value_ != other.value_;
     }
-    /// @brief Order by wrapped value.
-    /// @param other Wrapper to compare against.
-    /// @return True when this wrapped value orders before the other.
+    /**
+     * @brief Order by wrapped value.
+     * @param other Wrapper to compare against.
+     * @return True when this wrapped value orders before the other.
+     */
     constexpr bool operator<(const StrongType& other) const noexcept {
         return value_ < other.value_;
     }
@@ -399,9 +425,9 @@ struct QuadratureWeightTag {};  ///< Tag type for quadrature weights.
 struct BasisValueTag {};        ///< Tag type for basis-function values.
 struct BasisGradientTag {};     ///< Tag type for basis-function gradients.
 
-/// Type-safe index of a quadrature point within a rule.
+/** Type-safe index of a quadrature point within a rule. */
 using QuadraturePointIndex = StrongType<LocalIndex, QuadraturePointTag>;
-/// Type-safe quadrature weight value.
+/** Type-safe quadrature weight value. */
 using QuadratureWeight = StrongType<double, QuadratureWeightTag>;
 
 // ============================================================================
@@ -423,7 +449,7 @@ struct is_index_type<GlobalIndex> : std::true_type {};
 template<>
 struct is_index_type<DofIndex> : std::true_type {};
 
-/// Convenience variable template for is_index_type.
+/** Convenience variable template for is_index_type. */
 template<typename T>
 inline constexpr bool is_index_type_v = is_index_type<T>::value;
 
@@ -436,7 +462,7 @@ struct is_field_type : std::false_type {};
 template<>
 struct is_field_type<FieldType> : std::true_type {};
 
-/// Convenience variable template for is_field_type.
+/** Convenience variable template for is_field_type. */
 template<typename T>
 inline constexpr bool is_field_type_v = is_field_type<T>::value;
 
@@ -526,7 +552,7 @@ constexpr int element_dimension(ElementType elem) noexcept {
     }
 }
 
-/// @}
+/** @} */
 
 } // namespace FE
 } // namespace svmp

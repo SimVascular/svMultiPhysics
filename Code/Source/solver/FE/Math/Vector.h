@@ -19,17 +19,19 @@
 
 #include <cstddef>
 
-/// \defgroup FE_Math Math
-/// \ingroup FE
-/// \brief Linear algebra vocabulary types and dense utilities for finite-element computations.
-///
-/// \details The Math module defines the fixed-size vector and matrix types
-/// used in element-level kernels (as aliases of Eigen types) and dense linear
-/// algebra utilities used by basis construction and local transforms.
-///
-/// \defgroup FE_VectorMath Vector
-/// \ingroup FE_Math
-/// \brief Fixed-size vector type aliases.
+/**
+ * @defgroup FE_Math Math
+ * @ingroup FE
+ * @brief Linear algebra vocabulary types and dense utilities for finite-element computations.
+ *
+ * @details The Math module defines the fixed-size vector and matrix types
+ * used in element-level kernels (as aliases of Eigen types) and dense linear
+ * algebra utilities used by basis construction and local transforms.
+ *
+ * @defgroup FE_VectorMath Vector
+ * @ingroup FE_Math
+ * @brief Fixed-size vector type aliases.
+ */
 
 namespace svmp {
 namespace FE {

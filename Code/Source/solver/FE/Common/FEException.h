@@ -22,31 +22,33 @@
 namespace svmp {
 namespace FE {
 
-/// \defgroup FE_CommonExceptions Exceptions
-/// \ingroup FE_Common
-/// \brief FE exception hierarchy.
-///
-/// \details All FE-specific exceptions derive from FEException, which itself
-/// derives from the shared solver ExceptionBase. Specialized subclasses carry
-/// structured context (element type, DOF index, backend name and error code,
-/// iteration counts, Jacobian determinants) so call sites can report
-/// actionable diagnostics.
-///
-/// Throw FE exceptions through the canonical core helpers in Core/Exception.h:
-///
-/// \code
-/// svmp::raise<ExceptionT>(SVMP_HERE, message);
-/// svmp::throw_if<ExceptionT>(failure_condition, SVMP_HERE, message);
-/// svmp::check_arg<ExceptionT>(valid_condition, SVMP_HERE, message);
-/// svmp::check_not_null<ExceptionT>(ptr, SVMP_HERE, message);
-/// svmp::check_index<ExceptionT>(index, size, SVMP_HERE);
-/// svmp::not_implemented<ExceptionT>(feature, SVMP_HERE);
-/// \endcode
-///
-/// throw_if() is failure-condition based. check_arg() is
-/// success-condition based. FE owns exception types; helper spelling is owned
-/// by the core layer.
-/// @{
+/**
+ * @defgroup FE_CommonExceptions Exceptions
+ * @ingroup FE_Common
+ * @brief FE exception hierarchy.
+ *
+ * @details All FE-specific exceptions derive from FEException, which itself
+ * derives from the shared solver ExceptionBase. Specialized subclasses carry
+ * structured context (element type, DOF index, backend name and error code,
+ * iteration counts, Jacobian determinants) so call sites can report
+ * actionable diagnostics.
+ *
+ * Throw FE exceptions through the canonical core helpers in Core/Exception.h:
+ *
+ * @code
+ * svmp::raise<ExceptionT>(SVMP_HERE, message);
+ * svmp::throw_if<ExceptionT>(failure_condition, SVMP_HERE, message);
+ * svmp::check_arg<ExceptionT>(valid_condition, SVMP_HERE, message);
+ * svmp::check_not_null<ExceptionT>(ptr, SVMP_HERE, message);
+ * svmp::check_index<ExceptionT>(index, size, SVMP_HERE);
+ * svmp::not_implemented<ExceptionT>(feature, SVMP_HERE);
+ * @endcode
+ *
+ * throw_if() is failure-condition based. check_arg() is
+ * success-condition based. FE owns exception types; helper spelling is owned
+ * by the core layer.
+ * @{
+ */
 
 /**
  * @brief Base exception type for errors originating in the FE library
@@ -57,12 +59,14 @@ namespace FE {
  */
 class FEException : public ExceptionBase {
 public:
-    /// @brief Construct with a message and optional status code and source location.
-    /// @param message Human-readable error description.
-    /// @param status Status code classifying the failure.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and optional status code and source location.
+     * @param message Human-readable error description.
+     * @param status Status code classifying the failure.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     FEException(const std::string& message,
                 StatusCode status = StatusCode::Unknown,
                 const char* file = "",
@@ -77,11 +81,13 @@ public:
     {
     }
 
-    /// @brief Construct with a message and source location, using an Unknown status.
-    /// @param message Human-readable error description.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and source location, using an Unknown status.
+     * @param message Human-readable error description.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     FEException(const std::string& message,
                 const char* file,
                 int line,
@@ -90,8 +96,10 @@ public:
     {
     }
 
-    /// @brief Status code classifying the failure.
-    /// @return The status code recorded at construction.
+    /**
+     * @brief Status code classifying the failure.
+     * @return The status code recorded at construction.
+     */
     StatusCode status() const noexcept { return status_code(); }
 };
 
@@ -100,11 +108,13 @@ public:
  */
 class InvalidArgumentException : public FEException {
 public:
-    /// @brief Construct with a message and optional source location.
-    /// @param message Human-readable error description.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and optional source location.
+     * @param message Human-readable error description.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     InvalidArgumentException(const std::string& message,
                              const char* file = "",
                              int line = 0,
@@ -122,12 +132,14 @@ public:
  */
 class InvalidElementException : public FEException {
 public:
-    /// @brief Construct with a message and optional element-type context.
-    /// @param message Human-readable error description.
-    /// @param element_type Name of the offending element type; appended to the message when non-empty.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and optional element-type context.
+     * @param message Human-readable error description.
+     * @param element_type Name of the offending element type; appended to the message when non-empty.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     InvalidElementException(const std::string& message,
                             std::string element_type = "",
                             const char* file = "",
@@ -142,8 +154,10 @@ public:
     {
     }
 
-    /// @brief Name of the offending element type.
-    /// @return Element-type name; empty when not provided.
+    /**
+     * @brief Name of the offending element type.
+     * @return Element-type name; empty when not provided.
+     */
     const std::string& element_type() const noexcept { return element_type_; }
 
 private:
@@ -167,12 +181,14 @@ private:
  */
 class DofException : public FEException {
 public:
-    /// @brief Construct with a message and optional DOF-index context.
-    /// @param message Human-readable error description.
-    /// @param dof_index Offending DOF index; appended to the message unless it equals invalid_dof_index().
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and optional DOF-index context.
+     * @param message Human-readable error description.
+     * @param dof_index Offending DOF index; appended to the message unless it equals invalid_dof_index().
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     DofException(const std::string& message,
                  long long dof_index = invalid_dof_index(),
                  const char* file = "",
@@ -187,11 +203,15 @@ public:
     {
     }
 
-    /// @brief Offending DOF index.
-    /// @return DOF index; invalid_dof_index() when not provided.
+    /**
+     * @brief Offending DOF index.
+     * @return DOF index; invalid_dof_index() when not provided.
+     */
     long long dof_index() const noexcept { return dof_index_; }
-    /// @brief Sentinel meaning "no DOF index attached".
-    /// @return The sentinel value -1.
+    /**
+     * @brief Sentinel meaning "no DOF index attached".
+     * @return The sentinel value -1.
+     */
     static constexpr long long invalid_dof_index() noexcept { return -1; }
 
 private:
@@ -213,11 +233,13 @@ private:
  */
 class AssemblyException : public FEException {
 public:
-    /// @brief Construct with a message and optional source location.
-    /// @param message Human-readable error description.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and optional source location.
+     * @param message Human-readable error description.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     AssemblyException(const std::string& message,
                       const char* file = "",
                       int line = 0,
@@ -235,13 +257,15 @@ public:
  */
 class BackendException : public FEException {
 public:
-    /// @brief Construct with a message and optional backend context.
-    /// @param message Human-readable error description.
-    /// @param backend_name Name of the failing backend; appended to the message when non-empty.
-    /// @param error_code Backend-native error code; appended to the message when nonzero.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and optional backend context.
+     * @param message Human-readable error description.
+     * @param backend_name Name of the failing backend; appended to the message when non-empty.
+     * @param error_code Backend-native error code; appended to the message when nonzero.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     BackendException(const std::string& message,
                      std::string backend_name = "",
                      int error_code = 0,
@@ -258,11 +282,15 @@ public:
     {
     }
 
-    /// @brief Name of the failing backend.
-    /// @return Backend name; empty when not provided.
+    /**
+     * @brief Name of the failing backend.
+     * @return Backend name; empty when not provided.
+     */
     const std::string& backend_name() const noexcept { return backend_name_; }
-    /// @brief Backend-native error code.
-    /// @return Error code; zero when not provided.
+    /**
+     * @brief Backend-native error code.
+     * @return Error code; zero when not provided.
+     */
     int error_code() const noexcept { return error_code_; }
 
 private:
@@ -297,11 +325,13 @@ private:
  */
 class NotImplementedException : public FEException {
 public:
-    /// @brief Construct from the name of the missing feature.
-    /// @param feature Description of the unimplemented feature.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct from the name of the missing feature.
+     * @param feature Description of the unimplemented feature.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     NotImplementedException(const std::string& feature,
                             const char* file = "",
                             int line = 0,
@@ -320,11 +350,13 @@ public:
  */
 class NotInitializedException : public FEException {
 public:
-  /// @brief Construct from the name of the uninitialized feature.
-  /// @param feature Description of the missing initialization.
-  /// @param file Source file where the error was raised.
-  /// @param line Source line where the error was raised.
-  /// @param function Function where the error was raised.
+  /**
+   * @brief Construct from the name of the uninitialized feature.
+   * @param feature Description of the missing initialization.
+   * @param file Source file where the error was raised.
+   * @param line Source line where the error was raised.
+   * @param function Function where the error was raised.
+   */
   NotInitializedException(const std::string &feature,
                           const char *file,
                           int line = 0,
@@ -346,13 +378,15 @@ public:
  */
 class ConvergenceException : public FEException {
 public:
-    /// @brief Construct with a message and optional iteration context.
-    /// @param message Human-readable error description.
-    /// @param iteration Iteration at which the failure was detected; appended to the message when non-negative.
-    /// @param residual Final residual; appended to the message when positive.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and optional iteration context.
+     * @param message Human-readable error description.
+     * @param iteration Iteration at which the failure was detected; appended to the message when non-negative.
+     * @param residual Final residual; appended to the message when positive.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     ConvergenceException(const std::string& message,
                          int iteration = -1,
                          double residual = 0.0,
@@ -369,11 +403,15 @@ public:
     {
     }
 
-    /// @brief Iteration at which the failure was detected.
-    /// @return Iteration count; -1 when not provided.
+    /**
+     * @brief Iteration at which the failure was detected.
+     * @return Iteration count; -1 when not provided.
+     */
     int iteration() const noexcept { return iteration_; }
-    /// @brief Final residual value.
-    /// @return Residual; 0.0 when not provided.
+    /**
+     * @brief Final residual value.
+     * @return Residual; 0.0 when not provided.
+     */
     double residual() const noexcept { return residual_; }
 
 private:
@@ -405,12 +443,14 @@ private:
  */
 class SingularMappingException : public FEException {
 public:
-    /// @brief Construct with a message and the offending Jacobian determinant.
-    /// @param message Human-readable error description.
-    /// @param jacobian_det Jacobian determinant at the failure point; appended to the message.
-    /// @param file Source file where the error was raised.
-    /// @param line Source line where the error was raised.
-    /// @param function Function where the error was raised.
+    /**
+     * @brief Construct with a message and the offending Jacobian determinant.
+     * @param message Human-readable error description.
+     * @param jacobian_det Jacobian determinant at the failure point; appended to the message.
+     * @param file Source file where the error was raised.
+     * @param line Source line where the error was raised.
+     * @param function Function where the error was raised.
+     */
     SingularMappingException(const std::string& message,
                              double jacobian_det = 0.0,
                              const char* file = "",
@@ -425,8 +465,10 @@ public:
     {
     }
 
-    /// @brief Jacobian determinant at the failure point.
-    /// @return The determinant recorded at construction.
+    /**
+     * @brief Jacobian determinant at the failure point.
+     * @return The determinant recorded at construction.
+     */
     double jacobian_det() const noexcept { return jacobian_det_; }
 
 private:
@@ -439,7 +481,7 @@ private:
     double jacobian_det_ = 0.0;
 };
 
-/// @}
+/** @} */
 
 } // namespace FE
 } // namespace svmp
