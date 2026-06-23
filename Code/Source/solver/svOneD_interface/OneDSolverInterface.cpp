@@ -38,8 +38,8 @@ void OneDSolverInterface::load_library(const std::string& interface_lib)
     const char* err = dlerror();
     if (err) {
       throw svmp::CoreException(
-          std::string("[OneDSolverInterface] Could not load symbol '") +
-          name + "': " + err,
+          std::string("[OneDSolverInterface] Could not find the 1D interface function '") +
+          name + "' in the shared library '" + interface_lib + "': " + err,
           svmp::StatusCode::DependencyError,
           __FILE__,
           __LINE__,
@@ -63,7 +63,10 @@ void OneDSolverInterface::initialize(const std::string& input_file,
 {
   if (!initialize_1d_) {
     throw svmp::CoreException(
-        "[OneDSolverInterface] initialize_1d not loaded",
+        "[OneDSolverInterface] Cannot initialize the 1D solver because the "
+        "1D interface library has not been loaded. Call load_library() with "
+        "the svOneDSolver interface shared library before initialize(), and "
+        "check that the library path is correct.",
         svmp::StatusCode::DependencyError,
         __FILE__,
         __LINE__,
@@ -123,20 +126,35 @@ void OneDSolverInterface::run_simulation(int problem_id, double current_time,
 {
   if (!run_1d_simulation_step_1d_) {
     throw svmp::CoreException(
-        "[OneDSolverInterface] run_1d_simulation_step_1d not loaded",
+        "[OneDSolverInterface] Cannot run the 1D solver because the "
+        "run_1d_simulation_step_1d interface function is not available. "
+        "Check that the svOneDSolver interface shared library was loaded correctly.",
         svmp::StatusCode::DependencyError,
         __FILE__,
         __LINE__,
         __func__);
   }
-  // Copy coupling_type into a mutable buffer (shared-library uses char*).
+
   std::vector<char> ctype_buf(coupling_type.begin(), coupling_type.end());
   ctype_buf.push_back('\0');
-  // Copy last_flag into a mutable single-character buffer.
+
   char flag_buf[2] = { last_flag, '\0' };
+
+  error_code = 0;
+
   run_1d_simulation_step_1d_(problem_id, current_time, save_incr,
-                              ctype_buf.data(), params, solution,
-                              cpl_value, flag_buf, error_code);
+                             ctype_buf.data(), params, solution,
+                             cpl_value, flag_buf, error_code);
+
+  if (error_code != 0) {
+    throw svmp::CoreException(
+        "[OneDSolverInterface] svOneDSolver failed while advancing the 1D model. "
+        "The 1D solver returned error code " + std::to_string(error_code) + ".",
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
+  }
 }
 
 void OneDSolverInterface::extract_coupled_dof(int problem_id, int& coupled_dof,

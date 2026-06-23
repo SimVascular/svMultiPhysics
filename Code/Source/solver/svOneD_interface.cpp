@@ -176,7 +176,7 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
 
   if (!solver_if.has_data) {
   throw svmp::CoreException(
-      "[svOneD::init_svOneD] svOneD solver interface data is missing.",
+      "[svOneD::init_svOneD] svOneD solver interface data is missing. Please check the XML input file.",
       svmp::StatusCode::InvalidState,
       __FILE__,
       __LINE__,
@@ -210,7 +210,7 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
 
   if (oned_models.empty()) {
   throw svmp::CoreException(
-      "[svOneD::init_svOneD] No svOneD-coupled faces with input files found.",
+      "[svOneD::init_svOneD] No svOneD-coupled faces with input files found. Please check the XML input file.",
       svmp::StatusCode::InvalidState,
       __FILE__,
       __LINE__,
@@ -366,16 +366,17 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     int save_incr  = com_mod.saveIncr;
     int error_code = 0;
 
-    st.interface->run_simulation(st.problem_id, t_old, save_incr,
-                                 st.coupling_type, params,
-                                 work_sol.data(), cpl_values[k], BCFlag, error_code);
-
-    if (error_code != 0) {
+    try {
+      st.interface->run_simulation(st.problem_id, t_old, save_incr,
+                                  st.coupling_type, params,
+                                  work_sol.data(), cpl_values[k], BCFlag, error_code);
+    } catch (const std::exception& e) {
       svmp::raise<svmp::DependencyException>(
           SVMP_HERE,
-          "[svOneD::calc_svOneD] 1D solver step for face '" +
-          bc.coupled_bc.get_oned_input_file() + "' failed with error code " +
-          std::to_string(error_code));
+          "[svOneD::calc_svOneD] 1D solver step failed for svOneD input file '" +
+          bc.coupled_bc.get_oned_input_file() + "' with coupling type '" +
+          st.coupling_type + "' at time " + std::to_string(t_new) + ". " +
+          "Original error: " + e.what());
     }
 
     // Commit the updated solution only on the final iteration.

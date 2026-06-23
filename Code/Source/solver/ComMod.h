@@ -817,24 +817,29 @@ class svZeroDSolverInterfaceData
     void set_data(const svZeroDSolverInterfaceParameters& params);
 };
 
-//----------------------------
-// svOneDSolverInterfaceData
-//----------------------------
-// This class stores information used to interface to the svOneDSolver.
-//
+/// \brief Stores information used to interface with svOneDSolver.
+///
+/// This class stores the global svOneDSolver interface settings read from the
+/// solver XML file. Per-face 1D input files are stored separately in
+/// cplFaceType::oned_input_file.
 class svOneDSolverInterfaceData
 {
   public:
-    // Path to the 1D solver shared library (without .so/.dylib extension,
-    // or with extension if the full path is provided).
+    /// \brief Path to the svOneDSolver interface shared library.
+    ///
+    /// This may be provided either with the platform-specific extension
+    /// (.so/.dylib) or without it.
     std::string solver_library;
 
-    // If the data has been set for the interface.  Set to true after
-    // the svOneDSolver_interface XML element has been parsed.
-    // Note: the per-face input files are stored in cplFaceType::oned_input_file.
+    /// \brief True if the svOneDSolver interface settings were read from XML.
+    ///
+    /// This is set to true after the svOneDSolver_interface XML element has
+    /// been parsed successfully.
     bool has_data = false;
 
-    // Read svOneDSolver interface information from parameters.
+    /// \brief Read svOneDSolver interface settings from parsed parameters.
+    ///
+    /// \param params Parsed svOneDSolver interface parameters.
     void set_data(const svOneDSolverInterfaceParameters& params);
 };
 
