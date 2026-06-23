@@ -186,6 +186,12 @@ TEST(BasisErrorPaths, SerendipityInvalidRequestsThrowBasisExceptions) {
                  BasisElementCompatibilityException);
     EXPECT_THROW(SerendipityBasis(ElementType::Pyramid14, 2),
                  BasisElementCompatibilityException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Hex8, 2),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Hex20, 1),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Hex20, 3),
+                 BasisConfigurationException);
 }
 
 TEST(BasisErrorPaths, BasisFactoryRejectsNonC0Continuity) {

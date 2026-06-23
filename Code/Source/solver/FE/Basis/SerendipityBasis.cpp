@@ -396,15 +396,16 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
         quad_inv_vandermonde_ = quad_serendipity_inverse_vandermonde(nodes_, quad_monomial_exponents_, order_);
     } else if (type == ElementType::Hex8 || type == ElementType::Hex20) {
         dimension_ = 3;
-        if (order_ < 1) order_ = 1;
-        if (order_ == 1) {
-            size_ = 8;
-        } else if (order_ == 2) {
-            size_ = 20;
-        } else {
-            svmp::raise<BasisConfigurationException>(SVMP_HERE,
-                "SerendipityBasis supports up to quadratic on hexahedra");
+        if (order_ < 1) {
+            order_ = 1;
         }
+        svmp::throw_if<BasisConfigurationException>(
+            type == ElementType::Hex8 && order_ != 1, SVMP_HERE,
+            "SerendipityBasis: Hex8 is the trilinear 8-node basis (order 1 only); use Hex20 for quadratic serendipity");
+        svmp::throw_if<BasisConfigurationException>(
+            type == ElementType::Hex20 && order_ != 2, SVMP_HERE,
+            "SerendipityBasis: Hex20 is the 20-node quadratic serendipity layout (order 2 only)");
+        size_ = (type == ElementType::Hex8) ? 8u : 20u;
     } else if (type == ElementType::Wedge15) {
         dimension_ = 3;
         if (order_ < 2) {
