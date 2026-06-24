@@ -178,6 +178,9 @@ TEST(BasisErrorPaths, LagrangeInvalidRequestsThrowBasisExceptions) {
                  BasisConfigurationException);
     EXPECT_THROW(LagrangeBasis(ElementType::Quad8, 2),
                  BasisElementCompatibilityException);
+    EXPECT_NO_THROW((void)LagrangeBasis(BasisTopology::Point, 0));
+    EXPECT_THROW((void)LagrangeBasis(BasisTopology::Point, 1),
+                 BasisConfigurationException);
 }
 
 // A named Lagrange element layout fixes its polynomial order: the matching order

@@ -93,7 +93,8 @@ public:
      *
      * @param topology Reference topology; Point through the volume topologies.
      * @param order Polynomial order; must be non-negative. Point is order 0.
-     * @throws BasisConfigurationException If the order is negative.
+     * @throws BasisConfigurationException If the order is negative, or if Point
+     *         is requested with a nonzero order.
      * @throws BasisElementCompatibilityException If the topology is Unknown.
      */
     LagrangeBasis(BasisTopology topology, int order);

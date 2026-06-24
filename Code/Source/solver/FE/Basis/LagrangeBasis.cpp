@@ -261,6 +261,9 @@ LagrangeBasis::LagrangeBasis(BasisTopology topology, int order)
                                                      "LagrangeBasis: unknown reference topology");
     svmp::throw_if<BasisConfigurationException>(order_ < 0, SVMP_HERE,
                                               "LagrangeBasis requires non-negative polynomial order");
+    svmp::throw_if<BasisConfigurationException>(
+        topology_ == BasisTopology::Point && order_ != 0, SVMP_HERE,
+        "LagrangeBasis: Point topology supports order 0 only");
     dimension_ = topology_dimension(topology_);
     init_nodes();
 }
