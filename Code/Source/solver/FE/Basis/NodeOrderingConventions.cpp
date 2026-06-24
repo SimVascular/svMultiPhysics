@@ -611,6 +611,11 @@ std::size_t ReferenceNodeLayout::num_nodes(ElementType elem_type) {
 }
 
 std::vector<math::Vector<double, 3>>
+ReferenceNodeLayout::node_coords(ElementType elem_type) {
+    return element_nodes(elem_type);
+}
+
+std::vector<math::Vector<double, 3>>
 ReferenceNodeLayout::get_lagrange_node_coords(ElementType canonical_type, int order) {
     return complete_lagrange_nodes(canonical_type, order).coords;
 }

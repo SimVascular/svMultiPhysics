@@ -89,6 +89,12 @@ double interpolate_nodal_function(const SerendipityBasis& basis,
     return result;
 }
 
+// The _for_test helpers below intentionally re-derive the production monomial
+// selection (superlinear-degree rule, exponent enumeration, and size formula)
+// independently of SerendipityBasis, so the basis is checked against an external
+// oracle rather than against its own code. If the production formula in
+// SerendipityBasis.cpp is changed deliberately, update these copies to match; an
+// accidental drift between the two is meant to surface here as a test failure.
 int quad_serendipity_superlinear_degree_for_test(int ax, int ay) {
     return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0);
 }

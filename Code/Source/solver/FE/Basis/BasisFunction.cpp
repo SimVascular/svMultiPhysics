@@ -49,6 +49,10 @@ void BasisFunction::evaluate_all(const math::Vector<double, 3>& xi,
     evaluate_hessians(xi, hessians);
 }
 
+// The base-class *_to overloads are a correct fallback for bases that implement
+// only the vector evaluators: they evaluate into a temporary and copy into the
+// caller's span. The concrete nodal families (LagrangeBasis, SerendipityBasis)
+// override these to compute directly into the span without the temporary.
 void BasisFunction::evaluate_values_to(const math::Vector<double, 3>& xi,
                                        std::span<double> values_out) const {
     require_span_size(values_out.size(), size(), "BasisFunction::evaluate_values_to");

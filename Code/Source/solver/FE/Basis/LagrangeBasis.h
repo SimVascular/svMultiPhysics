@@ -232,6 +232,7 @@ private:
     int order_{0};
 
     std::vector<double> nodes_1d_;
+    std::vector<double> nodes_1d_weights_;
     std::vector<math::Vector<double, 3>> nodes_;
     std::vector<TensorNodeIndex> tensor_indices_;
     std::vector<SimplexExponent> simplex_exponents_;

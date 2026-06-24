@@ -446,10 +446,10 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
     } else {
         size_ = 15u;  // Wedge15
     }
-    nodes_.reserve(size_);
-    for (std::size_t i = 0; i < size_; ++i) {
-        nodes_.push_back(ReferenceNodeLayout::get_node_coords(element_type_, i));
-    }
+    nodes_ = ReferenceNodeLayout::node_coords(element_type_);
+    svmp::throw_if<BasisConstructionException>(
+        nodes_.size() != size_, SVMP_HERE,
+        "SerendipityBasis: fixed serendipity layout node count does not match basis size");
 }
 
 void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,

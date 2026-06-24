@@ -60,7 +60,12 @@
  * always 3-by-3 matrices; inactive reference directions are expected to be
  * zero for conforming lower-dimensional bases. The std::vector overloads are
  * convenient for setup, tests, and adapter code. The *_to overloads write to
- * caller-owned spans and are the allocation-free path for assembly.
+ * caller-owned spans; the concrete nodal families (LagrangeBasis,
+ * SerendipityBasis) compute directly into the span and so provide the
+ * allocation-free path for assembly. The base-class defaults instead evaluate
+ * into a temporary and copy into the span, so a basis that implements only the
+ * vector form still works through the span API, just without the allocation
+ * savings.
  *
  * Outputs are in ReferenceNodeLayout basis order, not necessarily the mesh or
  * solver's native node order. A caller that stores elements in another local
@@ -258,6 +263,8 @@ public:
      * @brief Evaluate basis values into caller-provided storage.
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values_out Output span with at least size() entries.
+     * @note The base-class default evaluates into a temporary and copies; nodal
+     *       families override this to write directly into the span.
      */
     virtual void evaluate_values_to(const math::Vector<double, 3>& xi,
                                     std::span<double> values_out) const;
@@ -266,6 +273,8 @@ public:
      * @brief Evaluate basis gradients into caller-provided storage.
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param gradients_out Output span with at least size() entries.
+     * @note The base-class default evaluates into a temporary and copies; nodal
+     *       families override this to write directly into the span.
      */
     virtual void evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                        std::span<Gradient> gradients_out) const;
@@ -274,6 +283,8 @@ public:
      * @brief Evaluate basis Hessians into caller-provided storage.
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param hessians_out Output span with at least size() entries.
+     * @note The base-class default evaluates into a temporary and copies; nodal
+     *       families override this to write directly into the span.
      */
     virtual void evaluate_hessians_to(const math::Vector<double, 3>& xi,
                                       std::span<Hessian> hessians_out) const;

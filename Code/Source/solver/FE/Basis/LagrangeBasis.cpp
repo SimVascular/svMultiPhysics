@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <array>
-#include <limits>
 #include <span>
 #include <string>
 
@@ -97,72 +96,47 @@ LagrangeBasis::SimplexExponent simplex_exponent_from_lattice(const std::array<in
     return e;
 }
 
-// Sentinel node index meaning "skip nothing" in product_excluding below.
-constexpr std::size_t kNoSkip = std::numeric_limits<std::size_t>::max();
-
-// Evaluate 1D Lagrange polynomials and derivatives at a point. `level` selects
-// how many derivative orders to compute: 0 for values only, 1 to also fill the
-// first derivative, and 2 to also fill the second. The output arrays stay sized
-// at n regardless of level so the tensor-product assembly can index them
-// unconditionally; only the higher-order computation loops are skipped.
-void evaluate_1d_lagrange(double x, const std::vector<double>& nodes, AxisEval& out,
+// Evaluate 1D Lagrange polynomials and their derivatives at a point in the
+// barycentric form l_i(x) = w_i * prod_{j!=i}(x - x_j), where the weights
+// w_i = 1 / prod_{j!=i}(x_i - x_j) depend only on the fixed node set and are
+// precomputed once by the caller. For each i the numerator and its first and
+// second derivatives are built by a single product-rule accumulation over the
+// remaining nodes.
+void evaluate_1d_lagrange(double x,
+                          const std::vector<double>& nodes,
+                          const std::vector<double>& weights,
+                          AxisEval& out,
                           int level) {
     const std::size_t n = nodes.size();
     out.value.assign(n, double(0));
     out.first.assign(n, double(0));
     out.second.assign(n, double(0));
 
-    if (n == 1u) {
-        out.value[0] = double(1);
-        return;
-    }
-
     for (std::size_t i = 0; i < n; ++i) {
-        // Product of (x - nodes[j]) over all j except i and the listed skips.
-        // Each derivative order drops one additional factor from the product.
-        const auto product_excluding = [&](std::size_t skip1 = kNoSkip,
-                                           std::size_t skip2 = kNoSkip) {
-            double product = double(1);
-            for (std::size_t j = 0; j < n; ++j) {
-                if (j != i && j != skip1 && j != skip2) {
-                    product *= x - nodes[j];
-                }
-            }
-            return product;
-        };
-
-        double denom = double(1);
+        double value = double(1);
+        double first = double(0);
+        double second = double(0);
         for (std::size_t j = 0; j < n; ++j) {
-            if (j != i) {
-                denom *= nodes[i] - nodes[j];
+            if (j == i) {
+                continue;
             }
+            const double f = x - nodes[j];
+            if (level >= 2) {
+                second = second * f + double(2) * first;
+            }
+            if (level >= 1) {
+                first = first * f + value;
+            }
+            value = value * f;
         }
 
-        out.value[i] = product_excluding() / denom;
-
+        const double w = weights[i];
+        out.value[i] = value * w;
         if (level >= 1) {
-            double first = double(0);
-            for (std::size_t m = 0; m < n; ++m) {
-                if (m != i) {
-                    first += product_excluding(m);
-                }
-            }
-            out.first[i] = first / denom;
+            out.first[i] = first * w;
         }
-
         if (level >= 2) {
-            double second = double(0);
-            for (std::size_t m = 0; m < n; ++m) {
-                if (m == i) {
-                    continue;
-                }
-                for (std::size_t l = 0; l < n; ++l) {
-                    if (l != i && l != m) {
-                        second += product_excluding(m, l);
-                    }
-                }
-            }
-            out.second[i] = second / denom;
+            out.second[i] = second * w;
         }
     }
 }
@@ -302,12 +276,29 @@ LagrangeBasis::LagrangeBasis(ElementType type, int order)
     init_nodes();
 }
 
-// Initialize equispaced 1D interpolation nodes for tensor-product axes.
+// Initialize equispaced 1D interpolation nodes and their barycentric weights for
+// tensor-product axes.
 void LagrangeBasis::init_equispaced_1d_nodes() {
-    nodes_1d_.resize(static_cast<std::size_t>(order_ + 1));
+    const std::size_t n = static_cast<std::size_t>(order_ + 1);
+    nodes_1d_.resize(n);
     for (int i = 0; i <= order_; ++i) {
         nodes_1d_[static_cast<std::size_t>(i)] =
             line_coord_pm_one(i, order_);
+    }
+
+    // Barycentric weights w_i = 1 / prod_{j!=i}(x_i - x_j); the nodes are
+    // distinct so every denominator is nonzero. Precomputing here keeps the
+    // per-evaluation 1D Lagrange work at O(n^2) without recomputing the weights
+    // on every call.
+    nodes_1d_weights_.assign(n, double(1));
+    for (std::size_t i = 0; i < n; ++i) {
+        double denom = double(1);
+        for (std::size_t j = 0; j < n; ++j) {
+            if (j != i) {
+                denom *= nodes_1d_[i] - nodes_1d_[j];
+            }
+        }
+        nodes_1d_weights_[i] = double(1) / denom;
     }
 }
 
@@ -315,6 +306,7 @@ void LagrangeBasis::init_equispaced_1d_nodes() {
 void LagrangeBasis::init_nodes() {
     nodes_.clear();
     nodes_1d_.clear();
+    nodes_1d_weights_.clear();
     tensor_indices_.clear();
     simplex_exponents_.clear();
     wedge_indices_.clear();
@@ -435,12 +427,12 @@ void LagrangeBasis::evaluate_tensor_product_to(const Vec3& xi,
     AxisEval ax;
     AxisEval ay;
     AxisEval az;
-    evaluate_1d_lagrange(xi[0], nodes_1d_, ax, level);
+    evaluate_1d_lagrange(xi[0], nodes_1d_, nodes_1d_weights_, ax, level);
     if (dimension_ >= 2) {
-        evaluate_1d_lagrange(xi[1], nodes_1d_, ay, level);
+        evaluate_1d_lagrange(xi[1], nodes_1d_, nodes_1d_weights_, ay, level);
     }
     if (dimension_ >= 3) {
-        evaluate_1d_lagrange(xi[2], nodes_1d_, az, level);
+        evaluate_1d_lagrange(xi[2], nodes_1d_, nodes_1d_weights_, az, level);
     }
 
     for (std::size_t node = 0; node < tensor_indices_.size(); ++node) {
@@ -524,7 +516,7 @@ void LagrangeBasis::evaluate_wedge_to(const Vec3& xi,
     AxisEval z_axis;
     evaluate_simplex(xi, BasisTopology::Triangle, order_, simplex_exponents_, tri,
                      want_tri_gradient, want_hessians);
-    evaluate_1d_lagrange(xi[2], nodes_1d_, z_axis, z_level);
+    evaluate_1d_lagrange(xi[2], nodes_1d_, nodes_1d_weights_, z_axis, z_level);
 
     for (std::size_t node = 0; node < wedge_indices_.size(); ++node) {
         const auto [tri_idx, z_idx] = wedge_indices_[node];

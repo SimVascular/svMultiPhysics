@@ -55,6 +55,19 @@ public:
                                                  std::size_t local_node);
     static std::size_t num_nodes(ElementType elem_type);
 
+    /**
+     * @brief All reference node coordinates for an element type, in public layout order.
+     *
+     * @details Returns the complete public reference layout for @p elem_type
+     * (the same coordinates get_node_coords() returns one at a time), including
+     * the serendipity layouts. Prefer this single call when the whole layout is
+     * needed: get_node_coords() regenerates the full list on every call.
+     *
+     * @param elem_type Element type to look up.
+     * @return Reference node coordinates, one per node.
+     */
+    static std::vector<math::Vector<double, 3>> node_coords(ElementType elem_type);
+
     static std::vector<math::Vector<double, 3>>
     get_lagrange_node_coords(ElementType canonical_type, int order);
 
