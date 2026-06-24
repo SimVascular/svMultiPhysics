@@ -84,11 +84,12 @@ namespace basis {
  * supported basis.
  *
  * Hex8 uses the standard trilinear corner basis
- * @f$(1 \pm r)(1 \pm s)(1 \pm t)/8@f$. Hex20 and Wedge15 use tabulated
- * polynomial coefficient tables over monomial bases; analytical gradients and
- * Hessians are obtained by differentiating those monomials. Hex20 evaluation
- * is reordered through ReferenceNodeLayout so the output matches the public
- * basis ordering.
+ * @f$(1 \pm r)(1 \pm s)(1 \pm t)/8@f$. Hex20 and Wedge15 use fixed monomial
+ * spaces whose nodal coefficient tables are generated at construction by
+ * inverting the Vandermonde built from their public-order reference nodes, the
+ * same way the quadrilateral space is built; analytical gradients and Hessians
+ * are obtained by differentiating those monomials. Because the tables are
+ * generated in public node order, evaluation needs no output reordering.
  */
 class SerendipityBasis final : public BasisFunction {
 public:
@@ -96,11 +97,11 @@ public:
      * @brief Construct a serendipity basis for an element type and polynomial order.
      *
      * @details The constructor selects the topology-specific interpolation
-     * space, computes the reference node coordinates, and initializes any
-     * coefficient tables needed for evaluation. Quadrilateral bases build and
-     * invert a Vandermonde matrix for the selected serendipity monomials.
-     * Hex20 and Wedge15 use fixed coefficient tables. For hexahedra, only
-     * linear Hex8 and quadratic Hex20 serendipity spaces are supported. For
+     * space, computes the reference node coordinates, and builds the nodal
+     * coefficient table needed for evaluation. Quadrilateral, Hex20, and Wedge15
+     * bases build and invert a Vandermonde matrix for their serendipity
+     * monomials; Hex8 uses the trilinear corner basis directly. For hexahedra,
+     * only linear Hex8 and quadratic Hex20 serendipity spaces are supported. For
      * wedges, only quadratic Wedge15 is supported. Quad4 supports explicit
      * quadrilateral serendipity requests of any order @f$p \ge 1@f$; Quad8 is
      * restricted to order 2.
@@ -152,7 +153,7 @@ public:
      * monomial vector and multiplies by the inverse Vandermonde matrix to
      * obtain nodal shape-function values. For Hex8, values are the standard
      * trilinear corner products. For Hex20 and Wedge15, values are evaluated
-     * from the stored polynomial coefficient tables.
+     * from their generated nodal coefficient tables.
      *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values Receives one value per basis function.
@@ -167,7 +168,7 @@ public:
      * coordinates. Quadrilateral gradients differentiate the monomial vector
      * before applying the inverse Vandermonde coefficients. Hex8 gradients are
      * direct derivatives of the trilinear corner products. Hex20 and Wedge15
-     * gradients are computed by differentiating the tabulated monomial
+     * gradients are computed by differentiating their generated monomial
      * expansions.
      *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
@@ -184,7 +185,7 @@ public:
      * derivatives of the monomial vector and inverse Vandermonde coefficients.
      * Hex8 Hessians are computed directly from the trilinear corner products.
      * Hex20 and Wedge15 Hessians are computed by differentiating their
-     * polynomial coefficient tables twice.
+     * generated monomial expansions twice.
      *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param hessians Receives one 3-by-3 Hessian per basis function.
@@ -239,9 +240,10 @@ private:
     int order_;
     std::size_t size_;
     std::vector<math::Vector<double, 3>> nodes_;
-    std::vector<std::array<int, 2>> quad_monomial_exponents_;
+    // Monomial exponents (r^a s^b t^c) spanning the family's polynomial space.
+    std::vector<std::array<int, 3>> monomial_exponents_;
     // Row-major inverse Vandermonde, indexed as [monomial, basis].
-    std::vector<double> quad_inv_vandermonde_;
+    std::vector<double> inv_vandermonde_;
 
     void evaluate_all_to(const math::Vector<double, 3>& xi,
                          std::span<double> values_out,

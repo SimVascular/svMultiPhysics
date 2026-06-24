@@ -163,43 +163,36 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
     return nodes;
 }
 
-std::vector<double> invert_dense_matrix(std::vector<double> matrix, int n, const char* label) {
-    return math::invert_dense_matrix(
-        std::move(matrix),
-        static_cast<std::size_t>(n),
-        std::string("SerendipityBasis interpolation matrix for ") + label);
-}
-
-std::vector<double> quad_serendipity_inverse_vandermonde(
+// Build the nodal coefficient table for a monomial-generated serendipity family:
+// assemble V[node][monomial] = r^a s^b t^c at the public-order reference nodes and
+// invert it. Because the nodes are in public order, the inverse is already in
+// public basis order and needs no output permutation. The same routine serves the
+// quadrilateral, Hex20, and Wedge15 spaces.
+std::vector<double> build_inverse_vandermonde(
     std::span<const Vec3> nodes,
-    std::span<const std::array<int, 2>> exponents,
-    int order) {
-    const int n = static_cast<int>(nodes.size());
+    std::span<const std::array<int, 3>> exponents,
+    const std::string& label) {
+    const std::size_t n = nodes.size();
     svmp::throw_if<BasisConstructionException>(
-        n == 0 || exponents.size() != nodes.size(), SVMP_HERE,
-        "SerendipityBasis: invalid quadrilateral serendipity interpolation setup");
+        n == 0 || exponents.size() != n, SVMP_HERE,
+        "SerendipityBasis: invalid serendipity interpolation setup");
 
-    std::vector<double> vandermonde(static_cast<std::size_t>(n * n), double(0));
-    auto idx = [n](int row, int col) -> std::size_t {
-        return static_cast<std::size_t>(row * n + col);
-    };
-
-    for (int row = 0; row < n; ++row) {
-        const double x = nodes[static_cast<std::size_t>(row)][0];
-        const double y = nodes[static_cast<std::size_t>(row)][1];
-        for (int col = 0; col < n; ++col) {
-            const auto [ax, ay] = exponents[static_cast<std::size_t>(col)];
-            vandermonde[idx(row, col)] = integer_power(x, ax) * integer_power(y, ay);
+    std::vector<double> vandermonde(n * n, double(0));
+    for (std::size_t row = 0; row < n; ++row) {
+        const Vec3& p = nodes[row];
+        for (std::size_t col = 0; col < n; ++col) {
+            const auto& e = exponents[col];
+            vandermonde[row * n + col] =
+                integer_power(p[0], e[0]) * integer_power(p[1], e[1]) *
+                integer_power(p[2], e[2]);
         }
     }
 
-    // Quadrilateral serendipity bases are generated from the requested
-    // monomial space, so a small dense inverse produces the nodal coefficient
-    // table at construction time. Hex20 and Wedge15 use fixed tables because
-    // only their quadratic layouts are supported here.
-    const std::string label = "Quad order " + std::to_string(order);
-    return invert_dense_matrix(std::move(vandermonde), n, label.c_str());
+    return math::invert_dense_matrix(
+        std::move(vandermonde), n,
+        "SerendipityBasis interpolation matrix for " + label);
 }
+
 constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{0, 0, 0}},
     {{0, 0, 1}},
@@ -218,63 +211,11 @@ constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{2, 0, 1}}
 }};
 
-// Coefficients for the quadratic Wedge15 nodal serendipity basis. Rows are
-// monomials in kWedge15MonomialExponents order; columns are basis functions in
-// public Wedge15 node order. The table is the inverse of
-// V[node][monomial] = r^a s^b t^c evaluated at ReferenceNodeLayout Wedge15
-// nodes, so V * kWedge15Coefficients is the identity.
-constexpr std::array<std::array<double, 15>, 15> kWedge15Coefficients = {{
-    {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
-    {{-0.5, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-    {{0.5, -0, -0, 0.5, -0, -0, -0, -0, -0, -0, -0, -0, -1, -0, -0}},
-    {{-1, 0, -1, -1, 0, -1, 0, 0, 2, 0, 0, 2, -1, 0, 1}},
-    {{1.5, 0, 0.5, -1.5, 0, -0.5, 0, 0, -2, 0, 0, 2, 0, 0, 0}},
-    {{-0.5, -0, 0.5, -0.5, -0, 0.5, -0, -0, -0, -0, -0, -0, 1, -0, -1}},
-    {{1, 0, 1, 1, 0, 1, 0, 0, -2, 0, 0, -2, 0, 0, 0}},
-    {{-1, 0, -1, 1, 0, 1, 0, 0, 2, 0, 0, -2, 0, 0, 0}},
-    {{-1, -1, 0, -1, -1, 0, 2, 0, 0, 2, 0, 0, -1, 1, 0}},
-    {{1.5, 0.5, 0, -1.5, -0.5, 0, -2, 0, 0, 2, 0, 0, 0, 0, 0}},
-    {{-0.5, 0.5, -0, -0.5, 0.5, -0, -0, -0, -0, -0, -0, -0, 1, -1, -0}},
-    {{2, 0, -0, 2, 0, -0, -2, 2, -2, -2, 2, -2, -0, -0, -0}},
-    {{-2, 0, 0, 2, 0, 0, 2, -2, 2, -2, 2, -2, 0, 0, 0}},
-    {{1, 1, -0, 1, 1, -0, -2, -0, -0, -2, -0, -0, -0, -0, -0}},
-    {{-1, -1, -0, 1, 1, -0, 2, -0, -0, -2, -0, -0, -0, -0, -0}}
-}};
-
 constexpr std::array<std::array<int, 3>, 20> kHex20MonomialExponents = {{
     {{0, 0, 0}}, {{0, 0, 1}}, {{0, 0, 2}}, {{0, 1, 0}}, {{0, 1, 1}},
     {{0, 1, 2}}, {{0, 2, 0}}, {{0, 2, 1}}, {{1, 0, 0}}, {{1, 0, 1}},
     {{1, 0, 2}}, {{1, 1, 0}}, {{1, 1, 1}}, {{1, 1, 2}}, {{1, 2, 0}},
     {{1, 2, 1}}, {{2, 0, 0}}, {{2, 0, 1}}, {{2, 1, 0}}, {{2, 1, 1}}
-}};
-
-// Coefficients for the quadratic Hex20 nodal serendipity basis. Rows are
-// monomials in kHex20MonomialExponents order; columns are basis functions in
-// the internal Hex20 coefficient-table order. The table is the inverse of
-// V[node][monomial] = r^a s^b t^c evaluated at the corresponding Hex20
-// reference nodes, so V * kHex20Coefficients is the identity. Evaluation
-// remaps public output slots through ReferenceNodeLayout::mesh_to_basis_ordering.
-constexpr std::array<std::array<double, 20>, 20> kHex20Coefficients = {{
-    {{-0.25, -0.25, -0.25, -0.25, -0.25, -0.25, -0.25, -0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}},
-    {{0.125, 0.125, 0.125, 0.125, -0.125, -0.125, -0.125, -0.125, -0.25, 0.25, -0.25, 0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0, 0}},
-    {{0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0, 0, 0, 0, 0, 0, 0, 0, -0.25, -0.25, -0.25, -0.25}},
-    {{0.125, 0.125, -0.125, -0.125, 0.125, 0.125, -0.125, -0.125, -0.25, -0.25, 0.25, 0.25, 0, 0, 0, 0, -0.25, -0.25, 0.25, 0.25}},
-    {{0, 0, 0, 0, 0, 0, 0, 0, 0.25, -0.25, -0.25, 0.25, 0, 0, 0, 0, 0, 0, 0, 0}},
-    {{-0.125, -0.125, 0.125, 0.125, -0.125, -0.125, 0.125, 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.25, 0.25, -0.25, -0.25}},
-    {{0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0, 0, 0, 0, -0.25, -0.25, -0.25, -0.25, 0, 0, 0, 0}},
-    {{-0.125, -0.125, -0.125, -0.125, 0.125, 0.125, 0.125, 0.125, 0, 0, 0, 0, 0.25, 0.25, -0.25, -0.25, 0, 0, 0, 0}},
-    {{0.125, -0.125, -0.125, 0.125, 0.125, -0.125, -0.125, 0.125, 0, 0, 0, 0, -0.25, 0.25, -0.25, 0.25, -0.25, 0.25, -0.25, 0.25}},
-    {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.25, -0.25, -0.25, 0.25, 0, 0, 0, 0}},
-    {{-0.125, 0.125, 0.125, -0.125, -0.125, 0.125, 0.125, -0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.25, -0.25, 0.25, -0.25}},
-    {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.25, -0.25, -0.25, 0.25}},
-    {{-0.125, 0.125, -0.125, 0.125, 0.125, -0.125, 0.125, -0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-    {{0.125, -0.125, 0.125, -0.125, 0.125, -0.125, 0.125, -0.125, 0, 0, 0, 0, 0, 0, 0, 0, -0.25, 0.25, 0.25, -0.25}},
-    {{-0.125, 0.125, 0.125, -0.125, -0.125, 0.125, 0.125, -0.125, 0, 0, 0, 0, 0.25, -0.25, 0.25, -0.25, 0, 0, 0, 0}},
-    {{0.125, -0.125, -0.125, 0.125, -0.125, 0.125, 0.125, -0.125, 0, 0, 0, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0, 0}},
-    {{0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, -0.25, -0.25, -0.25, -0.25, 0, 0, 0, 0, 0, 0, 0, 0}},
-    {{-0.125, -0.125, -0.125, -0.125, 0.125, 0.125, 0.125, 0.125, 0.25, -0.25, 0.25, -0.25, 0, 0, 0, 0, 0, 0, 0, 0}},
-    {{-0.125, -0.125, 0.125, 0.125, -0.125, -0.125, 0.125, 0.125, 0.25, 0.25, -0.25, -0.25, 0, 0, 0, 0, 0, 0, 0, 0}},
-    {{0.125, 0.125, -0.125, -0.125, -0.125, -0.125, 0.125, 0.125, -0.25, 0.25, 0.25, -0.25, 0, 0, 0, 0, 0, 0, 0, 0}}
 }};
 
 // Value and first/second derivatives of the 1D monomial x^a. The derivative of
@@ -299,20 +240,14 @@ inline MonomialAxis monomial_axis(double x, int exponent) {
 // reference point. For each monomial j the routine forms x^a y^b z^c and the
 // requested derivatives, then accumulates the coefficient-weighted sum into the
 // output slots. `count` is both the number of monomials and the number of basis
-// functions (the coefficient table is square). Outputs are assumed pre-zeroed by
-// the caller; an empty span skips that quantity.
-//
-// `table_to_output_order` maps each output slot to the basis column of the
-// coefficient table. An empty span means the table is already in output (public
-// node) order, i.e. the identity permutation: Hex20 supplies a real permutation
-// because its table is authored in an internal node order, while Wedge15 and the
-// quadrilateral serendipity tables are authored directly in public order.
+// functions (the coefficient table is square). The table is in public basis
+// order, so output slot i reads coefficient column i directly. Outputs are
+// assumed pre-zeroed by the caller; an empty span skips that quantity.
 template <typename ExponentFn, typename CoeffFn>
 void eval_monomial_basis(double r, double s, double t,
                          std::size_t count,
                          ExponentFn&& exponent,
                          CoeffFn&& coeff,
-                         std::span<const std::size_t> table_to_output_order,
                          std::span<double> values,
                          std::span<Gradient> gradients,
                          std::span<Hessian> hessians) {
@@ -347,9 +282,7 @@ void eval_monomial_basis(double r, double s, double t,
         }
 
         for (std::size_t slot = 0; slot < count; ++slot) {
-            const std::size_t basis_index =
-                table_to_output_order.empty() ? slot : table_to_output_order[slot];
-            const double c = coeff(j, basis_index);
+            const double c = coeff(j, slot);
             if (want_values) {
                 values[slot] += c * phi;
             }
@@ -425,31 +358,59 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
         // Quadrilateral serendipity is generated from its monomial space, so the
         // basis size, reference nodes, and nodal coefficient table are all built
         // here from the effective order.
-        quad_monomial_exponents_ = quad_serendipity_exponents(order_);
-        size_ = quad_monomial_exponents_.size();
+        const auto quad_exponents = quad_serendipity_exponents(order_);
+        monomial_exponents_.clear();
+        monomial_exponents_.reserve(quad_exponents.size());
+        for (const auto& e : quad_exponents) {
+            monomial_exponents_.push_back({e[0], e[1], 0});
+        }
+        size_ = monomial_exponents_.size();
         nodes_ = quad_serendipity_nodes(order_, size_);
         svmp::throw_if<BasisConstructionException>(
             nodes_.size() != size_, SVMP_HERE,
             "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
-        quad_inv_vandermonde_ =
-            quad_serendipity_inverse_vandermonde(nodes_, quad_monomial_exponents_, order_);
+        inv_vandermonde_ = build_inverse_vandermonde(
+            nodes_, monomial_exponents_, "Quad order " + std::to_string(order_));
         return;
     }
 
-    // Hex8/Hex20/Wedge15 use fixed node layouts with tabulated coefficients: the
-    // size is pinned by the layout and the reference nodes come straight from
-    // ReferenceNodeLayout.
     if (type == ElementType::Hex8) {
+        // Hex8 is the standard trilinear corner basis, evaluated directly rather
+        // than through a generated coefficient table.
         size_ = 8u;
-    } else if (type == ElementType::Hex20) {
+        nodes_ = ReferenceNodeLayout::node_coords(element_type_);
+        svmp::throw_if<BasisConstructionException>(
+            nodes_.size() != size_, SVMP_HERE,
+            "SerendipityBasis: Hex8 layout node count does not match basis size");
+        return;
+    }
+
+    // Hex20 and Wedge15 have fixed monomial spaces and reference layouts. Their
+    // nodal coefficient tables are generated by inverting the Vandermonde built
+    // from the public-order reference nodes, exactly like the quadrilateral, so
+    // no transcribed tables or output permutation are needed.
+    std::span<const std::array<int, 3>> family_exponents;
+    std::string label;
+    if (type == ElementType::Hex20) {
         size_ = 20u;
-    } else {
-        size_ = 15u;  // Wedge15
+        family_exponents = std::span<const std::array<int, 3>>(
+            kHex20MonomialExponents.data(), kHex20MonomialExponents.size());
+        label = "Hex20";
+    } else {  // Wedge15
+        size_ = 15u;
+        family_exponents = std::span<const std::array<int, 3>>(
+            kWedge15MonomialExponents.data(), kWedge15MonomialExponents.size());
+        label = "Wedge15";
     }
     nodes_ = ReferenceNodeLayout::node_coords(element_type_);
     svmp::throw_if<BasisConstructionException>(
         nodes_.size() != size_, SVMP_HERE,
         "SerendipityBasis: fixed serendipity layout node count does not match basis size");
+    svmp::throw_if<BasisConstructionException>(
+        family_exponents.size() != size_, SVMP_HERE,
+        "SerendipityBasis: serendipity monomial count does not match basis size");
+    monomial_exponents_.assign(family_exponents.begin(), family_exponents.end());
+    inv_vandermonde_ = build_inverse_vandermonde(nodes_, monomial_exponents_, label);
 }
 
 void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
@@ -478,64 +439,26 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
     const double y = xi[1];
     const double z = xi[2];
 
-    if (dimension_ == 2) {
-        svmp::throw_if<BasisEvaluationException>(
-            quad_monomial_exponents_.size() != size_ ||
-                quad_inv_vandermonde_.size() != size_ * size_,
-            SVMP_HERE,
-            "SerendipityBasis: quadrilateral interpolation tables are not initialized for value evaluation");
-
-        // Quadrilateral serendipity monomials are planar; the through-axis
-        // exponent is zero, so all z derivatives vanish. The inverse Vandermonde
-        // is already in public node order (identity output ordering).
-        eval_monomial_basis(
-            x, y, z, size_,
-            [this](std::size_t j) {
-                const auto& e = quad_monomial_exponents_[j];
-                return std::array<int, 3>{e[0], e[1], 0};
-            },
-            [this](std::size_t j, std::size_t i) {
-                return quad_inv_vandermonde_[j * size_ + i];
-            },
-            std::span<const std::size_t>{},
-            values_out, gradients_out, hessians_out);
-        return;
-    }
-
-    if (dimension_ == 3 && order_ == 1) {
+    if (element_type_ == ElementType::Hex8) {
         evaluate_hex8_reference(x, y, z, values_out, gradients_out, hessians_out);
         return;
     }
 
-    if (element_type_ == ElementType::Hex20) {
-        // The Hex20 coefficient table is authored in an internal node order, so
-        // results are remapped into the public node layout through mesh_to_basis.
-        const auto mesh_to_basis = ReferenceNodeLayout::mesh_to_basis_ordering(element_type_);
-        svmp::throw_if<BasisEvaluationException>(mesh_to_basis.size() != size_, SVMP_HERE,
-                                               "Hex20 mesh-to-basis ordering is not registered");
-        eval_monomial_basis(
-            x, y, z, size_,
-            [](std::size_t j) { return kHex20MonomialExponents[j]; },
-            [](std::size_t j, std::size_t i) { return kHex20Coefficients[j][i]; },
-            mesh_to_basis,
-            values_out, gradients_out, hessians_out);
-        return;
-    }
+    // Quad, Hex20, and Wedge15 evaluate through their generated coefficient
+    // table, which is already in public basis order.
+    svmp::throw_if<BasisEvaluationException>(
+        monomial_exponents_.size() != size_ ||
+            inv_vandermonde_.size() != size_ * size_,
+        SVMP_HERE,
+        "SerendipityBasis: interpolation tables are not initialized for evaluation");
 
-    if (element_type_ == ElementType::Wedge15) {
-        // The Wedge15 coefficient table is authored directly in public node
-        // order, so no output reordering is applied (identity permutation).
-        eval_monomial_basis(
-            x, y, z, size_,
-            [](std::size_t j) { return kWedge15MonomialExponents[j]; },
-            [](std::size_t j, std::size_t i) { return kWedge15Coefficients[j][i]; },
-            std::span<const std::size_t>{},
-            values_out, gradients_out, hessians_out);
-        return;
-    }
-
-    svmp::raise<BasisEvaluationException>(SVMP_HERE,
-        "SerendipityBasis::evaluate_all_to: unsupported serendipity configuration");
+    eval_monomial_basis(
+        x, y, z, size_,
+        [this](std::size_t j) { return monomial_exponents_[j]; },
+        [this](std::size_t j, std::size_t i) {
+            return inv_vandermonde_[j * size_ + i];
+        },
+        values_out, gradients_out, hessians_out);
 }
 
 void SerendipityBasis::evaluate_values(const math::Vector<double, 3>& xi,

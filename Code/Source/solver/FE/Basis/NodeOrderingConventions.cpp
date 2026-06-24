@@ -17,17 +17,6 @@ namespace {
 using Point = math::Vector<double, 3>;
 using Lattice = std::array<int, 3>;
 
-// Maps public Hex20 ReferenceNodeLayout slots to the internal coefficient-table
-// basis columns used by kHex20Coefficients. Wedge15 and quadrilateral
-// serendipity tables are stored directly in public node order and need no
-// equivalent permutation.
-constexpr std::array<std::size_t, 20> kHex20MeshToBasisOrder = {
-    0, 1, 2, 3, 4, 5, 6, 7,
-    8, 13, 10, 12,
-    9, 15, 11, 14,
-    16, 17, 19, 18
-};
-
 double line_coord_zero_one(int i, int order) {
     if (order <= 0) {
         return double(0);
@@ -625,14 +614,6 @@ ReferenceNodeLayout::get_lagrange_lattice(ElementType canonical_type, int order)
     LagrangeNodeLayout layout = complete_lagrange_nodes(canonical_type, order);
     validate_lattice(layout, canonical_type, order);
     return layout;
-}
-
-std::span<const std::size_t> ReferenceNodeLayout::mesh_to_basis_ordering(ElementType elem_type) {
-    if (elem_type == ElementType::Hex20) {
-        return std::span<const std::size_t>(kHex20MeshToBasisOrder.data(),
-                                            kHex20MeshToBasisOrder.size());
-    }
-    return {};
 }
 
 } // namespace basis

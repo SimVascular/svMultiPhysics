@@ -86,8 +86,6 @@ public:
      */
     static LagrangeNodeLayout
     get_lagrange_lattice(ElementType canonical_type, int order);
-
-    static std::span<const std::size_t> mesh_to_basis_ordering(ElementType elem_type);
 };
 
 } // namespace basis

@@ -190,6 +190,130 @@ double bilinear_function(const math::Vector<double, 3>& p) {
     return double(2) - double(3) * p[0] + double(4) * p[1] + double(0.5) * p[0] * p[1];
 }
 
+// --- 3D serendipity guard-test helpers (Hex20, Wedge15) --------------------
+//
+// Like the quadrilateral _for_test helpers above, these re-derive the monomial
+// selection and reference-node placement from the mathematical definition of
+// each serendipity space, independently of the production tables in
+// SerendipityBasis.cpp
+
+double monomial_value_3d_for_test(const math::Vector<double, 3>& p,
+                                const std::array<int, 3>& exponent) {
+    return integer_power_for_test(p[0], exponent[0]) *
+           integer_power_for_test(p[1], exponent[1]) *
+           integer_power_for_test(p[2], exponent[2]);
+}
+
+std::vector<double> vandermonde_3d_for_test(
+    const std::vector<math::Vector<double, 3>>& nodes,
+    const std::vector<std::array<int, 3>>& exponents) {
+    const std::size_t n = nodes.size();
+    std::vector<double> vandermonde(n * n, double(0));
+    for (std::size_t row = 0; row < n; ++row) {
+        for (std::size_t col = 0; col < n; ++col) {
+            vandermonde[row * n + col] =
+                monomial_value_3d_for_test(nodes[row], exponents[col]);
+        }
+    }
+    return vandermonde;
+}
+
+// Superlinear degree generalized to three axes (the quadrilateral rule extended
+// to t). An exponent contributes only when it exceeds one.
+int superlinear_degree_3d_for_test(int ax, int ay, int az) {
+    return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0) + (az > 1 ? az : 0);
+}
+
+// Hex20 serendipity span: every (ax, ay, az) in {0,1,2}^3 with superlinear
+// degree at most two.
+std::vector<std::array<int, 3>> hex20_serendipity_exponents_for_test() {
+    std::vector<std::array<int, 3>> exponents;
+    for (int ax = 0; ax <= 2; ++ax) {
+        for (int ay = 0; ay <= 2; ++ay) {
+            for (int az = 0; az <= 2; ++az) {
+                if (superlinear_degree_3d_for_test(ax, ay, az) <= 2) {
+                    exponents.push_back({ax, ay, az});
+                }
+            }
+        }
+    }
+    return exponents;
+}
+
+// Wedge15 serendipity span: triangle monomials (ax, ay) with ax + ay <= 2,
+// tensored with the through-axis. Linear triangle monomials (ax + ay <= 1) carry
+// t-degree up to two; quadratic triangle monomials (ax + ay == 2) carry t-degree
+// up to one.
+std::vector<std::array<int, 3>> wedge15_serendipity_exponents_for_test() {
+    std::vector<std::array<int, 3>> exponents;
+    for (int ax = 0; ax <= 2; ++ax) {
+        for (int ay = 0; ax + ay <= 2; ++ay) {
+            const int triangle_degree = ax + ay;
+            const int max_t = (triangle_degree <= 1) ? 2 : 1;
+            for (int az = 0; az <= max_t; ++az) {
+                exponents.push_back({ax, ay, az});
+            }
+        }
+    }
+    return exponents;
+}
+
+// Independent Hex20 reference layout: the eight cube corners followed by the
+// twelve edge midpoints, in the corner/edge order the reference layout uses.
+std::vector<math::Vector<double, 3>> hex20_reference_nodes_for_test() {
+    std::vector<math::Vector<double, 3>> corners;
+    corners.push_back({double(-1), double(-1), double(-1)});
+    corners.push_back({double(1), double(-1), double(-1)});
+    corners.push_back({double(1), double(1), double(-1)});
+    corners.push_back({double(-1), double(1), double(-1)});
+    corners.push_back({double(-1), double(-1), double(1)});
+    corners.push_back({double(1), double(-1), double(1)});
+    corners.push_back({double(1), double(1), double(1)});
+    corners.push_back({double(-1), double(1), double(1)});
+
+    const int edges[12][2] = {
+        {0, 1}, {1, 2}, {2, 3}, {3, 0},
+        {4, 5}, {5, 6}, {6, 7}, {7, 4},
+        {0, 4}, {1, 5}, {2, 6}, {3, 7},
+    };
+
+    std::vector<math::Vector<double, 3>> nodes = corners;
+    for (const auto& edge : edges) {
+        const math::Vector<double, 3> midpoint =
+            (corners[static_cast<std::size_t>(edge[0])] +
+             corners[static_cast<std::size_t>(edge[1])]) * double(0.5);
+        nodes.push_back(midpoint);
+    }
+    return nodes;
+}
+
+// Independent Wedge15 reference layout: the six prism corners followed by the
+// nine edge midpoints, in reference-layout order.
+std::vector<math::Vector<double, 3>> wedge15_reference_nodes_for_test() {
+    std::vector<math::Vector<double, 3>> corners;
+    corners.push_back({double(0), double(0), double(-1)});
+    corners.push_back({double(1), double(0), double(-1)});
+    corners.push_back({double(0), double(1), double(-1)});
+    corners.push_back({double(0), double(0), double(1)});
+    corners.push_back({double(1), double(0), double(1)});
+    corners.push_back({double(0), double(1), double(1)});
+
+    const int edges[9][2] = {
+        {0, 1}, {1, 2}, {2, 0},
+        {3, 4}, {4, 5}, {5, 3},
+        {0, 3}, {1, 4}, {2, 5},
+    };
+
+    std::vector<math::Vector<double, 3>> nodes = corners;
+    for (const auto& edge : edges) {
+        const math::Vector<double, 3> midpoint =
+            (corners[static_cast<std::size_t>(edge[0])] +
+             corners[static_cast<std::size_t>(edge[1])]) * double(0.5);
+        nodes.push_back(midpoint);
+    }
+    return nodes;
+}
+
 } // namespace
 
 TEST(SerendipityBasis, Quad8IsNodalAndPartitionsUnity) {
@@ -445,4 +569,155 @@ TEST(SerendipityBasis, TrilinearHexMatchesLagrangeHex8) {
             }
         }
     }
+}
+
+// The Hex20 and Wedge15 guard tests below pin the nodal coefficients away from
+// the reference nodes. Each builds an independent Vandermonde from the
+// re-derived monomial span and reference nodes, so a coefficient error that
+// still vanishes at the nodes is caught.
+
+TEST(SerendipityBasis, Hex20VandermondeHasFullRank) {
+    SerendipityBasis basis(ElementType::Hex20, 2);
+    const auto exponents = hex20_serendipity_exponents_for_test();
+    const std::size_t n = basis.size();
+    ASSERT_EQ(exponents.size(), n);
+    const auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
+    ASSERT_EQ(vandermonde.size(), n * n);
+    EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n);
+}
+
+TEST(SerendipityBasis, Wedge15VandermondeHasFullRank) {
+    SerendipityBasis basis(ElementType::Wedge15, 2);
+    const auto exponents = wedge15_serendipity_exponents_for_test();
+    const std::size_t n = basis.size();
+    ASSERT_EQ(exponents.size(), n);
+    const auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
+    ASSERT_EQ(vandermonde.size(), n * n);
+    EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n);
+}
+
+// V * C == I guard: independently invert the Vandermonde and confirm the basis
+// evaluates to the same inverse-Vandermonde nodal functions, without reading the
+// basis's internal coefficient table.
+TEST(SerendipityBasis, Hex20MatchesIndependentlyInvertedVandermonde) {
+    SerendipityBasis basis(ElementType::Hex20, 2);
+    const auto exponents = hex20_serendipity_exponents_for_test();
+    const std::size_t n = basis.size();
+    ASSERT_EQ(exponents.size(), n);
+    auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
+    const auto coefficients =
+        math::invert_dense_matrix(std::move(vandermonde), n, "Hex20 test Vandermonde");
+
+    const std::vector<math::Vector<double, 3>> points = {
+        {double(0.2), double(-0.1), double(0.3)},
+        {double(-0.35), double(0.25), double(-0.15)},
+        {double(0.11), double(0.23), double(-0.42)},
+    };
+    for (const auto& xi : points) {
+        std::vector<double> values;
+        basis.evaluate_values(xi, values);
+        ASSERT_EQ(values.size(), n);
+        for (std::size_t i = 0; i < n; ++i) {
+            double expected = double(0);
+            for (std::size_t j = 0; j < n; ++j) {
+                expected += coefficients[j * n + i] *
+                            monomial_value_3d_for_test(xi, exponents[j]);
+            }
+            EXPECT_NEAR(values[i], expected, double(1e-10)) << "basis=" << i;
+        }
+    }
+}
+
+TEST(SerendipityBasis, Wedge15MatchesIndependentlyInvertedVandermonde) {
+    SerendipityBasis basis(ElementType::Wedge15, 2);
+    const auto exponents = wedge15_serendipity_exponents_for_test();
+    const std::size_t n = basis.size();
+    ASSERT_EQ(exponents.size(), n);
+    auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
+    const auto coefficients =
+        math::invert_dense_matrix(std::move(vandermonde), n, "Wedge15 test Vandermonde");
+
+    const std::vector<math::Vector<double, 3>> points = {
+        {double(0.2), double(0.3), double(0.1)},
+        {double(0.25), double(0.25), double(-0.4)},
+        {double(0.1), double(0.6), double(0.5)},
+    };
+    for (const auto& xi : points) {
+        std::vector<double> values;
+        basis.evaluate_values(xi, values);
+        ASSERT_EQ(values.size(), n);
+        for (std::size_t i = 0; i < n; ++i) {
+            double expected = double(0);
+            for (std::size_t j = 0; j < n; ++j) {
+                expected += coefficients[j * n + i] *
+                            monomial_value_3d_for_test(xi, exponents[j]);
+            }
+            EXPECT_NEAR(values[i], expected, double(1e-10)) << "basis=" << i;
+        }
+    }
+}
+
+// Non-nodal polynomial reproduction: the basis must reproduce every monomial in
+// its span at interior points, not just interpolate at the nodes.
+TEST(SerendipityBasis, Hex20ReproducesEverySerendipityMonomial) {
+    SerendipityBasis basis(ElementType::Hex20, 2);
+    const auto exponents = hex20_serendipity_exponents_for_test();
+    ASSERT_EQ(exponents.size(), basis.size());
+
+    const std::vector<math::Vector<double, 3>> points = {
+        {double(0.2), double(-0.1), double(0.3)},
+        {double(-0.35), double(0.25), double(-0.15)},
+        {double(0.11), double(0.23), double(-0.42)},
+    };
+    for (const auto& exponent : exponents) {
+        for (const auto& xi : points) {
+            const double interpolated = interpolate_nodal_function(
+                basis, xi,
+                [&exponent](const math::Vector<double, 3>& node) {
+                    return monomial_value_3d_for_test(node, exponent);
+                });
+            EXPECT_NEAR(interpolated, monomial_value_3d_for_test(xi, exponent),
+                        double(1e-10))
+                << "ax=" << exponent[0] << " ay=" << exponent[1]
+                << " az=" << exponent[2];
+        }
+    }
+}
+
+TEST(SerendipityBasis, Wedge15ReproducesEverySerendipityMonomial) {
+    SerendipityBasis basis(ElementType::Wedge15, 2);
+    const auto exponents = wedge15_serendipity_exponents_for_test();
+    ASSERT_EQ(exponents.size(), basis.size());
+
+    const std::vector<math::Vector<double, 3>> points = {
+        {double(0.2), double(0.3), double(0.1)},
+        {double(0.25), double(0.25), double(-0.4)},
+        {double(0.1), double(0.6), double(0.5)},
+    };
+    for (const auto& exponent : exponents) {
+        for (const auto& xi : points) {
+            const double interpolated = interpolate_nodal_function(
+                basis, xi,
+                [&exponent](const math::Vector<double, 3>& node) {
+                    return monomial_value_3d_for_test(node, exponent);
+                });
+            EXPECT_NEAR(interpolated, monomial_value_3d_for_test(xi, exponent),
+                        double(1e-10))
+                << "ax=" << exponent[0] << " ay=" << exponent[1]
+                << " az=" << exponent[2];
+        }
+    }
+}
+
+// Independent node-coordinate anchor: the reference nodes must be the cube/prism
+// corners and edge midpoints, breaking the loop where the basis and its node
+// table are otherwise only checked against each other.
+TEST(SerendipityBasis, Hex20ReferenceNodesMatchIndependentConstruction) {
+    SerendipityBasis basis(ElementType::Hex20, 2);
+    expect_nodes_near(basis.nodes(), hex20_reference_nodes_for_test(), double(1e-14));
+}
+
+TEST(SerendipityBasis, Wedge15ReferenceNodesMatchIndependentConstruction) {
+    SerendipityBasis basis(ElementType::Wedge15, 2);
+    expect_nodes_near(basis.nodes(), wedge15_reference_nodes_for_test(), double(1e-14));
 }
