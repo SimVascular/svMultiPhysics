@@ -42,25 +42,6 @@ namespace math {
 template<typename T, std::size_t M, std::size_t N>
 using Matrix = Eigen::Matrix<T, static_cast<int>(M), static_cast<int>(N)>;
 
-// Type aliases for common matrix types
-template<typename T> using Matrix2x2 = Matrix<T, 2, 2>;
-template<typename T> using Matrix3x3 = Matrix<T, 3, 3>;
-template<typename T> using Matrix4x4 = Matrix<T, 4, 4>;
-template<typename T> using Matrix2x3 = Matrix<T, 2, 3>;
-template<typename T> using Matrix3x2 = Matrix<T, 3, 2>;
-template<typename T> using Matrix3x4 = Matrix<T, 3, 4>;
-template<typename T> using Matrix4x3 = Matrix<T, 4, 3>;
-
-// Double precision aliases
-using Matrix2x2d = Matrix2x2<double>;
-using Matrix3x3d = Matrix3x3<double>;
-using Matrix4x4d = Matrix4x4<double>;
-
-// Single precision aliases
-using Matrix2x2f = Matrix2x2<float>;
-using Matrix3x3f = Matrix3x3<float>;
-using Matrix4x4f = Matrix4x4<float>;
-
 } // namespace math
 } // namespace FE
 } // namespace svmp
