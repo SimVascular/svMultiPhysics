@@ -192,6 +192,10 @@ TEST(BasisErrorPaths, SerendipityInvalidRequestsThrowBasisExceptions) {
                  BasisConfigurationException);
     EXPECT_THROW(SerendipityBasis(ElementType::Hex20, 3),
                  BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Wedge15, 1),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Wedge15, 3),
+                 BasisConfigurationException);
 }
 
 TEST(BasisErrorPaths, BasisFactoryRejectsNonC0Continuity) {

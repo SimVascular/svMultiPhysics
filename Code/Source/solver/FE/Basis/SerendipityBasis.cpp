@@ -375,58 +375,80 @@ void eval_monomial_basis(double r, double s, double t,
     }
 }
 
+struct NormalizedSerendipityRequest {
+    int dimension;
+    int order;
+};
+
+// Validate the element/order pairing and return the normalized reference
+// dimension and effective order. The fixed-layout serendipity elements (Quad8,
+// Hex8, Hex20, Wedge15) are each pinned to a single polynomial order by their
+// node count, so a mismatched explicit order is rejected uniformly rather than
+// silently reinterpreted. Quad4 is the arbitrary-order quadrilateral
+// serendipity entry point and only floors sub-linear requests to order 1.
+NormalizedSerendipityRequest normalize_serendipity_request(ElementType type, int order) {
+    const int floored_order = std::max(order, 1);
+    switch (type) {
+        case ElementType::Quad4:
+            return {2, floored_order};
+        case ElementType::Quad8:
+            svmp::throw_if<BasisConfigurationException>(floored_order != 2, SVMP_HERE,
+                "SerendipityBasis: Quad8 is only valid for quadratic order 2; use Quad4 for higher-order quadrilateral serendipity");
+            return {2, 2};
+        case ElementType::Hex8:
+            svmp::throw_if<BasisConfigurationException>(floored_order != 1, SVMP_HERE,
+                "SerendipityBasis: Hex8 is the trilinear 8-node basis (order 1 only); use Hex20 for quadratic serendipity");
+            return {3, 1};
+        case ElementType::Hex20:
+            svmp::throw_if<BasisConfigurationException>(floored_order != 2, SVMP_HERE,
+                "SerendipityBasis: Hex20 is the 20-node quadratic serendipity layout (order 2 only)");
+            return {3, 2};
+        case ElementType::Wedge15:
+            svmp::throw_if<BasisConfigurationException>(floored_order != 2, SVMP_HERE,
+                "SerendipityBasis: Wedge15 is the 15-node quadratic serendipity layout (order 2 only)");
+            return {3, 2};
+        default:
+            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
+                "SerendipityBasis supports Quad4/Quad8, Hex8/Hex20, and Wedge15 elements");
+    }
+}
+
 } // namespace
 
 SerendipityBasis::SerendipityBasis(ElementType type, int order)
     : element_type_(type), dimension_(0), order_(order), size_(0) {
+    const NormalizedSerendipityRequest normalized = normalize_serendipity_request(type, order);
+    dimension_ = normalized.dimension;
+    order_ = normalized.order;
+
     if (type == ElementType::Quad4 || type == ElementType::Quad8) {
-        dimension_ = 2;
-        if (order_ < 1) {
-            order_ = 1;
-        }
-        svmp::throw_if<BasisConfigurationException>(
-            type == ElementType::Quad8 && order_ != 2, SVMP_HERE,
-            "SerendipityBasis: Quad8 is only valid for quadratic order 2; use Quad4 for higher-order quadrilateral serendipity");
+        // Quadrilateral serendipity is generated from its monomial space, so the
+        // basis size, reference nodes, and nodal coefficient table are all built
+        // here from the effective order.
         quad_monomial_exponents_ = quad_serendipity_exponents(order_);
         size_ = quad_monomial_exponents_.size();
         nodes_ = quad_serendipity_nodes(order_, size_);
         svmp::throw_if<BasisConstructionException>(
             nodes_.size() != size_, SVMP_HERE,
             "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
-        quad_inv_vandermonde_ = quad_serendipity_inverse_vandermonde(nodes_, quad_monomial_exponents_, order_);
-    } else if (type == ElementType::Hex8 || type == ElementType::Hex20) {
-        dimension_ = 3;
-        if (order_ < 1) {
-            order_ = 1;
-        }
-        svmp::throw_if<BasisConfigurationException>(
-            type == ElementType::Hex8 && order_ != 1, SVMP_HERE,
-            "SerendipityBasis: Hex8 is the trilinear 8-node basis (order 1 only); use Hex20 for quadratic serendipity");
-        svmp::throw_if<BasisConfigurationException>(
-            type == ElementType::Hex20 && order_ != 2, SVMP_HERE,
-            "SerendipityBasis: Hex20 is the 20-node quadratic serendipity layout (order 2 only)");
-        size_ = (type == ElementType::Hex8) ? 8u : 20u;
-    } else if (type == ElementType::Wedge15) {
-        dimension_ = 3;
-        if (order_ < 2) {
-            order_ = 2;
-        }
-        if (order_ == 2) {
-            size_ = 15;
-        } else {
-            svmp::raise<BasisConfigurationException>(SVMP_HERE,
-                "SerendipityBasis supports up to quadratic on wedge15");
-        }
-    } else {
-        svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-            "SerendipityBasis supports Quad4/Quad8, Hex8/Hex20, and Wedge15 elements");
+        quad_inv_vandermonde_ =
+            quad_serendipity_inverse_vandermonde(nodes_, quad_monomial_exponents_, order_);
+        return;
     }
 
-    if (nodes_.empty()) {
-        nodes_.reserve(size_);
-        for (std::size_t i = 0; i < size_; ++i) {
-            nodes_.push_back(ReferenceNodeLayout::get_node_coords(element_type_, i));
-        }
+    // Hex8/Hex20/Wedge15 use fixed node layouts with tabulated coefficients: the
+    // size is pinned by the layout and the reference nodes come straight from
+    // ReferenceNodeLayout.
+    if (type == ElementType::Hex8) {
+        size_ = 8u;
+    } else if (type == ElementType::Hex20) {
+        size_ = 20u;
+    } else {
+        size_ = 15u;  // Wedge15
+    }
+    nodes_.reserve(size_);
+    for (std::size_t i = 0; i < size_; ++i) {
+        nodes_.push_back(ReferenceNodeLayout::get_node_coords(element_type_, i));
     }
 }
 
