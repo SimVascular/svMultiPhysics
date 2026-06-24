@@ -805,3 +805,36 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
     EXPECT_THROW((void)basis_factory::create(unsupported_serendipity_topology),
                  BasisElementCompatibilityException);
 }
+
+// The shared 1D tensor-axis distribution (line_coord_pm_one) is Gauss-Lobatto-
+// Legendre: endpoints exactly +/-1, symmetric about 0, strictly increasing, and
+// coincident with the equispaced layout at the production orders 1 and 2.
+TEST(LagrangeBasis, TensorAxisNodesAreGaussLobattoLegendre) {
+    // Orders 1 and 2 coincide with equispaced (the production layouts).
+    EXPECT_EQ(line_coord_pm_one(0, 1), double(-1));
+    EXPECT_EQ(line_coord_pm_one(1, 1), double(1));
+    EXPECT_EQ(line_coord_pm_one(0, 2), double(-1));
+    EXPECT_EQ(line_coord_pm_one(1, 2), double(0));
+    EXPECT_EQ(line_coord_pm_one(2, 2), double(1));
+
+    for (int order = 1; order <= 12; ++order) {
+        EXPECT_EQ(line_coord_pm_one(0, order), double(-1)) << "order=" << order;
+        EXPECT_EQ(line_coord_pm_one(order, order), double(1)) << "order=" << order;
+
+        double previous = line_coord_pm_one(0, order);
+        for (int i = 1; i <= order; ++i) {
+            const double x = line_coord_pm_one(i, order);
+            EXPECT_GT(x, previous) << "order=" << order << " i=" << i;  // strictly increasing
+            EXPECT_LE(x, double(1)) << "order=" << order << " i=" << i;
+            EXPECT_GE(x, double(-1)) << "order=" << order << " i=" << i;
+            EXPECT_NEAR(x, -line_coord_pm_one(order - i, order), double(1e-14))
+                << "order=" << order << " i=" << i;  // symmetric about 0
+            previous = x;
+        }
+    }
+
+    // For order >= 3 GLL differs from equispaced: the interior nodes cluster toward
+    // the endpoints. At order 4 the first interior node is -sqrt(3/7) ~ -0.6547,
+    // past the equispaced position -0.5.
+    EXPECT_LT(line_coord_pm_one(1, 4), double(-0.5) - double(1e-6));
+}

@@ -406,7 +406,7 @@ TEST(BasisGradients, QuadrilateralSerendipityInactiveZDerivativesRemainZero) {
 TEST(BasisHessians, SerendipityFamiliesMatchNumericalHessians) {
     // Arbitrary-order quadrilateral serendipity (topology path).
     const struct QuadCase { int order; double tol; } quad_cases[] = {
-        {1, double(1e-6)}, {3, double(1e-6)}, {4, double(5e-6)}, {6, double(2e-5)},
+        {1, double(1e-6)}, {3, double(1e-6)}, {4, double(2e-6)}, {6, double(5e-6)},
     };
     for (const auto& c : quad_cases) {
         SerendipityBasis basis(BasisTopology::Quadrilateral, c.order);
@@ -416,8 +416,8 @@ TEST(BasisHessians, SerendipityFamiliesMatchNumericalHessians) {
 
     // Arbitrary-order hexahedral serendipity (topology path).
     const struct HexCase { int order; double tol; } hex_cases[] = {
-        {1, double(1e-6)}, {2, double(1e-6)}, {3, double(5e-6)},
-        {4, double(1e-5)}, {5, double(5e-5)},
+        {1, double(1e-6)}, {2, double(1e-6)}, {3, double(2e-6)},
+        {4, double(5e-6)}, {5, double(1e-5)},
     };
     for (const auto& c : hex_cases) {
         SerendipityBasis basis(BasisTopology::Hexahedron, c.order);

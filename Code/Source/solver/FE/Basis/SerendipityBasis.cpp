@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <span>
 #include <string>
 
@@ -27,6 +28,104 @@ inline double integer_power(double base, int exponent) {
         result *= base;
     }
     return result;
+}
+
+// Which 1D polynomial family the tensor modes are written in. Monomials x^k are
+// simple but make the interpolation (Vandermonde) matrix exponentially
+// ill-conditioned as the order grows; tensor products of Legendre polynomials
+// P_k span exactly the same polynomial space (the serendipity exponent set is
+// downward-closed, so the change of basis is triangular) while keeping the
+// Vandermonde well-conditioned. The quadrilateral and hexahedral families use
+// Legendre; the fixed Wedge15 layout (order 2, trivially well-conditioned) keeps
+// the monomial form.
+enum class ModalAxisKind { Monomial, Legendre };
+
+// Value and first/second derivative of every 1D mode phi_0..phi_{max_degree} at a
+// fixed coordinate, indexed by per-axis degree.
+struct AxisTable {
+    std::vector<double> value;
+    std::vector<double> first;
+    std::vector<double> second;
+};
+
+// phi_k(x) = x^k and its derivatives. Matches the previous per-mode evaluation
+// exactly, so the Wedge15 monomial path is unchanged.
+void fill_monomial_table(double x, int max_degree, AxisTable& out) {
+    const std::size_t n = static_cast<std::size_t>(max_degree) + 1u;
+    out.value.assign(n, double(0));
+    out.first.assign(n, double(0));
+    out.second.assign(n, double(0));
+    for (int k = 0; k <= max_degree; ++k) {
+        const std::size_t kp = static_cast<std::size_t>(k);
+        out.value[kp] = integer_power(x, k);
+        out.first[kp] = (k > 0) ? double(k) * integer_power(x, k - 1) : double(0);
+        out.second[kp] =
+            (k > 1) ? double(k * (k - 1)) * integer_power(x, k - 2) : double(0);
+    }
+}
+
+// phi_k(x) = P_k(x), the degree-k Legendre polynomial on [-1, 1], with first and
+// second derivatives. Built from the three-term recurrences
+//   (k+1) P_{k+1}   = (2k+1) x P_k          - k P_{k-1}
+//   (k+1) P'_{k+1}  = (2k+1)(P_k + x P'_k)  - k P'_{k-1}
+//   (k+1) P''_{k+1} = (2k+1)(2 P'_k + x P''_k) - k P''_{k-1}
+// all regular at x = +/-1 (no division by 1 - x^2).
+void fill_legendre_table(double x, int max_degree, AxisTable& out) {
+    const std::size_t n = static_cast<std::size_t>(max_degree) + 1u;
+    out.value.assign(n, double(0));
+    out.first.assign(n, double(0));
+    out.second.assign(n, double(0));
+    out.value[0] = double(1);
+    if (max_degree >= 1) {
+        out.value[1] = x;
+        out.first[1] = double(1);
+    }
+    for (int k = 1; k < max_degree; ++k) {
+        const std::size_t kp = static_cast<std::size_t>(k);
+        const double kk = static_cast<double>(k);
+        const double two_k_plus_one = double(2) * kk + double(1);
+        const double inv = double(1) / (kk + double(1));
+        out.value[kp + 1] =
+            (two_k_plus_one * x * out.value[kp] - kk * out.value[kp - 1]) * inv;
+        out.first[kp + 1] =
+            (two_k_plus_one * (out.value[kp] + x * out.first[kp]) -
+             kk * out.first[kp - 1]) * inv;
+        out.second[kp + 1] =
+            (two_k_plus_one * (double(2) * out.first[kp] + x * out.second[kp]) -
+             kk * out.second[kp - 1]) * inv;
+    }
+}
+
+void fill_axis_table(ModalAxisKind kind, double x, int max_degree, AxisTable& out) {
+    if (kind == ModalAxisKind::Legendre) {
+        fill_legendre_table(x, max_degree, out);
+    } else {
+        fill_monomial_table(x, max_degree, out);
+    }
+}
+
+// Maximum tolerated infinity-norm condition number of a serendipity interpolation
+// (Vandermonde) matrix. Above this the inverse loses more than about half of
+// double precision (~1/sqrt(epsilon)), so construction throws rather than return
+// silently-degraded functions. With the Legendre modal basis and
+// Gauss-Lobatto-Legendre nodes the condition number stays far below this across
+// the recommended range (~1.7e4 at quadrilateral order 10, ~1.3e4 at hexahedral
+// order 8); the bound is the numerical-soundness backstop for orders pushed well
+// past it. The shape-function quality limit (Lebesgue constant) is the tighter,
+// inherent constraint and is documented/tested separately.
+constexpr double kSerendipityVandermondeMaxCond = double(1e8);
+
+// Infinity norm (maximum absolute row sum) of a row-major n-by-n matrix.
+double matrix_norm_inf(const std::vector<double>& matrix, std::size_t n) {
+    double max_row = double(0);
+    for (std::size_t row = 0; row < n; ++row) {
+        double sum = double(0);
+        for (std::size_t col = 0; col < n; ++col) {
+            sum += std::abs(matrix[row * n + col]);
+        }
+        max_row = std::max(max_row, sum);
+    }
+    return max_row;
 }
 
 std::vector<std::array<int, 2>> quad_serendipity_exponents(int order) {
@@ -62,14 +161,17 @@ void append_quad_serendipity_interior_nodes(std::vector<Vec3>& nodes, int order)
         return;
     }
 
+    // Interior staircase placed on Gauss-Lobatto-Legendre interior nodes (the same
+    // 1D distribution as the boundary), so the reduced space stays well-conditioned
+    // at high order. The unisolvence argument above needs only a distinct y per row
+    // and distinct x within each row; GLL changes where those distinct points sit,
+    // not the staircase structure.
     const int m = order - 4;
-    const double y_denominator = double(m + 2);
     for (int row = 0; row <= m; ++row) {
         const int row_count = m + 1 - row;
-        const double y = double(-1) + double(2) * double(row + 1) / y_denominator;
-        const double x_denominator = double(row_count + 1);
+        const double y = line_coord_pm_one(row + 1, m + 2);
         for (int col = 0; col < row_count; ++col) {
-            const double x = double(-1) + double(2) * double(col + 1) / x_denominator;
+            const double x = line_coord_pm_one(col + 1, row_count + 1);
             nodes.push_back(Vec3{x, y, double(0)});
         }
     }
@@ -194,15 +296,18 @@ void append_hex_serendipity_volume_interior_nodes(std::vector<Vec3>& nodes, int 
     if (order < 6) {
         return;
     }
+    // Tetrahedral staircase on Gauss-Lobatto-Legendre interior nodes, mirroring the
+    // 2D quad interior: distinct t per layer, distinct s per row, distinct r within
+    // a row keep the residual unisolvent while staying well-conditioned at order.
     const int m = order - 6;
     for (int layer = 0; layer <= m; ++layer) {
         const int tri_order = m - layer;
-        const double t = double(-1) + double(2) * double(layer + 1) / double(m + 2);
+        const double t = line_coord_pm_one(layer + 1, m + 2);
         for (int row = 0; row <= tri_order; ++row) {
             const int row_count = tri_order + 1 - row;
-            const double s = double(-1) + double(2) * double(row + 1) / double(tri_order + 2);
+            const double s = line_coord_pm_one(row + 1, tri_order + 2);
             for (int col = 0; col < row_count; ++col) {
-                const double r = double(-1) + double(2) * double(col + 1) / double(row_count + 1);
+                const double r = line_coord_pm_one(col + 1, row_count + 1);
                 nodes.push_back(Vec3{r, s, t});
             }
         }
@@ -246,34 +351,58 @@ std::vector<Vec3> hex_serendipity_nodes(int order, std::size_t total_size) {
     return nodes;
 }
 
-// Build the nodal coefficient table for a monomial-generated serendipity family:
-// assemble V[node][monomial] = r^a s^b t^c at the public-order reference nodes and
-// invert it. Because the nodes are in public order, the inverse is already in
-// public basis order and needs no output permutation. The same routine serves the
-// quadrilateral, Hex20, and Wedge15 spaces.
+// Build the nodal coefficient table for a serendipity family: assemble the
+// generalized Vandermonde V[node][mode] = phi_a(r) phi_b(s) phi_c(t) at the
+// public-order reference nodes -- with phi the monomial or Legendre 1D modes per
+// `kind` -- and invert it. Because the nodes are in public order, the inverse is
+// already in public basis order and needs no output permutation. The same routine
+// serves the quadrilateral, hexahedral, and Wedge15 spaces. `max_degree` bounds
+// the per-axis mode degree (the family's order). Construction throws if the matrix
+// is too ill-conditioned to trust (see kSerendipityVandermondeMaxCond).
 std::vector<double> build_inverse_vandermonde(
     std::span<const Vec3> nodes,
     std::span<const std::array<int, 3>> exponents,
-    const std::string& label) {
+    const std::string& label,
+    ModalAxisKind kind,
+    int max_degree) {
     const std::size_t n = nodes.size();
     svmp::throw_if<BasisConstructionException>(
         n == 0 || exponents.size() != n, SVMP_HERE,
         "SerendipityBasis: invalid serendipity interpolation setup");
 
     std::vector<double> vandermonde(n * n, double(0));
+    AxisTable tx;
+    AxisTable ty;
+    AxisTable tz;
     for (std::size_t row = 0; row < n; ++row) {
         const Vec3& p = nodes[row];
+        fill_axis_table(kind, p[0], max_degree, tx);
+        fill_axis_table(kind, p[1], max_degree, ty);
+        fill_axis_table(kind, p[2], max_degree, tz);
         for (std::size_t col = 0; col < n; ++col) {
             const auto& e = exponents[col];
             vandermonde[row * n + col] =
-                integer_power(p[0], e[0]) * integer_power(p[1], e[1]) *
-                integer_power(p[2], e[2]);
+                tx.value[static_cast<std::size_t>(e[0])] *
+                ty.value[static_cast<std::size_t>(e[1])] *
+                tz.value[static_cast<std::size_t>(e[2])];
         }
     }
 
-    return math::invert_dense_matrix(
+    // Condition-number backstop: estimate cond_inf = ||V||_inf * ||V^{-1}||_inf
+    // and reject orders where the inverse can no longer be trusted, rather than
+    // returning silently-degraded shape functions.
+    const double norm_v = matrix_norm_inf(vandermonde, n);
+    std::vector<double> inverse = math::invert_dense_matrix(
         std::move(vandermonde), n,
         "SerendipityBasis interpolation matrix for " + label);
+    const double cond_estimate = norm_v * matrix_norm_inf(inverse, n);
+    svmp::throw_if<BasisConstructionException>(
+        !(cond_estimate <= kSerendipityVandermondeMaxCond), SVMP_HERE,
+        "SerendipityBasis: " + label +
+            " interpolation matrix is too ill-conditioned (condition number ~ " +
+            std::to_string(cond_estimate) +
+            "); the requested order exceeds the well-conditioned range");
+    return inverse;
 }
 
 constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
@@ -294,67 +423,54 @@ constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{2, 0, 1}}
 }};
 
-// Value and first/second derivatives of the 1D monomial x^a. The derivative of
-// a constant or linear term collapses to zero, so negative powers never arise.
-struct MonomialAxis {
-    double value;   ///< x^a
-    double first;   ///< d/dx (x^a)     = a x^(a-1)
-    double second;  ///< d^2/dx^2 (x^a) = a (a-1) x^(a-2)
-};
-
-inline MonomialAxis monomial_axis(double x, int exponent) {
-    MonomialAxis axis;
-    axis.value = integer_power(x, exponent);
-    axis.first = (exponent > 0) ? double(exponent) * integer_power(x, exponent - 1) : double(0);
-    axis.second = (exponent > 1)
-                      ? double(exponent * (exponent - 1)) * integer_power(x, exponent - 2)
-                      : double(0);
-    return axis;
-}
-
-// Evaluate a nodal basis defined by a monomial coefficient table at one
-// reference point. For each monomial j the routine forms x^a y^b z^c and the
-// requested derivatives, then accumulates the coefficient-weighted sum into the
-// output slots. `count` is both the number of monomials and the number of basis
-// functions (the coefficient table is square). The table is in public basis
-// order, so output slot i reads coefficient column i directly. Outputs are
-// assumed pre-zeroed by the caller; an empty span skips that quantity.
+// Evaluate a nodal basis defined by a modal coefficient table at one reference
+// point. The three axis tables (tx, ty, tz) already hold phi and its derivatives
+// for every per-axis degree at this point. For each mode j the routine forms
+// phi_a(r) phi_b(s) phi_c(t) and the requested derivatives, then accumulates the
+// coefficient-weighted sum into the output slots. `count` is both the number of
+// modes and the number of basis functions (the coefficient table is square). The
+// table is in public basis order, so output slot i reads coefficient column i
+// directly. Outputs are assumed pre-zeroed by the caller; an empty span skips that
+// quantity.
 template <typename ExponentFn, typename CoeffFn>
-void eval_monomial_basis(double r, double s, double t,
-                         std::size_t count,
-                         ExponentFn&& exponent,
-                         CoeffFn&& coeff,
-                         std::span<double> values,
-                         std::span<Gradient> gradients,
-                         std::span<Hessian> hessians) {
+void eval_modal_basis(const AxisTable& tx, const AxisTable& ty, const AxisTable& tz,
+                      std::size_t count,
+                      ExponentFn&& exponent,
+                      CoeffFn&& coeff,
+                      std::span<double> values,
+                      std::span<Gradient> gradients,
+                      std::span<Hessian> hessians) {
     const bool want_values = !values.empty();
     const bool want_gradients = !gradients.empty();
     const bool want_hessians = !hessians.empty();
 
     for (std::size_t j = 0; j < count; ++j) {
         const std::array<int, 3> e = exponent(j);
-        const MonomialAxis ax = monomial_axis(r, e[0]);
-        const MonomialAxis ay = monomial_axis(s, e[1]);
-        const MonomialAxis az = monomial_axis(t, e[2]);
+        const std::size_t ex = static_cast<std::size_t>(e[0]);
+        const std::size_t ey = static_cast<std::size_t>(e[1]);
+        const std::size_t ez = static_cast<std::size_t>(e[2]);
 
-        const double phi = ax.value * ay.value * az.value;
+        const double vx = tx.value[ex];
+        const double vy = ty.value[ey];
+        const double vz = tz.value[ez];
+        const double phi = vx * vy * vz;
 
         double d_dr = double(0), d_ds = double(0), d_dt = double(0);
         if (want_gradients || want_hessians) {
-            d_dr = ax.first * ay.value * az.value;
-            d_ds = ax.value * ay.first * az.value;
-            d_dt = ax.value * ay.value * az.first;
+            d_dr = tx.first[ex] * vy * vz;
+            d_ds = vx * ty.first[ey] * vz;
+            d_dt = vx * vy * tz.first[ez];
         }
 
         double d_drr = double(0), d_dss = double(0), d_dtt = double(0);
         double d_drs = double(0), d_drt = double(0), d_dst = double(0);
         if (want_hessians) {
-            d_drr = ax.second * ay.value * az.value;
-            d_dss = ax.value * ay.second * az.value;
-            d_dtt = ax.value * ay.value * az.second;
-            d_drs = ax.first * ay.first * az.value;
-            d_drt = ax.first * ay.value * az.first;
-            d_dst = ax.value * ay.first * az.first;
+            d_drr = tx.second[ex] * vy * vz;
+            d_dss = vx * ty.second[ey] * vz;
+            d_dtt = vx * vy * tz.second[ez];
+            d_drs = tx.first[ex] * ty.first[ey] * vz;
+            d_drt = tx.first[ex] * vy * tz.first[ez];
+            d_dst = vx * ty.first[ey] * tz.first[ez];
         }
 
         for (std::size_t slot = 0; slot < count; ++slot) {
@@ -500,8 +616,10 @@ void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_l
     svmp::throw_if<BasisConstructionException>(
         nodes_.size() != size_, SVMP_HERE,
         "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
+    uses_legendre_modes_ = true;
     inv_vandermonde_ = build_inverse_vandermonde(
-        nodes_, monomial_exponents_, "Quad order " + std::to_string(order));
+        nodes_, monomial_exponents_, "Quad order " + std::to_string(order),
+        ModalAxisKind::Legendre, order);
 }
 
 // Build the hexahedral serendipity monomial space, reference nodes, and nodal
@@ -522,8 +640,10 @@ void SerendipityBasis::init_hexahedron(int order, bool nodes_from_reference_layo
     svmp::throw_if<BasisConstructionException>(
         nodes_.size() != size_, SVMP_HERE,
         "SerendipityBasis: hexahedral serendipity setup produced inconsistent sizes");
+    uses_legendre_modes_ = true;
     inv_vandermonde_ = build_inverse_vandermonde(
-        nodes_, monomial_exponents_, "Hex order " + std::to_string(order));
+        nodes_, monomial_exponents_, "Hex order " + std::to_string(order),
+        ModalAxisKind::Legendre, order);
 }
 
 // Build the Wedge15 serendipity layout from its tabulated monomial space and
@@ -545,7 +665,11 @@ void SerendipityBasis::init_fixed_named(ElementType type) {
         family_exponents.size() != size_, SVMP_HERE,
         "SerendipityBasis: Wedge15 monomial count does not match basis size");
     monomial_exponents_.assign(family_exponents.begin(), family_exponents.end());
-    inv_vandermonde_ = build_inverse_vandermonde(nodes_, monomial_exponents_, "Wedge15");
+    // Wedge15 is the fixed order-2 layout; its 15x15 system is trivially
+    // well-conditioned, so it keeps the monomial modal basis.
+    uses_legendre_modes_ = false;
+    inv_vandermonde_ = build_inverse_vandermonde(
+        nodes_, monomial_exponents_, "Wedge15", ModalAxisKind::Monomial, order_);
 }
 
 void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
@@ -582,8 +706,19 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
         SVMP_HERE,
         "SerendipityBasis: interpolation tables are not initialized for evaluation");
 
-    eval_monomial_basis(
-        x, y, z, size_,
+    // Build the per-axis modal tables once, then accumulate over the modes. The
+    // mode family must match the one the coefficient table was built with.
+    const ModalAxisKind kind =
+        uses_legendre_modes_ ? ModalAxisKind::Legendre : ModalAxisKind::Monomial;
+    AxisTable tx;
+    AxisTable ty;
+    AxisTable tz;
+    fill_axis_table(kind, x, order_, tx);
+    fill_axis_table(kind, y, order_, ty);
+    fill_axis_table(kind, z, order_, tz);
+
+    eval_modal_basis(
+        tx, ty, tz, size_,
         [this](std::size_t j) { return monomial_exponents_[j]; },
         [this](std::size_t j, std::size_t i) {
             return inv_vandermonde_[j * size_ + i];

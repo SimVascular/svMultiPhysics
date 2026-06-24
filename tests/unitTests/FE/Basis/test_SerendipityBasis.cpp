@@ -376,6 +376,96 @@ std::vector<math::Vector<double, 3>> quad8_reference_nodes_for_test() {
     return nodes;
 }
 
+// --- Conditioning oracles (Legendre Vandermonde + Lebesgue constant) ----------
+
+double legendre_value_for_test(double x, int degree) {
+    if (degree <= 0) {
+        return double(1);
+    }
+    double p_km1 = double(1);
+    double p_k = x;
+    for (int k = 1; k < degree; ++k) {
+        const double p_kp1 =
+            ((double(2) * double(k) + double(1)) * x * p_k - double(k) * p_km1) /
+            double(k + 1);
+        p_km1 = p_k;
+        p_k = p_kp1;
+    }
+    return p_k;
+}
+
+double legendre_mode_for_test(const math::Vector<double, 3>& p,
+                              const std::array<int, 3>& mode) {
+    return legendre_value_for_test(p[0], mode[0]) *
+           legendre_value_for_test(p[1], mode[1]) *
+           legendre_value_for_test(p[2], mode[2]);
+}
+
+double matrix_norm_inf_for_test(const std::vector<double>& matrix, std::size_t n) {
+    double max_row = double(0);
+    for (std::size_t row = 0; row < n; ++row) {
+        double sum = double(0);
+        for (std::size_t col = 0; col < n; ++col) {
+            sum += std::abs(matrix[row * n + col]);
+        }
+        max_row = std::max(max_row, sum);
+    }
+    return max_row;
+}
+
+// Infinity-norm condition number of the Legendre generalized Vandermonde the
+// production basis inverts, rebuilt from the basis nodes and the re-derived
+// serendipity modes (an independent check that Source B is fixed).
+double legendre_vandermonde_condition(const std::vector<math::Vector<double, 3>>& nodes,
+                                      const std::vector<std::array<int, 3>>& modes) {
+    const std::size_t n = nodes.size();
+    std::vector<double> v(n * n, double(0));
+    for (std::size_t row = 0; row < n; ++row) {
+        for (std::size_t col = 0; col < n; ++col) {
+            v[row * n + col] = legendre_mode_for_test(nodes[row], modes[col]);
+        }
+    }
+    const double norm_v = matrix_norm_inf_for_test(v, n);
+    const auto inverse = math::invert_dense_matrix(v, n, "test Legendre Vandermonde");
+    return norm_v * matrix_norm_inf_for_test(inverse, n);
+}
+
+std::vector<std::array<int, 3>> quad_serendipity_modes_3d_for_test(int order) {
+    std::vector<std::array<int, 3>> modes;
+    for (const auto& e : quad_serendipity_exponents_for_test(order)) {
+        modes.push_back({e[0], e[1], 0});
+    }
+    return modes;
+}
+
+// Lebesgue constant of the nodal basis: the maximum over a dense reference-cell
+// sample of sum_i |N_i(xi)|. Bounded and slowly growing for GLL nodes; it is the
+// "are the shape functions good" metric (equispaced nodes make it blow up).
+double serendipity_lebesgue_constant(const SerendipityBasis& basis, int samples) {
+    const int dim = basis.dimension();
+    const auto axis = [samples](int idx) {
+        return double(-1) + double(2) * double(idx) / double(samples);
+    };
+    double max_sum = double(0);
+    std::vector<double> values;
+    for (int i = 0; i <= samples; ++i) {
+        for (int j = 0; j <= samples; ++j) {
+            const int kmax = (dim >= 3) ? samples : 0;
+            for (int k = 0; k <= kmax; ++k) {
+                const math::Vector<double, 3> xi{
+                    axis(i), axis(j), dim >= 3 ? axis(k) : double(0)};
+                basis.evaluate_values(xi, values);
+                double sum = double(0);
+                for (const double v : values) {
+                    sum += std::abs(v);
+                }
+                max_sum = std::max(max_sum, sum);
+            }
+        }
+    }
+    return max_sum;
+}
+
 } // namespace
 
 TEST(SerendipityBasis, Quad8IsNodalAndPartitionsUnity) {
@@ -553,17 +643,17 @@ TEST(SerendipityBasis, QuadrilateralNodesFollowDocumentedConstructionThroughOrde
 
         std::size_t index = boundary_count;
         if (order >= 4) {
+            // The interior staircase sits on Gauss-Lobatto-Legendre interior nodes:
+            // row r at the (r+1)-th GLL node of order m+2, each row's columns at the
+            // GLL interior of order row_count+1 (same line_coord_pm_one the basis
+            // uses), re-derived here as an independent placement oracle.
             const int m = order - 4;
-            const double y_denominator = double(m + 2);
             for (int row = 0; row <= m; ++row) {
                 const int row_count = m + 1 - row;
-                const double expected_y =
-                    double(-1) + double(2) * double(row + 1) / y_denominator;
-                const double x_denominator = double(row_count + 1);
+                const double expected_y = line_coord_pm_one(row + 1, m + 2);
                 for (int col = 0; col < row_count; ++col) {
                     ASSERT_LT(index, nodes.size());
-                    const double expected_x =
-                        double(-1) + double(2) * double(col + 1) / x_denominator;
+                    const double expected_x = line_coord_pm_one(col + 1, row_count + 1);
                     EXPECT_NEAR(nodes[index][0], expected_x, kTol)
                         << "order=" << order << " row=" << row << " col=" << col;
                     EXPECT_NEAR(nodes[index][1], expected_y, kTol)
@@ -616,7 +706,10 @@ TEST(SerendipityBasis, QuadrilateralOrdersReproduceEverySerendipityMonomial) {
         const auto exponents = quad_serendipity_exponents_for_test(order);
         ASSERT_EQ(exponents.size(), basis.size()) << "order=" << order;
 
-        const double tolerance = (order <= 7) ? double(1e-10) : double(2e-8);
+        // Uniformly tight across the whole range: GLL nodes and the Legendre modal
+        // basis keep the reproduction accurate even at order 10 (the equispaced/
+        // monomial construction needed 2e-8 here).
+        const double tolerance = double(1e-10);
         for (const auto& exponent : exponents) {
             for (const auto& xi : points) {
                 const double interpolated =
@@ -946,9 +1039,9 @@ TEST(SerendipityBasis, HexahedralTopologyIsNodalAndPartitionsUnity) {
         EXPECT_EQ(basis.size(), expected_hex_serendipity_size(order)) << "order=" << order;
         ASSERT_EQ(basis.nodes().size(), basis.size());
 
-        expect_nodal_delta(basis, basis.nodes(), double(1e-7));
+        expect_nodal_delta(basis, basis.nodes(), double(1e-9));
         for (const auto& xi : points) {
-            expect_partition_of_unity(basis, xi, double(1e-7));
+            expect_partition_of_unity(basis, xi, double(1e-9));
         }
     }
 }
@@ -974,7 +1067,7 @@ TEST(SerendipityBasis, HexahedralTopologyReproducesEverySerendipityMonomial) {
                         return monomial_value_3d_for_test(node, exponent);
                     });
                 EXPECT_NEAR(interpolated, monomial_value_3d_for_test(xi, exponent),
-                            double(1e-6))
+                            double(1e-9))
                     << "order=" << order << " ax=" << exponent[0]
                     << " ay=" << exponent[1] << " az=" << exponent[2];
             }
@@ -1025,4 +1118,41 @@ TEST(SerendipityBasis, NamedHexLayoutsMatchTopologyConstruction) {
             }
         }
     }
+}
+
+// Conditioning is a tested quantity, not a tolerance that quietly loosens. With
+// the Legendre modal basis and Gauss-Lobatto-Legendre nodes, both the Vandermonde
+// condition number and the Lebesgue constant stay small across the recommended
+// range -- a logarithmic-style growth instead of the exponential blow-up of the
+// previous equispaced/monomial construction (which lost ~8 digits by order 10).
+TEST(SerendipityBasis, SerendipityStaysWellConditionedAcrossRecommendedRange) {
+    for (int order = 1; order <= 10; ++order) {
+        SerendipityBasis basis(BasisTopology::Quadrilateral, order);
+        const double cond = legendre_vandermonde_condition(
+            basis.nodes(), quad_serendipity_modes_3d_for_test(order));
+        const double lebesgue = serendipity_lebesgue_constant(basis, 24);
+        EXPECT_LT(cond, double(5e4)) << "quad order=" << order;
+        EXPECT_LT(lebesgue, double(1e3)) << "quad order=" << order;
+    }
+    for (int order = 1; order <= 8; ++order) {
+        SerendipityBasis basis(BasisTopology::Hexahedron, order);
+        const double cond = legendre_vandermonde_condition(
+            basis.nodes(), hex_serendipity_exponents_for_test(order));
+        const double lebesgue = serendipity_lebesgue_constant(basis, 12);
+        EXPECT_LT(cond, double(5e4)) << "hex order=" << order;
+        EXPECT_LT(lebesgue, double(1e3)) << "hex order=" << order;
+    }
+}
+
+// The condition-number guard is the numerical-soundness backstop: orders pushed
+// far past the well-conditioned range throw rather than return shape functions
+// whose coefficients have lost all precision. The recommended orders construct
+// without complaint.
+TEST(SerendipityBasis, RejectsOrdersBeyondTheWellConditionedRange) {
+    EXPECT_NO_THROW((void)SerendipityBasis(BasisTopology::Quadrilateral, 10));
+    EXPECT_NO_THROW((void)SerendipityBasis(BasisTopology::Hexahedron, 8));
+    EXPECT_THROW((void)SerendipityBasis(BasisTopology::Quadrilateral, 20),
+                 BasisConstructionException);
+    EXPECT_THROW((void)SerendipityBasis(BasisTopology::Hexahedron, 16),
+                 BasisConstructionException);
 }

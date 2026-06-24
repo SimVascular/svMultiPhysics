@@ -6,6 +6,8 @@
 #include "BasisTraits.h"
 
 #include <array>
+#include <cmath>
+#include <map>
 #include <utility>
 
 namespace svmp {
@@ -16,6 +18,69 @@ namespace {
 
 using Point = math::Vector<double, 3>;
 using Lattice = std::array<int, 3>;
+
+// Gauss-Lobatto-Legendre nodes on [-1, 1] for a degree-`order` distribution
+// (order + 1 nodes). The endpoints are -1 and +1; the interior nodes are the
+// roots of P'_order, found by Newton iteration on f(x) = x P_order(x) -
+// P_{order-1}(x) -- whose roots are exactly the GLL nodes -- from the
+// Chebyshev-Gauss-Lobatto seed.
+const std::vector<double>& gll_points(int order) {
+    thread_local std::map<int, std::vector<double>> cache;
+    const auto found = cache.find(order);
+    if (found != cache.end()) {
+        return found->second;
+    }
+
+    std::vector<double> pts(static_cast<std::size_t>(order + 1), double(0));
+    if (order >= 1) {
+        pts.front() = double(-1);
+        pts.back() = double(1);
+    }
+    const double pi = std::acos(double(-1));
+    const int half = order / 2;
+    for (int j = 1; j <= half; ++j) {
+        if (2 * j == order) {
+            pts[static_cast<std::size_t>(j)] = double(0);  // exact center, even order
+            continue;
+        }
+        double x = -std::cos(pi * static_cast<double>(j) / static_cast<double>(order));
+        for (int iter = 0; iter < 100; ++iter) {
+            // Legendre P_k and P'_k up to k = order at x, by the three-term
+            // recurrences (regular at x = +/-1).
+            double p_km1 = double(1);   // P_0
+            double p_k = x;             // P_1
+            double d_km1 = double(0);   // P'_0
+            double d_k = double(1);     // P'_1
+            for (int k = 1; k < order; ++k) {
+                const double kk = static_cast<double>(k);
+                const double inv = double(1) / (kk + double(1));
+                const double p_kp1 =
+                    ((double(2) * kk + double(1)) * x * p_k - kk * p_km1) * inv;
+                const double d_kp1 =
+                    ((double(2) * kk + double(1)) * (p_k + x * d_k) - kk * d_km1) * inv;
+                p_km1 = p_k;
+                p_k = p_kp1;
+                d_km1 = d_k;
+                d_k = d_kp1;
+            }
+            // p_k = P_order, p_km1 = P_{order-1}, d_k = P'_order, d_km1 = P'_{order-1}.
+            const double f = x * p_k - p_km1;
+            const double f_prime = p_k + x * d_k - d_km1;
+            const double dx = f / f_prime;
+            x -= dx;
+            if (std::abs(dx) <= double(1e-15)) {
+                break;
+            }
+        }
+        pts[static_cast<std::size_t>(j)] = x;
+    }
+    for (int j = half + 1; j < order; ++j) {
+        pts[static_cast<std::size_t>(j)] = -pts[static_cast<std::size_t>(order - j)];
+    }
+
+    auto inserted = cache.emplace(order, std::move(pts));
+    return inserted.first->second;
+}
 
 double line_coord_zero_one(int i, int order) {
     if (order <= 0) {
@@ -287,11 +352,19 @@ LagrangeNodeLayout generate_hex_nodes(int order) {
         {4, 5}, {5, 6}, {6, 7}, {7, 4},
         {0, 4}, {1, 5}, {2, 6}, {3, 7},
     };
+    // Edge-interior nodes at the Gauss-Lobatto-Legendre position of their lattice
+    // index on each axis (line_coord_pm_one), consistent with the corner, face, and
+    // interior strata and with the 1D tensor-axis nodes the evaluator uses. (A plain
+    // equispaced interpolation along the edge would disagree with the GLL faces and
+    // interior at order >= 3.)
     for (const auto& edge : edges) {
         for (int m = 1; m < order; ++m) {
-            const double t = static_cast<double>(m) / static_cast<double>(order);
-            out.coords.push_back(verts[edge[0]] * (double(1) - t) + verts[edge[1]] * t);
-            out.lattice.push_back(lerp_lattice(vert_lattice[edge[0]], vert_lattice[edge[1]], m, order));
+            const Lattice idx =
+                lerp_lattice(vert_lattice[edge[0]], vert_lattice[edge[1]], m, order);
+            out.coords.push_back(Point{line_coord_pm_one(idx[0], order),
+                                       line_coord_pm_one(idx[1], order),
+                                       line_coord_pm_one(idx[2], order)});
+            out.lattice.push_back(idx);
         }
     }
 
@@ -393,11 +466,20 @@ LagrangeNodeLayout generate_wedge_nodes(int order) {
         {3, 4}, {4, 5}, {5, 3},
         {0, 3}, {1, 4}, {2, 5},
     };
+    // The triangle cross-section (x, y) keeps its equispaced simplex placement; the
+    // through-axis (z) uses the Gauss-Lobatto-Legendre node of the lattice index, so
+    // the prism's tensor axis matches the 1D nodes the evaluator uses. (Triangle
+    // edges have z lattice 0 or `order`, for which line_coord_pm_one is -1 / +1, so
+    // their z is unchanged.)
     for (const auto& edge : edges) {
         for (int m = 1; m < order; ++m) {
             const double t = static_cast<double>(m) / static_cast<double>(order);
-            out.coords.push_back(verts[edge[0]] * (double(1) - t) + verts[edge[1]] * t);
-            out.lattice.push_back(lerp_lattice(vert_lattice[edge[0]], vert_lattice[edge[1]], m, order));
+            const Lattice idx =
+                lerp_lattice(vert_lattice[edge[0]], vert_lattice[edge[1]], m, order);
+            Point coord = verts[edge[0]] * (double(1) - t) + verts[edge[1]] * t;
+            coord[2] = line_coord_pm_one(idx[2], order);
+            out.coords.push_back(coord);
+            out.lattice.push_back(idx);
         }
     }
 
@@ -586,6 +668,13 @@ void validate_lattice(const LagrangeNodeLayout& layout, ElementType type, int or
 }
 
 } // namespace
+
+double line_coord_pm_one(int i, int order) {
+    if (order <= 0) {
+        return double(0);
+    }
+    return gll_points(order)[static_cast<std::size_t>(i)];
+}
 
 math::Vector<double, 3> ReferenceNodeLayout::get_node_coords(ElementType elem_type,
                                                            std::size_t local_node) {

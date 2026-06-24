@@ -269,7 +269,7 @@ private:
     void build_tensor_product_nodes();
     void build_simplex_nodes();
     void build_wedge_nodes();
-    void init_equispaced_1d_nodes();
+    void init_tensor_axis_nodes();
 
     void evaluate_all_to(const math::Vector<double, 3>& xi,
                          std::span<double> values_out,

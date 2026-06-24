@@ -109,13 +109,33 @@ namespace basis {
  * caller explicitly requests a different supported basis.
  *
  * Every supported family -- quadrilateral, hexahedral, and Wedge15 -- is built by
- * inverting the Vandermonde of its monomial space at the public-order reference
- * nodes; values, gradients, and Hessians are evaluated by differentiating the
- * monomial vector and applying the inverse-Vandermonde coefficients. Because the
- * tables are generated in public node order, evaluation needs no output
- * reordering, and there is no hand-written special case -- the Hex8 basis is the
- * order-1 instance of the generated hexahedral space, not a separate trilinear
- * evaluator.
+ * inverting the generalized Vandermonde of its mode space at the public-order
+ * reference nodes; values, gradients, and Hessians are evaluated by
+ * differentiating the mode vector and applying the inverse-Vandermonde
+ * coefficients. Because the tables are generated in public node order, evaluation
+ * needs no output reordering, and there is no hand-written special case -- the
+ * Hex8 basis is the order-1 instance of the generated hexahedral space, not a
+ * separate trilinear evaluator.
+ *
+ * ## Conditioning and the well-conditioned order range
+ *
+ * High-order nodal interpolation is governed by two conditioning factors, both
+ * addressed so that arbitrary orders produce trustworthy shape functions:
+ * - **Node distribution.** The quadrilateral and hexahedral families place their
+ *   nodes on the Gauss-Lobatto-Legendre (GLL) distribution (edges, faces, and the
+ *   interior staircase all use the GLL 1D nodes). GLL has a logarithmic Lebesgue
+ *   constant, where an equispaced layout grows exponentially (the Runge
+ *   phenomenon). The named production layouts are unaffected: GLL coincides with
+ *   the equispaced layout at orders 1 and 2, so Quad8/Hex8/Hex20 keep their exact
+ *   public coordinates; GLL differs only for order >= 3, where the layout is this
+ *   module's own convention.
+ * - **Modal basis.** The quadrilateral and hexahedral Vandermondes are assembled
+ *   in a tensor **Legendre** basis rather than raw monomials. The serendipity
+ *   exponent set is downward-closed, so the Legendre and monomial spans are
+ *   identical (the change of basis is triangular) -- the nodal shape functions are
+ *   unchanged -- but the Legendre Vandermonde is far better conditioned. (The
+ *   fixed Wedge15 layout, order 2, keeps the monomial form; it is trivially
+ *   well-conditioned.)
  */
 class SerendipityBasis final : public BasisFunction {
 public:
@@ -287,10 +307,17 @@ private:
     int order_;
     std::size_t size_;
     std::vector<math::Vector<double, 3>> nodes_;
-    // Monomial exponents (r^a s^b t^c) spanning the family's polynomial space.
+    // Per-axis degrees (a, b, c) of the tensor modes spanning the family's
+    // polynomial space. Interpreted as monomial powers r^a s^b t^c or, when
+    // uses_legendre_modes_ is set, as tensor Legendre degrees P_a(r) P_b(s) P_c(t)
+    // (the same space; see ModalAxisKind in SerendipityBasis.cpp).
     std::vector<std::array<int, 3>> monomial_exponents_;
-    // Row-major inverse Vandermonde, indexed as [monomial, basis].
+    // Row-major inverse (generalized) Vandermonde, indexed as [mode, basis].
     std::vector<double> inv_vandermonde_;
+    // Whether the tensor modes are Legendre polynomials (quadrilateral/hexahedral
+    // families) or plain monomials (the fixed Wedge15 layout). Evaluation must use
+    // the same family the coefficient table was built with.
+    bool uses_legendre_modes_{false};
 
     // Build the quadrilateral serendipity monomial space, reference nodes, and
     // nodal coefficient table for the given order. The named Quad8 layout takes

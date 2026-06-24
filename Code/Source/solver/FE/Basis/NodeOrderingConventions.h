@@ -17,17 +17,25 @@ namespace FE {
 namespace basis {
 
 /**
- * @brief Equispaced 1D reference coordinate on [-1, 1]: -1 + 2 i / order.
+ * @brief The i-th 1D tensor-axis reference node on [-1, 1] at the given order.
+ *
+ * @details Returns the Gauss-Lobatto-Legendre (GLL) node of index @p i for a
+ * degree-@p order distribution: the endpoints are -1 and +1 and the interior
+ * nodes are the roots of @f$P'_{order}@f$, so high-order tensor interpolation
+ * stays well-conditioned (a logarithmic Lebesgue constant instead of the
+ * exponential growth of equispaced nodes). At order 1 the nodes are
+ * @f$\{-1, +1\}@f$ and at order 2 @f$\{-1, 0, +1\}@f$, so they coincide with the
+ * equispaced layout for the production orders and differ only for order >= 3.
+ * Returns 0 for order <= 0.
  *
  * Shared by the reference-node layout generators and the Lagrange tensor-axis
- * node initialization so the lattice formula lives in a single place.
+ * node initialization so the 1D distribution lives in a single place.
+ *
+ * @param i Node index in [0, order].
+ * @param order Polynomial order of the 1D distribution.
+ * @return GLL node coordinate on [-1, 1].
  */
-[[nodiscard]] inline constexpr double line_coord_pm_one(int i, int order) noexcept {
-    if (order <= 0) {
-        return double(0);
-    }
-    return double(-1) + double(2) * static_cast<double>(i) / static_cast<double>(order);
-}
+[[nodiscard]] double line_coord_pm_one(int i, int order);
 
 /**
  * @brief Reference Lagrange node coordinates paired with their integer lattice

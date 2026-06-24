@@ -271,9 +271,9 @@ LagrangeBasis::LagrangeBasis(BasisTopology topology, int order)
 LagrangeBasis::LagrangeBasis(ElementType type, int order)
     : LagrangeBasis(validated_lagrange_topology(type, order), order) {}
 
-// Initialize equispaced 1D interpolation nodes and their barycentric weights for
-// tensor-product axes.
-void LagrangeBasis::init_equispaced_1d_nodes() {
+// Initialize the 1D tensor-axis interpolation nodes (Gauss-Lobatto-Legendre, via
+// line_coord_pm_one) and their barycentric weights for tensor-product axes.
+void LagrangeBasis::init_tensor_axis_nodes() {
     const std::size_t n = static_cast<std::size_t>(order_ + 1);
     nodes_1d_.resize(n);
     for (int i = 0; i <= order_; ++i) {
@@ -337,7 +337,7 @@ void LagrangeBasis::build_point_nodes() {
 
 // Build nodes and axis indices for tensor-product elements.
 void LagrangeBasis::build_tensor_product_nodes() {
-    init_equispaced_1d_nodes();
+    init_tensor_axis_nodes();
     const auto layout =
         ReferenceNodeLayout::get_lagrange_lattice(lagrange_topology_representative(topology_), order_);
     nodes_ = layout.coords;
@@ -365,7 +365,7 @@ void LagrangeBasis::build_simplex_nodes() {
 
 // Build nodes and mixed triangle-axis lookup data for wedge elements.
 void LagrangeBasis::build_wedge_nodes() {
-    init_equispaced_1d_nodes();
+    init_tensor_axis_nodes();
     const auto layout =
         ReferenceNodeLayout::get_lagrange_lattice(lagrange_topology_representative(topology_), order_);
     nodes_ = layout.coords;
