@@ -21,6 +21,7 @@
 #include "CoupledBoundaryCondition.h"
 #include "Timer.h"
 #include "Vector.h"
+#include "fcType.h"
 
 #include "DebugMsg.h"
 
@@ -42,42 +43,6 @@
 #include <sstream>
 
 class LinearAlgebra;
-
-/// @brief Fourier coefficients that are used to specify unsteady BCs
-//
-class fcType
-{
-  public:
-
-    bool defined() { return n != 0; };
-
-    // If this is a ramp function
-    bool lrmp = false;
-
-    // Number of Fourier coefficient
-    int n = 0;
-
-    // No. of dimensions (scalar or vector)
-    int d = 0;
-   
-    // Initial value
-    Vector<double> qi;
-
-    // Time derivative of linear part
-    Vector<double> qs;
-
-    // Period
-    double T = 0.0;
-
-    // Initial time
-    double ti = 0.0;
-
-    // Imaginary part of coefficint
-    Array<double> i;
-
-    // Real part of coefficint
-    Array<double> r;
-};
 
 /// @brief Moving boundary data structure (used for general BC)
 //

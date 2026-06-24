@@ -156,7 +156,8 @@ set(CSRCS
   PetscLinearAlgebra.h PetscLinearAlgebra.cpp
   TrilinosLinearAlgebra.h TrilinosLinearAlgebra.cpp
   Tensor4.h Tensor4.cpp
-  Vector.h Vector.cpp 
+  Vector.h Vector.cpp
+  fcType.cpp
 
   lapack_defs.h
 
