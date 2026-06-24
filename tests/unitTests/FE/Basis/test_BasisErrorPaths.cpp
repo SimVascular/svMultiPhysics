@@ -226,6 +226,19 @@ TEST(BasisErrorPaths, SerendipityInvalidRequestsThrowBasisExceptions) {
                  BasisConfigurationException);
     EXPECT_THROW(SerendipityBasis(ElementType::Wedge15, 3),
                  BasisConfigurationException);
+
+    // Order 0 and negative orders are rejected for every serendipity layout; a
+    // named element is pinned to its inferred order and is never floored up to it.
+    EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 0),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Hex8, 0),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Hex20, 0),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Wedge15, 0),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Hex8, -1),
+                 BasisConfigurationException);
 }
 
 TEST(BasisErrorPaths, BasisFactoryRejectsNonC0Continuity) {

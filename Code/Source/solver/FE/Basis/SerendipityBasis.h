@@ -75,8 +75,8 @@ namespace basis {
  * nonsingular for the implemented quadrilateral serendipity space.
  *
  * `SerendipityBasis(BasisTopology::Quadrilateral, p)` is the arbitrary-order
- * entry point for quadrilateral serendipity (@f$p \ge 1@f$, requests below one
- * normalized to one); it generates its own reference nodes, since the
+ * entry point for quadrilateral serendipity (@f$p \ge 1@f$; orders below one are
+ * rejected); it generates its own reference nodes, since the
  * higher-order interior ordering is an implementation convention rather than a
  * public layout. `ElementType::Quad8` is the named quadratic eight-node layout
  * (valid only with order 2) and, like Hex20 and Wedge15, takes its reference
@@ -105,12 +105,13 @@ public:
      * family with a free order: the quadrilateral. The topology carries no
      * node-count assumption; the monomial space, reference nodes (generated
      * here), and nodal coefficient table are built from the requested order
-     * (orders below 1 are normalized to 1). Hex and wedge serendipity are single
+     * (which must be @f$p \ge 1@f$). Hex and wedge serendipity are single
      * fixed layouts and are not constructed this way -- use the named ElementType
      * overload (Hex8/Hex20/Wedge15) for them.
      *
      * @param topology Must be BasisTopology::Quadrilateral.
-     * @param order Polynomial order @f$p \ge 1@f$ (lower values normalized to 1).
+     * @param order Polynomial order @f$p \ge 1@f$; orders below 1 are rejected.
+     * @throws BasisConfigurationException If @p order is less than 1.
      * @throws BasisElementCompatibilityException If @p topology is not Quadrilateral.
      */
     SerendipityBasis(BasisTopology topology, int order);
@@ -122,13 +123,16 @@ public:
      * Quad8 builds the quadratic quadrilateral serendipity space from its
      * ReferenceNodeLayout nodes; Hex8 uses the trilinear corner basis directly;
      * Hex20 and Wedge15 build and invert a Vandermonde over their fixed monomial
-     * spaces. Each layout is pinned to a single order (Hex8 to 1; Quad8, Hex20,
-     * and Wedge15 to 2), so the requested @p order must match it; arbitrary-order
-     * quadrilateral serendipity is requested through the BasisTopology overload.
+     * spaces. Each layout carries an inferred fixed order (Hex8 to 1; Quad8,
+     * Hex20, and Wedge15 to 2); the requested @p order must equal that inferred
+     * order and is never adjusted to fit, so a mismatched request (including
+     * order 0 or negative) is rejected. Arbitrary-order quadrilateral serendipity
+     * is requested through the BasisTopology overload.
      *
      * @param type Named serendipity element type (Quad8, Hex8, Hex20, or Wedge15).
-     * @param order Requested order; must equal the layout's fixed order.
-     * @throws BasisConfigurationException If @p order does not match the layout's fixed order.
+     * @param order Requested order; must equal the layout's inferred fixed order
+     *        (1 for Hex8; 2 for Quad8, Hex20, and Wedge15).
+     * @throws BasisConfigurationException If @p order does not match the layout's inferred order.
      * @throws BasisElementCompatibilityException If the element type is unsupported.
      */
     SerendipityBasis(ElementType type, int order);

@@ -421,9 +421,17 @@ TEST(SerendipityBasis, TopologyConstructionOnlySupportsQuadrilateral) {
     EXPECT_EQ(topo.element_type(), ElementType::Quad8);
 }
 
-TEST(SerendipityBasis, QuadrilateralOrderZeroNormalizesToLinear) {
-    SerendipityBasis basis(BasisTopology::Quadrilateral, 0);
+TEST(SerendipityBasis, QuadrilateralRejectsOrdersBelowOne) {
+    // Serendipity bases require a positive polynomial order; orders <= 0 are
+    // rejected rather than normalized up to the linear space.
+    EXPECT_THROW(SerendipityBasis(BasisTopology::Quadrilateral, 0),
+                 BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(BasisTopology::Quadrilateral, -1),
+                 BasisConfigurationException);
 
+    // Order 1 is the smallest valid quadrilateral serendipity (the bilinear Q1
+    // space): four corner nodes and the nodal-interpolation property.
+    SerendipityBasis basis(BasisTopology::Quadrilateral, 1);
     EXPECT_EQ(basis.order(), 1);
     EXPECT_EQ(basis.size(), 4u);
     expect_nodal_delta(basis, basis.nodes(), double(1e-12));

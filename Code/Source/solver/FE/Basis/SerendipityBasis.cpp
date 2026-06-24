@@ -321,23 +321,26 @@ struct NormalizedSerendipityRequest {
 // quadrilateral serendipity is not a named element: it is requested through the
 // BasisTopology::Quadrilateral constructor.
 NormalizedSerendipityRequest normalize_serendipity_request(ElementType type, int order) {
-    const int floored_order = std::max(order, 1);
+    // The named layouts carry an inferred fixed order (Hex8 -> 1; Quad8, Hex20,
+    // and Wedge15 -> 2). The request must supply that exact order: it is never
+    // floored or otherwise adjusted to fit, so order 0 and negative orders are
+    // rejected rather than promoted to a valid layout.
     switch (type) {
         case ElementType::Quad8:
-            svmp::throw_if<BasisConfigurationException>(floored_order != 2, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != 2, SVMP_HERE,
                 "SerendipityBasis: Quad8 is the quadratic 8-node serendipity layout (order 2 only); "
                 "use BasisTopology::Quadrilateral for higher-order quadrilateral serendipity");
             return {BasisTopology::Quadrilateral, 2, 2};
         case ElementType::Hex8:
-            svmp::throw_if<BasisConfigurationException>(floored_order != 1, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != 1, SVMP_HERE,
                 "SerendipityBasis: Hex8 is the trilinear 8-node basis (order 1 only); use Hex20 for quadratic serendipity");
             return {BasisTopology::Hexahedron, 3, 1};
         case ElementType::Hex20:
-            svmp::throw_if<BasisConfigurationException>(floored_order != 2, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != 2, SVMP_HERE,
                 "SerendipityBasis: Hex20 is the 20-node quadratic serendipity layout (order 2 only)");
             return {BasisTopology::Hexahedron, 3, 2};
         case ElementType::Wedge15:
-            svmp::throw_if<BasisConfigurationException>(floored_order != 2, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != 2, SVMP_HERE,
                 "SerendipityBasis: Wedge15 is the 15-node quadratic serendipity layout (order 2 only)");
             return {BasisTopology::Wedge, 3, 2};
         default:
@@ -355,8 +358,11 @@ SerendipityBasis::SerendipityBasis(BasisTopology topology, int order)
         topology_ != BasisTopology::Quadrilateral, SVMP_HERE,
         "SerendipityBasis: arbitrary-order topology construction is only supported for "
         "Quadrilateral; use the named ElementType (Hex8/Hex20/Wedge15) for hex/wedge serendipity");
+    svmp::throw_if<BasisConfigurationException>(
+        order < 1, SVMP_HERE,
+        "SerendipityBasis: quadrilateral serendipity requires a polynomial order >= 1");
     dimension_ = 2;
-    order_ = std::max(order, 1);
+    order_ = order;
     init_quadrilateral(order_, /*nodes_from_reference_layout=*/false);
 }
 
