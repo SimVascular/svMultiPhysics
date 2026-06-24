@@ -475,9 +475,9 @@ TEST(LagrangeBasis, QuadraticPolynomialReproductionAcrossQuadraticAliases) {
 // activates the volume-interior lattice, and hex order >= 3 activates the six
 // orientation-specific face traversals in NodeOrderingConventions. None of
 // those generation paths run at the orders covered elsewhere; the Kronecker
-// test is what validates the node lattice together with its llround-based
-// inverse index mapping (a duplicated or missing node makes the basis
-// non-nodal here).
+// test is what validates the node lattice together with the integer
+// lattice-index mapping the basis builds from it (a duplicated or missing
+// node makes the basis non-nodal here).
 TEST(LagrangeBasis, HigherOrderLatticesAreNodalAndPartitionUnity) {
     const struct Case {
         ElementType type;
