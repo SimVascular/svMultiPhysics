@@ -440,8 +440,8 @@ LagrangeNodeLayout generate_wedge_nodes(int order) {
 }
 
 LagrangeNodeLayout complete_lagrange_nodes(ElementType canonical_type, int order) {
-    svmp::throw_if<BasisNodeOrderingException>(order < 0, SVMP_HERE,
-                                             "ReferenceNodeLayout requires non-negative Lagrange order");
+    svmp::throw_if<BasisConfigurationException>(order < 0, SVMP_HERE,
+                                              "ReferenceNodeLayout requires non-negative Lagrange order");
     const ElementType type = canonical_lagrange_type(canonical_type);
     switch (type) {
         case ElementType::Point1: {
