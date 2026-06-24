@@ -6,6 +6,7 @@
 #include "BasisTraits.h"
 
 #include <array>
+#include <utility>
 
 namespace svmp {
 namespace FE {
@@ -481,6 +482,68 @@ LagrangeNodeLayout complete_lagrange_nodes(ElementType canonical_type, int order
     }
 }
 
+// Topological interior dimension of an integer lattice node: the number of
+// independent directions in which the point sits in the relative interior of
+// the reference cell. A vertex gives 0, an edge-interior node 1, a
+// face-interior node 2, and a volume-interior node 3.
+int serendipity_interior_dim(BasisTopology top, const Lattice& idx, int order) {
+    const auto tensor_interior = [order](int v) { return (v > 0 && v < order) ? 1 : 0; };
+    switch (top) {
+        case BasisTopology::Quadrilateral:
+            return tensor_interior(idx[0]) + tensor_interior(idx[1]);
+        case BasisTopology::Hexahedron:
+            return tensor_interior(idx[0]) + tensor_interior(idx[1]) +
+                   tensor_interior(idx[2]);
+        case BasisTopology::Wedge: {
+            // (idx[0], idx[1]) is the triangle cross-section with implied third
+            // barycentric index k; idx[2] is the tensor through-axis. A triangle
+            // vertex contributes 0, a triangle edge 1, and the triangle interior 2.
+            const int i = idx[0];
+            const int j = idx[1];
+            const int k = order - i - j;
+            const bool tri_vertex = (i == order) || (j == order) || (i + j == 0);
+            const bool tri_interior = (i > 0) && (j > 0) && (k > 0);
+            const int tri_dim = tri_vertex ? 0 : (tri_interior ? 2 : 1);
+            return tri_dim + tensor_interior(idx[2]);
+        }
+        default:
+            return 0;
+    }
+}
+
+// Build a serendipity reference layout (Quad8, Hex20, Wedge15) from the complete
+// quadratic layout of the same topology. Serendipity layouts keep only the
+// element's vertices and edge midpoints and drop the face- and volume-interior
+// nodes; the complete-quadratic generators emit the vertex/edge nodes first, so
+// the serendipity set is exactly the leading keep_count nodes.
+std::vector<Point> serendipity_subset_nodes(BasisTopology top,
+                                            LagrangeNodeLayout complete,
+                                            std::size_t keep_count,
+                                            std::size_t complete_count) {
+    constexpr int kQuadraticOrder = 2;
+    svmp::throw_if<BasisConstructionException>(
+        complete.coords.size() != complete_count ||
+            complete.lattice.size() != complete_count,
+        SVMP_HERE,
+        "ReferenceNodeLayout: unexpected complete-quadratic node count for serendipity layout");
+    svmp::throw_if<BasisConstructionException>(
+        keep_count >= complete_count, SVMP_HERE,
+        "ReferenceNodeLayout: serendipity node count must be smaller than the complete layout");
+
+    for (std::size_t n = 0; n < complete.lattice.size(); ++n) {
+        const bool on_skeleton =
+            serendipity_interior_dim(top, complete.lattice[n], kQuadraticOrder) <= 1;
+        const bool kept = n < keep_count;
+        svmp::throw_if<BasisConstructionException>(
+            kept != on_skeleton, SVMP_HERE,
+            "ReferenceNodeLayout: serendipity truncation does not separate skeleton nodes from interior nodes");
+    }
+
+    std::vector<Point> nodes = std::move(complete.coords);
+    nodes.resize(keep_count);
+    return nodes;
+}
+
 std::vector<Point> element_nodes(ElementType elem_type) {
     const int order = complete_lagrange_alias_order(elem_type);
     if (order >= 0) {
@@ -488,21 +551,15 @@ std::vector<Point> element_nodes(ElementType elem_type) {
     }
 
     switch (elem_type) {
-        case ElementType::Quad8: {
-            auto nodes = generate_quad_nodes(2).coords;
-            nodes.resize(8u);
-            return nodes;
-        }
-        case ElementType::Hex20: {
-            auto nodes = generate_hex_nodes(2).coords;
-            nodes.resize(20u);
-            return nodes;
-        }
-        case ElementType::Wedge15: {
-            auto nodes = generate_wedge_nodes(2).coords;
-            nodes.resize(15u);
-            return nodes;
-        }
+        case ElementType::Quad8:
+            return serendipity_subset_nodes(BasisTopology::Quadrilateral,
+                                            generate_quad_nodes(2), 8u, 9u);
+        case ElementType::Hex20:
+            return serendipity_subset_nodes(BasisTopology::Hexahedron,
+                                            generate_hex_nodes(2), 20u, 27u);
+        case ElementType::Wedge15:
+            return serendipity_subset_nodes(BasisTopology::Wedge,
+                                            generate_wedge_nodes(2), 15u, 18u);
         case ElementType::Pyramid13:
             svmp::raise<BasisNodeOrderingException>(SVMP_HERE,
                 "ReferenceNodeLayout: pyramid node ordering is disabled");
