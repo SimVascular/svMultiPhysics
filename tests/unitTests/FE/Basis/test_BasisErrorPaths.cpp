@@ -41,6 +41,7 @@ namespace {
 class MinimalScalarBasis : public BasisFunction {
 public:
     BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
+    BasisTopology topology() const noexcept override { return BasisTopology::Line; }
     ElementType element_type() const noexcept override { return ElementType::Line2; }
     int dimension() const noexcept override { return 1; }
     int order() const noexcept override { return 1; }
@@ -63,6 +64,7 @@ public:
     using BasisFunction::numerical_hessian;
 
     BasisType basis_type() const noexcept override { return BasisType::Custom; }
+    BasisTopology topology() const noexcept override { return BasisTopology::Hexahedron; }
     ElementType element_type() const noexcept override { return ElementType::Hex8; }
     int dimension() const noexcept override { return 3; }
     int order() const noexcept override { return 2; }
@@ -111,6 +113,7 @@ public:
 class CompleteFallbackBasis : public BasisFunction {
 public:
     BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
+    BasisTopology topology() const noexcept override { return BasisTopology::Triangle; }
     ElementType element_type() const noexcept override { return ElementType::Triangle3; }
     int dimension() const noexcept override { return 2; }
     int order() const noexcept override { return 1; }
@@ -175,6 +178,33 @@ TEST(BasisErrorPaths, LagrangeInvalidRequestsThrowBasisExceptions) {
                  BasisConfigurationException);
     EXPECT_THROW(LagrangeBasis(ElementType::Quad8, 2),
                  BasisElementCompatibilityException);
+}
+
+// A named Lagrange element layout fixes its polynomial order: the matching order
+// is accepted and any other order is rejected. Arbitrary orders must be
+// requested through the BasisTopology overload, never by over-/under-specifying
+// a node-count-named element.
+TEST(BasisErrorPaths, NamedLagrangeElementsRejectNonBakedOrders) {
+    const std::vector<std::pair<ElementType, int>> named = {
+        {ElementType::Point1, 0},
+        {ElementType::Line2, 1},     {ElementType::Line3, 2},
+        {ElementType::Triangle3, 1}, {ElementType::Triangle6, 2},
+        {ElementType::Quad4, 1},     {ElementType::Quad9, 2},
+        {ElementType::Tetra4, 1},    {ElementType::Tetra10, 2},
+        {ElementType::Hex8, 1},      {ElementType::Hex27, 2},
+        {ElementType::Wedge6, 1},    {ElementType::Wedge18, 2},
+    };
+
+    for (const auto& [type, baked] : named) {
+        EXPECT_NO_THROW((void)LagrangeBasis(type, baked))
+            << "element=" << static_cast<int>(type);
+        EXPECT_THROW((void)LagrangeBasis(type, baked + 1), BasisConfigurationException)
+            << "element=" << static_cast<int>(type);
+        if (baked > 0) {
+            EXPECT_THROW((void)LagrangeBasis(type, baked - 1), BasisConfigurationException)
+                << "element=" << static_cast<int>(type);
+        }
+    }
 }
 
 TEST(BasisErrorPaths, SerendipityInvalidRequestsThrowBasisExceptions) {

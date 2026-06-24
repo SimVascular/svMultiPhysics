@@ -340,13 +340,14 @@ std::vector<math::Vector<double, 3>> quad8_reference_nodes_for_test() {
 
 TEST(SerendipityBasis, Quad8IsNodalAndPartitionsUnity) {
     SerendipityBasis basis(ElementType::Quad8, 2);
-    SerendipityBasis explicit_quad4_basis(ElementType::Quad4, 2);
+    SerendipityBasis topology_quad_basis(BasisTopology::Quadrilateral, 2);
 
     EXPECT_EQ(basis.size(), 8u);
-    // Quad8 sources its nodes from ReferenceNodeLayout while explicit Quad4 order
-    // 2 uses the local arbitrary-order generator, so this also pins the two
-    // independent quadrilateral node sources to agree at the production order.
-    expect_nodes_near(basis.nodes(), explicit_quad4_basis.nodes(), double(1e-14));
+    // Quad8 sources its nodes from ReferenceNodeLayout while the arbitrary-order
+    // Quadrilateral path at order 2 uses the local generator, so this also pins
+    // the two independent quadrilateral node sources to agree at the production
+    // order.
+    expect_nodes_near(basis.nodes(), topology_quad_basis.nodes(), double(1e-14));
     expect_nodal_delta(basis, basis.nodes(), double(1e-10));
     expect_partition_of_unity(basis, {double(0.17), double(-0.31), double(0)});
 }
@@ -396,19 +397,41 @@ TEST(SerendipityBasis, RejectsUnsupportedSerendipityAliases) {
     EXPECT_THROW(SerendipityBasis(ElementType::Pyramid14, 2), FEException);
     EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 3), FEException);
     EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 1), FEException);
+    // Quad4 is the linear Lagrange quad, not a named serendipity layout; arbitrary
+    // quadrilateral serendipity is requested through BasisTopology::Quadrilateral.
+    EXPECT_THROW(SerendipityBasis(ElementType::Quad4, 2), FEException);
+}
+
+// Topology construction is the arbitrary-order entry point and exists only for
+// the quadrilateral, the single serendipity family with a free order. Hex and
+// wedge serendipity are fixed layouts requested through their named ElementType.
+TEST(SerendipityBasis, TopologyConstructionOnlySupportsQuadrilateral) {
+    EXPECT_NO_THROW((void)SerendipityBasis(BasisTopology::Quadrilateral, 3));
+    EXPECT_THROW(SerendipityBasis(BasisTopology::Hexahedron, 2),
+                 BasisElementCompatibilityException);
+    EXPECT_THROW(SerendipityBasis(BasisTopology::Wedge, 2),
+                 BasisElementCompatibilityException);
+    EXPECT_THROW(SerendipityBasis(BasisTopology::Triangle, 2),
+                 BasisElementCompatibilityException);
+
+    // Topology and named construction agree at the production order.
+    SerendipityBasis topo(BasisTopology::Quadrilateral, 2);
+    EXPECT_EQ(topo.topology(), BasisTopology::Quadrilateral);
+    EXPECT_EQ(topo.order(), 2);
+    EXPECT_EQ(topo.element_type(), ElementType::Quad8);
 }
 
 TEST(SerendipityBasis, QuadrilateralOrderZeroNormalizesToLinear) {
-    SerendipityBasis basis(ElementType::Quad4, 0);
+    SerendipityBasis basis(BasisTopology::Quadrilateral, 0);
 
     EXPECT_EQ(basis.order(), 1);
     EXPECT_EQ(basis.size(), 4u);
     expect_nodal_delta(basis, basis.nodes(), double(1e-12));
 }
 
-// Explicit Quad4 serendipity orders run the documented monomial selection,
-// boundary plus triangular interior node placement, and runtime Vandermonde
-// inversion. Order four is the first order with an interior residual
+// Explicit quadrilateral-topology serendipity orders run the documented monomial
+// selection, boundary plus triangular interior node placement, and runtime
+// Vandermonde inversion. Order four is the first order with an interior residual
 // polynomial, so it is the first order that appends an interior node.
 TEST(SerendipityBasis, QuadrilateralOrdersOneThreeFourAreNodalAndPartitionUnity) {
     const struct Case {
@@ -421,7 +444,7 @@ TEST(SerendipityBasis, QuadrilateralOrdersOneThreeFourAreNodalAndPartitionUnity)
     };
 
     for (const auto& c : cases) {
-        SerendipityBasis basis(ElementType::Quad4, c.order);
+        SerendipityBasis basis(BasisTopology::Quadrilateral, c.order);
         EXPECT_EQ(basis.size(), c.size) << "order=" << c.order;
         EXPECT_EQ(basis.order(), c.order);
         EXPECT_EQ(basis.dimension(), 2);
@@ -442,7 +465,7 @@ TEST(SerendipityBasis, QuadrilateralNodesFollowDocumentedConstructionThroughOrde
     constexpr double kTol = double(1e-14);
 
     for (int order = 1; order <= 10; ++order) {
-        SerendipityBasis basis(ElementType::Quad4, order);
+        SerendipityBasis basis(BasisTopology::Quadrilateral, order);
         const auto& nodes = basis.nodes();
         const std::size_t expected_size = expected_quad_serendipity_size(order);
         const std::size_t boundary_count = static_cast<std::size_t>(4 * order);
@@ -501,7 +524,7 @@ TEST(SerendipityBasis, QuadrilateralNodesFollowDocumentedConstructionThroughOrde
 }
 
 TEST(SerendipityBasis, QuadrilateralOrderOneReproducesBilinearFunctions) {
-    SerendipityBasis basis(ElementType::Quad4, 1);
+    SerendipityBasis basis(BasisTopology::Quadrilateral, 1);
 
     const std::vector<math::Vector<double, 3>> points = {
         {double(0.25), double(-0.4), double(0)},
@@ -515,7 +538,7 @@ TEST(SerendipityBasis, QuadrilateralOrderOneReproducesBilinearFunctions) {
 }
 
 TEST(SerendipityBasis, QuadrilateralOrderThreeReproducesSerendipityCubics) {
-    SerendipityBasis basis(ElementType::Quad4, 3);
+    SerendipityBasis basis(BasisTopology::Quadrilateral, 3);
 
     const std::vector<math::Vector<double, 3>> points = {
         {double(0.25), double(-0.4), double(0)},
@@ -536,7 +559,7 @@ TEST(SerendipityBasis, QuadrilateralOrdersReproduceEverySerendipityMonomial) {
     };
 
     for (int order = 1; order <= 10; ++order) {
-        SerendipityBasis basis(ElementType::Quad4, order);
+        SerendipityBasis basis(BasisTopology::Quadrilateral, order);
         const auto exponents = quad_serendipity_exponents_for_test(order);
         ASSERT_EQ(exponents.size(), basis.size()) << "order=" << order;
 
@@ -562,7 +585,7 @@ TEST(SerendipityBasis, QuadrilateralOrdersReproduceEverySerendipityMonomial) {
 
 TEST(SerendipityBasis, QuadrilateralVandermondeHasFullRankThroughOrderTen) {
     for (int order = 1; order <= 10; ++order) {
-        SerendipityBasis basis(ElementType::Quad4, order);
+        SerendipityBasis basis(BasisTopology::Quadrilateral, order);
         const auto exponents = quad_serendipity_exponents_for_test(order);
         const auto vandermonde =
             quadrilateral_vandermonde_for_test(basis.nodes(), exponents);

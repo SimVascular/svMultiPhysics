@@ -24,7 +24,8 @@ namespace {
 using Point = math::Vector<double, 3>;
 
 struct CanonicalCase {
-    ElementType type;
+    BasisTopology topology;
+    ElementType representative;  // linear element for sample-point lookup and labeling
     int order;
     std::size_t size;
     int dimension;
@@ -34,31 +35,31 @@ struct CanonicalCase {
 
 const std::vector<CanonicalCase>& canonical_cases() {
     static const std::vector<CanonicalCase> cases = {
-        {ElementType::Line2, 3, 4u, 1,
+        {BasisTopology::Line, ElementType::Line2, 3, 4u, 1,
          {{double(-0.35), double(0), double(0)}, {double(0.2), double(0), double(0)}},
          double(1e-11)},
-        {ElementType::Triangle3, 3, 10u, 2,
+        {BasisTopology::Triangle, ElementType::Triangle3, 3, 10u, 2,
          {{double(0.15), double(0.2), double(0)}, {double(0.25), double(0.1), double(0)}},
          double(1e-9)},
-        {ElementType::Quad4, 3, 16u, 2,
+        {BasisTopology::Quadrilateral, ElementType::Quad4, 3, 16u, 2,
          {{double(0.2), double(-0.3), double(0)}, {double(-0.45), double(0.25), double(0)}},
          double(1e-11)},
-        {ElementType::Tetra4, 2, 10u, 3,
+        {BasisTopology::Tetrahedron, ElementType::Tetra4, 2, 10u, 3,
          {{double(0.12), double(0.18), double(0.16)}, {double(0.2), double(0.1), double(0.18)}},
          double(1e-9)},
-        {ElementType::Hex8, 2, 27u, 3,
+        {BasisTopology::Hexahedron, ElementType::Hex8, 2, 27u, 3,
          {{double(0.1), double(-0.2), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}},
          double(1e-10)},
-        {ElementType::Wedge6, 2, 18u, 3,
+        {BasisTopology::Wedge, ElementType::Wedge6, 2, 18u, 3,
          {{double(0.18), double(0.22), double(-0.2)}, {double(0.12), double(0.16), double(0.1)}},
          double(1e-9)},
     };
     return cases;
 }
 
-std::vector<Point> sample_points_for(ElementType type) {
+std::vector<Point> sample_points_for(ElementType representative) {
     for (const auto& c : canonical_cases()) {
-        if (c.type == type) {
+        if (c.representative == representative) {
             return c.points;
         }
     }
@@ -235,9 +236,9 @@ double interpolate_value(const LagrangeBasis& basis,
 
 TEST(LagrangeBasis, CanonicalTopologiesHaveExpectedSizesAndDimensions) {
     for (const auto& c : canonical_cases()) {
-        LagrangeBasis basis(c.type, c.order);
+        LagrangeBasis basis(c.topology, c.order);
         EXPECT_EQ(basis.basis_type(), BasisType::Lagrange);
-        EXPECT_EQ(basis.element_type(), c.type);
+        EXPECT_EQ(basis.topology(), c.topology);
         EXPECT_EQ(basis.order(), c.order);
         EXPECT_EQ(basis.size(), c.size);
         EXPECT_EQ(basis.dimension(), c.dimension);
@@ -246,7 +247,7 @@ TEST(LagrangeBasis, CanonicalTopologiesHaveExpectedSizesAndDimensions) {
 
 TEST(LagrangeBasis, CanonicalTopologiesAreNodalAndPartitionUnity) {
     for (const auto& c : canonical_cases()) {
-        LagrangeBasis basis(c.type, c.order);
+        LagrangeBasis basis(c.topology, c.order);
         expect_kronecker_at_nodes(basis, double(2e-10));
         expect_partition_gradient_hessian_sums(basis, c.points, c.derivative_tol);
     }
@@ -254,45 +255,68 @@ TEST(LagrangeBasis, CanonicalTopologiesAreNodalAndPartitionUnity) {
 
 TEST(LagrangeBasis, SpanOutputSinksMatchVectorEvaluationAcrossTopologies) {
     for (const auto& c : canonical_cases()) {
-        LagrangeBasis basis(c.type, c.order);
+        LagrangeBasis basis(c.topology, c.order);
         expect_span_sinks_match_vector_evaluation(basis, c.points.front());
     }
 }
 
-TEST(LagrangeBasis, CompleteAliasesNormalizeToCanonicalBases) {
-    const std::vector<std::tuple<ElementType, ElementType, int>> aliases = {
-        {ElementType::Line3, ElementType::Line2, 2},
-        {ElementType::Triangle6, ElementType::Triangle3, 2},
-        {ElementType::Quad9, ElementType::Quad4, 2},
-        {ElementType::Tetra10, ElementType::Tetra4, 2},
-        {ElementType::Hex27, ElementType::Hex8, 2},
-        {ElementType::Wedge18, ElementType::Wedge6, 2},
+// A named quadratic alias is a fixed-order shorthand for the same topology at
+// order 2: it builds the identical basis as the BasisTopology overload, reports
+// that topology, and round-trips faithfully through element_type() (Hex27 stays
+// Hex27 rather than collapsing to a canonical linear type).
+TEST(LagrangeBasis, CompleteAliasesMatchTopologyConstruction) {
+    const std::vector<std::tuple<ElementType, BasisTopology, ElementType>> aliases = {
+        {ElementType::Line3, BasisTopology::Line, ElementType::Line2},
+        {ElementType::Triangle6, BasisTopology::Triangle, ElementType::Triangle3},
+        {ElementType::Quad9, BasisTopology::Quadrilateral, ElementType::Quad4},
+        {ElementType::Tetra10, BasisTopology::Tetrahedron, ElementType::Tetra4},
+        {ElementType::Hex27, BasisTopology::Hexahedron, ElementType::Hex8},
+        {ElementType::Wedge18, BasisTopology::Wedge, ElementType::Wedge6},
     };
 
-    for (const auto& [alias, canonical, order] : aliases) {
-        LagrangeBasis alias_basis(alias, 1);
-        LagrangeBasis canonical_basis(canonical, order);
-        const auto generated = ReferenceNodeLayout::get_lagrange_node_coords(canonical, order);
+    for (const auto& [alias, topo, representative] : aliases) {
+        LagrangeBasis alias_basis(alias, 2);
+        LagrangeBasis topo_basis(topo, 2);
+        const auto generated = ReferenceNodeLayout::get_lagrange_node_coords(representative, 2);
 
-        EXPECT_EQ(alias_basis.element_type(), canonical);
-        EXPECT_EQ(alias_basis.order(), order);
+        EXPECT_EQ(alias_basis.topology(), topo);
+        EXPECT_EQ(alias_basis.element_type(), alias);
+        EXPECT_EQ(alias_basis.order(), 2);
         expect_nodes_close(alias_basis.nodes(), generated, double(1e-14));
-        expect_nodes_close(alias_basis.nodes(), canonical_basis.nodes(), double(1e-14));
+        expect_nodes_close(alias_basis.nodes(), topo_basis.nodes(), double(1e-14));
         expect_evaluations_match(alias_basis,
-                                 canonical_basis,
-                                 sample_points_for(canonical),
+                                 topo_basis,
+                                 sample_points_for(representative),
                                  double(1e-12));
     }
 }
 
-// CompleteAliasesNormalizeToCanonicalBases pins the alias floor (a named
-// quadratic alias requested below order 2 is raised to 2). This pins the
-// complementary direction documented in normalize_lagrange_request: a higher
-// requested order on an alias is honored, not clamped to the alias order.
-TEST(LagrangeBasis, QuadraticAliasHonorsHigherRequestedOrder) {
-    const LagrangeBasis basis(ElementType::Hex27, 3);
-    EXPECT_EQ(basis.element_type(), ElementType::Hex8);
-    EXPECT_EQ(basis.order(), 3);
+// The arbitrary order a named alias rejects is exactly what the BasisTopology
+// overload is for: a node-count-named element cannot carry a conflicting order,
+// and an order with no named layout reports element_type() == Unknown.
+TEST(LagrangeBasis, ArbitraryOrderRequiresTopologyNotNamedAlias) {
+    EXPECT_THROW((void)LagrangeBasis(ElementType::Hex27, 3), BasisConfigurationException);
+
+    const LagrangeBasis basis(BasisTopology::Hexahedron, 5);
+    EXPECT_EQ(basis.topology(), BasisTopology::Hexahedron);
+    EXPECT_EQ(basis.order(), 5);
+    EXPECT_EQ(basis.size(), 216u);  // (5 + 1)^3
+    EXPECT_EQ(basis.element_type(), ElementType::Unknown);  // no named order-5 hex
+}
+
+// element_type() is the inverse of (topology, order): a named layout at orders
+// 0-2, Unknown where no named element exists (order 0 on a volume topology, or
+// any order >= 3). topology() + order() remain the authoritative identity.
+TEST(LagrangeBasis, ElementTypeAccessorReflectsTopologyAndOrder) {
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Point, 0).element_type(), ElementType::Point1);
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 1).element_type(), ElementType::Hex8);
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 2).element_type(), ElementType::Hex27);
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 3).element_type(), ElementType::Unknown);
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Tetrahedron, 1).element_type(), ElementType::Tetra4);
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Tetrahedron, 2).element_type(), ElementType::Tetra10);
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Quadrilateral, 2).element_type(), ElementType::Quad9);
+    // An order-0 P0 basis on a volume topology has no named element.
+    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 0).element_type(), ElementType::Unknown);
 }
 
 TEST(LagrangeBasis, NodeOrderingMatchesPublicAliasLayouts) {
@@ -480,23 +504,23 @@ TEST(LagrangeBasis, QuadraticPolynomialReproductionAcrossQuadraticAliases) {
 // node makes the basis non-nodal here).
 TEST(LagrangeBasis, HigherOrderLatticesAreNodalAndPartitionUnity) {
     const struct Case {
-        ElementType type;
+        BasisTopology topology;
         int order;
         std::size_t size;
         double kronecker_tol;
         double derivative_tol;
         std::vector<Point> points;
     } cases[] = {
-        {ElementType::Tetra4, 3, 20u, double(5e-10), double(1e-8),
+        {BasisTopology::Tetrahedron, 3, 20u, double(5e-10), double(1e-8),
          {{double(0.12), double(0.18), double(0.16)}, {double(0.3), double(0.2), double(0.25)}}},
-        {ElementType::Tetra4, 4, 35u, double(1e-9), double(1e-7),
+        {BasisTopology::Tetrahedron, 4, 35u, double(1e-9), double(1e-7),
          {{double(0.12), double(0.18), double(0.16)}, {double(0.2), double(0.1), double(0.18)}}},
-        {ElementType::Hex8, 3, 64u, double(5e-10), double(1e-8),
+        {BasisTopology::Hexahedron, 3, 64u, double(5e-10), double(1e-8),
          {{double(0.1), double(-0.2), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}}},
     };
 
     for (const auto& c : cases) {
-        LagrangeBasis basis(c.type, c.order);
+        LagrangeBasis basis(c.topology, c.order);
         EXPECT_EQ(basis.size(), c.size);
         expect_kronecker_at_nodes(basis, c.kronecker_tol);
         expect_partition_gradient_hessian_sums(basis, c.points, c.derivative_tol);
@@ -540,19 +564,19 @@ TEST(LagrangeBasis, HigherOrderHexFaceInteriorFollowsVtkFaceOrder) {
 }
 
 TEST(LagrangeBasis, CubicPolynomialReproductionAtOrderThree) {
-    const std::vector<std::pair<ElementType, Point>> cases = {
-        {ElementType::Tetra4, {double(0.15), double(0.2), double(0.25)}},
-        {ElementType::Hex8, {double(0.15), double(-0.2), double(0.25)}},
+    const std::vector<std::pair<BasisTopology, Point>> cases = {
+        {BasisTopology::Tetrahedron, {double(0.15), double(0.2), double(0.25)}},
+        {BasisTopology::Hexahedron, {double(0.15), double(-0.2), double(0.25)}},
     };
 
-    for (const auto& [type, point] : cases) {
-        LagrangeBasis basis(type, 3);
+    for (const auto& [topo, point] : cases) {
+        LagrangeBasis basis(topo, 3);
         std::vector<double> values;
         basis.evaluate_values(point, values);
 
         const double interpolated = interpolate_value(basis, values, cubic_function);
         EXPECT_NEAR(interpolated, cubic_function(point), double(1e-10))
-            << "element=" << static_cast<int>(type);
+            << "topology=" << static_cast<int>(topo);
     }
 }
 
@@ -606,21 +630,21 @@ TEST(LagrangeBasis, PointTopologyEvaluatesConstantUnity) {
 // the order-zero branches in node generation and the simplex/tensor/wedge
 // evaluators have no other coverage.
 TEST(LagrangeBasis, OrderZeroBasesAreConstantUnity) {
-    const std::array<ElementType, 6> types = {
-        ElementType::Line2,
-        ElementType::Triangle3,
-        ElementType::Quad4,
-        ElementType::Tetra4,
-        ElementType::Hex8,
-        ElementType::Wedge6,
-    };
+    const std::array<std::pair<BasisTopology, ElementType>, 6> cases = {{
+        {BasisTopology::Line, ElementType::Line2},
+        {BasisTopology::Triangle, ElementType::Triangle3},
+        {BasisTopology::Quadrilateral, ElementType::Quad4},
+        {BasisTopology::Tetrahedron, ElementType::Tetra4},
+        {BasisTopology::Hexahedron, ElementType::Hex8},
+        {BasisTopology::Wedge, ElementType::Wedge6},
+    }};
 
-    for (const auto type : types) {
-        LagrangeBasis basis(type, 0);
-        EXPECT_EQ(basis.order(), 0) << "element=" << static_cast<int>(type);
-        EXPECT_EQ(basis.size(), 1u) << "element=" << static_cast<int>(type);
+    for (const auto& [topo, representative] : cases) {
+        LagrangeBasis basis(topo, 0);
+        EXPECT_EQ(basis.order(), 0) << "topology=" << static_cast<int>(topo);
+        EXPECT_EQ(basis.size(), 1u) << "topology=" << static_cast<int>(topo);
 
-        for (const auto& xi : sample_points_for(type)) {
+        for (const auto& xi : sample_points_for(representative)) {
             std::vector<double> values;
             std::vector<Gradient> gradients;
             std::vector<Hessian> hessians;
@@ -628,7 +652,7 @@ TEST(LagrangeBasis, OrderZeroBasesAreConstantUnity) {
 
             ASSERT_EQ(values.size(), 1u);
             EXPECT_NEAR(values[0], double(1), double(1e-14))
-                << "element=" << static_cast<int>(type);
+                << "topology=" << static_cast<int>(topo);
             for (std::size_t d = 0; d < 3u; ++d) {
                 EXPECT_NEAR(gradients[0][d], double(0), double(1e-14));
                 for (std::size_t e = 0; e < 3u; ++e) {
@@ -702,11 +726,17 @@ TEST(BasisFactoryDefaults, RejectsElementsWithoutDefaultBasis) {
 
 TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
     auto lagrange =
-        basis_factory::create(BasisRequest{ElementType::Hex27, BasisType::Lagrange, 1});
+        basis_factory::create(BasisRequest{ElementType::Hex27, BasisType::Lagrange, 2});
     ASSERT_NE(lagrange, nullptr);
     EXPECT_EQ(lagrange->basis_type(), BasisType::Lagrange);
-    EXPECT_EQ(lagrange->element_type(), ElementType::Hex8);
+    EXPECT_EQ(lagrange->topology(), BasisTopology::Hexahedron);
+    EXPECT_EQ(lagrange->element_type(), ElementType::Hex27);
     EXPECT_EQ(lagrange->order(), 2);
+
+    // The factory inherits the named-element order validation: Hex27 is order 2.
+    EXPECT_THROW((void)basis_factory::create(
+                     BasisRequest{ElementType::Hex27, BasisType::Lagrange, 1}),
+                 BasisConfigurationException);
 
     auto serendipity =
         basis_factory::create(BasisRequest{ElementType::Quad8, BasisType::Serendipity, 2});

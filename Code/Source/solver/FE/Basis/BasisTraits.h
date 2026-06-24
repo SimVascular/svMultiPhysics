@@ -156,6 +156,103 @@ namespace detail {
     }
 }
 
+// Reference-space dimension of a basis topology: 0 for points up to 3 for
+// volume topologies; -1 for Unknown.
+[[nodiscard]] constexpr int topology_dimension(BasisTopology top) noexcept {
+    switch (top) {
+        case BasisTopology::Point:         return 0;
+        case BasisTopology::Line:          return 1;
+        case BasisTopology::Triangle:
+        case BasisTopology::Quadrilateral: return 2;
+        case BasisTopology::Tetrahedron:
+        case BasisTopology::Hexahedron:
+        case BasisTopology::Wedge:         return 3;
+        default:                           return -1;
+    }
+}
+
+// Lowest-order named element that represents a topology. Used internally to
+// drive the reference-node generators, which key on a canonical ElementType
+// (and re-canonicalize it). This is the inverse of topology() for the linear
+// elements and is purely an implementation detail: the node-count name never
+// leaks into the public basis identity.
+[[nodiscard]] constexpr ElementType lagrange_topology_representative(BasisTopology top) noexcept {
+    switch (top) {
+        case BasisTopology::Point:         return ElementType::Point1;
+        case BasisTopology::Line:          return ElementType::Line2;
+        case BasisTopology::Triangle:      return ElementType::Triangle3;
+        case BasisTopology::Quadrilateral: return ElementType::Quad4;
+        case BasisTopology::Tetrahedron:   return ElementType::Tetra4;
+        case BasisTopology::Hexahedron:    return ElementType::Hex8;
+        case BasisTopology::Wedge:         return ElementType::Wedge6;
+        default:                           return ElementType::Unknown;
+    }
+}
+
+// Polynomial order baked into a named Lagrange element layout: 0 for the point,
+// 1 for the linear elements, 2 for the complete-quadratic aliases; -1 for types
+// with no complete-Lagrange order (serendipity, pyramid, Unknown). Unlike
+// complete_lagrange_alias_order this also maps Point1 -> 0, so it is the single
+// source of truth the (ElementType, order) constructor validates against.
+[[nodiscard]] constexpr int named_lagrange_order(ElementType type) noexcept {
+    if (type == ElementType::Point1) {
+        return 0;
+    }
+    return complete_lagrange_alias_order(type);
+}
+
+// Inverse of (topology(), order()) for the named layouts: the ElementType that a
+// (topology, order, family) triple denotes, or Unknown when no named layout
+// exists (order 0 on a non-point topology, any order >= 3, or a reduced family
+// at an unsupported order). topology() + order() remain the authoritative
+// identity; this only backs the element_type() convenience accessor.
+[[nodiscard]] constexpr ElementType named_element_for(BasisTopology top, int order,
+                                                      BasisType family) noexcept {
+    if (family == BasisType::Serendipity) {
+        switch (top) {
+            case BasisTopology::Quadrilateral:
+                return order == 2 ? ElementType::Quad8 : ElementType::Unknown;
+            case BasisTopology::Hexahedron:
+                if (order == 1) { return ElementType::Hex8; }
+                if (order == 2) { return ElementType::Hex20; }
+                return ElementType::Unknown;
+            case BasisTopology::Wedge:
+                return order == 2 ? ElementType::Wedge15 : ElementType::Unknown;
+            default:
+                return ElementType::Unknown;
+        }
+    }
+
+    // Lagrange (and any nodal family built on the complete layouts).
+    if (top == BasisTopology::Point) {
+        return order == 0 ? ElementType::Point1 : ElementType::Unknown;
+    }
+    switch (order) {
+        case 1:
+            switch (top) {
+                case BasisTopology::Line:          return ElementType::Line2;
+                case BasisTopology::Triangle:      return ElementType::Triangle3;
+                case BasisTopology::Quadrilateral: return ElementType::Quad4;
+                case BasisTopology::Tetrahedron:   return ElementType::Tetra4;
+                case BasisTopology::Hexahedron:    return ElementType::Hex8;
+                case BasisTopology::Wedge:         return ElementType::Wedge6;
+                default:                           return ElementType::Unknown;
+            }
+        case 2:
+            switch (top) {
+                case BasisTopology::Line:          return ElementType::Line3;
+                case BasisTopology::Triangle:      return ElementType::Triangle6;
+                case BasisTopology::Quadrilateral: return ElementType::Quad9;
+                case BasisTopology::Tetrahedron:   return ElementType::Tetra10;
+                case BasisTopology::Hexahedron:    return ElementType::Hex27;
+                case BasisTopology::Wedge:         return ElementType::Wedge18;
+                default:                           return ElementType::Unknown;
+            }
+        default:
+            return ElementType::Unknown;
+    }
+}
+
 } // namespace basis
 } // namespace FE
 } // namespace svmp

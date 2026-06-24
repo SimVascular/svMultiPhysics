@@ -37,6 +37,22 @@ static_assert(detail::basis_nearly_equal(
     double(1),
     double(1) + detail::basis_scaled_tolerance() * double(0.5)));
 
+// Topology/order helpers backing the BasisTopology construction path.
+static_assert(topology_dimension(BasisTopology::Line) == 1);
+static_assert(topology_dimension(BasisTopology::Hexahedron) == 3);
+static_assert(lagrange_topology_representative(BasisTopology::Hexahedron) == ElementType::Hex8);
+static_assert(lagrange_topology_representative(BasisTopology::Point) == ElementType::Point1);
+static_assert(named_lagrange_order(ElementType::Hex8) == 1);
+static_assert(named_lagrange_order(ElementType::Hex27) == 2);
+static_assert(named_lagrange_order(ElementType::Point1) == 0);
+static_assert(named_element_for(BasisTopology::Hexahedron, 1, BasisType::Lagrange) == ElementType::Hex8);
+static_assert(named_element_for(BasisTopology::Hexahedron, 2, BasisType::Lagrange) == ElementType::Hex27);
+static_assert(named_element_for(BasisTopology::Hexahedron, 5, BasisType::Lagrange) == ElementType::Unknown);
+static_assert(named_element_for(BasisTopology::Point, 0, BasisType::Lagrange) == ElementType::Point1);
+static_assert(named_element_for(BasisTopology::Quadrilateral, 2, BasisType::Serendipity) == ElementType::Quad8);
+static_assert(named_element_for(BasisTopology::Hexahedron, 2, BasisType::Serendipity) == ElementType::Hex20);
+static_assert(named_element_for(BasisTopology::Hexahedron, 1, BasisType::Serendipity) == ElementType::Hex8);
+
 TEST(ConstexprBasis, FixedNodeTableSizesForSupportedLayouts) {
     const std::vector<std::pair<ElementType, std::size_t>> expected = {
         {ElementType::Line2, 2u},

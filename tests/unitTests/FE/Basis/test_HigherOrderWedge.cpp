@@ -106,18 +106,19 @@ void expect_all_entries_finite(const LagrangeBasis& basis,
 } // namespace
 
 TEST(HigherOrderWedge, CompleteAliasMatchesGeneratedNodeLayout) {
-    LagrangeBasis alias_basis(ElementType::Wedge18, 1);
+    LagrangeBasis alias_basis(ElementType::Wedge18, 2);
     const auto generated =
         ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Wedge6, 2);
 
     ASSERT_EQ(generated.size(), ReferenceNodeLayout::num_nodes(ElementType::Wedge18));
-    EXPECT_EQ(alias_basis.element_type(), ElementType::Wedge6);
+    EXPECT_EQ(alias_basis.topology(), BasisTopology::Wedge);
+    EXPECT_EQ(alias_basis.element_type(), ElementType::Wedge18);  // faithful round-trip
     EXPECT_EQ(alias_basis.order(), 2);
     expect_nodes_close(alias_basis.nodes(), generated, double(1e-14));
 }
 
 TEST(HigherOrderWedge, OrderThreeIsNodalAndPartitionsUnity) {
-    LagrangeBasis wedge(ElementType::Wedge6, 3);
+    LagrangeBasis wedge(BasisTopology::Wedge, 3);
 
     expect_kronecker_at_nodes(wedge, double(2e-10));
     expect_partition_gradient_hessian_sums(
@@ -132,7 +133,7 @@ TEST(HigherOrderWedge, OrderThreeIsNodalAndPartitionsUnity) {
 }
 
 TEST(HigherOrderWedge, OrderFourEvaluationsRemainFinite) {
-    LagrangeBasis wedge(ElementType::Wedge6, 4);
+    LagrangeBasis wedge(BasisTopology::Wedge, 4);
 
     expect_all_entries_finite(wedge, {double(0.2), double(0.1), double(-0.6)});
     expect_all_entries_finite(wedge, {double(0.05), double(0.8), double(0.3)});
@@ -142,7 +143,7 @@ TEST(HigherOrderWedge, OrderFourEvaluationsRemainFinite) {
 // the Kronecker property validates the order-four node lattice and its inverse
 // index mapping end to end.
 TEST(HigherOrderWedge, OrderFourIsNodalAndPartitionsUnity) {
-    LagrangeBasis wedge(ElementType::Wedge6, 4);
+    LagrangeBasis wedge(BasisTopology::Wedge, 4);
 
     // Order-4 wedge = triangle(order 4) x line(order 4) = 15 x 5 nodes.
     EXPECT_EQ(wedge.size(), 15u * 5u);

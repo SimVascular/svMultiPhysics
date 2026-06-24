@@ -33,9 +33,13 @@ namespace basis {
  * @details LagrangeBasis represents the nodal interpolation basis associated
  * with an equispaced reference-node lattice. It supports point, line,
  * quadrilateral, hexahedron, triangle, tetrahedron, and wedge reference
- * elements. Named complete quadratic elements such as Line3, Triangle6,
- * Quad9, Tetra10, Hex27, and Wedge18 are normalized to their canonical
- * linear topology plus effective order 2.
+ * topologies. The primary constructor takes a BasisTopology and an explicit
+ * polynomial order, so an arbitrary order carries no node-count assumption
+ * (an order-2 hexahedron is BasisTopology::Hexahedron with order 2). A named
+ * ElementType such as Line3, Quad9, Tetra10, or Hex27 is a fixed-order
+ * shorthand: it maps to the same (topology, order) pair and the requested order
+ * must equal the order baked into that layout (1 for the linear elements, 2 for
+ * the complete-quadratic aliases, 0 for Point1).
  *
  * Tensor-product elements use the one-dimensional nodal polynomials
  * @f[
@@ -77,18 +81,35 @@ public:
     using WedgeNodeIndex = std::array<std::size_t, 2>;
 
     /**
-     * @brief Construct a Lagrange basis for an element type and polynomial order.
+     * @brief Construct a Lagrange basis on a reference topology at a polynomial order.
      *
-     * @details The constructor normalizes complete higher-order aliases to the
-     * canonical topology and effective polynomial order, builds the reference
-     * node coordinates, and precomputes topology-specific lookup data used by
-     * evaluation. Tensor-product bases store per-axis node indices, simplex
-     * bases store barycentric exponent tuples, and wedge bases store the
-     * triangle-node/axis-node decomposition.
+     * @details This is the primary, arbitrary-order entry point: a BasisTopology
+     * carries no node-count assumption, so any supported order is requested
+     * explicitly (e.g. an order-5 hexahedron is BasisTopology::Hexahedron with
+     * order 5). The constructor builds the reference node coordinates and the
+     * topology-specific lookup data used by evaluation. Tensor-product bases
+     * store per-axis node indices, simplex bases store barycentric exponent
+     * tuples, and wedge bases store the triangle-node/axis-node decomposition.
      *
-     * @param type Element type used to determine topology and reference-node layout.
-     * @param order Requested polynomial order.
-     * @throws BasisConfigurationException If the effective order is negative.
+     * @param topology Reference topology; Point through the volume topologies.
+     * @param order Polynomial order; must be non-negative. Point is order 0.
+     * @throws BasisConfigurationException If the order is negative.
+     * @throws BasisElementCompatibilityException If the topology is Unknown.
+     */
+    LagrangeBasis(BasisTopology topology, int order);
+
+    /**
+     * @brief Construct a Lagrange basis from a named element layout.
+     *
+     * @details Convenience overload for a named mesh element. The order is baked
+     * into the layout (0 for Point1, 1 for the linear elements, 2 for the
+     * complete-quadratic aliases such as Hex27/Tetra10) and the requested
+     * @p order must match it; arbitrary orders must be requested through the
+     * BasisTopology overload. Serendipity and pyramid layouts are rejected.
+     *
+     * @param type Named element type used to determine topology and baked-in order.
+     * @param order Requested order; must equal the element's baked-in order.
+     * @throws BasisConfigurationException If @p order does not match the element's baked-in order.
      * @throws BasisElementCompatibilityException If the element type is unsupported.
      */
     LagrangeBasis(ElementType type, int order);
@@ -96,8 +117,13 @@ public:
     /** @copydoc BasisFunction::basis_type() */
     BasisType basis_type() const noexcept final { return BasisType::Lagrange; }
 
+    /** @copydoc BasisFunction::topology() */
+    BasisTopology topology() const noexcept final { return topology_; }
+
     /** @copydoc BasisFunction::element_type() */
-    ElementType element_type() const noexcept final { return element_type_; }
+    ElementType element_type() const noexcept final {
+        return named_element_for(topology_, order_, BasisType::Lagrange);
+    }
 
     /** @copydoc BasisFunction::dimension() */
     int dimension() const noexcept final { return dimension_; }
@@ -226,7 +252,6 @@ public:
                               std::span<Hessian> hessians_out) const final;
 
 private:
-    ElementType element_type_;
     BasisTopology topology_{BasisTopology::Unknown};
     int dimension_{0};
     int order_{0};

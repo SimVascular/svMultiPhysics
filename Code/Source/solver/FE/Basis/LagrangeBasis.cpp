@@ -29,29 +29,16 @@ struct SimplexEval {
     std::vector<Hessian> hessian;
 };
 
-struct NormalizedLagrangeRequest {
-    ElementType element_type;
-    int order;
-};
-
-// Validate and return the supported basis topology for a Lagrange element type.
-BasisTopology supported_lagrange_topology(ElementType type) {
-    const BasisTopology top = topology(type);
-    svmp::throw_if<BasisElementCompatibilityException>(top == BasisTopology::Unknown, SVMP_HERE,
-                                                     "LagrangeBasis: unsupported element type");
-    return top;
-}
-
-// Normalize named higher-order element requests to base Lagrange topologies.
+// Validate a named-element Lagrange request and return its reference topology.
 //
-// This function only adds the LagrangeBasis routing policy: serendipity
-// layouts and pyramids are rejected, and a named quadratic alias
-// (Line3, Triangle6, Quad9, Tetra10, Hex27, Wedge18) is floored
-// to at least quadratic order. The floor only raises the
-// order: a higher requested order on an alias is honored, so
-// LagrangeBasis(Hex27, 5) yields an order-5 basis on the Hex8 topology rather
-// than rejecting the over-specified order.
-NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, int order) {
+// Serendipity layouts and pyramids are rejected. The requested order must equal
+// the order baked into the named layout (0 for Point1, 1 for the linear
+// elements, 2 for the complete-quadratic aliases Line3/Triangle6/Quad9/Tetra10/
+// Hex27/Wedge18). A named element therefore cannot carry a conflicting order;
+// arbitrary orders are requested through the BasisTopology constructor, so a
+// reader never has to read a polynomial order out of a node-count name such as
+// Hex8 or Tetra10.
+BasisTopology validated_lagrange_topology(ElementType element_type, int order) {
     switch (element_type) {
         case ElementType::Quad8:
             svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
@@ -71,10 +58,15 @@ NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, i
             break;
     }
 
-    const ElementType canonical = canonical_lagrange_type(element_type);
-    const bool is_quadratic_alias = canonical != element_type;
-    const int normalized_order = is_quadratic_alias ? std::max(order, 2) : order;
-    return {canonical, normalized_order};
+    const BasisTopology top = topology(element_type);
+    svmp::throw_if<BasisElementCompatibilityException>(top == BasisTopology::Unknown, SVMP_HERE,
+                                                     "LagrangeBasis: unsupported element type");
+
+    const int baked_order = named_lagrange_order(element_type);
+    svmp::throw_if<BasisConfigurationException>(order != baked_order, SVMP_HERE,
+        "LagrangeBasis: a named element layout has a fixed polynomial order; request the matching "
+        "BasisTopology with an explicit order to choose a different order");
+    return top;
 }
 
 // Convert an integer lattice index (i, j[, k]) into the barycentric exponent
@@ -263,18 +255,18 @@ void evaluate_simplex(const Vec3& xi,
 
 } // namespace
 
-LagrangeBasis::LagrangeBasis(ElementType type, int order)
-    : element_type_(type), order_(order) {
-    const auto normalized = normalize_lagrange_request(element_type_, order_);
-    element_type_ = normalized.element_type;
-    order_ = normalized.order;
+LagrangeBasis::LagrangeBasis(BasisTopology topology, int order)
+    : topology_(topology), order_(order) {
+    svmp::throw_if<BasisElementCompatibilityException>(topology_ == BasisTopology::Unknown, SVMP_HERE,
+                                                     "LagrangeBasis: unknown reference topology");
     svmp::throw_if<BasisConfigurationException>(order_ < 0, SVMP_HERE,
                                               "LagrangeBasis requires non-negative polynomial order");
-
-    topology_ = supported_lagrange_topology(element_type_);
-    dimension_ = reference_dimension(element_type_);
+    dimension_ = topology_dimension(topology_);
     init_nodes();
 }
+
+LagrangeBasis::LagrangeBasis(ElementType type, int order)
+    : LagrangeBasis(validated_lagrange_topology(type, order), order) {}
 
 // Initialize equispaced 1D interpolation nodes and their barycentric weights for
 // tensor-product axes.
@@ -343,7 +335,8 @@ void LagrangeBasis::build_point_nodes() {
 // Build nodes and axis indices for tensor-product elements.
 void LagrangeBasis::build_tensor_product_nodes() {
     init_equispaced_1d_nodes();
-    const auto layout = ReferenceNodeLayout::get_lagrange_lattice(element_type_, order_);
+    const auto layout =
+        ReferenceNodeLayout::get_lagrange_lattice(lagrange_topology_representative(topology_), order_);
     nodes_ = layout.coords;
     tensor_indices_.reserve(layout.lattice.size());
     for (const auto& idx : layout.lattice) {
@@ -358,7 +351,8 @@ void LagrangeBasis::build_tensor_product_nodes() {
 
 // Build nodes and barycentric exponents for simplex elements.
 void LagrangeBasis::build_simplex_nodes() {
-    const auto layout = ReferenceNodeLayout::get_lagrange_lattice(element_type_, order_);
+    const auto layout =
+        ReferenceNodeLayout::get_lagrange_lattice(lagrange_topology_representative(topology_), order_);
     nodes_ = layout.coords;
     simplex_exponents_.reserve(layout.lattice.size());
     for (const auto& idx : layout.lattice) {
@@ -369,7 +363,8 @@ void LagrangeBasis::build_simplex_nodes() {
 // Build nodes and mixed triangle-axis lookup data for wedge elements.
 void LagrangeBasis::build_wedge_nodes() {
     init_equispaced_1d_nodes();
-    const auto layout = ReferenceNodeLayout::get_lagrange_lattice(element_type_, order_);
+    const auto layout =
+        ReferenceNodeLayout::get_lagrange_lattice(lagrange_topology_representative(topology_), order_);
     nodes_ = layout.coords;
 
     const auto tri_layout =

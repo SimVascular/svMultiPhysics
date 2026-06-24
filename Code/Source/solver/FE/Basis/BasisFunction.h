@@ -5,6 +5,7 @@
 #define SVMP_FE_BASIS_BASISFUNCTION_H
 
 #include "BasisExceptions.h"
+#include "BasisTraits.h"
 #include "Math/Matrix.h"
 #include "Math/Vector.h"
 #include "Types.h"
@@ -184,8 +185,30 @@ public:
     virtual BasisType basis_type() const noexcept = 0;
 
     /**
-     * @brief Return the canonical element type represented by this basis.
-     * @return Element type used for node layout and evaluation.
+     * @brief Return the reference topology of this basis.
+     *
+     * @details Together with order(), this is the authoritative identity of a
+     * basis: a topology plus a polynomial order, with no node-count assumption.
+     * Arbitrary-order bases are constructed from a BasisTopology and an order;
+     * named ElementType layouts (Hex8, Hex27, ...) are a fixed-order shorthand
+     * that maps to the same (topology, order) pair.
+     *
+     * @return Reference topology.
+     */
+    virtual BasisTopology topology() const noexcept = 0;
+
+    /**
+     * @brief Return the named element type for this basis, if one exists.
+     *
+     * @details Convenience accessor that round-trips to a named mesh element
+     * when one is defined for this (topology(), order(), basis_type()) triple
+     * (orders 0-2), and returns ElementType::Unknown otherwise (for example an
+     * order-0 P0 basis on a volume topology, or any order >= 3 that has no named
+     * layout). topology() + order() are the authoritative identity; this should
+     * not be used as a discriminator for high-order or topology-constructed
+     * bases.
+     *
+     * @return Named element type, or ElementType::Unknown when none applies.
      */
     virtual ElementType element_type() const noexcept = 0;
 

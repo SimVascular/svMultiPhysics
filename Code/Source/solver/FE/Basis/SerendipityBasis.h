@@ -74,17 +74,19 @@ namespace basis {
  * linear term in @f$y@f$. The interpolation Vandermonde is therefore
  * nonsingular for the implemented quadrilateral serendipity space.
  *
- * `SerendipityBasis(ElementType::Quad4, p)` supports explicit
- * arbitrary-order quadrilateral serendipity requests for @f$p \ge 1@f$
- * (requests below one are normalized to one) and generates its own reference
- * nodes, since the higher-order interior ordering is an implementation
- * convention rather than a public layout. `ElementType::Quad8` is the named
- * quadratic eight-node layout (valid only with order 2) and, like Hex20 and
- * Wedge15, takes its reference nodes from ReferenceNodeLayout so that all named
- * fixed layouts share the single public node ordering. Solver-default basis
- * selection remains separate: `basis_factory` maps the complete Quad4 layout to
- * the default linear Lagrange basis and maps Quad8 to quadratic serendipity
- * unless a caller explicitly requests a different supported basis.
+ * `SerendipityBasis(BasisTopology::Quadrilateral, p)` is the arbitrary-order
+ * entry point for quadrilateral serendipity (@f$p \ge 1@f$, requests below one
+ * normalized to one); it generates its own reference nodes, since the
+ * higher-order interior ordering is an implementation convention rather than a
+ * public layout. `ElementType::Quad8` is the named quadratic eight-node layout
+ * (valid only with order 2) and, like Hex20 and Wedge15, takes its reference
+ * nodes from ReferenceNodeLayout so that all named fixed layouts share the
+ * single public node ordering. Hex and wedge serendipity are single fixed
+ * layouts with no arbitrary-order form, so they are constructed only from their
+ * named ElementType. Solver-default basis selection remains separate:
+ * `basis_factory` maps the complete Quad4 layout to the default linear Lagrange
+ * basis and maps Quad8 to quadratic serendipity unless a caller explicitly
+ * requests a different supported basis.
  *
  * Hex8 uses the standard trilinear corner basis
  * @f$(1 \pm r)(1 \pm s)(1 \pm t)/8@f$. Quad8, Hex20, and Wedge15 use fixed
@@ -97,21 +99,36 @@ namespace basis {
 class SerendipityBasis final : public BasisFunction {
 public:
     /**
-     * @brief Construct a serendipity basis for an element type and polynomial order.
+     * @brief Construct an arbitrary-order quadrilateral serendipity basis.
      *
-     * @details The constructor selects the topology-specific interpolation
-     * space, computes the reference node coordinates, and builds the nodal
-     * coefficient table needed for evaluation. Quadrilateral, Hex20, and Wedge15
-     * bases build and invert a Vandermonde matrix for their serendipity
-     * monomials; Hex8 uses the trilinear corner basis directly. For hexahedra,
-     * only linear Hex8 and quadratic Hex20 serendipity spaces are supported. For
-     * wedges, only quadratic Wedge15 is supported. Quad4 supports explicit
-     * quadrilateral serendipity requests of any order @f$p \ge 1@f$; Quad8 is
-     * restricted to order 2.
+     * @details This is the arbitrary-order entry point for the only serendipity
+     * family with a free order: the quadrilateral. The topology carries no
+     * node-count assumption; the monomial space, reference nodes (generated
+     * here), and nodal coefficient table are built from the requested order
+     * (orders below 1 are normalized to 1). Hex and wedge serendipity are single
+     * fixed layouts and are not constructed this way -- use the named ElementType
+     * overload (Hex8/Hex20/Wedge15) for them.
      *
-     * @param type Element type used to determine topology and reference-node layout.
-     * @param order Requested polynomial order.
-     * @throws BasisConfigurationException If the requested order is invalid.
+     * @param topology Must be BasisTopology::Quadrilateral.
+     * @param order Polynomial order @f$p \ge 1@f$ (lower values normalized to 1).
+     * @throws BasisElementCompatibilityException If @p topology is not Quadrilateral.
+     */
+    SerendipityBasis(BasisTopology topology, int order);
+
+    /**
+     * @brief Construct a serendipity basis from a named element layout.
+     *
+     * @details Convenience overload for the named, fixed serendipity layouts.
+     * Quad8 builds the quadratic quadrilateral serendipity space from its
+     * ReferenceNodeLayout nodes; Hex8 uses the trilinear corner basis directly;
+     * Hex20 and Wedge15 build and invert a Vandermonde over their fixed monomial
+     * spaces. Each layout is pinned to a single order (Hex8 to 1; Quad8, Hex20,
+     * and Wedge15 to 2), so the requested @p order must match it; arbitrary-order
+     * quadrilateral serendipity is requested through the BasisTopology overload.
+     *
+     * @param type Named serendipity element type (Quad8, Hex8, Hex20, or Wedge15).
+     * @param order Requested order; must equal the layout's fixed order.
+     * @throws BasisConfigurationException If @p order does not match the layout's fixed order.
      * @throws BasisElementCompatibilityException If the element type is unsupported.
      */
     SerendipityBasis(ElementType type, int order);
@@ -119,8 +136,13 @@ public:
     /** @copydoc BasisFunction::basis_type() */
     BasisType basis_type() const noexcept final { return BasisType::Serendipity; }
 
+    /** @copydoc BasisFunction::topology() */
+    BasisTopology topology() const noexcept final { return topology_; }
+
     /** @copydoc BasisFunction::element_type() */
-    ElementType element_type() const noexcept final { return element_type_; }
+    ElementType element_type() const noexcept final {
+        return named_element_for(topology_, order_, BasisType::Serendipity);
+    }
 
     /** @copydoc BasisFunction::dimension() */
     int dimension() const noexcept final { return dimension_; }
@@ -135,16 +157,16 @@ public:
      * @brief Return the reference interpolation nodes in basis ordering.
      *
      * @details Node coordinates are the points at which the serendipity basis
-     * satisfies the nodal interpolation property. quadrilateral, hexahedral, and wedge
-     * nodes are taken from ReferenceNodeLayout, the public node-ordering source
-     * the solver adapter permutes against. Arbitrary-order Quad4 nodes are
-     * generated here instead: boundary nodes first and then, for higher order
-     * requests, the selected interior points needed to make the reduced monomial
-     * space unisolvent. For high-order Quad4 serendipity, the deterministic
-     * interior row ordering is an implementation convention; callers should
-     * pair it with basis values from the same object rather than assume an
-     * external mesh ordering contract beyond the supported Quad4/Quad8
-     * production layouts.
+     * satisfies the nodal interpolation property. The named fixed layouts (Quad8,
+     * Hex8, Hex20, Wedge15) take their nodes from ReferenceNodeLayout, the public
+     * node-ordering source the solver adapter permutes against. Arbitrary-order
+     * quadrilateral serendipity (constructed from BasisTopology::Quadrilateral)
+     * generates its nodes here instead: boundary nodes first and then, for higher
+     * order requests, the selected interior points needed to make the reduced
+     * monomial space unisolvent. That deterministic interior row ordering is an
+     * implementation convention; callers should pair it with basis values from
+     * the same object rather than assume an external mesh ordering contract
+     * beyond the supported Quad8 production layout.
      *
      * @return Reference node coordinates, one per basis function.
      */
@@ -239,7 +261,7 @@ public:
                               std::span<Hessian> hessians_out) const final;
 
 private:
-    ElementType element_type_;
+    BasisTopology topology_;
     int dimension_;
     int order_;
     std::size_t size_;
@@ -248,6 +270,15 @@ private:
     std::vector<std::array<int, 3>> monomial_exponents_;
     // Row-major inverse Vandermonde, indexed as [monomial, basis].
     std::vector<double> inv_vandermonde_;
+
+    // Build the quadrilateral serendipity monomial space, reference nodes, and
+    // nodal coefficient table for the given order. The named Quad8 layout takes
+    // its nodes from ReferenceNodeLayout; the arbitrary-order topology path
+    // generates them.
+    void init_quadrilateral(int order, bool nodes_from_reference_layout);
+    // Build a fixed named volume serendipity layout (Hex20 or Wedge15) from its
+    // tabulated monomial space and ReferenceNodeLayout nodes.
+    void init_fixed_named(ElementType type);
 
     void evaluate_all_to(const math::Vector<double, 3>& xi,
                          std::span<double> values_out,

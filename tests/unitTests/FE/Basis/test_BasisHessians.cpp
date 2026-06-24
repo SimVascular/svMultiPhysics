@@ -74,19 +74,19 @@ void numerical_hessian_helper(const BasisFunction& basis,
     }
 }
 
-std::vector<math::Vector<double, 3>> sample_points_for(ElementType type) {
-    switch (type) {
-        case ElementType::Line2:
+std::vector<math::Vector<double, 3>> sample_points_for(BasisTopology topology) {
+    switch (topology) {
+        case BasisTopology::Line:
             return {{double(-0.35), double(0), double(0)}, {double(0.2), double(0), double(0)}};
-        case ElementType::Triangle3:
+        case BasisTopology::Triangle:
             return {{double(0.15), double(0.2), double(0)}, {double(0.25), double(0.1), double(0)}};
-        case ElementType::Quad4:
+        case BasisTopology::Quadrilateral:
             return {{double(0.2), double(-0.3), double(0)}, {double(-0.45), double(0.25), double(0)}};
-        case ElementType::Tetra4:
+        case BasisTopology::Tetrahedron:
             return {{double(0.12), double(0.18), double(0.16)}, {double(0.2), double(0.1), double(0.18)}};
-        case ElementType::Hex8:
+        case BasisTopology::Hexahedron:
             return {{double(0.1), double(-0.2), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}};
-        case ElementType::Wedge6:
+        case BasisTopology::Wedge:
             return {{double(0.18), double(0.22), double(-0.2)}, {double(0.12), double(0.16), double(0.1)}};
         default:
             return {{double(0), double(0), double(0)}};
@@ -221,56 +221,56 @@ void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
     }
 }
 
-std::vector<math::Vector<double, 3>> serendipity_sample_points(ElementType type) {
-    if (type == ElementType::Quad4 || type == ElementType::Quad8) {
+std::vector<math::Vector<double, 3>> serendipity_sample_points(BasisTopology topology) {
+    if (topology == BasisTopology::Quadrilateral) {
         return {{double(0.17), double(-0.31), double(0)}, {double(-0.45), double(0.25), double(0)}};
     }
-    if (type == ElementType::Hex8 || type == ElementType::Hex20) {
+    if (topology == BasisTopology::Hexahedron) {
         return {{double(0.2), double(-0.1), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}};
     }
-    return {{double(0.2), double(0.3), double(0.1)}, {double(0.12), double(0.16), double(-0.2)}};
+    return {{double(0.2), double(0.3), double(0.1)}, {double(0.12), double(0.16), double(-0.2)}};  // wedge
 }
 
 } // namespace
 
 TEST(BasisHessians, LagrangeCanonicalTopologiesMatchNumericalHessians) {
     const struct Case {
-        ElementType type;
+        BasisTopology topology;
         int order;
         double tol;
         double eps;
     } cases[] = {
-        {ElementType::Line2, 3, double(1e-7), double(1e-5)},
-        {ElementType::Triangle3, 3, double(2e-6), double(1e-5)},
-        {ElementType::Quad4, 3, double(1e-6), double(1e-5)},
-        {ElementType::Tetra4, 2, double(1e-6), double(1e-5)},
-        {ElementType::Hex8, 2, double(1e-6), double(1e-5)},
-        {ElementType::Wedge6, 2, double(1e-5), double(1e-5)},
+        {BasisTopology::Line, 3, double(1e-7), double(1e-5)},
+        {BasisTopology::Triangle, 3, double(2e-6), double(1e-5)},
+        {BasisTopology::Quadrilateral, 3, double(1e-6), double(1e-5)},
+        {BasisTopology::Tetrahedron, 2, double(1e-6), double(1e-5)},
+        {BasisTopology::Hexahedron, 2, double(1e-6), double(1e-5)},
+        {BasisTopology::Wedge, 2, double(1e-5), double(1e-5)},
     };
 
     for (const auto& c : cases) {
-        LagrangeBasis basis(c.type, c.order);
-        expect_hessians_match_numerical(basis, sample_points_for(c.type), c.tol, c.eps);
+        LagrangeBasis basis(c.topology, c.order);
+        expect_hessians_match_numerical(basis, sample_points_for(c.topology), c.tol, c.eps);
     }
 }
 
 TEST(BasisHessians, LagrangeHessiansSumToZeroAndAreSymmetric) {
     const struct Case {
-        ElementType type;
+        BasisTopology topology;
         int order;
         math::Vector<double, 3> xi;
         double tol;
     } cases[] = {
-        {ElementType::Line2, 3, {double(0.15), double(0), double(0)}, double(1e-12)},
-        {ElementType::Triangle3, 3, {double(0.2), double(0.25), double(0)}, double(1e-10)},
-        {ElementType::Quad4, 3, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
-        {ElementType::Tetra4, 2, {double(0.15), double(0.2), double(0.1)}, double(1e-10)},
-        {ElementType::Hex8, 2, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
-        {ElementType::Wedge6, 2, {double(0.2), double(0.15), double(-0.3)}, double(1e-10)},
+        {BasisTopology::Line, 3, {double(0.15), double(0), double(0)}, double(1e-12)},
+        {BasisTopology::Triangle, 3, {double(0.2), double(0.25), double(0)}, double(1e-10)},
+        {BasisTopology::Quadrilateral, 3, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
+        {BasisTopology::Tetrahedron, 2, {double(0.15), double(0.2), double(0.1)}, double(1e-10)},
+        {BasisTopology::Hexahedron, 2, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
+        {BasisTopology::Wedge, 2, {double(0.2), double(0.15), double(-0.3)}, double(1e-10)},
     };
 
     for (const auto& c : cases) {
-        LagrangeBasis basis(c.type, c.order);
+        LagrangeBasis basis(c.topology, c.order);
         expect_partition_hessian_sum_zero(basis, c.xi, double(10) * c.tol);
         expect_hessians_symmetric(basis, c.xi, c.tol);
     }
@@ -331,21 +331,21 @@ TEST(BasisHessians, SolverMappedVolumeSelectionsSatisfyInvariants) {
 // shared by the first- and second-derivative recurrences.
 TEST(BasisGradients, LagrangeCanonicalTopologiesMatchNumericalGradients) {
     const struct Case {
-        ElementType type;
+        BasisTopology topology;
         int order;
         double tol;
     } cases[] = {
-        {ElementType::Line2, 3, double(1e-8)},
-        {ElementType::Triangle3, 3, double(1e-7)},
-        {ElementType::Quad4, 3, double(1e-7)},
-        {ElementType::Tetra4, 2, double(1e-7)},
-        {ElementType::Hex8, 2, double(1e-7)},
-        {ElementType::Wedge6, 2, double(1e-7)},
+        {BasisTopology::Line, 3, double(1e-8)},
+        {BasisTopology::Triangle, 3, double(1e-7)},
+        {BasisTopology::Quadrilateral, 3, double(1e-7)},
+        {BasisTopology::Tetrahedron, 2, double(1e-7)},
+        {BasisTopology::Hexahedron, 2, double(1e-7)},
+        {BasisTopology::Wedge, 2, double(1e-7)},
     };
 
     for (const auto& c : cases) {
-        LagrangeBasis basis(c.type, c.order);
-        expect_gradients_match_numerical(basis, sample_points_for(c.type), c.tol);
+        LagrangeBasis basis(c.topology, c.order);
+        expect_gradients_match_numerical(basis, sample_points_for(c.topology), c.tol);
     }
 }
 
@@ -356,66 +356,63 @@ TEST(BasisGradients, LagrangeCanonicalTopologiesMatchNumericalGradients) {
 // structurally, so neither can detect a wrong derivative formula. Finite
 // differences of values are the authoritative check.
 TEST(BasisGradients, SerendipityFamiliesMatchNumericalGradients) {
-    const struct Case {
-        ElementType type;
-        int order;
-        double tol;
-    } cases[] = {
-        {ElementType::Quad4, 1, double(1e-8)},
+    // Arbitrary-order quadrilateral serendipity (topology path).
+    const struct QuadCase { int order; double tol; } quad_cases[] = {
+        {1, double(1e-8)}, {3, double(1e-7)}, {4, double(5e-7)}, {6, double(2e-6)},
+    };
+    for (const auto& c : quad_cases) {
+        SerendipityBasis basis(BasisTopology::Quadrilateral, c.order);
+        expect_gradients_match_numerical(
+            basis, serendipity_sample_points(BasisTopology::Quadrilateral), c.tol);
+    }
+
+    // Named fixed serendipity layouts.
+    const struct NamedCase { ElementType type; int order; double tol; } named_cases[] = {
         {ElementType::Quad8, 2, double(1e-7)},
-        {ElementType::Quad4, 3, double(1e-7)},
-        {ElementType::Quad4, 4, double(5e-7)},
-        {ElementType::Quad4, 6, double(2e-6)},
         {ElementType::Hex8, 1, double(1e-8)},
         {ElementType::Hex20, 2, double(1e-7)},
         {ElementType::Wedge15, 2, double(1e-7)},
     };
-
-    for (const auto& c : cases) {
+    for (const auto& c : named_cases) {
         SerendipityBasis basis(c.type, c.order);
-        expect_gradients_match_numerical(basis, serendipity_sample_points(c.type), c.tol);
+        expect_gradients_match_numerical(
+            basis, serendipity_sample_points(basis.topology()), c.tol);
     }
 }
 
 TEST(BasisGradients, QuadrilateralSerendipityInactiveZDerivativesRemainZero) {
-    const struct Case {
-        ElementType type;
-        int order;
-    } cases[] = {
-        {ElementType::Quad4, 1},
-        {ElementType::Quad8, 2},
-        {ElementType::Quad4, 4},
-        {ElementType::Quad4, 6},
-        {ElementType::Quad4, 10},
-    };
-
-    for (const auto& c : cases) {
-        SerendipityBasis basis(c.type, c.order);
+    // All quadrilateral serendipity, including the production order 2, exercised
+    // through the arbitrary-order topology path.
+    for (const int order : {1, 2, 4, 6, 10}) {
+        SerendipityBasis basis(BasisTopology::Quadrilateral, order);
         expect_inactive_z_derivatives_zero(
             basis,
-            serendipity_sample_points(c.type),
+            serendipity_sample_points(BasisTopology::Quadrilateral),
             double(1e-12));
     }
 }
 
 TEST(BasisHessians, SerendipityFamiliesMatchNumericalHessians) {
-    const struct Case {
-        ElementType type;
-        int order;
-        double tol;
-    } cases[] = {
-        {ElementType::Quad4, 1, double(1e-6)},
+    // Arbitrary-order quadrilateral serendipity (topology path).
+    const struct QuadCase { int order; double tol; } quad_cases[] = {
+        {1, double(1e-6)}, {3, double(1e-6)}, {4, double(5e-6)}, {6, double(2e-5)},
+    };
+    for (const auto& c : quad_cases) {
+        SerendipityBasis basis(BasisTopology::Quadrilateral, c.order);
+        expect_hessians_match_numerical(
+            basis, serendipity_sample_points(BasisTopology::Quadrilateral), c.tol);
+    }
+
+    // Named fixed serendipity layouts.
+    const struct NamedCase { ElementType type; int order; double tol; } named_cases[] = {
         {ElementType::Quad8, 2, double(1e-6)},
-        {ElementType::Quad4, 3, double(1e-6)},
-        {ElementType::Quad4, 4, double(5e-6)},
-        {ElementType::Quad4, 6, double(2e-5)},
         {ElementType::Hex8, 1, double(1e-6)},
         {ElementType::Hex20, 2, double(1e-6)},
         {ElementType::Wedge15, 2, double(1e-6)},
     };
-
-    for (const auto& c : cases) {
+    for (const auto& c : named_cases) {
         SerendipityBasis basis(c.type, c.order);
-        expect_hessians_match_numerical(basis, serendipity_sample_points(c.type), c.tol);
+        expect_hessians_match_numerical(
+            basis, serendipity_sample_points(basis.topology()), c.tol);
     }
 }
