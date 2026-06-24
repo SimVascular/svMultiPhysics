@@ -93,7 +93,7 @@
  *   enrichment, and convergence studies may use different families or orders
  *   for different fields on the same mesh topology. Those bases should be
  *   requested explicitly with basis_factory::create() and a BasisRequest
- *   naming the desired family and order.
+ *   naming the desired family, topology, and order.
  * - **Evaluation points come from the caller.** Quadrature rules, probe
  *   points, interpolation targets, and error-sampling locations are outside
  *   this module. The basis only evaluates at the reference coordinates it is

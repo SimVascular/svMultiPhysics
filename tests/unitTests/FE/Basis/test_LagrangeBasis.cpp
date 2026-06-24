@@ -738,15 +738,70 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
                      BasisRequest{ElementType::Hex27, BasisType::Lagrange, 1}),
                  BasisConfigurationException);
 
+    BasisRequest arbitrary_lagrange;
+    arbitrary_lagrange.basis_type = BasisType::Lagrange;
+    arbitrary_lagrange.order = 5;
+    arbitrary_lagrange.topology = BasisTopology::Hexahedron;
+    auto high_order_lagrange = basis_factory::create(arbitrary_lagrange);
+    ASSERT_NE(high_order_lagrange, nullptr);
+    EXPECT_EQ(high_order_lagrange->basis_type(), BasisType::Lagrange);
+    EXPECT_EQ(high_order_lagrange->topology(), BasisTopology::Hexahedron);
+    EXPECT_EQ(high_order_lagrange->element_type(), ElementType::Unknown);
+    EXPECT_EQ(high_order_lagrange->order(), 5);
+    EXPECT_EQ(high_order_lagrange->size(), 216u);
+
     auto serendipity =
         basis_factory::create(BasisRequest{ElementType::Quad8, BasisType::Serendipity, 2});
     ASSERT_NE(serendipity, nullptr);
     EXPECT_EQ(serendipity->basis_type(), BasisType::Serendipity);
+
+    BasisRequest arbitrary_quad_serendipity;
+    arbitrary_quad_serendipity.basis_type = BasisType::Serendipity;
+    arbitrary_quad_serendipity.order = 4;
+    arbitrary_quad_serendipity.topology = BasisTopology::Quadrilateral;
+    auto high_order_quad_serendipity = basis_factory::create(arbitrary_quad_serendipity);
+    ASSERT_NE(high_order_quad_serendipity, nullptr);
+    EXPECT_EQ(high_order_quad_serendipity->basis_type(), BasisType::Serendipity);
+    EXPECT_EQ(high_order_quad_serendipity->topology(), BasisTopology::Quadrilateral);
+    EXPECT_EQ(high_order_quad_serendipity->element_type(), ElementType::Unknown);
+    EXPECT_EQ(high_order_quad_serendipity->order(), 4);
+    EXPECT_EQ(high_order_quad_serendipity->size(), 17u);
+
+    BasisRequest arbitrary_hex_serendipity;
+    arbitrary_hex_serendipity.basis_type = BasisType::Serendipity;
+    arbitrary_hex_serendipity.order = 3;
+    arbitrary_hex_serendipity.topology = BasisTopology::Hexahedron;
+    auto high_order_hex_serendipity = basis_factory::create(arbitrary_hex_serendipity);
+    ASSERT_NE(high_order_hex_serendipity, nullptr);
+    EXPECT_EQ(high_order_hex_serendipity->basis_type(), BasisType::Serendipity);
+    EXPECT_EQ(high_order_hex_serendipity->topology(), BasisTopology::Hexahedron);
+    EXPECT_EQ(high_order_hex_serendipity->element_type(), ElementType::Unknown);
+    EXPECT_EQ(high_order_hex_serendipity->order(), 3);
+    EXPECT_EQ(high_order_hex_serendipity->size(), 32u);
 
     EXPECT_THROW((void)basis_factory::create(
                      BasisRequest{ElementType::Pyramid5, BasisType::Lagrange, 1}),
                  BasisElementCompatibilityException);
     EXPECT_THROW((void)basis_factory::create(
                      BasisRequest{ElementType::Pyramid13, BasisType::Serendipity, 2}),
+                 BasisElementCompatibilityException);
+
+    BasisRequest ambiguous;
+    ambiguous.element_type = ElementType::Hex27;
+    ambiguous.basis_type = BasisType::Lagrange;
+    ambiguous.order = 2;
+    ambiguous.topology = BasisTopology::Hexahedron;
+    EXPECT_THROW((void)basis_factory::create(ambiguous), BasisConfigurationException);
+
+    BasisRequest missing_target;
+    missing_target.basis_type = BasisType::Lagrange;
+    missing_target.order = 2;
+    EXPECT_THROW((void)basis_factory::create(missing_target), BasisConfigurationException);
+
+    BasisRequest unsupported_serendipity_topology;
+    unsupported_serendipity_topology.basis_type = BasisType::Serendipity;
+    unsupported_serendipity_topology.order = 2;
+    unsupported_serendipity_topology.topology = BasisTopology::Wedge;
+    EXPECT_THROW((void)basis_factory::create(unsupported_serendipity_topology),
                  BasisElementCompatibilityException);
 }

@@ -20,6 +20,8 @@ namespace FE {
 namespace basis {
 
 struct BasisRequest {
+    // Named mesh element layout for default/mesh-compatible bases. Leave Unknown
+    // when requesting an arbitrary-order basis by reference topology.
     ElementType element_type{ElementType::Unknown};
     BasisType basis_type{BasisType::Lagrange};
     std::optional<int> order{};
@@ -32,10 +34,27 @@ struct BasisRequest {
     std::vector<std::vector<double>> axis_weights{};
     std::vector<int> tensor_extents{};
     std::string custom_id{};
+    // Reference topology for arbitrary-order bases. This field is intentionally
+    // last so existing aggregate initializers for named elements keep their
+    // positional meaning.
+    BasisTopology topology{BasisTopology::Unknown};
 };
 
 namespace basis_factory {
 
+/**
+ * @brief Create a basis from a runtime request.
+ *
+ * @details A request must identify exactly one construction target: set
+ * BasisRequest::element_type for a named mesh-node layout, or set
+ * BasisRequest::topology for an arbitrary-order reference-topology basis.
+ * Setting neither target, or setting both, is rejected. Named element requests
+ * keep the element's fixed polynomial order contract; topology requests are the
+ * arbitrary-order path.
+ *
+ * @param req Basis family, target, and order request.
+ * @return Shared basis instance.
+ */
 [[nodiscard]] std::shared_ptr<BasisFunction> create(const BasisRequest& req);
 
 /**

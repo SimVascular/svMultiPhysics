@@ -13,6 +13,11 @@ namespace basis {
 
 namespace {
 
+enum class RequestTarget {
+    NamedElement,
+    Topology,
+};
+
 int require_basis_order(const BasisRequest& req,
                         const char* missing_message,
                         const char* negative_message) {
@@ -21,6 +26,18 @@ int require_basis_order(const BasisRequest& req,
     svmp::throw_if<BasisConfigurationException>(*req.order < 0, SVMP_HERE,
                                               negative_message);
     return *req.order;
+}
+
+RequestTarget require_single_request_target(const BasisRequest& req) {
+    const bool has_named_element = req.element_type != ElementType::Unknown;
+    const bool has_topology = req.topology != BasisTopology::Unknown;
+    svmp::throw_if<BasisConfigurationException>(
+        !has_named_element && !has_topology, SVMP_HERE,
+        "BasisFactory: request must specify either a named element_type or a reference topology");
+    svmp::throw_if<BasisConfigurationException>(
+        has_named_element && has_topology, SVMP_HERE,
+        "BasisFactory: request must specify element_type or topology, not both");
+    return has_topology ? RequestTarget::Topology : RequestTarget::NamedElement;
 }
 
 void require_scalar_c0_request(const BasisRequest& req) {
@@ -38,6 +55,9 @@ std::shared_ptr<BasisFunction> create_lagrange(const BasisRequest& req) {
         req,
         "BasisFactory: Lagrange creation requires an explicit order",
         "BasisFactory: Lagrange requires non-negative order");
+    if (require_single_request_target(req) == RequestTarget::Topology) {
+        return std::make_shared<LagrangeBasis>(req.topology, order);
+    }
     return std::make_shared<LagrangeBasis>(req.element_type, order);
 }
 
@@ -47,6 +67,9 @@ std::shared_ptr<BasisFunction> create_serendipity(const BasisRequest& req) {
         req,
         "BasisFactory: Serendipity creation requires an explicit order",
         "BasisFactory: Serendipity requires non-negative order");
+    if (require_single_request_target(req) == RequestTarget::Topology) {
+        return std::make_shared<SerendipityBasis>(req.topology, order);
+    }
     return std::make_shared<SerendipityBasis>(req.element_type, order);
 }
 
