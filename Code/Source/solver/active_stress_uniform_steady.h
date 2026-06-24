@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef ACTIVE_STRESS_UNIFORM_H
-#define ACTIVE_STRESS_UNIFORM_H
+#ifndef ACTIVE_STRESS_UNIFORM_STEADY_H
+#define ACTIVE_STRESS_UNIFORM_STEADY_H
 
 #include "active_stress.h"
 
 /**
- * @brief Uniform active stress model.
+ * @brief Uniform and steady active stress model.
  *
  * Defines an active tension that is constant in space and time, i.e.
  * @f[
@@ -15,10 +15,10 @@
  * @f]
  * where @f$g@f$ is a user-defined constant value.
  */
-class UniformActiveStress : public ActiveStress {
+class UniformSteadyActiveStress : public ActiveStress {
 public:
   /// Model label.
-  static inline const std::string label = "Uniform";
+  static inline const std::string label = "UniformSteady";
 
   /// Model parameters class.
   class Parameters : public ActiveStressModelParameters {
@@ -33,7 +33,7 @@ public:
   /**
    * @brief Constructor.
    */
-  UniformActiveStress() : ActiveStress(/* n_states = */ 0) {}
+  UniformSteadyActiveStress() : ActiveStress(/* n_states = */ 0) {}
 
   /**
    * @brief Construct an instance of model parameters.
