@@ -355,9 +355,10 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
     order_ = normalized.order;
 
     if (type == ElementType::Quad4 || type == ElementType::Quad8) {
-        // Quadrilateral serendipity is generated from its monomial space, so the
-        // basis size, reference nodes, and nodal coefficient table are all built
-        // here from the effective order.
+        // Quadrilateral serendipity is generated from its monomial space: the
+        // basis size, monomial exponents, and nodal coefficient table are built
+        // here from the effective order, and the coefficient table is the inverse
+        // Vandermonde of those monomials at the reference nodes.
         const auto quad_exponents = quad_serendipity_exponents(order_);
         monomial_exponents_.clear();
         monomial_exponents_.reserve(quad_exponents.size());
@@ -365,7 +366,9 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
             monomial_exponents_.push_back({e[0], e[1], 0});
         }
         size_ = monomial_exponents_.size();
-        nodes_ = quad_serendipity_nodes(order_, size_);
+        nodes_ = (type == ElementType::Quad8)
+                     ? ReferenceNodeLayout::node_coords(element_type_)
+                     : quad_serendipity_nodes(order_, size_);
         svmp::throw_if<BasisConstructionException>(
             nodes_.size() != size_, SVMP_HERE,
             "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");

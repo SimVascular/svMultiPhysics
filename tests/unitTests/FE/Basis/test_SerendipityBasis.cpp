@@ -314,6 +314,28 @@ std::vector<math::Vector<double, 3>> wedge15_reference_nodes_for_test() {
     return nodes;
 }
 
+// Independent Quad8 reference layout: the four quad corners followed by the four
+// edge midpoints, in the corner/edge order the reference layout uses (the VTK
+// quad boundary traversal). Mirrors the Hex20/Wedge15 anchors above.
+std::vector<math::Vector<double, 3>> quad8_reference_nodes_for_test() {
+    std::vector<math::Vector<double, 3>> corners;
+    corners.push_back({double(-1), double(-1), double(0)});
+    corners.push_back({double(1), double(-1), double(0)});
+    corners.push_back({double(1), double(1), double(0)});
+    corners.push_back({double(-1), double(1), double(0)});
+
+    const int edges[4][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
+
+    std::vector<math::Vector<double, 3>> nodes = corners;
+    for (const auto& edge : edges) {
+        const math::Vector<double, 3> midpoint =
+            (corners[static_cast<std::size_t>(edge[0])] +
+             corners[static_cast<std::size_t>(edge[1])]) * double(0.5);
+        nodes.push_back(midpoint);
+    }
+    return nodes;
+}
+
 } // namespace
 
 TEST(SerendipityBasis, Quad8IsNodalAndPartitionsUnity) {
@@ -321,9 +343,31 @@ TEST(SerendipityBasis, Quad8IsNodalAndPartitionsUnity) {
     SerendipityBasis explicit_quad4_basis(ElementType::Quad4, 2);
 
     EXPECT_EQ(basis.size(), 8u);
+    // Quad8 sources its nodes from ReferenceNodeLayout while explicit Quad4 order
+    // 2 uses the local arbitrary-order generator, so this also pins the two
+    // independent quadrilateral node sources to agree at the production order.
     expect_nodes_near(basis.nodes(), explicit_quad4_basis.nodes(), double(1e-14));
     expect_nodal_delta(basis, basis.nodes(), double(1e-10));
     expect_partition_of_unity(basis, {double(0.17), double(-0.31), double(0)});
+}
+
+// Quad8 takes its reference nodes from ReferenceNodeLayout -- the single public
+// node-ordering source the solver adapter permutes against, the same source
+// Hex20 and Wedge15 use.
+TEST(SerendipityBasis, Quad8ReferenceNodesComeFromReferenceNodeLayout) {
+    SerendipityBasis basis(ElementType::Quad8, 2);
+    expect_nodes_near(basis.nodes(),
+                      ReferenceNodeLayout::node_coords(ElementType::Quad8),
+                      double(1e-14));
+}
+
+// Independent node-coordinate anchor for the Quad8 layout: the four corners
+// followed by the four edge midpoints, breaking the loop where the basis and the
+// reference layout are otherwise only checked against each other. Mirrors the
+// Hex20/Wedge15 independent-construction anchors.
+TEST(SerendipityBasis, Quad8ReferenceNodesMatchIndependentConstruction) {
+    SerendipityBasis basis(ElementType::Quad8, 2);
+    expect_nodes_near(basis.nodes(), quad8_reference_nodes_for_test(), double(1e-14));
 }
 
 TEST(SerendipityBasis, Hex20IsNodalAndPartitionsUnity) {

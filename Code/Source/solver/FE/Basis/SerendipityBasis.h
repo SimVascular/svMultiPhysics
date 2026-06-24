@@ -76,20 +76,23 @@ namespace basis {
  *
  * `SerendipityBasis(ElementType::Quad4, p)` supports explicit
  * arbitrary-order quadrilateral serendipity requests for @f$p \ge 1@f$
- * (requests below one are normalized to one). `ElementType::Quad8` remains
- * the standard quadratic eight-node layout and is valid only with order 2.
- * Solver-default basis selection remains separate: `basis_factory` maps the
- * complete Quad4 layout to the default linear Lagrange basis and maps Quad8 to
- * quadratic serendipity unless a caller explicitly requests a different
- * supported basis.
+ * (requests below one are normalized to one) and generates its own reference
+ * nodes, since the higher-order interior ordering is an implementation
+ * convention rather than a public layout. `ElementType::Quad8` is the named
+ * quadratic eight-node layout (valid only with order 2) and, like Hex20 and
+ * Wedge15, takes its reference nodes from ReferenceNodeLayout so that all named
+ * fixed layouts share the single public node ordering. Solver-default basis
+ * selection remains separate: `basis_factory` maps the complete Quad4 layout to
+ * the default linear Lagrange basis and maps Quad8 to quadratic serendipity
+ * unless a caller explicitly requests a different supported basis.
  *
  * Hex8 uses the standard trilinear corner basis
- * @f$(1 \pm r)(1 \pm s)(1 \pm t)/8@f$. Hex20 and Wedge15 use fixed monomial
- * spaces whose nodal coefficient tables are generated at construction by
- * inverting the Vandermonde built from their public-order reference nodes, the
- * same way the quadrilateral space is built; analytical gradients and Hessians
- * are obtained by differentiating those monomials. Because the tables are
- * generated in public node order, evaluation needs no output reordering.
+ * @f$(1 \pm r)(1 \pm s)(1 \pm t)/8@f$. Quad8, Hex20, and Wedge15 use fixed
+ * monomial spaces whose nodal coefficient tables are generated at construction
+ * by inverting the Vandermonde built from their public-order ReferenceNodeLayout
+ * nodes; analytical gradients and Hessians are obtained by differentiating those
+ * monomials. Because the tables are generated in public node order, evaluation
+ * needs no output reordering.
  */
 class SerendipityBasis final : public BasisFunction {
 public:
@@ -132,11 +135,12 @@ public:
      * @brief Return the reference interpolation nodes in basis ordering.
      *
      * @details Node coordinates are the points at which the serendipity basis
-     * satisfies the nodal interpolation property. Quadrilateral nodes are
-     * placed first on the boundary and then, for higher order requests, at the
-     * selected interior points needed to make the reduced monomial space
-     * unisolvent. Hexahedral and wedge nodes are taken from
-     * ReferenceNodeLayout. For high-order Quad4 serendipity, the deterministic
+     * satisfies the nodal interpolation property. quadrilateral, hexahedral, and wedge
+     * nodes are taken from ReferenceNodeLayout, the public node-ordering source
+     * the solver adapter permutes against. Arbitrary-order Quad4 nodes are
+     * generated here instead: boundary nodes first and then, for higher order
+     * requests, the selected interior points needed to make the reduced monomial
+     * space unisolvent. For high-order Quad4 serendipity, the deterministic
      * interior row ordering is an implementation convention; callers should
      * pair it with basis values from the same object rather than assume an
      * external mesh ordering contract beyond the supported Quad4/Quad8
