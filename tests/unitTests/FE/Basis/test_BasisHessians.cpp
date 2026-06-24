@@ -366,6 +366,17 @@ TEST(BasisGradients, SerendipityFamiliesMatchNumericalGradients) {
             basis, serendipity_sample_points(BasisTopology::Quadrilateral), c.tol);
     }
 
+    // Arbitrary-order hexahedral serendipity (topology path).
+    const struct HexCase { int order; double tol; } hex_cases[] = {
+        {1, double(1e-8)}, {2, double(1e-7)}, {3, double(5e-7)},
+        {4, double(1e-6)}, {5, double(5e-6)},
+    };
+    for (const auto& c : hex_cases) {
+        SerendipityBasis basis(BasisTopology::Hexahedron, c.order);
+        expect_gradients_match_numerical(
+            basis, serendipity_sample_points(BasisTopology::Hexahedron), c.tol);
+    }
+
     // Named fixed serendipity layouts.
     const struct NamedCase { ElementType type; int order; double tol; } named_cases[] = {
         {ElementType::Quad8, 2, double(1e-7)},
@@ -401,6 +412,17 @@ TEST(BasisHessians, SerendipityFamiliesMatchNumericalHessians) {
         SerendipityBasis basis(BasisTopology::Quadrilateral, c.order);
         expect_hessians_match_numerical(
             basis, serendipity_sample_points(BasisTopology::Quadrilateral), c.tol);
+    }
+
+    // Arbitrary-order hexahedral serendipity (topology path).
+    const struct HexCase { int order; double tol; } hex_cases[] = {
+        {1, double(1e-6)}, {2, double(1e-6)}, {3, double(5e-6)},
+        {4, double(1e-5)}, {5, double(5e-5)},
+    };
+    for (const auto& c : hex_cases) {
+        SerendipityBasis basis(BasisTopology::Hexahedron, c.order);
+        expect_hessians_match_numerical(
+            basis, serendipity_sample_points(BasisTopology::Hexahedron), c.tol);
     }
 
     // Named fixed serendipity layouts.

@@ -17,55 +17,6 @@ namespace basis {
 namespace {
 using Vec3 = math::Vector<double, 3>;
 
-void evaluate_hex8_reference(double r,
-                             double s,
-                             double t,
-                             std::span<double> values,
-                             std::span<Gradient> gradients,
-                             std::span<Hessian> hessians) {
-    static constexpr int signs[8][3] = {
-        {-1, -1, -1},
-        { 1, -1, -1},
-        { 1,  1, -1},
-        {-1,  1, -1},
-        {-1, -1,  1},
-        { 1, -1,  1},
-        { 1,  1,  1},
-        {-1,  1,  1},
-    };
-
-    for (std::size_t i = 0; i < 8u; ++i) {
-        const double a = double(signs[i][0]);
-        const double b = double(signs[i][1]);
-        const double c = double(signs[i][2]);
-        const double ar = double(1) + a * r;
-        const double bs = double(1) + b * s;
-        const double ct = double(1) + c * t;
-
-        if (!values.empty()) {
-            values[i] = double(0.125) * ar * bs * ct;
-        }
-        if (!gradients.empty()) {
-            Gradient& g = gradients[i];
-            g[0] = double(0.125) * a * bs * ct;
-            g[1] = double(0.125) * b * ar * ct;
-            g[2] = double(0.125) * c * ar * bs;
-        }
-        if (!hessians.empty()) {
-            Hessian& h = hessians[i];
-            h(0, 0) = double(0);
-            h(0, 1) = double(0.125) * a * b * ct;
-            h(0, 2) = double(0.125) * a * c * bs;
-            h(1, 0) = h(0, 1);
-            h(1, 1) = double(0);
-            h(1, 2) = double(0.125) * b * c * ar;
-            h(2, 0) = h(0, 2);
-            h(2, 1) = h(1, 2);
-            h(2, 2) = double(0);
-        }
-    }
-}
-
 int quad_serendipity_superlinear_degree(int ax, int ay) {
     return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0);
 }
@@ -163,6 +114,162 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
     return nodes;
 }
 
+int hex_serendipity_superlinear_degree(int ax, int ay, int az) {
+    return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0) + (az > 1 ? az : 0);
+}
+
+// Hexahedral serendipity monomial space: every r^a s^b t^c whose superlinear
+// degree is at most `order`. This is the three-axis generalization of
+// quad_serendipity_exponents; at order 1 it is the eight multilinear monomials
+// (the Hex8 space) and at order 2 it is the twenty-monomial Hex20 space. The
+// enumeration order is internal -- evaluation sums over the monomials, so only
+// the node order, not the monomial order, is observable to a caller.
+std::vector<std::array<int, 3>> hex_serendipity_exponents(int order) {
+    std::vector<std::array<int, 3>> exponents;
+    for (int az = 0; az <= order; ++az) {
+        for (int ay = 0; ay <= order; ++ay) {
+            for (int ax = 0; ax <= order; ++ax) {
+                if (hex_serendipity_superlinear_degree(ax, ay, az) <= order) {
+                    exponents.push_back({ax, ay, az});
+                }
+            }
+        }
+    }
+    return exponents;
+}
+
+// Volume-interior node count for hexahedral serendipity. Once the boundary trace
+// is fixed, an interior serendipity function factors as the cube bubble
+// (1 - r^2)(1 - s^2)(1 - t^2) times a quotient of total degree at most order - 6,
+// so the interior space is P_{order-6} in three variables: empty until order 6,
+// then dim P_{order-6} = (m+1)(m+2)(m+3)/6 with m = order - 6.
+std::size_t hex_serendipity_volume_interior_count(int order) {
+    if (order < 6) {
+        return 0u;
+    }
+    const auto m = static_cast<std::size_t>(order - 6);
+    return (m + 1u) * (m + 2u) * (m + 3u) / 6u;
+}
+
+// Append the face-interior nodes. The restriction of the order-`order` cube
+// serendipity space to a face is the order-`order` quadrilateral serendipity
+// space, so every face carries the same 2D quad-serendipity interior set,
+// embedded into the face plane. Faces are visited in VTK face order
+// (-X, +X, -Y, +Y, -Z, +Z); the in-plane (u, v) point maps to the two free axes
+// of each face. Empty until order 4 (when the quad interior first appears).
+void append_hex_serendipity_face_interior_nodes(std::vector<Vec3>& nodes, int order) {
+    std::vector<Vec3> face_interior;  // (u, v, 0) interior points of one quad face
+    append_quad_serendipity_interior_nodes(face_interior, order);
+    if (face_interior.empty()) {
+        return;
+    }
+
+    // Each face: the fixed axis (0 = r, 1 = s, 2 = t), its +/-1 value, and the two
+    // in-plane axes that carry the 2D interior point (u, v).
+    struct Face {
+        int fixed_axis;
+        double fixed_value;
+        int u_axis;
+        int v_axis;
+    };
+    static constexpr Face faces[6] = {
+        {0, double(-1), 1, 2},  // -X: (s, t) in plane
+        {0, double(1),  1, 2},  // +X
+        {1, double(-1), 0, 2},  // -Y: (r, t) in plane
+        {1, double(1),  0, 2},  // +Y
+        {2, double(-1), 0, 1},  // -Z: (r, s) in plane
+        {2, double(1),  0, 1},  // +Z
+    };
+
+    for (const auto& face : faces) {
+        for (const auto& p : face_interior) {
+            Vec3 node = Vec3::Zero();
+            node[static_cast<std::size_t>(face.fixed_axis)] = face.fixed_value;
+            node[static_cast<std::size_t>(face.u_axis)] = p[0];
+            node[static_cast<std::size_t>(face.v_axis)] = p[1];
+            nodes.push_back(node);
+        }
+    }
+}
+
+// Append the volume-interior nodes: a tetrahedral staircase unisolvent for the
+// interior residual P_{order-6}. Each t-layer is a triangular staircase (the 2D
+// construction reused) whose total degree decreases by one per layer, so the
+// layers consume P_{order-6} by induction in t exactly as the quad interior
+// consumes P_{order-4} by induction in s. Empty until order 6.
+void append_hex_serendipity_volume_interior_nodes(std::vector<Vec3>& nodes, int order) {
+    if (order < 6) {
+        return;
+    }
+    const int m = order - 6;
+    for (int layer = 0; layer <= m; ++layer) {
+        const int tri_order = m - layer;
+        const double t = double(-1) + double(2) * double(layer + 1) / double(m + 2);
+        for (int row = 0; row <= tri_order; ++row) {
+            const int row_count = tri_order + 1 - row;
+            const double s = double(-1) + double(2) * double(row + 1) / double(tri_order + 2);
+            for (int col = 0; col < row_count; ++col) {
+                const double r = double(-1) + double(2) * double(col + 1) / double(row_count + 1);
+                nodes.push_back(Vec3{r, s, t});
+            }
+        }
+    }
+}
+
+// Generate the hexahedral serendipity reference nodes in the generalized
+// right-hand-rule / VTK-consistent stratified order: 8 corners, then 12 edges in
+// VTK quadratic-hex edge order, then the 6 face interiors in VTK face order, then
+// the volume interior. The corner and edge strata reuse the VTK ordering of
+// generate_hex_nodes verbatim, so at order 1 (corners only) and order 2 (corners
+// plus edge midpoints) the layout is exactly the public Hex8 / Hex20 ordering;
+// for higher order the reduced face/volume sets are this module's own convention.
+std::vector<Vec3> hex_serendipity_nodes(int order, std::size_t total_size) {
+    static constexpr double corner_coords[8][3] = {
+        {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
+        {-1, -1, 1},  {1, -1, 1},  {1, 1, 1},  {-1, 1, 1},
+    };
+    static constexpr int edges[12][2] = {
+        {0, 1}, {1, 2}, {2, 3}, {3, 0},
+        {4, 5}, {5, 6}, {6, 7}, {7, 4},
+        {0, 4}, {1, 5}, {2, 6}, {3, 7},
+    };
+
+    std::vector<Vec3> nodes;
+    nodes.reserve(total_size);
+
+    for (const auto& c : corner_coords) {
+        nodes.push_back(Vec3{c[0], c[1], c[2]});
+    }
+
+    for (const auto& edge : edges) {
+        const auto& ca = corner_coords[edge[0]];
+        const auto& cb = corner_coords[edge[1]];
+        const Vec3 a{ca[0], ca[1], ca[2]};
+        const Vec3 b{cb[0], cb[1], cb[2]};
+        for (int m = 1; m < order; ++m) {
+            const double t = double(m) / double(order);
+            nodes.push_back(a * (double(1) - t) + b * t);
+        }
+    }
+
+    const std::size_t skeleton = nodes.size();
+    append_hex_serendipity_face_interior_nodes(nodes, order);
+    svmp::throw_if<BasisConstructionException>(
+        nodes.size() - skeleton != 6u * quad_serendipity_interior_count(order), SVMP_HERE,
+        "SerendipityBasis: hexahedral serendipity face-interior node count mismatch");
+
+    const std::size_t before_volume = nodes.size();
+    append_hex_serendipity_volume_interior_nodes(nodes, order);
+    svmp::throw_if<BasisConstructionException>(
+        nodes.size() - before_volume != hex_serendipity_volume_interior_count(order), SVMP_HERE,
+        "SerendipityBasis: hexahedral serendipity volume-interior node count mismatch");
+
+    svmp::throw_if<BasisConstructionException>(
+        nodes.size() != total_size, SVMP_HERE,
+        "SerendipityBasis: hexahedral serendipity node count does not match the monomial count");
+    return nodes;
+}
+
 // Build the nodal coefficient table for a monomial-generated serendipity family:
 // assemble V[node][monomial] = r^a s^b t^c at the public-order reference nodes and
 // invert it. Because the nodes are in public order, the inverse is already in
@@ -209,13 +316,6 @@ constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{1, 1, 1}},
     {{2, 0, 0}},
     {{2, 0, 1}}
-}};
-
-constexpr std::array<std::array<int, 3>, 20> kHex20MonomialExponents = {{
-    {{0, 0, 0}}, {{0, 0, 1}}, {{0, 0, 2}}, {{0, 1, 0}}, {{0, 1, 1}},
-    {{0, 1, 2}}, {{0, 2, 0}}, {{0, 2, 1}}, {{1, 0, 0}}, {{1, 0, 1}},
-    {{1, 0, 2}}, {{1, 1, 0}}, {{1, 1, 1}}, {{1, 1, 2}}, {{1, 2, 0}},
-    {{1, 2, 1}}, {{2, 0, 0}}, {{2, 0, 1}}, {{2, 1, 0}}, {{2, 1, 1}}
 }};
 
 // Value and first/second derivatives of the 1D monomial x^a. The derivative of
@@ -354,16 +454,22 @@ NormalizedSerendipityRequest normalize_serendipity_request(ElementType type, int
 
 SerendipityBasis::SerendipityBasis(BasisTopology topology, int order)
     : topology_(topology), dimension_(0), order_(0), size_(0) {
+    const bool supported_topology = topology_ == BasisTopology::Quadrilateral ||
+                                    topology_ == BasisTopology::Hexahedron;
     svmp::throw_if<BasisElementCompatibilityException>(
-        topology_ != BasisTopology::Quadrilateral, SVMP_HERE,
-        "SerendipityBasis: arbitrary-order topology construction is only supported for "
-        "Quadrilateral; use the named ElementType (Hex8/Hex20/Wedge15) for hex/wedge serendipity");
+        !supported_topology, SVMP_HERE,
+        "SerendipityBasis: arbitrary-order topology construction is supported for "
+        "Quadrilateral and Hexahedron; use the named ElementType (Wedge15) for wedge serendipity");
     svmp::throw_if<BasisConfigurationException>(
         order < 1, SVMP_HERE,
-        "SerendipityBasis: quadrilateral serendipity requires a polynomial order >= 1");
-    dimension_ = 2;
+        "SerendipityBasis: serendipity requires a polynomial order >= 1");
+    dimension_ = topology_ == BasisTopology::Hexahedron ? 3 : 2;
     order_ = order;
-    init_quadrilateral(order_, /*nodes_from_reference_layout=*/false);
+    if (topology_ == BasisTopology::Hexahedron) {
+        init_hexahedron(order_, /*nodes_from_reference_layout=*/false);
+    } else {
+        init_quadrilateral(order_, /*nodes_from_reference_layout=*/false);
+    }
 }
 
 SerendipityBasis::SerendipityBasis(ElementType type, int order)
@@ -377,19 +483,17 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
         case ElementType::Quad8:
             // Quad8 is the named quadratic layout; its nodes come from
             // ReferenceNodeLayout so the basis shares the single public Quad8
-            // ordering (the same source Hex20/Wedge15 use).
+            // ordering (the same source Hex8/Hex20/Wedge15 use).
             init_quadrilateral(order_, /*nodes_from_reference_layout=*/true);
             return;
         case ElementType::Hex8:
-            // Hex8 is the standard trilinear corner basis, evaluated directly
-            // rather than through a generated coefficient table.
-            size_ = 8u;
-            nodes_ = ReferenceNodeLayout::node_coords(type);
-            svmp::throw_if<BasisConstructionException>(
-                nodes_.size() != size_, SVMP_HERE,
-                "SerendipityBasis: Hex8 layout node count does not match basis size");
+            // Hex8 is the order-1 instance of the hexahedral serendipity space.
+            init_hexahedron(1, /*nodes_from_reference_layout=*/true);
             return;
         case ElementType::Hex20:
+            // Hex20 is the order-2 instance of the hexahedral serendipity space.
+            init_hexahedron(2, /*nodes_from_reference_layout=*/true);
+            return;
         case ElementType::Wedge15:
             init_fixed_named(type);
             return;
@@ -424,33 +528,48 @@ void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_l
         nodes_, monomial_exponents_, "Quad order " + std::to_string(order));
 }
 
-// Build a fixed named volume serendipity layout (Hex20 or Wedge15). The nodal
-// coefficient table is generated by inverting the Vandermonde built from the
-// public-order ReferenceNodeLayout nodes, exactly like the quadrilateral, so no
-// transcribed tables or output permutation are needed.
-void SerendipityBasis::init_fixed_named(ElementType type) {
-    std::span<const std::array<int, 3>> family_exponents;
-    std::string label;
-    if (type == ElementType::Hex20) {
-        size_ = 20u;
-        family_exponents = std::span<const std::array<int, 3>>(
-            kHex20MonomialExponents.data(), kHex20MonomialExponents.size());
-        label = "Hex20";
-    } else {  // Wedge15
-        size_ = 15u;
-        family_exponents = std::span<const std::array<int, 3>>(
-            kWedge15MonomialExponents.data(), kWedge15MonomialExponents.size());
-        label = "Wedge15";
+// Build the hexahedral serendipity monomial space, reference nodes, and nodal
+// coefficient table for the given order, mirroring init_quadrilateral. The
+// arbitrary-order topology path generates its own VTK-consistent nodes; the named
+// Hex8 (order 1) and Hex20 (order 2) layouts source their public-order nodes from
+// ReferenceNodeLayout so the generated layout matches the public ordering exactly.
+void SerendipityBasis::init_hexahedron(int order, bool nodes_from_reference_layout) {
+    monomial_exponents_ = hex_serendipity_exponents(order);
+    size_ = monomial_exponents_.size();
+    if (nodes_from_reference_layout) {
+        const ElementType named =
+            (order == 1) ? ElementType::Hex8 : ElementType::Hex20;
+        nodes_ = ReferenceNodeLayout::node_coords(named);
+    } else {
+        nodes_ = hex_serendipity_nodes(order, size_);
     }
+    svmp::throw_if<BasisConstructionException>(
+        nodes_.size() != size_, SVMP_HERE,
+        "SerendipityBasis: hexahedral serendipity setup produced inconsistent sizes");
+    inv_vandermonde_ = build_inverse_vandermonde(
+        nodes_, monomial_exponents_, "Hex order " + std::to_string(order));
+}
+
+// Build the Wedge15 serendipity layout from its tabulated monomial space and
+// public-order ReferenceNodeLayout nodes. Hexahedral serendipity (Hex8 and Hex20
+// included) is generated by init_hexahedron, so the prism is the only named
+// layout that still carries a fixed monomial table.
+void SerendipityBasis::init_fixed_named(ElementType type) {
+    svmp::throw_if<BasisConstructionException>(
+        type != ElementType::Wedge15, SVMP_HERE,
+        "SerendipityBasis: init_fixed_named builds only the Wedge15 layout");
+    size_ = 15u;
+    const std::span<const std::array<int, 3>> family_exponents(
+        kWedge15MonomialExponents.data(), kWedge15MonomialExponents.size());
     nodes_ = ReferenceNodeLayout::node_coords(type);
     svmp::throw_if<BasisConstructionException>(
         nodes_.size() != size_, SVMP_HERE,
-        "SerendipityBasis: fixed serendipity layout node count does not match basis size");
+        "SerendipityBasis: Wedge15 layout node count does not match basis size");
     svmp::throw_if<BasisConstructionException>(
         family_exponents.size() != size_, SVMP_HERE,
-        "SerendipityBasis: serendipity monomial count does not match basis size");
+        "SerendipityBasis: Wedge15 monomial count does not match basis size");
     monomial_exponents_.assign(family_exponents.begin(), family_exponents.end());
-    inv_vandermonde_ = build_inverse_vandermonde(nodes_, monomial_exponents_, label);
+    inv_vandermonde_ = build_inverse_vandermonde(nodes_, monomial_exponents_, "Wedge15");
 }
 
 void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
@@ -479,15 +598,8 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
     const double y = xi[1];
     const double z = xi[2];
 
-    // Hex8 (Hexahedron at order 1) is the only serendipity basis evaluated
-    // directly from the trilinear corner products rather than a coefficient table.
-    if (topology_ == BasisTopology::Hexahedron && order_ == 1) {
-        evaluate_hex8_reference(x, y, z, values_out, gradients_out, hessians_out);
-        return;
-    }
-
-    // Quad, Hex20, and Wedge15 evaluate through their generated coefficient
-    // table, which is already in public basis order.
+    // Every serendipity family evaluates through its generated coefficient table,
+    // which is already in public basis order.
     svmp::throw_if<BasisEvaluationException>(
         monomial_exponents_.size() != size_ ||
             inv_vandermonde_.size() != size_ * size_,

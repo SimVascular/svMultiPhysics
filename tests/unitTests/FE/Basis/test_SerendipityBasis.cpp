@@ -240,6 +240,46 @@ std::vector<std::array<int, 3>> hex20_serendipity_exponents_for_test() {
     return exponents;
 }
 
+// Arbitrary-order hexahedral serendipity verification
+std::vector<std::array<int, 3>> hex_serendipity_exponents_for_test(int order) {
+    std::vector<std::array<int, 3>> exponents;
+    for (int az = 0; az <= order; ++az) {
+        for (int ay = 0; ay <= order; ++ay) {
+            for (int ax = 0; ax <= order; ++ax) {
+                if (superlinear_degree_3d_for_test(ax, ay, az) <= order) {
+                    exponents.push_back({ax, ay, az});
+                }
+            }
+        }
+    }
+    return exponents;
+}
+
+std::size_t quad_serendipity_interior_count_for_test(int order) {
+    if (order < 4) {
+        return 0u;
+    }
+    const auto m = static_cast<std::size_t>(order - 4);
+    return (m + 1u) * (m + 2u) / 2u;
+}
+
+std::size_t hex_serendipity_volume_interior_count_for_test(int order) {
+    if (order < 6) {
+        return 0u;
+    }
+    const auto m = static_cast<std::size_t>(order - 6);
+    return (m + 1u) * (m + 2u) * (m + 3u) / 6u;
+}
+
+// dim S_p from the node strata: 8 corners, 12 (p - 1) edge nodes, 6 q(p) face
+// interiors, and the P_{p-6} volume residual.
+std::size_t expected_hex_serendipity_size(int order) {
+    const auto p = static_cast<std::size_t>(order);
+    return 8u + 12u * (p - 1u) +
+           6u * quad_serendipity_interior_count_for_test(order) +
+           hex_serendipity_volume_interior_count_for_test(order);
+}
+
 // Wedge15 serendipity span: triangle monomials (ax, ay) with ax + ay <= 2,
 // tensored with the through-axis. Linear triangle monomials (ax + ay <= 1) carry
 // t-degree up to two; quadratic triangle monomials (ax + ay == 2) carry t-degree
@@ -405,20 +445,25 @@ TEST(SerendipityBasis, RejectsUnsupportedSerendipityAliases) {
 // Topology construction is the arbitrary-order entry point and exists only for
 // the quadrilateral, the single serendipity family with a free order. Hex and
 // wedge serendipity are fixed layouts requested through their named ElementType.
-TEST(SerendipityBasis, TopologyConstructionOnlySupportsQuadrilateral) {
+TEST(SerendipityBasis, TopologyConstructionSupportsQuadrilateralAndHexahedron) {
     EXPECT_NO_THROW((void)SerendipityBasis(BasisTopology::Quadrilateral, 3));
-    EXPECT_THROW(SerendipityBasis(BasisTopology::Hexahedron, 2),
-                 BasisElementCompatibilityException);
+    EXPECT_NO_THROW((void)SerendipityBasis(BasisTopology::Hexahedron, 3));
     EXPECT_THROW(SerendipityBasis(BasisTopology::Wedge, 2),
                  BasisElementCompatibilityException);
     EXPECT_THROW(SerendipityBasis(BasisTopology::Triangle, 2),
                  BasisElementCompatibilityException);
 
-    // Topology and named construction agree at the production order.
-    SerendipityBasis topo(BasisTopology::Quadrilateral, 2);
-    EXPECT_EQ(topo.topology(), BasisTopology::Quadrilateral);
-    EXPECT_EQ(topo.order(), 2);
-    EXPECT_EQ(topo.element_type(), ElementType::Quad8);
+    // Topology and named construction agree at the production order for both the
+    // quadrilateral and the hexahedron.
+    SerendipityBasis quad(BasisTopology::Quadrilateral, 2);
+    EXPECT_EQ(quad.topology(), BasisTopology::Quadrilateral);
+    EXPECT_EQ(quad.order(), 2);
+    EXPECT_EQ(quad.element_type(), ElementType::Quad8);
+
+    SerendipityBasis hex(BasisTopology::Hexahedron, 2);
+    EXPECT_EQ(hex.topology(), BasisTopology::Hexahedron);
+    EXPECT_EQ(hex.order(), 2);
+    EXPECT_EQ(hex.element_type(), ElementType::Hex20);
 }
 
 TEST(SerendipityBasis, QuadrilateralRejectsOrdersBelowOne) {
@@ -606,9 +651,10 @@ TEST(SerendipityBasis, QuadrilateralVandermondeHasFullRankThroughOrderTen) {
     }
 }
 
-// SerendipityBasis(Hex8, 1) is the only route to the hand-written trilinear
-// corner evaluator (values, gradients, and Hessians); it must agree with the
-// trilinear Lagrange basis on the same element.
+// Hex8 serendipity is the order-1 instance of the generated hexahedral
+// serendipity space (the eight multilinear monomials). It must still reproduce
+// the trilinear Lagrange basis -- values, gradients, and Hessians -- which guards
+// the generated order-1 coefficient table against the closed-form trilinear basis.
 TEST(SerendipityBasis, TrilinearHexMatchesLagrangeHex8) {
     SerendipityBasis serendipity(ElementType::Hex8, 1);
     LagrangeBasis lagrange(ElementType::Hex8, 1);
@@ -795,4 +841,157 @@ TEST(SerendipityBasis, Hex20ReferenceNodesMatchIndependentConstruction) {
 TEST(SerendipityBasis, Wedge15ReferenceNodesMatchIndependentConstruction) {
     SerendipityBasis basis(ElementType::Wedge15, 2);
     expect_nodes_near(basis.nodes(), wedge15_reference_nodes_for_test(), double(1e-14));
+}
+
+// --- Arbitrary-order hexahedral serendipity (BasisTopology::Hexahedron) -------
+
+// dim S_p of the cube serendipity space for p = 1..6 (Hex8 = 8, Hex20 = 20),
+// checked against both the re-derived monomial enumeration and the node-strata
+// decomposition.
+TEST(SerendipityBasis, HexahedralSerendipitySpaceHasExpectedDimensions) {
+    const std::array<std::size_t, 7> expected = {0u, 8u, 20u, 32u, 50u, 74u, 105u};
+    for (int order = 1; order <= 6; ++order) {
+        const auto exponents = hex_serendipity_exponents_for_test(order);
+        const auto p = static_cast<std::size_t>(order);
+        EXPECT_EQ(exponents.size(), expected[p]) << "order=" << order;
+        EXPECT_EQ(expected_hex_serendipity_size(order), expected[p]) << "order=" << order;
+        for (const auto& e : exponents) {
+            EXPECT_LE(superlinear_degree_3d_for_test(e[0], e[1], e[2]), order);
+            for (int d = 0; d < 3; ++d) {
+                EXPECT_GE(e[d], 0);
+                EXPECT_LE(e[d], order);
+            }
+        }
+    }
+
+    // The order-2 hex serendipity span is exactly the Hex20 span (as a set).
+    auto order_two = hex_serendipity_exponents_for_test(2);
+    auto hex20 = hex20_serendipity_exponents_for_test();
+    std::sort(order_two.begin(), order_two.end());
+    std::sort(hex20.begin(), hex20.end());
+    EXPECT_EQ(order_two, hex20);
+}
+
+// VTK conformance: the generated arbitrary-order layout reproduces the public
+// Hex8 (order 1) and Hex20 (order 2) node ordering coordinate-for-coordinate.
+TEST(SerendipityBasis, HexahedralTopologyNodesMatchPublicHex8AndHex20Layouts) {
+    SerendipityBasis hex8(BasisTopology::Hexahedron, 1);
+    EXPECT_EQ(hex8.size(), 8u);
+    expect_nodes_near(hex8.nodes(),
+                      ReferenceNodeLayout::node_coords(ElementType::Hex8),
+                      double(1e-14));
+
+    SerendipityBasis hex20(BasisTopology::Hexahedron, 2);
+    EXPECT_EQ(hex20.size(), 20u);
+    expect_nodes_near(hex20.nodes(),
+                      ReferenceNodeLayout::node_coords(ElementType::Hex20),
+                      double(1e-14));
+}
+
+// The generated node set is unisolvent for the hex serendipity span at every
+// supported order: the Vandermonde of the re-derived monomials at the generated
+// nodes has full rank.
+TEST(SerendipityBasis, HexahedralSerendipityVandermondeHasFullRankThroughOrderSix) {
+    for (int order = 1; order <= 6; ++order) {
+        SerendipityBasis basis(BasisTopology::Hexahedron, order);
+        const auto exponents = hex_serendipity_exponents_for_test(order);
+        const std::size_t n = basis.size();
+        ASSERT_EQ(exponents.size(), n) << "order=" << order;
+        const auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
+        ASSERT_EQ(vandermonde.size(), n * n) << "order=" << order;
+        EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n) << "order=" << order;
+    }
+}
+
+TEST(SerendipityBasis, HexahedralTopologyIsNodalAndPartitionsUnity) {
+    const std::vector<math::Vector<double, 3>> points = {
+        {double(0.2), double(-0.1), double(0.3)},
+        {double(-0.35), double(0.25), double(-0.15)},
+    };
+    for (int order = 1; order <= 5; ++order) {
+        SerendipityBasis basis(BasisTopology::Hexahedron, order);
+        EXPECT_EQ(basis.dimension(), 3);
+        EXPECT_EQ(basis.order(), order);
+        EXPECT_EQ(basis.size(), expected_hex_serendipity_size(order)) << "order=" << order;
+        ASSERT_EQ(basis.nodes().size(), basis.size());
+
+        expect_nodal_delta(basis, basis.nodes(), double(1e-7));
+        for (const auto& xi : points) {
+            expect_partition_of_unity(basis, xi, double(1e-7));
+        }
+    }
+}
+
+// Non-nodal polynomial reproduction across orders: the basis reproduces every
+// monomial in its span at interior points, pinning the production monomial space
+// against the re-derived verification.
+TEST(SerendipityBasis, HexahedralTopologyReproducesEverySerendipityMonomial) {
+    const std::vector<math::Vector<double, 3>> points = {
+        {double(0.2), double(-0.1), double(0.3)},
+        {double(-0.35), double(0.25), double(-0.15)},
+        {double(0.11), double(0.23), double(-0.42)},
+    };
+    for (int order = 1; order <= 5; ++order) {
+        SerendipityBasis basis(BasisTopology::Hexahedron, order);
+        const auto exponents = hex_serendipity_exponents_for_test(order);
+        ASSERT_EQ(exponents.size(), basis.size()) << "order=" << order;
+        for (const auto& exponent : exponents) {
+            for (const auto& xi : points) {
+                const double interpolated = interpolate_nodal_function(
+                    basis, xi,
+                    [&exponent](const math::Vector<double, 3>& node) {
+                        return monomial_value_3d_for_test(node, exponent);
+                    });
+                EXPECT_NEAR(interpolated, monomial_value_3d_for_test(xi, exponent),
+                            double(1e-6))
+                    << "order=" << order << " ax=" << exponent[0]
+                    << " ay=" << exponent[1] << " az=" << exponent[2];
+            }
+        }
+    }
+}
+
+
+TEST(SerendipityBasis, NamedHexLayoutsMatchTopologyConstruction) {
+    const struct Case { ElementType type; int order; } cases[] = {
+        {ElementType::Hex8, 1},
+        {ElementType::Hex20, 2},
+    };
+    const std::vector<math::Vector<double, 3>> points = {
+        {double(0.2), double(-0.1), double(0.3)},
+        {double(-0.35), double(0.25), double(-0.15)},
+        {double(0.11), double(0.23), double(-0.42)},
+    };
+    for (const auto& c : cases) {
+        SerendipityBasis named(c.type, c.order);
+        SerendipityBasis topo(BasisTopology::Hexahedron, c.order);
+
+        ASSERT_EQ(named.size(), topo.size());
+        ASSERT_EQ(named.nodes().size(), topo.nodes().size());
+        for (std::size_t i = 0; i < named.nodes().size(); ++i) {
+            for (std::size_t d = 0; d < 3u; ++d) {
+                EXPECT_EQ(named.nodes()[i][d], topo.nodes()[i][d])
+                    << "node=" << i << " d=" << d;
+            }
+        }
+
+        for (const auto& xi : points) {
+            std::vector<double> nv, tv;
+            std::vector<Gradient> ng, tg;
+            std::vector<Hessian> nh, th;
+            named.evaluate_all(xi, nv, ng, nh);
+            topo.evaluate_all(xi, tv, tg, th);
+            ASSERT_EQ(nv.size(), tv.size());
+            for (std::size_t i = 0; i < nv.size(); ++i) {
+                EXPECT_EQ(nv[i], tv[i]) << "value i=" << i;
+                for (std::size_t d = 0; d < 3u; ++d) {
+                    EXPECT_EQ(ng[i][d], tg[i][d]) << "grad i=" << i << " d=" << d;
+                    for (std::size_t e = 0; e < 3u; ++e) {
+                        EXPECT_EQ(nh[i](d, e), th[i](d, e))
+                            << "hess i=" << i << " (" << d << "," << e << ")";
+                    }
+                }
+            }
+        }
+    }
 }
