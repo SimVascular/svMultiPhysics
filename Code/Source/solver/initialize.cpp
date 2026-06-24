@@ -126,7 +126,9 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
         } else if (cepEq) {
           bin_file.read((char*)Ad.data(), Ad.msize());
           bin_file.read((char*)Xion.data(), Xion.msize());
-          bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+          bin_file.read((char*)cem.Ya_f.data(), cem.Ya_f.msize());
+          bin_file.read((char*)cem.Ya_s.data(), cem.Ya_s.msize());
+          bin_file.read((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           bin_file.read((char*)Ad.data(), Ad.msize());
@@ -147,7 +149,9 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 
         } else if (cepEq) {
           bin_file.read((char*)Xion.data(), Xion.msize());
-          bin_file.read((char*)cem.Ya.data(), cem.Ya.msize());
+          bin_file.read((char*)cem.Ya_f.data(), cem.Ya_f.msize());
+          bin_file.read((char*)cem.Ya_s.data(), cem.Ya_s.msize());
+          bin_file.read((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           init_ris_data(com_mod, bin_file); 
@@ -683,12 +687,14 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   // Electromechanics.
   // @todo[michelebucelli] There's probably a better solution than initializing
-  //   these two vectors all the time. E.g. we could put the calcium evaluation
+  //   these vectors all the time. E.g. we could put the calcium evaluation
   //   behind a getter, that returns zero if the vector has not been
   //   initialized.
   {
     cep_mod.calcium.resize(tnNo);
-    cep_mod.cem.Ya.resize(tnNo);
+    cep_mod.cem.Ya_f.resize(tnNo);
+    cep_mod.cem.Ya_s.resize(tnNo);
+    cep_mod.cem.Ya_n.resize(tnNo);
   }
 
   // Setup the initial conditions for the active stress models.

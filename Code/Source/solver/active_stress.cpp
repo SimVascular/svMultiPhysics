@@ -10,6 +10,24 @@ bool supports_active_stress(const consts::EquationType eq_type) {
          eq_type == consts::EquationType::phys_FSI;
 }
 
+void ActiveStress::read_parameters(const ActiveStressParameters &params) {
+  eta_f = params.get_eta_f();
+  eta_s = params.get_eta_s();
+  eta_n = params.get_eta_n();
+
+  read_model_specific_parameters(
+      params.get_parameters(params.get_model_name()));
+}
+
+void ActiveStress::distribute_parameters(const CmMod &cm_mod,
+                                         const cmType &cm) {
+  cm.bcast(cm_mod, &eta_f);
+  cm.bcast(cm_mod, &eta_s);
+  cm.bcast(cm_mod, &eta_n);
+
+  distribute_model_specific_parameters(cm_mod, cm);
+}
+
 void ActiveStress::init(const unsigned int tnNo) {
   states.resize(n_states, tnNo);
 

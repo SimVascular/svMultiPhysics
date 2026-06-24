@@ -140,10 +140,23 @@ class cemModelType
     bool aStrain = false;
     //bool aStrain = .FALSE.
 
-    /// @brief  Local variable integrated in time
-    ///    := active tension for active stress model
-    ///    := fiber stretch for active strain model
-    Vector<double> Ya;
+    /// @brief Activation along fibers.
+    ///
+    /// Corresponds to active tension along fibers if using active stress, and
+    /// to fiber stretch if using active strain.
+    Vector<double> Ya_f;
+
+    /// @brief Activation along sheets.
+    ///
+    /// Only used if using active stress, in which case it represents the active
+    /// tension along sheets.
+    Vector<double> Ya_s;
+
+    /// @brief Activation along sheet normals.
+    ///
+    /// Only used if using active stress, in which case it represents the active
+    /// tension along sheet normals.
+    Vector<double> Ya_n;
 };
 
 class CepMod 

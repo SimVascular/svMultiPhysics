@@ -40,7 +40,9 @@ std::map<consts::OutputNameType, OutputProps> output_props_map =
   {OutputNameType::out_fibStrn,      std::make_tuple(OutputNameType::outGrp_fS,     0, 1,             "Fiber_shortening") },
   {OutputNameType::out_fibStretch,   std::make_tuple(OutputNameType::outGrp_fibStretch,    0, 1,      "Fiber_stretch") },
   {OutputNameType::out_fibStretchRate, std::make_tuple(OutputNameType::outGrp_fibStretchRate, 0, 1,   "Fiber_stretch_rate") },
-  {OutputNameType::out_activeTension, std::make_tuple(OutputNameType::outGrp_activeTension, 0, 1,     "Active_tension") },
+  {OutputNameType::out_activeTensionFibers, std::make_tuple(OutputNameType::outGrp_activeTensionFibers, 0, 1, "Active_tension_fibers") },
+  {OutputNameType::out_activeTensionSheets, std::make_tuple(OutputNameType::outGrp_activeTensionSheets, 0, 1, "Active_tension_sheets") },
+  {OutputNameType::out_activeTensionNormal, std::make_tuple(OutputNameType::outGrp_activeTensionNormal, 0, 1, "Active_tension_normal") },
 
   {OutputNameType::out_heatFlux,     std::make_tuple(OutputNameType::outGrp_hFlx,   0, nsd,           "Heat_flux") },
   {OutputNameType::out_integ,        std::make_tuple(OutputNameType::outGrp_I,      0,   1, nsd == 2 ?  "Area" : "Volume") },

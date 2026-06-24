@@ -578,7 +578,9 @@ void Integrator::predictor()
       // multiple domains (which happens for points on domain interfaces), we
       // average the active stresses from the domains.
       for (int Ac = 0; Ac < com_mod.tnNo; Ac++) {
-        double active_stress = 0.0;
+        double Ta_f = 0.0;
+        double Ta_s = 0.0;
+        double Ta_n = 0.0;
         unsigned int n_domains = 0;
 
         for (auto &dmn : eq.dmn) {
@@ -589,13 +591,20 @@ void Integrator::predictor()
           if (!supports_active_stress(dmn.phys))
             continue;
 
-          if (dmn.active_stress != nullptr)
-            active_stress += (*dmn.active_stress)(Ac);
+          if (dmn.active_stress != nullptr) {
+            Ta_f += dmn.active_stress->get_tension_fibers(Ac);
+            Ta_s += dmn.active_stress->get_tension_sheets(Ac);
+            Ta_n += dmn.active_stress->get_tension_sheet_normals(Ac);
+          }
 
           n_domains++;
         }
 
-        cep_mod.cem.Ya[Ac] = (n_domains > 0) ? active_stress / n_domains : 0.0;
+        if (n_domains > 0) {
+          cep_mod.cem.Ya_f[Ac] = Ta_f / n_domains;
+          cep_mod.cem.Ya_s[Ac] = Ta_s / n_domains;
+          cep_mod.cem.Ya_n[Ac] = Ta_n / n_domains;
+        }
       }
     }
 

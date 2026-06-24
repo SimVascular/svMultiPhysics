@@ -69,19 +69,19 @@ public:
     return std::make_unique<Parameters>();
   }
 
+protected:
   /**
    * @brief Read model parameters from a parameter object.
    */
-  virtual void
-  read_parameters(const ActiveStressModelParameters &params) override;
+  virtual void read_model_specific_parameters(
+      const ActiveStressModelParameters &params) override;
 
   /**
    * @brief Distribute model parameters to all parallel processes.
    */
-  virtual void distribute_parameters(const CmMod &cm_mod,
-                                     const cmType &cm) override;
+  virtual void distribute_model_specific_parameters(const CmMod &cm_mod,
+                                                    const cmType &cm) override;
 
-protected:
   /**
    * @brief Initialize the state vector for a single node.
    *

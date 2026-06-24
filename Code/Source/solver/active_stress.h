@@ -43,7 +43,36 @@ bool supports_active_stress(const consts::EquationType eq_type);
  * given point only depends on the value of other variables at that same point.
  * Accordingly, this class works nodally, by evaluating the active tension at
  * every mesh node and storing it in a vector, whose values can be accessed
- * through @ref ActiveStress::operator().
+ * through @ref ActiveStress::get_tension_fibers.
+ *
+ * ### Directional distribution of active stress
+ *
+ * In muscular mechanics models, active stress normally acts only along the
+ * direction of fibers @f$\fiberdirection@f$, reflecting the fact that
+ * contractile units are aligned with fibers. However, one might want to account
+ * for fiber dispersion, i.e. the fact that fibers are not perfectly and
+ * regularly aligned, but rather have a certain distribution of orientations
+ * centered around the principal direction @f$\fiberdirection@f$.
+ *
+ * This can be surrogated by defining the active stress tensor as
+ * @f[
+ *   S_\text{act} = \Tact \left(
+ *     \eta_f \fiberdirection \otimes \fiberdirection +
+ *     \eta_s \sheetdirection \otimes \sheetdirection +
+ *     \eta_n \sheetnormaldirection \otimes \sheetnormaldirection
+ *   \right),
+ * @f]
+ * where @f$\sheetdirection@f$ and @f$\sheetnormaldirection@f$ are the sheet and
+ * sheet-normal directions, respectively, and @f$\eta_f@f$, @f$\eta_s@f$, and
+ * @f$\eta_n@f$ are coefficients that define the distribution the active tension
+ * along the three principal directions. The coefficients must be such that
+ * @f$\eta_f + \eta_s + \eta_n = 1@f$.
+ *
+ * This class stores the values of @f$\eta_f@f$, @f$\eta_s@f$ and @f$\eta_n@f$,
+ * and provides the functions @ref ActiveStress::get_tension_fibers,
+ * @ref ActiveStress::get_tension_sheets and @ref
+ * ActiveStress::get_tension_sheet_normals to access @f$\eta_f \Tact@f$,
+ * @f$\eta_s \Tact@f$ and @f$\eta_n \Tact@f$, respectively.
  *
  * ### Implementing concrete active stress models
  *
@@ -56,9 +85,10 @@ bool supports_active_stress(const consts::EquationType eq_type);
  *    node.
  * 3. Create a new class derived from @ref ActiveStressModelParameters to store
  *    the parameters specific to the new active stress model.
- * 4. Override the methods @ref get_parameters, @ref read_parameters and
- *    @ref distribute_parameters to manage the parameters of the new active
- *    stress model.
+ * 4. Override the methods @ref get_parameters,
+ *    @ref read_model_specific_parameters and
+ *    @ref distribute_model_specific_parameters to manage the parameters of the
+ *    new active stress model.
  * 5. Register the new class into the active stress model factory by using the
  *    macro @ref REGISTER_ACTIVE_STRESS_MODEL. The macro should be called in a
  *    `.cpp` file, not in a header file.
@@ -90,22 +120,34 @@ public:
   /**
    * @brief Read model parameters from a parameter object.
    */
-  virtual void read_parameters(const ActiveStressModelParameters &params) = 0;
+  void read_parameters(const ActiveStressParameters &params);
 
   /**
    * @brief Distribute model parameters to all parallel processes.
    */
-  virtual void distribute_parameters(const CmMod &cm_mod, const cmType &cm) = 0;
+  void distribute_parameters(const CmMod &cm_mod, const cmType &cm);
 
   /**
-   * @brief Evaluate the active stress at a given point.
-   *
-   * @param[in] idx Index of the degree of freedom for which the active stress
-   *   must be returned.
-   *
-   * @return Active tension value at the given point.
+   * @brief Get the tension along fibers @f$\eta_f \Tact@f$ at a given point.
    */
-  virtual double operator()(const int idx) const { return active_tension[idx]; }
+  double get_tension_fibers(const int idx) const {
+    return eta_f * active_tension[idx];
+  }
+
+  /**
+   * @brief Get the tension along sheets @f$\eta_s \Tact@f$ at a given point.
+   */
+  double get_tension_sheets(const int idx) const {
+    return eta_s * active_tension[idx];
+  }
+
+  /**
+   * @brief Get the tension along sheet normals @f$\eta_n \Tact@f$ at a given
+   * point.
+   */
+  double get_tension_sheet_normals(const int idx) const {
+    return eta_n * active_tension[idx];
+  }
 
   /**
    * @brief Initialize the model.
@@ -137,6 +179,25 @@ public:
   const unsigned int n_states;
 
 protected:
+  /**
+   * @brief Read model parameters from a parameter object.
+   *
+   * This method needs to be overridden by derived classes to read the
+   * parameters specific to the concrete model they implement.
+   */
+  virtual void
+  read_model_specific_parameters(const ActiveStressModelParameters &params) = 0;
+
+  /**
+   * @brief Distribute model parameters to all parallel processes.
+   *
+   * This method needs to be overridden by derived classes to distribute the
+   * parameters specific to the concrete model they implement to all parallel
+   * processes.
+   */
+  virtual void distribute_model_specific_parameters(const CmMod &cm_mod,
+                                                    const cmType &cm) = 0;
+
   /**
    * @brief Initialize the state vector for a single node.
    *
@@ -173,6 +234,15 @@ protected:
 
   /// Active tension at every node.
   Vector<double> active_tension;
+
+  /// Active tension coefficient along the fiber direction.
+  double eta_f;
+
+  /// Active tension coefficient along the sheet direction.
+  double eta_s;
+
+  /// Active tension coefficient along the sheet-normal direction.
+  double eta_n;
 };
 
 /**

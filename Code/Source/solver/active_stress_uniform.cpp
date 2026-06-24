@@ -3,13 +3,13 @@
 
 #include "active_stress_uniform.h"
 
-void UniformActiveStress::read_parameters(
+void UniformActiveStress::read_model_specific_parameters(
     const ActiveStressModelParameters &params) {
   value = params.get_scalar("Value");
 }
 
-void UniformActiveStress::distribute_parameters(const CmMod &cm_mod,
-                                                const cmType &cm) {
+void UniformActiveStress::distribute_model_specific_parameters(
+    const CmMod &cm_mod, const cmType &cm) {
   cm.bcast(cm_mod, &value);
 }
 

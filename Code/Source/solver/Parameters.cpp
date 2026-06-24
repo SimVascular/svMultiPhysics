@@ -128,9 +128,10 @@ typename MapT::mapped_type require_map_value(const MapT& map,
 //
 // Subsection names given in 'sub_sections' are ignored and processed elsewhere.
 //
-void xml_util_set_parameters( std::function<void(const std::string&, const std::string&)> fn, tinyxml2::XMLElement* xml_elem,
-    const std::string& error_msg, std::set<std::string> sub_sections = std::set<std::string>())
-{
+void xml_util_set_parameters(
+    std::function<void(const std::string &, const std::string &)> fn,
+    const tinyxml2::XMLElement *xml_elem, const std::string &error_msg,
+    std::set<std::string> sub_sections = std::set<std::string>()) {
   auto item = xml_elem->FirstChildElement();
 
   while (item != nullptr) {
@@ -1799,6 +1800,8 @@ void ActiveStressParameters::print_parameters() const {
     for (const auto &[name, params] : active_stress_models) {
       params->print_parameters();
     }
+
+    directional_distribution.print_parameters();
   }
 }
 
@@ -1811,6 +1814,9 @@ void ActiveStressParameters::set_values(const tinyxml2::XMLElement *xml_elem) {
 
     if (active_stress_models.count(name) > 0) {
       active_stress_models.at(name)->set_values(item);
+    } else if (name == DirectionalDistributionParameters::xml_element_name_) {
+      directional_distribution.set_values(item);
+      directional_distribution.validate();
     } else if (item->GetText() != nullptr) {
       auto value = item->GetText();
       try {
@@ -1838,6 +1844,18 @@ std::string ActiveStressParameters::get_model_name() const {
         SVMP_HERE, "Active stress model name is not defined.");
 
   return model_name.value();
+}
+
+double ActiveStressParameters::get_eta_f() const {
+  return directional_distribution.fiber_direction.value();
+}
+
+double ActiveStressParameters::get_eta_s() const {
+  return directional_distribution.sheet_direction.value();
+}
+
+double ActiveStressParameters::get_eta_n() const {
+  return directional_distribution.sheet_normal_direction.value();
 }
 
 const ActiveStressModelParameters &
@@ -2083,8 +2101,8 @@ DirectionalDistributionParameters::DirectionalDistributionParameters()
   set_parameter("Sheet_normal_direction", 0.0, required, sheet_normal_direction);
 }
 
-void DirectionalDistributionParameters::set_values(tinyxml2::XMLElement* xml_elem)
-{
+void DirectionalDistributionParameters::set_values(
+    const tinyxml2::XMLElement *xml_elem) {
   using namespace tinyxml2;
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
@@ -2157,8 +2175,7 @@ void DirectionalDistributionParameters::validate() const
   }
 }
 
-void DirectionalDistributionParameters::print_parameters()
-{
+void DirectionalDistributionParameters::print_parameters() const {
   if (!value_set) {
     return;
   }

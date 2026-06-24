@@ -556,16 +556,24 @@ SetEquationPropertiesMapType set_equation_props = {
     outPuts = {OutputNameType::out_displacement, OutputNameType::out_stress, OutputNameType::out_cauchy, OutputNameType::out_strain};
     //simulation->com_mod.pstEq = true;
   } else {
-    nDOP = {15, 2, 0, 0};
-    outPuts = {
-        OutputNameType::out_displacement, OutputNameType::out_mises,
-        OutputNameType::out_stress,       OutputNameType::out_cauchy,
-        OutputNameType::out_strain,       OutputNameType::out_jacobian,
-        OutputNameType::out_defGrad,      OutputNameType::out_integ,
-        OutputNameType::out_fibDir,       OutputNameType::out_fibAlign,
-        OutputNameType::out_velocity,     OutputNameType::out_acceleration,
-        OutputNameType::out_fibStretch,   OutputNameType::out_fibStretchRate,
-        OutputNameType::out_activeTension};
+    nDOP = {17, 2, 0, 0};
+    outPuts = {OutputNameType::out_displacement,
+               OutputNameType::out_mises,
+               OutputNameType::out_stress,
+               OutputNameType::out_cauchy,
+               OutputNameType::out_strain,
+               OutputNameType::out_jacobian,
+               OutputNameType::out_defGrad,
+               OutputNameType::out_integ,
+               OutputNameType::out_fibDir,
+               OutputNameType::out_fibAlign,
+               OutputNameType::out_velocity,
+               OutputNameType::out_acceleration,
+               OutputNameType::out_fibStretch,
+               OutputNameType::out_fibStretchRate,
+               OutputNameType::out_activeTensionFibers,
+               OutputNameType::out_activeTensionSheets,
+               OutputNameType::out_activeTensionNormal};
   }
 
   // Set solver parameters.
@@ -599,17 +607,26 @@ SetEquationPropertiesMapType set_equation_props = {
 
   read_domain(simulation, eq_params, lEq, propL);
 
-  nDOP = {17, 2, 0, 0};
-  outPuts = {
-      OutputNameType::out_displacement, OutputNameType::out_mises,
-      OutputNameType::out_stress,       OutputNameType::out_cauchy,
-      OutputNameType::out_strain,       OutputNameType::out_jacobian,
-      OutputNameType::out_defGrad,      OutputNameType::out_integ,
-      OutputNameType::out_fibDir,       OutputNameType::out_fibAlign,
-      OutputNameType::out_velocity,     OutputNameType::out_pressure,
-      OutputNameType::out_acceleration, OutputNameType::out_divergence,
-      OutputNameType::out_fibStretch,   OutputNameType::out_fibStretchRate,
-      OutputNameType::out_activeTension};
+  nDOP = {19, 2, 0, 0};
+  outPuts = {OutputNameType::out_displacement,
+             OutputNameType::out_mises,
+             OutputNameType::out_stress,
+             OutputNameType::out_cauchy,
+             OutputNameType::out_strain,
+             OutputNameType::out_jacobian,
+             OutputNameType::out_defGrad,
+             OutputNameType::out_integ,
+             OutputNameType::out_fibDir,
+             OutputNameType::out_fibAlign,
+             OutputNameType::out_velocity,
+             OutputNameType::out_pressure,
+             OutputNameType::out_acceleration,
+             OutputNameType::out_divergence,
+             OutputNameType::out_fibStretch,
+             OutputNameType::out_fibStretchRate,
+             OutputNameType::out_activeTensionFibers,
+             OutputNameType::out_activeTensionSheets,
+             OutputNameType::out_activeTensionNormal};
 
   // Set solver parameters.
   read_ls(simulation, eq_params, SolverType::lSolver_GMRES, lEq);

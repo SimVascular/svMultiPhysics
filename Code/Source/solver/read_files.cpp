@@ -1210,8 +1210,7 @@ void read_active_stress(dmnType &lDmn, DomainParameters *domain_params) {
 
     lDmn.active_stress_model_name = name;
     lDmn.active_stress = ActiveStressFactory::create(name);
-    lDmn.active_stress->read_parameters(
-        domain_params->active_stress.get_parameters(name));
+    lDmn.active_stress->read_parameters(domain_params->active_stress);
   }
 }
 

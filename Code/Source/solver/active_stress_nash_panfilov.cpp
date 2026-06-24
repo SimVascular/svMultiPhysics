@@ -3,7 +3,8 @@
 
 #include "active_stress_nash_panfilov.h"
 
-void NashPanfilov::read_parameters(const ActiveStressModelParameters &params) {
+void NashPanfilov::read_model_specific_parameters(
+    const ActiveStressModelParameters &params) {
   epsilon_0 = params.get_scalar("epsilon_0");
   epsilon_i = params.get_scalar("epsilon_i");
   xi_T = params.get_scalar("xi_T");
@@ -12,8 +13,8 @@ void NashPanfilov::read_parameters(const ActiveStressModelParameters &params) {
   eta_T = params.get_scalar("eta_T");
 }
 
-void NashPanfilov::distribute_parameters(const CmMod &cm_mod,
-                                         const cmType &cm) {
+void NashPanfilov::distribute_model_specific_parameters(const CmMod &cm_mod,
+                                                        const cmType &cm) {
   cm.bcast(cm_mod, &epsilon_0);
   cm.bcast(cm_mod, &epsilon_i);
   cm.bcast(cm_mod, &xi_T);
