@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <limits>
 #include <span>
 #include <string>
@@ -79,59 +78,22 @@ NormalizedLagrangeRequest normalize_lagrange_request(ElementType element_type, i
     return {canonical, normalized_order};
 }
 
-// Convert a coordinate on [-1, 1] to an equispaced axis node index.
-std::size_t axis_index_pm_one(double coord, int order) {
-    if (order <= 0) {
-        return 0u;
-    }
-    const double scaled = (coord + double(1)) * double(order) / double(2);
-    const long long rounded = std::llround(scaled);
-    svmp::throw_if<BasisConstructionException>(
-        rounded < 0 || rounded > static_cast<long long>(order) ||
-            !detail::basis_nearly_equal(scaled, static_cast<double>(rounded)),
-        SVMP_HERE,
-        "LagrangeBasis: tensor-product node coordinate is off the equispaced lattice");
-    return static_cast<std::size_t>(rounded);
-}
-
-// Convert a simplex barycentric coordinate to a lattice index.
-int simplex_lattice_index(double value, int order) {
-    if (order <= 0) {
-        return 0;
-    }
-    const double scaled = value * double(order);
-    const long long rounded = std::llround(scaled);
-    svmp::throw_if<BasisConstructionException>(
-        rounded < 0 || rounded > static_cast<long long>(order) ||
-            !detail::basis_nearly_equal(scaled, static_cast<double>(rounded)),
-        SVMP_HERE,
-        "LagrangeBasis: simplex node coordinate is off the lattice");
-    return static_cast<int>(rounded);
-}
-
-// Compute simplex interpolation exponents from a reference node.
-LagrangeBasis::SimplexExponent simplex_exponent_from_point(const Vec3& p,
-                                                           BasisTopology top,
-                                                           int order) {
+// Convert an integer lattice index (i, j[, k]) into the barycentric exponent
+// tuple (order - i - j - k, i, j, k). The lattice already carries the exact
+// coordinate indices, so no floating-point round-trip is needed; the accessor's
+// structural invariants guarantee i + j + k <= order, hence e[0] >= 0.
+LagrangeBasis::SimplexExponent simplex_exponent_from_lattice(const std::array<int, 3>& idx,
+                                                            BasisTopology top,
+                                                            int order) {
     LagrangeBasis::SimplexExponent e{0, 0, 0, 0};
-    if (order <= 0) {
-        return e;
-    }
-    if (top == BasisTopology::Triangle) {
-        e[1] = simplex_lattice_index(p[0], order);
-        e[2] = simplex_lattice_index(p[1], order);
-        e[0] = order - e[1] - e[2];
+    e[1] = idx[0];
+    e[2] = idx[1];
+    if (top == BasisTopology::Tetrahedron) {
+        e[3] = idx[2];
+        e[0] = order - idx[0] - idx[1] - idx[2];
     } else {
-        e[1] = simplex_lattice_index(p[0], order);
-        e[2] = simplex_lattice_index(p[1], order);
-        e[3] = simplex_lattice_index(p[2], order);
-        e[0] = order - e[1] - e[2] - e[3];
+        e[0] = order - idx[0] - idx[1];
     }
-    // e[0] is order minus the other exponents, so the exponents sum to order by
-    // construction; a negative e[0] means the node coordinates are off-lattice.
-    svmp::throw_if<BasisConstructionException>(
-        e[0] < 0, SVMP_HERE,
-        "LagrangeBasis: simplex node coordinate yields a negative implied exponent");
     return e;
 }
 
@@ -389,52 +351,62 @@ void LagrangeBasis::build_point_nodes() {
 // Build nodes and axis indices for tensor-product elements.
 void LagrangeBasis::build_tensor_product_nodes() {
     init_equispaced_1d_nodes();
-    nodes_ = ReferenceNodeLayout::get_lagrange_node_coords(element_type_, order_);
-    tensor_indices_.reserve(nodes_.size());
-    for (const auto& node : nodes_) {
-        TensorNodeIndex idx{0u, 0u, 0u};
-        idx[0] = axis_index_pm_one(node[0], order_);
-        if (dimension_ >= 2) {
-            idx[1] = axis_index_pm_one(node[1], order_);
-        }
-        if (dimension_ >= 3) {
-            idx[2] = axis_index_pm_one(node[2], order_);
-        }
-        tensor_indices_.push_back(idx);
+    const auto layout = ReferenceNodeLayout::get_lagrange_lattice(element_type_, order_);
+    nodes_ = layout.coords;
+    tensor_indices_.reserve(layout.lattice.size());
+    for (const auto& idx : layout.lattice) {
+        // The lattice already holds the per-axis equispaced node index (unused
+        // axes are zero), so no coordinate-to-index inversion is needed.
+        tensor_indices_.push_back(TensorNodeIndex{
+            static_cast<std::size_t>(idx[0]),
+            static_cast<std::size_t>(idx[1]),
+            static_cast<std::size_t>(idx[2])});
     }
 }
 
 // Build nodes and barycentric exponents for simplex elements.
 void LagrangeBasis::build_simplex_nodes() {
-    nodes_ = ReferenceNodeLayout::get_lagrange_node_coords(element_type_, order_);
-    simplex_exponents_.reserve(nodes_.size());
-    for (const auto& node : nodes_) {
-        simplex_exponents_.push_back(simplex_exponent_from_point(node, topology_, order_));
+    const auto layout = ReferenceNodeLayout::get_lagrange_lattice(element_type_, order_);
+    nodes_ = layout.coords;
+    simplex_exponents_.reserve(layout.lattice.size());
+    for (const auto& idx : layout.lattice) {
+        simplex_exponents_.push_back(simplex_exponent_from_lattice(idx, topology_, order_));
     }
 }
 
 // Build nodes and mixed triangle-axis lookup data for wedge elements.
 void LagrangeBasis::build_wedge_nodes() {
     init_equispaced_1d_nodes();
-    nodes_ = ReferenceNodeLayout::get_lagrange_node_coords(element_type_, order_);
-    const auto tri_nodes =
-        ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Triangle3, order_);
-    simplex_exponents_.reserve(tri_nodes.size());
-    for (const auto& tri_node : tri_nodes) {
+    const auto layout = ReferenceNodeLayout::get_lagrange_lattice(element_type_, order_);
+    nodes_ = layout.coords;
+
+    const auto tri_layout =
+        ReferenceNodeLayout::get_lagrange_lattice(ElementType::Triangle3, order_);
+    simplex_exponents_.reserve(tri_layout.lattice.size());
+    for (const auto& idx : tri_layout.lattice) {
         simplex_exponents_.push_back(
-            simplex_exponent_from_point(tri_node, BasisTopology::Triangle, order_));
+            simplex_exponent_from_lattice(idx, BasisTopology::Triangle, order_));
     }
 
-    wedge_indices_.reserve(nodes_.size());
-    for (const auto& node : nodes_) {
-        const auto tri_exp =
-            simplex_exponent_from_point(node, BasisTopology::Triangle, order_);
-        auto it = std::find(simplex_exponents_.begin(), simplex_exponents_.end(), tri_exp);
-        svmp::throw_if<BasisConstructionException>(it == simplex_exponents_.end(), SVMP_HERE,
+    // Map a triangle cross-section lattice (i, j) to its triangle-node ordinal
+    // through the flat key i * (order + 1) + j, so each wedge node's triangle
+    // index is an exact integer lookup.
+    const int stride = order_ + 1;
+    std::vector<int> tri_ordinal_for_key(static_cast<std::size_t>(stride * stride), -1);
+    for (std::size_t t = 0; t < tri_layout.lattice.size(); ++t) {
+        const auto& idx = tri_layout.lattice[t];
+        tri_ordinal_for_key[static_cast<std::size_t>(idx[0] * stride + idx[1])] =
+            static_cast<int>(t);
+    }
+
+    wedge_indices_.reserve(layout.lattice.size());
+    for (const auto& idx : layout.lattice) {
+        const int tri_ordinal =
+            tri_ordinal_for_key[static_cast<std::size_t>(idx[0] * stride + idx[1])];
+        svmp::throw_if<BasisConstructionException>(tri_ordinal < 0, SVMP_HERE,
                                                  "LagrangeBasis: wedge node triangle index lookup failed");
-        const std::size_t tri_index =
-            static_cast<std::size_t>(std::distance(simplex_exponents_.begin(), it));
-        wedge_indices_.push_back({tri_index, axis_index_pm_one(node[2], order_)});
+        wedge_indices_.push_back({static_cast<std::size_t>(tri_ordinal),
+                                  static_cast<std::size_t>(idx[2])});
     }
 }
 

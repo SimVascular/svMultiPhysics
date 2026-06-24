@@ -324,6 +324,72 @@ TEST(LagrangeBasis, NodeOrderingMatchesPublicAliasLayouts) {
     }
 }
 
+// The lattice emitted with each node must be the exact forward image of the
+// coordinate: tensor axes invert through line_coord_pm_one, simplex axes through
+// the [0, 1] equispaced map, and the wedge combines the two. This pins the
+// integer-lattice contract that replaced the floating-point round-trip, so a
+// generator that emitted a coordinate and a mismatched index would fail here.
+TEST(LagrangeBasis, LatticeIsExactForwardImageOfCoordinates) {
+    constexpr double kTol = double(1e-14);
+
+    const std::vector<std::tuple<ElementType, int, int>> tensor_cases = {
+        {ElementType::Line2, 1, 1}, {ElementType::Line2, 4, 1},
+        {ElementType::Quad4, 1, 2}, {ElementType::Quad4, 4, 2},
+        {ElementType::Hex8, 1, 3},  {ElementType::Hex8, 3, 3},
+    };
+    for (const auto& [type, order, dim] : tensor_cases) {
+        const auto layout = ReferenceNodeLayout::get_lagrange_lattice(type, order);
+        ASSERT_EQ(layout.coords.size(), layout.lattice.size())
+            << "type=" << static_cast<int>(type);
+        for (std::size_t n = 0; n < layout.coords.size(); ++n) {
+            for (int d = 0; d < dim; ++d) {
+                const auto sd = static_cast<std::size_t>(d);
+                EXPECT_NEAR(layout.coords[n][sd],
+                            line_coord_pm_one(layout.lattice[n][sd], order), kTol)
+                    << "type=" << static_cast<int>(type) << " node=" << n << " axis=" << d;
+            }
+        }
+    }
+
+    const std::vector<std::tuple<ElementType, int, int>> simplex_cases = {
+        {ElementType::Triangle3, 1, 2}, {ElementType::Triangle3, 4, 2},
+        {ElementType::Tetra4, 1, 3},    {ElementType::Tetra4, 4, 3},
+    };
+    for (const auto& [type, order, dim] : simplex_cases) {
+        const auto layout = ReferenceNodeLayout::get_lagrange_lattice(type, order);
+        ASSERT_EQ(layout.coords.size(), layout.lattice.size())
+            << "type=" << static_cast<int>(type);
+        for (std::size_t n = 0; n < layout.coords.size(); ++n) {
+            for (int d = 0; d < dim; ++d) {
+                const auto sd = static_cast<std::size_t>(d);
+                EXPECT_NEAR(layout.coords[n][sd],
+                            static_cast<double>(layout.lattice[n][sd]) /
+                                static_cast<double>(order),
+                            kTol)
+                    << "type=" << static_cast<int>(type) << " node=" << n << " axis=" << d;
+            }
+        }
+    }
+
+    for (const int order : {1, 2, 3, 4}) {
+        const auto layout =
+            ReferenceNodeLayout::get_lagrange_lattice(ElementType::Wedge6, order);
+        ASSERT_EQ(layout.coords.size(), layout.lattice.size()) << "wedge order=" << order;
+        for (std::size_t n = 0; n < layout.coords.size(); ++n) {
+            // (x, y) are triangle [0, 1] indices; z inverts through line_coord_pm_one.
+            EXPECT_NEAR(layout.coords[n][0],
+                        static_cast<double>(layout.lattice[n][0]) / static_cast<double>(order),
+                        kTol) << "wedge order=" << order << " node=" << n;
+            EXPECT_NEAR(layout.coords[n][1],
+                        static_cast<double>(layout.lattice[n][1]) / static_cast<double>(order),
+                        kTol) << "wedge order=" << order << " node=" << n;
+            EXPECT_NEAR(layout.coords[n][2],
+                        line_coord_pm_one(layout.lattice[n][2], order), kTol)
+                << "wedge order=" << order << " node=" << n;
+        }
+    }
+}
+
 TEST(LagrangeBasis, RemovedOrSerendipityFamiliesAreRejected) {
     const std::array<ElementType, 6> unsupported = {
         ElementType::Quad8,
