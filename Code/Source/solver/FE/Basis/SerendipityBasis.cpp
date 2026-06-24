@@ -76,30 +76,23 @@ void append_quad_serendipity_interior_nodes(std::vector<Vec3>& nodes, int order)
 }
 
 std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
-    std::vector<Vec3> nodes;
     if (order <= 0) {
-        return nodes;
+        return {};
     }
 
-    const double inv_order = double(1) / double(order);
-
-    nodes.push_back(Vec3{double(-1), double(-1), double(0)});
-    nodes.push_back(Vec3{double(1),  double(-1), double(0)});
-    nodes.push_back(Vec3{double(1),  double(1),  double(0)});
-    nodes.push_back(Vec3{double(-1), double(1),  double(0)});
-
-    for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{double(-1) + double(2 * i) * inv_order, double(-1), double(0)});
-    }
-    for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{double(1), double(-1) + double(2 * i) * inv_order, double(0)});
-    }
-    for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{double(1) - double(2 * i) * inv_order, double(1), double(0)});
-    }
-    for (int i = 1; i < order; ++i) {
-        nodes.push_back(Vec3{double(-1), double(1) - double(2 * i) * inv_order, double(0)});
-    }
+    // The corner+edge skeleton is the leading prefix of the complete quadrilateral
+    // Lagrange layout of the same order: 4 corners followed by 4(order-1) edge
+    // nodes, in the same VTK boundary order. Source it from the single
+    // ReferenceNodeLayout generator and drop that layout's interior, so the
+    // reference-cell corner/edge geometry has one owner; only the reduced interior
+    // appended below is serendipity-specific.
+    std::vector<Vec3> nodes =
+        ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Quad4, order);
+    const std::size_t boundary_count = static_cast<std::size_t>(4 * order);
+    svmp::throw_if<BasisConstructionException>(
+        boundary_count > nodes.size(), SVMP_HERE,
+        "SerendipityBasis: quadrilateral skeleton exceeds the complete Lagrange layout");
+    nodes.resize(boundary_count);
 
     svmp::throw_if<BasisConstructionException>(
         nodes.size() > total_size, SVMP_HERE,
@@ -219,38 +212,21 @@ void append_hex_serendipity_volume_interior_nodes(std::vector<Vec3>& nodes, int 
 // Generate the hexahedral serendipity reference nodes in the generalized
 // right-hand-rule / VTK-consistent stratified order: 8 corners, then 12 edges in
 // VTK quadratic-hex edge order, then the 6 face interiors in VTK face order, then
-// the volume interior. The corner and edge strata reuse the VTK ordering of
-// generate_hex_nodes verbatim, so at order 1 (corners only) and order 2 (corners
-// plus edge midpoints) the layout is exactly the public Hex8 / Hex20 ordering;
-// for higher order the reduced face/volume sets are this module's own convention.
+// the volume interior. The corner and edge strata are taken directly from the
+// complete hexahedral Lagrange layout (generate_hex_nodes, via ReferenceNodeLayout),
+// so they share that single generator's VTK ordering: at order 1 (corners only)
+// and order 2 (corners plus edge midpoints) the layout is exactly the public
+// Hex8 / Hex20 ordering, and for higher order the reduced face/volume sets are
+// this module's own convention.
 std::vector<Vec3> hex_serendipity_nodes(int order, std::size_t total_size) {
-    static constexpr double corner_coords[8][3] = {
-        {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
-        {-1, -1, 1},  {1, -1, 1},  {1, 1, 1},  {-1, 1, 1},
-    };
-    static constexpr int edges[12][2] = {
-        {0, 1}, {1, 2}, {2, 3}, {3, 0},
-        {4, 5}, {5, 6}, {6, 7}, {7, 4},
-        {0, 4}, {1, 5}, {2, 6}, {3, 7},
-    };
-
-    std::vector<Vec3> nodes;
-    nodes.reserve(total_size);
-
-    for (const auto& c : corner_coords) {
-        nodes.push_back(Vec3{c[0], c[1], c[2]});
-    }
-
-    for (const auto& edge : edges) {
-        const auto& ca = corner_coords[edge[0]];
-        const auto& cb = corner_coords[edge[1]];
-        const Vec3 a{ca[0], ca[1], ca[2]};
-        const Vec3 b{cb[0], cb[1], cb[2]};
-        for (int m = 1; m < order; ++m) {
-            const double t = double(m) / double(order);
-            nodes.push_back(a * (double(1) - t) + b * t);
-        }
-    }
+    std::vector<Vec3> nodes =
+        ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Hex8, order);
+    const std::size_t skeleton_count =
+        8u + 12u * static_cast<std::size_t>(order - 1);
+    svmp::throw_if<BasisConstructionException>(
+        skeleton_count > nodes.size(), SVMP_HERE,
+        "SerendipityBasis: hexahedral skeleton exceeds the complete Lagrange layout");
+    nodes.resize(skeleton_count);
 
     const std::size_t skeleton = nodes.size();
     append_hex_serendipity_face_interior_nodes(nodes, order);

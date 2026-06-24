@@ -888,6 +888,37 @@ TEST(SerendipityBasis, HexahedralTopologyNodesMatchPublicHex8AndHex20Layouts) {
                       double(1e-14));
 }
 
+TEST(SerendipityBasis, SkeletonMatchesCompleteLagrangePrefix) {
+    for (int order = 1; order <= 8; ++order) {
+        SerendipityBasis quad(BasisTopology::Quadrilateral, order);
+        const auto quad_complete =
+            ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Quad4, order);
+        const std::size_t quad_skeleton = static_cast<std::size_t>(4 * order);
+        ASSERT_LE(quad_skeleton, quad.nodes().size()) << "quad order=" << order;
+        ASSERT_LE(quad_skeleton, quad_complete.size()) << "quad order=" << order;
+        for (std::size_t i = 0; i < quad_skeleton; ++i) {
+            for (std::size_t d = 0; d < 3u; ++d) {
+                EXPECT_EQ(quad.nodes()[i][d], quad_complete[i][d])
+                    << "quad order=" << order << " node=" << i << " d=" << d;
+            }
+        }
+
+        SerendipityBasis hex(BasisTopology::Hexahedron, order);
+        const auto hex_complete =
+            ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Hex8, order);
+        const std::size_t hex_skeleton =
+            8u + 12u * static_cast<std::size_t>(order - 1);
+        ASSERT_LE(hex_skeleton, hex.nodes().size()) << "hex order=" << order;
+        ASSERT_LE(hex_skeleton, hex_complete.size()) << "hex order=" << order;
+        for (std::size_t i = 0; i < hex_skeleton; ++i) {
+            for (std::size_t d = 0; d < 3u; ++d) {
+                EXPECT_EQ(hex.nodes()[i][d], hex_complete[i][d])
+                    << "hex order=" << order << " node=" << i << " d=" << d;
+            }
+        }
+    }
+}
+
 // The generated node set is unisolvent for the hex serendipity span at every
 // supported order: the Vandermonde of the re-derived monomials at the generated
 // nodes has full rank.
