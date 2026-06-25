@@ -7,7 +7,6 @@
 #include "Types.h"
 
 #include <cstddef>
-#include <limits>
 
 namespace svmp {
 namespace FE {
@@ -24,36 +23,27 @@ enum class BasisTopology {
     Wedge,
 };
 
-namespace detail {
-
-[[nodiscard]] constexpr double basis_abs(double value) noexcept {
-    return value < double(0) ? -value : value;
-}
-
-[[nodiscard]] constexpr double basis_max(double lhs, double rhs) noexcept {
-    return lhs < rhs ? rhs : lhs;
-}
-
-[[nodiscard]] constexpr double basis_scaled_tolerance(double scale = double(1),
-                                                    double multiplier = double(64)) noexcept {
-    return multiplier * std::numeric_limits<double>::epsilon() *
-           basis_max(double(1), basis_abs(scale));
-}
-
-[[nodiscard]] constexpr bool basis_near_zero(double value,
-                                             double scale = double(1),
-                                             double multiplier = double(64)) noexcept {
-    return basis_abs(value) <= basis_scaled_tolerance(scale, multiplier);
-}
-
-[[nodiscard]] constexpr bool basis_nearly_equal(double a,
-                                                double b,
-                                                double multiplier = double(64)) noexcept {
-    const double scale = basis_max(double(1), basis_max(basis_abs(a), basis_abs(b)));
-    return basis_abs(a - b) <= basis_scaled_tolerance(scale, multiplier);
-}
-
-} // namespace detail
+// ---------------------------------------------------------------------------
+// ElementType / BasisTopology / order mapping helpers.
+//
+// A basis identity is expressed three ways -- a named ElementType, a
+// (BasisTopology, order) pair, and a reference dimension -- and the constexpr
+// maps below convert between them. They are grouped here so the relationships
+// stay in one place:
+//
+//   ElementType   -> BasisTopology    topology()
+//   ElementType   -> ElementType      canonical_lagrange_type()   (alias -> linear representative)
+//   ElementType   -> order            complete_lagrange_alias_order(), named_lagrange_order()
+//   BasisTopology -> int (dimension)  topology_dimension()
+//   BasisTopology -> ElementType      lagrange_topology_representative() (lowest-order representative)
+//   (BasisTopology, order, family) -> ElementType   named_element_for() (inverse of topology() + order())
+//
+// The two ElementType -> order maps differ only at Point1:
+// complete_lagrange_alias_order() returns -1 (a point is not a complete-Lagrange
+// alias) while named_lagrange_order() returns 0 (the point layout's order).
+// named_lagrange_order() is defined in terms of complete_lagrange_alias_order(),
+// so the order-1 / order-2 alias values have a single source of truth.
+// ---------------------------------------------------------------------------
 
 // Reference-cell topology is derived from the single mesh cell-family
 // classification (to_mesh_family) so the basis layer never maintains a parallel
@@ -75,39 +65,6 @@ namespace detail {
         // Pyramid/Polygon/Polyhedron are outside the current basis scope.
         default:                   return BasisTopology::Unknown;
     }
-}
-
-// The shape predicates derive from topology() so they share its single source.
-[[nodiscard]] constexpr bool is_point(ElementType type) noexcept {
-    return topology(type) == BasisTopology::Point;
-}
-
-[[nodiscard]] constexpr bool is_line(ElementType type) noexcept {
-    return topology(type) == BasisTopology::Line;
-}
-
-[[nodiscard]] constexpr bool is_triangle(ElementType type) noexcept {
-    return topology(type) == BasisTopology::Triangle;
-}
-
-[[nodiscard]] constexpr bool is_quadrilateral(ElementType type) noexcept {
-    return topology(type) == BasisTopology::Quadrilateral;
-}
-
-[[nodiscard]] constexpr bool is_tetrahedron(ElementType type) noexcept {
-    return topology(type) == BasisTopology::Tetrahedron;
-}
-
-[[nodiscard]] constexpr bool is_hexahedron(ElementType type) noexcept {
-    return topology(type) == BasisTopology::Hexahedron;
-}
-
-[[nodiscard]] constexpr bool is_wedge(ElementType type) noexcept {
-    return topology(type) == BasisTopology::Wedge;
-}
-
-[[nodiscard]] constexpr int reference_dimension(ElementType type) noexcept {
-    return element_dimension(type);
 }
 
 [[nodiscard]] constexpr ElementType canonical_lagrange_type(ElementType type) noexcept {

@@ -31,6 +31,12 @@ const std::vector<double>& gll_points(int order) {
         return found->second;
     }
 
+    // Newton converges quadratically from the Chebyshev-Gauss-Lobatto seed, so a
+    // few iterations suffice for any practical order; the cap is only a safety
+    // bound. Reaching it without meeting the tolerance signals a real failure
+    constexpr int kMaxNewtonIterations = 100;
+    constexpr double kNewtonTolerance = double(1e-15);
+
     std::vector<double> pts(static_cast<std::size_t>(order + 1), double(0));
     if (order >= 1) {
         pts.front() = double(-1);
@@ -44,7 +50,8 @@ const std::vector<double>& gll_points(int order) {
             continue;
         }
         double x = -std::cos(pi * static_cast<double>(j) / static_cast<double>(order));
-        for (int iter = 0; iter < 100; ++iter) {
+        bool converged = false;
+        for (int iter = 0; iter < kMaxNewtonIterations; ++iter) {
             // Legendre P_k and P'_k up to k = order at x, by the three-term
             // recurrences (regular at x = +/-1).
             double p_km1 = double(1);   // P_0
@@ -68,10 +75,15 @@ const std::vector<double>& gll_points(int order) {
             const double f_prime = p_k + x * d_k - d_km1;
             const double dx = f / f_prime;
             x -= dx;
-            if (std::abs(dx) <= double(1e-15)) {
+            if (std::abs(dx) <= kNewtonTolerance) {
+                converged = true;
                 break;
             }
         }
+        svmp::throw_if<BasisConstructionException>(
+            !converged, SVMP_HERE,
+            "ReferenceNodeLayout: Gauss-Lobatto-Legendre Newton iteration did not converge "
+            "(order outside the trustworthy range)");
         pts[static_cast<std::size_t>(j)] = x;
     }
     for (int j = half + 1; j < order; ++j) {
