@@ -271,6 +271,9 @@ LagrangeBasis::LagrangeBasis(BasisTopology topology, int order)
 LagrangeBasis::LagrangeBasis(ElementType type, int order)
     : LagrangeBasis(validated_lagrange_topology(type, order), order) {}
 
+LagrangeBasis::LagrangeBasis(ElementType type)
+    : LagrangeBasis(type, named_lagrange_order(type)) {}
+
 // Initialize the 1D tensor-axis interpolation nodes (Gauss-Lobatto-Legendre, via
 // line_coord_pm_one) and their barycentric weights for tensor-product axes.
 void LagrangeBasis::init_tensor_axis_nodes() {
@@ -282,9 +285,7 @@ void LagrangeBasis::init_tensor_axis_nodes() {
     }
 
     // Barycentric weights w_i = 1 / prod_{j!=i}(x_i - x_j); the nodes are
-    // distinct so every denominator is nonzero. Precomputing here keeps the
-    // per-evaluation 1D Lagrange work at O(n^2) without recomputing the weights
-    // on every call.
+    // distinct so every denominator is nonzero.
     nodes_1d_weights_.assign(n, double(1));
     for (std::size_t i = 0; i < n; ++i) {
         double denom = double(1);

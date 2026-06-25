@@ -198,21 +198,6 @@ public:
     virtual BasisTopology topology() const noexcept = 0;
 
     /**
-     * @brief Return the named element type for this basis, if one exists.
-     *
-     * @details Convenience accessor that round-trips to a named mesh element
-     * when one is defined for this (topology(), order(), basis_type()) triple
-     * (orders 0-2), and returns ElementType::Unknown otherwise (for example an
-     * order-0 P0 basis on a volume topology, or any order >= 3 that has no named
-     * layout). topology() + order() are the authoritative identity; this should
-     * not be used as a discriminator for high-order or topology-constructed
-     * bases.
-     *
-     * @return Named element type, or ElementType::Unknown when none applies.
-     */
-    virtual ElementType element_type() const noexcept = 0;
-
-    /**
      * @brief Return the reference-space dimension of the basis.
      * @return Reference dimension, from zero for points through three for volume elements.
      */

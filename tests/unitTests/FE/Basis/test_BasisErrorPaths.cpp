@@ -42,7 +42,6 @@ class MinimalScalarBasis : public BasisFunction {
 public:
     BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
     BasisTopology topology() const noexcept override { return BasisTopology::Line; }
-    ElementType element_type() const noexcept override { return ElementType::Line2; }
     int dimension() const noexcept override { return 1; }
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }
@@ -65,7 +64,6 @@ public:
 
     BasisType basis_type() const noexcept override { return BasisType::Custom; }
     BasisTopology topology() const noexcept override { return BasisTopology::Hexahedron; }
-    ElementType element_type() const noexcept override { return ElementType::Hex8; }
     int dimension() const noexcept override { return 3; }
     int order() const noexcept override { return 2; }
     std::size_t size() const noexcept override { return 2u; }
@@ -114,7 +112,6 @@ class CompleteFallbackBasis : public BasisFunction {
 public:
     BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
     BasisTopology topology() const noexcept override { return BasisTopology::Triangle; }
-    ElementType element_type() const noexcept override { return ElementType::Triangle3; }
     int dimension() const noexcept override { return 2; }
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }

@@ -205,7 +205,8 @@ namespace detail {
 // (topology, order, family) triple denotes, or Unknown when no named layout
 // exists (order 0 on a non-point topology, any order >= 3, or a reduced family
 // at an unsupported order). topology() + order() remain the authoritative
-// identity; this only backs the element_type() convenience accessor.
+// identity; callers that want a named ElementType for a basis pass its
+// topology(), order(), and basis_type() to this free helper directly.
 [[nodiscard]] constexpr ElementType named_element_for(BasisTopology top, int order,
                                                       BasisType family) noexcept {
     if (family == BasisType::Serendipity) {

@@ -42,19 +42,21 @@ namespace basis {
  * Quad8, Hex8, and Hex20 are the fixed-order instances of these families
  * (quadrilateral order 2, hexahedron orders 1 and 2).
  *
- * Quadrilateral serendipity bases are built from monomials
+ * The quadrilateral serendipity polynomial space is described by monomials
  * @f$x^{a_x}y^{a_y}@f$ whose superlinear degree is at most the requested
- * order. In this implementation the superlinear degree is
+ * order. The implementation evaluates this space through tensor Legendre
+ * modes, which span the same polynomial space but give a better-conditioned
+ * Vandermonde. The superlinear degree is
  * @f[
  *   sldeg(x^{a_x}y^{a_y}) =
  *   \begin{cases} a_x, & a_x > 1 \\ 0, & a_x \le 1 \end{cases}
  *   +
  *   \begin{cases} a_y, & a_y > 1 \\ 0, & a_y \le 1 \end{cases}.
  * @f]
- * The nodal basis is recovered by inverting the Vandermonde interpolation
- * matrix at the selected reference nodes. Values, gradients, and Hessians are
- * then evaluated by differentiating the monomial vector and applying the
- * inverse Vandermonde coefficients.
+ * The nodal basis is recovered by inverting the generalized Vandermonde
+ * interpolation matrix at the selected reference nodes. Values, gradients, and
+ * Hessians are then evaluated by differentiating the modal vector and applying
+ * the inverse Vandermonde coefficients.
  * For order @f$p \ge 1@f$, this space has @f$4p@f$ boundary modes for
  * @f$p \le 3@f$ and
  * @f[
@@ -77,9 +79,10 @@ namespace basis {
  * nonsingular for the implemented quadrilateral serendipity space.
  *
  * Hexahedral serendipity generalizes the same construction to the cube. The
- * monomial space is every @f$r^{a_r}s^{a_s}t^{a_t}@f$ whose superlinear degree
- * (the three-axis form of the rule above) is at most @f$p@f$, and the nodal
- * basis is again the inverse Vandermonde at the reference nodes. Those nodes are
+ * polynomial space is described by every monomial
+ * @f$r^{a_r}s^{a_s}t^{a_t}@f$ whose superlinear degree (the three-axis form of
+ * the rule above) is at most @f$p@f$, and the nodal basis is again the inverse
+ * Vandermonde at the reference nodes. Those nodes are
  * distributed by boundary stratum: 8 corners, @f$12(p-1)@f$ edge nodes,
  * @f$6\,q(p)@f$ face-interior nodes -- each face carries the 2D quadrilateral
  * serendipity interior, since the trace of the cube space on a face is the
@@ -110,12 +113,13 @@ namespace basis {
  *
  * Every supported family -- quadrilateral, hexahedral, and Wedge15 -- is built by
  * inverting the generalized Vandermonde of its mode space at the public-order
- * reference nodes; values, gradients, and Hessians are evaluated by
- * differentiating the mode vector and applying the inverse-Vandermonde
- * coefficients. Because the tables are generated in public node order, evaluation
- * needs no output reordering, and there is no hand-written special case -- the
- * Hex8 basis is the order-1 instance of the generated hexahedral space, not a
- * separate trilinear evaluator.
+ * reference nodes. Quadrilateral and hexahedral bases use tensor Legendre modes;
+ * the fixed Wedge15 table uses monomial modes. Values, gradients, and Hessians
+ * are evaluated by differentiating the matching mode vector and applying the
+ * inverse-Vandermonde coefficients. Because the tables are generated in public
+ * node order, evaluation needs no output reordering, and there is no hand-written
+ * special case -- the Hex8 basis is the order-1 instance of the generated
+ * hexahedral space, not a separate trilinear evaluator.
  *
  * ## Conditioning and the well-conditioned order range
  *
@@ -144,10 +148,10 @@ public:
      *
      * @details This is the arbitrary-order entry point for the serendipity
      * families with a free order: the quadrilateral and the hexahedron. The
-     * topology carries no node-count assumption; the monomial space, reference
-     * nodes (generated here in VTK-consistent stratified order), and nodal
-     * coefficient table are built from the requested order (which must be
-     * @f$p \ge 1@f$). Wedge serendipity is a single fixed layout and is not
+     * topology carries no node-count assumption; the serendipity polynomial
+     * space, reference nodes (generated here in VTK-consistent stratified order),
+     * and nodal coefficient table are built from the requested order (which must
+     * be @f$p \ge 1@f$). Wedge serendipity is a single fixed layout and is not
      * constructed this way -- use the named ElementType overload (Wedge15).
      *
      * @param topology Must be BasisTopology::Quadrilateral or BasisTopology::Hexahedron.
@@ -179,16 +183,24 @@ public:
      */
     SerendipityBasis(ElementType type, int order);
 
+    /**
+     * @brief Construct a serendipity basis from a named layout at its fixed order.
+     *
+     * @details Single-argument convenience overload for the named serendipity
+     * layouts: the order is the one fixed by the layout (1 for Hex8; 2 for Quad8,
+     * Hex20, and Wedge15), so the caller does not repeat it. Equivalent to
+     * SerendipityBasis(type, <fixed order>).
+     *
+     * @param type Named serendipity element type (Quad8, Hex8, Hex20, or Wedge15).
+     * @throws BasisElementCompatibilityException If the element type is unsupported.
+     */
+    explicit SerendipityBasis(ElementType type);
+
     /** @copydoc BasisFunction::basis_type() */
     BasisType basis_type() const noexcept final { return BasisType::Serendipity; }
 
     /** @copydoc BasisFunction::topology() */
     BasisTopology topology() const noexcept final { return topology_; }
-
-    /** @copydoc BasisFunction::element_type() */
-    ElementType element_type() const noexcept final {
-        return named_element_for(topology_, order_, BasisType::Serendipity);
-    }
 
     /** @copydoc BasisFunction::dimension() */
     int dimension() const noexcept final { return dimension_; }
@@ -210,7 +222,7 @@ public:
      * generates its nodes here instead, in VTK-consistent stratified order:
      * corners and edges first (matching the public Quad8/Hex8/Hex20 ordering at
      * the named orders), then the face and volume interior points needed to make
-     * the reduced monomial space unisolvent. For @f$p \ge 3@f$ that interior
+     * the reduced polynomial space unisolvent. For @f$p \ge 3@f$ that interior
      * ordering is an implementation convention; callers should pair it with basis
      * values from the same object rather than assume an external mesh ordering
      * contract beyond the supported named production layouts.
@@ -222,10 +234,11 @@ public:
     /**
      * @brief Evaluate serendipity basis function values at a reference coordinate.
      *
-     * @details Every family evaluates the serendipity monomial vector and
-     * multiplies by the generated inverse Vandermonde matrix to obtain nodal
-     * shape-function values; the coefficient table is already in public basis
-     * order, so no output reordering is needed.
+     * @details Every family evaluates the serendipity modal vector and multiplies
+     * by the generated inverse Vandermonde matrix to obtain nodal shape-function
+     * values. Quadrilateral and hexahedral bases use tensor Legendre modes; the
+     * fixed Wedge15 layout uses monomial modes. The coefficient table is already
+     * in public basis order, so no output reordering is needed.
      *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values Receives one value per basis function.
@@ -237,8 +250,8 @@ public:
      * @brief Evaluate analytical serendipity basis gradients at a reference coordinate.
      *
      * @details Gradients are derivatives with respect to reference coordinates.
-     * Every family differentiates the monomial vector and applies the same
-     * generated inverse Vandermonde coefficients used for the values.
+     * Every family differentiates the same modal vector used for values and
+     * applies the generated inverse Vandermonde coefficients.
      *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param gradients Receives one three-component gradient per basis function.
@@ -251,8 +264,8 @@ public:
      *
      * @details Hessians are second derivatives in reference coordinates and are
      * stored as 3-by-3 matrices. Every family uses the second derivatives of the
-     * monomial vector together with the same generated inverse Vandermonde
-     * coefficients used for the values.
+     * same modal vector used for values together with the generated inverse
+     * Vandermonde coefficients.
      *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param hessians Receives one 3-by-3 Hessian per basis function.
@@ -319,12 +332,12 @@ private:
     // the same family the coefficient table was built with.
     bool uses_legendre_modes_{false};
 
-    // Build the quadrilateral serendipity monomial space, reference nodes, and
-    // nodal coefficient table for the given order. The named Quad8 layout takes
+    // Build the quadrilateral serendipity mode set, reference nodes, and nodal
+    // coefficient table for the given order. The named Quad8 layout takes
     // its nodes from ReferenceNodeLayout; the arbitrary-order topology path
     // generates them.
     void init_quadrilateral(int order, bool nodes_from_reference_layout);
-    // Build the hexahedral serendipity monomial space, reference nodes, and nodal
+    // Build the hexahedral serendipity mode set, reference nodes, and nodal
     // coefficient table for the given order. The arbitrary-order topology path
     // generates VTK-consistent nodes; the named Hex8 (order 1) and Hex20 (order 2)
     // layouts take their public-order nodes from ReferenceNodeLayout.

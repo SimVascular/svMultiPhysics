@@ -110,7 +110,7 @@ void expect_gradients_match_numerical(const BasisFunction& basis,
                 const std::size_t sd = static_cast<std::size_t>(d);
                 EXPECT_NEAR(analytical[n][sd], numerical[n][sd], tol)
                     << "basis " << n << ", component " << d
-                    << ", element " << static_cast<int>(basis.element_type())
+                    << ", element " << static_cast<int>(named_element_for(basis.topology(), basis.order(), basis.basis_type()))
                     << ", order " << basis.order();
             }
         }
@@ -136,7 +136,7 @@ void expect_hessians_match_numerical(const BasisFunction& basis,
                     const std::size_t sj = static_cast<std::size_t>(j);
                     EXPECT_NEAR(analytical[n](si, sj), numerical[n](si, sj), tol)
                         << "basis " << n << ", component (" << i << "," << j
-                        << "), element " << static_cast<int>(basis.element_type())
+                        << "), element " << static_cast<int>(named_element_for(basis.topology(), basis.order(), basis.basis_type()))
                         << ", order " << basis.order();
                 }
             }
@@ -165,7 +165,7 @@ void expect_partition_hessian_sum_zero(const BasisFunction& basis,
             EXPECT_NEAR(sum(static_cast<std::size_t>(r), static_cast<std::size_t>(c)),
                         double(0),
                         tol)
-                << "element " << static_cast<int>(basis.element_type())
+                << "element " << static_cast<int>(named_element_for(basis.topology(), basis.order(), basis.basis_type()))
                 << ", order " << basis.order();
         }
     }
@@ -205,16 +205,16 @@ void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
         for (std::size_t n = 0; n < basis.size(); ++n) {
             EXPECT_NEAR(gradients[n][2], double(0), tol)
                 << "basis " << n << ", element "
-                << static_cast<int>(basis.element_type())
+                << static_cast<int>(named_element_for(basis.topology(), basis.order(), basis.basis_type()))
                 << ", order " << basis.order();
             for (std::size_t d = 0; d < 3u; ++d) {
                 EXPECT_NEAR(hessians[n](2, d), double(0), tol)
                     << "basis " << n << ", component (2," << d
-                    << "), element " << static_cast<int>(basis.element_type())
+                    << "), element " << static_cast<int>(named_element_for(basis.topology(), basis.order(), basis.basis_type()))
                     << ", order " << basis.order();
                 EXPECT_NEAR(hessians[n](d, 2), double(0), tol)
                     << "basis " << n << ", component (" << d
-                    << ",2), element " << static_cast<int>(basis.element_type())
+                    << ",2), element " << static_cast<int>(named_element_for(basis.topology(), basis.order(), basis.basis_type()))
                     << ", order " << basis.order();
             }
         }

@@ -548,12 +548,33 @@ TEST(SerendipityBasis, TopologyConstructionSupportsQuadrilateralAndHexahedron) {
     SerendipityBasis quad(BasisTopology::Quadrilateral, 2);
     EXPECT_EQ(quad.topology(), BasisTopology::Quadrilateral);
     EXPECT_EQ(quad.order(), 2);
-    EXPECT_EQ(quad.element_type(), ElementType::Quad8);
+    EXPECT_EQ(named_element_for(quad.topology(), quad.order(), quad.basis_type()),
+              ElementType::Quad8);
 
     SerendipityBasis hex(BasisTopology::Hexahedron, 2);
     EXPECT_EQ(hex.topology(), BasisTopology::Hexahedron);
     EXPECT_EQ(hex.order(), 2);
-    EXPECT_EQ(hex.element_type(), ElementType::Hex20);
+    EXPECT_EQ(named_element_for(hex.topology(), hex.order(), hex.basis_type()),
+              ElementType::Hex20);
+}
+
+TEST(SerendipityBasis, SingleArgumentNamedOverloadInfersFixedOrder) {
+    const std::vector<std::pair<ElementType, int>> named = {
+        {ElementType::Quad8, 2},
+        {ElementType::Hex8, 1},
+        {ElementType::Hex20, 2},
+        {ElementType::Wedge15, 2},
+    };
+    for (const auto& [type, fixed_order] : named) {
+        const SerendipityBasis inferred(type);
+        const SerendipityBasis explicit_order(type, fixed_order);
+        EXPECT_EQ(inferred.order(), fixed_order) << "type=" << static_cast<int>(type);
+        EXPECT_EQ(inferred.topology(), explicit_order.topology()) << "type=" << static_cast<int>(type);
+        EXPECT_EQ(inferred.size(), explicit_order.size()) << "type=" << static_cast<int>(type);
+    }
+
+    EXPECT_THROW((void)SerendipityBasis(ElementType::Quad4), BasisElementCompatibilityException);
+    EXPECT_THROW((void)SerendipityBasis(ElementType::Tetra4), BasisElementCompatibilityException);
 }
 
 TEST(SerendipityBasis, QuadrilateralRejectsOrdersBelowOne) {

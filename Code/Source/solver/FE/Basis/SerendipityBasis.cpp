@@ -213,12 +213,11 @@ int hex_serendipity_superlinear_degree(int ax, int ay, int az) {
     return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0) + (az > 1 ? az : 0);
 }
 
-// Hexahedral serendipity monomial space: every r^a s^b t^c whose superlinear
-// degree is at most `order`. This is the three-axis generalization of
-// quad_serendipity_exponents; at order 1 it is the eight multilinear monomials
-// (the Hex8 space) and at order 2 it is the twenty-monomial Hex20 space. The
-// enumeration order is internal -- evaluation sums over the monomials, so only
-// the node order, not the monomial order, is observable to a caller.
+// Hexahedral serendipity polynomial space: every monomial r^a s^b t^c whose
+// superlinear degree is at most `order`. This is the three-axis generalization
+// of quad_serendipity_exponents; at order 1 it is the eight multilinear
+// monomials (the Hex8 space) and at order 2 it is the twenty-monomial Hex20
+// space.
 std::vector<std::array<int, 3>> hex_serendipity_exponents(int order) {
     std::vector<std::array<int, 3>> exponents;
     for (int az = 0; az <= order; ++az) {
@@ -506,6 +505,19 @@ struct NormalizedSerendipityRequest {
     int order;
 };
 
+int serendipity_named_order(ElementType type) {
+    switch (type) {
+        case ElementType::Hex8:
+            return 1;
+        case ElementType::Quad8:
+        case ElementType::Hex20:
+        case ElementType::Wedge15:
+            return 2;
+        default:
+            return -1;
+    }
+}
+
 // Validate a named serendipity element/order pairing and return its topology,
 // reference dimension, and order. The named serendipity layouts (Quad8, Hex8,
 // Hex20, Wedge15) are each pinned to a single polynomial order by their node
@@ -513,28 +525,28 @@ struct NormalizedSerendipityRequest {
 // quadrilateral serendipity is not a named element: it is requested through the
 // BasisTopology::Quadrilateral constructor.
 NormalizedSerendipityRequest normalize_serendipity_request(ElementType type, int order) {
-    // The named layouts carry an inferred fixed order (Hex8 -> 1; Quad8, Hex20,
-    // and Wedge15 -> 2). The request must supply that exact order: it is never
-    // floored or otherwise adjusted to fit, so order 0 and negative orders are
-    // rejected rather than promoted to a valid layout.
+    // The request must supply the layout's fixed order (serendipity_named_order):
+    // it is never floored or otherwise adjusted to fit, so order 0 and negative
+    // orders are rejected rather than promoted to a valid layout.
+    const int expected_order = serendipity_named_order(type);
     switch (type) {
         case ElementType::Quad8:
-            svmp::throw_if<BasisConfigurationException>(order != 2, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
                 "SerendipityBasis: Quad8 is the quadratic 8-node serendipity layout (order 2 only); "
                 "use BasisTopology::Quadrilateral for higher-order quadrilateral serendipity");
-            return {BasisTopology::Quadrilateral, 2, 2};
+            return {BasisTopology::Quadrilateral, 2, expected_order};
         case ElementType::Hex8:
-            svmp::throw_if<BasisConfigurationException>(order != 1, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
                 "SerendipityBasis: Hex8 is the trilinear 8-node basis (order 1 only); use Hex20 for quadratic serendipity");
-            return {BasisTopology::Hexahedron, 3, 1};
+            return {BasisTopology::Hexahedron, 3, expected_order};
         case ElementType::Hex20:
-            svmp::throw_if<BasisConfigurationException>(order != 2, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
                 "SerendipityBasis: Hex20 is the 20-node quadratic serendipity layout (order 2 only)");
-            return {BasisTopology::Hexahedron, 3, 2};
+            return {BasisTopology::Hexahedron, 3, expected_order};
         case ElementType::Wedge15:
-            svmp::throw_if<BasisConfigurationException>(order != 2, SVMP_HERE,
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
                 "SerendipityBasis: Wedge15 is the 15-node quadratic serendipity layout (order 2 only)");
-            return {BasisTopology::Wedge, 3, 2};
+            return {BasisTopology::Wedge, 3, expected_order};
         default:
             svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
                 "SerendipityBasis named elements are Quad8, Hex8, Hex20, and Wedge15; "
@@ -596,12 +608,15 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order)
     }
 }
 
-// Build the quadrilateral serendipity monomial space, reference nodes, and nodal
+SerendipityBasis::SerendipityBasis(ElementType type)
+    : SerendipityBasis(type, serendipity_named_order(type)) {}
+
+// Build the quadrilateral serendipity mode set, reference nodes, and nodal
 // coefficient table for the given order. The coefficient table is the inverse
-// Vandermonde of those monomials at the reference nodes; because the nodes are
-// in public order, evaluation needs no output permutation. The named Quad8
-// layout sources its nodes from ReferenceNodeLayout; the arbitrary-order
-// topology path generates them.
+// Vandermonde of tensor Legendre modes spanning the same polynomial space as the
+// monomial degree triples; because the nodes are in public order, evaluation
+// needs no output permutation. The named Quad8 layout sources its nodes from
+// ReferenceNodeLayout; the arbitrary-order topology path generates them.
 void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_layout) {
     const auto quad_exponents = quad_serendipity_exponents(order);
     monomial_exponents_.clear();
@@ -622,7 +637,7 @@ void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_l
         ModalAxisKind::Legendre, order);
 }
 
-// Build the hexahedral serendipity monomial space, reference nodes, and nodal
+// Build the hexahedral serendipity mode set, reference nodes, and nodal
 // coefficient table for the given order, mirroring init_quadrilateral. The
 // arbitrary-order topology path generates its own VTK-consistent nodes; the named
 // Hex8 (order 1) and Hex20 (order 2) layouts source their public-order nodes from

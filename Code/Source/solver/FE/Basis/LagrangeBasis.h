@@ -158,16 +158,26 @@ public:
      */
     LagrangeBasis(ElementType type, int order);
 
+    /**
+     * @brief Construct a Lagrange basis from a named element layout at its baked-in order.
+     *
+     * @details Single-argument convenience overload: the polynomial order is the
+     * one baked into the layout (0 for Point1, 1 for the linear elements, 2 for
+     * the complete-quadratic aliases such as Hex27/Tetra10), so the caller does
+     * not repeat it. Equivalent to LagrangeBasis(type, <baked-in order>).
+     * Serendipity and pyramid layouts are rejected, as for the two-argument
+     * overload.
+     *
+     * @param type Named element type; determines both topology and order.
+     * @throws BasisElementCompatibilityException If the element type is unsupported.
+     */
+    explicit LagrangeBasis(ElementType type);
+
     /** @copydoc BasisFunction::basis_type() */
     BasisType basis_type() const noexcept final { return BasisType::Lagrange; }
 
     /** @copydoc BasisFunction::topology() */
     BasisTopology topology() const noexcept final { return topology_; }
-
-    /** @copydoc BasisFunction::element_type() */
-    ElementType element_type() const noexcept final {
-        return named_element_for(topology_, order_, BasisType::Lagrange);
-    }
 
     /** @copydoc BasisFunction::dimension() */
     int dimension() const noexcept final { return dimension_; }

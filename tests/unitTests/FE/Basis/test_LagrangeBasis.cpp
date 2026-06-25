@@ -262,8 +262,8 @@ TEST(LagrangeBasis, SpanOutputSinksMatchVectorEvaluationAcrossTopologies) {
 
 // A named quadratic alias is a fixed-order shorthand for the same topology at
 // order 2: it builds the identical basis as the BasisTopology overload, reports
-// that topology, and round-trips faithfully through element_type() (Hex27 stays
-// Hex27 rather than collapsing to a canonical linear type).
+// that topology, and round-trips faithfully through named_element_for() (Hex27
+// stays Hex27 rather than collapsing to a canonical linear type).
 TEST(LagrangeBasis, CompleteAliasesMatchTopologyConstruction) {
     const std::vector<std::tuple<ElementType, BasisTopology, ElementType>> aliases = {
         {ElementType::Line3, BasisTopology::Line, ElementType::Line2},
@@ -280,7 +280,8 @@ TEST(LagrangeBasis, CompleteAliasesMatchTopologyConstruction) {
         const auto generated = ReferenceNodeLayout::get_lagrange_node_coords(representative, 2);
 
         EXPECT_EQ(alias_basis.topology(), topo);
-        EXPECT_EQ(alias_basis.element_type(), alias);
+        EXPECT_EQ(named_element_for(alias_basis.topology(), alias_basis.order(), alias_basis.basis_type()),
+                  alias);
         EXPECT_EQ(alias_basis.order(), 2);
         expect_nodes_close(alias_basis.nodes(), generated, double(1e-14));
         expect_nodes_close(alias_basis.nodes(), topo_basis.nodes(), double(1e-14));
@@ -293,7 +294,7 @@ TEST(LagrangeBasis, CompleteAliasesMatchTopologyConstruction) {
 
 // The arbitrary order a named alias rejects is exactly what the BasisTopology
 // overload is for: a node-count-named element cannot carry a conflicting order,
-// and an order with no named layout reports element_type() == Unknown.
+// and an order with no named layout maps to named_element_for() == Unknown.
 TEST(LagrangeBasis, ArbitraryOrderRequiresTopologyNotNamedAlias) {
     EXPECT_THROW((void)LagrangeBasis(ElementType::Hex27, 3), BasisConfigurationException);
 
@@ -301,22 +302,49 @@ TEST(LagrangeBasis, ArbitraryOrderRequiresTopologyNotNamedAlias) {
     EXPECT_EQ(basis.topology(), BasisTopology::Hexahedron);
     EXPECT_EQ(basis.order(), 5);
     EXPECT_EQ(basis.size(), 216u);  // (5 + 1)^3
-    EXPECT_EQ(basis.element_type(), ElementType::Unknown);  // no named order-5 hex
+    EXPECT_EQ(named_element_for(basis.topology(), basis.order(), basis.basis_type()),
+              ElementType::Unknown);  // no named order-5 hex
 }
 
-// element_type() is the inverse of (topology, order): a named layout at orders
-// 0-2, Unknown where no named element exists (order 0 on a volume topology, or
-// any order >= 3). topology() + order() remain the authoritative identity.
-TEST(LagrangeBasis, ElementTypeAccessorReflectsTopologyAndOrder) {
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Point, 0).element_type(), ElementType::Point1);
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 1).element_type(), ElementType::Hex8);
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 2).element_type(), ElementType::Hex27);
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 3).element_type(), ElementType::Unknown);
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Tetrahedron, 1).element_type(), ElementType::Tetra4);
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Tetrahedron, 2).element_type(), ElementType::Tetra10);
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Quadrilateral, 2).element_type(), ElementType::Quad9);
+// named_element_for() is the inverse of (topology, order): a named layout at
+// orders 0-2, Unknown where no named element exists (order 0 on a volume
+// topology, or any order >= 3). topology() + order() remain the authoritative
+// identity; callers recover a named ElementType through this free helper.
+TEST(LagrangeBasis, NamedElementForReflectsTopologyAndOrder) {
+    EXPECT_EQ(named_element_for(BasisTopology::Point, 0, BasisType::Lagrange), ElementType::Point1);
+    EXPECT_EQ(named_element_for(BasisTopology::Hexahedron, 1, BasisType::Lagrange), ElementType::Hex8);
+    EXPECT_EQ(named_element_for(BasisTopology::Hexahedron, 2, BasisType::Lagrange), ElementType::Hex27);
+    EXPECT_EQ(named_element_for(BasisTopology::Hexahedron, 3, BasisType::Lagrange), ElementType::Unknown);
+    EXPECT_EQ(named_element_for(BasisTopology::Tetrahedron, 1, BasisType::Lagrange), ElementType::Tetra4);
+    EXPECT_EQ(named_element_for(BasisTopology::Tetrahedron, 2, BasisType::Lagrange), ElementType::Tetra10);
+    EXPECT_EQ(named_element_for(BasisTopology::Quadrilateral, 2, BasisType::Lagrange), ElementType::Quad9);
     // An order-0 P0 basis on a volume topology has no named element.
-    EXPECT_EQ(LagrangeBasis(BasisTopology::Hexahedron, 0).element_type(), ElementType::Unknown);
+    EXPECT_EQ(named_element_for(BasisTopology::Hexahedron, 0, BasisType::Lagrange), ElementType::Unknown);
+}
+
+// The single-argument named overload infers the layout's baked-in order, so it
+// builds the same basis as passing that order explicitly, and still rejects the
+// non-Lagrange (serendipity/pyramid) layouts the two-argument overload rejects.
+TEST(LagrangeBasis, SingleArgumentNamedOverloadInfersBakedOrder) {
+    const std::vector<std::pair<ElementType, int>> named = {
+        {ElementType::Point1, 0},
+        {ElementType::Line2, 1},     {ElementType::Line3, 2},
+        {ElementType::Triangle3, 1}, {ElementType::Triangle6, 2},
+        {ElementType::Quad4, 1},     {ElementType::Quad9, 2},
+        {ElementType::Tetra4, 1},    {ElementType::Tetra10, 2},
+        {ElementType::Hex8, 1},      {ElementType::Hex27, 2},
+        {ElementType::Wedge6, 1},    {ElementType::Wedge18, 2},
+    };
+    for (const auto& [type, baked_order] : named) {
+        const LagrangeBasis inferred(type);
+        const LagrangeBasis explicit_order(type, baked_order);
+        EXPECT_EQ(inferred.order(), baked_order) << "type=" << static_cast<int>(type);
+        EXPECT_EQ(inferred.topology(), explicit_order.topology()) << "type=" << static_cast<int>(type);
+        EXPECT_EQ(inferred.size(), explicit_order.size()) << "type=" << static_cast<int>(type);
+    }
+
+    EXPECT_THROW((void)LagrangeBasis(ElementType::Quad8), BasisElementCompatibilityException);
+    EXPECT_THROW((void)LagrangeBasis(ElementType::Pyramid5), BasisElementCompatibilityException);
 }
 
 TEST(LagrangeBasis, NodeOrderingMatchesPublicAliasLayouts) {
@@ -583,7 +611,8 @@ TEST(LagrangeBasis, CubicPolynomialReproductionAtOrderThree) {
 TEST(LagrangeBasis, PointTopologyEvaluatesConstantUnity) {
     LagrangeBasis basis(ElementType::Point1, 0);
 
-    EXPECT_EQ(basis.element_type(), ElementType::Point1);
+    EXPECT_EQ(named_element_for(basis.topology(), basis.order(), basis.basis_type()),
+              ElementType::Point1);
     EXPECT_EQ(basis.size(), 1u);
     EXPECT_EQ(basis.dimension(), 0);
     ASSERT_EQ(basis.nodes().size(), 1u);
@@ -730,7 +759,8 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
     ASSERT_NE(lagrange, nullptr);
     EXPECT_EQ(lagrange->basis_type(), BasisType::Lagrange);
     EXPECT_EQ(lagrange->topology(), BasisTopology::Hexahedron);
-    EXPECT_EQ(lagrange->element_type(), ElementType::Hex27);
+    EXPECT_EQ(named_element_for(lagrange->topology(), lagrange->order(), lagrange->basis_type()),
+              ElementType::Hex27);
     EXPECT_EQ(lagrange->order(), 2);
 
     // The factory inherits the named-element order validation: Hex27 is order 2.
@@ -746,7 +776,9 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
     ASSERT_NE(high_order_lagrange, nullptr);
     EXPECT_EQ(high_order_lagrange->basis_type(), BasisType::Lagrange);
     EXPECT_EQ(high_order_lagrange->topology(), BasisTopology::Hexahedron);
-    EXPECT_EQ(high_order_lagrange->element_type(), ElementType::Unknown);
+    EXPECT_EQ(named_element_for(high_order_lagrange->topology(), high_order_lagrange->order(),
+                               high_order_lagrange->basis_type()),
+              ElementType::Unknown);
     EXPECT_EQ(high_order_lagrange->order(), 5);
     EXPECT_EQ(high_order_lagrange->size(), 216u);
 
@@ -763,7 +795,10 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
     ASSERT_NE(high_order_quad_serendipity, nullptr);
     EXPECT_EQ(high_order_quad_serendipity->basis_type(), BasisType::Serendipity);
     EXPECT_EQ(high_order_quad_serendipity->topology(), BasisTopology::Quadrilateral);
-    EXPECT_EQ(high_order_quad_serendipity->element_type(), ElementType::Unknown);
+    EXPECT_EQ(named_element_for(high_order_quad_serendipity->topology(),
+                               high_order_quad_serendipity->order(),
+                               high_order_quad_serendipity->basis_type()),
+              ElementType::Unknown);
     EXPECT_EQ(high_order_quad_serendipity->order(), 4);
     EXPECT_EQ(high_order_quad_serendipity->size(), 17u);
 
@@ -775,7 +810,10 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
     ASSERT_NE(high_order_hex_serendipity, nullptr);
     EXPECT_EQ(high_order_hex_serendipity->basis_type(), BasisType::Serendipity);
     EXPECT_EQ(high_order_hex_serendipity->topology(), BasisTopology::Hexahedron);
-    EXPECT_EQ(high_order_hex_serendipity->element_type(), ElementType::Unknown);
+    EXPECT_EQ(named_element_for(high_order_hex_serendipity->topology(),
+                               high_order_hex_serendipity->order(),
+                               high_order_hex_serendipity->basis_type()),
+              ElementType::Unknown);
     EXPECT_EQ(high_order_hex_serendipity->order(), 3);
     EXPECT_EQ(high_order_hex_serendipity->size(), 32u);
 

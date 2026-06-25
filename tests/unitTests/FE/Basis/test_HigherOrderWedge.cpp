@@ -112,7 +112,8 @@ TEST(HigherOrderWedge, CompleteAliasMatchesGeneratedNodeLayout) {
 
     ASSERT_EQ(generated.size(), ReferenceNodeLayout::num_nodes(ElementType::Wedge18));
     EXPECT_EQ(alias_basis.topology(), BasisTopology::Wedge);
-    EXPECT_EQ(alias_basis.element_type(), ElementType::Wedge18);  // faithful round-trip
+    EXPECT_EQ(named_element_for(alias_basis.topology(), alias_basis.order(), alias_basis.basis_type()),
+              ElementType::Wedge18);  // faithful round-trip
     EXPECT_EQ(alias_basis.order(), 2);
     expect_nodes_close(alias_basis.nodes(), generated, double(1e-14));
 }
