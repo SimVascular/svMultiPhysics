@@ -2141,6 +2141,8 @@ StimulusParameters::StimulusParameters()
   set_parameter("Cycle_length", 0.0, !required, cycle_length);
   set_parameter("Duration", 0.0, !required, duration);
   set_parameter("Start_time", 0.0, !required, start_time);
+  set_parameter("Box_min", {}, !required, box_min);
+  set_parameter("Box_max", {}, !required, box_max);
 }
 
 void StimulusParameters::set_values(tinyxml2::XMLElement* xml_elem)

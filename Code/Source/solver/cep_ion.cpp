@@ -16,6 +16,27 @@ namespace cep_ion {
 ///   cep_mod.Xion
 /// \endcode
 //
+static bool node_in_stimulus_box(const ComMod& com_mod, const stimType& stim, const int Ac)
+{
+  if (!stim.box_defined) {
+    return true;
+  }
+
+  if (stim.box_min.size() < com_mod.nsd || stim.box_max.size() < com_mod.nsd) {
+    throw std::runtime_error("Stimulus box dimension is smaller than the simulation spatial dimension.");
+  }
+
+  for (int i = 0; i < com_mod.nsd; i++) {
+    const double xi = com_mod.x(i, Ac);
+
+    if (xi < stim.box_min(i) || xi > stim.box_max(i)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void cep_init(Simulation* simulation)
 {
   using namespace consts;
@@ -221,7 +242,13 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
           yl = cem.Ya(Ac);
         }
 
-        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt);
+        double stimulus_amplitude = dmn.cep.Istim.A;
+
+        if (!node_in_stimulus_box(com_mod, dmn.cep.Istim, Ac)) {
+          stimulus_amplitude = 0.0;
+        }
+
+        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt, stimulus_amplitude);
 
         sA(Ac) = sA(Ac) + 1.0;
         for (int i = 0; i < nX; i++) {
@@ -270,7 +297,13 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
         yl = cem.Ya(Ac);
       }
 
-      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt);
+      double stimulus_amplitude = eq.dmn[0].cep.Istim.A;
+
+      if (!node_in_stimulus_box(com_mod, eq.dmn[0].cep.Istim, Ac)) {
+        stimulus_amplitude = 0.0;
+      }
+
+      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt, stimulus_amplitude);
 
       for (int i = 0; i < nX; i++) {
         Xion(i,Ac) = Xl(i);
@@ -300,7 +333,8 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 //
 void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
                  Vector<double> &Xg, const double t1, double &yl,
-                 const double I4f, const double dt) {
+                 const double I4f, const double dt,
+                 const double stimulus_amplitude) {
   using namespace consts;
 
   #define n_debug_cep_integ_l
@@ -337,7 +371,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
 
   for (unsigned int i = 0; i < nt; ++i) {
     const double t = t1 + i * dt;
-    const double Istim = (Ts - eps <= t && t <= Te + eps) ? cep.Istim.A : 0.0;
+    const double Istim = (Ts - eps <= t && t <= Te + eps) ? stimulus_amplitude : 0.0;
 
     cep.ionic_model->integ(cep.odes, cep.imyo, t, cep.dt, Istim, Ksac, X, Xg);
   }

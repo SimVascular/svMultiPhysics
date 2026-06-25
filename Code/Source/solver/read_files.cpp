@@ -1098,6 +1098,39 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
         lDmn.cep.Istim.CL = simulation->nTs * simulation->com_mod.dt; 
       }
     }
+
+    const bool box_min_defined = stimulus_params.box_min.defined();
+    const bool box_max_defined = stimulus_params.box_max.defined();
+
+    if (box_min_defined != box_max_defined) {
+      throw std::runtime_error("Both Box_min and Box_max must be specified for a CEP stimulus box.");
+    }
+
+    if (box_min_defined && box_max_defined) {
+      const auto& box_min = stimulus_params.box_min.value();
+      const auto& box_max = stimulus_params.box_max.value();
+
+      if (box_min.size() != box_max.size()) {
+        throw std::runtime_error("Stimulus Box_min and Box_max must have the same coordinate dimension.");
+      }
+
+      if (box_min.size() < static_cast<std::size_t>(simulation->com_mod.nsd)) {
+        throw std::runtime_error("Stimulus box dimension is smaller than the simulation spatial dimension.");
+      }
+
+      lDmn.cep.Istim.box_defined = true;
+      lDmn.cep.Istim.box_min.resize(box_min.size());
+      lDmn.cep.Istim.box_max.resize(box_max.size());
+
+      for (int i = 0; i < static_cast<int>(box_min.size()); i++) {
+        if (box_min[i] > box_max[i]) {
+          throw std::runtime_error("Stimulus Box_min values must be less than or equal to Box_max values.");
+        }
+
+        lDmn.cep.Istim.box_min(i) = box_min[i];
+        lDmn.cep.Istim.box_max(i) = box_max[i];
+      }
+    }
   }
 
   // Dual time step for cellular activation model.

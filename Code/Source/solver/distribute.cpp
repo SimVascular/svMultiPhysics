@@ -1576,6 +1576,25 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       cm.bcast(cm_mod, &cep.Istim.Td);
       cm.bcast(cm_mod, &cep.Istim.CL);
       cm.bcast(cm_mod, &cep.Istim.A);
+      cm.bcast(cm_mod, &cep.Istim.box_defined);
+
+      if (cep.Istim.box_defined) {
+        int box_size = cep.Istim.box_min.size();
+        cm.bcast(cm_mod, &box_size);
+
+        if (box_size <= 0) {
+          throw std::runtime_error("Stimulus box has invalid coordinate dimension.");
+        }
+
+        if (cm.slv(cm_mod)) {
+          cep.Istim.box_min.resize(box_size);
+          cep.Istim.box_max.resize(box_size);
+        }
+
+        cm.bcast(cm_mod, cep.Istim.box_min, "Stimulus box_min");
+        cm.bcast(cm_mod, cep.Istim.box_max, "Stimulus box_max");
+      }
+
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 
       if (cep.odes.tIntType == TimeIntegrationType::CN2) {
