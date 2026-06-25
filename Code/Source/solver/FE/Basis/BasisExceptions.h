@@ -11,6 +11,18 @@ namespace FE {
 namespace basis {
 
 /**
+ * @defgroup FE_BasisExceptions Exceptions
+ * @ingroup FE_Basis
+ * @brief Basis-module exception hierarchy.
+ *
+ * @details Every Basis exception derives from BasisException (and thus FEException),
+ * so a caller can catch a specific basis failure or the FE base type. See
+ * BasisException for why the module raises these basis-specific types rather than
+ * the generic FE exceptions.
+ * @{
+ */
+
+/**
  * @brief Base exception type for errors originating in the Basis module
  *
  * @details The Basis module raises these basis-specific types -- rather than the
@@ -89,6 +101,8 @@ public:
                                const char* function)
         : BasisException(message, file, line, function, StatusCode::InternalError) {}
 };
+
+/** @} */
 
 } // namespace basis
 } // namespace FE

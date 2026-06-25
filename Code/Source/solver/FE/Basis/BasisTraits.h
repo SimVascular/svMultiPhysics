@@ -4,6 +4,12 @@
 #ifndef SVMP_FE_BASIS_BASISTRAITS_H
 #define SVMP_FE_BASIS_BASISTRAITS_H
 
+/**
+ * @file BasisTraits.h
+ * @brief Reference-topology vocabulary (BasisTopology) and the internal
+ *        ElementType/topology/order maps.
+ */
+
 #include "Types.h"
 
 #include <cstddef>
@@ -12,16 +18,29 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
+/**
+ * @brief Reference-cell topology of a basis (the shape, independent of order).
+ * @ingroup FE_Basis
+ *
+ * @details Together with a polynomial order this is the order-agnostic identity a
+ * basis is built from: the arbitrary-order constructors take a BasisTopology and an
+ * order, and BasisRequest::topology selects that path. A named ElementType maps to
+ * one of these through topology().
+ */
 enum class BasisTopology {
-    Unknown,
-    Point,
-    Line,
-    Triangle,
-    Quadrilateral,
-    Tetrahedron,
-    Hexahedron,
-    Wedge,
+    Unknown,        ///< Unrecognized or uninitialized topology.
+    Point,          ///< 0D point.
+    Line,           ///< 1D line segment.
+    Triangle,       ///< 2D triangle (simplex).
+    Quadrilateral,  ///< 2D quadrilateral (tensor product).
+    Tetrahedron,    ///< 3D tetrahedron (simplex).
+    Hexahedron,     ///< 3D hexahedron (tensor product).
+    Wedge,          ///< 3D triangular prism.
 };
+
+// The maps below are internal to the Basis module (used to build the basis classes
+// and the factory); they are excluded from the public Doxygen output.
+/** @cond INTERNAL */
 
 // ---------------------------------------------------------------------------
 // ElementType / BasisTopology / order mapping helpers.
@@ -158,12 +177,24 @@ enum class BasisTopology {
     return complete_lagrange_alias_order(type);
 }
 
-// Inverse of (topology(), order()) for the named layouts: the ElementType that a
-// (topology, order, family) triple denotes, or Unknown when no named layout
-// exists (order 0 on a non-point topology, any order >= 3, or a reduced family
-// at an unsupported order). topology() + order() remain the authoritative
-// identity; callers that want a named ElementType for a basis pass its
-// topology(), order(), and basis_type() to this free helper directly.
+/** @endcond */
+
+/**
+ * @brief Named ElementType denoted by a (topology, order, family) triple.
+ * @ingroup FE_Basis
+ *
+ * @details Inverse of topology() + order() for the named layouts: returns the
+ * ElementType a basis identity denotes, or ElementType::Unknown when no named
+ * layout exists (order 0 on a non-point topology, any order >= 3, or a reduced
+ * family at an unsupported order). topology() + order() remain the authoritative
+ * identity; callers that want a named ElementType for a basis pass its topology(),
+ * order(), and basis_type() here.
+ *
+ * @param top Reference topology.
+ * @param order Polynomial order.
+ * @param family Basis family; only Serendipity is distinguished from nodal/Lagrange naming.
+ * @return Named ElementType, or ElementType::Unknown when none applies.
+ */
 [[nodiscard]] constexpr ElementType named_element_for(BasisTopology top, int order,
                                                       BasisType family) noexcept {
     if (family == BasisType::Serendipity) {

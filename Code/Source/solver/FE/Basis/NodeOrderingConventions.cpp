@@ -15,6 +15,10 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
+// Internal to the Basis module; excluded from the public Doxygen output (the
+// matching conditional region is in NodeOrderingConventions.h).
+/** @cond INTERNAL */
+
 namespace {
 
 using Point = math::Vector<double, 3>;
@@ -897,6 +901,8 @@ ReferenceNodeLayout::serendipity_node_coords(BasisTopology topology, int order) 
                 "exist only for Quadrilateral and Hexahedron (Wedge15 is the fixed named layout)");
     }
 }
+
+/** @endcond */
 
 } // namespace basis
 } // namespace FE

@@ -19,24 +19,32 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
+/**
+ * @brief Runtime description of a basis to construct.
+ * @ingroup FE_Basis
+ *
+ * @details A request identifies exactly one construction target -- a named
+ * ElementType layout, or a reference BasisTopology with an explicit order -- plus
+ * the family and field policy; basis_factory::create() validates and builds from
+ * it. The spline/NURBS fields are reserved for future families and are unused by
+ * the scalar Lagrange/Serendipity factory.
+ */
 struct BasisRequest {
-    // Named mesh element layout for default/mesh-compatible bases. Leave Unknown
-    // when requesting an arbitrary-order basis by reference topology.
-    ElementType element_type{ElementType::Unknown};
-    BasisType basis_type{BasisType::Lagrange};
-    std::optional<int> order{};
-    Continuity continuity{Continuity::C0};
-    FieldType field_type{FieldType::Scalar};
-    std::vector<double> knot_vector{};
-    std::vector<double> weights{};
-    std::vector<int> axis_orders{};
-    std::vector<std::vector<double>> axis_knot_vectors{};
-    std::vector<std::vector<double>> axis_weights{};
-    std::vector<int> tensor_extents{};
-    std::string custom_id{};
-    // Reference topology for arbitrary-order bases. This field is intentionally
-    // last so existing aggregate initializers for named elements keep their
-    // positional meaning.
+    ElementType element_type{ElementType::Unknown};  ///< Named element layout, or Unknown to request by topology.
+    BasisType basis_type{BasisType::Lagrange};       ///< Basis family to construct.
+    std::optional<int> order{};                      ///< Polynomial order; required by the factory.
+    Continuity continuity{Continuity::C0};           ///< Inter-element continuity (Lagrange/Serendipity are C0).
+    FieldType field_type{FieldType::Scalar};         ///< Field type (Lagrange/Serendipity support Scalar).
+    std::vector<double> knot_vector{};               ///< Reserved for spline/NURBS families; unused here.
+    std::vector<double> weights{};                   ///< Reserved for rational (NURBS) families; unused here.
+    std::vector<int> axis_orders{};                  ///< Reserved for per-axis tensor spline orders; unused here.
+    std::vector<std::vector<double>> axis_knot_vectors{};  ///< Reserved for per-axis spline knots; unused here.
+    std::vector<std::vector<double>> axis_weights{};       ///< Reserved for per-axis rational weights; unused here.
+    std::vector<int> tensor_extents{};               ///< Reserved for tensor-product extents; unused here.
+    std::string custom_id{};                         ///< Optional identifier for Custom families.
+    /// Reference topology for arbitrary-order requests, or Unknown to request by
+    /// element_type. Kept last so existing aggregate initializers for named
+    /// elements keep their positional meaning.
     BasisTopology topology{BasisTopology::Unknown};
 };
 
@@ -44,6 +52,7 @@ namespace basis_factory {
 
 /**
  * @brief Create a basis from a runtime request.
+ * @ingroup FE_Basis
  *
  * @details A request must identify exactly one construction target: set
  * BasisRequest::element_type for a named mesh-node layout, or set
@@ -59,6 +68,7 @@ namespace basis_factory {
 
 /**
  * @brief Return the default basis request (family and order) for an element type.
+ * @ingroup FE_Basis
  *
  * @details This is the single source of truth for which basis family and
  * polynomial order a given element type uses by default: serendipity node
@@ -77,6 +87,7 @@ namespace basis_factory {
 
 /**
  * @brief Create the default basis for an element type.
+ * @ingroup FE_Basis
  *
  * @details Equivalent to create(default_basis_request(element_type)).
  *

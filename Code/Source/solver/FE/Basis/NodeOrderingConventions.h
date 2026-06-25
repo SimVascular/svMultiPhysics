@@ -17,6 +17,12 @@ namespace svmp {
 namespace FE {
 namespace basis {
 
+// NodeOrderingConventions is internal to the Basis module: it is the reference-node
+// generator the basis families build on, not a consumer entry point (callers obtain
+// a basis through basis_factory and read BasisFunction::nodes()), so it is excluded
+// from the public Doxygen output below.
+/** @cond INTERNAL */
+
 /**
  * @brief The i-th 1D tensor-axis reference node on [-1, 1] at the given order.
  *
@@ -126,6 +132,8 @@ public:
     static std::vector<math::Vector<double, 3>>
     serendipity_node_coords(BasisTopology topology, int order);
 };
+
+/** @endcond */
 
 } // namespace basis
 } // namespace FE
