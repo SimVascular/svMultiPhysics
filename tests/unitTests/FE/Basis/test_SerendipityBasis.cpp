@@ -1152,16 +1152,16 @@ TEST(SerendipityBasis, SerendipityStaysWellConditionedAcrossRecommendedRange) {
         const double cond = legendre_vandermonde_condition(
             basis.nodes(), quad_serendipity_modes_3d_for_test(order));
         const double lebesgue = serendipity_lebesgue_constant(basis, 24);
-        EXPECT_LT(cond, double(5e4)) << "quad order=" << order;
-        EXPECT_LT(lebesgue, double(1e3)) << "quad order=" << order;
+        EXPECT_LT(cond, double(2.5e4)) << "quad order=" << order;
+        EXPECT_LT(lebesgue, double(9e2)) << "quad order=" << order;
     }
     for (int order = 1; order <= 8; ++order) {
         SerendipityBasis basis(BasisTopology::Hexahedron, order);
         const double cond = legendre_vandermonde_condition(
             basis.nodes(), hex_serendipity_exponents_for_test(order));
         const double lebesgue = serendipity_lebesgue_constant(basis, 12);
-        EXPECT_LT(cond, double(5e4)) << "hex order=" << order;
-        EXPECT_LT(lebesgue, double(1e3)) << "hex order=" << order;
+        EXPECT_LT(cond, double(2e4)) << "hex order=" << order;
+        EXPECT_LT(lebesgue, double(3.5e2)) << "hex order=" << order;
     }
 }
 

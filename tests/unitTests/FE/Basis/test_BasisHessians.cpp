@@ -18,6 +18,13 @@ using namespace svmp::FE::basis;
 
 namespace {
 
+// The exact Hessian identities below -- the partition sum (sum_i Hess N_i = 0) and
+// symmetry (Hess N_i = Hess N_i^T) -- have a floating-point round-off residual at
+// every order and family, so they share one tolerance. The finite-difference-vs-
+// analytic comparisons keep their own, larger, order-dependent tolerances because
+// finite-difference error grows with order.
+constexpr double kHessianInvariantTol = double(1e-12);
+
 void numerical_gradient_helper(const BasisFunction& basis,
                                const math::Vector<double, 3>& xi,
                                std::vector<Gradient>& gradients,
@@ -259,20 +266,19 @@ TEST(BasisHessians, LagrangeHessiansSumToZeroAndAreSymmetric) {
         BasisTopology topology;
         int order;
         math::Vector<double, 3> xi;
-        double tol;
     } cases[] = {
-        {BasisTopology::Line, 3, {double(0.15), double(0), double(0)}, double(1e-12)},
-        {BasisTopology::Triangle, 3, {double(0.2), double(0.25), double(0)}, double(1e-10)},
-        {BasisTopology::Quadrilateral, 3, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
-        {BasisTopology::Tetrahedron, 2, {double(0.15), double(0.2), double(0.1)}, double(1e-10)},
-        {BasisTopology::Hexahedron, 2, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
-        {BasisTopology::Wedge, 2, {double(0.2), double(0.15), double(-0.3)}, double(1e-10)},
+        {BasisTopology::Line, 3, {double(0.15), double(0), double(0)}},
+        {BasisTopology::Triangle, 3, {double(0.2), double(0.25), double(0)}},
+        {BasisTopology::Quadrilateral, 3, {double(0.3), double(-0.2), double(0)}},
+        {BasisTopology::Tetrahedron, 2, {double(0.15), double(0.2), double(0.1)}},
+        {BasisTopology::Hexahedron, 2, {double(0.1), double(-0.2), double(0.3)}},
+        {BasisTopology::Wedge, 2, {double(0.2), double(0.15), double(-0.3)}},
     };
 
     for (const auto& c : cases) {
         LagrangeBasis basis(c.topology, c.order);
-        expect_partition_hessian_sum_zero(basis, c.xi, double(10) * c.tol);
-        expect_hessians_symmetric(basis, c.xi, c.tol);
+        expect_partition_hessian_sum_zero(basis, c.xi, kHessianInvariantTol);
+        expect_hessians_symmetric(basis, c.xi, kHessianInvariantTol);
     }
 }
 
@@ -281,47 +287,52 @@ TEST(BasisHessians, SerendipityHessiansSumToZeroAndAreSymmetric) {
         ElementType type;
         int order;
         math::Vector<double, 3> xi;
-        double tol;
     } cases[] = {
-        {ElementType::Quad8, 2, {double(0.17), double(-0.31), double(0)}, double(1e-10)},
-        {ElementType::Hex20, 2, {double(0.2), double(-0.1), double(0.3)}, double(1e-10)},
-        {ElementType::Wedge15, 2, {double(0.2), double(0.3), double(0.1)}, double(1e-10)},
+        {ElementType::Quad8, 2, {double(0.17), double(-0.31), double(0)}},
+        {ElementType::Hex20, 2, {double(0.2), double(-0.1), double(0.3)}},
+        {ElementType::Wedge15, 2, {double(0.2), double(0.3), double(0.1)}},
     };
 
     for (const auto& c : cases) {
         SerendipityBasis basis(c.type, c.order);
-        expect_partition_hessian_sum_zero(basis, c.xi, c.tol);
-        expect_hessians_symmetric(basis, c.xi, c.tol);
+        expect_partition_hessian_sum_zero(basis, c.xi, kHessianInvariantTol);
+        expect_hessians_symmetric(basis, c.xi, kHessianInvariantTol);
     }
 }
 
 TEST(BasisHessians, SolverMappedVolumeSelectionsSatisfyInvariants) {
+    // Mirrors the full default element set pinned in
+    // BasisFactoryDefaults.SelectionsArePinnedForAllSupportedElements (including
+    // both wedge defaults: Wedge15 serendipity and Wedge18 Lagrange), so every
+    // family the solver adapter can map is exercised for the Hessian invariants.
     const struct Case {
         ElementType type;
         BasisType basis_type;
         int order;
         math::Vector<double, 3> xi;
-        double tol;
     } cases[] = {
-        {ElementType::Line2, BasisType::Lagrange, 1, {double(0.15), double(0), double(0)}, double(1e-12)},
-        {ElementType::Line3, BasisType::Lagrange, 2, {double(-0.25), double(0), double(0)}, double(1e-12)},
-        {ElementType::Triangle3, BasisType::Lagrange, 1, {double(0.2), double(0.25), double(0)}, double(1e-12)},
-        {ElementType::Triangle6, BasisType::Lagrange, 2, {double(0.2), double(0.25), double(0)}, double(1e-12)},
-        {ElementType::Quad4, BasisType::Lagrange, 1, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
-        {ElementType::Quad8, BasisType::Serendipity, 2, {double(0.17), double(-0.31), double(0)}, double(1e-10)},
-        {ElementType::Quad9, BasisType::Lagrange, 2, {double(0.3), double(-0.2), double(0)}, double(1e-12)},
-        {ElementType::Tetra4, BasisType::Lagrange, 1, {double(0.15), double(0.2), double(0.1)}, double(1e-12)},
-        {ElementType::Tetra10, BasisType::Lagrange, 2, {double(0.15), double(0.2), double(0.1)}, double(1e-10)},
-        {ElementType::Hex8, BasisType::Lagrange, 1, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
-        {ElementType::Hex20, BasisType::Serendipity, 2, {double(0.2), double(-0.1), double(0.3)}, double(1e-10)},
-        {ElementType::Hex27, BasisType::Lagrange, 2, {double(0.1), double(-0.2), double(0.3)}, double(1e-12)},
-        {ElementType::Wedge6, BasisType::Lagrange, 1, {double(0.2), double(0.15), double(-0.3)}, double(1e-12)},
+        {ElementType::Line2, BasisType::Lagrange, 1, {double(0.15), double(0), double(0)}},
+        {ElementType::Line3, BasisType::Lagrange, 2, {double(-0.25), double(0), double(0)}},
+        {ElementType::Triangle3, BasisType::Lagrange, 1, {double(0.2), double(0.25), double(0)}},
+        {ElementType::Triangle6, BasisType::Lagrange, 2, {double(0.2), double(0.25), double(0)}},
+        {ElementType::Quad4, BasisType::Lagrange, 1, {double(0.3), double(-0.2), double(0)}},
+        {ElementType::Quad8, BasisType::Serendipity, 2, {double(0.17), double(-0.31), double(0)}},
+        {ElementType::Quad9, BasisType::Lagrange, 2, {double(0.3), double(-0.2), double(0)}},
+        {ElementType::Tetra4, BasisType::Lagrange, 1, {double(0.15), double(0.2), double(0.1)}},
+        {ElementType::Tetra10, BasisType::Lagrange, 2, {double(0.15), double(0.2), double(0.1)}},
+        {ElementType::Hex8, BasisType::Lagrange, 1, {double(0.1), double(-0.2), double(0.3)}},
+        {ElementType::Hex20, BasisType::Serendipity, 2, {double(0.2), double(-0.1), double(0.3)}},
+        {ElementType::Hex27, BasisType::Lagrange, 2, {double(0.1), double(-0.2), double(0.3)}},
+        {ElementType::Wedge6, BasisType::Lagrange, 1, {double(0.2), double(0.15), double(-0.3)}},
+        {ElementType::Wedge15, BasisType::Serendipity, 2, {double(0.2), double(0.3), double(0.1)}},
+        {ElementType::Wedge18, BasisType::Lagrange, 2, {double(0.2), double(0.15), double(-0.3)}},
     };
 
     for (const auto& c : cases) {
         auto basis = basis_factory::create(BasisRequest{c.type, c.basis_type, c.order});
-        expect_partition_hessian_sum_zero(*basis, c.xi, c.tol);
-        expect_hessians_symmetric(*basis, c.xi, c.tol);
+        ASSERT_NE(basis, nullptr) << "element=" << static_cast<int>(c.type);
+        expect_partition_hessian_sum_zero(*basis, c.xi, kHessianInvariantTol);
+        expect_hessians_symmetric(*basis, c.xi, kHessianInvariantTol);
     }
 }
 

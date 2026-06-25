@@ -351,6 +351,10 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
     ExactQuadraticBasis basis;
     const math::Vector<double, 3> xi{double(0.2), double(-0.35), double(0.4)};
 
+    // On a quadratic, centered differences are exact except for the round-off
+    // floor ~ eps_machine/step. The tolerances below are a few times
+    // those floors -- tight enough that a wrong difference or analytic formula
+    // (which would give an O(step) or O(1) error) cannot slip through.
     std::vector<Gradient> exact_gradients;
     basis.evaluate_gradients(xi, exact_gradients);
 
@@ -360,7 +364,7 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
     for (std::size_t n = 0; n < basis.size(); ++n) {
         for (int d = 0; d < basis.dimension(); ++d) {
             const std::size_t sd = static_cast<std::size_t>(d);
-            EXPECT_NEAR(approx_gradients[n][sd], exact_gradients[n][sd], double(1e-8))
+            EXPECT_NEAR(approx_gradients[n][sd], exact_gradients[n][sd], double(3e-9))
                 << "basis=" << n << " component=" << d;
         }
     }
@@ -377,7 +381,7 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
                 const std::size_t sr = static_cast<std::size_t>(r);
                 const std::size_t sc = static_cast<std::size_t>(c);
                 EXPECT_NEAR(approx_hessians[n](sr, sc), exact_hessians[n](sr, sc),
-                            double(1e-8))
+                            double(2e-10))
                     << "basis=" << n << " component=(" << r << "," << c << ")";
             }
         }

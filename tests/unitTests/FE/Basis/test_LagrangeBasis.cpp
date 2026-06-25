@@ -23,6 +23,17 @@ namespace {
 
 using Point = math::Vector<double, 3>;
 
+// Tolerance convention (set from measured residuals, not guessed). Identities that
+// share a generator -- node coordinates, the lattice forward-image, span vs vector
+// evaluation, P0 constants -- are exact up to round-off and use 1e-14. The
+// nodal/partition identities here -- the Kronecker delta at the nodes and the
+// value/gradient/Hessian partition sums (sum_i N_i = 1, sum_i grad N_i = 0,
+// sum_i Hess N_i = 0) -- are exact at every order (at a node an off-diagonal shape
+// function has an exactly-zero factor, and the partition sums differentiate the
+// constant 1), so one tolerance covers them all instead of an order-dependent
+// ladder. Measured residuals stay near round-off (~7e-15 through the orders here).
+constexpr double kPartitionTol = double(1e-12);
+
 struct CanonicalCase {
     BasisTopology topology;
     ElementType representative;  // linear element for sample-point lookup and labeling
@@ -30,29 +41,22 @@ struct CanonicalCase {
     std::size_t size;
     int dimension;
     std::vector<Point> points;
-    double derivative_tol;
 };
 
 const std::vector<CanonicalCase>& canonical_cases() {
     static const std::vector<CanonicalCase> cases = {
         {BasisTopology::Line, ElementType::Line2, 3, 4u, 1,
-         {{double(-0.35), double(0), double(0)}, {double(0.2), double(0), double(0)}},
-         double(1e-11)},
+         {{double(-0.35), double(0), double(0)}, {double(0.2), double(0), double(0)}}},
         {BasisTopology::Triangle, ElementType::Triangle3, 3, 10u, 2,
-         {{double(0.15), double(0.2), double(0)}, {double(0.25), double(0.1), double(0)}},
-         double(1e-9)},
+         {{double(0.15), double(0.2), double(0)}, {double(0.25), double(0.1), double(0)}}},
         {BasisTopology::Quadrilateral, ElementType::Quad4, 3, 16u, 2,
-         {{double(0.2), double(-0.3), double(0)}, {double(-0.45), double(0.25), double(0)}},
-         double(1e-11)},
+         {{double(0.2), double(-0.3), double(0)}, {double(-0.45), double(0.25), double(0)}}},
         {BasisTopology::Tetrahedron, ElementType::Tetra4, 2, 10u, 3,
-         {{double(0.12), double(0.18), double(0.16)}, {double(0.2), double(0.1), double(0.18)}},
-         double(1e-9)},
+         {{double(0.12), double(0.18), double(0.16)}, {double(0.2), double(0.1), double(0.18)}}},
         {BasisTopology::Hexahedron, ElementType::Hex8, 2, 27u, 3,
-         {{double(0.1), double(-0.2), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}},
-         double(1e-10)},
+         {{double(0.1), double(-0.2), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}}},
         {BasisTopology::Wedge, ElementType::Wedge6, 2, 18u, 3,
-         {{double(0.18), double(0.22), double(-0.2)}, {double(0.12), double(0.16), double(0.1)}},
-         double(1e-9)},
+         {{double(0.18), double(0.22), double(-0.2)}, {double(0.12), double(0.16), double(0.1)}}},
     };
     return cases;
 }
@@ -83,8 +87,7 @@ void expect_kronecker_at_nodes(const LagrangeBasis& basis, double tol)
 }
 
 void expect_partition_gradient_hessian_sums(const LagrangeBasis& basis,
-                                            const std::vector<Point>& points,
-                                            double derivative_tol)
+                                            const std::vector<Point>& points)
 {
     for (const auto& xi : points) {
         std::vector<double> values;
@@ -105,14 +108,14 @@ void expect_partition_gradient_hessian_sums(const LagrangeBasis& basis,
             }
         }
 
-        EXPECT_NEAR(value_sum, double(1), double(1e-12));
+        EXPECT_NEAR(value_sum, double(1), kPartitionTol);
         for (int d = 0; d < basis.dimension(); ++d) {
-            EXPECT_NEAR(gradient_sum[static_cast<std::size_t>(d)], double(0), derivative_tol);
+            EXPECT_NEAR(gradient_sum[static_cast<std::size_t>(d)], double(0), kPartitionTol);
             for (int e = 0; e < basis.dimension(); ++e) {
                 EXPECT_NEAR(hessian_sum(static_cast<std::size_t>(d),
                                         static_cast<std::size_t>(e)),
                             double(0),
-                            derivative_tol);
+                            kPartitionTol);
             }
         }
     }
@@ -248,8 +251,8 @@ TEST(LagrangeBasis, CanonicalTopologiesHaveExpectedSizesAndDimensions) {
 TEST(LagrangeBasis, CanonicalTopologiesAreNodalAndPartitionUnity) {
     for (const auto& c : canonical_cases()) {
         LagrangeBasis basis(c.topology, c.order);
-        expect_kronecker_at_nodes(basis, double(2e-10));
-        expect_partition_gradient_hessian_sums(basis, c.points, c.derivative_tol);
+        expect_kronecker_at_nodes(basis, kPartitionTol);
+        expect_partition_gradient_hessian_sums(basis, c.points);
     }
 }
 
@@ -535,23 +538,21 @@ TEST(LagrangeBasis, HigherOrderLatticesAreNodalAndPartitionUnity) {
         BasisTopology topology;
         int order;
         std::size_t size;
-        double kronecker_tol;
-        double derivative_tol;
         std::vector<Point> points;
     } cases[] = {
-        {BasisTopology::Tetrahedron, 3, 20u, double(5e-10), double(1e-8),
+        {BasisTopology::Tetrahedron, 3, 20u,
          {{double(0.12), double(0.18), double(0.16)}, {double(0.3), double(0.2), double(0.25)}}},
-        {BasisTopology::Tetrahedron, 4, 35u, double(1e-9), double(1e-7),
+        {BasisTopology::Tetrahedron, 4, 35u,
          {{double(0.12), double(0.18), double(0.16)}, {double(0.2), double(0.1), double(0.18)}}},
-        {BasisTopology::Hexahedron, 3, 64u, double(5e-10), double(1e-8),
+        {BasisTopology::Hexahedron, 3, 64u,
          {{double(0.1), double(-0.2), double(0.3)}, {double(-0.35), double(0.25), double(-0.15)}}},
     };
 
     for (const auto& c : cases) {
         LagrangeBasis basis(c.topology, c.order);
         EXPECT_EQ(basis.size(), c.size);
-        expect_kronecker_at_nodes(basis, c.kronecker_tol);
-        expect_partition_gradient_hessian_sums(basis, c.points, c.derivative_tol);
+        expect_kronecker_at_nodes(basis, kPartitionTol);
+        expect_partition_gradient_hessian_sums(basis, c.points);
     }
 }
 
@@ -753,7 +754,10 @@ TEST(BasisFactoryDefaults, RejectsElementsWithoutDefaultBasis) {
                  BasisElementCompatibilityException);
 }
 
-TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
+// The factory-creation paths below were one 90-line test; they are split by the
+// path under test so an early ASSERT_NE in one cannot mask the others, and each
+// name says what it covers.
+TEST(LagrangeBasis, FactoryCreatesNamedLagrangeBasis) {
     auto lagrange =
         basis_factory::create(BasisRequest{ElementType::Hex27, BasisType::Lagrange, 2});
     ASSERT_NE(lagrange, nullptr);
@@ -767,7 +771,9 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
     EXPECT_THROW((void)basis_factory::create(
                      BasisRequest{ElementType::Hex27, BasisType::Lagrange, 1}),
                  BasisConfigurationException);
+}
 
+TEST(LagrangeBasis, FactoryCreatesArbitraryOrderLagrangeBasis) {
     BasisRequest arbitrary_lagrange;
     arbitrary_lagrange.basis_type = BasisType::Lagrange;
     arbitrary_lagrange.order = 5;
@@ -781,12 +787,16 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
               ElementType::Unknown);
     EXPECT_EQ(high_order_lagrange->order(), 5);
     EXPECT_EQ(high_order_lagrange->size(), 216u);
+}
 
+TEST(LagrangeBasis, FactoryCreatesNamedSerendipityBasis) {
     auto serendipity =
         basis_factory::create(BasisRequest{ElementType::Quad8, BasisType::Serendipity, 2});
     ASSERT_NE(serendipity, nullptr);
     EXPECT_EQ(serendipity->basis_type(), BasisType::Serendipity);
+}
 
+TEST(LagrangeBasis, FactoryCreatesArbitraryOrderQuadSerendipityBasis) {
     BasisRequest arbitrary_quad_serendipity;
     arbitrary_quad_serendipity.basis_type = BasisType::Serendipity;
     arbitrary_quad_serendipity.order = 4;
@@ -801,7 +811,9 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
               ElementType::Unknown);
     EXPECT_EQ(high_order_quad_serendipity->order(), 4);
     EXPECT_EQ(high_order_quad_serendipity->size(), 17u);
+}
 
+TEST(LagrangeBasis, FactoryCreatesArbitraryOrderHexSerendipityBasis) {
     BasisRequest arbitrary_hex_serendipity;
     arbitrary_hex_serendipity.basis_type = BasisType::Serendipity;
     arbitrary_hex_serendipity.order = 3;
@@ -816,7 +828,9 @@ TEST(LagrangeBasis, FactoryCreatesReducedScalarBasisFamilies) {
               ElementType::Unknown);
     EXPECT_EQ(high_order_hex_serendipity->order(), 3);
     EXPECT_EQ(high_order_hex_serendipity->size(), 32u);
+}
 
+TEST(LagrangeBasis, FactoryRejectsInvalidScalarRequests) {
     EXPECT_THROW((void)basis_factory::create(
                      BasisRequest{ElementType::Pyramid5, BasisType::Lagrange, 1}),
                  BasisElementCompatibilityException);
