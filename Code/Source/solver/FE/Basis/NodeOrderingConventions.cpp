@@ -683,8 +683,14 @@ void validate_lattice(const LagrangeNodeLayout& layout, ElementType type, int or
 
 double line_coord_pm_one(int i, int order) {
     if (order <= 0) {
+        svmp::throw_if<BasisNodeOrderingException>(
+            i != 0, SVMP_HERE,
+            "ReferenceNodeLayout::line_coord_pm_one: node index out of range");
         return double(0);
     }
+    svmp::throw_if<BasisNodeOrderingException>(
+        i < 0 || i > order, SVMP_HERE,
+        "ReferenceNodeLayout::line_coord_pm_one: node index out of range");
     return gll_points(order)[static_cast<std::size_t>(i)];
 }
 

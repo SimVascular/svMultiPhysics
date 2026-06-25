@@ -26,14 +26,15 @@ namespace basis {
  * exponential growth of equispaced nodes). At order 1 the nodes are
  * @f$\{-1, +1\}@f$ and at order 2 @f$\{-1, 0, +1\}@f$, so they coincide with the
  * equispaced layout for the production orders and differ only for order >= 3.
- * Returns 0 for order <= 0.
+ * Returns 0 for order <= 0 when @p i is 0. Invalid indices throw.
  *
  * Shared by the reference-node layout generators and the Lagrange tensor-axis
  * node initialization so the 1D distribution lives in a single place.
  *
- * @param i Node index in [0, order].
+ * @param i Node index in [0, order] for positive orders, or 0 for order <= 0.
  * @param order Polynomial order of the 1D distribution.
  * @return GLL node coordinate on [-1, 1].
+ * @throws BasisNodeOrderingException If @p i is outside the valid range.
  */
 [[nodiscard]] double line_coord_pm_one(int i, int order);
 

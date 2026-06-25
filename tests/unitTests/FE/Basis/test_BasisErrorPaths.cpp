@@ -321,6 +321,14 @@ TEST(BasisErrorPaths, CoreHelpersPreserveSourceLocation) {
 }
 
 TEST(BasisErrorPaths, NodeOrderingInvalidNodeThrows) {
+    EXPECT_THROW((void)line_coord_pm_one(-1, 1),
+                 BasisNodeOrderingException);
+    EXPECT_THROW((void)line_coord_pm_one(2, 1),
+                 BasisNodeOrderingException);
+    EXPECT_THROW((void)line_coord_pm_one(-1, 0),
+                 BasisNodeOrderingException);
+    EXPECT_THROW((void)line_coord_pm_one(1, 0),
+                 BasisNodeOrderingException);
     EXPECT_THROW((void)ReferenceNodeLayout::get_node_coords(ElementType::Quad8, 99u),
                  BasisNodeOrderingException);
     EXPECT_THROW((void)ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Quad8, 2),
