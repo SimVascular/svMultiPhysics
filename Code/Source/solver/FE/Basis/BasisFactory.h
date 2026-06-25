@@ -62,9 +62,10 @@ namespace basis_factory {
  * arbitrary-order path.
  *
  * @param req Basis family, target, and order request.
- * @return Shared basis instance.
+ * @return Unique basis instance. Move it into a std::shared_ptr at the call site
+ *         if shared ownership is needed.
  */
-[[nodiscard]] std::shared_ptr<BasisFunction> create(const BasisRequest& req);
+[[nodiscard]] std::unique_ptr<BasisFunction> create(const BasisRequest& req);
 
 /**
  * @brief Return the default basis request (family and order) for an element type.
@@ -92,9 +93,10 @@ namespace basis_factory {
  * @details Equivalent to create(default_basis_request(element_type)).
  *
  * @param element_type Element type to create a default basis for.
- * @return Shared basis instance.
+ * @return Unique basis instance. Move it into a std::shared_ptr at the call site
+ *         if shared ownership is needed.
  */
-[[nodiscard]] std::shared_ptr<BasisFunction> create_default_for(ElementType element_type);
+[[nodiscard]] std::unique_ptr<BasisFunction> create_default_for(ElementType element_type);
 
 } // namespace basis_factory
 

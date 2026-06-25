@@ -49,35 +49,35 @@ void require_scalar_c0_request(const BasisRequest& req) {
         "BasisFactory: Lagrange/Serendipity bases support C0 continuity only");
 }
 
-std::shared_ptr<BasisFunction> create_lagrange(const BasisRequest& req) {
+std::unique_ptr<BasisFunction> create_lagrange(const BasisRequest& req) {
     require_scalar_c0_request(req);
     const int order = require_basis_order(
         req,
         "BasisFactory: Lagrange creation requires an explicit order",
         "BasisFactory: Lagrange requires non-negative order");
     if (require_single_request_target(req) == RequestTarget::Topology) {
-        return std::make_shared<LagrangeBasis>(req.topology, order);
+        return std::make_unique<LagrangeBasis>(req.topology, order);
     }
-    return std::make_shared<LagrangeBasis>(req.element_type, order);
+    return std::make_unique<LagrangeBasis>(req.element_type, order);
 }
 
-std::shared_ptr<BasisFunction> create_serendipity(const BasisRequest& req) {
+std::unique_ptr<BasisFunction> create_serendipity(const BasisRequest& req) {
     require_scalar_c0_request(req);
     const int order = require_basis_order(
         req,
         "BasisFactory: Serendipity creation requires an explicit order",
         "BasisFactory: Serendipity requires non-negative order");
     if (require_single_request_target(req) == RequestTarget::Topology) {
-        return std::make_shared<SerendipityBasis>(req.topology, order);
+        return std::make_unique<SerendipityBasis>(req.topology, order);
     }
-    return std::make_shared<SerendipityBasis>(req.element_type, order);
+    return std::make_unique<SerendipityBasis>(req.element_type, order);
 }
 
 } // namespace
 
 namespace basis_factory {
 
-std::shared_ptr<BasisFunction> create(const BasisRequest& req) {
+std::unique_ptr<BasisFunction> create(const BasisRequest& req) {
     switch (req.basis_type) {
         case BasisType::Lagrange:
             return create_lagrange(req);
@@ -110,7 +110,7 @@ BasisRequest default_basis_request(ElementType element_type) {
     }
 }
 
-std::shared_ptr<BasisFunction> create_default_for(ElementType element_type) {
+std::unique_ptr<BasisFunction> create_default_for(ElementType element_type) {
     return create(default_basis_request(element_type));
 }
 
