@@ -572,42 +572,34 @@ LagrangeNodeLayout complete_lagrange_nodes(ElementType canonical_type, int order
     }
 }
 
-// Topological interior dimension of an integer lattice node: the number of
-// independent directions in which the point sits in the relative interior of
-// the reference cell. A vertex gives 0, an edge-interior node 1, a
-// face-interior node 2, and a volume-interior node 3.
-int serendipity_interior_dim(BasisTopology top, const Lattice& idx, int order) {
+// Topological interior dimension of a wedge-prism lattice node: the number of
+// independent directions in which the point sits in the relative interior of the
+// reference cell. A vertex gives 0, an edge-interior node 1, a face-interior node
+// 2, and a volume-interior node 3. Only the wedge needs this classification -- it
+// is the one serendipity layout still built by truncating a complete layout
+// (serendipity_subset_nodes). Quadrilateral and hexahedral serendipity geometries
+// are generated directly by quad_/hex_serendipity_nodes and never go through here.
+int wedge_interior_dim(const Lattice& idx, int order) {
     const auto tensor_interior = [order](int v) { return (v > 0 && v < order) ? 1 : 0; };
-    switch (top) {
-        case BasisTopology::Quadrilateral:
-            return tensor_interior(idx[0]) + tensor_interior(idx[1]);
-        case BasisTopology::Hexahedron:
-            return tensor_interior(idx[0]) + tensor_interior(idx[1]) +
-                   tensor_interior(idx[2]);
-        case BasisTopology::Wedge: {
-            // (idx[0], idx[1]) is the triangle cross-section with implied third
-            // barycentric index k; idx[2] is the tensor through-axis. A triangle
-            // vertex contributes 0, a triangle edge 1, and the triangle interior 2.
-            const int i = idx[0];
-            const int j = idx[1];
-            const int k = order - i - j;
-            const bool tri_vertex = (i == order) || (j == order) || (i + j == 0);
-            const bool tri_interior = (i > 0) && (j > 0) && (k > 0);
-            const int tri_dim = tri_vertex ? 0 : (tri_interior ? 2 : 1);
-            return tri_dim + tensor_interior(idx[2]);
-        }
-        default:
-            return 0;
-    }
+    // (idx[0], idx[1]) is the triangle cross-section with implied third
+    // barycentric index k; idx[2] is the tensor through-axis. A triangle vertex
+    // contributes 0, a triangle edge 1, and the triangle interior 2.
+    const int i = idx[0];
+    const int j = idx[1];
+    const int k = order - i - j;
+    const bool tri_vertex = (i == order) || (j == order) || (i + j == 0);
+    const bool tri_interior = (i > 0) && (j > 0) && (k > 0);
+    const int tri_dim = tri_vertex ? 0 : (tri_interior ? 2 : 1);
+    return tri_dim + tensor_interior(idx[2]);
 }
 
-// Build a serendipity reference layout (Quad8, Hex20, Wedge15) from the complete
-// quadratic layout of the same topology. Serendipity layouts keep only the
-// element's vertices and edge midpoints and drop the face- and volume-interior
-// nodes; the complete-quadratic generators emit the vertex/edge nodes first, so
-// the serendipity set is exactly the leading keep_count nodes.
-std::vector<Point> serendipity_subset_nodes(BasisTopology top,
-                                            LagrangeNodeLayout complete,
+// Build the Wedge15 serendipity reference layout from the complete quadratic wedge
+// layout. Serendipity layouts keep only the element's vertices and edge midpoints
+// and drop the face- and volume-interior nodes; the complete-quadratic generators
+// emit the vertex/edge nodes first, so the serendipity set is exactly the leading
+// keep_count nodes. (Quadrilateral and hexahedral serendipity geometries are
+// generated directly by quad_/hex_serendipity_nodes, not by truncation here.)
+std::vector<Point> serendipity_subset_nodes(LagrangeNodeLayout complete,
                                             std::size_t keep_count,
                                             std::size_t complete_count) {
     constexpr int kQuadraticOrder = 2;
@@ -622,7 +614,7 @@ std::vector<Point> serendipity_subset_nodes(BasisTopology top,
 
     for (std::size_t n = 0; n < complete.lattice.size(); ++n) {
         const bool on_skeleton =
-            serendipity_interior_dim(top, complete.lattice[n], kQuadraticOrder) <= 1;
+            wedge_interior_dim(complete.lattice[n], kQuadraticOrder) <= 1;
         const bool kept = n < keep_count;
         svmp::throw_if<BasisConstructionException>(
             kept != on_skeleton, SVMP_HERE,
@@ -808,8 +800,7 @@ std::vector<Point> element_nodes(ElementType elem_type) {
         case ElementType::Hex20:
             return hex_serendipity_nodes(2);
         case ElementType::Wedge15:
-            return serendipity_subset_nodes(BasisTopology::Wedge,
-                                            generate_wedge_nodes(2), 15u, 18u);
+            return serendipity_subset_nodes(generate_wedge_nodes(2), 15u, 18u);
         case ElementType::Pyramid13:
             svmp::raise<BasisNodeOrderingException>(SVMP_HERE,
                 "ReferenceNodeLayout: pyramid node ordering is disabled");
