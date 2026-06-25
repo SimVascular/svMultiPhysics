@@ -44,21 +44,19 @@ namespace basis {
  * ## Reference-node distribution
  *
  * The interpolation nodes are not a single distribution across topologies; each
- * family uses the node set its evaluator is built for (see ReferenceNodeLayout
- * and line_coord_pm_one):
- * - **Tensor-product (line, quadrilateral, hexahedron):** Gauss-Lobatto-Legendre
- *   (GLL) nodes on each axis -- endpoints at @f$\pm 1@f$ and interior nodes at
- *   the roots of @f$P'_p@f$ -- not an equispaced layout.
+ * family uses the node set its evaluator is built for:
+ * - **Tensor-product (line, quadrilateral, hexahedron):** the shared
+ *   Gauss-Lobatto-Legendre (GLL) tensor-axis nodes -- see line_coord_pm_one for
+ *   the distribution and its conditioning -- not an equispaced layout.
  * - **Simplex (triangle, tetrahedron):** the equispaced barycentric lattice
  *   (each barycentric coordinate at @f$i/p@f$). The closed-form evaluator below
  *   is specific to this equispaced lattice.
  * - **Wedge:** the tensor product of an equispaced triangle cross-section with a
  *   GLL through-axis.
  *
- * GLL coincides with the equispaced layout at orders 1 and 2, so every named
- * production element (Line2/Line3, Triangle3/Triangle6, Quad4/Quad9,
- * Tetra4/Tetra10, Hex8/Hex27, Wedge6/Wedge18) keeps its standard coordinates;
- * the GLL/equispaced distinction appears only for order >= 3.
+ * Because GLL coincides with the equispaced layout at orders 1 and 2
+ * (line_coord_pm_one), every named production element keeps its standard
+ * coordinates and the GLL/equispaced distinction appears only for order >= 3.
  *
  * ## Evaluation
  *
@@ -127,12 +125,11 @@ public:
      * store per-axis node indices, simplex bases store barycentric exponent
      * tuples, and wedge bases store the triangle-node/axis-node decomposition.
      *
-     * Reference nodes are Gauss-Lobatto-Legendre on tensor-product axes and the
-     * equispaced barycentric lattice on simplex axes (see the class description).
-     * High order stays well-conditioned on tensor-product topologies but degrades
-     * on simplex and wedge topologies, and -- unlike SerendipityBasis -- this
-     * constructor does not reject ill-conditioned high-order simplex/wedge
-     * requests; that choice is the caller's.
+     * Reference nodes follow the per-topology distribution described in the class
+     * documentation (Reference-node distribution). Unlike SerendipityBasis, this
+     * constructor does not reject ill-conditioned high-order simplex/wedge requests
+     * (where the equispaced barycentric lattice degrades); that choice is the
+     * caller's.
      *
      * @param topology Reference topology; Point through the volume topologies.
      * @param order Polynomial order; must be non-negative. Point is order 0.
@@ -191,12 +188,9 @@ public:
     /**
      * @brief Return the reference interpolation nodes in basis ordering.
      *
-     * @details The returned node order matches the basis-function order used
-     * by all evaluators. Coordinates are reference-element coordinates:
-     * tensor-product axes use the Gauss-Lobatto-Legendre nodes on @f$[-1,1]@f$,
-     * triangles and tetrahedra use the equispaced barycentric simplex lattice,
-     * and wedges combine the equispaced triangle lattice with a GLL @f$[-1,1]@f$
-     * through-axis coordinate.
+     * @details The returned node order matches the basis-function order used by
+     * all evaluators; the coordinates follow the per-topology distribution
+     * described in the class documentation (Reference-node distribution).
      *
      * @return Reference node coordinates, one per basis function.
      */

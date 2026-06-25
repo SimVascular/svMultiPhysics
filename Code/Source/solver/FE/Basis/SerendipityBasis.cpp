@@ -34,14 +34,11 @@ inline double integer_power(double base, int exponent) {
     return result;
 }
 
-// Which 1D polynomial family the tensor modes are written in. Monomials x^k are
-// simple but make the interpolation (Vandermonde) matrix exponentially
-// ill-conditioned as the order grows; tensor products of Legendre polynomials
-// P_k span exactly the same polynomial space (the serendipity exponent set is
-// downward-closed, so the change of basis is triangular) while keeping the
-// Vandermonde well-conditioned. The quadrilateral and hexahedral families use
-// Legendre; the fixed Wedge15 layout (order 2, trivially well-conditioned) keeps
-// the monomial form.
+// Which 1D polynomial family the tensor modes are written in: the quadrilateral
+// and hexahedral families use Legendre, the fixed Wedge15 layout (order 2) keeps
+// the monomial form. Both span the same serendipity polynomial space; see the
+// SerendipityBasis class documentation (Modal basis) for why Legendre is used to
+// keep the Vandermonde well-conditioned.
 enum class ModalAxisKind { Monomial, Legendre };
 
 // Value and first/second derivative of every 1D mode phi_0..phi_{max_degree} at a
@@ -133,12 +130,13 @@ double matrix_norm_inf(const std::vector<double>& matrix, std::size_t n) {
 }
 
 // Per-axis degree triples (ax, ay, az) of the serendipity mode space: every
-// combination whose superlinear degree (the sum of superlinear_term over the
-// axes) is at most `order`. `active_axes` is 2 for the quadrilateral (az pinned
-// to 0) and 3 for the hexahedron, so the quad space is exactly the hex space
-// restricted to az = 0. The same downward-closed set spans both the monomial and
-// the tensor Legendre basis (see ModalAxisKind), and the resulting nodal basis is
-// independent of how this set is ordered.
+// combination whose superlinear degree (the sum of superlinear_term over the axes;
+// see the SerendipityBasis class documentation for the rule) is at most `order`.
+// `active_axes` is 2 for the quadrilateral (az pinned to 0) and 3 for the
+// hexahedron, so the quad space is exactly the hex space restricted to az = 0. The
+// set is downward-closed (so it spans both the monomial and the tensor Legendre
+// basis; see ModalAxisKind), and the resulting nodal basis is independent of how
+// the set is ordered.
 std::vector<std::array<int, 3>> serendipity_exponents(int order, int active_axes) {
     const int max_y = active_axes >= 2 ? order : 0;
     const int max_z = active_axes >= 3 ? order : 0;

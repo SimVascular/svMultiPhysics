@@ -258,8 +258,10 @@ TEST(BasisErrorPaths, BasisFactoryInvalidRequestsThrowBasisExceptions) {
     EXPECT_THROW((void)basis_factory::create(
                      BasisRequest{ElementType::Line2, BasisType::Lagrange, -1}),
                  BasisConfigurationException);
+    // NURBS is a declared but unimplemented family, so the scalar factory rejects
+    // it as outside the Lagrange/Serendipity scope.
     EXPECT_THROW((void)basis_factory::create(
-                     BasisRequest{ElementType::Line2, BasisType::Bernstein, 1}),
+                     BasisRequest{ElementType::Line2, BasisType::NURBS, 1}),
                  BasisConfigurationException);
     EXPECT_THROW((void)basis_factory::create(
                      BasisRequest{ElementType::Pyramid5, BasisType::Lagrange, 1}),

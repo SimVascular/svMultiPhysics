@@ -522,14 +522,14 @@ TEST(SerendipityBasis, Wedge15IsNodalAndPartitionsUnity) {
 }
 
 TEST(SerendipityBasis, RejectsUnsupportedSerendipityAliases) {
-    EXPECT_THROW(SerendipityBasis(ElementType::Quad9, 2), FEException);
-    EXPECT_THROW(SerendipityBasis(ElementType::Pyramid13, 2), FEException);
-    EXPECT_THROW(SerendipityBasis(ElementType::Pyramid14, 2), FEException);
-    EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 3), FEException);
-    EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 1), FEException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Quad9, 2), BasisElementCompatibilityException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Pyramid13, 2), BasisElementCompatibilityException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Pyramid14, 2), BasisElementCompatibilityException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 3), BasisConfigurationException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Quad8, 1), BasisConfigurationException);
     // Quad4 is the linear Lagrange quad, not a named serendipity layout; arbitrary
     // quadrilateral serendipity is requested through BasisTopology::Quadrilateral.
-    EXPECT_THROW(SerendipityBasis(ElementType::Quad4, 2), FEException);
+    EXPECT_THROW(SerendipityBasis(ElementType::Quad4, 2), BasisElementCompatibilityException);
 }
 
 // Topology construction is the arbitrary-order entry point and exists only for

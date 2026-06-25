@@ -12,6 +12,13 @@ namespace basis {
 
 /**
  * @brief Base exception type for errors originating in the Basis module
+ *
+ * @details The Basis module raises these basis-specific types -- rather than the
+ * generic FE exceptions in FEException.h -- so a caller can catch a basis failure
+ * precisely: an unsupported element/order pairing, a non-unisolvent node set, an
+ * out-of-range reference-node index. They all derive from FEException, so code
+ * that only wants "some FE error" can still catch the base type, and they carry
+ * the same StatusCode and source location as the rest of the hierarchy.
  */
 class BasisException : public FEException {
 public:

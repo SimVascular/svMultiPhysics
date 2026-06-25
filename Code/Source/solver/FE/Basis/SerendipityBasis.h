@@ -126,13 +126,13 @@ namespace basis {
  * High-order nodal interpolation is governed by two conditioning factors, both
  * addressed so that arbitrary orders produce trustworthy shape functions:
  * - **Node distribution.** The quadrilateral and hexahedral families place their
- *   nodes on the Gauss-Lobatto-Legendre (GLL) distribution (edges, faces, and the
- *   interior staircase all use the GLL 1D nodes). GLL has a logarithmic Lebesgue
- *   constant, where an equispaced layout grows exponentially (the Runge
- *   phenomenon). The named production layouts are unaffected: GLL coincides with
- *   the equispaced layout at orders 1 and 2, so Quad8/Hex8/Hex20 keep their exact
- *   public coordinates; GLL differs only for order >= 3, where the layout is this
- *   module's own convention.
+ *   nodes on the shared Gauss-Lobatto-Legendre (GLL) distribution -- edges, faces,
+ *   and the interior staircase all use the GLL 1D nodes (line_coord_pm_one), whose
+ *   logarithmic Lebesgue constant keeps high-order interpolation well-conditioned.
+ *   The named production layouts are unaffected, since GLL coincides with the
+ *   equispaced layout at orders 1 and 2 (so Quad8/Hex8/Hex20 keep their exact
+ *   public coordinates); the layout is this module's own convention only for
+ *   order >= 3.
  * - **Modal basis.** The quadrilateral and hexahedral Vandermondes are assembled
  *   in a tensor **Legendre** basis rather than raw monomials. The serendipity
  *   exponent set is downward-closed, so the Legendre and monomial spans are

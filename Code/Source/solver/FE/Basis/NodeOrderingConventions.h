@@ -29,8 +29,11 @@ namespace basis {
  * equispaced layout for the production orders and differ only for order >= 3.
  * Returns 0 for order <= 0 when @p i is 0. Invalid indices throw.
  *
- * Shared by the reference-node layout generators and the Lagrange tensor-axis
- * node initialization so the 1D distribution lives in a single place.
+ * This is the single definition of the tensor-axis node distribution: the
+ * reference-node layout generators, the Lagrange tensor-axis initialization, and
+ * the serendipity edge/face/interior strata all source their 1D nodes here. The
+ * LagrangeBasis and SerendipityBasis docs point back to this description of the
+ * GLL distribution and its conditioning rather than restating it.
  *
  * @param i Node index in [0, order] for positive orders, or 0 for order <= 0.
  * @param order Polynomial order of the 1D distribution.
