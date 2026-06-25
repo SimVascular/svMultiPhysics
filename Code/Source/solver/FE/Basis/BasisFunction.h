@@ -32,24 +32,26 @@
  * material model, and equation context.
  *
  * The main pieces are:
- * - BasisFunction (BasisFunction.h): the abstract query and evaluation
+ * - @ref BasisFunction (BasisFunction.h): the abstract query and evaluation
  *   contract for code that does not need to know the concrete family.
  * - @ref FE_LagrangeBasis "LagrangeBasis" and
  *   @ref FE_SerendipityBasis "SerendipityBasis": the implemented nodal
  *   families, including analytical first and second derivatives in reference
  *   coordinates.
- * - basis_factory (BasisFactory.h): runtime construction from a BasisRequest.
- *   basis_factory::default_basis_request() centralizes the family/order that
- *   matches each supported element's public node layout.
- * - ReferenceNodeLayout (NodeOrderingConventions.h): canonical reference-node
+ * - basis_factory (BasisFactory.h): runtime construction from a
+ *   @ref BasisRequest. basis_factory::default_basis_request() centralizes the
+ *   family/order that matches each supported element's public node layout.
+ * - @ref ReferenceNodeLayout (NodeOrderingConventions.h): canonical reference-node
  *   coordinates and the output ordering used by every basis evaluator.
- * - BasisTraits.h and BasisExceptions.h: topology classification,
+ * - @ref BasisTopology (BasisTraits.h) and the @ref FE_BasisExceptions
+ *   "basis exceptions" (BasisExceptions.h): topology classification,
  *   compile-time helpers, and module-specific exception types.
  *
  * ## Object and evaluation contract
  *
  * A basis object is immutable after construction. It represents one reference
- * topology, basis family, and effective polynomial order, and can be shared
+ * topology (e.g. tetrahedron, hexahedron), basis family (Lagrange or
+ * serendipity), and effective polynomial order, and can be shared
  * safely across evaluations. Construction may build node lattices or invert
  * interpolation matrices, so callers should construct through basis_factory
  * and cache one instance for each distinct basis request instead of rebuilding
@@ -154,8 +156,8 @@ void require_span_size(std::size_t actual, std::size_t expected, const char* lab
  *
  * BasisFunction defines the common query and evaluation API used by solver
  * code that does not need to know the concrete basis implementation. Derived
- * classes provide values at minimum and can override analytical gradients,
- * Hessians, combined evaluation, and span output paths. The interface
+ * classes provide shape function values at minimum and can override analytical
+ * gradients, Hessians, combined evaluation, and span output paths. The interface
  * is deliberately limited to reference-space quantities; callers own node
  * ordering translation, physical mapping, and any field-level discretization
  * policy.
@@ -174,11 +176,15 @@ public:
     /**
      * @brief Return the reference topology of this basis.
      *
-     * @details Together with order(), this is the authoritative identity of a
-     * basis: a topology plus a polynomial order, with no node-count assumption.
-     * Arbitrary-order bases are constructed from a BasisTopology and an order;
-     * named ElementType layouts (Hex8, Hex27, ...) are a fixed-order shorthand
-     * that maps to the same (topology, order) pair.
+     * @details Together with order() and basis_type(), this is the authoritative
+     * identity of a basis: a topology, a polynomial order, and a basis family,
+     * with no node-count assumption. The family is part of the identity because
+     * the same topology and order can denote different bases -- a hexahedron at
+     * order 2 is the Hex20 serendipity space or the Hex27 Lagrange space
+     * depending on basis_type(). Arbitrary-order bases are constructed from a
+     * BasisTopology and an order; named ElementType layouts (Hex8, Hex27, ...)
+     * are a fixed-order shorthand that maps to the same (topology, order, family)
+     * triple.
      *
      * @return Reference topology.
      */
@@ -192,7 +198,9 @@ public:
 
     /**
      * @brief Return the polynomial order represented by this basis.
-     * @return Effective polynomial order after any element-family normalization.
+     * @return Polynomial order of the basis. A named element layout reports the
+     *         order implied by that layout (Quad8 and Hex20 report 2, Hex8
+     *         reports 1), not its node count.
      */
     virtual int order() const noexcept = 0;
 
