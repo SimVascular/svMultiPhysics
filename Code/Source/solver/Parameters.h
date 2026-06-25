@@ -1107,6 +1107,9 @@ class StimulusParameters : public ParameterLists
     Parameter<double> cycle_length;
     Parameter<double> duration;
     Parameter<double> start_time;
+
+    VectorParameter<double> box_min;
+    VectorParameter<double> box_max;
     
     bool value_set = false;
 };

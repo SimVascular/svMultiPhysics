@@ -59,6 +59,15 @@ class stimType
 
     /// @brief stimulus amplitude
     double A = 0.0;
+
+    /// @brief Whether the stimulus is restricted to a coordinate box.
+    bool box_defined = false;
+
+    /// @brief Minimum coordinates for the stimulus box.
+    Vector<double> box_min;
+
+    /// @brief Maximum coordinates for the stimulus box.
+    Vector<double> box_max;
 };
 
 /// @brief ECG leads type
