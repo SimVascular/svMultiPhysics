@@ -71,8 +71,8 @@ BasisTopology validated_lagrange_topology(ElementType element_type, int order) {
 
 // Convert an integer lattice index (i, j[, k]) into the barycentric exponent
 // tuple (order - i - j - k, i, j, k). The lattice already carries the exact
-// coordinate indices, so no floating-point round-trip is needed; the accessor's
-// structural invariants guarantee i + j + k <= order, hence e[0] >= 0.
+// coordinate indices, the accessor's structural invariants guarantee
+//  i + j + k <= order, hence e[0] >= 0.
 LagrangeBasis::SimplexExponent simplex_exponent_from_lattice(const std::array<int, 3>& idx,
                                                             BasisTopology top,
                                                             int order) {
@@ -557,9 +557,9 @@ void LagrangeBasis::evaluate_all_to(const Vec3& xi,
                                     std::span<double> values_out,
                                     std::span<Gradient> gradients_out,
                                     std::span<Hessian> hessians_out) const {
-    require_requested_span_size(values_out, size(), "LagrangeBasis::evaluate_all_to values");
-    require_requested_span_size(gradients_out, size(), "LagrangeBasis::evaluate_all_to gradients");
-    require_requested_span_size(hessians_out, size(), "LagrangeBasis::evaluate_all_to hessians");
+    // Private sink: callers guarantee valid output spans -- the public *_to methods
+    // validate their one output with require_span_size, and the vector evaluators
+    // resize to size(). An empty span here means "skip that quantity".
 
     if (values_out.empty() && gradients_out.empty() && hessians_out.empty()) {
         return;

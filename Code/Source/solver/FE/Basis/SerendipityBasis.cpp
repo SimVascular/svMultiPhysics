@@ -253,83 +253,6 @@ constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{2, 0, 1}}
 }};
 
-// Evaluate a nodal basis defined by a modal coefficient table at one reference
-// point. The three axis tables (tx, ty, tz) already hold phi and its derivatives
-// for every per-axis degree at this point. For each mode j the routine forms
-// phi_a(r) phi_b(s) phi_c(t) and the requested derivatives, then accumulates the
-// coefficient-weighted sum into the output slots. `count` is both the number of
-// modes and the number of basis functions (the coefficient table is square). The
-// table is in public basis order, so output slot i reads coefficient column i
-// directly. Outputs are assumed pre-zeroed by the caller; an empty span skips that
-// quantity.
-template <typename ExponentFn, typename CoeffFn>
-void eval_modal_basis(const AxisTable& tx, const AxisTable& ty, const AxisTable& tz,
-                      std::size_t count,
-                      ExponentFn&& exponent,
-                      CoeffFn&& coeff,
-                      std::span<double> values,
-                      std::span<Gradient> gradients,
-                      std::span<Hessian> hessians) {
-    const bool want_values = !values.empty();
-    const bool want_gradients = !gradients.empty();
-    const bool want_hessians = !hessians.empty();
-
-    for (std::size_t j = 0; j < count; ++j) {
-        const std::array<int, 3> e = exponent(j);
-        const std::size_t ex = static_cast<std::size_t>(e[0]);
-        const std::size_t ey = static_cast<std::size_t>(e[1]);
-        const std::size_t ez = static_cast<std::size_t>(e[2]);
-
-        const double vx = tx.value[ex];
-        const double vy = ty.value[ey];
-        const double vz = tz.value[ez];
-        const double phi = vx * vy * vz;
-
-        double d_dr = double(0), d_ds = double(0), d_dt = double(0);
-        if (want_gradients || want_hessians) {
-            d_dr = tx.first[ex] * vy * vz;
-            d_ds = vx * ty.first[ey] * vz;
-            d_dt = vx * vy * tz.first[ez];
-        }
-
-        double d_drr = double(0), d_dss = double(0), d_dtt = double(0);
-        double d_drs = double(0), d_drt = double(0), d_dst = double(0);
-        if (want_hessians) {
-            d_drr = tx.second[ex] * vy * vz;
-            d_dss = vx * ty.second[ey] * vz;
-            d_dtt = vx * vy * tz.second[ez];
-            d_drs = tx.first[ex] * ty.first[ey] * vz;
-            d_drt = tx.first[ex] * vy * tz.first[ez];
-            d_dst = vx * ty.first[ey] * tz.first[ez];
-        }
-
-        for (std::size_t slot = 0; slot < count; ++slot) {
-            const double c = coeff(j, slot);
-            if (want_values) {
-                values[slot] += c * phi;
-            }
-            if (want_gradients) {
-                Gradient& g = gradients[slot];
-                g[0] += c * d_dr;
-                g[1] += c * d_ds;
-                g[2] += c * d_dt;
-            }
-            if (want_hessians) {
-                Hessian& h = hessians[slot];
-                h(0, 0) += c * d_drr;
-                h(1, 1) += c * d_dss;
-                h(2, 2) += c * d_dtt;
-                h(0, 1) += c * d_drs;
-                h(1, 0) += c * d_drs;
-                h(0, 2) += c * d_drt;
-                h(2, 0) += c * d_drt;
-                h(1, 2) += c * d_dst;
-                h(2, 1) += c * d_dst;
-            }
-        }
-    }
-}
-
 struct NormalizedSerendipityRequest {
     BasisTopology topology;
     int dimension;
@@ -508,9 +431,9 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
                                        std::span<double> values_out,
                                        std::span<Gradient> gradients_out,
                                        std::span<Hessian> hessians_out) const {
-    require_requested_span_size(values_out, size_, "SerendipityBasis::evaluate_all_to values");
-    require_requested_span_size(gradients_out, size_, "SerendipityBasis::evaluate_all_to gradients");
-    require_requested_span_size(hessians_out, size_, "SerendipityBasis::evaluate_all_to hessians");
+    // Private sink: callers guarantee valid output spans -- the public *_to methods
+    // validate their one output with require_span_size, and the vector evaluators
+    // resize to size_. An empty span here means "skip that quantity".
 
     if (values_out.empty() && gradients_out.empty() && hessians_out.empty()) {
         return;
@@ -549,13 +472,69 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
     fill_axis_table(kind, y, order_, ty);
     fill_axis_table(kind, z, order_, tz);
 
-    eval_modal_basis(
-        tx, ty, tz, size_,
-        [this](std::size_t j) { return mode_exponents_[j]; },
-        [this](std::size_t j, std::size_t i) {
-            return inv_vandermonde_[j * size_ + i];
-        },
-        values_out, gradients_out, hessians_out);
+    // Accumulate the nodal shape functions from the modal tables. For each mode j,
+    // phi = phi_a(r) phi_b(s) phi_c(t) (and its derivatives) is weighted by the
+    // inverse-Vandermonde coefficient for each basis slot; the table is already in
+    // public basis order, so slot i reads column i directly. The spans were zeroed
+    // above and an empty span is skipped.
+    const bool want_values = !values_out.empty();
+    const bool want_gradients = !gradients_out.empty();
+    const bool want_hessians = !hessians_out.empty();
+
+    for (std::size_t j = 0; j < size_; ++j) {
+        const std::array<int, 3>& e = mode_exponents_[j];
+        const std::size_t ex = static_cast<std::size_t>(e[0]);
+        const std::size_t ey = static_cast<std::size_t>(e[1]);
+        const std::size_t ez = static_cast<std::size_t>(e[2]);
+
+        const double vx = tx.value[ex];
+        const double vy = ty.value[ey];
+        const double vz = tz.value[ez];
+        const double phi = vx * vy * vz;
+
+        double d_dr = double(0), d_ds = double(0), d_dt = double(0);
+        if (want_gradients || want_hessians) {
+            d_dr = tx.first[ex] * vy * vz;
+            d_ds = vx * ty.first[ey] * vz;
+            d_dt = vx * vy * tz.first[ez];
+        }
+
+        double d_drr = double(0), d_dss = double(0), d_dtt = double(0);
+        double d_drs = double(0), d_drt = double(0), d_dst = double(0);
+        if (want_hessians) {
+            d_drr = tx.second[ex] * vy * vz;
+            d_dss = vx * ty.second[ey] * vz;
+            d_dtt = vx * vy * tz.second[ez];
+            d_drs = tx.first[ex] * ty.first[ey] * vz;
+            d_drt = tx.first[ex] * vy * tz.first[ez];
+            d_dst = vx * ty.first[ey] * tz.first[ez];
+        }
+
+        for (std::size_t slot = 0; slot < size_; ++slot) {
+            const double c = inv_vandermonde_[j * size_ + slot];
+            if (want_values) {
+                values_out[slot] += c * phi;
+            }
+            if (want_gradients) {
+                Gradient& g = gradients_out[slot];
+                g[0] += c * d_dr;
+                g[1] += c * d_ds;
+                g[2] += c * d_dt;
+            }
+            if (want_hessians) {
+                Hessian& h = hessians_out[slot];
+                h(0, 0) += c * d_drr;
+                h(1, 1) += c * d_dss;
+                h(2, 2) += c * d_dtt;
+                h(0, 1) += c * d_drs;
+                h(1, 0) += c * d_drs;
+                h(0, 2) += c * d_drt;
+                h(2, 0) += c * d_drt;
+                h(1, 2) += c * d_dst;
+                h(2, 1) += c * d_dst;
+            }
+        }
+    }
 }
 
 void SerendipityBasis::evaluate_values(const math::Vector<double, 3>& xi,
