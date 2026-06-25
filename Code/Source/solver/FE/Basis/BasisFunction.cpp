@@ -24,57 +24,75 @@ const std::vector<math::Vector<double, 3>>& BasisFunction::nodes() const noexcep
     return kNoNodes;
 }
 
+// Vector-output overloads: size the container and forward to the matching span
+// primitive. Defined once here so concrete families implement only the span
+// primitives below.
+void BasisFunction::evaluate_values(const math::Vector<double, 3>& xi,
+                                    std::vector<double>& values) const {
+    values.resize(size());
+    evaluate_values_to(xi, std::span<double>(values.data(), values.size()));
+}
+
 void BasisFunction::evaluate_gradients(const math::Vector<double, 3>& xi,
                                        std::vector<Gradient>& gradients) const {
-    (void)xi;
-    (void)gradients;
-    svmp::raise<BasisEvaluationException>(SVMP_HERE,
-        "Analytic gradient evaluation is not implemented for this basis");
+    gradients.resize(size());
+    evaluate_gradients_to(xi, std::span<Gradient>(gradients.data(), gradients.size()));
 }
 
 void BasisFunction::evaluate_hessians(const math::Vector<double, 3>& xi,
                                       std::vector<Hessian>& hessians) const {
-    (void)xi;
-    (void)hessians;
-    svmp::raise<BasisEvaluationException>(SVMP_HERE,
-        "Analytic Hessian evaluation is not implemented for this basis");
+    hessians.resize(size());
+    evaluate_hessians_to(xi, std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
 void BasisFunction::evaluate_all(const math::Vector<double, 3>& xi,
                                  std::vector<double>& values,
                                  std::vector<Gradient>& gradients,
                                  std::vector<Hessian>& hessians) const {
-    evaluate_values(xi, values);
-    evaluate_gradients(xi, gradients);
-    evaluate_hessians(xi, hessians);
+    values.resize(size());
+    gradients.resize(size());
+    hessians.resize(size());
+    evaluate_all_to(xi,
+                    std::span<double>(values.data(), values.size()),
+                    std::span<Gradient>(gradients.data(), gradients.size()),
+                    std::span<Hessian>(hessians.data(), hessians.size()));
 }
 
-// The base-class *_to overloads are a correct fallback for bases that implement
-// only the vector evaluators: they evaluate into a temporary and copy into the
-// caller's span. The concrete nodal families (LagrangeBasis, SerendipityBasis)
-// override these to compute directly into the span without the temporary.
-void BasisFunction::evaluate_values_to(const math::Vector<double, 3>& xi,
-                                       std::span<double> values_out) const {
-    require_span_size(values_out.size(), size(), "BasisFunction::evaluate_values_to");
-    std::vector<double> tmp(size());
-    evaluate_values(xi, tmp);
-    std::copy_n(tmp.begin(), tmp.size(), values_out.begin());
-}
-
+// The gradient/Hessian span primitives default to reporting "not implemented"; a
+// family supplies analytical derivatives by overriding them. evaluate_values_to
+// has no base definition: every basis must provide values.
 void BasisFunction::evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                           std::span<Gradient> gradients_out) const {
-    require_span_size(gradients_out.size(), size(), "BasisFunction::evaluate_gradients_to");
-    std::vector<Gradient> tmp(size());
-    evaluate_gradients(xi, tmp);
-    std::copy_n(tmp.begin(), tmp.size(), gradients_out.begin());
+    (void)xi;
+    (void)gradients_out;
+    svmp::raise<BasisEvaluationException>(SVMP_HERE,
+        "Analytic gradient evaluation is not implemented for this basis");
 }
 
 void BasisFunction::evaluate_hessians_to(const math::Vector<double, 3>& xi,
                                          std::span<Hessian> hessians_out) const {
-    require_span_size(hessians_out.size(), size(), "BasisFunction::evaluate_hessians_to");
-    std::vector<Hessian> tmp(size());
-    evaluate_hessians(xi, tmp);
-    std::copy_n(tmp.begin(), tmp.size(), hessians_out.begin());
+    (void)xi;
+    (void)hessians_out;
+    svmp::raise<BasisEvaluationException>(SVMP_HERE,
+        "Analytic Hessian evaluation is not implemented for this basis");
+}
+
+// Combined evaluator default: forward each requested (non-empty) quantity to its
+// single-quantity span primitive. Families override this to share per-point setup
+// across the requested quantities.
+void BasisFunction::evaluate_all_to(const math::Vector<double, 3>& xi,
+                                    std::span<double> values_out,
+                                    std::span<Gradient> gradients_out,
+                                    std::span<Hessian> hessians_out) const {
+    if (!values_out.empty()) {
+        evaluate_values_to(xi, values_out);
+    }
+    if (!gradients_out.empty()) {
+        evaluate_gradients_to(xi, gradients_out);
+    }
+    if (!hessians_out.empty()) {
+        evaluate_hessians_to(xi, hessians_out);
+    }
 }
 
 void BasisFunction::numerical_gradient(const math::Vector<double, 3>& xi,

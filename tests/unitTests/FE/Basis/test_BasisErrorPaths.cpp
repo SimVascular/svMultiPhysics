@@ -12,6 +12,8 @@
 #include "FE/Basis/NodeOrderingConventions.h"
 #include "FE/Basis/SerendipityBasis.h"
 
+#include <algorithm>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -46,10 +48,10 @@ public:
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values(const math::Vector<double, 3>&,
-                         std::vector<double>& values) const override
+    void evaluate_values_to(const math::Vector<double, 3>&,
+                            std::span<double> values_out) const override
     {
-        values.assign(size(), double(0));
+        std::fill(values_out.begin(), values_out.end(), double(0));
     }
 };
 
@@ -68,34 +70,34 @@ public:
     int order() const noexcept override { return 2; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values(const math::Vector<double, 3>& xi,
-                         std::vector<double>& values) const override
+    void evaluate_values_to(const math::Vector<double, 3>& xi,
+                            std::span<double> values_out) const override
     {
         const double x = xi[0];
         const double y = xi[1];
         const double z = xi[2];
-        values.resize(size());
-        values[0] = double(1) + double(2) * x - y + double(0.5) * z +
-                    x * x + double(0.75) * y * y - double(0.25) * z * z +
-                    double(0.2) * x * y - double(0.3) * x * z + double(0.4) * y * z;
-        values[1] = double(3) - x + double(2) * y + z +
-                    double(0.5) * x * x - y * y + z * z +
-                    x * y + x * z - y * z;
+        values_out[0] = double(1) + double(2) * x - y + double(0.5) * z +
+                        x * x + double(0.75) * y * y - double(0.25) * z * z +
+                        double(0.2) * x * y - double(0.3) * x * z + double(0.4) * y * z;
+        values_out[1] = double(3) - x + double(2) * y + z +
+                        double(0.5) * x * x - y * y + z * z +
+                        x * y + x * z - y * z;
     }
 
-    void evaluate_gradients(const math::Vector<double, 3>& xi,
-                            std::vector<Gradient>& gradients) const override
+    void evaluate_gradients_to(const math::Vector<double, 3>& xi,
+                               std::span<Gradient> gradients_out) const override
     {
         const double x = xi[0];
         const double y = xi[1];
         const double z = xi[2];
-        gradients.assign(size(), Gradient::Zero());
-        gradients[0][0] = double(2) + double(2) * x + double(0.2) * y - double(0.3) * z;
-        gradients[0][1] = double(-1) + double(1.5) * y + double(0.2) * x + double(0.4) * z;
-        gradients[0][2] = double(0.5) - double(0.5) * z - double(0.3) * x + double(0.4) * y;
-        gradients[1][0] = double(-1) + x + y + z;
-        gradients[1][1] = double(2) - double(2) * y + x - z;
-        gradients[1][2] = double(1) + double(2) * z + x - y;
+        gradients_out[0] = Gradient::Zero();
+        gradients_out[1] = Gradient::Zero();
+        gradients_out[0][0] = double(2) + double(2) * x + double(0.2) * y - double(0.3) * z;
+        gradients_out[0][1] = double(-1) + double(1.5) * y + double(0.2) * x + double(0.4) * z;
+        gradients_out[0][2] = double(0.5) - double(0.5) * z - double(0.3) * x + double(0.4) * y;
+        gradients_out[1][0] = double(-1) + x + y + z;
+        gradients_out[1][1] = double(2) - double(2) * y + x - z;
+        gradients_out[1][2] = double(1) + double(2) * z + x - y;
     }
 
     void exact_hessians(std::vector<Hessian>& hessians) const
@@ -108,7 +110,11 @@ public:
     }
 };
 
-class CompleteFallbackBasis : public BasisFunction {
+// Basis that implements only the span primitives and deliberately does not
+// override the combined evaluate_all_to. It therefore exercises the base class's
+// vector overloads and the default combined evaluator, both of which must forward
+// to these primitives.
+class SpanPrimitiveBasis : public BasisFunction {
 public:
     BasisType basis_type() const noexcept override { return BasisType::Lagrange; }
     BasisTopology topology() const noexcept override { return BasisTopology::Triangle; }
@@ -116,32 +122,32 @@ public:
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values(const math::Vector<double, 3>& xi,
-                         std::vector<double>& values) const override
+    void evaluate_values_to(const math::Vector<double, 3>& xi,
+                            std::span<double> values_out) const override
     {
-        values.resize(size());
-        values[0] = double(1) + xi[0];
-        values[1] = double(2) + xi[1];
+        values_out[0] = double(1) + xi[0];
+        values_out[1] = double(2) + xi[1];
     }
 
-    void evaluate_gradients(const math::Vector<double, 3>&,
-                            std::vector<Gradient>& gradients) const override
+    void evaluate_gradients_to(const math::Vector<double, 3>&,
+                               std::span<Gradient> gradients_out) const override
     {
-        gradients.assign(size(), Gradient::Zero());
-        gradients[0][0] = double(1);
-        gradients[1][1] = double(1);
+        gradients_out[0] = Gradient::Zero();
+        gradients_out[1] = Gradient::Zero();
+        gradients_out[0][0] = double(1);
+        gradients_out[1][1] = double(1);
     }
 
-    void evaluate_hessians(const math::Vector<double, 3>& xi,
-                           std::vector<Hessian>& hessians) const override
+    void evaluate_hessians_to(const math::Vector<double, 3>& xi,
+                              std::span<Hessian> hessians_out) const override
     {
-        hessians.assign(size(), Hessian::Zero());
-        for (std::size_t d = 0; d < hessians.size(); ++d) {
+        for (std::size_t d = 0; d < size(); ++d) {
+            hessians_out[d] = Hessian::Zero();
             for (std::size_t r = 0; r < 3u; ++r) {
                 for (std::size_t c = 0; c < 3u; ++c) {
-                    hessians[d](r, c) = double(100) * static_cast<double>(d + 1u) +
-                                        double(10) * static_cast<double>(r) +
-                                        static_cast<double>(c) + xi[2];
+                    hessians_out[d](r, c) = double(100) * static_cast<double>(d + 1u) +
+                                            double(10) * static_cast<double>(r) +
+                                            static_cast<double>(c) + xi[2];
                 }
             }
         }
@@ -390,10 +396,11 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
     }
 }
 
-TEST(BasisErrorPaths, BasisFunctionFallbackWritesSpanOutputs) {
-    CompleteFallbackBasis basis;
+TEST(BasisErrorPaths, BasisFunctionVectorOverloadsForwardToSpanPrimitives) {
+    SpanPrimitiveBasis basis;
     const math::Vector<double, 3> point{double(0.25), double(0.5), double(-0.25)};
 
+    // Reference results taken directly from the span primitives the basis defines.
     std::vector<double> span_values(basis.size());
     std::vector<Gradient> span_gradients(basis.size());
     std::vector<Hessian> span_hessians(basis.size());
@@ -401,18 +408,28 @@ TEST(BasisErrorPaths, BasisFunctionFallbackWritesSpanOutputs) {
     basis.evaluate_gradients_to(point, span_gradients);
     basis.evaluate_hessians_to(point, span_hessians);
 
-    std::vector<double> expected_values;
-    std::vector<Gradient> expected_gradients;
-    std::vector<Hessian> expected_hessians;
-    basis.evaluate_all(point, expected_values, expected_gradients, expected_hessians);
+    // The base-class vector overloads must size their outputs and forward to the
+    // span primitives; evaluate_all() goes through the default combined evaluator.
+    std::vector<double> values;
+    basis.evaluate_values(point, values);
+    std::vector<double> all_values;
+    std::vector<Gradient> all_gradients;
+    std::vector<Hessian> all_hessians;
+    basis.evaluate_all(point, all_values, all_gradients, all_hessians);
+
+    ASSERT_EQ(values.size(), basis.size());
+    ASSERT_EQ(all_values.size(), basis.size());
+    ASSERT_EQ(all_gradients.size(), basis.size());
+    ASSERT_EQ(all_hessians.size(), basis.size());
     for (std::size_t d = 0; d < basis.size(); ++d) {
-        EXPECT_EQ(span_values[d], expected_values[d]);
+        EXPECT_EQ(values[d], span_values[d]);
+        EXPECT_EQ(all_values[d], span_values[d]);
         for (std::size_t c = 0; c < 3u; ++c) {
-            EXPECT_EQ(span_gradients[d][c], expected_gradients[d][c]);
+            EXPECT_EQ(all_gradients[d][c], span_gradients[d][c]);
         }
         for (std::size_t r = 0; r < 3u; ++r) {
             for (std::size_t c = 0; c < 3u; ++c) {
-                EXPECT_EQ(span_hessians[d](r, c), expected_hessians[d](r, c));
+                EXPECT_EQ(all_hessians[d](r, c), span_hessians[d](r, c));
             }
         }
     }

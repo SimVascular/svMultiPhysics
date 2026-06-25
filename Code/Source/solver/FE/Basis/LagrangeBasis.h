@@ -198,73 +198,6 @@ public:
     const std::vector<math::Vector<double, 3>>& nodes() const noexcept final { return nodes_; }
 
     /**
-     * @brief Evaluate Lagrange basis function values at a reference coordinate.
-     *
-     * @details Values satisfy the nodal interpolation property
-     * @f$N_i(x_j)=\delta_{ij}@f$ at the basis nodes. Tensor-product values are
-     * products of one-dimensional Lagrange polynomials. Simplex values are
-     * products of barycentric falling-factorial factors. Wedge values are
-     * products of triangle simplex values and through-axis Lagrange values.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param values Receives one value per basis function.
-     */
-    void evaluate_values(const math::Vector<double, 3>& xi,
-                         std::vector<double>& values) const final;
-
-    /**
-     * @brief Evaluate analytical Lagrange basis gradients at a reference coordinate.
-     *
-     * @details Gradients are derivatives with respect to reference
-     * coordinates, not physical coordinates. Tensor-product gradients apply
-     * the product rule to the active axis polynomials. Simplex gradients
-     * differentiate the barycentric factors and multiply by the constant
-     * gradients of the barycentric coordinates. Wedge gradients combine the
-     * triangle gradient in the first two components with the through-axis
-     * derivative in the third component.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param gradients Receives one three-component gradient per basis function.
-     */
-    void evaluate_gradients(const math::Vector<double, 3>& xi,
-                            std::vector<Gradient>& gradients) const final;
-
-    /**
-     * @brief Evaluate analytical Lagrange basis Hessians at a reference coordinate.
-     *
-     * @details Hessians are second derivatives in reference coordinates and
-     * are stored as 3-by-3 matrices. Tensor-product Hessians contain pure
-     * second axis derivatives on the diagonal and mixed product-rule terms
-     * off diagonal. Simplex Hessians are assembled from first and second
-     * derivatives of the barycentric factors. Wedge Hessians contain triangle
-     * Hessian terms, through-axis second derivatives, and mixed
-     * triangle/through-axis derivative products.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param hessians Receives one 3-by-3 Hessian per basis function.
-     */
-    void evaluate_hessians(const math::Vector<double, 3>& xi,
-                           std::vector<Hessian>& hessians) const final;
-
-    /**
-     * @brief Evaluate Lagrange values, gradients, and Hessians together.
-     *
-     * @details This is the allocation-friendly vector API for callers that
-     * need all basis quantities at the same quadrature point. The underlying
-     * evaluator computes only topology-local polynomial data once and then
-     * fills all requested outputs.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param values Receives one value per basis function.
-     * @param gradients Receives one three-component gradient per basis function.
-     * @param hessians Receives one 3-by-3 Hessian per basis function.
-     */
-    void evaluate_all(const math::Vector<double, 3>& xi,
-                      std::vector<double>& values,
-                      std::vector<Gradient>& gradients,
-                      std::vector<Hessian>& hessians) const final;
-
-    /**
      * @brief Evaluate Lagrange basis values into caller-provided storage.
      *
      * @details This is the low-allocation API intended for element assembly
@@ -332,7 +265,7 @@ private:
     void evaluate_all_to(const math::Vector<double, 3>& xi,
                          std::span<double> values_out,
                          std::span<Gradient> gradients_out,
-                         std::span<Hessian> hessians_out) const;
+                         std::span<Hessian> hessians_out) const override;
     void evaluate_point_to(std::span<double> values_out,
                            std::span<Gradient> gradients_out,
                            std::span<Hessian> hessians_out) const;

@@ -231,65 +231,6 @@ public:
     const std::vector<math::Vector<double, 3>>& nodes() const noexcept final { return nodes_; }
 
     /**
-     * @brief Evaluate serendipity basis function values at a reference coordinate.
-     *
-     * @details Every family evaluates the serendipity modal vector and multiplies
-     * by the generated inverse Vandermonde matrix to obtain nodal shape-function
-     * values. Quadrilateral and hexahedral bases use tensor Legendre modes; the
-     * fixed Wedge15 layout uses monomial modes. The coefficient table is already
-     * in public basis order, so no output reordering is needed.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param values Receives one value per basis function.
-     */
-    void evaluate_values(const math::Vector<double, 3>& xi,
-                         std::vector<double>& values) const final;
-
-    /**
-     * @brief Evaluate analytical serendipity basis gradients at a reference coordinate.
-     *
-     * @details Gradients are derivatives with respect to reference coordinates.
-     * Every family differentiates the same modal vector used for values and
-     * applies the generated inverse Vandermonde coefficients.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param gradients Receives one three-component gradient per basis function.
-     */
-    void evaluate_gradients(const math::Vector<double, 3>& xi,
-                            std::vector<Gradient>& gradients) const final;
-
-    /**
-     * @brief Evaluate analytical serendipity basis Hessians at a reference coordinate.
-     *
-     * @details Hessians are second derivatives in reference coordinates and are
-     * stored as 3-by-3 matrices. Every family uses the second derivatives of the
-     * same modal vector used for values together with the generated inverse
-     * Vandermonde coefficients.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param hessians Receives one 3-by-3 Hessian per basis function.
-     */
-    void evaluate_hessians(const math::Vector<double, 3>& xi,
-                           std::vector<Hessian>& hessians) const final;
-
-    /**
-     * @brief Evaluate serendipity values, gradients, and Hessians together.
-     *
-     * @details This vector API is backed by the same span-based evaluator as
-     * the assembly-oriented `*_to` methods, so topology-specific polynomial
-     * setup can be shared for a quadrature point.
-     *
-     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
-     * @param values Receives one value per basis function.
-     * @param gradients Receives one three-component gradient per basis function.
-     * @param hessians Receives one 3-by-3 Hessian per basis function.
-     */
-    void evaluate_all(const math::Vector<double, 3>& xi,
-                      std::vector<double>& values,
-                      std::vector<Gradient>& gradients,
-                      std::vector<Hessian>& hessians) const final;
-
-    /**
      * @brief Evaluate serendipity basis values into caller-provided storage.
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values_out Output span with at least size() entries.
@@ -343,7 +284,7 @@ private:
     void evaluate_all_to(const math::Vector<double, 3>& xi,
                          std::span<double> values_out,
                          std::span<Gradient> gradients_out,
-                         std::span<Hessian> hessians_out) const;
+                         std::span<Hessian> hessians_out) const override;
 };
 
 /** @} */

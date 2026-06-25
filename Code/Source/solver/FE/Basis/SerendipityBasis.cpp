@@ -537,37 +537,6 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
     }
 }
 
-void SerendipityBasis::evaluate_values(const math::Vector<double, 3>& xi,
-                                       std::vector<double>& values) const {
-    values.resize(size_);
-    evaluate_values_to(xi, std::span<double>(values.data(), values.size()));
-}
-
-void SerendipityBasis::evaluate_gradients(const math::Vector<double, 3>& xi,
-                                          std::vector<Gradient>& gradients) const {
-    gradients.resize(size_);
-    evaluate_gradients_to(xi, std::span<Gradient>(gradients.data(), gradients.size()));
-}
-
-void SerendipityBasis::evaluate_hessians(const math::Vector<double, 3>& xi,
-                                         std::vector<Hessian>& hessians) const {
-    hessians.resize(size_);
-    evaluate_hessians_to(xi, std::span<Hessian>(hessians.data(), hessians.size()));
-}
-
-void SerendipityBasis::evaluate_all(const math::Vector<double, 3>& xi,
-                                    std::vector<double>& values,
-                                    std::vector<Gradient>& gradients,
-                                    std::vector<Hessian>& hessians) const {
-    values.resize(size_);
-    gradients.resize(size_);
-    hessians.resize(size_);
-    evaluate_all_to(xi,
-                    std::span<double>(values.data(), values.size()),
-                    std::span<Gradient>(gradients.data(), gradients.size()),
-                    std::span<Hessian>(hessians.data(), hessians.size()));
-}
-
 void SerendipityBasis::evaluate_values_to(const math::Vector<double, 3>& xi,
                                           std::span<double> values_out) const {
     require_span_size(values_out.size(), size_, "SerendipityBasis::evaluate_values_to");

@@ -61,14 +61,13 @@
  * lower-dimensional elements, only the first dimension() components are
  * active. Returned gradients always have three components and Hessians are
  * always 3-by-3 matrices; inactive reference directions are expected to be
- * zero for conforming lower-dimensional bases. The std::vector overloads are
- * convenient for setup, tests, and adapter code. The *_to overloads write to
- * caller-owned spans; the concrete nodal families (LagrangeBasis,
- * SerendipityBasis) compute directly into the span and so provide the
- * allocation-free path for assembly. The base-class defaults instead evaluate
- * into a temporary and copy into the span, so a basis that implements only the
- * vector form still works through the span API, just without the allocation
- * savings.
+ * zero for conforming lower-dimensional bases. The *_to overloads write to
+ * caller-owned spans and are the override points a concrete family implements:
+ * the nodal families (LagrangeBasis, SerendipityBasis) compute directly into the
+ * span, so this is the allocation-free path for assembly. The std::vector
+ * overloads are convenient for setup, tests, and adapter code; they are defined
+ * once on the base class, which sizes the output and forwards to the matching
+ * span overload.
  *
  * Outputs are in ReferenceNodeLayout basis order, not necessarily the mesh or
  * solver's native node order. A caller that stores elements in another local
@@ -155,11 +154,12 @@ void require_span_size(std::size_t actual, std::size_t expected, const char* lab
  * @ingroup FE_Basis
  *
  * BasisFunction defines the common query and evaluation API used by solver
- * code that does not need to know the concrete basis implementation. Derived
- * classes provide shape function values at minimum and can override analytical
- * gradients, Hessians, combined evaluation, and span output paths. The interface
- * is deliberately limited to reference-space quantities; callers own node
- * ordering translation, physical mapping, and any field-level discretization
+ * code that does not need to know the concrete basis implementation. Concrete
+ * families implement the span output primitives -- shape function values at
+ * minimum, and optionally analytical gradients and Hessians; the vector
+ * overloads and the combined evaluator are provided once by the base class. The
+ * interface is deliberately limited to reference-space quantities; callers own
+ * node ordering translation, physical mapping, and any field-level discretization
  * policy.
  */
 class BasisFunction {
@@ -226,73 +226,121 @@ public:
 
     /**
      * @brief Evaluate basis function values at a reference coordinate.
+     *
+     * @details Convenience overload: it sizes \p values to size() and forwards to
+     * evaluate_values_to(). It is implemented once on the base class, so concrete
+     * families override the span primitive rather than this overload.
+     *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values Receives one value per basis function.
      */
-    virtual void evaluate_values(const math::Vector<double, 3>& xi,
-                                 std::vector<double>& values) const = 0;
+    void evaluate_values(const math::Vector<double, 3>& xi,
+                         std::vector<double>& values) const;
 
     /**
      * @brief Evaluate basis gradients at a reference coordinate.
+     *
+     * @details Convenience overload over evaluate_gradients_to(); see
+     * evaluate_values() for the sizing and forwarding contract.
+     *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param gradients Receives one three-component gradient per basis function.
      * @throws BasisEvaluationException If gradients are not available for the basis.
      */
-    virtual void evaluate_gradients(const math::Vector<double, 3>& xi,
-                                    std::vector<Gradient>& gradients) const;
+    void evaluate_gradients(const math::Vector<double, 3>& xi,
+                            std::vector<Gradient>& gradients) const;
 
     /**
      * @brief Evaluate basis Hessians at a reference coordinate.
+     *
+     * @details Convenience overload over evaluate_hessians_to(); see
+     * evaluate_values() for the sizing and forwarding contract.
+     *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param hessians Receives one 3-by-3 Hessian per basis function.
      * @throws BasisEvaluationException If Hessians are not available for the basis.
      */
-    virtual void evaluate_hessians(const math::Vector<double, 3>& xi,
-                                   std::vector<Hessian>& hessians) const;
+    void evaluate_hessians(const math::Vector<double, 3>& xi,
+                           std::vector<Hessian>& hessians) const;
 
     /**
      * @brief Evaluate values, gradients, and Hessians together.
+     *
+     * @details Convenience overload over evaluate_all_to(): it sizes all three
+     * containers to size() and forwards them in a single pass.
+     *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values Receives one value per basis function.
      * @param gradients Receives one three-component gradient per basis function.
      * @param hessians Receives one 3-by-3 Hessian per basis function.
      */
-    virtual void evaluate_all(const math::Vector<double, 3>& xi,
-                              std::vector<double>& values,
-                              std::vector<Gradient>& gradients,
-                              std::vector<Hessian>& hessians) const;
+    void evaluate_all(const math::Vector<double, 3>& xi,
+                      std::vector<double>& values,
+                      std::vector<Gradient>& gradients,
+                      std::vector<Hessian>& hessians) const;
 
     /**
      * @brief Evaluate basis values into caller-provided storage.
+     *
+     * @details This span primitive is the single required override for a concrete
+     * basis: the vector overloads above and the combined evaluate_all_to() are all
+     * defined in terms of it, so a minimal basis implements only this method.
+     *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values_out Output span with at least size() entries.
-     * @note The base-class default evaluates into a temporary and copies; nodal
-     *       families override this to write directly into the span.
      */
     virtual void evaluate_values_to(const math::Vector<double, 3>& xi,
-                                    std::span<double> values_out) const;
+                                    std::span<double> values_out) const = 0;
 
     /**
      * @brief Evaluate basis gradients into caller-provided storage.
+     *
+     * @details Override to supply analytical gradients. The base implementation
+     * throws, so a family that provides no gradients reports it uniformly through
+     * every gradient entry point.
+     *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param gradients_out Output span with at least size() entries.
-     * @note The base-class default evaluates into a temporary and copies; nodal
-     *       families override this to write directly into the span.
+     * @throws BasisEvaluationException If gradients are not available for the basis.
      */
     virtual void evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                        std::span<Gradient> gradients_out) const;
 
     /**
      * @brief Evaluate basis Hessians into caller-provided storage.
+     *
+     * @details Override to supply analytical Hessians. The base implementation
+     * throws, so a family that provides no Hessians reports it uniformly through
+     * every Hessian entry point.
+     *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param hessians_out Output span with at least size() entries.
-     * @note The base-class default evaluates into a temporary and copies; nodal
-     *       families override this to write directly into the span.
+     * @throws BasisEvaluationException If Hessians are not available for the basis.
      */
     virtual void evaluate_hessians_to(const math::Vector<double, 3>& xi,
                                       std::span<Hessian> hessians_out) const;
 
 protected:
+    /**
+     * @brief Evaluate any non-empty subset of values, gradients, and Hessians
+     * into caller-provided storage in a single pass.
+     *
+     * @details An empty span selects "skip that quantity". The base
+     * implementation forwards each requested quantity to its single-quantity span
+     * primitive; families that can share per-point setup override this to compute
+     * the requested quantities together. It backs the public evaluate_all()
+     * overload.
+     *
+     * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
+     * @param values_out Values output span, or empty to skip.
+     * @param gradients_out Gradients output span, or empty to skip.
+     * @param hessians_out Hessians output span, or empty to skip.
+     */
+    virtual void evaluate_all_to(const math::Vector<double, 3>& xi,
+                                 std::span<double> values_out,
+                                 std::span<Gradient> gradients_out,
+                                 std::span<Hessian> hessians_out) const;
+
     /**
      * @brief Approximate gradients by centered finite differences of values.
      *
