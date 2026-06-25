@@ -55,8 +55,9 @@ namespace basis {
  *   GLL through-axis.
  *
  * Because GLL coincides with the equispaced layout at orders 1 and 2
- * (line_coord_pm_one), every named production element keeps its standard
- * coordinates and the GLL/equispaced distinction appears only for order >= 3.
+ * (line_coord_pm_one), the linear and quadratic tensor elements -- Line2/Line3,
+ * Quad4/Quad9, Hex8/Hex27, and the wedge through-axis -- are built on equispaced
+ * nodes, and the GLL/equispaced distinction appears only for order >= 3.
  *
  * ## Evaluation
  *
