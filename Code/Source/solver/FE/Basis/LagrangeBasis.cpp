@@ -343,8 +343,9 @@ void LagrangeBasis::build_tensor_product_nodes() {
     nodes_ = layout.coords;
     tensor_indices_.reserve(layout.lattice.size());
     for (const auto& idx : layout.lattice) {
-        // The lattice already holds the per-axis equispaced node index (unused
-        // axes are zero), so no coordinate-to-index inversion is needed.
+        // The lattice already holds the per-axis node index 0..order along each
+        // axis (unused axes are zero; the coordinate itself is the GLL node for
+        // that index), so no coordinate-to-index inversion is needed.
         tensor_indices_.push_back(TensorNodeIndex{
             static_cast<std::size_t>(idx[0]),
             static_cast<std::size_t>(idx[1]),
