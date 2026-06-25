@@ -315,16 +315,16 @@ public:
                               std::span<Hessian> hessians_out) const final;
 
 private:
-    BasisTopology topology_;
-    int dimension_;
-    int order_;
-    std::size_t size_;
+    BasisTopology topology_{BasisTopology::Unknown};
+    int dimension_{0};
+    int order_{0};
+    std::size_t size_{0};
     std::vector<math::Vector<double, 3>> nodes_;
     // Per-axis degrees (a, b, c) of the tensor modes spanning the family's
     // polynomial space. Interpreted as monomial powers r^a s^b t^c or, when
     // uses_legendre_modes_ is set, as tensor Legendre degrees P_a(r) P_b(s) P_c(t)
     // (the same space; see ModalAxisKind in SerendipityBasis.cpp).
-    std::vector<std::array<int, 3>> monomial_exponents_;
+    std::vector<std::array<int, 3>> mode_exponents_;
     // Row-major inverse (generalized) Vandermonde, indexed as [mode, basis].
     std::vector<double> inv_vandermonde_;
     // Whether the tensor modes are Legendre polynomials (quadrilateral/hexahedral
@@ -332,19 +332,13 @@ private:
     // the same family the coefficient table was built with.
     bool uses_legendre_modes_{false};
 
-    // Build the quadrilateral serendipity mode set, reference nodes, and nodal
-    // coefficient table for the given order. The named Quad8 layout takes
-    // its nodes from ReferenceNodeLayout; the arbitrary-order topology path
-    // generates them.
+    // Build the quadrilateral serendipity mode set, nodes, and Legendre
+    // coefficient table for the given order. (Details at the definition.)
     void init_quadrilateral(int order, bool nodes_from_reference_layout);
-    // Build the hexahedral serendipity mode set, reference nodes, and nodal
-    // coefficient table for the given order. The arbitrary-order topology path
-    // generates VTK-consistent nodes; the named Hex8 (order 1) and Hex20 (order 2)
-    // layouts take their public-order nodes from ReferenceNodeLayout.
+    // Build the hexahedral serendipity mode set, nodes, and Legendre coefficient
+    // table for the given order; Hex8/Hex20 are its order-1/order-2 instances.
     void init_hexahedron(int order, bool nodes_from_reference_layout);
-    // Build the Wedge15 serendipity layout from its tabulated monomial space and
-    // ReferenceNodeLayout nodes. Hexahedral serendipity (Hex8/Hex20) is generated
-    // by init_hexahedron, so the prism is the only remaining fixed named layout.
+    // Build the fixed Wedge15 layout from its tabulated monomial mode space.
     void init_fixed_named(ElementType type);
 
     void evaluate_all_to(const math::Vector<double, 3>& xi,

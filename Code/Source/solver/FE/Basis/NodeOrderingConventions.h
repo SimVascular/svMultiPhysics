@@ -60,7 +60,11 @@ struct LagrangeNodeLayout {
 
 class ReferenceNodeLayout {
 public:
-    static math::Vector<double, 3> get_node_coords(ElementType elem_type,
+    /**
+     * @brief One reference node coordinate by local index. Regenerates the full
+     * layout per call; prefer node_coords() when more than one node is needed.
+     */
+    static math::Vector<double, 3> node_coord_at(ElementType elem_type,
                                                  std::size_t local_node);
     static std::size_t num_nodes(ElementType elem_type);
 
@@ -68,9 +72,9 @@ public:
      * @brief All reference node coordinates for an element type, in public layout order.
      *
      * @details Returns the complete public reference layout for @p elem_type
-     * (the same coordinates get_node_coords() returns one at a time), including
+     * (the same coordinates node_coord_at() returns one at a time), including
      * the serendipity layouts. Prefer this single call when the whole layout is
-     * needed: get_node_coords() regenerates the full list on every call.
+     * needed: node_coord_at() regenerates the full list on every call.
      *
      * @param elem_type Element type to look up.
      * @return Reference node coordinates, one per node.

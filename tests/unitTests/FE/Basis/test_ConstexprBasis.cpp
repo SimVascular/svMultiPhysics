@@ -83,7 +83,7 @@ TEST(ConstexprBasis, CompleteAliasTablesMatchGeneratedLagrangeNodes) {
         const auto nodes = ReferenceNodeLayout::get_lagrange_node_coords(canonical_type, order);
         ASSERT_EQ(nodes.size(), ReferenceNodeLayout::num_nodes(alias));
         for (std::size_t i = 0; i < nodes.size(); ++i) {
-            const auto direct = ReferenceNodeLayout::get_node_coords(alias, i);
+            const auto direct = ReferenceNodeLayout::node_coord_at(alias, i);
             EXPECT_EQ(nodes[i][0], direct[0]);
             EXPECT_EQ(nodes[i][1], direct[1]);
             EXPECT_EQ(nodes[i][2], direct[2]);

@@ -68,7 +68,7 @@ std::vector<math::Vector<double, 3>> reference_nodes(ElementType type,
     std::vector<math::Vector<double, 3>> nodes;
     nodes.reserve(count);
     for (std::size_t i = 0; i < count; ++i) {
-        nodes.push_back(ReferenceNodeLayout::get_node_coords(type, i));
+        nodes.push_back(ReferenceNodeLayout::node_coord_at(type, i));
     }
     return nodes;
 }

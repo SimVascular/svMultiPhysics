@@ -18,8 +18,12 @@ namespace basis {
 namespace {
 using Vec3 = math::Vector<double, 3>;
 
-int quad_serendipity_superlinear_degree(int ax, int ay) {
-    return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0);
+// Superlinear contribution of one axis exponent: degrees 0 and 1 are free (they
+// do not raise the superlinear degree), every higher degree contributes its full
+// value. Summed over the active axes this gives the serendipity superlinear
+// degree that bounds the mode set.
+int superlinear_term(int a) {
+    return a > 1 ? a : 0;
 }
 
 inline double integer_power(double base, int exponent) {
@@ -128,12 +132,23 @@ double matrix_norm_inf(const std::vector<double>& matrix, std::size_t n) {
     return max_row;
 }
 
-std::vector<std::array<int, 2>> quad_serendipity_exponents(int order) {
-    std::vector<std::array<int, 2>> exponents;
-    for (int ay = 0; ay <= order; ++ay) {
-        for (int ax = 0; ax <= order; ++ax) {
-            if (quad_serendipity_superlinear_degree(ax, ay) <= order) {
-                exponents.push_back({ax, ay});
+// Per-axis degree triples (ax, ay, az) of the serendipity mode space: every
+// combination whose superlinear degree (the sum of superlinear_term over the
+// axes) is at most `order`. `active_axes` is 2 for the quadrilateral (az pinned
+// to 0) and 3 for the hexahedron, so the quad space is exactly the hex space
+// restricted to az = 0. The same downward-closed set spans both the monomial and
+// the tensor Legendre basis (see ModalAxisKind), and the resulting nodal basis is
+// independent of how this set is ordered.
+std::vector<std::array<int, 3>> serendipity_exponents(int order, int active_axes) {
+    const int max_y = active_axes >= 2 ? order : 0;
+    const int max_z = active_axes >= 3 ? order : 0;
+    std::vector<std::array<int, 3>> exponents;
+    for (int az = 0; az <= max_z; ++az) {
+        for (int ay = 0; ay <= max_y; ++ay) {
+            for (int ax = 0; ax <= order; ++ax) {
+                if (superlinear_term(ax) + superlinear_term(ay) + superlinear_term(az) <= order) {
+                    exponents.push_back({ax, ay, az});
+                }
             }
         }
     }
@@ -207,29 +222,6 @@ std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
 
     append_quad_serendipity_interior_nodes(nodes, order);
     return nodes;
-}
-
-int hex_serendipity_superlinear_degree(int ax, int ay, int az) {
-    return (ax > 1 ? ax : 0) + (ay > 1 ? ay : 0) + (az > 1 ? az : 0);
-}
-
-// Hexahedral serendipity polynomial space: every monomial r^a s^b t^c whose
-// superlinear degree is at most `order`. This is the three-axis generalization
-// of quad_serendipity_exponents; at order 1 it is the eight multilinear
-// monomials (the Hex8 space) and at order 2 it is the twenty-monomial Hex20
-// space.
-std::vector<std::array<int, 3>> hex_serendipity_exponents(int order) {
-    std::vector<std::array<int, 3>> exponents;
-    for (int az = 0; az <= order; ++az) {
-        for (int ay = 0; ay <= order; ++ay) {
-            for (int ax = 0; ax <= order; ++ax) {
-                if (hex_serendipity_superlinear_degree(ax, ay, az) <= order) {
-                    exponents.push_back({ax, ay, az});
-                }
-            }
-        }
-    }
-    return exponents;
 }
 
 // Volume-interior node count for hexahedral serendipity. Once the boundary trace
@@ -387,23 +379,33 @@ std::vector<double> build_inverse_vandermonde(
         }
     }
 
-    // Condition-number backstop: estimate cond_inf = ||V||_inf * ||V^{-1}||_inf
-    // and reject orders where the inverse can no longer be trusted, rather than
-    // returning silently-degraded shape functions.
+    // Condition-number backstop: the inverse is explicitly formed just above, so
+    // this is the true infinity-norm condition number
+    // cond_inf = ||V||_inf * ||V^{-1}||_inf, not an estimate. Reject orders where
+    // the inverse can no longer be trusted rather than returning silently-degraded
+    // shape functions; the comparison is negated so a non-finite value is rejected
+    // too.
     const double norm_v = matrix_norm_inf(vandermonde, n);
     std::vector<double> inverse = math::invert_dense_matrix(
         std::move(vandermonde), n,
         "SerendipityBasis interpolation matrix for " + label);
-    const double cond_estimate = norm_v * matrix_norm_inf(inverse, n);
+    const double condition_number = norm_v * matrix_norm_inf(inverse, n);
     svmp::throw_if<BasisConstructionException>(
-        !(cond_estimate <= kSerendipityVandermondeMaxCond), SVMP_HERE,
+        !(condition_number <= kSerendipityVandermondeMaxCond), SVMP_HERE,
         "SerendipityBasis: " + label +
             " interpolation matrix is too ill-conditioned (condition number ~ " +
-            std::to_string(cond_estimate) +
+            std::to_string(condition_number) +
             "); the requested order exceeds the well-conditioned range");
     return inverse;
 }
 
+// Wedge15 serendipity monomial space, as (x, y, z) exponent triples. The prism is
+// the triangle cross-section (x, y) crossed with the through-axis (z): the 6
+// triangle monomials x^a y^b with a + b <= 2 times the 3 line monomials z^c with
+// c <= 2 form the complete 18-mode Wedge18 space. Wedge15 serendipity drops the 3
+// superlinear modes -- a quadratic triangle monomial (a + b == 2) times z^2,
+// i.e. (2,0,2), (1,1,2), (0,2,2) -- leaving 6*3 - 3 = 15. The set (not its order)
+// fixes the space; the nodal basis is the inverse Vandermonde at the Wedge15 nodes.
 constexpr std::array<std::array<int, 3>, 15> kWedge15MonomialExponents = {{
     {{0, 0, 0}},
     {{0, 0, 1}},
@@ -557,7 +559,7 @@ NormalizedSerendipityRequest normalize_serendipity_request(ElementType type, int
 } // namespace
 
 SerendipityBasis::SerendipityBasis(BasisTopology topology, int order)
-    : topology_(topology), dimension_(0), order_(0), size_(0) {
+    : topology_(topology) {
     const bool supported_topology = topology_ == BasisTopology::Quadrilateral ||
                                     topology_ == BasisTopology::Hexahedron;
     svmp::throw_if<BasisElementCompatibilityException>(
@@ -576,8 +578,7 @@ SerendipityBasis::SerendipityBasis(BasisTopology topology, int order)
     }
 }
 
-SerendipityBasis::SerendipityBasis(ElementType type, int order)
-    : topology_(BasisTopology::Unknown), dimension_(0), order_(0), size_(0) {
+SerendipityBasis::SerendipityBasis(ElementType type, int order) {
     const NormalizedSerendipityRequest normalized = normalize_serendipity_request(type, order);
     topology_ = normalized.topology;
     dimension_ = normalized.dimension;
@@ -618,13 +619,8 @@ SerendipityBasis::SerendipityBasis(ElementType type)
 // needs no output permutation. The named Quad8 layout sources its nodes from
 // ReferenceNodeLayout; the arbitrary-order topology path generates them.
 void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_layout) {
-    const auto quad_exponents = quad_serendipity_exponents(order);
-    monomial_exponents_.clear();
-    monomial_exponents_.reserve(quad_exponents.size());
-    for (const auto& e : quad_exponents) {
-        monomial_exponents_.push_back({e[0], e[1], 0});
-    }
-    size_ = monomial_exponents_.size();
+    mode_exponents_ = serendipity_exponents(order, /*active_axes=*/2);
+    size_ = mode_exponents_.size();
     nodes_ = nodes_from_reference_layout
                  ? ReferenceNodeLayout::node_coords(ElementType::Quad8)
                  : quad_serendipity_nodes(order, size_);
@@ -633,7 +629,7 @@ void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_l
         "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
     uses_legendre_modes_ = true;
     inv_vandermonde_ = build_inverse_vandermonde(
-        nodes_, monomial_exponents_, "Quad order " + std::to_string(order),
+        nodes_, mode_exponents_, "Quad order " + std::to_string(order),
         ModalAxisKind::Legendre, order);
 }
 
@@ -643,8 +639,8 @@ void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_l
 // Hex8 (order 1) and Hex20 (order 2) layouts source their public-order nodes from
 // ReferenceNodeLayout so the generated layout matches the public ordering exactly.
 void SerendipityBasis::init_hexahedron(int order, bool nodes_from_reference_layout) {
-    monomial_exponents_ = hex_serendipity_exponents(order);
-    size_ = monomial_exponents_.size();
+    mode_exponents_ = serendipity_exponents(order, /*active_axes=*/3);
+    size_ = mode_exponents_.size();
     if (nodes_from_reference_layout) {
         const ElementType named =
             (order == 1) ? ElementType::Hex8 : ElementType::Hex20;
@@ -657,7 +653,7 @@ void SerendipityBasis::init_hexahedron(int order, bool nodes_from_reference_layo
         "SerendipityBasis: hexahedral serendipity setup produced inconsistent sizes");
     uses_legendre_modes_ = true;
     inv_vandermonde_ = build_inverse_vandermonde(
-        nodes_, monomial_exponents_, "Hex order " + std::to_string(order),
+        nodes_, mode_exponents_, "Hex order " + std::to_string(order),
         ModalAxisKind::Legendre, order);
 }
 
@@ -679,12 +675,12 @@ void SerendipityBasis::init_fixed_named(ElementType type) {
     svmp::throw_if<BasisConstructionException>(
         family_exponents.size() != size_, SVMP_HERE,
         "SerendipityBasis: Wedge15 monomial count does not match basis size");
-    monomial_exponents_.assign(family_exponents.begin(), family_exponents.end());
+    mode_exponents_.assign(family_exponents.begin(), family_exponents.end());
     // Wedge15 is the fixed order-2 layout; its 15x15 system is trivially
     // well-conditioned, so it keeps the monomial modal basis.
     uses_legendre_modes_ = false;
     inv_vandermonde_ = build_inverse_vandermonde(
-        nodes_, monomial_exponents_, "Wedge15", ModalAxisKind::Monomial, order_);
+        nodes_, mode_exponents_, "Wedge15", ModalAxisKind::Monomial, order_);
 }
 
 void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
@@ -716,7 +712,7 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
     // Every serendipity family evaluates through its generated coefficient table,
     // which is already in public basis order.
     svmp::throw_if<BasisEvaluationException>(
-        monomial_exponents_.size() != size_ ||
+        mode_exponents_.size() != size_ ||
             inv_vandermonde_.size() != size_ * size_,
         SVMP_HERE,
         "SerendipityBasis: interpolation tables are not initialized for evaluation");
@@ -734,7 +730,7 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
 
     eval_modal_basis(
         tx, ty, tz, size_,
-        [this](std::size_t j) { return monomial_exponents_[j]; },
+        [this](std::size_t j) { return mode_exponents_[j]; },
         [this](std::size_t j, std::size_t i) {
             return inv_vandermonde_[j * size_ + i];
         },

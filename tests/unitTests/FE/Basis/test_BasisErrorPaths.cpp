@@ -329,7 +329,7 @@ TEST(BasisErrorPaths, NodeOrderingInvalidNodeThrows) {
                  BasisNodeOrderingException);
     EXPECT_THROW((void)line_coord_pm_one(1, 0),
                  BasisNodeOrderingException);
-    EXPECT_THROW((void)ReferenceNodeLayout::get_node_coords(ElementType::Quad8, 99u),
+    EXPECT_THROW((void)ReferenceNodeLayout::node_coord_at(ElementType::Quad8, 99u),
                  BasisNodeOrderingException);
     EXPECT_THROW((void)ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Quad8, 2),
                  BasisNodeOrderingException);

@@ -368,7 +368,7 @@ TEST(LagrangeBasis, NodeOrderingMatchesPublicAliasLayouts) {
         ASSERT_EQ(generated.size(), ReferenceNodeLayout::num_nodes(alias));
 
         for (std::size_t i = 0; i < generated.size(); ++i) {
-            const auto public_node = ReferenceNodeLayout::get_node_coords(alias, i);
+            const auto public_node = ReferenceNodeLayout::node_coord_at(alias, i);
             EXPECT_NEAR(public_node[0], generated[i][0], double(1e-14)) << "node=" << i;
             EXPECT_NEAR(public_node[1], generated[i][1], double(1e-14)) << "node=" << i;
             EXPECT_NEAR(public_node[2], generated[i][2], double(1e-14)) << "node=" << i;

@@ -311,6 +311,15 @@ private:
     int dimension_{0};
     int order_{0};
 
+    // Topology-specific construction data. nodes_ (the reference nodes in basis
+    // order) is populated for every topology and backs size(); each remaining
+    // vector is filled only for the topologies that use it and stays empty
+    // otherwise:
+    //   line/quad/hex : nodes_1d_, nodes_1d_weights_, tensor_indices_
+    //   triangle/tetra: simplex_exponents_
+    //   wedge         : nodes_1d_, nodes_1d_weights_, wedge_indices_, and
+    //                   simplex_exponents_ (the triangle cross-section exponents)
+    //   point         : nodes_ only
     std::vector<double> nodes_1d_;
     std::vector<double> nodes_1d_weights_;
     std::vector<math::Vector<double, 3>> nodes_;

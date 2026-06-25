@@ -8,6 +8,7 @@
 #include <array>
 #include <cmath>
 #include <map>
+#include <span>
 #include <utility>
 
 namespace svmp {
@@ -157,12 +158,31 @@ void append_triangle_face_interior(LagrangeNodeLayout& out,
     }
 }
 
+// One-node layout for the order-0 (constant) basis: the element centroid carried
+// with the origin lattice index. Shared by every generator's order-0 branch.
+LagrangeNodeLayout single_node_layout(const Point& centroid) {
+    LagrangeNodeLayout out;
+    out.coords.push_back(centroid);
+    out.lattice.push_back(Lattice{0, 0, 0});
+    return out;
+}
+
+// Append the element corner vertices (coordinate paired with lattice index) in
+// the given order. Shared by the volume generators, which all open with the same
+// corner loop.
+void append_vertices(LagrangeNodeLayout& out,
+                     std::span<const Point> verts,
+                     std::span<const Lattice> vert_lattice) {
+    for (std::size_t v = 0; v < verts.size(); ++v) {
+        out.coords.push_back(verts[v]);
+        out.lattice.push_back(vert_lattice[v]);
+    }
+}
+
 LagrangeNodeLayout generate_line_nodes(int order) {
     LagrangeNodeLayout out;
     if (order == 0) {
-        out.coords.push_back(Point{double(0), double(0), double(0)});
-        out.lattice.push_back(Lattice{0, 0, 0});
-        return out;
+        return single_node_layout(Point{double(0), double(0), double(0)});
     }
 
     out.coords.reserve(static_cast<std::size_t>(order + 1));
@@ -181,9 +201,7 @@ LagrangeNodeLayout generate_line_nodes(int order) {
 LagrangeNodeLayout generate_triangle_nodes(int order) {
     LagrangeNodeLayout out;
     if (order == 0) {
-        out.coords.push_back(Point{double(1) / double(3), double(1) / double(3), double(0)});
-        out.lattice.push_back(Lattice{0, 0, 0});
-        return out;
+        return single_node_layout(Point{double(1) / double(3), double(1) / double(3), double(0)});
     }
 
     out.coords.reserve(static_cast<std::size_t>((order + 1) * (order + 2) / 2));
@@ -223,9 +241,7 @@ LagrangeNodeLayout generate_triangle_nodes(int order) {
 LagrangeNodeLayout generate_quad_nodes(int order) {
     LagrangeNodeLayout out;
     if (order == 0) {
-        out.coords.push_back(Point{double(0), double(0), double(0)});
-        out.lattice.push_back(Lattice{0, 0, 0});
-        return out;
+        return single_node_layout(Point{double(0), double(0), double(0)});
     }
 
     out.coords.reserve(static_cast<std::size_t>((order + 1) * (order + 1)));
@@ -268,9 +284,7 @@ LagrangeNodeLayout generate_quad_nodes(int order) {
 LagrangeNodeLayout generate_tetra_nodes(int order) {
     LagrangeNodeLayout out;
     if (order == 0) {
-        out.coords.push_back(Point{double(0.25), double(0.25), double(0.25)});
-        out.lattice.push_back(Lattice{0, 0, 0});
-        return out;
+        return single_node_layout(Point{double(0.25), double(0.25), double(0.25)});
     }
 
     const Point verts[] = {
@@ -288,11 +302,9 @@ LagrangeNodeLayout generate_tetra_nodes(int order) {
 
     out.coords.reserve(static_cast<std::size_t>((order + 1) * (order + 2) * (order + 3) / 6));
     out.lattice.reserve(static_cast<std::size_t>((order + 1) * (order + 2) * (order + 3) / 6));
-    for (std::size_t v = 0; v < 4u; ++v) {
-        out.coords.push_back(verts[v]);
-        out.lattice.push_back(vert_lattice[v]);
-    }
+    append_vertices(out, verts, vert_lattice);
 
+    // Edge vertex pairs in VTK quadratic-tetra edge order.
     const int edges[6][2] = {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {1, 3}, {2, 3}};
     for (const auto& edge : edges) {
         for (int m = 1; m < order; ++m) {
@@ -302,6 +314,7 @@ LagrangeNodeLayout generate_tetra_nodes(int order) {
         }
     }
 
+    // Triangular faces in VTK tetra face order (vertex triples).
     const int faces[4][3] = {{0, 1, 2}, {0, 1, 3}, {1, 2, 3}, {0, 2, 3}};
     for (const auto& face : faces) {
         append_triangle_face_interior(out,
@@ -326,9 +339,7 @@ LagrangeNodeLayout generate_tetra_nodes(int order) {
 LagrangeNodeLayout generate_hex_nodes(int order) {
     LagrangeNodeLayout out;
     if (order == 0) {
-        out.coords.push_back(Point{double(0), double(0), double(0)});
-        out.lattice.push_back(Lattice{0, 0, 0});
-        return out;
+        return single_node_layout(Point{double(0), double(0), double(0)});
     }
 
     const Point verts[] = {
@@ -354,11 +365,10 @@ LagrangeNodeLayout generate_hex_nodes(int order) {
 
     out.coords.reserve(static_cast<std::size_t>((order + 1) * (order + 1) * (order + 1)));
     out.lattice.reserve(static_cast<std::size_t>((order + 1) * (order + 1) * (order + 1)));
-    for (std::size_t v = 0; v < 8u; ++v) {
-        out.coords.push_back(verts[v]);
-        out.lattice.push_back(vert_lattice[v]);
-    }
+    append_vertices(out, verts, vert_lattice);
 
+    // Edge vertex pairs in VTK quadratic-hex edge order (bottom ring, top ring,
+    // then the four vertical edges).
     const int edges[12][2] = {
         {0, 1}, {1, 2}, {2, 3}, {3, 0},
         {4, 5}, {5, 6}, {6, 7}, {7, 4},
@@ -444,9 +454,7 @@ LagrangeNodeLayout generate_hex_nodes(int order) {
 LagrangeNodeLayout generate_wedge_nodes(int order) {
     LagrangeNodeLayout out;
     if (order == 0) {
-        out.coords.push_back(Point{double(1) / double(3), double(1) / double(3), double(0)});
-        out.lattice.push_back(Lattice{0, 0, 0});
-        return out;
+        return single_node_layout(Point{double(1) / double(3), double(1) / double(3), double(0)});
     }
 
     const Point verts[] = {
@@ -468,11 +476,10 @@ LagrangeNodeLayout generate_wedge_nodes(int order) {
 
     out.coords.reserve(static_cast<std::size_t>((order + 1) * (order + 1) * (order + 2) / 2));
     out.lattice.reserve(static_cast<std::size_t>((order + 1) * (order + 1) * (order + 2) / 2));
-    for (std::size_t v = 0; v < 6u; ++v) {
-        out.coords.push_back(verts[v]);
-        out.lattice.push_back(vert_lattice[v]);
-    }
+    append_vertices(out, verts, vert_lattice);
 
+    // Edge vertex pairs in VTK quadratic-wedge edge order (bottom triangle, top
+    // triangle, then the three vertical edges).
     const int edges[9][2] = {
         {0, 1}, {1, 2}, {2, 0},
         {3, 4}, {4, 5}, {5, 3},
@@ -694,11 +701,11 @@ double line_coord_pm_one(int i, int order) {
     return gll_points(order)[static_cast<std::size_t>(i)];
 }
 
-math::Vector<double, 3> ReferenceNodeLayout::get_node_coords(ElementType elem_type,
+math::Vector<double, 3> ReferenceNodeLayout::node_coord_at(ElementType elem_type,
                                                            std::size_t local_node) {
     const auto nodes = element_nodes(elem_type);
     svmp::throw_if<BasisNodeOrderingException>(local_node >= nodes.size(), SVMP_HERE,
-                                             "ReferenceNodeLayout::get_node_coords: node index out of range");
+                                             "ReferenceNodeLayout::node_coord_at: node index out of range");
     return nodes[local_node];
 }
 
