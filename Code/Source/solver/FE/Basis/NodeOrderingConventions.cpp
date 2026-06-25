@@ -634,6 +634,168 @@ std::vector<Point> serendipity_subset_nodes(BasisTopology top,
     return nodes;
 }
 
+// ---------------------------------------------------------------------------
+// Arbitrary-order serendipity node geometry (quadrilateral and hexahedral).
+//
+// The corner+edge skeleton is the leading prefix of the complete Lagrange layout
+// of the same order (the complete generators above); only the reduced face/volume
+// interior below is serendipity-specific. These back
+// ReferenceNodeLayout::serendipity_node_coords and the named Quad8/Hex20 layouts,
+// so serendipity node geometry has a single owner. (Wedge15 is a fixed named
+// layout, handled by serendipity_subset_nodes above.)
+// ---------------------------------------------------------------------------
+
+std::size_t quad_serendipity_interior_count(int order) {
+    if (order < 4) {
+        return 0u;
+    }
+    const auto m = static_cast<std::size_t>(order - 4);
+    return (m + 1u) * (m + 2u) / 2u;
+}
+
+// Interior nodes are a triangular row set for P_m, m = order - 4: a serendipity
+// polynomial vanishing at the p + 1 boundary nodes on every edge factors as
+// (1 - x^2)(1 - y^2) q with q in P_m, and the staircase below is unisolvent for q
+// by induction over rows. It sits on Gauss-Lobatto-Legendre interior nodes (the
+// same 1D distribution as the boundary) so the reduced space stays well-conditioned
+// at high order; GLL only moves where the distinct points sit, not the staircase
+// structure.
+void append_quad_serendipity_interior_nodes(std::vector<Point>& nodes, int order) {
+    if (order < 4) {
+        return;
+    }
+    const int m = order - 4;
+    for (int row = 0; row <= m; ++row) {
+        const int row_count = m + 1 - row;
+        const double y = line_coord_pm_one(row + 1, m + 2);
+        for (int col = 0; col < row_count; ++col) {
+            const double x = line_coord_pm_one(col + 1, row_count + 1);
+            nodes.push_back(Point{x, y, double(0)});
+        }
+    }
+}
+
+// Quadrilateral serendipity reference nodes at the given order: the 4 corners and
+// 4(order-1) edge nodes (the leading prefix of the complete Quad layout, in VTK
+// boundary order) followed by the reduced triangular interior.
+std::vector<Point> quad_serendipity_nodes(int order) {
+    std::vector<Point> nodes = generate_quad_nodes(order).coords;
+    const std::size_t boundary_count = static_cast<std::size_t>(4 * order);
+    svmp::throw_if<BasisConstructionException>(
+        boundary_count > nodes.size(), SVMP_HERE,
+        "ReferenceNodeLayout: quadrilateral serendipity skeleton exceeds the complete Lagrange layout");
+    nodes.resize(boundary_count);
+    append_quad_serendipity_interior_nodes(nodes, order);
+    return nodes;
+}
+
+// Volume-interior node count for hexahedral serendipity. Once the boundary trace
+// is fixed, an interior serendipity function factors as the cube bubble
+// (1 - r^2)(1 - s^2)(1 - t^2) times a quotient of total degree at most order - 6,
+// so the interior space is P_{order-6} in three variables: empty until order 6,
+// then dim P_{order-6} = (m+1)(m+2)(m+3)/6 with m = order - 6.
+std::size_t hex_serendipity_volume_interior_count(int order) {
+    if (order < 6) {
+        return 0u;
+    }
+    const auto m = static_cast<std::size_t>(order - 6);
+    return (m + 1u) * (m + 2u) * (m + 3u) / 6u;
+}
+
+// Append the face-interior nodes. The restriction of the order-`order` cube
+// serendipity space to a face is the order-`order` quadrilateral serendipity
+// space, so every face carries the same 2D quad-serendipity interior set,
+// embedded into the face plane. Faces are visited in VTK face order
+// (-X, +X, -Y, +Y, -Z, +Z); the in-plane (u, v) point maps to the two free axes
+// of each face. Empty until order 4 (when the quad interior first appears).
+void append_hex_serendipity_face_interior_nodes(std::vector<Point>& nodes, int order) {
+    std::vector<Point> face_interior;  // (u, v, 0) interior points of one quad face
+    append_quad_serendipity_interior_nodes(face_interior, order);
+    if (face_interior.empty()) {
+        return;
+    }
+
+    // Each face: the fixed axis (0 = r, 1 = s, 2 = t), its +/-1 value, and the two
+    // in-plane axes that carry the 2D interior point (u, v).
+    struct Face {
+        int fixed_axis;
+        double fixed_value;
+        int u_axis;
+        int v_axis;
+    };
+    static constexpr Face faces[6] = {
+        {0, double(-1), 1, 2},  // -X: (s, t) in plane
+        {0, double(1),  1, 2},  // +X
+        {1, double(-1), 0, 2},  // -Y: (r, t) in plane
+        {1, double(1),  0, 2},  // +Y
+        {2, double(-1), 0, 1},  // -Z: (r, s) in plane
+        {2, double(1),  0, 1},  // +Z
+    };
+
+    for (const auto& face : faces) {
+        for (const auto& p : face_interior) {
+            Point node = Point::Zero();
+            node[static_cast<std::size_t>(face.fixed_axis)] = face.fixed_value;
+            node[static_cast<std::size_t>(face.u_axis)] = p[0];
+            node[static_cast<std::size_t>(face.v_axis)] = p[1];
+            nodes.push_back(node);
+        }
+    }
+}
+
+// Append the volume-interior nodes: a tetrahedral staircase unisolvent for the
+// interior residual P_{order-6}, on Gauss-Lobatto-Legendre interior nodes. Each
+// t-layer is a triangular staircase whose total degree decreases by one per layer,
+// so the layers consume P_{order-6} by induction in t exactly as the quad interior
+// consumes P_{order-4} by induction in s. Empty until order 6.
+void append_hex_serendipity_volume_interior_nodes(std::vector<Point>& nodes, int order) {
+    if (order < 6) {
+        return;
+    }
+    const int m = order - 6;
+    for (int layer = 0; layer <= m; ++layer) {
+        const int tri_order = m - layer;
+        const double t = line_coord_pm_one(layer + 1, m + 2);
+        for (int row = 0; row <= tri_order; ++row) {
+            const int row_count = tri_order + 1 - row;
+            const double s = line_coord_pm_one(row + 1, tri_order + 2);
+            for (int col = 0; col < row_count; ++col) {
+                const double r = line_coord_pm_one(col + 1, row_count + 1);
+                nodes.push_back(Point{r, s, t});
+            }
+        }
+    }
+}
+
+// Hexahedral serendipity reference nodes in VTK-consistent stratified order: 8
+// corners, 12(order-1) edge nodes (the leading prefix of the complete Hex layout),
+// then the 6 face interiors in VTK face order, then the volume interior. At order 1
+// (corners) and order 2 (corners + edge midpoints) this is exactly the public
+// Hex8 / Hex20 ordering; higher-order face/volume sets are this module's own
+// convention.
+std::vector<Point> hex_serendipity_nodes(int order) {
+    std::vector<Point> nodes = generate_hex_nodes(order).coords;
+    const std::size_t skeleton_count =
+        8u + 12u * static_cast<std::size_t>(order - 1);
+    svmp::throw_if<BasisConstructionException>(
+        skeleton_count > nodes.size(), SVMP_HERE,
+        "ReferenceNodeLayout: hexahedral serendipity skeleton exceeds the complete Lagrange layout");
+    nodes.resize(skeleton_count);
+
+    const std::size_t skeleton = nodes.size();
+    append_hex_serendipity_face_interior_nodes(nodes, order);
+    svmp::throw_if<BasisConstructionException>(
+        nodes.size() - skeleton != 6u * quad_serendipity_interior_count(order), SVMP_HERE,
+        "ReferenceNodeLayout: hexahedral serendipity face-interior node count mismatch");
+
+    const std::size_t before_volume = nodes.size();
+    append_hex_serendipity_volume_interior_nodes(nodes, order);
+    svmp::throw_if<BasisConstructionException>(
+        nodes.size() - before_volume != hex_serendipity_volume_interior_count(order), SVMP_HERE,
+        "ReferenceNodeLayout: hexahedral serendipity volume-interior node count mismatch");
+    return nodes;
+}
+
 std::vector<Point> element_nodes(ElementType elem_type) {
     const int order = complete_lagrange_alias_order(elem_type);
     if (order >= 0) {
@@ -642,11 +804,9 @@ std::vector<Point> element_nodes(ElementType elem_type) {
 
     switch (elem_type) {
         case ElementType::Quad8:
-            return serendipity_subset_nodes(BasisTopology::Quadrilateral,
-                                            generate_quad_nodes(2), 8u, 9u);
+            return quad_serendipity_nodes(2);
         case ElementType::Hex20:
-            return serendipity_subset_nodes(BasisTopology::Hexahedron,
-                                            generate_hex_nodes(2), 20u, 27u);
+            return hex_serendipity_nodes(2);
         case ElementType::Wedge15:
             return serendipity_subset_nodes(BasisTopology::Wedge,
                                             generate_wedge_nodes(2), 15u, 18u);
@@ -728,6 +888,23 @@ ReferenceNodeLayout::get_lagrange_lattice(ElementType canonical_type, int order)
     LagrangeNodeLayout layout = complete_lagrange_nodes(canonical_type, order);
     validate_lattice(layout, canonical_type, order);
     return layout;
+}
+
+std::vector<math::Vector<double, 3>>
+ReferenceNodeLayout::serendipity_node_coords(BasisTopology topology, int order) {
+    svmp::throw_if<BasisConstructionException>(
+        order < 1, SVMP_HERE,
+        "ReferenceNodeLayout::serendipity_node_coords requires a polynomial order >= 1");
+    switch (topology) {
+        case BasisTopology::Quadrilateral:
+            return quad_serendipity_nodes(order);
+        case BasisTopology::Hexahedron:
+            return hex_serendipity_nodes(order);
+        default:
+            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
+                "ReferenceNodeLayout::serendipity_node_coords: generated serendipity layouts "
+                "exist only for Quadrilateral and Hexahedron (Wedge15 is the fixed named layout)");
+    }
 }
 
 } // namespace basis

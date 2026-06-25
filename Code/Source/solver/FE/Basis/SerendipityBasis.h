@@ -96,16 +96,16 @@ namespace basis {
  *
  * `SerendipityBasis(BasisTopology::Quadrilateral, p)` and
  * `SerendipityBasis(BasisTopology::Hexahedron, p)` are the arbitrary-order entry
- * points (@f$p \ge 1@f$; orders below one are rejected). They generate their own
- * reference nodes in a VTK-consistent stratified order; for @f$p \ge 3@f$ the
- * interior ordering is an implementation convention rather than a public layout.
- * The named fixed layouts -- `ElementType::Quad8` (order 2), `Hex8` (order 1),
- * and `Hex20` (order 2) -- are the same construction at those orders but take
- * their nodes from ReferenceNodeLayout so they carry the single public node
- * ordering the solver permutes against. Because the generator reuses the VTK
- * corner/edge ordering, its order-1 and order-2 hexahedral layouts match the
- * public Hex8/Hex20 ordering exactly, so the named and topology constructions
- * produce identical objects. Wedge serendipity remains a single fixed layout
+ * points (@f$p \ge 1@f$; orders below one are rejected). Reference nodes for both
+ * the arbitrary-order and the named paths come from the single
+ * ReferenceNodeLayout serendipity generator, in a VTK-consistent stratified
+ * order; for @f$p \ge 3@f$ the interior ordering is an implementation convention
+ * rather than a public layout. The named fixed layouts -- `ElementType::Quad8`
+ * (order 2), `Hex8` (order 1), and `Hex20` (order 2) -- are the same construction
+ * at those orders; the named overload only pins the order, so the named and
+ * topology constructions produce identical objects and share the single public
+ * node ordering the solver permutes against (order 1 and order 2 reuse the VTK
+ * corner/edge ordering exactly). Wedge serendipity remains a single fixed layout
  * (Wedge15), constructed only from its named ElementType. Solver-default basis
  * selection is separate: `basis_factory` maps the complete Quad4 layout to the
  * default linear Lagrange basis and maps Quad8/Hex20 to serendipity unless a
@@ -215,17 +215,16 @@ public:
      * @brief Return the reference interpolation nodes in basis ordering.
      *
      * @details Node coordinates are the points at which the serendipity basis
-     * satisfies the nodal interpolation property. The named fixed layouts (Quad8,
-     * Hex8, Hex20, Wedge15) take their nodes from ReferenceNodeLayout, the public
-     * node-ordering source the solver adapter permutes against. Arbitrary-order
-     * quadrilateral and hexahedral serendipity (constructed from a BasisTopology)
-     * generates its nodes here instead, in VTK-consistent stratified order:
-     * corners and edges first (matching the public Quad8/Hex8/Hex20 ordering at
-     * the named orders), then the face and volume interior points needed to make
-     * the reduced polynomial space unisolvent. For @f$p \ge 3@f$ that interior
-     * ordering is an implementation convention; callers should pair it with basis
-     * values from the same object rather than assume an external mesh ordering
-     * contract beyond the supported named production layouts.
+     * satisfies the nodal interpolation property. All families take their nodes
+     * from ReferenceNodeLayout, the public node-ordering source the solver adapter
+     * permutes against: the fixed Wedge15 layout and the quadrilateral/hexahedral
+     * families (named or arbitrary-order) alike, in VTK-consistent stratified
+     * order -- corners and edges first (matching the public Quad8/Hex8/Hex20
+     * ordering at the named orders), then the face and volume interior points
+     * needed to make the reduced polynomial space unisolvent. For @f$p \ge 3@f$
+     * that interior ordering is an implementation convention; callers should pair
+     * it with basis values from the same object rather than assume an external
+     * mesh ordering contract beyond the supported named production layouts.
      *
      * @return Reference node coordinates, one per basis function.
      */
@@ -334,10 +333,10 @@ private:
 
     // Build the quadrilateral serendipity mode set, nodes, and Legendre
     // coefficient table for the given order. (Details at the definition.)
-    void init_quadrilateral(int order, bool nodes_from_reference_layout);
+    void init_quadrilateral(int order);
     // Build the hexahedral serendipity mode set, nodes, and Legendre coefficient
     // table for the given order; Hex8/Hex20 are its order-1/order-2 instances.
-    void init_hexahedron(int order, bool nodes_from_reference_layout);
+    void init_hexahedron(int order);
     // Build the fixed Wedge15 layout from its tabulated monomial mode space.
     void init_fixed_named(ElementType type);
 

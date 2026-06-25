@@ -155,193 +155,6 @@ std::vector<std::array<int, 3>> serendipity_exponents(int order, int active_axes
     return exponents;
 }
 
-std::size_t quad_serendipity_interior_count(int order) {
-    if (order < 4) {
-        return 0u;
-    }
-    const auto m = static_cast<std::size_t>(order - 4);
-    return (m + 1u) * (m + 2u) / 2u;
-}
-
-// Interior nodes are a triangular row set for P_m, m = order - 4. If a
-// serendipity polynomial vanishes at the p + 1 boundary nodes on each edge,
-// each edge restriction is identically zero and the polynomial factors as
-// (1 - x^2)(1 - y^2) q with q in P_m. Row 0 has m + 1 distinct x-values; if q
-// vanishes there, q(x, y_0) is the zero one-variable polynomial and
-// q = (y - y_0) q_1 with q_1 in P_{m-1}. Repeating over the remaining rows
-// proves q = 0, so the full quadrilateral serendipity Vandermonde is
-// nonsingular for this node set.
-void append_quad_serendipity_interior_nodes(std::vector<Vec3>& nodes, int order) {
-    if (order < 4) {
-        return;
-    }
-
-    // Interior staircase placed on Gauss-Lobatto-Legendre interior nodes (the same
-    // 1D distribution as the boundary), so the reduced space stays well-conditioned
-    // at high order. The unisolvence argument above needs only a distinct y per row
-    // and distinct x within each row; GLL changes where those distinct points sit,
-    // not the staircase structure.
-    const int m = order - 4;
-    for (int row = 0; row <= m; ++row) {
-        const int row_count = m + 1 - row;
-        const double y = line_coord_pm_one(row + 1, m + 2);
-        for (int col = 0; col < row_count; ++col) {
-            const double x = line_coord_pm_one(col + 1, row_count + 1);
-            nodes.push_back(Vec3{x, y, double(0)});
-        }
-    }
-}
-
-std::vector<Vec3> quad_serendipity_nodes(int order, std::size_t total_size) {
-    if (order <= 0) {
-        return {};
-    }
-
-    // The corner+edge skeleton is the leading prefix of the complete quadrilateral
-    // Lagrange layout of the same order: 4 corners followed by 4(order-1) edge
-    // nodes, in the same VTK boundary order. Source it from the single
-    // ReferenceNodeLayout generator and drop that layout's interior, so the
-    // reference-cell corner/edge geometry has one owner; only the reduced interior
-    // appended below is serendipity-specific.
-    std::vector<Vec3> nodes =
-        ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Quad4, order);
-    const std::size_t boundary_count = static_cast<std::size_t>(4 * order);
-    svmp::throw_if<BasisConstructionException>(
-        boundary_count > nodes.size(), SVMP_HERE,
-        "SerendipityBasis: quadrilateral skeleton exceeds the complete Lagrange layout");
-    nodes.resize(boundary_count);
-
-    svmp::throw_if<BasisConstructionException>(
-        nodes.size() > total_size, SVMP_HERE,
-        "SerendipityBasis: quadrilateral serendipity boundary nodes exceed requested size");
-
-    const std::size_t interior_count = quad_serendipity_interior_count(order);
-    svmp::throw_if<BasisConstructionException>(
-        nodes.size() + interior_count != total_size, SVMP_HERE,
-        "SerendipityBasis: quadrilateral serendipity monomial/node count mismatch");
-
-    append_quad_serendipity_interior_nodes(nodes, order);
-    return nodes;
-}
-
-// Volume-interior node count for hexahedral serendipity. Once the boundary trace
-// is fixed, an interior serendipity function factors as the cube bubble
-// (1 - r^2)(1 - s^2)(1 - t^2) times a quotient of total degree at most order - 6,
-// so the interior space is P_{order-6} in three variables: empty until order 6,
-// then dim P_{order-6} = (m+1)(m+2)(m+3)/6 with m = order - 6.
-std::size_t hex_serendipity_volume_interior_count(int order) {
-    if (order < 6) {
-        return 0u;
-    }
-    const auto m = static_cast<std::size_t>(order - 6);
-    return (m + 1u) * (m + 2u) * (m + 3u) / 6u;
-}
-
-// Append the face-interior nodes. The restriction of the order-`order` cube
-// serendipity space to a face is the order-`order` quadrilateral serendipity
-// space, so every face carries the same 2D quad-serendipity interior set,
-// embedded into the face plane. Faces are visited in VTK face order
-// (-X, +X, -Y, +Y, -Z, +Z); the in-plane (u, v) point maps to the two free axes
-// of each face. Empty until order 4 (when the quad interior first appears).
-void append_hex_serendipity_face_interior_nodes(std::vector<Vec3>& nodes, int order) {
-    std::vector<Vec3> face_interior;  // (u, v, 0) interior points of one quad face
-    append_quad_serendipity_interior_nodes(face_interior, order);
-    if (face_interior.empty()) {
-        return;
-    }
-
-    // Each face: the fixed axis (0 = r, 1 = s, 2 = t), its +/-1 value, and the two
-    // in-plane axes that carry the 2D interior point (u, v).
-    struct Face {
-        int fixed_axis;
-        double fixed_value;
-        int u_axis;
-        int v_axis;
-    };
-    static constexpr Face faces[6] = {
-        {0, double(-1), 1, 2},  // -X: (s, t) in plane
-        {0, double(1),  1, 2},  // +X
-        {1, double(-1), 0, 2},  // -Y: (r, t) in plane
-        {1, double(1),  0, 2},  // +Y
-        {2, double(-1), 0, 1},  // -Z: (r, s) in plane
-        {2, double(1),  0, 1},  // +Z
-    };
-
-    for (const auto& face : faces) {
-        for (const auto& p : face_interior) {
-            Vec3 node = Vec3::Zero();
-            node[static_cast<std::size_t>(face.fixed_axis)] = face.fixed_value;
-            node[static_cast<std::size_t>(face.u_axis)] = p[0];
-            node[static_cast<std::size_t>(face.v_axis)] = p[1];
-            nodes.push_back(node);
-        }
-    }
-}
-
-// Append the volume-interior nodes: a tetrahedral staircase unisolvent for the
-// interior residual P_{order-6}. Each t-layer is a triangular staircase (the 2D
-// construction reused) whose total degree decreases by one per layer, so the
-// layers consume P_{order-6} by induction in t exactly as the quad interior
-// consumes P_{order-4} by induction in s. Empty until order 6.
-void append_hex_serendipity_volume_interior_nodes(std::vector<Vec3>& nodes, int order) {
-    if (order < 6) {
-        return;
-    }
-    // Tetrahedral staircase on Gauss-Lobatto-Legendre interior nodes, mirroring the
-    // 2D quad interior: distinct t per layer, distinct s per row, distinct r within
-    // a row keep the residual unisolvent while staying well-conditioned at order.
-    const int m = order - 6;
-    for (int layer = 0; layer <= m; ++layer) {
-        const int tri_order = m - layer;
-        const double t = line_coord_pm_one(layer + 1, m + 2);
-        for (int row = 0; row <= tri_order; ++row) {
-            const int row_count = tri_order + 1 - row;
-            const double s = line_coord_pm_one(row + 1, tri_order + 2);
-            for (int col = 0; col < row_count; ++col) {
-                const double r = line_coord_pm_one(col + 1, row_count + 1);
-                nodes.push_back(Vec3{r, s, t});
-            }
-        }
-    }
-}
-
-// Generate the hexahedral serendipity reference nodes in the generalized
-// right-hand-rule / VTK-consistent stratified order: 8 corners, then 12 edges in
-// VTK quadratic-hex edge order, then the 6 face interiors in VTK face order, then
-// the volume interior. The corner and edge strata are taken directly from the
-// complete hexahedral Lagrange layout (generate_hex_nodes, via ReferenceNodeLayout),
-// so they share that single generator's VTK ordering: at order 1 (corners only)
-// and order 2 (corners plus edge midpoints) the layout is exactly the public
-// Hex8 / Hex20 ordering, and for higher order the reduced face/volume sets are
-// this module's own convention.
-std::vector<Vec3> hex_serendipity_nodes(int order, std::size_t total_size) {
-    std::vector<Vec3> nodes =
-        ReferenceNodeLayout::get_lagrange_node_coords(ElementType::Hex8, order);
-    const std::size_t skeleton_count =
-        8u + 12u * static_cast<std::size_t>(order - 1);
-    svmp::throw_if<BasisConstructionException>(
-        skeleton_count > nodes.size(), SVMP_HERE,
-        "SerendipityBasis: hexahedral skeleton exceeds the complete Lagrange layout");
-    nodes.resize(skeleton_count);
-
-    const std::size_t skeleton = nodes.size();
-    append_hex_serendipity_face_interior_nodes(nodes, order);
-    svmp::throw_if<BasisConstructionException>(
-        nodes.size() - skeleton != 6u * quad_serendipity_interior_count(order), SVMP_HERE,
-        "SerendipityBasis: hexahedral serendipity face-interior node count mismatch");
-
-    const std::size_t before_volume = nodes.size();
-    append_hex_serendipity_volume_interior_nodes(nodes, order);
-    svmp::throw_if<BasisConstructionException>(
-        nodes.size() - before_volume != hex_serendipity_volume_interior_count(order), SVMP_HERE,
-        "SerendipityBasis: hexahedral serendipity volume-interior node count mismatch");
-
-    svmp::throw_if<BasisConstructionException>(
-        nodes.size() != total_size, SVMP_HERE,
-        "SerendipityBasis: hexahedral serendipity node count does not match the monomial count");
-    return nodes;
-}
-
 // Build the nodal coefficient table for a serendipity family: assemble the
 // generalized Vandermonde V[node][mode] = phi_a(r) phi_b(s) phi_c(t) at the
 // public-order reference nodes -- with phi the monomial or Legendre 1D modes per
@@ -386,9 +199,27 @@ std::vector<double> build_inverse_vandermonde(
     // shape functions; the comparison is negated so a non-finite value is rejected
     // too.
     const double norm_v = matrix_norm_inf(vandermonde, n);
-    std::vector<double> inverse = math::invert_dense_matrix(
-        std::move(vandermonde), n,
-        "SerendipityBasis interpolation matrix for " + label);
+
+    // invert_dense_matrix raises a generic FEException if the Vandermonde is
+    // exactly singular (a rank-deficient pivot). For a serendipity family that
+    // means the node set is not unisolvent at this order -- a construction failure
+    // in basis terms -- so translate it to BasisConstructionException, presenting
+    // the singular and the ill-conditioned cases (below) as one catchable type in
+    // one vocabulary. The matrix was just built n-by-n from n modes, so a
+    // size-mismatch FEException cannot originate here; rank deficiency is the only
+    // FEException this call can raise. (Defensive: the supported node sets are
+    // provably unisolvent, so this branch is not reachable for the shipped orders.)
+    std::vector<double> inverse;
+    try {
+        inverse = math::invert_dense_matrix(
+            std::move(vandermonde), n,
+            "SerendipityBasis interpolation matrix for " + label);
+    } catch (const FEException&) {
+        svmp::raise<BasisConstructionException>(SVMP_HERE,
+            "SerendipityBasis: " + label +
+                " interpolation matrix is singular; the serendipity node set is not "
+                "unisolvent at the requested order");
+    }
     const double condition_number = norm_v * matrix_norm_inf(inverse, n);
     svmp::throw_if<BasisConstructionException>(
         !(condition_number <= kSerendipityVandermondeMaxCond), SVMP_HERE,
@@ -572,9 +403,9 @@ SerendipityBasis::SerendipityBasis(BasisTopology topology, int order)
     dimension_ = topology_ == BasisTopology::Hexahedron ? 3 : 2;
     order_ = order;
     if (topology_ == BasisTopology::Hexahedron) {
-        init_hexahedron(order_, /*nodes_from_reference_layout=*/false);
+        init_hexahedron(order_);
     } else {
-        init_quadrilateral(order_, /*nodes_from_reference_layout=*/false);
+        init_quadrilateral(order_);
     }
 }
 
@@ -586,18 +417,17 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order) {
 
     switch (type) {
         case ElementType::Quad8:
-            // Quad8 is the named quadratic layout; its nodes come from
-            // ReferenceNodeLayout so the basis shares the single public Quad8
-            // ordering (the same source Hex8/Hex20/Wedge15 use).
-            init_quadrilateral(order_, /*nodes_from_reference_layout=*/true);
+            // Quad8 is the order-2 instance of the quadrilateral serendipity
+            // space; the named overload only pins the order.
+            init_quadrilateral(order_);
             return;
         case ElementType::Hex8:
             // Hex8 is the order-1 instance of the hexahedral serendipity space.
-            init_hexahedron(1, /*nodes_from_reference_layout=*/true);
+            init_hexahedron(1);
             return;
         case ElementType::Hex20:
             // Hex20 is the order-2 instance of the hexahedral serendipity space.
-            init_hexahedron(2, /*nodes_from_reference_layout=*/true);
+            init_hexahedron(2);
             return;
         case ElementType::Wedge15:
             init_fixed_named(type);
@@ -616,14 +446,13 @@ SerendipityBasis::SerendipityBasis(ElementType type)
 // coefficient table for the given order. The coefficient table is the inverse
 // Vandermonde of tensor Legendre modes spanning the same polynomial space as the
 // monomial degree triples; because the nodes are in public order, evaluation
-// needs no output permutation. The named Quad8 layout sources its nodes from
-// ReferenceNodeLayout; the arbitrary-order topology path generates them.
-void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_layout) {
+// needs no output permutation. Reference nodes come from the single
+// ReferenceNodeLayout serendipity generator for both the named Quad8 layout and
+// the arbitrary-order path.
+void SerendipityBasis::init_quadrilateral(int order) {
     mode_exponents_ = serendipity_exponents(order, /*active_axes=*/2);
     size_ = mode_exponents_.size();
-    nodes_ = nodes_from_reference_layout
-                 ? ReferenceNodeLayout::node_coords(ElementType::Quad8)
-                 : quad_serendipity_nodes(order, size_);
+    nodes_ = ReferenceNodeLayout::serendipity_node_coords(BasisTopology::Quadrilateral, order);
     svmp::throw_if<BasisConstructionException>(
         nodes_.size() != size_, SVMP_HERE,
         "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
@@ -634,20 +463,14 @@ void SerendipityBasis::init_quadrilateral(int order, bool nodes_from_reference_l
 }
 
 // Build the hexahedral serendipity mode set, reference nodes, and nodal
-// coefficient table for the given order, mirroring init_quadrilateral. The
-// arbitrary-order topology path generates its own VTK-consistent nodes; the named
-// Hex8 (order 1) and Hex20 (order 2) layouts source their public-order nodes from
-// ReferenceNodeLayout so the generated layout matches the public ordering exactly.
-void SerendipityBasis::init_hexahedron(int order, bool nodes_from_reference_layout) {
+// coefficient table for the given order, mirroring init_quadrilateral. Reference
+// nodes come from the single ReferenceNodeLayout serendipity generator; Hex8
+// (order 1) and Hex20 (order 2) are its order-1/order-2 instances and match the
+// public Hex8/Hex20 ordering exactly.
+void SerendipityBasis::init_hexahedron(int order) {
     mode_exponents_ = serendipity_exponents(order, /*active_axes=*/3);
     size_ = mode_exponents_.size();
-    if (nodes_from_reference_layout) {
-        const ElementType named =
-            (order == 1) ? ElementType::Hex8 : ElementType::Hex20;
-        nodes_ = ReferenceNodeLayout::node_coords(named);
-    } else {
-        nodes_ = hex_serendipity_nodes(order, size_);
-    }
+    nodes_ = ReferenceNodeLayout::serendipity_node_coords(BasisTopology::Hexahedron, order);
     svmp::throw_if<BasisConstructionException>(
         nodes_.size() != size_, SVMP_HERE,
         "SerendipityBasis: hexahedral serendipity setup produced inconsistent sizes");

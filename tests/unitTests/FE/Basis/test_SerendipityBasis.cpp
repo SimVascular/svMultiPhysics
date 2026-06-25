@@ -473,10 +473,10 @@ TEST(SerendipityBasis, Quad8IsNodalAndPartitionsUnity) {
     SerendipityBasis topology_quad_basis(BasisTopology::Quadrilateral, 2);
 
     EXPECT_EQ(basis.size(), 8u);
-    // Quad8 sources its nodes from ReferenceNodeLayout while the arbitrary-order
-    // Quadrilateral path at order 2 uses the local generator, so this also pins
-    // the two independent quadrilateral node sources to agree at the production
-    // order.
+    // The named Quad8 and the arbitrary-order Quadrilateral path at order 2 now
+    // share the single ReferenceNodeLayout serendipity generator, so this pins
+    // that the named and topology overloads build the same object. The independent
+    // node-coordinate oracle is Quad8ReferenceNodesMatchIndependentConstruction.
     expect_nodes_near(basis.nodes(), topology_quad_basis.nodes(), double(1e-14));
     expect_nodal_delta(basis, basis.nodes(), double(1e-10));
     expect_partition_of_unity(basis, {double(0.17), double(-0.31), double(0)});

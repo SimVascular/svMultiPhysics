@@ -4,6 +4,7 @@
 #ifndef SVMP_FE_BASIS_NODEORDERINGCONVENTIONS_H
 #define SVMP_FE_BASIS_NODEORDERINGCONVENTIONS_H
 
+#include "BasisTraits.h"
 #include "Math/Vector.h"
 #include "Types.h"
 
@@ -99,6 +100,28 @@ public:
      */
     static LagrangeNodeLayout
     get_lagrange_lattice(ElementType canonical_type, int order);
+
+    /**
+     * @brief Reference nodes for an arbitrary-order serendipity layout.
+     *
+     * @details Generates the stratified serendipity node set for the
+     * quadrilateral or hexahedral family at the requested order: the
+     * corner+edge skeleton (the leading prefix of the complete Lagrange layout
+     * of the same order, in VTK boundary order) followed by the reduced face
+     * and volume interior. This is the single source of serendipity node
+     * geometry -- SerendipityBasis builds its mode space and coefficient table
+     * on top of these coordinates for both the arbitrary-order path and the
+     * named Quad8/Hex20 layouts (the order-2 instances). Wedge serendipity
+     * (Wedge15) is a fixed named layout and is not generated here.
+     *
+     * @param topology BasisTopology::Quadrilateral or BasisTopology::Hexahedron.
+     * @param order Polynomial order; must be >= 1.
+     * @return Reference node coordinates in stratified (skeleton-then-interior) order.
+     * @throws BasisConstructionException If @p order is below 1.
+     * @throws BasisElementCompatibilityException If @p topology is not Quadrilateral or Hexahedron.
+     */
+    static std::vector<math::Vector<double, 3>>
+    serendipity_node_coords(BasisTopology topology, int order);
 };
 
 } // namespace basis
