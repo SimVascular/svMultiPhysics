@@ -44,6 +44,13 @@ public:
 
 /**
  * @brief Invalid Basis request or configuration
+ *
+ * @details Raised when a request is malformed before any geometry is built: a
+ * missing or negative polynomial order, a named element layout paired with an
+ * explicit order that does not match its fixed order, or a field type or
+ * continuity the scalar Lagrange/Serendipity factory does not support. Example:
+ * constructing a LagrangeBasis for Tetra10 at order 1, when that layout is fixed
+ * at order 2.
  */
 class BasisConfigurationException : public BasisException {
 public:
@@ -56,6 +63,11 @@ public:
 
 /**
  * @brief Requested element topology is incompatible with the basis family
+ *
+ * @details Raised when the family cannot represent the requested topology or
+ * named layout. Example: requesting wedge serendipity through the arbitrary-order
+ * topology path (only the named Wedge15 layout is supported), or requesting a
+ * basis on ElementType::Unknown.
  */
 class BasisElementCompatibilityException : public BasisException {
 public:
@@ -68,6 +80,10 @@ public:
 
 /**
  * @brief Basis evaluation request cannot be satisfied
+ *
+ * @details Raised at evaluation time rather than construction time. Example: an
+ * output span smaller than size(), or requesting analytical gradients or Hessians
+ * from a basis that does not provide them.
  */
 class BasisEvaluationException : public BasisException {
 public:
@@ -80,6 +96,10 @@ public:
 
 /**
  * @brief Public-to-canonical node ordering or coordinate lookup failure
+ *
+ * @details Raised when a node index or coordinate lookup falls outside the
+ * reference layout. Example: requesting a tensor-axis node index outside
+ * [0, order] from line_coord_pm_one.
  */
 class BasisNodeOrderingException : public BasisException {
 public:
@@ -92,6 +112,10 @@ public:
 
 /**
  * @brief Internal basis construction or transform setup failure
+ *
+ * @details Signals a violated internal invariant during setup (StatusCode::
+ * InternalError) rather than bad user input. Example: a generated Lagrange node
+ * lattice whose index components fall outside [0, order] in get_lagrange_lattice.
  */
 class BasisConstructionException : public BasisException {
 public:
