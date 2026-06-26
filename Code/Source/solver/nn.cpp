@@ -97,8 +97,15 @@ std::optional<fe::ElementType> to_fe_element_type(consts::ElementType eType)
     case consts::ElementType::PNT:
     case consts::ElementType::NRB:
       return std::nullopt;
+
+    // A solver element type with no case above is a missing mapping, not a
+    // deliberately unsupported type; fail loudly instead of relying on the
+    // unhandled-enum compiler warning being enabled.
+    default:
+      svmp::raise<febasis::BasisElementCompatibilityException>(SVMP_HERE,
+          "to_fe_element_type: unhandled solver element type " +
+              std::to_string(static_cast<int>(eType)));
   }
-  return std::nullopt;
 }
 
 /// Whether the FE Basis face adapter can evaluate face shape functions for
