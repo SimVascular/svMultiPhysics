@@ -5,6 +5,7 @@
 #define FC_TYPE_H
 
 #include "Array.h"
+#include "CmMod.h"
 #include "Vector.h"
 
 #include <string>
@@ -36,6 +37,12 @@ public:
   static fcType from_time_series_file(const std::string &file_name,
                                       const unsigned int n_dimensions,
                                       const bool is_ramp);
+
+  /// @brief Distribute the data to all parallel processes.
+  ///
+  /// Does nothing if the object has not been initialized (i.e. if @ref defined
+  /// returns false) on the master rank.
+  void distribute(const CmMod &cm_mod, const cmType &cm);
 
   /// @brief Return the interpolated value.
   Vector<double> value(const double time) const;

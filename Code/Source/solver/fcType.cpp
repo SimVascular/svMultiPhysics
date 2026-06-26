@@ -170,6 +170,36 @@ fcType fcType::from_fourier_coefficients_file(const std::string &file_name,
   return result;
 }
 
+void fcType::distribute(const CmMod &cm_mod, const cmType &cm) {
+  // Only the master knows whether the object has been initialized. Therefore,
+  // we broadcast the initialization flag to all ranks, so that the following if
+  // statement can be run correctly by all.
+  bool initialized = defined();
+  cm.bcast(cm_mod, &initialized);
+
+  if (initialized) {
+    cm.bcast(cm_mod, &lrmp);
+    cm.bcast(cm_mod, &n);
+    cm.bcast(cm_mod, &d);
+
+    // All ranks but the master need to allocate the arrays before receiving
+    // data.
+    if (cm.slv(cm_mod)) {
+      qi.resize(d);
+      qs.resize(d);
+      r.resize(d, n);
+      i.resize(d, n);
+    }
+
+    cm.bcast(cm_mod, &ti);
+    cm.bcast(cm_mod, &T);
+    cm.bcast(cm_mod, qi);
+    cm.bcast(cm_mod, qs);
+    cm.bcast(cm_mod, r);
+    cm.bcast(cm_mod, i);
+  }
+}
+
 Vector<double> fcType::value(const double time) const {
   Vector<double> result(d);
   static Vector<double> dummy;
