@@ -66,11 +66,69 @@ public:
   std::pair<Vector<double>, Vector<double>>
   value_and_derivative(const double time) const;
 
+  /// @name Data member access.
+  /// @{
+
   /// @brief Return whether this object has been initialized.
   bool defined() const { return n != 0; };
 
   /// @brief Get the dimension of the data interpolated by this object.
   unsigned int dimension() const { return d; }
+
+  /// @brief Get the initial value of the linear trend part for one component.
+  const double get_qi(const unsigned int component) const {
+    // @todo[michelebucelli] Add check on the index.
+    return qi[component];
+  }
+
+  /// @brief Get the slope of the linear trend part for one component.
+  const double get_qs(const unsigned int component) const {
+    // @todo[michelebucelli] Add check on the index.
+    return qs[component];
+  }
+
+  /// @brief Get the real part of the Fourier coefficients for one component.
+  const double get_r(const unsigned int component,
+                     const unsigned int frequency) const {
+    // @todo[michelebucelli] Add check on the indices.
+    return r(component, frequency);
+  }
+
+  /// @brief Get the imaginary part of the Fourier coefficients for one
+  /// component.
+  const double get_i(const unsigned int component,
+                     const unsigned int frequency) const {
+    // @todo[michelebucelli] Add check on the indices.
+    return i(component, frequency);
+  }
+
+  /// @}
+
+private:
+  /** @brief Internal evaluation function.
+   *
+   * Uses the inverse Fourier transform to evaluate the value, and optionally
+   * the derivative, of the interpolated data. This function is not meant to be
+   * used directly, but only as a backend to @ref value and @ref
+   * value_and_derivative.
+   *
+   * The vectors value and derivative are assumed to be of size @ref d. This is
+   * not checked by this function.
+   *
+   * @throws std::runtime_error if this fcType instance has not been
+   * initialized (i.e. if @ref defined returns false).
+   *
+   * @param[in] time The time at which to evaluate the interpolation.
+   * @param[in] evaluate_derivative Whether to also evaluate the time
+   *   derivative of the interpolation.
+   * @param[out] value The interpolated value at the given time.
+   * @param[out] derivative The time derivative of the interpolated value at
+   *   the given time. If evaluated_derivative is false, this will not be
+   *   modified or accessed.
+   */
+  void evaluate_internal(const double time, const bool evaluate_derivative,
+                         Vector<double> &value,
+                         Vector<double> &derivative) const;
 
   /// Toggle whether this is a ramp function or not.
   bool lrmp = false;
@@ -98,32 +156,6 @@ public:
 
   /// Real part of coefficients.
   Array<double> r;
-
-private:
-  /** @brief Internal evaluation function.
-   *
-   * Uses the inverse Fourier transform to evaluate the value, and optionally
-   * the derivative, of the interpolated data. This function is not meant to be
-   * used directly, but only as a backend to @ref value and @ref
-   * value_and_derivative.
-   *
-   * The vectors value and derivative are assumed to be of size @ref d. This is
-   * not checked by this function.
-   *
-   * @throws std::runtime_error if this fcType instance has not been
-   * initialized (i.e. if @ref defined returns false).
-   *
-   * @param[in] time The time at which to evaluate the interpolation.
-   * @param[in] evaluate_derivative Whether to also evaluate the time
-   *   derivative of the interpolation.
-   * @param[out] value The interpolated value at the given time.
-   * @param[out] derivative The time derivative of the interpolated value at
-   *   the given time. If evaluated_derivative is false, this will not be
-   *   modified or accessed.
-   */
-  void evaluate_internal(const double time, const bool evaluate_derivative,
-                         Vector<double> &value,
-                         Vector<double> &derivative) const;
 };
 
 #endif
