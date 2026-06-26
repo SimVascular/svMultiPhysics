@@ -8,20 +8,20 @@
 // are defined here.
 
 #ifndef COMMOD_H 
-#define COMMOD_H 
+#define COMMOD_H
 
 #include "Array.h"
 #include "Array3.h"
-#include "SolutionStates.h"
 #include "CepMod.h"
 #include "ChnlMod.h"
 #include "CmMod.h"
+#include "CoupledBoundaryCondition.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
-#include "CoupledBoundaryCondition.h"
+#include "SolutionStates.h"
 #include "Timer.h"
 #include "Vector.h"
-#include "fcType.h"
+#include "fourier_interpolation.h"
 
 #include "DebugMsg.h"
 
@@ -159,7 +159,7 @@ class bcType
     //
     // This is declare ALLOCATABLE in MOD.f. 
     //
-    fcType gt;
+    FourierInterpolation gt;
 
     // Neu: RCR
     rcrType RCR;
@@ -271,7 +271,7 @@ class bfType
     Array<double> bx;
 
     // Time dependant (unsteady imposed value)
-    fcType bt;
+    FourierInterpolation bt;
 
     // General (unsteady and spatially dependent combination)
     MBType bm;
@@ -299,7 +299,7 @@ class fibStrsType
     double eta_n = 0.0;
 
     // Unsteady time-dependent values
-    fcType gt;
+    FourierInterpolation gt;
 };
 
 /// @brief Structural domain type

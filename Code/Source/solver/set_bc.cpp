@@ -1826,7 +1826,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     }
 
   } else if (utils::btest(lBc.bType,iBC_ustd)) {
-    if (lBc.gt.dimension() != nsd) {
+    if (lBc.gt.get_n_components() != nsd) {
       throw std::runtime_error(
           "[set_bc_trac_l]  Traction dof not initialized properly");
     }

@@ -28,8 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fft.h"
-#include "ComMod.h"
+#include "fourier_interpolation.h"
 #include "../test_common.h"
 #include <cmath>
 
@@ -65,18 +64,18 @@ TEST_F(FFTTest, SinCosLinearCombination) {
     CreateTemporalValues(N, x_start, x_end, temporal_values);
 
     // Compute the Fourier coefficients
-    const fcType gt =
-        fcType::from_time_series(/* n_fourier_coefficients = */ 16,
-                                 temporal_values, /* is_ramp = */ false);
+    const FourierInterpolation gt = FourierInterpolation::from_time_series(
+        /* n_fourier_coefficients = */ 16, temporal_values,
+        /* is_ramp = */ false);
 
     // Check the slope (first Fourier coefficient)
-    ASSERT_NEAR(gt.get_qs(0), -0.13830, 1e-2) << "Expected slope ~-0.13830";
+    ASSERT_NEAR(gt.get_linear_trend_slope(0),       -0.13830, 1e-2) << "Expected slope ~-0.13830";
 
     // Check the real and imaginary components of the first three Fourier coefficients
-    ASSERT_NEAR(gt.get_r(0, 0), 0.32094, 1e-2) << "Expected first real coefficient to be close to 0.32094";
-    ASSERT_NEAR(gt.get_i(0, 0), 0.0, 1e-2) << "Expected first imaginary coefficient to be close to 0.0";
-    ASSERT_NEAR(gt.get_r(0, 1), 0.42759, 1e-2) << "Expected second real coefficient to be close to 0.42759";
-    ASSERT_NEAR(gt.get_i(0, 1), 1.25295, 1e-2) << "Expected second imaginary coefficient to be close to 1.25295";
-    ASSERT_NEAR(gt.get_r(0, 2), -0.44685, 1e-2) << "Expected third real coefficient to be close to -0.44685";
-    ASSERT_NEAR(gt.get_i(0, 2), -0.65403, 1e-2) << "Expected third imaginary coefficient to be close to -0.65403";
+    ASSERT_NEAR(gt.get_coefficient_real(0, 0),       0.32094, 1e-2) << "Expected first real coefficient to be close to 0.32094";
+    ASSERT_NEAR(gt.get_coefficient_imaginary(0, 0),  0.0,     1e-2) << "Expected first imaginary coefficient to be close to 0.0";
+    ASSERT_NEAR(gt.get_coefficient_real(0, 1),       0.42759, 1e-2) << "Expected second real coefficient to be close to 0.42759";
+    ASSERT_NEAR(gt.get_coefficient_imaginary(0, 1),  1.25295, 1e-2) << "Expected second imaginary coefficient to be close to 1.25295";
+    ASSERT_NEAR(gt.get_coefficient_real(0, 2),      -0.44685, 1e-2) << "Expected third real coefficient to be close to -0.44685";
+    ASSERT_NEAR(gt.get_coefficient_imaginary(0, 2), -0.65403, 1e-2) << "Expected third imaginary coefficient to be close to -0.65403";
 }

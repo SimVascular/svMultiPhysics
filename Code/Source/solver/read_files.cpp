@@ -232,11 +232,11 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
             : 1;
 
     if (bc_params->temporal_values_file_path.defined()) {
-      lBc.gt = fcType::from_time_series_file(
+      lBc.gt = FourierInterpolation::from_time_series_file(
           bc_params->temporal_values_file_path.value(), n_dimensions,
           bc_params->ramp_function.value());
     } else if (bc_params->fourier_coefficients_file_path.defined()) {
-      lBc.gt = fcType::from_fourier_coefficients_file(
+      lBc.gt = FourierInterpolation::from_fourier_coefficients_file(
           bc_params->fourier_coefficients_file_path.value(), n_dimensions);
     } else {
       throw std::runtime_error(
@@ -949,11 +949,11 @@ void read_bf(ComMod& com_mod, BodyForceParameters* bf_params, bfType& lBf)
     lBf.bType = utils::ibset(lBf.bType, enum_int(BodyForceType::bfType_ustd));
 
     if (bf_params->temporal_values_file_path.defined()) {
-      lBf.bt = fcType::from_time_series_file(
+      lBf.bt = FourierInterpolation::from_time_series_file(
           bf_params->temporal_values_file_path.value(), lBf.dof,
           bf_params->ramp_function.value());
     } else if (bf_params->fourier_coefficients_file_path.defined()) {
-      lBf.bt = fcType::from_fourier_coefficients_file(
+      lBf.bt = FourierInterpolation::from_fourier_coefficients_file(
           bf_params->fourier_coefficients_file_path.value(), lBf.dof);
     } else {
       throw std::runtime_error("No temporal values or Fourier coefficients "
@@ -2034,7 +2034,7 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
           utils::ibset(lDmn.stM.Tf.fType,
                        static_cast<int>(BoundaryConditionType::bType_ustd));
 
-      lDmn.stM.Tf.gt = fcType::from_time_series_file(
+      lDmn.stM.Tf.gt = FourierInterpolation::from_time_series_file(
           fiber_params.temporal_values_file_path.value(),
           /* n_dimensions = */ 1, fiber_params.ramp_function.value());
     }
