@@ -53,7 +53,7 @@ namespace mat_fun {
           auto mat_dims = (std::stringstream() << "(" << mat.rows()  << "x" << mat.cols() << ")").str();
           auto dest_dims = (std::stringstream() << "(" << dest.nrows()  << "x" << dest.ncols() << ")").str();
           svmp::raise<svmp::FE::InvalidArgumentException>(
-              SVMP_HERE, "The 'mat" + mat_dims + "' and 'dest" + dest_dims +
+              "The 'mat" + mat_dims + "' and 'dest" + dest_dims +
               "' arrays have incompatible sizes.");
         }
 

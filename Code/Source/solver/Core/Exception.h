@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -281,12 +282,23 @@ public:
         rebuild_what();
     }
 
+    /// @brief Record the originating source location and refresh what().
+    ///
+    /// @details Called by raise() after construction, so exception constructors
+    /// do not need to accept (and forward) the file/line/function themselves.
+    void set_source_location(const SourceLocation& location)
+    {
+        context_.set_source_location(location.file, location.line,
+                                     location.function);
+        rebuild_what();
+    }
+
     virtual ~ExceptionBase() noexcept = default;
 
 protected:
     ExceptionBase(std::string message, StatusCode status,
-                  std::string_view subsystem_label, const char* file,
-                  int line, const char* function)
+                  std::string_view subsystem_label, const char* file = "",
+                  int line = 0, const char* function = "")
         : message_(std::move(message)),
           subsystem_label_(subsystem_label.empty() ? std::string_view("Exception")
                                                    : subsystem_label)
@@ -323,60 +335,51 @@ public:
     }
 };
 
-class ParseException : public CoreException {
-public:
-    ParseException(const std::string& message,
-                   const char* file = "",
-                   int line = 0,
-                   const char* function = "")
-        : CoreException(message, StatusCode::ParseError, file, line, function)
-    {
+/**
+ * @brief Define a simple, message-only exception type in one line.
+ *
+ * @details Expands to a class @p Name deriving from @p Base with a single
+ * `explicit Name(const std::string& message)` constructor that records @p Status.
+ * Use it for exceptions that carry only a message; write the class by hand when it
+ * needs extra structured context (members and accessors). The source location is
+ * stamped by raise(), so no file/line/function constructor is needed.
+ *
+ * @p Base must be an ExceptionBase-derived type whose constructor accepts
+ * `(const std::string&, StatusCode)` (CoreException, FEException, and the
+ * subsystem bases do).
+ *
+ * @code
+ * SVMP_DEFINE_EXCEPTION(ParseException, CoreException, StatusCode::ParseError);
+ * @endcode
+ */
+#define SVMP_DEFINE_EXCEPTION(Name, Base, Status)                              \
+    class Name : public Base {                                                 \
+    public:                                                                    \
+        explicit Name(const std::string& message)                             \
+            : Base(message, (Status))                                          \
+        {                                                                      \
+        }                                                                      \
     }
-};
 
-class DependencyException : public CoreException {
-public:
-    DependencyException(const std::string& message,
-                        const char* file = "",
-                        int line = 0,
-                        const char* function = "")
-        : CoreException(message, StatusCode::DependencyError, file, line,
-                        function)
-    {
-    }
-};
+/// @brief A parsing or input-format error.
+SVMP_DEFINE_EXCEPTION(ParseException, CoreException, StatusCode::ParseError);
+
+/// @brief A required dependency is missing or failed to load.
+SVMP_DEFINE_EXCEPTION(DependencyException, CoreException,
+                      StatusCode::DependencyError);
 
 /// @brief A requested operation or feature is not implemented.
 ///
-/// This is the default exception raised by not_implemented(). Subsystems that
-/// need their not-implemented errors to be catchable as their own base type may
-/// define a more specific exception (for example, svmp::FE::NotImplementedException
-/// derives from FEException); pass it explicitly to not_implemented<...>().
-class NotImplementedException : public CoreException {
-public:
-    NotImplementedException(const std::string& message,
-                            const char* file = "",
-                            int line = 0,
-                            const char* function = "")
-        : CoreException(message, StatusCode::NotImplemented, file, line, function)
-    {
-    }
-};
+/// @details The default exception raised by not_implemented().
+SVMP_DEFINE_EXCEPTION(NotImplementedException, CoreException,
+                      StatusCode::NotImplemented);
 
 /// @brief An index is outside its valid range.
 ///
-/// This is the default exception raised by check_index(). The status code is
+/// @details The default exception raised by check_index(); the status code is
 /// InvalidArgument because an out-of-range index is a caller error.
-class IndexOutOfRangeException : public CoreException {
-public:
-    IndexOutOfRangeException(const std::string& message,
-                             const char* file = "",
-                             int line = 0,
-                             const char* function = "")
-        : CoreException(message, StatusCode::InvalidArgument, file, line, function)
-    {
-    }
-};
+SVMP_DEFINE_EXCEPTION(IndexOutOfRangeException, CoreException,
+                      StatusCode::InvalidArgument);
 
 inline void ExceptionRuntime::install_terminate_handler()
 {
@@ -399,44 +402,97 @@ inline void ExceptionRuntime::install_terminate_handler()
 }
 
 /**
- * @brief Construct and throw @p ExceptionT, appending the source location.
+ * @brief A diagnostic message bundled with the source location where it was written.
  *
- * @details The exception type is given explicitly; @p args are forwarded to the
- * exception constructor ahead of the file/line/function from @p location.
+ * @details The core helpers (raise(), check(), throw_if(), check_not_null()) take
+ * a Diagnostic in place of an explicit source location. Its file/line/function
+ * arguments default to the compiler builtins __builtin_FILE()/__builtin_LINE()/
+ * __builtin_FUNCTION(), which capture the caller's location, so a string literal
+ * or std::string passed at the call site is implicitly wrapped into a Diagnostic
+ * that records exactly where the call appears -- callers do not pass SVMP_HERE:
+ * @code
+ * svmp::check<MyException>(ptr != nullptr, "pointer must not be null");
+ * @endcode
+ */
+class Diagnostic {
+public:
+    /**
+     * @brief Wrap a message, capturing the caller's source location by default.
+     * @param message The diagnostic message.
+     * @param file Source file; defaults to the caller's via __builtin_FILE().
+     * @param line Source line; defaults to the caller's via __builtin_LINE().
+     * @param function Function; defaults to the caller's via __builtin_FUNCTION().
+     */
+    Diagnostic(const char* message,
+               const char* file = __builtin_FILE(),
+               int line = __builtin_LINE(),
+               const char* function = __builtin_FUNCTION())
+        : message_(message), location_{file, line, function}
+    {
+    }
+    /**
+     * @brief Wrap a message, capturing the caller's source location by default.
+     * @param message The diagnostic message.
+     * @param file Source file; defaults to the caller's via __builtin_FILE().
+     * @param line Source line; defaults to the caller's via __builtin_LINE().
+     * @param function Function; defaults to the caller's via __builtin_FUNCTION().
+     */
+    Diagnostic(std::string message,
+               const char* file = __builtin_FILE(),
+               int line = __builtin_LINE(),
+               const char* function = __builtin_FUNCTION())
+        : message_(std::move(message)), location_{file, line, function}
+    {
+    }
+
+    /**
+     * @brief The diagnostic message.
+     * @return The stored message.
+     */
+    const std::string& message() const noexcept { return message_; }
+    /**
+     * @brief The source location captured when the Diagnostic was constructed.
+     * @return The stored source location.
+     */
+    const SourceLocation& location() const noexcept { return location_; }
+
+private:
+    std::string message_;
+    SourceLocation location_;
+};
+
+/**
+ * @brief Construct @p ExceptionT from the diagnostic message and @p args, stamp
+ * the source location, and throw it.
+ *
+ * @details @p diagnostic carries the message and the source location captured at
+ * the call site; @p args are forwarded to the exception constructor after the
+ * message. The location is recorded via ExceptionBase::set_source_location(), so
+ * exception types never need a file/line/function constructor -- a `(message)`
+ * (plus any structured-context) constructor is enough.
  */
 template <class ExceptionT, class... Args>
-[[noreturn]] void raise(SourceLocation location, Args&&... args)
+[[noreturn]] void raise(Diagnostic diagnostic, Args&&... args)
 {
-    throw ExceptionT(std::forward<Args>(args)..., location.file, location.line,
-                     location.function);
+    static_assert(std::is_base_of_v<ExceptionBase, ExceptionT>,
+                  "raise<>() requires an svmp::ExceptionBase-derived exception type");
+    ExceptionT exception(diagnostic.message(), std::forward<Args>(args)...);
+    exception.set_source_location(diagnostic.location());
+    throw exception;
 }
 
 /**
  * @brief Raise @p ExceptionT when @p condition is false (a required condition).
  *
- * @details Use for general invariants and postconditions. check_arg() is the same
- * check with a name that documents argument/precondition validation at the call
- * site; throw_if() is the logical inverse (it raises when its condition is true).
+ * @details The general success-condition check, used for argument, state, and
+ * invariant validation: `check<E>(ptr != nullptr, "...")`. throw_if() is the
+ * logical inverse -- it raises when its condition is true.
  */
 template <class ExceptionT, class... Args>
-void check(bool condition, SourceLocation location, Args&&... args)
+void check(bool condition, Diagnostic diagnostic, Args&&... args)
 {
     if (!condition) {
-        raise<ExceptionT>(location, std::forward<Args>(args)...);
-    }
-}
-
-/**
- * @brief Raise @p ExceptionT when an argument @p condition is false.
- *
- * @details Behaves exactly like check(); the distinct name documents at the call
- * site that the condition validates a function argument/precondition.
- */
-template <class ExceptionT, class... Args>
-void check_arg(bool condition, SourceLocation location, Args&&... args)
-{
-    if (!condition) {
-        raise<ExceptionT>(location, std::forward<Args>(args)...);
+        raise<ExceptionT>(std::move(diagnostic), std::forward<Args>(args)...);
     }
 }
 
@@ -444,10 +500,10 @@ void check_arg(bool condition, SourceLocation location, Args&&... args)
  * @brief Raise @p ExceptionT when @p ptr is null.
  */
 template <class ExceptionT, class PointerT, class... Args>
-void check_not_null(PointerT ptr, SourceLocation location, Args&&... args)
+void check_not_null(PointerT ptr, Diagnostic diagnostic, Args&&... args)
 {
     if (ptr == nullptr) {
-        raise<ExceptionT>(location, std::forward<Args>(args)...);
+        raise<ExceptionT>(std::move(diagnostic), std::forward<Args>(args)...);
     }
 }
 
@@ -459,10 +515,10 @@ void check_not_null(PointerT ptr, SourceLocation location, Args&&... args)
  * failure condition). The two are not interchangeable.
  */
 template <class ExceptionT, class... Args>
-void throw_if(bool condition, SourceLocation location, Args&&... args)
+void throw_if(bool condition, Diagnostic diagnostic, Args&&... args)
 {
     if (condition) {
-        raise<ExceptionT>(location, std::forward<Args>(args)...);
+        raise<ExceptionT>(std::move(diagnostic), std::forward<Args>(args)...);
     }
 }
 
@@ -470,45 +526,41 @@ void throw_if(bool condition, SourceLocation location, Args&&... args)
  * @brief Raise an exception when @p index is outside [0, @p size).
  *
  * @details @p ExceptionT defaults to IndexOutOfRangeException; supply a different
- * type only when a subsystem needs its own exception. The bounds message is
- * generated automatically.
+ * type only when a subsystem needs its own exception. The bounds message and the
+ * source location are generated automatically.
  */
 template <class ExceptionT = IndexOutOfRangeException, class IndexT, class SizeT>
-void check_index(IndexT index, SizeT size, SourceLocation location)
+void check_index(IndexT index, SizeT size,
+                 const char* file = __builtin_FILE(),
+                 int line = __builtin_LINE(),
+                 const char* function = __builtin_FUNCTION())
 {
     const long long index_value = static_cast<long long>(index);
     const long long size_value = static_cast<long long>(size);
-    check_arg<ExceptionT>(
+    check<ExceptionT>(
         index_value >= 0 && index_value < size_value,
-        location,
-        "Index " + std::to_string(index_value) + " out of bounds [0, " +
-            std::to_string(size_value) + ")");
+        Diagnostic("Index " + std::to_string(index_value) + " out of bounds [0, " +
+                       std::to_string(size_value) + ")",
+                   file, line, function));
 }
 
 /**
- * @brief Raise an exception reporting an unimplemented feature.
+ * @brief Raise an exception reporting an unimplemented feature, with a message.
  *
- * @details @p ExceptionT defaults to NotImplementedException. This overload
- * forwards @p args to the exception constructor; prefer the (feature, location)
- * overload below for the common case of a single feature-name string.
+ * @details @p ExceptionT defaults to NotImplementedException, so most call sites
+ * pass only a message:
+ * @code
+ * svmp::not_implemented("GPU assembly is not supported");
+ * @endcode
+ * Pass a different exception type explicitly only when a subsystem needs one.
  */
-template <class ExceptionT = NotImplementedException, class... Args>
-[[noreturn]] void not_implemented(SourceLocation location, Args&&... args)
+template <class ExceptionT = NotImplementedException>
+[[noreturn]] void not_implemented(std::string message,
+                                  const char* file = __builtin_FILE(),
+                                  int line = __builtin_LINE(),
+                                  const char* function = __builtin_FUNCTION())
 {
-    raise<ExceptionT>(location, std::forward<Args>(args)...);
-}
-
-/**
- * @brief Raise an exception reporting an unimplemented @p feature.
- *
- * @details Convenience for the common case where the only argument is a
- * feature-name string (note the feature-first parameter order). @p ExceptionT
- * defaults to NotImplementedException.
- */
-template <class ExceptionT = NotImplementedException, class FeatureT>
-[[noreturn]] void not_implemented(FeatureT&& feature, SourceLocation location)
-{
-    raise<ExceptionT>(location, std::forward<FeatureT>(feature));
+    raise<ExceptionT>(Diagnostic(std::move(message), file, line, function));
 }
 
 } // namespace svmp
@@ -519,7 +571,7 @@ template <class ExceptionT = NotImplementedException, class FeatureT>
 #define SVMP_DEBUG_CHECK(ExceptionT, condition, ...)                         \
     do {                                                                     \
         if (!(condition)) {                                                  \
-            ::svmp::raise<ExceptionT>(SVMP_HERE, __VA_ARGS__);               \
+            ::svmp::raise<ExceptionT>(__VA_ARGS__);                          \
         }                                                                    \
     } while (false)
 #else

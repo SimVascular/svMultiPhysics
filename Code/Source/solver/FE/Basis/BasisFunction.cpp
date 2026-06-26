@@ -13,8 +13,7 @@ namespace basis {
 void require_span_size(std::size_t actual,
                        std::size_t expected,
                        const char* label) {
-    svmp::throw_if<BasisEvaluationException>(actual < expected, SVMP_HERE,
-        std::string(label) + ": output span is smaller than basis size");
+    svmp::throw_if<BasisEvaluationException>(actual < expected, std::string(label) + ": output span is smaller than basis size");
 }
 
 const std::vector<math::Vector<double, 3>>& BasisFunction::nodes() const noexcept {
@@ -65,16 +64,14 @@ void BasisFunction::evaluate_gradients_to(const math::Vector<double, 3>& xi,
                                           std::span<Gradient> gradients_out) const {
     (void)xi;
     (void)gradients_out;
-    svmp::raise<BasisEvaluationException>(SVMP_HERE,
-        "Analytic gradient evaluation is not implemented for this basis");
+    svmp::raise<BasisEvaluationException>("Analytic gradient evaluation is not implemented for this basis");
 }
 
 void BasisFunction::evaluate_hessians_to(const math::Vector<double, 3>& xi,
                                          std::span<Hessian> hessians_out) const {
     (void)xi;
     (void)hessians_out;
-    svmp::raise<BasisEvaluationException>(SVMP_HERE,
-        "Analytic Hessian evaluation is not implemented for this basis");
+    svmp::raise<BasisEvaluationException>("Analytic Hessian evaluation is not implemented for this basis");
 }
 
 // Combined evaluator default: forward each requested (non-empty) quantity to its

@@ -86,8 +86,7 @@ const std::vector<double>& gll_points(int order) {
             }
         }
         svmp::throw_if<BasisConstructionException>(
-            !converged, SVMP_HERE,
-            "ReferenceNodeLayout: Gauss-Lobatto-Legendre Newton iteration did not converge "
+            !converged, "ReferenceNodeLayout: Gauss-Lobatto-Legendre Newton iteration did not converge "
             "(order outside the trustworthy range)");
         pts[static_cast<std::size_t>(j)] = x;
     }
@@ -115,8 +114,7 @@ Lattice lerp_lattice(const Lattice& a, const Lattice& b, int m, int order) {
     for (std::size_t d = 0; d < 3u; ++d) {
         const int numerator = a[d] * (order - m) + b[d] * m;
         svmp::throw_if<BasisConstructionException>(
-            numerator % order != 0, SVMP_HERE,
-            "ReferenceNodeLayout: non-integral edge lattice index");
+            numerator % order != 0, "ReferenceNodeLayout: non-integral edge lattice index");
         result[d] = numerator / order;
     }
     return result;
@@ -131,8 +129,7 @@ Lattice combine_lattice(const Lattice& l0, const Lattice& l1, const Lattice& l2,
     for (std::size_t d = 0; d < 3u; ++d) {
         const int numerator = a * l0[d] + b * l1[d] + c * l2[d];
         svmp::throw_if<BasisConstructionException>(
-            numerator % order != 0, SVMP_HERE,
-            "ReferenceNodeLayout: non-integral face-interior lattice index");
+            numerator % order != 0, "ReferenceNodeLayout: non-integral face-interior lattice index");
         result[d] = numerator / order;
     }
     return result;
@@ -545,8 +542,7 @@ LagrangeNodeLayout generate_wedge_nodes(int order) {
 }
 
 LagrangeNodeLayout complete_lagrange_nodes(ElementType canonical_type, int order) {
-    svmp::throw_if<BasisConfigurationException>(order < 0, SVMP_HERE,
-                                              "ReferenceNodeLayout requires non-negative Lagrange order");
+    svmp::throw_if<BasisConfigurationException>(order < 0, "ReferenceNodeLayout requires non-negative Lagrange order");
     const ElementType type = canonical_lagrange_type(canonical_type);
     switch (type) {
         case ElementType::Point1: {
@@ -568,11 +564,9 @@ LagrangeNodeLayout complete_lagrange_nodes(ElementType canonical_type, int order
         case ElementType::Wedge6:
             return generate_wedge_nodes(order);
         case ElementType::Pyramid5:
-            svmp::raise<BasisNodeOrderingException>(SVMP_HERE,
-                "ReferenceNodeLayout: pyramid node ordering is disabled");
+            svmp::raise<BasisNodeOrderingException>("ReferenceNodeLayout: pyramid node ordering is disabled");
         default:
-            svmp::raise<BasisNodeOrderingException>(SVMP_HERE,
-                "ReferenceNodeLayout: unsupported Lagrange topology");
+            svmp::raise<BasisNodeOrderingException>("ReferenceNodeLayout: unsupported Lagrange topology");
     }
 }
 
@@ -610,19 +604,16 @@ std::vector<Point> serendipity_subset_nodes(LagrangeNodeLayout complete,
     svmp::throw_if<BasisConstructionException>(
         complete.coords.size() != complete_count ||
             complete.lattice.size() != complete_count,
-        SVMP_HERE,
         "ReferenceNodeLayout: unexpected complete-quadratic node count for serendipity layout");
     svmp::throw_if<BasisConstructionException>(
-        keep_count >= complete_count, SVMP_HERE,
-        "ReferenceNodeLayout: serendipity node count must be smaller than the complete layout");
+        keep_count >= complete_count, "ReferenceNodeLayout: serendipity node count must be smaller than the complete layout");
 
     for (std::size_t n = 0; n < complete.lattice.size(); ++n) {
         const bool on_skeleton =
             wedge_interior_dim(complete.lattice[n], kQuadraticOrder) <= 1;
         const bool kept = n < keep_count;
         svmp::throw_if<BasisConstructionException>(
-            kept != on_skeleton, SVMP_HERE,
-            "ReferenceNodeLayout: serendipity truncation does not separate skeleton nodes from interior nodes");
+            kept != on_skeleton, "ReferenceNodeLayout: serendipity truncation does not separate skeleton nodes from interior nodes");
     }
 
     std::vector<Point> nodes = std::move(complete.coords);
@@ -678,8 +669,7 @@ std::vector<Point> quad_serendipity_nodes(int order) {
     std::vector<Point> nodes = generate_quad_nodes(order).coords;
     const std::size_t boundary_count = static_cast<std::size_t>(4 * order);
     svmp::throw_if<BasisConstructionException>(
-        boundary_count > nodes.size(), SVMP_HERE,
-        "ReferenceNodeLayout: quadrilateral serendipity skeleton exceeds the complete Lagrange layout");
+        boundary_count > nodes.size(), "ReferenceNodeLayout: quadrilateral serendipity skeleton exceeds the complete Lagrange layout");
     nodes.resize(boundary_count);
     append_quad_serendipity_interior_nodes(nodes, order);
     return nodes;
@@ -774,21 +764,18 @@ std::vector<Point> hex_serendipity_nodes(int order) {
     const std::size_t skeleton_count =
         8u + 12u * static_cast<std::size_t>(order - 1);
     svmp::throw_if<BasisConstructionException>(
-        skeleton_count > nodes.size(), SVMP_HERE,
-        "ReferenceNodeLayout: hexahedral serendipity skeleton exceeds the complete Lagrange layout");
+        skeleton_count > nodes.size(), "ReferenceNodeLayout: hexahedral serendipity skeleton exceeds the complete Lagrange layout");
     nodes.resize(skeleton_count);
 
     const std::size_t skeleton = nodes.size();
     append_hex_serendipity_face_interior_nodes(nodes, order);
     svmp::throw_if<BasisConstructionException>(
-        nodes.size() - skeleton != 6u * quad_serendipity_interior_count(order), SVMP_HERE,
-        "ReferenceNodeLayout: hexahedral serendipity face-interior node count mismatch");
+        nodes.size() - skeleton != 6u * quad_serendipity_interior_count(order), "ReferenceNodeLayout: hexahedral serendipity face-interior node count mismatch");
 
     const std::size_t before_volume = nodes.size();
     append_hex_serendipity_volume_interior_nodes(nodes, order);
     svmp::throw_if<BasisConstructionException>(
-        nodes.size() - before_volume != hex_serendipity_volume_interior_count(order), SVMP_HERE,
-        "ReferenceNodeLayout: hexahedral serendipity volume-interior node count mismatch");
+        nodes.size() - before_volume != hex_serendipity_volume_interior_count(order), "ReferenceNodeLayout: hexahedral serendipity volume-interior node count mismatch");
     return nodes;
 }
 
@@ -806,11 +793,9 @@ std::vector<Point> element_nodes(ElementType elem_type) {
         case ElementType::Wedge15:
             return serendipity_subset_nodes(generate_wedge_nodes(2), 15u, 18u);
         case ElementType::Pyramid13:
-            svmp::raise<BasisNodeOrderingException>(SVMP_HERE,
-                "ReferenceNodeLayout: pyramid node ordering is disabled");
+            svmp::raise<BasisNodeOrderingException>("ReferenceNodeLayout: pyramid node ordering is disabled");
         default:
-            svmp::raise<BasisNodeOrderingException>(SVMP_HERE,
-                "ReferenceNodeLayout: unknown element type");
+            svmp::raise<BasisNodeOrderingException>("ReferenceNodeLayout: unknown element type");
     }
 }
 
@@ -819,24 +804,20 @@ std::vector<Point> element_nodes(ElementType elem_type) {
 // guards with exact integer checks.
 void validate_lattice(const LagrangeNodeLayout& layout, ElementType type, int order) {
     svmp::throw_if<BasisConstructionException>(
-        layout.coords.size() != layout.lattice.size(), SVMP_HERE,
-        "ReferenceNodeLayout: lattice/coordinate count mismatch");
+        layout.coords.size() != layout.lattice.size(), "ReferenceNodeLayout: lattice/coordinate count mismatch");
 
     const BasisTopology top = topology(type);
     for (const auto& idx : layout.lattice) {
         for (std::size_t d = 0; d < 3u; ++d) {
             svmp::throw_if<BasisConstructionException>(
-                idx[d] < 0 || idx[d] > order, SVMP_HERE,
-                "ReferenceNodeLayout: lattice index outside [0, order]");
+                idx[d] < 0 || idx[d] > order, "ReferenceNodeLayout: lattice index outside [0, order]");
         }
         if (top == BasisTopology::Triangle || top == BasisTopology::Tetrahedron) {
             svmp::throw_if<BasisConstructionException>(
-                idx[0] + idx[1] + idx[2] > order, SVMP_HERE,
-                "ReferenceNodeLayout: simplex lattice index sum exceeds order");
+                idx[0] + idx[1] + idx[2] > order, "ReferenceNodeLayout: simplex lattice index sum exceeds order");
         } else if (top == BasisTopology::Wedge) {
             svmp::throw_if<BasisConstructionException>(
-                idx[0] + idx[1] > order, SVMP_HERE,
-                "ReferenceNodeLayout: wedge triangle lattice index sum exceeds order");
+                idx[0] + idx[1] > order, "ReferenceNodeLayout: wedge triangle lattice index sum exceeds order");
         }
     }
 }
@@ -846,21 +827,18 @@ void validate_lattice(const LagrangeNodeLayout& layout, ElementType type, int or
 double line_coord_pm_one(int i, int order) {
     if (order <= 0) {
         svmp::throw_if<BasisNodeOrderingException>(
-            i != 0, SVMP_HERE,
-            "ReferenceNodeLayout::line_coord_pm_one: node index out of range");
+            i != 0, "ReferenceNodeLayout::line_coord_pm_one: node index out of range");
         return double(0);
     }
     svmp::throw_if<BasisNodeOrderingException>(
-        i < 0 || i > order, SVMP_HERE,
-        "ReferenceNodeLayout::line_coord_pm_one: node index out of range");
+        i < 0 || i > order, "ReferenceNodeLayout::line_coord_pm_one: node index out of range");
     return gll_points(order)[static_cast<std::size_t>(i)];
 }
 
 math::Vector<double, 3> ReferenceNodeLayout::node_coord_at(ElementType elem_type,
                                                            std::size_t local_node) {
     const auto nodes = element_nodes(elem_type);
-    svmp::throw_if<BasisNodeOrderingException>(local_node >= nodes.size(), SVMP_HERE,
-                                             "ReferenceNodeLayout::node_coord_at: node index out of range");
+    svmp::throw_if<BasisNodeOrderingException>(local_node >= nodes.size(), "ReferenceNodeLayout::node_coord_at: node index out of range");
     return nodes[local_node];
 }
 
@@ -888,16 +866,14 @@ ReferenceNodeLayout::get_lagrange_lattice(ElementType canonical_type, int order)
 std::vector<math::Vector<double, 3>>
 ReferenceNodeLayout::serendipity_node_coords(BasisTopology topology, int order) {
     svmp::throw_if<BasisConstructionException>(
-        order < 1, SVMP_HERE,
-        "ReferenceNodeLayout::serendipity_node_coords requires a polynomial order >= 1");
+        order < 1, "ReferenceNodeLayout::serendipity_node_coords requires a polynomial order >= 1");
     switch (topology) {
         case BasisTopology::Quadrilateral:
             return quad_serendipity_nodes(order);
         case BasisTopology::Hexahedron:
             return hex_serendipity_nodes(order);
         default:
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "ReferenceNodeLayout::serendipity_node_coords: generated serendipity layouts "
+            svmp::raise<BasisElementCompatibilityException>("ReferenceNodeLayout::serendipity_node_coords: generated serendipity layouts "
                 "exist only for Quadrilateral and Hexahedron (Wedge15 is the fixed named layout)");
     }
 }

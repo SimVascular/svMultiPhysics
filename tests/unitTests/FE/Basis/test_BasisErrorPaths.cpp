@@ -154,20 +154,23 @@ public:
     }
 };
 
-void expect_source_location(const FEException& e)
+void expect_source_location(const svmp::ExceptionBase& e)
 {
     EXPECT_NE(e.context().file().find("test_BasisErrorPaths.cpp"), std::string::npos);
     EXPECT_GT(e.context().line(), 0);
     EXPECT_FALSE(e.context().function().empty());
 }
 
+// The core helpers raise both FE-subsystem exceptions and Core exceptions (for
+// example not_implemented() defaults to svmp::NotImplementedException), so this
+// catches their common base, svmp::ExceptionBase.
 template <class Thrower>
 void expect_core_helper_preserves_source_location(Thrower&& thrower)
 {
     try {
         thrower();
-        FAIL() << "Expected an FEException";
-    } catch (const FEException& e) {
+        FAIL() << "Expected an svmp::ExceptionBase";
+    } catch (const svmp::ExceptionBase& e) {
         expect_source_location(e);
     }
 }
@@ -285,13 +288,13 @@ TEST(BasisErrorPaths, BasisFactoryInvalidRequestsThrowBasisExceptions) {
 
 TEST(BasisErrorPaths, BasisExceptionsUseCommonStatusCodes) {
     try {
-        svmp::raise<BasisConfigurationException>(SVMP_HERE, "invalid config");
+        svmp::raise<BasisConfigurationException>("invalid config");
     } catch (const FEException& e) {
         EXPECT_EQ(e.status(), svmp::StatusCode::InvalidArgument);
     }
 
     try {
-        svmp::raise<BasisConstructionException>(SVMP_HERE, "construction failure");
+        svmp::raise<BasisConstructionException>("construction failure");
     } catch (const FEException& e) {
         EXPECT_EQ(e.status(), svmp::StatusCode::InternalError);
     }
@@ -299,32 +302,32 @@ TEST(BasisErrorPaths, BasisExceptionsUseCommonStatusCodes) {
 
 TEST(BasisErrorPaths, CoreHelpersPreserveSourceLocation) {
     expect_core_helper_preserves_source_location([] {
-        svmp::raise<BasisEvaluationException>(SVMP_HERE, "raise location");
+        svmp::raise<BasisEvaluationException>("raise location");
     });
 
     expect_core_helper_preserves_source_location([] {
         svmp::throw_if<BasisEvaluationException>(
-            true, SVMP_HERE, "throw_if location");
+            true, "throw_if location");
     });
 
     expect_core_helper_preserves_source_location([] {
-        svmp::check_arg<BasisEvaluationException>(
-            false, SVMP_HERE, "check_arg location");
+        svmp::check<BasisEvaluationException>(
+            false, "check location");
     });
 
     expect_core_helper_preserves_source_location([] {
         const int* ptr = nullptr;
         svmp::check_not_null<BasisEvaluationException>(
-            ptr, SVMP_HERE, "check_not_null location");
+            ptr, "check_not_null location");
     });
 
     expect_core_helper_preserves_source_location([] {
-        svmp::check_index<BasisEvaluationException>(1, 1, SVMP_HERE);
+        svmp::check_index<BasisEvaluationException>(1, 1);
     });
 
     expect_core_helper_preserves_source_location([] {
         svmp::not_implemented<NotImplementedException>(
-            "test feature", SVMP_HERE);
+            "test feature");
     });
 }
 

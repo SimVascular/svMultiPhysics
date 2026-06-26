@@ -21,10 +21,8 @@ enum class RequestTarget {
 int require_basis_order(const BasisRequest& req,
                         const char* missing_message,
                         const char* negative_message) {
-    svmp::throw_if<BasisConfigurationException>(!req.order.has_value(), SVMP_HERE,
-                                              missing_message);
-    svmp::throw_if<BasisConfigurationException>(*req.order < 0, SVMP_HERE,
-                                              negative_message);
+    svmp::throw_if<BasisConfigurationException>(!req.order.has_value(), missing_message);
+    svmp::throw_if<BasisConfigurationException>(*req.order < 0, negative_message);
     return *req.order;
 }
 
@@ -32,21 +30,17 @@ RequestTarget require_single_request_target(const BasisRequest& req) {
     const bool has_named_element = req.element_type != ElementType::Unknown;
     const bool has_topology = req.topology != BasisTopology::Unknown;
     svmp::throw_if<BasisConfigurationException>(
-        !has_named_element && !has_topology, SVMP_HERE,
-        "BasisFactory: request must specify either a named element_type or a reference topology");
+        !has_named_element && !has_topology, "BasisFactory: request must specify either a named element_type or a reference topology");
     svmp::throw_if<BasisConfigurationException>(
-        has_named_element && has_topology, SVMP_HERE,
-        "BasisFactory: request must specify element_type or topology, not both");
+        has_named_element && has_topology, "BasisFactory: request must specify element_type or topology, not both");
     return has_topology ? RequestTarget::Topology : RequestTarget::NamedElement;
 }
 
 void require_scalar_c0_request(const BasisRequest& req) {
     svmp::throw_if<BasisConfigurationException>(
-        req.field_type != FieldType::Scalar, SVMP_HERE,
-        "BasisFactory: Lagrange/Serendipity bases support scalar fields only");
+        req.field_type != FieldType::Scalar, "BasisFactory: Lagrange/Serendipity bases support scalar fields only");
     svmp::throw_if<BasisConfigurationException>(
-        req.continuity != Continuity::C0, SVMP_HERE,
-        "BasisFactory: Lagrange/Serendipity bases support C0 continuity only");
+        req.continuity != Continuity::C0, "BasisFactory: Lagrange/Serendipity bases support C0 continuity only");
 }
 
 std::unique_ptr<BasisFunction> create_lagrange(const BasisRequest& req) {
@@ -84,8 +78,7 @@ std::unique_ptr<BasisFunction> create(const BasisRequest& req) {
         case BasisType::Serendipity:
             return create_serendipity(req);
         default:
-            svmp::raise<BasisConfigurationException>(SVMP_HERE,
-                "BasisFactory: requested basis family is outside the scalar Lagrange/Serendipity scope");
+            svmp::raise<BasisConfigurationException>("BasisFactory: requested basis family is outside the scalar Lagrange/Serendipity scope");
     }
 }
 
@@ -104,8 +97,7 @@ BasisRequest default_basis_request(ElementType element_type) {
             if (order >= 0) {
                 return BasisRequest{element_type, BasisType::Lagrange, order};
             }
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "BasisFactory: no default basis is defined for the requested element type");
+            svmp::raise<BasisElementCompatibilityException>("BasisFactory: no default basis is defined for the requested element type");
         }
     }
 }

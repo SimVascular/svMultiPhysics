@@ -34,12 +34,9 @@ namespace basis {
  */
 class BasisException : public FEException {
 public:
-    BasisException(const std::string& message,
-                   const char* file,
-                   int line,
-                   const char* function,
-                   StatusCode status = StatusCode::Unknown)
-        : FEException(message, status, file, line, function) {}
+    explicit BasisException(const std::string& message,
+                            StatusCode status = StatusCode::Unknown)
+        : FEException(message, status) {}
 };
 
 /**
@@ -52,14 +49,8 @@ public:
  * constructing a LagrangeBasis for Tetra10 at order 1, when that layout is fixed
  * at order 2.
  */
-class BasisConfigurationException : public BasisException {
-public:
-    BasisConfigurationException(const std::string& message,
-                                const char* file,
-                                int line,
-                                const char* function)
-        : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
-};
+SVMP_DEFINE_EXCEPTION(BasisConfigurationException, BasisException,
+                      StatusCode::InvalidArgument);
 
 /**
  * @brief Requested element topology is incompatible with the basis family
@@ -69,14 +60,8 @@ public:
  * topology path (only the named Wedge15 layout is supported), or requesting a
  * basis on ElementType::Unknown.
  */
-class BasisElementCompatibilityException : public BasisException {
-public:
-    BasisElementCompatibilityException(const std::string& message,
-                                       const char* file,
-                                       int line,
-                                       const char* function)
-        : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
-};
+SVMP_DEFINE_EXCEPTION(BasisElementCompatibilityException, BasisException,
+                      StatusCode::InvalidArgument);
 
 /**
  * @brief Basis evaluation request cannot be satisfied
@@ -85,14 +70,8 @@ public:
  * output span smaller than size(), or requesting analytical gradients or Hessians
  * from a basis that does not provide them.
  */
-class BasisEvaluationException : public BasisException {
-public:
-    BasisEvaluationException(const std::string& message,
-                             const char* file,
-                             int line,
-                             const char* function)
-        : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
-};
+SVMP_DEFINE_EXCEPTION(BasisEvaluationException, BasisException,
+                      StatusCode::InvalidArgument);
 
 /**
  * @brief Public-to-canonical node ordering or coordinate lookup failure
@@ -101,14 +80,8 @@ public:
  * reference layout. Example: requesting a tensor-axis node index outside
  * [0, order] from line_coord_pm_one.
  */
-class BasisNodeOrderingException : public BasisException {
-public:
-    BasisNodeOrderingException(const std::string& message,
-                               const char* file,
-                               int line,
-                               const char* function)
-        : BasisException(message, file, line, function, StatusCode::InvalidArgument) {}
-};
+SVMP_DEFINE_EXCEPTION(BasisNodeOrderingException, BasisException,
+                      StatusCode::InvalidArgument);
 
 /**
  * @brief Internal basis construction or transform setup failure
@@ -117,14 +90,8 @@ public:
  * InternalError) rather than bad user input. Example: a generated Lagrange node
  * lattice whose index components fall outside [0, order] in get_lagrange_lattice.
  */
-class BasisConstructionException : public BasisException {
-public:
-    BasisConstructionException(const std::string& message,
-                               const char* file,
-                               int line,
-                               const char* function)
-        : BasisException(message, file, line, function, StatusCode::InternalError) {}
-};
+SVMP_DEFINE_EXCEPTION(BasisConstructionException, BasisException,
+                      StatusCode::InternalError);
 
 /** @} */
 

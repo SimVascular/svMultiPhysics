@@ -41,30 +41,24 @@ struct SimplexEval {
 BasisTopology validated_lagrange_topology(ElementType element_type, int order) {
     switch (element_type) {
         case ElementType::Quad8:
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "LagrangeBasis: Quad8 is serendipity; use SerendipityBasis");
+            svmp::raise<BasisElementCompatibilityException>("LagrangeBasis: Quad8 is serendipity; use SerendipityBasis");
         case ElementType::Hex20:
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "LagrangeBasis: Hex20 is serendipity; use SerendipityBasis");
+            svmp::raise<BasisElementCompatibilityException>("LagrangeBasis: Hex20 is serendipity; use SerendipityBasis");
         case ElementType::Wedge15:
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "LagrangeBasis: Wedge15 is serendipity; use SerendipityBasis");
+            svmp::raise<BasisElementCompatibilityException>("LagrangeBasis: Wedge15 is serendipity; use SerendipityBasis");
         case ElementType::Pyramid5:
         case ElementType::Pyramid13:
         case ElementType::Pyramid14:
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "LagrangeBasis: pyramid support is not within the current solver basis scope");
+            svmp::raise<BasisElementCompatibilityException>("LagrangeBasis: pyramid support is not within the current solver basis scope");
         default:
             break;
     }
 
     const BasisTopology top = topology(element_type);
-    svmp::throw_if<BasisElementCompatibilityException>(top == BasisTopology::Unknown, SVMP_HERE,
-                                                     "LagrangeBasis: unsupported element type");
+    svmp::throw_if<BasisElementCompatibilityException>(top == BasisTopology::Unknown, "LagrangeBasis: unsupported element type");
 
     const int baked_order = named_lagrange_order(element_type);
-    svmp::throw_if<BasisConfigurationException>(order != baked_order, SVMP_HERE,
-        "LagrangeBasis: a named element layout has a fixed polynomial order; request the matching "
+    svmp::throw_if<BasisConfigurationException>(order != baked_order, "LagrangeBasis: a named element layout has a fixed polynomial order; request the matching "
         "BasisTopology with an explicit order to choose a different order");
     return top;
 }
@@ -257,13 +251,10 @@ void evaluate_simplex(const Vec3& xi,
 
 LagrangeBasis::LagrangeBasis(BasisTopology topology, int order)
     : topology_(topology), order_(order) {
-    svmp::throw_if<BasisElementCompatibilityException>(topology_ == BasisTopology::Unknown, SVMP_HERE,
-                                                     "LagrangeBasis: unknown reference topology");
-    svmp::throw_if<BasisConfigurationException>(order_ < 0, SVMP_HERE,
-                                              "LagrangeBasis requires non-negative polynomial order");
+    svmp::throw_if<BasisElementCompatibilityException>(topology_ == BasisTopology::Unknown, "LagrangeBasis: unknown reference topology");
+    svmp::throw_if<BasisConfigurationException>(order_ < 0, "LagrangeBasis requires non-negative polynomial order");
     svmp::throw_if<BasisConfigurationException>(
-        topology_ == BasisTopology::Point && order_ != 0, SVMP_HERE,
-        "LagrangeBasis: Point topology supports order 0 only");
+        topology_ == BasisTopology::Point && order_ != 0, "LagrangeBasis: Point topology supports order 0 only");
     dimension_ = topology_dimension(topology_);
     init_nodes();
 }
@@ -327,8 +318,7 @@ void LagrangeBasis::init_nodes() {
             break;
     }
 
-    svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-        "Unsupported element type in LagrangeBasis::init_nodes");
+    svmp::raise<BasisElementCompatibilityException>("Unsupported element type in LagrangeBasis::init_nodes");
 }
 
 // Build the single reference node for a point basis.
@@ -395,8 +385,7 @@ void LagrangeBasis::build_wedge_nodes() {
     for (const auto& idx : layout.lattice) {
         const int tri_ordinal =
             tri_ordinal_for_key[static_cast<std::size_t>(idx[0] * stride + idx[1])];
-        svmp::throw_if<BasisConstructionException>(tri_ordinal < 0, SVMP_HERE,
-                                                 "LagrangeBasis: wedge node triangle index lookup failed");
+        svmp::throw_if<BasisConstructionException>(tri_ordinal < 0, "LagrangeBasis: wedge node triangle index lookup failed");
         wedge_indices_.push_back({static_cast<std::size_t>(tri_ordinal),
                                   static_cast<std::size_t>(idx[2])});
     }
@@ -585,8 +574,7 @@ void LagrangeBasis::evaluate_all_to(const Vec3& xi,
             break;
     }
 
-    svmp::raise<BasisEvaluationException>(SVMP_HERE,
-        "Unsupported element in LagrangeBasis evaluation");
+    svmp::raise<BasisEvaluationException>("Unsupported element in LagrangeBasis evaluation");
 }
 
 void LagrangeBasis::evaluate_values_to(const Vec3& xi,

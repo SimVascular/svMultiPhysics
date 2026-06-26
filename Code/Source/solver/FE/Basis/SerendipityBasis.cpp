@@ -169,8 +169,7 @@ std::vector<double> build_inverse_vandermonde(
     int max_degree) {
     const std::size_t n = nodes.size();
     svmp::throw_if<BasisConstructionException>(
-        n == 0 || exponents.size() != n, SVMP_HERE,
-        "SerendipityBasis: invalid serendipity interpolation setup");
+        n == 0 || exponents.size() != n, "SerendipityBasis: invalid serendipity interpolation setup");
 
     std::vector<double> vandermonde(n * n, double(0));
     AxisTable tx;
@@ -213,15 +212,13 @@ std::vector<double> build_inverse_vandermonde(
             std::move(vandermonde), n,
             "SerendipityBasis interpolation matrix for " + label);
     } catch (const FEException&) {
-        svmp::raise<BasisConstructionException>(SVMP_HERE,
-            "SerendipityBasis: " + label +
+        svmp::raise<BasisConstructionException>("SerendipityBasis: " + label +
                 " interpolation matrix is singular; the serendipity node set is not "
                 "unisolvent at the requested order");
     }
     const double condition_number = norm_v * matrix_norm_inf(inverse, n);
     svmp::throw_if<BasisConstructionException>(
-        !(condition_number <= kSerendipityVandermondeMaxCond), SVMP_HERE,
-        "SerendipityBasis: " + label +
+        !(condition_number <= kSerendipityVandermondeMaxCond), "SerendipityBasis: " + label +
             " interpolation matrix is too ill-conditioned (condition number ~ " +
             std::to_string(condition_number) +
             "); the requested order exceeds the well-conditioned range");
@@ -285,25 +282,20 @@ NormalizedSerendipityRequest normalize_serendipity_request(ElementType type, int
     const int expected_order = serendipity_named_order(type);
     switch (type) {
         case ElementType::Quad8:
-            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
-                "SerendipityBasis: Quad8 is the quadratic 8-node serendipity layout (order 2 only); "
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, "SerendipityBasis: Quad8 is the quadratic 8-node serendipity layout (order 2 only); "
                 "use BasisTopology::Quadrilateral for higher-order quadrilateral serendipity");
             return {BasisTopology::Quadrilateral, 2, expected_order};
         case ElementType::Hex8:
-            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
-                "SerendipityBasis: Hex8 is the trilinear 8-node basis (order 1 only); use Hex20 for quadratic serendipity");
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, "SerendipityBasis: Hex8 is the trilinear 8-node basis (order 1 only); use Hex20 for quadratic serendipity");
             return {BasisTopology::Hexahedron, 3, expected_order};
         case ElementType::Hex20:
-            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
-                "SerendipityBasis: Hex20 is the 20-node quadratic serendipity layout (order 2 only)");
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, "SerendipityBasis: Hex20 is the 20-node quadratic serendipity layout (order 2 only)");
             return {BasisTopology::Hexahedron, 3, expected_order};
         case ElementType::Wedge15:
-            svmp::throw_if<BasisConfigurationException>(order != expected_order, SVMP_HERE,
-                "SerendipityBasis: Wedge15 is the 15-node quadratic serendipity layout (order 2 only)");
+            svmp::throw_if<BasisConfigurationException>(order != expected_order, "SerendipityBasis: Wedge15 is the 15-node quadratic serendipity layout (order 2 only)");
             return {BasisTopology::Wedge, 3, expected_order};
         default:
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "SerendipityBasis named elements are Quad8, Hex8, Hex20, and Wedge15; "
+            svmp::raise<BasisElementCompatibilityException>("SerendipityBasis named elements are Quad8, Hex8, Hex20, and Wedge15; "
                 "use BasisTopology::Quadrilateral for arbitrary-order quadrilateral serendipity");
     }
 }
@@ -315,12 +307,10 @@ SerendipityBasis::SerendipityBasis(BasisTopology topology, int order)
     const bool supported_topology = topology_ == BasisTopology::Quadrilateral ||
                                     topology_ == BasisTopology::Hexahedron;
     svmp::throw_if<BasisElementCompatibilityException>(
-        !supported_topology, SVMP_HERE,
-        "SerendipityBasis: arbitrary-order topology construction is supported for "
+        !supported_topology, "SerendipityBasis: arbitrary-order topology construction is supported for "
         "Quadrilateral and Hexahedron; use the named ElementType (Wedge15) for wedge serendipity");
     svmp::throw_if<BasisConfigurationException>(
-        order < 1, SVMP_HERE,
-        "SerendipityBasis: serendipity requires a polynomial order >= 1");
+        order < 1, "SerendipityBasis: serendipity requires a polynomial order >= 1");
     dimension_ = topology_ == BasisTopology::Hexahedron ? 3 : 2;
     order_ = order;
     if (topology_ == BasisTopology::Hexahedron) {
@@ -355,8 +345,7 @@ SerendipityBasis::SerendipityBasis(ElementType type, int order) {
             return;
         default:
             // normalize_serendipity_request already rejected anything else.
-            svmp::raise<BasisElementCompatibilityException>(SVMP_HERE,
-                "SerendipityBasis: unsupported named serendipity element");
+            svmp::raise<BasisElementCompatibilityException>("SerendipityBasis: unsupported named serendipity element");
     }
 }
 
@@ -375,8 +364,7 @@ void SerendipityBasis::init_quadrilateral(int order) {
     size_ = mode_exponents_.size();
     nodes_ = ReferenceNodeLayout::serendipity_node_coords(BasisTopology::Quadrilateral, order);
     svmp::throw_if<BasisConstructionException>(
-        nodes_.size() != size_, SVMP_HERE,
-        "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
+        nodes_.size() != size_, "SerendipityBasis: quadrilateral serendipity setup produced inconsistent sizes");
     uses_legendre_modes_ = true;
     inv_vandermonde_ = build_inverse_vandermonde(
         nodes_, mode_exponents_, "Quad order " + std::to_string(order),
@@ -393,8 +381,7 @@ void SerendipityBasis::init_hexahedron(int order) {
     size_ = mode_exponents_.size();
     nodes_ = ReferenceNodeLayout::serendipity_node_coords(BasisTopology::Hexahedron, order);
     svmp::throw_if<BasisConstructionException>(
-        nodes_.size() != size_, SVMP_HERE,
-        "SerendipityBasis: hexahedral serendipity setup produced inconsistent sizes");
+        nodes_.size() != size_, "SerendipityBasis: hexahedral serendipity setup produced inconsistent sizes");
     uses_legendre_modes_ = true;
     inv_vandermonde_ = build_inverse_vandermonde(
         nodes_, mode_exponents_, "Hex order " + std::to_string(order),
@@ -407,18 +394,15 @@ void SerendipityBasis::init_hexahedron(int order) {
 // layout that still carries a fixed monomial table.
 void SerendipityBasis::init_fixed_named(ElementType type) {
     svmp::throw_if<BasisConstructionException>(
-        type != ElementType::Wedge15, SVMP_HERE,
-        "SerendipityBasis: init_fixed_named builds only the Wedge15 layout");
+        type != ElementType::Wedge15, "SerendipityBasis: init_fixed_named builds only the Wedge15 layout");
     size_ = 15u;
     const std::span<const std::array<int, 3>> family_exponents(
         kWedge15MonomialExponents.data(), kWedge15MonomialExponents.size());
     nodes_ = ReferenceNodeLayout::node_coords(type);
     svmp::throw_if<BasisConstructionException>(
-        nodes_.size() != size_, SVMP_HERE,
-        "SerendipityBasis: Wedge15 layout node count does not match basis size");
+        nodes_.size() != size_, "SerendipityBasis: Wedge15 layout node count does not match basis size");
     svmp::throw_if<BasisConstructionException>(
-        family_exponents.size() != size_, SVMP_HERE,
-        "SerendipityBasis: Wedge15 monomial count does not match basis size");
+        family_exponents.size() != size_, "SerendipityBasis: Wedge15 monomial count does not match basis size");
     mode_exponents_.assign(family_exponents.begin(), family_exponents.end());
     // Wedge15 is the fixed order-2 layout; its 15x15 system is trivially
     // well-conditioned, so it keeps the monomial modal basis.
@@ -458,7 +442,6 @@ void SerendipityBasis::evaluate_all_to(const math::Vector<double, 3>& xi,
     svmp::throw_if<BasisEvaluationException>(
         mode_exponents_.size() != size_ ||
             inv_vandermonde_.size() != size_ * size_,
-        SVMP_HERE,
         "SerendipityBasis: interpolation tables are not initialized for evaluation");
 
     // Build the per-axis modal tables once, then accumulate over the modes. The
