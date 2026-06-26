@@ -346,6 +346,38 @@ public:
     }
 };
 
+/// @brief A requested operation or feature is not implemented.
+///
+/// This is the default exception raised by not_implemented(). Subsystems that
+/// need their not-implemented errors to be catchable as their own base type may
+/// define a more specific exception (for example, svmp::FE::NotImplementedException
+/// derives from FEException); pass it explicitly to not_implemented<...>().
+class NotImplementedException : public CoreException {
+public:
+    NotImplementedException(const std::string& message,
+                            const char* file = "",
+                            int line = 0,
+                            const char* function = "")
+        : CoreException(message, StatusCode::NotImplemented, file, line, function)
+    {
+    }
+};
+
+/// @brief An index is outside its valid range.
+///
+/// This is the default exception raised by check_index(). The status code is
+/// InvalidArgument because an out-of-range index is a caller error.
+class IndexOutOfRangeException : public CoreException {
+public:
+    IndexOutOfRangeException(const std::string& message,
+                             const char* file = "",
+                             int line = 0,
+                             const char* function = "")
+        : CoreException(message, StatusCode::InvalidArgument, file, line, function)
+    {
+    }
+};
+
 inline void ExceptionRuntime::install_terminate_handler()
 {
     std::set_terminate([]() {
@@ -366,6 +398,12 @@ inline void ExceptionRuntime::install_terminate_handler()
     });
 }
 
+/**
+ * @brief Construct and throw @p ExceptionT, appending the source location.
+ *
+ * @details The exception type is given explicitly; @p args are forwarded to the
+ * exception constructor ahead of the file/line/function from @p location.
+ */
 template <class ExceptionT, class... Args>
 [[noreturn]] void raise(SourceLocation location, Args&&... args)
 {
@@ -373,6 +411,13 @@ template <class ExceptionT, class... Args>
                      location.function);
 }
 
+/**
+ * @brief Raise @p ExceptionT when @p condition is false (a required condition).
+ *
+ * @details Use for general invariants and postconditions. check_arg() is the same
+ * check with a name that documents argument/precondition validation at the call
+ * site; throw_if() is the logical inverse (it raises when its condition is true).
+ */
 template <class ExceptionT, class... Args>
 void check(bool condition, SourceLocation location, Args&&... args)
 {
@@ -381,6 +426,12 @@ void check(bool condition, SourceLocation location, Args&&... args)
     }
 }
 
+/**
+ * @brief Raise @p ExceptionT when an argument @p condition is false.
+ *
+ * @details Behaves exactly like check(); the distinct name documents at the call
+ * site that the condition validates a function argument/precondition.
+ */
 template <class ExceptionT, class... Args>
 void check_arg(bool condition, SourceLocation location, Args&&... args)
 {
@@ -389,6 +440,9 @@ void check_arg(bool condition, SourceLocation location, Args&&... args)
     }
 }
 
+/**
+ * @brief Raise @p ExceptionT when @p ptr is null.
+ */
 template <class ExceptionT, class PointerT, class... Args>
 void check_not_null(PointerT ptr, SourceLocation location, Args&&... args)
 {
@@ -397,6 +451,13 @@ void check_not_null(PointerT ptr, SourceLocation location, Args&&... args)
     }
 }
 
+/**
+ * @brief Raise @p ExceptionT when @p condition is true.
+ *
+ * @details The logical inverse of check(): check() raises when its condition is
+ * false (a required condition); throw_if() raises when its condition is true (a
+ * failure condition). The two are not interchangeable.
+ */
 template <class ExceptionT, class... Args>
 void throw_if(bool condition, SourceLocation location, Args&&... args)
 {
@@ -405,7 +466,14 @@ void throw_if(bool condition, SourceLocation location, Args&&... args)
     }
 }
 
-template <class ExceptionT, class IndexT, class SizeT>
+/**
+ * @brief Raise an exception when @p index is outside [0, @p size).
+ *
+ * @details @p ExceptionT defaults to IndexOutOfRangeException; supply a different
+ * type only when a subsystem needs its own exception. The bounds message is
+ * generated automatically.
+ */
+template <class ExceptionT = IndexOutOfRangeException, class IndexT, class SizeT>
 void check_index(IndexT index, SizeT size, SourceLocation location)
 {
     const long long index_value = static_cast<long long>(index);
@@ -417,13 +485,27 @@ void check_index(IndexT index, SizeT size, SourceLocation location)
             std::to_string(size_value) + ")");
 }
 
-template <class ExceptionT, class... Args>
+/**
+ * @brief Raise an exception reporting an unimplemented feature.
+ *
+ * @details @p ExceptionT defaults to NotImplementedException. This overload
+ * forwards @p args to the exception constructor; prefer the (feature, location)
+ * overload below for the common case of a single feature-name string.
+ */
+template <class ExceptionT = NotImplementedException, class... Args>
 [[noreturn]] void not_implemented(SourceLocation location, Args&&... args)
 {
     raise<ExceptionT>(location, std::forward<Args>(args)...);
 }
 
-template <class ExceptionT, class FeatureT>
+/**
+ * @brief Raise an exception reporting an unimplemented @p feature.
+ *
+ * @details Convenience for the common case where the only argument is a
+ * feature-name string (note the feature-first parameter order). @p ExceptionT
+ * defaults to NotImplementedException.
+ */
+template <class ExceptionT = NotImplementedException, class FeatureT>
 [[noreturn]] void not_implemented(FeatureT&& feature, SourceLocation location)
 {
     raise<ExceptionT>(location, std::forward<FeatureT>(feature));
