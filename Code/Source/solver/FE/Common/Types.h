@@ -117,34 +117,6 @@ using LocalIndex = std::uint32_t;
 using GlobalIndex = std::int64_t;
 
 /**
- * @brief DOF-specific index type
- *
- * Strong type alias to prevent mixing DOF indices with other indices.
- * Provides type safety at compile time. It is hand-rolled to carry an invalid
- * sentinel and is_valid(); QuadraturePointIndex uses the general StrongType
- * template for the same strong-typing purpose.
- */
-struct DofIndex {
-    GlobalIndex value;  ///< Underlying global DOF index; negative values are invalid.
-
-    /**
-     * @brief Construct a DOF index, defaulting to the invalid sentinel.
-     * @param v Global DOF index value.
-     */
-    constexpr explicit DofIndex(GlobalIndex v = -1) noexcept : value(v) {}
-    /**
-     * @brief Convert to the underlying global index value.
-     * @return The stored global index.
-     */
-    constexpr operator GlobalIndex() const noexcept { return value; }
-    /**
-     * @brief Check whether this index refers to a valid DOF.
-     * @return True when the stored value is non-negative.
-     */
-    constexpr bool is_valid() const noexcept { return value >= 0; }
-};
-
-/**
  * @brief Field identifier type
  *
  * Used to distinguish between different physical fields in multi-field problems.
@@ -433,11 +405,36 @@ struct QuadraturePointTag {};   ///< Tag type for quadrature-point indices.
 struct QuadratureWeightTag {};  ///< Tag type for quadrature weights.
 struct BasisValueTag {};        ///< Tag type for basis-function values.
 struct BasisGradientTag {};     ///< Tag type for basis-function gradients.
+struct DofTag {};               ///< Tag type for global DOF indices.
 
 /** Type-safe index of a quadrature point within a rule. */
 using QuadraturePointIndex = StrongType<LocalIndex, QuadraturePointTag>;
 /** Type-safe quadrature weight value. */
 using QuadratureWeight = StrongType<double, QuadratureWeightTag>;
+
+/**
+ * @brief DOF-specific index type
+ *
+ * @details A StrongType over GlobalIndex that prevents mixing DOF indices with
+ * other indices: conversion back to GlobalIndex is explicit (via get()), so a
+ * DofIndex cannot silently decay to a raw integer. Over the base StrongType it
+ * adds two DOF-specific conveniences -- it default-constructs to the invalid
+ * sentinel (-1) and exposes is_valid() -- for distributed DOF numbering where a
+ * negative value marks an unset or non-local DOF.
+ */
+class DofIndex : public StrongType<GlobalIndex, DofTag> {
+public:
+    using StrongType::StrongType;
+
+    /** @brief Construct an invalid DOF index (the negative sentinel). */
+    constexpr DofIndex() noexcept : StrongType(GlobalIndex{-1}) {}
+
+    /**
+     * @brief Check whether this index refers to a valid DOF.
+     * @return True when the stored value is non-negative.
+     */
+    constexpr bool is_valid() const noexcept { return get() >= 0; }
+};
 
 // ============================================================================
 // Type Traits
