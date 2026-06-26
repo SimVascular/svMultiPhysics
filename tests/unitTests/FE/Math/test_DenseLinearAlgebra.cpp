@@ -204,7 +204,7 @@ TEST(DenseLinearAlgebra, SolveInPlaceValidatesInputs) {
 
     DenseLUSolver unfactored;
     unfactored.n = 2u;
-    unfactored.label = "unfactored";
+    unfactored.error_message_label = "unfactored";
     EXPECT_FALSE(unfactored.empty());
     EXPECT_THROW(unfactored.solve_in_place(std::span<double>(rhs.data(), rhs.size()), 1u),
                  FEException);
