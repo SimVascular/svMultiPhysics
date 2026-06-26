@@ -409,7 +409,7 @@ inline void ExceptionRuntime::install_terminate_handler()
  * arguments default to the compiler builtins __builtin_FILE()/__builtin_LINE()/
  * __builtin_FUNCTION(), which capture the caller's location, so a string literal
  * or std::string passed at the call site is implicitly wrapped into a Diagnostic
- * that records exactly where the call appears -- callers do not pass SVMP_HERE:
+ * that records exactly where the call appears -- callers pass no explicit location:
  * @code
  * svmp::check<MyException>(ptr != nullptr, "pointer must not be null");
  * @endcode
@@ -564,8 +564,6 @@ template <class ExceptionT = NotImplementedException>
 }
 
 } // namespace svmp
-
-#define SVMP_HERE ::svmp::SourceLocation{__FILE__, __LINE__, __func__}
 
 #if SVMP_EXCEPTION_DEBUG_MODE
 #define SVMP_DEBUG_CHECK(ExceptionT, condition, ...)                         \
