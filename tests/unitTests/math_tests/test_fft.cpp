@@ -78,7 +78,8 @@ TEST_F(FFTTest, SinCosLinearCombination) {
     InitializeFourierCoefficients(gt, 1, 16);
     
     // Compute the Fourier coefficients
-    fft(N, temporal_values, gt);
+    gt = fcType::from_time_series(/* n_fourier_coefficients = */ N,
+                                  temporal_values, /* is_ramp = */ false);
 
     // Check the slope (first Fourier coefficient)
     ASSERT_NEAR(gt.qs[0], -0.13830, 1e-2) << "Expected slope ~-0.13830";

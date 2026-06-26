@@ -17,13 +17,111 @@ std::string clean_line(std::string line) {
 }
 } // namespace
 
+fcType fcType::from_time_series(
+    const unsigned int n_fourier_coefficients,
+    const std::vector<std::vector<double>> &temporal_values,
+    const bool is_ramp) {
+  const unsigned int n_time_points = temporal_values.size();
+
+  // @todo[michelebucelli] This should be an appropriate exception.
+  if (n_time_points < 2) {
+    throw std::runtime_error(
+        "At least two time points are needed to construct an fcType object.");
+  }
+
+  const unsigned int n_dimensions = temporal_values[0].size() - 1;
+
+  // Check that all entries of temporal_values have the same number of elements.
+  // @todo[michelebucelli] This should probably be an Array, in which this is
+  //   enforced a priori, rather than a vector of vectors. This change would
+  //   also save us the extraction for loop below.
+  for (const auto &row : temporal_values) {
+    if (row.size() != n_dimensions + 1) {
+      throw std::runtime_error(
+          "All rows of temporal_values must have the same number of elements.");
+    }
+  }
+
+  Vector<double> times(n_time_points);
+  Array<double> values(n_dimensions, n_time_points);
+
+  for (unsigned int i = 0; i < n_time_points; ++i) {
+    times[i] = temporal_values[i][0];
+    for (unsigned int j = 0; j < n_dimensions; ++j) {
+      values(j, i) = temporal_values[i][j + 1];
+    }
+  }
+
+  fcType result;
+
+  result.lrmp = is_ramp;
+  result.d = n_dimensions;
+  result.n = is_ramp ? 1 : n_fourier_coefficients;
+  result.ti = times[0];
+  result.T = times[n_time_points - 1] - times[0];
+  result.qi.resize(n_dimensions);
+  result.qs.resize(n_dimensions);
+  result.r.resize(n_dimensions, result.n);
+  result.i.resize(n_dimensions, result.n);
+
+  // Compute the linear trend part.
+  for (unsigned int j = 0; j < n_dimensions; ++j) {
+    result.qi[j] = values(j, 0);
+    result.qs[j] = (values(j, n_time_points - 1) - values(j, 0)) / result.T;
+  }
+
+  // Subtract the linear trend part from the values.
+  for (unsigned int i = 0; i < n_time_points; ++i) {
+    times[i] -= result.ti;
+    for (unsigned int j = 0; j < n_dimensions; ++j) {
+      values(j, i) = values(j, i) - result.qi[j] - result.qs[j] * times[i];
+    }
+  }
+
+  // Compute the Fourier coefficients.
+  for (int n = 0; n < result.n; ++n) {
+    const double tmp = static_cast<double>(n);
+    result.r.set_col(n, 0.0);
+    result.i.set_col(n, 0.0);
+
+    for (int i = 0; i < n_time_points - 1; ++i) {
+      const double ko = 2.0 * consts::pi * tmp * times[i] / result.T;
+      const double kn = 2.0 * consts::pi * tmp * times[i + 1] / result.T;
+
+      for (int j = 0; j < result.d; j++) {
+        const double s =
+            (values(j, i + 1) - values(j, i)) / (times[i + 1] - times[i]);
+
+        if (n == 0) {
+          result.r(j, n) += 0.5 * (times[i + 1] - times[i]) *
+                            (values(j, i + 1) + values(j, i));
+        } else {
+          result.r(j, n) += s * (std::cos(kn) - std::cos(ko));
+          result.i(j, n) -= s * (std::sin(kn) - std::sin(ko));
+        }
+      }
+    }
+
+    if (n == 0) {
+      for (int k = 0; k < result.d; k++) {
+        result.r(k, n) /= result.T;
+      }
+    } else {
+      for (int k = 0; k < result.d; k++) {
+        result.r(k, n) = 0.5 * result.r(k, n) * result.T /
+                         (consts::pi * consts::pi * tmp * tmp);
+        result.i(k, n) = 0.5 * result.i(k, n) * result.T /
+                         (consts::pi * consts::pi * tmp * tmp);
+      }
+    }
+  }
+
+  return result;
+}
+
 fcType fcType::from_time_series_file(const std::string &file_name,
                                      const unsigned int n_dimensions,
                                      const bool is_ramp) {
-  fcType result;
-  result.d = n_dimensions;
-  result.lrmp = is_ramp;
-
   std::ifstream file(file_name);
 
   // @todo[michelebucelli] This should actually thrown an exception, ideally of
@@ -33,18 +131,15 @@ fcType fcType::from_time_series_file(const std::string &file_name,
   }
 
   // Read the header of the file.
-  int n_time_points;
-  file >> n_time_points >> result.n;
+  int n_time_points, n_fourier_coefficients;
+  file >> n_time_points >> n_fourier_coefficients;
 
   // @todo[michelebucelli] This should also be an appropriate exception.
-  if (n_time_points < 2 || result.n == 0) {
+  if (n_time_points < 2 || n_fourier_coefficients == 0) {
     throw std::runtime_error(
         "Error reading the first line of the temporal values file '" +
         file_name + "'.");
   }
-
-  if (is_ramp)
-    result.n = 1;
 
   // Read the time-value pairs.
   std::vector<std::vector<double>> values;
@@ -89,22 +184,33 @@ fcType fcType::from_time_series_file(const std::string &file_name,
     ++line_number;
   }
 
-  result.qi.resize(n_dimensions);
-  result.qs.resize(n_dimensions);
-  result.r.resize(n_dimensions, result.n);
-  result.i.resize(n_dimensions, result.n);
+  return fcType::from_time_series(n_fourier_coefficients, values, is_ramp);
+}
 
-  fft(n_time_points, values, result);
+fcType fcType::from_fourier_coefficients(const Vector<double> &qi,
+                                         const Vector<double> &qs,
+                                         const Array<double> &r,
+                                         const Array<double> &i,
+                                         const double ti, const double T) {
+  // @todo[michelebucelli] Add some correctness checks on the input arguments.
+
+  fcType result;
+
+  result.lrmp = false;
+  result.n = r.ncols();
+  result.d = qi.size();
+  result.qi = qi;
+  result.qs = qs;
+  result.r = r;
+  result.i = i;
+  result.ti = ti;
+  result.T = T;
 
   return result;
 }
 
 fcType fcType::from_fourier_coefficients_file(const std::string &file_name,
                                               const unsigned int n_dimensions) {
-  fcType result;
-  result.d = n_dimensions;
-  result.lrmp = false;
-
   std::ifstream file(file_name);
 
   // @todo[michelebucelli] This should actually thrown an exception, ideally of
@@ -114,11 +220,11 @@ fcType fcType::from_fourier_coefficients_file(const std::string &file_name,
   }
 
   // Read the initial time and period from the header.
-  file >> result.ti >> result.T;
+  double ti, T;
+  file >> ti >> T;
 
   // Read the linear trend part.
-  result.qi.resize(n_dimensions);
-  result.qs.resize(n_dimensions);
+  Vector<double> qi(n_dimensions), qs(n_dimensions);
 
   std::string line;
   double tmp;
@@ -136,18 +242,21 @@ fcType fcType::from_fourier_coefficients_file(const std::string &file_name,
       values.push_back(tmp);
     }
 
-    result.qi[current_dimension] = values[0];
-    result.qs[current_dimension] = values[1];
+    qi[current_dimension] = values[0];
+    qs[current_dimension] = values[1];
     ++current_dimension;
   }
 
   // Read the Fourier coefficients.
-  file >> result.n;
-  result.r.resize(n_dimensions, result.n);
-  result.i.resize(n_dimensions, result.n);
+  unsigned int n_fourier_coefficients;
+  file >> n_fourier_coefficients;
+
+  Array<double> r(n_dimensions, n_fourier_coefficients);
+  Array<double> i(n_dimensions, n_fourier_coefficients);
 
   unsigned int current_coefficient = 0;
-  while (current_coefficient < result.n && std::getline(file, line)) {
+  while (current_coefficient < n_fourier_coefficients &&
+         std::getline(file, line)) {
     line = clean_line(line);
     if (line.empty())
       continue;
@@ -159,15 +268,15 @@ fcType fcType::from_fourier_coefficients_file(const std::string &file_name,
       values.push_back(tmp);
     }
 
-    for (unsigned int i = 0; i < n_dimensions; ++i) {
-      result.r(i, current_coefficient) = values[i];
-      result.i(i, current_coefficient) = values[i + n_dimensions];
+    for (unsigned int j = 0; j < n_dimensions; ++j) {
+      r(j, current_coefficient) = values[j];
+      i(j, current_coefficient) = values[j + n_dimensions];
     }
 
     ++current_coefficient;
   }
 
-  return result;
+  return fcType::from_fourier_coefficients(qi, qs, r, i, ti, T);
 }
 
 void fcType::distribute(const CmMod &cm_mod, const cmType &cm) {

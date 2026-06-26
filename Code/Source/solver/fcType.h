@@ -17,15 +17,17 @@
 ///
 /// These are used for boundary conditions and for time-dependent prescribed
 /// active stress.
+///
+/// @todo[michelebucelli] More detailed documentation.
 class fcType {
 public:
-  /// @brief Read Fourier coefficients from file and return the corresponding
-  /// fcType instance.
+  /// @brief Construct an fcType from a time series.
   ///
-  /// @todo[michelebucelli] More detailed documentation, especially on the file
-  ///   format.
-  static fcType from_fourier_coefficients_file(const std::string &file_name,
-                                               const unsigned int n_dimensions);
+  /// @todo[michelebucelli] More detailed documentation.
+  static fcType
+  from_time_series(const unsigned int n_fourier_coefficients,
+                   const std::vector<std::vector<double>> &temporal_values,
+                   const bool is_ramp);
 
   /// @brief Read a time series from file and return the corresponding fcType
   /// instance.
@@ -35,6 +37,21 @@ public:
   static fcType from_time_series_file(const std::string &file_name,
                                       const unsigned int n_dimensions,
                                       const bool is_ramp);
+
+  /// @brief Construct an fcType instance from Fourier coefficients.
+  static fcType from_fourier_coefficients(const Vector<double> &qi,
+                                          const Vector<double> &qs,
+                                          const Array<double> &r,
+                                          const Array<double> &i,
+                                          const double ti, const double T);
+
+  /// @brief Read Fourier coefficients from file and return the corresponding
+  /// fcType instance.
+  ///
+  /// @todo[michelebucelli] More detailed documentation, especially on the file
+  ///   format.
+  static fcType from_fourier_coefficients_file(const std::string &file_name,
+                                               const unsigned int n_dimensions);
 
   /// @brief Distribute the data to all parallel processes.
   ///
