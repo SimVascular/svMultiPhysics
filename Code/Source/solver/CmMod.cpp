@@ -138,6 +138,11 @@ void cmType::bcast(const CmMod& cm_mod, Vector<int>& data) const
   MPI_Bcast(data.data(), data.size(), cm_mod::mpint, cm_mod.master, com());
 }
 
+/// @brief bcast unsigned int
+void cmType::bcast(const CmMod &cm_mod, unsigned int *data) const {
+  MPI_Bcast(data, 1, cm_mod::mpuint, cm_mod.master, com());
+}
+
 /// @brief gather int array
 void cmType::gather(const CmMod& cm_mod, const int* send_data, int send_count, int* recv_data, int recv_count, int root) const
 {
