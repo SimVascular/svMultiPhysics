@@ -1826,9 +1826,10 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     }
 
   } else if (utils::btest(lBc.bType,iBC_ustd)) {
-     if (lBc.gt.d != nsd) {
-       throw std::runtime_error("[set_bc_trac_l]  Traction dof not initialized properly");
-     }
+    if (lBc.gt.dimension() != nsd) {
+      throw std::runtime_error(
+          "[set_bc_trac_l]  Traction dof not initialized properly");
+    }
      const Vector<double> h = lBc.gt.value(com_mod.time);
      for (int a = 0; a < nNo; a++) {
        int Ac = lFa.gN(a);

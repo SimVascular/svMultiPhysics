@@ -19,8 +19,6 @@
 /// active stress.
 class fcType {
 public:
-  bool defined() const { return n != 0; };
-
   /// @brief Read Fourier coefficients from file and return the corresponding
   /// fcType instance.
   ///
@@ -50,6 +48,12 @@ public:
   /// @brief Return the interpolated value and time derivative.
   std::pair<Vector<double>, Vector<double>>
   value_and_derivative(const double time) const;
+
+  /// @brief Return whether this object has been initialized.
+  bool defined() const { return n != 0; };
+
+  /// @brief Get the dimension of the data interpolated by this object.
+  unsigned int dimension() const { return d; }
 
   /// Toggle whether this is a ramp function or not.
   bool lrmp = false;
