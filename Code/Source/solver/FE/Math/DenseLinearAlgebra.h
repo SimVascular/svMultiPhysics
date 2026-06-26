@@ -92,9 +92,17 @@ struct DenseInverseResult {
     bool used_svd_fallback{false};      ///< True when an SVD fallback was used for a high-condition matrix.
 };
 
-/** @brief Condition estimate above which the inverse switches to an SVD fallback. @ingroup FE_Math */
+/**
+ * @brief Condition estimate above which the inverse switches to an SVD fallback.
+ * @ingroup FE_Math
+ * @return The fallback condition-number threshold.
+ */
 [[nodiscard]] double dense_matrix_condition_fallback_threshold() noexcept;
-/** @brief Condition estimate above which validation rejects a dense inverse. @ingroup FE_Math */
+/**
+ * @brief Condition estimate above which validation rejects a dense inverse.
+ * @ingroup FE_Math
+ * @return The error condition-number threshold.
+ */
 [[nodiscard]] double dense_matrix_condition_error_threshold() noexcept;
 
 /**
@@ -123,7 +131,10 @@ struct DenseLUSolver {
     std::string error_message_label;     ///< Prefix for solve-time exception messages.
     std::unique_ptr<Impl> impl;          ///< Eigen factorization (pimpl).
 
-    /** @brief Whether the factorization is empty (n == 0). */
+    /**
+     * @brief Whether the factorization is empty (n == 0).
+     * @return True when no matrix has been factored.
+     */
     [[nodiscard]] bool empty() const noexcept { return n == 0; }
 
     /**

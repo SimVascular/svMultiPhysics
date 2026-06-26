@@ -32,20 +32,23 @@
  * material model, and equation context.
  *
  * The main pieces are:
- * - @ref BasisFunction (BasisFunction.h): the abstract query and evaluation
- *   contract for code that does not need to know the concrete family.
+ * - @ref svmp::FE::basis::BasisFunction "BasisFunction" (BasisFunction.h): the
+ *   abstract query and evaluation contract for code that does not need to know
+ *   the concrete family.
  * - @ref FE_LagrangeBasis "LagrangeBasis" and
  *   @ref FE_SerendipityBasis "SerendipityBasis": the implemented nodal
  *   families, including analytical first and second derivatives in reference
  *   coordinates.
  * - basis_factory (BasisFactory.h): runtime construction from a
- *   @ref BasisRequest. basis_factory::default_basis_request() centralizes the
- *   family/order that matches each supported element's public node layout.
- * - @ref ReferenceNodeLayout (NodeOrderingConventions.h): canonical reference-node
- *   coordinates and the output ordering used by every basis evaluator.
- * - @ref BasisTopology (BasisTraits.h) and the @ref FE_BasisExceptions
- *   "basis exceptions" (BasisExceptions.h): topology classification,
- *   compile-time helpers, and module-specific exception types.
+ *   @ref svmp::FE::basis::BasisRequest "BasisRequest".
+ *   basis_factory::default_basis_request() centralizes the family/order that
+ *   matches each supported element's public node layout.
+ * - @ref svmp::FE::basis::ReferenceNodeLayout "ReferenceNodeLayout"
+ *   (NodeOrderingConventions.h): canonical reference-node coordinates and the
+ *   output ordering used by every basis evaluator.
+ * - @ref svmp::FE::basis::BasisTopology "BasisTopology" (BasisTraits.h) and the
+ *   @ref FE_BasisExceptions "basis exceptions" (BasisExceptions.h): topology
+ *   classification, compile-time helpers, and module-specific exception types.
  *
  * ## Object and evaluation contract
  *

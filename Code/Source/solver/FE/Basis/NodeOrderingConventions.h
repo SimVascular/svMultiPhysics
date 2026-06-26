@@ -23,7 +23,7 @@ namespace basis {
  * @brief Reference-node generators that the basis families build on.
  *
  * @warning Internal implementation detail. Do not use these directly: obtain a
- * basis through @ref basis_factory and read its nodes via BasisFunction::nodes().
+ * basis through basis_factory and read its nodes via BasisFunction::nodes().
  * These declarations are part of the internal node-ordering machinery and their
  * interface may change without notice.
  *
@@ -74,18 +74,31 @@ namespace basis {
  * index directly instead of reconstructing it from the floating-point coordinate.
  */
 struct LagrangeNodeLayout {
-    std::vector<math::Vector<double, 3>> coords;
-    std::vector<std::array<int, 3>>      lattice;
+    std::vector<math::Vector<double, 3>> coords;   ///< Reference node coordinates, one per node.
+    std::vector<std::array<int, 3>>      lattice;  ///< Integer lattice index of each node (see details above).
 };
 
+/**
+ * @brief Reference-node coordinate and count lookups for an element type.
+ */
 class ReferenceNodeLayout {
 public:
     /**
      * @brief One reference node coordinate by local index. Regenerates the full
      * layout per call; prefer node_coords() when more than one node is needed.
+     *
+     * @param elem_type Element type to look up.
+     * @param local_node Local node index in [0, num_nodes(elem_type)).
+     * @return Reference coordinate of the requested node.
      */
     static math::Vector<double, 3> node_coord_at(ElementType elem_type,
                                                  std::size_t local_node);
+
+    /**
+     * @brief Number of reference nodes in an element type's public layout.
+     * @param elem_type Element type to look up.
+     * @return Node count.
+     */
     static std::size_t num_nodes(ElementType elem_type);
 
     /**
@@ -101,6 +114,12 @@ public:
      */
     static std::vector<math::Vector<double, 3>> node_coords(ElementType elem_type);
 
+    /**
+     * @brief Reference Lagrange node coordinates for a canonical type and order.
+     * @param canonical_type Canonical Lagrange element type (or Point1).
+     * @param order Polynomial order.
+     * @return Reference node coordinates, one per node, in basis order.
+     */
     static std::vector<math::Vector<double, 3>>
     get_lagrange_node_coords(ElementType canonical_type, int order);
 
