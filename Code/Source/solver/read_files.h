@@ -33,7 +33,7 @@ namespace read_files_ns {
 
   void read_eq(Simulation* simulation, EquationParameters* params, eqType& eq);
 
-  void read_files(Simulation* simulation, const std::string& file_name);
+  void read_files(Simulation* simulation, const std::string& file_name, bool from_string = false);
 
   void read_fourier_coeff_values_file(const std::string& file_name, bcType& lBc);
   void read_fourier_coeff_values_file(const std::string& file_name, bfType& lBf);

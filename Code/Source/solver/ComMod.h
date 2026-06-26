@@ -1571,8 +1571,13 @@ class ComMod {
     /// @brief Whether there is a requirement to update mesh and Dn-Do variables
     bool dFlag = false;
 
-    /// @brief Whether mesh is moving
+    /// @brief Whether mesh is moving (monolithic FSI: mesh velocity in DOFs nsd+1..2*nsd)
     bool mvMsh = false;
+
+    /// @brief ALE mesh velocity for partitioned FSI (nsd, tnNo).
+    /// When non-empty, the fluid assembly subtracts this from the convective
+    /// velocity, providing the ALE correction without expanding tDof.
+    Array<double> ale_mesh_velocity;
 
     /// @brief Whether to averaged results
     bool saveAve = false;

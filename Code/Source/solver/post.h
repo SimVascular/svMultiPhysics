@@ -37,6 +37,16 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
 void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>& res, Vector<double>& resE,
     const SolutionStates& solutions, const int iEq, consts::OutputNameType outGrp);
 
+/// @brief Compute consistent nodal traction forces at a fluid face.
+///
+/// Used by partitioned FSI to extract the fluid traction at the FSI
+/// interface.  Returns force ON the solid (sign: -(sigma . n_fluid)).
+Array<double> compute_face_traction(
+    ComMod& com_mod, const CmMod& cm_mod,
+    const mshType& fluid_mesh, const faceType& fluid_face,
+    const eqType& fluid_eq,
+    const SolutionStates& solutions);
+
 };
 
 #endif

@@ -9,6 +9,7 @@
 //
 #include "Simulation.h"
 #include "Integrator.h"
+#include "PartitionedFSI.h"
 
 #include "all_fun.h"
 #include "bf.h"
@@ -36,21 +37,6 @@
 #include <cmath>
 #include <fstream>
 
-//------------------------
-// add_eq_linear_algebra
-//------------------------
-// Create a LinearAlgebra object for an equation.
-//
-void add_eq_linear_algebra(ComMod& com_mod, eqType& lEq)
-{
-  lEq.linear_algebra = LinearAlgebraFactory::create_interface(lEq.linear_algebra_type);
-  lEq.linear_algebra->set_preconditioner(lEq.linear_algebra_preconditioner);
-  lEq.linear_algebra->initialize(com_mod, lEq);
-
-  if (lEq.linear_algebra_assembly_type != consts::LinearAlgebraType::none) {
-    lEq.linear_algebra->set_assembly(lEq.linear_algebra_assembly_type);
-  }
-}
 
 void finalize_linear_algebra(eqType& lEq)
 {
@@ -350,6 +336,8 @@ void iterate_solution(Simulation* simulation)
     #endif
 
     int iEqOld = cEq;
+
+    // Monolithic Newton iteration loop
     integrator.step();
 
     #ifdef debug_iterate_solution
@@ -569,7 +557,12 @@ void iterate_solution(Simulation* simulation)
 
 void run_simulation(Simulation* simulation)
 {
-  iterate_solution(simulation);
+  auto* partitioned_fsi = simulation->get_partitioned_fsi();
+  if (partitioned_fsi) {
+    partitioned_fsi->run();
+  } else {
+    iterate_solution(simulation);
+  }
 }
 
 
@@ -654,6 +647,9 @@ int main(int argc, char *argv[])
       auto& eq = simulation->com_mod.eq[iEq];
       add_eq_linear_algebra(simulation->com_mod, eq);
     }
+
+    // Initialize partitioned FSI coupling if configured
+    simulation->initialize_partitioned_fsi(file_name);
 
     #ifdef debug_main
     for (int iM = 0; iM < simulation->com_mod.nMsh; iM++) {

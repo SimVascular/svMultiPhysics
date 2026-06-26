@@ -13,8 +13,11 @@
 #include <string>
 #include <memory>
 
-// Forward declaration
+// Forward declarations
 class Integrator;
+class PartitionedFSI;
+
+void add_eq_linear_algebra(ComMod& com_mod, eqType& lEq);
 
 class Simulation {
 
@@ -28,6 +31,8 @@ class Simulation {
     ChnlMod& get_chnl_mod() { return chnl_mod; };
     ComMod& get_com_mod() { return com_mod; };
     Integrator& get_integrator();
+    PartitionedFSI* get_partitioned_fsi();
+    void initialize_partitioned_fsi(const std::string& xml_file_path);
 
     // Initialize the Integrator object after simulation setup is complete
     // Takes ownership of solution states via move semantics
@@ -35,6 +40,9 @@ class Simulation {
 
     // Read a solver paramerer input XML file.
     void read_parameters(const std::string& fileName);
+
+    // Read solver parameters from an in-memory XML string (no file on disk).
+    void read_parameters_from_string(const std::string& xml_content);
 
     // Set simulation and module member data from Parameters.
     void set_module_parameters();
@@ -75,6 +83,9 @@ class Simulation {
   private:
     // Time integrator for Newton iteration loop
     std::unique_ptr<Integrator> integrator_;
+
+    // Partitioned FSI coupling (null if not configured)
+    std::unique_ptr<PartitionedFSI> partitioned_fsi_;
 };
 
 #endif
