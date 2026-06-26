@@ -151,8 +151,7 @@ void set_bf_l(ComMod& com_mod, bfType& lBf, mshType& lM, const SolutionStates& s
     f = lBf.b;
 
   } else if (utils::btest(lBf.bType, enum_int(BodyForceType::bfType_ustd))) {
-    Vector<double> rtmp(1);
-    ifft(com_mod, lBf.bt, f, rtmp);
+    f = lBf.bt.value(com_mod.time);
 
   } else if (utils::btest(lBf.bType, enum_int(BodyForceType::bfType_gen))) {
     bfl.resize(idof,nNo); 

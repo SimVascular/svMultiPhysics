@@ -216,10 +216,8 @@ void compute_fib_stress(const ComMod& com_mod, const CepMod& cep_mod, const fibS
 
   if (utils::btest(Tfl.fType, iBC_std)) {
     g = Tfl.g;
-  } else if (utils::btest(Tfl.fType, iBC_ustd)) { 
-    Vector<double> gv(1), tv(1);
-    ifft(com_mod, Tfl.gt, gv, tv);
-    g = gv[0];
+  } else if (utils::btest(Tfl.fType, iBC_ustd)) {
+    g = Tfl.gt.value(com_mod.time)[0];
   }
 }
 

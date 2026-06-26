@@ -1075,10 +1075,9 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
     #ifdef debug_set_bc_dir_l
     dmsg << "bType_ustd";
     #endif
-    Vector<double> dirY_v(1), dirA_v(1);
-    ifft(com_mod, lBc.gt, dirY_v, dirA_v);
-    dirY = dirY_v(0);
-    dirA = dirA_v(0);
+    const auto value_and_derivative = lBc.gt.value_and_derivative(com_mod.time);
+    dirY = value_and_derivative.first[0];
+    dirA = value_and_derivative.second[0];
 
   } else { 
     dirA = 0.0;
@@ -1427,7 +1426,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   int nsd = com_mod.nsd;
 
   int nNo = lFa.nNo;
-  Vector<double> h(1), rtmp(1);
+  Vector<double> h(1);
   Vector<double> tmpA(nNo); 
 
   // Geting the contribution of Neu BC
@@ -1466,7 +1465,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        h(0) = lBc.g;
 
      } else if (utils::btest(lBc.bType,iBC_ustd)) {
-       ifft(com_mod, lBc.gt, h, rtmp);
+       h = lBc.gt.value(com_mod.time);
 
      } else {
        throw std::runtime_error("[set_bc_neu_l] Correction in SETBCNEU is needed");
@@ -1830,9 +1829,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
      if (lBc.gt.d != nsd) {
        throw std::runtime_error("[set_bc_trac_l]  Traction dof not initialized properly");
      }
-     Vector<double> h(nsd);
-     Vector<double> tmp(nsd);
-     ifft(com_mod, lBc.gt, h, tmp);
+     const Vector<double> h = lBc.gt.value(com_mod.time);
      for (int a = 0; a < nNo; a++) {
        int Ac = lFa.gN(a);
        hg.set_col(Ac, h);
