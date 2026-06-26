@@ -229,7 +229,10 @@ public:
      *
      * @details Convenience overload: it sizes \p values to size() and forwards to
      * evaluate_values_to(). It is implemented once on the base class, so concrete
-     * families override the span primitive rather than this overload.
+     * families override the span primitive rather than this overload. The result
+     * is delivered through the output argument rather than by return value so a
+     * caller can reuse one container across repeated evaluations (for example,
+     * across quadrature points) instead of allocating on every call.
      *
      * @param xi Reference coordinate. Lower-dimensional elements use the active prefix components.
      * @param values Receives one value per basis function.

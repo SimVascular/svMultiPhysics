@@ -82,6 +82,9 @@ enum class BasisTopology {
         case CellFamily::Hex:      return BasisTopology::Hexahedron;
         case CellFamily::Wedge:    return BasisTopology::Wedge;
         // Pyramid/Polygon/Polyhedron are outside the current basis scope.
+        // BasisTopology::Unknown is a sentinel the basis constructors validate
+        // and convert into a BasisElementCompatibilityException at the call site,
+        // not an error raised from this constexpr noexcept classifier.
         default:                   return BasisTopology::Unknown;
     }
 }
@@ -128,6 +131,12 @@ enum class BasisTopology {
         case ElementType::Wedge18:
             return 2;
         default:
+            // -1 is a sentinel for "not a complete-Lagrange alias" (serendipity
+            // layouts, pyramids, Unknown), not an error: the LagrangeBasis
+            // (ElementType, order) constructor compares the requested order
+            // against named_lagrange_order() and raises BasisConfigurationException
+            // on mismatch. These classifiers are constexpr noexcept and so cannot
+            // throw themselves.
             return -1;
     }
 }

@@ -43,9 +43,11 @@ struct BasisRequest {
     std::vector<int> tensor_extents{};               ///< Reserved for tensor-product extents; unused here.
     std::string custom_id{};                         ///< Optional identifier for Custom families.
     /// Reference topology for arbitrary-order requests, or Unknown to request by
-    /// element_type. Kept last so existing aggregate initializers for named
-    /// elements keep their positional meaning.
+    /// element_type.
     BasisTopology topology{BasisTopology::Unknown};
+    // Implementation note (kept out of the rendered docs): topology is declared
+    // last so existing aggregate initializers for named elements keep their
+    // positional meaning.
 };
 
 namespace basis_factory {
