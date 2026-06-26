@@ -14,6 +14,11 @@
  * independence from backend-specific types.
  */
 
+// The Mesh library is an optional, external module. When the build enables it
+// (SVMP_FE_WITH_MESH), FE imports the Mesh scalar/index types so the two libraries
+// share a vocabulary; otherwise FE compiles standalone using the fallback
+// definitions below (e.g. svmp::CellFamily and the Mesh* aliases). The Mesh
+// headers are not part of this repository.
 #if defined(SVMP_FE_WITH_MESH) && SVMP_FE_WITH_MESH
 #  include "Mesh/Core/MeshTypes.h"
 /** Nonzero when FE shares scalar/index types with the Mesh library. */
@@ -103,6 +108,11 @@ using LocalIndex = std::uint32_t;
  *
  * Signed 64-bit for compatibility with PETSc and Trilinos.
  * Negative values can indicate special conditions or invalid indices.
+ *
+ * @note Kept as a plain integer alias rather than a StrongType wrapper: this is
+ * the raw interop type handed directly to PETSc/Trilinos, where a wrapper would
+ * force an unwrap at every call. Type safety for DOF indices is provided by
+ * DofIndex (below), the strong wrapper around a GlobalIndex.
  */
 using GlobalIndex = std::int64_t;
 
@@ -110,7 +120,9 @@ using GlobalIndex = std::int64_t;
  * @brief DOF-specific index type
  *
  * Strong type alias to prevent mixing DOF indices with other indices.
- * Provides type safety at compile time.
+ * Provides type safety at compile time. It is hand-rolled to carry an invalid
+ * sentinel and is_valid(); QuadraturePointIndex uses the general StrongType
+ * template for the same strong-typing purpose.
  */
 struct DofIndex {
     GlobalIndex value;  ///< Underlying global DOF index; negative values are invalid.
@@ -224,6 +236,12 @@ struct FieldValueEntry {
  *
  * Maps to svmp::CellFamily from the Mesh library but provides
  * FE-specific categorization including higher-order variants.
+ *
+ * @note The explicit enumerator values are intentional and grouped into bands:
+ * linear (0-6), quadratic (10-20), and special (Point1 = 30; Unknown = 255, the
+ * uint8_t sentinel). The enum is consumed via its names, not the numeric values,
+ * but the banding keeps related types together and leaves room to extend each
+ * group; keep new entries within their band.
  */
 enum class ElementType : std::uint8_t {
     // Linear elements
