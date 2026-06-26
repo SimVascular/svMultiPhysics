@@ -13,6 +13,12 @@
  * Eigen. Note that, unlike the previous in-house implementation, Eigen types
  * are NOT zero-initialized by default construction; use Vector::Zero() where a
  * zeroed value is required.
+ *
+ * This is a small, fixed-size (compile-time length) vector for element-level FE
+ * kernels in namespace svmp::FE::math. It is distinct from, and not a replacement
+ * for, the legacy dynamically sized global ::Vector container in solver/Vector.h:
+ * the two differ in namespace, size model (compile-time vs runtime), and memory
+ * management, and coexist deliberately.
  */
 
 #include <Eigen/Core>
