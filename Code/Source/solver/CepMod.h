@@ -68,6 +68,15 @@ class stimType
 
     /// @brief Maximum coordinates for the stimulus box.
     Vector<double> box_max;
+
+    /// @brief Whether the stimulus is restricted to a sphere.
+    bool sphere_defined = false;
+
+    /// @brief Center coordinates for the stimulus sphere.
+    Vector<double> sphere_center;
+
+    /// @brief Radius of the stimulus sphere.
+    double sphere_radius = 0.0;
 };
 
 /// @brief ECG leads type

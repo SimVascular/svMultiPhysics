@@ -1088,6 +1088,10 @@ class LinearSolverParameters : public ParameterLists
 ///   <Start_time> 0.0 </Start_time>
 ///   <Duration> 1.0 </Duration>
 ///   <Cycle_length> 10000.0 </Cycle_length>
+///   <Box_min> 0.0 0.0 0.0 </Box_min>
+///   <Box_max> 1.0 1.0 1.0 </Box_max>
+///   <Sphere_center> 0.5 0.5 0.5 </Sphere_center>
+///   <Sphere_radius> 0.25 </Sphere_radius>
 /// </Stimulus>
 /// \endcode
 class StimulusParameters : public ParameterLists
@@ -1110,6 +1114,9 @@ class StimulusParameters : public ParameterLists
 
     VectorParameter<double> box_min;
     VectorParameter<double> box_max;
+
+    VectorParameter<double> sphere_center;
+    Parameter<double> sphere_radius;
     
     bool value_set = false;
 };

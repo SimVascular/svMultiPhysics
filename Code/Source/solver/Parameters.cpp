@@ -2141,6 +2141,8 @@ StimulusParameters::StimulusParameters()
   set_parameter("Start_time", 0.0, !required, start_time);
   set_parameter("Box_min", {}, !required, box_min);
   set_parameter("Box_max", {}, !required, box_max);
+  set_parameter("Sphere_center", {}, !required, sphere_center);
+  set_parameter("Sphere_radius", 0.0, !required, sphere_radius);
 }
 
 void StimulusParameters::set_values(tinyxml2::XMLElement* xml_elem)

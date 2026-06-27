@@ -16,20 +16,35 @@ namespace cep_ion {
 ///   cep_mod.Xion
 /// \endcode
 //
-static bool node_in_stimulus_box(const ComMod& com_mod, const stimType& stim, const int Ac)
+static bool node_in_stimulus_geometry(const ComMod& com_mod, const stimType& stim, const int Ac)
 {
-  if (!stim.box_defined) {
-    return true;
+  if (stim.box_defined) {
+    if (stim.box_min.size() < com_mod.nsd || stim.box_max.size() < com_mod.nsd) {
+      throw std::runtime_error("Stimulus box dimension is smaller than the simulation spatial dimension.");
+    }
+
+    for (int i = 0; i < com_mod.nsd; i++) {
+      const double xi = com_mod.x(i, Ac);
+
+      if (xi < stim.box_min(i) || xi > stim.box_max(i)) {
+        return false;
+      }
+    }
   }
 
-  if (stim.box_min.size() < com_mod.nsd || stim.box_max.size() < com_mod.nsd) {
-    throw std::runtime_error("Stimulus box dimension is smaller than the simulation spatial dimension.");
-  }
+  if (stim.sphere_defined) {
+    if (stim.sphere_center.size() < com_mod.nsd) {
+      throw std::runtime_error("Stimulus sphere center dimension is smaller than the simulation spatial dimension.");
+    }
 
-  for (int i = 0; i < com_mod.nsd; i++) {
-    const double xi = com_mod.x(i, Ac);
+    double distance_squared = 0.0;
 
-    if (xi < stim.box_min(i) || xi > stim.box_max(i)) {
+    for (int i = 0; i < com_mod.nsd; i++) {
+      const double dx = com_mod.x(i, Ac) - stim.sphere_center(i);
+      distance_squared += dx * dx;
+    }
+
+    if (distance_squared > stim.sphere_radius * stim.sphere_radius) {
       return false;
     }
   }
@@ -244,7 +259,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 
         double stimulus_amplitude = dmn.cep.Istim.A;
 
-        if (!node_in_stimulus_box(com_mod, dmn.cep.Istim, Ac)) {
+        if (!node_in_stimulus_geometry(com_mod, dmn.cep.Istim, Ac)) {
           stimulus_amplitude = 0.0;
         }
 
@@ -299,7 +314,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 
       double stimulus_amplitude = eq.dmn[0].cep.Istim.A;
 
-      if (!node_in_stimulus_box(com_mod, eq.dmn[0].cep.Istim, Ac)) {
+      if (!node_in_stimulus_geometry(com_mod, eq.dmn[0].cep.Istim, Ac)) {
         stimulus_amplitude = 0.0;
       }
 
