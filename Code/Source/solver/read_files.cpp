@@ -1085,6 +1085,9 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   lDmn.cep.Istim.Ts = 99999.0;
   lDmn.cep.Istim.CL = 99999.0;
   lDmn.cep.Istim.Td = 0.0;
+  lDmn.cep.Istim.box_defined = false;
+  lDmn.cep.Istim.sphere_defined = false;
+  lDmn.cep.Istim.sphere_radius = 0.0;
 
   if (domain_params->stimulus.defined()) { 
     auto& stimulus_params = domain_params->stimulus;
@@ -1129,6 +1132,34 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
 
         lDmn.cep.Istim.box_min(i) = box_min[i];
         lDmn.cep.Istim.box_max(i) = box_max[i];
+      }
+    }
+
+    const bool sphere_center_defined = stimulus_params.sphere_center.defined();
+    const bool sphere_radius_defined = stimulus_params.sphere_radius.defined();
+
+    if (sphere_center_defined != sphere_radius_defined) {
+      throw std::runtime_error("Both Sphere_center and Sphere_radius must be specified for a CEP stimulus sphere.");
+    }
+
+    if (sphere_center_defined && sphere_radius_defined) {
+      const auto& sphere_center = stimulus_params.sphere_center.value();
+      const double sphere_radius = stimulus_params.sphere_radius.value();
+
+      if (sphere_center.size() < static_cast<std::size_t>(simulation->com_mod.nsd)) {
+        throw std::runtime_error("Stimulus sphere center dimension is smaller than the simulation spatial dimension.");
+      }
+
+      if (sphere_radius < 0.0) {
+        throw std::runtime_error("Stimulus Sphere_radius must be non-negative.");
+      }
+
+      lDmn.cep.Istim.sphere_defined = true;
+      lDmn.cep.Istim.sphere_center.resize(sphere_center.size());
+      lDmn.cep.Istim.sphere_radius = sphere_radius;
+
+      for (int i = 0; i < static_cast<int>(sphere_center.size()); i++) {
+        lDmn.cep.Istim.sphere_center(i) = sphere_center[i];
       }
     }
   }

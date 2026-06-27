@@ -1595,6 +1595,24 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
         cm.bcast(cm_mod, cep.Istim.box_max, "Stimulus box_max");
       }
 
+      cm.bcast(cm_mod, &cep.Istim.sphere_defined);
+
+      if (cep.Istim.sphere_defined) {
+        int sphere_center_size = cep.Istim.sphere_center.size();
+        cm.bcast(cm_mod, &sphere_center_size);
+
+        if (sphere_center_size <= 0) {
+          throw std::runtime_error("Stimulus sphere center has invalid coordinate dimension.");
+        }
+
+        if (cm.slv(cm_mod)) {
+          cep.Istim.sphere_center.resize(sphere_center_size);
+        }
+
+        cm.bcast(cm_mod, cep.Istim.sphere_center, "Stimulus sphere_center");
+        cm.bcast(cm_mod, &cep.Istim.sphere_radius);
+      }
+
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 
       if (cep.odes.tIntType == TimeIntegrationType::CN2) {
