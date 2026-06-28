@@ -534,7 +534,11 @@ void FourierInterpolation::evaluate_internal(const double time,
         // Using value[j] = value[j] + ... instead of value[j] += ..., because
         // the latter changes the order of operations enough to break some of
         // the tests.
-        // @todo[michelebucelli] This seems pretty fragile!
+        // @todo[michelebucelli] This seems pretty fragile! It happens in a few
+        //   other places in this file as well, where using an increment
+        //   operator (*= or +=) changes the order of operations resulting in
+        //   changes in the test values. This should be investigated and the
+        //   best (i.e. most accurate) operation order should be chosen.
         value[j] = value[j] + fourier_coefficients_real(j, i) * std::cos(K) -
                    fourier_coefficients_imaginary(j, i) * std::sin(K);
 
