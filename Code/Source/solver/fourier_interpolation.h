@@ -8,6 +8,9 @@
 #include "CmMod.h"
 #include "Vector.h"
 
+#include "Core/Exception.h"
+#include "FE/Common/FEException.h"
+
 #include <string>
 #include <utility>
 #include <vector>
@@ -274,38 +277,26 @@ public:
   /// @{
 
   /// @brief Return whether this object has been initialized.
-  bool defined() const { return n_fourier_coefficients != 0; };
+  bool defined() const;
 
   /// @brief Get the dimension of the data interpolated by this object.
-  unsigned int get_n_components() const { return n_components; }
+  unsigned int get_n_components() const;
 
   /// @brief Get the initial value of the linear trend part for one component.
   const double
-  get_linear_trend_initial_value(const unsigned int component) const {
-    // @todo[michelebucelli] Add check on the index.
-    return linear_trend_initial_values[component];
-  }
+  get_linear_trend_initial_value(const unsigned int component) const;
 
   /// @brief Get the slope of the linear trend part for one component.
-  const double get_linear_trend_slope(const unsigned int component) const {
-    // @todo[michelebucelli] Add check on the index.
-    return linear_trend_slopes[component];
-  }
+  const double get_linear_trend_slope(const unsigned int component) const;
 
   /// @brief Get the real part of the Fourier coefficients for one component.
   const double get_coefficient_real(const unsigned int component,
-                                    const unsigned int frequency) const {
-    // @todo[michelebucelli] Add check on the indices.
-    return fourier_coefficients_real(component, frequency);
-  }
+                                    const unsigned int frequency) const;
 
   /// @brief Get the imaginary part of the Fourier coefficients for one
   /// component.
   const double get_coefficient_imaginary(const unsigned int component,
-                                         const unsigned int frequency) const {
-    // @todo[michelebucelli] Add check on the indices.
-    return fourier_coefficients_imaginary(component, frequency);
-  }
+                                         const unsigned int frequency) const;
 
   /// @}
 

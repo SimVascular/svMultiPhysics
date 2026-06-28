@@ -23,10 +23,10 @@ FourierInterpolation FourierInterpolation::from_time_series(
     const bool use_ramp) {
   const unsigned int n_time_points = temporal_values.size();
 
-  // @todo[michelebucelli] This should be an appropriate exception.
   if (n_time_points < 2) {
-    throw std::runtime_error("At least two time points are needed to construct "
-                             "a FourierInterpolation object.");
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "At least two time points are needed to construct "
+                   "a FourierInterpolation object.");
   }
 
   const unsigned int n_components = temporal_values[0].size() - 1;
@@ -137,21 +137,27 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
                                             const bool use_ramp) {
   std::ifstream file(file_name);
 
-  // @todo[michelebucelli] This should actually thrown an exception, ideally of
-  //   a dedicated type such as FileNotFoundException (to be defined).
   if (!file.is_open()) {
-    throw std::runtime_error("Could not open file: " + file_name);
+    svmp::raise<svmp::FileNotFoundException>(SVMP_HERE, file_name);
   }
 
   // Read the header of the file.
   int n_time_points, n_fourier_coefficients;
   file >> n_time_points >> n_fourier_coefficients;
 
-  // @todo[michelebucelli] This should also be an appropriate exception.
-  if (n_time_points < 2 || n_fourier_coefficients == 0) {
-    throw std::runtime_error(
-        "Error reading the first line of the temporal values file '" +
-        file_name + "'.");
+  if (n_time_points < 2) {
+    svmp::raise<svmp::FileFormatException>(
+        SVMP_HERE, file_name,
+        "At least 2 time points are required to set up Fourier interpolation. "
+        "Only " +
+            std::to_string(n_time_points) + " time points were provided.");
+  }
+
+  if (n_fourier_coefficients == 0) {
+    svmp::raise<svmp::FileFormatException>(
+        SVMP_HERE, file_name,
+        "At least 1 Fourier coefficient is required to set up Fourier "
+        "interpolation. 0 Fourier coefficients were provided.");
   }
 
   // Read the time-value pairs.
@@ -172,25 +178,25 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
     while (!line_string_stream.eof()) {
       line_string_stream >> tmp;
 
-      // @todo[michelebucelli] This should also be an appropriate exception.
       if (line_string_stream.fail()) {
-        throw std::runtime_error(
-            "Error reading values for the temporal values file '" + file_name +
-            "' for line " + std::to_string(line_number) + ": '" + line +
-            "'; value number " + std::to_string(line_values.size() + 1) +
-            " is not a double.");
+        svmp::raise<svmp::FileFormatException>(
+            SVMP_HERE, file_name,
+            "Error reading values for the temporal values file for line " +
+                std::to_string(line_number) + ": '" + line +
+                "'; value number " + std::to_string(line_values.size() + 1) +
+                " is not a double.");
       }
 
       line_values.push_back(tmp);
     }
 
-    // @todo[michelebucelli] This should also be an appropriate exception.
     if (line_values.size() != 1 + n_components) {
-      throw std::runtime_error(
-          "Error reading values for the temporal values file '" + file_name +
-          "' for line " + std::to_string(line_number) + ": '" + line +
-          "'; expected " + std::to_string(1 + n_components) +
-          " values, but got " + std::to_string(line_values.size()) + ".");
+      svmp::raise<svmp::FileFormatException>(
+          SVMP_HERE, file_name,
+          "Error reading values for the temporal values file for line " +
+              std::to_string(line_number) + ": '" + line + "'; expected " +
+              std::to_string(1 + n_components) + " values, but got " +
+              std::to_string(line_values.size()) + ".");
     }
 
     values.push_back(line_values);
@@ -207,7 +213,42 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients(
     const Array<double> &fourier_coefficients_real,
     const Array<double> &fourier_coefficients_imaginary,
     const double initial_time, const double period) {
-  // @todo[michelebucelli] Add some correctness checks on the input arguments.
+  // Linear trend initial values and slopes must have the same size (which will
+  // determine the number of components).
+  if (linear_trend_initial_values.size() != linear_trend_slopes.size()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE,
+        "linear_trend_initial_values and linear_trend_slopes must have the "
+        "same size, but their sizes are " +
+            std::to_string(linear_trend_initial_values.size()) + " and " +
+            std::to_string(linear_trend_slopes.size()) + ".");
+  }
+
+  // The number of rows of the Fourier coefficients must match the number of
+  // components (i.e. the size of the linear trend vectors).
+  if (fourier_coefficients_real.nrows() != linear_trend_initial_values.size()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "The number of rows of fourier_coefficients_real must match "
+                   "the size of linear_trend_initial_values.");
+  }
+
+  // The number of rows of the Fourier coefficients must match the number of
+  // components (i.e. the size of the linear trend vectors).
+  if (fourier_coefficients_imaginary.nrows() !=
+      linear_trend_initial_values.size()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "The number of rows of fourier_coefficients_imaginary must "
+                   "match the size of linear_trend_initial_values.");
+  }
+
+  // The number of columns of the real and imaginary Fourier coefficients must
+  // match.
+  if (fourier_coefficients_real.ncols() !=
+      fourier_coefficients_imaginary.ncols()) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "The number of columns of fourier_coefficients_real and "
+                   "fourier_coefficients_imaginary must match.");
+  }
 
   FourierInterpolation result;
 
@@ -228,10 +269,8 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
     const std::string &file_name, const unsigned int n_components) {
   std::ifstream file(file_name);
 
-  // @todo[michelebucelli] This should actually thrown an exception, ideally of
-  //   a dedicated type such as FileNotFoundException (to be defined).
   if (!file.is_open()) {
-    throw std::runtime_error("Could not open file: " + file_name);
+    svmp::raise<svmp::FileNotFoundException>(SVMP_HERE, file_name);
   }
 
   double initial_time, period;
@@ -349,14 +388,122 @@ FourierInterpolation::value_and_derivative(const double time) const {
   return std::make_pair(value, derivative);
 }
 
+bool FourierInterpolation::defined() const {
+  return n_fourier_coefficients != 0;
+}
+
+unsigned int FourierInterpolation::get_n_components() const {
+  return n_components;
+}
+
+const double FourierInterpolation::get_linear_trend_initial_value(
+    const unsigned int component) const {
+  if (!defined()) {
+    svmp::raise<svmp::FE::NotInitializedException>(
+        SVMP_HERE,
+        "Cannot get linear trend initial value of FourierInterpolation "
+        "instance that has not been defined.");
+  }
+
+  if (component >= n_components) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Component index " + std::to_string(component) +
+                       " is out of bounds for FourierInterpolation instance "
+                       "with " +
+                       std::to_string(n_components) + " components.");
+  }
+
+  return linear_trend_initial_values[component];
+}
+
+const double
+FourierInterpolation::get_linear_trend_slope(const unsigned int component) const {
+  if (!defined()) {
+    svmp::raise<svmp::FE::NotInitializedException>(
+        SVMP_HERE,
+        "Cannot get linear trend initial value of FourierInterpolation "
+        "instance that has not been defined.");
+  }
+
+  if (component >= n_components) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Component index " + std::to_string(component) +
+                       " is out of bounds for FourierInterpolation instance "
+                       "with " +
+                       std::to_string(n_components) + " components.");
+  }
+
+  return linear_trend_slopes[component];
+}
+
+const double
+FourierInterpolation::get_coefficient_real(const unsigned int component,
+                                           const unsigned int frequency) const {
+  if (!defined()) {
+    svmp::raise<svmp::FE::NotInitializedException>(
+        SVMP_HERE,
+        "Cannot get linear trend initial value of FourierInterpolation "
+        "instance that has not been defined.");
+  }
+
+  if (component >= n_components) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Component index " + std::to_string(component) +
+                       " is out of bounds for FourierInterpolation instance "
+                       "with " +
+                       std::to_string(n_components) + " components.");
+  }
+
+  if (frequency >= n_fourier_coefficients) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Frequency index " + std::to_string(frequency) +
+                       " is out of bounds for FourierInterpolation instance "
+                       "with " +
+                       std::to_string(n_fourier_coefficients) +
+                       " Fourier coefficients.");
+  }
+
+  return fourier_coefficients_real(component, frequency);
+}
+
+const double FourierInterpolation::get_coefficient_imaginary(
+    const unsigned int component, const unsigned int frequency) const {
+
+  if (!defined()) {
+    svmp::raise<svmp::FE::NotInitializedException>(
+        SVMP_HERE,
+        "Cannot get linear trend initial value of FourierInterpolation "
+        "instance that has not been defined.");
+  }
+
+  if (component >= n_components) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Component index " + std::to_string(component) +
+                       " is out of bounds for FourierInterpolation instance "
+                       "with " +
+                       std::to_string(n_components) + " components.");
+  }
+
+  if (frequency >= n_fourier_coefficients) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "Frequency index " + std::to_string(frequency) +
+                       " is out of bounds for FourierInterpolation instance "
+                       "with " +
+                       std::to_string(n_fourier_coefficients) +
+                       " Fourier coefficients.");
+  }
+
+  return fourier_coefficients_imaginary(component, frequency);
+}
+
 void FourierInterpolation::evaluate_internal(const double time,
                                              const bool evaluate_derivative,
                                              Vector<double> &value,
                                              Vector<double> &derivative) const {
-  // @todo[michelebucelli] This should be an appropriate exception.
   if (!defined()) {
-    throw std::runtime_error("Cannot evaluate FourierInterpolation instance "
-                             "that has not been defined.");
+    svmp::raise<svmp::FE::NotInitializedException>(
+        SVMP_HERE, "Cannot evaluate FourierInterpolation instance that has not "
+                   "been defined.");
   }
 
   // Shifted and rescaled time.
