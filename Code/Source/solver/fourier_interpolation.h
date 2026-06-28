@@ -64,16 +64,16 @@
  * \mathbf{q}_i &= \mathbf{v}_0 \\
  * \mathbf{q}_s &= \frac{\mathbf{v}_{N-1} - \mathbf{v}_0}{T} \\
  * \mathbf{c}_0^{\text{real}} &=
- *   \frac{1}{2} \sum_{i=0}^{N-2} (\hat{t}_{i+1} - \hat{t}_i)
+ *   \frac{1}{2T} \sum_{i=0}^{N-2} (\hat{t}_{i+1} - \hat{t}_i)
  *     (\hat{\mathbf{v}}_{i+1} + \hat{\mathbf{v}}_i) \\
  * \mathbf{c}_0^{\text{imag}} &= 0 \\
- * \mathbf{c}_k^{\text{real}} &=
+ * \mathbf{c}_k^{\text{real}} &= \frac{T}{2 \pi^2 k^2}
  *   \sum_{i=0}^{N-2} \frac{\hat{\mathbf{v}}_{i+1} - \hat{\mathbf{v}}_i}
  *   {\hat{t}_{i+1} - \hat{t}_i} \left(
  *     \cos\left(\frac{2 \pi k \hat{t}_{i+1}}{T}\right) -
  *     \cos\left(\frac{2 \pi k \hat{t}_i}{T}\right)
  *   \right) \\
- * \mathbf{c}_k^{\text{imag}} &=
+ * \mathbf{c}_k^{\text{imag}} &= \frac{T}{2 \pi^2 k^2}
  *   -\sum_{i=0}^{N-2} \frac{\hat{\mathbf{v}}_{i+1} - \hat{\mathbf{v}}_i}
  *   {\hat{t}_{i+1} - \hat{t}_i} \left(
  *     \sin\left(\frac{2 \pi k \hat{t}_{i+1}}{T}\right) -

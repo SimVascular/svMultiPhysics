@@ -117,7 +117,6 @@ FourierInterpolation FourierInterpolation::from_time_series(
       const double tmp_2 = (consts::pi * consts::pi * tmp * tmp);
 
       for (int k = 0; k < result.n_components; k++) {
-        // @todo[michelebucelli] Check if operator*= breaks something here.
         result.fourier_coefficients_real(k, n) =
             0.5 * result.fourier_coefficients_real(k, n) * result.period /
             tmp_2;
