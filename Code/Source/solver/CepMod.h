@@ -44,6 +44,10 @@ static std::ostream &operator << ( std::ostream& strm, ElectrophysiologyModelTyp
   return strm << names.at(type);
 }
 
+class ComMod;
+class CmMod;
+class cmType;
+
 /// @brief External stimulus type
 class stimType
 {
@@ -59,6 +63,43 @@ class stimType
 
     /// @brief stimulus amplitude
     double A = 0.0;
+
+    /// @brief Whether the stimulus is restricted to a coordinate box.
+    bool box_defined = false;
+
+    /// @brief Minimum coordinates for the stimulus box.
+    Vector<double> box_min;
+
+    /// @brief Maximum coordinates for the stimulus box.
+    Vector<double> box_max;
+
+    /// @brief Whether the stimulus is restricted to a sphere.
+    bool sphere_defined = false;
+
+    /// @brief Center coordinates for the stimulus sphere.
+    Vector<double> sphere_center;
+
+    /// @brief Radius of the stimulus sphere.
+    double sphere_radius = 0.0;
+
+    /// @brief Return the applied stimulus value at a node and time.
+    double operator()(const double time, const ComMod& com_mod, const int Ac) const;
+
+    /// @brief Broadcast stimulus parameters to all ranks.
+    void distribute(const CmMod& cm_mod, const cmType& cm);
+
+  private:
+    /// @brief Check whether the stimulus is active at the given time.
+    bool is_active(const double time) const;
+
+    /// @brief Check whether a node lies inside all active spatial bounds.
+    bool contains_node(const ComMod& com_mod, const int Ac) const;
+
+    /// @brief Check whether a node lies inside the stimulus box.
+    bool inside_box(const ComMod& com_mod, const int Ac) const;
+
+    /// @brief Check whether a node lies inside the stimulus sphere.
+    bool inside_sphere(const ComMod& com_mod, const int Ac) const;
 };
 
 /// @brief ECG leads type
