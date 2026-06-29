@@ -278,7 +278,15 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
   double initial_time, period;
   file >> initial_time >> period;
 
-  // Read the linear trend part.
+  if (file.fail()) {
+    svmp::raise<svmp::FileFormatException>(
+        SVMP_HERE, file_name,
+        "Could not read the initial time and period from the first line.");
+  }
+
+  // Read the linear trend part. Each line is expected to contain the initial
+  // value and slope of the linear trend for one component, so it must hold at
+  // least 2 values.
   Vector<double> linear_trend_initial_values(n_components);
   Vector<double> linear_trend_slopes(n_components);
 
@@ -298,18 +306,48 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
       values.push_back(tmp);
     }
 
+    if (values.size() != 2) {
+      svmp::raise<svmp::FileFormatException>(
+          SVMP_HERE, file_name,
+          "Error reading the linear trend for component " +
+              std::to_string(current_component) + ": '" + line +
+              "'; expected exactly 2 values (initial value and slope), but "
+              "got " +
+              std::to_string(values.size()) + ".");
+    }
+
     linear_trend_initial_values[current_component] = values[0];
     linear_trend_slopes[current_component] = values[1];
     ++current_component;
+  }
+
+  if (current_component != n_components) {
+    svmp::raise<svmp::FileFormatException>(
+        SVMP_HERE, file_name,
+        "Expected " + std::to_string(n_components) +
+            " lines of linear trend coefficients (one per component), but only "
+            "found " +
+            std::to_string(current_component) + ".");
   }
 
   // Read the Fourier coefficients.
   unsigned int n_fourier_coefficients;
   file >> n_fourier_coefficients;
 
+  if (file.fail()) {
+    svmp::raise<svmp::FileFormatException>(
+        SVMP_HERE, file_name,
+        "Could not read the number of Fourier coefficients.");
+  }
+
   Array<double> fourier_coefficients_real(n_components, n_fourier_coefficients);
   Array<double> fourier_coefficients_imaginary(n_components,
                                                n_fourier_coefficients);
+
+  // Each line is expected to hold the real parts of the coefficients for all
+  // components followed by the imaginary parts, so it must hold exactly
+  // 2 * n_components values.
+  const unsigned int n_values_per_line = 2 * n_components;
 
   unsigned int current_coefficient = 0;
   while (current_coefficient < n_fourier_coefficients &&
@@ -325,6 +363,17 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
       values.push_back(tmp);
     }
 
+    if (values.size() != n_values_per_line) {
+      svmp::raise<svmp::FileFormatException>(
+          SVMP_HERE, file_name,
+          "Error reading Fourier coefficient " +
+              std::to_string(current_coefficient) + ": '" + line +
+              "'; expected " + std::to_string(n_values_per_line) +
+              " values (real and imaginary parts for " +
+              std::to_string(n_components) + " components), but got " +
+              std::to_string(values.size()) + ".");
+    }
+
     for (unsigned int j = 0; j < n_components; ++j) {
       fourier_coefficients_real(j, current_coefficient) = values[j];
       fourier_coefficients_imaginary(j, current_coefficient) =
@@ -332,6 +381,14 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
     }
 
     ++current_coefficient;
+  }
+
+  if (current_coefficient != n_fourier_coefficients) {
+    svmp::raise<svmp::FileFormatException>(
+        SVMP_HERE, file_name,
+        "Expected " + std::to_string(n_fourier_coefficients) +
+            " lines of Fourier coefficients, but only found " +
+            std::to_string(current_coefficient) + ".");
   }
 
   return FourierInterpolation::from_fourier_coefficients(
