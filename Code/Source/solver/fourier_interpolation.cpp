@@ -37,8 +37,9 @@ FourierInterpolation FourierInterpolation::from_time_series(
   //   also save us the extraction for loop below.
   for (const auto &row : temporal_values) {
     if (row.size() != n_components + 1) {
-      throw std::runtime_error(
-          "All rows of temporal_values must have the same number of elements.");
+      svmp::raise<svmp::FE::InvalidArgumentException>(
+          SVMP_HERE, "All rows of temporal_values must have the same number of "
+                     "elements.");
     }
   }
 
