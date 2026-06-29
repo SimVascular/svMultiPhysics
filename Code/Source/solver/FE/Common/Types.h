@@ -209,39 +209,38 @@ struct FieldValueEntry {
  * Maps to svmp::CellFamily from the Mesh library but provides
  * FE-specific categorization including higher-order variants.
  *
- * @note The explicit enumerator values are intentional and grouped into bands:
- * linear (0-6), quadratic (10-20), and special (Point1 = 30; Unknown = 255, the
- * uint8_t sentinel). The enum is consumed via its names, not the numeric values,
- * but the banding keeps related types together and leaves room to extend each
- * group; keep new entries within their band.
+ * @note The enum is consumed by name (the switches in to_mesh_family() and
+ * element_dimension() and the basis classifiers); nothing depends on the
+ * underlying numeric values, so they are left implicit. Entries are grouped by
+ * polynomial order (linear, quadratic) plus a special section.
  */
 enum class ElementType : std::uint8_t {
     // Linear elements
-    Line2      = 0,   ///< 2-node line
-    Triangle3  = 1,   ///< 3-node triangle
-    Quad4      = 2,   ///< 4-node quadrilateral
-    Tetra4     = 3,   ///< 4-node tetrahedron
-    Hex8       = 4,   ///< 8-node hexahedron
-    Wedge6     = 5,   ///< 6-node wedge/prism
-    Pyramid5   = 6,   ///< 5-node pyramid
+    Line2,       ///< 2-node line
+    Triangle3,   ///< 3-node triangle
+    Quad4,       ///< 4-node quadrilateral
+    Tetra4,      ///< 4-node tetrahedron
+    Hex8,        ///< 8-node hexahedron
+    Wedge6,      ///< 6-node wedge/prism
+    Pyramid5,    ///< 5-node pyramid
 
     // Quadratic elements
-    Line3      = 10,  ///< 3-node line
-    Triangle6  = 11,  ///< 6-node triangle
-    Quad9      = 12,  ///< 9-node quadrilateral (bi-quadratic)
-    Quad8      = 13,  ///< 8-node quadrilateral (serendipity)
-    Tetra10    = 14,  ///< 10-node tetrahedron
-    Hex27      = 15,  ///< 27-node hexahedron (tri-quadratic)
-    Hex20      = 16,  ///< 20-node hexahedron (serendipity)
-    Wedge15    = 17,  ///< 15-node wedge
-    Wedge18    = 18,  ///< 18-node wedge (complete quadratic)
-    Pyramid13  = 19,  ///< 13-node pyramid
-    Pyramid14  = 20,  ///< 14-node pyramid
+    Line3,       ///< 3-node line
+    Triangle6,   ///< 6-node triangle
+    Quad9,       ///< 9-node quadrilateral (bi-quadratic)
+    Quad8,       ///< 8-node quadrilateral (serendipity)
+    Tetra10,     ///< 10-node tetrahedron
+    Hex27,       ///< 27-node hexahedron (tri-quadratic)
+    Hex20,       ///< 20-node hexahedron (serendipity)
+    Wedge15,     ///< 15-node wedge
+    Wedge18,     ///< 18-node wedge (complete quadratic)
+    Pyramid13,   ///< 13-node pyramid
+    Pyramid14,   ///< 14-node pyramid
 
     // Special elements
-    Point1     = 30,  ///< 1-node point element
+    Point1,      ///< 1-node point element
 
-    Unknown    = 255  ///< Unrecognized or uninitialized element type
+    Unknown      ///< Unrecognized or uninitialized element type
 };
 
 /**
