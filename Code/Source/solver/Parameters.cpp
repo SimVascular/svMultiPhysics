@@ -2126,6 +2126,84 @@ void FiberReinforcementStressParameters::print_parameters()
 // 'Stimulus' XML element used to parameters for 
 // pacemaker cells.
 
+/// @brief Define the XML element name for CEP stimulus box spatial bounds.
+const std::string StimulusBoxParameters::xml_element_name_ = "Box";
+
+StimulusBoxParameters::StimulusBoxParameters()
+{
+  bool required = true;
+
+  set_parameter("Minimum", {}, !required, minimum);
+  set_parameter("Maximum", {}, !required, maximum);
+}
+
+void StimulusBoxParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind(&StimulusBoxParameters::set_parameter_value, *this, _1, _2);
+
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+
+  value_set = true;
+}
+
+/// @brief Define the XML element name for CEP stimulus sphere spatial bounds.
+const std::string StimulusSphereParameters::xml_element_name_ = "Sphere";
+
+StimulusSphereParameters::StimulusSphereParameters()
+{
+  bool required = true;
+
+  set_parameter("Center", {}, !required, center);
+  set_parameter("Radius", 0.0, !required, radius);
+}
+
+void StimulusSphereParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
+  std::function<void(const std::string&, const std::string&)> ftpr =
+      std::bind(&StimulusSphereParameters::set_parameter_value, *this, _1, _2);
+
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+
+  value_set = true;
+}
+
+/// @brief Define the XML element name for CEP stimulus spatial bounds.
+const std::string StimulusSpatialBoundsParameters::xml_element_name_ = "Spatial_bounds";
+
+void StimulusSpatialBoundsParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  auto item = xml_elem->FirstChildElement();
+
+  while (item != nullptr) {
+    auto name = std::string(item->Value());
+
+    if (name == StimulusBoxParameters::xml_element_name_) {
+      box.set_values(item);
+    } else if (name == StimulusSphereParameters::xml_element_name_) {
+      sphere.set_values(item);
+    } else {
+      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+    }
+
+    item = item->NextSiblingElement();
+  }
+
+  value_set = true;
+}
+
 /// @brief Define the XML element name for equation output parameters.
 const std::string StimulusParameters::xml_element_name_ = "Stimulus";
 
@@ -2141,28 +2219,36 @@ StimulusParameters::StimulusParameters()
   set_parameter("Cycle_length", 0.0, !required, cycle_length);
   set_parameter("Duration", 0.0, !required, duration);
   set_parameter("Start_time", 0.0, !required, start_time);
-  set_parameter("Box_min", {}, !required, box_min);
-  set_parameter("Box_max", {}, !required, box_max);
-  set_parameter("Sphere_center", {}, !required, sphere_center);
-  set_parameter("Sphere_radius", 0.0, !required, sphere_radius);
 }
 
 void StimulusParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
-  // Get the 'type' from the <LS type=TYPE> element.
+  // Get the 'type' from the <Stimulus type=TYPE> element.
   const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
   type.set(std::string(stype));
-  auto item = xml_elem->FirstChildElement();
-  
+
   using std::placeholders::_1;
   using std::placeholders::_2;
 
   std::function<void(const std::string&, const std::string&)> ftpr =
-      std::bind( &StimulusParameters::set_parameter_value, *this, _1, _2);
+      std::bind(&StimulusParameters::set_parameter_value, *this, _1, _2);
 
-  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+  std::set<std::string> sub_sections = {StimulusSpatialBoundsParameters::xml_element_name_};
+  xml_util_set_parameters(ftpr, xml_elem, error_msg, sub_sections);
+
+  auto item = xml_elem->FirstChildElement();
+
+  while (item != nullptr) {
+    auto name = std::string(item->Value());
+
+    if (name == StimulusSpatialBoundsParameters::xml_element_name_) {
+      spatial_bounds.set_values(item);
+    }
+
+    item = item->NextSiblingElement();
+  }
 
   value_set = true;
 }

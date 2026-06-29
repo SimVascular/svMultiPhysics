@@ -1078,6 +1078,55 @@ class LinearSolverParameters : public ParameterLists
     LinearAlgebraParameters linear_algebra;
 };
 
+/// @brief Stores <Box> parameters for CEP stimulus spatial bounds.
+class StimulusBoxParameters : public ParameterLists
+{
+  public:
+    StimulusBoxParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> minimum;
+    VectorParameter<double> maximum;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Sphere> parameters for CEP stimulus spatial bounds.
+class StimulusSphereParameters : public ParameterLists
+{
+  public:
+    StimulusSphereParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> center;
+    Parameter<double> radius;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Spatial_bounds> parameters for CEP stimulus geometry restrictions.
+class StimulusSpatialBoundsParameters
+{
+  public:
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    StimulusBoxParameters box;
+    StimulusSphereParameters sphere;
+
+    bool value_set = false;
+};
+
 /// @brief The StimulusParameters class stores parameters for 
 /// 'Stimulus' XML element used to parameters for 
 /// pacemaker cells.
@@ -1088,10 +1137,16 @@ class LinearSolverParameters : public ParameterLists
 ///   <Start_time> 0.0 </Start_time>
 ///   <Duration> 1.0 </Duration>
 ///   <Cycle_length> 10000.0 </Cycle_length>
-///   <Box_min> 0.0 0.0 0.0 </Box_min>
-///   <Box_max> 1.0 1.0 1.0 </Box_max>
-///   <Sphere_center> 0.5 0.5 0.5 </Sphere_center>
-///   <Sphere_radius> 0.25 </Sphere_radius>
+///   <Spatial_bounds>
+///     <Box>
+///       <Minimum> 0.0 0.0 0.0 </Minimum>
+///       <Maximum> 1.0 1.0 1.0 </Maximum>
+///     </Box>
+///     <Sphere>
+///       <Center> 0.5 0.5 0.5 </Center>
+///       <Radius> 0.25 </Radius>
+///     </Sphere>
+///   </Spatial_bounds>
 /// </Stimulus>
 /// \endcode
 class StimulusParameters : public ParameterLists
@@ -1112,11 +1167,7 @@ class StimulusParameters : public ParameterLists
     Parameter<double> duration;
     Parameter<double> start_time;
 
-    VectorParameter<double> box_min;
-    VectorParameter<double> box_max;
-
-    VectorParameter<double> sphere_center;
-    Parameter<double> sphere_radius;
+    StimulusSpatialBoundsParameters spatial_bounds;
     
     bool value_set = false;
 };
