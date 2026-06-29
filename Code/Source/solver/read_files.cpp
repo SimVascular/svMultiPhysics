@@ -1106,7 +1106,8 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     const bool box_max_defined = stimulus_params.box_max.defined();
 
     if (box_min_defined != box_max_defined) {
-      throw std::runtime_error("Both Box_min and Box_max must be specified for a CEP stimulus box.");
+      svmp::raise<svmp::ParseException>(
+          SVMP_HERE, "Both Box_min and Box_max must be specified for a CEP stimulus box.");
     }
 
     if (box_min_defined && box_max_defined) {
@@ -1114,11 +1115,13 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
       const auto& box_max = stimulus_params.box_max.value();
 
       if (box_min.size() != box_max.size()) {
-        throw std::runtime_error("Stimulus Box_min and Box_max must have the same coordinate dimension.");
+        svmp::raise<svmp::ParseException>(
+            SVMP_HERE, "Stimulus Box_min and Box_max must have the same coordinate dimension.");
       }
 
       if (box_min.size() < static_cast<std::size_t>(simulation->com_mod.nsd)) {
-        throw std::runtime_error("Stimulus box dimension is smaller than the simulation spatial dimension.");
+        svmp::raise<svmp::ParseException>(
+            SVMP_HERE, "Stimulus box dimension is smaller than the simulation spatial dimension.");
       }
 
       lDmn.cep.Istim.box_defined = true;
@@ -1127,7 +1130,8 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
 
       for (int i = 0; i < static_cast<int>(box_min.size()); i++) {
         if (box_min[i] > box_max[i]) {
-          throw std::runtime_error("Stimulus Box_min values must be less than or equal to Box_max values.");
+          svmp::raise<svmp::ParseException>(
+              SVMP_HERE, "Stimulus Box_min values must be less than or equal to Box_max values.");
         }
 
         lDmn.cep.Istim.box_min(i) = box_min[i];
@@ -1139,7 +1143,8 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     const bool sphere_radius_defined = stimulus_params.sphere_radius.defined();
 
     if (sphere_center_defined != sphere_radius_defined) {
-      throw std::runtime_error("Both Sphere_center and Sphere_radius must be specified for a CEP stimulus sphere.");
+      svmp::raise<svmp::ParseException>(
+          SVMP_HERE, "Both Sphere_center and Sphere_radius must be specified for a CEP stimulus sphere.");
     }
 
     if (sphere_center_defined && sphere_radius_defined) {
@@ -1147,11 +1152,13 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
       const double sphere_radius = stimulus_params.sphere_radius.value();
 
       if (sphere_center.size() < static_cast<std::size_t>(simulation->com_mod.nsd)) {
-        throw std::runtime_error("Stimulus sphere center dimension is smaller than the simulation spatial dimension.");
+        svmp::raise<svmp::ParseException>(
+            SVMP_HERE, "Stimulus sphere center dimension is smaller than the simulation spatial dimension.");
       }
 
       if (sphere_radius < 0.0) {
-        throw std::runtime_error("Stimulus Sphere_radius must be non-negative.");
+        svmp::raise<svmp::ParseException>(
+            SVMP_HERE, "Stimulus Sphere_radius must be non-negative.");
       }
 
       lDmn.cep.Istim.sphere_defined = true;

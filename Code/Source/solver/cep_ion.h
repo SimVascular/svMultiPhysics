@@ -23,7 +23,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
                  Vector<double> &Xg, const double t1, double &yl,
                  const double I4f, const double dt,
-                 const double stimulus_amplitude);
+                 const ComMod& com_mod, const int Ac);
 };
 
 #endif
