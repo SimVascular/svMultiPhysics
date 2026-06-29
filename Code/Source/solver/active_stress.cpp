@@ -4,8 +4,7 @@
 #include "active_stress.h"
 
 bool supports_active_stress(const consts::EquationType eq_type) {
-  return eq_type == consts::EquationType::phys_shell ||
-         eq_type == consts::EquationType::phys_struct ||
+  return eq_type == consts::EquationType::phys_struct ||
          eq_type == consts::EquationType::phys_ustruct ||
          eq_type == consts::EquationType::phys_FSI;
 }
