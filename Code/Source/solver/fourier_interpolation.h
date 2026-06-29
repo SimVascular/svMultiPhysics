@@ -282,6 +282,9 @@ public:
   /// @brief Get the dimension of the data interpolated by this object.
   unsigned int get_n_components() const;
 
+  /// @brief Get the number of Fourier coefficients used by this object.
+  unsigned int get_n_fourier_coefficients() const;
+
   /// @brief Get the initial value of the linear trend part for one component.
   const double
   get_linear_trend_initial_value(const unsigned int component) const;

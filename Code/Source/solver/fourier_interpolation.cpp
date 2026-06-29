@@ -396,6 +396,10 @@ unsigned int FourierInterpolation::get_n_components() const {
   return n_components;
 }
 
+unsigned int FourierInterpolation::get_n_fourier_coefficients() const {
+  return n_fourier_coefficients;
+}
+
 const double FourierInterpolation::get_linear_trend_initial_value(
     const unsigned int component) const {
   if (!defined()) {
@@ -518,6 +522,10 @@ void FourierInterpolation::evaluate_internal(const double time,
   for (int i = 0; i < n_components; ++i) {
     value[i] = linear_trend_initial_values[i] + t * linear_trend_slopes[i];
 
+    // @todo[michelebucelli] This is consistent with the old code, but is
+    //   incorrect when use_ramp = true. In that case, the derivative should be
+    //   zero outside the interpolation interval [initial_time, initial_time +
+    //   period].
     if (evaluate_derivative)
       derivative[i] = linear_trend_slopes[i];
   }
