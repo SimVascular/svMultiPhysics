@@ -69,9 +69,9 @@ std::string solver_element_name(consts::ElementType eType)
 /// Translate a solver element type into its FE library counterpart. This is a
 /// pure renaming between the two enum vocabularies: the FE library owns the
 /// choice of basis family and polynomial order for each element type
-/// (basis_factory::default_basis_request). The switch deliberately has no
-/// default case so that compilers building with -Wswitch flag any newly added
-/// solver element type that is missing a mapping here. Returns std::nullopt for
+/// (basis_factory::default_basis_request). A solver element type with no case
+/// here is a missing mapping (a programmer error), so the default case throws
+/// rather than returning. Returns std::nullopt for
 /// element types the FE Basis does not implement (NA/PNT/NRB); callers test FE
 /// Basis support with has_value().
 std::optional<fe::ElementType> to_fe_element_type(consts::ElementType eType)
