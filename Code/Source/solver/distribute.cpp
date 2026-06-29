@@ -1599,46 +1599,8 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       } 
 
       cm.bcast(cm_mod, cep.Dani);
-      cm.bcast(cm_mod, &cep.Istim.Ts);
-      cm.bcast(cm_mod, &cep.Istim.Td);
-      cm.bcast(cm_mod, &cep.Istim.CL);
-      cm.bcast(cm_mod, &cep.Istim.A);
-      cm.bcast(cm_mod, &cep.Istim.box_defined);
 
-      if (cep.Istim.box_defined) {
-        int box_size = cep.Istim.box_min.size();
-        cm.bcast(cm_mod, &box_size);
-
-        if (box_size <= 0) {
-          throw std::runtime_error("Stimulus box has invalid coordinate dimension.");
-        }
-
-        if (cm.slv(cm_mod)) {
-          cep.Istim.box_min.resize(box_size);
-          cep.Istim.box_max.resize(box_size);
-        }
-
-        cm.bcast(cm_mod, cep.Istim.box_min, "Stimulus box_min");
-        cm.bcast(cm_mod, cep.Istim.box_max, "Stimulus box_max");
-      }
-
-      cm.bcast(cm_mod, &cep.Istim.sphere_defined);
-
-      if (cep.Istim.sphere_defined) {
-        int sphere_center_size = cep.Istim.sphere_center.size();
-        cm.bcast(cm_mod, &sphere_center_size);
-
-        if (sphere_center_size <= 0) {
-          throw std::runtime_error("Stimulus sphere center has invalid coordinate dimension.");
-        }
-
-        if (cm.slv(cm_mod)) {
-          cep.Istim.sphere_center.resize(sphere_center_size);
-        }
-
-        cm.bcast(cm_mod, cep.Istim.sphere_center, "Stimulus sphere_center");
-        cm.bcast(cm_mod, &cep.Istim.sphere_radius);
-      }
+      cep.Istim.distribute(cm_mod, cm);
 
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 
