@@ -578,7 +578,7 @@ void FourierInterpolation::evaluate_internal(const double time,
                        : std::fmod(time - initial_time, period);
 
   // Linear trend.
-  for (int i = 0; i < n_components; ++i) {
+  for (unsigned int i = 0; i < n_components; ++i) {
     value[i] = linear_trend_initial_values[i] + t * linear_trend_slopes[i];
 
     // @todo[michelebucelli] This is consistent with the old code, but is
