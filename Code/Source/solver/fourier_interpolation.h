@@ -52,7 +52,7 @@
  *   \underbrace{\mathbf{q}_i + \mathbf{q}_s \tau(t)}_{\text{linear trend}} +
  *   \underbrace{
  *     \sum_{k=0}^{M-1} \left(
- *       \mathbf{c}_k^{\text{real}} \cos\left(\frac{2 \pi k \tau(t)}{T}\right) +
+ *       \mathbf{c}_k^{\text{real}} \cos\left(\frac{2 \pi k \tau(t)}{T}\right) -
  *       \mathbf{c}_k^{\text{imag}} \sin\left(\frac{2 \pi k \tau(t)}{T}\right)
  *     \right)
  *   }_{\text{Fourier series}} \\
