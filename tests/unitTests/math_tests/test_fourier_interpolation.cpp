@@ -269,6 +269,9 @@ TEST_F(FourierInterpolationTest, Ramp) {
   // Check that after the final time the value is equal to the final value of
   // the linear trend.
   std::tie(value, derivative) = gt.value_and_derivative(x_end + 1.0);
+  ASSERT_NEAR(value[0], temporal_values.back()[1], 1e-6)
+      << "Expected value after final time to be equal to final value of linear "
+         "trend";
 
   // Check that the value in the interpolation interval is a linear
   // interpolation of the initial and final value.

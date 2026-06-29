@@ -133,7 +133,7 @@ public:
    * @param[in] temporal_values The time series to interpolate. This is a vector
    *   of vectors, where each inner vector contains the time and the values of
    *   all components at that time. In other words,
-   *   <kbd>temporal_values[i][0]</kbd> is the time @f$t_i@f$, and∏
+   *   <kbd>temporal_values[i][0]</kbd> is the time @f$t_i@f$, and
    *   <kbd>temporal_values[i][j]</kbd> is the value the @f$j@f$-th component of
    *   @f$\mathbf{v}_i@f$.
    * @param[in] use_ramp Whether to use a ramp function for the interpolation.
@@ -286,20 +286,19 @@ public:
   unsigned int get_n_fourier_coefficients() const;
 
   /// @brief Get the initial value of the linear trend part for one component.
-  const double
-  get_linear_trend_initial_value(const unsigned int component) const;
+  double get_linear_trend_initial_value(const unsigned int component) const;
 
   /// @brief Get the slope of the linear trend part for one component.
-  const double get_linear_trend_slope(const unsigned int component) const;
+  double get_linear_trend_slope(const unsigned int component) const;
 
   /// @brief Get the real part of the Fourier coefficients for one component.
-  const double get_coefficient_real(const unsigned int component,
-                                    const unsigned int frequency) const;
+  double get_coefficient_real(const unsigned int component,
+                              const unsigned int frequency) const;
 
   /// @brief Get the imaginary part of the Fourier coefficients for one
   /// component.
-  const double get_coefficient_imaginary(const unsigned int component,
-                                         const unsigned int frequency) const;
+  double get_coefficient_imaginary(const unsigned int component,
+                                   const unsigned int frequency) const;
 
   /// @}
 
@@ -314,8 +313,8 @@ private:
    * The vectors value and derivative are assumed to be of size @ref d. This is
    * not checked by this function.
    *
-   * @throws std::runtime_error if this FourierInterpolation instance has not
-   * been initialized (i.e. if @ref defined returns false).
+   * @throws svmp::FE::NotInitializedException if this FourierInterpolation
+   * instance has not been initialized (i.e. if @ref defined returns false).
    *
    * @param[in] time The time at which to evaluate the interpolation.
    * @param[in] evaluate_derivative Whether to also evaluate the time

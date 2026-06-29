@@ -2,8 +2,10 @@
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
 #include "fourier_interpolation.h"
-#include "fft.h"
+#include "consts.h"
 
+#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <regex>
 #include <sstream>
@@ -84,16 +86,16 @@ FourierInterpolation FourierInterpolation::from_time_series(
   }
 
   // Compute the Fourier coefficients.
-  for (int n = 0; n < result.n_fourier_coefficients; ++n) {
+  for (unsigned int n = 0; n < result.n_fourier_coefficients; ++n) {
     const double tmp = static_cast<double>(n);
     result.fourier_coefficients_real.set_col(n, 0.0);
     result.fourier_coefficients_imaginary.set_col(n, 0.0);
 
-    for (int i = 0; i < n_time_points - 1; ++i) {
+    for (unsigned int i = 0; i < n_time_points - 1; ++i) {
       const double ko = 2.0 * consts::pi * tmp * times[i] / result.period;
       const double kn = 2.0 * consts::pi * tmp * times[i + 1] / result.period;
 
-      for (int j = 0; j < result.n_components; j++) {
+      for (unsigned int j = 0; j < result.n_components; j++) {
         const double s =
             (values(j, i + 1) - values(j, i)) / (times[i + 1] - times[i]);
 
@@ -111,13 +113,13 @@ FourierInterpolation FourierInterpolation::from_time_series(
     }
 
     if (n == 0) {
-      for (int k = 0; k < result.n_components; k++) {
+      for (unsigned int k = 0; k < result.n_components; k++) {
         result.fourier_coefficients_real(k, n) /= result.period;
       }
     } else {
       const double tmp_2 = (consts::pi * consts::pi * tmp * tmp);
 
-      for (int k = 0; k < result.n_components; k++) {
+      for (unsigned int k = 0; k < result.n_components; k++) {
         result.fourier_coefficients_real(k, n) =
             0.5 * result.fourier_coefficients_real(k, n) * result.period /
             tmp_2;
@@ -400,7 +402,7 @@ unsigned int FourierInterpolation::get_n_fourier_coefficients() const {
   return n_fourier_coefficients;
 }
 
-const double FourierInterpolation::get_linear_trend_initial_value(
+double FourierInterpolation::get_linear_trend_initial_value(
     const unsigned int component) const {
   if (!defined()) {
     svmp::raise<svmp::FE::NotInitializedException>(
@@ -420,8 +422,8 @@ const double FourierInterpolation::get_linear_trend_initial_value(
   return linear_trend_initial_values[component];
 }
 
-const double
-FourierInterpolation::get_linear_trend_slope(const unsigned int component) const {
+double FourierInterpolation::get_linear_trend_slope(
+    const unsigned int component) const {
   if (!defined()) {
     svmp::raise<svmp::FE::NotInitializedException>(
         SVMP_HERE,
@@ -440,7 +442,7 @@ FourierInterpolation::get_linear_trend_slope(const unsigned int component) const
   return linear_trend_slopes[component];
 }
 
-const double
+double
 FourierInterpolation::get_coefficient_real(const unsigned int component,
                                            const unsigned int frequency) const {
   if (!defined()) {
@@ -470,7 +472,7 @@ FourierInterpolation::get_coefficient_real(const unsigned int component,
   return fourier_coefficients_real(component, frequency);
 }
 
-const double FourierInterpolation::get_coefficient_imaginary(
+double FourierInterpolation::get_coefficient_imaginary(
     const unsigned int component, const unsigned int frequency) const {
 
   if (!defined()) {
