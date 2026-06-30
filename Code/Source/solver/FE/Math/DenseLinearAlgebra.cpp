@@ -13,9 +13,7 @@
 #include <string>
 #include <utility>
 
-namespace svmp {
-namespace FE {
-namespace math {
+namespace svmp::FE::math {
 
 namespace {
 
@@ -336,6 +334,4 @@ DensePseudoInverseResult rank_revealing_pseudo_inverse(
     return result;
 }
 
-} // namespace math
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::math

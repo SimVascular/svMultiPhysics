@@ -14,9 +14,7 @@
 
 #include <cstddef>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 /**
  * @brief Reference-cell topology of a basis (the shape, independent of order).
@@ -251,8 +249,6 @@ enum class BasisTopology {
     }
 }
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
 
 #endif // SVMP_FE_BASIS_BASISTRAITS_H

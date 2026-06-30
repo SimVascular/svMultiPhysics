@@ -39,9 +39,7 @@
  * @brief Fixed-size vector type aliases.
  */
 
-namespace svmp {
-namespace FE {
-namespace math {
+namespace svmp::FE::math {
 
 /**
  * @brief Fixed-size column vector for element-level computations
@@ -52,8 +50,6 @@ namespace math {
 template<typename T, std::size_t N>
 using Vector = Eigen::Matrix<T, static_cast<int>(N), 1>;
 
-} // namespace math
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::math
 
 #endif // SVMP_FE_MATH_VECTOR_H

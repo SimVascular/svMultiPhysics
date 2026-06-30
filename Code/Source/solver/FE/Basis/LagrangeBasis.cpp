@@ -9,9 +9,7 @@
 #include <span>
 #include <string>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 namespace {
 
@@ -595,6 +593,4 @@ void LagrangeBasis::evaluate_hessians_to(const Vec3& xi,
     evaluate_all_to(xi, std::span<double>{}, std::span<Gradient>{}, hessians_out);
 }
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis

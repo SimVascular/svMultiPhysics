@@ -6,9 +6,7 @@
 #include <algorithm>
 #include <string>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 void require_span_size(std::size_t actual,
                        std::size_t expected,
@@ -146,6 +144,4 @@ void BasisFunction::numerical_hessian(const math::Vector<double, 3>& xi,
     }
 }
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis

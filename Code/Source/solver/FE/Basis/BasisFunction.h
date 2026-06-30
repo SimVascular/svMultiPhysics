@@ -55,10 +55,10 @@
  * A basis object is immutable after construction. It represents one reference
  * topology (e.g. tetrahedron, hexahedron), basis family (Lagrange or
  * serendipity), and effective polynomial order, and can be shared
- * safely across evaluations. Construction may build node lattices or invert
- * interpolation matrices, so callers should construct through basis_factory
- * and cache one instance for each distinct basis request instead of rebuilding
- * inside element loops.
+ * safely across evaluations. Construction may be computationally expensive -- it
+ * can build node lattices or invert interpolation matrices -- so a basis should
+ * be constructed only once for each distinct basis request, through
+ * basis_factory, and reused rather than rebuilt inside element loops.
  *
  * Every evaluator takes a three-component reference coordinate. For
  * lower-dimensional elements, only the first dimension() components are
@@ -135,9 +135,7 @@
  * second derivatives).
  */
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 /** @brief Gradient vector type used by basis evaluators. */
 using Gradient = math::Vector<double, 3>;
@@ -381,8 +379,6 @@ protected:
                            double eps = double(1e-5)) const;
 };
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
 
 #endif // SVMP_FE_BASIS_BASISFUNCTION_H

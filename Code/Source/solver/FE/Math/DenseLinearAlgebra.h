@@ -14,9 +14,7 @@
 #include <string_view>
 #include <vector>
 
-namespace svmp {
-namespace FE {
-namespace math {
+namespace svmp::FE::math {
 
 // Dense solve, inverse, rank, and pseudo-inverse support for FE construction
 // utilities. Matrices are row-major: matrix[row * cols + col]. The
@@ -260,8 +258,6 @@ void validate_dense_inverse_diagnostics(
     std::size_t cols,
     std::string_view error_message_label = "dense matrix");
 
-} // namespace math
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::math
 
 #endif // SVMP_FE_MATH_DENSELINEARALGEBRA_H

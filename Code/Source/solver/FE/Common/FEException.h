@@ -19,8 +19,7 @@
 #include <string>
 #include <utility>
 
-namespace svmp {
-namespace FE {
+namespace svmp::FE {
 
 /**
  * @defgroup FE_CommonExceptions Exceptions
@@ -359,7 +358,6 @@ private:
 
 /** @} */
 
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE
 
 #endif // SVMP_FE_EXCEPTION_H

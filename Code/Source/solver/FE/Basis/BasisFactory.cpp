@@ -7,9 +7,7 @@
 #include "LagrangeBasis.h"
 #include "SerendipityBasis.h"
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 namespace {
 
@@ -108,6 +106,4 @@ std::unique_ptr<BasisFunction> create_default_for(ElementType element_type) {
 
 } // namespace basis_factory
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis

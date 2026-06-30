@@ -14,9 +14,7 @@
 #include <array>
 #include <span>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 /**
  * @defgroup FE_SerendipityBasis SerendipityBasis
@@ -289,8 +287,6 @@ private:
 
 /** @} */
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
 
 #endif // SVMP_FE_BASIS_SERENDIPITYBASIS_H

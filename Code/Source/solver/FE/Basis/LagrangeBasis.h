@@ -11,9 +11,7 @@
 #include <cstddef>
 #include <span>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 /**
  * @defgroup FE_LagrangeBasis LagrangeBasis
@@ -285,8 +283,6 @@ private:
 
 /** @} */
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
 
 #endif // SVMP_FE_BASIS_LAGRANGEBASIS_H

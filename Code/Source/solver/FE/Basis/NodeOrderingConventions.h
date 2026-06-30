@@ -13,9 +13,7 @@
 #include <span>
 #include <vector>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 /**
  * @defgroup FE_BasisNodeOrdering Reference-node generation (internal)
@@ -164,8 +162,6 @@ public:
 
 /** @} */
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
 
 #endif // SVMP_FE_BASIS_NODEORDERINGCONVENTIONS_H

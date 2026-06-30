@@ -6,9 +6,7 @@
 
 #include "FEException.h"
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 /**
  * @defgroup FE_BasisExceptions Exceptions
@@ -95,8 +93,6 @@ SVMP_DEFINE_EXCEPTION(BasisConstructionException, BasisException,
 
 /** @} */
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
 
 #endif // SVMP_FE_BASIS_BASISEXCEPTIONS_H

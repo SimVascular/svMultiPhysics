@@ -11,9 +11,7 @@
 #include <span>
 #include <string>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 namespace {
 using Vec3 = math::Vector<double, 3>;
@@ -538,6 +536,4 @@ void SerendipityBasis::evaluate_hessians_to(const math::Vector<double, 3>& xi,
     evaluate_all_to(xi, std::span<double>{}, std::span<Gradient>{}, hessians_out);
 }
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis

@@ -75,8 +75,7 @@ enum class CellFamily {
  * argument-checking helpers.
  */
 
-namespace svmp {
-namespace FE {
+namespace svmp::FE {
 
 /**
  * @defgroup FE_CommonTypes Types
@@ -559,7 +558,6 @@ constexpr int element_dimension(ElementType elem) noexcept {
 
 /** @} */
 
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE
 
 #endif // SVMP_FE_TYPES_H

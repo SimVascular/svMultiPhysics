@@ -15,9 +15,7 @@
 #include <string>
 #include <vector>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 /**
  * @brief Runtime description of a basis to construct.
@@ -102,8 +100,6 @@ namespace basis_factory {
 
 } // namespace basis_factory
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
 
 #endif // SVMP_FE_BASIS_BASISFACTORY_H

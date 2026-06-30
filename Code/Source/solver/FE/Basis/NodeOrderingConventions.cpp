@@ -11,9 +11,7 @@
 #include <span>
 #include <utility>
 
-namespace svmp {
-namespace FE {
-namespace basis {
+namespace svmp::FE::basis {
 
 // Internal to the Basis module; excluded from the public Doxygen output (the
 // matching conditional region is in NodeOrderingConventions.h).
@@ -880,6 +878,4 @@ ReferenceNodeLayout::serendipity_node_coords(BasisTopology topology, int order) 
 
 /** @endcond */
 
-} // namespace basis
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE::basis
