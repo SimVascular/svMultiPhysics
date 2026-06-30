@@ -8,7 +8,6 @@
 #include "cmm.h"
 #include "consts.h"
 #include "eq_assem.h"
-#include "fft.h"
 #include "fluid.h"
 #include "fs.h"
 #include "lhsa.h"
@@ -1068,7 +1067,7 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
       throw std::runtime_error("[set_bc_dirl] Inconsistent DOF");
     }
 
-    igbc(com_mod, lBc.gm, lY, lA);
+    all_fun::igbc(com_mod, lBc.gm, lY, lA);
     return;
   
   } else if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_ustd))) {
@@ -1448,7 +1447,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        Array<double> hg(nrows,ncols);
        Array<double> tmpA_a(nrows,ncols);
 
-       igbc(com_mod, lBc.gm, tmpA_a, hg);
+       all_fun::igbc(com_mod, lBc.gm, tmpA_a, hg);
 
        int n = 0;
        for (int j = 0; j < ncols; j++) {
@@ -1813,7 +1812,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
 
   if (utils::btest(lBc.bType,iBC_gen)) {
     Array<double> tmpA(nsd,nNo), hl(nsd,nNo);
-    igbc(com_mod, lBc.gm, tmpA, hl);
+    all_fun::igbc(com_mod, lBc.gm, tmpA, hl);
     for (int a = 0; a < nNo; a++) {
       int Ac = lFa.gN(a);
       hg.set_col(Ac, tmpA.col(a));

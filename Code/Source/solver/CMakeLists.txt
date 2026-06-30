@@ -180,7 +180,6 @@ set(CSRCS
   fluid.h fluid.cpp
   fsi.h fsi.cpp
   fs.h fs.cpp
-  fft.h fft.cpp
   heatf.h heatf.cpp
   heats.h heats.cpp
   initialize.h initialize.cpp

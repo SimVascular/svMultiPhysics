@@ -5,7 +5,6 @@
 
 #include "mat_models.h"
 
-#include "fft.h"
 #include "mat_fun.h"
 #include "utils.h"
 #include "ArtificialNeuralNetMaterial.h"

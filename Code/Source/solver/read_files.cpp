@@ -8,7 +8,6 @@
 #include "FE/Common/FEException.h"
 #include "all_fun.h"
 #include "consts.h"
-#include "fft.h"
 #include "ionic_model.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
