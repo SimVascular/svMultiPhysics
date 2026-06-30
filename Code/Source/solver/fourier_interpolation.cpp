@@ -17,6 +17,58 @@ std::string clean_line(std::string line) {
   line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
   return std::regex_replace(line, std::regex("^ +| +$|( ) +"), "$1");
 }
+
+/// Read a double from a stream, raising an exception if the read fails.
+double read_double(std::istream &stream, const std::string &file_name,
+                   const std::string &context = "") {
+  double value;
+  stream >> value;
+
+  if (stream.fail()) {
+    std::string message = "Cannot parse double value";
+    if (context != "") {
+      message += " for " + context;
+    }
+
+    svmp::raise<svmp::FileFormatException>(SVMP_HERE, file_name, message);
+  }
+
+  return value;
+}
+
+/// Read an integer from a stream, raising an exception if the read fails.
+int read_int(std::istream &stream, const std::string &file_name,
+             const std::string &context = "") {
+  int value;
+  stream >> value;
+
+  if (stream.fail()) {
+    std::string message = "Cannot parse integer value";
+    if (context != "") {
+      message += " for " + context;
+    }
+
+    svmp::raise<svmp::FileFormatException>(SVMP_HERE, file_name, message);
+  }
+
+  return value;
+}
+
+/// Convert a string into a vector of doubles.
+std::vector<double> string_to_vector_double(const std::string &str,
+                                            const std::string &file_name,
+                                            unsigned int line_number) {
+  std::istringstream line_string_stream(str);
+  std::vector<double> values;
+
+  while (!line_string_stream.eof()) {
+    values.push_back(read_double(line_string_stream, file_name,
+                                 " on line " + std::to_string(line_number)));
+  }
+
+  return values;
+}
+
 } // namespace
 
 FourierInterpolation FourierInterpolation::from_time_series(
@@ -52,6 +104,16 @@ FourierInterpolation FourierInterpolation::from_time_series(
     times[i] = temporal_values[i][0];
     for (unsigned int j = 0; j < n_components; ++j) {
       values(j, i) = temporal_values[i][j + 1];
+    }
+  }
+
+  // Check that times are in strictly increasing order. Notice that this implies
+  // that the period is strictly positive, since it is computed as the
+  // difference between the last and first time value.
+  for (unsigned int i = 1; i < n_time_points; ++i) {
+    if (times[i] <= times[i - 1]) {
+      svmp::raise<svmp::FE::InvalidArgumentException>(
+          SVMP_HERE, "The time values must be in strictly increasing order.");
     }
   }
 
@@ -144,8 +206,9 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
   }
 
   // Read the header of the file.
-  int n_time_points, n_fourier_coefficients;
-  file >> n_time_points >> n_fourier_coefficients;
+  const int n_time_points = read_int(file, file_name, "number of time points");
+  const int n_fourier_coefficients =
+      read_int(file, file_name, "number of Fourier coefficients");
 
   if (n_time_points < 2) {
     svmp::raise<svmp::FileFormatException>(
@@ -171,37 +234,23 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
 
   while (std::getline(file, line)) {
     line = clean_line(line);
-    if (line.empty())
-      continue;
 
-    std::istringstream line_string_stream(line);
-    std::vector<double> line_values;
+    if (!line.empty()) {
+      const std::vector<double> line_values =
+          string_to_vector_double(line, file_name, line_number);
 
-    while (!line_string_stream.eof()) {
-      line_string_stream >> tmp;
-
-      if (line_string_stream.fail()) {
+      if (line_values.size() != 1 + n_components) {
         svmp::raise<svmp::FileFormatException>(
             SVMP_HERE, file_name,
             "Error reading values for the temporal values file for line " +
-                std::to_string(line_number) + ": '" + line +
-                "'; value number " + std::to_string(line_values.size() + 1) +
-                " is not a double.");
+                std::to_string(line_number) + ": '" + line + "'; expected " +
+                std::to_string(1 + n_components) + " values, but got " +
+                std::to_string(line_values.size()) + ".");
       }
 
-      line_values.push_back(tmp);
+      values.push_back(line_values);
     }
 
-    if (line_values.size() != 1 + n_components) {
-      svmp::raise<svmp::FileFormatException>(
-          SVMP_HERE, file_name,
-          "Error reading values for the temporal values file for line " +
-              std::to_string(line_number) + ": '" + line + "'; expected " +
-              std::to_string(1 + n_components) + " values, but got " +
-              std::to_string(line_values.size()) + ".");
-    }
-
-    values.push_back(line_values);
     ++line_number;
   }
 
@@ -252,6 +301,12 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients(
                    "fourier_coefficients_imaginary must match.");
   }
 
+  // The period must be a strictly positive number.
+  if (period <= 0.0) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        SVMP_HERE, "The period must be a strictly positive number.");
+  }
+
   FourierInterpolation result;
 
   result.use_ramp = false;
@@ -275,8 +330,8 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
     svmp::raise<svmp::FileNotFoundException>(SVMP_HERE, file_name);
   }
 
-  double initial_time, period;
-  file >> initial_time >> period;
+  const double initial_time = read_double(file, file_name, "initial time");
+  const double period = read_double(file, file_name, "period");
 
   if (file.fail()) {
     svmp::raise<svmp::FileFormatException>(
@@ -291,34 +346,32 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
   Vector<double> linear_trend_slopes(n_components);
 
   std::string line;
-  double tmp;
   unsigned int current_component = 0;
+  unsigned int line_number = 2;
 
   while (current_component < n_components && std::getline(file, line)) {
     line = clean_line(line);
-    if (line.empty())
-      continue;
 
-    std::istringstream line_string_stream(line);
-    std::vector<double> values;
+    if (!line.empty()) {
+      const std::vector<double> values =
+          string_to_vector_double(line, file_name, current_component + 2);
 
-    while (line_string_stream >> tmp) {
-      values.push_back(tmp);
+      if (values.size() != 2) {
+        svmp::raise<svmp::FileFormatException>(
+            SVMP_HERE, file_name,
+            "Error reading the linear trend for component " +
+                std::to_string(current_component) + ": '" + line +
+                "'; expected exactly 2 values (initial value and slope), but "
+                "got " +
+                std::to_string(values.size()) + ".");
+      }
+
+      linear_trend_initial_values[current_component] = values[0];
+      linear_trend_slopes[current_component] = values[1];
+      ++current_component;
     }
 
-    if (values.size() != 2) {
-      svmp::raise<svmp::FileFormatException>(
-          SVMP_HERE, file_name,
-          "Error reading the linear trend for component " +
-              std::to_string(current_component) + ": '" + line +
-              "'; expected exactly 2 values (initial value and slope), but "
-              "got " +
-              std::to_string(values.size()) + ".");
-    }
-
-    linear_trend_initial_values[current_component] = values[0];
-    linear_trend_slopes[current_component] = values[1];
-    ++current_component;
+    ++line_number;
   }
 
   if (current_component != n_components) {
@@ -331,14 +384,8 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
   }
 
   // Read the Fourier coefficients.
-  unsigned int n_fourier_coefficients;
-  file >> n_fourier_coefficients;
-
-  if (file.fail()) {
-    svmp::raise<svmp::FileFormatException>(
-        SVMP_HERE, file_name,
-        "Could not read the number of Fourier coefficients.");
-  }
+  const unsigned int n_fourier_coefficients =
+      read_int(file, file_name, "number of Fourier coefficients");
 
   Array<double> fourier_coefficients_real(n_components, n_fourier_coefficients);
   Array<double> fourier_coefficients_imaginary(n_components,
@@ -353,34 +400,32 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
   while (current_coefficient < n_fourier_coefficients &&
          std::getline(file, line)) {
     line = clean_line(line);
-    if (line.empty())
-      continue;
 
-    std::istringstream line_string_stream(line);
-    std::vector<double> values;
+    if (!line.empty()) {
+      const std::vector<double> values =
+          string_to_vector_double(line, file_name, line_number);
 
-    while (line_string_stream >> tmp) {
-      values.push_back(tmp);
+      if (values.size() != n_values_per_line) {
+        svmp::raise<svmp::FileFormatException>(
+            SVMP_HERE, file_name,
+            "Error reading Fourier coefficient " +
+                std::to_string(current_coefficient) + ": '" + line +
+                "'; expected " + std::to_string(n_values_per_line) +
+                " values (real and imaginary parts for " +
+                std::to_string(n_components) + " components), but got " +
+                std::to_string(values.size()) + ".");
+      }
+
+      for (unsigned int j = 0; j < n_components; ++j) {
+        fourier_coefficients_real(j, current_coefficient) = values[j];
+        fourier_coefficients_imaginary(j, current_coefficient) =
+            values[j + n_components];
+      }
+
+      ++current_coefficient;
     }
 
-    if (values.size() != n_values_per_line) {
-      svmp::raise<svmp::FileFormatException>(
-          SVMP_HERE, file_name,
-          "Error reading Fourier coefficient " +
-              std::to_string(current_coefficient) + ": '" + line +
-              "'; expected " + std::to_string(n_values_per_line) +
-              " values (real and imaginary parts for " +
-              std::to_string(n_components) + " components), but got " +
-              std::to_string(values.size()) + ".");
-    }
-
-    for (unsigned int j = 0; j < n_components; ++j) {
-      fourier_coefficients_real(j, current_coefficient) = values[j];
-      fourier_coefficients_imaginary(j, current_coefficient) =
-          values[j + n_components];
-    }
-
-    ++current_coefficient;
+    ++line_number;
   }
 
   if (current_coefficient != n_fourier_coefficients) {
