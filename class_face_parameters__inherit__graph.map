@@ -1,0 +1,5 @@
+<map id="FaceParameters" name="FaceParameters">
+<area shape="rect" id="Node000001" title="The FaceParameters class is used to store parameters for the &#39;Add_face&#39; XML element." alt="" coords="5,79,131,104"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="9,5,127,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="71,44,71,79,65,79,65,44"/>
+</map>

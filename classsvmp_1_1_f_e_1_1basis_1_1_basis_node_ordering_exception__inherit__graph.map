@@ -1,0 +1,11 @@
+<map id="svmp::FE::basis::BasisNodeOrderingException" name="svmp::FE::basis::BasisNodeOrderingException">
+<area shape="rect" id="Node000001" title="Public&#45;to&#45;canonical node ordering or coordinate lookup failure." alt="" coords="20,299,221,339"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_exception.html" title="Base exception type for errors originating in the Basis module." alt="" coords="5,225,236,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,264,123,299,118,299,118,264"/>
+<area shape="rect" id="Node000003" href="$classsvmp_1_1_f_e_1_1_f_e_exception.html" title="Base exception type for errors originating in the FE library." alt="" coords="35,152,206,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="123,191,123,225,118,225,118,191"/>
+<area shape="rect" id="Node000004" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="39,79,202,104"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="123,118,123,152,118,152,118,118"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="63,5,178,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="123,44,123,79,118,79,118,44"/>
+</map>

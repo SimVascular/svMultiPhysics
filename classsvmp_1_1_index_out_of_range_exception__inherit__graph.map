@@ -1,0 +1,9 @@
+<map id="svmp::IndexOutOfRangeException" name="svmp::IndexOutOfRangeException">
+<area shape="rect" id="Node000001" title="An index is outside its valid range." alt="" coords="5,225,251,251"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_core_exception.html" title=" " alt="" coords="48,152,208,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,191,131,225,125,225,125,191"/>
+<area shape="rect" id="Node000003" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="47,79,209,104"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="131,118,131,152,125,152,125,118"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="71,5,185,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="131,44,131,79,125,79,125,44"/>
+</map>

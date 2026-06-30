@@ -1,0 +1,7 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html" title="Abstract interface for finite&#45;element basis&#45;function families." alt="" coords="5,45,228,70"/>
+<area shape="rect" id="Node000001" href="$classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html" title="Nodal Lagrange basis on supported reference finite elements." alt="" coords="283,5,475,45"/>
+<area shape="poly" id="edge105_Node000000_Node000001" title=" " alt="" coords="234,40,283,34,283,40,235,46"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity basis on supported reference elements." alt="" coords="276,69,483,109"/>
+<area shape="poly" id="edge106_Node000000_Node000002" title=" " alt="" coords="235,69,276,74,276,79,234,74"/>
+</map>

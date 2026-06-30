@@ -1,0 +1,7 @@
+<map id="solver/FE/Math/Vector.h" name="solver/FE/Math/Vector.h">
+<area shape="rect" id="Node000001" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="16,5,191,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,97,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,33,70,69,66,66,93,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="121,79,192,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="114,29,142,66,138,69,110,33"/>
+</map>

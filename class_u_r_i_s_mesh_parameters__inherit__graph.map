@@ -1,0 +1,5 @@
+<map id="URISMeshParameters" name="URISMeshParameters">
+<area shape="rect" id="Node000001" title="The URISMeshParameters class is used to store paramaters for the &#39;Add_URIS_mesh&#39; XML element." alt="" coords="5,79,168,104"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="27,5,146,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,44,89,79,84,79,84,44"/>
+</map>

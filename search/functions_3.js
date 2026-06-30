@@ -1,11 +1,24 @@
 var searchData=
 [
-  ['defined_0',['defined',['../class_ionic_initial_state_parameters.html#aa2597d0ea0c4d83adf6e3191d554cefc',1,'IonicInitialStateParameters::defined()'],['../class_ionic_model_parameters.html#a43fd6d918dd7bc04b5d39b29f08b7dce',1,'IonicModelParameters::defined()']]],
-  ['delta_1',['delta',['../class_bueno_orovio.html#a6505fc0e5db745a4b68a0a65306fe1bd',1,'BuenoOrovio']]],
-  ['destroy_2',['destroy',['../classfs_type.html#a9a44be997855630783ee7f73d5bf4f67',1,'fsType::destroy()'],['../classface_type.html#a960e2f03636f6a94beba1bff888cba88',1,'faceType::destroy()']]],
-  ['distribute_3',['distribute',['../class_boundary_condition.html#a7859d5d785d1411542d6d3137c823c37',1,'BoundaryCondition::distribute()'],['../class_coupled_boundary_condition.html#a95f637f4794b73e914ef5a87467ff874',1,'CoupledBoundaryCondition::distribute()']]],
-  ['distribute_5fparameters_4',['distribute_parameters',['../class_aliev_panfilov.html#ab6148986d0cacb730985b108c22218c5',1,'AlievPanfilov::distribute_parameters()'],['../class_bueno_orovio.html#aa28fd8951986a2e15b7536154f542ea2',1,'BuenoOrovio::distribute_parameters()'],['../class_fitz_hugh_nagumo.html#a8a37758a7af32985f4075e6ddf95009d',1,'FitzHughNagumo::distribute_parameters()'],['../class_ionic_model.html#ac62ce48718ec2ed6f4af5a51cf4c2d3f',1,'IonicModel::distribute_parameters()'],['../class_t_t_p.html#a748499922d93e274a2e35ce6c9a04620',1,'TTP::distribute_parameters()']]],
-  ['dot_5',['dot',['../class_vector.html#a5be8b64d660df6e59dc41305a3c5a2a1',1,'Vector']]],
-  ['double_5fdot_5fproduct_6',['double_dot_product',['../namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577',1,'mat_fun']]],
-  ['dyadic_5fproduct_7',['dyadic_product',['../namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54',1,'mat_fun']]]
+  ['default_5fbasis_5frequest_0',['default_basis_request',['../group___f_e___basis.html#ga2058ec9a9b25d28247d0ea59265cac48',1,'svmp::FE::basis::basis_factory']]],
+  ['defined_1',['defined',['../class_ionic_model_parameters.html#a43fd6d918dd7bc04b5d39b29f08b7dce',1,'IonicModelParameters::defined()'],['../class_ionic_initial_state_parameters.html#aa2597d0ea0c4d83adf6e3191d554cefc',1,'IonicInitialStateParameters::defined()']]],
+  ['delta_2',['delta',['../class_bueno_orovio.html#a6505fc0e5db745a4b68a0a65306fe1bd',1,'BuenoOrovio']]],
+  ['dense_5fmatrix_5fcondition_5ferror_5fthreshold_3',['dense_matrix_condition_error_threshold',['../group___f_e___math.html#ga882177e601506f221ce267db3290d0e2',1,'svmp::FE::math']]],
+  ['dense_5fmatrix_5fcondition_5ffallback_5fthreshold_4',['dense_matrix_condition_fallback_threshold',['../group___f_e___math.html#gad19e933310f54f02dd16c1b655a4820d',1,'svmp::FE::math']]],
+  ['dense_5fmatrix_5fdiagnostics_5',['dense_matrix_diagnostics',['../group___f_e___math.html#gae66fe3d80483a93720d6f532cd5ea670',1,'svmp::FE::math']]],
+  ['dense_5fmatrix_5fmax_5fabs_6',['dense_matrix_max_abs',['../group___f_e___math.html#gaad777daf9c37296299be8858de6a0831',1,'svmp::FE::math']]],
+  ['dense_5fmatrix_5fpivot_5ftolerance_7',['dense_matrix_pivot_tolerance',['../group___f_e___math.html#ga1679bfd90e56d6caee22770066be28c3',1,'svmp::FE::math']]],
+  ['dense_5fmatrix_5frank_8',['dense_matrix_rank',['../group___f_e___math.html#ga3e5321c2bf507e0ce0b5f1b688408437',1,'svmp::FE::math']]],
+  ['dense_5fmatrix_5fsingular_5fvalue_5ftolerance_9',['dense_matrix_singular_value_tolerance',['../group___f_e___math.html#ga32cb2591ea7cf3a31e94ea2a3c37fe72',1,'svmp::FE::math']]],
+  ['destroy_10',['destroy',['../classface_type.html#a960e2f03636f6a94beba1bff888cba88',1,'faceType::destroy()'],['../classfs_type.html#a9a44be997855630783ee7f73d5bf4f67',1,'fsType::destroy()']]],
+  ['diagnostic_11',['diagnostic',['../classsvmp_1_1_diagnostic.html#a8871718d465342406f5c5ab6b99b3b22',1,'svmp::Diagnostic::Diagnostic(std::string message, const char *file=__builtin_FILE(), int line=__builtin_LINE(), const char *function=__builtin_FUNCTION())'],['../classsvmp_1_1_diagnostic.html#a6f42b453469f09da2dbccc6b6e133a44',1,'svmp::Diagnostic::Diagnostic(const char *message, const char *file=__builtin_FILE(), int line=__builtin_LINE(), const char *function=__builtin_FUNCTION())']]],
+  ['dimension_12',['dimension',['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a4bae6ef52dbe61d96ccbf1cd37adf44a',1,'svmp::FE::basis::SerendipityBasis::dimension()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#a59f63ed6aee4941e8a23e72ddf94a23e',1,'svmp::FE::basis::LagrangeBasis::dimension()'],['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ad66c9e86ff277552141889be6362a9be',1,'svmp::FE::basis::BasisFunction::dimension()']]],
+  ['distribute_13',['distribute',['../class_coupled_boundary_condition.html#a95f637f4794b73e914ef5a87467ff874',1,'CoupledBoundaryCondition::distribute()'],['../class_boundary_condition.html#a7859d5d785d1411542d6d3137c823c37',1,'BoundaryCondition::distribute()']]],
+  ['distribute_5fparameters_14',['distribute_parameters',['../class_ionic_model.html#ac62ce48718ec2ed6f4af5a51cf4c2d3f',1,'IonicModel::distribute_parameters()'],['../class_t_t_p.html#a748499922d93e274a2e35ce6c9a04620',1,'TTP::distribute_parameters()'],['../class_fitz_hugh_nagumo.html#a8a37758a7af32985f4075e6ddf95009d',1,'FitzHughNagumo::distribute_parameters()'],['../class_bueno_orovio.html#aa28fd8951986a2e15b7536154f542ea2',1,'BuenoOrovio::distribute_parameters()'],['../class_aliev_panfilov.html#ab6148986d0cacb730985b108c22218c5',1,'AlievPanfilov::distribute_parameters()']]],
+  ['dof_5findex_15',['dof_index',['../classsvmp_1_1_f_e_1_1_dof_exception.html#aa8719c8a34ef90d5707581fc5b238d53',1,'svmp::FE::DofException']]],
+  ['dofexception_16',['DofException',['../classsvmp_1_1_f_e_1_1_dof_exception.html#a3f675798cc87d5cf73b92681e8c86a3d',1,'svmp::FE::DofException']]],
+  ['dofindex_17',['DofIndex',['../classsvmp_1_1_f_e_1_1_dof_index.html#ada0cc01794956a2ac55f94f441cfa044',1,'svmp::FE::DofIndex']]],
+  ['dot_18',['dot',['../class_vector.html#a5be8b64d660df6e59dc41305a3c5a2a1',1,'Vector']]],
+  ['double_5fdot_5fproduct_19',['double_dot_product',['../namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577',1,'mat_fun']]],
+  ['dyadic_5fproduct_20',['dyadic_product',['../namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54',1,'mat_fun']]]
 ];

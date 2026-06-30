@@ -1,14 +1,9 @@
 var searchData=
 [
-  ['mat_5fddot_0',['mat_ddot',['../namespacemat__fun.html#ad504ada70491864776462a52dbc73246',1,'mat_fun']]],
-  ['mat_5fdyad_5fprod_1',['mat_dyad_prod',['../namespacemat__fun.html#ad05ac7a2eaf066914a30549c9e489a6d',1,'mat_fun']]],
-  ['mat_5finv_2',['mat_inv',['../namespacemat__fun.html#ab37105ea0bd5731ef3ba24889a33d236',1,'mat_fun']]],
-  ['mat_5finv_5fge_3',['mat_inv_ge',['../namespacemat__fun.html#ab7cf0a25ec503065254317903b7f0fcf',1,'mat_fun']]],
-  ['mat_5finv_5fge_5forig_4',['mat_inv_ge_orig',['../namespacemat__fun.html#ab3811947b4d5d230a30e666e3a8107ca',1,'mat_fun']]],
-  ['mat_5finv_5flp_5',['mat_inv_lp',['../namespacemat__fun.html#aa0e1aca3444929b9530b92d2e46eb92b',1,'mat_fun']]],
-  ['mat_5finv_5flp_5feigen_6',['mat_inv_lp_eigen',['../namespacemat__fun.html#a40f2162082df80a215e654bcdc4c0fb1',1,'mat_fun']]],
-  ['mat_5fmul_7',['mat_mul',['../namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203',1,'mat_fun::mat_mul(const Array&lt; double &gt; &amp;A, const Vector&lt; double &gt; &amp;v)'],['../namespacemat__fun.html#aa546e3d16c049da7c1a3d42b2c782866',1,'mat_fun::mat_mul(const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B)'],['../namespacemat__fun.html#a676f2d97dad7d3c511d3847b65573c37',1,'mat_fun::mat_mul(const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, Array&lt; double &gt; &amp;result)']]],
-  ['mat_5fsymm_8',['mat_symm',['../namespacemat__fun.html#a6ecffe7c0c2beba571579b3071f6da91',1,'mat_fun']]],
-  ['mat_5fsymm_5fprod_9',['mat_symm_prod',['../namespacemat__fun.html#ac74e37f69fc09901dd23652f89a4f7e1',1,'mat_fun']]],
-  ['mat_5ftrace_10',['mat_trace',['../namespacemat__fun.html#a80fd0b01661fb60e285f4d1a94ad3eeb',1,'mat_fun']]]
+  ['lagrangebasis_0',['lagrangebasis',['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#acee70b18f1eb48f2b45c91c0119f7ca1',1,'svmp::FE::basis::LagrangeBasis::LagrangeBasis(BasisTopology topology, int order)'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#a2a050d393e5a486c9de1596c98edb1d8',1,'svmp::FE::basis::LagrangeBasis::LagrangeBasis(ElementType type, int order)'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#abfbf5bb4245e280078c7eec3df37fe76',1,'svmp::FE::basis::LagrangeBasis::LagrangeBasis(ElementType type)']]],
+  ['line_5fcoord_5fpm_5fone_1',['line_coord_pm_one',['../group___f_e___basis_node_ordering.html#ga7ccfcd832fd600cabd44dad69523b99e',1,'svmp::FE::basis']]],
+  ['load_5fcap_5fface_5fvtp_2',['load_cap_face_vtp',['../class_coupled_boundary_condition.html#acc85470618489a7c1db2d85f675e5d5d',1,'CoupledBoundaryCondition']]],
+  ['load_5ffrom_5fvtp_3',['load_from_vtp',['../class_capping_surface.html#a24af507db602a7d10b7c0cb833847b23',1,'CappingSurface']]],
+  ['location_4',['location',['../classsvmp_1_1_diagnostic.html#a50fab9d53be4c756e68c1738177d575b',1,'svmp::Diagnostic']]],
+  ['log_5fmessage_5',['log_message',['../class_simulation_logger.html#a4f88ca37b189442d6fe68eb5acbbe34c',1,'SimulationLogger']]]
 ];

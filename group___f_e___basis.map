@@ -1,0 +1,8 @@
+<map id="Basis" name="Basis">
+<area shape="rect" id="Node000002" href="$group___f_e.html" title="Finite&#45;element interfaces and utilities used by the solver." alt="" coords="5,92,92,117"/>
+<area shape="rect" id="Node000001" title="Basis&#45;function interfaces, concrete basis families, and reference&#45;node conventions." alt="" coords="140,92,197,117"/>
+<area shape="rect" id="Node000003" href="$group___f_e___basis_exceptions.html" title="Basis&#45;module exception hierarchy." alt="" coords="298,5,391,31"/>
+<area shape="rect" id="Node000005" href="$group___f_e___basis_node_ordering.html" title="Reference&#45;node generators that the basis families build on." alt="" coords="245,55,444,95"/>
+<area shape="rect" id="Node000004" href="$group___f_e___lagrange_basis.html" title="Construction and evaluation API for nodal Lagrange finite&#45;element bases." alt="" coords="286,120,403,145"/>
+<area shape="rect" id="Node000006" href="$group___f_e___serendipity_basis.html" title="Construction and evaluation API for reduced serendipity finite&#45;element bases." alt="" coords="279,169,410,195"/>
+</map>

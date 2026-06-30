@@ -101,7 +101,7 @@ $(function() {
 <div class="dynheader">
 Inheritance diagram for svmp::ExceptionBase:</div>
 <div class="dyncontent">
-<div class="center"><!-- SVG 0 --></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="classsvmp_1_1_exception_base__inherit__graph.svg" width="1151" height="824"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
@@ -121,12 +121,15 @@ const <a class="el" href="classsvmp_1_1_exception_context.html">ExceptionContext
 <tr class="memitem:acf3af50a08f556eb5ed9887d96526541" id="r_acf3af50a08f556eb5ed9887d96526541"><td class="memItemLeft" align="right" valign="top"><a id="acf3af50a08f556eb5ed9887d96526541" name="acf3af50a08f556eb5ed9887d96526541"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>add_context</b> (const std::string &amp;context)</td></tr>
 <tr class="separator:acf3af50a08f556eb5ed9887d96526541"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae367634e235c652950923ac59c0db3de" id="r_ae367634e235c652950923ac59c0db3de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_exception_base.html#ae367634e235c652950923ac59c0db3de">set_source_location</a> (const <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> &amp;location)</td></tr>
+<tr class="memdesc:ae367634e235c652950923ac59c0db3de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Record the originating source location and refresh what().  <br /></td></tr>
+<tr class="separator:ae367634e235c652950923ac59c0db3de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a10af9a115e8e9fa6ce31c18d03712a56" id="r_a10af9a115e8e9fa6ce31c18d03712a56"><td class="memItemLeft" align="right" valign="top"><a id="a10af9a115e8e9fa6ce31c18d03712a56" name="a10af9a115e8e9fa6ce31c18d03712a56"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ExceptionBase</b> (std::string message, StatusCode status, std::string_view subsystem_label, const char *file, int line, const char *function)</td></tr>
-<tr class="separator:a10af9a115e8e9fa6ce31c18d03712a56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af55b5a74112cdff0e7edf6325825dc52" id="r_af55b5a74112cdff0e7edf6325825dc52"><td class="memItemLeft" align="right" valign="top"><a id="af55b5a74112cdff0e7edf6325825dc52" name="af55b5a74112cdff0e7edf6325825dc52"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ExceptionBase</b> (std::string message, StatusCode status, std::string_view subsystem_label, const char *file=&quot;&quot;, int line=0, const char *function=&quot;&quot;)</td></tr>
+<tr class="separator:af55b5a74112cdff0e7edf6325825dc52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e5cf47cf175b266a2b46287a5b10da4" id="r_a0e5cf47cf175b266a2b46287a5b10da4"><td class="memItemLeft" align="right" valign="top"><a id="a0e5cf47cf175b266a2b46287a5b10da4" name="a0e5cf47cf175b266a2b46287a5b10da4"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>rebuild_what</b> ()</td></tr>
 <tr class="separator:a0e5cf47cf175b266a2b46287a5b10da4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,6 +149,36 @@ std::string_view&#160;</td><td class="memItemRight" valign="bottom"><b>subsystem
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>what_</b></td></tr>
 <tr class="separator:a9dd27a15138aaed7d52375cf043d4d40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="ae367634e235c652950923ac59c0db3de" name="ae367634e235c652950923ac59c0db3de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae367634e235c652950923ac59c0db3de">&#9670;&#160;</a></span>set_source_location()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void svmp::ExceptionBase::set_source_location </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> &amp;&#160;</td>
+          <td class="paramname"><em>location</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Record the originating source location and refresh what(). </p>
+<p>Called by raise() after construction, so exception constructors do not need to accept (and forward) the file/line/function themselves. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>solver/Core/<a class="el" href="_exception_8h_source.html">Exception.h</a></li>
 </ul>

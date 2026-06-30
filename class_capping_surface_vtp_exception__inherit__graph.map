@@ -1,0 +1,7 @@
+<map id="CappingSurfaceVtpException" name="CappingSurfaceVtpException">
+<area shape="rect" id="Node000001" title="VTP read, parse, or validation error during cap load." alt="" coords="10,152,221,177"/>
+<area shape="rect" id="Node000002" href="$class_capping_surface_base_exception.html" title="Base exception for capping surface (cap VTP) errors." alt="" coords="5,79,225,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,118,118,152,113,152,113,118"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="58,5,173,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,44,118,79,113,79,113,44"/>
+</map>

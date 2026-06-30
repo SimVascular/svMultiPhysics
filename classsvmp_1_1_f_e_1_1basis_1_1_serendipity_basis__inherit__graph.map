@@ -1,0 +1,5 @@
+<map id="svmp::FE::basis::SerendipityBasis" name="svmp::FE::basis::SerendipityBasis">
+<area shape="rect" id="Node000001" title="Reduced&#45;degree&#45;of&#45;freedom serendipity basis on supported reference elements." alt="" coords="13,79,220,119"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html" title="Abstract interface for finite&#45;element basis&#45;function families." alt="" coords="5,5,228,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,44,119,79,114,79,114,44"/>
+</map>

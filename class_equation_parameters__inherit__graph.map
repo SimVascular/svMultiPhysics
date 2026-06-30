@@ -1,0 +1,5 @@
+<map id="EquationParameters" name="EquationParameters">
+<area shape="rect" id="Node000001" title="The EquationParameters class stores parameters for the &#39;Add_equation&#39; XML element used to specify an ..." alt="" coords="5,79,159,104"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="23,5,141,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="85,44,85,79,79,79,79,44"/>
+</map>

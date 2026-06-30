@@ -1,0 +1,5 @@
+<map id="GeneralSimulationParameters" name="GeneralSimulationParameters">
+<area shape="rect" id="Node000001" title="The GeneralSimulationParameters class stores paramaters for the &#39;GeneralSimulationParameters&#39; XML ele..." alt="" coords="5,79,223,104"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="55,5,173,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,44,117,79,111,79,111,44"/>
+</map>

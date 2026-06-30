@@ -93,25 +93,27 @@ $(function() {
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classsvmp_1_1_f_e_1_1_f_e_exception-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">svmp::FE::FEException Class Reference</div></div>
+  <div class="headertitle"><div class="title">svmp::FE::FEException Class Reference<div class="ingroups"><a class="el" href="group___f_e.html">FE Library</a> &raquo; <a class="el" href="group___f_e___common.html">Common</a> &raquo; <a class="el" href="group___f_e___common_exceptions.html">Exceptions</a></div></div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Base exception type for errors originating in the FE library.  
+ <a href="classsvmp_1_1_f_e_1_1_f_e_exception.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="_f_e_exception_8h_source.html">FEException.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for svmp::FE::FEException:</div>
 <div class="dyncontent">
-<div class="center"><!-- SVG 0 --></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="classsvmp_1_1_f_e_1_1_f_e_exception__inherit__graph.svg" width="1144" height="627"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a3e939b1c1850bb57d3988f68599d956f" id="r_a3e939b1c1850bb57d3988f68599d956f"><td class="memItemLeft" align="right" valign="top"><a id="a3e939b1c1850bb57d3988f68599d956f" name="a3e939b1c1850bb57d3988f68599d956f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>FEException</b> (const std::string &amp;message, StatusCode status=StatusCode::Unknown, const char *file=&quot;&quot;, int line=0, const char *function=&quot;&quot;)</td></tr>
-<tr class="separator:a3e939b1c1850bb57d3988f68599d956f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af67812023f1ddb8e48050c3c756f6de6" id="r_af67812023f1ddb8e48050c3c756f6de6"><td class="memItemLeft" align="right" valign="top"><a id="af67812023f1ddb8e48050c3c756f6de6" name="af67812023f1ddb8e48050c3c756f6de6"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>FEException</b> (const std::string &amp;message, const char *file, int line, const char *function=&quot;&quot;)</td></tr>
-<tr class="separator:af67812023f1ddb8e48050c3c756f6de6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13264839714e550969062516f3e73d01" id="r_a13264839714e550969062516f3e73d01"><td class="memItemLeft" align="right" valign="top"><a id="a13264839714e550969062516f3e73d01" name="a13264839714e550969062516f3e73d01"></a>
-StatusCode&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const noexcept</td></tr>
+<tr class="memitem:a2ffb38f01139b144244c118de5a0571f" id="r_a2ffb38f01139b144244c118de5a0571f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_f_e_exception.html#a2ffb38f01139b144244c118de5a0571f">FEException</a> (const std::string &amp;message, StatusCode <a class="el" href="classsvmp_1_1_f_e_1_1_f_e_exception.html#a13264839714e550969062516f3e73d01">status</a>=StatusCode::Unknown)</td></tr>
+<tr class="memdesc:a2ffb38f01139b144244c118de5a0571f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct with a message and optional status code.  <br /></td></tr>
+<tr class="separator:a2ffb38f01139b144244c118de5a0571f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13264839714e550969062516f3e73d01" id="r_a13264839714e550969062516f3e73d01"><td class="memItemLeft" align="right" valign="top">StatusCode&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_f_e_exception.html#a13264839714e550969062516f3e73d01">status</a> () const noexcept</td></tr>
+<tr class="memdesc:a13264839714e550969062516f3e73d01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Status code classifying the failure.  <br /></td></tr>
 <tr class="separator:a13264839714e550969062516f3e73d01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classsvmp_1_1_exception_base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classsvmp_1_1_exception_base')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classsvmp_1_1_exception_base.html">svmp::ExceptionBase</a></td></tr>
 <tr class="memitem:a8e77e8d52150e9d342871bf783fa5f7d inherit pub_methods_classsvmp_1_1_exception_base" id="r_a8e77e8d52150e9d342871bf783fa5f7d"><td class="memItemLeft" align="right" valign="top">
@@ -129,13 +131,16 @@ const <a class="el" href="classsvmp_1_1_exception_context.html">ExceptionContext
 <tr class="memitem:acf3af50a08f556eb5ed9887d96526541 inherit pub_methods_classsvmp_1_1_exception_base" id="r_acf3af50a08f556eb5ed9887d96526541"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>add_context</b> (const std::string &amp;context)</td></tr>
 <tr class="separator:acf3af50a08f556eb5ed9887d96526541 inherit pub_methods_classsvmp_1_1_exception_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae367634e235c652950923ac59c0db3de inherit pub_methods_classsvmp_1_1_exception_base" id="r_ae367634e235c652950923ac59c0db3de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_exception_base.html#ae367634e235c652950923ac59c0db3de">set_source_location</a> (const <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> &amp;location)</td></tr>
+<tr class="memdesc:ae367634e235c652950923ac59c0db3de inherit pub_methods_classsvmp_1_1_exception_base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Record the originating source location and refresh what().  <br /></td></tr>
+<tr class="separator:ae367634e235c652950923ac59c0db3de inherit pub_methods_classsvmp_1_1_exception_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_methods_classsvmp_1_1_exception_base"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classsvmp_1_1_exception_base')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classsvmp_1_1_exception_base.html">svmp::ExceptionBase</a></td></tr>
-<tr class="memitem:a10af9a115e8e9fa6ce31c18d03712a56 inherit pro_methods_classsvmp_1_1_exception_base" id="r_a10af9a115e8e9fa6ce31c18d03712a56"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>ExceptionBase</b> (std::string message, StatusCode status, std::string_view subsystem_label, const char *file, int line, const char *function)</td></tr>
-<tr class="separator:a10af9a115e8e9fa6ce31c18d03712a56 inherit pro_methods_classsvmp_1_1_exception_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af55b5a74112cdff0e7edf6325825dc52 inherit pro_methods_classsvmp_1_1_exception_base" id="r_af55b5a74112cdff0e7edf6325825dc52"><td class="memItemLeft" align="right" valign="top">
+&#160;</td><td class="memItemRight" valign="bottom"><b>ExceptionBase</b> (std::string message, StatusCode status, std::string_view subsystem_label, const char *file=&quot;&quot;, int line=0, const char *function=&quot;&quot;)</td></tr>
+<tr class="separator:af55b5a74112cdff0e7edf6325825dc52 inherit pro_methods_classsvmp_1_1_exception_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e5cf47cf175b266a2b46287a5b10da4 inherit pro_methods_classsvmp_1_1_exception_base" id="r_a0e5cf47cf175b266a2b46287a5b10da4"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>rebuild_what</b> ()</td></tr>
 <tr class="separator:a0e5cf47cf175b266a2b46287a5b10da4 inherit pro_methods_classsvmp_1_1_exception_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -153,6 +158,85 @@ std::string_view&#160;</td><td class="memItemRight" valign="bottom"><b>subsystem
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>what_</b></td></tr>
 <tr class="separator:a9dd27a15138aaed7d52375cf043d4d40 inherit pro_attribs_classsvmp_1_1_exception_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Base exception type for errors originating in the FE library. </p>
+<p>Carries a status code and source location alongside the message. Derived classes select an appropriate StatusCode and may attach additional structured context. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a2ffb38f01139b144244c118de5a0571f" name="a2ffb38f01139b144244c118de5a0571f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ffb38f01139b144244c118de5a0571f">&#9670;&#160;</a></span>FEException()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">svmp::FE::FEException::FEException </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>message</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">StatusCode&#160;</td>
+          <td class="paramname"><em>status</em> = <code>StatusCode::Unknown</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct with a message and optional status code. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">message</td><td>Human-readable error description. </td></tr>
+    <tr><td class="paramname">status</td><td>Status code classifying the failure.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The source location is stamped by svmp::raise(); construct FE exceptions through the core helpers rather than passing file/line/function. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a13264839714e550969062516f3e73d01" name="a13264839714e550969062516f3e73d01"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a13264839714e550969062516f3e73d01">&#9670;&#160;</a></span>status()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">StatusCode svmp::FE::FEException::status </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Status code classifying the failure. </p>
+<dl class="section return"><dt>Returns</dt><dd>The status code recorded at construction. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>solver/FE/Common/<a class="el" href="_f_e_exception_8h_source.html">FEException.h</a></li>
 </ul>

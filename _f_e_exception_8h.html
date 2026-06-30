@@ -92,7 +92,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle"><div class="title">FEException.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -106,12 +106,12 @@ $(function() {
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for FEException.h:</div>
 <div class="dyncontent">
-<div class="center"><!-- SVG 0 --></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="_f_e_exception_8h__incl.svg" width="1147" height="183"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 </div><div class="textblock"><div class="dynheader">
 This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
-<div class="center"><!-- SVG 1 --></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="_f_e_exception_8h__dep__incl.svg" width="4316" height="579"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 </div>
 <p><a href="_f_e_exception_8h_source.html">Go to the source code of this file.</a></p>
@@ -119,51 +119,38 @@ This graph shows which files directly or indirectly include this file:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_f_e_exception.html">svmp::FE::FEException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base exception type for errors originating in the FE library.  <a href="classsvmp_1_1_f_e_1_1_f_e_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_invalid_argument_exception.html">svmp::FE::InvalidArgumentException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An argument failed validation.  <a href="classsvmp_1_1_f_e_1_1_invalid_argument_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_invalid_element_exception.html">svmp::FE::InvalidElementException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsupported or malformed element request.  <a href="classsvmp_1_1_f_e_1_1_invalid_element_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_dof_exception.html">svmp::FE::DofException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Degree-of-freedom numbering or lookup failure.  <a href="classsvmp_1_1_f_e_1_1_dof_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_assembly_exception.html">svmp::FE::AssemblyException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global assembly failure.  <a href="classsvmp_1_1_f_e_1_1_assembly_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_backend_exception.html">svmp::FE::BackendException</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_not_implemented_exception.html">svmp::FE::NotImplementedException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Failure reported by a linear-algebra or solver backend.  <a href="classsvmp_1_1_f_e_1_1_backend_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_not_initialized_exception.html">svmp::FE::NotInitializedException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Required initialization step has not been performed.  <a href="classsvmp_1_1_f_e_1_1_not_initialized_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_convergence_exception.html">svmp::FE::ConvergenceException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterative process failed to converge.  <a href="classsvmp_1_1_f_e_1_1_convergence_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1_singular_mapping_exception.html">svmp::FE::SingularMappingException</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Element geometric mapping is singular or inverted.  <a href="classsvmp_1_1_f_e_1_1_singular_mapping_exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:aa0972def412b8cbebf8b44e013cd2f7b" id="r_aa0972def412b8cbebf8b44e013cd2f7b"><td class="memTemplParams" colspan="2"><a id="aa0972def412b8cbebf8b44e013cd2f7b" name="aa0972def412b8cbebf8b44e013cd2f7b"></a>
-template&lt;class ExceptionT , class... Args&gt; </td></tr>
-<tr class="memitem:aa0972def412b8cbebf8b44e013cd2f7b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::raise</b> (<a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location, Args &amp;&amp;... args)</td></tr>
-<tr class="separator:aa0972def412b8cbebf8b44e013cd2f7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6524d437d0adf1cc1666729f797e4176" id="r_a6524d437d0adf1cc1666729f797e4176"><td class="memTemplParams" colspan="2"><a id="a6524d437d0adf1cc1666729f797e4176" name="a6524d437d0adf1cc1666729f797e4176"></a>
-template&lt;class ExceptionT  = FEException, class... Args&gt; </td></tr>
-<tr class="memitem:a6524d437d0adf1cc1666729f797e4176"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::throw_if</b> (bool condition, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location, Args &amp;&amp;... args)</td></tr>
-<tr class="separator:a6524d437d0adf1cc1666729f797e4176"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b816712453a25e009cfdc0d66aa02e1" id="r_a0b816712453a25e009cfdc0d66aa02e1"><td class="memTemplParams" colspan="2"><a id="a0b816712453a25e009cfdc0d66aa02e1" name="a0b816712453a25e009cfdc0d66aa02e1"></a>
-template&lt;class ExceptionT  = InvalidArgumentException, class... Args&gt; </td></tr>
-<tr class="memitem:a0b816712453a25e009cfdc0d66aa02e1"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::check_arg</b> (bool condition, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location, Args &amp;&amp;... args)</td></tr>
-<tr class="separator:a0b816712453a25e009cfdc0d66aa02e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aef21c785a138b5ba6efb7212e88d442e" id="r_aef21c785a138b5ba6efb7212e88d442e"><td class="memTemplParams" colspan="2"><a id="aef21c785a138b5ba6efb7212e88d442e" name="aef21c785a138b5ba6efb7212e88d442e"></a>
-template&lt;class ExceptionT  = InvalidArgumentException, class PointerT , class... Args&gt; </td></tr>
-<tr class="memitem:aef21c785a138b5ba6efb7212e88d442e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::check_not_null</b> (PointerT ptr, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location, Args &amp;&amp;... args)</td></tr>
-<tr class="separator:aef21c785a138b5ba6efb7212e88d442e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aabb5cb6903822f93ca2ba80c0afc1e84" id="r_aabb5cb6903822f93ca2ba80c0afc1e84"><td class="memTemplParams" colspan="2"><a id="aabb5cb6903822f93ca2ba80c0afc1e84" name="aabb5cb6903822f93ca2ba80c0afc1e84"></a>
-template&lt;class ExceptionT  = InvalidArgumentException, class IndexT , class SizeT &gt; </td></tr>
-<tr class="memitem:aabb5cb6903822f93ca2ba80c0afc1e84"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>svmp::FE::check_index</b> (IndexT index, SizeT size, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location)</td></tr>
-<tr class="separator:aabb5cb6903822f93ca2ba80c0afc1e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa59de2099e337377a892a46cca37c50c" id="r_aa59de2099e337377a892a46cca37c50c"><td class="memItemLeft" align="right" valign="top"><a id="aa59de2099e337377a892a46cca37c50c" name="aa59de2099e337377a892a46cca37c50c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>svmp::FE::not_implemented</b> (const std::string &amp;feature, <a class="el" href="structsvmp_1_1_source_location.html">SourceLocation</a> location)</td></tr>
-<tr class="separator:aa59de2099e337377a892a46cca37c50c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:gaf1b312a963e7e5116df874bc16392fa4" id="r_gaf1b312a963e7e5116df874bc16392fa4"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___f_e___common_exceptions.html#gaf1b312a963e7e5116df874bc16392fa4">svmp::FE::NotImplementedException</a> = <a class="el" href="classsvmp_1_1_not_implemented_exception.html">svmp::NotImplementedException</a></td></tr>
+<tr class="memdesc:gaf1b312a963e7e5116df874bc16392fa4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requested feature is not implemented.  <br /></td></tr>
+<tr class="separator:gaf1b312a963e7e5116df874bc16392fa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Exception hierarchy for error handling in the FE library. </p>

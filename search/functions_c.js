@@ -1,11 +1,15 @@
 var searchData=
 [
-  ['operator_28_29_0',['operator()',['../class_array3.html#ae97685e04f50c5f5bb9c70538679c07d',1,'Array3::operator()(const int row, const int col, const int slice)'],['../class_array3.html#ad3e801b3eba93502f6d48f43bd0aafd7',1,'Array3::operator()(const int row, const int col, const int slice) const']]],
-  ['operator_2a_1',['operator*',['../class_array3.html#a4efd9c0c2c3c1c4a2f32c14f3cccb929',1,'Array3::operator*()'],['../class_vector.html#ab5c6ea220a41d4f9ca505aa989bff046',1,'Vector::operator*(const T value) const']]],
-  ['operator_2b_2',['operator+',['../class_vector.html#a0226d8916960275bfac50ee837f2efa8',1,'Vector::operator+(const Vector&lt; T &gt; &amp;vec) const'],['../class_vector.html#a9c0b34e94413a4ef55adc63784cc2da9',1,'Vector::operator+(const T value) const']]],
-  ['operator_2d_3',['operator-',['../class_vector.html#aed09a49898d7a949b93addb54657f1ed',1,'Vector']]],
-  ['operator_2f_4',['operator/',['../class_vector.html#a9d039799d2c2b1c8c3c02a28d2548b47',1,'Vector']]],
-  ['operator_3d_5',['operator=',['../class_array3.html#a35fd645a503475a7cc980acaa1af246a',1,'Array3::operator=()'],['../class_vector.html#a7594fda7b9388c049c2fe95ffe154075',1,'Vector::operator=()'],['../class_coupled_boundary_condition.html#ad1f7dc6ed936a004fa311d2d90ff649e',1,'CoupledBoundaryCondition::operator=(CoupledBoundaryCondition &amp;&amp;other) noexcept'],['../class_coupled_boundary_condition.html#a1084d8e3e0e8cfca134b2150d224f404',1,'CoupledBoundaryCondition::operator=(const CoupledBoundaryCondition &amp;other)'],['../class_capping_surface.html#a6677152b672b8727859b991e102c857f',1,'CappingSurface::operator=(CappingSurface &amp;&amp;other) noexcept=default'],['../class_capping_surface.html#a677af41a0ea524918e68eae4d7af7d38',1,'CappingSurface::operator=(const CappingSurface &amp;other)'],['../class_boundary_condition.html#a4112d1d42b93f0614e3193d075de8705',1,'BoundaryCondition::operator=()']]],
-  ['operator_5b_5d_6',['operator[]',['../class_ionic_initial_state_parameters.html#abda09b5dcc8aa71318df9c88f990c6f2',1,'IonicInitialStateParameters']]],
-  ['owns_5fcap_7',['owns_cap',['../class_coupled_boundary_condition.html#ac6dc612544b96e87fa06207d82d4f04a',1,'CoupledBoundaryCondition']]]
+  ['named_5felement_5ffor_0',['named_element_for',['../group___f_e___basis.html#gad02e42e3d84238b3aebe47a16f47d87a',1,'svmp::FE::basis']]],
+  ['neohookeanparameters_1',['NeoHookeanParameters',['../class_neo_hookean_parameters.html#a831df83a337ae7178df10f4bdae54a3b',1,'NeoHookeanParameters']]],
+  ['ng_2',['nG',['../class_ionic_model.html#abfd7245c70e4abf6ee05a443dda961a4',1,'IonicModel']]],
+  ['node_5fcoord_5fat_3',['node_coord_at',['../classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html#acadd64017f07d0a5165d50c32a400c06',1,'svmp::FE::basis::ReferenceNodeLayout']]],
+  ['node_5fcoords_4',['node_coords',['../classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html#af59303a10648a7af12dbe093cf067bd3',1,'svmp::FE::basis::ReferenceNodeLayout']]],
+  ['nodes_5',['nodes',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a53fd52f02e29e3e88053f29e593dafb4',1,'svmp::FE::basis::BasisFunction::nodes()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#ae57cec738607a9484d287902b76131d1',1,'svmp::FE::basis::LagrangeBasis::nodes()'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#aa26f44ed45f5f483d7266b26f59e05ef',1,'svmp::FE::basis::SerendipityBasis::nodes()']]],
+  ['normal_5fdirection_5fonly_6',['normal_direction_only',['../class_robin_boundary_condition.html#a56681064753046d869529bbc6cf260e6',1,'RobinBoundaryCondition']]],
+  ['notinitializedexception_7',['NotInitializedException',['../classsvmp_1_1_f_e_1_1_not_initialized_exception.html#a0cf10a0b1ce6ccd0ab95f2132177942c',1,'svmp::FE::NotInitializedException']]],
+  ['num_5fnodes_8',['num_nodes',['../classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html#a13f9dec59e497a9d070a1ae830212461',1,'svmp::FE::basis::ReferenceNodeLayout']]],
+  ['numerical_5fgradient_9',['numerical_gradient',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#acc73a246a9cfc53cea96b06c9cc06bd3',1,'svmp::FE::basis::BasisFunction']]],
+  ['numerical_5fhessian_10',['numerical_hessian',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a517589822f5c94cad790aaa29ce4e484',1,'svmp::FE::basis::BasisFunction']]],
+  ['nx_11',['nX',['../class_ionic_model.html#a516e246df2500757969cd51039c21ed6',1,'IonicModel']]]
 ];

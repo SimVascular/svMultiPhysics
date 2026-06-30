@@ -1,7 +1,16 @@
 var searchData=
 [
-  ['perturb_5fflowrate_0',['perturb_flowrate',['../class_coupled_boundary_condition.html#a05790b2236ad41d26e8367ac8afaea1b',1,'CoupledBoundaryCondition']]],
-  ['predictor_1',['predictor',['../class_integrator.html#adc20c8caeb6e1b6d80034afb70605d1c',1,'Integrator']]],
-  ['print_5fparameter_5flist_2',['print_parameter_list',['../class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4',1,'ParameterLists']]],
-  ['print_5fparameters_3',['print_parameters',['../class_ionic_initial_state_parameters.html#a7f6df694028b607ba3c4c65835cd1511',1,'IonicInitialStateParameters::print_parameters()'],['../class_ionic_model_parameters.html#ab21f192042cb0d4651f71d2388af7106',1,'IonicModelParameters::print_parameters()']]]
+  ['operator_20t_0',['operator T',['../classsvmp_1_1_f_e_1_1_strong_type.html#ab86029e91c86320a25bf36026c96db9d',1,'svmp::FE::StrongType']]],
+  ['operator_21_3d_1',['operator!=',['../classsvmp_1_1_f_e_1_1_strong_type.html#a7971104e00ebae26aff4dbf12aff398a',1,'svmp::FE::StrongType']]],
+  ['operator_28_29_2',['operator()',['../class_array3.html#ad3e801b3eba93502f6d48f43bd0aafd7',1,'Array3::operator()(const int row, const int col, const int slice) const'],['../class_array3.html#ae97685e04f50c5f5bb9c70538679c07d',1,'Array3::operator()(const int row, const int col, const int slice)']]],
+  ['operator_2a_3',['operator*',['../class_array3.html#a4efd9c0c2c3c1c4a2f32c14f3cccb929',1,'Array3::operator*()'],['../class_vector.html#ab5c6ea220a41d4f9ca505aa989bff046',1,'Vector::operator*(const T value) const']]],
+  ['operator_2b_4',['operator+',['../class_vector.html#a0226d8916960275bfac50ee837f2efa8',1,'Vector::operator+(const Vector&lt; T &gt; &amp;vec) const'],['../class_vector.html#a9c0b34e94413a4ef55adc63784cc2da9',1,'Vector::operator+(const T value) const']]],
+  ['operator_2d_5',['operator-',['../class_vector.html#aed09a49898d7a949b93addb54657f1ed',1,'Vector']]],
+  ['operator_2f_6',['operator/',['../class_vector.html#a9d039799d2c2b1c8c3c02a28d2548b47',1,'Vector']]],
+  ['operator_3c_7',['operator&lt;',['../classsvmp_1_1_f_e_1_1_strong_type.html#a84f3e60db9743996b0eebd2dfcc066cb',1,'svmp::FE::StrongType']]],
+  ['operator_3d_8',['operator=',['../class_boundary_condition.html#a4112d1d42b93f0614e3193d075de8705',1,'BoundaryCondition::operator=()'],['../class_vector.html#a7594fda7b9388c049c2fe95ffe154075',1,'Vector::operator=()'],['../class_coupled_boundary_condition.html#ad1f7dc6ed936a004fa311d2d90ff649e',1,'CoupledBoundaryCondition::operator=(CoupledBoundaryCondition &amp;&amp;other) noexcept'],['../class_coupled_boundary_condition.html#a1084d8e3e0e8cfca134b2150d224f404',1,'CoupledBoundaryCondition::operator=(const CoupledBoundaryCondition &amp;other)'],['../class_capping_surface.html#a6677152b672b8727859b991e102c857f',1,'CappingSurface::operator=(CappingSurface &amp;&amp;other) noexcept=default'],['../class_capping_surface.html#a677af41a0ea524918e68eae4d7af7d38',1,'CappingSurface::operator=(const CappingSurface &amp;other)'],['../class_array3.html#a35fd645a503475a7cc980acaa1af246a',1,'Array3::operator=()']]],
+  ['operator_3d_3d_9',['operator==',['../classsvmp_1_1_f_e_1_1_strong_type.html#ae36a9ec8abb76dcc7c0e9a8ad61e310a',1,'svmp::FE::StrongType']]],
+  ['operator_5b_5d_10',['operator[]',['../class_ionic_initial_state_parameters.html#abda09b5dcc8aa71318df9c88f990c6f2',1,'IonicInitialStateParameters']]],
+  ['order_11',['order',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a6feb02e88a5a196858d0be459776d31e',1,'svmp::FE::basis::BasisFunction::order()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#a1d86c195d153bd3fa0eddd89dde58904',1,'svmp::FE::basis::LagrangeBasis::order()'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a030e8342cd1a4f67050e7e8fe10c571a',1,'svmp::FE::basis::SerendipityBasis::order()']]],
+  ['owns_5fcap_12',['owns_cap',['../class_coupled_boundary_condition.html#ac6dc612544b96e87fa06207d82d4f04a',1,'CoupledBoundaryCondition']]]
 ];

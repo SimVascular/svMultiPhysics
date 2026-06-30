@@ -1,0 +1,13 @@
+<map id="IonicModelParameters" name="IonicModelParameters">
+<area shape="rect" id="Node000001" title="Initial conditions parameters for a generic ionic model." alt="" coords="172,80,339,105"/>
+<area shape="rect" id="Node000003" href="$class_aliev_panfilov_1_1_parameters.html" title="Model parameters class." alt="" coords="401,5,588,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="297,72,386,39,429,28,430,33,387,45,299,77"/>
+<area shape="rect" id="Node000004" href="$class_bueno_orovio_1_1_parameters.html" title="Model parameters class." alt="" coords="401,55,589,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="352,80,400,75,401,80,353,85"/>
+<area shape="rect" id="Node000005" href="$class_fitz_hugh_nagumo_1_1_parameters.html" title="Model parameters class." alt="" coords="387,104,603,129"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="353,100,387,103,386,108,352,105"/>
+<area shape="rect" id="Node000006" href="$class_t_t_p_1_1_parameters.html" title="Model parameters class." alt="" coords="431,153,559,179"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="300,108,387,139,431,151,430,156,386,145,298,113"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="5,80,124,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,90,172,90,172,95,138,95"/>
+</map>

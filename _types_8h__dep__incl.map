@@ -1,0 +1,20 @@
+<map id="solver/FE/Common/Types.h" name="solver/FE/Common/Types.h">
+<area shape="rect" id="Node000001" title="Fundamental type definitions for the finite element library." alt="" coords="500,5,699,31"/>
+<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="265,174,491,199"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="495,37,452,54,415,81,399,103,389,129,381,174,376,173,384,127,394,100,411,77,449,49,493,32"/>
+<area shape="rect" id="Node000006" href="$_basis_traits_8h.html" title="Reference&#45;topology vocabulary (BasisTopology) and the internal ElementType/topology/order maps." alt="" coords="425,86,632,111"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="582,43,541,88,537,84,578,39"/>
+<area shape="rect" id="Node000007" href="$_node_ordering_conventions_8h_source.html" title=" " alt="" coords="567,167,781,207"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="621,40,647,77,664,124,674,166,668,167,659,126,642,80,617,43"/>
+<area shape="rect" id="Node000008" href="$_dense_linear_algebra_8h_source.html" title=" " alt="" coords="708,79,912,119"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="644,33,760,76,758,81,642,38"/>
+<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,262,223,287"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="330,206,150,264,149,259,329,201"/>
+<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="469,255,655,295"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="416,203,523,252,520,257,414,208"/>
+<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="247,255,445,295"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="371,213,356,255,351,253,366,211"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="498,121,400,176,397,171,495,116"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="536,124,561,254,556,255,531,125"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="561,116,643,164,641,169,559,121"/>
+</map>

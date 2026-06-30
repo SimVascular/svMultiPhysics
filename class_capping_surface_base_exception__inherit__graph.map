@@ -1,0 +1,17 @@
+<map id="CappingSurfaceBaseException" name="CappingSurfaceBaseException">
+<area shape="rect" id="Node000001" title="Base exception for capping surface (cap VTP) errors." alt="" coords="168,159,388,185"/>
+<area shape="rect" id="Node000003" href="$class_capping_surface_coupling_topology_exception.html" title="Cap mesh shares no nodes with the coupled boundary face." alt="" coords="436,5,675,45"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="302,148,360,101,396,76,435,55,465,43,467,48,437,60,399,81,363,105,305,152"/>
+<area shape="rect" id="Node000004" href="$class_capping_surface_file_exception.html" title="Cap VTP file cannot be opened." alt="" coords="450,70,661,95"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="318,151,373,128,435,105,484,93,486,98,437,111,375,133,320,156"/>
+<area shape="rect" id="Node000005" href="$class_capping_surface_invalid_element_nodes_exception.html" title="Cap VTP connectivity does not match expected TRI3 topology." alt="" coords="444,120,667,160"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="401,155,444,150,444,155,402,160"/>
+<area shape="rect" id="Node000006" href="$class_capping_surface_quadrature_exception.html" title="Cap face quadrature (shape functions on TRI3) setup failed." alt="" coords="457,184,654,224"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="402,184,457,190,456,195,401,189"/>
+<area shape="rect" id="Node000007" href="$class_capping_surface_unsupported_cell_exception.html" title="Cap VTP uses an unsupported cell type (only TRI3 is supported)." alt="" coords="452,248,659,288"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="321,188,437,233,476,245,474,251,435,239,319,193"/>
+<area shape="rect" id="Node000008" href="$class_capping_surface_vtp_exception.html" title="VTP read, parse, or validation error during cap load." alt="" coords="450,313,661,338"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="302,193,360,246,397,274,437,298,471,310,470,315,435,302,394,279,356,250,299,197"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,159,120,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,169,168,169,168,175,134,175"/>
+</map>

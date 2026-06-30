@@ -1,14 +1,16 @@
 var searchData=
 [
-  ['ucann_0',['uCANN',['../class_artificial_neural_net_material.html#aa36edcc98150c7a39c48850ace50e6f9',1,'ArtificialNeuralNetMaterial']]],
-  ['ucann_5fh0_1',['uCANN_h0',['../class_artificial_neural_net_material.html#aa70835906df5ea2363492213502d5442',1,'ArtificialNeuralNetMaterial']]],
-  ['ucann_5fh1_2',['uCANN_h1',['../class_artificial_neural_net_material.html#a1417c0a8cfe17a635e1597d2b4a280dc',1,'ArtificialNeuralNetMaterial']]],
-  ['ucann_5fh2_3',['uCANN_h2',['../class_artificial_neural_net_material.html#aed1c2c7008e77d2152801f6e0e6e8221',1,'ArtificialNeuralNetMaterial']]],
-  ['update_5fg_4',['update_g',['../class_aliev_panfilov.html#aa288c83cf1370aa2bc81313ce507822f',1,'AlievPanfilov::update_g()'],['../class_bueno_orovio.html#a3d1b4ecd85cb66a28ebb190fa7f5daa9',1,'BuenoOrovio::update_g()'],['../class_fitz_hugh_nagumo.html#a72a77eaf5c9676ebac3bd85b52c18599',1,'FitzHughNagumo::update_g()'],['../class_ionic_model.html#a910da48c092c9e6feef4a9be516ae3b8',1,'IonicModel::update_g()'],['../class_t_t_p.html#ad668c6a83bafea4faa854b59ad26d374',1,'TTP::update_g()']]],
-  ['ustruct_5f2d_5fc_5',['ustruct_2d_c',['../ustruct_8cpp.html#a1932a6e82fe23a81987cfc209b92f394',1,'ustruct']]],
-  ['ustruct_5f2d_5fm_6',['ustruct_2d_m',['../ustruct_8cpp.html#a80e8da99aee39c727871f006d2548d07',1,'ustruct']]],
-  ['ustruct_5f3d_5fc_7',['ustruct_3d_c',['../ustruct_8cpp.html#addd531ce2343b1ad531413660c82977b',1,'ustruct']]],
-  ['ustruct_5f3d_5fm_8',['ustruct_3d_m',['../ustruct_8cpp.html#afdc61ab87ebb13a84f2137adf3da5bed',1,'ustruct']]],
-  ['ustruct_5fdo_5fassem_9',['ustruct_do_assem',['../ustruct_8cpp.html#acd5866866247ec4b4a9f4a8a4c29bed2',1,'ustruct']]],
-  ['ustruct_5fr_10',['ustruct_r',['../ustruct_8cpp.html#a3eb0ce39d2695122719f672cebee9978',1,'ustruct']]]
+  ['ten_5fasym_5fprod12_0',['ten_asym_prod12',['../namespacemat__fun.html#af3367681f82e87222e557415681edd4a',1,'mat_fun']]],
+  ['ten_5fddot_1',['ten_ddot',['../namespacemat__fun.html#a9359f973f503f358d24a8db8c5630846',1,'mat_fun']]],
+  ['ten_5fddot_5f2412_2',['ten_ddot_2412',['../namespacemat__fun.html#ae77741e0486f9d35108bc57ffbc3bdb4',1,'mat_fun']]],
+  ['ten_5fdyad_5fprod_3',['ten_dyad_prod',['../namespacemat__fun.html#a998c0fc509c870bc57677032ef09034e',1,'mat_fun']]],
+  ['ten_5fids_4',['ten_ids',['../namespacemat__fun.html#a6f90a43cf65bdb492935c0fb0f0a6bf7',1,'mat_fun']]],
+  ['ten_5finit_5',['ten_init',['../namespacemat__fun.html#a31191bf7be4deec4c4ce4dd1a238e7e5',1,'mat_fun']]],
+  ['ten_5fmddot_6',['ten_mddot',['../namespacemat__fun.html#a537a2b432aceb0959b8b0522410f12a8',1,'mat_fun']]],
+  ['ten_5fsymm_5fprod_7',['ten_symm_prod',['../namespacemat__fun.html#a36539d086d29370c7c0649df4a132645',1,'mat_fun']]],
+  ['to_5fmesh_5ffamily_8',['to_mesh_family',['../group___f_e___common_types.html#ga4cb707740d635908aea653cbf73b819b',1,'svmp::FE']]],
+  ['topology_9',['topology',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a54931869f961425bbd9c6f420c0366d4',1,'svmp::FE::basis::BasisFunction::topology()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#a7f2f40f982539e31fb15b82a32a5958e',1,'svmp::FE::basis::LagrangeBasis::topology()'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a4f85cd0bb2ba9390a8df598c6bdf8862',1,'svmp::FE::basis::SerendipityBasis::topology()']]],
+  ['transpose_10',['transpose',['../namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1',1,'mat_fun::transpose(const Array&lt; double &gt; &amp;A)'],['../namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91',1,'mat_fun::transpose(const Tensor&lt; nsd &gt; &amp;A)']]],
+  ['trilinosmatvec_11',['TrilinosMatVec',['../class_trilinos_mat_vec.html#a6a58fed912d0450689f95885c36684db',1,'TrilinosMatVec']]],
+  ['ttp_12',['TTP',['../class_t_t_p.html#a10aca0a92864919d1e0575e3f74da371',1,'TTP']]]
 ];

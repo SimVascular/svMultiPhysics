@@ -1,0 +1,11 @@
+<map id="svmp::FE::basis::BasisEvaluationException" name="svmp::FE::basis::BasisEvaluationException">
+<area shape="rect" id="Node000001" title="Basis evaluation request cannot be satisfied." alt="" coords="5,299,241,339"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_exception.html" title="Base exception type for errors originating in the Basis module." alt="" coords="8,225,239,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,264,126,299,121,299,121,264"/>
+<area shape="rect" id="Node000003" href="$classsvmp_1_1_f_e_1_1_f_e_exception.html" title="Base exception type for errors originating in the FE library." alt="" coords="38,152,209,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="126,191,126,225,121,225,121,191"/>
+<area shape="rect" id="Node000004" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="42,79,205,104"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="126,118,126,152,121,152,121,118"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="66,5,181,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="126,44,126,79,121,79,121,44"/>
+</map>

@@ -1,9 +1,0 @@
-digraph "Graphical Class Hierarchy"
-{
- // LATEX_PDF_SIZE
-  bgcolor="transparent";
-  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
-  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
-  rankdir="LR";
-  Node0 [id="Node000000",label="CapGlobalMeshState",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$struct_cap_global_mesh_state.html",tooltip="Cap-surface nodal state: n_cap columns, column a is cap node a (same order as cap face gN / broadcast..."];
-}

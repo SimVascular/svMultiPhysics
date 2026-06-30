@@ -1,0 +1,11 @@
+<map id="solver/FE/Math/Matrix.h" name="solver/FE/Math/Matrix.h">
+<area shape="rect" id="Node000001" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="251,5,428,31"/>
+<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="226,79,453,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="342,44,342,79,337,79,337,44"/>
+<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,159,223,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="295,111,148,162,146,157,293,106"/>
+<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="247,152,432,192"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="342,118,342,152,337,152,337,118"/>
+<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="456,152,655,192"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="384,106,504,149,502,154,382,111"/>
+</map>

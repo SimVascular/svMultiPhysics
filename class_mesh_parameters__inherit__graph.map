@@ -1,0 +1,5 @@
+<map id="MeshParameters" name="MeshParameters">
+<area shape="rect" id="Node000001" title="The MeshParameters class is used to store paramaters for the &#39;Add_mesh&#39; XML element." alt="" coords="5,79,136,104"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="11,5,130,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="73,44,73,79,68,79,68,44"/>
+</map>

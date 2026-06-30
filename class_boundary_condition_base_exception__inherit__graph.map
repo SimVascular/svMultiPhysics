@@ -1,0 +1,29 @@
+<map id="BoundaryConditionBaseException" name="BoundaryConditionBaseException">
+<area shape="rect" id="Node000001" title="Base exception class for BC errors." alt="" coords="168,312,411,337"/>
+<area shape="rect" id="Node000003" href="$class_boundary_condition_array_exception.html" title="Exception thrown when a requested array is not found." alt="" coords="464,5,709,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="295,298,315,243,347,173,369,136,395,100,424,68,457,40,478,28,481,33,460,44,428,71,399,103,374,139,352,175,320,245,300,300"/>
+<area shape="rect" id="Node000004" href="$class_boundary_condition_file_exception.html" title="Exception thrown when VTP file cannot be read or is invalid." alt="" coords="470,55,703,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="299,298,321,252,355,195,401,137,428,111,457,89,480,78,482,83,460,94,431,115,405,141,360,198,326,255,304,300"/>
+<area shape="rect" id="Node000005" href="$class_boundary_condition_flag_exception.html" title="Exception thrown when a requested flag is not defined." alt="" coords="467,104,706,129"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="303,299,328,263,363,219,407,176,457,140,487,127,489,132,460,144,410,180,367,223,333,266,308,302"/>
+<area shape="rect" id="Node000006" href="$class_boundary_condition_global_node_id_exception.html" title="Exception thrown when a global node ID is not found in the global&#45;to&#45;local map." alt="" coords="475,154,698,194"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="313,301,376,252,416,226,458,204,489,192,491,197,460,208,418,231,379,256,317,305"/>
+<area shape="rect" id="Node000007" href="$class_boundary_condition_node_count_exception.html" title="Exception thrown when node count mismatch between VTP and face." alt="" coords="477,218,696,258"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="340,305,458,267,502,255,503,261,459,273,342,310"/>
+<area shape="rect" id="Node000008" href="$class_boundary_condition_node_id_exception.html" title="Exception thrown when a node ID is out of range." alt="" coords="459,283,715,308"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="424,309,458,305,459,311,425,314"/>
+<area shape="rect" id="Node000009" href="$class_boundary_condition_not_initialized_exception.html" title="Exception thrown when BoundaryCondition is not properly initialized." alt="" coords="470,333,703,373"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="424,335,470,339,469,344,424,340"/>
+<area shape="rect" id="Node000010" href="$class_boundary_condition_null_face_exception.html" title="Exception thrown when face_ is nullptr during distribute." alt="" coords="486,397,687,437"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="337,340,459,382,502,394,500,399,458,387,336,345"/>
+<area shape="rect" id="Node000011" href="$class_boundary_condition_point_not_found_exception.html" title="Exception thrown when a point cannot be found in VTP file." alt="" coords="485,461,688,501"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="316,345,378,396,418,423,460,446,490,458,488,463,458,451,415,428,375,400,313,349"/>
+<area shape="rect" id="Node000012" href="$class_boundary_condition_validation_exception.html" title="Exception thrown when array validation fails." alt="" coords="481,525,692,565"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="308,348,333,384,368,428,411,473,460,510,484,522,482,527,457,515,407,477,364,432,328,387,303,351"/>
+<area shape="rect" id="Node000013" href="$class_boundary_condition_vtp_array_dimension_exception.html" title="Exception thrown when a VTP array has incorrect dimensions." alt="" coords="485,589,688,629"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="303,349,324,398,358,459,403,522,430,550,460,574,486,588,483,593,457,579,427,554,399,525,353,462,320,400,298,351"/>
+<area shape="rect" id="Node000014" href="$class_boundary_condition_vtp_array_exception.html" title="Exception thrown when a VTP file doesn&#39;t contain a required array." alt="" coords="485,653,688,693"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="299,350,317,410,349,489,371,530,396,570,426,607,460,639,486,654,483,658,457,643,422,610,392,573,366,533,344,491,312,412,294,352"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,312,120,337"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,322,168,322,168,327,134,327"/>
+</map>

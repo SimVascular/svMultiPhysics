@@ -1,0 +1,5 @@
+<map id="VariableWallPropsParameters" name="VariableWallPropsParameters">
+<area shape="rect" id="Node000001" title="The VariableWallPropsParameters class stores parameters for variable wall properties for the CMM equa..." alt="" coords="5,79,219,104"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="53,5,171,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,44,115,79,109,79,109,44"/>
+</map>

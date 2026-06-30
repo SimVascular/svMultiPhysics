@@ -13,10 +13,16 @@ var searchData=
   ['integ_5frk_10',['integ_rk',['../class_ionic_model.html#a0658e9dc7a28e284b304bec8a1e59891',1,'IonicModel']]],
   ['integrate_5fvelocity_5fflux_11',['integrate_velocity_flux',['../class_capping_surface.html#a95c2bcf204769fa6a4c4fa08ab07c215',1,'CappingSurface']]],
   ['integrator_12',['Integrator',['../class_integrator.html#a3e97d2ea12a13ff4ab448404f3f2b210',1,'Integrator']]],
-  ['ionicinitialstateparameters_13',['IonicInitialStateParameters',['../class_ionic_initial_state_parameters.html#a7241cd1d558b5dca511885199796d383',1,'IonicInitialStateParameters']]],
-  ['ionicmodel_14',['ionicmodel',['../class_ionic_model.html#a0cd4651caa1256f01f9e78fad54063a0',1,'IonicModel::IonicModel(const InitialStates &amp;initial_X_, const InitialStates &amp;initial_Xg_, const double Vrest_)'],['../class_ionic_model.html#ab2b88a93ad5292a828d81b7e4ba7e5df',1,'IonicModel::IonicModel(const InitialStates &amp;initial_X_, const InitialStates &amp;initial_Xg_, const double Vrest_, const double Vscale_, const double Tscale_, const double Voffset_)']]],
-  ['ionicmodelfactory_15',['IonicModelFactory',['../class_ionic_model_factory.html#a31aa008d4e60567d3038600d9c1f82bd',1,'IonicModelFactory']]],
-  ['ionicmodelparameters_16',['IonicModelParameters',['../class_ionic_model_parameters.html#ae9f4797f55c4f6a8a1762dd477aafc52',1,'IonicModelParameters']]],
-  ['is_5ffrom_5fvtp_17',['is_from_vtp',['../class_boundary_condition.html#a1dab4a0efb8bd6792232453d010a29ba',1,'BoundaryCondition']]],
-  ['is_5finitialized_18',['is_initialized',['../class_boundary_condition.html#afb5fc12d83abbbd9c09a01eb1d047d5e',1,'BoundaryCondition']]]
+  ['invalid_5fdof_5findex_13',['invalid_dof_index',['../classsvmp_1_1_f_e_1_1_dof_exception.html#aa22b2480aecbbf5f1c21cda497fd924d',1,'svmp::FE::DofException']]],
+  ['invalidelementexception_14',['InvalidElementException',['../classsvmp_1_1_f_e_1_1_invalid_element_exception.html#a9a9a40eefac42a48a2d7765d2ff9d01a',1,'svmp::FE::InvalidElementException']]],
+  ['invert_5fdense_5fmatrix_15',['invert_dense_matrix',['../group___f_e___math.html#ga1b0a57fd84adfceb746e5caeed15cc67',1,'svmp::FE::math']]],
+  ['invert_5fdense_5fmatrix_5fwith_5fdiagnostics_16',['invert_dense_matrix_with_diagnostics',['../group___f_e___math.html#ga0c16550739bbbee756a74f628ef0be5a',1,'svmp::FE::math']]],
+  ['ionicinitialstateparameters_17',['IonicInitialStateParameters',['../class_ionic_initial_state_parameters.html#a7241cd1d558b5dca511885199796d383',1,'IonicInitialStateParameters']]],
+  ['ionicmodel_18',['ionicmodel',['../class_ionic_model.html#a0cd4651caa1256f01f9e78fad54063a0',1,'IonicModel::IonicModel(const InitialStates &amp;initial_X_, const InitialStates &amp;initial_Xg_, const double Vrest_)'],['../class_ionic_model.html#ab2b88a93ad5292a828d81b7e4ba7e5df',1,'IonicModel::IonicModel(const InitialStates &amp;initial_X_, const InitialStates &amp;initial_Xg_, const double Vrest_, const double Vscale_, const double Tscale_, const double Voffset_)']]],
+  ['ionicmodelfactory_19',['IonicModelFactory',['../class_ionic_model_factory.html#a31aa008d4e60567d3038600d9c1f82bd',1,'IonicModelFactory']]],
+  ['ionicmodelparameters_20',['IonicModelParameters',['../class_ionic_model_parameters.html#ae9f4797f55c4f6a8a1762dd477aafc52',1,'IonicModelParameters']]],
+  ['is_5ffrom_5fvtp_21',['is_from_vtp',['../class_boundary_condition.html#a1dab4a0efb8bd6792232453d010a29ba',1,'BoundaryCondition']]],
+  ['is_5finitialized_22',['is_initialized',['../class_boundary_condition.html#afb5fc12d83abbbd9c09a01eb1d047d5e',1,'BoundaryCondition']]],
+  ['is_5fvalid_23',['is_valid',['../classsvmp_1_1_f_e_1_1_dof_index.html#aa08c28341b3bbd67910ed3794bbb3e20',1,'svmp::FE::DofIndex']]],
+  ['iteration_24',['iteration',['../classsvmp_1_1_f_e_1_1_convergence_exception.html#a520dbfbf46bea31d8263c4cf9bb76f79',1,'svmp::FE::ConvergenceException']]]
 ];

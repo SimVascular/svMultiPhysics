@@ -1,0 +1,6 @@
+<map id="Common" name="Common">
+<area shape="rect" id="Node000002" href="$group___f_e.html" title="Finite&#45;element interfaces and utilities used by the solver." alt="" coords="5,31,92,56"/>
+<area shape="rect" id="Node000001" title="Shared vocabulary types, constants, and exception infrastructure used by every FE module." alt="" coords="140,31,221,56"/>
+<area shape="rect" id="Node000003" href="$group___f_e___common_exceptions.html" title="FE exception hierarchy." alt="" coords="269,5,363,31"/>
+<area shape="rect" id="Node000004" href="$group___f_e___common_types.html" title="Core type aliases, enumerations, constants, geometric types, and compile&#45;time traits." alt="" coords="287,55,345,80"/>
+</map>

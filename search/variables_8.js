@@ -19,7 +19,10 @@ var searchData=
   ['k_5fso_16',['k_so',['../class_bueno_orovio.html#a636bfe0ab47351212c8728455f49d9af',1,'BuenoOrovio']]],
   ['k_5fup_17',['K_up',['../class_t_t_p.html#a766fac9e8bb8e93dc485c83935f99db7',1,'TTP']]],
   ['kd_18',['Kd',['../class_com_mod.html#ad13b9d1c2d2cae2cae7d786034f092a1',1,'ComMod']]],
-  ['km_5fw_19',['km_w',['../class_bueno_orovio.html#ab863c036991b65b69a08948ec939214e',1,'BuenoOrovio']]],
-  ['ksac_20',['Ksac',['../classcep_model_type.html#a45d1393149113626952c1a8d982c77bf',1,'cepModelType']]],
-  ['ku_21',['Ku',['../classib_type.html#a2564ddd020800cd323e81a144c933fe8',1,'ibType']]]
+  ['kfefixedobjectalignmentbytes_19',['kFEFixedObjectAlignmentBytes',['../group___f_e___common_types.html#gab766e4c6853543f6be6fd2a330432d36',1,'svmp::FE']]],
+  ['kfepreferredalignmentbytes_20',['kFEPreferredAlignmentBytes',['../group___f_e___common_types.html#ga5a15a5775bb99e1c20870e51ed599f09',1,'svmp::FE']]],
+  ['km_5fw_21',['km_w',['../class_bueno_orovio.html#ab863c036991b65b69a08948ec939214e',1,'BuenoOrovio']]],
+  ['knot_5fvector_22',['knot_vector',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#adee1fefaf3a090c86358457cf008e78b',1,'svmp::FE::basis::BasisRequest']]],
+  ['ksac_23',['Ksac',['../classcep_model_type.html#a45d1393149113626952c1a8d982c77bf',1,'cepModelType']]],
+  ['ku_24',['Ku',['../classib_type.html#a2564ddd020800cd323e81a144c933fe8',1,'ibType']]]
 ];

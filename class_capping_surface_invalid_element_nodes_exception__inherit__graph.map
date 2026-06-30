@@ -1,0 +1,7 @@
+<map id="CappingSurfaceInvalidElementNodesException" name="CappingSurfaceInvalidElementNodesException">
+<area shape="rect" id="Node000001" title="Cap VTP connectivity does not match expected TRI3 topology." alt="" coords="5,152,228,192"/>
+<area shape="rect" id="Node000002" href="$class_capping_surface_base_exception.html" title="Base exception for capping surface (cap VTP) errors." alt="" coords="7,79,227,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,118,119,152,114,152,114,118"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="59,5,174,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,44,119,79,114,79,114,44"/>
+</map>

@@ -5,7 +5,7 @@ var searchData=
   ['abstol_2',['abstol',['../classls_type.html#a12ed37fb635049635a90cbdcbe9e4176',1,'lsType::absTol'],['../classode_type.html#a03243152e72ef43acfa97318cd8e122a',1,'odeType::absTol']]],
   ['ad_3',['Ad',['../class_com_mod.html#a2ce2a9403ba5b438b995b618fe2128ca',1,'ComMod']]],
   ['af_4',['af',['../classeq_type.html#abb83ca2583ed26cfd4a4230386302786',1,'eqType']]],
-  ['alpha_5',['alpha',['../class_fitz_hugh_nagumo.html#a221b11ef10448045c9982de4d8083fd0',1,'FitzHughNagumo::alpha'],['../class_t_t_p.html#a9468eddfc6bbe281bd8cb559ca47746c',1,'TTP::alpha'],['../class_aliev_panfilov.html#a41a42b2f9b3545b3f5c7c3a1c0767e51',1,'AlievPanfilov::alpha']]],
+  ['alpha_5',['alpha',['../class_aliev_panfilov.html#a41a42b2f9b3545b3f5c7c3a1c0767e51',1,'AlievPanfilov::alpha'],['../class_fitz_hugh_nagumo.html#a221b11ef10448045c9982de4d8083fd0',1,'FitzHughNagumo::alpha'],['../class_t_t_p.html#a9468eddfc6bbe281bd8cb559ca47746c',1,'TTP::alpha']]],
   ['am_6',['am',['../classeq_type.html#a8615023d7532cdafc3a5fc78dc26de5d',1,'eqType']]],
   ['array_5fnames_5f_7',['array_names_',['../class_boundary_condition.html#a843bd39be5f2e0c4243b1b75aaf806f8',1,'BoundaryCondition']]],
   ['assmtls_8',['assmTLS',['../classeq_type.html#a28d811c9247012b1915cc919dfb1731f',1,'eqType']]],
@@ -13,5 +13,8 @@ var searchData=
   ['astress_10',['aStress',['../classcem_model_type.html#a48e58483acb25db579e72221a9c16a87',1,'cemModelType']]],
   ['auk_11',['Auk',['../classib_type.html#afaf3a23ec46848c6c41e493cc933fb4c',1,'ibType']]],
   ['aun_12',['Aun',['../classib_type.html#a1e197fa7b5cf9dc0a92f8f8556b0bee5',1,'ibType']]],
-  ['auo_13',['Auo',['../classib_type.html#ac71646102acc375f85023e7d331c8d55',1,'ibType']]]
+  ['auo_13',['Auo',['../classib_type.html#ac71646102acc375f85023e7d331c8d55',1,'ibType']]],
+  ['axis_5fknot_5fvectors_14',['axis_knot_vectors',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#ab3eb73e82c57a5a5bf07d077ce899e2f',1,'svmp::FE::basis::BasisRequest']]],
+  ['axis_5forders_15',['axis_orders',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#ab8ee09ff10e4dc4e8665d6fe15bde283',1,'svmp::FE::basis::BasisRequest']]],
+  ['axis_5fweights_16',['axis_weights',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#aceb056d0746bcffe70b65316782acb1f',1,'svmp::FE::basis::BasisRequest']]]
 ];

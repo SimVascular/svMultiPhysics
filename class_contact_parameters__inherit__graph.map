@@ -1,0 +1,5 @@
+<map id="ContactParameters" name="ContactParameters">
+<area shape="rect" id="Node000001" title="The ContactParameters class stores parameters for the &#39;Contact&#39;&#39; XML element used to specify paramete..." alt="" coords="5,79,152,104"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="19,5,138,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="81,44,81,79,76,79,76,44"/>
+</map>

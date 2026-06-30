@@ -1,0 +1,9 @@
+<map id="svmp::FE::DofException" name="svmp::FE::DofException">
+<area shape="rect" id="Node000001" title="Degree&#45;of&#45;freedom numbering or lookup failure." alt="" coords="5,225,183,251"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_f_e_1_1_f_e_exception.html" title="Base exception type for errors originating in the FE library." alt="" coords="9,152,179,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,191,97,225,91,225,91,191"/>
+<area shape="rect" id="Node000003" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="13,79,175,104"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="97,118,97,152,91,152,91,118"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="37,5,151,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="97,44,97,79,91,79,91,44"/>
+</map>

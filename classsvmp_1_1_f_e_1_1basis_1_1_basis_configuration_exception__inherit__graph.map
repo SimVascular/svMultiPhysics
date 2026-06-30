@@ -1,0 +1,11 @@
+<map id="svmp::FE::basis::BasisConfigurationException" name="svmp::FE::basis::BasisConfigurationException">
+<area shape="rect" id="Node000001" title="Invalid Basis request or configuration." alt="" coords="5,299,260,339"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_exception.html" title="Base exception type for errors originating in the Basis module." alt="" coords="17,225,248,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,264,135,299,130,299,130,264"/>
+<area shape="rect" id="Node000003" href="$classsvmp_1_1_f_e_1_1_f_e_exception.html" title="Base exception type for errors originating in the FE library." alt="" coords="47,152,218,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="135,191,135,225,130,225,130,191"/>
+<area shape="rect" id="Node000004" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="51,79,214,104"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="135,118,135,152,130,152,130,118"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="75,5,190,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="135,44,135,79,130,79,130,44"/>
+</map>
