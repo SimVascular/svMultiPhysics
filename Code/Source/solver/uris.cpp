@@ -16,6 +16,8 @@
 #include "read_msh.h"
 #include "VtkData.h"
 
+#include <numbers>
+
 namespace uris { 
 
 /// @brief This subroutine computes the mean pressure and flux on the 
@@ -1469,7 +1471,8 @@ void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, 
       }
 
       if (dist_srf(iUris) < sdf_deps && sdf_deps > 0.0) {
-        delta_eps = (1 + cos(consts::pi*dist_srf(iUris)/sdf_deps))/(2*sdf_deps*sdf_deps);
+        delta_eps = (1 + cos(std::numbers::pi * dist_srf(iUris) / sdf_deps)) /
+                    (2 * sdf_deps * sdf_deps);
       }
       uris_factor_total_el(g) += com_mod.uris[iUris].resistance * delta_eps;
 

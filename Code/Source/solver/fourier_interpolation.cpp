@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <numbers>
 #include <regex>
 #include <sstream>
 
@@ -153,8 +154,9 @@ FourierInterpolation FourierInterpolation::from_time_series(
     result.fourier_coefficients_imaginary.set_col(n, 0.0);
 
     for (unsigned int i = 0; i < n_time_points - 1; ++i) {
-      const double ko = 2.0 * consts::pi * tmp * times[i] / result.period;
-      const double kn = 2.0 * consts::pi * tmp * times[i + 1] / result.period;
+      const double ko = 2.0 * std::numbers::pi * tmp * times[i] / result.period;
+      const double kn =
+          2.0 * std::numbers::pi * tmp * times[i + 1] / result.period;
 
       for (unsigned int j = 0; j < result.n_components; j++) {
         const double s =
@@ -178,7 +180,7 @@ FourierInterpolation FourierInterpolation::from_time_series(
         result.fourier_coefficients_real(k, n) /= result.period;
       }
     } else {
-      const double tmp_2 = (consts::pi * consts::pi * tmp * tmp);
+      const double tmp_2 = (std::numbers::pi * std::numbers::pi * tmp * tmp);
 
       for (unsigned int k = 0; k < result.n_components; k++) {
         result.fourier_coefficients_real(k, n) =
@@ -622,7 +624,7 @@ void FourierInterpolation::evaluate_internal(const double time,
 
   // Fourier series.
   if (!use_ramp) {
-    const double tmp = 2.0 * consts::pi / period;
+    const double tmp = 2.0 * std::numbers::pi / period;
 
     // Fourier series.
     for (int i = 0; i < n_fourier_coefficients; ++i) {

@@ -31,7 +31,9 @@
 
 #include "../test_common.h"
 #include "fourier_interpolation.h"
+
 #include <cmath>
+#include <numbers>
 
 class FourierInterpolationTest : public ::testing::Test {
 protected:
@@ -81,7 +83,7 @@ TEST_F(FourierInterpolationTest, FromTimeSeries) {
 
   int N = 100;                   // 100 timesteps
   double x_start = 0.0;          // start time
-  double x_end = 2 * consts::pi; // end time
+  double x_end = 2 * std::numbers::pi; // end time
   std::vector<std::vector<double>> temporal_values;
 
   CreateTemporalValues(N, x_start, x_end, temporal_values);
@@ -107,7 +109,7 @@ TEST_F(FourierInterpolationTest, FromFourierCoefficients) {
   const Array<double> c_real = {{0.0, 1.0}, {0.0, 3.0}};
   const Array<double> c_imag = {{0.0, -1.0}, {0.0, -2.0}};
   const double initial_time = 0.0;
-  const double period = 2 * consts::pi;
+  const double period = 2 * std::numbers::pi;
 
   const FourierInterpolation gt =
       FourierInterpolation::from_fourier_coefficients(q_i, q_s, c_real, c_imag,
@@ -158,7 +160,7 @@ TEST_F(FourierInterpolationTest, ValueAndDerivative) {
 
   int N = 100;                   // 100 timesteps
   double x_start = 0.0;          // start time
-  double x_end = 2 * consts::pi; // end time
+  double x_end = 2 * std::numbers::pi; // end time
   std::vector<std::vector<double>> temporal_values;
 
   CreateTemporalValues(N, x_start, x_end, temporal_values);
