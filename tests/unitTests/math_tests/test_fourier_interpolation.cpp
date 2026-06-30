@@ -265,6 +265,8 @@ TEST_F(FourierInterpolationTest, Ramp) {
   ASSERT_NEAR(value[0], temporal_values[0][1], 1e-6)
       << "Expected value before initial time to be equal to initial value of "
          "linear trend";
+  ASSERT_NEAR(derivative[0], 0.0, 1e-6)
+      << "Expected derivative before initial time to be zero";
 
   // Check that after the final time the value is equal to the final value of
   // the linear trend.
@@ -272,9 +274,13 @@ TEST_F(FourierInterpolationTest, Ramp) {
   ASSERT_NEAR(value[0], temporal_values.back()[1], 1e-6)
       << "Expected value after final time to be equal to final value of linear "
          "trend";
+  ASSERT_NEAR(derivative[0], 0.0, 1e-6)
+      << "Expected derivative after final time to be zero";
 
   // Check that the value in the interpolation interval is a linear
   // interpolation of the initial and final value.
+  const double expected_derivative =
+      (temporal_values.back()[1] - temporal_values[0][1]) / (x_end - x_start);
   for (double t = x_start; t <= x_end; t += 0.5) {
     std::tie(value, derivative) = gt.value_and_derivative(t);
 
@@ -293,5 +299,8 @@ TEST_F(FourierInterpolationTest, Ramp) {
     ASSERT_NEAR(value[1], expected_z, 1e-6)
         << "Expected value in interpolation interval to be linear "
            "interpolation of initial and final value";
+    ASSERT_NEAR(derivative[0], expected_derivative, 1e-6)
+        << "Expected derivative in interpolation interval to be linear "
+           "interpolation of initial and final derivative";
   }
 }

@@ -581,12 +581,13 @@ void FourierInterpolation::evaluate_internal(const double time,
   for (unsigned int i = 0; i < n_components; ++i) {
     value[i] = linear_trend_initial_values[i] + t * linear_trend_slopes[i];
 
-    // @todo[michelebucelli] This is consistent with the old code, but is
-    //   incorrect when use_ramp = true. In that case, the derivative should be
-    //   zero outside the interpolation interval [initial_time, initial_time +
-    //   period].
-    if (evaluate_derivative)
-      derivative[i] = linear_trend_slopes[i];
+    if (evaluate_derivative) {
+      if (use_ramp && (time < initial_time || time > initial_time + period)) {
+        derivative[i] = 0.0;
+      } else {
+        derivative[i] = linear_trend_slopes[i];
+      }
+    }
   }
 
   // Fourier series.
