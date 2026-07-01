@@ -73,10 +73,10 @@ std::vector<double> string_to_vector_double(const std::string &str,
 } // namespace
 
 FourierInterpolation FourierInterpolation::from_time_series(
-    const unsigned int n_fourier_coefficients,
-    const std::vector<std::vector<double>> &temporal_values,
-    const bool use_ramp) {
-  const unsigned int n_time_points = temporal_values.size();
+    const unsigned int n_fourier_coefficients, const Vector<double> &times,
+    const Array<double> &values, const bool use_ramp) {
+  const unsigned int n_time_points = times.size();
+  const unsigned int n_components = values.nrows();
 
   if (n_time_points < 2) {
     svmp::raise<svmp::FE::InvalidArgumentException>(
@@ -84,28 +84,10 @@ FourierInterpolation FourierInterpolation::from_time_series(
         "FourierInterpolation object.");
   }
 
-  const unsigned int n_components = temporal_values[0].size() - 1;
-
-  // Check that all entries of temporal_values have the same number of elements.
-  // @todo[michelebucelli] This should probably be an Array, in which this is
-  //   enforced a priori, rather than a vector of vectors. This change would
-  //   also save us the extraction for loop below.
-  for (const auto &row : temporal_values) {
-    if (row.size() != n_components + 1) {
-      svmp::raise<svmp::FE::InvalidArgumentException>(
-          "All rows of temporal_values must have the same number of elements.");
-    }
-  }
-
-  Vector<double> times(n_time_points);
-  Array<double> values(n_components, n_time_points);
-
-  for (unsigned int i = 0; i < n_time_points; ++i) {
-    times[i] = temporal_values[i][0];
-    for (unsigned int j = 0; j < n_components; ++j) {
-      values(j, i) = temporal_values[i][j + 1];
-    }
-  }
+  // Check that times and values have compatible sizes.
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      values.ncols() != times.size(),
+      "The number of columns of values must match the size of times.");
 
   // Check that times are in strictly increasing order. Notice that this implies
   // that the period is strictly positive, since it is computed as the
@@ -113,7 +95,10 @@ FourierInterpolation FourierInterpolation::from_time_series(
   for (unsigned int i = 1; i < n_time_points; ++i) {
     if (times[i] <= times[i - 1]) {
       svmp::raise<svmp::FE::InvalidArgumentException>(
-          "The time values must be in strictly increasing order.");
+          "The time values must be in strictly increasing order. Got times[" +
+          std::to_string(i - 1) + "] = " + std::to_string(times[i - 1]) +
+          " and times[" + std::to_string(i) +
+          "] = " + std::to_string(times[i]) + ".");
     }
   }
 
@@ -139,11 +124,14 @@ FourierInterpolation FourierInterpolation::from_time_series(
   }
 
   // Subtract the linear trend part from the values.
+  Vector<double> times_shifted = times;
+  Array<double> values_shifted = values;
   for (unsigned int i = 0; i < n_time_points; ++i) {
-    times[i] -= result.initial_time;
+    times_shifted[i] -= result.initial_time;
     for (unsigned int j = 0; j < n_components; ++j) {
-      values(j, i) = values(j, i) - result.linear_trend_initial_values[j] -
-                     result.linear_trend_slopes[j] * times[i];
+      values_shifted(j, i) = values_shifted(j, i) -
+                             result.linear_trend_initial_values[j] -
+                             result.linear_trend_slopes[j] * times_shifted[i];
     }
   }
 
@@ -154,19 +142,20 @@ FourierInterpolation FourierInterpolation::from_time_series(
     result.fourier_coefficients_imaginary.set_col(n, 0.0);
 
     for (unsigned int i = 0; i < n_time_points - 1; ++i) {
-      const double ko = 2.0 * std::numbers::pi * tmp * times[i] / result.period;
+      const double ko =
+          2.0 * std::numbers::pi * tmp * times_shifted[i] / result.period;
       const double kn =
-          2.0 * std::numbers::pi * tmp * times[i + 1] / result.period;
+          2.0 * std::numbers::pi * tmp * times_shifted[i + 1] / result.period;
 
       for (unsigned int j = 0; j < result.n_components; j++) {
-        const double s =
-            (values(j, i + 1) - values(j, i)) / (times[i + 1] - times[i]);
-
         if (n == 0) {
           result.fourier_coefficients_real(j, n) +=
-              0.5 * (times[i + 1] - times[i]) *
-              (values(j, i + 1) + values(j, i));
+              0.5 * (times_shifted[i + 1] - times_shifted[i]) *
+              (values_shifted(j, i + 1) + values_shifted(j, i));
         } else {
+          const double s = (values_shifted(j, i + 1) - values_shifted(j, i)) /
+                           (times_shifted[i + 1] - times_shifted[i]);
+
           result.fourier_coefficients_real(j, n) +=
               s * (std::cos(kn) - std::cos(ko));
           result.fourier_coefficients_imaginary(j, n) -=
@@ -227,11 +216,12 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
   }
 
   // Read the time-value pairs.
-  std::vector<std::vector<double>> values;
-  double tmp;
+  Vector<double> times(n_time_points);
+  Array<double> values(n_components, n_time_points);
 
   std::string line;
   int line_number = 1;
+  unsigned int i = 0;
 
   while (std::getline(file, line)) {
     line = clean_line(line);
@@ -249,14 +239,32 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
                 std::to_string(line_values.size()) + ".");
       }
 
-      values.push_back(line_values);
+      if (i >= n_time_points) {
+        svmp::raise<svmp::FileFormatException>(
+            file_name, "Found more than the expected " +
+                           std::to_string(n_time_points) +
+                           " time points in the temporal values file.");
+      }
+
+      times[i] = line_values[0];
+      for (unsigned int j = 0; j < n_components; ++j) {
+        values(j, i) = line_values[j + 1];
+      }
+      ++i;
     }
 
     ++line_number;
   }
 
-  return FourierInterpolation::from_time_series(n_fourier_coefficients, values,
-                                                use_ramp);
+  if (i != static_cast<unsigned int>(n_time_points)) {
+    svmp::raise<svmp::FileFormatException>(
+        file_name, "Expected " + std::to_string(n_time_points) +
+                       " time points in the temporal values file, but found " +
+                       std::to_string(i) + ".");
+  }
+
+  return FourierInterpolation::from_time_series(n_fourier_coefficients, times,
+                                                values, use_ramp);
 }
 
 FourierInterpolation FourierInterpolation::from_fourier_coefficients(

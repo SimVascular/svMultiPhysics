@@ -130,19 +130,20 @@ public:
    *
    * @param[in] n_fourier_coefficients The number @f$M@f$ of Fourier modes to
    *   use in the interpolation.
-   * @param[in] temporal_values The time series to interpolate. This is a vector
-   *   of vectors, where each inner vector contains the time and the values of
-   *   all components at that time. In other words,
-   *   <kbd>temporal_values[i][0]</kbd> is the time @f$t_i@f$, and
-   *   <kbd>temporal_values[i][j]</kbd> is the value the @f$j@f$-th component of
-   *   @f$\mathbf{v}_i@f$.
+   * @param[in] times The time points @f$t_i@f$ of the time series. It must be a
+   *   vector in strictly ascending order, and an exception will be thrown
+   *   otherwise.
+   * @param[in] values The values @f$\mathbf{v}_i@f$ of the time series. It must
+   *   be a 2D array with one row for each component and one column for each
+   *   time point. The number of columns must match the size of @p times, and an
+   *   exception will be thrown otherwise.
    * @param[in] use_ramp Whether to use a ramp function for the interpolation.
    *   See the general class documentation for the precise meaning of this
    *   choice.
    */
   static FourierInterpolation
   from_time_series(const unsigned int n_fourier_coefficients,
-                   const std::vector<std::vector<double>> &temporal_values,
+                   const Vector<double> &times, const Array<double> &values,
                    const bool use_ramp);
 
   /**

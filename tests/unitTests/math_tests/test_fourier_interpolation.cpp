@@ -43,17 +43,19 @@ protected:
 
   // Generate temporal values for function f(t) = sin(t) + cos(t) + 0.1*t
   void CreateTemporalValues(int N, double x_start, double x_end,
-                            std::vector<std::vector<double>> &temporal_values) {
-    temporal_values.clear();
-    temporal_values.reserve(N);
+                            Vector<double> &times, Array<double> &values) {
+    const unsigned int n_components = 2;
+
+    times.resize(N);
+    values.resize(n_components, N);
 
     const double step = (x_end - x_start) / (N - 1);
     for (int i = 0; i < N; ++i) {
-      const double t = x_start + i * step;
-      const double y = interpolated(t, 0);
-      const double z = interpolated(t, 1);
+      times[i] = x_start + i * step;
 
-      temporal_values.push_back({t, y, z});
+      for (unsigned int j = 0; j < n_components; ++j) {
+        values(j, i) = interpolated(times[i], j);
+      }
     }
   }
 
@@ -84,13 +86,14 @@ TEST_F(FourierInterpolationTest, FromTimeSeries) {
   int N = 100;                   // 100 timesteps
   double x_start = 0.0;          // start time
   double x_end = 2 * std::numbers::pi; // end time
-  std::vector<std::vector<double>> temporal_values;
 
-  CreateTemporalValues(N, x_start, x_end, temporal_values);
+  Vector<double> times;
+  Array<double> values;
+  CreateTemporalValues(N, x_start, x_end, times, values);
 
   // Compute the Fourier interpolation.
   const FourierInterpolation gt = FourierInterpolation::from_time_series(
-      /* n_fourier_coefficients = */ 3, temporal_values,
+      /* n_fourier_coefficients = */ 3, times, values,
       /* use_ramp = */ false);
 
   // Check the number of components and Fourier coefficients.
@@ -161,13 +164,14 @@ TEST_F(FourierInterpolationTest, ValueAndDerivative) {
   int N = 100;                   // 100 timesteps
   double x_start = 0.0;          // start time
   double x_end = 2 * std::numbers::pi; // end time
-  std::vector<std::vector<double>> temporal_values;
 
-  CreateTemporalValues(N, x_start, x_end, temporal_values);
+  Vector<double> times;
+  Array<double> values;
+  CreateTemporalValues(N, x_start, x_end, times, values);
 
   // Compute the Fourier interpolation.
   const FourierInterpolation gt = FourierInterpolation::from_time_series(
-      /* n_fourier_coefficients = */ 3, temporal_values,
+      /* n_fourier_coefficients = */ 3, times, values,
       /* use_ramp = */ false);
 
   Vector<double> value, derivative;
@@ -210,13 +214,14 @@ TEST_F(FourierInterpolationTest, Coefficients) {
   int N = 100;          // 100 timesteps
   double x_start = 0.0; // start time
   double x_end = 10.0;  // end time
-  std::vector<std::vector<double>> temporal_values;
 
-  CreateTemporalValues(N, x_start, x_end, temporal_values);
+  Vector<double> times;
+  Array<double> values;
+  CreateTemporalValues(N, x_start, x_end, times, values);
 
   // Compute the Fourier coefficients
   const FourierInterpolation gt = FourierInterpolation::from_time_series(
-      /* n_fourier_coefficients = */ 16, temporal_values,
+      /* n_fourier_coefficients = */ 16, times, values,
       /* use_ramp = */ false);
 
   // Check the linear trend slope
@@ -246,13 +251,14 @@ TEST_F(FourierInterpolationTest, Ramp) {
   int N = 100;          // 100 timesteps
   double x_start = 0.0; // start time
   double x_end = 10.0;  // end time
-  std::vector<std::vector<double>> temporal_values;
 
-  CreateTemporalValues(N, x_start, x_end, temporal_values);
+  Vector<double> times;
+  Array<double> values;
+  CreateTemporalValues(N, x_start, x_end, times, values);
 
   // Compute the Fourier coefficients
   const FourierInterpolation gt = FourierInterpolation::from_time_series(
-      /* n_fourier_coefficients = */ 16, temporal_values,
+      /* n_fourier_coefficients = */ 16, times, values,
       /* use_ramp = */ true);
 
   // Check that the number of Fourier coefficients is 1 (since ramp is used)
@@ -264,7 +270,7 @@ TEST_F(FourierInterpolationTest, Ramp) {
   // Check that before the initial time the value is equal to the initial value
   // of the linear trend.
   std::tie(value, derivative) = gt.value_and_derivative(x_start - 1.0);
-  ASSERT_NEAR(value[0], temporal_values[0][1], 1e-6)
+  ASSERT_NEAR(value[0], values(0, 0), 1e-6)
       << "Expected value before initial time to be equal to initial value of "
          "linear trend";
   ASSERT_NEAR(derivative[0], 0.0, 1e-6)
@@ -273,7 +279,7 @@ TEST_F(FourierInterpolationTest, Ramp) {
   // Check that after the final time the value is equal to the final value of
   // the linear trend.
   std::tie(value, derivative) = gt.value_and_derivative(x_end + 1.0);
-  ASSERT_NEAR(value[0], temporal_values.back()[1], 1e-6)
+  ASSERT_NEAR(value[0], values(0, values.ncols() - 1), 1e-6)
       << "Expected value after final time to be equal to final value of linear "
          "trend";
   ASSERT_NEAR(derivative[0], 0.0, 1e-6)
@@ -282,18 +288,16 @@ TEST_F(FourierInterpolationTest, Ramp) {
   // Check that the value in the interpolation interval is a linear
   // interpolation of the initial and final value.
   const double expected_derivative =
-      (temporal_values.back()[1] - temporal_values[0][1]) / (x_end - x_start);
+      (values(0, values.ncols() - 1) - values(0, 0)) / (x_end - x_start);
   for (double t = x_start; t <= x_end; t += 0.5) {
     std::tie(value, derivative) = gt.value_and_derivative(t);
 
     const double expected_y =
-        temporal_values[0][1] +
-        (temporal_values.back()[1] - temporal_values[0][1]) * (t - x_start) /
-            (x_end - x_start);
+        values(0, 0) + (values(0, values.ncols() - 1) - values(0, 0)) *
+                           (t - x_start) / (x_end - x_start);
     const double expected_z =
-        temporal_values[0][2] +
-        (temporal_values.back()[2] - temporal_values[0][2]) * (t - x_start) /
-            (x_end - x_start);
+        values(1, 0) + (values(1, values.ncols() - 1) - values(1, 0)) *
+                           (t - x_start) / (x_end - x_start);
 
     ASSERT_NEAR(value[0], expected_y, 1e-6)
         << "Expected value in interpolation interval to be linear "
