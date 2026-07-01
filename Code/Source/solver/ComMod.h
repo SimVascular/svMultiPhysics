@@ -204,6 +204,10 @@ class bcType
 
     // Coupled BC class
     CoupledBoundaryCondition coupled_bc;
+
+    // svOneD: per-face 1D solver input file path (set when Time_dependence=Coupled
+    // and svOneDSolver_interface is active).
+    std::string oned_input_file;
 };
 
 /// @brief Class storing data for B-Splines.
@@ -771,15 +775,21 @@ class cplFaceType
 
     // RCR type BC
     rcrType RCR;
+
+    // svOneD: path to the per-face 1D solver input file.
+    std::string oned_input_file;
+
+    // Whether this face uses RCR (Windkessel) boundary condition.
+    bool isRCR = false;
 };
 
 //----------------------------
-// svZeroDSolverInterfaceType
+// svZeroDSolverInterfaceData
 //----------------------------
 // This class stores information used to interface to
 // the svZeroDSolver.
 //
-class svZeroDSolverInterfaceType
+class svZeroDSolverInterfaceData
 {
   public:
 
@@ -807,6 +817,32 @@ class svZeroDSolverInterfaceType
     void set_data(const svZeroDSolverInterfaceParameters& params);
 };
 
+/// \brief Stores information used to interface with svOneDSolver.
+///
+/// This class stores the global svOneDSolver interface settings read from the
+/// solver XML file. Per-face 1D input files are stored separately in
+/// cplFaceType::oned_input_file.
+class svOneDSolverInterfaceData
+{
+  public:
+    /// \brief Path to the svOneDSolver interface shared library.
+    ///
+    /// This may be provided either with the platform-specific extension
+    /// (.so/.dylib) or without it.
+    std::string solver_library;
+
+    /// \brief True if the svOneDSolver interface settings were read from XML.
+    ///
+    /// This is set to true after the svOneDSolver_interface XML element has
+    /// been parsed successfully.
+    bool has_data = false;
+
+    /// \brief Read svOneDSolver interface settings from parsed parameters.
+    ///
+    /// \param params Parsed svOneDSolver interface parameters.
+    void set_data(const svOneDSolverInterfaceParameters& params);
+};
+
 /// @brief For coupled 0D-3D problems
 //
 class cplBCType
@@ -821,6 +857,9 @@ class cplBCType
 
     //  Whether to use svZeroD
     bool useSvZeroD = false;
+
+    //  Whether to use svOneD (svOneDSolver)
+    bool useSvOneD = false;
 
     //  Whether to initialize RCR from flow data
     bool initRCR = false;
@@ -851,7 +890,11 @@ class cplBCType
     std::string commuName;
     //std::string commuName = ".CPLBC_0D_3D.tmp";
 
-    svZeroDSolverInterfaceType svzerod_solver_interface;
+    /// @brief Data structure used for coupling with svZeroD code
+    svZeroDSolverInterfaceData svzerod_solver_interface;
+
+    /// @brief Data structure used for coupling with svOneD code
+    svOneDSolverInterfaceData svOneD_solver_interface;
 
     /// @brief The name of history file containing "X"
     std::string saveName;
