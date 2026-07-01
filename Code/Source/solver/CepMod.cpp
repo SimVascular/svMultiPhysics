@@ -35,9 +35,9 @@ bool stimType::is_active(const double time) const
 {
   const double eps = std::numeric_limits<double>::epsilon();
 
-  const int icl = static_cast<int>(fmax(floor(time / CL), 0.0));
-  const double Ts_cycle = Ts + static_cast<double>(icl) * CL;
-  const double Te_cycle = Ts_cycle + Td;
+  const int icl = static_cast<int>(fmax(floor(time / cycle_length_), 0.0));
+  const double Ts_cycle = start_time_ + static_cast<double>(icl) * cycle_length_;
+  const double Te_cycle = Ts_cycle + duration_;
 
   return Ts_cycle - eps <= time && time <= Te_cycle + eps;
 }
@@ -144,7 +144,7 @@ void SpatialBounds::distribute(const CmMod& cm_mod, const cmType& cm)
 
 double stimType::operator()(const double time, const Vector<double>& x) const
 {
-  if (utils::is_zero(A)) {
+  if (utils::is_zero(amplitude_)) {
     return 0.0;
   }
 
@@ -156,26 +156,26 @@ double stimType::operator()(const double time, const Vector<double>& x) const
     return 0.0;
   }
 
-  return A;
+  return amplitude_;
 }
 
 void stimType::distribute(const CmMod& cm_mod, const cmType& cm)
 {
-  cm.bcast(cm_mod, &Ts);
-  cm.bcast(cm_mod, &Td);
-  cm.bcast(cm_mod, &CL);
-  cm.bcast(cm_mod, &A);
+  cm.bcast(cm_mod, &start_time_);
+  cm.bcast(cm_mod, &duration_);
+  cm.bcast(cm_mod, &cycle_length_);
+  cm.bcast(cm_mod, &amplitude_);
   spatial_bounds_.distribute(cm_mod, cm);
 }
 
 void stimType::read_parameters(const StimulusParameters& params, const int nsd, const double default_cycle_length)
 {
-  A = params.amplitude.value();
+  amplitude_ = params.amplitude.value();
 
-  if (!utils::is_zero(A)) {
-    Ts = params.start_time.value();
-    Td = params.duration.value();
-    CL = params.cycle_length.defined() ? params.cycle_length.value() : default_cycle_length;
+  if (!utils::is_zero(amplitude_)) {
+    start_time_ = params.start_time.value();
+    duration_ = params.duration.value();
+    cycle_length_ = params.cycle_length.defined() ? params.cycle_length.value() : default_cycle_length;
   }
 
   const auto& spatial_bounds_params = params.spatial_bounds;
@@ -199,9 +199,9 @@ void stimType::read_parameters(const StimulusParameters& params, const int nsd, 
           SVMP_HERE, "Stimulus box Minimum and Maximum must have the same coordinate dimension.");
     }
 
-    if (box_min_vals.size() < static_cast<std::size_t>(nsd)) {
+    if (box_min_vals.size() != static_cast<std::size_t>(nsd)) {
       svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Stimulus box dimension is smaller than the simulation spatial dimension.");
+          SVMP_HERE, "Stimulus box coordinate dimension must match the simulation spatial dimension.");
     }
 
     Vector<double> box_min(box_min_vals.size());
@@ -234,9 +234,9 @@ void stimType::read_parameters(const StimulusParameters& params, const int nsd, 
     const auto& sphere_center_vals = sphere_params.center.value();
     const double sphere_radius_val = sphere_params.radius.value();
 
-    if (sphere_center_vals.size() < static_cast<std::size_t>(nsd)) {
+    if (sphere_center_vals.size() != static_cast<std::size_t>(nsd)) {
       svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Stimulus sphere center dimension is smaller than the simulation spatial dimension.");
+          SVMP_HERE, "Stimulus sphere center coordinate dimension must match the simulation spatial dimension.");
     }
 
     if (sphere_radius_val < 0.0) {
