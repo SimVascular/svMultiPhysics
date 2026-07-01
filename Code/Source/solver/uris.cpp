@@ -1656,7 +1656,9 @@ void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, 
         // The scaffold surface uses the same thickness parameter as the closed valve surface
         const double scaffold_deps = com_mod.uris[iUris].sdf_deps_close;
         if (dist_scaffold(iUris) < scaffold_deps && scaffold_deps > 0.0) {
-          delta_eps_scaffold = (1 + cos(consts::pi*dist_scaffold(iUris)/scaffold_deps))/(2*scaffold_deps*scaffold_deps);
+          delta_eps_scaffold = (1 + cos(std::numbers::pi *
+                                        dist_scaffold(iUris) / scaffold_deps)) /
+                               (2 * scaffold_deps * scaffold_deps);
         }
       }
 
