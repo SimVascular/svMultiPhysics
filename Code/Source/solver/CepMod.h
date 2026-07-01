@@ -94,10 +94,10 @@ class stimType
     void distribute(const CmMod& cm_mod, const cmType& cm);
 
   private:
-    double Ts = 0.0;
-    double Td = 0.0;
-    double CL = 0.0;
-    double A = 0.0;
+    double start_time_ = 0.0;
+    double duration_ = 0.0;
+    double cycle_length_ = 0.0;
+    double amplitude_ = 0.0;
 
     SpatialBounds spatial_bounds_;
 
