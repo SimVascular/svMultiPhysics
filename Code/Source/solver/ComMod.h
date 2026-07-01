@@ -1448,110 +1448,143 @@ class risFaceType
     std::vector<bool> status;
 };
 
-/// @brief Unfitted Resistive Immersed surface data type
-//
+/// @brief Unfitted Resistive Immersed Surface (URIS) data type.
+///
+/// Stores the immersed valve surface geometry, motion state, distance fields,
+/// resistance parameters, and background-mesh interpolation data used by the
+/// URIS formulation.
+///
+/// ### Scaffolding
+///
+/// A scaffold is an optional auxiliary surface mesh associated with a URIS
+/// valve. It represents supporting valve structure that contributes
+/// additional resistance near the scaffold surface without being treated as a
+/// moving valve leaflet surface. When enabled, the scaffold mesh is loaded from
+/// `Scaffold_file_path`, scaled with the URIS mesh scale factor, and stored as a
+/// separate mesh. The solver computes an unsigned distance function (UDF) from
+/// background fluid mesh nodes to the scaffold and uses the closed-valve
+/// thickness parameter to apply the scaffold resistance contribution.
+///
+/// Scaffold is disabled by default. Set `Scaffold_file_path` in the
+/// `Add_URIS_mesh` input section to a VTU scaffold mesh file to enable it.
 class urisType 
 {
   public:
 
-    // Name of the URIS instance.
+    /// @brief Name of the URIS instance.
     std::string name;
 
-    // Whether any file has been saved.
+    /// @brief Whether any file has been saved.
     bool savedOnce = false;
 
-    // Total number of IB nodes.
+    /// @brief Total number of immersed boundary nodes.
     int tnNo = 0;
 
-    // Number of IB meshes.
+    /// @brief Number of immersed boundary meshes.
     int nFa = 0;
 
-    // Valve surface position coordinates.
+    /// @brief Valve surface position coordinates.
     Array<double> x;
 
-    // Valve position coordinates at the previous time step.
+    /// @brief Valve position coordinates at the previous time step.
     Array<double> x_prev;
 
-    // Valve velocity on the valve surface nodes.
+    /// @brief Valve velocity on the valve surface nodes.
     Array<double> valve_velocity;
 
-    // Valve displacement.
+    /// @brief Valve displacement.
     Array<double> Yd;
 
-    // Default signed distance value away from the valve.
+    /// @brief Default signed distance value away from the valve.
     double sdf_default;
 
-    // Half-valve thickness when the valve is open.
+    /// @brief Half-valve thickness when the valve is open.
     double sdf_deps;
 
-    // Half-thickness used when the valve is closed. Set larger than sdf_deps 
-    // if the fully closed position alone is not able to prevent backflow.
+    /// @brief Half-thickness used when the valve is closed.
+    ///
+    /// Set larger than sdf_deps if the fully closed position alone is not able
+    /// to prevent backflow.
     double sdf_deps_close;
 
-    // Resistance value of the valve.
+    /// @brief Resistance value of the valve.
     double resistance;
 
-    // Whether to invert the valve surface normal vector. Default is false.
-    // 
-    // Valve normal vectors are assumed to point downstream, so that the
-    // downstream region has positive signed distance and the upstream region
-    // has negative signed distance. If the input surface does not satisfy
-    // this assumption, this flag should be set to true to flip the normals.
+    /// @brief Whether to invert the valve surface normal vector.
+    ///
+    /// Valve normal vectors are assumed to point downstream, so that the
+    /// downstream region has positive signed distance and the upstream region
+    /// has negative signed distance. If the input surface does not satisfy
+    /// this assumption, this flag should be set to true to flip the normals.
     bool invert_normal;
 
-    // Whether to include the valve velocity in the RIS implementation. Default is false.
+    /// @brief Whether to include the valve velocity in the RIS implementation.
     bool include_uris_velocity = false;
 
-    // Opening positions of the valve surfaces.
+    /// @brief Opening positions of the valve surfaces.
     Array3<double> DxOpen;
 
-    // Closing positions of the valve surfaces.
+    /// @brief Closing positions of the valve surfaces.
     Array3<double> DxClose;
 
-    // Normal vector pointing in the positive flow direction.
+    /// @brief Normal vector pointing in the positive flow direction.
     Vector<double> nrm;
 
-    // Close flag.
+    /// @brief Close flag.
     bool clsFlg;
 
-    // Iteration count.
+    /// @brief Iteration count.
     int cnt = 1000000;
 
-    // Flag to indicate if the SDF is computed.
+    /// @brief Flag indicating whether the signed distance function is computed.
     bool sdf_computed = false;
 
-    // Signed distance function indexed by backgroundfluid mesh node.
+    /// @brief Signed distance function indexed by background fluid mesh node.
     Vector<double> sdf;
 
-    // Valve velocity interpolated on background fluid mesh nodes.
+    /// @brief Valve velocity interpolated on background fluid mesh nodes.
     Array<double> valve_velocity_fluid;
 
-    // Mesh scale factor.
+    /// @brief Mesh scale factor.
     double scF;
 
-    // Mean pressure upstream.
+    /// @brief Mean pressure upstream.
     double meanPU = 0.0;
 
-    // Mean pressure downstream.
+    /// @brief Mean pressure downstream.
     double meanPD = 0.0;
 
-    // Relaxation factor to compute weighted averages of pressure values.
+    /// @brief Relaxation factor to compute weighted averages of pressure values.
     double relax_factor = 0.5;
 
-    // elemId(0, nd) = mesh index jM, elemId(1, nd) = element index iEln
-    // for the fluid element containing immersed surface node nd.
-    // Set to -1 if no containing element was found on this rank.
+    /// @brief Background fluid mesh element containing each immersed surface node.
+    ///
+    /// `elemId(0, nd)` is the mesh index `jM`, and `elemId(1, nd)` is the
+    /// element index `iEln` for the fluid element containing immersed surface
+    /// node `nd`. Set to -1 if no containing element was found on this rank.
     Array<int> elemId;
 
-    // Per-node ownership flag set by uris_find_tetra. A value of 1 means this
-    // rank own that node and is used for interpolating its displacement. 
-    // A value of 0 means another rank owns it and this rank skips it to avoid 
-    //double-counting in the MPI_SUM gather.
+    /// @brief Per-node ownership flag set by uris_find_tetra.
+    ///
+    /// A value of 1 means this rank owns the node and is used for interpolating
+    /// its displacement. A value of 0 means another rank owns it, so this rank
+    /// skips it to avoid double-counting in the MPI_SUM gather.
     Vector<int> localNode;
 
-    // Derived type variables
-    // IB meshes
+    /// @brief Immersed boundary meshes.
     std::vector<mshType> msh;
+
+    /// @brief Whether a scaffold mesh is enabled for this URIS instance.
+    bool scaffold_flag = false;
+
+    /// @brief Scaffold mesh data.
+    mshType scaffold_msh;
+
+    /// @brief Unsigned distance function (UDF) for the scaffold mesh.
+    Vector<double> scaffold_udf;
+
+    /// @brief Flag indicating whether the scaffold mesh UDF is computed.
+    bool scaffold_udf_computed = false;
 
 };
 
@@ -1874,4 +1907,3 @@ class ComMod {
 };
 
 #endif
-

@@ -37,12 +37,8 @@ int CountBits(int n)
 
 double cput()
 {
-  auto now = std::chrono::system_clock::now();
-  auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-
-  auto value = now_ms.time_since_epoch();
-  auto duration = value.count() / 1000.0;
-  return static_cast<double>(duration);
+  const auto now = std::chrono::system_clock::now();
+  return std::chrono::duration<double>(now.time_since_epoch()).count();
 }
 
 Vector<double> 

@@ -203,7 +203,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     if (effective_direction.size() != com_mod.nsd) {
       auto effective_size = (std::stringstream() << "(" << effective_direction.size() << ")").str();
       auto space_dim = (std::stringstream() << "(" << com_mod.nsd << ")").str();
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "The size of the effective direction " + effective_size + 
+      svmp::raise<svmp::ParseException>("The size of the effective direction " + effective_size + 
           " does not equal the number of space dimensions " + space_dim); 
     }
 
@@ -2380,7 +2380,7 @@ void read_outputs(Simulation* simulation, EquationParameters* eq_params, eqType&
           continue;
 
         svmp::check_not_null<svmp::FE::NotInitializedException>(
-            dmn.cep.ionic_model, SVMP_HERE, "ionic model was not constructed.");
+            dmn.cep.ionic_model, "ionic model was not constructed.");
 
         const auto registered_outputs =
             dmn.cep.ionic_model->get_registered_outputs();
@@ -3322,4 +3322,3 @@ void set_equation_properties(Simulation* simulation, EquationParameters* eq_para
 }
 
 };
-

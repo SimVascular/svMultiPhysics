@@ -84,38 +84,43 @@ std::string missing_xml_attribute_message(tinyxml2::XMLElement* element,
 }
 
 const char* require_xml_attribute(tinyxml2::XMLElement* element,
-    const char* attribute_name, svmp::SourceLocation location,
-    const std::string& message = std::string())
+    const char* attribute_name, const std::string& message = std::string(),
+    const char* file = __builtin_FILE(), int line = __builtin_LINE(),
+    const char* function = __builtin_FUNCTION())
 {
   const char* value = nullptr;
   if (element == nullptr ||
       element->QueryStringAttribute(attribute_name, &value) != tinyxml2::XML_SUCCESS ||
       value == nullptr) {
-    svmp::raise<svmp::ParseException>(
-        location,
+    svmp::raise<svmp::ParseException>(svmp::Diagnostic(
         message.empty() ? missing_xml_attribute_message(element, attribute_name)
-                        : message);
+                        : message,
+        file, line, function));
   }
   return value;
 }
 
 const char* require_xml_text(tinyxml2::XMLElement* element,
-    svmp::SourceLocation location, const std::string& message)
+    const std::string& message, const char* file = __builtin_FILE(),
+    int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
 {
   if (element == nullptr || element->GetText() == nullptr) {
-    svmp::raise<svmp::ParseException>(location, message);
+    svmp::raise<svmp::ParseException>(
+        svmp::Diagnostic(message, file, line, function));
   }
   return element->GetText();
 }
 
 template <typename MapT>
 typename MapT::mapped_type require_map_value(const MapT& map,
-    const typename MapT::key_type& key, svmp::SourceLocation location,
-    const std::string& message)
+    const typename MapT::key_type& key, const std::string& message,
+    const char* file = __builtin_FILE(), int line = __builtin_LINE(),
+    const char* function = __builtin_FUNCTION())
 {
   auto iter = map.find(key);
   if (iter == map.end()) {
-    svmp::raise<svmp::ParseException>(location, message);
+    svmp::raise<svmp::ParseException>(
+        svmp::Diagnostic(message, file, line, function));
   }
   return iter->second;
 }
@@ -140,10 +145,10 @@ void xml_util_set_parameters( std::function<void(const std::string&, const std::
         try {
           fn(name, value);
         } catch (const std::bad_function_call& exception) {
-          svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+          svmp::raise<svmp::ParseException>(error_msg + name + "'.");
         }
       } else {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
       }
     }
 
@@ -161,18 +166,18 @@ std::string IncludeParametersFile::NAME = "Include_xml";
 IncludeParametersFile::IncludeParametersFile(const char* cfile_name)
 {
   svmp::check<svmp::ParseException>(
-      cfile_name != nullptr, SVMP_HERE, "Include_xml requires a file name.");
+      cfile_name != nullptr, "Include_xml requires a file name.");
 
   std::string file_name(cfile_name);
   file_name.erase(std::remove_if(file_name.begin(), file_name.end(), ::isspace), file_name.end());
   svmp::check<svmp::ParseException>(
-      !file_name.empty(), SVMP_HERE, "Include_xml requires a non-empty file name.");
+      !file_name.empty(), "Include_xml requires a non-empty file name.");
 
   auto error = document.LoadFile(file_name.c_str());
   root_element = document.FirstChildElement(Parameters::FSI_FILE.c_str());
 
   if (error != tinyxml2::XML_SUCCESS || root_element == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "The following error occurred while reading the XML file '" +
+    svmp::raise<svmp::ParseException>("The following error occurred while reading the XML file '" +
         file_name + "'.\n" + "[svMultiPhysics] ERROR " + std::string(document.ErrorStr())); 
   }
 }
@@ -229,7 +234,7 @@ void Parameters::read_xml(std::string file_name)
   
   auto root_element = doc.FirstChildElement(FSI_FILE.c_str());
   if (error != tinyxml2::XML_SUCCESS || root_element == nullptr) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "The following error occurred while reading the XML file '" + file_name + "'.\n" +
+    svmp::raise<svmp::ParseException>("The following error occurred while reading the XML file '" + file_name + "'.\n" +
         "[svMultiPhysics] ERROR " + std::string(doc.ErrorStr()));
   }
 
@@ -274,7 +279,7 @@ void Parameters::set_equation_values(tinyxml2::XMLElement* root_element)
   auto add_eq_item = root_element->FirstChildElement(EquationParameters::xml_element_name_.c_str());
 
   while (add_eq_item) {
-    const char* eq_type = require_xml_attribute(add_eq_item, "type", SVMP_HERE);
+    const char* eq_type = require_xml_attribute(add_eq_item, "type");
 
     auto eq_params = new EquationParameters();
     eq_params->type.set(std::string(eq_type));
@@ -290,7 +295,7 @@ void Parameters::set_mesh_values(tinyxml2::XMLElement* root_element)
   auto add_mesh_item = root_element->FirstChildElement(MeshParameters::xml_element_name_.c_str());
 
   while (add_mesh_item) {
-    const char* mesh_name = require_xml_attribute(add_mesh_item, "name", SVMP_HERE);
+    const char* mesh_name = require_xml_attribute(add_mesh_item, "name");
 
     MeshParameters* mesh_params = new MeshParameters();
     mesh_params->name.set(std::string(mesh_name));
@@ -316,7 +321,7 @@ void Parameters::set_projection_values(tinyxml2::XMLElement* root_element)
   auto add_proj_item = root_element->FirstChildElement(ProjectionParameters::xml_element_name_.c_str());
 
   while (add_proj_item) {
-    const char* proj_name = require_xml_attribute(add_proj_item, "name", SVMP_HERE);
+    const char* proj_name = require_xml_attribute(add_proj_item, "name");
 
     ProjectionParameters* proj_params = new ProjectionParameters();
     proj_params->name.set(std::string(proj_name));
@@ -333,7 +338,7 @@ void Parameters::set_RIS_projection_values(tinyxml2::XMLElement* root_element)
 
   while (add_RIS_proj_item) {
     const char* RIS_proj_name =
-        require_xml_attribute(add_RIS_proj_item, "name", SVMP_HERE);
+        require_xml_attribute(add_RIS_proj_item, "name");
 
     RISProjectionParameters* RIS_proj_params = new RISProjectionParameters();
     RIS_proj_params->name.set(std::string(RIS_proj_name));
@@ -350,7 +355,7 @@ void Parameters::set_URIS_mesh_values(tinyxml2::XMLElement* root_element)
 
   while (add_URIS_mesh_item) {
     const char* URIS_mesh_name =
-        require_xml_attribute(add_URIS_mesh_item, "name", SVMP_HERE);
+        require_xml_attribute(add_URIS_mesh_item, "name");
 
     URISMeshParameters* URIS_mesh_params = new URISMeshParameters();
     URIS_mesh_params->name.set(std::string(URIS_mesh_name));
@@ -410,7 +415,7 @@ void BodyForceParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <LS type=TYPE> element.
-  const char* smesh = require_xml_attribute(xml_elem, "mesh", SVMP_HERE);
+  const char* smesh = require_xml_attribute(xml_elem, "mesh");
   mesh_name.set(std::string(smesh));
   //auto item = xml_elem->FirstChildElement();
 
@@ -584,7 +589,7 @@ void BoundaryConditionParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
   // Get the 'name' from the <Add_BC name=NAME> element.
-  const char* sname = require_xml_attribute(xml_elem, "name", SVMP_HERE);
+  const char* sname = require_xml_attribute(xml_elem, "name");
   name.set(std::string(sname));
 
   auto item = xml_elem->FirstChildElement();
@@ -601,10 +606,10 @@ void BoundaryConditionParameters::set_values(tinyxml2::XMLElement* xml_elem)
       try {
         set_parameter_value(name, value);
       } catch (const std::bad_function_call& exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
       }
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -938,8 +943,7 @@ void CANNRowParameters::print_parameters()
 void CANNRowParameters::set_values(tinyxml2::XMLElement* row_elem)
 {
   svmp::check_not_null<svmp::ParseException>(
-      row_elem, SVMP_HERE,
-      "CANNRowParameters::set_values: Received null XML element.");
+      row_elem, "CANNRowParameters::set_values: Received null XML element.");
 
   using namespace tinyxml2;
 
@@ -947,7 +951,7 @@ void CANNRowParameters::set_values(tinyxml2::XMLElement* row_elem)
 
   // Set row_name for current row element
   const char* row_name_input =
-      require_xml_attribute(row_elem, "row_name", SVMP_HERE);
+      require_xml_attribute(row_elem, "row_name");
   row_name.set(std::string(row_name_input));
 
   auto item = row_elem->FirstChildElement();
@@ -958,13 +962,13 @@ void CANNRowParameters::set_values(tinyxml2::XMLElement* row_elem)
     auto value = item->GetText();
 
     if (value == nullptr) { 
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     try {
       set_parameter_value_CANN(name, value);
     } catch (const std::bad_function_call& exception) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -1008,7 +1012,7 @@ void CANNParameters::set_values(tinyxml2::XMLElement* xml_elem)
   }
 
   if (rows.empty()) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + "Add_row'. No rows found.");
+    svmp::raise<svmp::ParseException>(error_msg + "Add_row'. No rows found.");
   }
 
   value_set = true;
@@ -1055,7 +1059,7 @@ void ConstitutiveModelParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
   // Get the 'type' from the <Constitutive_model type= > element.
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
   type.set(std::string(stype));
 
   // Check constitutive model type.
@@ -1067,7 +1071,7 @@ void ConstitutiveModelParameters::set_values(tinyxml2::XMLElement* xml_elem)
     }
     msg_2 += "\n";
     auto msg = msg_1 + msg_2;
-    svmp::raise<svmp::ParseException>(SVMP_HERE, msg);
+    svmp::raise<svmp::ParseException>(msg);
   }
   auto model_type = constitutive_model_types.at(type.value());
   type.set(model_type);
@@ -1083,13 +1087,13 @@ void ConstitutiveModelParameters::set_values(tinyxml2::XMLElement* xml_elem)
 void ConstitutiveModelParameters::check_constitutive_model(const Parameter<std::string>& eq_type_str)
 {
   auto eq_type = require_map_value(consts::equation_name_to_type, eq_type_str.value(),
-      SVMP_HERE, "Unknown equation type '" + eq_type_str.value() + "'.");
+      "Unknown equation type '" + eq_type_str.value() + "'.");
   auto model = require_map_value(consts::constitutive_model_name_to_type, type.value(),
-      SVMP_HERE, "Unknown constitutive model '" + type.value() + "'.");
+      "Unknown constitutive model '" + type.value() + "'.");
 
   if (eq_type == consts::EquationType::phys_ustruct) {
     if (! ustruct::constitutive_model_is_valid(model)) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "The " + type.value() + " constitutive model is not valid for ustruct equations.");
+      svmp::raise<svmp::ParseException>("The " + type.value() + " constitutive model is not valid for ustruct equations.");
     }
   }
 }
@@ -1118,7 +1122,7 @@ void CoupleGenBCParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown Couple_to_genBC type=TYPE XML element '";
   
   // Get the 'type' from the <Couple_to_genBC type=TYPE> element.
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
   type.set(std::string(stype));
   auto item = xml_elem->FirstChildElement();
   
@@ -1208,7 +1212,7 @@ void OutputParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string msg("[OutputParameters::set_values] ");
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
 
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
   type.set(std::string(stype));
 
   // Get values from XML file.
@@ -1220,8 +1224,7 @@ void OutputParameters::set_values(tinyxml2::XMLElement* xml_elem)
     auto item = xml_elem->FirstChildElement();
     while (item != nullptr) {
       auto name = std::string(item->Name());
-      auto value = std::string(require_xml_text(item, SVMP_HERE,
-          "Output XML element '" + name + "' requires a value."));
+      auto value = std::string(require_xml_text(item, "Output XML element '" + name + "' requires a value."));
       Parameter<std::string> param(name, "", false);
       param.set(value);
       alias_list.emplace_back(param);
@@ -1231,8 +1234,7 @@ void OutputParameters::set_values(tinyxml2::XMLElement* xml_elem)
     auto item = xml_elem->FirstChildElement();
     while (item != nullptr) {
       auto name = std::string(item->Name());
-      auto value = std::string(require_xml_text(item, SVMP_HERE,
-          "Output XML element '" + name + "' requires a value."));
+      auto value = std::string(require_xml_text(item, "Output XML element '" + name + "' requires a value."));
       Parameter<bool> param(name, false, false);
       param.set(value);
       output_list.emplace_back(param);
@@ -1291,7 +1293,7 @@ void VariableWallPropsParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Variable_wall_properties mesh_name=NAME> element.
-  const char* sname = require_xml_attribute(xml_elem, "mesh_name", SVMP_HERE);
+  const char* sname = require_xml_attribute(xml_elem, "mesh_name");
   mesh_name.set(std::string(sname));
   auto item = xml_elem->FirstChildElement();
 
@@ -1456,12 +1458,12 @@ void FluidViscosityParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
   using namespace tinyxml2;
 
-  const char* smodel = require_xml_attribute(xml_elem, "model", SVMP_HERE);
+  const char* smodel = require_xml_attribute(xml_elem, "model");
   model.set(std::string(smodel));
 
   // Check fluid_viscosity model name.
   if (model_names.count(model.value()) == 0) { 
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown fluid viscosity model '" + model.value() +
+      svmp::raise<svmp::ParseException>("Unknown fluid viscosity model '" + model.value() +
         "' in '" + xml_elem->Name() + "'.");
   }
 
@@ -1576,12 +1578,12 @@ void SolidViscosityParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
   using namespace tinyxml2;
 
-  const char* smodel = require_xml_attribute(xml_elem, "model", SVMP_HERE);
+  const char* smodel = require_xml_attribute(xml_elem, "model");
   model.set(std::string(smodel));
 
   // Check solid viscosity model name.
   if (model_names.count(model.value()) == 0) { 
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown solid viscosity model '" + model.value() +
+      svmp::raise<svmp::ParseException>("Unknown solid viscosity model '" + model.value() +
         "' in '" + xml_elem->Name() + "'.");
   }
 
@@ -1616,7 +1618,7 @@ void IonicInitialStateParameters::print_parameters() const {
 void IonicInitialStateParameters::set_values(
     const tinyxml2::XMLElement *xml_elem) {
   if (xml_elem->Name() != xml_element_name) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name +
+    svmp::raise<svmp::ParseException>("Unknown " + xml_element_name +
                                                      " XML element '");
   }
 
@@ -1634,12 +1636,10 @@ void IonicInitialStateParameters::set_values(
         set_parameter_value(name, value);
         value_set = true;
       } catch (const std::bad_function_call &exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE,
-                                          error_msg_prefix + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg_prefix + name + "'.");
       }
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE,
-                                        error_msg_prefix + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg_prefix + name + "'.");
     }
   }
 
@@ -1715,14 +1715,14 @@ void IonicModelParameters::set_values(const tinyxml2::XMLElement *xml_elem) {
   // The initial values of both state and gating variables must be set.
   if (initial_X_parameters.required && !initial_X_parameters.defined()) {
     svmp::raise<svmp::ParseException>(
-        SVMP_HERE, xml_element_name + " requires an '" +
+        xml_element_name + " requires an '" +
                        initial_X_parameters.xml_element_name +
                        "' XML section.");
   }
 
   if (initial_Xg_parameters.required && !initial_Xg_parameters.defined()) {
     svmp::raise<svmp::ParseException>(
-        SVMP_HERE, xml_element_name + " requires an '" +
+        xml_element_name + " requires an '" +
                        initial_Xg_parameters.xml_element_name +
                        "' XML section.");
   }
@@ -1841,7 +1841,7 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
   // If not reading from an external xml file then get the <Domain id=ID> 'id' attrribute.
   //
   if (!from_external_xml) {
-    const char* sid = require_xml_attribute(domain_elem, "id", SVMP_HERE);
+    const char* sid = require_xml_attribute(domain_elem, "id");
     id.set(std::string(sid));
   }
 
@@ -1877,8 +1877,7 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
     if (name == FluidViscosityParameters::xml_element_name_ ||
         name == SolidViscosityParameters::xml_element_name_) {
       auto eq_type = require_map_value(
-          consts::equation_name_to_type, equation.value(), SVMP_HERE,
-          "Unknown equation type '" + equation.value() +
+          consts::equation_name_to_type, equation.value(), "Unknown equation type '" + equation.value() +
               "' while parsing viscosity model.");
       if (eq_type == consts::EquationType::phys_fluid ||
           eq_type == consts::EquationType::phys_CMM ||
@@ -1891,14 +1890,13 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
         item_found = true;
       } else {
         svmp::raise<svmp::ParseException>(
-            SVMP_HERE, "Viscosity model not supported for equation '" +
+            "Viscosity model not supported for equation '" +
                            equation.value() + "'.");
       }
     }
 
     if (name == include_xml.name()) {
-      auto value = require_xml_text(item, SVMP_HERE,
-          "Domain Include_xml requires a file name.");
+      auto value = require_xml_text(item, "Domain Include_xml requires a file name.");
       IncludeParametersFile include_parameters(value);
       set_values(include_parameters.root_element, true);
 
@@ -1911,12 +1909,12 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
         set_parameter_value(name, value);
         item_found = true;
       } catch (const std::bad_function_call &exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
       }
     }
 
     if (!item_found)
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
 
     item = item->NextSiblingElement();
   }
@@ -1926,14 +1924,14 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
     // Check values for some parameters..
     //
     if (Parameters::constitutive_model_names.count(constitutive_model.value())
-    == 0) { svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown constitutive
+    == 0) { svmp::raise<svmp::ParseException>("Unknown constitutive
     model '" + constitutive_model.value_ + "' for '" + constitutive_model.name_
     +
         "' in '" + domain_params->Name() + "'.");
     }
 
     if (Parameters::equation_names.count(equation.value()) == 0) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown equation name '" +
+      svmp::raise<svmp::ParseException>("Unknown equation name '" +
     equation.value() + "' for '" + equation.name_ +
         "' in '" + domain_params->Name() + "'.");
     }
@@ -1988,7 +1986,7 @@ void DirectionalDistributionParameters::validate() const
   
   // Empty block is invalid - if block exists, must specify all three
   if (num_defined == 0) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Directional_distribution block is empty. "
+    svmp::raise<svmp::ParseException>("Directional_distribution block is empty. "
       "Either remove the block entirely (to use defaults: fiber=1.0, sheet=0.0, normal=0.0) "
       "or specify all three directions: Fiber_direction, Sheet_direction, Sheet_normal_direction.");
   }
@@ -2003,7 +2001,7 @@ void DirectionalDistributionParameters::validate() const
     if (!fiber_defined) msg += "Fiber_direction ";
     if (!sheet_defined) msg += "Sheet_direction ";
     if (!normal_defined) msg += "Sheet_normal_direction ";
-    svmp::raise<svmp::ParseException>(SVMP_HERE, msg);
+    svmp::raise<svmp::ParseException>(msg);
   }
   
   // All three are specified, validate their values
@@ -2015,7 +2013,7 @@ void DirectionalDistributionParameters::validate() const
   double eta_sum = eta_f + eta_s + eta_n;
   const double tol = 1.0e-10;
   if (std::abs(eta_sum - 1.0) > tol) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Directional distribution fractions must sum to 1.0. "
+    svmp::raise<svmp::ParseException>("Directional distribution fractions must sum to 1.0. "
       "Got: Fiber_direction=" + std::to_string(eta_f) + 
       ", Sheet_direction=" + std::to_string(eta_s) + 
       ", Sheet_normal_direction=" + std::to_string(eta_n) + 
@@ -2024,7 +2022,7 @@ void DirectionalDistributionParameters::validate() const
   
   // Validate that each eta is non-negative
   if (eta_f < 0.0 || eta_s < 0.0 || eta_n < 0.0) {
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Directional distribution fractions must be non-negative. "
+    svmp::raise<svmp::ParseException>("Directional distribution fractions must be non-negative. "
       "Got: Fiber_direction=" + std::to_string(eta_f) + 
       ", Sheet_direction=" + std::to_string(eta_s) + 
       ", Sheet_normal_direction=" + std::to_string(eta_n));
@@ -2071,7 +2069,7 @@ void FiberReinforcementStressParameters::set_values(tinyxml2::XMLElement* xml_el
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the element attribute.
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
   type.set(std::string(stype));
   auto item = xml_elem->FirstChildElement();
   
@@ -2086,10 +2084,10 @@ void FiberReinforcementStressParameters::set_values(tinyxml2::XMLElement* xml_el
       try {
         set_parameter_value(name, value);
       } catch (const std::bad_function_call& exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
       }
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
     
     item = item->NextSiblingElement();
@@ -2148,7 +2146,7 @@ void StimulusParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <LS type=TYPE> element.
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
   type.set(std::string(stype));
   auto item = xml_elem->FirstChildElement();
   
@@ -2277,7 +2275,7 @@ void ContactParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Add_projection name=NAME> element.
-  const char* mname = require_xml_attribute(xml_elem, "model", SVMP_HERE);
+  const char* mname = require_xml_attribute(xml_elem, "model");
   model.set(std::string(mname));
 
   using std::placeholders::_1;
@@ -2439,14 +2437,14 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
 
     } else if (viscosity_names.count(name)) { 
       auto eq_type = require_map_value(consts::equation_name_to_type, type.value(),
-          SVMP_HERE, "Unknown equation type '" + type.value() + "' while parsing viscosity model.");
+          "Unknown equation type '" + type.value() + "' while parsing viscosity model.");
 
       if (fluid_eqs.count(eq_type)) {
         domain->fluid_viscosity.set_values(item);
       } else if (eq_type == consts::EquationType::phys_struct || eq_type == consts::EquationType::phys_ustruct) {
         domain->solid_viscosity.set_values(item);
       } else {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, "Viscosity model not supported for equation '" + type.value() + "'.");
+        svmp::raise<svmp::ParseException>("Viscosity model not supported for equation '" + type.value() + "'.");
       }
 
     } else if (name == ECGLeadsParameters::xml_element_name_) {
@@ -2456,8 +2454,7 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
       variable_wall_properties.set_values(item);
 
     } else if (name == include_xml.name()) { 
-      auto value = require_xml_text(item, SVMP_HERE,
-          "Equation Include_xml requires a file name.");
+      auto value = require_xml_text(item, "Equation Include_xml requires a file name.");
       IncludeParametersFile include_parameters(value);
       set_values(include_parameters.root_element, default_domain);
 
@@ -2473,13 +2470,13 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
         try {
           default_domain->set_parameter_value(name, value);
         } catch (const std::bad_function_call& exception) {
-          svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name_ + " XML element '" + name + "'.");
+          svmp::raise<svmp::ParseException>("Unknown " + xml_element_name_ + " XML element '" + name + "'.");
         }
       }
 
 
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "[Equation] Unknown " + xml_element_name_ + " XML element '" + name + "'.");
+      svmp::raise<svmp::ParseException>("[Equation] Unknown " + xml_element_name_ + " XML element '" + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -2571,8 +2568,7 @@ void GeneralSimulationParameters::set_values(tinyxml2::XMLElement* xml_element, 
   } else {
     auto general_params = xml_element->FirstChildElement(xml_element_name.c_str());
     if (general_params == nullptr) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE,
-          "No <" + xml_element_name + "> section found in the solver XML file.");
+      svmp::raise<svmp::ParseException>("No <" + xml_element_name + "> section found in the solver XML file.");
     }
     item = general_params->FirstChildElement();
   }
@@ -2581,19 +2577,17 @@ void GeneralSimulationParameters::set_values(tinyxml2::XMLElement* xml_element, 
     std::string name = std::string(item->Value());
 
     if (name == include_xml.name()) {
-      auto value = require_xml_text(item, SVMP_HERE,
-          "GeneralSimulationParameters Include_xml requires a file name.");
+      auto value = require_xml_text(item, "GeneralSimulationParameters Include_xml requires a file name.");
       IncludeParametersFile include_parameters(value);
       set_values(include_parameters.root_element, true);
 
     } else {
-      auto value = require_xml_text(item, SVMP_HERE,
-          "GeneralSimulationParameters XML element '" + name + "' requires a value.");
+      auto value = require_xml_text(item, "GeneralSimulationParameters XML element '" + name + "' requires a value.");
 
       try {
         set_parameter_value(name, value);
       } catch (const std::bad_function_call& exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown XML GeneralSimulationParameters element '" + name + ".");
+        svmp::raise<svmp::ParseException>("Unknown XML GeneralSimulationParameters element '" + name + ".");
       }
     }
 
@@ -2645,7 +2639,7 @@ void FaceParameters::set_values(tinyxml2::XMLElement* face_elem)
   using namespace tinyxml2;
 
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
-  const char* face_name = require_xml_attribute(face_elem, "name", SVMP_HERE);
+  const char* face_name = require_xml_attribute(face_elem, "name");
   name.set(std::string(face_name));
   auto item = face_elem->FirstChildElement();
 
@@ -2654,13 +2648,13 @@ void FaceParameters::set_values(tinyxml2::XMLElement* face_elem)
     auto value = item->GetText();
 
     if (value == nullptr) { 
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     try {
       set_parameter_value(name, value);
     } catch (const std::bad_function_call& exception) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -2703,7 +2697,7 @@ void RemesherParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name + " XML element '";
 
   // Get the 'type' from the <Remesher type=TYPE> element.
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
   type.set(std::string(stype));
   values_set_ = true;
 
@@ -2717,15 +2711,15 @@ void RemesherParameters::set_values(tinyxml2::XMLElement* xml_elem)
     if (name == "Max_edge_size") {
       const char* name;
       const char* value;
-      name = require_xml_attribute(item, "name", SVMP_HERE);
-      value = require_xml_attribute(item, "value", SVMP_HERE);
+      name = require_xml_attribute(item, "name");
+      value = require_xml_attribute(item, "value");
       auto svalue = std::string(value);
 
       try {
         double dvalue = std::stod(svalue);
         max_edge_sizes_[std::string(name)] = dvalue;
       } catch (...) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, "VALUE=" + svalue +
+        svmp::raise<svmp::ParseException>("VALUE=" + svalue +
             " is not a valid float in the XML Remesher <Max_edge_size name=NAME  value=VALUE> element.");
       }
 
@@ -2734,11 +2728,11 @@ void RemesherParameters::set_values(tinyxml2::XMLElement* xml_elem)
       try {
         set_parameter_value(name, value);
       } catch (const std::bad_function_call& exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
       }
 
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -2825,15 +2819,13 @@ void MeshParameters::set_values(tinyxml2::XMLElement* mesh_elem, bool from_exter
     // them as a list of VectorParameter<double>. 
     //
     } else if (name == "Fiber_direction") {
-      auto value = require_xml_text(item, SVMP_HERE,
-          "Mesh Fiber_direction XML element requires a value.");
+      auto value = require_xml_text(item, "Mesh Fiber_direction XML element requires a value.");
       VectorParameter<double> dir("Fiber_direction", {}, false, {});
       dir.set(value);
       fiber_directions.push_back(dir);
 
     } else if (name == include_xml.name()) {
-      auto value = require_xml_text(item, SVMP_HERE,
-          "Mesh Include_xml requires a file name.");
+      auto value = require_xml_text(item, "Mesh Include_xml requires a file name.");
       IncludeParametersFile include_parameters(value);
       set_values(include_parameters.root_element, true);
 
@@ -2843,10 +2835,10 @@ void MeshParameters::set_values(tinyxml2::XMLElement* mesh_elem, bool from_exter
       try {
         set_parameter_value(name, value);
       } catch (const std::bad_function_call& exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
       }
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -2914,7 +2906,7 @@ void ProjectionParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Add_projection name=NAME> element.
-  const char* sname = require_xml_attribute(xml_elem, "name", SVMP_HERE);
+  const char* sname = require_xml_attribute(xml_elem, "name");
   name.set(std::string(sname));
 
   using std::placeholders::_1;
@@ -2951,7 +2943,7 @@ void RISProjectionParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
   // Get the 'type' from the <Add_RIS_projection name=NAME> element.
-  const char* sname = require_xml_attribute(xml_elem, "name", SVMP_HERE);
+  const char* sname = require_xml_attribute(xml_elem, "name");
   name.set(std::string(sname));
 
   using std::placeholders::_1;
@@ -2990,6 +2982,7 @@ URISMeshParameters::URISMeshParameters()
   set_parameter("Valve_starts_as_closed", true,  !required, valve_starts_as_closed);
   set_parameter("Invert_normal", false,  !required, invert_normal);
   set_parameter("Positive_flow_normal_file_path", "",  !required, positive_flow_normal_file_path);
+  set_parameter("Scaffold_file_path", "",  !required, scaffold_file_path);
   set_parameter("Include_URIS_velocity", false,  !required, include_uris_velocity);
 }
 
@@ -3030,10 +3023,10 @@ void URISMeshParameters::set_values(tinyxml2::XMLElement* mesh_elem)
       try {
         set_parameter_value(name, value);
       } catch (const std::bad_function_call& exception) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
       }
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -3082,7 +3075,7 @@ void URISFaceParameters::set_values(tinyxml2::XMLElement* face_elem)
   using namespace tinyxml2;
 
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '"; 
-  const char* face_name = require_xml_attribute(face_elem, "name", SVMP_HERE);
+  const char* face_name = require_xml_attribute(face_elem, "name");
   name.set(std::string(face_name));
   auto item = face_elem->FirstChildElement();
 
@@ -3091,13 +3084,13 @@ void URISFaceParameters::set_values(tinyxml2::XMLElement* face_elem)
     auto value = item->GetText();
 
     if (value == nullptr) { 
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     try {
       set_parameter_value(name, value);
     } catch (const std::bad_function_call& exception) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
 
     item = item->NextSiblingElement();
@@ -3152,7 +3145,7 @@ void LinearAlgebraParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name + " XML element '";
 
   // Get the 'type' from the <Linear_algebra type=TYPE> element.
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
   type.set(std::string(stype));
 
   // Check Linear_algebra type=TYPE> element.
@@ -3163,7 +3156,7 @@ void LinearAlgebraParameters::set_values(tinyxml2::XMLElement* xml_elem)
     std::string valid_types = "";
     std::for_each(LinearAlgebra::name_to_type.begin(), LinearAlgebra::name_to_type.end(), 
         [&valid_types](std::pair<const std::string, const consts::LinearAlgebraType> p) {valid_types += p.first+" ";}); 
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown TYPE '" + type.value() +
+    svmp::raise<svmp::ParseException>("Unknown TYPE '" + type.value() +
         "' given in the XML <Linear_algebra type=TYPE> element.\nValid types are: " + valid_types);
   }
 
@@ -3182,7 +3175,7 @@ void LinearAlgebraParameters::set_values(tinyxml2::XMLElement* xml_elem)
     std::string valid_types = "";
     std::for_each(consts::preconditioner_name_to_type.begin(), consts::preconditioner_name_to_type.end(),
         [&valid_types](std::pair<const std::string, const consts::PreconditionerType> p) {valid_types += p.first+" ";});
-    svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown TYPE '" + preconditioner() +
+    svmp::raise<svmp::ParseException>("Unknown TYPE '" + preconditioner() +
         "' given in the XML <Linear_algebra> <Preconditioner> element.\nValid types are: " + valid_types);
   }     
 
@@ -3195,21 +3188,20 @@ void LinearAlgebraParameters::set_values(tinyxml2::XMLElement* xml_elem)
 void LinearAlgebraParameters::check_input_parameters()
 {
   auto linear_algebra_type = require_map_value(LinearAlgebra::name_to_type, type(),
-      SVMP_HERE, "Unknown TYPE '" + type() +
+      "Unknown TYPE '" + type() +
       "' given in the XML <Linear_algebra type=TYPE> element.");
   auto prec_cond_type = require_map_value(consts::preconditioner_name_to_type,
-      preconditioner.value(), SVMP_HERE, "Unknown TYPE '" + preconditioner() +
+      preconditioner.value(), "Unknown TYPE '" + preconditioner() +
       "' given in the XML <Linear_algebra> <Preconditioner> element.");
   auto assembly_type = require_map_value(LinearAlgebra::name_to_type, assembly.value(),
-      SVMP_HERE, "Unknown TYPE '" + assembly() +
+      "Unknown TYPE '" + assembly() +
       "' given in the XML <Linear_algebra> <Assembly> element.");
 
   LinearAlgebra* linear_algebra = nullptr;
   try {
     linear_algebra = LinearAlgebraFactory::create_interface(linear_algebra_type);
     if (linear_algebra == nullptr) {
-      svmp::raise<svmp::ParseException>(SVMP_HERE,
-          "Linear_algebra type '" + type() + "' cannot be used as a solver backend.");
+      svmp::raise<svmp::ParseException>("Linear_algebra type '" + type() + "' cannot be used as a solver backend.");
     }
     linear_algebra->check_options(prec_cond_type, assembly_type);
     delete linear_algebra;
@@ -3218,7 +3210,7 @@ void LinearAlgebraParameters::check_input_parameters()
     throw;
   } catch (const std::exception& exception) {
     delete linear_algebra;
-    svmp::raise<svmp::ParseException>(SVMP_HERE, exception.what());
+    svmp::raise<svmp::ParseException>(exception.what());
   }
 }
 
@@ -3276,7 +3268,7 @@ void LinearSolverParameters::set_values(tinyxml2::XMLElement* xml_elem)
   std::string error_msg = "Unknown " + xml_element_name + " XML element '";
 
   // Get the 'type' from the <LS type=TYPE> element.
-  const char* stype = require_xml_attribute(xml_elem, "type", SVMP_HERE);
+  const char* stype = require_xml_attribute(xml_elem, "type");
 
   type.set(std::string(stype));
 
