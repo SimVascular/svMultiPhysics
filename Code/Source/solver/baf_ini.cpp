@@ -297,8 +297,13 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
 
   int iM = lFa.iM;
   int iFa = lBc.iFa;
-  lBc.gx.resize(lFa.nNo);
-  //if (.NOT.ALLOCATED(lBc.gx)) ALLOCATE(lBc.gx(lFa.nNo))
+
+  // lBc.gx may have values set when for example when 
+  // reading in a user-defined profile.
+  if (lBc.gx.size() == 0) {
+    lBc.gx.resize(lFa.nNo);
+  }
+
   #ifdef debug_bc_ini
   dmsg << "iM: " << iM;
   dmsg << "iFa: " << iFa ;
