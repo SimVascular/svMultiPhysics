@@ -221,7 +221,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
           yl = cem.Ya(Ac);
         }
 
-        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt, com_mod, Ac);
+        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt, com_mod.x.col(Ac));
 
         sA(Ac) = sA(Ac) + 1.0;
         for (int i = 0; i < nX; i++) {
@@ -270,7 +270,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
         yl = cem.Ya(Ac);
       }
 
-      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt, com_mod, Ac);
+      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt, com_mod.x.col(Ac));
 
       for (int i = 0; i < nX; i++) {
         Xion(i,Ac) = Xl(i);
@@ -301,12 +301,12 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
                  Vector<double> &Xg, const double t1, double &yl,
                  const double I4f, const double dt,
-                 const ComMod& com_mod, const int Ac) {
+                 const Vector<double>& x) {
   using namespace consts;
 
   #define n_debug_cep_integ_l
   #ifdef debug_cep_integ_l
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  DebugMsg dmsg(__func__, cep_mod.cm.idcm());
   dmsg.banner();
   #endif
 
@@ -328,7 +328,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
 
   for (unsigned int i = 0; i < nt; ++i) {
     const double t = t1 + i * dt;
-    const double Istim = cep.Istim(t, com_mod, Ac);
+    const double Istim = cep.Istim(t, x);
 
     cep.ionic_model->integ(cep.odes, cep.imyo, t, cep.dt, Istim, Ksac, X, Xg);
   }

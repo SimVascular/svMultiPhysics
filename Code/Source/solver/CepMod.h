@@ -19,6 +19,8 @@
 #include <map>
 #include <memory>
 
+class StimulusParameters;
+
 /// @brief Type of cardiac electrophysiology models.
 enum class ElectrophysiologyModelType {
   NA = 100, 
@@ -48,58 +50,58 @@ class ComMod;
 class CmMod;
 class cmType;
 
+/// @brief Spatial bounds for a CEP stimulus region.
+class SpatialBounds
+{
+  public:
+    enum class RegionType { none, box, sphere, both };
+
+    /// @brief Set box bounds. Updates region type to box or both.
+    void set_box(const Vector<double>& min, const Vector<double>& max);
+
+    /// @brief Set sphere bounds. Updates region type to sphere or both.
+    void set_sphere(const Vector<double>& center, const double radius);
+
+    /// @brief Return true if the point lies inside all active spatial bounds.
+    bool contains(const Vector<double>& x) const;
+
+    /// @brief Broadcast spatial bounds to all MPI ranks.
+    void distribute(const CmMod& cm_mod, const cmType& cm);
+
+  private:
+    RegionType region_type_ = RegionType::none;
+
+    Vector<double> box_min_;
+    Vector<double> box_max_;
+    Vector<double> sphere_center_;
+    double sphere_radius_ = 0.0;
+
+    bool inside_box(const Vector<double>& x) const;
+    bool inside_sphere(const Vector<double>& x) const;
+};
+
 /// @brief External stimulus type
 class stimType
 {
   public:
-    /// @brief start time
-    double Ts = 0.0;
+    /// @brief Return the applied stimulus value at a point and time.
+    double operator()(const double time, const Vector<double>& x) const;
 
-    /// @brief duration of stimulus
-    double Td = 0.0;
-
-    /// @brief cycle length
-    double CL = 0.0;
-
-    /// @brief stimulus amplitude
-    double A = 0.0;
-
-    /// @brief Whether the stimulus is restricted to a coordinate box.
-    bool box_defined = false;
-
-    /// @brief Minimum coordinates for the stimulus box.
-    Vector<double> box_min;
-
-    /// @brief Maximum coordinates for the stimulus box.
-    Vector<double> box_max;
-
-    /// @brief Whether the stimulus is restricted to a sphere.
-    bool sphere_defined = false;
-
-    /// @brief Center coordinates for the stimulus sphere.
-    Vector<double> sphere_center;
-
-    /// @brief Radius of the stimulus sphere.
-    double sphere_radius = 0.0;
-
-    /// @brief Return the applied stimulus value at a node and time.
-    double operator()(const double time, const ComMod& com_mod, const int Ac) const;
+    /// @brief Set stimulus parameters from parsed XML parameters.
+    void read_parameters(const StimulusParameters& params, const int nsd, const double default_cycle_length);
 
     /// @brief Broadcast stimulus parameters to all ranks.
     void distribute(const CmMod& cm_mod, const cmType& cm);
 
   private:
-    /// @brief Check whether the stimulus is active at the given time.
+    double Ts = 0.0;
+    double Td = 0.0;
+    double CL = 0.0;
+    double A = 0.0;
+
+    SpatialBounds spatial_bounds_;
+
     bool is_active(const double time) const;
-
-    /// @brief Check whether a node lies inside all active spatial bounds.
-    bool contains_node(const ComMod& com_mod, const int Ac) const;
-
-    /// @brief Check whether a node lies inside the stimulus box.
-    bool inside_box(const ComMod& com_mod, const int Ac) const;
-
-    /// @brief Check whether a node lies inside the stimulus sphere.
-    bool inside_sphere(const ComMod& com_mod, const int Ac) const;
 };
 
 /// @brief ECG leads type

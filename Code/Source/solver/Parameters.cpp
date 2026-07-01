@@ -2126,7 +2126,6 @@ void FiberReinforcementStressParameters::print_parameters()
 // 'Stimulus' XML element used to parameters for 
 // pacemaker cells.
 
-/// @brief Define the XML element name for CEP stimulus box spatial bounds.
 const std::string StimulusBoxParameters::xml_element_name_ = "Box";
 
 StimulusBoxParameters::StimulusBoxParameters()
@@ -2152,7 +2151,6 @@ void StimulusBoxParameters::set_values(tinyxml2::XMLElement* xml_elem)
   value_set = true;
 }
 
-/// @brief Define the XML element name for CEP stimulus sphere spatial bounds.
 const std::string StimulusSphereParameters::xml_element_name_ = "Sphere";
 
 StimulusSphereParameters::StimulusSphereParameters()
@@ -2178,16 +2176,13 @@ void StimulusSphereParameters::set_values(tinyxml2::XMLElement* xml_elem)
   value_set = true;
 }
 
-/// @brief Define the XML element name for CEP stimulus spatial bounds.
 const std::string StimulusSpatialBoundsParameters::xml_element_name_ = "Spatial_bounds";
 
 void StimulusSpatialBoundsParameters::set_values(tinyxml2::XMLElement* xml_elem)
 {
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
 
-  auto item = xml_elem->FirstChildElement();
-
-  while (item != nullptr) {
+  for (auto item = xml_elem->FirstChildElement(); item != nullptr; item = item->NextSiblingElement()) {
     auto name = std::string(item->Value());
 
     if (name == StimulusBoxParameters::xml_element_name_) {
@@ -2197,14 +2192,11 @@ void StimulusSpatialBoundsParameters::set_values(tinyxml2::XMLElement* xml_elem)
     } else {
       svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
     }
-
-    item = item->NextSiblingElement();
   }
 
   value_set = true;
 }
 
-/// @brief Define the XML element name for equation output parameters.
 const std::string StimulusParameters::xml_element_name_ = "Stimulus";
 
 StimulusParameters::StimulusParameters()

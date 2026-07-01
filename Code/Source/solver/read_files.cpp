@@ -1079,102 +1079,11 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     }
   }
 
-  // Set stimulus parameters. 
+  // Set stimulus parameters.
   //
-  lDmn.cep.Istim.A  = 0.0;
-  lDmn.cep.Istim.Ts = 99999.0;
-  lDmn.cep.Istim.CL = 99999.0;
-  lDmn.cep.Istim.Td = 0.0;
-  lDmn.cep.Istim.box_defined = false;
-  lDmn.cep.Istim.sphere_defined = false;
-  lDmn.cep.Istim.sphere_radius = 0.0;
-
-  if (domain_params->stimulus.defined()) { 
-    auto& stimulus_params = domain_params->stimulus;
-    lDmn.cep.Istim.A = stimulus_params.amplitude.value();
-    if (!utils::is_zero(lDmn.cep.Istim.A)) {
-      lDmn.cep.Istim.Ts = stimulus_params.start_time.value();
-      lDmn.cep.Istim.Td = stimulus_params.duration.value();
-      if (stimulus_params.cycle_length.defined()) { 
-        lDmn.cep.Istim.CL = stimulus_params.cycle_length.value();
-      } else {
-        lDmn.cep.Istim.CL = simulation->nTs * simulation->com_mod.dt; 
-      }
-    }
-
-    const auto& spatial_bounds_params = stimulus_params.spatial_bounds;
-
-    const auto& box_params = spatial_bounds_params.box;
-    const bool box_defined = box_params.defined();
-    const bool box_min_defined = box_params.minimum.defined();
-    const bool box_max_defined = box_params.maximum.defined();
-
-    if (box_defined && !(box_min_defined && box_max_defined)) {
-      svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Both Minimum and Maximum must be specified for a CEP stimulus box.");
-    }
-
-    if (box_defined) {
-      const auto& box_min = box_params.minimum.value();
-      const auto& box_max = box_params.maximum.value();
-
-      if (box_min.size() != box_max.size()) {
-        svmp::raise<svmp::ParseException>(
-            SVMP_HERE, "Stimulus box Minimum and Maximum must have the same coordinate dimension.");
-      }
-
-      if (box_min.size() < static_cast<std::size_t>(simulation->com_mod.nsd)) {
-        svmp::raise<svmp::ParseException>(
-            SVMP_HERE, "Stimulus box dimension is smaller than the simulation spatial dimension.");
-      }
-
-      lDmn.cep.Istim.box_defined = true;
-      lDmn.cep.Istim.box_min.resize(box_min.size());
-      lDmn.cep.Istim.box_max.resize(box_max.size());
-
-      for (int i = 0; i < static_cast<int>(box_min.size()); i++) {
-        if (box_min[i] > box_max[i]) {
-          svmp::raise<svmp::ParseException>(
-              SVMP_HERE, "Stimulus box Minimum values must be less than or equal to Maximum values.");
-        }
-
-        lDmn.cep.Istim.box_min(i) = box_min[i];
-        lDmn.cep.Istim.box_max(i) = box_max[i];
-      }
-    }
-
-    const auto& sphere_params = spatial_bounds_params.sphere;
-    const bool sphere_defined = sphere_params.defined();
-    const bool sphere_center_defined = sphere_params.center.defined();
-    const bool sphere_radius_defined = sphere_params.radius.defined();
-
-    if (sphere_defined && !(sphere_center_defined && sphere_radius_defined)) {
-      svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Both Center and Radius must be specified for a CEP stimulus sphere.");
-    }
-
-    if (sphere_defined) {
-      const auto& sphere_center = sphere_params.center.value();
-      const double sphere_radius = sphere_params.radius.value();
-
-      if (sphere_center.size() < static_cast<std::size_t>(simulation->com_mod.nsd)) {
-        svmp::raise<svmp::ParseException>(
-            SVMP_HERE, "Stimulus sphere center dimension is smaller than the simulation spatial dimension.");
-      }
-
-      if (sphere_radius < 0.0) {
-        svmp::raise<svmp::ParseException>(
-            SVMP_HERE, "Stimulus sphere Radius must be non-negative.");
-      }
-
-      lDmn.cep.Istim.sphere_defined = true;
-      lDmn.cep.Istim.sphere_center.resize(sphere_center.size());
-      lDmn.cep.Istim.sphere_radius = sphere_radius;
-
-      for (int i = 0; i < static_cast<int>(sphere_center.size()); i++) {
-        lDmn.cep.Istim.sphere_center(i) = sphere_center[i];
-      }
-    }
+  if (domain_params->stimulus.defined()) {
+    const double default_cycle_length = simulation->nTs * simulation->com_mod.dt;
+    lDmn.cep.Istim.read_parameters(domain_params->stimulus, simulation->com_mod.nsd, default_cycle_length);
   }
 
   // Dual time step for cellular activation model.
