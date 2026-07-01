@@ -2024,52 +2024,53 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l01786" name="l01786"></a><span class="lineno"> 1786</span>    <a class="code hl_class" href="class_parameter.html">Parameter&lt;bool&gt;</a> valve_starts_as_closed; <span class="comment">// Whether the valve starts as closed</span></div>
 <div class="line"><a id="l01787" name="l01787"></a><span class="lineno"> 1787</span>    <a class="code hl_class" href="class_parameter.html">Parameter&lt;bool&gt;</a> invert_normal; <span class="comment">// Whether to invert the valve surface normal vector</span></div>
 <div class="line"><a id="l01788" name="l01788"></a><span class="lineno"> 1788</span>    <a class="code hl_class" href="class_parameter.html">Parameter&lt;std::string&gt;</a> positive_flow_normal_file_path; <span class="comment">// File path for the positive flow normal</span></div>
-<div class="line"><a id="l01789" name="l01789"></a><span class="lineno"> 1789</span>    <a class="code hl_class" href="class_parameter.html">Parameter&lt;bool&gt;</a> include_uris_velocity; <span class="comment">// Whether to include the RIS velocity</span></div>
-<div class="line"><a id="l01790" name="l01790"></a><span class="lineno"> 1790</span>};</div>
+<div class="line"><a id="l01789" name="l01789"></a><span class="lineno"> 1789</span>    <a class="code hl_class" href="class_parameter.html">Parameter&lt;std::string&gt;</a> scaffold_file_path; <span class="comment">// File path for the valve scaffold mesh</span></div>
+<div class="line"><a id="l01790" name="l01790"></a><span class="lineno"> 1790</span>    <a class="code hl_class" href="class_parameter.html">Parameter&lt;bool&gt;</a> include_uris_velocity; <span class="comment">// Whether to include the RIS velocity</span></div>
+<div class="line"><a id="l01791" name="l01791"></a><span class="lineno"> 1791</span>};</div>
 </div>
-<div class="line"><a id="l01791" name="l01791"></a><span class="lineno"> 1791</span> </div>
 <div class="line"><a id="l01792" name="l01792"></a><span class="lineno"> 1792</span> </div>
-<div class="line"><a id="l01793" name="l01793"></a><span class="lineno"> 1793</span><span class="comment"></span> </div>
-<div class="line"><a id="l01794" name="l01794"></a><span class="lineno"> 1794</span><span class="comment">/// @brief The Parameters class stores parameter values read in from a solver input file.</span></div>
-<div class="foldopen" id="foldopen01795" data-start="{" data-end="};">
-<div class="line"><a id="l01795" name="l01795"></a><span class="lineno"><a class="line" href="class_parameters.html"> 1795</a></span><span class="comment"></span><span class="keyword">class </span><a class="code hl_class" href="class_parameters.html">Parameters</a> {</div>
-<div class="line"><a id="l01796" name="l01796"></a><span class="lineno"> 1796</span> </div>
-<div class="line"><a id="l01797" name="l01797"></a><span class="lineno"> 1797</span>  <span class="keyword">public</span>:</div>
-<div class="line"><a id="l01798" name="l01798"></a><span class="lineno"> 1798</span>    <a class="code hl_class" href="class_parameters.html">Parameters</a>();</div>
-<div class="line"><a id="l01799" name="l01799"></a><span class="lineno"> 1799</span> </div>
-<div class="line"><a id="l01800" name="l01800"></a><span class="lineno"> 1800</span>    <span class="keyword">static</span> <span class="keyword">const</span> std::set&lt;std::string&gt; constitutive_model_names;</div>
-<div class="line"><a id="l01801" name="l01801"></a><span class="lineno"> 1801</span>    <span class="keyword">static</span> <span class="keyword">const</span> std::set&lt;std::string&gt; equation_names;</div>
-<div class="line"><a id="l01802" name="l01802"></a><span class="lineno"> 1802</span>    <span class="keyword">static</span> <span class="keyword">const</span> std::string FSI_FILE;</div>
-<div class="line"><a id="l01803" name="l01803"></a><span class="lineno"> 1803</span> </div>
-<div class="line"><a id="l01804" name="l01804"></a><span class="lineno"> 1804</span>    <span class="keywordtype">void</span> get_logging_levels(<span class="keywordtype">int</span>&amp; verbose, <span class="keywordtype">int</span>&amp; warning, <span class="keywordtype">int</span>&amp; debug);</div>
-<div class="line"><a id="l01805" name="l01805"></a><span class="lineno"> 1805</span>    <span class="keywordtype">void</span> print_parameters();</div>
-<div class="line"><a id="l01806" name="l01806"></a><span class="lineno"> 1806</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="class_parameters.html#a9bf5624296006a1f843cf0e7cdf4a9d6">read_xml</a>(std::string file_name);</div>
-<div class="line"><a id="l01807" name="l01807"></a><span class="lineno"> 1807</span> </div>
-<div class="line"><a id="l01808" name="l01808"></a><span class="lineno"> 1808</span>    <span class="keywordtype">void</span> set_contact_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01809" name="l01809"></a><span class="lineno"> 1809</span>    <span class="keywordtype">void</span> set_equation_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01810" name="l01810"></a><span class="lineno"> 1810</span>    <span class="keywordtype">void</span> set_mesh_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01811" name="l01811"></a><span class="lineno"> 1811</span>    <span class="keywordtype">void</span> set_precomputed_solution_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01812" name="l01812"></a><span class="lineno"> 1812</span>    <span class="keywordtype">void</span> set_projection_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01813" name="l01813"></a><span class="lineno"> 1813</span>    <span class="keywordtype">void</span> set_svzerodsolver_interface_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01814" name="l01814"></a><span class="lineno"> 1814</span> </div>
-<div class="line"><a id="l01815" name="l01815"></a><span class="lineno"> 1815</span>    <span class="keywordtype">void</span> set_RIS_projection_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01816" name="l01816"></a><span class="lineno"> 1816</span>    <span class="keywordtype">void</span> set_URIS_mesh_values(tinyxml2::XMLElement* root_element);</div>
-<div class="line"><a id="l01817" name="l01817"></a><span class="lineno"> 1817</span> </div>
-<div class="line"><a id="l01818" name="l01818"></a><span class="lineno"> 1818</span>    <span class="comment">// Objects representing each parameter section of XML file.</span></div>
-<div class="line"><a id="l01819" name="l01819"></a><span class="lineno"> 1819</span>    <a class="code hl_class" href="class_contact_parameters.html">ContactParameters</a> contact_parameters;</div>
-<div class="line"><a id="l01820" name="l01820"></a><span class="lineno"> 1820</span>    <a class="code hl_class" href="class_general_simulation_parameters.html">GeneralSimulationParameters</a> general_simulation_parameters;</div>
-<div class="line"><a id="l01821" name="l01821"></a><span class="lineno"> 1821</span>    std::vector&lt;MeshParameters*&gt; mesh_parameters;</div>
-<div class="line"><a id="l01822" name="l01822"></a><span class="lineno"> 1822</span>    std::vector&lt;EquationParameters*&gt; equation_parameters;</div>
-<div class="line"><a id="l01823" name="l01823"></a><span class="lineno"> 1823</span>    std::vector&lt;ProjectionParameters*&gt; projection_parameters;</div>
-<div class="line"><a id="l01824" name="l01824"></a><span class="lineno"> 1824</span>    <a class="code hl_class" href="class_precomputed_solution_parameters.html">PrecomputedSolutionParameters</a> precomputed_solution_parameters;</div>
-<div class="line"><a id="l01825" name="l01825"></a><span class="lineno"> 1825</span> </div>
-<div class="line"><a id="l01826" name="l01826"></a><span class="lineno"> 1826</span>    std::vector&lt;RISProjectionParameters*&gt; RIS_projection_parameters;</div>
-<div class="line"><a id="l01827" name="l01827"></a><span class="lineno"> 1827</span>    std::vector&lt;URISMeshParameters*&gt; URIS_mesh_parameters;</div>
-<div class="line"><a id="l01828" name="l01828"></a><span class="lineno"> 1828</span> </div>
-<div class="line"><a id="l01829" name="l01829"></a><span class="lineno"> 1829</span>};</div>
+<div class="line"><a id="l01793" name="l01793"></a><span class="lineno"> 1793</span> </div>
+<div class="line"><a id="l01794" name="l01794"></a><span class="lineno"> 1794</span><span class="comment"></span> </div>
+<div class="line"><a id="l01795" name="l01795"></a><span class="lineno"> 1795</span><span class="comment">/// @brief The Parameters class stores parameter values read in from a solver input file.</span></div>
+<div class="foldopen" id="foldopen01796" data-start="{" data-end="};">
+<div class="line"><a id="l01796" name="l01796"></a><span class="lineno"><a class="line" href="class_parameters.html"> 1796</a></span><span class="comment"></span><span class="keyword">class </span><a class="code hl_class" href="class_parameters.html">Parameters</a> {</div>
+<div class="line"><a id="l01797" name="l01797"></a><span class="lineno"> 1797</span> </div>
+<div class="line"><a id="l01798" name="l01798"></a><span class="lineno"> 1798</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l01799" name="l01799"></a><span class="lineno"> 1799</span>    <a class="code hl_class" href="class_parameters.html">Parameters</a>();</div>
+<div class="line"><a id="l01800" name="l01800"></a><span class="lineno"> 1800</span> </div>
+<div class="line"><a id="l01801" name="l01801"></a><span class="lineno"> 1801</span>    <span class="keyword">static</span> <span class="keyword">const</span> std::set&lt;std::string&gt; constitutive_model_names;</div>
+<div class="line"><a id="l01802" name="l01802"></a><span class="lineno"> 1802</span>    <span class="keyword">static</span> <span class="keyword">const</span> std::set&lt;std::string&gt; equation_names;</div>
+<div class="line"><a id="l01803" name="l01803"></a><span class="lineno"> 1803</span>    <span class="keyword">static</span> <span class="keyword">const</span> std::string FSI_FILE;</div>
+<div class="line"><a id="l01804" name="l01804"></a><span class="lineno"> 1804</span> </div>
+<div class="line"><a id="l01805" name="l01805"></a><span class="lineno"> 1805</span>    <span class="keywordtype">void</span> get_logging_levels(<span class="keywordtype">int</span>&amp; verbose, <span class="keywordtype">int</span>&amp; warning, <span class="keywordtype">int</span>&amp; debug);</div>
+<div class="line"><a id="l01806" name="l01806"></a><span class="lineno"> 1806</span>    <span class="keywordtype">void</span> print_parameters();</div>
+<div class="line"><a id="l01807" name="l01807"></a><span class="lineno"> 1807</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="class_parameters.html#a9bf5624296006a1f843cf0e7cdf4a9d6">read_xml</a>(std::string file_name);</div>
+<div class="line"><a id="l01808" name="l01808"></a><span class="lineno"> 1808</span> </div>
+<div class="line"><a id="l01809" name="l01809"></a><span class="lineno"> 1809</span>    <span class="keywordtype">void</span> set_contact_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01810" name="l01810"></a><span class="lineno"> 1810</span>    <span class="keywordtype">void</span> set_equation_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01811" name="l01811"></a><span class="lineno"> 1811</span>    <span class="keywordtype">void</span> set_mesh_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01812" name="l01812"></a><span class="lineno"> 1812</span>    <span class="keywordtype">void</span> set_precomputed_solution_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01813" name="l01813"></a><span class="lineno"> 1813</span>    <span class="keywordtype">void</span> set_projection_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01814" name="l01814"></a><span class="lineno"> 1814</span>    <span class="keywordtype">void</span> set_svzerodsolver_interface_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01815" name="l01815"></a><span class="lineno"> 1815</span> </div>
+<div class="line"><a id="l01816" name="l01816"></a><span class="lineno"> 1816</span>    <span class="keywordtype">void</span> set_RIS_projection_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01817" name="l01817"></a><span class="lineno"> 1817</span>    <span class="keywordtype">void</span> set_URIS_mesh_values(tinyxml2::XMLElement* root_element);</div>
+<div class="line"><a id="l01818" name="l01818"></a><span class="lineno"> 1818</span> </div>
+<div class="line"><a id="l01819" name="l01819"></a><span class="lineno"> 1819</span>    <span class="comment">// Objects representing each parameter section of XML file.</span></div>
+<div class="line"><a id="l01820" name="l01820"></a><span class="lineno"> 1820</span>    <a class="code hl_class" href="class_contact_parameters.html">ContactParameters</a> contact_parameters;</div>
+<div class="line"><a id="l01821" name="l01821"></a><span class="lineno"> 1821</span>    <a class="code hl_class" href="class_general_simulation_parameters.html">GeneralSimulationParameters</a> general_simulation_parameters;</div>
+<div class="line"><a id="l01822" name="l01822"></a><span class="lineno"> 1822</span>    std::vector&lt;MeshParameters*&gt; mesh_parameters;</div>
+<div class="line"><a id="l01823" name="l01823"></a><span class="lineno"> 1823</span>    std::vector&lt;EquationParameters*&gt; equation_parameters;</div>
+<div class="line"><a id="l01824" name="l01824"></a><span class="lineno"> 1824</span>    std::vector&lt;ProjectionParameters*&gt; projection_parameters;</div>
+<div class="line"><a id="l01825" name="l01825"></a><span class="lineno"> 1825</span>    <a class="code hl_class" href="class_precomputed_solution_parameters.html">PrecomputedSolutionParameters</a> precomputed_solution_parameters;</div>
+<div class="line"><a id="l01826" name="l01826"></a><span class="lineno"> 1826</span> </div>
+<div class="line"><a id="l01827" name="l01827"></a><span class="lineno"> 1827</span>    std::vector&lt;RISProjectionParameters*&gt; RIS_projection_parameters;</div>
+<div class="line"><a id="l01828" name="l01828"></a><span class="lineno"> 1828</span>    std::vector&lt;URISMeshParameters*&gt; URIS_mesh_parameters;</div>
+<div class="line"><a id="l01829" name="l01829"></a><span class="lineno"> 1829</span> </div>
+<div class="line"><a id="l01830" name="l01830"></a><span class="lineno"> 1830</span>};</div>
 </div>
-<div class="line"><a id="l01830" name="l01830"></a><span class="lineno"> 1830</span> </div>
-<div class="line"><a id="l01831" name="l01831"></a><span class="lineno"> 1831</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l01831" name="l01831"></a><span class="lineno"> 1831</span> </div>
+<div class="line"><a id="l01832" name="l01832"></a><span class="lineno"> 1832</span><span class="preprocessor">#endif</span></div>
 </div>
 <div class="ttc" id="aclass_body_force_parameters_html"><div class="ttname"><a href="class_body_force_parameters.html">BodyForceParameters</a></div><div class="ttdoc">Body force over a mesh using the &quot;Add_BF&quot; command.</div><div class="ttdef"><b>Definition</b> Parameters.h:692</div></div>
 <div class="ttc" id="aclass_body_force_parameters_html_ae9cf91e1272da076a3e7fe280f86ac8f"><div class="ttname"><a href="class_body_force_parameters.html#ae9cf91e1272da076a3e7fe280f86ac8f">BodyForceParameters::xml_element_name_</a></div><div class="ttdeci">static const std::string xml_element_name_</div><div class="ttdoc">Define the XML element name for boundary condition parameters.</div><div class="ttdef"><b>Definition</b> Parameters.h:697</div></div>
@@ -2142,7 +2143,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclass_ionic_model_parameters_html_ab7763c98c69f6e257dd8d06c9e5ff28b"><div class="ttname"><a href="class_ionic_model_parameters.html#ab7763c98c69f6e257dd8d06c9e5ff28b">IonicModelParameters::get_initial_Xg</a></div><div class="ttdeci">const IonicInitialStateParameters &amp; get_initial_Xg() const</div><div class="ttdoc">Get the parameters for the gating variables.</div><div class="ttdef"><b>Definition</b> Parameters.h:1265</div></div>
 <div class="ttc" id="aclass_lee_sacks_parameters_html"><div class="ttname"><a href="class_lee_sacks_parameters.html">LeeSacksParameters</a></div><div class="ttdef"><b>Definition</b> Parameters.h:458</div></div>
 <div class="ttc" id="aclass_linear_algebra_parameters_html"><div class="ttname"><a href="class_linear_algebra_parameters.html">LinearAlgebraParameters</a></div><div class="ttdoc">The LinearAlgebraParameters class stores parameters for the 'Linear_algebra' XML element.</div><div class="ttdef"><b>Definition</b> Parameters.h:1034</div></div>
-<div class="ttc" id="aclass_linear_algebra_parameters_html_a57ff3791692bf69b4dd98b3ceff0e5aa"><div class="ttname"><a href="class_linear_algebra_parameters.html#a57ff3791692bf69b4dd98b3ceff0e5aa">LinearAlgebraParameters::check_input_parameters</a></div><div class="ttdeci">void check_input_parameters()</div><div class="ttdoc">Check the validity of the input parameters.</div><div class="ttdef"><b>Definition</b> Parameters.cpp:3187</div></div>
+<div class="ttc" id="aclass_linear_algebra_parameters_html_a57ff3791692bf69b4dd98b3ceff0e5aa"><div class="ttname"><a href="class_linear_algebra_parameters.html#a57ff3791692bf69b4dd98b3ceff0e5aa">LinearAlgebraParameters::check_input_parameters</a></div><div class="ttdeci">void check_input_parameters()</div><div class="ttdoc">Check the validity of the input parameters.</div><div class="ttdef"><b>Definition</b> Parameters.cpp:3188</div></div>
 <div class="ttc" id="aclass_linear_algebra_parameters_html_a90c2ac3516cfb80b4a32bf9df916f406"><div class="ttname"><a href="class_linear_algebra_parameters.html#a90c2ac3516cfb80b4a32bf9df916f406">LinearAlgebraParameters::xml_element_name_</a></div><div class="ttdeci">static const std::string xml_element_name_</div><div class="ttdoc">Define the XML element name for equation output parameters.</div><div class="ttdef"><b>Definition</b> Parameters.h:1036</div></div>
 <div class="ttc" id="aclass_linear_solver_parameters_html"><div class="ttname"><a href="class_linear_solver_parameters.html">LinearSolverParameters</a></div><div class="ttdoc">The LinearSolverParameters class stores parameters for the 'LS' XML element.</div><div class="ttdef"><b>Definition</b> Parameters.h:1054</div></div>
 <div class="ttc" id="aclass_linear_solver_parameters_html_a4b30b70fdd33be6333703a10d283013f"><div class="ttname"><a href="class_linear_solver_parameters.html#a4b30b70fdd33be6333703a10d283013f">LinearSolverParameters::xml_element_name_</a></div><div class="ttdeci">static const std::string xml_element_name_</div><div class="ttdoc">Define the XML element name for equation output parameters.</div><div class="ttdef"><b>Definition</b> Parameters.h:1061</div></div>
@@ -2167,7 +2168,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclass_parameter_lists_html_a6131758a550b2e63f34e7554933e27f8"><div class="ttname"><a href="class_parameter_lists.html#a6131758a550b2e63f34e7554933e27f8">ParameterLists::params_map</a></div><div class="ttdeci">std::map&lt; std::string, std::variant&lt; Parameter&lt; bool &gt; *, Parameter&lt; double &gt; *, Parameter&lt; int &gt; *, Parameter&lt; std::string &gt; *, VectorParameter&lt; double &gt; *, VectorParameter&lt; int &gt; *, VectorParameter&lt; std::string &gt; * &gt; &gt; params_map</div><div class="ttdoc">Map used for storing parameters by name / Parameter template union.</div><div class="ttdef"><b>Definition</b> Parameters.h:430</div></div>
 <div class="ttc" id="aclass_parameter_lists_html_a9fe04f3c28dec4a1fe01da2c468b75f6"><div class="ttname"><a href="class_parameter_lists.html#a9fe04f3c28dec4a1fe01da2c468b75f6">ParameterLists::get_parameter_list</a></div><div class="ttdeci">std::map&lt; std::string, std::string &gt; get_parameter_list() const</div><div class="ttdoc">Get the defined parameters as a map of strings.</div><div class="ttdef"><b>Definition</b> Parameters.h:403</div></div>
 <div class="ttc" id="aclass_parameter_lists_html_ab2f5c08258f5805a7f2f9c50c8939fe4"><div class="ttname"><a href="class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4">ParameterLists::print_parameter_list</a></div><div class="ttdeci">void print_parameter_list()</div><div class="ttdoc">Print the parameters.</div><div class="ttdef"><b>Definition</b> Parameters.h:416</div></div>
-<div class="ttc" id="aclass_parameters_html"><div class="ttname"><a href="class_parameters.html">Parameters</a></div><div class="ttdoc">The Parameters class stores parameter values read in from a solver input file.</div><div class="ttdef"><b>Definition</b> Parameters.h:1795</div></div>
+<div class="ttc" id="aclass_parameters_html"><div class="ttname"><a href="class_parameters.html">Parameters</a></div><div class="ttdoc">The Parameters class stores parameter values read in from a solver input file.</div><div class="ttdef"><b>Definition</b> Parameters.h:1796</div></div>
 <div class="ttc" id="aclass_parameters_html_a9bf5624296006a1f843cf0e7cdf4a9d6"><div class="ttname"><a href="class_parameters.html#a9bf5624296006a1f843cf0e7cdf4a9d6">Parameters::read_xml</a></div><div class="ttdeci">void read_xml(std::string file_name)</div><div class="ttdoc">Set the simulation parameter values given in an XML format file.</div><div class="ttdef"><b>Definition</b> Parameters.cpp:229</div></div>
 <div class="ttc" id="aclass_precomputed_solution_parameters_html"><div class="ttname"><a href="class_precomputed_solution_parameters.html">PrecomputedSolutionParameters</a></div><div class="ttdoc">The PrecomputedSolutionParameters class stores parameters for the 'Precomputed_solution' XML element ...</div><div class="ttdef"><b>Definition</b> Parameters.h:869</div></div>
 <div class="ttc" id="aclass_projection_parameters_html"><div class="ttname"><a href="class_projection_parameters.html">ProjectionParameters</a></div><div class="ttdoc">The ProjectionParameters class stores parameters for the 'Add_projection' XML element used for fluid-...</div><div class="ttdef"><b>Definition</b> Parameters.h:892</div></div>

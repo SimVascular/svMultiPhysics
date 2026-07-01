@@ -1,7 +1,7 @@
 var searchData=
 [
   ['b_0',['b',['../class_fitz_hugh_nagumo.html#ab585f8c3c89191d773a38c25c102b9c8',1,'FitzHughNagumo::b'],['../class_aliev_panfilov.html#a1c0ce5df9b2c64289b1e3a879e875d0f',1,'AlievPanfilov::b']]],
-  ['b_20global_20assembly_20fsils_20assembled_1',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md34',1,'']]],
+  ['b_20global_20assembly_20fsils_20assembled_1',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md35',1,'']]],
   ['b_5fustruct_5f3d_2',['b_ustruct_3d',['../ustruct_8cpp.html#a73fea4d707b1a56072a10d4a6b4c10d8',1,'ustruct']]],
   ['backend_5fname_3',['backend_name',['../classsvmp_1_1_f_e_1_1_backend_exception.html#a79b6da2ea4b0f302ef6b24d24675c5b8',1,'svmp::FE::BackendException']]],
   ['backendexception_4',['backendexception',['../classsvmp_1_1_f_e_1_1_backend_exception.html',1,'svmp::FE::BackendException'],['../classsvmp_1_1_f_e_1_1_backend_exception.html#a444b5a8bc8d6bc590ba66894bcc73019',1,'svmp::FE::BackendException::BackendException()']]],
@@ -34,7 +34,7 @@ var searchData=
   ['blktype_31',['blkType',['../classread__msh__ns_1_1blk_type.html',1,'read_msh_ns']]],
   ['blockid_32',['BlockId',['../group___f_e___common_types.html#ga5b0d0a078c8ea4e0cc6bdaa06517699d',1,'svmp::FE']]],
   ['bodyforceparameters_33',['BodyForceParameters',['../class_body_force_parameters.html',1,'']]],
-  ['boundary_20conditions_34',['Coupled Neumann Boundary Conditions',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md40',1,'']]],
+  ['boundary_20conditions_34',['Coupled Neumann Boundary Conditions',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md41',1,'']]],
   ['boundarycondition_35',['boundarycondition',['../class_boundary_condition.html',1,'BoundaryCondition'],['../class_boundary_condition.html#af3b8db504d02c32da05785bc4103c6ee',1,'BoundaryCondition::BoundaryCondition(BoundaryCondition &amp;&amp;other) noexcept'],['../class_boundary_condition.html#add8cf0232591bb66dde6fdac0d11d9e6',1,'BoundaryCondition::BoundaryCondition(const BoundaryCondition &amp;other)'],['../class_boundary_condition.html#a939dec4babbadc60114b4f3ece8464a3',1,'BoundaryCondition::BoundaryCondition(const StringDoubleMap &amp;uniform_values, const StringBoolMap &amp;flags, const faceType &amp;face, SimulationLogger &amp;logger)'],['../class_boundary_condition.html#ac94dc294b229d48f091b69bc6d432ad8',1,'BoundaryCondition::BoundaryCondition(const std::string &amp;vtp_file_path, const std::vector&lt; std::string &gt; &amp;array_names, const StringBoolMap &amp;flags, const faceType &amp;face, SimulationLogger &amp;logger)'],['../class_boundary_condition.html#a2e0903a6b189a3914d02285d32a02096',1,'BoundaryCondition::BoundaryCondition()=default']]],
   ['boundaryconditionarrayexception_36',['BoundaryConditionArrayException',['../class_boundary_condition_array_exception.html',1,'']]],
   ['boundaryconditionbaseexception_37',['boundaryconditionbaseexception',['../class_boundary_condition_base_exception.html#a2c7179ca2ba0cae35f18b50d22dc97a7',1,'BoundaryConditionBaseException::BoundaryConditionBaseException()'],['../class_boundary_condition_base_exception.html',1,'BoundaryConditionBaseException']]],
@@ -57,5 +57,5 @@ var searchData=
   ['buf_5fc_54',['Buf_c',['../class_t_t_p.html#ade5a3229a1ef8076b85903f732b5c346',1,'TTP']]],
   ['buf_5fsr_55',['Buf_sr',['../class_t_t_p.html#a05dde0cbe69b460a0adc14244786da38',1,'TTP']]],
   ['buf_5fss_56',['Buf_ss',['../class_t_t_p.html#a88767bdc20c4b90b25bcd3b8a89ea8a6',1,'TTP']]],
-  ['by_20element_20assembly_20trilinos_20native_57',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md33',1,'']]]
+  ['by_20element_20assembly_20trilinos_20native_57',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md34',1,'']]]
 ];

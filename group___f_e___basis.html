@@ -167,7 +167,7 @@ Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Basis-function interfaces, concrete basis families, and reference-node conventions. </p>
-<h2><a class="anchor" id="autotoc_md2"></a>
+<h2><a class="anchor" id="autotoc_md3"></a>
 Scope</h2>
 <p>The Basis module owns reference-element shape functions. It provides the number of basis functions and the values and derivatives, \(N_i\), \(\partial N_i / \partial \xi_j\), and \(\partial^2 N_i / \partial \xi_j \partial \xi_k\) at reference points. It does not own mesh storage, quadrature selection, field formulation policy, or transformation of derivatives to physical coordinates. Those decisions stay with the solver layer that has the mesh, material model, and equation context.</p>
 <p>The main pieces are:</p><ul>
@@ -177,12 +177,12 @@ Scope</h2>
 <li><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html">ReferenceNodeLayout</a> (<a class="el" href="_node_ordering_conventions_8h_source.html">NodeOrderingConventions.h</a>): canonical reference-node coordinates and the output ordering used by every basis evaluator.</li>
 <li><a class="el" href="group___f_e___basis.html#ga5b32f7e0042b0bddc6330a056d80f63d">BasisTopology</a> (<a class="el" href="_basis_traits_8h.html" title="Reference-topology vocabulary (BasisTopology) and the internal ElementType/topology/order maps.">BasisTraits.h</a>) and the <a class="el" href="group___f_e___basis_exceptions.html">basis exceptions</a> (<a class="el" href="_basis_exceptions_8h_source.html">BasisExceptions.h</a>): topology classification, compile-time helpers, and module-specific exception types.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md3"></a>
+<h2><a class="anchor" id="autotoc_md4"></a>
 Object and evaluation contract</h2>
 <p>A basis object is immutable after construction. It represents one reference topology (e.g. tetrahedron, hexahedron), basis family (Lagrange or serendipity), and effective polynomial order, and can be shared safely across evaluations. Construction may be computationally expensive &ndash; it can build node lattices or invert interpolation matrices &ndash; so a basis should be constructed only once for each distinct basis request, through basis_factory, and reused rather than rebuilt inside element loops.</p>
 <p>Every evaluator takes a three-component reference coordinate. For lower-dimensional elements, only the first dimension() components are active. Returned gradients always have three components and Hessians are always 3-by-3 matrices; inactive reference directions are expected to be zero for conforming lower-dimensional bases. The *_to overloads write to caller-owned spans and are the override points a concrete family implements: the nodal families (LagrangeBasis, SerendipityBasis) compute directly into the span, so this is the allocation-free path for assembly. The std::vector overloads are convenient for setup, tests, and adapter code; they are defined once on the base class, which sizes the output and forwards to the matching span overload.</p>
 <p>Outputs are in ReferenceNodeLayout basis order, not necessarily the mesh or solver's native node order. A caller that stores elements in another local ordering must apply the appropriate permutation at the boundary between the basis module and that storage format.</p>
-<h2><a class="anchor" id="autotoc_md4"></a>
+<h2><a class="anchor" id="autotoc_md5"></a>
 Inputs and ownership</h2>
 <p>Constructing and evaluating a basis combines several independent choices:</p>
 <ul>
@@ -195,7 +195,7 @@ Inputs and ownership</h2>
 <iframe scrolling="no" frameborder="0" src="dot_inline_dotgraph_1.svg" width="719" height="167"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe><div class="caption">
 Basis inputs and responsibilities</div>
 </div>
-<h2><a class="anchor" id="autotoc_md5"></a>
+<h2><a class="anchor" id="autotoc_md6"></a>
 Reference scope and the solver adapter</h2>
 <p>The solver-facing adapter in nn.cpp is the boundary between this reference basis contract and legacy solver storage. It translates solver element enums to ElementType, obtains cached default bases for mesh/face shape tables, permutes from ReferenceNodeLayout order into solver node order, and stores N, Nx, and, where needed, packed Nxx at Gauss points. At that stage Nx and Nxx are still derivatives with respect to reference coordinates. Physical-coordinate derivatives are formed later, for a particular configuration and element geometry, by composing the cached reference data with the mapping Jacobian (nn::gnn for first derivatives and nn::gn_nxx for second derivatives). </p>
 <h2 class="groupheader">Enumeration Type Documentation</h2>

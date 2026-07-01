@@ -64,7 +64,7 @@ var searchData=
   ['getf_61',['getf',['../class_aliev_panfilov.html#a5b0a6dd063462fa10c38d5fd9168396f',1,'AlievPanfilov::getf()'],['../class_bueno_orovio.html#a5b5bb8f31c99f397a00d431364f84b84',1,'BuenoOrovio::getf()'],['../class_fitz_hugh_nagumo.html#a8bc616b44f5cc48a6755d722999188e1',1,'FitzHughNagumo::getf()'],['../class_ionic_model.html#ab5f1998a3bb13a68c731e32d1785160d',1,'IonicModel::getf()'],['../class_t_t_p.html#ab3c64eb056edc58abbe44e9b89bd3cf2',1,'TTP::getf()']]],
   ['getj_62',['getj',['../class_fitz_hugh_nagumo.html#a6bb0924e2ea9ade0bb543e530f8e0ce5',1,'FitzHughNagumo::getj()'],['../class_ionic_model.html#a7f57bcae4207a8b1e79d5d2800952a66',1,'IonicModel::getj()'],['../class_bueno_orovio.html#a80a54309b88b7f6d0929632758666e64',1,'BuenoOrovio::getj()'],['../class_aliev_panfilov.html#a808e9def1cdddf717bc49f4f2de12cb1',1,'AlievPanfilov::getj()']]],
   ['gien_63',['gIEN',['../classmsh_type.html#ad58a7875abbefeebe1838ce48a1909ab',1,'mshType']]],
-  ['global_20assembly_20fsils_20assembled_64',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md34',1,'']]],
+  ['global_20assembly_20fsils_20assembled_64',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md35',1,'']]],
   ['global_5fdata_5f_65',['global_data_',['../class_boundary_condition.html#ab71a7cd71d1b9442532ddf711044df90',1,'BoundaryCondition']]],
   ['global_5fnode_5fmap_5f_66',['global_node_map_',['../class_boundary_condition.html#a7236726780f17376f831669d0a1e984c',1,'BoundaryCondition']]],
   ['global_5fnum_5fnodes_5f_67',['global_num_nodes_',['../class_boundary_condition.html#a8dfba1e41a60293483b42bb46405e6c8',1,'BoundaryCondition']]],
@@ -73,11 +73,11 @@ var searchData=
   ['gnel_70',['gnEl',['../classmsh_type.html#a7e8fb50227cbe604cd6d01102231ad53',1,'mshType']]],
   ['gnno_71',['gnNo',['../classmsh_type.html#a4079f486ba185ef804b14e2ca4347325',1,'mshType']]],
   ['gpn_72',['gpN',['../classmsh_type.html#ad55452e0aad3ad591cbb41ef3151667c',1,'mshType']]],
-  ['graph_20and_20matrix_20construction_20details_73',['Graph and Matrix Construction Details',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]],
-  ['graph_20construction_74',['Phase 1: Initialization and Graph Construction',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md30',1,'']]],
+  ['graph_20and_20matrix_20construction_20details_73',['Graph and Matrix Construction Details',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'']]],
+  ['graph_20construction_74',['Phase 1: Initialization and Graph Construction',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md31',1,'']]],
   ['grismaplist_75',['grisMapList',['../class_com_mod.html#a140fba58c234b21f36476d914efd7111',1,'ComMod']]],
   ['grow_76',['grow',['../class_vector.html#ab60d44a9588bc2a50720fa767d49acaa',1,'Vector']]],
   ['gtnno_77',['gtnNo',['../class_com_mod.html#a3514c61187dd00a7f44b3e0d1817292b',1,'ComMod']]],
   ['guccioneparameters_78',['GuccioneParameters',['../class_guccione_parameters.html',1,'']]],
-  ['guide_79',['User guide',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md19',1,'']]]
+  ['guide_79',['User guide',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md20',1,'']]]
 ];

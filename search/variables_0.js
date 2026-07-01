@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['a_0',['a',['../class_fitz_hugh_nagumo.html#a576d3cfb2d2d723cbf9fa0c4d78f5845',1,'FitzHughNagumo::a'],['../classstim_type.html#aa238651f2a4f6b211f533ea76b295018',1,'stimType::A'],['../class_aliev_panfilov.html#a5cf17c85050319cd6f21517dc77af321',1,'AlievPanfilov::a']]],
+  ['a_0',['a',['../class_aliev_panfilov.html#a5cf17c85050319cd6f21517dc77af321',1,'AlievPanfilov::a'],['../class_fitz_hugh_nagumo.html#a576d3cfb2d2d723cbf9fa0c4d78f5845',1,'FitzHughNagumo::a'],['../classstim_type.html#aa238651f2a4f6b211f533ea76b295018',1,'stimType::A']]],
   ['a0_1',['A0',['../classrmsh_type.html#a7713ca9ef22ab1dbf118af318605f7f4',1,'rmshType']]],
   ['abstol_2',['abstol',['../classls_type.html#a12ed37fb635049635a90cbdcbe9e4176',1,'lsType::absTol'],['../classode_type.html#a03243152e72ef43acfa97318cd8e122a',1,'odeType::absTol']]],
   ['ad_3',['Ad',['../class_com_mod.html#a2ce2a9403ba5b438b995b618fe2128ca',1,'ComMod']]],

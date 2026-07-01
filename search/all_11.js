@@ -1,13 +1,13 @@
 var searchData=
 [
-  ['object_20and_20evaluation_20contract_0',['Object and evaluation contract',['../group___f_e___basis.html#autotoc_md3',1,'']]],
-  ['objects_1',['Section objects',['../class_parameter.html#autotoc_md16',1,'']]],
+  ['object_20and_20evaluation_20contract_0',['Object and evaluation contract',['../group___f_e___basis.html#autotoc_md4',1,'']]],
+  ['objects_1',['Section objects',['../class_parameter.html#autotoc_md17',1,'']]],
   ['odes_2',['odes',['../classcep_model_type.html#a5561dc6f1de77d662ee66199a15317b4',1,'cepModelType']]],
   ['odetype_3',['odeType',['../classode_type.html',1,'']]],
   ['ok_4',['ok',['../classeq_type.html#a168b70cd9f8b50c649d5dd5d64afadf0',1,'eqType']]],
   ['old_5',['old',['../struct_solution_states.html#aad834638292dec1d605cfcd5898143a7',1,'SolutionStates']]],
-  ['on_20the_20trilinos_20ml_6',['Notes on the trilinos-ml',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md20',1,'']]],
-  ['operator_7',['3. &lt;tt&gt;TrilinosMatVec&lt;/tt&gt; Operator',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md27',1,'']]],
+  ['on_20the_20trilinos_20ml_6',['Notes on the trilinos-ml',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md21',1,'']]],
+  ['operator_7',['3. &lt;tt&gt;TrilinosMatVec&lt;/tt&gt; Operator',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md28',1,'']]],
   ['operator_20t_8',['operator T',['../classsvmp_1_1_f_e_1_1_strong_type.html#ab86029e91c86320a25bf36026c96db9d',1,'svmp::FE::StrongType']]],
   ['operator_21_3d_9',['operator!=',['../classsvmp_1_1_f_e_1_1_strong_type.html#a7971104e00ebae26aff4dbf12aff398a',1,'svmp::FE::StrongType']]],
   ['operator_28_29_10',['operator()',['../class_array3.html#ad3e801b3eba93502f6d48f43bd0aafd7',1,'Array3::operator()(const int row, const int col, const int slice) const'],['../class_array3.html#ae97685e04f50c5f5bb9c70538679c07d',1,'Array3::operator()(const int row, const int col, const int slice)']]],
@@ -20,8 +20,8 @@ var searchData=
   ['operator_3d_3d_17',['operator==',['../classsvmp_1_1_f_e_1_1_strong_type.html#ae36a9ec8abb76dcc7c0e9a8ad61e310a',1,'svmp::FE::StrongType']]],
   ['operator_5b_5d_18',['operator[]',['../class_ionic_initial_state_parameters.html#abda09b5dcc8aa71318df9c88f990c6f2',1,'IonicInitialStateParameters']]],
   ['order_19',['order',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#a35b2c8bc34d65603caf7716202ec34a3',1,'svmp::FE::basis::BasisRequest::order'],['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a6feb02e88a5a196858d0be459776d31e',1,'svmp::FE::basis::BasisFunction::order()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#a1d86c195d153bd3fa0eddd89dde58904',1,'svmp::FE::basis::LagrangeBasis::order()'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a030e8342cd1a4f67050e7e8fe10c571a',1,'svmp::FE::basis::SerendipityBasis::order()']]],
-  ['order_20range_20',['order range',['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#autotoc_md8',1,'Conditioning and the supported order range'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#autotoc_md9',1,'Conditioning and the well-conditioned order range']]],
-  ['ordering_21',['ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'DOF Ordering'],['../classmsh_type.html#a0c78a71d1348faa5432b75c48c872fd5',1,'mshType::ordering']]],
+  ['order_20range_20',['order range',['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#autotoc_md9',1,'Conditioning and the supported order range'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#autotoc_md10',1,'Conditioning and the well-conditioned order range']]],
+  ['ordering_21',['ordering',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md44',1,'DOF Ordering'],['../classmsh_type.html#a0c78a71d1348faa5432b75c48c872fd5',1,'mshType::ordering']]],
   ['otnien_22',['otnIEN',['../classmsh_type.html#a4eae34247ad01296d1a2a5bce7cf243f',1,'mshType']]],
   ['out_5ffiles_23',['out_files',['../classecg_leads_type.html#af77b84a8b3e4444955a642447c278a34',1,'ecgLeadsType']]],
   ['outib_24',['outIB',['../classeq_type.html#a6986408c1ffc78110922fefa5506d792',1,'eqType']]],
@@ -30,7 +30,7 @@ var searchData=
   ['outputparameters_27',['OutputParameters',['../class_output_parameters.html',1,'']]],
   ['outputtype_28',['outputType',['../classoutput_type.html',1,'']]],
   ['outuris_29',['outURIS',['../classeq_type.html#a7b64d6dd21156fde4abb359b4af5609d',1,'eqType']]],
-  ['overview_30',['Overview',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md18',1,'']]],
-  ['ownership_31',['Inputs and ownership',['../group___f_e___basis.html#autotoc_md4',1,'']]],
+  ['overview_30',['Overview',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md19',1,'']]],
+  ['ownership_31',['Inputs and ownership',['../group___f_e___basis.html#autotoc_md5',1,'']]],
   ['owns_5fcap_32',['owns_cap',['../class_coupled_boundary_condition.html#ac6dc612544b96e87fa06207d82d4f04a',1,'CoupledBoundaryCondition']]]
 ];
