@@ -25,14 +25,10 @@ double read_double(std::istream &stream, const std::string &file_name,
   double value;
   stream >> value;
 
-  if (stream.fail()) {
-    std::string message = "Cannot parse double value";
-    if (context != "") {
-      message += " for " + context;
-    }
-
-    svmp::raise<svmp::FileFormatException>(file_name, message);
-  }
+  svmp::throw_if<svmp::FileFormatException>(
+      stream.fail(),
+      "Cannot parse integer value" + (context != "" ? " for " + context : ""),
+      file_name);
 
   return value;
 }
@@ -43,14 +39,10 @@ int read_int(std::istream &stream, const std::string &file_name,
   int value;
   stream >> value;
 
-  if (stream.fail()) {
-    std::string message = "Cannot parse integer value";
-    if (context != "") {
-      message += " for " + context;
-    }
-
-    svmp::raise<svmp::FileFormatException>(file_name, message);
-  }
+  svmp::throw_if<svmp::FileFormatException>(
+      stream.fail(),
+      "Cannot parse integer value" + (context != "" ? " for " + context : ""),
+      file_name);
 
   return value;
 }
@@ -78,11 +70,9 @@ FourierInterpolation FourierInterpolation::from_time_series(
   const unsigned int n_time_points = times.size();
   const unsigned int n_components = values.nrows();
 
-  if (n_time_points < 2) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "At least two time points are needed to construct a "
-        "FourierInterpolation object.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      n_time_points < 2, "At least two time points are needed to construct a "
+                         "FourierInterpolation object.");
 
   // Check that times and values have compatible sizes.
   svmp::throw_if<svmp::FE::InvalidArgumentException>(
@@ -93,13 +83,12 @@ FourierInterpolation FourierInterpolation::from_time_series(
   // that the period is strictly positive, since it is computed as the
   // difference between the last and first time value.
   for (unsigned int i = 1; i < n_time_points; ++i) {
-    if (times[i] <= times[i - 1]) {
-      svmp::raise<svmp::FE::InvalidArgumentException>(
-          "The time values must be in strictly increasing order. Got times[" +
-          std::to_string(i - 1) + "] = " + std::to_string(times[i - 1]) +
-          " and times[" + std::to_string(i) +
-          "] = " + std::to_string(times[i]) + ".");
-    }
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        times[i] <= times[i - 1],
+        "The time values must be in strictly increasing order. Got times[" +
+            std::to_string(i - 1) + "] = " + std::to_string(times[i - 1]) +
+            " and times[" + std::to_string(i) +
+            "] = " + std::to_string(times[i]) + ".");
   }
 
   FourierInterpolation result;
@@ -190,30 +179,24 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
                                             const unsigned int n_components,
                                             const bool use_ramp) {
   std::ifstream file(file_name);
-
-  if (!file.is_open()) {
-    svmp::raise<svmp::FileNotFoundException>(file_name);
-  }
+  svmp::throw_if<svmp::FileNotFoundException>(!file.is_open(), file_name);
 
   // Read the header of the file.
-  const int n_time_points = read_int(file, file_name, "number of time points");
-  const int n_fourier_coefficients =
+  const unsigned int n_time_points =
+      read_int(file, file_name, "number of time points");
+  const unsigned int n_fourier_coefficients =
       read_int(file, file_name, "number of Fourier coefficients");
 
-  if (n_time_points < 2) {
-    svmp::raise<svmp::FileFormatException>(
-        file_name, "At least 2 time points are required to set up Fourier "
-                   "interpolation. Only " +
-                       std::to_string(n_time_points) +
-                       " time points were provided.");
-  }
+  svmp::throw_if<svmp::FileFormatException>(
+      n_time_points < 2, file_name,
+      "At least 2 time points are required to set up Fourier "
+      "interpolation. Only " +
+          std::to_string(n_time_points) + " time points were provided.");
 
-  if (n_fourier_coefficients == 0) {
-    svmp::raise<svmp::FileFormatException>(
-        file_name,
-        "At least 1 Fourier coefficient is required to set up Fourier "
-        "interpolation. 0 Fourier coefficients were provided.");
-  }
+  svmp::throw_if<svmp::FileFormatException>(
+      n_fourier_coefficients == 0, file_name,
+      "At least 1 Fourier coefficient is required to set up Fourier "
+      "interpolation. 0 Fourier coefficients were provided.");
 
   // Read the time-value pairs.
   Vector<double> times(n_time_points);
@@ -230,21 +213,17 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
       const std::vector<double> line_values =
           string_to_vector_double(line, file_name, line_number);
 
-      if (line_values.size() != 1 + n_components) {
-        svmp::raise<svmp::FileFormatException>(
-            file_name,
-            "Error reading values for the temporal values file for line " +
-                std::to_string(line_number) + ": '" + line + "'; expected " +
-                std::to_string(1 + n_components) + " values, but got " +
-                std::to_string(line_values.size()) + ".");
-      }
+      svmp::throw_if<svmp::FileFormatException>(
+          line_values.size() != 1 + n_components, file_name,
+          "Error reading values for the temporal values file for line " +
+              std::to_string(line_number) + ": '" + line + "'; expected " +
+              std::to_string(1 + n_components) + " values, but got " +
+              std::to_string(line_values.size()) + ".");
 
-      if (i >= n_time_points) {
-        svmp::raise<svmp::FileFormatException>(
-            file_name, "Found more than the expected " +
-                           std::to_string(n_time_points) +
-                           " time points in the temporal values file.");
-      }
+      svmp::throw_if<svmp::FileFormatException>(
+          i >= n_time_points, file_name,
+          "Found more than the expected " + std::to_string(n_time_points) +
+              " time points in the temporal values file.");
 
       times[i] = line_values[0];
       for (unsigned int j = 0; j < n_components; ++j) {
@@ -256,12 +235,11 @@ FourierInterpolation::from_time_series_file(const std::string &file_name,
     ++line_number;
   }
 
-  if (i != static_cast<unsigned int>(n_time_points)) {
-    svmp::raise<svmp::FileFormatException>(
-        file_name, "Expected " + std::to_string(n_time_points) +
-                       " time points in the temporal values file, but found " +
-                       std::to_string(i) + ".");
-  }
+  svmp::throw_if<svmp::FileFormatException>(
+      i != n_time_points, file_name,
+      "Expected " + std::to_string(n_time_points) +
+          " time points in the temporal values file, but found " +
+          std::to_string(i) + ".");
 
   return FourierInterpolation::from_time_series(n_fourier_coefficients, times,
                                                 values, use_ramp);
@@ -275,45 +253,39 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients(
     const double initial_time, const double period) {
   // Linear trend initial values and slopes must have the same size (which will
   // determine the number of components).
-  if (linear_trend_initial_values.size() != linear_trend_slopes.size()) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "linear_trend_initial_values and linear_trend_slopes must have the "
-        "same size, but their sizes are " +
-        std::to_string(linear_trend_initial_values.size()) + " and " +
-        std::to_string(linear_trend_slopes.size()) + ".");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      linear_trend_initial_values.size() != linear_trend_slopes.size(),
+      "linear_trend_initial_values and linear_trend_slopes must have the same "
+      "size, but their sizes are " +
+          std::to_string(linear_trend_initial_values.size()) + " and " +
+          std::to_string(linear_trend_slopes.size()) + ".");
 
   // The number of rows of the Fourier coefficients must match the number of
   // components (i.e. the size of the linear trend vectors).
-  if (fourier_coefficients_real.nrows() != linear_trend_initial_values.size()) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "The number of rows of fourier_coefficients_real must match the size "
-        "of linear_trend_initial_values.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      fourier_coefficients_real.nrows() != linear_trend_initial_values.size(),
+      "The number of rows of fourier_coefficients_real must match the size of "
+      "linear_trend_initial_values.");
 
   // The number of rows of the Fourier coefficients must match the number of
   // components (i.e. the size of the linear trend vectors).
-  if (fourier_coefficients_imaginary.nrows() !=
-      linear_trend_initial_values.size()) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "The number of rows of fourier_coefficients_imaginary must match the "
-        "size of linear_trend_initial_values.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      fourier_coefficients_imaginary.nrows() !=
+          linear_trend_initial_values.size(),
+      "The number of rows of fourier_coefficients_imaginary must match the "
+      "size of linear_trend_initial_values.");
 
   // The number of columns of the real and imaginary Fourier coefficients must
   // match.
-  if (fourier_coefficients_real.ncols() !=
-      fourier_coefficients_imaginary.ncols()) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "The number of columns of fourier_coefficients_real and "
-        "fourier_coefficients_imaginary must match.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      fourier_coefficients_real.ncols() !=
+          fourier_coefficients_imaginary.ncols(),
+      "The number of columns of fourier_coefficients_real and "
+      "fourier_coefficients_imaginary must match.");
 
   // The period must be a strictly positive number.
-  if (period <= 0.0) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "The period must be a strictly positive number.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      period <= 0.0, "The period must be a strictly positive number.");
 
   FourierInterpolation result;
 
@@ -333,19 +305,10 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients(
 FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
     const std::string &file_name, const unsigned int n_components) {
   std::ifstream file(file_name);
-
-  if (!file.is_open()) {
-    svmp::raise<svmp::FileNotFoundException>(file_name);
-  }
+  svmp::throw_if<svmp::FileNotFoundException>(!file.is_open(), file_name);
 
   const double initial_time = read_double(file, file_name, "initial time");
   const double period = read_double(file, file_name, "period");
-
-  if (file.fail()) {
-    svmp::raise<svmp::FileFormatException>(
-        file_name,
-        "Could not read the initial time and period from the first line.");
-  }
 
   // Read the linear trend part. Each line is expected to contain the initial
   // value and slope of the linear trend for one component, so it must hold at
@@ -364,15 +327,13 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
       const std::vector<double> values =
           string_to_vector_double(line, file_name, current_component + 2);
 
-      if (values.size() != 2) {
-        svmp::raise<svmp::FileFormatException>(
-            file_name,
-            "Error reading the linear trend for component " +
-                std::to_string(current_component) + ": '" + line +
-                "'; expected exactly 2 values (initial value and slope), but "
-                "got " +
-                std::to_string(values.size()) + ".");
-      }
+      svmp::throw_if<svmp::FileFormatException>(
+          values.size() != 2, file_name,
+          "Error reading the linear trend for component " +
+              std::to_string(current_component) + ": '" + line +
+              "'; expected exactly 2 values (initial value and slope), but "
+              "got " +
+              std::to_string(values.size()) + ".");
 
       linear_trend_initial_values[current_component] = values[0];
       linear_trend_slopes[current_component] = values[1];
@@ -382,14 +343,12 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
     ++line_number;
   }
 
-  if (current_component != n_components) {
-    svmp::raise<svmp::FileFormatException>(
-        file_name,
-        "Expected " + std::to_string(n_components) +
-            " lines of linear trend coefficients (one per component), but only "
-            "found " +
-            std::to_string(current_component) + ".");
-  }
+  svmp::throw_if<svmp::FileFormatException>(
+      current_component != n_components, file_name,
+      "Expected " + std::to_string(n_components) +
+          " lines of linear trend coefficients (one per component), but only "
+          "found " +
+          std::to_string(current_component) + ".");
 
   // Read the Fourier coefficients.
   const unsigned int n_fourier_coefficients =
@@ -413,16 +372,14 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
       const std::vector<double> values =
           string_to_vector_double(line, file_name, line_number);
 
-      if (values.size() != n_values_per_line) {
-        svmp::raise<svmp::FileFormatException>(
-            file_name, "Error reading Fourier coefficient " +
-                           std::to_string(current_coefficient) + ": '" + line +
-                           "'; expected " + std::to_string(n_values_per_line) +
-                           " values (real and imaginary parts for " +
-                           std::to_string(n_components) +
-                           " components), but got " +
-                           std::to_string(values.size()) + ".");
-      }
+      svmp::throw_if<svmp::FileFormatException>(
+          values.size() != n_values_per_line, file_name,
+          "Error reading Fourier coefficient " +
+              std::to_string(current_coefficient) + ": '" + line +
+              "'; expected " + std::to_string(n_values_per_line) +
+              " values (real and imaginary parts for " +
+              std::to_string(n_components) + " components), but got " +
+              std::to_string(values.size()) + ".");
 
       for (unsigned int j = 0; j < n_components; ++j) {
         fourier_coefficients_real(j, current_coefficient) = values[j];
@@ -436,12 +393,11 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
     ++line_number;
   }
 
-  if (current_coefficient != n_fourier_coefficients) {
-    svmp::raise<svmp::FileFormatException>(
-        file_name, "Expected " + std::to_string(n_fourier_coefficients) +
-                       " lines of Fourier coefficients, but only found " +
-                       std::to_string(current_coefficient) + ".");
-  }
+  svmp::throw_if<svmp::FileFormatException>(
+      current_coefficient != n_fourier_coefficients, file_name,
+      "Expected " + std::to_string(n_fourier_coefficients) +
+          " lines of Fourier coefficients, but only found " +
+          std::to_string(current_coefficient) + ".");
 
   return FourierInterpolation::from_fourier_coefficients(
       linear_trend_initial_values, linear_trend_slopes,
@@ -513,36 +469,33 @@ unsigned int FourierInterpolation::get_n_fourier_coefficients() const {
 
 double FourierInterpolation::get_linear_trend_initial_value(
     const unsigned int component) const {
-  if (!defined()) {
-    svmp::raise<svmp::FE::NotInitializedException>(
-        "Cannot get linear trend initial value of FourierInterpolation "
-        "instance that has not been defined.");
-  }
 
-  if (component >= n_components) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "Component index " + std::to_string(component) +
-        " is out of bounds for FourierInterpolation instance with " +
-        std::to_string(n_components) + " components.");
-  }
+  svmp::throw_if<svmp::FE::NotInitializedException>(
+      !defined(),
+      "Cannot get linear trend initial value of FourierInterpolation "
+      "instance that has not been defined.");
+
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      component >= n_components,
+      "Component index " + std::to_string(component) +
+          " is out of bounds for FourierInterpolation instance with " +
+          std::to_string(n_components) + " components.");
 
   return linear_trend_initial_values[component];
 }
 
 double FourierInterpolation::get_linear_trend_slope(
     const unsigned int component) const {
-  if (!defined()) {
-    svmp::raise<svmp::FE::NotInitializedException>(
-        "Cannot get linear trend initial value of FourierInterpolation "
-        "instance that has not been defined.");
-  }
 
-  if (component >= n_components) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "Component index " + std::to_string(component) +
-        " is out of bounds for FourierInterpolation instance with " +
-        std::to_string(n_components) + " components.");
-  }
+  svmp::throw_if<svmp::FE::NotInitializedException>(
+      !defined(), "Cannot get linear trend initial value of "
+                  "FourierInterpolation instance that has not been defined.");
+
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      component >= n_components,
+      "Component index " + std::to_string(component) +
+          " is out of bounds for FourierInterpolation instance with " +
+          std::to_string(n_components) + " components.");
 
   return linear_trend_slopes[component];
 }
@@ -550,51 +503,42 @@ double FourierInterpolation::get_linear_trend_slope(
 double
 FourierInterpolation::get_coefficient_real(const unsigned int component,
                                            const unsigned int frequency) const {
-  if (!defined()) {
-    svmp::raise<svmp::FE::NotInitializedException>(
-        "Cannot get linear trend initial value of FourierInterpolation "
-        "instance that has not been defined.");
-  }
+  svmp::throw_if<svmp::FE::NotInitializedException>(
+      !defined(), "Cannot get linear trend initial value of "
+                  "FourierInterpolation instance that has not been defined.");
 
-  if (component >= n_components) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "Component index " + std::to_string(component) +
-        " is out of bounds for FourierInterpolation instance with " +
-        std::to_string(n_components) + " components.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      component >= n_components,
+      "Component index " + std::to_string(component) +
+          " is out of bounds for FourierInterpolation instance with " +
+          std::to_string(n_components) + " components.");
 
-  if (frequency >= n_fourier_coefficients) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "Frequency index " + std::to_string(frequency) +
-        " is out of bounds for FourierInterpolation instance with " +
-        std::to_string(n_fourier_coefficients) + " Fourier coefficients.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      frequency >= n_fourier_coefficients,
+      "Frequency index " + std::to_string(frequency) +
+          " is out of bounds for FourierInterpolation instance with " +
+          std::to_string(n_fourier_coefficients) + " Fourier coefficients.");
 
   return fourier_coefficients_real(component, frequency);
 }
 
 double FourierInterpolation::get_coefficient_imaginary(
     const unsigned int component, const unsigned int frequency) const {
+  svmp::throw_if<svmp::FE::NotInitializedException>(
+      !defined(), "Cannot get linear trend initial value of "
+                  "FourierInterpolation instance that has not been defined.");
 
-  if (!defined()) {
-    svmp::raise<svmp::FE::NotInitializedException>(
-        "Cannot get linear trend initial value of FourierInterpolation "
-        "instance that has not been defined.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      component >= n_components,
+      "Component index " + std::to_string(component) +
+          " is out of bounds for FourierInterpolation instance with " +
+          std::to_string(n_components) + " components.");
 
-  if (component >= n_components) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "Component index " + std::to_string(component) +
-        " is out of bounds for FourierInterpolation instance with " +
-        std::to_string(n_components) + " components.");
-  }
-
-  if (frequency >= n_fourier_coefficients) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-        "Frequency index " + std::to_string(frequency) +
-        " is out of bounds for FourierInterpolation instance with " +
-        std::to_string(n_fourier_coefficients) + " Fourier coefficients.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      frequency >= n_fourier_coefficients,
+      "Frequency index " + std::to_string(frequency) +
+          " is out of bounds for FourierInterpolation instance with " +
+          std::to_string(n_fourier_coefficients) + " Fourier coefficients.");
 
   return fourier_coefficients_imaginary(component, frequency);
 }
@@ -603,11 +547,9 @@ void FourierInterpolation::evaluate_internal(const double time,
                                              const bool evaluate_derivative,
                                              Vector<double> &value,
                                              Vector<double> &derivative) const {
-  if (!defined()) {
-    svmp::raise<svmp::FE::NotInitializedException>(
-        "Cannot evaluate FourierInterpolation instance that has not been "
-        "defined.");
-  }
+  svmp::throw_if<svmp::FE::NotInitializedException>(
+      !defined(), "Cannot evaluate FourierInterpolation instance that has not "
+                  "been defined.");
 
   // Shifted and rescaled time.
   // The input time is shifted by ti. Then, if using the ramp function, it is
