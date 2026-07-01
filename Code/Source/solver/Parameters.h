@@ -1084,6 +1084,7 @@ class StimulusBoxParameters : public ParameterLists
   public:
     StimulusBoxParameters();
 
+    /// @brief XML element name for CEP stimulus box spatial bounds.
     static const std::string xml_element_name_;
 
     bool defined() const { return value_set; };
@@ -1101,6 +1102,7 @@ class StimulusSphereParameters : public ParameterLists
   public:
     StimulusSphereParameters();
 
+    /// @brief XML element name for CEP stimulus sphere spatial bounds.
     static const std::string xml_element_name_;
 
     bool defined() const { return value_set; };
@@ -1116,6 +1118,7 @@ class StimulusSphereParameters : public ParameterLists
 class StimulusSpatialBoundsParameters
 {
   public:
+    /// @brief XML element name for CEP stimulus spatial bounds.
     static const std::string xml_element_name_;
 
     bool defined() const { return value_set; };
@@ -1150,10 +1153,11 @@ class StimulusSpatialBoundsParameters
 /// </Stimulus>
 /// \endcode
 class StimulusParameters : public ParameterLists
-{ 
+{
   public:
     StimulusParameters();
 
+    /// @brief XML element name for CEP stimulus parameters.
     static const std::string xml_element_name_;
     
     bool defined() const { return value_set; };
