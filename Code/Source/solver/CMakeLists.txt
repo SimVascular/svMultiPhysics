@@ -159,7 +159,8 @@ set(CSRCS
   PetscLinearAlgebra.h PetscLinearAlgebra.cpp
   TrilinosLinearAlgebra.h TrilinosLinearAlgebra.cpp
   Tensor4.h Tensor4.cpp
-  Vector.h Vector.cpp 
+  Vector.h Vector.cpp
+  fourier_interpolation.cpp
 
   lapack_defs.h
 
@@ -182,7 +183,6 @@ set(CSRCS
   fluid.h fluid.cpp
   fsi.h fsi.cpp
   fs.h fs.cpp
-  fft.h fft.cpp
   heatf.h heatf.cpp
   heats.h heats.cpp
   initialize.h initialize.cpp
