@@ -1786,6 +1786,7 @@ class URISMeshParameters : public ParameterLists
     Parameter<bool> valve_starts_as_closed; // Whether the valve starts as closed
     Parameter<bool> invert_normal; // Whether to invert the valve surface normal vector
     Parameter<std::string> positive_flow_normal_file_path; // File path for the positive flow normal
+    Parameter<std::string> scaffold_file_path; // File path for the valve scaffold mesh
     Parameter<bool> include_uris_velocity; // Whether to include the RIS velocity
 };
 

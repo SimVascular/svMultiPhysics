@@ -62,6 +62,7 @@
   <Invert_normal> false </Invert_normal>
   <Include_URIS_velocity> true </Include_URIS_velocity>
   <Positive_flow_normal_file_path> meshes/normal.dat </Positive_flow_normal_file_path>
+  <Scaffold_file_path> meshes/mv_scaffold.vtu </Scaffold_file_path>
 </Add_URIS_mesh>
 
 <Add_URIS_mesh name="AV" > 
