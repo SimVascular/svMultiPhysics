@@ -144,7 +144,7 @@ public:
   static FourierInterpolation
   from_time_series(const unsigned int n_fourier_coefficients,
                    const Vector<double> &times, const Array<double> &values,
-                   const bool use_ramp);
+                   bool use_ramp);
 
   /**
    * @brief Read a time series from file and return the corresponding instance
@@ -171,8 +171,8 @@ public:
    *   first and last will have no effect.
    */
   static FourierInterpolation
-  from_time_series_file(const std::string &file_name,
-                        const unsigned int n_components, const bool use_ramp);
+  from_time_series_file(const std::string &file_name, unsigned int n_components,
+                        bool use_ramp);
 
   /**
    * @brief Construct a FourierInterpolation from Fourier coefficients.
@@ -205,7 +205,7 @@ public:
                             const Vector<double> &linear_trend_slopes,
                             const Array<double> &fourier_coefficients_real,
                             const Array<double> &fourier_coefficients_imaginary,
-                            const double initial_time, const double period);
+                            double initial_time, double period);
 
   /**
    * @brief Read Fourier coefficients from file and return the corresponding
@@ -234,7 +234,7 @@ public:
    */
   static FourierInterpolation
   from_fourier_coefficients_file(const std::string &file_name,
-                                 const unsigned int n_components);
+                                 unsigned int n_components);
 
   /**
    * @brief Distribute the data to all parallel processes.
@@ -257,7 +257,7 @@ public:
    *
    * @param[in] time The time at which to evaluate the interpolation.
    */
-  Vector<double> value(const double time) const;
+  Vector<double> value(double time) const;
 
   /**
    * @brief Return the interpolated value and its time derivative at a given
@@ -272,7 +272,7 @@ public:
    *   second element is its time derivative.
    */
   std::pair<Vector<double>, Vector<double>>
-  value_and_derivative(const double time) const;
+  value_and_derivative(double time) const;
 
   /// @name Data member access.
   /// @{
@@ -287,19 +287,19 @@ public:
   unsigned int get_n_fourier_coefficients() const;
 
   /// @brief Get the initial value of the linear trend part for one component.
-  double get_linear_trend_initial_value(const unsigned int component) const;
+  double get_linear_trend_initial_value(unsigned int component) const;
 
   /// @brief Get the slope of the linear trend part for one component.
-  double get_linear_trend_slope(const unsigned int component) const;
+  double get_linear_trend_slope(unsigned int component) const;
 
   /// @brief Get the real part of the Fourier coefficients for one component.
-  double get_coefficient_real(const unsigned int component,
-                              const unsigned int frequency) const;
+  double get_coefficient_real(unsigned int component,
+                              unsigned int frequency) const;
 
   /// @brief Get the imaginary part of the Fourier coefficients for one
   /// component.
-  double get_coefficient_imaginary(const unsigned int component,
-                                   const unsigned int frequency) const;
+  double get_coefficient_imaginary(unsigned int component,
+                                   unsigned int frequency) const;
 
   /// @}
 
@@ -325,7 +325,7 @@ private:
    *   the given time. If evaluated_derivative is false, this will not be
    *   modified or accessed.
    */
-  void evaluate_internal(const double time, const bool evaluate_derivative,
+  void evaluate_internal(double time, bool evaluate_derivative,
                          Vector<double> &value,
                          Vector<double> &derivative) const;
 

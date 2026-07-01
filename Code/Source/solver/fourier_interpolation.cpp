@@ -66,7 +66,7 @@ std::vector<double> string_to_vector_double(const std::string &str,
 
 FourierInterpolation FourierInterpolation::from_time_series(
     const unsigned int n_fourier_coefficients, const Vector<double> &times,
-    const Array<double> &values, const bool use_ramp) {
+    const Array<double> &values, bool use_ramp) {
   const unsigned int n_time_points = times.size();
   const unsigned int n_components = values.nrows();
 
@@ -174,10 +174,8 @@ FourierInterpolation FourierInterpolation::from_time_series(
   return result;
 }
 
-FourierInterpolation
-FourierInterpolation::from_time_series_file(const std::string &file_name,
-                                            const unsigned int n_components,
-                                            const bool use_ramp) {
+FourierInterpolation FourierInterpolation::from_time_series_file(
+    const std::string &file_name, unsigned int n_components, bool use_ramp) {
   std::ifstream file(file_name);
   svmp::throw_if<svmp::FileNotFoundException>(!file.is_open(), file_name);
 
@@ -249,8 +247,8 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients(
     const Vector<double> &linear_trend_initial_values,
     const Vector<double> &linear_trend_slopes,
     const Array<double> &fourier_coefficients_real,
-    const Array<double> &fourier_coefficients_imaginary,
-    const double initial_time, const double period) {
+    const Array<double> &fourier_coefficients_imaginary, double initial_time,
+    double period) {
   // Linear trend initial values and slopes must have the same size (which will
   // determine the number of components).
   svmp::throw_if<svmp::FE::InvalidArgumentException>(
@@ -303,7 +301,7 @@ FourierInterpolation FourierInterpolation::from_fourier_coefficients(
 }
 
 FourierInterpolation FourierInterpolation::from_fourier_coefficients_file(
-    const std::string &file_name, const unsigned int n_components) {
+    const std::string &file_name, unsigned int n_components) {
   std::ifstream file(file_name);
   svmp::throw_if<svmp::FileNotFoundException>(!file.is_open(), file_name);
 
@@ -436,7 +434,7 @@ void FourierInterpolation::distribute(const CmMod &cm_mod, const cmType &cm) {
   }
 }
 
-Vector<double> FourierInterpolation::value(const double time) const {
+Vector<double> FourierInterpolation::value(double time) const {
   Vector<double> result(n_components);
   static Vector<double> dummy;
 
@@ -446,7 +444,7 @@ Vector<double> FourierInterpolation::value(const double time) const {
 }
 
 std::pair<Vector<double>, Vector<double>>
-FourierInterpolation::value_and_derivative(const double time) const {
+FourierInterpolation::value_and_derivative(double time) const {
   Vector<double> value(n_components);
   Vector<double> derivative(n_components);
 
@@ -468,7 +466,7 @@ unsigned int FourierInterpolation::get_n_fourier_coefficients() const {
 }
 
 double FourierInterpolation::get_linear_trend_initial_value(
-    const unsigned int component) const {
+    unsigned int component) const {
 
   svmp::throw_if<svmp::FE::NotInitializedException>(
       !defined(),
@@ -484,8 +482,8 @@ double FourierInterpolation::get_linear_trend_initial_value(
   return linear_trend_initial_values[component];
 }
 
-double FourierInterpolation::get_linear_trend_slope(
-    const unsigned int component) const {
+double
+FourierInterpolation::get_linear_trend_slope(unsigned int component) const {
 
   svmp::throw_if<svmp::FE::NotInitializedException>(
       !defined(), "Cannot get linear trend initial value of "
@@ -501,8 +499,8 @@ double FourierInterpolation::get_linear_trend_slope(
 }
 
 double
-FourierInterpolation::get_coefficient_real(const unsigned int component,
-                                           const unsigned int frequency) const {
+FourierInterpolation::get_coefficient_real(unsigned int component,
+                                           unsigned int frequency) const {
   svmp::throw_if<svmp::FE::NotInitializedException>(
       !defined(), "Cannot get linear trend initial value of "
                   "FourierInterpolation instance that has not been defined.");
@@ -522,8 +520,9 @@ FourierInterpolation::get_coefficient_real(const unsigned int component,
   return fourier_coefficients_real(component, frequency);
 }
 
-double FourierInterpolation::get_coefficient_imaginary(
-    const unsigned int component, const unsigned int frequency) const {
+double
+FourierInterpolation::get_coefficient_imaginary(unsigned int component,
+                                                unsigned int frequency) const {
   svmp::throw_if<svmp::FE::NotInitializedException>(
       !defined(), "Cannot get linear trend initial value of "
                   "FourierInterpolation instance that has not been defined.");
@@ -543,8 +542,8 @@ double FourierInterpolation::get_coefficient_imaginary(
   return fourier_coefficients_imaginary(component, frequency);
 }
 
-void FourierInterpolation::evaluate_internal(const double time,
-                                             const bool evaluate_derivative,
+void FourierInterpolation::evaluate_internal(double time,
+                                             bool evaluate_derivative,
                                              Vector<double> &value,
                                              Vector<double> &derivative) const {
   svmp::throw_if<svmp::FE::NotInitializedException>(
