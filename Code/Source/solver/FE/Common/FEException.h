@@ -19,64 +19,96 @@
 #include <string>
 #include <utility>
 
-namespace svmp {
-namespace FE {
+namespace svmp::FE {
 
+/**
+ * @defgroup FE_CommonExceptions Exceptions
+ * @ingroup FE_Common
+ * @brief FE exception hierarchy.
+ *
+ * @details All FE-specific exceptions derive from FEException, which itself
+ * derives from the shared solver ExceptionBase. Specialized subclasses carry
+ * structured context (element type, DOF index, backend name and error code,
+ * iteration counts, Jacobian determinants) so call sites can report
+ * actionable diagnostics.
+ *
+ * Throw FE exceptions through the canonical core helpers in Core/Exception.h:
+ *
+ * @code
+ * svmp::raise<ExceptionT>(message);
+ * svmp::throw_if<ExceptionT>(failure_condition, message);
+ * svmp::check<ExceptionT>(valid_condition, message);
+ * svmp::check_not_null<ExceptionT>(ptr, message);
+ * svmp::check_index<ExceptionT>(index, size);
+ * svmp::not_implemented(message);
+ * @endcode
+ *
+ * check() raises when its (success) condition is false; throw_if() raises when
+ * its (failure) condition is true. FE owns exception types; helper spelling is
+ * owned by the core layer.
+ * @{
+ */
+
+/**
+ * @brief Base exception type for errors originating in the FE library
+ *
+ * Carries a status code and source location alongside the message. Derived
+ * classes select an appropriate StatusCode and may attach additional
+ * structured context.
+ */
 class FEException : public ExceptionBase {
 public:
-    FEException(const std::string& message,
-                StatusCode status = StatusCode::Unknown,
-                const char* file = "",
-                int line = 0,
-                const char* function = "")
-        : ExceptionBase(message,
-                        status,
-                        "FE Exception",
-                        file,
-                        line,
-                        function)
+    /**
+     * @brief Construct with a message and optional status code.
+     * @param message Human-readable error description.
+     * @param status Status code classifying the failure.
+     *
+     * @details The source location is stamped by svmp::raise(); construct FE
+     * exceptions through the core helpers rather than passing file/line/function.
+     */
+    explicit FEException(const std::string& message,
+                         StatusCode status = StatusCode::Unknown)
+        : ExceptionBase(message, status, "FE Exception")
     {
     }
 
-    FEException(const std::string& message,
-                const char* file,
-                int line,
-                const char* function = "")
-        : FEException(message, StatusCode::Unknown, file, line, function)
-    {
-    }
-
+    /**
+     * @brief Status code classifying the failure.
+     * @return The status code recorded at construction.
+     */
     StatusCode status() const noexcept { return status_code(); }
 };
 
-class InvalidArgumentException : public FEException {
-public:
-    InvalidArgumentException(const std::string& message,
-                             const char* file = "",
-                             int line = 0,
-                             const char* function = "")
-        : FEException(message, StatusCode::InvalidArgument, file, line,
-                      function)
-    {
-    }
-};
+/**
+ * @brief An argument failed validation
+ */
+SVMP_DEFINE_EXCEPTION(InvalidArgumentException, FEException,
+                      StatusCode::InvalidArgument);
 
+/**
+ * @brief Unsupported or malformed element request
+ *
+ * Records the offending element type so error reports can name it.
+ */
 class InvalidElementException : public FEException {
 public:
+    /**
+     * @brief Construct with a message and optional element-type context.
+     * @param message Human-readable error description.
+     * @param element_type Name of the offending element type; appended to the message when non-empty.
+     */
     InvalidElementException(const std::string& message,
-                            std::string element_type = "",
-                            const char* file = "",
-                            int line = 0,
-                            const char* function = "")
+                            std::string element_type = "")
         : FEException(build_message(message, element_type),
-                      StatusCode::InvalidArgument,
-                      file,
-                      line,
-                      function),
+                      StatusCode::InvalidArgument),
           element_type_(std::move(element_type))
     {
     }
 
+    /**
+     * @brief Name of the offending element type.
+     * @return Element-type name; empty when not provided.
+     */
     const std::string& element_type() const noexcept { return element_type_; }
 
 private:
@@ -93,23 +125,35 @@ private:
     std::string element_type_;
 };
 
+/**
+ * @brief Degree-of-freedom numbering or lookup failure
+ *
+ * Records the offending DOF index so error reports can name it.
+ */
 class DofException : public FEException {
 public:
+    /**
+     * @brief Construct with a message and optional DOF-index context.
+     * @param message Human-readable error description.
+     * @param dof_index Offending DOF index; appended to the message unless it equals invalid_dof_index().
+     */
     DofException(const std::string& message,
-                 long long dof_index = invalid_dof_index(),
-                 const char* file = "",
-                 int line = 0,
-                 const char* function = "")
+                 long long dof_index = invalid_dof_index())
         : FEException(build_message(message, dof_index),
-                      StatusCode::InvalidArgument,
-                      file,
-                      line,
-                      function),
+                      StatusCode::InvalidArgument),
           dof_index_(dof_index)
     {
     }
 
+    /**
+     * @brief Offending DOF index.
+     * @return DOF index; invalid_dof_index() when not provided.
+     */
     long long dof_index() const noexcept { return dof_index_; }
+    /**
+     * @brief Sentinel meaning "no DOF index attached".
+     * @return The sentinel value -1.
+     */
     static constexpr long long invalid_dof_index() noexcept { return -1; }
 
 private:
@@ -126,36 +170,44 @@ private:
     long long dof_index_ = invalid_dof_index();
 };
 
-class AssemblyException : public FEException {
-public:
-    AssemblyException(const std::string& message,
-                      const char* file = "",
-                      int line = 0,
-                      const char* function = "")
-        : FEException(message, StatusCode::InvalidState, file, line, function)
-    {
-    }
-};
+/**
+ * @brief Global assembly failure
+ */
+SVMP_DEFINE_EXCEPTION(AssemblyException, FEException, StatusCode::InvalidState);
 
+/**
+ * @brief Failure reported by a linear-algebra or solver backend
+ *
+ * Records the backend name and its native error code so error reports can
+ * identify the failing dependency.
+ */
 class BackendException : public FEException {
 public:
+    /**
+     * @brief Construct with a message and optional backend context.
+     * @param message Human-readable error description.
+     * @param backend_name Name of the failing backend; appended to the message when non-empty.
+     * @param error_code Backend-native error code; appended to the message when nonzero.
+     */
     BackendException(const std::string& message,
                      std::string backend_name = "",
-                     int error_code = 0,
-                     const char* file = "",
-                     int line = 0,
-                     const char* function = "")
+                     int error_code = 0)
         : FEException(build_message(message, backend_name, error_code),
-                      StatusCode::DependencyError,
-                      file,
-                      line,
-                      function),
+                      StatusCode::DependencyError),
           backend_name_(std::move(backend_name)),
           error_code_(error_code)
     {
     }
 
+    /**
+     * @brief Name of the failing backend.
+     * @return Backend name; empty when not provided.
+     */
     const std::string& backend_name() const noexcept { return backend_name_; }
+    /**
+     * @brief Backend-native error code.
+     * @return Error code; zero when not provided.
+     */
     int error_code() const noexcept { return error_code_; }
 
 private:
@@ -185,55 +237,65 @@ private:
     int error_code_ = 0;
 };
 
-class NotImplementedException : public FEException {
-public:
-    NotImplementedException(const std::string& feature,
-                            const char* file = "",
-                            int line = 0,
-                            const char* function = "")
-        : FEException("Feature not implemented: " + feature,
-                      StatusCode::NotImplemented,
-                      file,
-                      line,
-                      function)
-    {
-    }
-};
+/**
+ * @brief Requested feature is not implemented.
+ *
+ * @details Alias for svmp::NotImplementedException (Core/Exception.h), the single
+ * not-implemented type used across the solver and the default raised by
+ * svmp::not_implemented(). Kept in the FE namespace for source compatibility; it
+ * derives from CoreException, not FEException.
+ */
+using NotImplementedException = svmp::NotImplementedException;
 
+/**
+ * @brief Required initialization step has not been performed
+ */
 class NotInitializedException : public FEException {
 public:
-  NotInitializedException(const std::string &feature,
-                          const char *file,
-                          int line = 0,
-                          const char *function = "")
+  /**
+   * @brief Construct from the name of the uninitialized feature.
+   * @param feature Description of the missing initialization.
+   */
+  explicit NotInitializedException(const std::string& feature)
       : FEException("Missing initialization: " + feature,
-                    StatusCode::InvalidState,
-                    file,
-                    line,
-                    function)
+                    StatusCode::InvalidState)
   {
   }
 };
 
+/**
+ * @brief Iterative process failed to converge
+ *
+ * Records the iteration count and final residual so error reports can show
+ * how far the iteration progressed.
+ */
 class ConvergenceException : public FEException {
 public:
+    /**
+     * @brief Construct with a message and optional iteration context.
+     * @param message Human-readable error description.
+     * @param iteration Iteration at which the failure was detected; appended to the message when non-negative.
+     * @param residual Final residual; appended to the message when positive.
+     */
     ConvergenceException(const std::string& message,
                          int iteration = -1,
-                         double residual = 0.0,
-                         const char* file = "",
-                         int line = 0,
-                         const char* function = "")
+                         double residual = 0.0)
         : FEException(build_message(message, iteration, residual),
-                      StatusCode::InvalidState,
-                      file,
-                      line,
-                      function),
+                      StatusCode::InvalidState),
           iteration_(iteration),
           residual_(residual)
     {
     }
 
+    /**
+     * @brief Iteration at which the failure was detected.
+     * @return Iteration count; -1 when not provided.
+     */
     int iteration() const noexcept { return iteration_; }
+    /**
+     * @brief Final residual value.
+     * @return Residual; 0.0 when not provided.
+     */
     double residual() const noexcept { return residual_; }
 
 private:
@@ -257,22 +319,31 @@ private:
     double residual_ = 0.0;
 };
 
+/**
+ * @brief Element geometric mapping is singular or inverted
+ *
+ * Records the offending Jacobian determinant so error reports can show the
+ * degeneracy.
+ */
 class SingularMappingException : public FEException {
 public:
+    /**
+     * @brief Construct with a message and the offending Jacobian determinant.
+     * @param message Human-readable error description.
+     * @param jacobian_det Jacobian determinant at the failure point; appended to the message.
+     */
     SingularMappingException(const std::string& message,
-                             double jacobian_det = 0.0,
-                             const char* file = "",
-                             int line = 0,
-                             const char* function = "")
+                             double jacobian_det = 0.0)
         : FEException(build_message(message, jacobian_det),
-                      StatusCode::InvalidState,
-                      file,
-                      line,
-                      function),
+                      StatusCode::InvalidState),
           jacobian_det_(jacobian_det)
     {
     }
 
+    /**
+     * @brief Jacobian determinant at the failure point.
+     * @return The determinant recorded at construction.
+     */
     double jacobian_det() const noexcept { return jacobian_det_; }
 
 private:
@@ -285,57 +356,8 @@ private:
     double jacobian_det_ = 0.0;
 };
 
-template <class ExceptionT, class... Args>
-[[noreturn]] inline void raise(SourceLocation location, Args&&... args)
-{
-    ::svmp::raise<ExceptionT>(location, std::forward<Args>(args)...);
-}
+/** @} */
 
-template <class ExceptionT = FEException, class... Args>
-inline void throw_if(bool condition, SourceLocation location, Args&&... args)
-{
-    if (condition) {
-        ::svmp::FE::raise<ExceptionT>(location, std::forward<Args>(args)...);
-    }
-}
-
-template <class ExceptionT = InvalidArgumentException, class... Args>
-inline void check_arg(bool condition, SourceLocation location, Args&&... args)
-{
-    ::svmp::check_arg<ExceptionT>(condition, location,
-                                  std::forward<Args>(args)...);
-}
-
-template <class ExceptionT = InvalidArgumentException, class PointerT,
-          class... Args>
-inline void check_not_null(PointerT ptr, SourceLocation location,
-                           Args&&... args)
-{
-    ::svmp::check_not_null<ExceptionT>(ptr, location, std::forward<Args>(args)...);
-}
-
-template <class ExceptionT = InvalidArgumentException, class IndexT,
-          class SizeT>
-inline void check_index(IndexT index, SizeT size, SourceLocation location)
-{
-    const long long fe_check_index_value = static_cast<long long>(index);
-    const long long fe_check_size_value = static_cast<long long>(size);
-
-    ::svmp::FE::check_arg<ExceptionT>(
-        fe_check_index_value >= 0 &&
-            fe_check_index_value < fe_check_size_value,
-        location,
-        "Index " + std::to_string(fe_check_index_value) +
-            " out of bounds [0, " + std::to_string(fe_check_size_value) + ")");
-}
-
-[[noreturn]] inline void not_implemented(const std::string& feature,
-                                         SourceLocation location)
-{
-    ::svmp::FE::raise<NotImplementedException>(location, feature);
-}
-
-} // namespace FE
-} // namespace svmp
+} // namespace svmp::FE
 
 #endif // SVMP_FE_EXCEPTION_H

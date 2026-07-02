@@ -557,7 +557,7 @@ void Integrator::predictor()
     if (eq.phys == Equation_CEP) {
       if (fiber_stretch.size() != com_mod.tnNo)
         svmp::raise<svmp::InternalErrorException>(
-            SVMP_HERE, "Fiber stretch vector is not initialized correctly.");
+            "Fiber stretch vector is not initialized correctly.");
 
       cep_ion::cep_integ(simulation_, iEq, e, solutions_, fiber_stretch);
     }

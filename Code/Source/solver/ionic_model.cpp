@@ -41,7 +41,7 @@ void IonicModel::distribute_parameters(const CmMod &cm_mod, const cmType &cm) {
 void IonicModel::init(Vector<double> &X, Vector<double> &Xg) const {
   if (initial_X.size() != X.size()) {
     svmp::raise<svmp::FE::InvalidArgumentException>(
-        SVMP_HERE, "Initial conditions size for X does not match vector size.");
+        "Initial conditions size for X does not match vector size.");
   }
 
   for (size_t i = 0; i < initial_X.size(); ++i)
@@ -49,7 +49,6 @@ void IonicModel::init(Vector<double> &X, Vector<double> &Xg) const {
 
   if (initial_Xg.size() != Xg.size()) {
     svmp::raise<svmp::FE::InvalidArgumentException>(
-        SVMP_HERE,
         "Initial conditions size for Xg does not match vector size.");
   }
 
@@ -77,9 +76,8 @@ void IonicModel::integ(const odeType &ode_solver_params, const int zone_id,
 
   default:
     svmp::raise<svmp::FE::InvalidArgumentException>(
-        SVMP_HERE,
         "Unknown time integration type: " +
-            std::to_string(static_cast<int>(ode_solver_params.tIntType)));
+        std::to_string(static_cast<int>(ode_solver_params.tIntType)));
   }
 }
 

@@ -43,9 +43,8 @@ public:
     if (factory_instance.children.find(name) !=
         factory_instance.children.end()) {
       svmp::raise<svmp::FE::InvalidArgumentException>(
-          SVMP_HERE,
           "A model with name '" + name +
-              "' was already registered in the ionic model factory.");
+          "' was already registered in the ionic model factory.");
     }
 
     factory_instance.children[name] = []() -> std::unique_ptr<BaseType> {
@@ -64,7 +63,6 @@ public:
     auto iter = factory_instance.children.find(name);
     if (iter == factory_instance.children.end()) {
       svmp::raise<svmp::FE::InvalidArgumentException>(
-          SVMP_HERE,
           "No class with name '" + name + "' was registered in the factory.");
     }
 

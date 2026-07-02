@@ -523,9 +523,12 @@ void iterate_solution(Simulation* simulation)
         } else {
           uris::uris_meanv(com_mod, cm_mod, iUris, solutions);
         }
+        # ifdef debug_iterate_solution
         if (cm.mas(cm_mod)) {
-          std::cout << " URIS surface: " << com_mod.uris[iUris].name << ", count: " << com_mod.uris[iUris].cnt << std::endl;
+          dmsg << " URIS surface: " + com_mod.uris[iUris].name + ", count: " 
+               + std::to_string(com_mod.uris[iUris].cnt) << std::endl;
         }
+        # endif
       }
 
       if (com_mod.mvMsh) {

@@ -601,7 +601,7 @@ A map type used to set element properties.
 
 Computes shape functions and derivatives at given natural coords.
 
-- `set_face_shape_data[face.eType](gaus_pt, face)`
+- FE Basis face evaluation for supported mapped face elements.
 
 
 <!-- ============= -->

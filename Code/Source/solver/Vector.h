@@ -350,9 +350,8 @@ class Vector
     {
       if (size_ != vec.size()) {
         svmp::raise<svmp::FE::InvalidArgumentException>(
-            SVMP_HERE,
             "Vectors have diffrenct sizes: " + std::to_string(size_) +
-                " != " + std::to_string(vec.size()));
+            " != " + std::to_string(vec.size()));
       }
 
       for (int i = 0; i < size_; i++) {

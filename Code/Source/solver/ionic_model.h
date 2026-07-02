@@ -85,7 +85,8 @@ public:
  * specified by classes derived from this.
  *
  * **References**:
- *  - [Colli Franzone, Pavarino, Scacchi (2014)](https://doi.org/10.1007/978-3-319-04801-7)
+ *  - [Colli Franzone, Pavarino, Scacchi
+ * (2014)](https://doi.org/10.1007/978-3-319-04801-7)
  *  - [Goktepe, Kuhl (2009)](https://doi.org/10.1007/s00466-009-0434-z)
  *
  * ### Numerical methods
@@ -404,7 +405,7 @@ protected:
                              const Vector<double> &X, const Vector<double> &Xg,
                              const double Ksac) const {
     svmp::raise<svmp::FE::NotImplementedException>(
-        SVMP_HERE, "getj method not implemented for this ionic model.");
+        "getj method not implemented for this ionic model.");
 
     // Dummy return statement to avoid compiler warnings.
     Array<double> dummy(X.size(), X.size());
