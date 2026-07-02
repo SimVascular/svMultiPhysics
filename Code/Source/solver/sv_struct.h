@@ -19,16 +19,23 @@ void b_struct_3d(const ComMod& com_mod, const int eNoN, const double w, const Ve
 
 void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);
 
-void struct_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w, 
-    const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl, const Array<double>& fN, const Array<double>& pS0l, 
-    Vector<double>& pSl, const Vector<double>& ya_l, Array<double>& lR, Array3<double>& lK);
+void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
+               const double w, const Vector<double> &N, const Array<double> &Nx,
+               const Array<double> &al, const Array<double> &yl,
+               const Array<double> &dl, const Array<double> &bfl,
+               const Array<double> &fN, const Array<double> &pS0l,
+               Vector<double> &pSl, const Vector<double> &ya_l_f,
+               const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+               Array<double> &lR, Array3<double> &lK);
 
-void struct_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w, 
-    const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl, const Array<double>& fN, const Array<double>& pS0l, 
-    Vector<double>& pSl, const Vector<double>& ya_l, Array<double>& lR, Array3<double>& lK);
-
+void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
+               const double w, const Vector<double> &N, const Array<double> &Nx,
+               const Array<double> &al, const Array<double> &yl,
+               const Array<double> &dl, const Array<double> &bfl,
+               const Array<double> &fN, const Array<double> &pS0l,
+               Vector<double> &pSl, const Vector<double> &ya_l_f,
+               const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+               Array<double> &lR, Array3<double> &lK);
 };
 
 #endif

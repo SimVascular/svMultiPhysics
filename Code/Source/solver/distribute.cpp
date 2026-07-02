@@ -1582,8 +1582,8 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
 
       // All ranks but the master need to allocate the ionic model instance.
       if (!cm.mas(cm_mod)) {
-        cep.ionic_model = IonicModelFactory::create_model(
-            cep_model_type_to_name.at(cep.cepType));
+        cep.ionic_model =
+            IonicModelFactory::create(cep_model_type_to_name.at(cep.cepType));
       }
 
       cm.bcast(cm_mod, &cep.nX);
@@ -1612,7 +1612,21 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       }
 
       cep.ionic_model->distribute_parameters(cm_mod, cm);
-    } 
+    }
+
+    if (supports_active_stress(lEq.dmn[iDmn].phys)) {
+      cm.bcast(cm_mod, dmn.active_stress_model_name);
+
+      if (dmn.active_stress_model_name != "") {
+        // All ranks but the master need to allocate the active stress instance.
+        if (!cm.mas(cm_mod)) {
+          dmn.active_stress =
+              ActiveStressFactory::create(dmn.active_stress_model_name);
+        }
+
+        dmn.active_stress->distribute_parameters(cm_mod, cm);
+      }
+    }
 
     if ((dmn.phys == EquationType::phys_struct) || (dmn.phys == EquationType::phys_ustruct)) {
       dist_mat_consts(com_mod, cm_mod, cm, dmn.stM);
@@ -1630,10 +1644,9 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
   //
   cm.bcast(cm_mod, &cep_mod.cem.cpld);
 
-  if (cep_mod.cem.cpld); {
-    cm.bcast(cm_mod, &cep_mod.cem.aStress);
+  if (cep_mod.cem.cpld) {
     cm.bcast(cm_mod, &cep_mod.cem.aStrain);
-  } 
+  }
 
   if (com_mod.ibFlag) {
     if (cm.slv(cm_mod)) {

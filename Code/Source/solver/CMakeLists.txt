@@ -227,6 +227,11 @@ set(CSRCS
   ionic_bueno_orovio.cpp
   ionic_fitzhugh_nagumo.cpp
   ionic_ttp.cpp
+
+  active_stress.cpp
+  active_stress_uniform_steady.cpp
+  active_stress_ode.cpp
+  active_stress_nash_panfilov.cpp
   
   SPLIT.c
 

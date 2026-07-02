@@ -29,11 +29,15 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
     Array3<double>& lKd);
 
-void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
-    const int nFn, const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
-    const Array<double>& Nwx, const Array<double>& al, const Array<double>& yl, const Array<double>& dl,
-    const Array<double>& bfl, const Array<double>& fN, const Vector<double>& ya_l, Array<double>& lR,
-    Array3<double>& lK, Array3<double>& lKd);
+void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
+                  const int eNoNw, const int eNoNq, const int nFn,
+                  const double w, const double Je, const Vector<double> &Nw,
+                  const Vector<double> &Nq, const Array<double> &Nwx,
+                  const Array<double> &al, const Array<double> &yl,
+                  const Array<double> &dl, const Array<double> &bfl,
+                  const Array<double> &fN, const Vector<double> &ya_l_f,
+                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd);
 
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
@@ -41,11 +45,15 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
     Array3<double>& lKd);
 
-void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq, 
-    const int nFn, const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq, 
-    const Array<double>& Nwx, const Array<double>& al, const Array<double>& yl, const Array<double>& dl, 
-    const Array<double>& bfl, const Array<double>& fN, const Vector<double>& ya_l, Array<double>& lR, 
-    Array3<double>& lK, Array3<double>& lKd);
+void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
+                  const int eNoNw, const int eNoNq, const int nFn,
+                  const double w, const double Je, const Vector<double> &Nw,
+                  const Vector<double> &Nq, const Array<double> &Nwx,
+                  const Array<double> &al, const Array<double> &yl,
+                  const Array<double> &dl, const Array<double> &bfl,
+                  const Array<double> &fN, const Vector<double> &ya_l_f,
+                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd);
 
 void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd, 
     const Array3<double>& lK, const Array<double>& lR);

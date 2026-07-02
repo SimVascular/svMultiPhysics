@@ -381,6 +381,14 @@ SVMP_DEFINE_EXCEPTION(NotImplementedException, CoreException,
 SVMP_DEFINE_EXCEPTION(IndexOutOfRangeException, CoreException,
                       StatusCode::InvalidArgument);
 
+class InternalErrorException : public CoreException {
+public:
+  InternalErrorException(const std::string &message, const char *file = "",
+                         int line = 0, const char *function = "")
+      : CoreException(message, StatusCode::InternalError, file, line,
+                      function) {}
+};
+
 inline void ExceptionRuntime::install_terminate_handler()
 {
     std::set_terminate([]() {

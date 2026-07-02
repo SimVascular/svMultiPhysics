@@ -18,12 +18,8 @@
  * reference below.
  *
  * **References**:
- * 1. Ten Tusscher, Noble, Noble, Panfilov. A model for human ventricular
- * tissue. American Journal of Physiology - Heart and Circulatory Physiology
- * (2004).
- * 2. Ten Tusscher, Panfilov. Alternans and spiral breakup in a human
- * ventricular tissue model. American Journal of Physiology - Heart and
- * Circulatory Physiology (2006).
+ * 1. [Ten Tusscher, Noble, Noble, Panfilov (2004)](https://doi.org/10.1152/ajpheart.00794.2003)
+ * 2. [Ten Tusscher, Panfilov (2006)](https://doi.org/10.1152/ajpheart.00109.2006)
  *
  * Model parameters are from reference 2 above. Default parameters are for
  * epicardium state (source: https://models.cellml.org/e/80d)

@@ -136,18 +136,27 @@ class cemModelType
     bool cpld = false;
     //bool cpld = .FALSE.
 
-    /// @brief  Whether active stress formulation is employed
-    bool aStress = false;
-    //bool aStress = .FALSE.
-
     /// @brief  Whether active strain formulation is employed
     bool aStrain = false;
     //bool aStrain = .FALSE.
 
-    /// @brief  Local variable integrated in time
-    ///    := activation force for active stress model
-    ///    := fiber stretch for active strain model
-    Vector<double> Ya;
+    /// @brief Activation along fibers.
+    ///
+    /// Corresponds to active tension along fibers if using active stress, and
+    /// to fiber stretch if using active strain.
+    Vector<double> Ya_f;
+
+    /// @brief Activation along sheets.
+    ///
+    /// Only used if using active stress, in which case it represents the active
+    /// tension along sheets.
+    Vector<double> Ya_s;
+
+    /// @brief Activation along sheet normals.
+    ///
+    /// Only used if using active stress, in which case it represents the active
+    /// tension along sheet normals.
+    Vector<double> Ya_n;
 };
 
 class CepMod 
@@ -162,6 +171,9 @@ class CepMod
 
     /// @brief Unknowns stored at all nodes
     Array<double> Xion;
+
+    /// @brief Calcium vector at all nodes.
+    Vector<double> calcium;
 
     /// @brief Cardiac electromechanics type
     cemModelType cem;

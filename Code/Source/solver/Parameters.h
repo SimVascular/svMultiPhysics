@@ -1147,8 +1147,8 @@ class DirectionalDistributionParameters : public ParameterLists
     static const std::string xml_element_name_;
 
     bool defined() const { return value_set; };
-    void print_parameters();
-    void set_values(tinyxml2::XMLElement* xml_elem);
+    void print_parameters() const;
+    void set_values(const tinyxml2::XMLElement *xml_elem);
     void validate() const;  // Validate directional fractions
 
     Parameter<double> fiber_direction;
@@ -1235,7 +1235,7 @@ protected:
   bool value_set = false;
 };
 
-/// @brief Initial conditions parameters for a generic ionic model.
+/// @brief Parameters for a generic ionic model.
 ///
 /// Bundles initial conditions for the model's ionic concentrations and gating
 /// variables, represented by two instances of IonicInitialStateParameters.
@@ -1318,6 +1318,113 @@ protected:
   bool value_set = false;
 };
 
+/// @brief Parameters for a generic active stress model.
+///
+/// This class is meant to be inherited from to implement parameters for
+/// specific active stress models. Derived classes will mostly have to call
+/// add_parameter in their constructor to define the model-specific parameters.
+///
+/// In the XML file, this class, and the classes derived from it, correspond to
+/// the element <Model_name> within the <Active_stress> element, where
+/// Model_name is the name of a concrete active stress model.
+class ActiveStressModelParameters : public ParameterLists {
+public:
+  /// Constructor.
+  ActiveStressModelParameters(const std::string &xml_element_name_);
+
+  /// Return whether the parameters represented by this object were defined.
+  bool defined() const { return value_set; }
+
+  /// Print the value of parameters.
+  void print_parameters() const;
+
+  /// Set the values of parameters in this object from an XML element.
+  void set_values(const tinyxml2::XMLElement *xml_elem);
+
+  /// Name of the XML element for this object.
+  const std::string xml_element_name;
+
+  /// Get the value of a parameter by label.
+  double get_scalar(const std::string &label) const {
+    return parameters.at(label).value();
+  }
+
+protected:
+  /// Add a new parameter to this object.
+  void add_parameter(const std::string &label, double default_value,
+                     bool required) {
+    set_parameter(label, default_value, required, parameters[label]);
+  }
+
+  /// Parameters are stored in a map as key-parameter pairs. Derived classes
+  /// should add parameters to this map in their constructors by calling
+  /// add_parameter.
+  std::map<std::string, Parameter<double>> parameters;
+
+  /// Flag indicating whether the values of the parameters stored in this
+  /// object have been set.
+  bool value_set = false;
+};
+
+/// @brief Parameters for active stress models.
+///
+/// This class stores all the parameters related to active stress, including
+/// e.g. the name of the specific selected model. The parameters specific to an
+/// individual model are managed by the class @ref ActiveStressModelParameters,
+/// of which this class owns an instance for every registered model.
+///
+/// In the XML file, this class corresponds to the <Active_stress> element.
+class ActiveStressParameters : public ParameterLists {
+public:
+  /// Constructor.
+  ActiveStressParameters();
+
+  /// Return whether the parameters represented by this object were defined.
+  bool defined() const { return value_set; }
+
+  /// Print the value of parameters.
+  void print_parameters() const;
+
+  /// Set the values of parameters in this object from an XML element.
+  void set_values(const tinyxml2::XMLElement *xml_elem);
+
+  /// Get the name of the selected model. Throws an exception if it has not been
+  /// set.
+  std::string get_model_name() const;
+
+  /// Get the active tension coefficient along fibers.
+  double get_eta_f() const;
+
+  /// Get the active tension coefficient along sheets.
+  double get_eta_s() const;
+
+  /// Get the active tension coefficient along sheet normals.
+  double get_eta_n() const;
+
+  /// Get the parameters for a given active stress model.
+  const ActiveStressModelParameters &
+  get_parameters(const std::string &model_name) const;
+
+  /// Name of the XML element for this object.
+  static const std::string xml_element_name;
+
+protected:
+  /// Parameter for the model name.
+  Parameter<std::string> model_name;
+
+  /// Parameters for the directional distribution of active tension.
+  DirectionalDistributionParameters directional_distribution;
+
+  /// Active stress model parameters. Keys are the model names, as registered
+  /// in the @ref ActiveStressModelFactory.
+  std::map<std::string, std::unique_ptr<ActiveStressModelParameters>>
+      active_stress_models;
+
+  /// Flag indicating whether the values of the parameters stored in this
+  /// object have been set.
+  bool value_set = false;
+};
+
 /// @brief The DomainParameters class stores parameters for the XML
 /// 'Domain' element to specify properties for solving equations.
 ///
@@ -1347,8 +1454,10 @@ class DomainParameters : public ParameterLists
     StimulusParameters stimulus;
     FluidViscosityParameters fluid_viscosity;
     SolidViscosityParameters solid_viscosity;
+    ActiveStressParameters active_stress;
 
-    // Ionic model parameters.
+    /// Ionic model parameters. Keys are the model names, as registered in the
+    /// @ref IonicModelFactory.
     std::map<std::string, std::unique_ptr<IonicModelParameters>> ionic_models;
 
     // Attributes.

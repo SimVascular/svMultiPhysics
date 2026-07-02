@@ -6,6 +6,7 @@
 #include "read_files.h"
 
 #include "FE/Common/FEException.h"
+#include "active_stress.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "fft.h"
@@ -1032,7 +1033,7 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   {
     const std::string model_name = cep_model_type_to_name.at(model_type);
 
-    lDmn.cep.ionic_model = IonicModelFactory::create_model(model_name);
+    lDmn.cep.ionic_model = IonicModelFactory::create(model_name);
     lDmn.cep.ionic_model->read_parameters(
         *domain_params->ionic_models.at(model_name));
 
@@ -1197,6 +1198,19 @@ void read_cep_equation(CepMod* cep_mod, Simulation* simulation, EquationParamete
 
     cep_mod->ecgleads.pseudo_ECG.resize(cep_mod->ecgleads.num_leads);
     std::fill(cep_mod->ecgleads.pseudo_ECG.begin(), cep_mod->ecgleads.pseudo_ECG.end(), 0.);
+  }
+}
+
+/**
+ * @brief Read parameters related to active stress.
+ */
+void read_active_stress(dmnType &lDmn, DomainParameters *domain_params) {
+  if (domain_params->active_stress.defined()) {
+    const std::string name = domain_params->active_stress.get_model_name();
+
+    lDmn.active_stress_model_name = name;
+    lDmn.active_stress = ActiveStressFactory::create(name);
+    lDmn.active_stress->read_parameters(domain_params->active_stress);
   }
 }
 
@@ -1366,17 +1380,26 @@ void read_domain(Simulation* simulation, EquationParameters* eq_params, eqType& 
         read_cep_domain(simulation, eq_params, domain_params, lEq.dmn[iDmn]);
      }
 
+     // Read active stress parameters
+     if (supports_active_stress(lEq.dmn[iDmn].phys)) {
+       read_active_stress(lEq.dmn[iDmn], domain_params);
+     }
+
      // Read material/constitutive model parameters for nonlinear
      // elastodynamics simulations (both solids and shells)
      //
-     if ( (lEq.dmn[iDmn].phys == EquationType::phys_shell) || 
-          (lEq.dmn[iDmn].phys == EquationType::phys_struct) || 
-          (lEq.dmn[iDmn].phys == EquationType::phys_ustruct)) { 
-        read_mat_model(simulation, eq_params, domain_params, lEq.dmn[iDmn]);
-        if (utils::is_zero(lEq.dmn[iDmn].stM.Kpen) && lEq.dmn[iDmn].phys == EquationType::phys_struct) { 
-          //err = "Incompressible struct is not allowed. Use "//  "penalty method or ustruct"
-          throw std::runtime_error("An incompressible material model is not allowed for 'struct' physics; use penalty method or ustruct."); 
-        }
+     if ((lEq.dmn[iDmn].phys == EquationType::phys_shell) ||
+         (lEq.dmn[iDmn].phys == EquationType::phys_struct) ||
+         (lEq.dmn[iDmn].phys == EquationType::phys_ustruct)) {
+       read_mat_model(simulation, eq_params, domain_params, lEq.dmn[iDmn]);
+       if (utils::is_zero(lEq.dmn[iDmn].stM.Kpen) &&
+           lEq.dmn[iDmn].phys == EquationType::phys_struct) {
+         // err = "Incompressible struct is not allowed. Use "//  "penalty
+         // method or ustruct"
+         throw std::runtime_error(
+             "An incompressible material model is not allowed for 'struct' "
+             "physics; use penalty method or ustruct.");
+       }
      }
 
      // Set parameters for a fluid viscosity model.
@@ -1855,10 +1878,6 @@ void read_files(Simulation* simulation, const std::string& file_name)
       throw std::runtime_error("Both electrophysiology and struct have to be solved for electro-mechanics");
     }
 
-    if (cep_mod.cem.aStress &&  cep_mod.cem.aStrain) {
-      throw std::runtime_error("Cannot set both active strain and active stress coupling");
-    }
-
     if (cep_mod.cem.aStrain) {
       if (com_mod.nsd != 3) {
         throw std::runtime_error("Active strain coupling is allowed only for 3D bodies");
@@ -1868,9 +1887,16 @@ void read_files(Simulation* simulation, const std::string& file_name)
         auto& eq = com_mod.eq[iEq];
         for (int i = 0; i < eq.nDmn; i++) {
           auto& dmn = eq.dmn[i];
+
           if ((dmn.phys != EquationType::phys_ustruct) && (dmn.phys != EquationType::phys_struct)) { 
             continue; 
           }
+
+          if (dmn.active_stress != nullptr) {
+            svmp::raise<svmp::FE::InvalidArgumentException>(
+                "Active strain and active stress cannot be used together.");
+          }
+
           if ((dmn.stM.isoType != ConstitutiveModelType::stIso_HO)) {
             throw std::runtime_error("Active strain is allowed with Holzapfel-Ogden passive constitutive model only");
           }

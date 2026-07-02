@@ -69,7 +69,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
   Array3<double> lK(dof*dof,eNoN,eNoN), lKd(dof*nsd,eNoN,eNoN);
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN), bfl(nsd,eNoN), 
       fN(nsd,nFn), pS0l(nsymd,eNoN), lR(dof,eNoN);
-  Vector<double> pSl(nsymd), ya_l(eNoN);
+  Vector<double> pSl(nsymd), ya_l_f(eNoN), ya_l_s(eNoN), ya_l_n(eNoN);
 
   std::array<fsType,2> fs_1;
   fs::get_thood_fs(com_mod, fs_1, lM, vmsStab, 1);
@@ -98,7 +98,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     // Create local copies
     fN  = 0.0;
     pS0l = 0.0;
-    ya_l = 0.0;
+    ya_l_f = 0.0;
+    ya_l_s = 0.0;
+    ya_l_n = 0.0;
 
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
@@ -126,8 +128,10 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         pS0l.set_col(a, pS0.col(Ac));
       }
 
-      if (cem.cpld) {
-        ya_l(a) = cem.Ya(Ac);
+      if (eq.dmn[cDmn].active_stress != nullptr) {
+        ya_l_f(a) = cep_mod.cem.Ya_f[Ac];
+        ya_l_s(a) = cep_mod.cem.Ya_s[Ac];
+        ya_l_n(a) = cep_mod.cem.Ya_n[Ac];
       }
     }
 
@@ -214,7 +218,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
-            struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0, Nwx, al, yl, dl, bfl, fN, pS0l, pSl, ya_l, lR, lK);
+            struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
+                                 Nwx, al, yl, dl, bfl, fN, pS0l, pSl, ya_l_f,
+                                 ya_l_s, ya_l_n, lR, lK);
           } break;
           case Equation_lElas:
             throw std::runtime_error("[construct_fsi] LELAS3D not implemented");
@@ -224,8 +230,11 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_ustruct:
             auto N0 = fs_1[0].N.col(g);
             auto N1 = fs_1[1].N.col(g);
-            ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l, lR, lK, lKd);
-          break;
+            ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
+                                  fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al,
+                                  yl, dl, bfl, fN, ya_l_f, ya_l_s, ya_l_n, lR,
+                                  lK, lKd);
+            break;
           }
 
       } else if (nsd == 2) {
@@ -245,7 +254,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
-            struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0, Nwx, al, yl, dl, bfl, fN, pS0l, pSl, ya_l, lR, lK);
+            struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
+                                 Nwx, al, yl, dl, bfl, fN, pS0l, pSl, ya_l_f,
+                                 ya_l_s, ya_l_n, lR, lK);
           } break;
 
           case Equation_ustruct:

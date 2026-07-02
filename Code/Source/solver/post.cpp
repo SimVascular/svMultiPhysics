@@ -1712,8 +1712,6 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
   Array<double> Nx(nsd,fs.eNoN); 
   Vector<double> N(fs.eNoN);
 
-  double ya = 0.0;
-
   int insd = nsd;
   if (lM.lFib) {
     insd = 1;
@@ -1896,8 +1894,13 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
 
             Array<double> Dm(nsymd,nsymd);
             double Ja;
-            
-            mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya, S, Dm, Ja);
+
+            // @todo[michelebucelli] The active tension here was kept to zero,
+            //   so I replicated the same for fibers, sheets and normals. This
+            //   might not be the correct thing to do.
+            mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
+                                      fN, /* ya_f = */ 0.0, /* ya_s = */ 0.0,
+                                      /* ya_n = */ 0.0, S, Dm, Ja);
 
             // TODO: Add viscous stress
 
@@ -1915,7 +1918,13 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
           } else if (cPhys == EquationType::phys_struct) {
             Array<double> Dm(nsymd,nsymd);
             double Ja;
-            mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya, S, Dm, Ja);
+
+            // @todo[michelebucelli] The active tension here was kept to zero,
+            //   so I replicated the same for fibers, sheets and normals. This
+            //   might not be the correct thing to do.
+            mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
+                                      fN, /* ya_f = */ 0.0, /* ya_s = */ 0.0,
+                                      /* ya_n = */ 0.0, S, Dm, Ja);
 
             // TODO: Add viscous stress
 

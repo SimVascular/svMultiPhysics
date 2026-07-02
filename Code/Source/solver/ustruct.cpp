@@ -249,7 +249,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
   // USTRUCT: dof = nsd+1
   Vector<int> ptr(eNoN);
-  Vector<double> pSl(nsymd), ya_l(eNoN), N(eNoN);
+  Vector<double> pSl(nsymd), ya_l_f(eNoN), ya_l_s(eNoN), ya_l_n(eNoN), N(eNoN);
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
                 bfl(nsd,eNoN), fN(nsd,nFn), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN), lKd(dof*nsd,eNoN,eNoN);
@@ -264,7 +264,9 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
     // Create local copies
     fN  = 0.0;
-    ya_l = 0.0;
+    ya_l_f = 0.0;
+    ya_l_s = 0.0;
+    ya_l_n = 0.0;
 
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
@@ -289,8 +291,10 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         }
       }
 
-      if (cem.cpld) {
-        ya_l(a) = cem.Ya(Ac);
+      if (eq.dmn[cDmn].active_stress != nullptr) {
+        ya_l_f(a) = cep_mod.cem.Ya_f[Ac];
+        ya_l_s(a) = cep_mod.cem.Ya_s[Ac];
+        ya_l_n(a) = cep_mod.cem.Ya_n[Ac];
       }
     }
 
@@ -336,12 +340,16 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l, lR, lK, lKd);
+        ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l_f, ya_l_s,
+                     ya_l_n, lR, lK, lKd);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l, lR, lK, lKd);
+        ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l_f, ya_l_s,
+                     ya_l_n, lR, lK, lKd);
       }
 
     } // for g = 0 to fs[0].nG
@@ -864,12 +872,15 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 
 /// @brief Replicates Fortran USTRUCT2D_M.
 //
-void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq, 
-    const int nFn, const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq, 
-    const Array<double>& Nwx, const Array<double>& al, const Array<double>& yl, const Array<double>& dl, 
-    const Array<double>& bfl, const Array<double>& fN, const Vector<double>& ya_l, Array<double>& lR, 
-    Array3<double>& lK, Array3<double>& lKd)
-{
+void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
+                  const int eNoNw, const int eNoNq, const int nFn,
+                  const double w, const double Je, const Vector<double> &Nw,
+                  const Vector<double> &Nq, const Array<double> &Nwx,
+                  const Array<double> &al, const Array<double> &yl,
+                  const Array<double> &dl, const Array<double> &bfl,
+                  const Array<double> &fN, const Vector<double> &ya_l_f,
+                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd) {
   using namespace consts;
   using namespace mat_fun;
 
@@ -916,7 +927,11 @@ void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   Vector<double> vd{-fb[0], -fb[1]};
   Vector<double> v(2);
   Array<double> vx(2,2), F(2,2);
-  double ya_g = 0.0;
+
+  double ya_g_f = 0.0;
+  double ya_g_s = 0.0;
+  double ya_g_n = 0.0;
+
   F(0,0) = 1.0;
   F(1,1) = 1.0;
 
@@ -937,7 +952,9 @@ void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     F(1,0) = F(1,0) + Nwx(0,a)*dl(j,a);
     F(1,1) = F(1,1) + Nwx(1,a)*dl(j,a);
 
-    ya_g = ya_g + Nw(a)*ya_l(a);
+    ya_g_f = ya_g_f + Nw(a) * ya_l_f(a);
+    ya_g_s = ya_g_s + Nw(a) * ya_l_s(a);
+    ya_g_n = ya_g_n + Nw(a) * ya_l_n(a);
   }
 
   double Jac = mat_fun::mat_det(F, 2);
@@ -957,9 +974,10 @@ void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   // isochoric elasticity tensor in Voigt notation (Dm)
   Array<double> Siso(2,2), Dm(3,3);
   double Ja = 0;
-  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g, Siso, Dm, Ja);
+  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g_f,
+                            ya_g_s, ya_g_n, Siso, Dm, Ja);
 
-   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
+  // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
   Array<double> Svis(2,2);
   Array3<double> Kvis_u(4, eNoNw, eNoNw);
   Array3<double> Kvis_v(4, eNoNw, eNoNw);
@@ -1144,12 +1162,15 @@ void ustruct_2d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 
 /// @brief Reproduces Fortran USTRUCT3D_M.
 //
-void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq, 
-    const int nFn, const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq, 
-    const Array<double>& Nwx, const Array<double>& al, const Array<double>& yl, const Array<double>& dl, 
-    const Array<double>& bfl, const Array<double>& fN, const Vector<double>& ya_l, Array<double>& lR, 
-    Array3<double>& lK, Array3<double>& lKd)
-{
+void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
+                  const int eNoNw, const int eNoNq, const int nFn,
+                  const double w, const double Je, const Vector<double> &Nw,
+                  const Vector<double> &Nq, const Array<double> &Nwx,
+                  const Array<double> &al, const Array<double> &yl,
+                  const Array<double> &dl, const Array<double> &bfl,
+                  const Array<double> &fN, const Vector<double> &ya_l_f,
+                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd) {
   using namespace consts;
   using namespace mat_fun;
 
@@ -1199,7 +1220,11 @@ void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   Vector<double> vd{-fb[0], -fb[1], -fb[2]};
   Vector<double> v(3);
   Array<double> vx(3,3), F(3,3);
-  double ya_g = 0.0;
+
+  double ya_g_f = 0.0;
+  double ya_g_s = 0.0;
+  double ya_g_n = 0.0;
+
   F(0,0) = 1.0;
   F(1,1) = 1.0;
   F(2,2) = 1.0;
@@ -1237,7 +1262,9 @@ void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     F(2,1) = F(2,1) + Nwx(1,a)*dl(k,a);
     F(2,2) = F(2,2) + Nwx(2,a)*dl(k,a);
 
-    ya_g = ya_g + Nw(a)*ya_l(a);
+    ya_g_f = ya_g_f + Nw(a) * ya_l_f(a);
+    ya_g_s = ya_g_s + Nw(a) * ya_l_s(a);
+    ya_g_n = ya_g_n + Nw(a) * ya_l_n(a);
   }
 
   double Jac = mat_fun::mat_det(F, 3);
@@ -1258,7 +1285,8 @@ void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   //
   Array<double> Siso(3,3), Dm(6,6);
   double Ja = 0;
-  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g, Siso, Dm, Ja);
+  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, ya_g_f,
+                            ya_g_s, ya_g_n, Siso, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
   Array<double> Svis(3,3);
@@ -1560,7 +1588,6 @@ void ustruct_3d_m(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
       lK(11,a,b) = lK(11,a,b) + w*Jac*T1;
     }
   }
-
 }
 
 /// @brief Replicates 'SUBROUTINE USTRUCT_DOASSEM(d, eqN, lKd, lK, lR)'

@@ -12,9 +12,7 @@
 /**
  * @brief Bueno-Orovio ionic model.
  *
- * **Reference**: Bueno-Orovio, Cherry, Fenton. Minimal model for human
- * ventricular action potentials in tissue. Journal of Theoretical Biology
- * (2008)
+ * **Reference**: [Bueno-Orovio, Cherry, Fenton (2008)](https://doi.org/10.1016/j.jtbi.2008.03.029)
  */
 class BuenoOrovio : public IonicModel {
 public:

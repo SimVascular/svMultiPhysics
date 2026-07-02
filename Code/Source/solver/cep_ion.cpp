@@ -115,8 +115,8 @@ void cep_init(Simulation* simulation)
 //-----------
 // State variable integration.
 //
-void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionStates& solutions)
-{
+void cep_integ(Simulation *simulation, const int iEq, const int iDof,
+               SolutionStates &solutions, const Vector<double> &I4f) {
   auto& Yo = solutions.old.get_velocity();
   static bool IPASS = true;
 
@@ -142,29 +142,10 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
   auto& Xion = cep_mod.Xion;
   int nXion = cep_mod.nXion;
 
-  Vector<double> I4f(tnNo);
-
-  #ifdef debug_cep_integ
+#ifdef debug_cep_integ
   dmsg << "cem.cpld: " << cem.cpld;
   dmsg << "time: " << time;
   #endif
-
-  // Electromechanics: get fiber stretch for stretch activated currents
-  //
-  if (cem.cpld) {
-    for (int iM = 0; iM < com_mod.nMsh; iM++) {
-      auto& msh = com_mod.msh[iM];
-
-      if (msh.nFn != 0) {
-        Vector<double> sA(msh.nNo);
-        post::fib_stretch(com_mod, iEq, msh, solutions.current.get_displacement(), sA);
-        for (int a = 0; a < msh.nNo; a++) {
-          int Ac = msh.gN(a);
-          I4f(Ac) = sA(a);
-        }
-      }
-    }
-  }
 
   //  Ignore first pass as Xion is already initialized
   if (IPASS) {
@@ -183,6 +164,8 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
     Vector<double> sA(tnNo); 
     Array<double> sF(nXion,tnNo); 
     Vector<double> sY(tnNo);
+
+    cep_mod.calcium = 0.0;
 
     for (int Ac = 0; Ac < tnNo; Ac++) {
       if (!all_fun::is_domain(com_mod, eq, Ac, Equation_CEP)) {
@@ -216,12 +199,8 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
           }
         }
 
-        double yl = 0.0;
-        if (cem.cpld) {
-          yl = cem.Ya(Ac);
-        }
-
-        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt);
+        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, I4f(Ac), dt);
+        cep_mod.calcium[Ac] += Xl[dmn.cep.ionic_model->get_calcium_index()];
 
         sA(Ac) = sA(Ac) + 1.0;
         for (int i = 0; i < nX; i++) {
@@ -231,15 +210,12 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
         for (int i = 0; i < nG; i++) {
           sF(nX+i,Ac) += Xgl(i);
         }
-
-        if (cem.cpld) {
-          sY(Ac) = sY(Ac) + yl;
-        }
       }
     }
 
     all_fun::commu(com_mod, sA);
     all_fun::commu(com_mod, sF);
+    all_fun::commu(com_mod, cep_mod.calcium);
 
     if (cem.cpld) {
       all_fun::commu(com_mod, sY);
@@ -248,9 +224,7 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
     for (int Ac = 0; Ac < tnNo; Ac++) {
       if (!utils::is_zero(sA(Ac))) {
         Xion.set_col(Ac, sF.col(Ac) / sA(Ac));
-        if (cem.cpld) {
-          cem.Ya(Ac) = sY(Ac) / sA(Ac);
-        }
+        cep_mod.calcium[Ac] = cep_mod.calcium[Ac] / sA(Ac);
       }
     }
 
@@ -265,12 +239,8 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
       auto Xl = Xion.rows(0,nX-1,Ac);
       auto Xgl = Xion.rows(nX,nX+nG-1,Ac);
 
-      double yl = 0.0;
-      if (cem.cpld) {
-        yl = cem.Ya(Ac);
-      }
-
-      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, yl, I4f(Ac), dt);
+      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, I4f(Ac), dt);
+      cep_mod.calcium[Ac] = Xl[eq.dmn[0].cep.ionic_model->get_calcium_index()];
 
       for (int i = 0; i < nX; i++) {
         Xion(i,Ac) = Xl(i);
@@ -278,10 +248,6 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 
       for (int i = 0; i < nG; i++) {
         Xion(nX+i,Ac) = Xgl(i);
-      }
-
-      if (cem.cpld) {
-        cem.Ya(Ac) = yl;
       }
     }
   }
@@ -299,8 +265,8 @@ void cep_integ(Simulation* simulation, const int iEq, const int iDof, SolutionSt
 // mechanics. The equations are integrated at domain nodes.
 //
 void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
-                 Vector<double> &Xg, const double t1, double &yl,
-                 const double I4f, const double dt) {
+                 Vector<double> &Xg, const double t1, const double I4f,
+                 const double dt) {
   using namespace consts;
 
   #define n_debug_cep_integ_l
@@ -342,7 +308,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
     cep.ionic_model->integ(cep.odes, cep.imyo, t, cep.dt, Istim, Ksac, X, Xg);
   }
 
-  if (isnan(X(0)) ||  isnan(yl)) {
+  if (isnan(X(0))) {
     throw std::runtime_error("[cep_integ_l] A NaN has been computed during time integration of electrophysiology variables.");
   }
 }

@@ -1331,6 +1331,27 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
             }
           } break;
 
+          case OutputNameType::outGrp_activeTensionFibers: {
+            for (int a = 0; a < msh.nNo; a++) {
+              int Ac = msh.gN(a);
+              d[iM].x(is, a) = simulation->cep_mod.cem.Ya_f[Ac];
+            }
+          } break;
+
+          case OutputNameType::outGrp_activeTensionSheets: {
+            for (int a = 0; a < msh.nNo; a++) {
+              int Ac = msh.gN(a);
+              d[iM].x(is, a) = simulation->cep_mod.cem.Ya_s[Ac];
+            }
+          } break;
+
+          case OutputNameType::outGrp_activeTensionNormal: {
+            for (int a = 0; a < msh.nNo; a++) {
+              int Ac = msh.gN(a);
+              d[iM].x(is, a) = simulation->cep_mod.cem.Ya_n[Ac];
+            }
+          } break;
+
           default:
             throw std::runtime_error("Undefined output");
           break;

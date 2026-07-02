@@ -16,6 +16,8 @@
 
 #include "CmMod.h"
 
+#include "factory.h"
+
 // Forward declarations.
 class outputType;
 
@@ -83,11 +85,9 @@ public:
  * specified by classes derived from this.
  *
  * **References**:
- *  - Colli Franzone, Pavarino, Scacchi. Mathematical Cardiac Electrophysiology.
- *    Springer, 2014.
- *  - Goktepe, Kuhl. Computational Modeling of Cardiac Electrophysiology: a
- *    Novel Finite Element Approach. International Journal for Numerical Methods
- *    in Biomedical Engineering, 2009.
+ *  - [Colli Franzone, Pavarino, Scacchi
+ * (2014)](https://doi.org/10.1007/978-3-319-04801-7)
+ *  - [Goktepe, Kuhl (2009)](https://doi.org/10.1007/s00466-009-0434-z)
  *
  * ### Numerical methods
  *
@@ -447,93 +447,16 @@ protected:
 };
 
 /**
- * @brief Self-registering factory for ionic models.
+ * @brief Alias for the ionic model factory.
  *
- * This class gives a way to register ionic models when they are defined, and
- * then instantiate concrete ionic models, derived from IonicModel, by name. To
- * be compatible with this factory, classes derived from IonicModel must be
- * default constructible.
- *
- * It combines the
- * [factory](https://en.wikipedia.org/wiki/Abstract_factory_pattern) and
- * [singleton](https://en.wikipedia.org/wiki/Singleton_pattern) patterns. There
- * should always exist only one instance of this class, which cannot be accessed
- * directly but only manipulated through the static methods of this class.
- *
- * To register a new ionic model into the factory, you can call the
- * register_model static method, passing a class derived from Ionic as template
- * argument and a label for the model as argument. A shortcut for this is to
- * use the macro REGISTER_IONIC_MODEL.
+ * See the documentation for @ref Factory for more details on how this works.
  */
-class IonicModelFactory {
-public:
-  /**
-   * @brief Register a child model.
-   */
-  template <class Model> static bool register_model(const std::string &name) {
-    auto &factory_instance = get_instance();
-
-    if (factory_instance.children.find(name) !=
-        factory_instance.children.end()) {
-      svmp::raise<svmp::FE::InvalidArgumentException>(
-          "A model with name '" + name +
-              "' was already registered in the ionic model factory.");
-    }
-
-    factory_instance.children[name] = []() {
-      return std::make_unique<Model>();
-    };
-
-    return true;
-  }
-
-  /**
-   * @brief Instantiate a model from its name.
-   */
-  static std::unique_ptr<IonicModel> create_model(const std::string &name);
-
-  /**
-   * @brief Iterate through registered ionic models.
-   *
-   * For every registered ionic model, creates a dummy instance of it, and then
-   * calls the provided function on that model. All the dummy model instances
-   * are destroyed after the function call.
-   */
-  static void
-  visit(const std::function<void(const std::string &, const IonicModel &)> &f);
-
-protected:
-  /**
-   * @brief Default constructor.
-   */
-  IonicModelFactory() = default;
-
-  /**
-   * @brief Access the singleton instance.
-   */
-  static IonicModelFactory &get_instance() {
-    static IonicModelFactory instance;
-    return instance;
-  }
-
-  /**
-   * @brief Registered ionic models.
-   *
-   * Each ionic model is represented by a function that takes no argument and
-   * returns a unique_ptr<IonicModel> constructing an instance of that model.
-   * This requires classes derived from IonicModel to be default
-   * constructible.
-   */
-  std::map<std::string, std::function<std::unique_ptr<IonicModel>()>> children;
-};
+using IonicModelFactory = Factory<IonicModel>;
 
 /**
  * @brief Macro to register a ionic model in the factory.
  */
 #define REGISTER_IONIC_MODEL(name, type)                                       \
-  namespace IonicModelFactoryInternals {                                       \
-  static inline volatile const bool ionic_model_factory_registered_##type =    \
-      IonicModelFactory::register_model<type>(name);                           \
-  }
+  REGISTER_IN_FACTORY(IonicModel, type, name)
 
 #endif
