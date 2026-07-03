@@ -35,36 +35,41 @@ bool stimType::is_active(const double time) const
 {
   const double eps = std::numeric_limits<double>::epsilon();
 
-  const int icl = static_cast<int>(fmax(floor(time / cycle_length_), 0.0));
-  const double Ts_cycle = start_time_ + static_cast<double>(icl) * cycle_length_;
-  const double Te_cycle = Ts_cycle + duration_;
-
-  return Ts_cycle - eps <= time && time <= Te_cycle + eps;
+  const double time_relative = std::fmod(time, cycle_length);
+  return start_time - eps <= time_relative && time_relative <= start_time + duration + eps;
 }
 
-void SpatialBounds::set_box(const Vector<double>& min, const Vector<double>& max)
+void stimType::SpatialBounds::set_box(const Vector<double>& min, const Vector<double>& max)
 {
-  box_min_ = min;
-  box_max_ = max;
-  region_type_ = (region_type_ == RegionType::sphere) ? RegionType::both : RegionType::box;
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      min.size() == 0, "Stimulus box bounds must have at least one coordinate.");
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      min.size() != max.size(), "Stimulus box minimum and maximum must have the same coordinate dimension.");
+  box_min = min;
+  box_max = max;
+  has_box = true;
 }
 
-void SpatialBounds::set_sphere(const Vector<double>& center, const double radius)
+void stimType::SpatialBounds::set_sphere(const Vector<double>& center, const double radius)
 {
-  sphere_center_ = center;
-  sphere_radius_ = radius;
-  region_type_ = (region_type_ == RegionType::box) ? RegionType::both : RegionType::sphere;
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      center.size() == 0, "Stimulus sphere center must have at least one coordinate.");
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      radius < 0.0, "Stimulus sphere radius must be non-negative.");
+  sphere_center = center;
+  sphere_radius = radius;
+  has_sphere = true;
 }
 
-bool SpatialBounds::inside_box(const Vector<double>& x) const
+bool stimType::SpatialBounds::inside_box(const Vector<double>& x) const
 {
-  if (x.size() != box_min_.size()) {
+  if (x.size() != box_min.size()) {
     svmp::raise<svmp::FE::InvalidArgumentException>(
-        SVMP_HERE, "Point dimension does not match stimulus box dimension.");
+        "Point dimension does not match stimulus box dimension.");
   }
 
   for (int i = 0; i < x.size(); i++) {
-    if (x(i) < box_min_(i) || x(i) > box_max_(i)) {
+    if (x[i] < box_min[i] || x[i] > box_max[i]) {
       return false;
     }
   }
@@ -72,79 +77,64 @@ bool SpatialBounds::inside_box(const Vector<double>& x) const
   return true;
 }
 
-bool SpatialBounds::inside_sphere(const Vector<double>& x) const
+bool stimType::SpatialBounds::inside_sphere(const Vector<double>& x) const
 {
-  if (x.size() != sphere_center_.size()) {
+  if (x.size() != sphere_center.size()) {
     svmp::raise<svmp::FE::InvalidArgumentException>(
-        SVMP_HERE, "Point dimension does not match stimulus sphere dimension.");
+        "Point dimension does not match stimulus sphere dimension.");
   }
 
   double distance_squared = 0.0;
 
   for (int i = 0; i < x.size(); i++) {
-    const double dx = x(i) - sphere_center_(i);
+    const double dx = x[i] - sphere_center[i];
     distance_squared += dx * dx;
   }
 
-  return distance_squared <= sphere_radius_ * sphere_radius_;
+  return distance_squared <= sphere_radius * sphere_radius;
 }
 
-bool SpatialBounds::contains(const Vector<double>& x) const
+bool stimType::SpatialBounds::contains(const Vector<double>& x) const
 {
-  switch (region_type_) {
-    case RegionType::none:   return true;
-    case RegionType::box:    return inside_box(x);
-    case RegionType::sphere: return inside_sphere(x);
-    case RegionType::both:   return inside_box(x) && inside_sphere(x);
-  }
+  if (has_box && !inside_box(x)) return false;
+  if (has_sphere && !inside_sphere(x)) return false;
   return true;
 }
 
-void SpatialBounds::distribute(const CmMod& cm_mod, const cmType& cm)
+void stimType::SpatialBounds::distribute(const CmMod& cm_mod, const cmType& cm)
 {
-  int region_type_int = static_cast<int>(region_type_);
-  cm.bcast(cm_mod, &region_type_int);
-  region_type_ = static_cast<RegionType>(region_type_int);
+  cm.bcast(cm_mod, &has_box);
+  cm.bcast(cm_mod, &has_sphere);
 
-  if (region_type_ == RegionType::box || region_type_ == RegionType::both) {
-    int box_size = box_min_.size();
+  if (has_box) {
+    int box_size = box_min.size();
     cm.bcast(cm_mod, &box_size);
 
-    if (box_size <= 0) {
-      svmp::raise<svmp::FE::InvalidArgumentException>(
-          SVMP_HERE, "Stimulus box has invalid coordinate dimension.");
-    }
-
     if (cm.slv(cm_mod)) {
-      box_min_.resize(box_size);
-      box_max_.resize(box_size);
+      box_min.resize(box_size);
+      box_max.resize(box_size);
     }
 
-    cm.bcast(cm_mod, box_min_, "SpatialBounds box_min");
-    cm.bcast(cm_mod, box_max_, "SpatialBounds box_max");
+    cm.bcast(cm_mod, box_min, "SpatialBounds box_min");
+    cm.bcast(cm_mod, box_max, "SpatialBounds box_max");
   }
 
-  if (region_type_ == RegionType::sphere || region_type_ == RegionType::both) {
-    int sphere_center_size = sphere_center_.size();
+  if (has_sphere) {
+    int sphere_center_size = sphere_center.size();
     cm.bcast(cm_mod, &sphere_center_size);
 
-    if (sphere_center_size <= 0) {
-      svmp::raise<svmp::FE::InvalidArgumentException>(
-          SVMP_HERE, "Stimulus sphere center has invalid coordinate dimension.");
-    }
-
     if (cm.slv(cm_mod)) {
-      sphere_center_.resize(sphere_center_size);
+      sphere_center.resize(sphere_center_size);
     }
 
-    cm.bcast(cm_mod, sphere_center_, "SpatialBounds sphere_center");
-    cm.bcast(cm_mod, &sphere_radius_);
+    cm.bcast(cm_mod, sphere_center, "SpatialBounds sphere_center");
+    cm.bcast(cm_mod, &sphere_radius);
   }
 }
 
 double stimType::operator()(const double time, const Vector<double>& x) const
 {
-  if (utils::is_zero(amplitude_)) {
+  if (utils::is_zero(amplitude)) {
     return 0.0;
   }
 
@@ -152,30 +142,30 @@ double stimType::operator()(const double time, const Vector<double>& x) const
     return 0.0;
   }
 
-  if (!spatial_bounds_.contains(x)) {
+  if (!spatial_bounds.contains(x)) {
     return 0.0;
   }
 
-  return amplitude_;
+  return amplitude;
 }
 
 void stimType::distribute(const CmMod& cm_mod, const cmType& cm)
 {
-  cm.bcast(cm_mod, &start_time_);
-  cm.bcast(cm_mod, &duration_);
-  cm.bcast(cm_mod, &cycle_length_);
-  cm.bcast(cm_mod, &amplitude_);
-  spatial_bounds_.distribute(cm_mod, cm);
+  cm.bcast(cm_mod, &start_time);
+  cm.bcast(cm_mod, &duration);
+  cm.bcast(cm_mod, &cycle_length);
+  cm.bcast(cm_mod, &amplitude);
+  spatial_bounds.distribute(cm_mod, cm);
 }
 
 void stimType::read_parameters(const StimulusParameters& params, const int nsd, const double default_cycle_length)
 {
-  amplitude_ = params.amplitude.value();
+  amplitude = params.amplitude.value();
 
-  if (!utils::is_zero(amplitude_)) {
-    start_time_ = params.start_time.value();
-    duration_ = params.duration.value();
-    cycle_length_ = params.cycle_length.defined() ? params.cycle_length.value() : default_cycle_length;
+  if (!utils::is_zero(amplitude)) {
+    start_time = params.start_time.value();
+    duration = params.duration.value();
+    cycle_length = params.cycle_length.defined() ? params.cycle_length.value() : default_cycle_length;
   }
 
   const auto& spatial_bounds_params = params.spatial_bounds;
@@ -187,7 +177,7 @@ void stimType::read_parameters(const StimulusParameters& params, const int nsd, 
 
   if (box_is_defined && !(box_min_defined && box_max_defined)) {
     svmp::raise<svmp::ParseException>(
-        SVMP_HERE, "Both Minimum and Maximum must be specified for a CEP stimulus box.");
+        "Both Minimum and Maximum must be specified for a CEP stimulus box.");
   }
 
   if (box_is_defined) {
@@ -196,12 +186,12 @@ void stimType::read_parameters(const StimulusParameters& params, const int nsd, 
 
     if (box_min_vals.size() != box_max_vals.size()) {
       svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Stimulus box Minimum and Maximum must have the same coordinate dimension.");
+          "Stimulus box Minimum and Maximum must have the same coordinate dimension.");
     }
 
     if (box_min_vals.size() != static_cast<std::size_t>(nsd)) {
       svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Stimulus box coordinate dimension must match the simulation spatial dimension.");
+          "Stimulus box coordinate dimension must match the simulation spatial dimension.");
     }
 
     Vector<double> box_min(box_min_vals.size());
@@ -210,14 +200,14 @@ void stimType::read_parameters(const StimulusParameters& params, const int nsd, 
     for (int i = 0; i < static_cast<int>(box_min_vals.size()); i++) {
       if (box_min_vals[i] > box_max_vals[i]) {
         svmp::raise<svmp::ParseException>(
-            SVMP_HERE, "Stimulus box Minimum values must be less than or equal to Maximum values.");
+            "Stimulus box Minimum values must be less than or equal to Maximum values.");
       }
 
-      box_min(i) = box_min_vals[i];
-      box_max(i) = box_max_vals[i];
+      box_min[i] = box_min_vals[i];
+      box_max[i] = box_max_vals[i];
     }
 
-    spatial_bounds_.set_box(box_min, box_max);
+    spatial_bounds.set_box(box_min, box_max);
   }
 
   const auto& sphere_params = spatial_bounds_params.sphere;
@@ -227,7 +217,7 @@ void stimType::read_parameters(const StimulusParameters& params, const int nsd, 
 
   if (sphere_is_defined && !(sphere_center_defined && sphere_radius_defined)) {
     svmp::raise<svmp::ParseException>(
-        SVMP_HERE, "Both Center and Radius must be specified for a CEP stimulus sphere.");
+        "Both Center and Radius must be specified for a CEP stimulus sphere.");
   }
 
   if (sphere_is_defined) {
@@ -236,21 +226,21 @@ void stimType::read_parameters(const StimulusParameters& params, const int nsd, 
 
     if (sphere_center_vals.size() != static_cast<std::size_t>(nsd)) {
       svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Stimulus sphere center coordinate dimension must match the simulation spatial dimension.");
+          "Stimulus sphere center coordinate dimension must match the simulation spatial dimension.");
     }
 
     if (sphere_radius_val < 0.0) {
       svmp::raise<svmp::ParseException>(
-          SVMP_HERE, "Stimulus sphere Radius must be non-negative.");
+          "Stimulus sphere Radius must be non-negative.");
     }
 
     Vector<double> sphere_center(sphere_center_vals.size());
 
     for (int i = 0; i < static_cast<int>(sphere_center_vals.size()); i++) {
-      sphere_center(i) = sphere_center_vals[i];
+      sphere_center[i] = sphere_center_vals[i];
     }
 
-    spatial_bounds_.set_sphere(sphere_center, sphere_radius_val);
+    spatial_bounds.set_sphere(sphere_center, sphere_radius_val);
   }
 }
 

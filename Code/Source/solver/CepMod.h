@@ -50,40 +50,39 @@ class ComMod;
 class CmMod;
 class cmType;
 
-/// @brief Spatial bounds for a CEP stimulus region.
-class SpatialBounds
-{
-  public:
-    enum class RegionType { none, box, sphere, both };
-
-    /// @brief Set box bounds. Updates region type to box or both.
-    void set_box(const Vector<double>& min, const Vector<double>& max);
-
-    /// @brief Set sphere bounds. Updates region type to sphere or both.
-    void set_sphere(const Vector<double>& center, const double radius);
-
-    /// @brief Return true if the point lies inside all active spatial bounds.
-    bool contains(const Vector<double>& x) const;
-
-    /// @brief Broadcast spatial bounds to all MPI ranks.
-    void distribute(const CmMod& cm_mod, const cmType& cm);
-
-  private:
-    RegionType region_type_ = RegionType::none;
-
-    Vector<double> box_min_;
-    Vector<double> box_max_;
-    Vector<double> sphere_center_;
-    double sphere_radius_ = 0.0;
-
-    bool inside_box(const Vector<double>& x) const;
-    bool inside_sphere(const Vector<double>& x) const;
-};
-
 /// @brief External stimulus type
 class stimType
 {
   public:
+    /// @brief Spatial bounds for a CEP stimulus region.
+    class SpatialBounds
+    {
+      public:
+        /// @brief Set box bounds.
+        void set_box(const Vector<double>& min, const Vector<double>& max);
+
+        /// @brief Set sphere bounds.
+        void set_sphere(const Vector<double>& center, const double radius);
+
+        /// @brief Return true if the point lies inside all active spatial bounds.
+        bool contains(const Vector<double>& x) const;
+
+        /// @brief Broadcast spatial bounds to all MPI ranks.
+        void distribute(const CmMod& cm_mod, const cmType& cm);
+
+      private:
+        bool has_box = false;
+        bool has_sphere = false;
+
+        Vector<double> box_min;
+        Vector<double> box_max;
+        Vector<double> sphere_center;
+        double sphere_radius = 0.0;
+
+        bool inside_box(const Vector<double>& x) const;
+        bool inside_sphere(const Vector<double>& x) const;
+    };
+
     /// @brief Return the applied stimulus value at a point and time.
     double operator()(const double time, const Vector<double>& x) const;
 
@@ -94,12 +93,12 @@ class stimType
     void distribute(const CmMod& cm_mod, const cmType& cm);
 
   private:
-    double start_time_ = 0.0;
-    double duration_ = 0.0;
-    double cycle_length_ = 0.0;
-    double amplitude_ = 0.0;
+    double start_time = 0.0;
+    double duration = 0.0;
+    double cycle_length = 0.0;
+    double amplitude = 0.0;
 
-    SpatialBounds spatial_bounds_;
+    SpatialBounds spatial_bounds;
 
     bool is_active(const double time) const;
 };

@@ -2188,7 +2188,7 @@ void StimulusSpatialBoundsParameters::set_values(tinyxml2::XMLElement* xml_elem)
     } else if (name == StimulusSphereParameters::xml_element_name_) {
       sphere.set_values(item);
     } else {
-      svmp::raise<svmp::ParseException>(SVMP_HERE, error_msg + name + "'.");
+      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
     }
   }
 
