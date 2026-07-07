@@ -270,7 +270,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
       if (ci_has_block && ci_has_1d_file) {
         svmp::raise<svmp::CoreException>(
-          SVMP_HERE,
+          ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
           std::string("[read_bc] <Coupling_interface> on face '") + face_name +
           "' defines both <svZeroDSolver_block> and <svOneDSolver_input_file>. "
           "Specify exactly one per face.",
@@ -281,7 +281,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
         // 0D face: route to svZeroD.
         if (!svzd_iface) {
           svmp::raise<svmp::CoreException>(
-              SVMP_HERE,
+               ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
               std::string("[read_bc] Face '") + face_name +
               "' specifies <svZeroDSolver_block> but no <svZeroDSolver_interface> "
               "is defined on the equation.",
@@ -299,7 +299,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
         // 1D face: route to svOneD.
         if (!svOneD_iface) {
           svmp::raise<svmp::CoreException>(
-              SVMP_HERE,
+              ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
               std::string("[read_bc] Face '") + face_name +
               "' specifies <svOneDSolver_input_file> but no <svOneDSolver_interface> "
               "is defined on the equation.",
@@ -317,7 +317,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
         if (com_mod.cplBC.schm == CplBCType::cplBC_NA) {
           svmp::raise<svmp::CoreException>(
-              SVMP_HERE,
+              ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
               std::string("[read_bc] A coupling method (e.g. svOneDSolver_interface coupling_type) "
                           "must be defined for Time_dependence Coupled on face '") +
               face_name + "'.",
@@ -328,7 +328,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
         // <Coupling_interface> is present but has neither field, or is absent entirely.
         if (ci_set) {
           svmp::raise<svmp::CoreException>(
-              SVMP_HERE,
+              ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
               std::string("[read_bc] <Coupling_interface> on face '") + face_name +
               "' must define either <svZeroDSolver_block> (for 0D coupling) or "
               "<svOneDSolver_input_file> (for 1D coupling).",
@@ -337,7 +337,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
         if (svzd_iface) {
           svmp::raise<svmp::CoreException>(
-              SVMP_HERE,
+              ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
               std::string("[read_bc] With <svZeroDSolver_interface>, each svZeroD-coupled face needs "
                           "<Coupling_interface> with <svZeroDSolver_block> "
                           "(Time_dependence Coupled) on face '") +
@@ -345,7 +345,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
               svmp::StatusCode::InvalidArgument);
         } else {
           svmp::raise<svmp::CoreException>(
-              SVMP_HERE,
+              ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
               std::string("[read_bc] With <svOneDSolver_interface>, each 1D-coupled face needs "
                           "<Coupling_interface> with <svOneDSolver_input_file> "
                           "(Time_dependence Coupled) on face '") +
@@ -357,7 +357,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       // genBC / cplBC path: no svZeroD or svOneD interface defined.
       if (bc_params->coupling_interface.value_set) {
         svmp::raise<svmp::CoreException>(
-            SVMP_HERE,
+            ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
             "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> or "
             "<svOneDSolver_interface> is defined on the equation.",
             svmp::StatusCode::InvalidArgument);
@@ -369,7 +369,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
       if (com_mod.cplBC.schm == CplBCType::cplBC_NA) {
         svmp::raise<svmp::CoreException>(
-            SVMP_HERE,
+            ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
             std::string("[read_bc] A coupling method (e.g. Couple_to_genBC) must be defined for Time_dependence "
                         "Coupled on face '") +
             face_name + "'.",
@@ -381,21 +381,21 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_res)); 
     if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) { 
       svmp::raise<svmp::CoreException>(
-          SVMP_HERE,
+          ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
           "[read_bc] Resistance is only defined for Neu BC.",
           svmp::StatusCode::InvalidArgument);
     }
 
     if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) { 
       svmp::raise<svmp::CoreException>(
-          SVMP_HERE,
+          ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
           "[read_bc] Resistance is not defined for Robin BC.",
           svmp::StatusCode::InvalidArgument);
     }
 
     if (std::set<EquationType>{Equation_fluid,Equation_FSI,Equation_CMM}.count(lEq.phys) == 0) {
       svmp::raise<svmp::CoreException>(
-          SVMP_HERE,
+          ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
           "[read_bc] Resistance is only defined for fluid/CMM/SI equations.",
           svmp::StatusCode::InvalidArgument);
     }
@@ -626,7 +626,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     if (coupled_bc_type == BoundaryConditionType::bType_Dir) {
       if (!bc_params->impose_flux.value()) {
         svmp::raise<svmp::CoreException>(
-            SVMP_HERE,
+             ::svmp::SourceLocation{__FILE__, __LINE__, __func__},
             std::string("[read_bc] Dirichlet Coupled boundary condition on face '") +
             face_name + "' receives a volumetric flow rate Q from the downstream "
             "0D/1D solver, not a velocity. Set <Impose_flux>true</Impose_flux> "
