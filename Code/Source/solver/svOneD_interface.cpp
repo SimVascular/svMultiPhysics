@@ -123,10 +123,12 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   const int myRank = cm.taskId;
 
   if (!solver_if.has_data) {
-    svmp::raise<svmp::CoreException>(
-        SVMP_HERE,
-        "[svOneD::init_svOneD] svOneD solver interface data is missing. Please check the XML input file.",
-        svmp::StatusCode::InvalidState);
+  throw svmp::CoreException(
+      "[svOneD::init_svOneD] svOneD solver interface data is missing. Please check the XML input file.",
+      svmp::StatusCode::InvalidState,
+      __FILE__,
+      __LINE__,
+      __func__);
   }
 
   // Initialize the 1D simulation clock from the 3D solver's current time so
@@ -155,10 +157,12 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   }
 
   if (oned_models.empty()) {
-    svmp::raise<svmp::CoreException>(
-        SVMP_HERE,
-        "[svOneD::init_svOneD] No svOneD-coupled faces with input files found. Please check the XML input file.",
-        svmp::StatusCode::InvalidState);
+  throw svmp::CoreException(
+      "[svOneD::init_svOneD] No svOneD-coupled faces with input files found. Please check the XML input file.",
+      svmp::StatusCode::InvalidState,
+      __FILE__,
+      __LINE__,
+      __func__);
   }
 
   // ----- Guard: require at least one MPI rank per 1D model -----
@@ -167,14 +171,16 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   // more than once, corrupting the static problem-ID state inside the shared library.
   const int nTotalModels = static_cast<int>(oned_models.size());
   if (nProcs < nTotalModels) {
-    svmp::raise<svmp::CoreException>(
-        SVMP_HERE,
+    throw svmp::CoreException(
         "[svOneD::init_svOneD] Number of MPI processes (" + std::to_string(nProcs) +
         ") is less than the number of svOneD-coupled faces (" +
         std::to_string(nTotalModels) +
         "). Please run with at least " + std::to_string(nTotalModels) +
         " MPI processes.",
-        svmp::StatusCode::InvalidState);
+        svmp::StatusCode::InvalidState,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
 
   // ----- Load shared library (once per process) -----
@@ -313,12 +319,15 @@ void calc_svOneD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
                                   st.coupling_type, params,
                                   work_sol.data(), cpl_values[k], BCFlag, error_code);
     } catch (const std::exception& e) {
-      svmp::raise<svmp::DependencyException>(
-          SVMP_HERE,
-          "[svOneD::calc_svOneD] 1D solver step failed for svOneD input file '" +
-          bc.coupled_bc.get_oned_input_file() + "' with coupling type '" +
-          st.coupling_type + "' at time " + std::to_string(t_new) + ". " +
-          "Original error: " + e.what());
+        throw svmp::CoreException(
+            std::string("[svOneD::calc_svOneD] 1D solver step failed for svOneD input file '") +
+            bc.coupled_bc.get_oned_input_file() + "' with coupling type '" +
+            st.coupling_type + "' at time " + std::to_string(t_new) + ". " +
+            "Original error: " + e.what(),
+            svmp::StatusCode::DependencyError,
+            __FILE__,
+            __LINE__,
+            __func__);
     }
 
     // Commit the updated solution only on the final iteration.
