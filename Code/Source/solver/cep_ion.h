@@ -1,13 +1,13 @@
-// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
-// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
+// University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef CEP_ION_H 
-#define CEP_ION_H 
+#ifndef CEP_ION_H
+#define CEP_ION_H
 
 #include "Array.h"
-#include "SolutionStates.h"
 #include "ComMod.h"
 #include "Simulation.h"
+#include "SolutionStates.h"
 
 #include "all_fun.h"
 #include "consts.h"
@@ -16,15 +16,14 @@
 
 namespace cep_ion {
 
-void cep_init(Simulation* simulation);
+void cep_init(Simulation *simulation);
 
 void cep_integ(Simulation *simulation, const int iEq, const int iDof,
                SolutionStates &solutions, const Vector<double> &I4f);
 
 void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
                  Vector<double> &Xg, const double t1, const double I4f,
-                 const double dt);
-};
+                 const double dt, const Vector<double> &x);
+}; // namespace cep_ion
 
 #endif
-
