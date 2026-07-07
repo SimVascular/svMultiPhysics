@@ -1599,10 +1599,9 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       } 
 
       cm.bcast(cm_mod, cep.Dani);
-      cm.bcast(cm_mod, &cep.Istim.Ts);
-      cm.bcast(cm_mod, &cep.Istim.Td);
-      cm.bcast(cm_mod, &cep.Istim.CL);
-      cm.bcast(cm_mod, &cep.Istim.A);
+
+      cep.Istim.distribute(cm_mod, cm);
+
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 
       if (cep.odes.tIntType == TimeIntegrationType::CN2) {
