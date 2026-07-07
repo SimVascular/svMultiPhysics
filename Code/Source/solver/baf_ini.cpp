@@ -123,10 +123,6 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
         com_mod.cplBC.fa[i].name = com_mod.msh[iM].fa[iFa].name;
         com_mod.cplBC.fa[i].y = 0.0;
 
-        if (!bc.oned_input_file.empty()) {
-          com_mod.cplBC.fa[i].oned_input_file = bc.oned_input_file;
-        }
-
         if (utils::btest(bc.bType, iBC_Dir)) {
           com_mod.cplBC.fa[i].bGrp = CplBCType::cplBC_Dir;
 

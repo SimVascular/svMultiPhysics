@@ -1,58 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-// 3D-1D coupling subroutines.
-//
-// These routines interface the 3D finite-element solver (svMultiPhysics) with
-// the 1D blood-flow solver (svOneDSolver) via a dynamically loaded shared
-// library (libsvOneDSolver_interface.so/.dylib).
-//
-// Coupling overview
-// -----------------
-//   NEU coupling (1D inlet driven by 3D outflow):
-//     3D → 1D : flow rate Q  (as params[3..4])
-//     1D → 3D : pressure P   (as cpl_value)
-//     BC applied on 3D face  : Neumann (pressure traction)
-//
-//   DIR coupling (1D outlet driven by 3D pressure):
-//     3D → 1D : pressure P   (as params[3..4])
-//     1D → 3D : flow rate Q  (as cpl_value)
-//     BC applied on 3D face  : Dirichlet (velocity profile)
-//
-// Parallelism model
-// -----------------
-//   Unlike the 0D solver (which is solved once on the master rank), each
-//   1D model is INDEPENDENT and has its own input file.  Multiple 1D models
-//   are therefore read, initialized, and solved in parallel:
-//
-//   Initialization (init_svOneD):
-//     Phase 1 – parallel init:
-//       - Collect all svOneD-coupled faces into a list indexed 0..N-1.
-//       - Assign face (model) k to MPI rank  k % nProcs.
-//       - Each rank reads and initializes ONLY its owned model(s) with no
-//         MPI synchronization, so all ranks work simultaneously.
-//     Phase 2 – batch metadata exchange:
-//       - After every rank has finished initializing its own model(s),
-//         share system_size and coupled_dof via MPI_Bcast so that all
-//         ranks know the sizes needed for subsequent result broadcasts.
-//
-//   Time-stepping (calc_svOneD):
-//     Phase 1 – parallel solve:
-//       - Each rank runs run_simulation() for its owned model(s) with no MPI
-//         calls, so model k on rank A and model k+1 on rank B truly run
-//         concurrently.
-//     Phase 2 – batch result exchange:
-//       - After every rank has finished solving, results are shared via
-//         MPI_Bcast so that ALL ranks know the result, and each BC's
-//         coupled_bc.set_pressure() is updated accordingly.
-//
-// params array passed to run_1d_simulation_step_1d_:
-//   params[0] = 2.0          (number of time points)
-//   params[1] = t_old         (time at start of step)
-//   params[2] = t_new         (time at end of step)
-//   params[3] = BC_val_old    (Q or P at t_old)
-//   params[4] = BC_val_new    (Q or P at t_new)
-
 #include "svOneD_interface.h"
 
 #include <fstream>
@@ -175,12 +123,10 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   const int myRank = cm.taskId;
 
   if (!solver_if.has_data) {
-  throw svmp::CoreException(
-      "[svOneD::init_svOneD] svOneD solver interface data is missing. Please check the XML input file.",
-      svmp::StatusCode::InvalidState,
-      __FILE__,
-      __LINE__,
-      __func__);
+    svmp::raise<svmp::CoreException>(
+        SVMP_HERE,
+        "[svOneD::init_svOneD] svOneD solver interface data is missing. Please check the XML input file.",
+        svmp::StatusCode::InvalidState);
   }
 
   // Initialize the 1D simulation clock from the 3D solver's current time so
@@ -209,12 +155,10 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   }
 
   if (oned_models.empty()) {
-  throw svmp::CoreException(
-      "[svOneD::init_svOneD] No svOneD-coupled faces with input files found. Please check the XML input file.",
-      svmp::StatusCode::InvalidState,
-      __FILE__,
-      __LINE__,
-      __func__);
+    svmp::raise<svmp::CoreException>(
+        SVMP_HERE,
+        "[svOneD::init_svOneD] No svOneD-coupled faces with input files found. Please check the XML input file.",
+        svmp::StatusCode::InvalidState);
   }
 
   // ----- Guard: require at least one MPI rank per 1D model -----
@@ -223,16 +167,14 @@ void init_svOneD(ComMod& com_mod, const CmMod& cm_mod)
   // more than once, corrupting the static problem-ID state inside the shared library.
   const int nTotalModels = static_cast<int>(oned_models.size());
   if (nProcs < nTotalModels) {
-  throw svmp::CoreException(
-      "[svOneD::init_svOneD] Number of MPI processes (" + std::to_string(nProcs) +
-      ") is less than the number of svOneD-coupled faces (" +
-      std::to_string(nTotalModels) +
-      "). Please run with at least " + std::to_string(nTotalModels) +
-      " MPI processes.",
-      svmp::StatusCode::InvalidState,
-      __FILE__,
-      __LINE__,
-      __func__);
+    svmp::raise<svmp::CoreException>(
+        SVMP_HERE,
+        "[svOneD::init_svOneD] Number of MPI processes (" + std::to_string(nProcs) +
+        ") is less than the number of svOneD-coupled faces (" +
+        std::to_string(nTotalModels) +
+        "). Please run with at least " + std::to_string(nTotalModels) +
+        " MPI processes.",
+        svmp::StatusCode::InvalidState);
   }
 
   // ----- Load shared library (once per process) -----

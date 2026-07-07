@@ -72,6 +72,8 @@ class OneDSolverInterface {
   /// @param[in] last_flag    'L' for the final (committed) iteration, 'D' for
   ///                     derivative / predictor steps.
   /// @param[out] error_code   Non-zero on failure.
+  ///                          0 indicates success. Any non-zero value is
+  ///                          interpreted by this wrapper as a 1D solver failure.
   void run_simulation(int problem_id, double current_time, int save_incr,
                 const std::string& coupling_type, double* params,
                 double* solution, double& cpl_value, char last_flag,

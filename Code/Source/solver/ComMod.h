@@ -205,9 +205,6 @@ class bcType
     // Coupled BC class
     CoupledBoundaryCondition coupled_bc;
 
-    // svOneD: per-face 1D solver input file path (set when Time_dependence=Coupled
-    // and svOneDSolver_interface is active).
-    std::string oned_input_file;
 };
 
 /// @brief Class storing data for B-Splines.
@@ -855,13 +852,13 @@ class cplBCType
     /// @brief Whether to use genBC
     bool useGenBC = false;
 
-    //  Whether to use svZeroD
+    /// @brief Whether to use svZeroD
     bool useSvZeroD = false;
 
-    //  Whether to use svOneD (svOneDSolver)
+    /// @brief Whether to use svOneD (svOneDSolver)
     bool useSvOneD = false;
 
-    //  Whether to initialize RCR from flow data
+    /// @brief Whether to initialize RCR from flow data
     bool initRCR = false;
 
     /// @brief Number of coupled faces

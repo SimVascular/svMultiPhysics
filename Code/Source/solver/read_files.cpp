@@ -130,6 +130,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   using namespace consts;
   auto bc_type = bc_params->type.value();
   BoundaryConditionType coupled_bc_type = BoundaryConditionType::bType_Neu;
+  std::string oned_input_file;
 
   if (std::set<std::string>{"Dirichlet", "Dir"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
@@ -304,7 +305,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
               "is defined on the equation.",
               svmp::StatusCode::InvalidArgument);
         }
-        lBc.oned_input_file = bc_params->coupling_interface.svoned_input_file.value();
+        oned_input_file = bc_params->coupling_interface.svoned_input_file.value();
 
         // svOneD now uses the CoupledBoundaryCondition interface (same flags as svZeroD).
         lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
@@ -513,8 +514,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
           face_name + "'.");
     }
 
-    const bool is_svOneD_face = !lBc.oned_input_file.empty();
-
+    const bool is_svOneD_face = !oned_input_file.empty();
+    
     if (is_svOneD_face) {
       // ------------------------------------------------------------------
       // svOneD path: construct CoupledBoundaryCondition with empty
@@ -533,7 +534,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
                                                 com_mod.msh[lBc.iM].fa[lBc.iFa].name,
                                                 /*block_name=*/"", lEq.phys, /*follower_pressure_load=*/false);
-      lBc.coupled_bc.set_oned_input_file(lBc.oned_input_file);
+      lBc.coupled_bc.set_oned_input_file(oned_input_file);
 
       // Read optional pressure ramp parameters for 1D coupling initialization.
       if (bc_params->coupling_interface.coupling_ramp_steps.defined() &&
@@ -618,14 +619,22 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
           "' but neither svZeroDSolver_interface nor svOneDSolver_interface is defined.");
     }
 
-    // For DIR Coupled BCs (svZeroD or svOneD), the downstream solver always returns a
-    // volumetric flow rate Q [m³/s], not a velocity [m/s].  Without bType_flx, bc_ini
-    // sets gx(a) = 1, and set_bc_dir_l applies velocity = Q * nV which has the wrong
-    // dimensions.  With bType_flx, bc_ini normalises gx(a) = 1/area, so the applied
-    // velocity = (Q/area) * nV [m/s] is physically correct.  Enforce this automatically
-    // regardless of the user's <impose_flux> setting.
+    // Coupled DIR BCs (svZeroD or svOneD) receive a volumetric flow rate Q
+    // [m^3/s], not a velocity [m/s]. Require the user to explicitly set
+    // <Impose_flux>true</Impose_flux> so that bc_ini normalizes gx(a) = 1/area
+    // and set_bc_dir_l applies velocity = (Q/area) * nV.
     if (coupled_bc_type == BoundaryConditionType::bType_Dir) {
-      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_flx));
+      if (!bc_params->impose_flux.value()) {
+        svmp::raise<svmp::CoreException>(
+            SVMP_HERE,
+            std::string("[read_bc] Dirichlet Coupled boundary condition on face '") +
+            face_name + "' receives a volumetric flow rate Q from the downstream "
+            "0D/1D solver, not a velocity. Set <Impose_flux>true</Impose_flux> "
+            "for this boundary so Q is normalized by the face area before applying "
+            "the boundary velocity.",
+            svmp::StatusCode::InvalidArgument);
+      }
+
       is_coupled_dir = true;
     }
 
