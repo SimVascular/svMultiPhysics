@@ -5,6 +5,7 @@
 
 #include "read_files.h"
 
+#include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "all_fun.h"
 #include "consts.h"
@@ -25,7 +26,6 @@
 #include <math.h>
 #include <sstream>
 #include <vector>
-#include "Core/Exception.h"
 
 namespace read_files_ns {
 
