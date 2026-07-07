@@ -174,6 +174,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a143fd58eefaea677631d37cc52ebc9d2" id="r_a143fd58eefaea677631d37cc52ebc9d2"><td class="memItemLeft" align="right" valign="top"><a id="a143fd58eefaea677631d37cc52ebc9d2" name="a143fd58eefaea677631d37cc52ebc9d2"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>start_time</b></td></tr>
 <tr class="separator:a143fd58eefaea677631d37cc52ebc9d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1655575debb5be1f7716a9beede150a7" id="r_a1655575debb5be1f7716a9beede150a7"><td class="memItemLeft" align="right" valign="top"><a id="a1655575debb5be1f7716a9beede150a7" name="a1655575debb5be1f7716a9beede150a7"></a>
+<a class="el" href="class_stimulus_spatial_bounds_parameters.html">StimulusSpatialBoundsParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><b>spatial_bounds</b></td></tr>
+<tr class="separator:a1655575debb5be1f7716a9beede150a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab9b8e96f97ea6d703168c477a045a051" id="r_ab9b8e96f97ea6d703168c477a045a051"><td class="memItemLeft" align="right" valign="top"><a id="ab9b8e96f97ea6d703168c477a045a051" name="ab9b8e96f97ea6d703168c477a045a051"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>value_set</b> = false</td></tr>
 <tr class="separator:ab9b8e96f97ea6d703168c477a045a051"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,7 +191,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:aef27a1646c0f818b5d34b8f0517f5913" id="r_aef27a1646c0f818b5d34b8f0517f5913"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_stimulus_parameters.html#aef27a1646c0f818b5d34b8f0517f5913">xml_element_name_</a> = &quot;Stimulus&quot;</td></tr>
-<tr class="memdesc:aef27a1646c0f818b5d34b8f0517f5913"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define the XML element name for equation output parameters.  <br /></td></tr>
+<tr class="memdesc:aef27a1646c0f818b5d34b8f0517f5913"><td class="mdescLeft">&#160;</td><td class="mdescRight">XML element name for CEP stimulus parameters.  <br /></td></tr>
 <tr class="separator:aef27a1646c0f818b5d34b8f0517f5913"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -198,6 +201,16 @@ Static Public Attributes</h2></td></tr>
 <div class="line">  &lt;<span class="keywordtype">Start_time</span>&gt; 0.0 &lt;/<span class="keywordtype">Start_time</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">Duration</span>&gt; 1.0 &lt;/<span class="keywordtype">Duration</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">Cycle_length</span>&gt; 10000.0 &lt;/<span class="keywordtype">Cycle_length</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">Spatial_bounds</span>&gt;</div>
+<div class="line">    &lt;<span class="keywordtype">Box</span>&gt;</div>
+<div class="line">      &lt;<span class="keywordtype">Minimum</span>&gt; 0.0 0.0 0.0 &lt;/<span class="keywordtype">Minimum</span>&gt;</div>
+<div class="line">      &lt;<span class="keywordtype">Maximum</span>&gt; 1.0 1.0 1.0 &lt;/<span class="keywordtype">Maximum</span>&gt;</div>
+<div class="line">    &lt;/<span class="keywordtype">Box</span>&gt;</div>
+<div class="line">    &lt;<span class="keywordtype">Sphere</span>&gt;</div>
+<div class="line">      &lt;<span class="keywordtype">Center</span>&gt; 0.5 0.5 0.5 &lt;/<span class="keywordtype">Center</span>&gt;</div>
+<div class="line">      &lt;<span class="keywordtype">Radius</span>&gt; 0.25 &lt;/<span class="keywordtype">Radius</span>&gt;</div>
+<div class="line">    &lt;/<span class="keywordtype">Sphere</span>&gt;</div>
+<div class="line">  &lt;/<span class="keywordtype">Spatial_bounds</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">Stimulus</span>&gt;</div>
 </div><!-- fragment --> </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="aef27a1646c0f818b5d34b8f0517f5913" name="aef27a1646c0f818b5d34b8f0517f5913"></a>
@@ -220,7 +233,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Define the XML element name for equation output parameters. </p>
+<p>XML element name for CEP stimulus parameters. </p>
 
 </div>
 </div>

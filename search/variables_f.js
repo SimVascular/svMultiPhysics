@@ -9,7 +9,7 @@ var searchData=
   ['relax_5ffactor_6',['relax_factor',['../classuris_type.html#ad145a14cc19e72b4e45df49482d0d3e8',1,'urisType']]],
   ['reltol_7',['reltol',['../classls_type.html#acb851846402df623d3480030b5831932',1,'lsType::relTol'],['../classode_type.html#a09c0984b088e1276c1421aeb932067aa',1,'odeType::relTol']]],
   ['required_8',['required',['../class_ionic_initial_state_parameters.html#a3c9947e781967690c7040c4bf4784461',1,'IonicInitialStateParameters']]],
-  ['res_9',['res',['../classris_face_type.html#a544b7898420665b210b52d79c595b3ff',1,'risFaceType::Res'],['../classmsh_type.html#a819347035a740b8c77a70ff96e818d47',1,'mshType::res']]],
+  ['res_9',['res',['../classmsh_type.html#a819347035a740b8c77a70ff96e818d47',1,'mshType::res'],['../classris_face_type.html#a544b7898420665b210b52d79c595b3ff',1,'risFaceType::Res']]],
   ['reserve_10',['reserve',['../classls_type.html#a3fc715baede9e9d7b40de26169ead4a0',1,'lsType']]],
   ['resetsim_11',['resetSim',['../class_com_mod.html#a884b8c0797550cf10a71eee30be8bf05',1,'ComMod']]],
   ['resistance_12',['resistance',['../classuris_type.html#af6aef2917cd8c726e9c23cd3ca1f458b',1,'urisType']]],

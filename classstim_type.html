@@ -87,7 +87,8 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classstim_type-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">stimType Class Reference</div></div>
 </div><!--header-->
@@ -98,90 +99,126 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="_cep_mod_8h_source.html">CepMod.h</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a11c427a48f79c75547d7b2591e8db9c2" id="r_a11c427a48f79c75547d7b2591e8db9c2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type.html#a11c427a48f79c75547d7b2591e8db9c2">Ts</a> = 0.0</td></tr>
-<tr class="memdesc:a11c427a48f79c75547d7b2591e8db9c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">start time  <br /></td></tr>
-<tr class="separator:a11c427a48f79c75547d7b2591e8db9c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2ff9342a37876d80073e49009772148" id="r_af2ff9342a37876d80073e49009772148"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type.html#af2ff9342a37876d80073e49009772148">Td</a> = 0.0</td></tr>
-<tr class="memdesc:af2ff9342a37876d80073e49009772148"><td class="mdescLeft">&#160;</td><td class="mdescRight">duration of stimulus  <br /></td></tr>
-<tr class="separator:af2ff9342a37876d80073e49009772148"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad1acbde76bd0d756986c21d29226c57b" id="r_ad1acbde76bd0d756986c21d29226c57b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type.html#ad1acbde76bd0d756986c21d29226c57b">CL</a> = 0.0</td></tr>
-<tr class="memdesc:ad1acbde76bd0d756986c21d29226c57b"><td class="mdescLeft">&#160;</td><td class="mdescRight">cycle length  <br /></td></tr>
-<tr class="separator:ad1acbde76bd0d756986c21d29226c57b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa238651f2a4f6b211f533ea76b295018" id="r_aa238651f2a4f6b211f533ea76b295018"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type.html#aa238651f2a4f6b211f533ea76b295018">A</a> = 0.0</td></tr>
-<tr class="memdesc:aa238651f2a4f6b211f533ea76b295018"><td class="mdescLeft">&#160;</td><td class="mdescRight">stimulus amplitude  <br /></td></tr>
-<tr class="separator:aa238651f2a4f6b211f533ea76b295018"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type_1_1_spatial_bounds.html">SpatialBounds</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Spatial bounds for a CEP stimulus region.  <a href="classstim_type_1_1_spatial_bounds.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a000acbc197a215db317c5c30f207b913" id="r_a000acbc197a215db317c5c30f207b913"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type.html#a000acbc197a215db317c5c30f207b913">operator()</a> (const double time, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;x) const</td></tr>
+<tr class="memdesc:a000acbc197a215db317c5c30f207b913"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the applied stimulus value at a point and time.  <br /></td></tr>
+<tr class="separator:a000acbc197a215db317c5c30f207b913"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae958e6c60bc95a3da84cf33fc89c6032" id="r_ae958e6c60bc95a3da84cf33fc89c6032"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type.html#ae958e6c60bc95a3da84cf33fc89c6032">read_parameters</a> (const <a class="el" href="class_stimulus_parameters.html">StimulusParameters</a> &amp;params, const int nsd, const double default_cycle_length)</td></tr>
+<tr class="memdesc:ae958e6c60bc95a3da84cf33fc89c6032"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set stimulus parameters from parsed XML parameters.  <br /></td></tr>
+<tr class="separator:ae958e6c60bc95a3da84cf33fc89c6032"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d3c4d3fa88b8fe22e239174082bd470" id="r_a9d3c4d3fa88b8fe22e239174082bd470"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstim_type.html#a9d3c4d3fa88b8fe22e239174082bd470">distribute</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="classcm_type.html">cmType</a> &amp;cm)</td></tr>
+<tr class="memdesc:a9d3c4d3fa88b8fe22e239174082bd470"><td class="mdescLeft">&#160;</td><td class="mdescRight">Broadcast stimulus parameters to all ranks.  <br /></td></tr>
+<tr class="separator:a9d3c4d3fa88b8fe22e239174082bd470"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>External stimulus type. </p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="aa238651f2a4f6b211f533ea76b295018" name="aa238651f2a4f6b211f533ea76b295018"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa238651f2a4f6b211f533ea76b295018">&#9670;&#160;</a></span>A</h2>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a9d3c4d3fa88b8fe22e239174082bd470" name="a9d3c4d3fa88b8fe22e239174082bd470"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d3c4d3fa88b8fe22e239174082bd470">&#9670;&#160;</a></span>distribute()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double stimType::A = 0.0</td>
+          <td class="memname">void stimType::distribute </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classcm_type.html">cmType</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>stimulus amplitude </p>
+<p>Broadcast stimulus parameters to all ranks. </p>
 
 </div>
 </div>
-<a id="ad1acbde76bd0d756986c21d29226c57b" name="ad1acbde76bd0d756986c21d29226c57b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad1acbde76bd0d756986c21d29226c57b">&#9670;&#160;</a></span>CL</h2>
+<a id="a000acbc197a215db317c5c30f207b913" name="a000acbc197a215db317c5c30f207b913"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a000acbc197a215db317c5c30f207b913">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double stimType::CL = 0.0</td>
+          <td class="memname">double stimType::operator() </td>
+          <td>(</td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>time</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>x</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>cycle length </p>
+<p>Return the applied stimulus value at a point and time. </p>
 
 </div>
 </div>
-<a id="af2ff9342a37876d80073e49009772148" name="af2ff9342a37876d80073e49009772148"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af2ff9342a37876d80073e49009772148">&#9670;&#160;</a></span>Td</h2>
+<a id="ae958e6c60bc95a3da84cf33fc89c6032" name="ae958e6c60bc95a3da84cf33fc89c6032"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae958e6c60bc95a3da84cf33fc89c6032">&#9670;&#160;</a></span>read_parameters()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double stimType::Td = 0.0</td>
+          <td class="memname">void stimType::read_parameters </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_stimulus_parameters.html">StimulusParameters</a> &amp;&#160;</td>
+          <td class="paramname"><em>params</em>, </td>
         </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>duration of stimulus </p>
-
-</div>
-</div>
-<a id="a11c427a48f79c75547d7b2591e8db9c2" name="a11c427a48f79c75547d7b2591e8db9c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a11c427a48f79c75547d7b2591e8db9c2">&#9670;&#160;</a></span>Ts</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
         <tr>
-          <td class="memname">double stimType::Ts = 0.0</td>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>nsd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>default_cycle_length</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>start time </p>
+<p>Set stimulus parameters from parsed XML parameters. </p>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<a class="el" href="_cep_mod_8h_source.html">CepMod.h</a></li>
+<li>solver/<b>CepMod.cpp</b></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
