@@ -35,6 +35,9 @@ RTOL = {
     "WSS": 1.0e-8,
     "Fiber_stretch": 1.0e-10,
     "Fiber_stretch_rate": 1.0e-10,
+    "Active_tension_fibers": 1.0e-10,
+    "Active_tension_sheets": 1.0e-10,
+    "Active_tension_normal": 1.0e-10,
 }
 
 # Number of processors to test
