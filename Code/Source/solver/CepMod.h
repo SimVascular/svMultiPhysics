@@ -44,21 +44,76 @@ static std::ostream &operator << ( std::ostream& strm, ElectrophysiologyModelTyp
   return strm << names.at(type);
 }
 
+class ComMod;
+class CmMod;
+class cmType;
+class StimulusParameters;
+
 /// @brief External stimulus type
 class stimType
 {
   public:
-    /// @brief start time
-    double Ts = 0.0;
+    /// @brief Spatial bounds for a CEP stimulus region.
+    class SpatialBounds
+    {
+      public:
+        /// @brief Set box bounds.
+        void set_box(const Vector<double>& min, const Vector<double>& max);
 
-    /// @brief duration of stimulus
-    double Td = 0.0;
+        /// @brief Set sphere bounds.
+        void set_sphere(const Vector<double>& center, const double radius);
 
-    /// @brief cycle length
-    double CL = 0.0;
+        /// @brief Return true if the point lies inside all active spatial bounds.
+        bool contains(const Vector<double>& x) const;
 
-    /// @brief stimulus amplitude
-    double A = 0.0;
+        /// @brief Broadcast spatial bounds to all MPI ranks.
+        void distribute(const CmMod& cm_mod, const cmType& cm);
+
+      private:
+        /// @brief True if a box region has been set.
+        bool has_box = false;
+        /// @brief True if a sphere region has been set.
+        bool has_sphere = false;
+
+        /// @brief Minimum corner of the box region.
+        Vector<double> box_min;
+        /// @brief Maximum corner of the box region.
+        Vector<double> box_max;
+        /// @brief Center of the sphere region.
+        Vector<double> sphere_center;
+        /// @brief Radius of the sphere region.
+        double sphere_radius = 0.0;
+
+        /// @brief Return true if x lies inside the box. Assumes has_box is true.
+        bool inside_box(const Vector<double>& x) const;
+        /// @brief Return true if x lies inside the sphere. Assumes has_sphere is true.
+        bool inside_sphere(const Vector<double>& x) const;
+    };
+
+    /// @brief Return the applied stimulus value at a point and time.
+    double operator()(const double time, const Vector<double>& x) const;
+
+    /// @brief Set stimulus parameters from parsed XML parameters.
+    void read_parameters(const StimulusParameters& params, const int nsd, const double default_cycle_length);
+
+    /// @brief Broadcast stimulus parameters to all ranks.
+    void distribute(const CmMod& cm_mod, const cmType& cm);
+
+  private:
+    /// @brief Time at which the stimulus begins within each cycle.
+    double start_time = 0.0;
+    /// @brief Duration of the stimulus pulse within each cycle.
+    double duration = 0.0;
+    /// @brief Length of one stimulus cycle.
+    double cycle_length = 0.0;
+    /// @brief Amplitude of the applied stimulus.
+    double amplitude = 0.0;
+
+    /// @brief Spatial region to which the stimulus is applied.
+    SpatialBounds spatial_bounds;
+
+    /// @brief Return true if the stimulus is active at the given time.
+    bool is_active(const double time) const;
 };
 
 /// @brief ECG leads type

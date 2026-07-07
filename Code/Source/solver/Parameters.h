@@ -1078,6 +1078,58 @@ class LinearSolverParameters : public ParameterLists
     LinearAlgebraParameters linear_algebra;
 };
 
+/// @brief Stores <Box> parameters for CEP stimulus spatial bounds.
+class StimulusBoxParameters : public ParameterLists
+{
+  public:
+    StimulusBoxParameters();
+
+    /// @brief XML element name for CEP stimulus box spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> minimum;
+    VectorParameter<double> maximum;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Sphere> parameters for CEP stimulus spatial bounds.
+class StimulusSphereParameters : public ParameterLists
+{
+  public:
+    StimulusSphereParameters();
+
+    /// @brief XML element name for CEP stimulus sphere spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> center;
+    Parameter<double> radius;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Spatial_bounds> parameters for CEP stimulus geometry restrictions.
+class StimulusSpatialBoundsParameters
+{
+  public:
+    /// @brief XML element name for CEP stimulus spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    StimulusBoxParameters box;
+    StimulusSphereParameters sphere;
+
+    bool value_set = false;
+};
+
 /// @brief The StimulusParameters class stores parameters for 
 /// 'Stimulus' XML element used to parameters for 
 /// pacemaker cells.
@@ -1088,13 +1140,24 @@ class LinearSolverParameters : public ParameterLists
 ///   <Start_time> 0.0 </Start_time>
 ///   <Duration> 1.0 </Duration>
 ///   <Cycle_length> 10000.0 </Cycle_length>
+///   <Spatial_bounds>
+///     <Box>
+///       <Minimum> 0.0 0.0 0.0 </Minimum>
+///       <Maximum> 1.0 1.0 1.0 </Maximum>
+///     </Box>
+///     <Sphere>
+///       <Center> 0.5 0.5 0.5 </Center>
+///       <Radius> 0.25 </Radius>
+///     </Sphere>
+///   </Spatial_bounds>
 /// </Stimulus>
 /// \endcode
 class StimulusParameters : public ParameterLists
-{ 
+{
   public:
     StimulusParameters();
 
+    /// @brief XML element name for CEP stimulus parameters.
     static const std::string xml_element_name_;
     
     bool defined() const { return value_set; };
@@ -1107,6 +1170,8 @@ class StimulusParameters : public ParameterLists
     Parameter<double> cycle_length;
     Parameter<double> duration;
     Parameter<double> start_time;
+
+    StimulusSpatialBoundsParameters spatial_bounds;
     
     bool value_set = false;
 };
