@@ -134,15 +134,9 @@ void stimType::SpatialBounds::distribute(const CmMod& cm_mod, const cmType& cm)
 
 double stimType::operator()(const double time, const Vector<double>& x) const
 {
-  if (utils::is_zero(amplitude)) {
-    return 0.0;
-  }
-
-  if (!is_active(time)) {
-    return 0.0;
-  }
-
-  if (!spatial_bounds.contains(x)) {
+  if (utils::is_zero(amplitude) ||
+      !is_active(time) ||
+      !spatial_bounds.contains(x)) {
     return 0.0;
   }
 
