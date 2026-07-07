@@ -21,10 +21,13 @@ void OneDSolverInterface::load_library(const std::string& interface_lib)
 {
   library_handle_ = dlopen(interface_lib.c_str(), RTLD_LAZY);
   if (!library_handle_) {
-    svmp::raise<svmp::DependencyException>(
-        SVMP_HERE,
-        "[OneDSolverInterface] Could not load shared library '" +
-        interface_lib + "': " + dlerror());
+    throw svmp::CoreException(
+        std::string("[OneDSolverInterface] Could not load shared library '") +
+        interface_lib + "': " + dlerror(),
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
 
   // Clear any existing error.
@@ -34,10 +37,13 @@ void OneDSolverInterface::load_library(const std::string& interface_lib)
     void* sym = dlsym(library_handle_, name);
     const char* err = dlerror();
     if (err) {
-      svmp::raise<svmp::DependencyException>(
-          SVMP_HERE,
+      throw svmp::CoreException(
           std::string("[OneDSolverInterface] Could not find the 1D interface function '") +
-          name + "' in the shared library '" + interface_lib + "': " + err);
+          name + "' in the shared library '" + interface_lib + "': " + err,
+          svmp::StatusCode::DependencyError,
+          __FILE__,
+          __LINE__,
+          __func__);
     }
     return sym;
   };
@@ -56,12 +62,15 @@ void OneDSolverInterface::initialize(const std::string& input_file,
                                      const std::string& coupling_type)
 {
   if (!initialize_1d_) {
-    svmp::raise<svmp::DependencyException>(
-        SVMP_HERE,
+    throw svmp::CoreException(
         "[OneDSolverInterface] Cannot initialize the 1D solver because the "
         "1D interface library has not been loaded. Call load_library() with "
         "the svOneDSolver interface shared library before initialize(), and "
-        "check that the library path is correct.");
+        "check that the library path is correct.",
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
   initialize_1d_(input_file.c_str(), problem_id, system_size,
                  coupling_type.c_str());
@@ -72,9 +81,12 @@ void OneDSolverInterface::initialize(const std::string& input_file,
 void OneDSolverInterface::set_external_step_size(int problem_id, double dt)
 {
   if (!set_external_step_size_1d_) {
-    svmp::raise<svmp::DependencyException>(
-        SVMP_HERE,
-        "[OneDSolverInterface] set_external_step_size_1d not loaded");
+    throw svmp::CoreException(
+        "[OneDSolverInterface] set_external_step_size_1d not loaded",
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
   set_external_step_size_1d_(problem_id, dt);
 }
@@ -82,9 +94,12 @@ void OneDSolverInterface::set_external_step_size(int problem_id, double dt)
 void OneDSolverInterface::return_solution(int problem_id, double* solution, int size)
 {
   if (!return_1d_solution_) {
-    svmp::raise<svmp::DependencyException>(
-        SVMP_HERE,
-        "[OneDSolverInterface] return_1d_solution not loaded");
+    throw svmp::CoreException(
+        "[OneDSolverInterface] return_1d_solution not loaded",
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
   return_1d_solution_(problem_id, solution, size);
 }
@@ -92,9 +107,12 @@ void OneDSolverInterface::return_solution(int problem_id, double* solution, int 
 void OneDSolverInterface::update_solution(int problem_id, double* solution, int size)
 {
   if (!update_1d_solution_) {
-    svmp::raise<svmp::DependencyException>(
-        SVMP_HERE,
-        "[OneDSolverInterface] update_1d_solution not loaded");
+    throw svmp::CoreException(
+        "[OneDSolverInterface] update_1d_solution not loaded",
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
   update_1d_solution_(problem_id, solution, size);
 }
@@ -107,11 +125,14 @@ void OneDSolverInterface::run_simulation(int problem_id, double current_time,
                                    int& error_code)
 {
   if (!run_1d_simulation_step_1d_) {
-    svmp::raise<svmp::DependencyException>(
-        SVMP_HERE,
+    throw svmp::CoreException(
         "[OneDSolverInterface] Cannot run the 1D solver because the "
         "run_1d_simulation_step_1d interface function is not available. "
-        "Check that the svOneDSolver interface shared library was loaded correctly.");
+        "Check that the svOneDSolver interface shared library was loaded correctly.",
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
 
   std::vector<char> ctype_buf(coupling_type.begin(), coupling_type.end());
@@ -140,9 +161,12 @@ void OneDSolverInterface::extract_coupled_dof(int problem_id, int& coupled_dof,
                                               const std::string& coupling_type)
 {
   if (!extract_coupled_dof_) {
-    svmp::raise<svmp::DependencyException>(
-        SVMP_HERE,
-        "[OneDSolverInterface] extract_coupled_dof not loaded");
+    throw svmp::CoreException(
+        "[OneDSolverInterface] extract_coupled_dof not loaded",
+        svmp::StatusCode::DependencyError,
+        __FILE__,
+        __LINE__,
+        __func__);
   }
   // Copy into a mutable buffer; the shared-library function signature uses
   // char* (not const char*) so we must pass a writable copy.
