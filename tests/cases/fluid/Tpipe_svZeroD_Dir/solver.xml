@@ -78,6 +78,7 @@
         <Add_BC name="cap_main_3d">
             <Type> Dir </Type>
             <Time_dependence> Coupled </Time_dependence>
+            <Impose_flux>true</Impose_flux>
             <Coupling_interface>
       		<svZeroDSolver_block> cp1 </svZeroDSolver_block>
 	        <Ramp_steps> 100 </Ramp_steps>
