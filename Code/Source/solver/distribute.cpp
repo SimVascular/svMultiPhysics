@@ -1186,10 +1186,37 @@ void dist_uris(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm) {
     cm.bcast(cm_mod, &uris[iUris].clsFlg);
     cm.bcast(cm_mod, &uris[iUris].invert_normal);
     cm.bcast(cm_mod, &uris[iUris].sdf_computed);
+    cm.bcast(cm_mod, &uris[iUris].scaffold_udf_computed);
     cm.bcast(cm_mod, &uris[iUris].include_uris_velocity);
     cm.bcast(cm_mod, &uris[iUris].cnt);
     cm.bcast(cm_mod, &uris[iUris].scF);
     cm.bcast(cm_mod, uris[iUris].nrm);
+
+    cm.bcast(cm_mod, &uris[iUris].scaffold_flag);
+    if (uris[iUris].scaffold_flag) {
+      cm.bcast(cm_mod, &uris[iUris].scaffold_msh.lShl);
+      cm.bcast(cm_mod, &uris[iUris].scaffold_msh.nEl);
+      cm.bcast(cm_mod, &uris[iUris].scaffold_msh.gnEl);
+      cm.bcast(cm_mod, &uris[iUris].scaffold_msh.eNoN);
+      cm.bcast(cm_mod, &uris[iUris].scaffold_msh.nNo);
+      cm.bcast(cm_mod, &uris[iUris].scaffold_msh.gnNo);
+    }
+  }
+
+  if (cm.slv(cm_mod)) {
+    for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      if (uris[iUris].scaffold_flag) {
+        uris[iUris].scaffold_msh.x.resize(com_mod.nsd, uris[iUris].scaffold_msh.gnNo);
+        uris[iUris].scaffold_msh.IEN.resize(uris[iUris].scaffold_msh.eNoN, uris[iUris].scaffold_msh.gnEl);
+      }
+    }
+  }
+
+  for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+    if (uris[iUris].scaffold_flag) {
+      cm.bcast(cm_mod, uris[iUris].scaffold_msh.x);
+      cm.bcast(cm_mod, uris[iUris].scaffold_msh.IEN);
+    }
   }
 
   std::vector<Vector<int>> lM_gN_flat(com_mod.nUris);
@@ -1578,10 +1605,9 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       } 
 
       cm.bcast(cm_mod, cep.Dani);
-      cm.bcast(cm_mod, &cep.Istim.Ts);
-      cm.bcast(cm_mod, &cep.Istim.Td);
-      cm.bcast(cm_mod, &cep.Istim.CL);
-      cm.bcast(cm_mod, &cep.Istim.A);
+
+      cep.Istim.distribute(cm_mod, cm);
+
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 
       if (cep.odes.tIntType == TimeIntegrationType::CN2) {

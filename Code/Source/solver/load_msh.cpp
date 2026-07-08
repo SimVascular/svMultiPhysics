@@ -300,4 +300,3 @@ void read_sv(Simulation* simulation, mshType& mesh, const MeshParameters* mesh_p
         }
     }
 };
-

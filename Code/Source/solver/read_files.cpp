@@ -208,7 +208,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     if (effective_direction.size() != com_mod.nsd) {
       auto effective_size = (std::stringstream() << "(" << effective_direction.size() << ")").str();
       auto space_dim = (std::stringstream() << "(" << com_mod.nsd << ")").str();
-      svmp::raise<svmp::ParseException>(SVMP_HERE, "The size of the effective direction " + effective_size + 
+      svmp::raise<svmp::ParseException>("The size of the effective direction " + effective_size + 
           " does not equal the number of space dimensions " + space_dim); 
     }
 
@@ -1300,25 +1300,11 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     }
   }
 
-  // Set stimulus parameters. 
+  // Set stimulus parameters.
   //
-  lDmn.cep.Istim.A  = 0.0;
-  lDmn.cep.Istim.Ts = 99999.0;
-  lDmn.cep.Istim.CL = 99999.0;
-  lDmn.cep.Istim.Td = 0.0;
-
-  if (domain_params->stimulus.defined()) { 
-    auto& stimulus_params = domain_params->stimulus;
-    lDmn.cep.Istim.A = stimulus_params.amplitude.value();
-    if (!utils::is_zero(lDmn.cep.Istim.A)) {
-      lDmn.cep.Istim.Ts = stimulus_params.start_time.value();
-      lDmn.cep.Istim.Td = stimulus_params.duration.value();
-      if (stimulus_params.cycle_length.defined()) { 
-        lDmn.cep.Istim.CL = stimulus_params.cycle_length.value();
-      } else {
-        lDmn.cep.Istim.CL = simulation->nTs * simulation->com_mod.dt; 
-      }
-    }
+  if (domain_params->stimulus.defined()) {
+    const double default_cycle_length = simulation->nTs * simulation->com_mod.dt;
+    lDmn.cep.Istim.read_parameters(domain_params->stimulus, simulation->com_mod.nsd, default_cycle_length);
   }
 
   // Dual time step for cellular activation model.
@@ -2630,7 +2616,7 @@ void read_outputs(Simulation* simulation, EquationParameters* eq_params, eqType&
           continue;
 
         svmp::check_not_null<svmp::FE::NotInitializedException>(
-            dmn.cep.ionic_model, SVMP_HERE, "ionic model was not constructed.");
+            dmn.cep.ionic_model, "ionic model was not constructed.");
 
         const auto registered_outputs =
             dmn.cep.ionic_model->get_registered_outputs();
@@ -3572,4 +3558,3 @@ void set_equation_properties(Simulation* simulation, EquationParameters* eq_para
 }
 
 };
-

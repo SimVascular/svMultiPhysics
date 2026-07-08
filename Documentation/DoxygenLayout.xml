@@ -3,7 +3,11 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <!-- <tab type="pages" visible="yes" title="" intro=""/> -->
+    <!-- Doxygen <= 1.9.7 renders grouping pages via the "modules" tab; 1.9.8+
+         renamed them to "topics" and reuses "modules" for C++20 modules.
+         Declare both so the tab appears regardless of the doxygen version. -->
     <tab type="modules" visible="yes" title="" intro=""/>
+    <tab type="topics" visible="yes" title="" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>
       <tab type="namespacemembers" visible="yes" title="" intro=""/>

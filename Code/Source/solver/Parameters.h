@@ -140,7 +140,7 @@ class Parameter
       if (!(str_stream >> value_)) {
         std::istringstream str_stream(str);
         if (!(str_stream >> std::boolalpha >> value_)) {
-          svmp::raise<svmp::ParseException>(SVMP_HERE, "Incorrect value '" + str + "' for '" + name_ + "'.");
+          svmp::raise<svmp::ParseException>("Incorrect value '" + str + "' for '" + name_ + "'.");
         }
       }
 
@@ -342,7 +342,7 @@ class ParameterLists
     void set_parameter_value_CANN(const std::string& name, const std::string& value) 
     {
       if (params_map.count(name) == 0) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name + " XML element '" + name + "'.");
+        svmp::raise<svmp::ParseException>("Unknown " + xml_element_name + " XML element '" + name + "'.");
       }
 
       auto& param_variant = params_map[name];
@@ -353,7 +353,7 @@ class ParameterLists
           (*vec_param)->value_.clear();  // Clear the vector before setting
           (*vec_param)->set(value);  // Set the new value
         } else {
-          svmp::raise<svmp::ParseException>(SVMP_HERE, "Activation_functions is not a VectorParameter<int>.");
+          svmp::raise<svmp::ParseException>("Activation_functions is not a VectorParameter<int>.");
         }
       }
       // Check for Weights
@@ -362,7 +362,7 @@ class ParameterLists
           (*vec_param)->value_.clear();  // Clear the vector before setting
           (*vec_param)->set(value);  // Set the new value
         } else {
-          svmp::raise<svmp::ParseException>(SVMP_HERE, "Weights is not a VectorParameter<double>.");
+          svmp::raise<svmp::ParseException>("Weights is not a VectorParameter<double>.");
         }
       }
       // Default: everything else
@@ -379,7 +379,7 @@ class ParameterLists
     void set_parameter_value(const std::string& name, const std::string& value) 
     {
       if (params_map.count(name) == 0) {
-        svmp::raise<svmp::ParseException>(SVMP_HERE, "Unknown " + xml_element_name + " XML element '" + name + "'.");
+        svmp::raise<svmp::ParseException>("Unknown " + xml_element_name + " XML element '" + name + "'.");
       }
 
       std::visit([value](auto&& p) { p->set(value); }, params_map[name]);
@@ -394,7 +394,7 @@ class ParameterLists
         if (std::visit([](auto&& p) {
           return !p->check_required_set();
         }, param)) { 
-          svmp::raise<svmp::ParseException>(SVMP_HERE, xml_element_name + " XML element '" + key + "' has not been set.");
+          svmp::raise<svmp::ParseException>(xml_element_name + " XML element '" + key + "' has not been set.");
         }
       }
     }
@@ -1139,6 +1139,58 @@ class LinearSolverParameters : public ParameterLists
     LinearAlgebraParameters linear_algebra;
 };
 
+/// @brief Stores <Box> parameters for CEP stimulus spatial bounds.
+class StimulusBoxParameters : public ParameterLists
+{
+  public:
+    StimulusBoxParameters();
+
+    /// @brief XML element name for CEP stimulus box spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> minimum;
+    VectorParameter<double> maximum;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Sphere> parameters for CEP stimulus spatial bounds.
+class StimulusSphereParameters : public ParameterLists
+{
+  public:
+    StimulusSphereParameters();
+
+    /// @brief XML element name for CEP stimulus sphere spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> center;
+    Parameter<double> radius;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Spatial_bounds> parameters for CEP stimulus geometry restrictions.
+class StimulusSpatialBoundsParameters
+{
+  public:
+    /// @brief XML element name for CEP stimulus spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    StimulusBoxParameters box;
+    StimulusSphereParameters sphere;
+
+    bool value_set = false;
+};
+
 /// @brief The StimulusParameters class stores parameters for 
 /// 'Stimulus' XML element used to parameters for 
 /// pacemaker cells.
@@ -1149,13 +1201,24 @@ class LinearSolverParameters : public ParameterLists
 ///   <Start_time> 0.0 </Start_time>
 ///   <Duration> 1.0 </Duration>
 ///   <Cycle_length> 10000.0 </Cycle_length>
+///   <Spatial_bounds>
+///     <Box>
+///       <Minimum> 0.0 0.0 0.0 </Minimum>
+///       <Maximum> 1.0 1.0 1.0 </Maximum>
+///     </Box>
+///     <Sphere>
+///       <Center> 0.5 0.5 0.5 </Center>
+///       <Radius> 0.25 </Radius>
+///     </Sphere>
+///   </Spatial_bounds>
 /// </Stimulus>
 /// \endcode
 class StimulusParameters : public ParameterLists
-{ 
+{
   public:
     StimulusParameters();
 
+    /// @brief XML element name for CEP stimulus parameters.
     static const std::string xml_element_name_;
     
     bool defined() const { return value_set; };
@@ -1168,6 +1231,8 @@ class StimulusParameters : public ParameterLists
     Parameter<double> cycle_length;
     Parameter<double> duration;
     Parameter<double> start_time;
+
+    StimulusSpatialBoundsParameters spatial_bounds;
     
     bool value_set = false;
 };
@@ -1849,6 +1914,7 @@ class URISMeshParameters : public ParameterLists
     Parameter<bool> valve_starts_as_closed; // Whether the valve starts as closed
     Parameter<bool> invert_normal; // Whether to invert the valve surface normal vector
     Parameter<std::string> positive_flow_normal_file_path; // File path for the positive flow normal
+    Parameter<std::string> scaffold_file_path; // File path for the valve scaffold mesh
     Parameter<bool> include_uris_velocity; // Whether to include the RIS velocity
 };
 

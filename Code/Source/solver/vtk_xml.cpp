@@ -1006,6 +1006,10 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
     nOut = nOut + com_mod.nUris;
     outDof = outDof + com_mod.nUris;
     for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+      if (com_mod.uris[iUris].scaffold_flag) {
+        nOut = nOut + 1;
+        outDof = outDof + 1;
+      }
       if (com_mod.uris[iUris].include_uris_velocity) {
         nOut = nOut + 1;
         outDof = outDof + nsd;
@@ -1353,19 +1357,35 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
     } 
 
     if (com_mod.urisFlag) {
+      // SDF for each URIS
       for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
         cOut = cOut + 1;
         int is = outS[cOut];
         int ie = is;
         outS[cOut+1] = ie + 1;
         outNames[cOut] = "URIS_SDF_" + com_mod.uris[iUris].name;
-        
+
         for (int a = 0; a < msh.nNo; a++) {
           int Ac = msh.gN(a);
           d[iM].x(is,a) = static_cast<double>(com_mod.uris[iUris].sdf(Ac));
         }
       }
+      // SDF for scaffold
+      for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
+        if (com_mod.uris[iUris].scaffold_flag) {
+          cOut = cOut + 1;
+          int is = outS[cOut];
+          int ie = is;
+          outS[cOut+1] = ie + 1;
+          outNames[cOut] = "URIS_SCAF_UDF_" + com_mod.uris[iUris].name;
 
+          for (int a = 0; a < msh.nNo; a++) {
+            int Ac = msh.gN(a);
+            d[iM].x(is,a) = static_cast<double>(com_mod.uris[iUris].scaffold_udf(Ac));
+          }
+        }
+      }
+      // Valve velocity for each URIS
       for (int iUris = 0; iUris < com_mod.nUris; iUris++) {
         if (com_mod.uris[iUris].include_uris_velocity) {
           cOut = cOut + 1;
@@ -1373,6 +1393,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
           int ie = is + nsd - 1;
           outS[cOut+1] = ie + 1;
           outNames[cOut] = "URIS_VEL_" + com_mod.uris[iUris].name;
+
           for (int a = 0; a < msh.nNo; a++) {
             int Ac = msh.gN(a);
             for (int b = is; b <= ie; b++) {
