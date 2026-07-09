@@ -331,6 +331,9 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.nEq);
     cm.bcast(cm_mod, &com_mod.dt);
     cm.bcast(cm_mod, &com_mod.precompDt);
+    cm.bcast(cm_mod, &com_mod.have_initial_pressure);
+    cm.bcast(cm_mod, &com_mod.initial_pressure);
+
 
     cm.bcast(cm_mod, &com_mod.zeroAve);
     cm.bcast(cm_mod, &com_mod.cmmInit);
@@ -550,24 +553,30 @@ void distribute(Simulation* simulation)
   cm.bcast_enum(cm_mod, &cplBC.schm);
   cm.bcast(cm_mod, &cplBC.useGenBC);
   cm.bcast(cm_mod, &cplBC.useSvZeroD);
+  cm.bcast(cm_mod, &cplBC.useSv1D);
 
   if (cplBC.useGenBC) {   
     if (cm.slv(cm_mod)) {   
       cplBC.nX = 0;
       cplBC.xo.resize(cplBC.nX);
     }
+  }
 
-  } else if (cplBC.useSvZeroD) {   
-    if (cm.slv(cm_mod)) {   
-      cplBC.nX = 0;
-      cplBC.xo.resize(cplBC.nX);
-    }
+  if (cplBC.useSv1D) {
+    // Broadcast the sv1D solver interface data so that ALL ranks can call
+    // init_svOneD / calc_svOneD (which use MPI_Bcast collectives that require
+    // every rank to participate). Without this, slave processes have
+    // has_data = false and throw immediately inside init_svOneD.
+    cm.bcast(cm_mod, &cplBC.sv1d_solver_interface.has_data);
+    cm.bcast(cm_mod, cplBC.sv1d_solver_interface.solver_library);
+  }
 
-  } else {
-    // RCR (Windkessel): nX/xo sized in read_files from nFa; not genBC/svZeroD.
+  if (!cplBC.useGenBC) {
+    // Broadcast nX and xo: when RCR faces coexist with svZeroD/svOneD, nX > 0
+    // and xo must be distributed to all slave processes so rcr_init works correctly.
     cm.bcast(cm_mod, &cplBC.nX);
     if (cplBC.xo.size() == 0) {
-       cplBC.xo.resize(cplBC.nX);
+      cplBC.xo.resize(cplBC.nX);
     }
     if (cplBC.nX != 0) {
       cm.bcast(cm_mod, cplBC.xo);

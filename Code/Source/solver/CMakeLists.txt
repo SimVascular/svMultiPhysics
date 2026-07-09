@@ -207,6 +207,7 @@ set(CSRCS
   stokes.h stokes.cpp
   sv_struct.h sv_struct.cpp
   svZeroD_interface.h svZeroD_interface.cpp
+  svOneD_subroutines.h svOneD_subroutines.cpp
   txt.h txt.cpp
   utils.h utils.cpp
   ustruct.h ustruct.cpp
@@ -231,6 +232,7 @@ set(CSRCS
   SPLIT.c
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp
+  svOneD_interface/OneDSolverInterface.h svOneD_interface/OneDSolverInterface.cpp
 
   BoundaryCondition.h BoundaryCondition.cpp
   RobinBoundaryCondition.h RobinBoundaryCondition.cpp
