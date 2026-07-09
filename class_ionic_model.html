@@ -200,7 +200,7 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract ionic model class. </p>
-<h3><a class="anchor" id="autotoc_md11"></a>
+<h3><a class="anchor" id="autotoc_md14"></a>
 Mathematical model</h3>
 <p>This class represents an abstract ionic model, i.e. an ODE system in the form  </p><p class="formulaDsp">
 \[ \begin{aligned}
@@ -215,11 +215,11 @@ Mathematical model</h3>
 <li>Colli Franzone, Pavarino, Scacchi. Mathematical Cardiac Electrophysiology. Springer, 2014.</li>
 <li>Goktepe, Kuhl. Computational Modeling of Cardiac Electrophysiology: a Novel Finite Element Approach. International Journal for Numerical Methods in Biomedical Engineering, 2009.</li>
 </ul>
-<h3><a class="anchor" id="autotoc_md12"></a>
+<h3><a class="anchor" id="autotoc_md15"></a>
 Numerical methods</h3>
 <p>The vector of state variables \(\mathbf{w}\) is partitioned into two groups, the state variables \(\mathbf{x}\) (including the transmembrane potential \(v\)) and the gating variables \(\mathbf{x}_g\). The ODE system is advanced through a Rush-Larsen scheme, in which the gating variables are updated through an analytical expression and the state variables through a time-stepping scheme.</p>
 <p>This class currently supports forward Euler (FE), fourth-order explicit Runge-Kutta (RK) and Crank-Nicolson (CN) for advancing the state variables. Refer to the documentation of the functions integ_fe, integ_rk and integ_cn2 for details on the individual methods. Beware that the CN method is only supported for ionic models that implement the getj method, and an exception is raised otherwise.</p>
-<h3><a class="anchor" id="autotoc_md13"></a>
+<h3><a class="anchor" id="autotoc_md16"></a>
 Implementing concrete ionic models</h3>
 <p>To implement a new ionic model, the following steps need to be taken:</p>
 <ol type="1">

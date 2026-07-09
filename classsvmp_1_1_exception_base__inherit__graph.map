@@ -1,45 +1,49 @@
 <map id="svmp::ExceptionBase" name="svmp::ExceptionBase">
-<area shape="rect" id="Node000001" title=" " alt="" coords="168,256,331,281"/>
-<area shape="rect" id="Node000003" href="$classsvmp_1_1_core_exception.html" title=" " alt="" coords="384,104,544,129"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="278,246,443,127,446,132,281,250"/>
-<area shape="rect" id="Node000008" href="$classsvmp_1_1_f_e_1_1_f_e_exception.html" title="Base exception type for errors originating in the FE library." alt="" coords="379,379,549,404"/>
-<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="286,286,442,376,439,381,284,291"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,256,120,281"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,266,168,266,168,271,134,271"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="168,329,331,355"/>
+<area shape="rect" id="Node000003" href="$classsvmp_1_1_core_exception.html" title=" " alt="" coords="384,153,544,179"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="275,318,445,177,449,181,278,323"/>
+<area shape="rect" id="Node000010" href="$classsvmp_1_1_f_e_1_1_f_e_exception.html" title="Base exception type for errors originating in the FE library." alt="" coords="379,477,549,503"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="282,361,446,475,443,479,279,365"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,329,120,355"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,339,168,339,168,345,134,345"/>
 <area shape="rect" id="Node000004" href="$classsvmp_1_1_dependency_exception.html" title="A required dependency is missing or failed to load." alt="" coords="615,5,825,31"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="494,94,541,66,596,40,635,28,636,33,598,44,543,70,496,99"/>
-<area shape="rect" id="Node000005" href="$classsvmp_1_1_index_out_of_range_exception.html" title="An index is outside its valid range." alt="" coords="597,55,843,80"/>
-<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="543,99,653,77,654,83,544,104"/>
-<area shape="rect" id="Node000006" href="$classsvmp_1_1_not_implemented_exception.html" title="A requested operation or feature is not implemented." alt="" coords="600,104,840,129"/>
-<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="558,114,600,114,600,119,558,119"/>
-<area shape="rect" id="Node000007" href="$classsvmp_1_1_parse_exception.html" title="A parsing or input&#45;format error." alt="" coords="637,153,803,179"/>
-<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="544,129,654,151,653,156,543,135"/>
-<area shape="rect" id="Node000009" href="$classsvmp_1_1_f_e_1_1_assembly_exception.html" title="Global assembly failure." alt="" coords="611,203,829,228"/>
-<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="478,365,524,301,558,267,596,238,625,226,627,230,599,243,561,271,528,304,482,368"/>
-<area shape="rect" id="Node000010" href="$classsvmp_1_1_f_e_1_1_backend_exception.html" title="Failure reported by a linear&#45;algebra or solver backend." alt="" coords="615,252,825,277"/>
-<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="486,367,534,326,564,305,596,288,633,275,634,280,598,292,567,310,537,330,489,371"/>
-<area shape="rect" id="Node000011" href="$classsvmp_1_1_f_e_1_1_convergence_exception.html" title="Iterative process failed to converge." alt="" coords="601,301,839,327"/>
-<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="505,371,597,337,647,324,648,329,598,342,507,376"/>
-<area shape="rect" id="Node000012" href="$classsvmp_1_1_f_e_1_1_dof_exception.html" title="Degree&#45;of&#45;freedom numbering or lookup failure." alt="" coords="631,351,809,376"/>
-<area shape="poly" id="edge11_Node000008_Node000012" title=" " alt="" coords="563,378,631,370,631,376,563,383"/>
-<area shape="rect" id="Node000013" href="$classsvmp_1_1_f_e_1_1_invalid_argument_exception.html" title="An argument failed validation." alt="" coords="621,401,819,441"/>
-<area shape="poly" id="edge12_Node000008_Node000013" title=" " alt="" coords="563,400,621,407,620,412,563,405"/>
-<area shape="rect" id="Node000014" href="$classsvmp_1_1_f_e_1_1_invalid_element_exception.html" title="Unsupported or malformed element request." alt="" coords="626,465,814,505"/>
-<area shape="poly" id="edge13_Node000008_Node000014" title=" " alt="" coords="503,408,598,450,635,462,634,467,596,455,500,413"/>
-<area shape="rect" id="Node000015" href="$classsvmp_1_1_f_e_1_1_not_initialized_exception.html" title="Required initialization step has not been performed." alt="" coords="631,529,809,569"/>
-<area shape="poly" id="edge14_Node000008_Node000015" title=" " alt="" coords="486,413,533,465,564,491,599,514,632,529,630,534,596,519,561,496,530,468,482,417"/>
-<area shape="rect" id="Node000016" href="$classsvmp_1_1_f_e_1_1_singular_mapping_exception.html" title="Element geometric mapping is singular or inverted." alt="" coords="621,593,819,633"/>
-<area shape="poly" id="edge15_Node000008_Node000016" title=" " alt="" coords="478,415,496,452,523,496,557,541,599,578,622,591,619,596,596,583,553,545,518,499,492,455,473,418"/>
-<area shape="rect" id="Node000017" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_exception.html" title="Base exception type for errors originating in the Basis module." alt="" coords="605,657,835,683"/>
-<area shape="poly" id="edge16_Node000008_Node000017" title=" " alt="" coords="474,417,488,466,512,528,549,590,572,618,599,643,621,655,618,659,596,647,568,622,545,593,508,530,483,468,469,418"/>
-<area shape="rect" id="Node000018" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_configuration_exception.html" title="Invalid Basis request or configuration." alt="" coords="891,522,1145,562"/>
-<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="829,650,841,643,857,626,864,609,872,590,889,572,910,560,913,565,892,576,877,593,869,611,861,629,844,647,831,654"/>
-<area shape="rect" id="Node000019" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_construction_exception.html" title="Internal basis construction or transform setup failure." alt="" coords="893,586,1143,626"/>
-<area shape="poly" id="edge18_Node000017_Node000019" title=" " alt="" coords="796,652,842,642,927,623,928,629,843,647,797,657"/>
-<area shape="rect" id="Node000020" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_element_compatibility_exception.html" title="Requested element topology is incompatible with the basis family." alt="" coords="907,650,1129,690"/>
-<area shape="poly" id="edge19_Node000017_Node000020" title=" " alt="" coords="849,667,907,667,907,673,849,673"/>
-<area shape="rect" id="Node000021" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_evaluation_exception.html" title="Basis evaluation request cannot be satisfied." alt="" coords="900,714,1136,754"/>
-<area shape="poly" id="edge20_Node000017_Node000021" title=" " alt="" coords="794,683,925,711,924,717,793,688"/>
-<area shape="rect" id="Node000022" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_node_ordering_exception.html" title="Public&#45;to&#45;canonical node ordering or coordinate lookup failure." alt="" coords="917,778,1119,818"/>
-<area shape="poly" id="edge21_Node000017_Node000022" title=" " alt="" coords="753,688,815,726,892,764,926,775,925,780,890,768,813,731,750,693"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="481,141,529,89,561,62,596,40,624,28,626,33,599,44,564,66,533,93,485,144"/>
+<area shape="rect" id="Node000005" href="$classsvmp_1_1_file_format_exception.html" title=" " alt="" coords="621,55,819,80"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="494,143,541,115,596,89,635,78,636,83,598,94,543,120,496,148"/>
+<area shape="rect" id="Node000006" href="$classsvmp_1_1_file_not_found_exception.html" title=" " alt="" coords="613,104,827,129"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="543,148,653,127,654,132,544,153"/>
+<area shape="rect" id="Node000007" href="$classsvmp_1_1_index_out_of_range_exception.html" title="An index is outside its valid range." alt="" coords="597,153,843,179"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="558,163,597,163,597,169,558,169"/>
+<area shape="rect" id="Node000008" href="$classsvmp_1_1_not_implemented_exception.html" title="A requested operation or feature is not implemented." alt="" coords="600,203,840,228"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="544,179,654,200,653,205,543,184"/>
+<area shape="rect" id="Node000009" href="$classsvmp_1_1_parse_exception.html" title="A parsing or input&#45;format error." alt="" coords="637,252,803,277"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="497,184,544,211,598,237,641,249,639,254,596,242,541,216,494,188"/>
+<area shape="rect" id="Node000011" href="$classsvmp_1_1_f_e_1_1_assembly_exception.html" title="Global assembly failure." alt="" coords="611,301,829,327"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="478,464,524,400,558,365,596,337,625,324,627,329,599,342,561,369,528,403,482,467"/>
+<area shape="rect" id="Node000012" href="$classsvmp_1_1_f_e_1_1_backend_exception.html" title="Failure reported by a linear&#45;algebra or solver backend." alt="" coords="615,351,825,376"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="486,466,534,425,564,404,596,386,633,373,634,379,598,391,567,408,537,429,489,470"/>
+<area shape="rect" id="Node000013" href="$classsvmp_1_1_f_e_1_1_convergence_exception.html" title="Iterative process failed to converge." alt="" coords="601,400,839,425"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="505,469,597,435,647,423,648,428,598,441,507,474"/>
+<area shape="rect" id="Node000014" href="$classsvmp_1_1_f_e_1_1_dof_exception.html" title="Degree&#45;of&#45;freedom numbering or lookup failure." alt="" coords="631,449,809,475"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="563,477,631,469,631,474,563,482"/>
+<area shape="rect" id="Node000015" href="$classsvmp_1_1_f_e_1_1_invalid_argument_exception.html" title="An argument failed validation." alt="" coords="621,499,819,539"/>
+<area shape="poly" id="edge14_Node000010_Node000015" title=" " alt="" coords="563,499,621,505,620,511,563,504"/>
+<area shape="rect" id="Node000016" href="$classsvmp_1_1_f_e_1_1_invalid_element_exception.html" title="Unsupported or malformed element request." alt="" coords="626,563,814,603"/>
+<area shape="poly" id="edge15_Node000010_Node000016" title=" " alt="" coords="503,507,598,549,635,561,634,566,596,554,500,511"/>
+<area shape="rect" id="Node000017" href="$classsvmp_1_1_f_e_1_1_not_initialized_exception.html" title="Required initialization step has not been performed." alt="" coords="631,627,809,667"/>
+<area shape="poly" id="edge16_Node000010_Node000017" title=" " alt="" coords="486,512,533,563,564,590,599,613,632,627,630,632,596,618,561,594,530,567,482,515"/>
+<area shape="rect" id="Node000018" href="$classsvmp_1_1_f_e_1_1_singular_mapping_exception.html" title="Element geometric mapping is singular or inverted." alt="" coords="621,691,819,731"/>
+<area shape="poly" id="edge17_Node000010_Node000018" title=" " alt="" coords="478,514,496,551,523,595,557,640,599,677,622,690,619,694,596,682,553,643,518,598,492,553,473,516"/>
+<area shape="rect" id="Node000019" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_exception.html" title="Base exception type for errors originating in the Basis module." alt="" coords="605,756,835,781"/>
+<area shape="poly" id="edge18_Node000010_Node000019" title=" " alt="" coords="474,515,488,565,512,626,549,689,572,717,599,741,621,754,618,758,596,745,568,721,545,692,508,629,483,566,469,517"/>
+<area shape="rect" id="Node000020" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_configuration_exception.html" title="Invalid Basis request or configuration." alt="" coords="891,621,1145,661"/>
+<area shape="poly" id="edge19_Node000019_Node000020" title=" " alt="" coords="829,748,841,741,857,725,864,707,872,688,889,671,910,659,913,663,892,675,877,691,869,709,861,728,844,745,831,753"/>
+<area shape="rect" id="Node000021" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_construction_exception.html" title="Internal basis construction or transform setup failure." alt="" coords="893,685,1143,725"/>
+<area shape="poly" id="edge20_Node000019_Node000021" title=" " alt="" coords="796,751,842,741,927,722,928,727,843,746,797,756"/>
+<area shape="rect" id="Node000022" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_element_compatibility_exception.html" title="Requested element topology is incompatible with the basis family." alt="" coords="907,749,1129,789"/>
+<area shape="poly" id="edge21_Node000019_Node000022" title=" " alt="" coords="849,766,907,766,907,771,849,771"/>
+<area shape="rect" id="Node000023" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_evaluation_exception.html" title="Basis evaluation request cannot be satisfied." alt="" coords="900,813,1136,853"/>
+<area shape="poly" id="edge22_Node000019_Node000023" title=" " alt="" coords="794,782,925,810,924,815,793,787"/>
+<area shape="rect" id="Node000024" href="$classsvmp_1_1_f_e_1_1basis_1_1_basis_node_ordering_exception.html" title="Public&#45;to&#45;canonical node ordering or coordinate lookup failure." alt="" coords="917,877,1119,917"/>
+<area shape="poly" id="edge23_Node000019_Node000024" title=" " alt="" coords="753,787,815,825,892,862,926,874,925,879,890,867,813,829,750,791"/>
 </map>

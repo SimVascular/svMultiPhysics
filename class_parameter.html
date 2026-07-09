@@ -159,13 +159,13 @@ class Parameter&lt; T &gt;</div><p>The <a class="el" href="class_parameter.html"
 <div class="line">&lt;/svMultiPhysicsFile&gt;</div>
 </div><!-- fragment --><p>The elements in the svFSIplus simulation file are represented by sections of related parameters. Sub-elements are refered to as sub-sections.</p>
 <hr  />
- <h2><a class="anchor" id="autotoc_md15"></a>
+ <h2><a class="anchor" id="autotoc_md18"></a>
 Parameters class</h2>
 <p>The <a class="el" href="class_parameters.html" title="The Parameters class stores parameter values read in from a solver input file.">Parameters</a> class is the top level class. It contains objects used to store parameters for the sections making up an XML simulation parameters file</p>
 <p>1) General (<a class="el" href="class_general_simulation_parameters.html" title="The GeneralSimulationParameters class stores paramaters for the &#39;GeneralSimulationParameters&#39; XML ele...">GeneralSimulationParameters</a>) 2) Mesh (<a class="el" href="class_mesh_parameters.html" title="The MeshParameters class is used to store paramaters for the &#39;Add_mesh&#39; XML element.">MeshParameters</a>) 3) Equation (<a class="el" href="class_equation_parameters.html" title="The EquationParameters class stores parameters for the &#39;Add_equation&#39; XML element used to specify an ...">EquationParameters</a>) 4) Projection (<a class="el" href="class_projection_parameters.html" title="The ProjectionParameters class stores parameters for the &#39;Add_projection&#39; XML element used for fluid-...">ProjectionParameters</a>) 5) RIS Projection (RIS <a class="el" href="class_projection_parameters.html" title="The ProjectionParameters class stores parameters for the &#39;Add_projection&#39; XML element used for fluid-...">ProjectionParameters</a>)</p>
 <p>Each object contains methods to parse the XML file for the parameters defined for it. These section objects may also contain objects representing the sub-sections defined for each section.</p>
 <hr  />
- <h2><a class="anchor" id="autotoc_md17"></a>
+ <h2><a class="anchor" id="autotoc_md20"></a>
 Section objects</h2>
 <p>Each section object contains objects representing parameters. A parameter's name and value is stored using either a <a class="el" href="class_parameter.html" title="The Parameter class template is used to store a named paramater and its scalar value as a basic type:...">Parameter</a> and VectorParamater template objects. A parameter value is stored as a basic type: bool, double, int and string.</p>
 <p><a class="el" href="class_parameter.html" title="The Parameter class template is used to store a named paramater and its scalar value as a basic type:...">Parameter</a> objects in a section class are named using the same XML element name with the 1st character lower case.</p>
