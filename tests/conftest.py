@@ -5,6 +5,7 @@ import os
 import shutil
 import platform
 import subprocess
+import sys
 import meshio
 
 is_not_Darwin = True
@@ -104,7 +105,24 @@ def run_by_name(folder, name, t_max, n_proc=1):
                 ]
                 )
 
-    subprocess.call(cmd, cwd=folder, shell=True)
+    # Run the command while capturing the return code and stderr output. This
+    # way, if something goes wrong, we can raise an appropriate error message.
+    completed = subprocess.run(
+        cmd, cwd=folder, shell=True, stderr=subprocess.PIPE, text=True
+    )
+
+    # Print the captured stderr to console, so it is visible. Notice that this
+    # will print stderr after stdout, so they might be out of order (printing
+    # them in order while capturing is apparently not easy through subprocess).
+    if completed.stderr:
+        print(completed.stderr, end="", file=sys.stderr)
+
+    # If something went wrong, raise an error with the captured stderr output in
+    # the message.
+    if completed.returncode != 0:
+        raise RuntimeError(
+            "Exit code {}: {}\n".format(completed.returncode, completed.stderr)
+        )
 
     # read results
     fname = os.path.join(
