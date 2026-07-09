@@ -15,6 +15,29 @@ this_file_dir = os.path.abspath(os.path.dirname(__file__))
 cpp_exec = os.path.join(this_file_dir, "..", "build", "svMultiPhysics-build", "bin", "svmultiphysics")
 cpp_exec_p = os.path.join(this_file_dir, "..", "build-petsc", "svMultiPhysics-build", "bin", "svmultiphysics")
 
+
+def _detect_oversubscribe_flag():
+    """Return the mpirun flag needed to allow more ranks than physical cores.
+
+    Open MPI requires ``--oversubscribe``; Intel MPI / MPICH (Hydra) allow
+    oversubscription by default and reject the unknown flag, so no flag is used.
+    """
+    try:
+        proc = subprocess.run(
+            ["mpirun", "--version"], capture_output=True, text=True, check=False
+        )
+        version = (proc.stdout or "") + (proc.stderr or "")
+    except FileNotFoundError:
+        version = ""
+
+    if "Open MPI" in version or "OpenRTE" in version:
+        return "--oversubscribe"
+    return ""
+
+
+# Detected once at import; empty string for Intel MPI / MPICH.
+OVERSUBSCRIBE_FLAG = _detect_oversubscribe_flag()
+
 # Relative tolerances for each tested field
 RTOL = {
     "Membrane_potential": 1.0e-10,
@@ -72,7 +95,7 @@ def run_by_name(folder, name, t_max, n_proc=1):
             cmd = " ".join(
             [
                 "mpirun",
-                "--oversubscribe" if n_proc > 1 else "",
+                OVERSUBSCRIBE_FLAG if n_proc > 1 else "",
                 "-np",
                 str(n_proc),
                 cpp_exec_p,
@@ -83,7 +106,7 @@ def run_by_name(folder, name, t_max, n_proc=1):
             cmd = " ".join(
             [
                 "mpirun",
-                "--oversubscribe" if n_proc > 1 else "",
+                OVERSUBSCRIBE_FLAG if n_proc > 1 else "",
                 "-np",
                 str(n_proc),
                 cpp_exec,
@@ -97,7 +120,7 @@ def run_by_name(folder, name, t_max, n_proc=1):
             cmd = " ".join(
                 [
                     "mpirun",
-                    "--oversubscribe" if n_proc > 1 else "",
+                    OVERSUBSCRIBE_FLAG if n_proc > 1 else "",
                     "-np",
                     str(n_proc),
                     cpp_exec,
