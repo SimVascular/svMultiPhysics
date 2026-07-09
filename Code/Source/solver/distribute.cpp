@@ -1600,7 +1600,16 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
 
       cm.bcast(cm_mod, cep.Dani);
 
-      cep.Istim.distribute(cm_mod, cm);
+      int n_stim = cep.Istim.size();
+      cm.bcast(cm_mod, &n_stim);
+
+      if (cm.slv(cm_mod)) {
+        cep.Istim.resize(n_stim);
+      }
+
+      for (auto& stim : cep.Istim) {
+        stim.distribute(cm_mod, cm);
+      }
 
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 

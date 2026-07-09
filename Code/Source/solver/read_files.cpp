@@ -1079,11 +1079,14 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     }
   }
 
-  // Set stimulus parameters.
+  // Set stimulus parameters. A domain may define zero, one, or several
+  // <Stimulus> elements; each is stored as an independent runtime stimulus.
   //
-  if (domain_params->stimulus.defined()) {
-    const double default_cycle_length = simulation->nTs * simulation->com_mod.dt;
-    lDmn.cep.Istim.read_parameters(domain_params->stimulus, simulation->com_mod.nsd, default_cycle_length);
+  const double default_cycle_length = simulation->nTs * simulation->com_mod.dt;
+  for (const auto& stim_params : domain_params->stimuli) {
+    stimType stim;
+    stim.read_parameters(*stim_params, simulation->com_mod.nsd, default_cycle_length);
+    lDmn.cep.Istim.push_back(stim);
   }
 
   // Dual time step for cellular activation model.

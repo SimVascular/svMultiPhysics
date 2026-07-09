@@ -328,7 +328,7 @@ void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
 
   for (unsigned int i = 0; i < nt; ++i) {
     const double t = t1 + i * dt;
-    const double Istim = cep.Istim(t, x);
+    const double Istim = cep.stimulus_value(t, x);
 
     cep.ionic_model->integ(cep.odes, cep.imyo, t, cep.dt, Istim, Ksac, X, Xg);
   }

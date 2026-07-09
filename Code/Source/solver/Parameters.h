@@ -1409,7 +1409,7 @@ class DomainParameters : public ParameterLists
     // Parameters for sub-elements under the Domain element.
     ConstitutiveModelParameters constitutive_model;
     FiberReinforcementStressParameters fiber_reinforcement_stress;
-    StimulusParameters stimulus;
+    std::vector<std::unique_ptr<StimulusParameters>> stimuli;
     FluidViscosityParameters fluid_viscosity;
     SolidViscosityParameters solid_viscosity;
 

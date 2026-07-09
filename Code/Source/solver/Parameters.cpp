@@ -1814,7 +1814,9 @@ void DomainParameters::print_parameters()
 
   fiber_reinforcement_stress.print_parameters();
 
-  stimulus.print_parameters();
+  for (const auto& stim : stimuli) {
+    stim->print_parameters();
+  }
 
   for (const auto &[cepType, params] : ionic_models) {
     params->print_parameters();
@@ -1864,7 +1866,8 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
     }
 
     if (name == StimulusParameters::xml_element_name_) {
-      stimulus.set_values(item);
+      stimuli.emplace_back(std::make_unique<StimulusParameters>());
+      stimuli.back()->set_values(item);
       item_found = true;
     }
 
@@ -2515,7 +2518,8 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
       remesher.set_values(item);
 
     } else if (name == StimulusParameters::xml_element_name_) {
-      domain->stimulus.set_values(item);
+      domain->stimuli.emplace_back(std::make_unique<StimulusParameters>());
+      domain->stimuli.back()->set_values(item);
 
     } else if (viscosity_names.count(name)) { 
       auto eq_type = require_map_value(consts::equation_name_to_type, type.value(),

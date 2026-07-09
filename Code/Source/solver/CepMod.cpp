@@ -246,3 +246,14 @@ cepModelType::~cepModelType()
 {
 }
 
+double cepModelType::stimulus_value(const double time, const Vector<double>& x) const
+{
+  double total = 0.0;
+
+  for (const auto& stim : Istim) {
+    total += stim(time, x);
+  }
+
+  return total;
+}
+
