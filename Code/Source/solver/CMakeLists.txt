@@ -160,7 +160,7 @@ set(CSRCS
   TrilinosLinearAlgebra.h TrilinosLinearAlgebra.cpp
   Tensor4.h Tensor4.cpp
   Vector.h Vector.cpp
-  fourier_interpolation.cpp
+  FourierInterpolation.cpp
 
   lapack_defs.h
 

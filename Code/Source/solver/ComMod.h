@@ -16,12 +16,12 @@
 #include "ChnlMod.h"
 #include "CmMod.h"
 #include "CoupledBoundaryCondition.h"
+#include "FourierInterpolation.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
 #include "SolutionStates.h"
 #include "Timer.h"
 #include "Vector.h"
-#include "fourier_interpolation.h"
 
 #include "DebugMsg.h"
 

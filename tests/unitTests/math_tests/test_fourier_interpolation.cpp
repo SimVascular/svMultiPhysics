@@ -30,7 +30,7 @@
  */
 
 #include "../test_common.h"
-#include "fourier_interpolation.h"
+#include "FourierInterpolation.h"
 
 #include <cmath>
 #include <numbers>
