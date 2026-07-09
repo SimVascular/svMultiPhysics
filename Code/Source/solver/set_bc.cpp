@@ -1074,9 +1074,9 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
     #ifdef debug_set_bc_dir_l
     dmsg << "bType_ustd";
     #endif
-    const auto value_and_derivative = lBc.gt.value_and_derivative(com_mod.time);
-    dirY = value_and_derivative.first[0];
-    dirA = value_and_derivative.second[0];
+    const auto [value, derivative] = lBc.gt.value_and_derivative(com_mod.time);
+    dirY = value[0];
+    dirA = derivative[0];
 
   } else { 
     dirA = 0.0;
