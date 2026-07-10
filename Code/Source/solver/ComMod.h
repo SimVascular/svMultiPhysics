@@ -7,11 +7,7 @@
 // All of the data structures used for the mesh, boundarsy conditions and solver parameters, etc. 
 // are defined here.
 
-<<<<<<< HEAD
 #ifndef COMMOD_H
-=======
-#ifndef COMMOD_H 
->>>>>>> main
 #define COMMOD_H
 
 #include "Array.h"
@@ -20,10 +16,7 @@
 #include "ChnlMod.h"
 #include "CmMod.h"
 #include "CoupledBoundaryCondition.h"
-<<<<<<< HEAD
-=======
 #include "FourierInterpolation.h"
->>>>>>> main
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
 #include "SolutionStates.h"
