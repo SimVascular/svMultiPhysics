@@ -7,7 +7,11 @@
 // All of the data structures used for the mesh, boundarsy conditions and solver parameters, etc. 
 // are defined here.
 
+<<<<<<< HEAD
 #ifndef COMMOD_H
+=======
+#ifndef COMMOD_H 
+>>>>>>> main
 #define COMMOD_H
 
 #include "Array.h"
@@ -16,6 +20,10 @@
 #include "ChnlMod.h"
 #include "CmMod.h"
 #include "CoupledBoundaryCondition.h"
+<<<<<<< HEAD
+=======
+#include "FourierInterpolation.h"
+>>>>>>> main
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
 #include "SolutionStates.h"
@@ -43,42 +51,6 @@
 #include <sstream>
 
 class LinearAlgebra;
-
-/// @brief Fourier coefficients that are used to specify unsteady BCs
-//
-class fcType
-{
-  public:
-
-    bool defined() { return n != 0; };
-
-    // If this is a ramp function
-    bool lrmp = false;
-
-    // Number of Fourier coefficient
-    int n = 0;
-
-    // No. of dimensions (scalar or vector)
-    int d = 0;
-   
-    // Initial value
-    Vector<double> qi;
-
-    // Time derivative of linear part
-    Vector<double> qs;
-
-    // Period
-    double T = 0.0;
-
-    // Initial time
-    double ti = 0.0;
-
-    // Imaginary part of coefficint
-    Array<double> i;
-
-    // Real part of coefficint
-    Array<double> r;
-};
 
 /// @brief Moving boundary data structure (used for general BC)
 //
@@ -195,7 +167,7 @@ class bcType
     //
     // This is declare ALLOCATABLE in MOD.f. 
     //
-    fcType gt;
+    FourierInterpolation gt;
 
     // Neu: RCR
     rcrType RCR;
@@ -307,7 +279,7 @@ class bfType
     Array<double> bx;
 
     // Time dependant (unsteady imposed value)
-    fcType bt;
+    FourierInterpolation bt;
 
     // General (unsteady and spatially dependent combination)
     MBType bm;
@@ -335,7 +307,7 @@ class fibStrsType
     double eta_n = 0.0;
 
     // Unsteady time-dependent values
-    fcType gt;
+    FourierInterpolation gt;
 };
 
 /// @brief Structural domain type
