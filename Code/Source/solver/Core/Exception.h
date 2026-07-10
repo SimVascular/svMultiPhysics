@@ -365,6 +365,10 @@ SVMP_DEFINE_EXCEPTION(IndexOutOfRangeException, CoreException,
 SVMP_DEFINE_EXCEPTION(InternalErrorException, CoreException,
                       StatusCode::InternalError);
 
+/// @brief An exception raised when a file cannot be opened.
+///
+/// @details Raises a message in the format "Could not open file <file_name>",
+/// with the file name provided as constructor argument.
 class FileNotFoundException : public CoreException {
 public:
   FileNotFoundException(const std::string &file_name, const char *file = "",
@@ -373,6 +377,12 @@ public:
                       file, line, function) {}
 };
 
+/// @brief An exception raised when a file cannot be parsed or has an invalid
+/// format.
+///
+/// @details Raises a message in the format "Error parsing file <file_name>.
+/// <message>", with the file name and a descriptive message provided as
+/// constructor arguments.
 class FileFormatException : public CoreException {
 public:
   FileFormatException(const std::string &file_name, const std::string &message,
