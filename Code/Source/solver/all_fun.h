@@ -65,6 +65,10 @@ namespace all_fun {
 
   void split_jobs(int tid, int m, int n, Array<double>& A, Vector<double>& b);
 
+  /// @brief This routine is for calculating values by the inverse of general BC
+  //
+  void igbc(const ComMod &com_mod, const MBType &gm, Array<double> &Y,
+            Array<double> &dY);
 };
 
 #endif

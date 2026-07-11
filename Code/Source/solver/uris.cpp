@@ -16,6 +16,8 @@
 #include "read_msh.h"
 #include "VtkData.h"
 
+#include <numbers>
+
 namespace uris { 
 
 void find_closest_element_centroid(const mshType& mesh, const Vector<double>& xp,
@@ -1646,14 +1648,17 @@ void eval_uris_ris_factors_quadrature(const ComMod& com_mod, const mshType& lM, 
         sdf_deps = start_deps + progress * (end_deps - start_deps);
       }
       if (dist_srf(iUris) < sdf_deps && sdf_deps > 0.0) {
-        delta_eps = (1 + cos(consts::pi*dist_srf(iUris)/sdf_deps))/(2*sdf_deps*sdf_deps);
+        delta_eps = (1 + cos(std::numbers::pi * dist_srf(iUris) / sdf_deps)) /
+                    (2 * sdf_deps * sdf_deps);
       }
       if (com_mod.uris[iUris].scaffold_flag) {
         // Compute the scaffold resistance factor based on the unsigned distance function (UDF)
         // The scaffold surface uses the same thickness parameter as the closed valve surface
         const double scaffold_deps = com_mod.uris[iUris].sdf_deps_close;
         if (dist_scaffold(iUris) < scaffold_deps && scaffold_deps > 0.0) {
-          delta_eps_scaffold = (1 + cos(consts::pi*dist_scaffold(iUris)/scaffold_deps))/(2*scaffold_deps*scaffold_deps);
+          delta_eps_scaffold = (1 + cos(std::numbers::pi *
+                                        dist_scaffold(iUris) / scaffold_deps)) /
+                               (2 * scaffold_deps * scaffold_deps);
         }
       }
 

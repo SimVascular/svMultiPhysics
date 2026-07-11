@@ -381,6 +381,23 @@ SVMP_DEFINE_EXCEPTION(NotImplementedException, CoreException,
 SVMP_DEFINE_EXCEPTION(IndexOutOfRangeException, CoreException,
                       StatusCode::InvalidArgument);
 
+class FileNotFoundException : public CoreException {
+public:
+  FileNotFoundException(const std::string &file_name, const char *file = "",
+                        int line = 0, const char *function = "")
+      : CoreException("Could not open file " + file_name, StatusCode::IOError,
+                      file, line, function) {}
+};
+
+class FileFormatException : public CoreException {
+public:
+  FileFormatException(const std::string &file_name, const std::string &message,
+                      const char *file = "", int line = 0,
+                      const char *function = "")
+      : CoreException("Error parsing file " + file_name + ". " + message,
+                      StatusCode::IOError, file, line, function) {}
+};
+
 inline void ExceptionRuntime::install_terminate_handler()
 {
     std::set_terminate([]() {
