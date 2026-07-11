@@ -46,6 +46,8 @@ void ActiveStress::advance_time_step(const double t, const double dt,
                                      const Vector<double> &calcium,
                                      const Vector<double> &fiber_stretch,
                                      const Vector<double> &fiber_stretch_rate) {
+  time = t;
+
   for (unsigned int i = 0; i < states.ncols(); ++i) {
     Vector<double> state_loc = states.col(i);
     advance_time_step_local(t, dt, calcium[i], fiber_stretch[i],

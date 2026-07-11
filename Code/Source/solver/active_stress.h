@@ -229,6 +229,9 @@ protected:
   virtual double
   compute_active_tension_local(const Vector<double> &state) const = 0;
 
+  /// Current time. Updated whenever calling @ref advance_time_step.
+  double time;
+
   /// State variables for the model.
   Array<double> states;
 

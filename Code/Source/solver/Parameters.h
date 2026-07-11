@@ -1419,6 +1419,11 @@ public:
     return string_parameters.at(label).value();
   }
 
+  /// Get the value of a bool parameter by label.
+  bool get_bool(const std::string &label) const {
+    return bool_parameters.at(label).value();
+  }
+
 protected:
   /// Add a new parameter to this object.
   void add_parameter(const std::string &label, double default_value,
@@ -1432,11 +1437,25 @@ protected:
     set_parameter(label, default_value, required, string_parameters[label]);
   }
 
+  /// Add a new parameter to this object.
+  void add_parameter(const std::string &label, bool default_value,
+                     bool required) {
+    set_parameter(label, default_value, required, bool_parameters[label]);
+  }
+
   /// Parameters are stored in a map as key-parameter pairs. Derived classes
   /// should add parameters to this map in their constructors by calling
   /// add_parameter.
+  /// @{
+
+  /// Double-valued parameters.
   std::map<std::string, Parameter<double>> double_parameters;
+
+  /// String-valued parameters.
   std::map<std::string, Parameter<std::string>> string_parameters;
+
+  /// Bool-valued parameters.
+  std::map<std::string, Parameter<bool>> bool_parameters;
 
   /// Flag indicating whether the values of the parameters stored in this
   /// object have been set.
