@@ -5,6 +5,8 @@
 
 void NashPanfilov::read_model_specific_parameters(
     const ActiveStressModelParameters &params) {
+  ActiveStressODE::read_model_specific_parameters(params);
+
   epsilon_0 = params.get_scalar("epsilon_0");
   epsilon_i = params.get_scalar("epsilon_i");
   xi_T = params.get_scalar("xi_T");
@@ -15,6 +17,8 @@ void NashPanfilov::read_model_specific_parameters(
 
 void NashPanfilov::distribute_model_specific_parameters(const CmMod &cm_mod,
                                                         const cmType &cm) {
+  ActiveStressODE::distribute_model_specific_parameters(cm_mod, cm);
+
   cm.bcast(cm_mod, &epsilon_0);
   cm.bcast(cm_mod, &epsilon_i);
   cm.bcast(cm_mod, &xi_T);

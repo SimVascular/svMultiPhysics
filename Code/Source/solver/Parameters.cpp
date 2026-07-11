@@ -1824,9 +1824,16 @@ void ActiveStressModelParameters::print_parameters() const {
               << xml_element_name << "\n"
               << "---------------------------------\n";
 
-    if (!parameters.empty()) {
-      std::cout << "Model parameters:" << std::endl;
-      for (const auto &[name, param] : parameters) {
+    if (!double_parameters.empty()) {
+      std::cout << "Double model parameters:" << std::endl;
+      for (const auto &[name, param] : double_parameters) {
+        std::cout << "  " << name << ": " << param.value() << std::endl;
+      }
+    }
+
+    if (!string_parameters.empty()) {
+      std::cout << "String model parameters:" << std::endl;
+      for (const auto &[name, param] : string_parameters) {
         std::cout << "  " << name << ": " << param.value() << std::endl;
       }
     }

@@ -42,9 +42,9 @@ public:
   static inline const std::string label = "NashPanfilov";
 
   /// Model parameters class.
-  class Parameters : public ActiveStressModelParameters {
+  class Parameters : public ActiveStressODE::Parameters {
   public:
-    Parameters() : ActiveStressModelParameters(label) {
+    Parameters() : ActiveStressODE::Parameters(label) {
       constexpr bool required = true;
 
       add_parameter("epsilon_0", 1.0, required);

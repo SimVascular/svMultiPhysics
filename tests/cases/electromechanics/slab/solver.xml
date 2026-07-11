@@ -146,6 +146,8 @@
       </Directional_distribution>
 
       <NashPanfilov>
+        <ODE_solver> FE </ODE_solver>
+
         <epsilon_0> 0.1 </epsilon_0> <!-- 1/ms -->
         <epsilon_i> 1.0 </epsilon_i> <!-- 1/ms -->
         <xi_T> 4.0e3 </xi_T>
