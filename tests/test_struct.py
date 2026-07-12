@@ -1,4 +1,4 @@
-from .conftest import run_with_reference
+from .conftest import run_with_reference, skip_if_no_trilinos
 import os
 import subprocess
 
@@ -95,6 +95,7 @@ def test_LV_NeoHookean_passive_sv0D_cap(n_proc):
     test_folder = "LV_NeoHookean_passive_sv0D_cap"
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
 
+@skip_if_no_trilinos
 def test_LV_NeoHookean_passive_sv0D_cap_trilinos(n_proc):
     test_folder = "LV_NeoHookean_passive_sv0D_cap_trilinos"
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=3)
