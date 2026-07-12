@@ -84,7 +84,7 @@ public:
     Parameters(const std::string &label) : ActiveStressModelParameters(label) {
       constexpr bool required = true;
 
-      add_parameter("ODE_solver", "FE", required);
+      add_parameter("ODE_solver", std::string("FE"), required);
     }
   };
 
