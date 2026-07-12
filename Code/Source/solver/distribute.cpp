@@ -1705,21 +1705,6 @@ void dist_mat_consts(const ComMod& com_mod, const CmMod& cm_mod, const cmType& c
   cm.bcast(cm_mod, &lStM.b2);
   cm.bcast(cm_mod, &lStM.mu0);
 
-  // Distribute fiber stress
-  cm.bcast(cm_mod, &lStM.Tf.fType);
-
-  if (utils::btest(lStM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_std))) { 
-    cm.bcast(cm_mod, &lStM.Tf.g);
-
-  } else if (utils::btest(lStM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_ustd))) {
-    lStM.Tf.gt.distribute(cm_mod, cm);
-  }
-  
-  // Broadcast directional stress distribution parameters
-  cm.bcast(cm_mod, &lStM.Tf.eta_f);
-  cm.bcast(cm_mod, &lStM.Tf.eta_s);
-  cm.bcast(cm_mod, &lStM.Tf.eta_n);
-
   // Distribute CANN parameter table
   if (lStM.isoType == ConstitutiveModelType::stArtificialNeuralNet) {
     cm.bcast(cm_mod, &lStM.paramTable.num_rows);

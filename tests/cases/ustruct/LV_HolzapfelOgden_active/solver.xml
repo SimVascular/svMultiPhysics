@@ -79,10 +79,14 @@
    <Momentum_stabilization_coefficient> 1e-5 </Momentum_stabilization_coefficient>
    <Continuity_stabilization_coefficient> 1e-5 </Continuity_stabilization_coefficient>
    
-   <Fiber_reinforcement_stress type="Unsteady" >
-      <Temporal_values_file_path> LV_stress.dat </Temporal_values_file_path> 
-      <Ramp_function> false </Ramp_function>
-   </Fiber_reinforcement_stress>
+   <Active_stress>
+      <Model> UniformUnsteady </Model>
+
+      <UniformUnsteady>
+         <Ramp> false </Ramp>
+         <Temporal_values_file_path> LV_stress.dat </Temporal_values_file_path>
+      </UniformUnsteady>
+   </Active_stress>
 
     <Output type="Spatial" >
      <Displacement> true </Displacement>

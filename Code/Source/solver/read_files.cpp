@@ -2030,39 +2030,6 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
     throw std::runtime_error("[read_mat_model] Constitutive model type '" + cmodel_str + "' is not implemented.");
   }
 
-  // Set fiber reinforcement stress.
-  if (domain_params->fiber_reinforcement_stress.defined()) { 
-    auto& fiber_params = domain_params->fiber_reinforcement_stress;
-    auto fiber_stress = fiber_params.type.value();
-    std::transform(fiber_stress.begin(), fiber_stress.end(), fiber_stress.begin(), ::tolower);
-
-    if (fiber_stress == "steady") {
-      lDmn.stM.Tf.fType = utils::ibset(lDmn.stM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_std));
-      lDmn.stM.Tf.g = fiber_params.value.value();
-
-    } else if (fiber_stress == "unsteady") {
-      lDmn.stM.Tf.fType =
-          utils::ibset(lDmn.stM.Tf.fType,
-                       static_cast<int>(BoundaryConditionType::bType_ustd));
-
-      lDmn.stM.Tf.gt = FourierInterpolation::from_time_series_file(
-          fiber_params.temporal_values_file_path.value(),
-          /* n_dimensions = */ 1, fiber_params.ramp_function.value());
-    }
-
-    // Read directional stress distribution parameters
-    if (fiber_params.directional_distribution.defined()) {
-      // Validate: ensures exactly 3 parameters specified (no empty blocks), sums to 1.0, non-negative
-      fiber_params.directional_distribution.validate();
-      
-      // Read the validated values (validate() ensures all three are defined)
-      lDmn.stM.Tf.eta_f = fiber_params.directional_distribution.fiber_direction.value();
-      lDmn.stM.Tf.eta_s = fiber_params.directional_distribution.sheet_direction.value();
-      lDmn.stM.Tf.eta_n = fiber_params.directional_distribution.sheet_normal_direction.value();
-    }
-    // Otherwise (no block at all), defaults (eta_f=1.0, eta_s=0.0, eta_n=0.0) from ComMod.h are used
-  }
-
   // Check for shell model
   //
   // ST91 is the default and the only dilational penalty model for

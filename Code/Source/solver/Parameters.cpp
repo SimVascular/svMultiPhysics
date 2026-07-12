@@ -2039,8 +2039,6 @@ void DomainParameters::print_parameters() {
 
   constitutive_model.print_parameters();
 
-  fiber_reinforcement_stress.print_parameters();
-
   stimulus.print_parameters();
 
   for (const auto &[name, params] : ionic_models) {
@@ -2085,11 +2083,6 @@ void DomainParameters::set_values(tinyxml2::XMLElement *domain_elem,
 
     if (name == ConstitutiveModelParameters::xml_element_name_) {
       constitutive_model.set_values(item);
-      item_found = true;
-    }
-
-    if (name == FiberReinforcementStressParameters::xml_element_name_) {
-      fiber_reinforcement_stress.set_values(item);
       item_found = true;
     }
 
@@ -2288,83 +2281,6 @@ void DirectionalDistributionParameters::print_parameters() const {
   std::cout << "    Sheet_direction: " << sheet_direction.value() << std::endl;
   std::cout << "    Sheet_normal_direction: " << sheet_normal_direction.value()
             << std::endl;
-}
-
-//////////////////////////////////////////////////////////
-//            FiberReinforcementStressParameters        //
-//////////////////////////////////////////////////////////
-
-// Process parameters for the fiber reinforcement stress
-// 'Fiber_reinforcement_stress` XML element.
-
-/// @brief Define the XML element name for fiber reinforcement stress
-/// parameters.
-const std::string FiberReinforcementStressParameters::xml_element_name_ =
-    "Fiber_reinforcement_stress";
-
-FiberReinforcementStressParameters::FiberReinforcementStressParameters() {
-  // A parameter that must be defined.
-  bool required = true;
-
-  // Define attributes.
-  type = Parameter<std::string>("type", "", required);
-
-  set_parameter("Ramp_function", false, !required, ramp_function);
-  set_parameter("Temporal_values_file_path", "", !required,
-                temporal_values_file_path);
-  set_parameter("Value", 0.0, !required, value);
-}
-
-void FiberReinforcementStressParameters::set_values(
-    tinyxml2::XMLElement *xml_elem) {
-  using namespace tinyxml2;
-  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
-
-  // Get the 'type' from the element attribute.
-  const char *stype = require_xml_attribute(xml_elem, "type");
-  type.set(std::string(stype));
-  auto item = xml_elem->FirstChildElement();
-
-  while (item != nullptr) {
-    std::string name = item->Value();
-
-    if (name == DirectionalDistributionParameters::xml_element_name_) {
-      directional_distribution.set_values(item);
-
-    } else if (item->GetText() != nullptr) {
-      auto value = item->GetText();
-      try {
-        set_parameter_value(name, value);
-      } catch (const std::bad_function_call &exception) {
-        svmp::raise<svmp::ParseException>(error_msg + name + "'.");
-      }
-    } else {
-      svmp::raise<svmp::ParseException>(error_msg + name + "'.");
-    }
-
-    item = item->NextSiblingElement();
-  }
-
-  value_set = true;
-}
-
-void FiberReinforcementStressParameters::print_parameters() {
-  if (!value_set) {
-    return;
-  }
-  std::cout << std::endl;
-  std::cout << "-----------------------------------" << std::endl;
-  std::cout << "FiberReinforcementStress Parameters" << std::endl;
-  std::cout << "-----------------------------------" << std::endl;
-  std::cout << type.name() << ": " << type.value() << std::endl;
-
-  auto params_name_value = get_parameter_list();
-  for (auto &[key, value] : params_name_value) {
-    std::cout << key << ": " << value << std::endl;
-  }
-
-  // Print directional distribution if defined
-  directional_distribution.print_parameters();
 }
 
 //////////////////////////////////////////////////////////
@@ -2739,9 +2655,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement *eq_elem,
       auto domain_params = new DomainParameters();
       domain_params->set_values(item);
       domains.push_back(domain_params);
-
-    } else if (name == FiberReinforcementStressParameters::xml_element_name_) {
-      domain->fiber_reinforcement_stress.set_values(item);
 
     } else if (name == ActiveStressParameters::xml_element_name) {
       // @todo[michelebucelli] The need to manually fall back onto the domain

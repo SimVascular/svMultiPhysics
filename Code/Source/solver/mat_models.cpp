@@ -203,23 +203,6 @@ void voigt_to_cc(const int nsd, const Array<double>& Dm, Tensor4<double>& CC)
 
 
 
-/// @brief Compute additional fiber-reinforcement stress.
-///
-/// Reproduces Fortran 'GETFIBSTRESS' subroutine.
-//
-void compute_fib_stress(const ComMod& com_mod, const CepMod& cep_mod, const fibStrsType& Tfl, double& g)
-{
-  using namespace consts;
-
-  g = 0.0;
-
-  if (utils::btest(Tfl.fType, iBC_std)) {
-    g = Tfl.g;
-  } else if (utils::btest(Tfl.fType, iBC_ustd)) {
-    g = Tfl.gt.value(com_mod.time)[0];
-  }
-}
-
 
 /**
  * @brief Perform the necessary tensor operations to calculate S_iso (isochoric
@@ -336,22 +319,19 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   double nd = static_cast<double>(nsd);
   double Kp = stM.Kpen;
 
-  // Fiber-reinforced stress - compute total active stress
-  double Ta = 0.0;
-  compute_fib_stress(com_mod, cep_mod, stM.Tf, Ta);
-
-  // Distribute total active stress among fiber directions
-  double Tfa = stM.Tf.eta_f * Ta;  // Fiber direction
-  double Tsa = stM.Tf.eta_s * Ta;  // Sheet direction
-  double Tna = stM.Tf.eta_n * Ta;  // Sheet-normal direction
+  // Active stress from active stress models, already distributed among the
+  // fiber, sheet and sheet-normal directions by the active stress model.
+  double Tfa = ya_f;  // Fiber direction
+  double Tsa = ya_s;  // Sheet direction
+  double Tna = ya_n;  // Sheet-normal direction
 
   // Validate directional distribution is supported for this constitutive model
   // Only Guccione, HO, and HO-ma models support sheet and sheet-normal stress contributions
-  bool supports_directional_distribution = (stM.isoType == ConstitutiveModelType::stIso_Gucci || 
+  bool supports_directional_distribution = (stM.isoType == ConstitutiveModelType::stIso_Gucci ||
                                             stM.isoType == ConstitutiveModelType::stIso_HO ||
                                             stM.isoType == ConstitutiveModelType::stIso_HO_ma);
-  
-  if (!supports_directional_distribution && (stM.Tf.eta_s > 0.0 || stM.Tf.eta_n > 0.0 || ya_s > 0.0 || ya_n > 0.0)) {
+
+  if (!supports_directional_distribution && (ya_s > 0.0 || ya_n > 0.0)) {
     throw std::runtime_error("Directional distribution of active stress (eta_s > 0 or eta_n > 0) "
       "is only supported for Guccione, Holzapfel-Ogden (HO), and Holzapfel-Ogden Modified Anisotropy (HO-ma) models. "
       "Current model does not support sheet or sheet-normal stress contributions. "
@@ -377,11 +357,6 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   } else {
     Hss = Matrix<nsd>::Zero();
   }
-
-  // Electromechanics coupling - active stress
-  Tfa += ya_f;
-  Tsa += ya_s;
-  Tna += ya_n;
 
   // Electromechanics coupling - active strain
   Matrix<nsd> Fe  = F;

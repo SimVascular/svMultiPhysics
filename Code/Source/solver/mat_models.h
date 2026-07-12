@@ -24,8 +24,6 @@ void cc_to_voigt(const int nsd, const Tensor4<double>& CC, Array<double>& Dm);
 
 void voigt_to_cc(const int nsd, const Array<double>& Dm, Tensor4<double>& CC);
 
-void compute_fib_stress(const ComMod& com_mod, const CepMod& cep_mod, const fibStrsType& Tfl, double& g);
-
 /**
  * @brief Compute 2nd Piola-Kirchhoff stress and material stiffness tensors
  * including both dilational and isochoric components.

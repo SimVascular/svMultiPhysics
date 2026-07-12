@@ -81,10 +81,14 @@
 
    <Dilational_penalty_model> ST91 </Dilational_penalty_model>
 
-    <Fiber_reinforcement_stress type="Unsteady" >
-      <Temporal_values_file_path> stress.dat </Temporal_values_file_path> 
-      <Ramp_function> false </Ramp_function>
-   </Fiber_reinforcement_stress>
+    <Active_stress>
+      <Model> UniformUnsteady </Model>
+
+      <UniformUnsteady>
+         <Ramp> false </Ramp>
+         <Temporal_values_file_path> stress.dat </Temporal_values_file_path>
+      </UniformUnsteady>
+   </Active_stress>
 
    <Output type="Spatial" >
      <Displacement> true </Displacement>

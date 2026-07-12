@@ -57,10 +57,14 @@
     </Constitutive_model> 
 
    <!-- Fiber stress ramp from 0 to 60 kPa in 1s -->
-   <Fiber_reinforcement_stress type="Unsteady" > 
-      <Temporal_values_file_path> fib_stress.dat </Temporal_values_file_path> 
-      <Ramp_function> true </Ramp_function> 
-   </Fiber_reinforcement_stress> 
+   <Active_stress>
+      <Model> UniformUnsteady </Model>
+
+      <UniformUnsteady>
+         <Ramp> true </Ramp>
+         <Temporal_values_file_path> fib_stress.dat </Temporal_values_file_path>
+      </UniformUnsteady>
+   </Active_stress>
 
    <Momentum_stabilization_coefficient> 1e-3 </Momentum_stabilization_coefficient> 
    <Continuity_stabilization_coefficient> 1e-3 </Continuity_stabilization_coefficient> 

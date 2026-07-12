@@ -1863,6 +1863,21 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
           Array<double> sigma(nsd,nsd);
           Array<double> S(nsd,nsd);
 
+          // Interpolate the active stress from active stress models to the
+          // current Gauss point so that the active contribution is included in
+          // the reported stress, consistently with the residual assembly.
+          double ya_g_f = 0.0;
+          double ya_g_s = 0.0;
+          double ya_g_n = 0.0;
+          if (eq.dmn[cDmn].active_stress != nullptr) {
+            for (int a = 0; a < fs.eNoN; a++) {
+              int Ac = lM.IEN(a,e);
+              ya_g_f = ya_g_f + N(a)*cep_mod.cem.Ya_f[Ac];
+              ya_g_s = ya_g_s + N(a)*cep_mod.cem.Ya_s[Ac];
+              ya_g_n = ya_g_n + N(a)*cep_mod.cem.Ya_n[Ac];
+            }
+          }
+
           if (cPhys == EquationType::phys_lElas) {
             if (nsd == 3) {
               double detF = lambda*(ed(0) + ed(1) + ed(2));
@@ -1895,12 +1910,8 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
             Array<double> Dm(nsymd,nsymd);
             double Ja;
 
-            // @todo[michelebucelli] The active tension here was kept to zero,
-            //   so I replicated the same for fibers, sheets and normals. This
-            //   might not be the correct thing to do.
             mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
-                                      fN, /* ya_f = */ 0.0, /* ya_s = */ 0.0,
-                                      /* ya_n = */ 0.0, S, Dm, Ja);
+                                      fN, ya_g_f, ya_g_s, ya_g_n, S, Dm, Ja);
 
             // TODO: Add viscous stress
 
@@ -1919,12 +1930,8 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
             Array<double> Dm(nsymd,nsymd);
             double Ja;
 
-            // @todo[michelebucelli] The active tension here was kept to zero,
-            //   so I replicated the same for fibers, sheets and normals. This
-            //   might not be the correct thing to do.
             mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
-                                      fN, /* ya_f = */ 0.0, /* ya_s = */ 0.0,
-                                      /* ya_n = */ 0.0, S, Dm, Ja);
+                                      fN, ya_g_f, ya_g_s, ya_g_n, S, Dm, Ja);
 
             // TODO: Add viscous stress
 
