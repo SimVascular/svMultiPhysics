@@ -162,6 +162,18 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ae9adfc0633d4e082cb4a4ed1b20a8792" id="r_ae9adfc0633d4e082cb4a4ed1b20a8792"><td class="memItemLeft" align="right" valign="top"><a id="ae9adfc0633d4e082cb4a4ed1b20a8792" name="ae9adfc0633d4e082cb4a4ed1b20a8792"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>chamber_cap_surface</b></td></tr>
 <tr class="separator:ae9adfc0633d4e082cb4a4ed1b20a8792"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1027bfdddb8f57fa66f48a965222b86f" id="r_a1027bfdddb8f57fa66f48a965222b86f"><td class="memItemLeft" align="right" valign="top"><a id="a1027bfdddb8f57fa66f48a965222b86f" name="a1027bfdddb8f57fa66f48a965222b86f"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>svoned_input_file</b></td></tr>
+<tr class="separator:a1027bfdddb8f57fa66f48a965222b86f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13832b122923b4babd01d82300be45bf" id="r_a13832b122923b4babd01d82300be45bf"><td class="memItemLeft" align="right" valign="top"><a id="a13832b122923b4babd01d82300be45bf" name="a13832b122923b4babd01d82300be45bf"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>coupling_ramp_steps</b></td></tr>
+<tr class="separator:a13832b122923b4babd01d82300be45bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09ec1767a97c236f54a4a889e346f845" id="r_a09ec1767a97c236f54a4a889e346f845"><td class="memItemLeft" align="right" valign="top"><a id="a09ec1767a97c236f54a4a889e346f845" name="a09ec1767a97c236f54a4a889e346f845"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>coupling_ramp_ref_pressure</b></td></tr>
+<tr class="separator:a09ec1767a97c236f54a4a889e346f845"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0eb6f51e79a2ef721b367db733945f0f" id="r_a0eb6f51e79a2ef721b367db733945f0f"><td class="memItemLeft" align="right" valign="top"><a id="a0eb6f51e79a2ef721b367db733945f0f" name="a0eb6f51e79a2ef721b367db733945f0f"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>coupling_relax_factor</b></td></tr>
+<tr class="separator:a0eb6f51e79a2ef721b367db733945f0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75f13af3dfe0548f34556c0f0afcbd94" id="r_a75f13af3dfe0548f34556c0f0afcbd94"><td class="memItemLeft" align="right" valign="top"><a id="a75f13af3dfe0548f34556c0f0afcbd94" name="a75f13af3dfe0548f34556c0f0afcbd94"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>value_set</b> = false</td></tr>
 <tr class="separator:a75f13af3dfe0548f34556c0f0afcbd94"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -181,10 +193,12 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>x
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled). </p>
-<div class="fragment"><div class="line">&lt;<span class="keywordtype">Coupling_interface</span>&gt;</div>
-<div class="line">  &lt;<span class="keywordtype">svZeroDSolver_block</span>&gt; <span class="keyword">LV_IN</span> &lt;/<span class="keywordtype">svZeroDSolver_block</span>&gt;</div>
-<div class="line">  &lt;<span class="keywordtype">Chamber_cap_surface</span>&gt; <span class="keyword">mesh</span>/<span class="keyword">mesh-surfaces</span>/<span class="keyword">endo_cap.vtp</span> &lt;/<span class="keywordtype">Chamber_cap_surface</span>&gt;</div>
-<div class="line">&lt;/<span class="keywordtype">Coupling_interface</span>&gt;</div>
+<div class="fragment"><div class="line">//  &lt;<span class="keywordtype">Coupling_interface</span>&gt;</div>
+<div class="line">//    &lt;<span class="keywordtype">svOneDSolver_input_file</span>&gt; <span class="keyword">OneDfilename.in</span> &lt;/<span class="keywordtype">svOneDSolver_input_file</span>&gt;</div>
+<div class="line">//      &lt;<span class="keywordtype">Ramp_steps</span>&gt; 100 &lt;/<span class="keywordtype">Ramp_steps</span>&gt;</div>
+<div class="line">//      &lt;<span class="keywordtype">Ramp_ref_pressure</span>&gt; 0.0 &lt;/<span class="keywordtype">Ramp_ref_pressure</span>&gt;</div>
+<div class="line">//      &lt;<span class="keywordtype">Relax_factor</span>&gt; 0.3 &lt;/<span class="keywordtype">Relax_factor</span>&gt;</div>
+<div class="line">//  &lt;/<span class="keywordtype">Coupling_interface</span>&gt;</div>
 </div><!-- fragment --> </div><hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<a class="el" href="_parameters_8h_source.html">Parameters.h</a></li>
 <li>solver/<b>Parameters.cpp</b></li>

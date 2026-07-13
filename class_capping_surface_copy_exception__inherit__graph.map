@@ -1,0 +1,7 @@
+<map id="CappingSurfaceCopyException" name="CappingSurfaceCopyException">
+<area shape="rect" id="Node000001" title="Failure copying a CappingSurface or its internal face." alt="" coords="5,152,227,177"/>
+<area shape="rect" id="Node000002" href="$class_capping_surface_base_exception.html" title="Base exception for capping surface (cap VTP) errors." alt="" coords="6,79,226,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,118,119,152,113,152,113,118"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="59,5,173,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,44,119,79,113,79,113,44"/>
+</map>

@@ -137,6 +137,66 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a42f4476a63424cc78104975e9787eff2" id="r_a42f4476a63424cc78104975e9787eff2"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a42f4476a63424cc78104975e9787eff2">get_block_name</a> () const</td></tr>
 <tr class="memdesc:a42f4476a63424cc78104975e9787eff2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the svZeroD block name.  <br /></td></tr>
 <tr class="separator:a42f4476a63424cc78104975e9787eff2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae66fca001573f946053480972550f5e0" id="r_ae66fca001573f946053480972550f5e0"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#ae66fca001573f946053480972550f5e0">get_oned_input_file</a> () const</td></tr>
+<tr class="memdesc:ae66fca001573f946053480972550f5e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="namespacesv_one_d.html" title="3D-1D coupling subroutines.">svOneD</a> input file path.  <br /></td></tr>
+<tr class="separator:ae66fca001573f946053480972550f5e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cbbf85629172cfd7cb9ec22f8bbbbe2" id="r_a5cbbf85629172cfd7cb9ec22f8bbbbe2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a5cbbf85629172cfd7cb9ec22f8bbbbe2">set_oned_input_file</a> (const std::string &amp;path)</td></tr>
+<tr class="memdesc:a5cbbf85629172cfd7cb9ec22f8bbbbe2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the <a class="el" href="namespacesv_one_d.html" title="3D-1D coupling subroutines.">svOneD</a> input file path.  <br /></td></tr>
+<tr class="separator:a5cbbf85629172cfd7cb9ec22f8bbbbe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa6021818c5e979b293a09ede27aab7d" id="r_afa6021818c5e979b293a09ede27aab7d"><td class="memItemLeft" align="right" valign="top"><a id="afa6021818c5e979b293a09ede27aab7d" name="afa6021818c5e979b293a09ede27aab7d"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_svOneD_face</b> () const</td></tr>
+<tr class="separator:afa6021818c5e979b293a09ede27aab7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8470b3ca71883bd2117e31e30e159a86" id="r_a8470b3ca71883bd2117e31e30e159a86"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a8470b3ca71883bd2117e31e30e159a86">get_oned_ramp_steps</a> () const</td></tr>
+<tr class="memdesc:a8470b3ca71883bd2117e31e30e159a86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the pressure ramp step count (0 = disabled).  <br /></td></tr>
+<tr class="separator:a8470b3ca71883bd2117e31e30e159a86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12a7d666a9453f0985786b7d97253bcf" id="r_a12a7d666a9453f0985786b7d97253bcf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a12a7d666a9453f0985786b7d97253bcf">set_oned_ramp</a> (int steps, double P_ref)</td></tr>
+<tr class="memdesc:a12a7d666a9453f0985786b7d97253bcf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the pressure ramp parameters for 1D coupling initialization.  <br /></td></tr>
+<tr class="separator:a12a7d666a9453f0985786b7d97253bcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af48d9abb51021a5275b7bca7bc60db53" id="r_af48d9abb51021a5275b7bca7bc60db53"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#af48d9abb51021a5275b7bca7bc60db53">get_oned_ramp_ref_pressure</a> () const</td></tr>
+<tr class="memdesc:af48d9abb51021a5275b7bca7bc60db53"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the ramp reference pressure.  <br /></td></tr>
+<tr class="separator:af48d9abb51021a5275b7bca7bc60db53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2759c4bdb9eefd21c4b52642e9057e0d" id="r_a2759c4bdb9eefd21c4b52642e9057e0d"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a2759c4bdb9eefd21c4b52642e9057e0d">get_oned_relax_factor</a> () const</td></tr>
+<tr class="memdesc:a2759c4bdb9eefd21c4b52642e9057e0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the under-relaxation factor for DIR coupling pressure (1.0 = no relaxation).  <br /></td></tr>
+<tr class="separator:a2759c4bdb9eefd21c4b52642e9057e0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ee0acdf4cc43109b23b3d73db8a7abf" id="r_a7ee0acdf4cc43109b23b3d73db8a7abf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a7ee0acdf4cc43109b23b3d73db8a7abf">set_oned_relax_factor</a> (double omega)</td></tr>
+<tr class="memdesc:a7ee0acdf4cc43109b23b3d73db8a7abf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the under-relaxation factor for DIR coupling pressure.  <br /></td></tr>
+<tr class="separator:a7ee0acdf4cc43109b23b3d73db8a7abf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c933334cd66755d879ce18d0bbd694a" id="r_a0c933334cd66755d879ce18d0bbd694a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a0c933334cd66755d879ce18d0bbd694a">get_ramp_step_count</a> () const</td></tr>
+<tr class="memdesc:a0c933334cd66755d879ce18d0bbd694a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of committed time steps (used for ramp fraction).  <br /></td></tr>
+<tr class="separator:a0c933334cd66755d879ce18d0bbd694a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a279c33a940a56961b3b5a8fe05161e21" id="r_a279c33a940a56961b3b5a8fe05161e21"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a279c33a940a56961b3b5a8fe05161e21">increment_ramp_step_count</a> ()</td></tr>
+<tr class="memdesc:a279c33a940a56961b3b5a8fe05161e21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increment the committed step counter (call once per 'L' step).  <br /></td></tr>
+<tr class="separator:a279c33a940a56961b3b5a8fe05161e21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1103920d5c6da559d61bd2b3b1ee245f" id="r_a1103920d5c6da559d61bd2b3b1ee245f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a1103920d5c6da559d61bd2b3b1ee245f">get_P_prev_sent_old</a> () const</td></tr>
+<tr class="memdesc:a1103920d5c6da559d61bd2b3b1ee245f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the under-relaxed pressure sent at t_old on the last 'L' step (DIR input).  <br /></td></tr>
+<tr class="separator:a1103920d5c6da559d61bd2b3b1ee245f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a85da1f626d3cd38005b65a64b3d29198" id="r_a85da1f626d3cd38005b65a64b3d29198"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a85da1f626d3cd38005b65a64b3d29198">get_P_prev_sent_new</a> () const</td></tr>
+<tr class="memdesc:a85da1f626d3cd38005b65a64b3d29198"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the under-relaxed pressure sent at t_new on the last 'L' step (DIR input).  <br /></td></tr>
+<tr class="separator:a85da1f626d3cd38005b65a64b3d29198"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81641f447d1b1dc64c7fe5de8bc0ea71" id="r_a81641f447d1b1dc64c7fe5de8bc0ea71"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a81641f447d1b1dc64c7fe5de8bc0ea71">set_P_prev_sent</a> (double old_val, double new_val)</td></tr>
+<tr class="memdesc:a81641f447d1b1dc64c7fe5de8bc0ea71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the DIR input pressure history (call on 'L' steps).  <br /></td></tr>
+<tr class="separator:a81641f447d1b1dc64c7fe5de8bc0ea71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcf0316456c029c4c7fa2409c83411b0" id="r_adcf0316456c029c4c7fa2409c83411b0"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#adcf0316456c029c4c7fa2409c83411b0">get_Q_prev_sent</a> () const</td></tr>
+<tr class="memdesc:adcf0316456c029c4c7fa2409c83411b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the under-relaxed flow output on the last 'L' step (DIR output).  <br /></td></tr>
+<tr class="separator:adcf0316456c029c4c7fa2409c83411b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa066f280026add4ba9e8bc30a412d6c8" id="r_aa066f280026add4ba9e8bc30a412d6c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#aa066f280026add4ba9e8bc30a412d6c8">set_Q_prev_sent</a> (double Q)</td></tr>
+<tr class="memdesc:aa066f280026add4ba9e8bc30a412d6c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the DIR output flow history (call on 'L' steps).  <br /></td></tr>
+<tr class="separator:aa066f280026add4ba9e8bc30a412d6c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86a1b3836ddbe4b5c0451c1536445cc0" id="r_a86a1b3836ddbe4b5c0451c1536445cc0"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a86a1b3836ddbe4b5c0451c1536445cc0">get_P_neu_prev</a> () const</td></tr>
+<tr class="memdesc:a86a1b3836ddbe4b5c0451c1536445cc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the under-relaxed pressure output on the last 'L' step (NEU output).  <br /></td></tr>
+<tr class="separator:a86a1b3836ddbe4b5c0451c1536445cc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8ec3d280c6b5b1def74b4d9e01ab6c0" id="r_af8ec3d280c6b5b1def74b4d9e01ab6c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#af8ec3d280c6b5b1def74b4d9e01ab6c0">set_P_neu_prev</a> (double P)</td></tr>
+<tr class="memdesc:af8ec3d280c6b5b1def74b4d9e01ab6c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the NEU output pressure history (call on 'L' steps).  <br /></td></tr>
+<tr class="separator:af8ec3d280c6b5b1def74b4d9e01ab6c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b46ea31fde006227b3e6289492ecede" id="r_a5b46ea31fde006227b3e6289492ecede"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a5b46ea31fde006227b3e6289492ecede">get_Q_input_prev_old</a> () const</td></tr>
+<tr class="memdesc:a5b46ea31fde006227b3e6289492ecede"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the under-relaxed flow sent at t_old on the last 'L' step (NEU input).  <br /></td></tr>
+<tr class="separator:a5b46ea31fde006227b3e6289492ecede"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c09c75cd9184134f2d81731afaef159" id="r_a9c09c75cd9184134f2d81731afaef159"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a9c09c75cd9184134f2d81731afaef159">get_Q_input_prev_new</a> () const</td></tr>
+<tr class="memdesc:a9c09c75cd9184134f2d81731afaef159"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the under-relaxed flow sent at t_new on the last 'L' step (NEU input).  <br /></td></tr>
+<tr class="separator:a9c09c75cd9184134f2d81731afaef159"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0942980e74d86287f92ee43472edce6c" id="r_a0942980e74d86287f92ee43472edce6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a0942980e74d86287f92ee43472edce6c">set_Q_input_prev</a> (double old_val, double new_val)</td></tr>
+<tr class="memdesc:a0942980e74d86287f92ee43472edce6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the NEU input flow history (call on 'L' steps).  <br /></td></tr>
+<tr class="separator:a0942980e74d86287f92ee43472edce6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad08f311b4323041ef0bf1f3b82caaa52" id="r_ad08f311b4323041ef0bf1f3b82caaa52"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#ad08f311b4323041ef0bf1f3b82caaa52">set_solution_ids</a> (int flow_id, int pressure_id, double in_out_sign)</td></tr>
 <tr class="memdesc:ad08f311b4323041ef0bf1f3b82caaa52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the svZeroD solution IDs for flow and pressure.  <br /></td></tr>
 <tr class="separator:ad08f311b4323041ef0bf1f3b82caaa52"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -212,6 +272,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af964e06ca587a575d47449f3d4d57864" id="r_af964e06ca587a575d47449f3d4d57864"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#af964e06ca587a575d47449f3d4d57864">bcast_coupled_neumann_pressure</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, <a class="el" href="classcm_type.html">cmType</a> &amp;cm)</td></tr>
 <tr class="memdesc:af964e06ca587a575d47449f3d4d57864"><td class="mdescLeft">&#160;</td><td class="mdescRight">Master reads Neumann pressure, one scalar <code>MPI_Bcast</code>, all ranks set pressure (svZeroD sync).  <br /></td></tr>
 <tr class="separator:af964e06ca587a575d47449f3d4d57864"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0789fab849cfbf29e450f83fae983138" id="r_a0789fab849cfbf29e450f83fae983138"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_coupled_boundary_condition.html#a0789fab849cfbf29e450f83fae983138">bcast_coupled_dir_flowrate</a> (const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, <a class="el" href="classcm_type.html">cmType</a> &amp;cm)</td></tr>
+<tr class="memdesc:a0789fab849cfbf29e450f83fae983138"><td class="mdescLeft">&#160;</td><td class="mdescRight">Master reads DIR flowrates (Qo, Qn), two scalar <code>MPI_Bcast</code>, all ranks set flowrates (svZeroD sync).  <br /></td></tr>
+<tr class="separator:a0789fab849cfbf29e450f83fae983138"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Object-oriented Coupled boundary condition. </p>
@@ -464,6 +527,36 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a0789fab849cfbf29e450f83fae983138" name="a0789fab849cfbf29e450f83fae983138"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0789fab849cfbf29e450f83fae983138">&#9670;&#160;</a></span>bcast_coupled_dir_flowrate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::bcast_coupled_dir_flowrate </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classcm_type.html">cmType</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Master reads DIR flowrates (Qo, Qn), two scalar <code>MPI_Bcast</code>, all ranks set flowrates (svZeroD sync). </p>
+
+</div>
+</div>
 <a id="af964e06ca587a575d47449f3d4d57864" name="af964e06ca587a575d47449f3d4d57864"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af964e06ca587a575d47449f3d4d57864">&#9670;&#160;</a></span>bcast_coupled_neumann_pressure()</h2>
 
@@ -844,6 +937,188 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ae66fca001573f946053480972550f5e0" name="ae66fca001573f946053480972550f5e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae66fca001573f946053480972550f5e0">&#9670;&#160;</a></span>get_oned_input_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string &amp; CoupledBoundaryCondition::get_oned_input_file </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the <a class="el" href="namespacesv_one_d.html" title="3D-1D coupling subroutines.">svOneD</a> input file path. </p>
+<dl class="section return"><dt>Returns</dt><dd>Path to the 1D solver input file (empty for svZeroD BCs) </dd></dl>
+
+</div>
+</div>
+<a id="af48d9abb51021a5275b7bca7bc60db53" name="af48d9abb51021a5275b7bca7bc60db53"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af48d9abb51021a5275b7bca7bc60db53">&#9670;&#160;</a></span>get_oned_ramp_ref_pressure()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_oned_ramp_ref_pressure </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the ramp reference pressure. </p>
+
+</div>
+</div>
+<a id="a8470b3ca71883bd2117e31e30e159a86" name="a8470b3ca71883bd2117e31e30e159a86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8470b3ca71883bd2117e31e30e159a86">&#9670;&#160;</a></span>get_oned_ramp_steps()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int CoupledBoundaryCondition::get_oned_ramp_steps </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the pressure ramp step count (0 = disabled). </p>
+
+</div>
+</div>
+<a id="a2759c4bdb9eefd21c4b52642e9057e0d" name="a2759c4bdb9eefd21c4b52642e9057e0d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2759c4bdb9eefd21c4b52642e9057e0d">&#9670;&#160;</a></span>get_oned_relax_factor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_oned_relax_factor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the under-relaxation factor for DIR coupling pressure (1.0 = no relaxation). </p>
+
+</div>
+</div>
+<a id="a86a1b3836ddbe4b5c0451c1536445cc0" name="a86a1b3836ddbe4b5c0451c1536445cc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86a1b3836ddbe4b5c0451c1536445cc0">&#9670;&#160;</a></span>get_P_neu_prev()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_P_neu_prev </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the under-relaxed pressure output on the last 'L' step (NEU output). </p>
+
+</div>
+</div>
+<a id="a85da1f626d3cd38005b65a64b3d29198" name="a85da1f626d3cd38005b65a64b3d29198"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a85da1f626d3cd38005b65a64b3d29198">&#9670;&#160;</a></span>get_P_prev_sent_new()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_P_prev_sent_new </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the under-relaxed pressure sent at t_new on the last 'L' step (DIR input). </p>
+
+</div>
+</div>
+<a id="a1103920d5c6da559d61bd2b3b1ee245f" name="a1103920d5c6da559d61bd2b3b1ee245f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1103920d5c6da559d61bd2b3b1ee245f">&#9670;&#160;</a></span>get_P_prev_sent_old()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_P_prev_sent_old </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the under-relaxed pressure sent at t_old on the last 'L' step (DIR input). </p>
+
+</div>
+</div>
 <a id="ae3acc4c4cd3db83f936f021eb87020c4" name="ae3acc4c4cd3db83f936f021eb87020c4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae3acc4c4cd3db83f936f021eb87020c4">&#9670;&#160;</a></span>get_Pn()</h2>
 
@@ -923,6 +1198,87 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a9c09c75cd9184134f2d81731afaef159" name="a9c09c75cd9184134f2d81731afaef159"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c09c75cd9184134f2d81731afaef159">&#9670;&#160;</a></span>get_Q_input_prev_new()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_Q_input_prev_new </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the under-relaxed flow sent at t_new on the last 'L' step (NEU input). </p>
+
+</div>
+</div>
+<a id="a5b46ea31fde006227b3e6289492ecede" name="a5b46ea31fde006227b3e6289492ecede"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b46ea31fde006227b3e6289492ecede">&#9670;&#160;</a></span>get_Q_input_prev_old()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_Q_input_prev_old </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the under-relaxed flow sent at t_old on the last 'L' step (NEU input). </p>
+
+</div>
+</div>
+<a id="adcf0316456c029c4c7fa2409c83411b0" name="adcf0316456c029c4c7fa2409c83411b0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adcf0316456c029c4c7fa2409c83411b0">&#9670;&#160;</a></span>get_Q_prev_sent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double CoupledBoundaryCondition::get_Q_prev_sent </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the under-relaxed flow output on the last 'L' step (DIR output). </p>
+
+</div>
+</div>
 <a id="a0d54008ea96dbd627df84e761b50a562" name="a0d54008ea96dbd627df84e761b50a562"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0d54008ea96dbd627df84e761b50a562">&#9670;&#160;</a></span>get_Qn()</h2>
 
@@ -963,6 +1319,33 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a0c933334cd66755d879ce18d0bbd694a" name="a0c933334cd66755d879ce18d0bbd694a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c933334cd66755d879ce18d0bbd694a">&#9670;&#160;</a></span>get_ramp_step_count()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int CoupledBoundaryCondition::get_ramp_step_count </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the number of committed time steps (used for ramp fraction). </p>
+
+</div>
+</div>
 <a id="a1df0276f9258f26c78aaca4a00ea3a3f" name="a1df0276f9258f26c78aaca4a00ea3a3f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1df0276f9258f26c78aaca4a00ea3a3f">&#9670;&#160;</a></span>has_cap()</h2>
 
@@ -987,6 +1370,33 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Check if this BC has a cap (broadcast in distribute so all ranks agree). </p>
+
+</div>
+</div>
+<a id="a279c33a940a56961b3b5a8fe05161e21" name="a279c33a940a56961b3b5a8fe05161e21"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a279c33a940a56961b3b5a8fe05161e21">&#9670;&#160;</a></span>increment_ramp_step_count()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::increment_ramp_step_count </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Increment the committed step counter (call once per 'L' step). </p>
 
 </div>
 </div>
@@ -1265,6 +1675,171 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a5cbbf85629172cfd7cb9ec22f8bbbbe2" name="a5cbbf85629172cfd7cb9ec22f8bbbbe2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5cbbf85629172cfd7cb9ec22f8bbbbe2">&#9670;&#160;</a></span>set_oned_input_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::set_oned_input_file </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the <a class="el" href="namespacesv_one_d.html" title="3D-1D coupling subroutines.">svOneD</a> input file path. </p>
+
+</div>
+</div>
+<a id="a12a7d666a9453f0985786b7d97253bcf" name="a12a7d666a9453f0985786b7d97253bcf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12a7d666a9453f0985786b7d97253bcf">&#9670;&#160;</a></span>set_oned_ramp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::set_oned_ramp </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>steps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>P_ref</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the pressure ramp parameters for 1D coupling initialization. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">steps</td><td>Number of time steps over which to ramp (0 = disabled). </td></tr>
+    <tr><td class="paramname">P_ref</td><td>Reference pressure at step 0 (typically the 1D initial pressure). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a7ee0acdf4cc43109b23b3d73db8a7abf" name="a7ee0acdf4cc43109b23b3d73db8a7abf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ee0acdf4cc43109b23b3d73db8a7abf">&#9670;&#160;</a></span>set_oned_relax_factor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::set_oned_relax_factor </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>omega</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the under-relaxation factor for DIR coupling pressure. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">omega</td><td>Relaxation factor in (0, 1]. 1.0 disables relaxation. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af8ec3d280c6b5b1def74b4d9e01ab6c0" name="af8ec3d280c6b5b1def74b4d9e01ab6c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af8ec3d280c6b5b1def74b4d9e01ab6c0">&#9670;&#160;</a></span>set_P_neu_prev()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::set_P_neu_prev </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>P</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the NEU output pressure history (call on 'L' steps). </p>
+
+</div>
+</div>
+<a id="a81641f447d1b1dc64c7fe5de8bc0ea71" name="a81641f447d1b1dc64c7fe5de8bc0ea71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a81641f447d1b1dc64c7fe5de8bc0ea71">&#9670;&#160;</a></span>set_P_prev_sent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::set_P_prev_sent </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>old_val</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>new_val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the DIR input pressure history (call on 'L' steps). </p>
+
+</div>
+</div>
 <a id="a78d3305ae9e58258ff562b574bbeae1f" name="a78d3305ae9e58258ff562b574bbeae1f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a78d3305ae9e58258ff562b574bbeae1f">&#9670;&#160;</a></span>set_pressure()</h2>
 
@@ -1288,6 +1863,72 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a0942980e74d86287f92ee43472edce6c" name="a0942980e74d86287f92ee43472edce6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0942980e74d86287f92ee43472edce6c">&#9670;&#160;</a></span>set_Q_input_prev()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::set_Q_input_prev </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>old_val</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>new_val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the NEU input flow history (call on 'L' steps). </p>
+
+</div>
+</div>
+<a id="aa066f280026add4ba9e8bc30a412d6c8" name="aa066f280026add4ba9e8bc30a412d6c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa066f280026add4ba9e8bc30a412d6c8">&#9670;&#160;</a></span>set_Q_prev_sent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::set_Q_prev_sent </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>Q</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the DIR output flow history (call on 'L' steps). </p>
 
 </div>
 </div>

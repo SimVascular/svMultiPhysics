@@ -25,6 +25,8 @@ var searchData=
   ['strongtype_22',['StrongType',['../classsvmp_1_1_f_e_1_1_strong_type.html',1,'svmp::FE']]],
   ['strongtype_3c_20globalindex_2c_20doftag_20_3e_23',['StrongType&lt; GlobalIndex, DofTag &gt;',['../classsvmp_1_1_f_e_1_1_strong_type.html',1,'svmp::FE']]],
   ['stvenantkirchhoffparameters_24',['StVenantKirchhoffParameters',['../class_st_venant_kirchhoff_parameters.html',1,'']]],
-  ['svzerodsolverinterfaceparameters_25',['svZeroDSolverInterfaceParameters',['../classsv_zero_d_solver_interface_parameters.html',1,'']]],
-  ['svzerodsolverinterfacetype_26',['svZeroDSolverInterfaceType',['../classsv_zero_d_solver_interface_type.html',1,'']]]
+  ['svonedsolverinterfacedata_25',['svOneDSolverInterfaceData',['../classsv_one_d_solver_interface_data.html',1,'']]],
+  ['svonedsolverinterfaceparameters_26',['svOneDSolverInterfaceParameters',['../classsv_one_d_solver_interface_parameters.html',1,'']]],
+  ['svzerodsolverinterfacedata_27',['svZeroDSolverInterfaceData',['../classsv_zero_d_solver_interface_data.html',1,'']]],
+  ['svzerodsolverinterfaceparameters_28',['svZeroDSolverInterfaceParameters',['../classsv_zero_d_solver_interface_parameters.html',1,'']]]
 ];

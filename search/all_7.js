@@ -9,7 +9,7 @@ var searchData=
   ['edist_6',['eDist',['../classmsh_type.html#a187d763d73b66a4c483d78b4ae0e2be8',1,'mshType']]],
   ['eid_7',['eId',['../classmsh_type.html#a775ece8162a4b06bb88d7da7a499276b',1,'mshType']]],
   ['eien_8',['eIEN',['../classmsh_type.html#a5762191209f9ebdd4bdcc388a54a3224',1,'mshType']]],
-  ['element_20by_20element_20assembly_20trilinos_20native_9',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md37',1,'']]],
+  ['element_20by_20element_20assembly_20trilinos_20native_9',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md38',1,'']]],
   ['element_5fdimension_10',['element_dimension',['../group___f_e___common_types.html#ga5169c5f7572909bf6c0b27f3f60674a9',1,'svmp::FE']]],
   ['element_5ftype_11',['element_type',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#a1346c96469c28e3ef0e2f1e7f9e15f8a',1,'svmp::FE::basis::BasisRequest::element_type'],['../classsvmp_1_1_f_e_1_1_invalid_element_exception.html#ac0f72814d0750fddf10b781a56ae3396',1,'svmp::FE::InvalidElementException::element_type()']]],
   ['elementbyelement_12',['ElementByElement',['../group___f_e___common_types.html#gga6eaba08c9d38ba04b8c34d30371830d0a21c6101ed42e51ea8041e0462503e60a',1,'svmp::FE']]],
@@ -28,7 +28,7 @@ var searchData=
   ['evaluate_5fall_25',['evaluate_all',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a5aee1229b185ec7ebb4af6e400ea3a43',1,'svmp::FE::basis::BasisFunction']]],
   ['evaluate_5fall_5fto_26',['evaluate_all_to',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ad6f1a5b8e6cdbcd4c24d03242ec8c4dc',1,'svmp::FE::basis::BasisFunction']]],
   ['evaluate_5fgradients_27',['evaluate_gradients',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a0338d518f13aee8ae004a89fc679ea78',1,'svmp::FE::basis::BasisFunction']]],
-  ['evaluate_5fgradients_5fto_28',['evaluate_gradients_to',['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#ab7719814880ecdcf65acc4ac15d9ff65',1,'svmp::FE::basis::LagrangeBasis::evaluate_gradients_to()'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a0e909a94bf56be74f766fb4b8af46d8d',1,'svmp::FE::basis::SerendipityBasis::evaluate_gradients_to()'],['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a25a1fdc4f1f853d2b967e1a3f092585c',1,'svmp::FE::basis::BasisFunction::evaluate_gradients_to(const math::Vector&lt; double, 3 &gt; &amp;xi, std::span&lt; Gradient &gt; gradients_out) const']]],
+  ['evaluate_5fgradients_5fto_28',['evaluate_gradients_to',['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a0e909a94bf56be74f766fb4b8af46d8d',1,'svmp::FE::basis::SerendipityBasis::evaluate_gradients_to()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#ab7719814880ecdcf65acc4ac15d9ff65',1,'svmp::FE::basis::LagrangeBasis::evaluate_gradients_to()'],['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a25a1fdc4f1f853d2b967e1a3f092585c',1,'svmp::FE::basis::BasisFunction::evaluate_gradients_to(const math::Vector&lt; double, 3 &gt; &amp;xi, std::span&lt; Gradient &gt; gradients_out) const']]],
   ['evaluate_5fhessians_29',['evaluate_hessians',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ab2b6ab2246e77fd52637389da00b7ff1',1,'svmp::FE::basis::BasisFunction']]],
   ['evaluate_5fhessians_5fto_30',['evaluate_hessians_to',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a889246684972c223400fb370c03d60b1',1,'svmp::FE::basis::BasisFunction::evaluate_hessians_to()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#ac34ac2d33f26d4802236a5956ac62236',1,'svmp::FE::basis::LagrangeBasis::evaluate_hessians_to()'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a3b91cc4be870b756ef6ab54d9a423c75',1,'svmp::FE::basis::SerendipityBasis::evaluate_hessians_to()']]],
   ['evaluate_5fvalues_31',['evaluate_values',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a2c77881eb8e202f1d0438513e3a34491',1,'svmp::FE::basis::BasisFunction']]],
@@ -37,6 +37,7 @@ var searchData=
   ['evaluation_20contract_34',['Object and evaluation contract',['../group___f_e___basis.html#autotoc_md4',1,'']]],
   ['exceptionbase_35',['ExceptionBase',['../classsvmp_1_1_exception_base.html',1,'svmp']]],
   ['exceptioncontext_36',['ExceptionContext',['../classsvmp_1_1_exception_context.html',1,'svmp']]],
-  ['exceptions_37',['exceptions',['../group___f_e___common_exceptions.html',1,'Exceptions'],['../group___f_e___basis_exceptions.html',1,'Exceptions']]],
-  ['expl_5fgeom_5fcpl_38',['expl_geom_cpl',['../classeq_type.html#a2652bab94c8daed8fdbde4b97c3cbd5d',1,'eqType']]]
+  ['exceptions_37',['exceptions',['../group___f_e___basis_exceptions.html',1,'Exceptions'],['../group___f_e___common_exceptions.html',1,'Exceptions']]],
+  ['expl_5fgeom_5fcpl_38',['expl_geom_cpl',['../classeq_type.html#a2652bab94c8daed8fdbde4b97c3cbd5d',1,'eqType']]],
+  ['extract_5fcoupled_5fdof_39',['extract_coupled_dof',['../class_one_d_solver_interface.html#aa24e1fb266bc6efe6f9d8108d4fa8aff',1,'OneDSolverInterface']]]
 ];

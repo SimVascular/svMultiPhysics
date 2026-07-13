@@ -1,17 +1,23 @@
 <map id="CappingSurfaceBaseException" name="CappingSurfaceBaseException">
-<area shape="rect" id="Node000001" title="Base exception for capping surface (cap VTP) errors." alt="" coords="168,159,388,185"/>
-<area shape="rect" id="Node000003" href="$class_capping_surface_coupling_topology_exception.html" title="Cap mesh shares no nodes with the coupled boundary face." alt="" coords="436,5,675,45"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="302,148,360,101,396,76,435,55,465,43,467,48,437,60,399,81,363,105,305,152"/>
-<area shape="rect" id="Node000004" href="$class_capping_surface_file_exception.html" title="Cap VTP file cannot be opened." alt="" coords="450,70,661,95"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="318,151,373,128,435,105,484,93,486,98,437,111,375,133,320,156"/>
-<area shape="rect" id="Node000005" href="$class_capping_surface_invalid_element_nodes_exception.html" title="Cap VTP connectivity does not match expected TRI3 topology." alt="" coords="444,120,667,160"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="401,155,444,150,444,155,402,160"/>
-<area shape="rect" id="Node000006" href="$class_capping_surface_quadrature_exception.html" title="Cap face quadrature (shape functions on TRI3) setup failed." alt="" coords="457,184,654,224"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="402,184,457,190,456,195,401,189"/>
-<area shape="rect" id="Node000007" href="$class_capping_surface_unsupported_cell_exception.html" title="Cap VTP uses an unsupported cell type (only TRI3 is supported)." alt="" coords="452,248,659,288"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="321,188,437,233,476,245,474,251,435,239,319,193"/>
-<area shape="rect" id="Node000008" href="$class_capping_surface_vtp_exception.html" title="VTP read, parse, or validation error during cap load." alt="" coords="450,313,661,338"/>
-<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="302,193,360,246,397,274,437,298,471,310,470,315,435,302,394,279,356,250,299,197"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,159,120,185"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,169,168,169,168,175,134,175"/>
+<area shape="rect" id="Node000001" title="Base exception for capping surface (cap VTP) errors." alt="" coords="168,219,388,244"/>
+<area shape="rect" id="Node000003" href="$class_capping_surface_assembly_exception.html" title="Inconsistent cap connectivity or assembly indexing." alt="" coords="437,5,689,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="290,205,312,168,345,123,386,77,435,40,459,28,462,33,437,44,389,81,349,126,317,171,294,208"/>
+<area shape="rect" id="Node000004" href="$class_capping_surface_copy_exception.html" title="Failure copying a CappingSurface or its internal face." alt="" coords="452,55,673,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="296,206,354,147,392,116,435,90,468,78,470,83,437,95,396,121,358,151,300,210"/>
+<area shape="rect" id="Node000005" href="$class_capping_surface_coupling_topology_exception.html" title="Cap mesh shares no nodes with the coupled boundary face." alt="" coords="443,105,682,145"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="313,210,370,182,435,154,473,142,474,147,437,159,372,186,316,214"/>
+<area shape="rect" id="Node000006" href="$class_capping_surface_file_exception.html" title="Cap VTP file cannot be opened." alt="" coords="457,169,668,195"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="365,214,488,192,489,197,366,219"/>
+<area shape="rect" id="Node000007" href="$class_capping_surface_geometry_exception.html" title="Geometry or Jacobian error during cap surface integration." alt="" coords="436,219,689,244"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="402,229,436,229,436,234,402,234"/>
+<area shape="rect" id="Node000008" href="$class_capping_surface_invalid_element_nodes_exception.html" title="Cap VTP connectivity does not match expected TRI3 topology." alt="" coords="451,269,674,309"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="356,244,463,266,462,271,355,249"/>
+<area shape="rect" id="Node000009" href="$class_capping_surface_quadrature_exception.html" title="Cap face quadrature (shape functions on TRI3) setup failed." alt="" coords="464,333,661,373"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="310,249,368,284,437,318,472,330,470,335,435,323,365,289,308,254"/>
+<area shape="rect" id="Node000010" href="$class_capping_surface_unsupported_cell_exception.html" title="Cap VTP uses an unsupported cell type (only TRI3 is supported)." alt="" coords="459,397,666,437"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="299,253,356,318,394,353,437,382,463,394,461,399,435,387,391,357,352,322,295,257"/>
+<area shape="rect" id="Node000011" href="$class_capping_surface_vtp_exception.html" title="VTP read, parse, or validation error during cap load." alt="" coords="457,461,668,487"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="292,256,313,298,345,350,387,403,411,426,437,446,463,459,461,464,435,451,407,431,383,407,341,354,309,301,288,258"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,219,120,244"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,229,168,229,168,234,134,234"/>
 </map>
