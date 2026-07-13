@@ -1,4 +1,4 @@
-from .conftest import run_with_reference
+from .conftest import run_with_reference, skip_if_no_petsc, skip_if_no_trilinos
 import os
 import subprocess
 
@@ -19,16 +19,19 @@ def test_pipe_RCR_3d_fourier_coeff(n_proc):
     t_max = 2
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
 
+@skip_if_no_petsc
 def test_pipe_RCR_3d_petsc(n_proc):
     test_folder = "pipe_RCR_3d_petsc"
     t_max = 2
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
 
+@skip_if_no_trilinos
 def test_pipe_RCR_3d_trilinos_ilut(n_proc):
     test_folder = "pipe_RCR_3d_trilinos_ilut"
     t_max = 2
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max)
 
+@skip_if_no_trilinos
 def test_pipe_RCR_3d_trilinos_bj(n_proc):
     test_folder = "pipe_RCR_3d_trilinos_bj"
     t_max = 2
@@ -104,6 +107,7 @@ def test_iliac_artery(n_proc):
     test_folder = "iliac_artery"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+@skip_if_no_trilinos
 def test_iliac_artery_trilinos_gmres_ilut(n_proc):
     test_folder = "iliac_artery_trilinos_gmres_ilut"
     run_with_reference(base_folder, test_folder, fields, n_proc)

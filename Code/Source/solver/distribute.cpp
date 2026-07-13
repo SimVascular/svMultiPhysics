@@ -650,44 +650,10 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   }
 
   // Communicating time-dependent BC data
-  //
-  // lBc.gt is declare ALLOCATABLE in MOD.f but we don't
-  // want to use pointers so use the define() method
-  // to check if it has data define.
-  //
-  bool flag = lBc.gt.defined(); 
-  cm.bcast(cm_mod, &flag);
-
-  if (flag) {
-    if (is_slave) {
-      // [NOTE] This is allocated in ComMod.
-      //lBc.gt = new fcType;
-    }
-
-    cm.bcast(cm_mod, &lBc.gt.lrmp);
-    cm.bcast(cm_mod, &lBc.gt.d);
-    cm.bcast(cm_mod, &lBc.gt.n);
-
-    int j = lBc.gt.d;
-    int i = lBc.gt.n;
-
-    if (is_slave) { 
-      lBc.gt.qi.resize(j);
-      lBc.gt.qs.resize(j);
-      lBc.gt.r.resize(j,i);
-      lBc.gt.i.resize(j,i);
-    }
-
-    cm.bcast(cm_mod, &lBc.gt.ti);
-    cm.bcast(cm_mod, &lBc.gt.T);
-    cm.bcast(cm_mod, lBc.gt.qi);
-    cm.bcast(cm_mod, lBc.gt.qs);
-    cm.bcast(cm_mod, lBc.gt.r);
-    cm.bcast(cm_mod, lBc.gt.i);
-  }
+  lBc.gt.distribute(cm_mod, cm);
 
   // Communicating moving BC data
-  flag = lBc.gm.defined();
+  bool flag = lBc.gm.defined();
   cm.bcast(cm_mod, &flag);
   
   if (flag) {
@@ -923,31 +889,7 @@ void dist_bf(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bfType& lBf
   }
 
   //  Communicating time-dependent BF data
-  flag = lBf.bt.defined();
-  cm.bcast(cm_mod, &flag);
-  if (flag) {
-    if (is_slave) {
-      //ALLOCATE(lBf.bt)
-    }
-    cm.bcast(cm_mod, &lBf.bt.lrmp);
-    cm.bcast(cm_mod, &lBf.bt.d);
-    cm.bcast(cm_mod, &lBf.bt.n);
-
-    if (is_slave) {
-      int j = lBf.bt.d;
-      int i = lBf.bt.n;
-      lBf.bt.qi.resize(j);
-      lBf.bt.qs.resize(j);
-      lBf.bt.r.resize(j,i);
-      lBf.bt.i.resize(j,i);
-    }
-    cm.bcast(cm_mod, &lBf.bt.ti);
-    cm.bcast(cm_mod, &lBf.bt.T);
-    cm.bcast(cm_mod, lBf.bt.qi);
-    cm.bcast(cm_mod, lBf.bt.qs);
-    cm.bcast(cm_mod, lBf.bt.r);
-    cm.bcast(cm_mod, lBf.bt.i);
-  }
+  lBf.bt.distribute(cm_mod, cm);
 
   // Communicating moving BF data
   //
@@ -1763,26 +1705,7 @@ void dist_mat_consts(const ComMod& com_mod, const CmMod& cm_mod, const cmType& c
     cm.bcast(cm_mod, &lStM.Tf.g);
 
   } else if (utils::btest(lStM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_ustd))) {
-    cm.bcast(cm_mod, &lStM.Tf.gt.lrmp);
-    cm.bcast(cm_mod, &lStM.Tf.gt.d);
-    cm.bcast(cm_mod, &lStM.Tf.gt.n);
-
-    if (cm.slv(cm_mod)) {
-      int j = lStM.Tf.gt.d;
-      int i = lStM.Tf.gt.n;
-      lStM.Tf.gt.qi.resize(j);
-      lStM.Tf.gt.qs.resize(j);
-      lStM.Tf.gt.r.resize(j,i);
-      lStM.Tf.gt.i.resize(j,i);
-   } 
-
-   cm.bcast(cm_mod, &lStM.Tf.gt.ti);
-   cm.bcast(cm_mod, &lStM.Tf.gt.T);
-
-   cm.bcast(cm_mod, lStM.Tf.gt.qi, "lStM.Tf.gt.qi");
-   cm.bcast(cm_mod, lStM.Tf.gt.qs, "lStM.Tf.gt.qs");
-   cm.bcast(cm_mod, lStM.Tf.gt.r, "lStM.Tf.gt.r");
-   cm.bcast(cm_mod, lStM.Tf.gt.i, "lStM.Tf.gt.i");
+    lStM.Tf.gt.distribute(cm_mod, cm);
   }
   
   // Broadcast directional stress distribution parameters

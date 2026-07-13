@@ -8,7 +8,6 @@
 #include "cmm.h"
 #include "consts.h"
 #include "eq_assem.h"
-#include "fft.h"
 #include "fluid.h"
 #include "fs.h"
 #include "lhsa.h"
@@ -1146,17 +1145,16 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
       throw std::runtime_error("[set_bc_dirl] Inconsistent DOF");
     }
 
-    igbc(com_mod, lBc.gm, lY, lA);
+    all_fun::igbc(com_mod, lBc.gm, lY, lA);
     return;
   
   } else if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_ustd))) {
     #ifdef debug_set_bc_dir_l
     dmsg << "bType_ustd";
     #endif
-    Vector<double> dirY_v(1), dirA_v(1);
-    ifft(com_mod, lBc.gt, dirY_v, dirA_v);
-    dirY = dirY_v(0);
-    dirA = dirA_v(0);
+    const auto [value, derivative] = lBc.gt.value_and_derivative(com_mod.time);
+    dirY = value[0];
+    dirA = derivative[0];
 
   } else { 
     dirA = 0.0;
@@ -1509,7 +1507,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   int nsd = com_mod.nsd;
 
   int nNo = lFa.nNo;
-  Vector<double> h(1), rtmp(1);
+  Vector<double> h(1);
   Vector<double> tmpA(nNo); 
 
   // Geting the contribution of Neu BC
@@ -1531,7 +1529,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        Array<double> hg(nrows,ncols);
        Array<double> tmpA_a(nrows,ncols);
 
-       igbc(com_mod, lBc.gm, tmpA_a, hg);
+       all_fun::igbc(com_mod, lBc.gm, tmpA_a, hg);
 
        int n = 0;
        for (int j = 0; j < ncols; j++) {
@@ -1579,7 +1577,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        h(0) = lBc.g;
 
      } else if (utils::btest(lBc.bType,iBC_ustd)) {
-       ifft(com_mod, lBc.gt, h, rtmp);
+       h = lBc.gt.value(com_mod.time);
 
      } else {
        throw std::runtime_error("[set_bc_neu_l] Correction in SETBCNEU is needed");
@@ -1927,7 +1925,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
 
   if (utils::btest(lBc.bType,iBC_gen)) {
     Array<double> tmpA(nsd,nNo), hl(nsd,nNo);
-    igbc(com_mod, lBc.gm, tmpA, hl);
+    all_fun::igbc(com_mod, lBc.gm, tmpA, hl);
     for (int a = 0; a < nNo; a++) {
       int Ac = lFa.gN(a);
       hg.set_col(Ac, tmpA.col(a));
@@ -1940,12 +1938,11 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     }
 
   } else if (utils::btest(lBc.bType,iBC_ustd)) {
-     if (lBc.gt.d != nsd) {
-       throw std::runtime_error("[set_bc_trac_l]  Traction dof not initialized properly");
-     }
-     Vector<double> h(nsd);
-     Vector<double> tmp(nsd);
-     ifft(com_mod, lBc.gt, h, tmp);
+    if (lBc.gt.get_n_components() != nsd) {
+      throw std::runtime_error(
+          "[set_bc_trac_l]  Traction dof not initialized properly");
+    }
+     const Vector<double> h = lBc.gt.value(com_mod.time);
      for (int a = 0; a < nNo; a++) {
        int Ac = lFa.gN(a);
        hg.set_col(Ac, h);

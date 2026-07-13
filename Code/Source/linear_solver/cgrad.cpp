@@ -36,7 +36,7 @@ void schur(FSILS_lhsType& lhs, FSILS_subLsType& ls, const int dof, const Array<d
   Array<double> GP(dof,nNo), unCondU(dof,nNo);
 
   double time = fsi_linear_solver::fsils_cpu_t();
-  ls.suc = false;
+  ls.success = false;
   ls.iNorm = norm::fsi_ls_norms(mynNo, lhs.commu, R);
   double eps = pow(std::max(ls.absTol,ls.relTol*ls.iNorm),2.0);
   double errO = ls.iNorm*ls.iNorm;
@@ -64,7 +64,7 @@ void schur(FSILS_lhsType& lhs, FSILS_subLsType& ls, const int dof, const Array<d
     last_i = i;
 
     if (err < eps) {
-      ls.suc = true;
+      ls.success = true;
       break;
     }
 
@@ -156,7 +156,7 @@ void cgrad_v(FSILS_lhsType& lhs, FSILS_subLsType& ls, const int dof, const Array
   Array<double> P(dof,nNo), KP(dof,nNo), X(dof,nNo);
 
   ls.callD = fsi_linear_solver::fsils_cpu_t();
-  ls.suc = false;
+  ls.success = false;
   ls.iNorm = norm::fsi_ls_normv(dof, mynNo, lhs.commu, R);
   double eps = pow(std::max(ls.absTol, ls.relTol* ls.iNorm), 2.0);
 
@@ -181,7 +181,7 @@ void cgrad_v(FSILS_lhsType& lhs, FSILS_subLsType& ls, const int dof, const Array
     last_i = i;
 
     if (err < eps) {
-      ls.suc = true;
+      ls.success = true;
       break;
     }
 
@@ -242,7 +242,7 @@ void cgrad_s(FSILS_lhsType& lhs, FSILS_subLsType& ls, const Vector<double>& K, V
   Vector<double> P(nNo), KP(nNo), X(nNo);
 
   ls.callD = fsi_linear_solver::fsils_cpu_t();
-  ls.suc = false;
+  ls.success = false;
   ls.iNorm = norm::fsi_ls_norms(mynNo, lhs.commu, R);
   double eps = pow(std::max(ls.absTol, ls.relTol* ls.iNorm), 2.0);
   double errO = ls.iNorm * ls.iNorm;
@@ -266,7 +266,7 @@ void cgrad_s(FSILS_lhsType& lhs, FSILS_subLsType& ls, const Vector<double>& K, V
     last_i = i;
 
     if (err < eps) {
-      ls.suc = true;
+      ls.success = true;
       break;
     }
 

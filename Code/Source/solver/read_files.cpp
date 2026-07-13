@@ -9,7 +9,6 @@
 #include "FE/Common/FEException.h"
 #include "all_fun.h"
 #include "consts.h"
-#include "fft.h"
 #include "ionic_model.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
@@ -227,27 +226,26 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       lBc.g = bc_params->value.value();
     }
 
-  } else if (ctmp == "Unsteady") { 
-    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_ustd)); 
+  } else if (ctmp == "Unsteady") {
+    lBc.bType =
+        utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_ustd));
 
-    if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_trac))) { 
-      lBc.gt.d = com_mod.nsd;
-    } else { 
-      lBc.gt.d = 1;
-    }
+    const unsigned int n_dimensions =
+        utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_trac))
+            ? com_mod.nsd
+            : 1;
 
-    if (bc_params->temporal_values_file_path.defined()) { 
-      lBc.gt.lrmp = bc_params->ramp_function.value();
-      auto file_name = bc_params->temporal_values_file_path.value();
-      read_temporal_values(file_name, lBc);
-
-    } else { 
-      if (!bc_params->fourier_coefficients_file_path.defined()) { 
-        throw std::runtime_error("[read_bc] Undefined data for boundary condition type '" + bc_type + "'.");
-      }
-      lBc.gt.lrmp = false;
-      auto file_name = bc_params->fourier_coefficients_file_path.value(); 
-      read_fourier_coeff_values_file(file_name, lBc);
+    if (bc_params->temporal_values_file_path.defined()) {
+      lBc.gt = FourierInterpolation::from_time_series_file(
+          bc_params->temporal_values_file_path.value(), n_dimensions,
+          bc_params->ramp_function.value());
+    } else if (bc_params->fourier_coefficients_file_path.defined()) {
+      lBc.gt = FourierInterpolation::from_fourier_coefficients_file(
+          bc_params->fourier_coefficients_file_path.value(), n_dimensions);
+    } else {
+      throw std::runtime_error(
+          "[read_bc] Undefined data for boundary condition type '" + bc_type +
+          "'.");
     }
 
   // Coupling to a 0D/1D model:
@@ -395,7 +393,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       }
     }
 
-  } else if (ctmp == "Resistance") { 
+  } else if (ctmp == "Resistance") {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_res)); 
     if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) { 
       throw svmp::CoreException(
@@ -472,7 +470,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   //   S p a t i a l  ////
   ////////////////////////
 
-  } else if (ctmp == "Spatial") { 
+  } else if (ctmp == "Spatial") {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_gen)); 
     if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) { 
       throw std::runtime_error("[read_bc] Spatial BC is only defined for Neu BC.");
@@ -496,7 +494,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   //   G e n e r a l  ////
   ////////////////////////
 
-  } else if (ctmp == "General") { 
+  } else if (ctmp == "General") {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_gen)); 
     int iM = lBc.iM;
     int iFa = lBc.iFa;
@@ -1168,16 +1166,18 @@ void read_bf(ComMod& com_mod, BodyForceParameters* bf_params, bfType& lBf)
   // Unsteady //
 
   } else if (time_dependence == "unsteady") {
-    lBf.bType = utils::ibset(lBf.bType, enum_int(BodyForceType::bfType_ustd)); 
-    lBf.bt.d = lBf.dof;
+    lBf.bType = utils::ibset(lBf.bType, enum_int(BodyForceType::bfType_ustd));
+
     if (bf_params->temporal_values_file_path.defined()) {
-      lBf.bt.lrmp = bf_params->ramp_function.value();
-      auto file_name = bf_params->temporal_values_file_path.value();
-      read_temporal_values(file_name, lBf);
+      lBf.bt = FourierInterpolation::from_time_series_file(
+          bf_params->temporal_values_file_path.value(), lBf.dof,
+          bf_params->ramp_function.value());
+    } else if (bf_params->fourier_coefficients_file_path.defined()) {
+      lBf.bt = FourierInterpolation::from_fourier_coefficients_file(
+          bf_params->fourier_coefficients_file_path.value(), lBf.dof);
     } else {
-      lBf.bt.lrmp = false;
-      auto fTmp = bf_params->fourier_coefficients_file_path.value();
-      read_fourier_coeff_values_file(fTmp, lBf);
+      throw std::runtime_error("No temporal values or Fourier coefficients "
+                               "file provided for unsteady body force.");
     }
 
   // Spatial //
@@ -1816,62 +1816,6 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   }
 }
 
-//---------------------------------
-// read_fiber_temporal_values_file
-//---------------------------------
-// Read fiber reinforcement stress the values from a file.
-//
-// Note: There is no equivalent Fortran function.
-//
-void read_fiber_temporal_values_file(FiberReinforcementStressParameters& fiber_params, dmnType& lDmn)
-{
-  auto file_name = fiber_params.temporal_values_file_path.value();
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the fiber reinforcement stress the values file '" + file_name + "'.");
-  }
-
-  int i, j;
-  temporal_values_file >> i >> j; 
-  if ((i == 0) || (j == 0) || (i < 2)) {
-    throw std::runtime_error("Error reading the first line of the fiber reinforcement stress the values file '" + file_name + "' has an incorrect format.");
-  }
-
-  lDmn.stM.Tf.gt.d = 1;
-  lDmn.stM.Tf.gt.n = j;
-
-  // Read time/value pairs.
-  //
-  std::vector<std::vector<double>> temporal_values;
-  double time, value;
-  std::string line;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    temporal_values.push_back(values);
-  }
-
-  if (lDmn.stM.Tf.gt.lrmp) {
-    lDmn.stM.Tf.gt.n = 1;
-  }
-
-  lDmn.stM.Tf.gt.qi.resize(lDmn.stM.Tf.gt.d);
-  lDmn.stM.Tf.gt.qs.resize(lDmn.stM.Tf.gt.d);
-  lDmn.stM.Tf.gt.r.resize(lDmn.stM.Tf.gt.d,lDmn.stM.Tf.gt.n);
-  lDmn.stM.Tf.gt.i.resize(lDmn.stM.Tf.gt.d,lDmn.stM.Tf.gt.n);
-
-  fft(i, temporal_values, lDmn.stM.Tf.gt);
-}
-
 //------------
 // read_files
 //------------
@@ -2126,151 +2070,6 @@ void read_files(Simulation* simulation, const std::string& file_name)
   #endif
 }
 
-//--------------------------------
-// read_fourier_coeff_values_file 
-//--------------------------------
-// Set boundary condition Fourier coefficients read in from a file. 
-//
-// Note: There is no equivalent Fortran function.
-//
-// [TODO:DaveP] this is not fully implemented. 
-//
-void read_fourier_coeff_values_file(const std::string& file_name, bcType& lBc) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the Fourier coefficients values file '" + file_name + "'.");
-  }
-
-  temporal_values_file >> lBc.gt.ti >> lBc.gt.T; 
-
-  // Read time/value pairs.
-  //
-  lBc.gt.qi.resize(lBc.gt.d); 
-  lBc.gt.qs.resize(lBc.gt.d);
-
-  double time, value;
-  std::string line;
-  int n = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    lBc.gt.qi[n] = values[0];
-    lBc.gt.qs[n] = values[1];
-    n += 1;
-
-    if (n == lBc.gt.d) {
-      break;
-    }
-  }
-
-  temporal_values_file >> lBc.gt.n; 
-
-  lBc.gt.r.resize(lBc.gt.d, lBc.gt.n);
-  lBc.gt.i.resize(lBc.gt.d, lBc.gt.n);
-  
-  int j = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-
-    for (int i = 0; i < lBc.gt.d; i++) { 
-      lBc.gt.r(i,j) = values[i];
-      lBc.gt.i(i,j) = values[i + lBc.gt.d];
-    }
-
-    j += 1;
-    if (j == lBc.gt.n) {
-      break;
-    }
-  }
-}
-
-void read_fourier_coeff_values_file(const std::string& file_name, bfType& lBf) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the Fourier coefficients values file '" + file_name + "'.");
-  }
-
-  temporal_values_file >> lBf.bt.ti >> lBf.bt.T; 
-
-  // Read time/value pairs.
-  //
-  lBf.bt.qi.resize(lBf.bt.d); 
-  lBf.bt.qs.resize(lBf.bt.d);
-
-  double time, value;
-  std::string line;
-  int n = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    lBf.bt.qi[n] = values[0];
-    lBf.bt.qs[n] = values[1];
-    n += 1;
-
-    if (n == lBf.bt.d) {
-      break;
-    }
-  }
-
-  temporal_values_file >> lBf.bt.n; 
-
-  lBf.bt.r.resize(lBf.bt.d, lBf.bt.n);
-  lBf.bt.i.resize(lBf.bt.d, lBf.bt.n);
-  
-  int j = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-
-    for (int i = 0; i < lBf.bt.d; i++) { 
-      lBf.bt.r(i,j) = values[i];
-      lBf.bt.i(i,j) = values[i + lBf.bt.d];
-    }
-
-    j += 1;
-    if (j == lBf.bt.n) {
-      break;
-    }
-  }
-}
-
 //---------
 // read_ls
 //---------
@@ -2466,9 +2265,13 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
       lDmn.stM.Tf.g = fiber_params.value.value();
 
     } else if (fiber_stress == "unsteady") {
-      lDmn.stM.Tf.fType = utils::ibset(lDmn.stM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_ustd));
-      lDmn.stM.Tf.gt.lrmp = fiber_params.ramp_function.value();
-      read_fiber_temporal_values_file(fiber_params, lDmn);
+      lDmn.stM.Tf.fType =
+          utils::ibset(lDmn.stM.Tf.fType,
+                       static_cast<int>(BoundaryConditionType::bType_ustd));
+
+      lDmn.stM.Tf.gt = FourierInterpolation::from_time_series_file(
+          fiber_params.temporal_values_file_path.value(),
+          /* n_dimensions = */ 1, fiber_params.ramp_function.value());
     }
 
     // Read directional stress distribution parameters
@@ -2898,134 +2701,6 @@ void read_temp_spat_values(const ComMod& com_mod, const mshType& msh, const std:
       }
     } 
   } 
-}
-
-//----------------------
-// read_temporal_values
-//----------------------
-// Set boundary condition temporal values read in from a file. 
-//
-// Data modified:
-//
-//  Set lBc.gt Fourier coefficients data (fcType) 
-//     lBc.gt.n 
-//     lBc.gt.qi
-//     lBc.gt.qs
-//     lBc.gt.r
-//     lBc.gt.i
-//
-// Note: There is no equivalent Fortran function.
-//
-void read_temporal_values(const std::string& file_name, bcType& lBc) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the temporal values file '" + file_name + "'.");
-  }
-
-  int i, j;
-  temporal_values_file >> i >> j; 
-  if ((i == 0) || (j == 0) || (i < 2)) {
-    throw std::runtime_error("Error reading the first line of the temporal values file '" + file_name + "'.");
-  }
-  lBc.gt.n = j;
-
-  // Read time/value pairs.
-  //
-  std::vector<std::vector<double>> temporal_values;
-  double time, value;
-  std::string line;
-  int line_number = 1;
-  int num_values_per_line = lBc.gt.d + 1;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    // Remove leading and trailing spaces.
-    auto cleaned_line = std::regex_replace(line, std::regex("^ +| +$|( ) +"), "$1");
-    std::istringstream line_input(cleaned_line);
-    std::vector<double> values;
-
-    while (!line_input.eof()) {
-      line_input >> value;
-
-      if (line_input.fail()) { 
-        throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line " +
-            std::to_string(line_number) + ": '" + line + "'; value number " + std::to_string(values.size()+1) + " is not a double.");
-      }
-      values.push_back(value);
-    }
-
-    if (values.size() != num_values_per_line) { 
-      throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line " +
-          std::to_string(line_number) + ": '" + line + "'; expected " + std::to_string(num_values_per_line) + " values per line.");
-    }
-
-    temporal_values.push_back(values);
-    line_number += 1;
-  }
-
-  if (lBc.gt.lrmp) {
-    lBc.gt.n = 1;
-  }
-
-  lBc.gt.qi.resize(lBc.gt.d); 
-  lBc.gt.qs.resize(lBc.gt.d);
-  lBc.gt.r.resize(lBc.gt.d,lBc.gt.n);
-  lBc.gt.i.resize(lBc.gt.d,lBc.gt.n);
-
-  fft(i, temporal_values, lBc.gt);
-}
-
-// [NOTE] This is a hack, should really just have a single function for this..
-//
-void read_temporal_values(const std::string& file_name, bfType& lBf) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the temporal values file '" + file_name + "'.");
-  }
-
-  int i, j;
-  temporal_values_file >> i >> j; 
-  if (i < 2) {
-    throw std::runtime_error("The temporal values file '" + file_name + "' has an incorrect format.");
-  }
-  lBf.bt.n = j;
-
-  // Read time/value pairs.
-  //
-  std::vector<std::vector<double>> temporal_values;
-  double time, value;
-  std::string line;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    temporal_values.push_back(values);
-  }
-
-  if (lBf.bt.lrmp) {
-    lBf.bt.n = 1;
-  }
-
-  lBf.bt.qi.resize(lBf.bt.d); 
-  lBf.bt.qs.resize(lBf.bt.d);
-  lBf.bt.r.resize(lBf.bt.d, lBf.bt.n);
-  lBf.bt.i.resize(lBf.bt.d, lBf.bt.n);
-
-  fft(i, temporal_values, lBf.bt);
 }
 
 //----------------
