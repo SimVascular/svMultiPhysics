@@ -159,7 +159,8 @@ set(CSRCS
   PetscLinearAlgebra.h PetscLinearAlgebra.cpp
   TrilinosLinearAlgebra.h TrilinosLinearAlgebra.cpp
   Tensor4.h Tensor4.cpp
-  Vector.h Vector.cpp 
+  Vector.h Vector.cpp
+  FourierInterpolation.cpp
 
   lapack_defs.h
 
@@ -182,7 +183,6 @@ set(CSRCS
   fluid.h fluid.cpp
   fsi.h fsi.cpp
   fs.h fs.cpp
-  fft.h fft.cpp
   heatf.h heatf.cpp
   heats.h heats.cpp
   initialize.h initialize.cpp
@@ -207,6 +207,7 @@ set(CSRCS
   stokes.h stokes.cpp
   sv_struct.h sv_struct.cpp
   svZeroD_interface.h svZeroD_interface.cpp
+  svOneD_interface.h svOneD_interface.cpp
   txt.h txt.cpp
   utils.h utils.cpp
   ustruct.h ustruct.cpp
@@ -231,6 +232,7 @@ set(CSRCS
   SPLIT.c
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp
+  svOneD_interface/OneDSolverInterface.h svOneD_interface/OneDSolverInterface.cpp
 
   BoundaryCondition.h BoundaryCondition.cpp
   RobinBoundaryCondition.h RobinBoundaryCondition.cpp

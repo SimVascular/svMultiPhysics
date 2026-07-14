@@ -3,16 +3,77 @@ import numpy as np
 import pytest
 import os
 import shutil
-import platform
 import subprocess
+import sys
 import meshio
-
-is_not_Darwin = True
-if platform.system() == "Darwin": is_not_Darwin = False
 
 this_file_dir = os.path.abspath(os.path.dirname(__file__))
 cpp_exec = os.path.join(this_file_dir, "..", "build", "svMultiPhysics-build", "bin", "svmultiphysics")
 cpp_exec_p = os.path.join(this_file_dir, "..", "build-petsc", "svMultiPhysics-build", "bin", "svmultiphysics")
+
+
+def read_cmake_cache_variable(cache_path, key):
+    """Return the value of `key` in a CMakeCache.txt (lines are KEY:TYPE=VALUE),
+    or None if the cache file or the key cannot be found."""
+    try:
+        with open(cache_path) as cache:
+            for line in cache:
+                line = line.strip()
+                if line.startswith(key + ":"):
+                    return line.split("=", 1)[1].strip() if "=" in line else ""
+    except OSError:
+        return None
+    return None
+
+
+def cmake_cache_path_for(exe_path):
+    """CMakeCache.txt of the build that produced `exe_path`, which lives at
+    <build>/svMultiPhysics-build/bin/svmultiphysics."""
+    return os.path.join(os.path.dirname(os.path.dirname(exe_path)), "CMakeCache.txt")
+
+
+# Whether svMultiPhysics was built with PETSc / Trilinos, read from the
+# CMakeCache.txt of the corresponding build (PETSc tests use the separate build
+# at cpp_exec_p; Trilinos is linked into the main build at cpp_exec). PETSc is
+# enabled when SV_PETSC_DIR is a non-empty path, Trilinos when SV_USE_TRILINOS
+# is ON. A missing cache (e.g. the build does not exist) means "not available".
+HAS_PETSC = bool(read_cmake_cache_variable(cmake_cache_path_for(cpp_exec_p), "SV_PETSC_DIR"))
+HAS_TRILINOS = (
+    read_cmake_cache_variable(cmake_cache_path_for(cpp_exec), "SV_USE_TRILINOS") or ""
+).upper() in ("ON", "1", "TRUE", "YES")
+
+# Reusable markers to decorate PETSc/Trilinos tests at their definition site.
+skip_if_no_petsc = pytest.mark.skipif(
+    not HAS_PETSC,
+    reason="svMultiPhysics not built with PETSc (SV_PETSC_DIR empty in CMakeCache.txt)",
+)
+skip_if_no_trilinos = pytest.mark.skipif(
+    not HAS_TRILINOS,
+    reason="svMultiPhysics not built with Trilinos (SV_USE_TRILINOS=OFF in CMakeCache.txt)",
+)
+
+
+def _detect_oversubscribe_flag():
+    """Return the mpirun flag needed to allow more ranks than physical cores.
+
+    Open MPI requires ``--oversubscribe``; Intel MPI / MPICH (Hydra) allow
+    oversubscription by default and reject the unknown flag, so no flag is used.
+    """
+    try:
+        proc = subprocess.run(
+            ["mpirun", "--version"], capture_output=True, text=True, check=False
+        )
+        version = (proc.stdout or "") + (proc.stderr or "")
+    except FileNotFoundError:
+        version = ""
+
+    if "Open MPI" in version or "OpenRTE" in version:
+        return "--oversubscribe"
+    return ""
+
+
+# Detected once at import; empty string for Intel MPI / MPICH.
+OVERSUBSCRIBE_FLAG = _detect_oversubscribe_flag()
 
 # Relative tolerances for each tested field
 RTOL = {
@@ -65,46 +126,37 @@ def run_by_name(folder, name, t_max, n_proc=1):
     if os.path.exists(dir_path):
         shutil.rmtree(dir_path)
 
-    # run simulation
-    if is_not_Darwin:
-        if "petsc" in folder:
-            cmd = " ".join(
-            [
-                "mpirun",
-                "--oversubscribe" if n_proc > 1 else "",
-                "-np",
-                str(n_proc),
-                cpp_exec_p,
-                name,
-            ]
-            )
-        else:
-            cmd = " ".join(
-            [
-                "mpirun",
-                "--oversubscribe" if n_proc > 1 else "",
-                "-np",
-                str(n_proc),
-                cpp_exec,
-                name,
-            ]
-            )
-    else:
-        if "petsc" in folder or "trilinos" in folder: 
-            return
-        else:
-            cmd = " ".join(
-                [
-                    "mpirun",
-                    "--oversubscribe" if n_proc > 1 else "",
-                    "-np",
-                    str(n_proc),
-                    cpp_exec,
-                    name,
-                ]
-                )
+    # run simulation (PETSc tests use a dedicated build; see cpp_exec_p)
+    exe = cpp_exec_p if "petsc" in folder else cpp_exec
+    cmd = " ".join(
+        [
+            "mpirun",
+            OVERSUBSCRIBE_FLAG if n_proc > 1 else "",
+            "-np",
+            str(n_proc),
+            exe,
+            name,
+        ]
+    )
 
-    subprocess.call(cmd, cwd=folder, shell=True)
+    # Run the command while capturing the return code and stderr output. This
+    # way, if something goes wrong, we can raise an appropriate error message.
+    completed = subprocess.run(
+        cmd, cwd=folder, shell=True, stderr=subprocess.PIPE, text=True
+    )
+
+    # Print the captured stderr to console, so it is visible. Notice that this
+    # will print stderr after stdout, so they might be out of order (printing
+    # them in order while capturing is apparently not easy through subprocess).
+    if completed.stderr:
+        print(completed.stderr, end="", file=sys.stderr)
+
+    # If something went wrong, raise an error with the captured stderr output in
+    # the message.
+    if completed.returncode != 0:
+        raise RuntimeError(
+            "Exit code {}: {}\n".format(completed.returncode, completed.stderr)
+        )
 
     # read results
     fname = os.path.join(
@@ -140,14 +192,7 @@ def run_with_reference(
 
     # run simulation
     folder = os.path.join("cases", base_folder, test_folder)
-    
-    if is_not_Darwin:
-        res = run_by_name(folder, name_inp, t_max, n_proc)
-    else:
-        if "petsc" in folder or "trilinos" in folder: 
-            return
-        else:
-            res = run_by_name(folder, name_inp, t_max, n_proc)
+    res = run_by_name(folder, name_inp, t_max, n_proc)
 
     # read reference
     fname = os.path.join(folder, name_ref)

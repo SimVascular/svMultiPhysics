@@ -16,8 +16,6 @@
 
 namespace consts {
 
-const double pi = 3.1415926535897932384626;
-
 const int maxNSD = 3;
 
 const int maxNProp = 20;

@@ -5,10 +5,10 @@
 
 #include "read_files.h"
 
+#include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "all_fun.h"
 #include "consts.h"
-#include "fft.h"
 #include "ionic_model.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
@@ -128,12 +128,16 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 {
   using namespace consts;
   auto bc_type = bc_params->type.value();
+  BoundaryConditionType coupled_bc_type = BoundaryConditionType::bType_Neu;
+  std::string oned_input_file;
 
   if (std::set<std::string>{"Dirichlet", "Dir"}.count(bc_type)) {
-    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir)); 
+    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+    coupled_bc_type = BoundaryConditionType::bType_Dir; 
 
   } else if (std::set<std::string>{"Neumann", "Neu"}.count(bc_type)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Neu)); 
+    coupled_bc_type = BoundaryConditionType::bType_Neu;
     if ((lEq.phys == EquationType::phys_fluid) || (lEq.phys == EquationType::phys_FSI)) {
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
     }
@@ -222,61 +226,155 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       lBc.g = bc_params->value.value();
     }
 
-  } else if (ctmp == "Unsteady") { 
-    lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_ustd)); 
+  } else if (ctmp == "Unsteady") {
+    lBc.bType =
+        utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_ustd));
 
-    if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_trac))) { 
-      lBc.gt.d = com_mod.nsd;
-    } else { 
-      lBc.gt.d = 1;
+    const unsigned int n_dimensions =
+        utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_trac))
+            ? com_mod.nsd
+            : 1;
+
+    if (bc_params->temporal_values_file_path.defined()) {
+      lBc.gt = FourierInterpolation::from_time_series_file(
+          bc_params->temporal_values_file_path.value(), n_dimensions,
+          bc_params->ramp_function.value());
+    } else if (bc_params->fourier_coefficients_file_path.defined()) {
+      lBc.gt = FourierInterpolation::from_fourier_coefficients_file(
+          bc_params->fourier_coefficients_file_path.value(), n_dimensions);
+    } else {
+      throw std::runtime_error(
+          "[read_bc] Undefined data for boundary condition type '" + bc_type +
+          "'.");
     }
 
-    if (bc_params->temporal_values_file_path.defined()) { 
-      lBc.gt.lrmp = bc_params->ramp_function.value();
-      auto file_name = bc_params->temporal_values_file_path.value();
-      read_temporal_values(file_name, lBc);
-
-    } else { 
-      if (!bc_params->fourier_coefficients_file_path.defined()) { 
-        throw std::runtime_error("[read_bc] Undefined data for boundary condition type '" + bc_type + "'.");
-      }
-      lBc.gt.lrmp = false;
-      auto file_name = bc_params->fourier_coefficients_file_path.value(); 
-      read_fourier_coeff_values_file(file_name, lBc);
-    }
-
-  // Coupling to a 0D model:
+  // Coupling to a 0D/1D model:
   // - GenBC / cplBC: Time_dependence Coupled without <Coupling_interface> (cplBC.fa).
   // - svZeroDSolver: Time_dependence Coupled + <Coupling_interface> (CoupledBoundaryCondition).
+  // - svOneDSolver: Time_dependence Coupled + <Coupling_interface> (CoupledBoundaryCondition).
   //
   } else if (ctmp == "Coupled") {
     auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
     const bool svzd_iface = com_mod.cplBC.svzerod_solver_interface.has_data;
+    const bool svOneD_iface = com_mod.cplBC.svOneD_solver_interface.has_data;
     const bool ci_set = bc_params->coupling_interface.value_set;
-    const bool ci_has_block = ci_set && bc_params->coupling_interface.svzerod_solver_block.defined();
-
-    if (svzd_iface) {
-      // Coupled BC to svZeroDSolver
-      lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
-      lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
+    const bool ci_has_block   = ci_set && bc_params->coupling_interface.svzerod_solver_block.defined();
+    const bool ci_has_1d_file = ci_set && bc_params->coupling_interface.svoned_input_file.defined();
 
       // Sanity check: <Coupling_interface> must define <svZeroDSolver_block>
-      if (!ci_has_block) {
-        if (ci_set) {
-          throw std::runtime_error(std::string("[read_bc] <Coupling_interface> on face '") + face_name +
-                                   "' must define <svZeroDSolver_block>.");
-        }
-        throw std::runtime_error(
-            std::string("[read_bc] With <svZeroDSolver_interface>, each svZeroD-coupled face needs "
-                        "<Coupling_interface> with <svZeroDSolver_block> (Time_dependence Coupled) on face '") +
-            face_name + "'.");
+      if (svzd_iface || svOneD_iface) {
+      // svZeroD and/or svOneD path: route each face individually based on its
+      // <Coupling_interface> content.
+
+      if (ci_has_block && ci_has_1d_file) {
+        throw svmp::CoreException(
+          std::string("[read_bc] <Coupling_interface> on face '") + face_name +
+          "' defines both <svZeroDSolver_block> and <svOneDSolver_input_file>. "
+          "Specify exactly one per face.",
+          svmp::StatusCode::InvalidArgument,
+          __FILE__,
+          __LINE__,
+          __func__);
       }
 
+      if (ci_has_block) {
+        // 0D face: route to svZeroD.
+        if (!svzd_iface) {
+            throw svmp::CoreException(
+              std::string("[read_bc] Face '") + face_name +
+              "' specifies <svZeroDSolver_block> but no <svZeroDSolver_interface> "
+              "is defined on the equation.",
+              svmp::StatusCode::InvalidArgument,
+              __FILE__,
+              __LINE__,
+              __func__);
+        }
+        lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Neu));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
+        lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
+        // oned_input_file stays empty — marks this as a 0D face in the
+        // CoupledBoundaryCondition construction block below.
+
+      } else if (ci_has_1d_file) {
+        // 1D face: route to svOneD.
+        if (!svOneD_iface) {
+          throw svmp::CoreException(
+              std::string("[read_bc] Face '") + face_name +
+              "' specifies <svOneDSolver_input_file> but no <svOneDSolver_interface> "
+              "is defined on the equation.",
+              svmp::StatusCode::InvalidArgument,
+              __FILE__,
+              __LINE__,
+              __func__);
+        }
+        oned_input_file = bc_params->coupling_interface.svoned_input_file.value();
+
+        // svOneD now uses the CoupledBoundaryCondition interface (same flags as svZeroD).
+        lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Neu));
+        lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
+        lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
+        // cplBCptr stays -1; coupled_bc is constructed in the block below.
+
+        if (com_mod.cplBC.schm == CplBCType::cplBC_NA) {
+          throw svmp::CoreException(
+              std::string("[read_bc] A coupling method (e.g. svOneDSolver_interface coupling_type) "
+                          "must be defined for Time_dependence Coupled on face '") +
+              face_name + "'.",
+              svmp::StatusCode::InvalidArgument,
+              __FILE__,
+              __LINE__,
+              __func__);
+        }
+
+      } else {
+        // <Coupling_interface> is present but has neither field, or is absent entirely.
+        if (ci_set) {
+          throw svmp::CoreException(
+              std::string("[read_bc] <Coupling_interface> on face '") + face_name +
+              "' must define either <svZeroDSolver_block> (for 0D coupling) or "
+              "<svOneDSolver_input_file> (for 1D coupling).",
+              svmp::StatusCode::InvalidArgument,
+              __FILE__,
+              __LINE__,
+              __func__);
+        }
+
+        if (svzd_iface) {
+          throw svmp::CoreException(
+              std::string("[read_bc] With <svZeroDSolver_interface>, each svZeroD-coupled face needs "
+                          "<Coupling_interface> with <svZeroDSolver_block> "
+                          "(Time_dependence Coupled) on face '") +
+              face_name + "'.",
+              svmp::StatusCode::InvalidArgument,
+              __FILE__,
+              __LINE__,
+              __func__);
+        } else {
+          throw svmp::CoreException(
+              std::string("[read_bc] With <svOneDSolver_interface>, each 1D-coupled face needs "
+                          "<Coupling_interface> with <svOneDSolver_input_file> "
+                          "(Time_dependence Coupled) on face '") +
+              face_name + "'.",
+              svmp::StatusCode::InvalidArgument,
+              __FILE__,
+              __LINE__,
+              __func__);
+        }
+      }
     } else {
-      // Coupled BC to GenBC
-      if (ci_set) {
-        throw std::runtime_error(
-            "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> is defined on the equation.");
+      // genBC / cplBC path: no svZeroD or svOneD interface defined.
+      if (bc_params->coupling_interface.value_set) {
+        throw svmp::CoreException(
+            "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> or "
+            "<svOneDSolver_interface> is defined on the equation.",
+            svmp::StatusCode::InvalidArgument,
+            __FILE__,
+            __LINE__,
+            __func__);
       }
 
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
@@ -284,25 +382,44 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
       lBc.cplBCptr = com_mod.cplBC.nFa - 1;
 
       if (com_mod.cplBC.schm == CplBCType::cplBC_NA) {
-        throw std::runtime_error(
+        throw svmp::CoreException(
             std::string("[read_bc] A coupling method (e.g. Couple_to_genBC) must be defined for Time_dependence "
                         "Coupled on face '") +
-            face_name + "'.");
+            face_name + "'.",
+            svmp::StatusCode::InvalidArgument,
+            __FILE__,
+            __LINE__,
+            __func__);
       }
     }
 
-  } else if (ctmp == "Resistance") { 
+  } else if (ctmp == "Resistance") {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_res)); 
     if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) { 
-      throw std::runtime_error("[read_bc] Resistance is only defined for Neu BC.");
+      throw svmp::CoreException(
+          "[read_bc] Resistance is only defined for Neu BC.",
+          svmp::StatusCode::InvalidArgument,
+          __FILE__,
+          __LINE__,
+          __func__);
     }
 
     if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Robin))) { 
-      throw std::runtime_error("[read_bc] Resistance is not defined for Robin BC.");
+      throw svmp::CoreException(
+          "[read_bc] Resistance is not defined for Robin BC.",
+          svmp::StatusCode::InvalidArgument,
+          __FILE__,
+          __LINE__,
+          __func__);
     }
 
     if (std::set<EquationType>{Equation_fluid,Equation_FSI,Equation_CMM}.count(lEq.phys) == 0) {
-      throw std::runtime_error("[read_bc] Resistance is only defined for fluid/CMM/SI equations.");
+      throw svmp::CoreException(
+          "[read_bc] Resistance is only defined for fluid/CMM/SI equations.",
+          svmp::StatusCode::InvalidArgument,
+          __FILE__,
+          __LINE__,
+          __func__);
     }
 
     lBc.r = bc_params->value.value();
@@ -314,11 +431,21 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   } else if (std::set<std::string>{"RCR", "Windkessel"}.count(ctmp)) {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_RCR)); 
     if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) { 
-      throw std::runtime_error("[read_bc] RCR BC is only defined for Neu BC.");
+      throw svmp::CoreException(
+          "[read_bc] RCR BC is only defined for Neu BC.",
+          svmp::StatusCode::InvalidArgument,
+          __FILE__,
+          __LINE__,
+          __func__);
     }
 
     if (std::set<EquationType>{Equation_fluid,Equation_FSI,Equation_CMM}.count(lEq.phys) == 0) {
-      throw std::runtime_error("[read_bc] Resistance is only defined for fluid/CMM/FSI equations.");
+      throw svmp::CoreException(
+          "[read_bc] Resistance is only defined for fluid/CMM/FSI equations.",
+          svmp::StatusCode::InvalidArgument,
+          __FILE__,
+          __LINE__,
+          __func__);
     }
 
     lBc.RCR.Rp = bc_params->rcr.proximal_resistance.value();
@@ -327,8 +454,14 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     lBc.RCR.Pd = bc_params->rcr.distal_pressure.value();
     lBc.RCR.Xo = bc_params->rcr.initial_pressure.value();
 
-    if (com_mod.cplBC.schm != CplBCType::cplBC_NA || com_mod.cplBC.xo.size() != 0) {
-      throw std::runtime_error("[read_bc] RCR cannot be used in conjunction with cplBC.");
+    if ((com_mod.cplBC.schm != CplBCType::cplBC_NA && !com_mod.cplBC.useSvOneD && !com_mod.cplBC.useSvZeroD) ||
+        com_mod.cplBC.xo.size() != 0) {
+      throw svmp::CoreException(
+          "[read_bc] An RCR boundary condition can only be used when coupled with the svOneDsolver.",
+          svmp::StatusCode::InvalidArgument,
+          __FILE__,
+          __LINE__,
+          __func__);
     }
     com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
     lBc.cplBCptr = com_mod.cplBC.nFa - 1;
@@ -337,7 +470,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   //   S p a t i a l  ////
   ////////////////////////
 
-  } else if (ctmp == "Spatial") { 
+  } else if (ctmp == "Spatial") {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_gen)); 
     if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) { 
       throw std::runtime_error("[read_bc] Spatial BC is only defined for Neu BC.");
@@ -361,7 +494,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   //   G e n e r a l  ////
   ////////////////////////
 
-  } else if (ctmp == "General") { 
+  } else if (ctmp == "General") {
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_gen)); 
     int iM = lBc.iM;
     int iFa = lBc.iFa;
@@ -403,71 +536,148 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   }
 
   
-  // Coupled BC (svZeroDSolver / CoupledBoundaryCondition)
+  // Coupled BC (svZeroDSolver or svOneDSolver via CoupledBoundaryCondition)
+  bool is_coupled_dir = false;
   if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled))) {
 
-    // Get asssociated face name and block name
+    // Get associated face name
     const auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
-    const std::string zd_block = bc_params->coupling_interface.svzerod_solver_block.value();
 
-    // Get follower pressure load flag if defined
-    bool cpl_flwP = false;
-    if (lEq.phys == Equation_struct || lEq.phys == Equation_ustruct) {
-      cpl_flwP = bc_params->follower_pressure_load.value();
-    }
-
-    // Sanity check: CoupledBoundaryCondition is only supported for struct, ustruct, fluid, FSI, or CMM physics
-    const auto cpl_phys = lEq.phys;
-    if (cpl_phys != Equation_struct && cpl_phys != Equation_ustruct && cpl_phys != Equation_fluid &&
-        cpl_phys != Equation_FSI && cpl_phys != Equation_CMM) {
+    // Sanity check: CoupledBoundaryCondition must be Dirichlet or Neumann
+    if (coupled_bc_type != BoundaryConditionType::bType_Dir &&
+        coupled_bc_type != BoundaryConditionType::bType_Neu) {
       throw std::runtime_error(
-          std::string("[read_bc] CoupledBoundaryCondition (svZeroDSolver) is only supported for struct, ustruct, fluid, FSI, or CMM physics on face '") +
+          std::string("[read_bc] CoupledBoundaryCondition requires boundary <Type> Dirichlet or Neumann on face '") +
           face_name + "'.");
     }
+
+    const bool is_svOneD_face = !oned_input_file.empty();
     
-    // Sanity check: svZeroDSolver coupling is currently implemented only for Neumann-type boundaries.
-    if (!utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) {
-      throw std::runtime_error(
-          std::string("[read_bc] CoupledBoundaryCondition (svZeroDSolver) currently requires boundary <Type> Neu </Type> on face '") +
-          face_name + "'.");
-    }
+    if (is_svOneD_face) {
+      // ------------------------------------------------------------------
+      // svOneD path: construct CoupledBoundaryCondition with empty
+      // block_name and store the 1D input file path.
+      // ------------------------------------------------------------------
 
-    // Sanity check: Follower pressure load must be used for 0D coupling with struct/ustruct
-    if ((cpl_phys == Equation_struct || cpl_phys == Equation_ustruct) && !cpl_flwP) {
-      throw std::runtime_error(
-          std::string("[read_bc] Follower pressure load must be used for 0D coupling with struct/ustruct on face '") +
-          face_name + "'.");
-    }
+      // Sanity check: only fluid, FSI, or CMM physics supported
+      const auto cpl_phys = lEq.phys;
+      if (cpl_phys != Equation_fluid && cpl_phys != Equation_FSI && cpl_phys != Equation_CMM) {
+        throw std::runtime_error(
+            std::string("[read_bc] CoupledBoundaryCondition (svOneDSolver) is only supported for "
+                        "fluid, FSI, or CMM physics on face '") +
+            face_name + "'.");
+      }
 
-    // Get cap face VTP file name if defined
-    std::string zerod_cap;
-    bool use_cap = false;
-    if (bc_params->coupling_interface.chamber_cap_surface.defined()) {
-      zerod_cap = bc_params->coupling_interface.chamber_cap_surface.value();
-      use_cap = true;
-    }
-
-    // Figure out the coupled BC type
-    BoundaryConditionType coupled_bc_type = BoundaryConditionType::bType_Neu;
-    if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Dir))) {
-      coupled_bc_type = BoundaryConditionType::bType_Dir;
-    } else if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Neu))) {
-      coupled_bc_type = BoundaryConditionType::bType_Neu;
-    }
-
-    // Create the coupled boundary condition object
-    if (use_cap) {
       lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
-                                                com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, zerod_cap,
-                                                lEq.phys, cpl_flwP);
+                                                com_mod.msh[lBc.iM].fa[lBc.iFa].name,
+                                                /*block_name=*/"", lEq.phys, /*follower_pressure_load=*/false);
+      lBc.coupled_bc.set_oned_input_file(oned_input_file);
+
+      // Read optional pressure ramp parameters for 1D coupling initialization.
+      if (bc_params->coupling_interface.coupling_ramp_steps.defined() &&
+          bc_params->coupling_interface.coupling_ramp_steps.value() > 0) {
+        int    ramp_steps = bc_params->coupling_interface.coupling_ramp_steps.value();
+        double ramp_P_ref = bc_params->coupling_interface.coupling_ramp_ref_pressure.defined()
+                            ? bc_params->coupling_interface.coupling_ramp_ref_pressure.value()
+                            : 0.0;
+        lBc.coupled_bc.set_oned_ramp(ramp_steps, ramp_P_ref);
+      }
+
+      // Read optional under-relaxation factor for DIR coupling pressure.
+      if (bc_params->coupling_interface.coupling_relax_factor.defined()) {
+        double omega = bc_params->coupling_interface.coupling_relax_factor.value();
+        lBc.coupled_bc.set_oned_relax_factor(omega);
+      }
+
+    } else if (com_mod.cplBC.svzerod_solver_interface.has_data) {
+
+      // Get block name
+      const std::string zd_block = bc_params->coupling_interface.svzerod_solver_block.value();
+
+      // Get follower pressure load flag if defined
+      bool cpl_flwP = false;
+      if (lEq.phys == Equation_struct || lEq.phys == Equation_ustruct) {
+        cpl_flwP = bc_params->follower_pressure_load.value();
+      }
+
+      // Sanity check: CoupledBoundaryCondition is only supported for struct, ustruct, fluid, FSI, or CMM physics
+      const auto cpl_phys = lEq.phys;
+      if (cpl_phys != Equation_struct && cpl_phys != Equation_ustruct && cpl_phys != Equation_fluid &&
+          cpl_phys != Equation_FSI && cpl_phys != Equation_CMM) {
+        throw std::runtime_error(
+            std::string("[read_bc] CoupledBoundaryCondition (svZeroDSolver) is only supported for struct, ustruct, fluid, FSI, or CMM physics on face '") +
+            face_name + "'.");
+      }
+
+      // Sanity check: Follower pressure load must be used for 0D coupling with struct/ustruct
+      if ((cpl_phys == Equation_struct || cpl_phys == Equation_ustruct) && !cpl_flwP) {
+        throw std::runtime_error(
+            std::string("[read_bc] Follower pressure load must be used for 0D coupling with struct/ustruct on face '") +
+            face_name + "'.");
+      }
+
+      // Get cap face VTP file name if defined
+      std::string zd_cap;
+      bool use_cap = false;
+      if (bc_params->coupling_interface.chamber_cap_surface.defined()) {
+        zd_cap = bc_params->coupling_interface.chamber_cap_surface.value();
+        use_cap = true;
+      }
+
+      if (use_cap) {
+        lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                                   com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, zd_cap,
+                                                   lEq.phys, cpl_flwP);
+      } else {
+        lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
+                                                   com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, lEq.phys,
+                                                   cpl_flwP);
+      }
+
+      // Read optional pressure ramp parameters for 0D coupling initialization.
+      if (bc_params->coupling_interface.coupling_ramp_steps.defined() &&
+          bc_params->coupling_interface.coupling_ramp_steps.value() > 0) {
+        int    ramp_steps = bc_params->coupling_interface.coupling_ramp_steps.value();
+        double ramp_P_ref = bc_params->coupling_interface.coupling_ramp_ref_pressure.defined()
+                            ? bc_params->coupling_interface.coupling_ramp_ref_pressure.value()
+                            : 0.0;
+        lBc.coupled_bc.set_oned_ramp(ramp_steps, ramp_P_ref);
+      }
+
+      // Read optional under-relaxation factor for 0D coupling.
+      if (bc_params->coupling_interface.coupling_relax_factor.defined()) {
+        double omega = bc_params->coupling_interface.coupling_relax_factor.value();
+        lBc.coupled_bc.set_oned_relax_factor(omega);
+      }
+
     } else {
-      lBc.coupled_bc = CoupledBoundaryCondition(coupled_bc_type, com_mod.msh[lBc.iM].fa[lBc.iFa],
-                                                com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, lEq.phys,
-                                                cpl_flwP);
+      throw std::runtime_error(
+          std::string("[read_bc] bType_Coupled is set on face '") + face_name +
+          "' but neither svZeroDSolver_interface nor svOneDSolver_interface is defined.");
     }
+
+    // Coupled DIR BCs (svZeroD or svOneD) receive a volumetric flow rate Q
+    // [m^3/s], not a velocity [m/s]. Require the user to explicitly set
+    // <Impose_flux>true</Impose_flux> so that bc_ini normalizes gx(a) = 1/area
+    // and set_bc_dir_l applies velocity = (Q/area) * nV.
+    if (coupled_bc_type == BoundaryConditionType::bType_Dir) {
+      if (!bc_params->impose_flux.value()) {
+        throw svmp::CoreException(
+            std::string("[read_bc] Dirichlet Coupled boundary condition on face '") +
+            face_name + "' receives a volumetric flow rate Q from the downstream "
+            "0D/1D solver, not a velocity. Set <Impose_flux>true</Impose_flux> "
+            "for this boundary so Q is normalized by the face area before applying "
+            "the boundary velocity.",
+            svmp::StatusCode::InvalidArgument,
+            __FILE__,
+            __LINE__,
+            __func__);
+      }
+
+      is_coupled_dir = true;
+    }
+
   }
-
-
 
   // To impose value or flux
   bool ltmp = bc_params->impose_flux.value();
@@ -475,12 +685,21 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_flx)); 
   }
 
-  // To zero-out perimeter or not. Default is .true. for Dir/CMM
+  // To zero-out perimeter or not. Default is .true. for Dir/CMM and Coupled-DIR.
+  // For Coupled-DIR BCs, bType_Dir is cleared, but we still need bType_zp so that
+  // bc_ini zeros shared perimeter nodes before normalising gx.  Without bType_zp,
+  // gx = 1/full_area and the wall BC later zeros perimeter nodes, reducing the
+  // effective flux to Q*(interior_area/full_area) instead of Q.
   //
   ltmp = false; 
-  ltmp = utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
+  ltmp = utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Dir)) || is_coupled_dir;
+
   if (bc_params->zero_out_perimeter.defined()) {
     ltmp = bc_params->zero_out_perimeter.value();
+  }
+
+  if (is_coupled_dir) {
+    ltmp = true;
   }
   
   lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_zp));
@@ -947,16 +1166,18 @@ void read_bf(ComMod& com_mod, BodyForceParameters* bf_params, bfType& lBf)
   // Unsteady //
 
   } else if (time_dependence == "unsteady") {
-    lBf.bType = utils::ibset(lBf.bType, enum_int(BodyForceType::bfType_ustd)); 
-    lBf.bt.d = lBf.dof;
+    lBf.bType = utils::ibset(lBf.bType, enum_int(BodyForceType::bfType_ustd));
+
     if (bf_params->temporal_values_file_path.defined()) {
-      lBf.bt.lrmp = bf_params->ramp_function.value();
-      auto file_name = bf_params->temporal_values_file_path.value();
-      read_temporal_values(file_name, lBf);
+      lBf.bt = FourierInterpolation::from_time_series_file(
+          bf_params->temporal_values_file_path.value(), lBf.dof,
+          bf_params->ramp_function.value());
+    } else if (bf_params->fourier_coefficients_file_path.defined()) {
+      lBf.bt = FourierInterpolation::from_fourier_coefficients_file(
+          bf_params->fourier_coefficients_file_path.value(), lBf.dof);
     } else {
-      lBf.bt.lrmp = false;
-      auto fTmp = bf_params->fourier_coefficients_file_path.value();
-      read_fourier_coeff_values_file(fTmp, lBf);
+      throw std::runtime_error("No temporal values or Fourier coefficients "
+                               "file provided for unsteady body force.");
     }
 
   // Spatial //
@@ -1414,13 +1635,38 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       cplBC.useGenBC = true;
       cplbc_type_str = eq_params->couple_to_genBC.type.value();
 
-    } else if (eq_params->svzerodsolver_interface_parameters.defined()) {
-      cplBC.useSvZeroD = true;
-      cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
-      cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
+    } else {
+      // Allow svZeroDSolver_interface and svOneDSolver_interface to coexist
+      // (mixed coupling: some faces go to 0D, others to 1D).
+      //
+      // Processing order: svZeroD first, then svOneD.
+      // cplbc_type_str is set by whichever interface is processed first;
+      // the second interface must match that type.
+      if (eq_params->svzerodsolver_interface_parameters.defined()) {
+        cplBC.useSvZeroD = true;
+        cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
+        cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
+      }
+
+      if (eq_params->svonedsolver_interface_parameters.defined()) {
+        const std::string svOneD_type = eq_params->svonedsolver_interface_parameters.coupling_type.value();
+        // When both interfaces are defined, their Coupling_type must match.
+        if (!cplbc_type_str.empty() && cplbc_type_str != svOneD_type) {
+          throw std::runtime_error(
+              "[read_eq] svZeroDSolver_interface and svOneDSolver_interface must use the same "
+              "Coupling_type in a mixed-coupling simulation "
+              "(svZeroDSolver_interface has '" + cplbc_type_str +
+              "', svOneDSolver_interface has '" + svOneD_type + "').");
+        }
+        cplbc_type_str = svOneD_type;
+        cplBC.useSvOneD = true;
+        cplBC.svOneD_solver_interface.set_data(eq_params->svonedsolver_interface_parameters);
+      }
     }
 
-    if (eq_params->couple_to_genBC.defined() || eq_params->svzerodsolver_interface_parameters.defined()) { 
+    if (eq_params->couple_to_genBC.defined() ||
+        eq_params->svzerodsolver_interface_parameters.defined() ||
+        eq_params->svonedsolver_interface_parameters.defined()) {
       try {
         cplBC.schm = consts::cplbc_name_to_type.at(cplbc_type_str);
       } catch (const std::out_of_range& exception) {
@@ -1437,7 +1683,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
         cplBC.nX = 0;
         cplBC.xp.resize(cplBC.nX);
 
-      } else if (cplBC.useSvZeroD) {
+      } else {
         cplBC.nX = 0;
       }
     }
@@ -1526,9 +1772,13 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     if (std::set<EquationType>{Equation_fluid,Equation_FSI,Equation_CMM}.count(lEq.phys) == 0) {
       throw std::runtime_error("RCR-type BC is allowed for fluid/CMM/FSI eq. only.");
     }
-    cplBC.schm = CplBCType::cplBC_SI;
-    if (lEq.useTLS) {
-      cplBC.schm = CplBCType::cplBC_E;
+    // Only set coupling scheme if not already configured by an external solver (e.g. svOneD, svZeroD).
+    // When svOneD/svZeroD and RCR coexist, the external solver owns the scheme; RCR uses the same scheme.
+    if (!cplBC.useSvOneD && !cplBC.useSvZeroD) {
+      cplBC.schm = CplBCType::cplBC_SI;
+      if (lEq.useTLS) {
+        cplBC.schm = CplBCType::cplBC_E;
+      }
     }
     cplBC.nX = cplBC.nFa;
     cplBC.nXp = cplBC.nFa + 1;
@@ -1567,62 +1817,6 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       }
     }
   }
-}
-
-//---------------------------------
-// read_fiber_temporal_values_file
-//---------------------------------
-// Read fiber reinforcement stress the values from a file.
-//
-// Note: There is no equivalent Fortran function.
-//
-void read_fiber_temporal_values_file(FiberReinforcementStressParameters& fiber_params, dmnType& lDmn)
-{
-  auto file_name = fiber_params.temporal_values_file_path.value();
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the fiber reinforcement stress the values file '" + file_name + "'.");
-  }
-
-  int i, j;
-  temporal_values_file >> i >> j; 
-  if ((i == 0) || (j == 0) || (i < 2)) {
-    throw std::runtime_error("Error reading the first line of the fiber reinforcement stress the values file '" + file_name + "' has an incorrect format.");
-  }
-
-  lDmn.stM.Tf.gt.d = 1;
-  lDmn.stM.Tf.gt.n = j;
-
-  // Read time/value pairs.
-  //
-  std::vector<std::vector<double>> temporal_values;
-  double time, value;
-  std::string line;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    temporal_values.push_back(values);
-  }
-
-  if (lDmn.stM.Tf.gt.lrmp) {
-    lDmn.stM.Tf.gt.n = 1;
-  }
-
-  lDmn.stM.Tf.gt.qi.resize(lDmn.stM.Tf.gt.d);
-  lDmn.stM.Tf.gt.qs.resize(lDmn.stM.Tf.gt.d);
-  lDmn.stM.Tf.gt.r.resize(lDmn.stM.Tf.gt.d,lDmn.stM.Tf.gt.n);
-  lDmn.stM.Tf.gt.i.resize(lDmn.stM.Tf.gt.d,lDmn.stM.Tf.gt.n);
-
-  fft(i, temporal_values, lDmn.stM.Tf.gt);
 }
 
 //------------
@@ -1879,151 +2073,6 @@ void read_files(Simulation* simulation, const std::string& file_name)
   #endif
 }
 
-//--------------------------------
-// read_fourier_coeff_values_file 
-//--------------------------------
-// Set boundary condition Fourier coefficients read in from a file. 
-//
-// Note: There is no equivalent Fortran function.
-//
-// [TODO:DaveP] this is not fully implemented. 
-//
-void read_fourier_coeff_values_file(const std::string& file_name, bcType& lBc) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the Fourier coefficients values file '" + file_name + "'.");
-  }
-
-  temporal_values_file >> lBc.gt.ti >> lBc.gt.T; 
-
-  // Read time/value pairs.
-  //
-  lBc.gt.qi.resize(lBc.gt.d); 
-  lBc.gt.qs.resize(lBc.gt.d);
-
-  double time, value;
-  std::string line;
-  int n = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    lBc.gt.qi[n] = values[0];
-    lBc.gt.qs[n] = values[1];
-    n += 1;
-
-    if (n == lBc.gt.d) {
-      break;
-    }
-  }
-
-  temporal_values_file >> lBc.gt.n; 
-
-  lBc.gt.r.resize(lBc.gt.d, lBc.gt.n);
-  lBc.gt.i.resize(lBc.gt.d, lBc.gt.n);
-  
-  int j = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-
-    for (int i = 0; i < lBc.gt.d; i++) { 
-      lBc.gt.r(i,j) = values[i];
-      lBc.gt.i(i,j) = values[i + lBc.gt.d];
-    }
-
-    j += 1;
-    if (j == lBc.gt.n) {
-      break;
-    }
-  }
-}
-
-void read_fourier_coeff_values_file(const std::string& file_name, bfType& lBf) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the Fourier coefficients values file '" + file_name + "'.");
-  }
-
-  temporal_values_file >> lBf.bt.ti >> lBf.bt.T; 
-
-  // Read time/value pairs.
-  //
-  lBf.bt.qi.resize(lBf.bt.d); 
-  lBf.bt.qs.resize(lBf.bt.d);
-
-  double time, value;
-  std::string line;
-  int n = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    lBf.bt.qi[n] = values[0];
-    lBf.bt.qs[n] = values[1];
-    n += 1;
-
-    if (n == lBf.bt.d) {
-      break;
-    }
-  }
-
-  temporal_values_file >> lBf.bt.n; 
-
-  lBf.bt.r.resize(lBf.bt.d, lBf.bt.n);
-  lBf.bt.i.resize(lBf.bt.d, lBf.bt.n);
-  
-  int j = 0;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-
-    for (int i = 0; i < lBf.bt.d; i++) { 
-      lBf.bt.r(i,j) = values[i];
-      lBf.bt.i(i,j) = values[i + lBf.bt.d];
-    }
-
-    j += 1;
-    if (j == lBf.bt.n) {
-      break;
-    }
-  }
-}
-
 //---------
 // read_ls
 //---------
@@ -2219,9 +2268,13 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
       lDmn.stM.Tf.g = fiber_params.value.value();
 
     } else if (fiber_stress == "unsteady") {
-      lDmn.stM.Tf.fType = utils::ibset(lDmn.stM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_ustd));
-      lDmn.stM.Tf.gt.lrmp = fiber_params.ramp_function.value();
-      read_fiber_temporal_values_file(fiber_params, lDmn);
+      lDmn.stM.Tf.fType =
+          utils::ibset(lDmn.stM.Tf.fType,
+                       static_cast<int>(BoundaryConditionType::bType_ustd));
+
+      lDmn.stM.Tf.gt = FourierInterpolation::from_time_series_file(
+          fiber_params.temporal_values_file_path.value(),
+          /* n_dimensions = */ 1, fiber_params.ramp_function.value());
     }
 
     // Read directional stress distribution parameters
@@ -2651,134 +2704,6 @@ void read_temp_spat_values(const ComMod& com_mod, const mshType& msh, const std:
       }
     } 
   } 
-}
-
-//----------------------
-// read_temporal_values
-//----------------------
-// Set boundary condition temporal values read in from a file. 
-//
-// Data modified:
-//
-//  Set lBc.gt Fourier coefficients data (fcType) 
-//     lBc.gt.n 
-//     lBc.gt.qi
-//     lBc.gt.qs
-//     lBc.gt.r
-//     lBc.gt.i
-//
-// Note: There is no equivalent Fortran function.
-//
-void read_temporal_values(const std::string& file_name, bcType& lBc) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the temporal values file '" + file_name + "'.");
-  }
-
-  int i, j;
-  temporal_values_file >> i >> j; 
-  if ((i == 0) || (j == 0) || (i < 2)) {
-    throw std::runtime_error("Error reading the first line of the temporal values file '" + file_name + "'.");
-  }
-  lBc.gt.n = j;
-
-  // Read time/value pairs.
-  //
-  std::vector<std::vector<double>> temporal_values;
-  double time, value;
-  std::string line;
-  int line_number = 1;
-  int num_values_per_line = lBc.gt.d + 1;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    // Remove leading and trailing spaces.
-    auto cleaned_line = std::regex_replace(line, std::regex("^ +| +$|( ) +"), "$1");
-    std::istringstream line_input(cleaned_line);
-    std::vector<double> values;
-
-    while (!line_input.eof()) {
-      line_input >> value;
-
-      if (line_input.fail()) { 
-        throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line " +
-            std::to_string(line_number) + ": '" + line + "'; value number " + std::to_string(values.size()+1) + " is not a double.");
-      }
-      values.push_back(value);
-    }
-
-    if (values.size() != num_values_per_line) { 
-      throw std::runtime_error("Error reading values for the temporal values file '" + file_name + "' for line " +
-          std::to_string(line_number) + ": '" + line + "'; expected " + std::to_string(num_values_per_line) + " values per line.");
-    }
-
-    temporal_values.push_back(values);
-    line_number += 1;
-  }
-
-  if (lBc.gt.lrmp) {
-    lBc.gt.n = 1;
-  }
-
-  lBc.gt.qi.resize(lBc.gt.d); 
-  lBc.gt.qs.resize(lBc.gt.d);
-  lBc.gt.r.resize(lBc.gt.d,lBc.gt.n);
-  lBc.gt.i.resize(lBc.gt.d,lBc.gt.n);
-
-  fft(i, temporal_values, lBc.gt);
-}
-
-// [NOTE] This is a hack, should really just have a single function for this..
-//
-void read_temporal_values(const std::string& file_name, bfType& lBf) 
-{
-  std::ifstream temporal_values_file;
-  temporal_values_file.open(file_name);
-  if (!temporal_values_file.is_open()) {
-    throw std::runtime_error("Failed to open the temporal values file '" + file_name + "'.");
-  }
-
-  int i, j;
-  temporal_values_file >> i >> j; 
-  if (i < 2) {
-    throw std::runtime_error("The temporal values file '" + file_name + "' has an incorrect format.");
-  }
-  lBf.bt.n = j;
-
-  // Read time/value pairs.
-  //
-  std::vector<std::vector<double>> temporal_values;
-  double time, value;
-  std::string line;
-
-  while (std::getline(temporal_values_file, line)) { 
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    if (line == "") {
-      continue;
-    }
-    std::istringstream line_input(line);
-    std::vector<double> values;
-    while (line_input >> value) {
-      values.push_back(value);
-    }
-    temporal_values.push_back(values);
-  }
-
-  if (lBf.bt.lrmp) {
-    lBf.bt.n = 1;
-  }
-
-  lBf.bt.qi.resize(lBf.bt.d); 
-  lBf.bt.qs.resize(lBf.bt.d);
-  lBf.bt.r.resize(lBf.bt.d, lBf.bt.n);
-  lBf.bt.i.resize(lBf.bt.d, lBf.bt.n);
-
-  fft(i, temporal_values, lBf.bt);
 }
 
 //----------------
