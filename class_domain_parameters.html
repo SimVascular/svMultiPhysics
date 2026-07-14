@@ -162,9 +162,8 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:acbc53cb7d544de3f08b637ca027ee410" id="r_acbc53cb7d544de3f08b637ca027ee410"><td class="memItemLeft" align="right" valign="top"><a id="acbc53cb7d544de3f08b637ca027ee410" name="acbc53cb7d544de3f08b637ca027ee410"></a>
 <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fiber_reinforcement_stress</b></td></tr>
 <tr class="separator:acbc53cb7d544de3f08b637ca027ee410"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06261df7ab05a7a05eecae1ec12926be" id="r_a06261df7ab05a7a05eecae1ec12926be"><td class="memItemLeft" align="right" valign="top"><a id="a06261df7ab05a7a05eecae1ec12926be" name="a06261df7ab05a7a05eecae1ec12926be"></a>
-<a class="el" href="class_stimulus_parameters.html">StimulusParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><b>stimulus</b></td></tr>
-<tr class="separator:a06261df7ab05a7a05eecae1ec12926be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa098fb54df395bba1858635d54633244" id="r_aa098fb54df395bba1858635d54633244"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::unique_ptr&lt; <a class="el" href="class_stimulus_parameters.html">StimulusParameters</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_domain_parameters.html#aa098fb54df395bba1858635d54633244">stimuli</a></td></tr>
+<tr class="separator:aa098fb54df395bba1858635d54633244"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e6e08d2e05518e9cb9bc6c505c00af7" id="r_a5e6e08d2e05518e9cb9bc6c505c00af7"><td class="memItemLeft" align="right" valign="top"><a id="a5e6e08d2e05518e9cb9bc6c505c00af7" name="a5e6e08d2e05518e9cb9bc6c505c00af7"></a>
 <a class="el" href="class_fluid_viscosity_parameters.html">FluidViscosityParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fluid_viscosity</b></td></tr>
 <tr class="separator:a5e6e08d2e05518e9cb9bc6c505c00af7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -292,6 +291,21 @@ Static Public Attributes</h2></td></tr>
 <div class="line">  &lt;<span class="keywordtype">Backflow_stabilization_coefficient</span>&gt; 0.2 &lt;/<span class="keywordtype">Backflow_stabilization_coefficient</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">Domain</span>&gt;</div>
 </div><!-- fragment --> </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="aa098fb54df395bba1858635d54633244" name="aa098fb54df395bba1858635d54633244"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa098fb54df395bba1858635d54633244">&#9670;&#160;</a></span>stimuli</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::unique_ptr&lt;<a class="el" href="class_stimulus_parameters.html">StimulusParameters</a>&gt; &gt; DomainParameters::stimuli</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000012">Todo:</a></b></dt><dd>This uses <code>unique_ptr</code> unlike most similar containers because <code><a class="el" href="class_parameter_lists.html#a6131758a550b2e63f34e7554933e27f8" title="Map used for storing parameters by name / Parameter template union.">ParameterLists::params_map</a></code> stores pointers to members of each object. Revisit this when the <code><a class="el" href="class_parameters.html" title="The Parameters class stores parameter values read in from a solver input file.">Parameters</a></code> classes are refactored. </dd></dl>
+
+</div>
+</div>
 <a id="aba2bc976f32a2c8cb41cbb491daf917e" name="aba2bc976f32a2c8cb41cbb491daf917e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aba2bc976f32a2c8cb41cbb491daf917e">&#9670;&#160;</a></span>xml_element_name_</h2>
 

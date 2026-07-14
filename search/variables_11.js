@@ -35,11 +35,12 @@ var searchData=
   ['stfileincr_32',['stFileIncr',['../class_com_mod.html#a0c046b187e15ed62371b205b55eb3292',1,'ComMod']]],
   ['stfilename_33',['stFileName',['../class_com_mod.html#a385cf82e70a3d06e177829eb918313f0',1,'ComMod']]],
   ['stfilerepl_34',['stFileRepl',['../class_com_mod.html#a1ba09097d0d910b21eb672b20539beaf',1,'ComMod']]],
-  ['stoptrigname_35',['stopTrigName',['../class_com_mod.html#a0290e34e97980f78795c8c72a1541ff7',1,'ComMod']]],
-  ['suc_36',['suc',['../classls_type.html#a85cac07335a1be04e7af0d3fcfe0267b',1,'lsType']]],
-  ['sv_37',['sV',['../class_t_t_p.html#a7e50c1700386e7f0adb6725a27872fd3',1,'TTP']]],
-  ['svoned_5fsolver_5finterface_38',['svOneD_solver_interface',['../classcpl_b_c_type.html#afc6f2589ece056d220ddd40f27de7acf',1,'cplBCType']]],
-  ['svzerod_5fcoupled_5fbc_5fidxs_39',['svZeroD_coupled_bc_idxs',['../classcpl_b_c_type.html#a5bd88a4dd1117d7a33cf7cdadf98af3a',1,'cplBCType']]],
-  ['svzerod_5fsolver_5finterface_40',['svzerod_solver_interface',['../classcpl_b_c_type.html#a2e3c2d1f9539e0662a96982a5b932c46',1,'cplBCType']]],
-  ['sym_41',['sym',['../classeq_type.html#a1ea00f2cdccf8b7d61fe0d0a2ddbaa86',1,'eqType']]]
+  ['stimuli_35',['stimuli',['../class_domain_parameters.html#aa098fb54df395bba1858635d54633244',1,'DomainParameters']]],
+  ['stoptrigname_36',['stopTrigName',['../class_com_mod.html#a0290e34e97980f78795c8c72a1541ff7',1,'ComMod']]],
+  ['suc_37',['suc',['../classls_type.html#a85cac07335a1be04e7af0d3fcfe0267b',1,'lsType']]],
+  ['sv_38',['sV',['../class_t_t_p.html#a7e50c1700386e7f0adb6725a27872fd3',1,'TTP']]],
+  ['svoned_5fsolver_5finterface_39',['svOneD_solver_interface',['../classcpl_b_c_type.html#afc6f2589ece056d220ddd40f27de7acf',1,'cplBCType']]],
+  ['svzerod_5fcoupled_5fbc_5fidxs_40',['svZeroD_coupled_bc_idxs',['../classcpl_b_c_type.html#a5bd88a4dd1117d7a33cf7cdadf98af3a',1,'cplBCType']]],
+  ['svzerod_5fsolver_5finterface_41',['svzerod_solver_interface',['../classcpl_b_c_type.html#a2e3c2d1f9539e0662a96982a5b932c46',1,'cplBCType']]],
+  ['sym_42',['sym',['../classeq_type.html#a1ea00f2cdccf8b7d61fe0d0a2ddbaa86',1,'eqType']]]
 ];

@@ -87,6 +87,7 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classcep_model_type-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">cepModelType Class Reference</div></div>
@@ -98,6 +99,12 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="_cep_mod_8h_source.html">CepMod.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:abeb9d794e3b72dbaa5fbaca0536bd6da" id="r_abeb9d794e3b72dbaa5fbaca0536bd6da"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#abeb9d794e3b72dbaa5fbaca0536bd6da">stimulus_value</a> (const double time, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;x) const</td></tr>
+<tr class="memdesc:abeb9d794e3b72dbaa5fbaca0536bd6da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Summed applied stimulus at a point and time (0.0 if none active).  <br /></td></tr>
+<tr class="separator:abeb9d794e3b72dbaa5fbaca0536bd6da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a6fa666a049b988196394450bcac85608" id="r_a6fa666a049b988196394450bcac85608"><td class="memItemLeft" align="right" valign="top">ElectrophysiologyModelType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a6fa666a049b988196394450bcac85608">cepType</a> = ElectrophysiologyModelType::NA</td></tr>
@@ -127,9 +134,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a8781336826bf8adbee47388244504c75" id="r_a8781336826bf8adbee47388244504c75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a8781336826bf8adbee47388244504c75">Dani</a></td></tr>
 <tr class="memdesc:a8781336826bf8adbee47388244504c75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Anisotropic conductivity.  <br /></td></tr>
 <tr class="separator:a8781336826bf8adbee47388244504c75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac017c20295f3b14715b7dbb3d0aeb15f" id="r_ac017c20295f3b14715b7dbb3d0aeb15f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classstim_type.html">stimType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#ac017c20295f3b14715b7dbb3d0aeb15f">Istim</a></td></tr>
-<tr class="memdesc:ac017c20295f3b14715b7dbb3d0aeb15f"><td class="mdescLeft">&#160;</td><td class="mdescRight">External stimulus.  <br /></td></tr>
-<tr class="separator:ac017c20295f3b14715b7dbb3d0aeb15f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1101cae7b7a92d3b2f33c60c3571aac1" id="r_a1101cae7b7a92d3b2f33c60c3571aac1"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classstim_type.html">stimType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a1101cae7b7a92d3b2f33c60c3571aac1">Istim</a></td></tr>
+<tr class="memdesc:a1101cae7b7a92d3b2f33c60c3571aac1"><td class="mdescLeft">&#160;</td><td class="mdescRight">External stimuli applied within this domain.  <br /></td></tr>
+<tr class="separator:a1101cae7b7a92d3b2f33c60c3571aac1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5561dc6f1de77d662ee66199a15317b4" id="r_a5561dc6f1de77d662ee66199a15317b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classode_type.html">odeType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a5561dc6f1de77d662ee66199a15317b4">odes</a></td></tr>
 <tr class="memdesc:a5561dc6f1de77d662ee66199a15317b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time integration options.  <br /></td></tr>
 <tr class="separator:a5561dc6f1de77d662ee66199a15317b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -139,7 +146,38 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Cardiac electrophysiology model type. </p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="abeb9d794e3b72dbaa5fbaca0536bd6da" name="abeb9d794e3b72dbaa5fbaca0536bd6da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abeb9d794e3b72dbaa5fbaca0536bd6da">&#9670;&#160;</a></span>stimulus_value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double cepModelType::stimulus_value </td>
+          <td>(</td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>time</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>x</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Summed applied stimulus at a point and time (0.0 if none active). </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
 <a id="a6fa666a049b988196394450bcac85608" name="a6fa666a049b988196394450bcac85608"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6fa666a049b988196394450bcac85608">&#9670;&#160;</a></span>cepType</h2>
 
@@ -236,19 +274,19 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ac017c20295f3b14715b7dbb3d0aeb15f" name="ac017c20295f3b14715b7dbb3d0aeb15f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac017c20295f3b14715b7dbb3d0aeb15f">&#9670;&#160;</a></span>Istim</h2>
+<a id="a1101cae7b7a92d3b2f33c60c3571aac1" name="a1101cae7b7a92d3b2f33c60c3571aac1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1101cae7b7a92d3b2f33c60c3571aac1">&#9670;&#160;</a></span>Istim</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classstim_type.html">stimType</a> cepModelType::Istim</td>
+          <td class="memname">std::vector&lt;<a class="el" href="classstim_type.html">stimType</a>&gt; cepModelType::Istim</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>External stimulus. </p>
+<p>External stimuli applied within this domain. </p>
 
 </div>
 </div>
