@@ -176,7 +176,10 @@ bool Integrator::step() {
 // step_equation
 //------------------------
 /// @brief Solve a single equation to convergence without cycling to other equations
-bool Integrator::step_equation(int iEq, std::function<void()> post_assembly) {
+bool Integrator::step_equation(
+    int iEq, std::function<void()> post_assembly,
+    std::function<void()> pre_boundary_conditions,
+    std::function<void()> post_boundary_conditions) {
   using namespace consts;
 
   auto& com_mod = simulation_->com_mod;
@@ -215,7 +218,20 @@ bool Integrator::step_equation(int iEq, std::function<void()> post_assembly) {
     allocate_linear_system(eq);
     set_body_forces();
     assemble_equations();
-    apply_boundary_conditions();
+    if (pre_boundary_conditions) {
+      pre_boundary_conditions();
+    }
+    try {
+      apply_boundary_conditions();
+    } catch (...) {
+      if (post_boundary_conditions) {
+        post_boundary_conditions();
+      }
+      throw;
+    }
+    if (post_boundary_conditions) {
+      post_boundary_conditions();
+    }
 
     // Optional post-assembly callback (e.g., for injecting interface traction)
     if (post_assembly) {
@@ -258,6 +274,108 @@ bool Integrator::step_equation(int iEq, std::function<void()> post_assembly) {
     output::output_result(simulation_, com_mod.timeP, 2, iEq);
     newton_count_ += 1;
   }
+}
+
+//------------------------
+// assemble_equation_residual
+//------------------------
+/// @brief Assemble a single equation residual without solving or correcting.
+void Integrator::assemble_equation_residual(
+    int iEq, std::function<void()> post_assembly,
+    std::function<void()> pre_boundary_conditions,
+    std::function<void()> post_boundary_conditions)
+{
+  using namespace consts;
+
+  auto& com_mod = simulation_->com_mod;
+  auto& cm_mod = simulation_->cm_mod;
+
+  const int saved_cEq = com_mod.cEq;
+  const int saved_dof = com_mod.dof;
+  const int saved_newton_count = newton_count_;
+  const std::string saved_istr = istr_;
+
+  com_mod.cEq = iEq;
+  auto& eq = com_mod.eq[iEq];
+
+  const int saved_itr = eq.itr;
+  const bool saved_ok = eq.ok;
+  const double saved_iNorm = eq.iNorm;
+  const double saved_pNorm = eq.pNorm;
+  const auto saved_RI = eq.FSILS.RI;
+
+  auto restore_state = [&]() {
+    eq.itr = saved_itr;
+    eq.ok = saved_ok;
+    eq.iNorm = saved_iNorm;
+    eq.pNorm = saved_pNorm;
+    eq.FSILS.RI = saved_RI;
+    com_mod.cEq = saved_cEq;
+    com_mod.dof = saved_dof;
+    newton_count_ = saved_newton_count;
+    istr_ = saved_istr;
+  };
+
+  try {
+    const int& cTS = com_mod.cTS;
+    istr_ = "_" + std::to_string(cTS) + "_residual";
+
+    if (com_mod.cplBC.coupled && iEq == 0) {
+      set_bc::set_bc_cpl(com_mod, cm_mod, solutions_);
+      set_bc::set_bc_dir(com_mod, solutions_);
+    }
+
+    initiator_step();
+    eq.itr = saved_itr;
+
+    if (com_mod.Rd.size() != 0) {
+      com_mod.Rd = 0.0;
+      com_mod.Kd = 0.0;
+    }
+
+    allocate_linear_system(eq);
+    set_body_forces();
+    assemble_equations();
+    if (pre_boundary_conditions) {
+      pre_boundary_conditions();
+    }
+    try {
+      apply_boundary_conditions();
+    } catch (...) {
+      if (post_boundary_conditions) {
+        post_boundary_conditions();
+      }
+      throw;
+    }
+    if (post_boundary_conditions) {
+      post_boundary_conditions();
+    }
+
+    if (post_assembly) {
+      post_assembly();
+    }
+
+    if (!eq.assmTLS) {
+      all_fun::commu(com_mod, com_mod.R);
+    }
+
+    if (com_mod.sstEq) {
+      ustruct::ustruct_r(com_mod, solutions_);
+    }
+
+    if (std::set<EquationType>{Equation_stokes, Equation_fluid,
+                               Equation_ustruct, Equation_FSI}.count(eq.phys) != 0) {
+      fs::thood_val_rc(com_mod);
+    }
+
+    set_bc::set_bc_undef_neu(com_mod);
+    update_residual_arrays(eq);
+  } catch (...) {
+    restore_state();
+    throw;
+  }
+
+  restore_state();
 }
 
 //------------------------

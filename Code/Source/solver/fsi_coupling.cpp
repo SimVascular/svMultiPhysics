@@ -4,6 +4,9 @@
 #include "fsi_coupling.h"
 #include "Integrator.h"
 
+#include <cmath>
+#include <stdexcept>
+
 namespace fsi_coupling {
 
 //----------------------------------------------------------------------
@@ -25,6 +28,19 @@ Array<double> extract_solid_displacement(
     }
   }
   return result;
+}
+
+//----------------------------------------------------------------------
+// copy_time_integration_parameters
+//----------------------------------------------------------------------
+void copy_time_integration_parameters(const eqType& source_eq,
+                                      eqType& target_eq)
+{
+  target_eq.roInf = source_eq.roInf;
+  target_eq.am = source_eq.am;
+  target_eq.af = source_eq.af;
+  target_eq.beta = source_eq.beta;
+  target_eq.gam = source_eq.gam;
 }
 
 //----------------------------------------------------------------------
@@ -59,20 +75,44 @@ void apply_velocity_on_fluid(
 }
 
 //----------------------------------------------------------------------
+// extract_fluid_residual_force
+//----------------------------------------------------------------------
+Array<double> extract_fluid_residual_force(
+    const ComMod& com_mod,
+    const faceType& fluid_face,
+    const Array<double>& residual)
+{
+  const int nsd = com_mod.nsd;
+  if (residual.nrows() < nsd || residual.ncols() != com_mod.tnNo) {
+    throw std::runtime_error(
+        "[fsi_coupling] Fluid residual shape does not match fluid simulation.");
+  }
+
+  Array<double> force(nsd, fluid_face.nNo);
+  for (int a = 0; a < fluid_face.nNo; a++) {
+    int Ac = fluid_face.gN(a);
+    for (int i = 0; i < nsd; i++) {
+      force(i, a) = -residual(i, Ac);
+    }
+  }
+  return force;
+}
+
+//----------------------------------------------------------------------
 // apply_traction_on_solid
 //----------------------------------------------------------------------
 void apply_traction_on_solid(
     ComMod& com_mod, const eqType& solid_eq,
     const faceType& lFa,
-    const Array<double>& traction)
+    const Array<double>& force)
 {
-  // The traction array contains consistent nodal forces (external force on solid).
-  // In svMultiPhysics, external forces are SUBTRACTED from R (see b_l_elas:
-  // lR -= w*N*h). So R -= traction.
+  // The array contains consistent nodal forces (external force on solid).
+  // In svMultiPhysics, external forces are SUBTRACTED from R (for example:
+  // lR -= w*N*h). So R -= force.
   for (int a = 0; a < lFa.nNo; a++) {
     int Ac = lFa.gN(a);
-    for (int i = 0; i < traction.nrows(); i++) {
-      com_mod.R(i, Ac) -= traction(i, a);
+    for (int i = 0; i < force.nrows(); i++) {
+      com_mod.R(i, Ac) -= force(i, a);
     }
   }
 }
@@ -111,6 +151,41 @@ void apply_displacement_on_mesh(
       Yn(i + s, Ac) = v_new;
     }
   }
+}
+
+//----------------------------------------------------------------------
+// staged_fluid_mesh_coordinates
+//----------------------------------------------------------------------
+Array<double> staged_fluid_mesh_coordinates(
+    const Array<double>& x_ref,
+    const Array<double>& mesh_Dn,
+    const Array<double>& mesh_Do,
+    int mesh_s,
+    int nsd,
+    double theta)
+{
+  if (nsd <= 0 || mesh_s < 0 || !std::isfinite(theta)) {
+    throw std::runtime_error(
+        "[fsi_coupling] Invalid inputs for staged fluid mesh coordinates.");
+  }
+  if (x_ref.nrows() != nsd ||
+      mesh_Dn.ncols() != x_ref.ncols() ||
+      mesh_Do.ncols() != x_ref.ncols() ||
+      mesh_Dn.nrows() < mesh_s + nsd ||
+      mesh_Do.nrows() < mesh_s + nsd) {
+    throw std::runtime_error(
+        "[fsi_coupling] Mesh displacement shapes do not match fluid coordinates.");
+  }
+
+  Array<double> x_stage(nsd, x_ref.ncols());
+  for (int a = 0; a < x_ref.ncols(); a++) {
+    for (int i = 0; i < nsd; i++) {
+      x_stage(i, a) = x_ref(i, a)
+                    + theta * (mesh_Dn(i + mesh_s, a)
+                             - mesh_Do(i + mesh_s, a));
+    }
+  }
+  return x_stage;
 }
 
 } // namespace fsi_coupling

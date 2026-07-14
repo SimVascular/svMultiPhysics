@@ -35,7 +35,6 @@
 #include <iomanip>
 #include <iostream>
 #include <cmath>
-#include <fstream>
 
 
 void finalize_linear_algebra(eqType& lEq)

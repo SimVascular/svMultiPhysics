@@ -3,14 +3,16 @@
 
 #include "PartitionedFSI.h"
 #include "Integrator.h"
+#include "all_fun.h"
+#include "consts.h"
 #include "fsi_coupling.h"
-#include "post.h"
 #include "set_bc.h"
 #include "distribute.h"
 #include "initialize.h"
 #include "output.h"
 #include "vtk_xml.h"
 #include "read_files.h"
+#include "utils.h"
 
 #include <cmath>
 #include <cstdio>
@@ -32,7 +34,6 @@ static bool has_nan(const SolutionStates& sol) {
         if (std::isnan((*arr)(i, a))) return true;
   return false;
 }
-
 
 //----------------------------------------------------------------------
 // Helper: initialize one sub-simulation through the standard pipeline.
@@ -199,6 +200,10 @@ PartitionedFSI::PartitionedFSI(Simulation* main_simulation,
 
   solid_sim_ = std::make_unique<Simulation>();
   init_sub_sim(solid_sim_.get(), build_sub_xml(xml_file_path_, "partitioned_solid"));
+  // Monolithic FSI advances the solid domain with the FSI equation's
+  // generalized-alpha coefficients, not standalone structural coefficients.
+  fsi_coupling::copy_time_integration_parameters(
+      fluid_sim_->com_mod.eq[0], solid_sim_->com_mod.eq[0]);
 
   mesh_sim_ = std::make_unique<Simulation>();
   init_sub_sim(mesh_sim_.get(), build_sub_xml(xml_file_path_, "partitioned_mesh"));
@@ -217,6 +222,7 @@ PartitionedFSI::PartitionedFSI(Simulation* main_simulation,
 
   resolve_faces();
   build_node_maps();
+  build_solid_interface_force_mask();
 }
 
 PartitionedFSI::~PartitionedFSI() = default;
@@ -438,8 +444,8 @@ void PartitionedFSI::build_node_maps()
   mesh_face_canonical_  = build_face_dedup_map(*mesh_face_,  mesh_sim_->com_mod,
                                                mesh_face_global_nNo_,  cm, cm_mod);
 
-  // Owner flags for the solid interface face: the interface traction is a
-  // precomputed nodal force that must be injected exactly once per physical
+  // Owner flags for the solid interface face: the recovered interface force is
+  // a precomputed nodal load that must be injected exactly once per physical
   // node, since all_fun::commu sums it across ranks after the callback.
   solid_face_owner_ = build_face_owner_flags(*solid_face_, solid_sim_->com_mod, cm);
 
@@ -452,6 +458,67 @@ void PartitionedFSI::build_node_maps()
               << " dups, fluid " << count_dups(fluid_face_canonical_) << "/" << fluid_face_global_nNo_
               << " dups, mesh " << count_dups(mesh_face_canonical_) << "/" << mesh_face_global_nNo_
               << " dups" << std::endl;
+  }
+}
+
+//----------------------------------------------------------------------
+// build_solid_interface_force_mask — mask interface force components that
+// are prescribed by strong solid Dirichlet boundary conditions.
+//----------------------------------------------------------------------
+void PartitionedFSI::build_solid_interface_force_mask()
+{
+  auto& solid_com = solid_sim_->com_mod;
+  const int nsd = main_sim_->com_mod.nsd;
+
+  solid_interface_force_mask_.resize(nsd, solid_face_->nNo);
+  solid_interface_force_mask_ = 1.0;
+
+  std::unordered_map<int, int> interface_node_to_face_index;
+  interface_node_to_face_index.reserve(solid_face_->nNo);
+  for (int a = 0; a < solid_face_->nNo; a++) {
+    interface_node_to_face_index.emplace(solid_face_->gN(a), a);
+  }
+
+  if (solid_com.nEq == 0) {
+    return;
+  }
+
+  const auto& solid_eq = solid_com.eq[0];
+  for (int iBc = 0; iBc < solid_eq.nBc; iBc++) {
+    const auto& bc = solid_eq.bc[iBc];
+    if (!utils::btest(bc.bType, consts::iBC_Dir) || bc.weakDir) {
+      continue;
+    }
+    if (bc.iM < 0 || bc.iM >= solid_com.nMsh) {
+      continue;
+    }
+    const auto& mesh = solid_com.msh[bc.iM];
+    if (bc.iFa < 0 || bc.iFa >= mesh.nFa) {
+      continue;
+    }
+
+    bool has_effective_direction = false;
+    for (int i = 0; i < nsd; i++) {
+      if (i < bc.eDrn.size() && bc.eDrn(i) != 0) {
+        has_effective_direction = true;
+        break;
+      }
+    }
+
+    const auto& bc_face = mesh.fa[bc.iFa];
+    for (int a = 0; a < bc_face.nNo; a++) {
+      const auto it = interface_node_to_face_index.find(bc_face.gN(a));
+      if (it == interface_node_to_face_index.end()) {
+        continue;
+      }
+
+      const int interface_a = it->second;
+      for (int i = 0; i < nsd; i++) {
+        if (!has_effective_direction || (i < bc.eDrn.size() && bc.eDrn(i) != 0)) {
+          solid_interface_force_mask_(i, interface_a) = 0.0;
+        }
+      }
+    }
   }
 }
 
@@ -751,6 +818,7 @@ void PartitionedFSI::compute_interface_velocity()
 // vel_prev_ is global; extract this rank's local fluid face portion.
 //----------------------------------------------------------------------
 bool PartitionedFSI::solve_fluid(
+    const Array<double>& fluid_x_old,
     const Array<double>& mesh_vel_Yo, const Array<double>& mesh_vel_Yn)
 {
   auto& fluid_com = fluid_sim_->com_mod;
@@ -782,62 +850,129 @@ bool PartitionedFSI::solve_fluid(
       fluid_com.ale_mesh_velocity(i, a) = (1.0 - af) * mesh_vel_Yo(i, a)
                                          + af * mesh_vel_Yn(i, a);
 
-  fluid_int.step_equation(0, [&]() {
+  // On the FSI interface, monolithic residual assembly has ALE velocity at
+  // the same generalized-alpha stage as the imposed fluid velocity.
+  auto sync_interface_ale_to_fluid_stage = [&]() {
+    const auto& Yo = fluid_sol.old.get_velocity();
+    const auto& Yn = fluid_sol.current.get_velocity();
+    const int s = fluid_com.eq[0].s;
+    for (int a = 0; a < fluid_face_->nNo; a++) {
+      const int Ac = fluid_face_->gN(a);
+      for (int i = 0; i < nsd; i++) {
+        fluid_com.ale_mesh_velocity(i, Ac) =
+            (1.0 - af) * Yo(s + i, Ac) + af * Yn(s + i, Ac);
+      }
+    }
+  };
+  sync_interface_ale_to_fluid_stage();
+
+  // Monolithic FSI assembles the fluid volume on the generalized-alpha ALE
+  // geometry, but its face-based Neumann BC path uses the old mesh geometry
+  // through gnnb(). Match that split while boundary conditions are assembled.
+  Array<double> saved_fluid_x_for_bc;
+  auto use_old_geometry_for_boundary_conditions = [&]() {
+    if (fluid_x_old.nrows() != fluid_com.x.nrows() ||
+        fluid_x_old.ncols() != fluid_com.x.ncols()) {
+      throw std::runtime_error(
+          "[PartitionedFSI] Old fluid coordinates are incompatible with fluid coordinates.");
+    }
+    saved_fluid_x_for_bc = fluid_com.x;
+    fluid_com.x = fluid_x_old;
+  };
+  auto restore_staged_geometry_after_boundary_conditions = [&]() {
+    fluid_com.x = saved_fluid_x_for_bc;
+  };
+
+  bool fluid_ok = fluid_int.step_equation(0, [&]() {
     set_bc::enforce_dirichlet_dofs_on_face(fluid_com, *fluid_face_, 0, nsd);
-  });
-  return !has_nan(fluid_sol);
+  }, use_old_geometry_for_boundary_conditions,
+     restore_staged_geometry_after_boundary_conditions);
+
+  if (fluid_ok && !has_nan(fluid_sol)) {
+    set_bc::set_bc_dir(fluid_com, fluid_sol);
+    fsi_coupling::apply_velocity_on_fluid(
+        fluid_com, fluid_com.eq[0], *fluid_face_, local_fluid_vel, fluid_sol);
+    sync_interface_ale_to_fluid_stage();
+
+    auto recover_interface_force_before_boundary_conditions = [&]() {
+      Array<double> fluid_residual = fluid_com.R;
+      if (!fluid_com.eq[fluid_com.cEq].assmTLS) {
+        all_fun::commu(fluid_com, fluid_residual);
+      }
+      local_fluid_interface_force_ =
+          fsi_coupling::extract_fluid_residual_force(
+              fluid_com, *fluid_face_, fluid_residual);
+
+      use_old_geometry_for_boundary_conditions();
+    };
+
+    fluid_int.assemble_equation_residual(0, [&]() {
+      set_bc::enforce_dirichlet_dofs_on_face(fluid_com, *fluid_face_, 0, nsd);
+    }, recover_interface_force_before_boundary_conditions,
+       restore_staged_geometry_after_boundary_conditions);
+  }
+
+  return fluid_ok && !has_nan(fluid_sol);
 }
 
 //----------------------------------------------------------------------
-// solve_solid — extract traction from fluid, solve solid.
-// All-gathers local fluid traction to global, transfers to global solid,
+// solve_solid — transfer recovered fluid force, solve solid.
+// All-gathers local fluid force to global, transfers to global solid,
 // then extracts this rank's local solid portion.
 //----------------------------------------------------------------------
 bool PartitionedFSI::solve_solid()
 {
-  auto& fluid_com = fluid_sim_->com_mod;
   auto& solid_com = solid_sim_->com_mod;
-  auto& fluid_int = fluid_sim_->get_integrator();
   auto& solid_int = solid_sim_->get_integrator();
   auto& solid_sol = solid_int.get_solutions();
   auto& cm = main_sim_->com_mod.cm;
   auto& cm_mod = main_sim_->cm_mod;
 
-  // Compute local fluid traction, all-gather to global fluid face
-  auto local_fluid_traction = post::compute_face_traction(
-      fluid_com, fluid_sim_->cm_mod,
-      *fluid_mesh_, *fluid_face_, fluid_com.eq[0],
-      fluid_int.get_solutions());
-  // gather_face_data fills duplicate ring slots identically (compute_face_traction
-  // already summed across ranks via commu), so no dedup is needed here.
-  auto global_fluid_traction = gather_face_data(local_fluid_traction,
-                                                fluid_face_global_nNo_,
-                                                fluid_face_local_offset_,
-                                                cm, cm_mod);
+  const int nsd = main_sim_->com_mod.nsd;
+  if (local_fluid_interface_force_.nrows() != nsd ||
+      local_fluid_interface_force_.ncols() != fluid_face_->nNo) {
+    throw std::runtime_error(
+        "[PartitionedFSI] Fluid interface force is unavailable or has wrong shape.");
+  }
+
+  // All-gather the residual-recovered fluid force to the global fluid face.
+  // The residual copy was already communicated before Dirichlet row enforcement,
+  // so duplicate partition-ring slots carry identical physical-node values.
+  auto global_fluid_force = gather_face_data(local_fluid_interface_force_,
+                                             fluid_face_global_nNo_,
+                                             fluid_face_local_offset_,
+                                             cm, cm_mod);
 
   // Transfer global fluid → global solid, then extract local solid portion.
   // Only the owning (min-rank) slot of each node is read below, and that slot
   // is the canonical one that transfer_data writes, so no dedup is needed.
-  auto global_solid_traction = transfer_data(fluid_to_solid_map_,
-                                             global_fluid_traction,
-                                             solid_face_global_nNo_);
-  const int nrows = global_solid_traction.nrows();
-  Array<double> local_solid_traction(nrows, solid_face_->nNo);
+  auto global_solid_force = transfer_data(fluid_to_solid_map_,
+                                          global_fluid_force,
+                                          solid_face_global_nNo_);
+  const int nrows = global_solid_force.nrows();
+  Array<double> local_solid_force(nrows, solid_face_->nNo);
   for (int a = 0; a < solid_face_->nNo; a++) {
     // Apply the nodal force on the owning rank only; partition-ring nodes are
-    // shared by several ranks and all_fun::commu (called after the traction
+    // shared by several ranks and all_fun::commu (called after the force
     // callback in step_equation) SUMS R across them.  Subtracting the full
     // force on every sharing rank would multiply it by the node's multiplicity.
     double w = solid_face_owner_[a] ? 1.0 : 0.0;
     for (int i = 0; i < nrows; i++)
-      local_solid_traction(i, a) =
-          w * global_solid_traction(i, solid_face_local_offset_ + a);
+      local_solid_force(i, a) =
+          w * global_solid_force(i, solid_face_local_offset_ + a);
+  }
+
+  if (solid_interface_force_mask_.nrows() == nrows &&
+      solid_interface_force_mask_.ncols() == solid_face_->nNo) {
+    for (int a = 0; a < solid_face_->nNo; a++)
+      for (int i = 0; i < nrows; i++)
+        local_solid_force(i, a) *= solid_interface_force_mask_(i, a);
   }
 
   set_bc::set_bc_dir(solid_com, solid_sol);
   solid_int.step_equation(0, [&]() {
     fsi_coupling::apply_traction_on_solid(
-        solid_com, solid_com.eq[0], *solid_face_, local_solid_traction);
+        solid_com, solid_com.eq[0], *solid_face_, local_solid_force);
   });
   return !has_nan(solid_sol);
 }
@@ -848,7 +983,6 @@ bool PartitionedFSI::solve_solid()
 //----------------------------------------------------------------------
 bool PartitionedFSI::solve_mesh(const Array<double>& x_ref, int mesh_s)
 {
-  auto& fluid_com = fluid_sim_->com_mod;
   auto& mesh_com  = mesh_sim_->com_mod;
   auto& mesh_int  = mesh_sim_->get_integrator();
   auto& mesh_sol  = mesh_int.get_solutions();
@@ -874,15 +1008,28 @@ bool PartitionedFSI::solve_mesh(const Array<double>& x_ref, int mesh_s)
   });
   if (has_nan(mesh_sol)) return false;
 
-  // Deform fluid mesh: apply only the INCREMENT (Dn - Do) to x_ref
-  // so that fluid_com.x = x_original + Dn
-  auto& mesh_Dn = mesh_sol.current.get_displacement();
-  auto& mesh_Do = mesh_sol.old.get_displacement();
-  for (int a = 0; a < fluid_com.tnNo; a++)
-    for (int i = 0; i < nsd; i++)
-      fluid_com.x(i, a) = x_ref(i, a)
-                         + mesh_Dn(i + mesh_s, a) - mesh_Do(i + mesh_s, a);
+  // Match the generalized-alpha fluid residual geometry used by monolithic
+  // FSI: fluid assembly sees x_ref + alpha_f * (Dn - Do).
+  update_fluid_mesh_coordinates(x_ref, mesh_s, fluid_sim_->com_mod.eq[0].af);
   return true;
+}
+
+//----------------------------------------------------------------------
+// update_fluid_mesh_coordinates
+//----------------------------------------------------------------------
+void PartitionedFSI::update_fluid_mesh_coordinates(
+    const Array<double>& x_ref, int mesh_s, double theta)
+{
+  auto& fluid_com = fluid_sim_->com_mod;
+  auto& mesh_sol = mesh_sim_->get_integrator().get_solutions();
+
+  fluid_com.x = fsi_coupling::staged_fluid_mesh_coordinates(
+      x_ref,
+      mesh_sol.current.get_displacement(),
+      mesh_sol.old.get_displacement(),
+      mesh_s,
+      main_sim_->com_mod.nsd,
+      theta);
 }
 
 //======================================================================
@@ -972,7 +1119,7 @@ bool PartitionedFSI::step()
     }
 
     // ---- 2. Fluid solve ----
-    if (!solve_fluid(mesh_vel_Yo, mesh_vel_Yn)) {
+    if (!solve_fluid(x_ref, mesh_vel_Yo, mesh_vel_Yn)) {
       if (cm.mas(cm_mod)) std::cout << "  ABORT: NaN in fluid solve" << std::endl;
       return false;
     }
@@ -1055,6 +1202,11 @@ bool PartitionedFSI::step()
 
     if (rel < config_.coupling_tolerance) { converged = true; break; }
   }
+  if (converged) {
+    // Keep saved results and the next time step's reference coordinates at
+    // the full n+1 mesh position after solving the fluid on n+alpha_f geometry.
+    update_fluid_mesh_coordinates(x_ref, mesh_s, 1.0);
+  }
   return converged;
 }
 
@@ -1073,10 +1225,33 @@ void PartitionedFSI::save_results()
       bool l2 = ((cTS % com.saveIncr) == 0);
       bool l3 = (cTS >= com.saveATS);
       if (l2 && l3) {
-        output::output_result(sim, com.timeP, 3, 0);
-        vtk_xml::write_vtus(sim, sol, false);
+        Array<double> saved_fluid_x;
+        bool restore_fluid_x = false;
+        if (sim == fluid_sim_.get()) {
+          auto& mesh_x = mesh_sim_->com_mod.x;
+          if (mesh_x.nrows() != com.x.nrows() ||
+              mesh_x.ncols() != com.x.ncols()) {
+            throw std::runtime_error(
+                "[PartitionedFSI] Fluid and mesh coordinate arrays are incompatible for output.");
+          }
+          saved_fluid_x = com.x;
+          com.x = mesh_x;
+          restore_fluid_x = true;
+        }
+
+        try {
+          output::output_result(sim, com.timeP, 3, 0);
+          vtk_xml::write_vtus(sim, sol, false);
+        } catch (...) {
+          if (restore_fluid_x) {
+            com.x = saved_fluid_x;
+          }
+          throw;
+        }
+        if (restore_fluid_x) {
+          com.x = saved_fluid_x;
+        }
       }
     }
   }
 }
-
