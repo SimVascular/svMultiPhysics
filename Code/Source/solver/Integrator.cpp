@@ -466,8 +466,6 @@ void Integrator::predictor()
   // Determine if we need to compute fiber stretch and stretch rate, by going
   // through all domains of all equations until we find one for which active
   // stress is enabled.
-  // @todo[michelebucelli] This should be extended to also compute fiber stretch
-  //   for electrophysiology, if needed.
   bool need_fiber_stretch = false;
   bool need_fiber_stretch_rate = false;
   int fiber_stretch_eq_index = -1;
