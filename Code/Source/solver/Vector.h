@@ -332,8 +332,9 @@ class Vector
     Vector<T> operator+(const Vector<T>& vec) const
     {
       if (size_ != vec.size()) {
-        throw std::runtime_error("[Vector dot product] Vectors have diffrenct sizes: " + 
-            std::to_string(size_) +  " != " + std::to_string(vec.size()) + ".");
+        throw std::runtime_error(
+            "[Vector dot product] Vectors have different sizes: " +
+            std::to_string(size_) + " != " + std::to_string(vec.size()) + ".");
       }
       Vector<T> result(size_);
       for (int i = 0; i < size_; i++) {
