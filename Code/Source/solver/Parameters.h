@@ -679,6 +679,47 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
     bool value_set = false;
 };
 
+//----------------------------------
+// svOneDSolverInterfaceParameters
+//----------------------------------
+/// @brief Parameters for coupling to the svOneDSolver (1D blood-flow solver).
+///
+/// XML element: \code {.xml}
+/// <svOneDSolver_interface>
+///   <Coupling_type> Implicit </Coupling_type>
+///   <Shared_library> /path/to/libsvoned_interface </Shared_library>
+/// </svOneDSolver_interface>
+/// \endcode
+///
+/// Notes
+/// -----
+///   Coupling_type: "Explicit" | "Implicit" | "Semi-implicit"
+///     Controls how the 3D Newton iteration couples to the 1D solver
+///     (same semantics as the 0D coupling_type).
+///   Shared_library: Path to the 1D interface shared library.  The
+///     extension (.so or .dylib) may be omitted; it will be appended
+///     automatically based on the platform.
+///
+///   Each coupled face specifies its own input file via
+///   <Coupling_interface> <svOneDSolver_input_file> ... </svOneDSolver_input_file>
+///   </Coupling_interface> inside the corresponding <Add_BC> element.
+//
+class svOneDSolverInterfaceParameters : public ParameterLists
+{
+  public:
+    svOneDSolverInterfaceParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    Parameter<std::string> coupling_type;
+    Parameter<std::string> shared_library;
+
+    bool value_set = false;
+};
+
 /// @brief Body force over a mesh using the "Add_BF" command.
 ///
 /// \code {.xml}
@@ -745,10 +786,12 @@ class BoundaryConditionRCRParameters : public ParameterLists
 /// @brief svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled).
 ///
 /// \code {.xml}
-/// <Coupling_interface>
-///   <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
-///   <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
-/// </Coupling_interface>
+//  <Coupling_interface>
+//    <svOneDSolver_input_file> OneDfilename.in </svOneDSolver_input_file>
+//		<Ramp_steps> 100 </Ramp_steps>
+//   	<Ramp_ref_pressure> 0.0 </Ramp_ref_pressure>
+//		<Relax_factor> 0.3 </Relax_factor>
+//  </Coupling_interface>
 /// \endcode
 class CouplingInterfaceParameters : public ParameterLists
 {
@@ -762,6 +805,24 @@ class CouplingInterfaceParameters : public ParameterLists
 
     Parameter<std::string> svzerod_solver_block;
     Parameter<std::string> chamber_cap_surface;
+
+    // Path to the svOneDSolver .in input file for this face (1D coupling).
+    Parameter<std::string> svoned_input_file;
+
+    // Ramp for 1D coupling initialization (both DIR and NEU coupling).
+    // Over the first Coupling_ramp_steps committed time steps the value passed
+    // to the 1D solver is linearly ramped:
+    //   DIR: pressure P ramped from Coupling_ramp_ref_pressure to actual 3D P.
+    //   NEU: output pressure P is ramped before being applied to the 3D domain.
+    // Set Coupling_ramp_steps = 0 (default) to disable.
+    Parameter<int>    coupling_ramp_steps;
+    Parameter<double> coupling_ramp_ref_pressure;
+
+    // Under-relaxation factor for the value passed to the 1D solver (both DIR and NEU coupling).
+    //   DIR: P_sent = omega * P_target + (1 - omega) * P_prev_sent
+    //   NEU: Q_sent = omega * Q_target + (1 - omega) * Q_prev_sent
+    // Range: (0, 1].  Default 1.0 = no relaxation.
+    Parameter<double> coupling_relax_factor;
 
     bool value_set = false;
 };
@@ -1508,7 +1569,10 @@ class DomainParameters : public ParameterLists
 
     // Parameters for sub-elements under the Domain element.
     ConstitutiveModelParameters constitutive_model;
-    StimulusParameters stimulus;
+    /// @todo This uses `unique_ptr` unlike most similar containers because
+    /// `ParameterLists::params_map` stores pointers to members of each object.
+    /// Revisit this when the `Parameters` classes are refactored.
+    std::vector<std::unique_ptr<StimulusParameters>> stimuli;
     FluidViscosityParameters fluid_viscosity;
     SolidViscosityParameters solid_viscosity;
     ActiveStressParameters active_stress;
@@ -1693,6 +1757,8 @@ class EquationParameters : public ParameterLists
     CoupleGenBCParameters couple_to_genBC;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
+
+    svOneDSolverInterfaceParameters svonedsolver_interface_parameters;
 
     DomainParameters* default_domain = nullptr;
 

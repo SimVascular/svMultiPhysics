@@ -173,8 +173,11 @@ class cepModelType
     /// @brief  Anisotropic conductivity
     Vector<double> Dani;
 
-    /// @brief  External stimulus
-    stimType Istim;
+    /// @brief  External stimuli applied within this domain.
+    std::vector<stimType> Istim;
+
+    /// @brief Summed applied stimulus at a point and time (0.0 if none active).
+    double stimulus_value(const double time, const Vector<double>& x) const;
 
     /// @brief  Time integration options
     odeType odes;
