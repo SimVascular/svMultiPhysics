@@ -25,8 +25,13 @@ void ActiveStressODE::advance_time_step_local(const double t, const double dt,
                                               const double fiber_stretch,
                                               const double fiber_stretch_rate,
                                               Vector<double> &state) const {
-  // Forward Euler time stepping.
-  Vector<double> f = getf(t, state, calcium, fiber_stretch, fiber_stretch_rate);
-
-  state.add(dt, f);
+  if (ode_solver == ODESolver::ForwardEuler) {
+    const Vector<double> f =
+        getf(t - dt, state, calcium, fiber_stretch, fiber_stretch_rate);
+    state.add(dt, f);
+  } else {
+    svmp::raise<svmp::InternalErrorException>(
+        "Unknown ODE solver " + std::to_string(static_cast<int>(ode_solver)) +
+        " for active stress models.");
+  }
 }
