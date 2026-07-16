@@ -33,7 +33,7 @@ namespace read_files_ns {
 
   void read_eq(Simulation* simulation, EquationParameters* params, eqType& eq);
 
-  void read_files(Simulation* simulation, const std::string& file_name);
+  void read_files(Simulation* simulation, const std::string& file_name, bool from_string = false);
 
   void read_ls(Simulation* simulation, EquationParameters* eq_params, consts::SolverType solver_type, eqType& lEq);
 

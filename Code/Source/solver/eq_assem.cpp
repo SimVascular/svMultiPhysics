@@ -58,9 +58,13 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
     cDmn = all_fun::domain(com_mod, msh, cEq, Ec);
     auto cPhys = eq.dmn[cDmn].phys;
 
-    Vector<int> ptr(eNoN); 
-    Vector<double> N(eNoN), hl(eNoN); 
-    Array<double> yl(tDof,eNoN), lR(dof,eNoN); 
+    // For ALE partitioned FSI, extend yl to hold mesh velocity
+    const bool has_ale = (com_mod.ale_mesh_velocity.size() > 0);
+    const int yl_nrows = has_ale ? tDof + nsd : tDof;
+
+    Vector<int> ptr(eNoN);
+    Vector<double> N(eNoN), hl(eNoN);
+    Array<double> yl(yl_nrows,eNoN), lR(dof,eNoN);
     Array3<double> lK(dof*dof,eNoN,eNoN);
 
     for (int a = 0; a < eNoN; a++) {
@@ -69,6 +73,11 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
       hl(a) = hg(Ac);
       for (int i = 0; i < tDof; i++) {
         yl(i,a) = Yg(i,Ac);
+      }
+      if (has_ale) {
+        for (int i = 0; i < nsd; i++) {
+          yl(nsd+1+i, a) = com_mod.ale_mesh_velocity(i, Ac);
+        }
       }
     }
 
@@ -87,7 +96,7 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
       N  = lFa.N.col(g);
 
       double h = 0.0;
-      Vector<double> y(tDof);
+      Vector<double> y(yl_nrows);
 
       for (int a = 0; a < eNoN; a++) {
         h = h + N(a)*hl(a);
@@ -162,6 +171,9 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 /// @param Dg 
 void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
   const auto& Dg = solutions.intermediate.get_displacement();
@@ -296,6 +308,10 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 /// an arbitrary vector.
 void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const SolutionStates& solutions)
 {
+  // Local aliases for displacement arrays
+  const auto& Dn = solutions.current.get_displacement();
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
   using namespace fsi_linear_solver;

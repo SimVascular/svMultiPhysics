@@ -182,6 +182,8 @@ set(CSRCS
   eq_assem.h eq_assem.cpp
   fluid.h fluid.cpp
   fsi.h fsi.cpp
+  fsi_coupling.h fsi_coupling.cpp
+  PartitionedFSI.h PartitionedFSI.cpp
   fs.h fs.cpp
   heatf.h heatf.cpp
   heats.h heats.cpp
@@ -382,7 +384,13 @@ if(ENABLE_UNIT_TEST)
 
   # include source files (same as what svMultiPhysics does except for main.cpp)
   add_executable(run_all_unit_tests ${CSRCS})
-  
+
+  # Define test data directory for integration tests
+  # CMAKE_SOURCE_DIR points to Code/, so go up one level to reach the repo root
+  target_compile_definitions(run_all_unit_tests PRIVATE
+    TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/../tests/cases"
+  )
+
   if(USE_TRILINOS)
     target_link_libraries(run_all_unit_tests ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
   endif()

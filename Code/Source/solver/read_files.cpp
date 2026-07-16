@@ -1829,7 +1829,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
 // The many global COMMOD values set in the Fortan subroutine are set in the
 // Simulation::set_module_parameters() method.
 //
-void read_files(Simulation* simulation, const std::string& file_name)
+void read_files(Simulation* simulation, const std::string& file_name, bool from_string)
 {
   using namespace consts;
 
@@ -1841,12 +1841,18 @@ void read_files(Simulation* simulation, const std::string& file_name)
   dmsg.banner();
   #endif
 
-  // Read the solver XML file.
+  // Read the solver parameters. 'file_name' is either a path to an XML file or,
+  // when from_string is true, the XML content itself (used by the partitioned
+  // FSI driver to build sub-simulations without temp files).
   #ifdef debug_read_files
-  dmsg << "Read the solver XML file " << " ... ";
+  dmsg << "Read the solver XML " << " ... ";
   #endif
   if (!com_mod.resetSim) {
-    simulation->read_parameters(std::string(file_name));
+    if (from_string) {
+      simulation->read_parameters_from_string(file_name);
+    } else {
+      simulation->read_parameters(std::string(file_name));
+    }
   }
 
   auto& chnl_mod = simulation->get_chnl_mod();
@@ -1994,12 +2000,18 @@ void read_files(Simulation* simulation, const std::string& file_name)
       }
     }     
 
-    if (eq.phys == EquationType::phys_mesh) {   
-      if (!com_mod.mvMsh) {
-        throw std::runtime_error("mesh equation can only be specified after FSI equation");
+    if (eq.phys == EquationType::phys_mesh) {
+      // For partitioned FSI, mvMsh is set when Partitioned_coupling is configured
+      if (!com_mod.mvMsh && simulation->parameters.partitioned_coupling_parameters.defined()) {
+        com_mod.mvMsh = true;
       }
-      // Use the explicit geometry coupling flag of the FSI equation.
-      eq.expl_geom_cpl = com_mod.eq[0].expl_geom_cpl; 
+      if (!com_mod.mvMsh) {
+        throw std::runtime_error("mesh equation can only be specified after FSI or with Partitioned_coupling");
+      }
+      if (com_mod.nEq > 0 && com_mod.eq[0].phys == EquationType::phys_FSI) {
+        // Use the explicit geometry coupling flag of the FSI equation.
+        eq.expl_geom_cpl = com_mod.eq[0].expl_geom_cpl;
+      }
     }     
   }
   #ifdef debug_read_files

@@ -9,6 +9,38 @@
 #include "Vector.h"
 #include "Simulation.h"
 
+#include <functional>
+
+/// @brief Newmark time integration utilities.
+///
+/// Compute consistent state variables from a prescribed displacement or
+/// velocity using the Newmark-beta / generalized-alpha relationships:
+///   Dn = Do + dt*Yo + dt^2*((0.5-beta)*Ao + beta*An)
+///   Yn = Yo + dt*((1-gamma)*Ao + gamma*An)
+namespace newmark {
+
+/// Compute acceleration and velocity from prescribed displacement.
+inline void state_from_displacement(
+    double d_new, double d_old, double v_old, double a_old,
+    double dt, double beta, double gam,
+    double& a_new, double& v_new)
+{
+  a_new = (d_new - d_old - dt * v_old) / (beta * dt * dt)
+        - (0.5 - beta) / beta * a_old;
+  v_new = v_old + dt * ((1.0 - gam) * a_old + gam * a_new);
+}
+
+/// Compute acceleration from prescribed velocity.
+inline void state_from_velocity(
+    double v_new, double v_old, double a_old,
+    double dt, double gam,
+    double& a_new)
+{
+  a_new = (v_new - v_old) / (gam * dt) - (1.0 - gam) / gam * a_old;
+}
+
+} // namespace newmark
+
 /**
  * @brief Integrator class encapsulates the Newton iteration loop for time integration
  *
@@ -41,6 +73,48 @@ public:
    * @return True if all equations converged, false otherwise
    */
   bool step();
+
+  /**
+   * @brief Solve a single equation to convergence (for partitioned coupling)
+   *
+   * Runs Newton iterations for only the specified equation, without cycling
+   * to other equations. Used by partitioned FSI to solve fluid, solid, and
+   * mesh equations independently.
+   *
+   * @param iEq Index of the equation to solve
+   * @param post_assembly Optional callback invoked after boundary condition
+   *        application but before the linear solve. Used by partitioned FSI
+   *        to inject interface traction into the residual.
+   * @param pre_boundary_conditions Optional callback invoked after volume
+   *        assembly and before boundary-condition assembly.
+   * @param post_boundary_conditions Optional callback invoked immediately after
+   *        boundary-condition assembly.
+   * @return True if the equation converged, false if max iterations reached
+   */
+  bool step_equation(int iEq, std::function<void()> post_assembly = nullptr,
+                     std::function<void()> pre_boundary_conditions = nullptr,
+                     std::function<void()> post_boundary_conditions = nullptr);
+
+  /**
+   * @brief Assemble one equation residual at the current solution state.
+   *
+   * Reuses the normal assembly and boundary-condition path without solving the
+   * linear system or applying a Newton correction. The optional callback is
+   * invoked after boundary-condition assembly and before the standard residual
+   * communication/row filtering, matching step_equation().
+   *
+   * @param iEq Index of the equation to assemble
+   * @param post_assembly Optional callback invoked after boundary condition
+   *        application but before residual communication
+   * @param pre_boundary_conditions Optional callback invoked after volume
+   *        assembly and before boundary-condition assembly.
+   * @param post_boundary_conditions Optional callback invoked immediately after
+   *        boundary-condition assembly.
+   */
+  void assemble_equation_residual(int iEq,
+                                  std::function<void()> post_assembly = nullptr,
+                                  std::function<void()> pre_boundary_conditions = nullptr,
+                                  std::function<void()> post_boundary_conditions = nullptr);
 
   /**
    * @brief Perform predictor step for next time step
@@ -174,10 +248,19 @@ private:
   void initiator(SolutionStates& solutions);
 
   /**
+   * @brief Update solution and check convergence of current equation
+   *
+   * Performs the corrector step: updates An, Yn, Dn from the linear solve
+   * result and checks convergence norms. Sets eq.ok if converged.
+   * Does NOT handle equation cycling -- that is done separately in corrector().
+   */
+  void update_solution();
+
+  /**
    * @brief Corrector function with convergence check (corrector)
    *
-   * Updates solution at n+1 time level and checks convergence of Newton
-   * iterations. Also handles equation switching for coupled problems.
+   * Calls update_solution(), then handles equation switching for coupled
+   * problems (modifies cEq global).
    */
   void corrector();
 

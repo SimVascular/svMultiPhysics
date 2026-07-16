@@ -1185,6 +1185,9 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
 //
 void set_bc_dir_w(ComMod& com_mod, const SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
 
   const int cEq = com_mod.cEq;
@@ -1307,8 +1310,12 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
     }
   }
 
-  Vector<int> ptr(eNoN); 
-  Array<double> xl(nsd,eNoN), yl(tDof,eNoN), lR(dof,eNoN);
+  // For ALE partitioned FSI, extend yl to hold mesh velocity
+  const bool has_ale = (com_mod.ale_mesh_velocity.size() > 0);
+  const int yl_nrows = has_ale ? tDof + nsd : tDof;
+
+  Vector<int> ptr(eNoN);
+  Array<double> xl(nsd,eNoN), yl(yl_nrows,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN);
   Array<double> xbl(nsd,eNoNb), ubl(nsd,eNoNb);
 
@@ -1336,6 +1343,11 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
 
       for (int i = 0; i < tDof; i++) {
         yl(i,a) = Yg(i,Ac);
+      }
+      if (has_ale) {
+        for (int i = 0; i < nsd; i++) {
+          yl(nsd+1+i, a) = com_mod.ale_mesh_velocity(i, Ac);
+        }
       }
 
       for (int i = 0; i < nsd; i++) {
@@ -2095,6 +2107,71 @@ void set_bc_undef_neu_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa)
           Val(0, i) = -1.0;
           Val(5, i) = -1.0;
           Val(10,i) = -1.0;
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------
+// enforce_dirichlet_on_face
+//----------------------------------------------------------------------
+void enforce_dirichlet_on_face(ComMod& com_mod, const faceType& lFa, int nsd)
+{
+  const auto& eq = com_mod.eq[com_mod.cEq];
+  const int dof = eq.dof;
+  const auto& rowPtr = com_mod.rowPtr;
+  const auto& colPtr = com_mod.colPtr;
+  auto& R = com_mod.R;
+  auto& Val = com_mod.Val;
+
+  for (int a = 0; a < lFa.nNo; a++) {
+    int rowN = lFa.gN(a);
+    for (int i = 0; i < dof; i++) {
+      R(i, rowN) = 0.0;
+    }
+    for (int j = rowPtr(rowN); j <= rowPtr(rowN + 1) - 1; j++) {
+      int colN = colPtr(j);
+      for (int iDof = 0; iDof < dof * dof; iDof++) {
+        Val(iDof, j) = 0.0;
+      }
+      if (colN == rowN) {
+        for (int i = 0; i < dof; i++) {
+          Val(i * dof + i, j) = 1.0;
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------
+// enforce_dirichlet_dofs_on_face
+//----------------------------------------------------------------------
+void enforce_dirichlet_dofs_on_face(ComMod& com_mod, const faceType& lFa,
+                                    int dof_start, int num_dofs)
+{
+  const auto& eq = com_mod.eq[com_mod.cEq];
+  const int dof = eq.dof;
+  const auto& rowPtr = com_mod.rowPtr;
+  const auto& colPtr = com_mod.colPtr;
+  auto& R = com_mod.R;
+  auto& Val = com_mod.Val;
+
+  for (int a = 0; a < lFa.nNo; a++) {
+    int rowN = lFa.gN(a);
+    for (int i = dof_start; i < dof_start + num_dofs; i++) {
+      R(i, rowN) = 0.0;
+    }
+    for (int j = rowPtr(rowN); j <= rowPtr(rowN + 1) - 1; j++) {
+      int colN = colPtr(j);
+      for (int i = dof_start; i < dof_start + num_dofs; i++) {
+        for (int k = 0; k < dof; k++) {
+          Val(i * dof + k, j) = 0.0;
+        }
+      }
+      if (colN == rowN) {
+        for (int i = dof_start; i < dof_start + num_dofs; i++) {
+          Val(i * dof + i, j) = 1.0;
         }
       }
     }
