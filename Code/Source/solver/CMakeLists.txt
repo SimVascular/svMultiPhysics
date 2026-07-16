@@ -23,15 +23,18 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include_directories(${SV_SOURCE_DIR}/ThirdParty/eigen/include)
+include_directories(${SV_SOURCE_DIR}/ThirdParty/eigen/include/eigen3)
 include_directories(${SV_SOURCE_DIR}/ThirdParty/parmetis_internal/simvascular_parmetis_internal/ParMETISLib)
 include_directories(${SV_SOURCE_DIR}/ThirdParty/tetgen/simvascular_tetgen)
 include_directories(${SV_SOURCE_DIR}/ThirdParty/tinyxml/simvascular_tinyxml)
 include_directories(${MPI_C_INCLUDE_PATH})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Core)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FE)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FE/Common)
 
 # Find Trilinos package if requested
@@ -86,7 +89,7 @@ endif()
 # add trilinos flags and defines
 if(USE_TRILINOS)
   ADD_DEFINITIONS(-DWITH_TRILINOS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}")
 endif()
 
 # Build with the PETSc linear algebra package.
@@ -156,7 +159,8 @@ set(CSRCS
   PetscLinearAlgebra.h PetscLinearAlgebra.cpp
   TrilinosLinearAlgebra.h TrilinosLinearAlgebra.cpp
   Tensor4.h Tensor4.cpp
-  Vector.h Vector.cpp 
+  Vector.h Vector.cpp
+  FourierInterpolation.cpp
 
   lapack_defs.h
 
@@ -181,7 +185,6 @@ set(CSRCS
   fsi_coupling.h fsi_coupling.cpp
   PartitionedFSI.h PartitionedFSI.cpp
   fs.h fs.cpp
-  fft.h fft.cpp
   heatf.h heatf.cpp
   heats.h heats.cpp
   initialize.h initialize.cpp
@@ -206,6 +209,7 @@ set(CSRCS
   stokes.h stokes.cpp
   sv_struct.h sv_struct.cpp
   svZeroD_interface.h svZeroD_interface.cpp
+  svOneD_interface.h svOneD_interface.cpp
   txt.h txt.cpp
   utils.h utils.cpp
   ustruct.h ustruct.cpp
@@ -230,6 +234,7 @@ set(CSRCS
   SPLIT.c
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp
+  svOneD_interface/OneDSolverInterface.h svOneD_interface/OneDSolverInterface.cpp
 
   BoundaryCondition.h BoundaryCondition.cpp
   RobinBoundaryCondition.h RobinBoundaryCondition.cpp
@@ -247,9 +252,21 @@ file(GLOB SOLVER_FE_COMMON_SRCS CONFIGURE_DEPENDS
   FE/Common/*.h
 )
 
+file(GLOB SOLVER_FE_BASIS_SRCS CONFIGURE_DEPENDS
+  FE/Basis/*.cpp
+  FE/Basis/*.h
+)
+
+file(GLOB SOLVER_FE_MATH_SRCS CONFIGURE_DEPENDS
+  FE/Math/*.cpp
+  FE/Math/*.h
+)
+
 list(APPEND CSRCS
   ${SOLVER_CORE_SRCS}
   ${SOLVER_FE_COMMON_SRCS}
+  ${SOLVER_FE_BASIS_SRCS}
+  ${SOLVER_FE_MATH_SRCS}
 )
 
   # Set PETSc interace code.
@@ -326,16 +343,24 @@ if(ENABLE_UNIT_TEST)
 
   # link pthread on ubuntu20
   find_package(Threads REQUIRED)
-
+  include(FetchContent)
   # install Google Test
   #if(NOT TARGET gtest_main AND NOT TARGET gtest)
-  include(FetchContent)
   FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/heads/main.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+          googletest
+          GIT_REPOSITORY https://github.com/google/googletest.git
+          GIT_TAG v1.17.0
+          DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   )
   FetchContent_MakeAvailable(googletest)
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_STANDARD GREATER_EQUAL 20)
+    foreach(GTEST_TARGET gtest gtest_main gmock gmock_main)
+      if(TARGET ${GTEST_TARGET})
+        target_compile_options(${GTEST_TARGET} PRIVATE -std=gnu++17)
+      endif()
+    endforeach()
+  endif()
   #endif()
 
   enable_testing()

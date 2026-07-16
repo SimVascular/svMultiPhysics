@@ -5,9 +5,47 @@
 
 #include "fs.h"
 #include "consts.h"
+#include "FE/Common/FEException.h"
 #include "nn.h"
 
+#include <algorithm>
+#include <string>
+
 namespace fs {
+
+namespace {
+
+namespace fe = svmp::FE;
+
+std::string element_name(consts::ElementType eType)
+{
+  const auto iter = consts::element_type_to_string.find(eType);
+  if (iter != consts::element_type_to_string.end()) {
+    return iter->second;
+  }
+
+  return "unknown (" + std::to_string(static_cast<int>(eType)) + ")";
+}
+
+/// @brief Populate reference-space Hessians (fs.Nxx) at every Gauss point.
+///
+/// Element-type support is owned by nn::get_gn_nxx: it evaluates analytic
+/// reference Hessians for every element the FE Basis supports.
+/// Families without FE Basis Hessian support include (NA/PNT/NRB),
+/// their zero-initialized Nxx remain untouched.
+void populate_reference_hessians(fsType& fs, const int insd)
+{
+  if (fs.Nxx.size() == 0) {
+    return;
+  }
+
+  const int ind2 = std::max(3 * (insd - 1), 1);
+  for (int g = 0; g < fs.nG; ++g) {
+    nn::get_gn_nxx(insd, ind2, fs.eType, fs.eNoN, g, fs.xi, fs.Nxx);
+  }
+}
+
+} // namespace
 
 
 /// @brief Allocates arrays within the function space type. Assumes that 
@@ -103,6 +141,7 @@ void get_thood_fs(ComMod& com_mod, std::array<fsType,2>& fs, const mshType& lM, 
         nn::get_gnn(nsd, fs[1].eType, fs[1].eNoN, g, fs[1].xi, fs[1].N, fs[1].Nx);
       }
       nn::get_nn_bnds(nsd, fs[1].eType, fs[1].eNoN, fs[1].xib, fs[1].Nb);
+      populate_reference_hessians(fs[1], nsd);
 
     } else if (iOpt == 2) {
       fs[1].nG    = lM.fs[1].nG;
@@ -133,6 +172,7 @@ void get_thood_fs(ComMod& com_mod, std::array<fsType,2>& fs, const mshType& lM, 
         nn::get_gnn(nsd, fs[0].eType, fs[0].eNoN, g, fs[0].xi, fs[0].N, fs[0].Nx);
       }
       nn::get_nn_bnds(nsd, fs[0].eType, fs[0].eNoN, fs[0].xib, fs[0].Nb);
+      populate_reference_hessians(fs[0], nsd);
     }
   }
 }
@@ -275,14 +315,7 @@ void init_fs_msh(const ComMod& com_mod, mshType& lM)
     lM.fs[0].Nb  = lM.Nb;
     lM.fs[0].Nx  = lM.Nx;
   }
-  // Second order derivatives for vector function space
-  //
-  if (!lM.fs[0].lShpF) {
-    int ind2 = std::max(3*(insd-1), 1);
-    for (int g = 0; g < lM.fs[0].nG; g++) {
-      nn::get_gn_nxx(insd, ind2, lM.fs[0].eType, lM.fs[0].eNoN, g, lM.fs[0].xi, lM.fs[0].Nxx);
-    }
-  }
+  populate_reference_hessians(lM.fs[0], insd);
 
   // Sets Taylor-Hood basis [fluid, stokes, ustruct, FSI)
   if (lM.nFs == 2) {
@@ -291,6 +324,7 @@ void init_fs_msh(const ComMod& com_mod, mshType& lM)
 
     // Initialize the function space
     init_fs(lM.fs[1], nsd, insd);
+    populate_reference_hessians(lM.fs[1], insd);
   }
 }
 
@@ -343,8 +377,8 @@ void set_thood_fs(fsType& fs, consts::ElementType eType)
     break;
 
     default:
-      throw std::runtime_error("Cannot choose Taylor-Hood basis");
-    break;
+      svmp::raise<fe::InvalidElementException>(
+          "Cannot choose Taylor-Hood basis", element_name(eType));
   }
 }
 

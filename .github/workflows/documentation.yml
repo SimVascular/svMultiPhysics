@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build doxygen documentation
         run: |
-          sudo apt install -y doxygen
+          sudo apt install -y doxygen graphviz
           doxygen Documentation/Doxyfile
       - name: Save documentation
         uses: actions/upload-artifact@v4

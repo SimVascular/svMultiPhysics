@@ -13,6 +13,7 @@
 #include "utils.h"
 #include <math.h>
 #include "svZeroD_interface.h"
+#include "svOneD_interface.h"
 
 namespace txt_ns {
 
@@ -174,16 +175,52 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
       if (!init_write) {
         if (cplBC.useGenBC) {
           set_bc::genBC_Integ_X(com_mod, cm_mod, "L");
-        } else if (cplBC.useSvZeroD) {
-          svZeroD::calc_svZeroD(com_mod, cm_mod, 'L');
         } else {
-          for (auto& bc : com_mod.eq[0].bc) {
-            if (utils::btest(bc.bType, iBC_RCR)) {
-              ltmp = true;
-              break;
-            }
+          // In mixed-coupling simulations both useSvZeroD and useSvOneD can be true.
+          // Call each active solver independently.
+          if (cplBC.useSvZeroD) {
+            svZeroD::calc_svZeroD(com_mod, cm_mod, 'L');
           }
-          set_bc::cplBC_Integ_X(com_mod, cm_mod, ltmp);
+
+          if (cplBC.useSvOneD) {
+            // Update NEU coupling flowrates from the final converged velocity
+            // field (Yn) before committing the 1D solution.  During the Newton
+            // loop, compute_flowrates() is called at the *start* of each
+            // iteration using a partially-converged Yn.  After the last picc
+            // correction Yn is fully converged, but Qn_ is never refreshed.
+            // Re-computing here ensures the 1D solver receives the same
+            // flowrate that write_boundary_integral_data() reports in
+            // B_NS_Velocity_flux.txt.
+            for (auto& bc : com_mod.eq[0].bc) {
+              if (utils::btest(bc.bType, iBC_Coupled) &&
+                  bc.coupled_bc.is_svOneD_face() &&
+                  bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Neu) {
+                bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
+              }
+            }
+            svOneD::calc_svOneD(com_mod, cm_mod, 'L');
+          }
+
+          // Also integrate any RCR faces coexisting with svZeroD/svOneD faces.
+          if (cplBC.useSvZeroD || cplBC.useSvOneD) {
+            for (auto& bc : com_mod.eq[0].bc) {
+              if (utils::btest(bc.bType, iBC_RCR)) {
+                ltmp = true;
+                break;
+              }
+            }
+            if (ltmp) {
+              set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+            }
+          } else {
+            for (auto& bc : com_mod.eq[0].bc) {
+              if (utils::btest(bc.bType, iBC_RCR)) {
+                ltmp = true;
+                break;
+              }
+            }
+            set_bc::cplBC_Integ_X(com_mod, cm_mod, ltmp);
+          }
         }
       }
     }

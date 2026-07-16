@@ -68,6 +68,11 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   set(GLOBAL_DEFINES "${GLOBAL_DEFINES} -DGCC")
 endif()
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")   # icpx/icx
+  set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -fp-model=precise -ffp-contract=off")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fp-model=precise -ffp-contract=off")
+endif()
+
 #-----------------------------------------------------------------------------
 # Set a default build type (if none was specified)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)

@@ -888,6 +888,11 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
       uris_obj.sdf.resize(com_mod.tnNo);
       uris_obj.sdf = uris_obj.sdf_default;
       uris_obj.sdf_computed = false;
+      if (uris_obj.scaffold_flag && !uris_obj.scaffold_udf.allocated()) {
+        uris_obj.scaffold_udf.resize(com_mod.tnNo);
+        uris_obj.scaffold_udf = uris_obj.sdf_default;
+        uris_obj.scaffold_udf_computed = false;
+      }
       if (uris_obj.include_uris_velocity && !uris_obj.valve_velocity_fluid.allocated()) {
         uris_obj.valve_velocity_fluid.resize(nsd, com_mod.tnNo);
         uris_obj.valve_velocity_fluid = 0.0;

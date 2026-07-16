@@ -405,7 +405,7 @@ protected:
                              const Vector<double> &X, const Vector<double> &Xg,
                              const double Ksac) const {
     svmp::raise<svmp::FE::NotImplementedException>(
-        SVMP_HERE, "getj method not implemented for this ionic model.");
+        "getj method not implemented for this ionic model.");
 
     // Dummy return statement to avoid compiler warnings.
     Array<double> dummy(X.size(), X.size());
@@ -476,7 +476,6 @@ public:
     if (factory_instance.children.find(name) !=
         factory_instance.children.end()) {
       svmp::raise<svmp::FE::InvalidArgumentException>(
-          SVMP_HERE,
           "A model with name '" + name +
               "' was already registered in the ionic model factory.");
     }

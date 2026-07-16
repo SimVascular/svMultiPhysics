@@ -90,8 +90,8 @@ void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLs
   Array<double> unCondU(dof,nNo);
   Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD+1);
 
-  double time = fsi_linear_solver::fsils_cpu_t(); 
-  ls.suc = false;
+  double time = fsi_linear_solver::fsils_cpu_t();
+  ls.success = false;
   double eps = 0.0;
   int last_i = 0;
   X = 0.0;
@@ -210,7 +210,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLs
       #endif
 
       if (fabs(err(i+1)) < eps) {
-        ls.suc = true;
+        ls.success = true;
         break;
       }
     } // for int i = 0; i < ls.sD
@@ -235,7 +235,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLs
     }
 
     ls.fNorm = fabs(err(last_i+1));
-    if (ls.suc) {
+    if (ls.success) {
       break;
     }
 
@@ -283,7 +283,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   Vector<double> X(nNo), y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD+1);
 
   ls.callD = fsi_linear_solver::fsils_cpu_t();
-  ls.suc = false;
+  ls.success = false;
   double eps = norm::fsi_ls_norms(mynNo, lhs.commu, R);
   ls.iNorm = eps;
   ls.fNorm = eps;
@@ -298,6 +298,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   if (ls.iNorm <= ls.absTol) {
     ls.callD = std::numeric_limits<double>::epsilon();
     ls.dB = 0.0;
+    ls.success = true;
     return; 
   }
 
@@ -375,7 +376,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       #endif
 
       if (fabs(err(i+1)) < eps) {
-        ls.suc = true;
+        ls.success = true;
         break;
       }
     } // for int i = 0; i < ls.sD
@@ -400,7 +401,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     }
 
     ls.fNorm = fabs(err(last_i+1));
-    if (ls.suc) {
+    if (ls.success) {
       break;
     }
   }
@@ -452,7 +453,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD+1);
 
   ls.callD = fsi_linear_solver::fsils_cpu_t();
-  ls.suc = false;
+  ls.success = false;
   double eps = norm::fsi_ls_normv(dof, mynNo, lhs.commu, R);
   ls.iNorm = eps;
   ls.fNorm = eps;
@@ -469,6 +470,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   if (ls.iNorm <= ls.absTol) {
     ls.callD = std::numeric_limits<double>::epsilon();
     ls.dB = 0.0;
+    ls.success = true;
     return; 
   }
 
@@ -565,7 +567,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       #endif
 
       if (fabs(err(i+1)) < eps) {
-        ls.suc = true;
+        ls.success = true;
         break;
       }
     } // for int i = 0; i < ls.sD
@@ -590,7 +592,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     }
 
     ls.fNorm = fabs(err(last_i+1));
-    if (ls.suc) {
+    if (ls.success) {
       break;
     }
   }

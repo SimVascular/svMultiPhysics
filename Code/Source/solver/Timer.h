@@ -5,27 +5,21 @@
 #define TIMER_H 
 
 #include <chrono>
-#include <iostream>
-#include <string>
 
 /// @brief Keep track of time
 class Timer 
 {
   public:
 
-    double get_elapsed_time()
+    double get_elapsed_time() const
     {
       return get_time() - current_time;
     }
 
-    double get_time()
+    double get_time() const
     {
-      auto now = std::chrono::system_clock::now();
-      auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-
-      auto value = now_ms.time_since_epoch();
-      auto duration = value.count() / 1000.0;
-      return static_cast<double>(duration);
+      const auto now = std::chrono::steady_clock::now();
+      return std::chrono::duration<double>(now.time_since_epoch()).count();
     }
 
     void set_time()
@@ -33,8 +27,7 @@ class Timer
       current_time = get_time();
     }
 
-    double current_time;
+    double current_time{0.0};
 };
 
 #endif
-
