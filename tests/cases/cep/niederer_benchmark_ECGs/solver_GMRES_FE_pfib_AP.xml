@@ -29,39 +29,32 @@
 
   <Add_face name="X0">
       <Face_file_path> mesh/h0.1/mesh-surfaces/X0.vtp </Face_file_path>
-      <Quadrature_modifier_TRI3> 0.43 </Quadrature_modifier_TRI3>
   </Add_face>
 
   <Add_face name="X1">
       <Face_file_path> mesh/h0.1/mesh-surfaces/X1.vtp </Face_file_path>
-      <Quadrature_modifier_TRI3> 0.43 </Quadrature_modifier_TRI3>
   </Add_face>
 
  <Add_face name="Y0">
       <Face_file_path> mesh/h0.1/mesh-surfaces/Y0.vtp </Face_file_path>
-      <Quadrature_modifier_TRI3> 0.43 </Quadrature_modifier_TRI3>
   </Add_face>
 
   <Add_face name="Y1">
       <Face_file_path> mesh/h0.1/mesh-surfaces/Y1.vtp </Face_file_path>
-      <Quadrature_modifier_TRI3> 0.43 </Quadrature_modifier_TRI3>
   </Add_face>
 
  <Add_face name="Z0">
       <Face_file_path> mesh/h0.1/mesh-surfaces/Z0.vtp </Face_file_path>
-      <Quadrature_modifier_TRI3> 0.43 </Quadrature_modifier_TRI3>
   </Add_face>
 
   <Add_face name="Z1">
       <Face_file_path> mesh/h0.1/mesh-surfaces/Z1.vtp </Face_file_path>
-      <Quadrature_modifier_TRI3> 0.43 </Quadrature_modifier_TRI3>
   </Add_face>
 
   <Fiber_direction> (1, 0, 0) </Fiber_direction>
 
   <Domain_file_path> mesh/h0.1/domain_info.dat </Domain_file_path>
 
-  <Quadrature_modifier_TET4> 0.34 </Quadrature_modifier_TET4>
 </Add_mesh>
 
 <Add_equation type="CEP" > 
