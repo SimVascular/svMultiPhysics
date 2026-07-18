@@ -589,6 +589,12 @@ void Integrator::predictor()
           if (!supports_active_stress(dmn.phys))
             continue;
 
+          // Only domains that node Ac actually belongs to contribute to its
+          // average. Note that if there is only one domain dmnId may not be
+          // populated, so we only check domain membership if eq.nDmn > 1.
+          if (eq.nDmn > 1 && !utils::btest(com_mod.dmnId(Ac), dmn.Id))
+            continue;
+
           if (dmn.active_stress != nullptr) {
             Ta_f += dmn.active_stress->get_tension_fibers(Ac);
             Ta_s += dmn.active_stress->get_tension_sheets(Ac);
