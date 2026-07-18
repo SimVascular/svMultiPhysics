@@ -13,7 +13,6 @@ fields = [
     "Def_grad",
     "Displacement",
     "Jacobian",
-    "Jacobian",
     "Stress",
     "Strain",
     "Velocity",
