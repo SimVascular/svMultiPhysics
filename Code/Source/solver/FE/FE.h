@@ -11,7 +11,8 @@
  * This header intentionally contains no declarations. It gives Doxygen a
  * header-based home for the top-level FE group; submodule groups attach to it
  * from their own headers, including FE_Basis (Basis/BasisFunction.h),
- * FE_Common (Common/Types.h), and FE_Math (Math/Vector.h).
+ * FE_Common (Common/Types.h), FE_Math (Math/Vector.h), and FE_Quadrature
+ * (Quadrature/QuadratureRule.h).
  */
 
 /**
