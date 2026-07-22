@@ -9,8 +9,8 @@ if(DOXYGEN_FOUND)
   configure_file(${SV_SOURCE_DIR}/../Documentation/Doxyfile
     ${SV_BINARY_DIR}/Doxyfile @ONLY)
   add_custom_target(doc
-    ${DOXYGEN_EXECUTABLE} ${SV_BINARY_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND "${DOXYGEN_EXECUTABLE}" "${SV_BINARY_DIR}/Doxyfile"
+    WORKING_DIRECTORY "${SV_SOURCE_DIR}/.."
     COMMENT "Generating API documentation with Doxygen" VERBATIM
     )
 endif(DOXYGEN_FOUND)
