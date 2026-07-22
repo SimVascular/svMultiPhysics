@@ -3,6 +3,8 @@
 
 // The code here replicates the Fortran code in DISTRIBUTE.f.
 
+#include "Core/Exception.h"
+
 #include "initialize.h"
 
 #include "distribute.h"
@@ -417,11 +419,24 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     nFacesLS = nFacesLS + 1;
   }
 
-  for (auto& bc : com_mod.eq[0].bc) {
-    // Check for coupled faces (Dir, Neu via cplBC) or Coupled BCs
-    if (bc.cplBCptr != -1 || utils::btest(bc.bType, static_cast<int>(consts::BoundaryConditionType::bType_Coupled))) { 
-      com_mod.cplBC.coupled = true;
-      break; 
+  // Check for coupled faces (Dir, Neu via cplBC) or Coupled BCs
+  for (unsigned int i = 0; i < com_mod.eq.size(); ++i) {
+    for (auto &bc : com_mod.eq[i].bc) {
+
+      if (bc.cplBCptr != -1 ||
+          utils::btest(
+              bc.bType,
+              static_cast<int>(consts::BoundaryConditionType::bType_Coupled))) {
+        svmp::throw_if<svmp::ParseException>(
+            com_mod.cplBC.coupled && com_mod.cplBC.equationIndex != i,
+            "Coupled boundary conditions can only be assigned in one equation, "
+            "but they were assigned in equations " +
+                std::to_string(com_mod.cplBC.equationIndex) + " and " +
+                std::to_string(i) + ".");
+
+        com_mod.cplBC.equationIndex = i;
+        com_mod.cplBC.coupled = true;
+      }
     }
   }
 

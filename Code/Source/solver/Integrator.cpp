@@ -92,7 +92,7 @@ bool Integrator::step() {
     iEqOld = cEq;
     auto& eq = com_mod.eq[cEq];
 
-    if (com_mod.cplBC.coupled && cEq == 0) {
+    if (cEq == com_mod.cplBC.equationIndex && com_mod.cplBC.coupled) {
       #ifdef debug_integrator_step
       dmsg << "Set coupled BCs " << std::endl;
       #endif

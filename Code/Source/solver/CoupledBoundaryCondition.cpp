@@ -318,12 +318,16 @@ void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& c
     int nsd = com_mod.nsd;
     const auto& Yo = solutions.old.get_velocity();
     const auto& Yn = solutions.current.get_velocity();
-    
-    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, Yo, 0, solutions,
-                         std::optional<int>(nsd - 1), false, flowrate_cfg_o_);
-    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, Yn, 0, solutions,
-                         std::optional<int>(nsd - 1), false, flowrate_cfg_n_);
-    
+    const unsigned int equation_offset =
+        com_mod.eq[com_mod.cplBC.equationIndex].s;
+
+    Qo_ =
+        all_fun::integ(com_mod, cm_mod, *face_, Yo, equation_offset, solutions,
+                       equation_offset + nsd - 1, false, flowrate_cfg_o_);
+    Qn_ =
+        all_fun::integ(com_mod, cm_mod, *face_, Yn, equation_offset, solutions,
+                       equation_offset + nsd - 1, false, flowrate_cfg_n_);
+
     if (has_cap_) {
         const auto [Qo_cap, Qn_cap] =
             calculate_cap_contribution(com_mod, cm_mod, solutions, flowrate_cfg_o_, flowrate_cfg_n_);
@@ -347,12 +351,15 @@ void CoupledBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& c
     double area = face_->area;
     const auto& Yo = solutions.old.get_velocity();
     const auto& Yn = solutions.current.get_velocity();
-    
-    Po_ = all_fun::integ(com_mod, cm_mod, *face_, Yo, nsd, solutions,
-                         std::nullopt, false, flowrate_cfg_o_) / area;
-    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, Yn, nsd, solutions,
-                         std::nullopt, false, flowrate_cfg_n_) / area;
-    
+    const unsigned int equation_offset =
+        com_mod.eq[com_mod.cplBC.equationIndex].s;
+
+    Po_ = all_fun::integ(com_mod, cm_mod, *face_, Yo, equation_offset + nsd,
+                         solutions, std::nullopt, false, flowrate_cfg_o_) /
+          area;
+    Pn_ = all_fun::integ(com_mod, cm_mod, *face_, Yn, equation_offset + nsd,
+                         solutions, std::nullopt, false, flowrate_cfg_n_) /
+          area;
 }
 
 double CoupledBoundaryCondition::get_Qo() const

@@ -790,6 +790,10 @@ class cplBCType
 {
   public:
     cplBCType();
+
+    /// @brief Index of the equation that this condition is associated with.
+    unsigned int equationIndex = 0;
+
     /// @brief Is multi-domain active
     bool coupled = false;
 

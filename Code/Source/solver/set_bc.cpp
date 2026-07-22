@@ -44,7 +44,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
   dmsg.banner();
   #endif
 
-  const int iEq = 0;
+  const int iEq = com_mod.cplBC.equationIndex;
   // NOTE: For coupling with svZeroDPlus, absTol needs to be > 1e-8 to be compatible with the default convergence tolerance of svZeroDPlus (1e-8)
   // If this is not true, the finite difference computation of bc.r below results in zero because the perturbation is below the svZeroDPlus tolerance 
   const double absTol = 1.0e-7;
@@ -144,8 +144,16 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
         else {
           throw std::runtime_error("[calc_der_cpl_bc]  Invalid physics type for 0D coupling");
         }
-        cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions, nsd-1, false, cfg_o);
-        cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, fa, Yn, 0, solutions, nsd-1, false, cfg_n);
+
+        const unsigned int equation_offset =
+            com_mod.eq[com_mod.cplBC.equationIndex].s;
+        cplBC.fa[ptr].Qo =
+            all_fun::integ(com_mod, cm_mod, fa, Yo, equation_offset, solutions,
+                           equation_offset + nsd - 1, false, cfg_o);
+        cplBC.fa[ptr].Qn =
+            all_fun::integ(com_mod, cm_mod, fa, Yn, equation_offset, solutions,
+                           equation_offset + nsd - 1, false, cfg_n);
+
         cplBC.fa[ptr].Po = 0.0;
         cplBC.fa[ptr].Pn = 0.0;
         #ifdef debug_calc_der_cpl_bc 
@@ -616,7 +624,7 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& soluti
 
   using namespace consts;
 
-  const int iEq = 0;
+  const int iEq = com_mod.cplBC.equationIndex;
   int nsd = com_mod.nsd;
   auto& eq = com_mod.eq[iEq];
   auto& cplBC = com_mod.cplBC;
@@ -751,7 +759,7 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
   const int tnNo = com_mod.tnNo;
   auto& cplBC = com_mod.cplBC;
   // Yo, Ao, Do now passed as parameters
-  const int iEq = 0;
+  const int iEq = com_mod.cplBC.equationIndex;
   auto& eq = com_mod.eq[iEq];
 
   // Determine current physics
@@ -825,16 +833,34 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
           else {
             throw std::runtime_error("[set_bc_cpl]  Invalid physics type for 0D coupling");
           }
-        
-          cplBC.fa[ptr].Qo = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, 0, solutions, nsd-1, false, cfg_o);
-          cplBC.fa[ptr].Qn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, 0, solutions, nsd-1, false, cfg_n);
+
+          const unsigned int equation_offset =
+              com_mod.eq[com_mod.cplBC.equationIndex].s;
+          cplBC.fa[ptr].Qo = all_fun::integ(
+              com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, equation_offset,
+              solutions, equation_offset + nsd - 1, false, cfg_o);
+          cplBC.fa[ptr].Qn = all_fun::integ(
+              com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, equation_offset,
+              solutions, equation_offset + nsd - 1, false, cfg_n);
+
           cplBC.fa[ptr].Po = 0.0;
           cplBC.fa[ptr].Pn = 0.0;
         } 
         // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1
         else if (utils::btest(bc.bType,iBC_Dir)) {
-          cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
-          cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+          const unsigned int equation_offset =
+              com_mod.eq[com_mod.cplBC.equationIndex].s;
+          cplBC.fa[ptr].Po =
+              all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo,
+                             equation_offset + nsd, solutions, std::nullopt,
+                             false, MechanicalConfigurationType::reference) /
+              area;
+          cplBC.fa[ptr].Pn =
+              all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn,
+                             equation_offset + nsd, solutions, std::nullopt,
+                             false, MechanicalConfigurationType::reference) /
+              area;
+
           cplBC.fa[ptr].Qo = 0.0;
           cplBC.fa[ptr].Qn = 0.0;
         }

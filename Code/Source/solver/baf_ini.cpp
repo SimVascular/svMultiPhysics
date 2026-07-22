@@ -98,7 +98,7 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
 
   // cplBC faces are initialized here
   //
-  int iEq = 0;
+  int iEq = com_mod.cplBC.equationIndex;
   com_mod.cplBC.fa.resize(com_mod.cplBC.nFa); 
   com_mod.cplBC.xn.resize(com_mod.cplBC.nX);
   
