@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -110,12 +118,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afb56e303750ae7c7a7983677776680c0" id="r_afb56e303750ae7c7a7983677776680c0"><td class="memItemLeft" align="right" valign="top"><a id="afb56e303750ae7c7a7983677776680c0" name="afb56e303750ae7c7a7983677776680c0"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>defined</b> () const</td></tr>
 <tr class="separator:afb56e303750ae7c7a7983677776680c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a028f378f5f1d738043e4bf99e1f6cf4c" id="r_a028f378f5f1d738043e4bf99e1f6cf4c"><td class="memItemLeft" align="right" valign="top"><a id="a028f378f5f1d738043e4bf99e1f6cf4c" name="a028f378f5f1d738043e4bf99e1f6cf4c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>print_parameters</b> ()</td></tr>
-<tr class="separator:a028f378f5f1d738043e4bf99e1f6cf4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ae07f6ea5eebe9de461d708e792da7c" id="r_a5ae07f6ea5eebe9de461d708e792da7c"><td class="memItemLeft" align="right" valign="top"><a id="a5ae07f6ea5eebe9de461d708e792da7c" name="a5ae07f6ea5eebe9de461d708e792da7c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_values</b> (tinyxml2::XMLElement *xml_elem)</td></tr>
-<tr class="separator:a5ae07f6ea5eebe9de461d708e792da7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9bc904ca4b47121080565ce6db5c12b1" id="r_a9bc904ca4b47121080565ce6db5c12b1"><td class="memItemLeft" align="right" valign="top"><a id="a9bc904ca4b47121080565ce6db5c12b1" name="a9bc904ca4b47121080565ce6db5c12b1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>print_parameters</b> () const</td></tr>
+<tr class="separator:a9bc904ca4b47121080565ce6db5c12b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51b79ba803ffd54487a43b84554488f7" id="r_a51b79ba803ffd54487a43b84554488f7"><td class="memItemLeft" align="right" valign="top"><a id="a51b79ba803ffd54487a43b84554488f7" name="a51b79ba803ffd54487a43b84554488f7"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_values</b> (const tinyxml2::XMLElement *xml_elem)</td></tr>
+<tr class="separator:a51b79ba803ffd54487a43b84554488f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3edec9b418d9a967b86e33d87297c37" id="r_ad3edec9b418d9a967b86e33d87297c37"><td class="memItemLeft" align="right" valign="top"><a id="ad3edec9b418d9a967b86e33d87297c37" name="ad3edec9b418d9a967b86e33d87297c37"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>validate</b> () const</td></tr>
 <tr class="separator:ad3edec9b418d9a967b86e33d87297c37"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -184,7 +192,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a0992adb294b6d703894c5f181e57a3c6" id="r_a0992adb294b6d703894c5f181e57a3c6"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_directional_distribution_parameters.html#a0992adb294b6d703894c5f181e57a3c6">xml_element_name_</a> = &quot;Directional_distribution&quot;</td></tr>
+<tr class="memitem:a0992adb294b6d703894c5f181e57a3c6" id="r_a0992adb294b6d703894c5f181e57a3c6"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_directional_distribution_parameters.html#a0992adb294b6d703894c5f181e57a3c6">xml_element_name_</a></td></tr>
 <tr class="memdesc:a0992adb294b6d703894c5f181e57a3c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define the XML element name for directional distribution parameters.  <br /></td></tr>
 <tr class="separator:a0992adb294b6d703894c5f181e57a3c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -206,7 +214,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const std::string DirectionalDistributionParameters::xml_element_name_ = &quot;Directional_distribution&quot;</td>
+          <td class="memname">const std::string DirectionalDistributionParameters::xml_element_name_</td>
         </tr>
       </table>
   </td>
@@ -215,7 +223,9 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;Directional_distribution&quot;</span></div>
+</div><!-- fragment -->
 <p>Define the XML element name for directional distribution parameters. </p>
 
 </div>

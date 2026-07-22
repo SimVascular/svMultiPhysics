@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -488,7 +496,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="a_f_e_2_math_2_vector_8h_html"><div class="ttname"><a href="_f_e_2_math_2_vector_8h.html">Vector.h</a></div><div class="ttdoc">Fixed-size vector types for FE computations, backed by Eigen.</div></div>
 <div class="ttc" id="a_matrix_8h_html"><div class="ttname"><a href="_matrix_8h.html">Matrix.h</a></div><div class="ttdoc">Fixed-size matrix types for FE computations, backed by Eigen.</div></div>
 <div class="ttc" id="a_types_8h_html"><div class="ttname"><a href="_types_8h.html">Types.h</a></div><div class="ttdoc">Fundamental type definitions for the finite element library.</div></div>
-<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:24</div></div>
+<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:26</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1basis_1_1_basis_function_html"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html">svmp::FE::basis::BasisFunction</a></div><div class="ttdoc">Abstract interface for finite-element basis-function families.</div><div class="ttdef"><b>Definition</b> BasisFunction.h:166</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1basis_1_1_basis_function_html_a0338d518f13aee8ae004a89fc679ea78"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a0338d518f13aee8ae004a89fc679ea78">svmp::FE::basis::BasisFunction::evaluate_gradients</a></div><div class="ttdeci">void evaluate_gradients(const math::Vector&lt; double, 3 &gt; &amp;xi, std::vector&lt; Gradient &gt; &amp;gradients) const</div><div class="ttdoc">Evaluate basis gradients at a reference coordinate.</div><div class="ttdef"><b>Definition</b> BasisFunction.cpp:33</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1basis_1_1_basis_function_html_a25a1fdc4f1f853d2b967e1a3f092585c"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a25a1fdc4f1f853d2b967e1a3f092585c">svmp::FE::basis::BasisFunction::evaluate_gradients_to</a></div><div class="ttdeci">virtual void evaluate_gradients_to(const math::Vector&lt; double, 3 &gt; &amp;xi, std::span&lt; Gradient &gt; gradients_out) const</div><div class="ttdoc">Evaluate basis gradients into caller-provided storage.</div><div class="ttdef"><b>Definition</b> BasisFunction.cpp:61</div></div>

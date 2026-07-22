@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -175,7 +183,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a7caddb1c06e81c40db4ae4f05de7adea" id="r_a7caddb1c06e81c40db4ae4f05de7adea"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_variable_wall_props_parameters.html#a7caddb1c06e81c40db4ae4f05de7adea">xml_element_name_</a> = &quot;Variable_wall_properties&quot;</td></tr>
+<tr class="memitem:a7caddb1c06e81c40db4ae4f05de7adea" id="r_a7caddb1c06e81c40db4ae4f05de7adea"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_variable_wall_props_parameters.html#a7caddb1c06e81c40db4ae4f05de7adea">xml_element_name_</a></td></tr>
 <tr class="memdesc:a7caddb1c06e81c40db4ae4f05de7adea"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="class_variable_wall_props_parameters.html" title="The VariableWallPropsParameters class stores parameters for variable wall properties for the CMM equa...">VariableWallPropsParameters</a> class stores parameters for variable wall properties for the CMM equation.  <br /></td></tr>
 <tr class="separator:a7caddb1c06e81c40db4ae4f05de7adea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -192,7 +200,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const std::string VariableWallPropsParameters::xml_element_name_ = &quot;Variable_wall_properties&quot;</td>
+          <td class="memname">const std::string VariableWallPropsParameters::xml_element_name_</td>
         </tr>
       </table>
   </td>
@@ -201,7 +209,9 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;Variable_wall_properties&quot;</span></div>
+</div><!-- fragment -->
 <p>The <a class="el" href="class_variable_wall_props_parameters.html" title="The VariableWallPropsParameters class stores parameters for variable wall properties for the CMM equa...">VariableWallPropsParameters</a> class stores parameters for variable wall properties for the CMM equation. </p>
 <p>Define the XML element name for variable wall parameters. </p>
 

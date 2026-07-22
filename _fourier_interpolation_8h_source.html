@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -516,7 +524,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclass_fourier_interpolation_html_ab49c88d8c475ac35e1fa630b378d239b"><div class="ttname"><a href="class_fourier_interpolation.html#ab49c88d8c475ac35e1fa630b378d239b">FourierInterpolation::from_fourier_coefficients</a></div><div class="ttdeci">static FourierInterpolation from_fourier_coefficients(const Vector&lt; double &gt; &amp;linear_trend_initial_values, const Vector&lt; double &gt; &amp;linear_trend_slopes, const Array&lt; double &gt; &amp;fourier_coefficients_real, const Array&lt; double &gt; &amp;fourier_coefficients_imaginary, double initial_time, double period)</div><div class="ttdoc">Construct a FourierInterpolation from Fourier coefficients.</div><div class="ttdef"><b>Definition</b> FourierInterpolation.cpp:246</div></div>
 <div class="ttc" id="aclass_fourier_interpolation_html_ac5dda0c756daae85109ac40e0a48beb1"><div class="ttname"><a href="class_fourier_interpolation.html#ac5dda0c756daae85109ac40e0a48beb1">FourierInterpolation::get_linear_trend_initial_value</a></div><div class="ttdeci">double get_linear_trend_initial_value(unsigned int component) const</div><div class="ttdoc">Get the initial value of the linear trend part for one component.</div><div class="ttdef"><b>Definition</b> FourierInterpolation.cpp:468</div></div>
 <div class="ttc" id="aclass_fourier_interpolation_html_afe287f0cb0b9089fa3b249196da74dce"><div class="ttname"><a href="class_fourier_interpolation.html#afe287f0cb0b9089fa3b249196da74dce">FourierInterpolation::get_n_components</a></div><div class="ttdeci">unsigned int get_n_components() const</div><div class="ttdoc">Get the dimension of the data interpolated by this object.</div><div class="ttdef"><b>Definition</b> FourierInterpolation.cpp:460</div></div>
-<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:24</div></div>
+<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:26</div></div>
 <div class="ttc" id="aclasscm_type_html"><div class="ttname"><a href="classcm_type.html">cmType</a></div><div class="ttdoc">The cmType class stores data and defines methods used for mpi communication.</div><div class="ttdef"><b>Definition</b> CmMod.h:56</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

@@ -1,6 +1,6 @@
 <map id="FitzHughNagumo::Parameters" name="FitzHughNagumo::Parameters">
 <area shape="rect" id="Node000001" title="Model parameters class." alt="" coords="5,152,221,177"/>
-<area shape="rect" id="Node000002" href="$class_ionic_model_parameters.html" title="Initial conditions parameters for a generic ionic model." alt="" coords="30,79,197,104"/>
+<area shape="rect" id="Node000002" href="$class_ionic_model_parameters.html" title="Parameters for a generic ionic model." alt="" coords="30,79,197,104"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="116,118,116,152,111,152,111,118"/>
 <area shape="rect" id="Node000003" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="54,5,173,31"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="116,44,116,79,111,79,111,44"/>

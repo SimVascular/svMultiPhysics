@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -194,7 +202,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:24</div></div>
+<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:26</div></div>
 <div class="ttc" id="aclassutils_1_1queue_type_html"><div class="ttname"><a href="classutils_1_1queue_type.html">utils::queueType</a></div><div class="ttdef"><b>Definition</b> utils.h:25</div></div>
 <div class="ttc" id="aclassutils_1_1stack_type_html"><div class="ttname"><a href="classutils_1_1stack_type.html">utils::stackType</a></div><div class="ttdef"><b>Definition</b> utils.h:12</div></div>
 <div class="ttc" id="aclassutils_1_1stack_type_html_a3f71cfeade4178b2bceb175b0678a852"><div class="ttname"><a href="classutils_1_1stack_type.html#a3f71cfeade4178b2bceb175b0678a852">utils::stackType::maxN</a></div><div class="ttdeci">int maxN</div><div class="ttdoc">Maximum length of the stack.</div><div class="ttdef"><b>Definition</b> utils.h:15</div></div>

@@ -1,5 +1,5 @@
 <map id="svmp::FileFormatException" name="svmp::FileFormatException">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,225,204,251"/>
+<area shape="rect" id="Node000001" title="An exception raised when a file cannot be parsed or has an invalid format." alt="" coords="5,225,204,251"/>
 <area shape="rect" id="Node000002" href="$classsvmp_1_1_core_exception.html" title=" " alt="" coords="25,152,185,177"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,191,107,225,102,225,102,191"/>
 <area shape="rect" id="Node000003" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="23,79,186,104"/>

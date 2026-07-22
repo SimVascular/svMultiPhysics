@@ -1,5 +1,5 @@
 <map id="IonicModelParameters" name="IonicModelParameters">
-<area shape="rect" id="Node000001" title="Initial conditions parameters for a generic ionic model." alt="" coords="172,80,339,105"/>
+<area shape="rect" id="Node000001" title="Parameters for a generic ionic model." alt="" coords="172,80,339,105"/>
 <area shape="rect" id="Node000003" href="$class_aliev_panfilov_1_1_parameters.html" title="Model parameters class." alt="" coords="401,5,588,31"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="297,72,386,39,429,28,430,33,387,45,299,77"/>
 <area shape="rect" id="Node000004" href="$class_bueno_orovio_1_1_parameters.html" title="Model parameters class." alt="" coords="401,55,589,80"/>

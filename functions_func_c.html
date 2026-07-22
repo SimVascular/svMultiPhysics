@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -100,6 +108,7 @@ $(function() {
 <li>check_type()&#160;:&#160;<a class="el" href="class_vector.html#a47b9503d399fe6d1a64933277f53d670">Vector&lt; T &gt;</a></li>
 <li>clear()&#160;:&#160;<a class="el" href="class_array3.html#a4a7e3f6bc01c1658fec1576791832524">Array3&lt; T &gt;</a>, <a class="el" href="class_vector.html#a32ad98b135472b0ebc5d6cb3ae5d0085">Vector&lt; T &gt;</a></li>
 <li>com()&#160;:&#160;<a class="el" href="classcm_type.html#a9e9cdb352a90394571656255207d4eeb">cmType</a></li>
+<li>compute_active_tension_local()&#160;:&#160;<a class="el" href="class_active_stress.html#ad21b2ad355d1847373c272ec16c1a1c8">ActiveStress</a>, <a class="el" href="class_nash_panfilov.html#ade2a3f4f27bfba7592923cc3db5ecc93">NashPanfilov</a>, <a class="el" href="class_uniform_steady_active_stress.html#adb9e4a73761519457f92890fec876cd5">UniformSteadyActiveStress</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#a51e0ca0c6773d669115fffd3184dc786">UniformUnsteadyActiveStress</a></li>
 <li>compute_flowrates()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#af25d583e97a2411d3498b8065528c6d6">CoupledBoundaryCondition</a></li>
 <li>compute_pressures()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a474fe32bc6db16b41e2e2e5a502e4259">CoupledBoundaryCondition</a></li>
 <li>compute_valM()&#160;:&#160;<a class="el" href="class_capping_surface.html#a02c29b0eebb08de09312b90f83b96866">CappingSurface</a></li>
@@ -110,8 +119,8 @@ $(function() {
 <li>copy_point_data()&#160;:&#160;<a class="el" href="class_vtk_vtp_data.html#a4e0afd0bdd6af06c3d39b6d285848194">VtkVtpData</a>, <a class="el" href="class_vtk_vtu_data.html#a7d28c1521b4903902c00766d5522bfb5">VtkVtuData</a></li>
 <li>copy_points()&#160;:&#160;<a class="el" href="class_vtk_vtp_data.html#a1d1eb10487525b17010e21872e1cd3c5">VtkVtpData</a>, <a class="el" href="class_vtk_vtu_data.html#a02dc1c938e655cc555b7a2024526248c">VtkVtuData</a></li>
 <li>CoupledBoundaryCondition()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a293fa3bc832ee2a362b02760b45a954c">CoupledBoundaryCondition</a></li>
+<li>create()&#160;:&#160;<a class="el" href="class_factory.html#a7133b3f33dd3d0c156e00bd33723b097">Factory&lt; BaseType &gt;</a></li>
 <li>create_interface()&#160;:&#160;<a class="el" href="class_linear_algebra_factory.html#afd62bcef0b7bc8b378fe0d6cf8231c40">LinearAlgebraFactory</a></li>
-<li>create_model()&#160;:&#160;<a class="el" href="class_ionic_model_factory.html#a477436bf0f2781fedecfb079a5e5206a">IonicModelFactory</a></li>
 <li>createElementHashMap()&#160;:&#160;<a class="el" href="classload__msh_1_1_mesh_hash_maps.html#a654d8f6c9785c5d62548f6c9ce289dbd">load_msh::MeshHashMaps</a></li>
 <li>createNodeHashMap()&#160;:&#160;<a class="el" href="classload__msh_1_1_mesh_hash_maps.html#a0cdbe0bc545991b6f550648201e04fac">load_msh::MeshHashMaps</a></li>
 <li>cross()&#160;:&#160;<a class="el" href="class_vector.html#ae105bb033272694de2484e22faa84884">Vector&lt; T &gt;</a></li>

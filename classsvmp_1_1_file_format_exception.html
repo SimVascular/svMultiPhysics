@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -96,6 +104,11 @@ $(function() {
   <div class="headertitle"><div class="title">svmp::FileFormatException Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>An exception raised when a file cannot be parsed or has an invalid format.  
+ <a href="classsvmp_1_1_file_format_exception.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="_exception_8h_source.html">Exception.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for svmp::FileFormatException:</div>
 <div class="dyncontent">
@@ -154,7 +167,11 @@ std::string_view&#160;</td><td class="memItemRight" valign="bottom"><b>subsystem
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>what_</b></td></tr>
 <tr class="separator:a9dd27a15138aaed7d52375cf043d4d40 inherit pro_attribs_classsvmp_1_1_exception_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>An exception raised when a file cannot be parsed or has an invalid format. </p>
+<p>Raises a message in the format "Error parsing file &lt;file_name&gt;.
+&lt;message&gt;", with the file name and a descriptive message provided as constructor arguments. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>solver/Core/<a class="el" href="_exception_8h_source.html">Exception.h</a></li>
 </ul>
 </div><!-- contents -->

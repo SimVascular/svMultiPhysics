@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -179,8 +187,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:abda86969b389eecaf091e162d9f6f359" id="r_abda86969b389eecaf091e162d9f6f359"><td class="memItemLeft" align="right" valign="top"><a id="abda86969b389eecaf091e162d9f6f359" name="abda86969b389eecaf091e162d9f6f359"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>CONSTANT_MODEL</b> = &quot;Constant&quot;</td></tr>
 <tr class="separator:abda86969b389eecaf091e162d9f6f359"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10082aa519aeee3c0b87bcbaffc14251" id="r_a10082aa519aeee3c0b87bcbaffc14251"><td class="memItemLeft" align="right" valign="top"><a id="a10082aa519aeee3c0b87bcbaffc14251" name="a10082aa519aeee3c0b87bcbaffc14251"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>CARREAU_YASUDA_MODEL</b> = &quot;Carreau-Yasuda&quot;</td></tr>
+<tr class="memitem:a10082aa519aeee3c0b87bcbaffc14251" id="r_a10082aa519aeee3c0b87bcbaffc14251"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fluid_viscosity_parameters.html#a10082aa519aeee3c0b87bcbaffc14251">CARREAU_YASUDA_MODEL</a></td></tr>
 <tr class="separator:a10082aa519aeee3c0b87bcbaffc14251"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acdffc9e8a9316703898e0609dbe51633" id="r_acdffc9e8a9316703898e0609dbe51633"><td class="memItemLeft" align="right" valign="top"><a id="acdffc9e8a9316703898e0609dbe51633" name="acdffc9e8a9316703898e0609dbe51633"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>CASSONS_MODEL</b> = &quot;Cassons&quot;</td></tr>
@@ -189,6 +196,30 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>C
 <tr class="separator:ab6fdcba65e1cb8329195a5a46bf78264"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a10082aa519aeee3c0b87bcbaffc14251" name="a10082aa519aeee3c0b87bcbaffc14251"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10082aa519aeee3c0b87bcbaffc14251">&#9670;&#160;</a></span>CARREAU_YASUDA_MODEL</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string FluidViscosityParameters::CARREAU_YASUDA_MODEL</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;Carreau-Yasuda&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="ab6fdcba65e1cb8329195a5a46bf78264" name="ab6fdcba65e1cb8329195a5a46bf78264"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab6fdcba65e1cb8329195a5a46bf78264">&#9670;&#160;</a></span>model_names</h2>
 
@@ -209,10 +240,9 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>C
 </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">  FluidViscosityParameters::CONSTANT_MODEL,</div>
-<div class="line">  FluidViscosityParameters::CARREAU_YASUDA_MODEL,</div>
-<div class="line">  FluidViscosityParameters::CASSONS_MODEL</div>
-<div class="line">}</div>
+<div class="line">    FluidViscosityParameters::CONSTANT_MODEL,</div>
+<div class="line">    FluidViscosityParameters::CARREAU_YASUDA_MODEL,</div>
+<div class="line">    FluidViscosityParameters::CASSONS_MODEL}</div>
 </div><!-- fragment -->
 </div>
 </div>

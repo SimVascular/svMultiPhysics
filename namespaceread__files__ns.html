@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -132,6 +140,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>read_cep_domain</b> (
 <tr class="memitem:a6cbab955c322ac176d77a07f91a6f753" id="r_a6cbab955c322ac176d77a07f91a6f753"><td class="memItemLeft" align="right" valign="top"><a id="a6cbab955c322ac176d77a07f91a6f753" name="a6cbab955c322ac176d77a07f91a6f753"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>read_cep_equation</b> (<a class="el" href="class_cep_mod.html">CepMod</a> *cep_mod, <a class="el" href="class_simulation.html">Simulation</a> *simulation, <a class="el" href="class_equation_parameters.html">EquationParameters</a> *eq_params)</td></tr>
 <tr class="separator:a6cbab955c322ac176d77a07f91a6f753"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e93b90bb9efa2d48698ebec2b509c93" id="r_a9e93b90bb9efa2d48698ebec2b509c93"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceread__files__ns.html#a9e93b90bb9efa2d48698ebec2b509c93">read_active_stress</a> (<a class="el" href="classdmn_type.html">dmnType</a> &amp;lDmn, <a class="el" href="class_domain_parameters.html">DomainParameters</a> *domain_params)</td></tr>
+<tr class="memdesc:a9e93b90bb9efa2d48698ebec2b509c93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read parameters related to active stress.  <br /></td></tr>
+<tr class="separator:a9e93b90bb9efa2d48698ebec2b509c93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8ffaae5ef28f31783d2e8bfa71fa8b3" id="r_aa8ffaae5ef28f31783d2e8bfa71fa8b3"><td class="memItemLeft" align="right" valign="top"><a id="aa8ffaae5ef28f31783d2e8bfa71fa8b3" name="aa8ffaae5ef28f31783d2e8bfa71fa8b3"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>read_domain</b> (<a class="el" href="class_simulation.html">Simulation</a> *simulation, <a class="el" href="class_equation_parameters.html">EquationParameters</a> *eq_params, <a class="el" href="classeq_type.html">eqType</a> &amp;lEq, EquationProps &amp;propList, EquationPhys physI)</td></tr>
 <tr class="separator:aa8ffaae5ef28f31783d2e8bfa71fa8b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -189,7 +200,7 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>maxOutput</b> = 
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Define some types used to pass data to functions. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000015">Todo:</a></b></dt><dd>[TODO:DaveP] maxOutput=5 is is defined in consts but in the Fortran READEQ subroutine is defined as maxOutput=22. </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000016">Todo:</a></b></dt><dd>[TODO:DaveP] maxOutput=5 is is defined in consts but in the Fortran READEQ subroutine is defined as maxOutput=22. </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a6efc237e196580d73a5eb1df52003a05" name="a6efc237e196580d73a5eb1df52003a05"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6efc237e196580d73a5eb1df52003a05">&#9670;&#160;</a></span>face_match()</h2>
@@ -230,7 +241,37 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>maxOutput</b> = 
 </div><div class="memdoc">
 
 <p>Match two faces? </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000014">Todo:</a></b></dt><dd>[TODO:DaveP] this has not been tested. </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000015">Todo:</a></b></dt><dd>[TODO:DaveP] this has not been tested. </dd></dl>
+
+</div>
+</div>
+<a id="a9e93b90bb9efa2d48698ebec2b509c93" name="a9e93b90bb9efa2d48698ebec2b509c93"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e93b90bb9efa2d48698ebec2b509c93">&#9670;&#160;</a></span>read_active_stress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void read_files_ns::read_active_stress </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdmn_type.html">dmnType</a> &amp;&#160;</td>
+          <td class="paramname"><em>lDmn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_domain_parameters.html">DomainParameters</a> *&#160;</td>
+          <td class="paramname"><em>domain_params</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read parameters related to active stress. </p>
 
 </div>
 </div>

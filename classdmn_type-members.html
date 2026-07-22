@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -92,6 +100,8 @@ $(function() {
 
 <p>This is the complete list of members for <a class="el" href="classdmn_type.html">dmnType</a>, including all inherited members.</p>
 <table class="directory">
+  <tr class="even"><td class="entry"><a class="el" href="classdmn_type.html#a9a96888421bcaff6c4a44b677761b8a8">active_stress</a></td><td class="entry"><a class="el" href="classdmn_type.html">dmnType</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classdmn_type.html#a6381804be7b28de2675c347e799d2215">active_stress_model_name</a></td><td class="entry"><a class="el" href="classdmn_type.html">dmnType</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>cep</b> (defined in <a class="el" href="classdmn_type.html">dmnType</a>)</td><td class="entry"><a class="el" href="classdmn_type.html">dmnType</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>dmnType</b>() (defined in <a class="el" href="classdmn_type.html">dmnType</a>)</td><td class="entry"><a class="el" href="classdmn_type.html">dmnType</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>fluid_visc</b> (defined in <a class="el" href="classdmn_type.html">dmnType</a>)</td><td class="entry"><a class="el" href="classdmn_type.html">dmnType</a></td><td class="entry"></td></tr>

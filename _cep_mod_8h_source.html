@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -303,61 +311,75 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00194" name="l00194"></a><span class="lineno"><a class="line" href="classcem_model_type.html#a4c1d564ed47ee4d921be98696670352d">  194</a></span><span class="comment"></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classcem_model_type.html#a4c1d564ed47ee4d921be98696670352d">cpld</a> = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <span class="comment">//bool cpld = .FALSE.</span></div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span><span class="comment"></span> </div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span><span class="comment">    /// @brief  Whether active stress formulation is employed</span></div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno"><a class="line" href="classcem_model_type.html#a48e58483acb25db579e72221a9c16a87">  198</a></span><span class="comment"></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classcem_model_type.html#a48e58483acb25db579e72221a9c16a87">aStress</a> = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    <span class="comment">//bool aStress = .FALSE.</span></div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span><span class="comment">    /// @brief  Whether active strain formulation is employed</span></div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno"><a class="line" href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">  198</a></span><span class="comment"></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">aStrain</a> = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    <span class="comment">//bool aStrain = .FALSE.</span></div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><span class="comment"></span> </div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span><span class="comment">    /// @brief  Whether active strain formulation is employed</span></div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno"><a class="line" href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">  202</a></span><span class="comment"></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">aStrain</a> = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <span class="comment">//bool aStrain = .FALSE.</span></div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span><span class="comment"></span> </div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="comment">    /// @brief  Local variable integrated in time</span></div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span><span class="comment">    ///    := activation force for active stress model</span></div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span><span class="comment">    ///    := fiber stretch for active strain model</span></div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno"><a class="line" href="classcem_model_type.html#ad841b0cea097fde32f8e026dfa5893be">  208</a></span><span class="comment"></span>    <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> <a class="code hl_variable" href="classcem_model_type.html#ad841b0cea097fde32f8e026dfa5893be">Ya</a>;</div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>};</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span><span class="comment">    /// @brief Activation along fibers.</span></div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span><span class="comment">    /// Corresponds to active tension along fibers if using active stress, and</span></div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span><span class="comment">    /// to fiber stretch if using active strain.</span></div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno"><a class="line" href="classcem_model_type.html#a0b79f4a61e7439d6647afd351e2618fb">  205</a></span><span class="comment"></span>    <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> <a class="code hl_variable" href="classcem_model_type.html#a0b79f4a61e7439d6647afd351e2618fb">Ya_f</a>;</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span><span class="comment"></span> </div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span><span class="comment">    /// @brief Activation along sheets.</span></div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span><span class="comment">    /// Only used if using active stress, in which case it represents the active</span></div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span><span class="comment">    /// tension along sheets.</span></div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno"><a class="line" href="classcem_model_type.html#a122264583bbefa8fdb9b5ac4727da426">  211</a></span><span class="comment"></span>    <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> <a class="code hl_variable" href="classcem_model_type.html#a122264583bbefa8fdb9b5ac4727da426">Ya_s</a>;</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span><span class="comment"></span> </div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span><span class="comment">    /// @brief Activation along sheet normals.</span></div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span><span class="comment">    /// Only used if using active stress, in which case it represents the active</span></div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span><span class="comment">    /// tension along sheet normals.</span></div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno"><a class="line" href="classcem_model_type.html#a45c39474c8530e5793b089b563ef0f0f">  217</a></span><span class="comment"></span>    <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> <a class="code hl_variable" href="classcem_model_type.html#a45c39474c8530e5793b089b563ef0f0f">Ya_n</a>;</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>};</div>
 </div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span> </div>
-<div class="foldopen" id="foldopen00211" data-start="{" data-end="};">
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno"><a class="line" href="class_cep_mod.html">  211</a></span><span class="keyword">class </span><a class="code hl_class" href="class_cep_mod.html">CepMod</a> </div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>{</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>  <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span><span class="comment"></span> </div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span><span class="comment">    /// @brief Whether cardiac electrophysiology is solved</span></div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno"><a class="line" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">  216</a></span><span class="comment"></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">cepEq</a>;</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span><span class="comment"></span> </div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span><span class="comment">    /// @brief Max. dof in cellular activation model</span></div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno"><a class="line" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">  219</a></span><span class="comment"></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">nXion</a> = 0;</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span><span class="comment"></span> </div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="comment">    /// @brief Unknowns stored at all nodes</span></div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno"><a class="line" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">  222</a></span><span class="comment"></span>    Array&lt;double&gt; <a class="code hl_variable" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">Xion</a>;</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span> </div>
+<div class="foldopen" id="foldopen00220" data-start="{" data-end="};">
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno"><a class="line" href="class_cep_mod.html">  220</a></span><span class="keyword">class </span><a class="code hl_class" href="class_cep_mod.html">CepMod</a> </div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>{</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>  <span class="keyword">public</span>:</div>
 <div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span><span class="comment"></span> </div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span><span class="comment">    /// @brief Cardiac electromechanics type</span></div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno"><a class="line" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">  225</a></span><span class="comment"></span>    <a class="code hl_class" href="classcem_model_type.html">cemModelType</a> <a class="code hl_variable" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">cem</a>;</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span><span class="comment">    /// @brief Whether cardiac electrophysiology is solved</span></div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno"><a class="line" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">  225</a></span><span class="comment"></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">cepEq</a>;</div>
 <div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span><span class="comment"></span> </div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span><span class="comment">    /// @brief ECG leads</span></div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno"><a class="line" href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">  228</a></span><span class="comment"></span>    <a class="code hl_class" href="classecg_leads_type.html">ecgLeadsType</a> <a class="code hl_variable" href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">ecgleads</a>;</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>};</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span><span class="comment">    /// @brief Max. dof in cellular activation model</span></div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno"><a class="line" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">  228</a></span><span class="comment"></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">nXion</a> = 0;</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span><span class="comment"></span> </div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span><span class="comment">    /// @brief Unknowns stored at all nodes</span></div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno"><a class="line" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">  231</a></span><span class="comment"></span>    Array&lt;double&gt; <a class="code hl_variable" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">Xion</a>;</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="comment"></span> </div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span><span class="comment">    /// @brief Calcium vector at all nodes.</span></div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno"><a class="line" href="class_cep_mod.html#af35acba2dd2e61c90b34dcac4ee3cdbc">  234</a></span><span class="comment"></span>    <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> <a class="code hl_variable" href="class_cep_mod.html#af35acba2dd2e61c90b34dcac4ee3cdbc">calcium</a>;</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span><span class="comment"></span> </div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment">    /// @brief Cardiac electromechanics type</span></div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno"><a class="line" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">  237</a></span><span class="comment"></span>    <a class="code hl_class" href="classcem_model_type.html">cemModelType</a> <a class="code hl_variable" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">cem</a>;</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="comment"></span> </div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="comment">    /// @brief ECG leads</span></div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno"><a class="line" href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">  240</a></span><span class="comment"></span>    <a class="code hl_class" href="classecg_leads_type.html">ecgLeadsType</a> <a class="code hl_variable" href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">ecgleads</a>;</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>};</div>
 </div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span> </div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span> </div>
-<div class="ttc" id="aclass_cep_mod_html"><div class="ttname"><a href="class_cep_mod.html">CepMod</a></div><div class="ttdef"><b>Definition</b> CepMod.h:212</div></div>
-<div class="ttc" id="aclass_cep_mod_html_a05aeaa019c86dab7d9bea3b96270c5c2"><div class="ttname"><a href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">CepMod::nXion</a></div><div class="ttdeci">int nXion</div><div class="ttdoc">Max. dof in cellular activation model.</div><div class="ttdef"><b>Definition</b> CepMod.h:219</div></div>
-<div class="ttc" id="aclass_cep_mod_html_a7fa60b1d54d6eeac59f2fe0234aaeb19"><div class="ttname"><a href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">CepMod::cepEq</a></div><div class="ttdeci">bool cepEq</div><div class="ttdoc">Whether cardiac electrophysiology is solved.</div><div class="ttdef"><b>Definition</b> CepMod.h:216</div></div>
-<div class="ttc" id="aclass_cep_mod_html_abc0caf30d60d1223218837ba4f460c26"><div class="ttname"><a href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">CepMod::cem</a></div><div class="ttdeci">cemModelType cem</div><div class="ttdoc">Cardiac electromechanics type.</div><div class="ttdef"><b>Definition</b> CepMod.h:225</div></div>
-<div class="ttc" id="aclass_cep_mod_html_ae7baf616df1bb36d54d022665444e17e"><div class="ttname"><a href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">CepMod::Xion</a></div><div class="ttdeci">Array&lt; double &gt; Xion</div><div class="ttdoc">Unknowns stored at all nodes.</div><div class="ttdef"><b>Definition</b> CepMod.h:222</div></div>
-<div class="ttc" id="aclass_cep_mod_html_af0cf469ca4ed525ba96c99fa5b73c01f"><div class="ttname"><a href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">CepMod::ecgleads</a></div><div class="ttdeci">ecgLeadsType ecgleads</div><div class="ttdoc">ECG leads.</div><div class="ttdef"><b>Definition</b> CepMod.h:228</div></div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span> </div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span> </div>
+<div class="ttc" id="aclass_cep_mod_html"><div class="ttname"><a href="class_cep_mod.html">CepMod</a></div><div class="ttdef"><b>Definition</b> CepMod.h:221</div></div>
+<div class="ttc" id="aclass_cep_mod_html_a05aeaa019c86dab7d9bea3b96270c5c2"><div class="ttname"><a href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">CepMod::nXion</a></div><div class="ttdeci">int nXion</div><div class="ttdoc">Max. dof in cellular activation model.</div><div class="ttdef"><b>Definition</b> CepMod.h:228</div></div>
+<div class="ttc" id="aclass_cep_mod_html_a7fa60b1d54d6eeac59f2fe0234aaeb19"><div class="ttname"><a href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">CepMod::cepEq</a></div><div class="ttdeci">bool cepEq</div><div class="ttdoc">Whether cardiac electrophysiology is solved.</div><div class="ttdef"><b>Definition</b> CepMod.h:225</div></div>
+<div class="ttc" id="aclass_cep_mod_html_abc0caf30d60d1223218837ba4f460c26"><div class="ttname"><a href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">CepMod::cem</a></div><div class="ttdeci">cemModelType cem</div><div class="ttdoc">Cardiac electromechanics type.</div><div class="ttdef"><b>Definition</b> CepMod.h:237</div></div>
+<div class="ttc" id="aclass_cep_mod_html_ae7baf616df1bb36d54d022665444e17e"><div class="ttname"><a href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">CepMod::Xion</a></div><div class="ttdeci">Array&lt; double &gt; Xion</div><div class="ttdoc">Unknowns stored at all nodes.</div><div class="ttdef"><b>Definition</b> CepMod.h:231</div></div>
+<div class="ttc" id="aclass_cep_mod_html_af0cf469ca4ed525ba96c99fa5b73c01f"><div class="ttname"><a href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">CepMod::ecgleads</a></div><div class="ttdeci">ecgLeadsType ecgleads</div><div class="ttdoc">ECG leads.</div><div class="ttdef"><b>Definition</b> CepMod.h:240</div></div>
+<div class="ttc" id="aclass_cep_mod_html_af35acba2dd2e61c90b34dcac4ee3cdbc"><div class="ttname"><a href="class_cep_mod.html#af35acba2dd2e61c90b34dcac4ee3cdbc">CepMod::calcium</a></div><div class="ttdeci">Vector&lt; double &gt; calcium</div><div class="ttdoc">Calcium vector at all nodes.</div><div class="ttdef"><b>Definition</b> CepMod.h:234</div></div>
 <div class="ttc" id="aclass_cm_mod_html"><div class="ttname"><a href="class_cm_mod.html">CmMod</a></div><div class="ttdoc">The CmMod class duplicates the data structures in the Fortran CMMOD module defined in COMU....</div><div class="ttdef"><b>Definition</b> CmMod.h:36</div></div>
-<div class="ttc" id="aclass_com_mod_html"><div class="ttname"><a href="class_com_mod.html">ComMod</a></div><div class="ttdoc">The ComMod class duplicates the data structures in the Fortran COMMOD module defined in MOD....</div><div class="ttdef"><b>Definition</b> ComMod.h:1601</div></div>
+<div class="ttc" id="aclass_com_mod_html"><div class="ttname"><a href="class_com_mod.html">ComMod</a></div><div class="ttdoc">The ComMod class duplicates the data structures in the Fortran COMMOD module defined in MOD....</div><div class="ttdef"><b>Definition</b> ComMod.h:1580</div></div>
 <div class="ttc" id="aclass_stimulus_parameters_html"><div class="ttname"><a href="class_stimulus_parameters.html">StimulusParameters</a></div><div class="ttdoc">The StimulusParameters class stores parameters for 'Stimulus' XML element used to parameters for pace...</div><div class="ttdef"><b>Definition</b> Parameters.h:1217</div></div>
-<div class="ttc" id="aclass_t_t_p_html"><div class="ttname"><a href="class_t_t_p.html">TTP</a></div><div class="ttdoc">Ten Tusscher-Panfilov ionic model.</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:31</div></div>
-<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:24</div></div>
+<div class="ttc" id="aclass_t_t_p_html"><div class="ttname"><a href="class_t_t_p.html">TTP</a></div><div class="ttdoc">Ten Tusscher-Panfilov ionic model.</div><div class="ttdef"><b>Definition</b> ionic_ttp.h:27</div></div>
+<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:26</div></div>
 <div class="ttc" id="aclasscem_model_type_html"><div class="ttname"><a href="classcem_model_type.html">cemModelType</a></div><div class="ttdoc">Cardiac electromechanics model type.</div><div class="ttdef"><b>Definition</b> CepMod.h:191</div></div>
-<div class="ttc" id="aclasscem_model_type_html_a48e58483acb25db579e72221a9c16a87"><div class="ttname"><a href="classcem_model_type.html#a48e58483acb25db579e72221a9c16a87">cemModelType::aStress</a></div><div class="ttdeci">bool aStress</div><div class="ttdoc">Whether active stress formulation is employed.</div><div class="ttdef"><b>Definition</b> CepMod.h:198</div></div>
+<div class="ttc" id="aclasscem_model_type_html_a0b79f4a61e7439d6647afd351e2618fb"><div class="ttname"><a href="classcem_model_type.html#a0b79f4a61e7439d6647afd351e2618fb">cemModelType::Ya_f</a></div><div class="ttdeci">Vector&lt; double &gt; Ya_f</div><div class="ttdoc">Activation along fibers.</div><div class="ttdef"><b>Definition</b> CepMod.h:205</div></div>
+<div class="ttc" id="aclasscem_model_type_html_a122264583bbefa8fdb9b5ac4727da426"><div class="ttname"><a href="classcem_model_type.html#a122264583bbefa8fdb9b5ac4727da426">cemModelType::Ya_s</a></div><div class="ttdeci">Vector&lt; double &gt; Ya_s</div><div class="ttdoc">Activation along sheets.</div><div class="ttdef"><b>Definition</b> CepMod.h:211</div></div>
+<div class="ttc" id="aclasscem_model_type_html_a45c39474c8530e5793b089b563ef0f0f"><div class="ttname"><a href="classcem_model_type.html#a45c39474c8530e5793b089b563ef0f0f">cemModelType::Ya_n</a></div><div class="ttdeci">Vector&lt; double &gt; Ya_n</div><div class="ttdoc">Activation along sheet normals.</div><div class="ttdef"><b>Definition</b> CepMod.h:217</div></div>
 <div class="ttc" id="aclasscem_model_type_html_a4c1d564ed47ee4d921be98696670352d"><div class="ttname"><a href="classcem_model_type.html#a4c1d564ed47ee4d921be98696670352d">cemModelType::cpld</a></div><div class="ttdeci">bool cpld</div><div class="ttdoc">Whether electrophysiology and mechanics are coupled.</div><div class="ttdef"><b>Definition</b> CepMod.h:194</div></div>
-<div class="ttc" id="aclasscem_model_type_html_abda0a4d8a92638f49a270655f24a96c7"><div class="ttname"><a href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">cemModelType::aStrain</a></div><div class="ttdeci">bool aStrain</div><div class="ttdoc">Whether active strain formulation is employed.</div><div class="ttdef"><b>Definition</b> CepMod.h:202</div></div>
-<div class="ttc" id="aclasscem_model_type_html_ad841b0cea097fde32f8e026dfa5893be"><div class="ttname"><a href="classcem_model_type.html#ad841b0cea097fde32f8e026dfa5893be">cemModelType::Ya</a></div><div class="ttdeci">Vector&lt; double &gt; Ya</div><div class="ttdoc">Local variable integrated in time := activation force for active stress model := fiber stretch for ac...</div><div class="ttdef"><b>Definition</b> CepMod.h:208</div></div>
+<div class="ttc" id="aclasscem_model_type_html_abda0a4d8a92638f49a270655f24a96c7"><div class="ttname"><a href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">cemModelType::aStrain</a></div><div class="ttdeci">bool aStrain</div><div class="ttdoc">Whether active strain formulation is employed.</div><div class="ttdef"><b>Definition</b> CepMod.h:198</div></div>
 <div class="ttc" id="aclasscep_model_type_html"><div class="ttname"><a href="classcep_model_type.html">cepModelType</a></div><div class="ttdoc">Cardiac electrophysiology model type.</div><div class="ttdef"><b>Definition</b> CepMod.h:144</div></div>
 <div class="ttc" id="aclasscep_model_type_html_a08c91758afdcb42bc8350f18d1943cdb"><div class="ttname"><a href="classcep_model_type.html#a08c91758afdcb42bc8350f18d1943cdb">cepModelType::Diso</a></div><div class="ttdeci">double Diso</div><div class="ttdoc">Isotropic conductivity.</div><div class="ttdef"><b>Definition</b> CepMod.h:171</div></div>
 <div class="ttc" id="aclasscep_model_type_html_a1101cae7b7a92d3b2f33c60c3571aac1"><div class="ttname"><a href="classcep_model_type.html#a1101cae7b7a92d3b2f33c60c3571aac1">cepModelType::Istim</a></div><div class="ttdeci">std::vector&lt; stimType &gt; Istim</div><div class="ttdoc">External stimuli applied within this domain.</div><div class="ttdef"><b>Definition</b> CepMod.h:177</div></div>
@@ -380,7 +402,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclassecg_leads_type_html_a77e40f133d90ebe13ec836f1d02653d7"><div class="ttname"><a href="classecg_leads_type.html#a77e40f133d90ebe13ec836f1d02653d7">ecgLeadsType::y_coords</a></div><div class="ttdeci">Vector&lt; double &gt; y_coords</div><div class="ttdoc">y coordinates</div><div class="ttdef"><b>Definition</b> CepMod.h:130</div></div>
 <div class="ttc" id="aclassecg_leads_type_html_ad359b7b81451946e4a72482f5ec2c171"><div class="ttname"><a href="classecg_leads_type.html#ad359b7b81451946e4a72482f5ec2c171">ecgLeadsType::z_coords</a></div><div class="ttdeci">Vector&lt; double &gt; z_coords</div><div class="ttdoc">z coordinates</div><div class="ttdef"><b>Definition</b> CepMod.h:133</div></div>
 <div class="ttc" id="aclassecg_leads_type_html_af77b84a8b3e4444955a642447c278a34"><div class="ttname"><a href="classecg_leads_type.html#af77b84a8b3e4444955a642447c278a34">ecgLeadsType::out_files</a></div><div class="ttdeci">std::vector&lt; std::string &gt; out_files</div><div class="ttdoc">Output files.</div><div class="ttdef"><b>Definition</b> CepMod.h:139</div></div>
-<div class="ttc" id="aclassode_type_html"><div class="ttname"><a href="classode_type.html">odeType</a></div><div class="ttdoc">Time integration scheme and related parameters.</div><div class="ttdef"><b>Definition</b> ionic_model.h:48</div></div>
+<div class="ttc" id="aclassode_type_html"><div class="ttname"><a href="classode_type.html">odeType</a></div><div class="ttdoc">Time integration scheme and related parameters.</div><div class="ttdef"><b>Definition</b> ionic_model.h:50</div></div>
 <div class="ttc" id="aclassstim_type_1_1_spatial_bounds_html"><div class="ttname"><a href="classstim_type_1_1_spatial_bounds.html">stimType::SpatialBounds</a></div><div class="ttdoc">Spatial bounds for a CEP stimulus region.</div><div class="ttdef"><b>Definition</b> CepMod.h:58</div></div>
 <div class="ttc" id="aclassstim_type_1_1_spatial_bounds_html_a24b33ee84c58a7dd1f975a75be7e2d7d"><div class="ttname"><a href="classstim_type_1_1_spatial_bounds.html#a24b33ee84c58a7dd1f975a75be7e2d7d">stimType::SpatialBounds::contains</a></div><div class="ttdeci">bool contains(const Vector&lt; double &gt; &amp;x) const</div><div class="ttdoc">Return true if the point lies inside all active spatial bounds.</div><div class="ttdef"><b>Definition</b> CepMod.cpp:97</div></div>
 <div class="ttc" id="aclassstim_type_1_1_spatial_bounds_html_a9568734d85e3328ad847744d63e3d174"><div class="ttname"><a href="classstim_type_1_1_spatial_bounds.html#a9568734d85e3328ad847744d63e3d174">stimType::SpatialBounds::distribute</a></div><div class="ttdeci">void distribute(const CmMod &amp;cm_mod, const cmType &amp;cm)</div><div class="ttdoc">Broadcast spatial bounds to all MPI ranks.</div><div class="ttdef"><b>Definition</b> CepMod.cpp:104</div></div>

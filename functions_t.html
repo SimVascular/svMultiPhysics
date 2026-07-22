@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -106,13 +114,14 @@ $(function() {
 <li>taup_w&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a7cb178cc40a76e31bf49cb46d49a62e8">BuenoOrovio</a></li>
 <li>Tc&#160;:&#160;<a class="el" href="class_t_t_p.html#ae21916a30b938b5fa5109c905a107842">TTP</a></li>
 <li>tDof&#160;:&#160;<a class="el" href="class_com_mod.html#a74b27b683845cc2a621040e48a945dca">ComMod</a></li>
+<li>temporal_values_file_path&#160;:&#160;<a class="el" href="class_uniform_unsteady_active_stress.html#a14abf2b2a4985d1fff0187fda263ccb0">UniformUnsteadyActiveStress</a></li>
 <li>tensor_extents&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#a9402d3cffc008ea967526bf952b8c398">svmp::FE::basis::BasisRequest</a></li>
 <li>TensorNodeIndex&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#a734c5ad8abd728f997bbac37202df3a4">svmp::FE::basis::LagrangeBasis</a></li>
 <li>theta_o&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a9f8a1c0e77eb1b448bfbc2a842e3419a">BuenoOrovio</a></li>
 <li>theta_v&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a0ff805035c7e52931385509a10bd6a55">BuenoOrovio</a></li>
 <li>theta_w&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a1fed3ddc868406837cbdd84d90921c76">BuenoOrovio</a></li>
 <li>thetam_v&#160;:&#160;<a class="el" href="class_bueno_orovio.html#aefb631c7742a15342c418950f21d4b90">BuenoOrovio</a></li>
-<li>time&#160;:&#160;<a class="el" href="class_com_mod.html#a8611e1387341bc17c0ddf6f54ded1f09">ComMod</a>, <a class="el" href="classrmsh_type.html#abae9de29ce3e1e04ae4df7ebe942f62f">rmshType</a></li>
+<li>time&#160;:&#160;<a class="el" href="class_active_stress.html#a2f95bf936e79d96350a07c005b3028ec">ActiveStress</a>, <a class="el" href="class_com_mod.html#a8611e1387341bc17c0ddf6f54ded1f09">ComMod</a>, <a class="el" href="classrmsh_type.html#abae9de29ce3e1e04ae4df7ebe942f62f">rmshType</a></li>
 <li>tIntType&#160;:&#160;<a class="el" href="classode_type.html#a22441c13b34522f6bb03091cc84e9fcc">odeType</a></li>
 <li>tnNo&#160;:&#160;<a class="el" href="class_com_mod.html#a39e53febfdde055cb194b83de669f4b5">ComMod</a>, <a class="el" href="classib_type.html#a2ff4a8734fa1b1c382f92caaa6949ed2">ibType</a>, <a class="el" href="classuris_type.html#a77a74e532ad2dee7c3e8f9a34cfa3eff">urisType</a></li>
 <li>tol&#160;:&#160;<a class="el" href="classeq_type.html#a6c12a0776a7ceeb92dd9d48aa1117ff6">eqType</a>, <a class="el" href="classmsh_type.html#af6631f9d1aa2c75ec38b6378f617d099">mshType</a></li>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -379,8 +387,8 @@ Additional Inherited Members</h2></td></tr>
 <div class="textblock"><p>Ten Tusscher-Panfilov ionic model. </p>
 <p>This class implements the 2006 version of the model, described in the second reference below.</p>
 <p><b>References</b>:</p><ol type="1">
-<li>Ten Tusscher, Noble, Noble, Panfilov. A model for human ventricular tissue. American Journal of Physiology - Heart and Circulatory Physiology (2004).</li>
-<li>Ten Tusscher, Panfilov. Alternans and spiral breakup in a human ventricular tissue model. American Journal of Physiology - Heart and Circulatory Physiology (2006).</li>
+<li><a href="https://doi.org/10.1152/ajpheart.00794.2003">Ten Tusscher, Noble, Noble, Panfilov (2004)</a></li>
+<li><a href="https://doi.org/10.1152/ajpheart.00109.2006">Ten Tusscher, Panfilov (2006)</a></li>
 </ol>
 <p>Model parameters are from reference 2 above. Default parameters are for epicardium state (source: <a href="https://models.cellml.org/e/80d">https://models.cellml.org/e/80d</a>) </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>

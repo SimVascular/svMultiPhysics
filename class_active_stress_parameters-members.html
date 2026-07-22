@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -86,22 +94,28 @@ $(function() {
 
 </div><!-- top -->
 <div class="header">
-  <div class="headertitle"><div class="title">FiberReinforcementStressParameters Member List</div></div>
+  <div class="headertitle"><div class="title">ActiveStressParameters Member List</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a>, including all inherited members.</p>
 <table class="directory">
+  <tr class="even"><td class="entry"><a class="el" href="class_active_stress_parameters.html#a2b88052d1ef3c1ef063acc27d68839aa">active_stress_models</a></td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#a7b39971aebe0a29232461aa4bb8dfc06">ActiveStressParameters</a>()</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a09feae36022f5ebf7cd9a8c86bcbca78">check_required</a>()</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>defined</b>() const (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>directional_distribution</b> (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>FiberReinforcementStressParameters</b>() (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a9fe04f3c28dec4a1fe01da2c468b75f6">get_parameter_list</a>() const</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>ParameterLists</b>() (defined in <a class="el" href="class_parameter_lists.html">ParameterLists</a>)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a6131758a550b2e63f34e7554933e27f8">params_map</a></td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4">print_parameter_list</a>()</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>print_parameters</b>() (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>ramp_function</b> (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#aac0521c43b643c79dfd417e419a5d323">defined</a>() const</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_active_stress_parameters.html#acbe6db8116c89cfef89a8f8c7e9bcc35">directional_distribution</a></td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#af3eb5b5f0b6d92c370f2219ae8cf7f1e">get_eta_f</a>() const</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_active_stress_parameters.html#aaf4d85cf63c4aec33d42598748a493eb">get_eta_n</a>() const</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#ad1b19abfe07c0ac355af4463452bb4cd">get_eta_s</a>() const</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_active_stress_parameters.html#aed721dee50a5f22b006b7bbd62c48291">get_model_name</a>() const</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_parameter_lists.html#a9fe04f3c28dec4a1fe01da2c468b75f6">get_parameter_list</a>() const</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_active_stress_parameters.html#a894dfb0c153cd77c45c603c22a11df9a">get_parameters</a>(const std::string &amp;model_name) const</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#a78d34e172421d35e90d170bf9b372721">model_name</a></td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>ParameterLists</b>() (defined in <a class="el" href="class_parameter_lists.html">ParameterLists</a>)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_parameter_lists.html#a6131758a550b2e63f34e7554933e27f8">params_map</a></td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4">print_parameter_list</a>()</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#a9048f6bbfa1da432b726301b225c3e9c">print_parameters</a>() const</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a26a80343e9bfb925b217331a1188f488">set_parameter</a>(const std::string &amp;name, const bool value, bool required, Parameter&lt; bool &gt; &amp;param)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>set_parameter</b>(const std::string &amp;name, const double value, bool required, Parameter&lt; double &gt; &amp;param) (defined in <a class="el" href="class_parameter_lists.html">ParameterLists</a>)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>set_parameter</b>(const std::string &amp;name, std::initializer_list&lt; double &gt; value, bool required, VectorParameter&lt; double &gt; &amp;param) (defined in <a class="el" href="class_parameter_lists.html">ParameterLists</a>)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
@@ -111,14 +125,10 @@ $(function() {
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>set_parameter</b>(const std::string &amp;name, const std::string &amp;value, bool required, Parameter&lt; std::string &gt; &amp;param) (defined in <a class="el" href="class_parameter_lists.html">ParameterLists</a>)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="class_parameter_lists.html#a5840a4ed175edcc4e3c3193182bcaa7a">set_parameter_value</a>(const std::string &amp;name, const std::string &amp;value)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a2982d6677390fd587de71e7d934d8062">set_parameter_value_CANN</a>(const std::string &amp;name, const std::string &amp;value)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>set_values</b>(tinyxml2::XMLElement *xml_elem) (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#abb1a07f13f97c6b0db0868cdc6f5e316">set_values</a>(const tinyxml2::XMLElement *xml_elem)</td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>set_xml_element_name</b>(const std::string &amp;name) (defined in <a class="el" href="class_parameter_lists.html">ParameterLists</a>)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>temporal_values_file_path</b> (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>type</b> (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>value</b> (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>value_set</b> (defined in <a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a>)</td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>xml_element_name</b> (defined in <a class="el" href="class_parameter_lists.html">ParameterLists</a>)</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html#a70b810eac9290fcbe2892185c6b6decc">xml_element_name_</a></td><td class="entry"><a class="el" href="class_fiber_reinforcement_stress_parameters.html">FiberReinforcementStressParameters</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_active_stress_parameters.html#aef4a433d92a85af2189fa1484b14ea7a">value_set</a></td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_active_stress_parameters.html#a669946d1514405bd7ed11cc9bc25dfbd">xml_element_name</a></td><td class="entry"><a class="el" href="class_active_stress_parameters.html">ActiveStressParameters</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -112,8 +120,7 @@ $(function() {
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>mu0</b> (defined in <a class="el" href="classst_model_type.html">stModelType</a>)</td><td class="entry"><a class="el" href="classst_model_type.html">stModelType</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>paramTable</b> (defined in <a class="el" href="classst_model_type.html">stModelType</a>)</td><td class="entry"><a class="el" href="classst_model_type.html">stModelType</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>stModelType</b>() (defined in <a class="el" href="classst_model_type.html">stModelType</a>)</td><td class="entry"><a class="el" href="classst_model_type.html">stModelType</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Tf</b> (defined in <a class="el" href="classst_model_type.html">stModelType</a>)</td><td class="entry"><a class="el" href="classst_model_type.html">stModelType</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>volType</b> (defined in <a class="el" href="classst_model_type.html">stModelType</a>)</td><td class="entry"><a class="el" href="classst_model_type.html">stModelType</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>volType</b> (defined in <a class="el" href="classst_model_type.html">stModelType</a>)</td><td class="entry"><a class="el" href="classst_model_type.html">stModelType</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

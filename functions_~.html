@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -89,6 +97,7 @@ $(function() {
 <div class="textblock">Here is a list of all documented class members with links to the class documentation for each member:</div>
 
 <h3><a id="index__7E" name="index__7E"></a>- ~ -</h3><ul>
+<li>~ActiveStress()&#160;:&#160;<a class="el" href="class_active_stress.html#aba6fa15914b68f4b363f8e0a724d4e49">ActiveStress</a></li>
 <li>~BasisFunction()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a474b46a4b8b5944fefb747db7e885819">svmp::FE::basis::BasisFunction</a></li>
 <li>~BoundaryCondition()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a0ccfe84a790e5472773c5384d114e313">BoundaryCondition</a></li>
 <li>~CANNParameters()&#160;:&#160;<a class="el" href="class_c_a_n_n_parameters.html#abb79e64d90e9e6828dafd3afef4e6d65">CANNParameters</a></li>

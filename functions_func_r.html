@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -90,9 +98,10 @@ $(function() {
 
 <h3><a id="index_r" name="index_r"></a>- r -</h3><ul>
 <li>read_data_from_vtp_file()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a5ac4e400620a7fba93f58d0f9a703136">BoundaryCondition</a></li>
-<li>read_parameters()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#abb3d0dbec408e97ca6fed1ade1241f0c">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a1c423df0effc5f7eec21bede07fab50b">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a2cc9f22e7c9a2cc408f3ab5798c13190">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#a78d75c9bd02b0d1189a5249847b6913c">IonicModel</a>, <a class="el" href="class_simulation.html#aade1883dedf6e7145283f3a09fd22b7d">Simulation</a>, <a class="el" href="classstim_type.html#ae958e6c60bc95a3da84cf33fc89c6032">stimType</a>, <a class="el" href="class_t_t_p.html#a5eb1ea5527671b13e4e277c492919962">TTP</a></li>
+<li>read_model_specific_parameters()&#160;:&#160;<a class="el" href="class_active_stress.html#a5469da20042abdf004156e9cfcb39dce">ActiveStress</a>, <a class="el" href="class_active_stress_o_d_e.html#ad01855d5d3b0f40dbfb72b3ab6c45614">ActiveStressODE</a>, <a class="el" href="class_nash_panfilov.html#a4f9d46873beb0dee8decb35f9c3d623e">NashPanfilov</a>, <a class="el" href="class_uniform_steady_active_stress.html#ae7a7e2f8dc2817d7a6b85117521dc106">UniformSteadyActiveStress</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#aa5430edf93ef9064f66dc9a344906fb1">UniformUnsteadyActiveStress</a></li>
+<li>read_parameters()&#160;:&#160;<a class="el" href="class_active_stress.html#a7afea7f6057cbc36b3d28b4e596fd7e8">ActiveStress</a>, <a class="el" href="class_aliev_panfilov.html#abb3d0dbec408e97ca6fed1ade1241f0c">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a1c423df0effc5f7eec21bede07fab50b">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a2cc9f22e7c9a2cc408f3ab5798c13190">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#a78d75c9bd02b0d1189a5249847b6913c">IonicModel</a>, <a class="el" href="class_simulation.html#aade1883dedf6e7145283f3a09fd22b7d">Simulation</a>, <a class="el" href="classstim_type.html#ae958e6c60bc95a3da84cf33fc89c6032">stimType</a>, <a class="el" href="class_t_t_p.html#a5eb1ea5527671b13e4e277c492919962">TTP</a></li>
 <li>read_xml()&#160;:&#160;<a class="el" href="class_parameters.html#a9bf5624296006a1f843cf0e7cdf4a9d6">Parameters</a></li>
-<li>register_model()&#160;:&#160;<a class="el" href="class_ionic_model_factory.html#aab3815a373953cd1a4bf7a9066eb2f83">IonicModelFactory</a></li>
+<li>register_child()&#160;:&#160;<a class="el" href="class_factory.html#a3efe82007189092f5b0a8f54a529dab6">Factory&lt; BaseType &gt;</a></li>
 <li>residual()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1_convergence_exception.html#a4a6b809c746038c54cb7e16b49472f9b">svmp::FE::ConvergenceException</a></li>
 <li>resize()&#160;:&#160;<a class="el" href="class_array3.html#ad8f9340b441a4bab8f407ed4441fb71e">Array3&lt; T &gt;</a>, <a class="el" href="class_vector.html#ac2a45f807b626339a4b9b74747080f30">Vector&lt; T &gt;</a></li>
 <li>restore_state()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#ac0d9f60e60bbf259893aacb497968ab6">CoupledBoundaryCondition</a></li>

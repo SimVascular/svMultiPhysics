@@ -10,9 +10,15 @@ var searchData=
   ['element_5ftype_7',['element_type',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#a1346c96469c28e3ef0e2f1e7f9e15f8a',1,'svmp::FE::basis::BasisRequest']]],
   ['elemid_8',['elemId',['../classuris_type.html#aa9b3b0707d080a8dcad065fd1ec4573c',1,'urisType']]],
   ['enon_9',['eNoN',['../classmsh_type.html#a7650e323d00e7041a99014f03c36242b',1,'mshType']]],
-  ['eq_10',['eq',['../class_com_mod.html#aba060eb3db7bc3bcafc86374fc5ce2e2',1,'ComMod']]],
-  ['eris_11',['eRIS',['../classmsh_type.html#a527cc4e201cac250c055734d9fcbd09f',1,'mshType']]],
-  ['error_5fmessage_5flabel_12',['error_message_label',['../structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#ab71418d607efbc3cd40983a3b502169a',1,'svmp::FE::math::DenseLUSolver']]],
-  ['etype_13',['eType',['../classmsh_type.html#adfef58b820eb09c1e2768773f3c3a4fb',1,'mshType']]],
-  ['expl_5fgeom_5fcpl_14',['expl_geom_cpl',['../classeq_type.html#a2652bab94c8daed8fdbde4b97c3cbd5d',1,'eqType']]]
+  ['epsilon_5f0_10',['epsilon_0',['../class_nash_panfilov.html#a0dfdec60e82d4e4cea5d9f81300a8847',1,'NashPanfilov']]],
+  ['epsilon_5fi_11',['epsilon_i',['../class_nash_panfilov.html#a8d4ea6c006ba5e2c89e712957b5d978f',1,'NashPanfilov']]],
+  ['eq_12',['eq',['../class_com_mod.html#aba060eb3db7bc3bcafc86374fc5ce2e2',1,'ComMod']]],
+  ['eris_13',['eRIS',['../classmsh_type.html#a527cc4e201cac250c055734d9fcbd09f',1,'mshType']]],
+  ['error_5fmessage_5flabel_14',['error_message_label',['../structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#ab71418d607efbc3cd40983a3b502169a',1,'svmp::FE::math::DenseLUSolver']]],
+  ['eta_5ff_15',['eta_f',['../class_active_stress.html#a635b666d9262845b21d0172925f18174',1,'ActiveStress']]],
+  ['eta_5fn_16',['eta_n',['../class_active_stress.html#a1681aea4b1d1eae925d6831c0d81b041',1,'ActiveStress']]],
+  ['eta_5fs_17',['eta_s',['../class_active_stress.html#a962e2f18b0c712bc23457b8588e56c52',1,'ActiveStress']]],
+  ['eta_5ft_18',['eta_T',['../class_nash_panfilov.html#aab706f0a7d58af6cffa61736ff74c16a',1,'NashPanfilov']]],
+  ['etype_19',['eType',['../classmsh_type.html#adfef58b820eb09c1e2768773f3c3a4fb',1,'mshType']]],
+  ['expl_5fgeom_5fcpl_20',['expl_geom_cpl',['../classeq_type.html#a2652bab94c8daed8fdbde4b97c3cbd5d',1,'eqType']]]
 ];

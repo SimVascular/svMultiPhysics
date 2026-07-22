@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -157,9 +165,6 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>b2</b> = 0.0</td></
 <tr class="memitem:ae0511b4e385a027c0899d6347fe700fc" id="r_ae0511b4e385a027c0899d6347fe700fc"><td class="memItemLeft" align="right" valign="top"><a id="ae0511b4e385a027c0899d6347fe700fc" name="ae0511b4e385a027c0899d6347fe700fc"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>mu0</b> = 0.0</td></tr>
 <tr class="separator:ae0511b4e385a027c0899d6347fe700fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d4b28135d0afe5af710fca8a54d68b6" id="r_a5d4b28135d0afe5af710fca8a54d68b6"><td class="memItemLeft" align="right" valign="top"><a id="a5d4b28135d0afe5af710fca8a54d68b6" name="a5d4b28135d0afe5af710fca8a54d68b6"></a>
-<a class="el" href="classfib_strs_type.html">fibStrsType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Tf</b></td></tr>
-<tr class="separator:a5d4b28135d0afe5af710fca8a54d68b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a066449487c274a956b98cebba17d0a" id="r_a5a066449487c274a956b98cebba17d0a"><td class="memItemLeft" align="right" valign="top"><a id="a5a066449487c274a956b98cebba17d0a" name="a5a066449487c274a956b98cebba17d0a"></a>
 <a class="el" href="class_artificial_neural_net_material.html">ArtificialNeuralNetMaterial</a>&#160;</td><td class="memItemRight" valign="bottom"><b>paramTable</b></td></tr>
 <tr class="separator:a5a066449487c274a956b98cebba17d0a"><td class="memSeparator" colspan="2">&#160;</td></tr>

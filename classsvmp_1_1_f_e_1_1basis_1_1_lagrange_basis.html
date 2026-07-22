@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -188,7 +196,7 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Nodal Lagrange basis on supported reference finite elements. </p>
 <p><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html" title="Nodal Lagrange basis on supported reference finite elements.">LagrangeBasis</a> represents the complete (full-degree) nodal interpolation basis on a reference topology. It supports point, line, quadrilateral, hexahedron, triangle, tetrahedron, and wedge reference topologies. The primary constructor takes a BasisTopology and an explicit polynomial order, so an arbitrary order carries no node-count assumption (an order-2 hexahedron is <a class="el" href="group___f_e___basis.html#gga5b32f7e0042b0bddc6330a056d80f63da9f9ee7eff41b83c79fb8cce4168c5af6" title="3D hexahedron (tensor product).">BasisTopology::Hexahedron</a> with order 2). A named ElementType such as Line3, Quad9, Tetra10, or Hex27 is a fixed-order shorthand: it maps to the same (topology, order) pair and the requested order must equal the order baked into that layout (1 for the linear elements, 2 for the complete-quadratic aliases, 0 for Point1).</p>
-<h2><a class="anchor" id="autotoc_md7"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 Reference-node distribution</h2>
 <p>The interpolation nodes are not a single distribution across topologies; each family uses the node set its evaluator is built for:</p><ul>
 <li><b>Tensor-product (line, quadrilateral, hexahedron):</b> the shared Gauss-Lobatto-Legendre (GLL) tensor-axis nodes &ndash; see line_coord_pm_one for the distribution and its conditioning &ndash; not an equispaced layout.</li>
@@ -196,7 +204,7 @@ Reference-node distribution</h2>
 <li><b>Wedge:</b> the tensor product of an equispaced triangle cross-section with a GLL through-axis.</li>
 </ul>
 <p>Because GLL coincides with the equispaced layout at orders 1 and 2 (line_coord_pm_one), the linear and quadratic tensor elements &ndash; Line2/Line3, Quad4/Quad9, Hex8/Hex27, and the wedge through-axis &ndash; are built on equispaced nodes, and the GLL/equispaced distinction appears only for order &gt;= 3.</p>
-<h2><a class="anchor" id="autotoc_md8"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Evaluation</h2>
 <p>Tensor-product elements use the one-dimensional nodal polynomials  </p><p class="formulaDsp">
 \[
@@ -213,7 +221,7 @@ Evaluation</h2>
 </p>
 <p> Gradients and Hessians are evaluated analytically by differentiating these factors and applying the barycentric-coordinate chain rule.</p>
 <p>Wedge elements are treated as a tensor product between a triangle simplex basis and a one-dimensional through-axis basis: \(N_{a k}(r,s,t) = T_a(r,s)l_k(t)\).</p>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h2><a class="anchor" id="autotoc_md13"></a>
 Conditioning and the supported order range</h2>
 <p>Interpolation conditioning is governed by the node distribution and so differs by topology:</p><ul>
 <li><b>Tensor-product topologies stay well-conditioned at high order.</b> GLL nodes have a logarithmic Lebesgue constant, so line/quadrilateral/hexahedron bases remain trustworthy well beyond the production orders.</li>

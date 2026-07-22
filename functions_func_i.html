@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -90,9 +98,10 @@ $(function() {
 
 <h3><a id="index_i" name="index_i"></a>- i -</h3><ul>
 <li>increment_ramp_step_count()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a279c33a940a56961b3b5a8fe05161e21">CoupledBoundaryCondition</a></li>
-<li>init()&#160;:&#160;<a class="el" href="class_ionic_model.html#a4d83decb0879a819e99d5f942479a141">IonicModel</a></li>
+<li>init()&#160;:&#160;<a class="el" href="class_active_stress.html#ae32eafdc107a8fd96fee9c9e204f1c8b">ActiveStress</a>, <a class="el" href="class_ionic_model.html#a4d83decb0879a819e99d5f942479a141">IonicModel</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#a85ed9c56ddfad465eac97a02da17ffaf">UniformUnsteadyActiveStress</a></li>
 <li>init_cap_face_quadrature()&#160;:&#160;<a class="el" href="class_capping_surface.html#ac2c0ea69c5b75e70ba8e9030e18d4683">CappingSurface</a></li>
 <li>init_dir_and_coup_neu()&#160;:&#160;<a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#a7c662de8c1bf3c9172eb013b8b798706">TrilinosLinearAlgebra::TrilinosImpl</a></li>
+<li>init_local()&#160;:&#160;<a class="el" href="class_active_stress.html#a0ad5d13d79edda4638e377f137362226">ActiveStress</a>, <a class="el" href="class_nash_panfilov.html#ad1d1d88fd66e08c9bb48c90d9ed4c4f8">NashPanfilov</a>, <a class="el" href="class_uniform_steady_active_stress.html#abaaa051798c5b89d141fdfdf661e2bdc">UniformSteadyActiveStress</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#a21a2b2069ad6012bb12b03f1df170334">UniformUnsteadyActiveStress</a></li>
 <li>initialize()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#adfcf0a7d2f0d2d132d9e561bd97882cd">FsilsLinearAlgebra</a>, <a class="el" href="class_one_d_solver_interface.html#ae9d8e1e8f8a88c6a1230ed70c242965a">OneDSolverInterface</a>, <a class="el" href="class_petsc_linear_algebra.html#a0984f27753592a003aaf9ecdd7a73e0f">PetscLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#a788166b545e2c03eccabcc20641aee5e">TrilinosLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#ad43b7042d679e6a5760212c8168b9ad7">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>initialize_cap()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a3f263fa71ecf4449a31813d7d6e56e55">CoupledBoundaryCondition</a></li>
 <li>initialize_integrator()&#160;:&#160;<a class="el" href="class_simulation.html#a26d63e8a7fedd885fd13d0c1d07b4fd2">Simulation</a></li>
@@ -107,7 +116,6 @@ $(function() {
 <li>InvalidElementException()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1_invalid_element_exception.html#a9a9a40eefac42a48a2d7765d2ff9d01a">svmp::FE::InvalidElementException</a></li>
 <li>IonicInitialStateParameters()&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#a7241cd1d558b5dca511885199796d383">IonicInitialStateParameters</a></li>
 <li>IonicModel()&#160;:&#160;<a class="el" href="class_ionic_model.html#a0cd4651caa1256f01f9e78fad54063a0">IonicModel</a></li>
-<li>IonicModelFactory()&#160;:&#160;<a class="el" href="class_ionic_model_factory.html#a31aa008d4e60567d3038600d9c1f82bd">IonicModelFactory</a></li>
 <li>IonicModelParameters()&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#ae9f4797f55c4f6a8a1762dd477aafc52">IonicModelParameters</a></li>
 <li>is_from_vtp()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a1dab4a0efb8bd6792232453d010a29ba">BoundaryCondition</a></li>
 <li>is_initialized()&#160;:&#160;<a class="el" href="class_boundary_condition.html#afb5fc12d83abbbd9c09a01eb1d047d5e">BoundaryCondition</a></li>

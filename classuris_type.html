@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -203,7 +211,7 @@ Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Unfitted Resistive Immersed Surface (URIS) data type. </p>
 <p>Stores the immersed valve surface geometry, motion state, distance fields, resistance parameters, and background-mesh interpolation data used by the URIS formulation.</p>
-<h3><a class="anchor" id="autotoc_md2"></a>
+<h3><a class="anchor" id="autotoc_md6"></a>
 Scaffolding</h3>
 <p>A scaffold is an optional auxiliary surface mesh associated with a URIS valve. It represents supporting valve structure that contributes additional resistance near the scaffold surface without being treated as a moving valve leaflet surface. When enabled, the scaffold mesh is loaded from <code>Scaffold_file_path</code>, scaled with the URIS mesh scale factor, and stored as a separate mesh. The solver computes an unsigned distance function (UDF) from background fluid mesh nodes to the scaffold and uses the closed-valve thickness parameter to apply the scaffold resistance contribution.</p>
 <p>Scaffold is disabled by default. Set <code>Scaffold_file_path</code> in the <code>Add_URIS_mesh</code> input section to a VTU scaffold mesh file to enable it. </p>

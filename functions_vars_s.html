@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -117,6 +125,7 @@ $(function() {
 <li>sstEq&#160;:&#160;<a class="el" href="class_com_mod.html#afee120d485cad75438312953ccad3b46">ComMod</a></li>
 <li>stamp&#160;:&#160;<a class="el" href="class_com_mod.html#a2a381364c99c4029e355aa861605eeb7">ComMod</a></li>
 <li>startTS&#160;:&#160;<a class="el" href="class_com_mod.html#aa91827f22658b0774defd2e6ad517014">ComMod</a></li>
+<li>states&#160;:&#160;<a class="el" href="class_active_stress.html#a857face2b94f0a490a5625aa13116b2a">ActiveStress</a></li>
 <li>status&#160;:&#160;<a class="el" href="classris_face_type.html#a509d3c61fa68b3cf3956f9027b8e913c">risFaceType</a></li>
 <li>std&#160;:&#160;<a class="el" href="class_com_mod.html#a16a488efaa1d9e2292a78d9e9aff0de9">ComMod</a></li>
 <li>step_count&#160;:&#160;<a class="el" href="structsv_one_d_1_1_one_d_model_state.html#ae3edbc9cfaecdeea1b697e7a7bd4023b">svOneD::OneDModelState</a></li>
@@ -126,6 +135,7 @@ $(function() {
 <li>stFileRepl&#160;:&#160;<a class="el" href="class_com_mod.html#a1ba09097d0d910b21eb672b20539beaf">ComMod</a></li>
 <li>stimuli&#160;:&#160;<a class="el" href="class_domain_parameters.html#aa098fb54df395bba1858635d54633244">DomainParameters</a></li>
 <li>stopTrigName&#160;:&#160;<a class="el" href="class_com_mod.html#a0290e34e97980f78795c8c72a1541ff7">ComMod</a></li>
+<li>string_parameters&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#a52649bda5d6557e5024646dbfd5b51d5">ActiveStressModelParameters</a></li>
 <li>suc&#160;:&#160;<a class="el" href="classls_type.html#a85cac07335a1be04e7af0d3fcfe0267b">lsType</a></li>
 <li>sV&#160;:&#160;<a class="el" href="class_t_t_p.html#a7e50c1700386e7f0adb6725a27872fd3">TTP</a></li>
 <li>svOneD_solver_interface&#160;:&#160;<a class="el" href="classcpl_b_c_type.html#afc6f2589ece056d220ddd40f27de7acf">cplBCType</a></li>

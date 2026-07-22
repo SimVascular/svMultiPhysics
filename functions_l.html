@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -89,7 +97,7 @@ $(function() {
 <div class="textblock">Here is a list of all documented class members with links to the class documentation for each member:</div>
 
 <h3><a id="index_l" name="index_l"></a>- l -</h3><ul>
-<li>label&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a4826188e7880fbc3f1377cf1c117654b">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a9fb03d350a7e623f8508fe6645e18803">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#ab8d440ee1bf115febfd73eec9a3b2454">FitzHughNagumo</a>, <a class="el" href="class_t_t_p.html#a5ac5bf1b9db0056659f3eace146a1146">TTP</a></li>
+<li>label&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a4826188e7880fbc3f1377cf1c117654b">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a9fb03d350a7e623f8508fe6645e18803">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#ab8d440ee1bf115febfd73eec9a3b2454">FitzHughNagumo</a>, <a class="el" href="class_nash_panfilov.html#af7c6edc21369e2b7586dea7adb7ab8ef">NashPanfilov</a>, <a class="el" href="class_t_t_p.html#a5ac5bf1b9db0056659f3eace146a1146">TTP</a>, <a class="el" href="class_uniform_steady_active_stress.html#a8b0a8d6df6b657ba0199f3b7a4a63a83">UniformSteadyActiveStress</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#a05673c022ce9f72d1faed825ca1c65c7">UniformUnsteadyActiveStress</a></li>
 <li>LagrangeBasis()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#acee70b18f1eb48f2b45c91c0119f7ca1">svmp::FE::basis::LagrangeBasis</a></li>
 <li>largest_singular_value&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1math_1_1_dense_matrix_diagnostics.html#a7e35836f6bda28d1af59b1b9ba55f230">svmp::FE::math::DenseMatrixDiagnostics</a>, <a class="el" href="structsvmp_1_1_f_e_1_1math_1_1_dense_pseudo_inverse_result.html#af42ec03b3e668ebd60d1121bb1ecd06a">svmp::FE::math::DensePseudoInverseResult</a></li>
 <li>lattice&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1basis_1_1_lagrange_node_layout.html#a9c3346174bc3e52b317a2e06fd845985">svmp::FE::basis::LagrangeNodeLayout</a></li>

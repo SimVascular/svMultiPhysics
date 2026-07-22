@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -93,8 +101,19 @@ $(function() {
 <li>A0&#160;:&#160;<a class="el" href="classrmsh_type.html#a7713ca9ef22ab1dbf118af318605f7f4">rmshType</a></li>
 <li>abs()&#160;:&#160;<a class="el" href="class_vector.html#a61437d6f77194a90943bfd1f0d71083f">Vector&lt; T &gt;</a></li>
 <li>absTol&#160;:&#160;<a class="el" href="classls_type.html#a12ed37fb635049635a90cbdcbe9e4176">lsType</a>, <a class="el" href="classode_type.html#a03243152e72ef43acfa97318cd8e122a">odeType</a></li>
+<li>active_stress&#160;:&#160;<a class="el" href="classdmn_type.html#a9a96888421bcaff6c4a44b677761b8a8">dmnType</a></li>
+<li>active_stress_model_name&#160;:&#160;<a class="el" href="classdmn_type.html#a6381804be7b28de2675c347e799d2215">dmnType</a></li>
+<li>active_stress_models&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#a2b88052d1ef3c1ef063acc27d68839aa">ActiveStressParameters</a></li>
+<li>active_tension&#160;:&#160;<a class="el" href="class_active_stress.html#a6fcb14088dfafd9cfdeb66ffe882845c">ActiveStress</a></li>
+<li>ActiveStress()&#160;:&#160;<a class="el" href="class_active_stress.html#a24d6c44b87f7249ee2da907afad552c5">ActiveStress</a></li>
+<li>ActiveStressModelParameters()&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#a5cd2dd062be65d7f82a006d209768dab">ActiveStressModelParameters</a></li>
+<li>ActiveStressODE()&#160;:&#160;<a class="el" href="class_active_stress_o_d_e.html#a0dbd2203d20e7bae2355eb17ec79a82a">ActiveStressODE</a></li>
+<li>ActiveStressParameters()&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#a7b39971aebe0a29232461aa4bb8dfc06">ActiveStressParameters</a></li>
 <li>Ad&#160;:&#160;<a class="el" href="class_com_mod.html#a2ce2a9403ba5b438b995b618fe2128ca">ComMod</a></li>
-<li>add_parameter()&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#a73e83143fed13459f11e4fdd32cbc6ce">IonicModelParameters</a></li>
+<li>add()&#160;:&#160;<a class="el" href="class_vector.html#a54537a24ffb747928641704152d287d3">Vector&lt; T &gt;</a></li>
+<li>add_parameter()&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#ab665468041d845c3a99dd6d50f13d2b0">ActiveStressModelParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a73e83143fed13459f11e4fdd32cbc6ce">IonicModelParameters</a></li>
+<li>advance_time_step()&#160;:&#160;<a class="el" href="class_active_stress.html#a416d504f0ba90d96fddf5a92ffd07992">ActiveStress</a></li>
+<li>advance_time_step_local()&#160;:&#160;<a class="el" href="class_active_stress.html#a3c49fed002e0d4e765b5dc26c7c22400">ActiveStress</a>, <a class="el" href="class_active_stress_o_d_e.html#aa5283ccc4061ae705aa1049ce5f60be2">ActiveStressODE</a>, <a class="el" href="class_uniform_steady_active_stress.html#a3b83523f49dcc1160ed8ec24d16fe080">UniformSteadyActiveStress</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#a4934796293ac81976f94ea4e0b44be54">UniformUnsteadyActiveStress</a></li>
 <li>af&#160;:&#160;<a class="el" href="classeq_type.html#abb83ca2583ed26cfd4a4230386302786">eqType</a></li>
 <li>AlievPanfilov()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#ae46eccc13eba2591ea065e6ac5255b81">AlievPanfilov</a></li>
 <li>alloc()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#a8b59c6ae61413494b739245fea026bc6">FsilsLinearAlgebra</a>, <a class="el" href="class_petsc_linear_algebra.html#aeb93907e199cdb63ed8f7f5988030dd5">PetscLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra.html#aecf8e1f2cc47d83198099f82a163d7c7">TrilinosLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#af8ccec80c3533004591d4162235de7ed">TrilinosLinearAlgebra::TrilinosImpl</a></li>
@@ -107,7 +126,6 @@ $(function() {
 <li>assemble()&#160;:&#160;<a class="el" href="class_fsils_linear_algebra.html#a51fb853a802cbe5ac94bb9208f9a502c">FsilsLinearAlgebra</a>, <a class="el" href="class_petsc_linear_algebra.html#a23bae8b0e9ab3aba4fa2aebe097ca94f">PetscLinearAlgebra</a>, <a class="el" href="class_robin_boundary_condition.html#af0bad9f5bac553a15c1a893d1cfcfe68">RobinBoundaryCondition</a>, <a class="el" href="class_trilinos_linear_algebra.html#a32656fb4b7c8663d11890499131fdf27">TrilinosLinearAlgebra</a>, <a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html#ad01f718fc5cf7473ea9b1193e8a0cbc0">TrilinosLinearAlgebra::TrilinosImpl</a></li>
 <li>assmTLS&#160;:&#160;<a class="el" href="classeq_type.html#a28d811c9247012b1915cc919dfb1731f">eqType</a></li>
 <li>aStrain&#160;:&#160;<a class="el" href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">cemModelType</a></li>
-<li>aStress&#160;:&#160;<a class="el" href="classcem_model_type.html#a48e58483acb25db579e72221a9c16a87">cemModelType</a></li>
 <li>Auk&#160;:&#160;<a class="el" href="classib_type.html#afaf3a23ec46848c6c41e493cc933fb4c">ibType</a></li>
 <li>Aun&#160;:&#160;<a class="el" href="classib_type.html#a1e197fa7b5cf9dc0a92f8f8556b0bee5">ibType</a></li>
 <li>Auo&#160;:&#160;<a class="el" href="classib_type.html#ac71646102acc375f85023e7d331c8d55">ibType</a></li>

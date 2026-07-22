@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -105,6 +113,7 @@ $(function() {
 <li>minDihedAng&#160;:&#160;<a class="el" href="classrmsh_type.html#ad5609b14f1ed0e2b2adbb947785fbbfd">rmshType</a></li>
 <li>minItr&#160;:&#160;<a class="el" href="classeq_type.html#afb78f4d0d3be74c89f9cb3ae4843d65e">eqType</a></li>
 <li>mItr&#160;:&#160;<a class="el" href="classls_type.html#a865f76201c558c363d432780c56f8d43">lsType</a></li>
+<li>model_name&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#a78d34e172421d35e90d170bf9b372721">ActiveStressParameters</a></li>
 <li>ModelParam&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a4e0fe5c4269cac9450c3023c42df8263">BuenoOrovio</a></li>
 <li>msh&#160;:&#160;<a class="el" href="class_com_mod.html#ad199457e957470c2f821c0e18d3c4c80">ComMod</a>, <a class="el" href="classib_type.html#ad9f55dd4dfde319040bc07fedb6dbf94">ibType</a>, <a class="el" href="classuris_type.html#a64a7871842f3b77b2c8e75aaa651f4c9">urisType</a></li>
 <li>mthd&#160;:&#160;<a class="el" href="classib_type.html#ad2dfda1e1916b30eb47769f92d886554">ibType</a></li>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -104,6 +112,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ae7baf616df1bb36d54d022665444e17e" id="r_ae7baf616df1bb36d54d022665444e17e"><td class="memItemLeft" align="right" valign="top">Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">Xion</a></td></tr>
 <tr class="memdesc:ae7baf616df1bb36d54d022665444e17e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unknowns stored at all nodes.  <br /></td></tr>
 <tr class="separator:ae7baf616df1bb36d54d022665444e17e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af35acba2dd2e61c90b34dcac4ee3cdbc" id="r_af35acba2dd2e61c90b34dcac4ee3cdbc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod.html#af35acba2dd2e61c90b34dcac4ee3cdbc">calcium</a></td></tr>
+<tr class="memdesc:af35acba2dd2e61c90b34dcac4ee3cdbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calcium vector at all nodes.  <br /></td></tr>
+<tr class="separator:af35acba2dd2e61c90b34dcac4ee3cdbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abc0caf30d60d1223218837ba4f460c26" id="r_abc0caf30d60d1223218837ba4f460c26"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcem_model_type.html">cemModelType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">cem</a></td></tr>
 <tr class="memdesc:abc0caf30d60d1223218837ba4f460c26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cardiac electromechanics type.  <br /></td></tr>
 <tr class="separator:abc0caf30d60d1223218837ba4f460c26"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -112,6 +123,22 @@ Public Attributes</h2></td></tr>
 <tr class="separator:af0cf469ca4ed525ba96c99fa5b73c01f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="af35acba2dd2e61c90b34dcac4ee3cdbc" name="af35acba2dd2e61c90b34dcac4ee3cdbc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af35acba2dd2e61c90b34dcac4ee3cdbc">&#9670;&#160;</a></span>calcium</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; CepMod::calcium</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Calcium vector at all nodes. </p>
+
+</div>
+</div>
 <a id="abc0caf30d60d1223218837ba4f460c26" name="abc0caf30d60d1223218837ba4f460c26"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abc0caf30d60d1223218837ba4f460c26">&#9670;&#160;</a></span>cem</h2>
 

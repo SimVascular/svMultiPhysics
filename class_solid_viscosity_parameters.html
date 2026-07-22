@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -203,9 +211,8 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
 </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">  SolidViscosityParameters::NEWTONIAN_MODEL,</div>
-<div class="line">  SolidViscosityParameters::POTENTIAL_MODEL</div>
-<div class="line">}</div>
+<div class="line">    SolidViscosityParameters::NEWTONIAN_MODEL,</div>
+<div class="line">    SolidViscosityParameters::POTENTIAL_MODEL}</div>
 </div><!-- fragment -->
 </div>
 </div>

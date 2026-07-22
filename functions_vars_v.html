@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -97,7 +105,8 @@ $(function() {
 <li>V_ss&#160;:&#160;<a class="el" href="class_t_t_p.html#aaf87121f10968b89562d5baba98f50c3">TTP</a></li>
 <li>V_xfer&#160;:&#160;<a class="el" href="class_t_t_p.html#a23784074772873ddde9b507bd7c5f1cc">TTP</a></li>
 <li>Val&#160;:&#160;<a class="el" href="class_com_mod.html#a671da6fe0a4c0aa3730446e1d2891db2">ComMod</a></li>
-<li>value_set&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#a652aea0bca29f9bf0a05766dae33df19">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a702b21328cfe4c355e7a7bfcd115db3c">IonicModelParameters</a></li>
+<li>value&#160;:&#160;<a class="el" href="class_uniform_steady_active_stress.html#a4b4f62c08206316df133cc8d64423f13">UniformSteadyActiveStress</a></li>
+<li>value_set&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#adc29eef7c041ebac20588d8d0c9a1ec4">ActiveStressModelParameters</a>, <a class="el" href="class_active_stress_parameters.html#aef4a433d92a85af2189fa1484b14ea7a">ActiveStressParameters</a>, <a class="el" href="class_ionic_initial_state_parameters.html#a652aea0bca29f9bf0a05766dae33df19">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a702b21328cfe4c355e7a7bfcd115db3c">IonicModelParameters</a></li>
 <li>valve_velocity&#160;:&#160;<a class="el" href="classuris_type.html#a76162f9242106330859867c2d10476f7">urisType</a></li>
 <li>valve_velocity_fluid&#160;:&#160;<a class="el" href="classuris_type.html#a19cf8bceb1119bdfbd12bb77e5644a93">urisType</a></li>
 <li>varWallProps&#160;:&#160;<a class="el" href="class_com_mod.html#a1e5959af92d21d5889dd59cec725277f">ComMod</a></li>

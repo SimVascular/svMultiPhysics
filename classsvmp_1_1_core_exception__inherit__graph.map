@@ -1,19 +1,21 @@
 <map id="svmp::CoreException" name="svmp::CoreException">
-<area shape="rect" id="Node000001" title=" " alt="" coords="379,129,539,155"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="379,153,539,179"/>
 <area shape="rect" id="Node000004" href="$classsvmp_1_1_dependency_exception.html" title="A required dependency is missing or failed to load." alt="" coords="604,5,815,31"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="480,118,526,77,555,57,586,40,617,28,619,33,588,44,557,61,529,81,483,122"/>
-<area shape="rect" id="Node000005" href="$classsvmp_1_1_file_format_exception.html" title=" " alt="" coords="610,55,809,80"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="499,121,586,89,632,77,633,83,587,94,501,126"/>
-<area shape="rect" id="Node000006" href="$classsvmp_1_1_file_not_found_exception.html" title=" " alt="" coords="602,104,817,129"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="552,130,601,125,602,130,552,135"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="475,140,521,89,551,62,585,40,613,28,615,33,588,44,555,66,525,92,479,144"/>
+<area shape="rect" id="Node000005" href="$classsvmp_1_1_file_format_exception.html" title="An exception raised when a file cannot be parsed or has an invalid format." alt="" coords="610,55,809,80"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="487,143,532,115,586,89,623,78,625,83,588,94,535,119,490,148"/>
+<area shape="rect" id="Node000006" href="$classsvmp_1_1_file_not_found_exception.html" title="An exception raised when a file cannot be opened." alt="" coords="602,104,817,129"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="537,148,586,138,643,127,644,132,587,143,538,153"/>
 <area shape="rect" id="Node000007" href="$classsvmp_1_1_index_out_of_range_exception.html" title="An index is outside its valid range." alt="" coords="587,153,832,179"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="552,148,587,152,586,157,552,154"/>
-<area shape="rect" id="Node000008" href="$classsvmp_1_1_not_implemented_exception.html" title="A requested operation or feature is not implemented." alt="" coords="589,203,829,228"/>
-<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="502,158,587,189,634,200,632,205,586,194,500,163"/>
-<area shape="rect" id="Node000009" href="$classsvmp_1_1_parse_exception.html" title="A parsing or input&#45;format error." alt="" coords="627,252,792,277"/>
-<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="484,162,529,202,558,222,588,238,627,251,625,256,586,243,555,226,526,206,480,166"/>
-<area shape="rect" id="Node000002" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="168,129,331,155"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="345,139,378,139,378,145,345,145"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="5,129,120,155"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="134,139,168,139,168,145,134,145"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="552,163,586,163,586,169,552,169"/>
+<area shape="rect" id="Node000008" href="$classsvmp_1_1_internal_error_exception.html" title="Internal error exception." alt="" coords="604,203,815,228"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="538,179,587,189,644,200,643,205,586,194,537,184"/>
+<area shape="rect" id="Node000009" href="$classsvmp_1_1_not_implemented_exception.html" title="A requested operation or feature is not implemented." alt="" coords="589,252,829,277"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="490,184,535,213,588,238,625,249,623,254,586,243,532,217,487,189"/>
+<area shape="rect" id="Node000010" href="$classsvmp_1_1_parse_exception.html" title="A parsing or input&#45;format error." alt="" coords="627,301,792,327"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="479,188,525,240,555,266,588,288,627,302,625,307,585,292,551,270,521,243,475,192"/>
+<area shape="rect" id="Node000002" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="168,153,331,179"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="345,163,378,163,378,169,345,169"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,153,120,179"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="134,163,168,163,168,169,134,169"/>
 </map>

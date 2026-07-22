@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -124,6 +132,11 @@ $(function() {
 <li>mat_symm()&#160;:&#160;<a class="el" href="namespacemat__fun.html#a6ecffe7c0c2beba571579b3071f6da91">mat_fun</a></li>
 <li>mat_symm_prod()&#160;:&#160;<a class="el" href="namespacemat__fun.html#ac74e37f69fc09901dd23652f89a4f7e1">mat_fun</a></li>
 <li>mat_trace()&#160;:&#160;<a class="el" href="namespacemat__fun.html#a80fd0b01661fb60e285f4d1a94ad3eeb">mat_fun</a></li>
+</ul>
+
+
+<h3><a id="index_r" name="index_r"></a>- r -</h3><ul>
+<li>read_active_stress()&#160;:&#160;<a class="el" href="namespaceread__files__ns.html#a9e93b90bb9efa2d48698ebec2b509c93">read_files_ns</a></li>
 </ul>
 
 

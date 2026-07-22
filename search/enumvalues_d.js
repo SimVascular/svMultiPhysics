@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['vector_0',['Vector',['../group___f_e___common_types.html#gga3cdc47ee75a3358783eccc7438f278eaa57dea6f5039281b7fee517fc43bf3110',1,'svmp::FE']]],
-  ['vectorized_1',['Vectorized',['../group___f_e___common_types.html#gga6eaba08c9d38ba04b8c34d30371830d0a138bc087eaaaf426b54f9a466f0cc725',1,'svmp::FE']]]
+  ['unknown_0',['unknown',['../group___f_e___basis.html#gga5b32f7e0042b0bddc6330a056d80f63da88183b946cc5f0e8c96b2e66e1c74a7e',1,'Unknownsvmp::FE::basis'],['../group___f_e___common_types.html#gga9823727257775dd89648cab1a6c194d4a88183b946cc5f0e8c96b2e66e1c74a7e',1,'Unknownsvmp::FE']]]
 ];

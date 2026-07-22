@@ -1,5 +1,5 @@
 <map id="svmp::FileNotFoundException" name="svmp::FileNotFoundException">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,225,220,251"/>
+<area shape="rect" id="Node000001" title="An exception raised when a file cannot be opened." alt="" coords="5,225,220,251"/>
 <area shape="rect" id="Node000002" href="$classsvmp_1_1_core_exception.html" title=" " alt="" coords="33,152,193,177"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,191,115,225,110,225,110,191"/>
 <area shape="rect" id="Node000003" href="$classsvmp_1_1_exception_base.html" title=" " alt="" coords="31,79,194,104"/>

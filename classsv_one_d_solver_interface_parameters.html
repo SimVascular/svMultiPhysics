@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -175,8 +183,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a9283b2813e9c58ec93bea3e7af470e81" id="r_a9283b2813e9c58ec93bea3e7af470e81"><td class="memItemLeft" align="right" valign="top"><a id="a9283b2813e9c58ec93bea3e7af470e81" name="a9283b2813e9c58ec93bea3e7af470e81"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_name_</b> = &quot;svOneDSolver_interface&quot;</td></tr>
+<tr class="memitem:a9283b2813e9c58ec93bea3e7af470e81" id="r_a9283b2813e9c58ec93bea3e7af470e81"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsv_one_d_solver_interface_parameters.html#a9283b2813e9c58ec93bea3e7af470e81">xml_element_name_</a></td></tr>
 <tr class="separator:a9283b2813e9c58ec93bea3e7af470e81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -185,11 +192,36 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>x
 <div class="line">  &lt;<span class="keywordtype">Coupling_type</span>&gt; <span class="keyword">Implicit</span> &lt;/<span class="keywordtype">Coupling_type</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">Shared_library</span>&gt; /<span class="keyword">path</span>/<span class="keyword">to</span>/<span class="keyword">libsvoned_interface</span> &lt;/<span class="keywordtype">Shared_library</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">svOneDSolver_interface</span>&gt;</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md21"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md25"></a>
 Notes</h2>
 <p>Coupling_type: "Explicit" | "Implicit" | "Semi-implicit" Controls how the 3D Newton iteration couples to the 1D solver (same semantics as the 0D coupling_type). Shared_library: Path to the 1D interface shared library. The extension (.so or .dylib) may be omitted; it will be appended automatically based on the platform.</p>
 <p>Each coupled face specifies its own input file via &lt;Coupling_interface&gt; &lt;svOneDSolver_input_file&gt; ... &lt;/svOneDSolver_input_file&gt; &lt;/Coupling_interface&gt; inside the corresponding &lt;Add_BC&gt; element. </p>
-</div><hr/>The documentation for this class was generated from the following files:<ul>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a9283b2813e9c58ec93bea3e7af470e81" name="a9283b2813e9c58ec93bea3e7af470e81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9283b2813e9c58ec93bea3e7af470e81">&#9670;&#160;</a></span>xml_element_name_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string svOneDSolverInterfaceParameters::xml_element_name_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;svOneDSolver_interface&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<a class="el" href="_parameters_8h_source.html">Parameters.h</a></li>
 <li>solver/<b>Parameters.cpp</b></li>
 </ul>

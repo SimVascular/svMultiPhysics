@@ -1,0 +1,7 @@
+<map id="NashPanfilov" name="NashPanfilov">
+<area shape="rect" id="Node000001" title="Nash&#45;Panfilov active stress model." alt="" coords="17,152,124,177"/>
+<area shape="rect" id="Node000002" href="$class_active_stress_o_d_e.html" title="Abstract ODE&#45;based active stress model." alt="" coords="5,79,136,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="73,118,73,152,68,152,68,118"/>
+<area shape="rect" id="Node000003" href="$class_active_stress.html" title="Abstract active stress class." alt="" coords="19,5,122,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="73,44,73,79,68,79,68,44"/>
+</map>

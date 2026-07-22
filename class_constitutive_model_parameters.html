@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -202,7 +210,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:ace19262956c56a185acd6c9a650819d7" id="r_ace19262956c56a185acd6c9a650819d7"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_constitutive_model_parameters.html#ace19262956c56a185acd6c9a650819d7">xml_element_name_</a> = &quot;Constitutive_model&quot;</td></tr>
+<tr class="memitem:ace19262956c56a185acd6c9a650819d7" id="r_ace19262956c56a185acd6c9a650819d7"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_constitutive_model_parameters.html#ace19262956c56a185acd6c9a650819d7">xml_element_name_</a></td></tr>
 <tr class="memdesc:ace19262956c56a185acd6c9a650819d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process parameters for various constitutive models.  <br /></td></tr>
 <tr class="separator:ace19262956c56a185acd6c9a650819d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ca1ffcb7836cb0caff8717bd76c4e2f" id="r_a2ca1ffcb7836cb0caff8717bd76c4e2f"><td class="memItemLeft" align="right" valign="top"><a id="a2ca1ffcb7836cb0caff8717bd76c4e2f" name="a2ca1ffcb7836cb0caff8717bd76c4e2f"></a>
@@ -211,11 +219,9 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>G
 <tr class="memitem:a08f2b828913fe5d63f20a666e890f81f" id="r_a08f2b828913fe5d63f20a666e890f81f"><td class="memItemLeft" align="right" valign="top"><a id="a08f2b828913fe5d63f20a666e890f81f" name="a08f2b828913fe5d63f20a666e890f81f"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>HGO_MODEL</b> = &quot;HGO&quot;</td></tr>
 <tr class="separator:a08f2b828913fe5d63f20a666e890f81f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ac42dbc416862790f2e6f159f893125" id="r_a1ac42dbc416862790f2e6f159f893125"><td class="memItemLeft" align="right" valign="top"><a id="a1ac42dbc416862790f2e6f159f893125" name="a1ac42dbc416862790f2e6f159f893125"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>HOLZAPFEL_OGDEN_MODEL</b> = &quot;HolzapfelOgden&quot;</td></tr>
+<tr class="memitem:a1ac42dbc416862790f2e6f159f893125" id="r_a1ac42dbc416862790f2e6f159f893125"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_constitutive_model_parameters.html#a1ac42dbc416862790f2e6f159f893125">HOLZAPFEL_OGDEN_MODEL</a></td></tr>
 <tr class="separator:a1ac42dbc416862790f2e6f159f893125"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a970095fed847c9218e26ce6aec3f3de8" id="r_a970095fed847c9218e26ce6aec3f3de8"><td class="memItemLeft" align="right" valign="top"><a id="a970095fed847c9218e26ce6aec3f3de8" name="a970095fed847c9218e26ce6aec3f3de8"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>HOLZAPFEL_OGDEN_MA_MODEL</b> = &quot;HolzapfelOgden-ModifiedAnisotropy&quot;</td></tr>
+<tr class="memitem:a970095fed847c9218e26ce6aec3f3de8" id="r_a970095fed847c9218e26ce6aec3f3de8"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_constitutive_model_parameters.html#a970095fed847c9218e26ce6aec3f3de8">HOLZAPFEL_OGDEN_MA_MODEL</a></td></tr>
 <tr class="separator:a970095fed847c9218e26ce6aec3f3de8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca1d9bc2c3046fd96d3bde09c619dcb3" id="r_aca1d9bc2c3046fd96d3bde09c619dcb3"><td class="memItemLeft" align="right" valign="top"><a id="aca1d9bc2c3046fd96d3bde09c619dcb3" name="aca1d9bc2c3046fd96d3bde09c619dcb3"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>LEE_SACKS</b> = &quot;Lee-Sacks&quot;</td></tr>
@@ -223,8 +229,7 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>L
 <tr class="memitem:a666a51840358ecf268d6b26991aec30d" id="r_a666a51840358ecf268d6b26991aec30d"><td class="memItemLeft" align="right" valign="top"><a id="a666a51840358ecf268d6b26991aec30d" name="a666a51840358ecf268d6b26991aec30d"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>NEOHOOKEAN_MODEL</b> = &quot;neoHookean&quot;</td></tr>
 <tr class="separator:a666a51840358ecf268d6b26991aec30d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a97061f1f0ff1b7143140c7e6f31e1d27" id="r_a97061f1f0ff1b7143140c7e6f31e1d27"><td class="memItemLeft" align="right" valign="top"><a id="a97061f1f0ff1b7143140c7e6f31e1d27" name="a97061f1f0ff1b7143140c7e6f31e1d27"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>STVENANT_KIRCHHOFF_MODEL</b> = &quot;stVenantKirchhoff&quot;</td></tr>
+<tr class="memitem:a97061f1f0ff1b7143140c7e6f31e1d27" id="r_a97061f1f0ff1b7143140c7e6f31e1d27"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_constitutive_model_parameters.html#a97061f1f0ff1b7143140c7e6f31e1d27">STVENANT_KIRCHHOFF_MODEL</a></td></tr>
 <tr class="separator:a97061f1f0ff1b7143140c7e6f31e1d27"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0df09d16532ee5a3537d00b5baa10910" id="r_a0df09d16532ee5a3537d00b5baa10910"><td class="memItemLeft" align="right" valign="top"><a id="a0df09d16532ee5a3537d00b5baa10910" name="a0df09d16532ee5a3537d00b5baa10910"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>CANN_MODEL</b> = &quot;CANN&quot;</td></tr>
@@ -277,29 +282,109 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>C
 </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">  { ConstitutiveModelParameters::GUCCIONE_MODEL, ConstitutiveModelParameters::GUCCIONE_MODEL},</div>
-<div class="line">  { <span class="stringliteral">&quot;Gucci&quot;</span>,                                     ConstitutiveModelParameters::GUCCIONE_MODEL},</div>
+<div class="line">        {ConstitutiveModelParameters::GUCCIONE_MODEL,</div>
+<div class="line">         ConstitutiveModelParameters::GUCCIONE_MODEL},</div>
+<div class="line">        {<span class="stringliteral">&quot;Gucci&quot;</span>, ConstitutiveModelParameters::GUCCIONE_MODEL},</div>
 <div class="line"> </div>
-<div class="line">  {ConstitutiveModelParameters::HGO_MODEL, ConstitutiveModelParameters::HGO_MODEL},</div>
+<div class="line">        {ConstitutiveModelParameters::HGO_MODEL,</div>
+<div class="line">         ConstitutiveModelParameters::HGO_MODEL},</div>
 <div class="line"> </div>
-<div class="line">  {ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MODEL, ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MODEL},</div>
+<div class="line">        {ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MODEL,</div>
+<div class="line">         ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MODEL},</div>
 <div class="line"> </div>
-<div class="line">  {ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MA_MODEL, ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MA_MODEL},</div>
+<div class="line">        {ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MA_MODEL,</div>
+<div class="line">         ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MA_MODEL},</div>
 <div class="line"> </div>
-<div class="line">  {ConstitutiveModelParameters::LEE_SACKS, ConstitutiveModelParameters::LEE_SACKS},</div>
+<div class="line">        {ConstitutiveModelParameters::LEE_SACKS,</div>
+<div class="line">         ConstitutiveModelParameters::LEE_SACKS},</div>
 <div class="line"> </div>
-<div class="line">  {ConstitutiveModelParameters::NEOHOOKEAN_MODEL, ConstitutiveModelParameters::NEOHOOKEAN_MODEL},</div>
-<div class="line">  {<span class="stringliteral">&quot;nHK&quot;</span>, ConstitutiveModelParameters::NEOHOOKEAN_MODEL},</div>
+<div class="line">        {ConstitutiveModelParameters::NEOHOOKEAN_MODEL,</div>
+<div class="line">         ConstitutiveModelParameters::NEOHOOKEAN_MODEL},</div>
+<div class="line">        {<span class="stringliteral">&quot;nHK&quot;</span>, ConstitutiveModelParameters::NEOHOOKEAN_MODEL},</div>
 <div class="line"> </div>
-<div class="line">  {ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL, ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL},</div>
-<div class="line">  {<span class="stringliteral">&quot;stVK&quot;</span>,                                                ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL},</div>
+<div class="line">        {ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL,</div>
+<div class="line">         ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL},</div>
+<div class="line">        {<span class="stringliteral">&quot;stVK&quot;</span>, ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL},</div>
 <div class="line"> </div>
-<div class="line">  {ConstitutiveModelParameters::CANN_MODEL, ConstitutiveModelParameters::CANN_MODEL},</div>
-<div class="line">  {<span class="stringliteral">&quot;CANN&quot;</span>, ConstitutiveModelParameters::CANN_MODEL},</div>
+<div class="line">        {ConstitutiveModelParameters::CANN_MODEL,</div>
+<div class="line">         ConstitutiveModelParameters::CANN_MODEL},</div>
+<div class="line">        {<span class="stringliteral">&quot;CANN&quot;</span>, ConstitutiveModelParameters::CANN_MODEL},</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 <p>Supported constitutive model types and their aliases. </p>
 
+</div>
+</div>
+<a id="a970095fed847c9218e26ce6aec3f3de8" name="a970095fed847c9218e26ce6aec3f3de8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a970095fed847c9218e26ce6aec3f3de8">&#9670;&#160;</a></span>HOLZAPFEL_OGDEN_MA_MODEL</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MA_MODEL</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;HolzapfelOgden-ModifiedAnisotropy&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a1ac42dbc416862790f2e6f159f893125" name="a1ac42dbc416862790f2e6f159f893125"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ac42dbc416862790f2e6f159f893125">&#9670;&#160;</a></span>HOLZAPFEL_OGDEN_MODEL</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string ConstitutiveModelParameters::HOLZAPFEL_OGDEN_MODEL</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;HolzapfelOgden&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a97061f1f0ff1b7143140c7e6f31e1d27" name="a97061f1f0ff1b7143140c7e6f31e1d27"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97061f1f0ff1b7143140c7e6f31e1d27">&#9670;&#160;</a></span>STVENANT_KIRCHHOFF_MODEL</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string ConstitutiveModelParameters::STVENANT_KIRCHHOFF_MODEL</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;stVenantKirchhoff&quot;</span></div>
+</div><!-- fragment -->
 </div>
 </div>
 <a id="ace19262956c56a185acd6c9a650819d7" name="ace19262956c56a185acd6c9a650819d7"></a>
@@ -312,7 +397,7 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>C
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const std::string ConstitutiveModelParameters::xml_element_name_ = &quot;Constitutive_model&quot;</td>
+          <td class="memname">const std::string ConstitutiveModelParameters::xml_element_name_</td>
         </tr>
       </table>
   </td>
@@ -321,7 +406,9 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>C
   </tr>
 </table>
 </div><div class="memdoc">
-
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;Constitutive_model&quot;</span></div>
+</div><!-- fragment -->
 <p>Process parameters for various constitutive models. </p>
 <p>Define the XML element name for constitutive parameters. </p>
 

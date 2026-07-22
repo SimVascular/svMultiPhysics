@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -175,8 +183,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:aa69bf18287b003be99a5eba8c35d4d5c" id="r_aa69bf18287b003be99a5eba8c35d4d5c"><td class="memItemLeft" align="right" valign="top"><a id="aa69bf18287b003be99a5eba8c35d4d5c" name="aa69bf18287b003be99a5eba8c35d4d5c"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_name_</b> = &quot;Precomputed_solution&quot;</td></tr>
+<tr class="memitem:aa69bf18287b003be99a5eba8c35d4d5c" id="r_aa69bf18287b003be99a5eba8c35d4d5c"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_precomputed_solution_parameters.html#aa69bf18287b003be99a5eba8c35d4d5c">xml_element_name_</a></td></tr>
 <tr class="separator:aa69bf18287b003be99a5eba8c35d4d5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -184,7 +191,32 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>x
 <div class="fragment"><div class="line">&lt;<span class="keywordtype">Precomputed_solution</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">Project_from_face</span>&gt; <span class="keyword">lumen_wall</span> &lt;/<span class="keywordtype">Project_from_face</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">Precomputed_solution</span>&gt;</div>
-</div><!-- fragment --> </div><hr/>The documentation for this class was generated from the following files:<ul>
+</div><!-- fragment --> </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="aa69bf18287b003be99a5eba8c35d4d5c" name="aa69bf18287b003be99a5eba8c35d4d5c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa69bf18287b003be99a5eba8c35d4d5c">&#9670;&#160;</a></span>xml_element_name_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string PrecomputedSolutionParameters::xml_element_name_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;Precomputed_solution&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<a class="el" href="_parameters_8h_source.html">Parameters.h</a></li>
 <li>solver/<b>Parameters.cpp</b></li>
 </ul>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -108,7 +116,7 @@ $(function() {
 <li>precompFileName&#160;:&#160;<a class="el" href="class_com_mod.html#a5703dd4af9a8701876de31e2e4ae0a61">ComMod</a></li>
 <li>predictor()&#160;:&#160;<a class="el" href="class_integrator.html#adc20c8caeb6e1b6d80034afb70605d1c">Integrator</a></li>
 <li>print_parameter_list()&#160;:&#160;<a class="el" href="class_parameter_lists.html#ab2f5c08258f5805a7f2f9c50c8939fe4">ParameterLists</a></li>
-<li>print_parameters()&#160;:&#160;<a class="el" href="class_ionic_initial_state_parameters.html#a7f6df694028b607ba3c4c65835cd1511">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#ab21f192042cb0d4651f71d2388af7106">IonicModelParameters</a></li>
+<li>print_parameters()&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#af12ac37690c502386a8bdbd5796a7efa">ActiveStressModelParameters</a>, <a class="el" href="class_active_stress_parameters.html#a9048f6bbfa1da432b726301b225c3e9c">ActiveStressParameters</a>, <a class="el" href="class_ionic_initial_state_parameters.html#a7f6df694028b607ba3c4c65835cd1511">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#ab21f192042cb0d4651f71d2388af7106">IonicModelParameters</a></li>
 <li>pS0&#160;:&#160;<a class="el" href="class_com_mod.html#af6037b9453a02db9505b7af5bc403cae">ComMod</a></li>
 <li>pseudo_ECG&#160;:&#160;<a class="el" href="classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a">ecgLeadsType</a></li>
 <li>pstEq&#160;:&#160;<a class="el" href="class_com_mod.html#a87707963de89cffba1c523da18569cd8">ComMod</a></li>

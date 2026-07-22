@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -93,9 +101,11 @@ $(function() {
 <li>N&#160;:&#160;<a class="el" href="classmsh_type.html#a14952aebe301a67a398b7c46cc5156e8">mshType</a></li>
 <li>n&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#a9845e755c3dde4646477c00682784b2d">svmp::FE::math::DenseLUSolver</a>, <a class="el" href="classutils_1_1stack_type.html#aab9fe6a4b9b4cdada815fc2b6346be46">utils::stackType</a></li>
 <li>n_components&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1_field_value_entry.html#a8a2ddbfa067ad400f41035831df68ed8">svmp::FE::FieldValueEntry</a></li>
+<li>n_states&#160;:&#160;<a class="el" href="class_active_stress.html#a9f94bcf2617e372ab1e410c1069bcbbb">ActiveStress</a></li>
 <li>Na_o&#160;:&#160;<a class="el" href="class_t_t_p.html#a1a43c212db02f3a4eb8142cf2478b7bc">TTP</a></li>
 <li>nAdj&#160;:&#160;<a class="el" href="classmsh_type.html#a21ecec528c189cd9f1852a7029fb42cb">mshType</a></li>
 <li>name&#160;:&#160;<a class="el" href="classmsh_type.html#ae7cec54505739f048489e9cd5f383da3">mshType</a>, <a class="el" href="classuris_type.html#ac7ef792eac7d64ab056a62fd40865bb9">urisType</a></li>
+<li>NashPanfilov()&#160;:&#160;<a class="el" href="class_nash_panfilov.html#abe0ad98f4eecb6cdb2d50bbcd6a28cac">NashPanfilov</a></li>
 <li>Nb&#160;:&#160;<a class="el" href="classmsh_type.html#ab78f168b4bfb81759baac80f5b06dd9d">mshType</a></li>
 <li>nBc&#160;:&#160;<a class="el" href="classeq_type.html#a7e1859ff1a254ad95d3136219cea6955">eqType</a></li>
 <li>nBcIB&#160;:&#160;<a class="el" href="classeq_type.html#a1b6a3d1b43df59d7890b2fa6eed9519e">eqType</a></li>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -156,12 +164,12 @@ Static Public Member Functions</h2></td></tr>
 <p>This class implements interpolation of time dependent data through either a Fourier series or a linear clamped ramp. Which of the two is used is determined by the boolean member variable use_ramp.</p>
 <p>In what follows, let \(\{t_i, \mathbf{v}_i\}_{i=0}^{N-1}\) be the interpolated time series, and \(T = t_{N-1} - t_0\) be the period of the time series. The time series is assumed to be ordered, i.e. \(t_i &lt;
 t_{i+1}\) for all \(i\).</p>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md15"></a>
 Using this class</h2>
 <p>The <a class="el" href="class_fourier_interpolation.html" title="Fourier interpolation of time dependent data.">FourierInterpolation</a> class is not meant to be constructed directly, but rather through one of the static methods <a class="el" href="class_fourier_interpolation.html#a751f8e71383eddea5feb4ae9da4802d6">from_time_series</a>, <a class="el" href="class_fourier_interpolation.html#a3af8672847a26f4f62d4c315b92488a9">from_time_series_file</a>, <a class="el" href="class_fourier_interpolation.html#ab49c88d8c475ac35e1fa630b378d239b">from_fourier_coefficients</a>, or <a class="el" href="class_fourier_interpolation.html#a8792a9eba280b774fe6d0e1c50a51ad3">from_fourier_coefficients_file</a>.</p>
 <p>If data is only read from the master rank in a parallel setting, the method <a class="el" href="class_fourier_interpolation.html#a2e2337cc0cb991655bae385625e82685">distribute</a> can be used to broadcast the data to all ranks.</p>
 <p>Once the object has been constructed, the interpolated value at a given time can be obtained through the method <a class="el" href="class_fourier_interpolation.html#aac91f51581b30bf088edc69e46685604">value</a>, and the interpolated value and its time derivative can be obtained through the method <a class="el" href="class_fourier_interpolation.html#a209ad8e328f0073eafa876923de819b6">value_and_derivative</a>.</p>
-<h2><a class="anchor" id="autotoc_md12"></a>
+<h2><a class="anchor" id="autotoc_md16"></a>
 Fourier series interpolation</h2>
 <p>This gives rise to a periodic interpolation, with period \(T\). Let \(M\) be the user-defined number of Fourier modes. The interpolated value at time \(t\) is given by  </p><p class="formulaDsp">
 \[ \begin{aligned}
@@ -204,7 +212,7 @@ Fourier series interpolation</h2>
 \hat{\mathbf{v}}_i &amp;= \mathbf{v}_i - \mathbf{q}_i - \mathbf{q}_s \hat{t}_i
 \end{aligned} \]
 </p>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md17"></a>
 Ramp interpolation</h2>
 <p>The interpolated value is equal to \(\mathbf{v}_0\) until time \(t_0\), then it follows a linear ramp from \(\mathbf{v}_0\) to \(\mathbf{v}_{N-1}\) at \(t_{N-1}\), and then it remains constant at \(\mathbf{v}_{N-1}\) for all times greater than \(t_{N-1}\). Notice in particular that this interpolation is not periodic.</p>
 <p>The interpolated value is given by  </p><p class="formulaDsp">

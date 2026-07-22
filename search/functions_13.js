@@ -5,5 +5,5 @@ var searchData=
   ['valm_2',['valM',['../class_capping_surface.html#a3e9e871a83f2d94a9c174a13e963d073',1,'CappingSurface']]],
   ['value_3',['value',['../class_fourier_interpolation.html#aac91f51581b30bf088edc69e46685604',1,'FourierInterpolation']]],
   ['value_5fand_5fderivative_4',['value_and_derivative',['../class_fourier_interpolation.html#a209ad8e328f0073eafa876923de819b6',1,'FourierInterpolation']]],
-  ['visit_5',['visit',['../class_ionic_model_factory.html#a7d5a04042e915d06920a683cea045729',1,'IonicModelFactory']]]
+  ['visit_5',['visit',['../class_factory.html#a9498c7cee719f2985f60382e83b3f19d',1,'Factory']]]
 ];

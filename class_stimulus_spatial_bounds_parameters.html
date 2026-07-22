@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -123,7 +131,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>value_set</b> = false
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a08ea408ef5fa55b79f8798b17bfd46b7" id="r_a08ea408ef5fa55b79f8798b17bfd46b7"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_stimulus_spatial_bounds_parameters.html#a08ea408ef5fa55b79f8798b17bfd46b7">xml_element_name_</a> = &quot;Spatial_bounds&quot;</td></tr>
+<tr class="memitem:a08ea408ef5fa55b79f8798b17bfd46b7" id="r_a08ea408ef5fa55b79f8798b17bfd46b7"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_stimulus_spatial_bounds_parameters.html#a08ea408ef5fa55b79f8798b17bfd46b7">xml_element_name_</a></td></tr>
 <tr class="memdesc:a08ea408ef5fa55b79f8798b17bfd46b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">XML element name for CEP stimulus spatial bounds.  <br /></td></tr>
 <tr class="separator:a08ea408ef5fa55b79f8798b17bfd46b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -140,7 +148,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const std::string StimulusSpatialBoundsParameters::xml_element_name_ = &quot;Spatial_bounds&quot;</td>
+          <td class="memname">const std::string StimulusSpatialBoundsParameters::xml_element_name_</td>
         </tr>
       </table>
   </td>
@@ -149,7 +157,9 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;Spatial_bounds&quot;</span></div>
+</div><!-- fragment -->
 <p>XML element name for CEP stimulus spatial bounds. </p>
 
 </div>

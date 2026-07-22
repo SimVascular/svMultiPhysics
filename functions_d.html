@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -91,16 +99,18 @@ $(function() {
 <h3><a id="index_d" name="index_d"></a>- d -</h3><ul>
 <li>Dani&#160;:&#160;<a class="el" href="classcep_model_type.html#a8781336826bf8adbee47388244504c75">cepModelType</a></li>
 <li>dB&#160;:&#160;<a class="el" href="classls_type.html#ad8cafee67652ba89cc53125a4dac5efa">lsType</a></li>
-<li>defined()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#a99522afa755e55c8cb12b179b2bae43f">FourierInterpolation</a>, <a class="el" href="class_ionic_initial_state_parameters.html#aa2597d0ea0c4d83adf6e3191d554cefc">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a43fd6d918dd7bc04b5d39b29f08b7dce">IonicModelParameters</a></li>
+<li>defined()&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#a18c3133bc851a54860223f9357d90234">ActiveStressModelParameters</a>, <a class="el" href="class_active_stress_parameters.html#aac0521c43b643c79dfd417e419a5d323">ActiveStressParameters</a>, <a class="el" href="class_fourier_interpolation.html#a99522afa755e55c8cb12b179b2bae43f">FourierInterpolation</a>, <a class="el" href="class_ionic_initial_state_parameters.html#aa2597d0ea0c4d83adf6e3191d554cefc">IonicInitialStateParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a43fd6d918dd7bc04b5d39b29f08b7dce">IonicModelParameters</a></li>
 <li>delta()&#160;:&#160;<a class="el" href="class_bueno_orovio.html#a6505fc0e5db745a4b68a0a65306fe1bd">BuenoOrovio</a></li>
 <li>destroy()&#160;:&#160;<a class="el" href="classface_type.html#a960e2f03636f6a94beba1bff888cba88">faceType</a>, <a class="el" href="classfs_type.html#a9a44be997855630783ee7f73d5bf4f67">fsType</a></li>
 <li>dFlag&#160;:&#160;<a class="el" href="class_com_mod.html#ac05d7dca5ced9c58d76a54eb2ac0130c">ComMod</a></li>
-<li>Diagnostic()&#160;:&#160;<a class="el" href="classsvmp_1_1_diagnostic.html#a8871718d465342406f5c5ab6b99b3b22">svmp::Diagnostic</a></li>
+<li>Diagnostic()&#160;:&#160;<a class="el" href="classsvmp_1_1_diagnostic.html#a6f42b453469f09da2dbccc6b6e133a44">svmp::Diagnostic</a></li>
 <li>diagnostics&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1math_1_1_dense_inverse_result.html#ac7d797baf3b708e4ce1e32c73adc0235">svmp::FE::math::DenseInverseResult</a>, <a class="el" href="structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#abc1f743b02bff6471d1c97f982b05a9f">svmp::FE::math::DenseLUSolver</a></li>
 <li>dimension()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ad66c9e86ff277552141889be6362a9be">svmp::FE::basis::BasisFunction</a>, <a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#a59f63ed6aee4941e8a23e72ddf94a23e">svmp::FE::basis::LagrangeBasis</a>, <a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#a4bae6ef52dbe61d96ccbf1cd37adf44a">svmp::FE::basis::SerendipityBasis</a></li>
+<li>directional_distribution&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#acbe6db8116c89cfef89a8f8c7e9bcc35">ActiveStressParameters</a></li>
 <li>Diso&#160;:&#160;<a class="el" href="classcep_model_type.html#a08c91758afdcb42bc8350f18d1943cdb">cepModelType</a></li>
 <li>distribute()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a7859d5d785d1411542d6d3137c823c37">BoundaryCondition</a>, <a class="el" href="class_coupled_boundary_condition.html#a95f637f4794b73e914ef5a87467ff874">CoupledBoundaryCondition</a>, <a class="el" href="class_fourier_interpolation.html#a2e2337cc0cb991655bae385625e82685">FourierInterpolation</a>, <a class="el" href="classstim_type.html#a9d3c4d3fa88b8fe22e239174082bd470">stimType</a>, <a class="el" href="classstim_type_1_1_spatial_bounds.html#a9568734d85e3328ad847744d63e3d174">stimType::SpatialBounds</a></li>
-<li>distribute_parameters()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#ab6148986d0cacb730985b108c22218c5">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#aa28fd8951986a2e15b7536154f542ea2">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a8a37758a7af32985f4075e6ddf95009d">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#ac62ce48718ec2ed6f4af5a51cf4c2d3f">IonicModel</a>, <a class="el" href="class_t_t_p.html#a748499922d93e274a2e35ce6c9a04620">TTP</a></li>
+<li>distribute_model_specific_parameters()&#160;:&#160;<a class="el" href="class_active_stress.html#ad8b0f3d24386b63d3b9d9e5d0071cd84">ActiveStress</a>, <a class="el" href="class_active_stress_o_d_e.html#a99474d5d894ebe0dee10040612d47c9c">ActiveStressODE</a>, <a class="el" href="class_nash_panfilov.html#a14af554e4c9420ebaef3f9702fda4d68">NashPanfilov</a>, <a class="el" href="class_uniform_steady_active_stress.html#ac7b10febc090a3f649413be027661a17">UniformSteadyActiveStress</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#abe367d1a1709a195301d40b3eb938a73">UniformUnsteadyActiveStress</a></li>
+<li>distribute_parameters()&#160;:&#160;<a class="el" href="class_active_stress.html#aab5ac54b95f7c1e4224dc1867f5397ef">ActiveStress</a>, <a class="el" href="class_aliev_panfilov.html#ab6148986d0cacb730985b108c22218c5">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#aa28fd8951986a2e15b7536154f542ea2">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a8a37758a7af32985f4075e6ddf95009d">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#ac62ce48718ec2ed6f4af5a51cf4c2d3f">IonicModel</a>, <a class="el" href="class_t_t_p.html#a748499922d93e274a2e35ce6c9a04620">TTP</a></li>
 <li>dmn&#160;:&#160;<a class="el" href="classeq_type.html#a8444f77be8c6f85297aca3c3ce9eb1ec">eqType</a></li>
 <li>dmnIB&#160;:&#160;<a class="el" href="classeq_type.html#ac9596dcfa3a9f0e7505758df1783bcb0">eqType</a></li>
 <li>dmnId&#160;:&#160;<a class="el" href="class_com_mod.html#af4c58496f29910587451362895704511">ComMod</a></li>
@@ -110,6 +120,7 @@ $(function() {
 <li>DofException()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1_dof_exception.html#a3f675798cc87d5cf73b92681e8c86a3d">svmp::FE::DofException</a></li>
 <li>DofIndex()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1_dof_index.html#ada0cc01794956a2ac55f94f441cfa044">svmp::FE::DofIndex</a></li>
 <li>dot()&#160;:&#160;<a class="el" href="class_vector.html#a5be8b64d660df6e59dc41305a3c5a2a1">Vector&lt; T &gt;</a></li>
+<li>double_parameters&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#a2d4632add24457cacdcad8611c521557">ActiveStressModelParameters</a></li>
 <li>dt&#160;:&#160;<a class="el" href="classcep_model_type.html#a9150e6fecfe73b9e008600f0c4211cc1">cepModelType</a>, <a class="el" href="class_com_mod.html#a8a94399601d9bfca1102b5e5be27a055">ComMod</a></li>
 <li>dx&#160;:&#160;<a class="el" href="classmsh_type.html#a4578725ffdbfede707e48b4358d47de9">mshType</a></li>
 <li>DxClose&#160;:&#160;<a class="el" href="classuris_type.html#a7319d6430091ea413a74fd9c158ee80a">urisType</a></li>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -347,7 +355,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span> </div>
 <div class="ttc" id="aclass_cm_mod_html"><div class="ttname"><a href="class_cm_mod.html">CmMod</a></div><div class="ttdoc">The CmMod class duplicates the data structures in the Fortran CMMOD module defined in COMU....</div><div class="ttdef"><b>Definition</b> CmMod.h:36</div></div>
-<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:24</div></div>
+<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:26</div></div>
 <div class="ttc" id="aclasscm_type_html"><div class="ttname"><a href="classcm_type.html">cmType</a></div><div class="ttdoc">The cmType class stores data and defines methods used for mpi communication.</div><div class="ttdef"><b>Definition</b> CmMod.h:56</div></div>
 <div class="ttc" id="aclasscm_type_html_a4e0e8c123f55c5be3acce45504b5ea71"><div class="ttname"><a href="classcm_type.html#a4e0e8c123f55c5be3acce45504b5ea71">cmType::gatherv</a></div><div class="ttdeci">void gatherv(const CmMod &amp;cm_mod, const Vector&lt; int &gt; &amp;send_data, Vector&lt; int &gt; &amp;recv_data, const Vector&lt; int &gt; &amp;recv_counts, const Vector&lt; int &gt; &amp;displs, int root) const</div><div class="ttdoc">gatherv int Vector</div><div class="ttdef"><b>Definition</b> CmMod.cpp:199</div></div>
 <div class="ttc" id="aclasscm_type_html_a5faeaa793d615d608c012b7b6d44b0e3"><div class="ttname"><a href="classcm_type.html#a5faeaa793d615d608c012b7b6d44b0e3">cmType::scatterv</a></div><div class="ttdeci">void scatterv(const CmMod &amp;cm_mod, const Vector&lt; int &gt; &amp;send_data, const Vector&lt; int &gt; &amp;send_counts, const Vector&lt; int &gt; &amp;displs, Vector&lt; int &gt; &amp;recv_data, int root) const</div><div class="ttdoc">scatterv int Vector</div><div class="ttdef"><b>Definition</b> CmMod.cpp:213</div></div>

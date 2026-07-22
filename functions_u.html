@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -102,6 +110,8 @@ $(function() {
 <li>uCANN_h2()&#160;:&#160;<a class="el" href="class_artificial_neural_net_material.html#aed1c2c7008e77d2152801f6e0e6e8221">ArtificialNeuralNetMaterial</a></li>
 <li>um_w&#160;:&#160;<a class="el" href="class_bueno_orovio.html#ac5c2ad113102d9d3a9ab07387399190b">BuenoOrovio</a></li>
 <li>Un&#160;:&#160;<a class="el" href="classib_type.html#a3b7c4e0883aba8934343de50bf783325">ibType</a></li>
+<li>UniformSteadyActiveStress()&#160;:&#160;<a class="el" href="class_uniform_steady_active_stress.html#a5638bbcd5239e93f9d428dc3ac1db10b">UniformSteadyActiveStress</a></li>
+<li>UniformUnsteadyActiveStress()&#160;:&#160;<a class="el" href="class_uniform_unsteady_active_stress.html#a6fc22fec647877c0dfb5687e890d0b60">UniformUnsteadyActiveStress</a></li>
 <li>Uo&#160;:&#160;<a class="el" href="classib_type.html#a574ebd1a9019f4bb8c6968a8cfa7bb3d">ibType</a></li>
 <li>update_g()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#aa288c83cf1370aa2bc81313ce507822f">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a3d1b4ecd85cb66a28ebb190fa7f5daa9">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a72a77eaf5c9676ebac3bd85b52c18599">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#a910da48c092c9e6feef4a9be516ae3b8">IonicModel</a>, <a class="el" href="class_t_t_p.html#ad668c6a83bafea4faa854b59ad26d374">TTP</a></li>
 <li>update_solution()&#160;:&#160;<a class="el" href="class_one_d_solver_interface.html#a12309b37505c4035bd2517ae9458e6f3">OneDSolverInterface</a></li>

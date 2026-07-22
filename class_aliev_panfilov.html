@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -241,7 +249,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Aliev-Panfilov ionic model. </p>
-<p><b>Reference</b>: Aliev, Panfilov. A simple two-variable model of cardiac excitation. Chaos, Solitons and Fractals (1996). </p>
+<p><b>Reference</b>: <a href="https://doi.org/10.1016/0960-0779(95)00089-5">Aliev, Panfilov (1996)</a> </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae46eccc13eba2591ea065e6ac5255b81" name="ae46eccc13eba2591ea065e6ac5255b81"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae46eccc13eba2591ea065e6ac5255b81">&#9670;&#160;</a></span>AlievPanfilov()</h2>

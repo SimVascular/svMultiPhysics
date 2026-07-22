@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -89,6 +97,7 @@ $(function() {
 <div class="textblock">Here is a list of all documented variables with links to the class documentation for each member:</div>
 
 <h3><a id="index_o" name="index_o"></a>- o -</h3><ul>
+<li>ode_solver&#160;:&#160;<a class="el" href="class_active_stress_o_d_e.html#afa90fa79a3020c9381897338c2d872b9">ActiveStressODE</a></li>
 <li>odes&#160;:&#160;<a class="el" href="classcep_model_type.html#a5561dc6f1de77d662ee66199a15317b4">cepModelType</a></li>
 <li>ok&#160;:&#160;<a class="el" href="classeq_type.html#a168b70cd9f8b50c649d5dd5d64afadf0">eqType</a></li>
 <li>old&#160;:&#160;<a class="el" href="struct_solution_states.html#aad834638292dec1d605cfcd5898143a7">SolutionStates</a></li>

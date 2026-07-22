@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -102,7 +110,7 @@ $(function() {
 <li>gam&#160;:&#160;<a class="el" href="classeq_type.html#a7a920f1cd12fcf62e93c72fe7910b53e">eqType</a></li>
 <li>gamma&#160;:&#160;<a class="el" href="class_t_t_p.html#ae1f074bb8508646eec7764f4da3ccad5">TTP</a></li>
 <li>gather()&#160;:&#160;<a class="el" href="classcm_type.html#a982276c0bc3033f7a9f99a4be18f478a">cmType</a></li>
-<li>gatherv()&#160;:&#160;<a class="el" href="classcm_type.html#a19d171eae19b9e8d03b2a149c91135a8">cmType</a></li>
+<li>gatherv()&#160;:&#160;<a class="el" href="classcm_type.html#a4e0e8c123f55c5be3acce45504b5ea71">cmType</a></li>
 <li>gE&#160;:&#160;<a class="el" href="classib_comm_type.html#ad7de6265e2f87d7d01b3b0295221a9a3">ibCommType</a></li>
 <li>GeneralSimulationParameters()&#160;:&#160;<a class="el" href="class_general_simulation_parameters.html#aa7178082cc0e1713920afdcb42727b78">GeneralSimulationParameters</a></li>
 <li>get()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1_strong_type.html#a86b82331958dfd4c929a2275929aee0f">svmp::FE::StrongType&lt; T, Tag &gt;</a></li>
@@ -110,18 +118,22 @@ $(function() {
 <li>get_alias_value()&#160;:&#160;<a class="el" href="class_output_parameters.html#a03c553144ccae67fd5a3f7404e4b04ea">OutputParameters</a></li>
 <li>get_bc_type()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#aeed6ddc57c018d73c1c1638f8c3aa4b9">CoupledBoundaryCondition</a></li>
 <li>get_block_name()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a42f4476a63424cc78104975e9787eff2">CoupledBoundaryCondition</a></li>
+<li>get_bool()&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#a9d0c1336de70f9f87b5b3cb1bf44db36">ActiveStressModelParameters</a></li>
 <li>get_calcium_index()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#ad544cbb6099f358c4a9c01b00b073b71">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a379505119b6edeb57eef94c8865729f6">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a6ae3006e07ff50314771dcb4e085d5c5">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#a44d36fe0c16b40c26f5f144b9b7b67c4">IonicModel</a>, <a class="el" href="class_t_t_p.html#a666be40c571a232c4726c7cb13de1949">TTP</a></li>
 <li>get_coefficient_imaginary()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#a6e2473dd453521d0c64eb09f601fa2e1">FourierInterpolation</a></li>
 <li>get_coefficient_real()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#a41e232d4175b65519e1930d2b43f173f">FourierInterpolation</a></li>
 <li>get_damping()&#160;:&#160;<a class="el" href="class_robin_boundary_condition.html#ae0872c0e3c6bb3431a088b1a5153df7d">RobinBoundaryCondition</a></li>
 <li>get_Dg()&#160;:&#160;<a class="el" href="class_integrator.html#abc22b6f2ebb9286c676bf7f5f750fb7d">Integrator</a></li>
+<li>get_eta_f()&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#af3eb5b5f0b6d92c370f2219ae8cf7f1e">ActiveStressParameters</a></li>
+<li>get_eta_n()&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#aaf4d85cf63c4aec33d42598748a493eb">ActiveStressParameters</a></li>
+<li>get_eta_s()&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#ad1b19abfe07c0ac355af4463452bb4cd">ActiveStressParameters</a></li>
 <li>get_flag()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a7c72e507ce6139cfce4558534b903f59">BoundaryCondition</a></li>
 <li>get_flow_sol_id()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a7a63b706473f16bbad2e5e4e99929c1f">CoupledBoundaryCondition</a></li>
 <li>get_global_num_nodes()&#160;:&#160;<a class="el" href="class_boundary_condition.html#aad6d124f96c8ee94f99dc916aa149c47">BoundaryCondition</a></li>
 <li>get_in_out_sign()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a8e429dd13f52a50eedee2adc5aec98c9">CoupledBoundaryCondition</a></li>
 <li>get_initial_X()&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#a06681447688793494c19a4e2f2937ce1">IonicModelParameters</a></li>
 <li>get_initial_Xg()&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#ab7763c98c69f6e257dd8d06c9e5ff28b">IonicModelParameters</a></li>
-<li>get_instance()&#160;:&#160;<a class="el" href="class_ionic_model_factory.html#a52836514934118616a8890eb4746b8af">IonicModelFactory</a></li>
+<li>get_instance()&#160;:&#160;<a class="el" href="class_factory.html#a0948cdc082c3372169391db5ae47193f">Factory&lt; BaseType &gt;</a></li>
 <li>get_integrator()&#160;:&#160;<a class="el" href="class_simulation.html#a8b968b97c4e8530e15aeac38ed22cdeb">Simulation</a></li>
 <li>get_lagrange_lattice()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html#a08f3c2bd495cf42d594a39a2128fd15a">svmp::FE::basis::ReferenceNodeLayout</a></li>
 <li>get_lagrange_node_coords()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html#a0cb0c6d4615d360b6b800ba4022fc898">svmp::FE::basis::ReferenceNodeLayout</a></li>
@@ -129,6 +141,7 @@ $(function() {
 <li>get_linear_trend_slope()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#a81f079ca0a571e5501024e23a95e4bf2">FourierInterpolation</a></li>
 <li>get_local_index()&#160;:&#160;<a class="el" href="class_boundary_condition.html#aacf03a22f7663617b1fc87314d7a47d4">BoundaryCondition</a></li>
 <li>get_local_num_nodes()&#160;:&#160;<a class="el" href="class_boundary_condition.html#ad9dace049595ebfd46beb9c59cb38134">BoundaryCondition</a></li>
+<li>get_model_name()&#160;:&#160;<a class="el" href="class_active_stress_parameters.html#aed721dee50a5f22b006b7bbd62c48291">ActiveStressParameters</a></li>
 <li>get_n_components()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#afe287f0cb0b9089fa3b249196da74dce">FourierInterpolation</a></li>
 <li>get_n_fourier_coefficients()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#a581ccadb33364ce7cd524aef26bf2bf2">FourierInterpolation</a></li>
 <li>get_oned_input_file()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#ae66fca001573f946053480972550f5e0">CoupledBoundaryCondition</a></li>
@@ -141,7 +154,7 @@ $(function() {
 <li>get_P_prev_sent_new()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a85da1f626d3cd38005b65a64b3d29198">CoupledBoundaryCondition</a></li>
 <li>get_P_prev_sent_old()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a1103920d5c6da559d61bd2b3b1ee245f">CoupledBoundaryCondition</a></li>
 <li>get_parameter_list()&#160;:&#160;<a class="el" href="class_parameter_lists.html#a9fe04f3c28dec4a1fe01da2c468b75f6">ParameterLists</a></li>
-<li>get_parameters()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a8b660c6392184c3efab41f5df090ca5d">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a865f503b962d550c3867e437b06c08b8">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#aeeeb27425e8e3f655a60f7835faf2850">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#aeae41ac7d2f4bdba200f3859bc325103">IonicModel</a>, <a class="el" href="class_t_t_p.html#a195b7ec814146512de1e2a038c6105d2">TTP</a></li>
+<li>get_parameters()&#160;:&#160;<a class="el" href="class_active_stress.html#abf3b2b49a2e104f56a7c4fb94a390bb1">ActiveStress</a>, <a class="el" href="class_active_stress_parameters.html#a894dfb0c153cd77c45c603c22a11df9a">ActiveStressParameters</a>, <a class="el" href="class_aliev_panfilov.html#a8b660c6392184c3efab41f5df090ca5d">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a865f503b962d550c3867e437b06c08b8">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#aeeeb27425e8e3f655a60f7835faf2850">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#aeae41ac7d2f4bdba200f3859bc325103">IonicModel</a>, <a class="el" href="class_nash_panfilov.html#a966361422b1df5944daa273a9342abfb">NashPanfilov</a>, <a class="el" href="class_t_t_p.html#a195b7ec814146512de1e2a038c6105d2">TTP</a>, <a class="el" href="class_uniform_steady_active_stress.html#a50f6ff9dc1eed4091787235dde3202d0">UniformSteadyActiveStress</a>, <a class="el" href="class_uniform_unsteady_active_stress.html#ad6faaccbd27771bcbf0172b16b83bd91">UniformUnsteadyActiveStress</a></li>
 <li>get_Pn()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#ae3acc4c4cd3db83f936f021eb87020c4">CoupledBoundaryCondition</a></li>
 <li>get_Po()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a0d5e82599011a1223e6f122b09e0f36b">CoupledBoundaryCondition</a></li>
 <li>get_point_data()&#160;:&#160;<a class="el" href="class_vtk_vtp_data.html#aa0ca8c35634853f8f558cd8c4c687f38">VtkVtpData</a>, <a class="el" href="class_vtk_vtu_data.html#a41639abdec4f13c0df4fe319138b1bc3">VtkVtuData</a></li>
@@ -156,14 +169,18 @@ $(function() {
 <li>get_Qo()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#ac1a1161a5d77a7b638095560b0737e83">CoupledBoundaryCondition</a></li>
 <li>get_ramp_step_count()&#160;:&#160;<a class="el" href="class_coupled_boundary_condition.html#a0c933334cd66755d879ce18d0bbd694a">CoupledBoundaryCondition</a></li>
 <li>get_registered_outputs()&#160;:&#160;<a class="el" href="class_ionic_model.html#aea1e00a5ea03e797574e39dea5f76ea0">IonicModel</a></li>
-<li>get_scalar()&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#a39f7cdcc9fab30b70e92358a243bcb60">IonicModelParameters</a></li>
+<li>get_scalar()&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#a86f640c54353bb7b6d4209e85f9f3a3a">ActiveStressModelParameters</a>, <a class="el" href="class_ionic_model_parameters.html#a39f7cdcc9fab30b70e92358a243bcb60">IonicModelParameters</a></li>
 <li>get_solutions()&#160;:&#160;<a class="el" href="class_integrator.html#ac956bd613fe786d724630763ccb97fe4">Integrator</a></li>
 <li>get_stiffness()&#160;:&#160;<a class="el" href="class_robin_boundary_condition.html#a0b68753f8731f0c0a5891c1a0f061b28">RobinBoundaryCondition</a></li>
+<li>get_string()&#160;:&#160;<a class="el" href="class_active_stress_model_parameters.html#a73df0d5bf4734686852f1be7913e4d07">ActiveStressModelParameters</a></li>
+<li>get_tension_fibers()&#160;:&#160;<a class="el" href="class_active_stress.html#a7d5afceece53c6997cc97e078b38500c">ActiveStress</a></li>
+<li>get_tension_sheet_normals()&#160;:&#160;<a class="el" href="class_active_stress.html#a105a5462be182202415a443fbb81f6b0">ActiveStress</a></li>
+<li>get_tension_sheets()&#160;:&#160;<a class="el" href="class_active_stress.html#aecdb8c2f23cea055da5c57dc39ce1c71">ActiveStress</a></li>
 <li>get_value()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a74e078368acf48354b6d2523604fa4cf">BoundaryCondition</a></li>
 <li>get_vector()&#160;:&#160;<a class="el" href="class_ionic_model_parameters.html#a3bf3dd213f4179acfd7f6f4566f6771b">IonicModelParameters</a></li>
 <li>get_vtp_path()&#160;:&#160;<a class="el" href="class_boundary_condition.html#af6a3bc66547f5d6a3dc3b462474b33b8">BoundaryCondition</a></li>
 <li>get_Yg()&#160;:&#160;<a class="el" href="class_integrator.html#ad6a3e13763bf6c7f93c730da82ae96fa">Integrator</a></li>
-<li>getf()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a5b0a6dd063462fa10c38d5fd9168396f">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a5b5bb8f31c99f397a00d431364f84b84">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a8bc616b44f5cc48a6755d722999188e1">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#ab5f1998a3bb13a68c731e32d1785160d">IonicModel</a>, <a class="el" href="class_t_t_p.html#ab3c64eb056edc58abbe44e9b89bd3cf2">TTP</a></li>
+<li>getf()&#160;:&#160;<a class="el" href="class_active_stress_o_d_e.html#a04ba4b68e764a5ee2350d5b9781f08f1">ActiveStressODE</a>, <a class="el" href="class_aliev_panfilov.html#a5b0a6dd063462fa10c38d5fd9168396f">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a5b5bb8f31c99f397a00d431364f84b84">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a8bc616b44f5cc48a6755d722999188e1">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#ab5f1998a3bb13a68c731e32d1785160d">IonicModel</a>, <a class="el" href="class_nash_panfilov.html#a4cb59dee7cb131f7ea568a2f3f59b4dd">NashPanfilov</a>, <a class="el" href="class_t_t_p.html#ab3c64eb056edc58abbe44e9b89bd3cf2">TTP</a></li>
 <li>getj()&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a808e9def1cdddf717bc49f4f2de12cb1">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a80a54309b88b7f6d0929632758666e64">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a6bb0924e2ea9ade0bb543e530f8e0ce5">FitzHughNagumo</a>, <a class="el" href="class_ionic_model.html#a7f57bcae4207a8b1e79d5d2800952a66">IonicModel</a></li>
 <li>gIEN&#160;:&#160;<a class="el" href="classmsh_type.html#ad58a7875abbefeebe1838ce48a1909ab">mshType</a></li>
 <li>global_data_&#160;:&#160;<a class="el" href="class_boundary_condition.html#ab71a7cd71d1b9442532ddf711044df90">BoundaryCondition</a></li>

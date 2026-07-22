@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -115,6 +123,12 @@ std::map&lt; consts::PhysicalProperyType, double &gt;&#160;</td><td class="memIt
 <tr class="memitem:a139f776724c98afa0bf921b1f8d5691b" id="r_a139f776724c98afa0bf921b1f8d5691b"><td class="memItemLeft" align="right" valign="top"><a id="a139f776724c98afa0bf921b1f8d5691b" name="a139f776724c98afa0bf921b1f8d5691b"></a>
 <a class="el" href="classcep_model_type.html">cepModelType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>cep</b></td></tr>
 <tr class="separator:a139f776724c98afa0bf921b1f8d5691b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6381804be7b28de2675c347e799d2215" id="r_a6381804be7b28de2675c347e799d2215"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_type.html#a6381804be7b28de2675c347e799d2215">active_stress_model_name</a> = &quot;&quot;</td></tr>
+<tr class="memdesc:a6381804be7b28de2675c347e799d2215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Active stress model name.  <br /></td></tr>
+<tr class="separator:a6381804be7b28de2675c347e799d2215"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a96888421bcaff6c4a44b677761b8a8" id="r_a9a96888421bcaff6c4a44b677761b8a8"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="class_active_stress.html">ActiveStress</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_type.html#a9a96888421bcaff6c4a44b677761b8a8">active_stress</a></td></tr>
+<tr class="memdesc:a9a96888421bcaff6c4a44b677761b8a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Active stress model.  <br /></td></tr>
+<tr class="separator:a9a96888421bcaff6c4a44b677761b8a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adeb9a78839e449001fcb222e619cb2a9" id="r_adeb9a78839e449001fcb222e619cb2a9"><td class="memItemLeft" align="right" valign="top"><a id="adeb9a78839e449001fcb222e619cb2a9" name="adeb9a78839e449001fcb222e619cb2a9"></a>
 <a class="el" href="classst_model_type.html">stModelType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>stM</b></td></tr>
 <tr class="separator:adeb9a78839e449001fcb222e619cb2a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -127,7 +141,40 @@ std::map&lt; consts::PhysicalProperyType, double &gt;&#160;</td><td class="memIt
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Domain type is to keep track with element belong to which domain and also different physical quantities. </p>
-</div><hr/>The documentation for this class was generated from the following files:<ul>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a9a96888421bcaff6c4a44b677761b8a8" name="a9a96888421bcaff6c4a44b677761b8a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a96888421bcaff6c4a44b677761b8a8">&#9670;&#160;</a></span>active_stress</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt;<a class="el" href="class_active_stress.html">ActiveStress</a>&gt; dmnType::active_stress</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Active stress model. </p>
+
+</div>
+</div>
+<a id="a6381804be7b28de2675c347e799d2215" name="a6381804be7b28de2675c347e799d2215"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6381804be7b28de2675c347e799d2215">&#9670;&#160;</a></span>active_stress_model_name</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string dmnType::active_stress_model_name = &quot;&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Active stress model name. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<a class="el" href="_com_mod_8h_source.html">ComMod.h</a></li>
 <li>solver/<b>ComMod.cpp</b></li>
 </ul>

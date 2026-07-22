@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -100,10 +108,16 @@ $(function() {
 <li>elemId&#160;:&#160;<a class="el" href="classuris_type.html#aa9b3b0707d080a8dcad065fd1ec4573c">urisType</a></li>
 <li>empty()&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#a46657bc728ff1b9a0bc864398f606940">svmp::FE::math::DenseLUSolver</a></li>
 <li>eNoN&#160;:&#160;<a class="el" href="classmsh_type.html#a7650e323d00e7041a99014f03c36242b">mshType</a></li>
+<li>epsilon_0&#160;:&#160;<a class="el" href="class_nash_panfilov.html#a0dfdec60e82d4e4cea5d9f81300a8847">NashPanfilov</a></li>
+<li>epsilon_i&#160;:&#160;<a class="el" href="class_nash_panfilov.html#a8d4ea6c006ba5e2c89e712957b5d978f">NashPanfilov</a></li>
 <li>eq&#160;:&#160;<a class="el" href="class_com_mod.html#aba060eb3db7bc3bcafc86374fc5ce2e2">ComMod</a></li>
 <li>eRIS&#160;:&#160;<a class="el" href="classmsh_type.html#a527cc4e201cac250c055734d9fcbd09f">mshType</a></li>
 <li>error_code()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1_backend_exception.html#a0b805098d9282ea644e34913cc0b2edf">svmp::FE::BackendException</a></li>
 <li>error_message_label&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#ab71418d607efbc3cd40983a3b502169a">svmp::FE::math::DenseLUSolver</a></li>
+<li>eta_f&#160;:&#160;<a class="el" href="class_active_stress.html#a635b666d9262845b21d0172925f18174">ActiveStress</a></li>
+<li>eta_n&#160;:&#160;<a class="el" href="class_active_stress.html#a1681aea4b1d1eae925d6831c0d81b041">ActiveStress</a></li>
+<li>eta_s&#160;:&#160;<a class="el" href="class_active_stress.html#a962e2f18b0c712bc23457b8588e56c52">ActiveStress</a></li>
+<li>eta_T&#160;:&#160;<a class="el" href="class_nash_panfilov.html#aab706f0a7d58af6cffa61736ff74c16a">NashPanfilov</a></li>
 <li>eType&#160;:&#160;<a class="el" href="classmsh_type.html#adfef58b820eb09c1e2768773f3c3a4fb">mshType</a></li>
 <li>evaluate()&#160;:&#160;<a class="el" href="class_artificial_neural_net_material.html#ac14b604c9687302daca6ad54ed2ab1c6">ArtificialNeuralNetMaterial</a></li>
 <li>evaluate_all()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a5aee1229b185ec7ebb4af6e400ea3a43">svmp::FE::basis::BasisFunction</a></li>

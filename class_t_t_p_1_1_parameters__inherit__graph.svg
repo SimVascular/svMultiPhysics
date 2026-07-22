@@ -20,7 +20,7 @@
 <!-- Node2 -->
 <g id="Node000002" class="node">
 <title>Node2</title>
-<g id="a_Node000002"><a xlink:href="class_ionic_model_parameters.html" target="_top" xlink:title="Initial conditions parameters for a generic ionic model.">
+<g id="a_Node000002"><a xlink:href="class_ionic_model_parameters.html" target="_top" xlink:title="Parameters for a generic ionic model.">
 <polygon fill="white" stroke="#666666" points="125,-74 0,-74 0,-55 125,-55 125,-74"/>
 <text text-anchor="middle" x="62.5" y="-62" font-family="Helvetica,sans-Serif" font-size="10.00">IonicModelParameters</text>
 </a>

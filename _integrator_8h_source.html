@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -295,14 +303,14 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span><span class="preprocessor">#endif </span><span class="comment">// INTEGRATOR_H</span></div>
 <div class="ttc" id="aclass_integrator_html"><div class="ttname"><a href="class_integrator.html">Integrator</a></div><div class="ttdoc">Integrator class encapsulates the Newton iteration loop for time integration.</div><div class="ttdef"><b>Definition</b> Integrator.h:24</div></div>
 <div class="ttc" id="aclass_integrator_html_abc22b6f2ebb9286c676bf7f5f750fb7d"><div class="ttname"><a href="class_integrator.html#abc22b6f2ebb9286c676bf7f5f750fb7d">Integrator::get_Dg</a></div><div class="ttdeci">Array&lt; double &gt; &amp; get_Dg()</div><div class="ttdoc">Get reference to solution variable Dg (integrated variables)</div><div class="ttdef"><b>Definition</b> Integrator.h:75</div></div>
-<div class="ttc" id="aclass_integrator_html_abfb6cb62626abbd866f3d6f710dc7bab"><div class="ttname"><a href="class_integrator.html#abfb6cb62626abbd866f3d6f710dc7bab">Integrator::step</a></div><div class="ttdeci">bool step()</div><div class="ttdoc">Execute one time step with Newton iteration loop.</div><div class="ttdef"><b>Definition</b> Integrator.cpp:63</div></div>
+<div class="ttc" id="aclass_integrator_html_abfb6cb62626abbd866f3d6f710dc7bab"><div class="ttname"><a href="class_integrator.html#abfb6cb62626abbd866f3d6f710dc7bab">Integrator::step</a></div><div class="ttdeci">bool step()</div><div class="ttdoc">Execute one time step with Newton iteration loop.</div><div class="ttdef"><b>Definition</b> Integrator.cpp:65</div></div>
 <div class="ttc" id="aclass_integrator_html_ac956bd613fe786d724630763ccb97fe4"><div class="ttname"><a href="class_integrator.html#ac956bd613fe786d724630763ccb97fe4">Integrator::get_solutions</a></div><div class="ttdeci">SolutionStates &amp; get_solutions()</div><div class="ttdoc">Get reference to solution states struct.</div><div class="ttdef"><b>Definition</b> Integrator.h:89</div></div>
 <div class="ttc" id="aclass_integrator_html_ad6a3e13763bf6c7f93c730da82ae96fa"><div class="ttname"><a href="class_integrator.html#ad6a3e13763bf6c7f93c730da82ae96fa">Integrator::get_Yg</a></div><div class="ttdeci">Array&lt; double &gt; &amp; get_Yg()</div><div class="ttdoc">Get reference to solution variable Yg (variables)</div><div class="ttdef"><b>Definition</b> Integrator.h:67</div></div>
 <div class="ttc" id="aclass_integrator_html_ad8bfd61004c9f13e305c019fca8fdce2"><div class="ttname"><a href="class_integrator.html#ad8bfd61004c9f13e305c019fca8fdce2">Integrator::get_Ag</a></div><div class="ttdeci">Array&lt; double &gt; &amp; get_Ag()</div><div class="ttdoc">Get reference to solution variable Ag (time derivative of variables)</div><div class="ttdef"><b>Definition</b> Integrator.h:59</div></div>
-<div class="ttc" id="aclass_integrator_html_adc20c8caeb6e1b6d80034afb70605d1c"><div class="ttname"><a href="class_integrator.html#adc20c8caeb6e1b6d80034afb70605d1c">Integrator::predictor</a></div><div class="ttdeci">void predictor()</div><div class="ttdoc">Perform predictor step for next time step.</div><div class="ttdef"><b>Definition</b> Integrator.cpp:391</div></div>
+<div class="ttc" id="aclass_integrator_html_adc20c8caeb6e1b6d80034afb70605d1c"><div class="ttname"><a href="class_integrator.html#adc20c8caeb6e1b6d80034afb70605d1c">Integrator::predictor</a></div><div class="ttdeci">void predictor()</div><div class="ttdoc">Perform predictor step for next time step.</div><div class="ttdef"><b>Definition</b> Integrator.cpp:393</div></div>
 <div class="ttc" id="aclass_simulation_html"><div class="ttname"><a href="class_simulation.html">Simulation</a></div><div class="ttdef"><b>Definition</b> Simulation.h:19</div></div>
-<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:24</div></div>
-<div class="ttc" id="aclasseq_type_html"><div class="ttname"><a href="classeq_type.html">eqType</a></div><div class="ttdoc">Equation type.</div><div class="ttdef"><b>Definition</b> ComMod.h:1088</div></div>
+<div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:26</div></div>
+<div class="ttc" id="aclasseq_type_html"><div class="ttname"><a href="classeq_type.html">eqType</a></div><div class="ttdoc">Equation type.</div><div class="ttdef"><b>Definition</b> ComMod.h:1067</div></div>
 <div class="ttc" id="astruct_solution_states_html"><div class="ttname"><a href="struct_solution_states.html">SolutionStates</a></div><div class="ttdoc">Holds solution state at old, current, and intermediate time levels.</div><div class="ttdef"><b>Definition</b> SolutionStates.h:39</div></div>
 <div class="ttc" id="astruct_solution_states_html_a49784e5ca1664a5fde436340e409e503"><div class="ttname"><a href="struct_solution_states.html#a49784e5ca1664a5fde436340e409e503">SolutionStates::intermediate</a></div><div class="ttdeci">Solution intermediate</div><div class="ttdoc">Generalized-alpha intermediate level (Ag, Yg, Dg)</div><div class="ttdef"><b>Definition</b> SolutionStates.h:42</div></div>
 </div><!-- fragment --></div><!-- contents -->

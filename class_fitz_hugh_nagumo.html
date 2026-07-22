@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -236,8 +244,8 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>FitzHugh-Nagumo ionic model. </p>
 <p><b>References</b>:</p><ul>
-<li>FitzHugh, Impulses and physiological states in theoretical models of nerve membrane. Biophysical Journal (1961)</li>
-<li>Nagumo, Arimoto, Yoshizawa. An active pulse transmission line simulating nerve axon. Proceedings of the IRE (1962). </li>
+<li><a href="https://doi.org/10.1016/S0006-3495(61)86902-6">FitzHugh (1961)</a></li>
+<li><a href="https://doi.org/10.1109/JRPROC.1962.288235">Nagumo, Arimoto, Yoshizawa (1962)</a> </li>
 </ul>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a9548b1649adfbf401d01ef48934a6522" name="a9548b1649adfbf401d01ef48934a6522"></a>

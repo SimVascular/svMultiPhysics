@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -92,6 +100,7 @@ $(function() {
 <li>fa&#160;:&#160;<a class="el" href="classcpl_b_c_type.html#ab532fef3c4545dbe31c303a654d5cb9a">cplBCType</a>, <a class="el" href="classmsh_type.html#ad17c0b09ecca3e5b954c0fdf6d55ac7d">mshType</a></li>
 <li>face()&#160;:&#160;<a class="el" href="class_capping_surface.html#aaf00a11f893d9b74e90a300dcbb0ec2b">CappingSurface</a></li>
 <li>face_&#160;:&#160;<a class="el" href="class_boundary_condition.html#a5da3389f1063f587d24419b70c2bddb8">BoundaryCondition</a></li>
+<li>Factory()&#160;:&#160;<a class="el" href="class_factory.html#a3c53cfe8305847558413e93e65da1707">Factory&lt; BaseType &gt;</a></li>
 <li>Fc&#160;:&#160;<a class="el" href="class_t_t_p.html#af641f7ac9e063f0ee577eb592cef17d4">TTP</a></li>
 <li>FEException()&#160;:&#160;<a class="el" href="classsvmp_1_1_f_e_1_1_f_e_exception.html#a2ffb38f01139b144244c118de5a0571f">svmp::FE::FEException</a></li>
 <li>field&#160;:&#160;<a class="el" href="structsvmp_1_1_f_e_1_1_field_value_entry.html#a9fba45f271b4a4664e8972eb3833d5ab">svmp::FE::FieldValueEntry</a></li>
@@ -104,6 +113,7 @@ $(function() {
 <li>flags_to_string()&#160;:&#160;<a class="el" href="class_boundary_condition.html#a938edfefc9e6f4a110201f16edac44b2">BoundaryCondition</a></li>
 <li>fN&#160;:&#160;<a class="el" href="classmsh_type.html#a9c929b21d27ff353949f96f8df56d14f">mshType</a></li>
 <li>fNorm&#160;:&#160;<a class="el" href="classls_type.html#a222668a1cfbbb101310893855a83e227">lsType</a></li>
+<li>fourier_interpolation&#160;:&#160;<a class="el" href="class_uniform_unsteady_active_stress.html#a2354d6d5915a80376b6ac4e801b97de3">UniformUnsteadyActiveStress</a></li>
 <li>FourierInterpolation()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#a4802f2f71b5a6986a5e313da6c996640">FourierInterpolation</a></li>
 <li>freq&#160;:&#160;<a class="el" href="classrmsh_type.html#a6bd3b7b6c5a5631dbf67b36a723d4095">rmshType</a></li>
 <li>from_fourier_coefficients()&#160;:&#160;<a class="el" href="class_fourier_interpolation.html#ab49c88d8c475ac35e1fa630b378d239b">FourierInterpolation</a></li>

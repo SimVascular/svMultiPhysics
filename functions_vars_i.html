@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -114,6 +122,7 @@ $(function() {
 <li>invert_normal&#160;:&#160;<a class="el" href="classuris_type.html#ab50c39080937fcc7cbe08091dd8deabc">urisType</a></li>
 <li>io&#160;:&#160;<a class="el" href="class_com_mod.html#a98eb9eedd63b102ba50e1492630aa54c">ComMod</a></li>
 <li>ionic_model&#160;:&#160;<a class="el" href="classcep_model_type.html#a88c28fd3839cb1634a3fa9de77b2e65c">cepModelType</a></li>
+<li>ionic_models&#160;:&#160;<a class="el" href="class_domain_parameters.html#abf4b99b072002c79e4247f1b83284b2c">DomainParameters</a></li>
 <li>isReqd&#160;:&#160;<a class="el" href="classrmsh_type.html#afe01d3fba20254f640ae6796827b499e">rmshType</a></li>
 <li>Istim&#160;:&#160;<a class="el" href="classcep_model_type.html#a1101cae7b7a92d3b2f33c60c3571aac1">cepModelType</a></li>
 <li>itr&#160;:&#160;<a class="el" href="classeq_type.html#a729d8409204c2eca46848dfdf463e066">eqType</a>, <a class="el" href="classls_type.html#aa1fc30ce2b86d0aba12f67d208882903">lsType</a></li>

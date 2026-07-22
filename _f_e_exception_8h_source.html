@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -113,7 +121,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment"> * failures from finite-element assembly, backend, DOF, and element operations.</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment"> */</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &quot;Exception.h&quot;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &quot;Core/Exception.h&quot;</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;sstream&gt;</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;string&gt;</span></div>
@@ -489,7 +497,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>} <span class="comment">// namespace svmp::FE</span></div>
 <div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span> </div>
 <div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span><span class="preprocessor">#endif </span><span class="comment">// SVMP_FE_EXCEPTION_H</span></div>
-<div class="ttc" id="aclasssvmp_1_1_exception_base_html"><div class="ttname"><a href="classsvmp_1_1_exception_base.html">svmp::ExceptionBase</a></div><div class="ttdef"><b>Definition</b> Exception.h:272</div></div>
+<div class="ttc" id="aclasssvmp_1_1_exception_base_html"><div class="ttname"><a href="classsvmp_1_1_exception_base.html">svmp::ExceptionBase</a></div><div class="ttdef"><b>Definition</b> Exception.h:258</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1_assembly_exception_html"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1_assembly_exception.html">svmp::FE::AssemblyException</a></div><div class="ttdoc">Global assembly failure.</div><div class="ttdef"><b>Definition</b> FEException.h:176</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1_backend_exception_html"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1_backend_exception.html">svmp::FE::BackendException</a></div><div class="ttdoc">Failure reported by a linear-algebra or solver backend.</div><div class="ttdef"><b>Definition</b> FEException.h:184</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1_backend_exception_html_a0b805098d9282ea644e34913cc0b2edf"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1_backend_exception.html#a0b805098d9282ea644e34913cc0b2edf">svmp::FE::BackendException::error_code</a></div><div class="ttdeci">int error_code() const noexcept</div><div class="ttdoc">Backend-native error code.</div><div class="ttdef"><b>Definition</b> FEException.h:211</div></div>
@@ -514,7 +522,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1_singular_mapping_exception_html"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1_singular_mapping_exception.html">svmp::FE::SingularMappingException</a></div><div class="ttdoc">Element geometric mapping is singular or inverted.</div><div class="ttdef"><b>Definition</b> FEException.h:328</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1_singular_mapping_exception_html_a1e500e2794cc801037795c8ac62b1eb7"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1_singular_mapping_exception.html#a1e500e2794cc801037795c8ac62b1eb7">svmp::FE::SingularMappingException::SingularMappingException</a></div><div class="ttdeci">SingularMappingException(const std::string &amp;message, double jacobian_det=0.0)</div><div class="ttdoc">Construct with a message and the offending Jacobian determinant.</div><div class="ttdef"><b>Definition</b> FEException.h:335</div></div>
 <div class="ttc" id="aclasssvmp_1_1_f_e_1_1_singular_mapping_exception_html_ae16009777243d9cb2beee093280e3d9f"><div class="ttname"><a href="classsvmp_1_1_f_e_1_1_singular_mapping_exception.html#ae16009777243d9cb2beee093280e3d9f">svmp::FE::SingularMappingException::jacobian_det</a></div><div class="ttdeci">double jacobian_det() const noexcept</div><div class="ttdoc">Jacobian determinant at the failure point.</div><div class="ttdef"><b>Definition</b> FEException.h:347</div></div>
-<div class="ttc" id="aclasssvmp_1_1_not_implemented_exception_html"><div class="ttname"><a href="classsvmp_1_1_not_implemented_exception.html">svmp::NotImplementedException</a></div><div class="ttdoc">A requested operation or feature is not implemented.</div><div class="ttdef"><b>Definition</b> Exception.h:375</div></div>
+<div class="ttc" id="aclasssvmp_1_1_not_implemented_exception_html"><div class="ttname"><a href="classsvmp_1_1_not_implemented_exception.html">svmp::NotImplementedException</a></div><div class="ttdoc">A requested operation or feature is not implemented.</div><div class="ttdef"><b>Definition</b> Exception.h:352</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

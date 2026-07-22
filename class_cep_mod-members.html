@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -92,11 +100,12 @@ $(function() {
 
 <p>This is the complete list of members for <a class="el" href="class_cep_mod.html">CepMod</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">cem</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">cepEq</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">ecgleads</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">nXion</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">Xion</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#af35acba2dd2e61c90b34dcac4ee3cdbc">calcium</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#abc0caf30d60d1223218837ba4f460c26">cem</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">cepEq</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#af0cf469ca4ed525ba96c99fa5b73c01f">ecgleads</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2">nXion</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e">Xion</a></td><td class="entry"><a class="el" href="class_cep_mod.html">CepMod</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -96,7 +104,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Initial conditions parameters for a generic ionic model.  
+<p><a class="el" href="class_parameters.html" title="The Parameters class stores parameter values read in from a solver input file.">Parameters</a> for a generic ionic model.  
  <a href="class_ionic_model_parameters.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="_parameters_8h_source.html">Parameters.h</a>&gt;</code></p>
@@ -212,7 +220,7 @@ Protected Attributes</h2></td></tr>
 <tr class="separator:a702b21328cfe4c355e7a7bfcd115db3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Initial conditions parameters for a generic ionic model. </p>
+<div class="textblock"><p><a class="el" href="class_parameters.html" title="The Parameters class stores parameter values read in from a solver input file.">Parameters</a> for a generic ionic model. </p>
 <p>Bundles initial conditions for the model's ionic concentrations and gating variables, represented by two instances of <a class="el" href="class_ionic_initial_state_parameters.html" title="Generic ionic model initial conditions parameters.">IonicInitialStateParameters</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae9f4797f55c4f6a8a1762dd477aafc52" name="ae9f4797f55c4f6a8a1762dd477aafc52"></a>

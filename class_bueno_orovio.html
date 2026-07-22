@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -313,7 +321,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Bueno-Orovio ionic model. </p>
-<p><b>Reference</b>: Bueno-Orovio, Cherry, Fenton. Minimal model for human ventricular action potentials in tissue. Journal of Theoretical Biology (2008) </p>
+<p><b>Reference</b>: <a href="https://doi.org/10.1016/j.jtbi.2008.03.029">Bueno-Orovio, Cherry, Fenton (2008)</a> </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a4e0fe5c4269cac9450c3023c42df8263" name="a4e0fe5c4269cac9450c3023c42df8263"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4e0fe5c4269cac9450c3023c42df8263">&#9670;&#160;</a></span>ModelParam</h2>
@@ -334,7 +342,7 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Alias for model parameters container. The three entries in each of these correspond to epicardium, endocardium and myocardium, respectively (see also table 1 in the reference paper). </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000003">Todo:</a></b></dt><dd><p class="startdd">[TODO:DaveP] these guys should be maps map&lt;int,double&gt;. </p>
+<p>Alias for model parameters container. The three entries in each of these correspond to epicardium, endocardium and myocardium, respectively (see also table 1 in the reference paper). </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd><p class="startdd">[TODO:DaveP] these guys should be maps map&lt;int,double&gt;. </p>
 <p class="enddd">[michelebucelli] Would it make sense to treat these in the same way as the epi/endo/myo zone are treated in the <a class="el" href="class_t_t_p.html" title="Ten Tusscher-Panfilov ionic model.">TTP</a> model? </p>
 </dd></dl>
 

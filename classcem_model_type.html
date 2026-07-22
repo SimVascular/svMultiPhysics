@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -103,15 +111,18 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a4c1d564ed47ee4d921be98696670352d" id="r_a4c1d564ed47ee4d921be98696670352d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcem_model_type.html#a4c1d564ed47ee4d921be98696670352d">cpld</a> = false</td></tr>
 <tr class="memdesc:a4c1d564ed47ee4d921be98696670352d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether electrophysiology and mechanics are coupled.  <br /></td></tr>
 <tr class="separator:a4c1d564ed47ee4d921be98696670352d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48e58483acb25db579e72221a9c16a87" id="r_a48e58483acb25db579e72221a9c16a87"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcem_model_type.html#a48e58483acb25db579e72221a9c16a87">aStress</a> = false</td></tr>
-<tr class="memdesc:a48e58483acb25db579e72221a9c16a87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether active stress formulation is employed.  <br /></td></tr>
-<tr class="separator:a48e58483acb25db579e72221a9c16a87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abda0a4d8a92638f49a270655f24a96c7" id="r_abda0a4d8a92638f49a270655f24a96c7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcem_model_type.html#abda0a4d8a92638f49a270655f24a96c7">aStrain</a> = false</td></tr>
 <tr class="memdesc:abda0a4d8a92638f49a270655f24a96c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether active strain formulation is employed.  <br /></td></tr>
 <tr class="separator:abda0a4d8a92638f49a270655f24a96c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad841b0cea097fde32f8e026dfa5893be" id="r_ad841b0cea097fde32f8e026dfa5893be"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcem_model_type.html#ad841b0cea097fde32f8e026dfa5893be">Ya</a></td></tr>
-<tr class="memdesc:ad841b0cea097fde32f8e026dfa5893be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Local variable integrated in time := activation force for active stress model := fiber stretch for active strain model.  <br /></td></tr>
-<tr class="separator:ad841b0cea097fde32f8e026dfa5893be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b79f4a61e7439d6647afd351e2618fb" id="r_a0b79f4a61e7439d6647afd351e2618fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcem_model_type.html#a0b79f4a61e7439d6647afd351e2618fb">Ya_f</a></td></tr>
+<tr class="memdesc:a0b79f4a61e7439d6647afd351e2618fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activation along fibers.  <br /></td></tr>
+<tr class="separator:a0b79f4a61e7439d6647afd351e2618fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a122264583bbefa8fdb9b5ac4727da426" id="r_a122264583bbefa8fdb9b5ac4727da426"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcem_model_type.html#a122264583bbefa8fdb9b5ac4727da426">Ya_s</a></td></tr>
+<tr class="memdesc:a122264583bbefa8fdb9b5ac4727da426"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activation along sheets.  <br /></td></tr>
+<tr class="separator:a122264583bbefa8fdb9b5ac4727da426"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45c39474c8530e5793b089b563ef0f0f" id="r_a45c39474c8530e5793b089b563ef0f0f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcem_model_type.html#a45c39474c8530e5793b089b563ef0f0f">Ya_n</a></td></tr>
+<tr class="memdesc:a45c39474c8530e5793b089b563ef0f0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activation along sheet normals.  <br /></td></tr>
+<tr class="separator:a45c39474c8530e5793b089b563ef0f0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Cardiac electromechanics model type. </p>
@@ -132,22 +143,6 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a48e58483acb25db579e72221a9c16a87" name="a48e58483acb25db579e72221a9c16a87"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a48e58483acb25db579e72221a9c16a87">&#9670;&#160;</a></span>aStress</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool cemModelType::aStress = false</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Whether active stress formulation is employed. </p>
-
-</div>
-</div>
 <a id="a4c1d564ed47ee4d921be98696670352d" name="a4c1d564ed47ee4d921be98696670352d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4c1d564ed47ee4d921be98696670352d">&#9670;&#160;</a></span>cpld</h2>
 
@@ -164,19 +159,54 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ad841b0cea097fde32f8e026dfa5893be" name="ad841b0cea097fde32f8e026dfa5893be"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad841b0cea097fde32f8e026dfa5893be">&#9670;&#160;</a></span>Ya</h2>
+<a id="a0b79f4a61e7439d6647afd351e2618fb" name="a0b79f4a61e7439d6647afd351e2618fb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b79f4a61e7439d6647afd351e2618fb">&#9670;&#160;</a></span>Ya_f</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; cemModelType::Ya</td>
+          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; cemModelType::Ya_f</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Local variable integrated in time := activation force for active stress model := fiber stretch for active strain model. </p>
+<p>Activation along fibers. </p>
+<p>Corresponds to active tension along fibers if using active stress, and to fiber stretch if using active strain. </p>
+
+</div>
+</div>
+<a id="a45c39474c8530e5793b089b563ef0f0f" name="a45c39474c8530e5793b089b563ef0f0f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45c39474c8530e5793b089b563ef0f0f">&#9670;&#160;</a></span>Ya_n</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; cemModelType::Ya_n</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Activation along sheet normals. </p>
+<p>Only used if using active stress, in which case it represents the active tension along sheet normals. </p>
+
+</div>
+</div>
+<a id="a122264583bbefa8fdb9b5ac4727da426" name="a122264583bbefa8fdb9b5ac4727da426"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a122264583bbefa8fdb9b5ac4727da426">&#9670;&#160;</a></span>Ya_s</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; cemModelType::Ya_s</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Activation along sheets. </p>
+<p>Only used if using active stress, in which case it represents the active tension along sheets. </p>
 
 </div>
 </div>

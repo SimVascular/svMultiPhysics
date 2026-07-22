@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -244,7 +252,7 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The classes defined here duplicate the data structures in the Fortran MATFUN module defined in MATFUN.f. </p>
 <p>This module defines data structures for generally performed matrix and tensor operations.</p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000006">Todo:</a></b></dt><dd>[TODO:DaveP] this should just be a namespace? </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000007">Todo:</a></b></dt><dd>[TODO:DaveP] this should just be a namespace? </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="abbbee355035575333a0beda4d7ddc577" name="abbbee355035575333a0beda4d7ddc577"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abbbee355035575333a0beda4d7ddc577">&#9670;&#160;</a></span>double_dot_product()</h2>
@@ -541,7 +549,7 @@ template&lt;int nsd&gt; </div>
 </div><div class="memdoc">
 
 <p>This function computes inverse of a square matrix using Gauss Elimination method. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000005">Todo:</a></b></dt><dd>[TODO:DaveP] The original version sometimes produced NaNs. </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000006">Todo:</a></b></dt><dd>[TODO:DaveP] The original version sometimes produced NaNs. </dd></dl>
 
 </div>
 </div>

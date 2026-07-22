@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -93,20 +101,20 @@ $(function() {
 <p>This is the complete list of members for <a class="el" href="class_domain_parameters.html">DomainParameters</a>, including all inherited members.</p>
 <table class="directory">
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>absolute_tolerance</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>anisotropic_conductivity</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>backflow_stabilization_coefficient</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_parameter_lists.html#a09feae36022f5ebf7cd9a8c86bcbca78">check_required</a>()</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>conductivity</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>constitutive_model</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>continuity_stabilization_coefficient</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>density</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>dilational_penalty_model</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>DomainParameters</b>() (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>elasticity_modulus</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>electrophysiology_model</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>equation</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>feedback_parameter_for_stretch_activated_currents</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>fiber_reinforcement_stress</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>active_stress</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>anisotropic_conductivity</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>backflow_stabilization_coefficient</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_parameter_lists.html#a09feae36022f5ebf7cd9a8c86bcbca78">check_required</a>()</td><td class="entry"><a class="el" href="class_parameter_lists.html">ParameterLists</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>conductivity</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>constitutive_model</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>continuity_stabilization_coefficient</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>density</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>dilational_penalty_model</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>DomainParameters</b>() (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>elasticity_modulus</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>electrophysiology_model</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>equation</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>feedback_parameter_for_stretch_activated_currents</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>fluid_density</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>fluid_viscosity</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>force_x</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
@@ -116,7 +124,7 @@ $(function() {
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>id</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>include_xml</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>inverse_darcy_permeability</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>ionic_models</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_domain_parameters.html#abf4b99b072002c79e4247f1b83284b2c">ionic_models</a></td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>isotropic_conductivity</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>mass_damping</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>maximum_iterations</b> (defined in <a class="el" href="class_domain_parameters.html">DomainParameters</a>)</td><td class="entry"><a class="el" href="class_domain_parameters.html">DomainParameters</a></td><td class="entry"></td></tr>

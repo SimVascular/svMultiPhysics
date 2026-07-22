@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -91,7 +99,10 @@ $(function() {
 <h3><a id="index_c" name="index_c"></a>- c -</h3><ul>
 <li>c&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#abab46e5c441d0c0bcf6fa72bedf273b0">AlievPanfilov</a>, <a class="el" href="class_fitz_hugh_nagumo.html#a42b830a99d918a3f42abf3354c69d587">FitzHughNagumo</a></li>
 <li>Ca_o&#160;:&#160;<a class="el" href="class_t_t_p.html#a3e347afd6071d2f630ad90074740407f">TTP</a></li>
+<li>calcium&#160;:&#160;<a class="el" href="class_cep_mod.html#af35acba2dd2e61c90b34dcac4ee3cdbc">CepMod</a></li>
+<li>calcium_crit&#160;:&#160;<a class="el" href="class_nash_panfilov.html#adaf4021a1af657d17fff58ef138c4785">NashPanfilov</a></li>
 <li>calcium_index&#160;:&#160;<a class="el" href="class_aliev_panfilov.html#a86154947f5c790c21d7f861cf49caefd">AlievPanfilov</a>, <a class="el" href="class_bueno_orovio.html#a0999f45472ca9725a156081dbf7a1c98">BuenoOrovio</a>, <a class="el" href="class_fitz_hugh_nagumo.html#aa1a50477e9d2087fce5ec15528dcc2c2">FitzHughNagumo</a>, <a class="el" href="class_t_t_p.html#afc7a529d0c274eb396e6474a0b3e6b6f">TTP</a></li>
+<li>calcium_rest&#160;:&#160;<a class="el" href="class_nash_panfilov.html#af5fa12db9ed12bce3ec9456649c49a16">NashPanfilov</a></li>
 <li>callD&#160;:&#160;<a class="el" href="classib_type.html#a73b8da24a192330d0ecdd4114c6c7b99">ibType</a>, <a class="el" href="classls_type.html#a31792c18d75f77efd2851ede8e3768d4">lsType</a></li>
 <li>cD&#160;:&#160;<a class="el" href="classls_type.html#a19dab86d131c7c323746d153ae40dea0">lsType</a></li>
 <li>cDmn&#160;:&#160;<a class="el" href="class_com_mod.html#ac21829e679241101a965db3ff21a65f4">ComMod</a>, <a class="el" href="classib_type.html#a68069adbc08a79e09eed5354b6b97360">ibType</a></li>
@@ -99,7 +110,7 @@ $(function() {
 <li>cepEq&#160;:&#160;<a class="el" href="class_cep_mod.html#a7fa60b1d54d6eeac59f2fe0234aaeb19">CepMod</a></li>
 <li>cepType&#160;:&#160;<a class="el" href="classcep_model_type.html#a6fa666a049b988196394450bcac85608">cepModelType</a></li>
 <li>cEq&#160;:&#160;<a class="el" href="class_com_mod.html#a5cdb953f1e9bea055978805dd5c8bec3">ComMod</a>, <a class="el" href="classib_type.html#a3ded34d04ca3a9b778432103adbc23a4">ibType</a></li>
-<li>children&#160;:&#160;<a class="el" href="class_ionic_model_factory.html#ab3e2e336ba1abdf74f958e5d0a61cdf9">IonicModelFactory</a></li>
+<li>children&#160;:&#160;<a class="el" href="class_factory.html#a354793d06206bc36486d9006c9cd3e68">Factory&lt; BaseType &gt;</a></li>
 <li>clsFlg&#160;:&#160;<a class="el" href="classris_face_type.html#af44c193063b8b2d897dffbdc6a27fda5">risFaceType</a>, <a class="el" href="classuris_type.html#a84d4c791b64632784d3e0166681f6c12">urisType</a></li>
 <li>cm&#160;:&#160;<a class="el" href="class_com_mod.html#aa816d6fe1648828a7e8fb92dea79b0fa">ComMod</a>, <a class="el" href="classib_type.html#a7ce0bfc29eed8c4d09bc210bff0d758e">ibType</a></li>
 <li>cM&#160;:&#160;<a class="el" href="classls_type.html#aeca90965b81dd587011145a2a550754b">lsType</a></li>

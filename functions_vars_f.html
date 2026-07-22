@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -98,6 +106,7 @@ $(function() {
 <li>flags_&#160;:&#160;<a class="el" href="class_boundary_condition.html#a0c4a0e5033fc31f8a6628823558d8f12">BoundaryCondition</a></li>
 <li>fN&#160;:&#160;<a class="el" href="classmsh_type.html#a9c929b21d27ff353949f96f8df56d14f">mshType</a></li>
 <li>fNorm&#160;:&#160;<a class="el" href="classls_type.html#a222668a1cfbbb101310893855a83e227">lsType</a></li>
+<li>fourier_interpolation&#160;:&#160;<a class="el" href="class_uniform_unsteady_active_stress.html#a2354d6d5915a80376b6ac4e801b97de3">UniformUnsteadyActiveStress</a></li>
 <li>freq&#160;:&#160;<a class="el" href="classrmsh_type.html#a6bd3b7b6c5a5631dbf67b36a723d4095">rmshType</a></li>
 <li>fs&#160;:&#160;<a class="el" href="classmsh_type.html#a3a5db0afbd96be27208a4a49236bf6ca">mshType</a></li>
 <li>FSILS&#160;:&#160;<a class="el" href="classeq_type.html#ad3040eeb5a17e16bebf2e67eef664815">eqType</a></li>

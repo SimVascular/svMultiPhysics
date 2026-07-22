@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -179,10 +187,34 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_na
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:ad434b5461a5bcb0934290d90d7e33f0c" id="r_ad434b5461a5bcb0934290d90d7e33f0c"><td class="memItemLeft" align="right" valign="top"><a id="ad434b5461a5bcb0934290d90d7e33f0c" name="ad434b5461a5bcb0934290d90d7e33f0c"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>xml_element_name_</b> = &quot;svZeroDSolver_interface&quot;</td></tr>
+<tr class="memitem:ad434b5461a5bcb0934290d90d7e33f0c" id="r_ad434b5461a5bcb0934290d90d7e33f0c"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsv_zero_d_solver_interface_parameters.html#ad434b5461a5bcb0934290d90d7e33f0c">xml_element_name_</a></td></tr>
 <tr class="separator:ad434b5461a5bcb0934290d90d7e33f0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="ad434b5461a5bcb0934290d90d7e33f0c" name="ad434b5461a5bcb0934290d90d7e33f0c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad434b5461a5bcb0934290d90d7e33f0c">&#9670;&#160;</a></span>xml_element_name_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string svZeroDSolverInterfaceParameters::xml_element_name_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="stringliteral">&quot;svZeroDSolver_interface&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<a class="el" href="_parameters_8h_source.html">Parameters.h</a></li>
 <li>solver/<b>Parameters.cpp</b></li>

@@ -19,11 +19,19 @@ window.MathJax = {
     processHtmlClass: 'tex2jax_process'
   },
   loader: {
-    load: ['[tex]/ams']
+    load: ['[tex]/ams','[tex]/physics']
   },
   tex: {
-    macros: {},
-    packages: ['base','configmacros','ams']
+    macros: {    fiberdirection: "{\\mathbf{f}}",
+    sheetdirection: "{\\mathbf{s}}",
+    sheetnormaldirection: "{\\mathbf{n}}",
+    calcium: "{[\\text{Ca}^{2+}]}",
+    Tact: "{T_\\text{act}}",
+    fiberstretch: "{\\lambda}",
+    fiberstretchrate: "{\\dot{\\lambda}}",
+    astressstate: "{\\mathbf{s}}",
+    },
+    packages: ['base','configmacros','newcommand','ams','physics']
   }
 };
 </script>
@@ -175,6 +183,9 @@ T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (co
 <tr class="memitem:a0226d8916960275bfac50ee837f2efa8" id="r_a0226d8916960275bfac50ee837f2efa8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vector.html#a0226d8916960275bfac50ee837f2efa8">operator+</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; T &gt; &amp;vec) const</td></tr>
 <tr class="memdesc:a0226d8916960275bfac50ee837f2efa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add and subtract vectors.  <br /></td></tr>
 <tr class="separator:a0226d8916960275bfac50ee837f2efa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54537a24ffb747928641704152d287d3" id="r_a54537a24ffb747928641704152d287d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; T &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_vector.html#a54537a24ffb747928641704152d287d3">add</a> (const double &amp;c, const <a class="el" href="class_vector.html">Vector</a>&lt; T &gt; &amp;vec)</td></tr>
+<tr class="memdesc:a54537a24ffb747928641704152d287d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increment by a rescaled vector.  <br /></td></tr>
+<tr class="separator:a54537a24ffb747928641704152d287d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2d57b45e57d41351be2d9a97d9f2946" id="r_ad2d57b45e57d41351be2d9a97d9f2946"><td class="memItemLeft" align="right" valign="top"><a id="ad2d57b45e57d41351be2d9a97d9f2946" name="ad2d57b45e57d41351be2d9a97d9f2946"></a>
 <a class="el" href="class_vector.html">Vector</a>&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator-</b> (const <a class="el" href="class_vector.html">Vector</a>&lt; T &gt; &amp;x) const</td></tr>
 <tr class="separator:ad2d57b45e57d41351be2d9a97d9f2946"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -302,6 +313,47 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Absolute value. </p>
+
+</div>
+</div>
+<a id="a54537a24ffb747928641704152d287d3" name="a54537a24ffb747928641704152d287d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54537a24ffb747928641704152d287d3">&#9670;&#160;</a></span>add()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt; T &gt; &amp; <a class="el" href="class_vector.html">Vector</a>&lt; T &gt;::add </td>
+          <td>(</td>
+          <td class="paramtype">const double &amp;&#160;</td>
+          <td class="paramname"><em>c</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"><em>vec</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Increment by a rescaled vector. </p>
+<p>This is equivalent to <code>*this = *this + c * vec</code> but avoids the temporary vector created by the operator+ and operator*. </p>
 
 </div>
 </div>
