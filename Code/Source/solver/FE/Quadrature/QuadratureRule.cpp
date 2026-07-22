@@ -55,8 +55,16 @@ enum class ValidationFailure {
 };
 
 struct ValidationResult {
+    static constexpr std::size_t no_sample =
+        std::numeric_limits<std::size_t>::max();
+
     ValidationFailure failure{ValidationFailure::None};
-    std::size_t sample{std::numeric_limits<std::size_t>::max()};
+    std::size_t sample{no_sample};
+
+    constexpr bool valid() const noexcept
+    {
+        return failure == ValidationFailure::None;
+    }
 };
 
 constexpr ReferenceCellTraits unsupported_traits() noexcept
@@ -270,7 +278,7 @@ ValidationResult validate_rule_data(
     for (std::size_t sample = 0; sample < points.size(); ++sample) {
         const auto result =
             validate_point(points[sample], traits, tolerance, sample);
-        if (result.failure != ValidationFailure::None) {
+        if (!result.valid()) {
             return result;
         }
     }
@@ -281,7 +289,7 @@ ValidationResult validate_rule_data(
 std::string validation_failure_message(const ValidationResult& result)
 {
     const auto sample_suffix = [&result]() {
-        if (result.sample == std::numeric_limits<std::size_t>::max()) {
+        if (result.sample == ValidationResult::no_sample) {
             return std::string{};
         }
         return std::string{" at sample "} + std::to_string(result.sample);
@@ -356,7 +364,7 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
         data.points,
         data.weights,
         default_validation_tolerance());
-    if (validation.failure != ValidationFailure::None) {
+    if (!validation.valid()) {
         svmp::raise<InvalidArgumentException>(
             validation_failure_message(validation));
     }
@@ -380,7 +388,7 @@ bool QuadratureRule::is_structurally_valid(double tolerance) const noexcept
                points_,
                weights_,
                tolerance)
-               .failure == ValidationFailure::None;
+               .valid();
 }
 
 } // namespace svmp::FE::quadrature
