@@ -244,16 +244,6 @@ public:
      */
     double zeroth_moment() const noexcept { return zeroth_moment_; }
 
-    /**
-     * @brief Return the measure of the canonical reference cell.
-     *
-     * Compatibility alias for zeroth_moment(). All currently supported rules
-     * are unweighted rules on complete canonical reference cells.
-     *
-     * @return Reference length, area, volume, or unit point measure.
-     */
-    double reference_measure() const noexcept { return zeroth_moment(); }
-
 protected:
     /**
      * @brief Complete construction payload used by concrete rule providers.

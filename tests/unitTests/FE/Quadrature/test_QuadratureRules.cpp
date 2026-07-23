@@ -58,7 +58,7 @@ struct SolverRuleCase {
     int dimension;
     int requested_exactness;
     int advertised_exactness;
-    double reference_measure;
+    double zeroth_moment;
     ExpectedSamples samples;
 };
 
@@ -564,13 +564,13 @@ TEST(QuadraturePhase01Baseline, StandardSelectionTableHasOrderedPointWeightData)
         EXPECT_FALSE(c.samples.empty());
         EXPECT_GT(c.requested_exactness, 0);
         EXPECT_GE(c.advertised_exactness, c.requested_exactness);
-        EXPECT_GT(c.reference_measure, 0.0);
+        EXPECT_GT(c.zeroth_moment, 0.0);
 
         double weight_sum = 0.0;
         for (const auto& sample : c.samples) {
             weight_sum += sample.weight;
         }
-        EXPECT_NEAR(weight_sum, c.reference_measure, kTol);
+        EXPECT_NEAR(weight_sum, c.zeroth_moment, kTol);
     }
 }
 
@@ -586,8 +586,7 @@ TEST(QuadraturePhase01Baseline, CanonicalFixturesSatisfyTheRuleAndExactnessContr
         EXPECT_EQ(rule.dimension(), rule.integration_dimension());
         EXPECT_EQ(rule.polynomial_exactness(), c.advertised_exactness);
         EXPECT_EQ(rule.num_points(), c.samples.size());
-        EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.reference_measure);
-        EXPECT_DOUBLE_EQ(rule.reference_measure(), rule.zeroth_moment());
+        EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.zeroth_moment);
         expect_samples_in_order(rule, c.samples);
         expect_total_degree_exact(rule, c.advertised_exactness);
     }
@@ -833,7 +832,6 @@ TEST(QuadratureRuleValidation, AcceptsEverySupportedReferenceCell)
         EXPECT_EQ(rule.coordinate_dimension(), c.expected_dimension);
         EXPECT_EQ(rule.dimension(), rule.integration_dimension());
         EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.expected_measure);
-        EXPECT_DOUBLE_EQ(rule.reference_measure(), rule.zeroth_moment());
     }
 }
 
@@ -1141,7 +1139,6 @@ TEST(QuadratureRuleContract, PublishesOnlyACompleteImmutableQueryInterface)
     EXPECT_EQ(rule.dimension(), rule.integration_dimension());
     EXPECT_EQ(rule.polynomial_exactness(), 3);
     EXPECT_DOUBLE_EQ(rule.zeroth_moment(), 2.0);
-    EXPECT_DOUBLE_EQ(rule.reference_measure(), rule.zeroth_moment());
     ASSERT_EQ(rule.num_points(), 2u);
     ASSERT_EQ(rule.points().size(), 2u);
     ASSERT_EQ(rule.weights().size(), 2u);
