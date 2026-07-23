@@ -147,12 +147,6 @@ ValidationResult validate_point(
     return {};
 }
 
-double add_as_binary64(double left, double right) noexcept
-{
-    volatile double rounded_sum = left + right;
-    return rounded_sum;
-}
-
 ValidationResult validate_weights(
     const std::vector<double>& weights,
     double zeroth_moment,
@@ -170,7 +164,10 @@ ValidationResult validate_weights(
             return {ValidationFailure::NonFiniteWeight, sample};
         }
 
-        ordered_sum = add_as_binary64(ordered_sum, weight);
+        // The volatile store makes each stored-order addition round to
+        // binary64 even if intermediate expressions retain excess precision.
+        volatile double rounded_sum = ordered_sum + weight;
+        ordered_sum = rounded_sum;
         if (!std::isfinite(ordered_sum)) {
             return {ValidationFailure::NonFiniteWeightAccumulation, sample};
         }
