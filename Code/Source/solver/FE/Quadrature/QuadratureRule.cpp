@@ -28,6 +28,8 @@ struct ReferenceCellTraits {
     double zeroth_moment;
 };
 
+constexpr double construction_validation_tolerance = 1.0e-12;
+
 struct ValidationResult {
     static constexpr std::size_t no_sample =
         std::numeric_limits<std::size_t>::max();
@@ -209,8 +211,7 @@ ValidationResult validate_weights(
             compensated_error +
             cancellation_safety_factor * epsilon * absolute_sum;
         const long double stability_budget =
-            static_cast<long double>(
-                QuadratureRule::default_validation_tolerance()) * scale;
+            static_cast<long double>(construction_validation_tolerance) * scale;
         if (!std::isfinite(stability_error_bound) ||
             stability_error_bound > stability_budget) {
             return {
@@ -232,9 +233,6 @@ ValidationResult validate_rule_data(
 {
     if (polynomial_exactness < 0) {
         return {"polynomial exactness must be non-negative"};
-    }
-    if (!std::isfinite(tolerance) || tolerance < 0.0) {
-        return {"validation tolerance must be finite and non-negative"};
     }
     if (points.empty()) {
         return {"a rule must contain at least one sample"};
@@ -306,7 +304,7 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
         data.polynomial_exactness,
         data.points,
         data.weights,
-        default_validation_tolerance());
+        construction_validation_tolerance);
     if (!validation.valid()) {
         svmp::raise<InvalidArgumentException>(
             validation_failure_message(validation));
@@ -321,22 +319,6 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
         std::move(data.points),
         std::move(data.weights),
     };
-}
-
-bool QuadratureRule::is_structurally_valid(double tolerance) const noexcept
-{
-    const auto traits = reference_cell_traits(cell_family_);
-    if (!traits) {
-        return false;
-    }
-    return validate_rule_data(
-               cell_family_,
-               *traits,
-               polynomial_exactness_,
-               points_,
-               weights_,
-               tolerance)
-               .valid();
 }
 
 } // namespace svmp::FE::quadrature

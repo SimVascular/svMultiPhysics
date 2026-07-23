@@ -234,34 +234,6 @@ public:
     const std::vector<double>& weights() const noexcept { return weights_; }
 
     /**
-     * @brief Return the default tolerance used during structural validation.
-     *
-     * Coordinate bounds and inactive components use this as an absolute
-     * tolerance. Compensated and ordinary stored-order zeroth-moment checks
-     * scale it by the larger of one and the zeroth moment. For signed
-     * rules, a separate cancellation-sensitivity bound based on double epsilon
-     * and the absolute weight sum always uses this default tolerance, so callers
-     * cannot waive the minimum double-precision stability requirement.
-     *
-     * @return Default absolute validation tolerance.
-     */
-    static constexpr double default_validation_tolerance() noexcept { return 1.0e-12; }
-
-    /**
-     * @brief Recheck the rule's structural invariants using a caller tolerance.
-     *
-     * This diagnostic verifies metadata, storage, finite values, point
-     * containment, and the zeroth moment. It does not prove
-     * polynomial_exactness(). Construction already performs this check with
-     * default_validation_tolerance().
-     *
-     * @param tol Finite, non-negative absolute coordinate and scaled zeroth-moment tolerance.
-     * @return True when the stored rule satisfies every structural invariant.
-     */
-    bool is_structurally_valid(
-        double tol = default_validation_tolerance()) const noexcept;
-
-    /**
      * @brief Return the rule's zeroth moment.
      *
      * This is the integral of the constant function one under the rule's
