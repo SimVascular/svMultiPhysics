@@ -425,12 +425,13 @@ void expect_total_degree_exact(
     int degree,
     double tolerance = kExactnessTol)
 {
-    const int max_px = rule.dimension() >= 1 ? degree : 0;
+    const int max_px = rule.integration_dimension() >= 1 ? degree : 0;
     for (int px = 0; px <= max_px; ++px) {
-        const int max_py = rule.dimension() >= 2 ? degree - px : 0;
+        const int max_py =
+            rule.integration_dimension() >= 2 ? degree - px : 0;
         for (int py = 0; py <= max_py; ++py) {
             const int max_pz =
-                rule.dimension() >= 3 ? degree - px - py : 0;
+                rule.integration_dimension() >= 3 ? degree - px - py : 0;
             for (int pz = 0; pz <= max_pz; ++pz) {
                 EXPECT_NEAR(
                     integrate_monomial(rule, px, py, pz),
@@ -580,10 +581,13 @@ TEST(QuadraturePhase01Baseline, CanonicalFixturesSatisfyTheRuleAndExactnessContr
         const auto rule = make_rule(c);
 
         EXPECT_EQ(rule.cell_family(), to_mesh_family(c.fe_type));
-        EXPECT_EQ(rule.dimension(), c.dimension);
+        EXPECT_EQ(rule.integration_dimension(), c.dimension);
+        EXPECT_EQ(rule.coordinate_dimension(), c.dimension);
+        EXPECT_EQ(rule.dimension(), rule.integration_dimension());
         EXPECT_EQ(rule.polynomial_exactness(), c.advertised_exactness);
         EXPECT_EQ(rule.num_points(), c.samples.size());
-        EXPECT_DOUBLE_EQ(rule.reference_measure(), c.reference_measure);
+        EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.reference_measure);
+        EXPECT_DOUBLE_EQ(rule.reference_measure(), rule.zeroth_moment());
         EXPECT_TRUE(rule.is_structurally_valid());
         expect_samples_in_order(rule, c.samples);
         expect_total_degree_exact(rule, c.advertised_exactness);
@@ -826,8 +830,11 @@ TEST(QuadratureRuleValidation, AcceptsEverySupportedReferenceCell)
             0,
             {{c.point[0], c.point[1], c.point[2]}},
             {c.expected_measure});
-        EXPECT_EQ(rule.dimension(), c.expected_dimension);
-        EXPECT_DOUBLE_EQ(rule.reference_measure(), c.expected_measure);
+        EXPECT_EQ(rule.integration_dimension(), c.expected_dimension);
+        EXPECT_EQ(rule.coordinate_dimension(), c.expected_dimension);
+        EXPECT_EQ(rule.dimension(), rule.integration_dimension());
+        EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.expected_measure);
+        EXPECT_DOUBLE_EQ(rule.reference_measure(), rule.zeroth_moment());
         EXPECT_TRUE(rule.is_structurally_valid());
     }
 }
@@ -944,7 +951,7 @@ TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
         InvalidArgumentException);
 }
 
-TEST(QuadratureRuleValidation, EnforcesMeasureButAllowsNegativeWeights)
+TEST(QuadratureRuleValidation, EnforcesZerothMomentButAllowsNegativeWeights)
 {
     expect_invalid_argument_with_message(
         [] {
@@ -954,7 +961,7 @@ TEST(QuadratureRuleValidation, EnforcesMeasureButAllowsNegativeWeights)
                 {{0.25, 0.25, 0.0}},
                 {1.0});
         },
-        "weights do not reproduce the reference-cell measure");
+        "weights do not reproduce the zeroth moment");
 
     const RuleProbe rule(
         svmp::CellFamily::Triangle,
@@ -966,7 +973,7 @@ TEST(QuadratureRuleValidation, EnforcesMeasureButAllowsNegativeWeights)
     EXPECT_LT(rule.weight(0), 0.0);
     EXPECT_DOUBLE_EQ(
         integrate_monomial(rule, 0, 0, 0),
-        rule.reference_measure());
+        rule.zeroth_moment());
     EXPECT_FALSE(rule.is_structurally_valid(-1.0));
     EXPECT_FALSE(rule.is_structurally_valid(
         std::numeric_limits<double>::quiet_NaN()));
@@ -1006,7 +1013,7 @@ TEST(QuadratureRuleValidation, RejectsIllConditionedCancellationDespiteExactOrde
         "too ill-conditioned for stable double-precision integration");
 }
 
-TEST(QuadratureRuleValidation, RejectsIncorrectMeasureDespiteLargeCancellation)
+TEST(QuadratureRuleValidation, RejectsIncorrectZerothMomentDespiteLargeCancellation)
 {
     expect_invalid_argument_with_message(
         [] {
@@ -1018,7 +1025,7 @@ TEST(QuadratureRuleValidation, RejectsIncorrectMeasureDespiteLargeCancellation)
                  {0.5, 0.0, 0.0}},
                 {1.0e20, 0.0, -1.0e20});
         },
-        "weights do not reproduce the reference-cell measure");
+        "weights do not reproduce the zeroth moment");
 }
 
 TEST(QuadratureRuleValidation, AcceptsWellConditionedLargePositiveRule)
@@ -1037,7 +1044,7 @@ TEST(QuadratureRuleValidation, AcceptsWellConditionedLargePositiveRule)
     EXPECT_TRUE(rule.is_structurally_valid());
     EXPECT_DOUBLE_EQ(
         integrate_monomial(rule, 0, 0, 0),
-        rule.reference_measure());
+        rule.zeroth_moment());
 }
 
 TEST(QuadratureRuleValidation, AcceptsWellConditionedLargeSignedRule)
@@ -1060,7 +1067,7 @@ TEST(QuadratureRuleValidation, AcceptsWellConditionedLargeSignedRule)
     EXPECT_LT(rule.weight(0), 0.0);
     EXPECT_NEAR(
         integrate_monomial(rule, 0, 0, 0),
-        rule.reference_measure(),
+        rule.zeroth_moment(),
         QuadratureRule::default_validation_tolerance());
 }
 
@@ -1118,9 +1125,12 @@ TEST(QuadratureRuleContract, PublishesOnlyACompleteImmutableQueryInterface)
         {1.0, 1.0});
 
     EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Line);
-    EXPECT_EQ(rule.dimension(), 1);
+    EXPECT_EQ(rule.integration_dimension(), 1);
+    EXPECT_EQ(rule.coordinate_dimension(), 1);
+    EXPECT_EQ(rule.dimension(), rule.integration_dimension());
     EXPECT_EQ(rule.polynomial_exactness(), 3);
-    EXPECT_DOUBLE_EQ(rule.reference_measure(), 2.0);
+    EXPECT_DOUBLE_EQ(rule.zeroth_moment(), 2.0);
+    EXPECT_DOUBLE_EQ(rule.reference_measure(), rule.zeroth_moment());
     EXPECT_TRUE(rule.is_structurally_valid());
     ASSERT_EQ(rule.num_points(), 2u);
     ASSERT_EQ(rule.points().size(), 2u);

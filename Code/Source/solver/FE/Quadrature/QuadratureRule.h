@@ -28,9 +28,9 @@
  *   \int_{\hat K} f(\hat x)\,d\hat x
  *   \approx \sum_q w_q f(\hat x_q).
  * @f]
- * A rule identifies its reference-cell family, reports its intrinsic dimension
- * and declared polynomial exactness, and keeps every point paired with its
- * corresponding weight.
+ * A rule identifies its reference-cell family, reports its integration and
+ * coordinate dimensions and declared polynomial exactness, and keeps every
+ * point paired with its corresponding weight.
  *
  * The module does not choose the exactness required by an equation term, apply
  * reduced-integration policy, select a basis, own mesh storage, embed or orient
@@ -62,10 +62,10 @@
  * A rule is complete and structurally valid when construction returns. The
  * constructor rejects unsupported cells, negative exactness, empty or mismatched
  * storage, non-finite coordinates or weights, points outside the declared
- * reference cell, and weights whose zeroth moment does not equal the reference
- * measure in both compensated arithmetic and ordinary stored-order double
- * accumulation. A condition estimate based on the absolute weight sum rejects
- * signed rules whose cancellation is too sensitive for double precision.
+ * reference cell, and weights whose sum does not equal the canonical rule's
+ * zeroth moment in both compensated arithmetic and ordinary stored-order
+ * double accumulation. A condition estimate based on the absolute weight sum
+ * rejects signed rules whose cancellation is too sensitive for double precision.
  * Negative individual weights remain valid because some quadrature families
  * require them.
  *
@@ -77,9 +77,9 @@
  *
  * Points use one fixed-size three-component representation. Providers initialize
  * all three coordinates explicitly because the Eigen-backed vector is not
- * zero-initialized by default. Only the first dimension() components are active,
- * and every inactive component is zero within the construction tolerance. The
- * supported canonical domains are:
+ * zero-initialized by default. Only the first coordinate_dimension() components
+ * are active, and every inactive component is zero within the construction
+ * tolerance. The supported canonical domains are:
  *
  * | Cell family | Canonical reference domain | Measure |
  * | ----------- | -------------------------- | ------- |
@@ -118,9 +118,10 @@ namespace svmp::FE::quadrature {
 /**
  * @brief Three-component coordinate used for every reference quadrature point.
  *
- * Only the first QuadratureRule::dimension() components are active. Providers
- * explicitly zero remaining components, giving point, line, surface, and volume
- * rules a uniform representation directly compatible with FE math consumers.
+ * Only the first QuadratureRule::coordinate_dimension() components are active.
+ * Providers explicitly zero remaining components, giving point, line, surface,
+ * and volume rules a uniform representation directly compatible with FE math
+ * consumers.
  */
 using QuadPoint = math::Vector<double, 3>;
 
@@ -166,10 +167,36 @@ public:
     int polynomial_exactness() const noexcept { return polynomial_exactness_; }
 
     /**
-     * @brief Return the intrinsic dimension of the reference integration domain.
-     * @return Active coordinate count, from zero for Point through three for volume cells.
+     * @brief Return the intrinsic dimension of the integration domain.
+     *
+     * This is the dimension of the measure being integrated. It is distinct
+     * from coordinate_dimension() so future embedded rules can integrate a
+     * lower-dimensional entity represented in parent-reference coordinates.
+     *
+     * @return Integration dimension, from zero for Point through three for volume cells.
      */
-    int dimension() const noexcept { return dimension_; }
+    int integration_dimension() const noexcept { return integration_dimension_; }
+
+    /**
+     * @brief Return the number of active reference-coordinate components.
+     *
+     * Canonical reference-cell rules currently have the same integration and
+     * coordinate dimensions. Keeping the concepts distinct permits future
+     * embedded rules to use parent-reference coordinates without changing the
+     * meaning of integration_dimension().
+     *
+     * @return Active coordinate count in each QuadPoint.
+     */
+    int coordinate_dimension() const noexcept { return coordinate_dimension_; }
+
+    /**
+     * @brief Return the intrinsic integration dimension.
+     *
+     * Compatibility alias for integration_dimension().
+     *
+     * @return Integration dimension.
+     */
+    int dimension() const noexcept { return integration_dimension(); }
 
     /**
      * @brief Return the canonical reference-cell family.
@@ -211,7 +238,7 @@ public:
      *
      * Coordinate bounds and inactive components use this as an absolute
      * tolerance. Compensated and ordinary stored-order zeroth-moment checks
-     * scale it by the larger of one and the reference-cell measure. For signed
+     * scale it by the larger of one and the zeroth moment. For signed
      * rules, a separate cancellation-sensitivity bound based on double epsilon
      * and the absolute weight sum always uses this default tolerance, so callers
      * cannot waive the minimum double-precision stability requirement.
@@ -228,17 +255,32 @@ public:
      * polynomial_exactness(). Construction already performs this check with
      * default_validation_tolerance().
      *
-     * @param tol Finite, non-negative absolute coordinate and scaled measure tolerance.
+     * @param tol Finite, non-negative absolute coordinate and scaled zeroth-moment tolerance.
      * @return True when the stored rule satisfies every structural invariant.
      */
     bool is_structurally_valid(
         double tol = default_validation_tolerance()) const noexcept;
 
     /**
+     * @brief Return the rule's zeroth moment.
+     *
+     * This is the integral of the constant function one under the rule's
+     * integration measure. For current canonical unweighted rules it equals
+     * the geometric measure of the reference cell.
+     *
+     * @return Expected sum of the quadrature weights.
+     */
+    double zeroth_moment() const noexcept { return zeroth_moment_; }
+
+    /**
      * @brief Return the measure of the canonical reference cell.
+     *
+     * Compatibility alias for zeroth_moment(). All currently supported rules
+     * are unweighted rules on complete canonical reference cells.
+     *
      * @return Reference length, area, volume, or unit point measure.
      */
-    double reference_measure() const noexcept { return reference_measure_; }
+    double reference_measure() const noexcept { return zeroth_moment(); }
 
 protected:
     /**
@@ -257,16 +299,16 @@ protected:
     /**
      * @brief Construct and validate one complete immutable rule.
      *
-     * Dimension and reference measure are derived from @p family; callers cannot
-     * supply redundant topology metadata.
+     * Integration dimension, coordinate dimension, and zeroth moment are
+     * derived from @p family; callers cannot supply redundant topology metadata.
      *
      * @param family Supported canonical reference-cell family.
      * @param data Complete exactness, point, and weight payload.
      * @throws InvalidArgumentException If the family is unsupported, exactness
      * is negative, storage is empty or mismatched, a value is non-finite, a point
-     * is outside the reference cell, the weights do not reproduce its measure in
-     * compensated and stored-order arithmetic, or their cancellation is too
-     * ill-conditioned for stable double-precision integration.
+     * is outside the reference cell, the weights do not reproduce its zeroth
+     * moment in compensated and stored-order arithmetic, or their cancellation
+     * is too ill-conditioned for stable double-precision integration.
      */
     explicit QuadratureRule(svmp::CellFamily family, RuleData data);
 
@@ -274,9 +316,10 @@ private:
     /** @brief Fully checked state used by the delegating constructor. */
     struct ValidatedState {
         svmp::CellFamily cell_family;
-        int dimension;
+        int integration_dimension;
+        int coordinate_dimension;
         int polynomial_exactness;
-        double reference_measure;
+        double zeroth_moment;
         std::vector<QuadPoint> points;
         std::vector<double> weights;
     };
@@ -287,12 +330,13 @@ private:
     /** @brief Initialize members from state already checked by validate(). */
     explicit QuadratureRule(ValidatedState state);
 
-    const svmp::CellFamily cell_family_;     ///< Canonical reference topology.
-    const int dimension_;                    ///< Number of active coordinate components.
-    const int polynomial_exactness_;         ///< Exactness declared by the concrete generator.
-    const double reference_measure_;         ///< Canonical cell measure.
-    const std::vector<QuadPoint> points_;     ///< Ordered immutable reference coordinates.
-    const std::vector<double> weights_;       ///< Immutable weights paired with points_.
+    const svmp::CellFamily cell_family_;      ///< Canonical reference topology.
+    const int integration_dimension_;         ///< Dimension of the integration measure.
+    const int coordinate_dimension_;          ///< Number of active coordinate components.
+    const int polynomial_exactness_;          ///< Exactness declared by the concrete generator.
+    const double zeroth_moment_;               ///< Integral of one under the rule's measure.
+    const std::vector<QuadPoint> points_;       ///< Ordered immutable reference coordinates.
+    const std::vector<double> weights_;         ///< Immutable weights paired with points_.
 };
 
 /** @} */

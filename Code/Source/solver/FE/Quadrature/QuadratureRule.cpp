@@ -22,8 +22,9 @@ namespace svmp::FE::quadrature {
 namespace {
 
 struct ReferenceCellTraits {
-    int dimension;
-    double measure;
+    int integration_dimension;
+    int coordinate_dimension;
+    double zeroth_moment;
 };
 
 enum class ValidationFailure {
@@ -61,19 +62,19 @@ constexpr std::optional<ReferenceCellTraits> reference_cell_traits(
 {
     switch (family) {
         case svmp::CellFamily::Point:
-            return ReferenceCellTraits{0, 1.0};
+            return ReferenceCellTraits{0, 0, 1.0};
         case svmp::CellFamily::Line:
-            return ReferenceCellTraits{1, 2.0};
+            return ReferenceCellTraits{1, 1, 2.0};
         case svmp::CellFamily::Triangle:
-            return ReferenceCellTraits{2, 0.5};
+            return ReferenceCellTraits{2, 2, 0.5};
         case svmp::CellFamily::Quad:
-            return ReferenceCellTraits{2, 4.0};
+            return ReferenceCellTraits{2, 2, 4.0};
         case svmp::CellFamily::Tetra:
-            return ReferenceCellTraits{3, 1.0 / 6.0};
+            return ReferenceCellTraits{3, 3, 1.0 / 6.0};
         case svmp::CellFamily::Hex:
-            return ReferenceCellTraits{3, 8.0};
+            return ReferenceCellTraits{3, 3, 8.0};
         case svmp::CellFamily::Wedge:
-            return ReferenceCellTraits{3, 1.0};
+            return ReferenceCellTraits{3, 3, 1.0};
         default:
             return std::nullopt;
     }
@@ -90,7 +91,8 @@ ValidationResult validate_point(
         if (!std::isfinite(point[component])) {
             return {ValidationFailure::NonFiniteCoordinate, sample};
         }
-        if (component >= static_cast<std::size_t>(traits.dimension) &&
+        if (component >=
+            static_cast<std::size_t>(traits.coordinate_dimension) &&
             std::abs(point[component]) > tolerance) {
             return {ValidationFailure::NonzeroInactiveCoordinate, sample};
         }
@@ -153,7 +155,7 @@ double add_as_binary64(double left, double right) noexcept
 
 ValidationResult validate_weights(
     const std::vector<double>& weights,
-    double reference_measure,
+    double zeroth_moment,
     double tolerance) noexcept
 {
     double ordered_sum = 0.0;
@@ -195,7 +197,7 @@ ValidationResult validate_weights(
         return {ValidationFailure::NonFiniteWeightAccumulation, weights.size() - 1u};
     }
 
-    const long double expected = static_cast<long double>(reference_measure);
+    const long double expected = static_cast<long double>(zeroth_moment);
     const long double scale = std::max(1.0L, std::abs(expected));
     const long double requested_error_budget =
         static_cast<long double>(tolerance) * scale;
@@ -262,7 +264,7 @@ ValidationResult validate_rule_data(
         }
     }
 
-    return validate_weights(weights, traits.measure, tolerance);
+    return validate_weights(weights, traits.zeroth_moment, tolerance);
 }
 
 std::string validation_failure_message(const ValidationResult& result)
@@ -303,10 +305,10 @@ std::string validation_failure_message(const ValidationResult& result)
             return "QuadratureRule: weight accumulation is not finite" +
                    sample_suffix();
         case ValidationFailure::IncorrectZerothMoment:
-            return "QuadratureRule: weights do not reproduce the reference-cell measure";
+            return "QuadratureRule: weights do not reproduce the zeroth moment";
         case ValidationFailure::UnstableStoredOrderAccumulation:
             return "QuadratureRule: stored-order double-precision weight accumulation "
-                   "does not reproduce the reference-cell measure";
+                   "does not reproduce the zeroth moment";
         case ValidationFailure::IllConditionedWeightCancellation:
             return "QuadratureRule: weight cancellation is too ill-conditioned for "
                    "stable double-precision integration";
@@ -325,9 +327,10 @@ QuadratureRule::QuadratureRule(svmp::CellFamily family, RuleData data)
 
 QuadratureRule::QuadratureRule(ValidatedState state)
     : cell_family_(state.cell_family),
-      dimension_(state.dimension),
+      integration_dimension_(state.integration_dimension),
+      coordinate_dimension_(state.coordinate_dimension),
       polynomial_exactness_(state.polynomial_exactness),
-      reference_measure_(state.reference_measure),
+      zeroth_moment_(state.zeroth_moment),
       points_(std::move(state.points)),
       weights_(std::move(state.weights))
 {
@@ -358,9 +361,10 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
 
     return {
         family,
-        traits->dimension,
+        traits->integration_dimension,
+        traits->coordinate_dimension,
         data.polynomial_exactness,
-        traits->measure,
+        traits->zeroth_moment,
         std::move(data.points),
         std::move(data.weights),
     };
