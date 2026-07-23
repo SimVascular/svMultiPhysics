@@ -75,11 +75,11 @@
  * concrete rule provider is responsible for making its declaration a guarantee
  * by establishing the advertised exactness with analytic moment tests.
  *
- * Points use one zero-initialized three-component representation. Constructors
- * that receive fewer than three coordinates zero-fill the omitted components.
- * Only the first dimension() components are active, and every inactive
- * component is zero within the construction tolerance. The supported canonical
- * domains are:
+ * Points use one fixed-size three-component representation. Providers initialize
+ * all three coordinates explicitly because the Eigen-backed vector is not
+ * zero-initialized by default. Only the first dimension() components are active,
+ * and every inactive component is zero within the construction tolerance. The
+ * supported canonical domains are:
  *
  * | Cell family | Canonical reference domain | Measure |
  * | ----------- | -------------------------- | ------- |
@@ -116,100 +116,13 @@ namespace svmp::FE::quadrature {
  */
 
 /**
- * @brief Zero-initialized three-component reference coordinate.
+ * @brief Three-component coordinate used for every reference quadrature point.
  *
- * Only the first QuadratureRule::dimension() components are active. Remaining
- * components are zero, giving point, line, surface, and volume rules a uniform
- * representation.
+ * Only the first QuadratureRule::dimension() components are active. Providers
+ * explicitly zero remaining components, giving point, line, surface, and volume
+ * rules a uniform representation directly compatible with FE math consumers.
  */
-class QuadPoint {
-public:
-    /** @brief Fixed-size FE vector used as the coordinate storage type. */
-    using CoordinateVector = math::Vector<double, 3>;
-
-    /** @brief Construct the origin, with all three components initialized to zero. */
-    QuadPoint() : coordinates_(CoordinateVector::Zero()) {}
-
-    /**
-     * @brief Construct a line coordinate and zero-fill the remaining components.
-     * @param x First reference coordinate.
-     */
-    explicit QuadPoint(double x)
-        : coordinates_(x, 0.0, 0.0)
-    {
-    }
-
-    /**
-     * @brief Construct a surface coordinate and zero-fill the third component.
-     * @param x First reference coordinate.
-     * @param y Second reference coordinate.
-     */
-    QuadPoint(double x, double y)
-        : coordinates_(x, y, 0.0)
-    {
-    }
-
-    /**
-     * @brief Construct a three-component coordinate.
-     * @param x First reference coordinate.
-     * @param y Second reference coordinate.
-     * @param z Third reference coordinate.
-     */
-    QuadPoint(double x, double y, double z)
-        : coordinates_(x, y, z)
-    {
-    }
-
-    /**
-     * @brief Construct from an initialized fixed-size FE vector.
-     * @param coordinates Three reference-coordinate components.
-     */
-    explicit QuadPoint(const CoordinateVector& coordinates)
-        : coordinates_(coordinates)
-    {
-    }
-
-    /**
-     * @brief Return the zero coordinate.
-     * @return Three-component coordinate initialized to the origin.
-     */
-    static QuadPoint Zero() { return {}; }
-
-    /**
-     * @brief Access one coordinate component without bounds checking.
-     * @param component Component index in the half-open range `[0, 3)`.
-     * @return Mutable component reference for rule construction.
-     */
-    double& operator[](std::size_t component) noexcept
-    {
-        return coordinates_[static_cast<Eigen::Index>(component)];
-    }
-
-    /**
-     * @brief Access one coordinate component without bounds checking.
-     * @param component Component index in the half-open range `[0, 3)`.
-     * @return Immutable component reference.
-     */
-    const double& operator[](std::size_t component) const noexcept
-    {
-        return coordinates_[static_cast<Eigen::Index>(component)];
-    }
-
-    /**
-     * @brief Return mutable fixed-size FE coordinate storage for rule generation.
-     * @return Mutable three-component coordinate storage.
-     */
-    CoordinateVector& coordinates() noexcept { return coordinates_; }
-
-    /**
-     * @brief Return immutable fixed-size FE coordinate storage.
-     * @return Immutable three-component coordinate storage.
-     */
-    const CoordinateVector& coordinates() const noexcept { return coordinates_; }
-
-private:
-    CoordinateVector coordinates_;
-};
+using QuadPoint = math::Vector<double, 3>;
 
 /**
  * @brief Immutable consumer interface for a quadrature rule on a reference cell.

@@ -768,41 +768,32 @@ TEST(QuadraturePhase01Baseline, LegacyPositionModifiersAreOnlyDegreeOneExact)
         1.0e-3);
 }
 
-TEST(QuadPointContract, DefaultAndPartialConstructionZeroFillCoordinates)
+TEST(QuadPointContract, UsesFixedSizeFEVectorRepresentation)
 {
-    static_assert(!std::is_convertible_v<double, QuadPoint>);
+    static_assert(std::is_same_v<QuadPoint, math::Vector<double, 3>>);
+    static_assert(QuadPoint::RowsAtCompileTime == 3);
+    static_assert(QuadPoint::ColsAtCompileTime == 1);
 
-    const QuadPoint origin;
+    const QuadPoint origin = QuadPoint::Zero();
     for (std::size_t component = 0; component < 3u; ++component) {
         EXPECT_DOUBLE_EQ(origin[component], 0.0);
-        EXPECT_DOUBLE_EQ(
-            origin.coordinates()[static_cast<Eigen::Index>(component)], 0.0);
     }
 
-    const QuadPoint line_point{0.25};
+    const QuadPoint line_point{0.25, 0.0, 0.0};
     EXPECT_DOUBLE_EQ(line_point[0], 0.25);
     EXPECT_DOUBLE_EQ(line_point[1], 0.0);
     EXPECT_DOUBLE_EQ(line_point[2], 0.0);
 
-    const QuadPoint surface_point{0.25, 0.5};
+    const QuadPoint surface_point{0.25, 0.5, 0.0};
     EXPECT_DOUBLE_EQ(surface_point[0], 0.25);
     EXPECT_DOUBLE_EQ(surface_point[1], 0.5);
     EXPECT_DOUBLE_EQ(surface_point[2], 0.0);
 
-    QuadPoint::CoordinateVector coordinates =
-        QuadPoint::CoordinateVector::Zero();
-    coordinates[0] = 0.2;
-    coordinates[1] = 0.3;
-    const QuadPoint vector_point{coordinates};
-    EXPECT_DOUBLE_EQ(vector_point[0], 0.2);
-    EXPECT_DOUBLE_EQ(vector_point[1], 0.3);
-    EXPECT_DOUBLE_EQ(vector_point[2], 0.0);
-
-    QuadPoint mutable_point;
-    mutable_point.coordinates()[2] = 0.75;
+    QuadPoint mutable_point = QuadPoint::Zero();
+    mutable_point[2] = 0.75;
     EXPECT_DOUBLE_EQ(mutable_point[2], 0.75);
 
-    const std::vector<QuadPoint> points(2);
+    const std::vector<QuadPoint> points(2, QuadPoint::Zero());
     for (const auto& point : points) {
         for (std::size_t component = 0; component < 3u; ++component) {
             EXPECT_DOUBLE_EQ(point[component], 0.0);
@@ -1033,7 +1024,7 @@ TEST(QuadratureRuleValidation, RejectsIncorrectMeasureDespiteLargeCancellation)
 TEST(QuadratureRuleValidation, AcceptsWellConditionedLargePositiveRule)
 {
     constexpr std::size_t sample_count = 8192u;
-    std::vector<QuadPoint> points(sample_count);
+    std::vector<QuadPoint> points(sample_count, QuadPoint::Zero());
     std::vector<double> weights(
         sample_count,
         2.0 / static_cast<double>(sample_count));
@@ -1053,7 +1044,7 @@ TEST(QuadratureRuleValidation, AcceptsWellConditionedLargeSignedRule)
 {
     constexpr std::size_t sample_count = 8192u;
     constexpr double cancelling_weight = 1.0 / 1048576.0;
-    std::vector<QuadPoint> points(sample_count);
+    std::vector<QuadPoint> points(sample_count, QuadPoint::Zero());
     std::vector<double> weights(
         sample_count,
         2.0 / static_cast<double>(sample_count - 2u));
