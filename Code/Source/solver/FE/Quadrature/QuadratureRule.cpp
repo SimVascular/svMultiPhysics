@@ -14,25 +14,14 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 
 namespace svmp::FE::quadrature {
 namespace {
 
-enum class ReferenceDomain {
-    Unsupported,
-    Point,
-    Line,
-    Triangle,
-    Quad,
-    Tetra,
-    Hex,
-    Wedge,
-};
-
 struct ReferenceCellTraits {
-    ReferenceDomain domain;
     int dimension;
     double measure;
 };
@@ -67,39 +56,32 @@ struct ValidationResult {
     }
 };
 
-constexpr ReferenceCellTraits unsupported_traits() noexcept
-{
-    return {
-        ReferenceDomain::Unsupported,
-        -1,
-        std::numeric_limits<double>::quiet_NaN(),
-    };
-}
-
-constexpr ReferenceCellTraits reference_cell_traits(svmp::CellFamily family) noexcept
+constexpr std::optional<ReferenceCellTraits> reference_cell_traits(
+    svmp::CellFamily family) noexcept
 {
     switch (family) {
         case svmp::CellFamily::Point:
-            return {ReferenceDomain::Point, 0, 1.0};
+            return ReferenceCellTraits{0, 1.0};
         case svmp::CellFamily::Line:
-            return {ReferenceDomain::Line, 1, 2.0};
+            return ReferenceCellTraits{1, 2.0};
         case svmp::CellFamily::Triangle:
-            return {ReferenceDomain::Triangle, 2, 0.5};
+            return ReferenceCellTraits{2, 0.5};
         case svmp::CellFamily::Quad:
-            return {ReferenceDomain::Quad, 2, 4.0};
+            return ReferenceCellTraits{2, 4.0};
         case svmp::CellFamily::Tetra:
-            return {ReferenceDomain::Tetra, 3, 1.0 / 6.0};
+            return ReferenceCellTraits{3, 1.0 / 6.0};
         case svmp::CellFamily::Hex:
-            return {ReferenceDomain::Hex, 3, 8.0};
+            return ReferenceCellTraits{3, 8.0};
         case svmp::CellFamily::Wedge:
-            return {ReferenceDomain::Wedge, 3, 1.0};
+            return ReferenceCellTraits{3, 1.0};
         default:
-            return unsupported_traits();
+            return std::nullopt;
     }
 }
 
 ValidationResult validate_point(
     const QuadPoint& point,
+    svmp::CellFamily family,
     const ReferenceCellTraits& traits,
     double tolerance,
     std::size_t sample) noexcept
@@ -123,38 +105,38 @@ ValidationResult validate_point(
     const double z = point[2];
 
     bool is_contained = false;
-    switch (traits.domain) {
-        case ReferenceDomain::Point:
+    switch (family) {
+        case svmp::CellFamily::Point:
             is_contained = true;
             break;
-        case ReferenceDomain::Line:
+        case svmp::CellFamily::Line:
             is_contained = in_interval(x, -1.0, 1.0);
             break;
-        case ReferenceDomain::Triangle:
+        case svmp::CellFamily::Triangle:
             is_contained = x >= -tolerance && y >= -tolerance &&
                            x + y <= 1.0 + tolerance;
             break;
-        case ReferenceDomain::Quad:
+        case svmp::CellFamily::Quad:
             is_contained = in_interval(x, -1.0, 1.0) &&
                            in_interval(y, -1.0, 1.0);
             break;
-        case ReferenceDomain::Tetra:
+        case svmp::CellFamily::Tetra:
             is_contained = x >= -tolerance && y >= -tolerance &&
                            z >= -tolerance &&
                            x + y + z <= 1.0 + tolerance;
             break;
-        case ReferenceDomain::Hex:
+        case svmp::CellFamily::Hex:
             is_contained = in_interval(x, -1.0, 1.0) &&
                            in_interval(y, -1.0, 1.0) &&
                            in_interval(z, -1.0, 1.0);
             break;
-        case ReferenceDomain::Wedge:
+        case svmp::CellFamily::Wedge:
             is_contained = x >= -tolerance && y >= -tolerance &&
                            x + y <= 1.0 + tolerance &&
                            in_interval(z, -1.0, 1.0);
             break;
-        case ReferenceDomain::Unsupported:
-            break;
+        default:
+            return {ValidationFailure::UnsupportedCellFamily};
     }
 
     if (!is_contained) {
@@ -253,15 +235,12 @@ ValidationResult validate_weights(
 
 ValidationResult validate_rule_data(
     svmp::CellFamily family,
+    const ReferenceCellTraits& traits,
     int polynomial_exactness,
     const std::vector<QuadPoint>& points,
     const std::vector<double>& weights,
     double tolerance) noexcept
 {
-    const auto traits = reference_cell_traits(family);
-    if (traits.domain == ReferenceDomain::Unsupported) {
-        return {ValidationFailure::UnsupportedCellFamily};
-    }
     if (polynomial_exactness < 0) {
         return {ValidationFailure::NegativePolynomialExactness};
     }
@@ -277,7 +256,7 @@ ValidationResult validate_rule_data(
 
     for (std::size_t sample = 0; sample < points.size(); ++sample) {
         const auto result =
-            validate_point(points[sample], traits, tolerance, sample);
+            validate_point(points[sample], family, traits, tolerance, sample);
         if (!result.valid()) {
             return result;
         }
@@ -358,8 +337,16 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
     svmp::CellFamily family,
     RuleData data)
 {
+    const auto traits = reference_cell_traits(family);
+    if (!traits) {
+        svmp::raise<InvalidArgumentException>(
+            validation_failure_message(
+                {ValidationFailure::UnsupportedCellFamily}));
+    }
+
     const auto validation = validate_rule_data(
         family,
+        *traits,
         data.polynomial_exactness,
         data.points,
         data.weights,
@@ -369,12 +356,11 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
             validation_failure_message(validation));
     }
 
-    const auto traits = reference_cell_traits(family);
     return {
         family,
-        traits.dimension,
+        traits->dimension,
         data.polynomial_exactness,
-        traits.measure,
+        traits->measure,
         std::move(data.points),
         std::move(data.weights),
     };
@@ -382,8 +368,13 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
 
 bool QuadratureRule::is_structurally_valid(double tolerance) const noexcept
 {
+    const auto traits = reference_cell_traits(cell_family_);
+    if (!traits) {
+        return false;
+    }
     return validate_rule_data(
                cell_family_,
+               *traits,
                polynomial_exactness_,
                points_,
                weights_,
