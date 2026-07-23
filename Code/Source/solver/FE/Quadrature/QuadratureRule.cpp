@@ -12,7 +12,11 @@
 #include "FE/Common/FEException.h"
 
 #include <algorithm>
+#include <array>
+#include <bit>
+#include <cassert>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <optional>
 #include <string>
@@ -29,6 +33,188 @@ struct ReferenceCellTraits {
 
 constexpr double coordinate_validation_tolerance = 1.0e-12;
 constexpr double moment_validation_tolerance = 1.0e-12;
+
+static_assert(
+    std::numeric_limits<double>::is_iec559 &&
+        std::numeric_limits<double>::radix == 2 &&
+        std::numeric_limits<double>::digits == 53 &&
+        std::numeric_limits<double>::min_exponent == -1021 &&
+        std::numeric_limits<double>::max_exponent == 1024 &&
+        sizeof(double) == sizeof(std::uint64_t),
+    "Quadrature validation requires IEEE 754 binary64 doubles");
+static_assert(
+    std::bit_cast<std::uint64_t>(1.0) == 0x3ff0000000000000ULL &&
+        std::bit_cast<std::uint64_t>(-0.0) == 0x8000000000000000ULL &&
+        std::bit_cast<std::uint64_t>(
+            std::numeric_limits<double>::denorm_min()) == 1u,
+    "Quadrature validation requires the standard binary64 bit layout");
+
+/**
+ * @brief Exact, order-independent sum of finite binary64 values.
+ *
+ * Every finite binary64 value is an integer multiple of 2^-1074. Positive and
+ * negative coefficients are accumulated separately in fixed-width unsigned
+ * integers, so neither cancellation nor an intermediate floating-point
+ * overflow can affect the result.
+ */
+class ExactBinary64Sum {
+public:
+    /**
+     * @brief Add one value exactly.
+     * @return False when @p value is infinite or NaN.
+     */
+    bool add(double value) noexcept
+    {
+        const std::uint64_t bits = std::bit_cast<std::uint64_t>(value);
+        const std::uint64_t exponent =
+            (bits >> fraction_bit_count) & exponent_mask;
+        if (exponent == exponent_mask) {
+            return false;
+        }
+
+        const std::uint64_t fraction = bits & fraction_mask;
+        const std::uint64_t coefficient =
+            exponent == 0u ? fraction : hidden_bit | fraction;
+        const std::size_t shift =
+            exponent == 0u ? 0u : static_cast<std::size_t>(exponent - 1u);
+
+        auto& magnitude =
+            (bits & sign_mask) == 0u ? positive_ : negative_;
+        add_shifted(magnitude, coefficient, shift);
+        return true;
+    }
+
+    /**
+     * @brief Test the exact sum against a binary64 target and error budget.
+     */
+    bool is_within(double expected, double error_budget) const noexcept
+    {
+        if (!(error_budget >= 0.0)) {
+            return false;
+        }
+
+        ExactBinary64Sum residual = *this;
+        if (!residual.add(-expected)) {
+            return false;
+        }
+
+        ExactBinary64Sum budget;
+        if (!budget.add(error_budget)) {
+            return false;
+        }
+
+        return compare(
+                   residual.absolute_magnitude(),
+                   budget.absolute_magnitude()) <= 0;
+    }
+
+private:
+    static constexpr std::size_t limb_bit_count =
+        std::numeric_limits<std::uint64_t>::digits;
+    static constexpr std::size_t fraction_bit_count = 52u;
+    static constexpr std::uint64_t hidden_bit =
+        std::uint64_t{1} << fraction_bit_count;
+    static constexpr std::uint64_t fraction_mask = hidden_bit - 1u;
+    static constexpr std::uint64_t exponent_mask = 0x7ffu;
+    static constexpr std::uint64_t sign_mask =
+        std::uint64_t{1} << (limb_bit_count - 1u);
+
+    // A finite binary64 coefficient occupies at most this many bits when
+    // scaled by 2^1074. The size_t term covers every possible vector length
+    // plus the expected moment without dynamic allocation.
+    static constexpr std::size_t maximum_scaled_value_bits =
+        static_cast<std::size_t>(
+            std::numeric_limits<double>::max_exponent -
+            std::numeric_limits<double>::min_exponent +
+            std::numeric_limits<double>::digits);
+    static constexpr std::size_t accumulator_bit_count =
+        maximum_scaled_value_bits +
+        std::numeric_limits<std::size_t>::digits;
+    static constexpr std::size_t accumulator_limb_count =
+        (accumulator_bit_count + limb_bit_count - 1u) / limb_bit_count;
+
+    using Magnitude =
+        std::array<std::uint64_t, accumulator_limb_count>;
+
+    static void add_word(
+        Magnitude& magnitude,
+        std::size_t index,
+        std::uint64_t word) noexcept
+    {
+        while (word != 0u && index < magnitude.size()) {
+            const std::uint64_t previous = magnitude[index];
+            magnitude[index] += word;
+            word = magnitude[index] < previous ? 1u : 0u;
+            ++index;
+        }
+        assert(word == 0u);
+    }
+
+    static void add_shifted(
+        Magnitude& magnitude,
+        std::uint64_t coefficient,
+        std::size_t shift) noexcept
+    {
+        if (coefficient == 0u) {
+            return;
+        }
+
+        const std::size_t index = shift / limb_bit_count;
+        const std::size_t offset = shift % limb_bit_count;
+        add_word(magnitude, index, coefficient << offset);
+        if (offset != 0u) {
+            add_word(
+                magnitude,
+                index + 1u,
+                coefficient >> (limb_bit_count - offset));
+        }
+    }
+
+    static int compare(
+        const Magnitude& left,
+        const Magnitude& right) noexcept
+    {
+        for (std::size_t index = left.size(); index-- > 0u;) {
+            if (left[index] < right[index]) {
+                return -1;
+            }
+            if (left[index] > right[index]) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    static Magnitude subtract(
+        const Magnitude& larger,
+        const Magnitude& smaller) noexcept
+    {
+        Magnitude difference{};
+        std::uint64_t borrow = 0u;
+        for (std::size_t index = 0u; index < difference.size(); ++index) {
+            const std::uint64_t after_subtraction =
+                larger[index] - smaller[index];
+            const bool subtraction_borrow =
+                larger[index] < smaller[index];
+            difference[index] = after_subtraction - borrow;
+            const bool incoming_borrow = after_subtraction < borrow;
+            borrow =
+                subtraction_borrow || incoming_borrow ? 1u : 0u;
+        }
+        assert(borrow == 0u);
+        return difference;
+    }
+
+    Magnitude absolute_magnitude() const noexcept
+    {
+        return compare(positive_, negative_) >= 0
+                   ? subtract(positive_, negative_)
+                   : subtract(negative_, positive_);
+    }
+
+    Magnitude positive_{};
+    Magnitude negative_{};
+};
 
 struct ValidationResult {
     static constexpr std::size_t no_sample =
@@ -145,59 +331,18 @@ ValidationResult validate_weights(
     const std::vector<double>& weights,
     double zeroth_moment) noexcept
 {
-    long double compensated_sum = 0.0L;
-    long double correction = 0.0L;
-    long double absolute_sum = 0.0L;
+    ExactBinary64Sum exact_sum;
 
     for (std::size_t sample = 0; sample < weights.size(); ++sample) {
-        const double weight = weights[sample];
-        if (!std::isfinite(weight)) {
+        if (!exact_sum.add(weights[sample])) {
             return {"quadrature weight must be finite", sample};
         }
-
-        const long double value = static_cast<long double>(weight);
-        const long double next = compensated_sum + value;
-        if (std::abs(compensated_sum) >= std::abs(value)) {
-            correction += (compensated_sum - next) + value;
-        } else {
-            correction += (value - next) + compensated_sum;
-        }
-        compensated_sum = next;
-        absolute_sum += std::abs(value);
-        if (!std::isfinite(compensated_sum) ||
-            !std::isfinite(correction) ||
-            !std::isfinite(absolute_sum)) {
-            return {"weight accumulation is not finite", sample};
-        }
     }
 
-    const long double total = compensated_sum + correction;
-    if (!std::isfinite(total)) {
-        return {"weight accumulation is not finite", weights.size() - 1u};
-    }
-
-    const long double expected = static_cast<long double>(zeroth_moment);
-    const long double scale = std::max(1.0L, std::abs(expected));
-    const long double requested_error_budget =
-        static_cast<long double>(moment_validation_tolerance) * scale;
-    const long double compensated_error = std::abs(total - expected);
-
-    if (compensated_error > requested_error_budget) {
+    const double scale = std::max(1.0, std::abs(zeroth_moment));
+    const double error_budget = moment_validation_tolerance * scale;
+    if (!exact_sum.is_within(zeroth_moment, error_budget)) {
         return {"weights do not reproduce the zeroth moment"};
-    }
-
-    // A single compensated accumulator is not exact for unrestricted signed
-    // data. Use a conservative uncertainty estimate in the precision used by
-    // validation before accepting the computed moment.
-    constexpr long double validation_safety_factor = 8.0L;
-    const long double validation_error_bound =
-        compensated_error +
-        validation_safety_factor *
-            std::numeric_limits<long double>::epsilon() * absolute_sum;
-    if (!std::isfinite(validation_error_bound) ||
-        validation_error_bound > requested_error_budget) {
-        return {
-            "weight sum is too ill-conditioned to validate the zeroth moment"};
     }
 
     return {};

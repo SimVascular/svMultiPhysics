@@ -9,6 +9,7 @@
 #include "FE/Quadrature/QuadratureRule.h"
 #include "nn.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <exception>
@@ -969,19 +970,134 @@ TEST(QuadratureRuleValidation, RejectsIncorrectZerothMomentDespiteLargeCancellat
         "weights do not reproduce the zeroth moment");
 }
 
-TEST(QuadratureRuleValidation, RejectsSignedDataWithUnreliableMoment)
+TEST(QuadratureRuleValidation, RejectsIncorrectMomentHiddenByCancellation)
 {
     const double medium = std::ldexp(1.0, 93);
     const double large = std::ldexp(1.0, 233);
     const double residual = std::ldexp(1.0, 14);
 
-    EXPECT_THROW(
+    expect_invalid_argument_with_message(
+        [medium, large, residual] {
+            (void)RuleProbe(
+                svmp::CellFamily::Line,
+                0,
+                std::vector<QuadPoint>(6u, QuadPoint::Zero()),
+                {-medium, -large, residual, medium, large, 2.0});
+        },
+        "weights do not reproduce the zeroth moment");
+}
+
+TEST(QuadratureRuleValidation, ExactMomentValidationIsOrderIndependent)
+{
+    const double maximum = std::numeric_limits<double>::max();
+    std::vector<double> valid_weights{
+        -maximum, -maximum, 2.0, maximum, maximum};
+    std::sort(valid_weights.begin(), valid_weights.end());
+
+    std::size_t permutation_count = 0u;
+    do {
+        SCOPED_TRACE(permutation_count);
+        EXPECT_NO_THROW(
+            (void)RuleProbe(
+                svmp::CellFamily::Line,
+                0,
+                std::vector<QuadPoint>(
+                    valid_weights.size(),
+                    QuadPoint::Zero()),
+                valid_weights));
+        ++permutation_count;
+    } while (std::next_permutation(
+        valid_weights.begin(),
+        valid_weights.end()));
+    EXPECT_EQ(permutation_count, 30u);
+
+    const double excessive_residual = std::ldexp(1.0, -38);
+    std::vector<double> invalid_weights{
+        -maximum,
+        -maximum,
+        2.0,
+        excessive_residual,
+        maximum,
+        maximum};
+    std::sort(invalid_weights.begin(), invalid_weights.end());
+
+    permutation_count = 0u;
+    do {
+        SCOPED_TRACE(permutation_count);
+        expect_invalid_argument_with_message(
+            [&invalid_weights] {
+                (void)RuleProbe(
+                    svmp::CellFamily::Line,
+                    0,
+                    std::vector<QuadPoint>(
+                        invalid_weights.size(),
+                        QuadPoint::Zero()),
+                    invalid_weights);
+            },
+            "weights do not reproduce the zeroth moment");
+        ++permutation_count;
+    } while (std::next_permutation(
+        invalid_weights.begin(),
+        invalid_weights.end()));
+    EXPECT_EQ(permutation_count, 180u);
+}
+
+TEST(QuadratureRuleValidation, HandlesExtremeAndSubnormalCancellation)
+{
+    const double maximum = std::numeric_limits<double>::max();
+    const double minimum_normal = std::numeric_limits<double>::min();
+    const double minimum_subnormal =
+        std::numeric_limits<double>::denorm_min();
+    const double next_normal =
+        std::nextafter(minimum_normal, std::numeric_limits<double>::infinity());
+
+    EXPECT_NO_THROW(
         (void)RuleProbe(
             svmp::CellFamily::Line,
             0,
             std::vector<QuadPoint>(6u, QuadPoint::Zero()),
-            {-medium, -large, residual, medium, large, 2.0}),
-        InvalidArgumentException);
+            {
+                maximum,
+                minimum_normal,
+                minimum_subnormal,
+                2.0,
+                -next_normal,
+                -maximum,
+            }));
+
+    expect_invalid_argument_with_message(
+        [maximum] {
+            (void)RuleProbe(
+                svmp::CellFamily::Line,
+                0,
+                std::vector<QuadPoint>(2u, QuadPoint::Zero()),
+                {maximum, maximum});
+        },
+        "weights do not reproduce the zeroth moment");
+}
+
+TEST(QuadratureRuleValidation, AppliesToleranceToTheExactWeightSum)
+{
+    const double maximum = std::numeric_limits<double>::max();
+    const double accepted_residual = std::ldexp(1.0, -42);
+    const double rejected_residual = std::ldexp(1.0, -38);
+
+    EXPECT_NO_THROW(
+        (void)RuleProbe(
+            svmp::CellFamily::Line,
+            0,
+            std::vector<QuadPoint>(4u, QuadPoint::Zero()),
+            {maximum, accepted_residual, -maximum, 2.0}));
+
+    expect_invalid_argument_with_message(
+        [maximum, rejected_residual] {
+            (void)RuleProbe(
+                svmp::CellFamily::Line,
+                0,
+                std::vector<QuadPoint>(4u, QuadPoint::Zero()),
+                {maximum, rejected_residual, -maximum, 2.0});
+        },
+        "weights do not reproduce the zeroth moment");
 }
 
 TEST(QuadratureRuleValidation, AcceptsLargePositiveRule)

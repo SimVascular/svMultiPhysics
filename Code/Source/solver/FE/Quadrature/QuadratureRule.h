@@ -50,7 +50,7 @@
  * not derive new rules or modify rule storage.
  *
  * Complete-data construction, reference-cell traits, point-containment checks,
- * compensated weight summation, concrete generators, caches, and rule-selection
+ * exact weight summation, concrete generators, caches, and rule-selection
  * facilities are module implementation details.
  *
  * ## Rule-provider contract
@@ -71,8 +71,9 @@
  * a separate revalidation step. The constructor rejects unsupported cells,
  * negative exactness, empty or mismatched storage, non-finite coordinates or
  * weights, points outside the declared reference cell, and weights whose sum
- * does not equal the canonical rule's zeroth moment in compensated arithmetic
- * or cannot be established within the validator's numerical precision.
+ * does not equal the canonical rule's zeroth moment within the scaled moment
+ * tolerance. The sum of the stored binary64 weights is evaluated exactly and
+ * independently of their order.
  *
  * Structural validation does not require unique points or nonzero, positive
  * individual weights. It verifies metadata, containment, finiteness, and the
@@ -267,8 +268,7 @@ protected:
      * @throws InvalidArgumentException If the family is unsupported, exactness
      * is negative, storage is empty or mismatched, a value is non-finite, a point
      * is outside the reference cell, the weights do not reproduce its zeroth
-     * moment in compensated arithmetic, or cancellation prevents validating
-     * that moment reliably.
+     * moment within the scaled moment tolerance.
      */
     explicit QuadratureRule(svmp::CellFamily family, RuleData data);
 
