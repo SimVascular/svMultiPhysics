@@ -109,15 +109,12 @@ public:
     }
 
 private:
-    static constexpr std::size_t limb_bit_count =
-        std::numeric_limits<std::uint64_t>::digits;
+    static constexpr std::size_t limb_bit_count = std::numeric_limits<std::uint64_t>::digits;
     static constexpr std::size_t fraction_bit_count = 52u;
-    static constexpr std::uint64_t hidden_bit =
-        std::uint64_t{1} << fraction_bit_count;
+    static constexpr std::uint64_t hidden_bit = std::uint64_t{1} << fraction_bit_count;
     static constexpr std::uint64_t fraction_mask = hidden_bit - 1u;
     static constexpr std::uint64_t exponent_mask = 0x7ffu;
-    static constexpr std::uint64_t sign_mask =
-        std::uint64_t{1} << (limb_bit_count - 1u);
+    static constexpr std::uint64_t sign_mask = std::uint64_t{1} << (limb_bit_count - 1u);
 
     // A finite binary64 coefficient occupies at most this many bits when
     // scaled by 2^1074. The size_t term covers every possible vector length
