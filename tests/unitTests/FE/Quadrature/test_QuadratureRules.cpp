@@ -583,7 +583,6 @@ TEST(QuadraturePhase01Baseline, CanonicalFixturesSatisfyTheRuleAndExactnessContr
         EXPECT_EQ(rule.cell_family(), to_mesh_family(c.fe_type));
         EXPECT_EQ(rule.integration_dimension(), c.dimension);
         EXPECT_EQ(rule.coordinate_dimension(), c.dimension);
-        EXPECT_EQ(rule.dimension(), rule.integration_dimension());
         EXPECT_EQ(rule.polynomial_exactness(), c.advertised_exactness);
         EXPECT_EQ(rule.num_points(), c.samples.size());
         EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.zeroth_moment);
@@ -830,7 +829,6 @@ TEST(QuadratureRuleValidation, AcceptsEverySupportedReferenceCell)
             {c.expected_measure});
         EXPECT_EQ(rule.integration_dimension(), c.expected_dimension);
         EXPECT_EQ(rule.coordinate_dimension(), c.expected_dimension);
-        EXPECT_EQ(rule.dimension(), rule.integration_dimension());
         EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.expected_measure);
     }
 }
@@ -1136,7 +1134,6 @@ TEST(QuadratureRuleContract, PublishesOnlyACompleteImmutableQueryInterface)
     EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Line);
     EXPECT_EQ(rule.integration_dimension(), 1);
     EXPECT_EQ(rule.coordinate_dimension(), 1);
-    EXPECT_EQ(rule.dimension(), rule.integration_dimension());
     EXPECT_EQ(rule.polynomial_exactness(), 3);
     EXPECT_DOUBLE_EQ(rule.zeroth_moment(), 2.0);
     ASSERT_EQ(rule.num_points(), 2u);
