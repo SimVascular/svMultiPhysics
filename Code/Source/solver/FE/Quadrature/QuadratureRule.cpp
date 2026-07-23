@@ -16,6 +16,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace svmp::FE::quadrature {
@@ -27,33 +28,16 @@ struct ReferenceCellTraits {
     double zeroth_moment;
 };
 
-enum class ValidationFailure {
-    None,
-    UnsupportedCellFamily,
-    NegativePolynomialExactness,
-    InvalidTolerance,
-    EmptyRule,
-    PointWeightSizeMismatch,
-    NonFiniteCoordinate,
-    NonzeroInactiveCoordinate,
-    PointOutsideReferenceCell,
-    NonFiniteWeight,
-    NonFiniteWeightAccumulation,
-    IncorrectZerothMoment,
-    UnstableStoredOrderAccumulation,
-    IllConditionedWeightCancellation,
-};
-
 struct ValidationResult {
     static constexpr std::size_t no_sample =
         std::numeric_limits<std::size_t>::max();
 
-    ValidationFailure failure{ValidationFailure::None};
+    std::string_view reason{};
     std::size_t sample{no_sample};
 
     constexpr bool valid() const noexcept
     {
-        return failure == ValidationFailure::None;
+        return reason.empty();
     }
 };
 
@@ -89,12 +73,12 @@ ValidationResult validate_point(
 {
     for (std::size_t component = 0; component < 3u; ++component) {
         if (!std::isfinite(point[component])) {
-            return {ValidationFailure::NonFiniteCoordinate, sample};
+            return {"quadrature point contains a non-finite coordinate", sample};
         }
         if (component >=
             static_cast<std::size_t>(traits.coordinate_dimension) &&
             std::abs(point[component]) > tolerance) {
-            return {ValidationFailure::NonzeroInactiveCoordinate, sample};
+            return {"quadrature point has a nonzero inactive coordinate", sample};
         }
     }
 
@@ -138,11 +122,13 @@ ValidationResult validate_point(
                            in_interval(z, -1.0, 1.0);
             break;
         default:
-            return {ValidationFailure::UnsupportedCellFamily};
+            return {"unsupported reference-cell family"};
     }
 
     if (!is_contained) {
-        return {ValidationFailure::PointOutsideReferenceCell, sample};
+        return {
+            "quadrature point lies outside the canonical reference cell",
+            sample};
     }
     return {};
 }
@@ -161,7 +147,7 @@ ValidationResult validate_weights(
     for (std::size_t sample = 0; sample < weights.size(); ++sample) {
         const double weight = weights[sample];
         if (!std::isfinite(weight)) {
-            return {ValidationFailure::NonFiniteWeight, sample};
+            return {"quadrature weight must be finite", sample};
         }
 
         // The volatile store makes each stored-order addition round to
@@ -169,7 +155,7 @@ ValidationResult validate_weights(
         volatile double rounded_sum = ordered_sum + weight;
         ordered_sum = rounded_sum;
         if (!std::isfinite(ordered_sum)) {
-            return {ValidationFailure::NonFiniteWeightAccumulation, sample};
+            return {"weight accumulation is not finite", sample};
         }
         has_negative_weight = has_negative_weight || weight < 0.0;
 
@@ -185,13 +171,13 @@ ValidationResult validate_weights(
         if (!std::isfinite(compensated_sum) ||
             !std::isfinite(correction) ||
             !std::isfinite(absolute_sum)) {
-            return {ValidationFailure::NonFiniteWeightAccumulation, sample};
+            return {"weight accumulation is not finite", sample};
         }
     }
 
     const long double total = compensated_sum + correction;
     if (!std::isfinite(total)) {
-        return {ValidationFailure::NonFiniteWeightAccumulation, weights.size() - 1u};
+        return {"weight accumulation is not finite", weights.size() - 1u};
     }
 
     const long double expected = static_cast<long double>(zeroth_moment);
@@ -201,13 +187,15 @@ ValidationResult validate_weights(
     const long double compensated_error = std::abs(total - expected);
 
     if (compensated_error > requested_error_budget) {
-        return {ValidationFailure::IncorrectZerothMoment};
+        return {"weights do not reproduce the zeroth moment"};
     }
 
     const long double ordered_error =
         std::abs(static_cast<long double>(ordered_sum) - expected);
     if (ordered_error > requested_error_budget) {
-        return {ValidationFailure::UnstableStoredOrderAccumulation};
+        return {
+            "stored-order double-precision weight accumulation does not "
+            "reproduce the zeroth moment"};
     }
 
     if (has_negative_weight) {
@@ -225,7 +213,9 @@ ValidationResult validate_weights(
                 QuadratureRule::default_validation_tolerance()) * scale;
         if (!std::isfinite(stability_error_bound) ||
             stability_error_bound > stability_budget) {
-            return {ValidationFailure::IllConditionedWeightCancellation};
+            return {
+                "weight cancellation is too ill-conditioned for stable "
+                "double-precision integration"};
         }
     }
 
@@ -241,16 +231,16 @@ ValidationResult validate_rule_data(
     double tolerance) noexcept
 {
     if (polynomial_exactness < 0) {
-        return {ValidationFailure::NegativePolynomialExactness};
+        return {"polynomial exactness must be non-negative"};
     }
     if (!std::isfinite(tolerance) || tolerance < 0.0) {
-        return {ValidationFailure::InvalidTolerance};
+        return {"validation tolerance must be finite and non-negative"};
     }
     if (points.empty()) {
-        return {ValidationFailure::EmptyRule};
+        return {"a rule must contain at least one sample"};
     }
     if (points.size() != weights.size()) {
-        return {ValidationFailure::PointWeightSizeMismatch};
+        return {"points/weights size mismatch"};
     }
 
     for (std::size_t sample = 0; sample < points.size(); ++sample) {
@@ -266,51 +256,17 @@ ValidationResult validate_rule_data(
 
 std::string validation_failure_message(const ValidationResult& result)
 {
-    const auto sample_suffix = [&result]() {
-        if (result.sample == ValidationResult::no_sample) {
-            return std::string{};
-        }
-        return std::string{" at sample "} + std::to_string(result.sample);
-    };
-
-    switch (result.failure) {
-        case ValidationFailure::None:
-            return {};
-        case ValidationFailure::UnsupportedCellFamily:
-            return "QuadratureRule: unsupported reference-cell family";
-        case ValidationFailure::NegativePolynomialExactness:
-            return "QuadratureRule: polynomial exactness must be non-negative";
-        case ValidationFailure::InvalidTolerance:
-            return "QuadratureRule: validation tolerance must be finite and non-negative";
-        case ValidationFailure::EmptyRule:
-            return "QuadratureRule: a rule must contain at least one sample";
-        case ValidationFailure::PointWeightSizeMismatch:
-            return "QuadratureRule: points/weights size mismatch";
-        case ValidationFailure::NonFiniteCoordinate:
-            return "QuadratureRule: quadrature point contains a non-finite coordinate" +
-                   sample_suffix();
-        case ValidationFailure::NonzeroInactiveCoordinate:
-            return "QuadratureRule: quadrature point has a nonzero inactive coordinate" +
-                   sample_suffix();
-        case ValidationFailure::PointOutsideReferenceCell:
-            return "QuadratureRule: quadrature point lies outside the canonical reference cell" +
-                   sample_suffix();
-        case ValidationFailure::NonFiniteWeight:
-            return "QuadratureRule: quadrature weight must be finite" +
-                   sample_suffix();
-        case ValidationFailure::NonFiniteWeightAccumulation:
-            return "QuadratureRule: weight accumulation is not finite" +
-                   sample_suffix();
-        case ValidationFailure::IncorrectZerothMoment:
-            return "QuadratureRule: weights do not reproduce the zeroth moment";
-        case ValidationFailure::UnstableStoredOrderAccumulation:
-            return "QuadratureRule: stored-order double-precision weight accumulation "
-                   "does not reproduce the zeroth moment";
-        case ValidationFailure::IllConditionedWeightCancellation:
-            return "QuadratureRule: weight cancellation is too ill-conditioned for "
-                   "stable double-precision integration";
+    if (result.valid()) {
+        return {};
     }
-    return "QuadratureRule: unknown validation failure";
+
+    std::string message{"QuadratureRule: "};
+    message.append(result.reason);
+    if (result.sample != ValidationResult::no_sample) {
+        message.append(" at sample ");
+        message.append(std::to_string(result.sample));
+    }
+    return message;
 }
 
 } // namespace
@@ -341,7 +297,7 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
     if (!traits) {
         svmp::raise<InvalidArgumentException>(
             validation_failure_message(
-                {ValidationFailure::UnsupportedCellFamily}));
+                {"unsupported reference-cell family"}));
     }
 
     const auto validation = validate_rule_data(
