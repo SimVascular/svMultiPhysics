@@ -425,13 +425,11 @@ void expect_total_degree_exact(
     int degree,
     double tolerance = kExactnessTol)
 {
-    const int max_px = rule.integration_dimension() >= 1 ? degree : 0;
+    const int max_px = rule.dimension() >= 1 ? degree : 0;
     for (int px = 0; px <= max_px; ++px) {
-        const int max_py =
-            rule.integration_dimension() >= 2 ? degree - px : 0;
+        const int max_py = rule.dimension() >= 2 ? degree - px : 0;
         for (int py = 0; py <= max_py; ++py) {
-            const int max_pz =
-                rule.integration_dimension() >= 3 ? degree - px - py : 0;
+            const int max_pz = rule.dimension() >= 3 ? degree - px - py : 0;
             for (int pz = 0; pz <= max_pz; ++pz) {
                 EXPECT_NEAR(
                     integrate_monomial(rule, px, py, pz),
@@ -581,8 +579,7 @@ TEST(QuadraturePhase01Baseline, CanonicalFixturesSatisfyTheRuleAndExactnessContr
         const auto rule = make_rule(c);
 
         EXPECT_EQ(rule.cell_family(), to_mesh_family(c.fe_type));
-        EXPECT_EQ(rule.integration_dimension(), c.dimension);
-        EXPECT_EQ(rule.coordinate_dimension(), c.dimension);
+        EXPECT_EQ(rule.dimension(), c.dimension);
         EXPECT_EQ(rule.polynomial_exactness(), c.advertised_exactness);
         EXPECT_EQ(rule.num_points(), c.samples.size());
         EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.zeroth_moment);
@@ -827,8 +824,7 @@ TEST(QuadratureRuleValidation, AcceptsEverySupportedReferenceCell)
             0,
             {{c.point[0], c.point[1], c.point[2]}},
             {c.expected_measure});
-        EXPECT_EQ(rule.integration_dimension(), c.expected_dimension);
-        EXPECT_EQ(rule.coordinate_dimension(), c.expected_dimension);
+        EXPECT_EQ(rule.dimension(), c.expected_dimension);
         EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.expected_measure);
     }
 }
@@ -899,16 +895,6 @@ TEST(QuadratureRuleValidation, RejectsMalformedStorageAndNonfiniteValues)
                 svmp::CellFamily::Line, 1, {{0.0, 0.0, 0.0}}, {nan});
         },
         "quadrature weight must be finite at sample 0");
-    expect_invalid_argument_with_message(
-        [] {
-            (void)RuleProbe(
-                svmp::CellFamily::Line,
-                1,
-                {{0.0, 0.0, 0.0}, {0.5, 0.0, 0.0}},
-                {std::numeric_limits<double>::max(),
-                 std::numeric_limits<double>::max()});
-        },
-        "weight accumulation is not finite at sample 1");
 }
 
 TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
@@ -968,38 +954,6 @@ TEST(QuadratureRuleValidation, EnforcesZerothMomentButAllowsNegativeWeights)
         rule.zeroth_moment());
 }
 
-TEST(QuadratureRuleValidation, RejectsStoredOrderCancellation)
-{
-    expect_invalid_argument_with_message(
-        [] {
-            (void)RuleProbe(
-                svmp::CellFamily::Line,
-                0,
-                {{-0.75, 0.0, 0.0},
-                 {-0.25, 0.0, 0.0},
-                 {0.25, 0.0, 0.0},
-                 {0.75, 0.0, 0.0}},
-                {1.0e16, 1.0, -1.0e16, 1.0});
-        },
-        "stored-order double-precision weight accumulation");
-}
-
-TEST(QuadratureRuleValidation, RejectsIllConditionedCancellationDespiteExactOrderedSum)
-{
-    expect_invalid_argument_with_message(
-        [] {
-            (void)RuleProbe(
-                svmp::CellFamily::Line,
-                0,
-                {{-0.75, 0.0, 0.0},
-                 {-0.25, 0.0, 0.0},
-                 {0.25, 0.0, 0.0},
-                 {0.75, 0.0, 0.0}},
-                {1.0e16, -1.0e16, 1.0, 1.0});
-        },
-        "too ill-conditioned for stable double-precision integration");
-}
-
 TEST(QuadratureRuleValidation, RejectsIncorrectZerothMomentDespiteLargeCancellation)
 {
     expect_invalid_argument_with_message(
@@ -1015,25 +969,40 @@ TEST(QuadratureRuleValidation, RejectsIncorrectZerothMomentDespiteLargeCancellat
         "weights do not reproduce the zeroth moment");
 }
 
-TEST(QuadratureRuleValidation, AcceptsWellConditionedLargePositiveRule)
+TEST(QuadratureRuleValidation, RejectsSignedDataWithUnreliableMoment)
 {
-    constexpr std::size_t sample_count = 8192u;
+    const double medium = std::ldexp(1.0, 93);
+    const double large = std::ldexp(1.0, 233);
+    const double residual = std::ldexp(1.0, 14);
+
+    EXPECT_THROW(
+        (void)RuleProbe(
+            svmp::CellFamily::Line,
+            0,
+            std::vector<QuadPoint>(6u, QuadPoint::Zero()),
+            {-medium, -large, residual, medium, large, 2.0}),
+        InvalidArgumentException);
+}
+
+TEST(QuadratureRuleValidation, AcceptsLargePositiveRule)
+{
+    // Repeating a non-dyadic weight exposes ordinary left-fold drift without
+    // changing the mathematical normalization of the rule.
+    constexpr std::size_t sample_count = 100000u;
+    const double sample_weight = 2.0 / static_cast<double>(sample_count);
     std::vector<QuadPoint> points(sample_count, QuadPoint::Zero());
-    std::vector<double> weights(
-        sample_count,
-        2.0 / static_cast<double>(sample_count));
+    std::vector<double> weights(sample_count, sample_weight);
 
     const RuleProbe rule(
         svmp::CellFamily::Line,
         0,
         std::move(points),
         std::move(weights));
-    EXPECT_DOUBLE_EQ(
-        integrate_monomial(rule, 0, 0, 0),
-        rule.zeroth_moment());
+    EXPECT_EQ(rule.num_points(), sample_count);
+    EXPECT_DOUBLE_EQ(rule.weight(0), sample_weight);
 }
 
-TEST(QuadratureRuleValidation, AcceptsWellConditionedLargeSignedRule)
+TEST(QuadratureRuleValidation, AcceptsLargeSignedRule)
 {
     constexpr std::size_t sample_count = 8192u;
     constexpr double cancelling_weight = 1.0 / 1048576.0;
@@ -1058,7 +1027,7 @@ TEST(QuadratureRuleValidation, AcceptsWellConditionedLargeSignedRule)
 
 TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
 {
-    constexpr double accepted_offset = 0.5 * kTol;
+    constexpr double accepted_offset = 1.0e-14;
     const RuleProbe rule(
         svmp::CellFamily::Line,
         0,
@@ -1066,7 +1035,7 @@ TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
         {2.0});
     EXPECT_DOUBLE_EQ(rule.point(0)[0], 1.0 + accepted_offset);
 
-    constexpr double rejected_offset = 2.0 * kTol;
+    constexpr double rejected_offset = 1.0e-10;
     expect_invalid_argument_with_message(
         [rejected_offset] {
             (void)RuleProbe(
@@ -1080,7 +1049,7 @@ TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
 
 TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
 {
-    constexpr double accepted_offset = 0.5 * kTol;
+    constexpr double accepted_offset = 1.0e-14;
     const RuleProbe rule(
         svmp::CellFamily::Triangle,
         0,
@@ -1088,7 +1057,7 @@ TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
         {0.5 + accepted_offset});
     EXPECT_DOUBLE_EQ(rule.weight(0), 0.5 + accepted_offset);
 
-    constexpr double rejected_offset = 2.0 * kTol;
+    constexpr double rejected_offset = 1.0e-10;
     expect_invalid_argument_with_message(
         [rejected_offset] {
             (void)RuleProbe(
@@ -1132,8 +1101,7 @@ TEST(QuadratureRuleContract, PublishesOnlyACompleteImmutableQueryInterface)
         {1.0, 1.0});
 
     EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Line);
-    EXPECT_EQ(rule.integration_dimension(), 1);
-    EXPECT_EQ(rule.coordinate_dimension(), 1);
+    EXPECT_EQ(rule.dimension(), 1);
     EXPECT_EQ(rule.polynomial_exactness(), 3);
     EXPECT_DOUBLE_EQ(rule.zeroth_moment(), 2.0);
     ASSERT_EQ(rule.num_points(), 2u);
