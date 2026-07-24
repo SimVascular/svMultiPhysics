@@ -35,9 +35,6 @@ namespace read_files_ns {
 
   void read_files(Simulation* simulation, const std::string& file_name);
 
-  void read_fourier_coeff_values_file(const std::string& file_name, bcType& lBc);
-  void read_fourier_coeff_values_file(const std::string& file_name, bfType& lBf);
-
   void read_ls(Simulation* simulation, EquationParameters* eq_params, consts::SolverType solver_type, eqType& lEq);
 
   void read_mat_model(Simulation* simulation, EquationParameters* eq_params, DomainParameters* domain_params, dmnType& lDmn);
@@ -47,9 +44,6 @@ namespace read_files_ns {
   void read_rmsh(Simulation* simulation, EquationParameters* eq_param);
 
   void read_spatial_values(const ComMod& com_mod, const mshType& msh, const faceType& lFa, const std::string& file_name, bcType& lBc);
-
-  void read_temporal_values(const std::string& file_name, bcType& lBc);
-  void read_temporal_values(const std::string& file_name, bfType& lBf);
 
   void read_temp_spat_values(const ComMod& com_mod, const mshType& msh, const faceType& lFa, 
       const std::string& file_name, bcType& lBc);

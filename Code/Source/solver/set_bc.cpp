@@ -8,7 +8,6 @@
 #include "cmm.h"
 #include "consts.h"
 #include "eq_assem.h"
-#include "fft.h"
 #include "fluid.h"
 #include "fs.h"
 #include "lhsa.h"
@@ -18,6 +17,7 @@
 #include "utils.h"
 #include <math.h>
 #include "svZeroD_interface.h"
+#include "svOneD_interface.h"
 
 namespace set_bc {
 
@@ -103,11 +103,18 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
         RCRflag = true;
       }
     }
-
-    // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
+    
+    // Compute flowrates/pressures at 3D coupled boundaries for Coupled BCs.
+    // DIR coupling (both svZeroD and svOneD): the downstream solver is driven
+    // by the 3D face average pressure, so compute_pressures() is required.
+    // NEU coupling: the downstream solver is driven by the 3D outflow Q.
     if (utils::btest(bc.bType, iBC_Coupled)) {
-      bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
-      #ifdef debug_calc_der_cpl_bc 
+      if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+        bc.coupled_bc.compute_pressures(com_mod, cm_mod, solutions);
+      } else {
+        bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
+      }
+      #ifdef debug_calc_der_cpl_bc
       dmsg << "iBC_Coupled ";
       dmsg << "coupled_bc.Qo: " << bc.coupled_bc.get_Qo();
       dmsg << "coupled_bc.Qn: " << bc.coupled_bc.get_Qn();
@@ -171,10 +178,21 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
   // Call genBC or cplBC to get updated pressures or flowrates.
   if (cplBC.useGenBC) {
      set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
-   } else if (cplBC.useSvZeroD) {
-     svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
    } else {
-     set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+    // In mixed-coupling simulations both useSvZeroD and useSvOneD can be true.
+    // Call each active solver independently.
+    if (cplBC.useSvZeroD) {
+      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+    }
+    if (cplBC.useSvOneD) {
+      svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+    }
+    if (!cplBC.useSvZeroD && !cplBC.useSvOneD) {
+      set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+    } else if (RCRflag) {
+      // Also integrate any RCR faces that coexist with svZeroD/svOneD faces.
+      set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+    }
   }
 
   // Compute the epsilon parameter (diff) for the finite difference calculation
@@ -198,7 +216,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
      diff = diff*relTol;
   }
 
-  // Store the original pressures and flowrates
+  // Store the original pressures and flowrates for cplBC
   std::vector<double> orgY(cplBC.fa.size());
   std::vector<double> orgQ(cplBC.fa.size());
 
@@ -221,6 +239,16 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
           set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
         } else if (cplBC.useSvZeroD) {
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+          // Also integrate any RCR faces that coexist with svZeroD faces.
+          if (RCRflag) {
+            set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+          }
+        } else if (cplBC.useSvOneD) {
+          svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+          // Also integrate any RCR faces that coexist with svOneD faces.
+          if (RCRflag) {
+            set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+          }
         } else {
           set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
         }
@@ -262,7 +290,11 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
       
       // Perturb flowrate and compute new pressure
       bc.coupled_bc.perturb_flowrate(diff);
-      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      if (bc.coupled_bc.is_svOneD_face()) {
+        svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+      } else {
+        svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      }
       
       // Finite difference: dP/dQ
       bc.r = (bc.coupled_bc.get_pressure() - orig_state.pressure) / diff;
@@ -281,6 +313,7 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
 }
 
 /// @brief RCR (Windkessel) integration for the non-genBC / non-svZeroD branch.
+/// The legacy external Fortran Couple_to_cplBC file coupling has been removed.
 void cplBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const bool RCRflag)
 {
   using namespace consts;
@@ -476,26 +509,40 @@ void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat)
 
   double tt = fmax(time - dt, 0.0);
   double dtt = dt / static_cast<double>(nTS);
-  int nX = cplBC.nFa;
+
+  // Collect indices of RCR faces only.  When svOneD and RCR are mixed, some
+  // cplBC.fa[] entries belong to the 1D solver and must be skipped here to
+  // avoid accessing uninitialised RCR parameters (Rp/C/Rd/Pd = 0) and
+  // causing division-by-zero inside the RK4 loop.
+  std::vector<int> rcrIdx;
+  rcrIdx.reserve(cplBC.nFa);
+  for (int i = 0; i < cplBC.nFa; i++) {
+    if (cplBC.fa[i].isRCR) {
+      rcrIdx.push_back(i);
+    }
+  }
+  int nX = static_cast<int>(rcrIdx.size());
 
   Vector<double> Rp(nX), C(nX), Rd(nX), Pd(nX); 
   Vector<double> X(nX), Xrk(nX); 
   Array<double> frk(nX,4), Qrk(nX,4);
 
-  for (int i = 0; i < nX; i++) {
-    Rp(i) = cplBC.fa[i].RCR.Rp;
-    C(i) = cplBC.fa[i].RCR.C;
-    Rd(i) = cplBC.fa[i].RCR.Rd;
-    Pd(i) = cplBC.fa[i].RCR.Pd;
+  for (int k = 0; k < nX; k++) {
+    int i = rcrIdx[k];
+    Rp(k) = cplBC.fa[i].RCR.Rp;
+    C(k)  = cplBC.fa[i].RCR.C;
+    Rd(k) = cplBC.fa[i].RCR.Rd;
+    Pd(k) = cplBC.fa[i].RCR.Pd;
+    X(k)  = cplBC.xo[i];
   }
-  X = cplBC.xo;
 
   for (int n = 0; n < nTS; n++) {
     for (int i = 0; i < 4; i++) {
       double r = static_cast<double>(i) / 3.0;
       r = (static_cast<double>(n) + r) / static_cast<double>(nTS);
-      for (int j = 0; j < Qrk.nrows(); j++) {
-        Qrk(j,i) = cplBC.fa[j].Qo + (cplBC.fa[j].Qn - cplBC.fa[j].Qo) * r;
+      for (int j = 0; j < nX; j++) {
+        int fi = rcrIdx[j];
+        Qrk(j,i) = cplBC.fa[fi].Qo + (cplBC.fa[fi].Qn - cplBC.fa[fi].Qo) * r;
       }   
     }
 
@@ -512,21 +559,21 @@ void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat)
     trk = tt + dtt / 3.0;
     Xrk = X  + dtt * frk.col(0) / 3.0;
 
-    for (int j = 0; j < Qrk.nrows(); j++) {
+    for (int j = 0; j < nX; j++) {
       frk(j,1) = (Qrk(j,1) - (Xrk(j)-Pd(j)) / Rd(j)) / C(j);
     }
 
     // RK-4 3rd pass
     trk = tt + 2.0 * dtt / 3.0;
     Xrk = X - dtt * frk.col(0) / 3.0  +  dtt * frk.col(1);
-    for (int j = 0; j < Qrk.nrows(); j++) {
+    for (int j = 0; j < nX; j++) {
       frk(j,2) = (Qrk(j,2) - (Xrk(j) - Pd(j)) / Rd(j)) / C(j);
     }
 
     // RK-4 4th pass
     trk = tt + dtt;
     Xrk = X  + dtt * frk.col(0)  -  dtt * frk.col(1)  +  dtt * frk.col(2);
-    for (int j = 0; j < Qrk.nrows(); j++) {
+    for (int j = 0; j < nX; j++) {
       frk(j,3) = (Qrk(j,3) - (Xrk(j) - Pd(j)) / Rd(j)) / C(j);
     }
 
@@ -534,8 +581,8 @@ void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat)
     X  = X + r*(frk.col(0) + 3.0*(frk.col(1) + frk.col(2)) + frk.col(3));
     tt = tt + dtt;
 
-    for (int i = 0; i < nX; i++) {
-      if (isnan(X(i))) {
+    for (int k = 0; k < nX; k++) {
+      if (isnan(X(k))) {
         throw std::runtime_error("ERROR: NaN detected in RCR integration");
         istat = -1;
         return;
@@ -543,13 +590,14 @@ void RCR_Integ_X(ComMod& com_mod, const CmMod& cm_mod, int istat)
     }
   }
 
-  cplBC.xn = X;
-  cplBC.xp(0) = tt;
-
-  for (int i = 0; i < nX; i++) {
-    cplBC.xp(i+1) = Qrk(i,3); //cplBC.fa(i).Qn
-    cplBC.fa[i].y = X(i) + (cplBC.fa[i].Qn * Rp(i));
+  // Write results back using the original (sparse) face indices.
+  for (int k = 0; k < nX; k++) {
+    int i = rcrIdx[k];
+    cplBC.xn[i] = X(k);
+    cplBC.xp(i+1) = Qrk(k,3);
+    cplBC.fa[i].y = X(k) + (cplBC.fa[i].Qn * Rp(k));
   }
+  cplBC.xp(0) = tt;
 
 }
 
@@ -743,10 +791,16 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
         }
       }
 
-
-      // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
+      // Compute flowrates/pressures at 3D coupled boundaries for Coupled BCs.
+      // DIR coupling (both svZeroD and svOneD): the downstream solver is driven
+      // by the 3D face average pressure, so compute_pressures() is required.
+      // NEU coupling: the downstream solver is driven by the 3D outflow Q.
       if (utils::btest(bc.bType, iBC_Coupled)) {
-        bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
+        if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+          bc.coupled_bc.compute_pressures(com_mod, cm_mod, solutions);
+        } else {
+          bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
+        }
       }
       
       if (ptr != -1) {
@@ -791,10 +845,21 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
     // Updates pressure or flowrates stored in cplBC.fa[i].y
     if (cplBC.useGenBC) {
        set_bc::genBC_Integ_X(com_mod, cm_mod, "D");
-    } else if (cplBC.useSvZeroD){
-      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
     } else {
-       set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+      // In mixed-coupling simulations both useSvZeroD and useSvOneD can be true.
+      // Call each active solver independently.
+      if (cplBC.useSvZeroD) {
+        svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      }
+    if (cplBC.useSvOneD) {
+        svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+      }
+      if (!cplBC.useSvZeroD && !cplBC.useSvOneD) {
+        set_bc::cplBC_Integ_X(com_mod, cm_mod, RCRflag);
+      } else if (RCRflag) {
+        // Also integrate any RCR faces that coexist with svZeroD/svOneD faces.
+        set_bc::cplBC_Integ_X(com_mod, cm_mod, true);
+      }
     }
   }
 
@@ -802,9 +867,16 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
     auto& bc = eq.bc[iBc];
     int iFa = bc.iFa;
     
-    // For Coupled BC, get pressure from CoupledBoundaryCondition (set by svZeroD interface)
+    // For Coupled BC, get the coupling value from CoupledBoundaryCondition:
+    //   NEU: 0D/1D solver returns pressure P  → apply as Neumann traction
+    //   DIR: 0D/1D solver returns flow rate Q → apply as Dirichlet velocity (bc.g = Q, then
+    //        set_bc_dir_l multiplies by gx(a)*nV to produce the nodal velocity profile)
     if (utils::btest(bc.bType, iBC_Coupled)) {
-      bc.g = bc.coupled_bc.get_pressure();
+      if (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir) {
+        bc.g = bc.coupled_bc.get_Qn();
+      } else {
+        bc.g = bc.coupled_bc.get_pressure();
+      }
     }
     // For other coupled BCs (Dir, Neu), get from cplBC.fa
     else {
@@ -881,7 +953,12 @@ void set_bc_dir(ComMod& com_mod, SolutionStates& solutions)
         }
       } // END bType_CMM
 
-      if (!utils::btest(bc.bType, iBC_Dir)) {
+      // Allow Coupled BCs whose internal coupling type is DIR (svZeroD/svOneD DIR
+      // coupling): iBC_Dir is cleared for these in read_files but the velocity
+      // profile must still be applied via set_bc_dir_l.
+      bool isCoupledDir = utils::btest(bc.bType, iBC_Coupled) &&
+                          (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir);
+      if (!utils::btest(bc.bType, iBC_Dir) && !isCoupledDir) {
         continue;
       }
 
@@ -1068,17 +1145,16 @@ void set_bc_dir_l(ComMod& com_mod, const bcType& lBc, const faceType& lFa, Array
       throw std::runtime_error("[set_bc_dirl] Inconsistent DOF");
     }
 
-    igbc(com_mod, lBc.gm, lY, lA);
+    all_fun::igbc(com_mod, lBc.gm, lY, lA);
     return;
   
   } else if (utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_ustd))) {
     #ifdef debug_set_bc_dir_l
     dmsg << "bType_ustd";
     #endif
-    Vector<double> dirY_v(1), dirA_v(1);
-    ifft(com_mod, lBc.gt, dirY_v, dirA_v);
-    dirY = dirY_v(0);
-    dirA = dirA_v(0);
+    const auto [value, derivative] = lBc.gt.value_and_derivative(com_mod.time);
+    dirY = value[0];
+    dirA = derivative[0];
 
   } else { 
     dirA = 0.0;
@@ -1390,7 +1466,11 @@ void set_bc_neu(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solu
 
     if (utils::btest(bc.bType, iBC_Ris0D))  {continue;}
 
-    if (utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Coupled)) {
+    // Coupled BCs with DIR type must be handled by set_bc_dir (velocity profile),
+    // not here.  Only NEU Coupled BCs get a Neumann pressure traction.
+    bool isCoupledDir = utils::btest(bc.bType, iBC_Coupled) &&
+                        (bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir);
+    if ((utils::btest(bc.bType, iBC_Neu) || utils::btest(bc.bType, iBC_Coupled)) && !isCoupledDir) {
       #ifdef debug_set_bc_neu
       dmsg << "iM: " << iM+1;
       dmsg << "iFa: " << iFa+1;
@@ -1427,7 +1507,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
   int nsd = com_mod.nsd;
 
   int nNo = lFa.nNo;
-  Vector<double> h(1), rtmp(1);
+  Vector<double> h(1);
   Vector<double> tmpA(nNo); 
 
   // Geting the contribution of Neu BC
@@ -1449,7 +1529,7 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        Array<double> hg(nrows,ncols);
        Array<double> tmpA_a(nrows,ncols);
 
-       igbc(com_mod, lBc.gm, tmpA_a, hg);
+       all_fun::igbc(com_mod, lBc.gm, tmpA_a, hg);
 
        int n = 0;
        for (int j = 0; j < ncols; j++) {
@@ -1459,14 +1539,45 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
          }
        }
 
-     } else if (utils::btest(lBc.bType,iBC_res)) {
+     } else if (utils::btest(lBc.bType,iBC_Coupled)) {
+       // New-style Coupled NEU BC (svOneD/svZeroD): apply the actual 1D/0D
+       // pressure from the most recent 'D' solver call.  bc.g is updated
+       // every Newton iteration by set_bc_cpl / calc_der_cpl_bc.
+       
+       //h(0) = lBc.g;
+
+       double Q_3D = all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions,
+                                    eq.s+nsd-1, false,
+                                    consts::MechanicalConfigurationType::reference);
+
+         
+         h(0) = lBc.g;
+         //h(0) = lBc.g - lBc.r * std::abs(Q_3D);
+         
+         // Backflow kinetic energy correction: when backflow is detected
+         // (Q < 0), subtract the face-averaged dynamic pressure to further
+         // reduce the applied traction and damp the incoming flow.
+         if (Q_3D < 0.0) {
+           int iM = lFa.iM;
+           int cDmn_local = all_fun::domain(com_mod, com_mod.msh[iM], cEq, lFa.gE(0));
+           double rho  = eq.dmn[cDmn_local].prop.at(
+               consts::PhysicalProperyType::fluid_density);
+           double beta = eq.dmn[cDmn_local].prop.at(
+               consts::PhysicalProperyType::backflow_stab);
+           double A   = lFa.area;
+           if (A > 0.0) {
+             double u_n = Q_3D / A;  // face-averaged normal velocity (< 0)
+             h(0) -= 0.5 * beta * rho * u_n * u_n;
+           }
+         }     
+        } else if (utils::btest(lBc.bType,iBC_res)) {
        h(0) = lBc.r * all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions, eq.s+nsd-1, false, consts::MechanicalConfigurationType::reference);
 
      } else if (utils::btest(lBc.bType,iBC_std)) {
        h(0) = lBc.g;
 
      } else if (utils::btest(lBc.bType,iBC_ustd)) {
-       ifft(com_mod, lBc.gt, h, rtmp);
+       h = lBc.gt.value(com_mod.time);
 
      } else {
        throw std::runtime_error("[set_bc_neu_l] Correction in SETBCNEU is needed");
@@ -1814,7 +1925,7 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
 
   if (utils::btest(lBc.bType,iBC_gen)) {
     Array<double> tmpA(nsd,nNo), hl(nsd,nNo);
-    igbc(com_mod, lBc.gm, tmpA, hl);
+    all_fun::igbc(com_mod, lBc.gm, tmpA, hl);
     for (int a = 0; a < nNo; a++) {
       int Ac = lFa.gN(a);
       hg.set_col(Ac, tmpA.col(a));
@@ -1827,12 +1938,11 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     }
 
   } else if (utils::btest(lBc.bType,iBC_ustd)) {
-     if (lBc.gt.d != nsd) {
-       throw std::runtime_error("[set_bc_trac_l]  Traction dof not initialized properly");
-     }
-     Vector<double> h(nsd);
-     Vector<double> tmp(nsd);
-     ifft(com_mod, lBc.gt, h, tmp);
+    if (lBc.gt.get_n_components() != nsd) {
+      throw std::runtime_error(
+          "[set_bc_trac_l]  Traction dof not initialized properly");
+    }
+     const Vector<double> h = lBc.gt.value(com_mod.time);
      for (int a = 0; a < nNo; a++) {
        int Ac = lFa.gN(a);
        hg.set_col(Ac, h);

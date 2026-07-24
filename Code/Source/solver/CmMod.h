@@ -24,6 +24,7 @@ using MpiCommWorldType = MPI_Comm;
 const decltype(MPI_CXX_BOOL) mplog = MPI_CXX_BOOL;
 //const decltype(MPI_LOGICAL) mplog  = MPI_LOGICAL;
 const decltype(MPI_INTEGER) mpint = MPI_INTEGER;
+const decltype(MPI_UNSIGNED) mpuint = MPI_UNSIGNED;
 const decltype(MPI_DOUBLE_PRECISION) mpreal = MPI_DOUBLE_PRECISION;
 const decltype(MPI_CHARACTER) mpchar = MPI_CHARACTER;
 };
@@ -82,6 +83,8 @@ class cmType {
 
     void bcast(const CmMod& cm_mod, int* data) const;
     void bcast(const CmMod& cm_mod, Vector<int>& data) const;
+
+    void bcast(const CmMod &cm_mod, unsigned int *data) const;
 
     void bcast(const CmMod& cm_mod, Array<int>& data, const std::string& name="") const;
 

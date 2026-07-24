@@ -11,8 +11,7 @@
 /**
  * @brief Aliev-Panfilov ionic model.
  *
- * **Reference**: Aliev, Panfilov. A simple two-variable model of cardiac
- * excitation. Chaos, Solitons and Fractals (1996).
+ * **Reference**: [Aliev, Panfilov (1996)](https://doi.org/10.1016/0960-0779(95)00089-5)
  */
 class AlievPanfilov : public IonicModel {
 public:

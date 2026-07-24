@@ -57,28 +57,36 @@
      <Isotropic_conductivity> 0.1171 </Isotropic_conductivity>
      <ODE_solver> RK </ODE_solver>
    </Domain>
-  
+
    <Domain id="2" >
       <Electrophysiology_model> BO </Electrophysiology_model>
       <Isotropic_conductivity> 0.1171 </Isotropic_conductivity>
       <ODE_solver> RK </ODE_solver>
+
       <Stimulus type="Istim" >
          <Amplitude> -52.0 </Amplitude>
          <Start_time> 0.0 </Start_time>
          <Duration> 2.0 </Duration>
          <Cycle_length> 100000.0 </Cycle_length>
+         <Spatial_bounds>
+            <Box>
+               <Minimum> -1.0 -1.0 </Minimum>
+               <Maximum> 0.375 251.0 </Maximum>
+            </Box>
+         </Spatial_bounds>
       </Stimulus>
-   </Domain>
 
-   <Domain id="3" >
-      <Electrophysiology_model> BO </Electrophysiology_model>
-      <Isotropic_conductivity> 0.1171 </Isotropic_conductivity>
-      <ODE_solver> RK </ODE_solver>
       <Stimulus type="Istim" >
          <Amplitude> -52.0 </Amplitude>
          <Start_time> 440.0 </Start_time>
          <Duration> 5.0 </Duration>
          <Cycle_length> 100000.0 </Cycle_length>
+         <Spatial_bounds>
+            <Box>
+               <Minimum> 121.875 -1.0 </Minimum>
+               <Maximum> 128.125 200.125 </Maximum>
+            </Box>
+         </Spatial_bounds>
       </Stimulus>
    </Domain>
 

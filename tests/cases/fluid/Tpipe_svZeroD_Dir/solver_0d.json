@@ -1,0 +1,52 @@
+{
+    "boundary_conditions": [
+        {
+            "bc_name": "INFLOW",
+            "bc_type": "FLOW",
+            "bc_values": {
+                "Q": [
+                    100.0,
+                    100.0
+                ],
+                "t": [
+                    0.0,
+                    1.0
+                ]
+            }
+        }
+    ],
+    "external_solver_coupling_blocks": [
+        {
+            "name": "cp1",
+            "type": "PRESSURE",
+            "location": "outlet",
+            "connected_block": "vessel1",
+            "periodic": false,
+            "values": {
+                "t": [0.0, 1.0],
+                "P": [1.0, 1.0]
+            }
+        }
+    ],
+    "junctions": [],
+    "simulation_parameters": {
+        "coupled_simulation": true,
+        "number_of_time_pts": 10,
+        "output_all_cycles": true,
+        "steady_initial": false
+    },
+    "vessels": [
+        {
+	    "boundary_conditions": {
+                  "inlet": "INFLOW"
+            },
+            "vessel_id": 0,
+            "vessel_length": 1.0,
+            "vessel_name": "vessel1",
+            "zero_d_element_type": "BloodVessel",
+            "zero_d_element_values": {
+                "R_poiseuille": 100.0
+            }
+        }
+    ]
+}

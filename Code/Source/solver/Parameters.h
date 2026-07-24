@@ -679,6 +679,47 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
     bool value_set = false;
 };
 
+//----------------------------------
+// svOneDSolverInterfaceParameters
+//----------------------------------
+/// @brief Parameters for coupling to the svOneDSolver (1D blood-flow solver).
+///
+/// XML element: \code {.xml}
+/// <svOneDSolver_interface>
+///   <Coupling_type> Implicit </Coupling_type>
+///   <Shared_library> /path/to/libsvoned_interface </Shared_library>
+/// </svOneDSolver_interface>
+/// \endcode
+///
+/// Notes
+/// -----
+///   Coupling_type: "Explicit" | "Implicit" | "Semi-implicit"
+///     Controls how the 3D Newton iteration couples to the 1D solver
+///     (same semantics as the 0D coupling_type).
+///   Shared_library: Path to the 1D interface shared library.  The
+///     extension (.so or .dylib) may be omitted; it will be appended
+///     automatically based on the platform.
+///
+///   Each coupled face specifies its own input file via
+///   <Coupling_interface> <svOneDSolver_input_file> ... </svOneDSolver_input_file>
+///   </Coupling_interface> inside the corresponding <Add_BC> element.
+//
+class svOneDSolverInterfaceParameters : public ParameterLists
+{
+  public:
+    svOneDSolverInterfaceParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    Parameter<std::string> coupling_type;
+    Parameter<std::string> shared_library;
+
+    bool value_set = false;
+};
+
 /// @brief Body force over a mesh using the "Add_BF" command.
 ///
 /// \code {.xml}
@@ -745,10 +786,12 @@ class BoundaryConditionRCRParameters : public ParameterLists
 /// @brief svZeroDSolver coupling options under Add_BC (with Time_dependence Coupled).
 ///
 /// \code {.xml}
-/// <Coupling_interface>
-///   <svZeroDSolver_block> LV_IN </svZeroDSolver_block>
-///   <Chamber_cap_surface> mesh/mesh-surfaces/endo_cap.vtp </Chamber_cap_surface>
-/// </Coupling_interface>
+//  <Coupling_interface>
+//    <svOneDSolver_input_file> OneDfilename.in </svOneDSolver_input_file>
+//		<Ramp_steps> 100 </Ramp_steps>
+//   	<Ramp_ref_pressure> 0.0 </Ramp_ref_pressure>
+//		<Relax_factor> 0.3 </Relax_factor>
+//  </Coupling_interface>
 /// \endcode
 class CouplingInterfaceParameters : public ParameterLists
 {
@@ -762,6 +805,24 @@ class CouplingInterfaceParameters : public ParameterLists
 
     Parameter<std::string> svzerod_solver_block;
     Parameter<std::string> chamber_cap_surface;
+
+    // Path to the svOneDSolver .in input file for this face (1D coupling).
+    Parameter<std::string> svoned_input_file;
+
+    // Ramp for 1D coupling initialization (both DIR and NEU coupling).
+    // Over the first Coupling_ramp_steps committed time steps the value passed
+    // to the 1D solver is linearly ramped:
+    //   DIR: pressure P ramped from Coupling_ramp_ref_pressure to actual 3D P.
+    //   NEU: output pressure P is ramped before being applied to the 3D domain.
+    // Set Coupling_ramp_steps = 0 (default) to disable.
+    Parameter<int>    coupling_ramp_steps;
+    Parameter<double> coupling_ramp_ref_pressure;
+
+    // Under-relaxation factor for the value passed to the 1D solver (both DIR and NEU coupling).
+    //   DIR: P_sent = omega * P_target + (1 - omega) * P_prev_sent
+    //   NEU: Q_sent = omega * Q_target + (1 - omega) * Q_prev_sent
+    // Range: (0, 1].  Default 1.0 = no relaxation.
+    Parameter<double> coupling_relax_factor;
 
     bool value_set = false;
 };
@@ -1078,6 +1139,58 @@ class LinearSolverParameters : public ParameterLists
     LinearAlgebraParameters linear_algebra;
 };
 
+/// @brief Stores <Box> parameters for CEP stimulus spatial bounds.
+class StimulusBoxParameters : public ParameterLists
+{
+  public:
+    StimulusBoxParameters();
+
+    /// @brief XML element name for CEP stimulus box spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> minimum;
+    VectorParameter<double> maximum;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Sphere> parameters for CEP stimulus spatial bounds.
+class StimulusSphereParameters : public ParameterLists
+{
+  public:
+    StimulusSphereParameters();
+
+    /// @brief XML element name for CEP stimulus sphere spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    VectorParameter<double> center;
+    Parameter<double> radius;
+
+    bool value_set = false;
+};
+
+/// @brief Stores <Spatial_bounds> parameters for CEP stimulus geometry restrictions.
+class StimulusSpatialBoundsParameters
+{
+  public:
+    /// @brief XML element name for CEP stimulus spatial bounds.
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    StimulusBoxParameters box;
+    StimulusSphereParameters sphere;
+
+    bool value_set = false;
+};
+
 /// @brief The StimulusParameters class stores parameters for 
 /// 'Stimulus' XML element used to parameters for 
 /// pacemaker cells.
@@ -1088,13 +1201,24 @@ class LinearSolverParameters : public ParameterLists
 ///   <Start_time> 0.0 </Start_time>
 ///   <Duration> 1.0 </Duration>
 ///   <Cycle_length> 10000.0 </Cycle_length>
+///   <Spatial_bounds>
+///     <Box>
+///       <Minimum> 0.0 0.0 0.0 </Minimum>
+///       <Maximum> 1.0 1.0 1.0 </Maximum>
+///     </Box>
+///     <Sphere>
+///       <Center> 0.5 0.5 0.5 </Center>
+///       <Radius> 0.25 </Radius>
+///     </Sphere>
+///   </Spatial_bounds>
 /// </Stimulus>
 /// \endcode
 class StimulusParameters : public ParameterLists
-{ 
+{
   public:
     StimulusParameters();
 
+    /// @brief XML element name for CEP stimulus parameters.
     static const std::string xml_element_name_;
     
     bool defined() const { return value_set; };
@@ -1107,6 +1231,8 @@ class StimulusParameters : public ParameterLists
     Parameter<double> cycle_length;
     Parameter<double> duration;
     Parameter<double> start_time;
+
+    StimulusSpatialBoundsParameters spatial_bounds;
     
     bool value_set = false;
 };
@@ -1147,51 +1273,13 @@ class DirectionalDistributionParameters : public ParameterLists
     static const std::string xml_element_name_;
 
     bool defined() const { return value_set; };
-    void print_parameters();
-    void set_values(tinyxml2::XMLElement* xml_elem);
+    void print_parameters() const;
+    void set_values(const tinyxml2::XMLElement *xml_elem);
     void validate() const;  // Validate directional fractions
 
     Parameter<double> fiber_direction;
     Parameter<double> sheet_direction;
     Parameter<double> sheet_normal_direction;
-
-    bool value_set = false;
-};
-
-/// @brief The FiberReinforcementStressParameters class stores fiber
-/// reinforcement stress parameters for the 'Fiber_reinforcement_stress` 
-/// XML element.
-///
-/// \code {.xml}
-/// <Fiber_reinforcement_stress type="Unsteady" >
-///   <Temporal_values_file_path> fib_stress.dat </Temporal_values_file_path>
-///   <Ramp_function> true </Ramp_function>
-///   <Directional_distribution>
-///     <Fiber_direction> 0.7 </Fiber_direction>
-///     <Sheet_direction> 0.2 </Sheet_direction>
-///     <Sheet_normal_direction> 0.1 </Sheet_normal_direction>
-///   </Directional_distribution>
-/// </Fiber_reinforcement_stress>
-/// \endcode
-class FiberReinforcementStressParameters : public ParameterLists
-{
-  public:
-    FiberReinforcementStressParameters();
-
-    static const std::string xml_element_name_;
-
-    bool defined() const { return value_set; };
-    void print_parameters();
-    void set_values(tinyxml2::XMLElement* xml_elem);
-
-    Parameter<std::string> type;
-
-    Parameter<bool> ramp_function;
-    Parameter<std::string> temporal_values_file_path;
-    Parameter<double> value;
-
-    // Directional stress distribution parameters
-    DirectionalDistributionParameters directional_distribution;
 
     bool value_set = false;
 };
@@ -1235,7 +1323,7 @@ protected:
   bool value_set = false;
 };
 
-/// @brief Initial conditions parameters for a generic ionic model.
+/// @brief Parameters for a generic ionic model.
 ///
 /// Bundles initial conditions for the model's ionic concentrations and gating
 /// variables, represented by two instances of IonicInitialStateParameters.
@@ -1318,6 +1406,144 @@ protected:
   bool value_set = false;
 };
 
+/// @brief Parameters for a generic active stress model.
+///
+/// This class is meant to be inherited from to implement parameters for
+/// specific active stress models. Derived classes will mostly have to call
+/// add_parameter in their constructor to define the model-specific parameters.
+///
+/// In the XML file, this class, and the classes derived from it, correspond to
+/// the element <Model_name> within the <Active_stress> element, where
+/// Model_name is the name of a concrete active stress model.
+class ActiveStressModelParameters : public ParameterLists {
+public:
+  /// Constructor.
+  ActiveStressModelParameters(const std::string &xml_element_name_);
+
+  /// Return whether the parameters represented by this object were defined.
+  bool defined() const { return value_set; }
+
+  /// Print the value of parameters.
+  void print_parameters() const;
+
+  /// Set the values of parameters in this object from an XML element.
+  void set_values(const tinyxml2::XMLElement *xml_elem);
+
+  /// Name of the XML element for this object.
+  const std::string xml_element_name;
+
+  /// Get the value of a parameter by label.
+  double get_scalar(const std::string &label) const {
+    return double_parameters.at(label).value();
+  }
+
+  /// Get the value of a string parameter by label.
+  std::string get_string(const std::string &label) const {
+    return string_parameters.at(label).value();
+  }
+
+  /// Get the value of a bool parameter by label.
+  bool get_bool(const std::string &label) const {
+    return bool_parameters.at(label).value();
+  }
+
+protected:
+  /// Add a new parameter to this object.
+  void add_parameter(const std::string &label, double default_value,
+                     bool required) {
+    set_parameter(label, default_value, required, double_parameters[label]);
+  }
+
+  /// Add a new parameter to this object.
+  void add_parameter(const std::string &label, const std::string &default_value,
+                     bool required) {
+    set_parameter(label, default_value, required, string_parameters[label]);
+  }
+
+  /// Add a new parameter to this object.
+  void add_parameter(const std::string &label, bool default_value,
+                     bool required) {
+    set_parameter(label, default_value, required, bool_parameters[label]);
+  }
+
+  /// Parameters are stored in a map as key-parameter pairs. Derived classes
+  /// should add parameters to this map in their constructors by calling
+  /// add_parameter.
+  /// @{
+
+  /// Double-valued parameters.
+  std::map<std::string, Parameter<double>> double_parameters;
+
+  /// String-valued parameters.
+  std::map<std::string, Parameter<std::string>> string_parameters;
+
+  /// Bool-valued parameters.
+  std::map<std::string, Parameter<bool>> bool_parameters;
+
+  /// Flag indicating whether the values of the parameters stored in this
+  /// object have been set.
+  bool value_set = false;
+};
+
+/// @brief Parameters for active stress models.
+///
+/// This class stores all the parameters related to active stress, including
+/// e.g. the name of the specific selected model. The parameters specific to an
+/// individual model are managed by the class @ref ActiveStressModelParameters,
+/// of which this class owns an instance for every registered model.
+///
+/// In the XML file, this class corresponds to the <Active_stress> element.
+class ActiveStressParameters : public ParameterLists {
+public:
+  /// Constructor.
+  ActiveStressParameters();
+
+  /// Return whether the parameters represented by this object were defined.
+  bool defined() const { return value_set; }
+
+  /// Print the value of parameters.
+  void print_parameters() const;
+
+  /// Set the values of parameters in this object from an XML element.
+  void set_values(const tinyxml2::XMLElement *xml_elem);
+
+  /// Get the name of the selected model. Throws an exception if it has not been
+  /// set.
+  std::string get_model_name() const;
+
+  /// Get the active tension coefficient along fibers.
+  double get_eta_f() const;
+
+  /// Get the active tension coefficient along sheets.
+  double get_eta_s() const;
+
+  /// Get the active tension coefficient along sheet normals.
+  double get_eta_n() const;
+
+  /// Get the parameters for a given active stress model.
+  const ActiveStressModelParameters &
+  get_parameters(const std::string &model_name) const;
+
+  /// Name of the XML element for this object.
+  static const std::string xml_element_name;
+
+protected:
+  /// Parameter for the model name.
+  Parameter<std::string> model_name;
+
+  /// Parameters for the directional distribution of active tension.
+  DirectionalDistributionParameters directional_distribution;
+
+  /// Active stress model parameters. Keys are the model names, as registered
+  /// in the @ref ActiveStressModelFactory.
+  std::map<std::string, std::unique_ptr<ActiveStressModelParameters>>
+      active_stress_models;
+
+  /// Flag indicating whether the values of the parameters stored in this
+  /// object have been set.
+  bool value_set = false;
+};
+
 /// @brief The DomainParameters class stores parameters for the XML
 /// 'Domain' element to specify properties for solving equations.
 ///
@@ -1343,12 +1569,16 @@ class DomainParameters : public ParameterLists
 
     // Parameters for sub-elements under the Domain element.
     ConstitutiveModelParameters constitutive_model;
-    FiberReinforcementStressParameters fiber_reinforcement_stress;
-    StimulusParameters stimulus;
+    /// @todo This uses `unique_ptr` unlike most similar containers because
+    /// `ParameterLists::params_map` stores pointers to members of each object.
+    /// Revisit this when the `Parameters` classes are refactored.
+    std::vector<std::unique_ptr<StimulusParameters>> stimuli;
     FluidViscosityParameters fluid_viscosity;
     SolidViscosityParameters solid_viscosity;
+    ActiveStressParameters active_stress;
 
-    // Ionic model parameters.
+    /// Ionic model parameters. Keys are the model names, as registered in the
+    /// @ref IonicModelFactory.
     std::map<std::string, std::unique_ptr<IonicModelParameters>> ionic_models;
 
     // Attributes.
@@ -1527,6 +1757,8 @@ class EquationParameters : public ParameterLists
     CoupleGenBCParameters couple_to_genBC;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
+
+    svOneDSolverInterfaceParameters svonedsolver_interface_parameters;
 
     DomainParameters* default_domain = nullptr;
 

@@ -199,9 +199,7 @@ class FSILS_subLsType
 {
   public:
     /// Successful solving          (OUT)
-    bool suc;       
-
-    //int suc;       // Successful solving          (OUT)
+    bool success;
 
     /// Maximum iteration           (IN)
     int mItr;      

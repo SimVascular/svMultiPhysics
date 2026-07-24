@@ -24,14 +24,20 @@ allows the total active stress to be distributed among the three orthogonal fibe
 
 The fractions are specified in the solver.xml file as:
 ```xml
-<Fiber_reinforcement_stress type="Unsteady" >
-   <Temporal_values_file_path> stress.dat </Temporal_values_file_path> 
+<Active_stress>
+   <Model> UniformUnsteady </Model>
+
    <Directional_distribution>
       <Fiber_direction> 0.7 </Fiber_direction>
       <Sheet_direction> 0.2 </Sheet_direction>
       <Sheet_normal_direction> 0.1 </Sheet_normal_direction>
    </Directional_distribution>
-</Fiber_reinforcement_stress>
+
+   <UniformUnsteady>
+      <Ramp> false </Ramp>
+      <Temporal_values_file_path> stress.dat </Temporal_values_file_path>
+   </UniformUnsteady>
+</Active_stress>
 ```
 
 These fractions must sum to 1.0.

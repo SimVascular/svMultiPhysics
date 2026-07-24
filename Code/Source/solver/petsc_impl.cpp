@@ -1073,8 +1073,8 @@ void PetscLinearAlgebra::PetscImpl::solve(ComMod& com_mod, eqType& lEq, const Ve
 
   petsc_set_values(com_mod.dof, com_mod.cEq, com_mod.R.data(), com_mod.Val.data(), W_.data(), V_.data());
 
-  petsc_solve(&lEq.FSILS.RI.fNorm, &lEq.FSILS.RI.iNorm, &lEq.FSILS.RI.dB, &lEq.FSILS.RI.callD, 
-      &lEq.FSILS.RI.suc, &lEq.FSILS.RI.itr, com_mod.R.data(), lEq.FSILS.RI.mItr, com_mod.dof, com_mod.cEq);
-
+  petsc_solve(&lEq.FSILS.RI.fNorm, &lEq.FSILS.RI.iNorm, &lEq.FSILS.RI.dB,
+              &lEq.FSILS.RI.callD, &lEq.FSILS.RI.success, &lEq.FSILS.RI.itr,
+              com_mod.R.data(), lEq.FSILS.RI.mItr, com_mod.dof, com_mod.cEq);
 }
 

@@ -13,7 +13,7 @@
  * failures from finite-element assembly, backend, DOF, and element operations.
  */
 
-#include "Exception.h"
+#include "Core/Exception.h"
 
 #include <sstream>
 #include <string>

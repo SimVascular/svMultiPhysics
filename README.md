@@ -58,7 +58,7 @@ The following software packages are required to be installed in order to build s
 - [CMake](https://cmake.org/) - Used to the build the binary executable **svmultiphysics**
 - C++17 compiler - C++ compiler, linker and libraries 
 - [Visualization Toolkit (VTK)](https://vtk.org/) - Used for reading and writing VTK-format VTP and VTU files 
-- [Open MPI](https://www.open-mpi.org/) - Used for parallel processing
+- An MPI implementation - Used for parallel processing. svMultiPhysics has been successfully tested with [Open MPI](https://www.open-mpi.org/) and [Intel MPI](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library.html)
 - [BLAS](https://www.netlib.org/blas/) - Used for performing basic vector and matrix operations (optional but may be needed for external linear algebra packages)
 - [LAPACK](https://www.netlib.org/lapack/) - Used for solving systems of simultaneous linear equations (optional but may be needed for external linear algebra packages)
 

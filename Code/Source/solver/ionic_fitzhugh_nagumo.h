@@ -13,10 +13,8 @@
  * @brief FitzHugh-Nagumo ionic model.
  *
  * **References**:
- * - FitzHugh, Impulses and physiological states in theoretical models of nerve
- *   membrane. Biophysical Journal (1961)
- * - Nagumo, Arimoto, Yoshizawa. An active pulse transmission line simulating
- *   nerve axon. Proceedings of the IRE (1962).
+ * - [FitzHugh (1961)](https://doi.org/10.1016/S0006-3495(61)86902-6)
+ * - [Nagumo, Arimoto, Yoshizawa (1962)](https://doi.org/10.1109/JRPROC.1962.288235)
  */
 class FitzHughNagumo : public IonicModel {
 public:

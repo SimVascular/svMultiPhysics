@@ -300,7 +300,9 @@ class TestMaterialModel : public TestBase {
 public:
     int nFn;
     Array<double> fN;
-    double ya_g;
+    double ya_g_f;
+    double ya_g_s;
+    double ya_g_n;
     bool ustruct;
 
     TestMaterialModel(const consts::ConstitutiveModelType matType, const consts::ConstitutiveModelType penType) {
@@ -315,7 +317,9 @@ public:
         // Initialize fibers and other material parameters
         nFn = 2;                          // Number of fiber directions
         fN = Array<double>(nsd, nFn);     // Fiber directions array (initialized to zeros)
-        ya_g = 0.0;                       // ?
+        ya_g_f = 0.0;                     // Active tension along fibers.
+        ya_g_s = 0.0;                     // Active tension along sheets.
+        ya_g_n = 0.0;                     // Active tension along sheet normals.
 
         // Flag to use struct or ustruct material models
         // If struct, calls compute_pk2cc() and uses strain energy composed of isochoric and volumetric parts
@@ -354,8 +358,8 @@ public:
         }
 
         // Call compute_pk2cc to compute S and Dm
-        mat_models::compute_pk2cc(com_mod, cep_mod, dmn, F, nFn, fN, ya_g, S, Dm, J);
-
+        mat_models::compute_pk2cc(com_mod, cep_mod, dmn, F, nFn, fN, ya_g_f,
+                                  ya_g_s, ya_g_n, S, Dm, J);
     }
 
        /**

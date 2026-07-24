@@ -201,7 +201,7 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
 
   ls.CG.itr   = 0;
   ls.GM.itr   = 0;
-  ls.RI.suc   = false;
+  ls.RI.success = false;
   eps = std::max(ls.RI.absTol, ls.RI.relTol*eps);
   #ifdef debug_ns_solver
   dmsg << "eps: " << eps;
@@ -385,7 +385,7 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
     #endif
 
     if (ls.RI.fNorm < eps*eps) {
-      ls.RI.suc = true;
+      ls.RI.success = true;
       break;
     }
 

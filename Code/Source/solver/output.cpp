@@ -121,13 +121,13 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
 
   // Add a warning if the solution to the linear system did not converge.
   std::string convergence_msg;
-  if (eq.FSILS.RI.suc) {
-     c1 = "["; 
-     c2 = "]";
+  if (eq.FSILS.RI.success) {
+    c1 = "[";
+    c2 = "]";
   } else {
-     c1 = "!";  
-     c2 = "!";
-     convergence_msg = "  WARNING: The linear system solution has not converged";
+    c1 = "!";
+    c2 = "!";
+    convergence_msg = "  WARNING: The linear system solution has not converged";
   }
 
   // NS     1-2  3.82E1  [ -62 7.92E-4 7.92E-4 3.60E-4]  [   5  -15  23] 
@@ -147,7 +147,7 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
   if (eq.itr > eq.maxItr) {
     auto msg = "[svMultiPhysics] WARNING: The number of nonlinear iterations (" + std::to_string(eq.itr) + 
         ") has exceeded the maximum number set by the value of the Add_equation/Max_iterations parameter in the svMultiPhysics solver input file.";
-    if (!eq.FSILS.RI.suc) {
+    if (!eq.FSILS.RI.success) {
       msg += " This may be due to the failure of the linear system solution to converge.";
     }
     msg += "\n";
@@ -286,7 +286,9 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
         } else if (cepEq) {
           restart_file.write((char*)Ad.data(), Ad.msize());
           restart_file.write((char*)Xion.data(), Xion.msize());
-          restart_file.write((char*)cem.Ya.data(), cem.Ya.msize());
+          restart_file.write((char*)cem.Ya_f.data(), cem.Ya_f.msize());
+          restart_file.write((char*)cem.Ya_s.data(), cem.Ya_s.msize());
+          restart_file.write((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           restart_file.write((char*)Ad.data(), Ad.msize());
@@ -309,7 +311,9 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
 
         } else if (cepEq) {
           restart_file.write((char*)Xion.data(), Xion.msize());
-          restart_file.write((char*)cem.Ya.data(), cem.Ya.msize());
+          restart_file.write((char*)cem.Ya_f.data(), cem.Ya_f.msize());
+          restart_file.write((char*)cem.Ya_s.data(), cem.Ya_s.msize());
+          restart_file.write((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           write_ris_data(com_mod, restart_file);

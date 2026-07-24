@@ -2,7 +2,7 @@ import os
 import pytest
 import subprocess
 
-from .conftest import run_with_reference
+from .conftest import run_with_reference, skip_if_no_trilinos
 
 # Common folder for all tests in this file
 base_folder = "ustruct"
@@ -46,6 +46,7 @@ def test_LV_HolzapfelOgdenModifiedAnisotropy_passive(n_proc):
     test_folder = "LV_HolzapfelOgdenModifiedAnisotropy_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+@skip_if_no_trilinos
 def test_LV_HolzapfelOgdenModifiedAnisotropy_passive_trilinos(n_proc):
     test_folder = "LV_HolzapfelOgdenModifiedAnisotropy_passive_trilinos"
     run_with_reference(base_folder, test_folder, fields, n_proc)

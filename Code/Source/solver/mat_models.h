@@ -24,10 +24,33 @@ void cc_to_voigt(const int nsd, const Tensor4<double>& CC, Array<double>& Dm);
 
 void voigt_to_cc(const int nsd, const Array<double>& Dm, Tensor4<double>& CC);
 
-void compute_fib_stress(const ComMod& com_mod, const CepMod& cep_mod, const fibStrsType& Tfl, double& g);
-
-void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& lDmn, const Array<double>& F, const int nfd,
-    const Array<double>& fl, const double ya, Array<double>& S, Array<double>& Dm, double& Ja);
+/**
+ * @brief Compute 2nd Piola-Kirchhoff stress and material stiffness tensors
+ * including both dilational and isochoric components.
+ *
+ * Reproduces the Fortran 'GETPK2CC' subroutine.
+ *
+ * @param[in] com_mod Object containing global common variables.
+ * @param[in] cep_mod Object containing electrophysiology-specific common
+ *   variables.
+ * @param[in] lDmn Domain object.
+ * @param[in] F Deformation gradient tensor.
+ * @param[in] nfd Number of fiber directions.
+ * @param[in] fl Fiber directions.
+ * @param[in] ya_f Active tension along the fiber direction.
+ * @param[in] ya_s Active tension along the sheet direction.
+ * @param[in] ya_n Active tension along the sheet-normal direction.
+ * @param[out] S 2nd Piola-Kirchhoff stress tensor (modified in place).
+ * @param[out] Dm Material stiffness tensor (modified in place).
+ * @param[out] Ja Jacobian for active strain
+ *
+ * @return None, but modifies S, Dm, and Ja in place.
+ */
+void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
+                   const dmnType &lDmn, const Array<double> &F, const int nfd,
+                   const Array<double> &fl, const double ya_f,
+                   const double ya_s, const double ya_n, Array<double> &S,
+                   Array<double> &Dm, double &Ja);
 
 void compute_pk2cc_shlc(const ComMod& com_mod, const dmnType& lDmn, const int nfd, const Array<double>& fNa0,
     const Array<double>& gg_0, const Array<double>& gg_x, double& g33, Vector<double>& Sml, Array<double>& Dml);

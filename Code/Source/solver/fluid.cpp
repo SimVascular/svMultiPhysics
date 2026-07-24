@@ -462,13 +462,13 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
       double T1 = wl*Nq(a)*Nw(b);
 
       // dRc_a/du_b1
-      lK(12,a,b) = lK(13,a,b) - T1*nV(0);
+      lK(12, a, b) = lK(12, a, b) - T1 * nV(0);
 
       // dRc_a/du_b2
-      lK(13,a,b) = lK(14,a,b) - T1*nV(1);
+      lK(13, a, b) = lK(13, a, b) - T1 * nV(1);
 
       // dRc_a/du_b3
-      lK(14,a,b) = lK(15,a,b) - T1*nV(2);
+      lK(14, a, b) = lK(14, a, b) - T1 * nV(2);
     }
   }
 }

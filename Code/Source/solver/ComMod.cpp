@@ -190,10 +190,10 @@ rmshType::rmshType()
 
 
 /////////////////////////////////////////////////////////
-// s v Z e r o D S o l v e r I n t e r f a c e T y p e //
+// s v Z e r o D S o l v e r I n t e r f a c e D a t a //
 /////////////////////////////////////////////////////////
 
-void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters& params)
+void svZeroDSolverInterfaceData::set_data(const svZeroDSolverInterfaceParameters& params)
 {
   if (!params.defined()) {
     return;
@@ -216,4 +216,14 @@ void svZeroDSolverInterfaceType::set_data(const svZeroDSolverInterfaceParameters
   }
 
   has_data = true;
+}
+
+void svOneDSolverInterfaceData::set_data(const svOneDSolverInterfaceParameters& params)
+{
+  if (!params.defined()) {
+    return;
+  }
+
+  solver_library = params.shared_library();
+  has_data       = true;
 }

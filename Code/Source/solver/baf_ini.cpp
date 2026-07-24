@@ -12,6 +12,7 @@
 #include "set_bc.h"
 #include "utils.h"
 #include "svZeroD_interface.h"
+#include "svOneD_interface.h"
 
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
@@ -139,6 +140,9 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
           com_mod.cplBC.fa[i].RCR.Rd = bc.RCR.Rd;
           com_mod.cplBC.fa[i].RCR.Pd = bc.RCR.Pd;
           com_mod.cplBC.fa[i].RCR.Xo = bc.RCR.Xo;
+          if (utils::btest(bc.bType, iBC_RCR)) {
+            com_mod.cplBC.fa[i].isRCR = true;
+          }
         } else { 
           throw std::runtime_error("Not a compatible cplBC_type");
         }
@@ -160,6 +164,10 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
 
     if (com_mod.cplBC.useSvZeroD) {
       svZeroD::init_svZeroD(com_mod, cm_mod);
+    }
+
+    if (com_mod.cplBC.useSvOneD) {
+      svOneD::init_svOneD(com_mod, cm_mod);
     }
 
     // Initialize cap integration for Coupled boundary conditions
@@ -763,10 +771,21 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       }
       fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
     }
+    
+  } else if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_Coupled)) {
+    // For Coupled-DIR BCs: iBC_Dir was cleared in read_files but the face DOFs must still
+    // be excluded from the linear solve (Ax=b). Register as BC_TYPE_Dir so the
+    // preconditioner zeros out those rows/columns, preventing the solver from
+    // overwriting the velocity values set by set_bc_dir.
+    if (btest(lBc.bType, iBC_Coupled) &&
+        lBc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+      lsPtr = lsPtr + 1;
+      lBc.lsPtr = lsPtr;
+      sVl = 0.0;
+      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl);
 
-  } else if (btest(lBc.bType, iBC_Neu)) {
-    // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
-    if (btest(lBc.bType, iBC_res)) {
+    } else if (btest(lBc.bType, iBC_res)) {
+      // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
       sV = 0.0;
       for (int e = 0; e < lFa.nEl; e++) {
         if (lFa.eType == ElementType::NRB) {

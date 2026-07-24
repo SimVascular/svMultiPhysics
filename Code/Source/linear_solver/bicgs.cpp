@@ -43,7 +43,7 @@ void bicgsv (fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       S(dof,nNo), T(dof,nNo);
 
   ls.callD = fsi_linear_solver::fsils_cpu_t();
-  ls.suc = false;
+  ls.success = false;
   double err = norm::fsi_ls_normv(dof, mynNo, lhs.commu, R);
   double errO = err;
   ls.iNorm = err;
@@ -67,8 +67,8 @@ void bicgsv (fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     dmsg << "err: " << err;
     dmsg << "eps: " << eps;
     #endif
-    if (err < eps) { 
-      ls.suc = true;
+    if (err < eps) {
+      ls.success = true;
       break;
     }
 
@@ -142,7 +142,7 @@ void bicgss(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subL
   Vector<double> P(nNo), Rh(nNo), X(nNo), V(nNo), S(nNo), T(nNo);
 
   ls.callD = fsi_linear_solver::fsils_cpu_t();
-  ls.suc = false;
+  ls.success = false;
   double err = norm::fsi_ls_norms(mynNo, lhs.commu, R);
   double errO = err;
   ls.iNorm = err;
@@ -166,8 +166,8 @@ void bicgss(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subL
     dmsg << "err: " << err;
     dmsg << "eps: " << eps;
     #endif
-    if (err < eps) { 
-      ls.suc = true;
+    if (err < eps) {
+      ls.success = true;
       break;
     }
 

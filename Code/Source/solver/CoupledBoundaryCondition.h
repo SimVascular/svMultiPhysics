@@ -98,12 +98,30 @@ public:
                                       std::to_string(eNoN) + " (expected " + std::to_string(expected) + ").") {}
 };
 
+/// @brief Geometry or Jacobian error during cap surface integration.
+class CappingSurfaceGeometryException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceGeometryException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
 /// @brief Cap face quadrature (shape functions on TRI3) setup failed.
 class CappingSurfaceQuadratureException : public CappingSurfaceBaseException {
 public:
     explicit CappingSurfaceQuadratureException(const std::string& nested)
         : CappingSurfaceBaseException("[CappingSurface::init_cap_face_quadrature] Failed to initialize cap face shape "
                                       "functions: " + nested) {}
+};
+
+/// @brief Inconsistent cap connectivity or assembly indexing.
+class CappingSurfaceAssemblyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceAssemblyException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
+/// @brief Failure copying a \ref CappingSurface or its internal face.
+class CappingSurfaceCopyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceCopyException(std::string msg) : CappingSurfaceBaseException(std::move(msg)) {}
 };
 
 /// @brief Capping surface geometry and integration for a coupled boundary.
@@ -133,12 +151,11 @@ class CappingSurface {
         /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
         double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
             consts::MechanicalConfigurationType cfg);
-
+        
         /// @brief Compute the cap contribution to the linear solver face (fills \ref valM_; safe under \c const *this).
         void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
 
         /// @brief Get the cap face.
-        faceType* face() { return face_.get(); }
         const faceType* face() const { return face_.get(); }
 
         /// @brief Get the cap contribution.
@@ -191,7 +208,27 @@ private:
     /// @brief svZeroD coupling data
     std::string block_name_;                 ///< Block name in svZeroDSolver configuration
     std::string face_name_;                  ///< Face name from the mesh
-    
+    /// @brief svOneD coupling data
+    std::string oned_input_file_;            ///< Path to svOneDSolver input file (empty for svZeroD BCs)
+    /// @brief Pressure ramp parameters for 1D coupling initialization.
+    int    oned_ramp_steps_ = 0;             ///< Number of ramp steps (0 = disabled)
+    double oned_ramp_ref_pressure_ = 0.0;   ///< Reference pressure at step used for ramping pressure
+
+    /// @brief Under-relaxation factor for pressure or flowrate passed to the 1D solver.
+    /// Applied as: P_sent = omega * P_new + (1 - omega) * P_prev_sent.
+    /// Range: (0, 1].  Default 1.0 = no relaxation.
+    double oned_relax_factor_ = 1.0;
+
+    /// @brief Ramp/relax runtime state (shared by both 0D and 1D coupling).
+    /// Updated only on committed ('L') time steps.
+    int    ramp_step_count_ = 0;      ///< Number of committed steps taken (used for ramp fraction).
+    double P_prev_sent_old_ = 0.0;    ///< Under-relaxed pressure sent at t_old on last 'L' step (DIR input).
+    double P_prev_sent_new_ = 0.0;    ///< Under-relaxed pressure sent at t_new on last 'L' step (DIR input).
+    double Q_prev_sent_ = 0.0;        ///< Under-relaxed flow output on last 'L' step (DIR output).
+    double P_neu_prev_  = 0.0;        ///< Under-relaxed pressure output on last 'L' step (NEU output).
+    double Q_input_prev_old_ = 0.0;   ///< Under-relaxed flow sent at t_old on last 'L' step (NEU input).
+    double Q_input_prev_new_ = 0.0;   ///< Under-relaxed flow sent at t_new on last 'L' step (NEU input).
+
     /// @brief Flowrate data
     double Qo_ = 0.0;                        ///< Flowrate at old timestep (t_n)
     double Qn_ = 0.0;                        ///< Flowrate at new timestep (t_{n+1})
@@ -289,6 +326,82 @@ public:
     /// @return Block name
     const std::string& get_block_name() const;
     
+    /// @brief Get the svOneD input file path
+    /// @return Path to the 1D solver input file (empty for svZeroD BCs)
+    const std::string& get_oned_input_file() const;
+
+    /// @brief Set the svOneD input file path
+    void set_oned_input_file(const std::string& path);
+
+    bool is_svOneD_face() const { return !oned_input_file_.empty(); }
+
+    /// @brief Get the pressure ramp step count (0 = disabled).
+    int get_oned_ramp_steps() const { return oned_ramp_steps_; }
+
+    /// @brief Set the pressure ramp parameters for 1D coupling initialization.
+    /// @param steps  Number of time steps over which to ramp (0 = disabled).
+    /// @param P_ref  Reference pressure at step 0 (typically the 1D initial pressure).
+    void set_oned_ramp(int steps, double P_ref) {
+      oned_ramp_steps_ = steps;
+      oned_ramp_ref_pressure_ = P_ref;
+    }
+
+    /// @brief Get the ramp reference pressure.
+    double get_oned_ramp_ref_pressure() const { return oned_ramp_ref_pressure_; }
+
+    /// @brief Get the under-relaxation factor for DIR coupling pressure (1.0 = no relaxation).
+    double get_oned_relax_factor() const { return oned_relax_factor_; }
+
+    /// @brief Set the under-relaxation factor for DIR coupling pressure.
+    /// @param omega Relaxation factor in (0, 1].  1.0 disables relaxation.
+    void set_oned_relax_factor(double omega) { oned_relax_factor_ = omega; }
+
+    // =========================================================================
+    // Ramp/relax runtime state accessors (shared by 0D and 1D coupling)
+    // =========================================================================
+
+    /// @brief Get the number of committed time steps (used for ramp fraction).
+    int get_ramp_step_count() const { return ramp_step_count_; }
+
+    /// @brief Increment the committed step counter (call once per 'L' step).
+    void increment_ramp_step_count() { ramp_step_count_++; }
+
+    /// @brief Get the under-relaxed pressure sent at t_old on the last 'L' step (DIR input).
+    double get_P_prev_sent_old() const { return P_prev_sent_old_; }
+
+    /// @brief Get the under-relaxed pressure sent at t_new on the last 'L' step (DIR input).
+    double get_P_prev_sent_new() const { return P_prev_sent_new_; }
+
+    /// @brief Set the DIR input pressure history (call on 'L' steps).
+    void set_P_prev_sent(double old_val, double new_val) {
+        P_prev_sent_old_ = old_val;
+        P_prev_sent_new_ = new_val;
+    }
+
+    /// @brief Get the under-relaxed flow output on the last 'L' step (DIR output).
+    double get_Q_prev_sent() const { return Q_prev_sent_; }
+
+    /// @brief Set the DIR output flow history (call on 'L' steps).
+    void set_Q_prev_sent(double Q) { Q_prev_sent_ = Q; }
+
+    /// @brief Get the under-relaxed pressure output on the last 'L' step (NEU output).
+    double get_P_neu_prev() const { return P_neu_prev_; }
+
+    /// @brief Set the NEU output pressure history (call on 'L' steps).
+    void set_P_neu_prev(double P) { P_neu_prev_ = P; }
+
+    /// @brief Get the under-relaxed flow sent at t_old on the last 'L' step (NEU input).
+    double get_Q_input_prev_old() const { return Q_input_prev_old_; }
+
+    /// @brief Get the under-relaxed flow sent at t_new on the last 'L' step (NEU input).
+    double get_Q_input_prev_new() const { return Q_input_prev_new_; }
+
+    /// @brief Set the NEU input flow history (call on 'L' steps).
+    void set_Q_input_prev(double old_val, double new_val) {
+        Q_input_prev_old_ = old_val;
+        Q_input_prev_new_ = new_val;
+    }
+
     /// @brief Set the svZeroD solution IDs for flow and pressure
     /// @param flow_id Flow solution ID
     /// @param pressure_id Pressure solution ID
@@ -413,6 +526,9 @@ public:
 
     /// @brief Master reads Neumann pressure, one scalar \c MPI_Bcast, all ranks set pressure (svZeroD sync).
     void bcast_coupled_neumann_pressure(const CmMod& cm_mod, cmType& cm);
+
+    /// @brief Master reads DIR flowrates (Qo, Qn), two scalar \c MPI_Bcast, all ranks set flowrates (svZeroD sync).
+    void bcast_coupled_dir_flowrate(const CmMod& cm_mod, cmType& cm);
 
 };
 

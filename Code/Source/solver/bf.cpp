@@ -8,7 +8,6 @@
 #include "all_fun.h"
 #include "cmm.h"
 #include "consts.h"
-#include "fft.h"
 #include "lhsa.h"
 #include "shells.h"
 #include "utils.h"
@@ -151,13 +150,12 @@ void set_bf_l(ComMod& com_mod, bfType& lBf, mshType& lM, const SolutionStates& s
     f = lBf.b;
 
   } else if (utils::btest(lBf.bType, enum_int(BodyForceType::bfType_ustd))) {
-    Vector<double> rtmp(1);
-    ifft(com_mod, lBf.bt, f, rtmp);
+    f = lBf.bt.value(com_mod.time);
 
   } else if (utils::btest(lBf.bType, enum_int(BodyForceType::bfType_gen))) {
     bfl.resize(idof,nNo); 
     Array<double> xl(idof,nNo);
-    igbc(com_mod, lBf.bm, bfl, xl);
+    all_fun::igbc(com_mod, lBf.bm, bfl, xl);
   }
 
   Array<double> bfg(idof,tnNo);

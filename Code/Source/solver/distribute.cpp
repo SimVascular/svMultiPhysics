@@ -550,24 +550,30 @@ void distribute(Simulation* simulation)
   cm.bcast_enum(cm_mod, &cplBC.schm);
   cm.bcast(cm_mod, &cplBC.useGenBC);
   cm.bcast(cm_mod, &cplBC.useSvZeroD);
+  cm.bcast(cm_mod, &cplBC.useSvOneD);
 
   if (cplBC.useGenBC) {   
     if (cm.slv(cm_mod)) {   
       cplBC.nX = 0;
       cplBC.xo.resize(cplBC.nX);
     }
+  }
 
-  } else if (cplBC.useSvZeroD) {   
-    if (cm.slv(cm_mod)) {   
-      cplBC.nX = 0;
-      cplBC.xo.resize(cplBC.nX);
-    }
+  if (cplBC.useSvOneD) {
+    // Broadcast the svOneD solver interface data so that ALL ranks can call
+    // init_svOneD / calc_svOneD (which use MPI_Bcast collectives that require
+    // every rank to participate). Without this, slave processes have
+    // has_data = false and throw immediately inside init_svOneD.
+    cm.bcast(cm_mod, &cplBC.svOneD_solver_interface.has_data);
+    cm.bcast(cm_mod, cplBC.svOneD_solver_interface.solver_library);
+  }
 
-  } else {
-    // RCR (Windkessel): nX/xo sized in read_files from nFa; not genBC/svZeroD.
+  if (!cplBC.useGenBC) {
+    // Broadcast nX and xo: when RCR faces coexist with svZeroD/svOneD, nX > 0
+    // and xo must be distributed to all slave processes so rcr_init works correctly.
     cm.bcast(cm_mod, &cplBC.nX);
     if (cplBC.xo.size() == 0) {
-       cplBC.xo.resize(cplBC.nX);
+      cplBC.xo.resize(cplBC.nX);
     }
     if (cplBC.nX != 0) {
       cm.bcast(cm_mod, cplBC.xo);
@@ -644,44 +650,10 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   }
 
   // Communicating time-dependent BC data
-  //
-  // lBc.gt is declare ALLOCATABLE in MOD.f but we don't
-  // want to use pointers so use the define() method
-  // to check if it has data define.
-  //
-  bool flag = lBc.gt.defined(); 
-  cm.bcast(cm_mod, &flag);
-
-  if (flag) {
-    if (is_slave) {
-      // [NOTE] This is allocated in ComMod.
-      //lBc.gt = new fcType;
-    }
-
-    cm.bcast(cm_mod, &lBc.gt.lrmp);
-    cm.bcast(cm_mod, &lBc.gt.d);
-    cm.bcast(cm_mod, &lBc.gt.n);
-
-    int j = lBc.gt.d;
-    int i = lBc.gt.n;
-
-    if (is_slave) { 
-      lBc.gt.qi.resize(j);
-      lBc.gt.qs.resize(j);
-      lBc.gt.r.resize(j,i);
-      lBc.gt.i.resize(j,i);
-    }
-
-    cm.bcast(cm_mod, &lBc.gt.ti);
-    cm.bcast(cm_mod, &lBc.gt.T);
-    cm.bcast(cm_mod, lBc.gt.qi);
-    cm.bcast(cm_mod, lBc.gt.qs);
-    cm.bcast(cm_mod, lBc.gt.r);
-    cm.bcast(cm_mod, lBc.gt.i);
-  }
+  lBc.gt.distribute(cm_mod, cm);
 
   // Communicating moving BC data
-  flag = lBc.gm.defined();
+  bool flag = lBc.gm.defined();
   cm.bcast(cm_mod, &flag);
   
   if (flag) {
@@ -917,31 +889,7 @@ void dist_bf(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bfType& lBf
   }
 
   //  Communicating time-dependent BF data
-  flag = lBf.bt.defined();
-  cm.bcast(cm_mod, &flag);
-  if (flag) {
-    if (is_slave) {
-      //ALLOCATE(lBf.bt)
-    }
-    cm.bcast(cm_mod, &lBf.bt.lrmp);
-    cm.bcast(cm_mod, &lBf.bt.d);
-    cm.bcast(cm_mod, &lBf.bt.n);
-
-    if (is_slave) {
-      int j = lBf.bt.d;
-      int i = lBf.bt.n;
-      lBf.bt.qi.resize(j);
-      lBf.bt.qs.resize(j);
-      lBf.bt.r.resize(j,i);
-      lBf.bt.i.resize(j,i);
-    }
-    cm.bcast(cm_mod, &lBf.bt.ti);
-    cm.bcast(cm_mod, &lBf.bt.T);
-    cm.bcast(cm_mod, lBf.bt.qi);
-    cm.bcast(cm_mod, lBf.bt.qs);
-    cm.bcast(cm_mod, lBf.bt.r);
-    cm.bcast(cm_mod, lBf.bt.i);
-  }
+  lBf.bt.distribute(cm_mod, cm);
 
   // Communicating moving BF data
   //
@@ -1582,8 +1530,8 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
 
       // All ranks but the master need to allocate the ionic model instance.
       if (!cm.mas(cm_mod)) {
-        cep.ionic_model = IonicModelFactory::create_model(
-            cep_model_type_to_name.at(cep.cepType));
+        cep.ionic_model =
+            IonicModelFactory::create(cep_model_type_to_name.at(cep.cepType));
       }
 
       cm.bcast(cm_mod, &cep.nX);
@@ -1599,10 +1547,18 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       } 
 
       cm.bcast(cm_mod, cep.Dani);
-      cm.bcast(cm_mod, &cep.Istim.Ts);
-      cm.bcast(cm_mod, &cep.Istim.Td);
-      cm.bcast(cm_mod, &cep.Istim.CL);
-      cm.bcast(cm_mod, &cep.Istim.A);
+
+      int n_stim = cep.Istim.size();
+      cm.bcast(cm_mod, &n_stim);
+
+      if (cm.slv(cm_mod)) {
+        cep.Istim.resize(n_stim);
+      }
+
+      for (auto& stim : cep.Istim) {
+        stim.distribute(cm_mod, cm);
+      }
+
       cm.bcast_enum(cm_mod, &cep.odes.tIntType);
 
       if (cep.odes.tIntType == TimeIntegrationType::CN2) {
@@ -1612,7 +1568,21 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
       }
 
       cep.ionic_model->distribute_parameters(cm_mod, cm);
-    } 
+    }
+
+    if (supports_active_stress(lEq.dmn[iDmn].phys)) {
+      cm.bcast(cm_mod, dmn.active_stress_model_name);
+
+      if (dmn.active_stress_model_name != "") {
+        // All ranks but the master need to allocate the active stress instance.
+        if (!cm.mas(cm_mod)) {
+          dmn.active_stress =
+              ActiveStressFactory::create(dmn.active_stress_model_name);
+        }
+
+        dmn.active_stress->distribute_parameters(cm_mod, cm);
+      }
+    }
 
     if ((dmn.phys == EquationType::phys_struct) || (dmn.phys == EquationType::phys_ustruct)) {
       dist_mat_consts(com_mod, cm_mod, cm, dmn.stM);
@@ -1630,10 +1600,9 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
   //
   cm.bcast(cm_mod, &cep_mod.cem.cpld);
 
-  if (cep_mod.cem.cpld); {
-    cm.bcast(cm_mod, &cep_mod.cem.aStress);
+  if (cep_mod.cem.cpld) {
     cm.bcast(cm_mod, &cep_mod.cem.aStrain);
-  } 
+  }
 
   if (com_mod.ibFlag) {
     if (cm.slv(cm_mod)) {
@@ -1750,40 +1719,6 @@ void dist_mat_consts(const ComMod& com_mod, const CmMod& cm_mod, const cmType& c
   cm.bcast(cm_mod, &lStM.b1);
   cm.bcast(cm_mod, &lStM.b2);
   cm.bcast(cm_mod, &lStM.mu0);
-
-  // Distribute fiber stress
-  cm.bcast(cm_mod, &lStM.Tf.fType);
-
-  if (utils::btest(lStM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_std))) { 
-    cm.bcast(cm_mod, &lStM.Tf.g);
-
-  } else if (utils::btest(lStM.Tf.fType, static_cast<int>(BoundaryConditionType::bType_ustd))) {
-    cm.bcast(cm_mod, &lStM.Tf.gt.lrmp);
-    cm.bcast(cm_mod, &lStM.Tf.gt.d);
-    cm.bcast(cm_mod, &lStM.Tf.gt.n);
-
-    if (cm.slv(cm_mod)) {
-      int j = lStM.Tf.gt.d;
-      int i = lStM.Tf.gt.n;
-      lStM.Tf.gt.qi.resize(j);
-      lStM.Tf.gt.qs.resize(j);
-      lStM.Tf.gt.r.resize(j,i);
-      lStM.Tf.gt.i.resize(j,i);
-   } 
-
-   cm.bcast(cm_mod, &lStM.Tf.gt.ti);
-   cm.bcast(cm_mod, &lStM.Tf.gt.T);
-
-   cm.bcast(cm_mod, lStM.Tf.gt.qi, "lStM.Tf.gt.qi");
-   cm.bcast(cm_mod, lStM.Tf.gt.qs, "lStM.Tf.gt.qs");
-   cm.bcast(cm_mod, lStM.Tf.gt.r, "lStM.Tf.gt.r");
-   cm.bcast(cm_mod, lStM.Tf.gt.i, "lStM.Tf.gt.i");
-  }
-  
-  // Broadcast directional stress distribution parameters
-  cm.bcast(cm_mod, &lStM.Tf.eta_f);
-  cm.bcast(cm_mod, &lStM.Tf.eta_s);
-  cm.bcast(cm_mod, &lStM.Tf.eta_n);
 
   // Distribute CANN parameter table
   if (lStM.isoType == ConstitutiveModelType::stArtificialNeuralNet) {

@@ -58,8 +58,8 @@ def test_slab_domains(domain_definition, n_proc):
         ["GMRES_FE_pfib_AP", -0.0786707, 0.0786707, 0.00891599],
     ],
 )
-def test_niederer_benchmark_ECGs_quadrature(confs_ecgs, n_proc):
-    test_folder = "niederer_benchmark_ECGs_quadrature"
+def test_niederer_benchmark_ECGs(confs_ecgs, n_proc):
+    test_folder = "niederer_benchmark_ECGs"
     t_max = 1
     name_inp = "solver_" + confs_ecgs[0] + ".xml"
     name_ref = "result_" + confs_ecgs[0] + "_" + str(t_max).zfill(3) + ".vtu"

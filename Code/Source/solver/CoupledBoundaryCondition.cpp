@@ -22,6 +22,17 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(const CoupledBoundaryConditio
     , bc_type_(other.bc_type_)
     , block_name_(other.block_name_)
     , face_name_(other.face_name_)
+    , oned_input_file_(other.oned_input_file_)
+    , oned_ramp_steps_(other.oned_ramp_steps_)
+    , oned_ramp_ref_pressure_(other.oned_ramp_ref_pressure_)
+    , oned_relax_factor_(other.oned_relax_factor_)
+    , ramp_step_count_(other.ramp_step_count_)
+    , P_prev_sent_old_(other.P_prev_sent_old_)
+    , P_prev_sent_new_(other.P_prev_sent_new_)
+    , Q_prev_sent_(other.Q_prev_sent_)
+    , P_neu_prev_(other.P_neu_prev_)
+    , Q_input_prev_old_(other.Q_input_prev_old_)
+    , Q_input_prev_new_(other.Q_input_prev_new_)
     , Qo_(other.Qo_)
     , Qn_(other.Qn_)
     , Po_(other.Po_)
@@ -53,6 +64,17 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         bc_type_ = other.bc_type_;
         block_name_ = other.block_name_;
         face_name_ = other.face_name_;
+        oned_input_file_ = other.oned_input_file_;
+        oned_ramp_steps_ = other.oned_ramp_steps_;
+        oned_ramp_ref_pressure_ = other.oned_ramp_ref_pressure_;
+        oned_relax_factor_ = other.oned_relax_factor_;
+        ramp_step_count_ = other.ramp_step_count_;
+        P_prev_sent_old_ = other.P_prev_sent_old_;
+        P_prev_sent_new_ = other.P_prev_sent_new_;
+        Q_prev_sent_ = other.Q_prev_sent_;
+        P_neu_prev_ = other.P_neu_prev_;
+        Q_input_prev_old_ = other.Q_input_prev_old_;
+        Q_input_prev_new_ = other.Q_input_prev_new_;
         Qo_ = other.Qo_;
         Qn_ = other.Qn_;
         Po_ = other.Po_;
@@ -83,6 +105,17 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , bc_type_(other.bc_type_)
     , block_name_(std::move(other.block_name_))
     , face_name_(std::move(other.face_name_))
+    , oned_input_file_(std::move(other.oned_input_file_))
+    , oned_ramp_steps_(other.oned_ramp_steps_)
+    , oned_ramp_ref_pressure_(other.oned_ramp_ref_pressure_)
+    , oned_relax_factor_(other.oned_relax_factor_)
+    , ramp_step_count_(other.ramp_step_count_)
+    , P_prev_sent_old_(other.P_prev_sent_old_)
+    , P_prev_sent_new_(other.P_prev_sent_new_)
+    , Q_prev_sent_(other.Q_prev_sent_)
+    , P_neu_prev_(other.P_neu_prev_)
+    , Q_input_prev_old_(other.Q_input_prev_old_)
+    , Q_input_prev_new_(other.Q_input_prev_new_)
     , Qo_(other.Qo_)
     , Qn_(other.Qn_)
     , Po_(other.Po_)
@@ -129,6 +162,17 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         bc_type_ = other.bc_type_;
         block_name_ = std::move(other.block_name_);
         face_name_ = std::move(other.face_name_);
+        oned_input_file_ = std::move(other.oned_input_file_);
+        oned_ramp_steps_ = other.oned_ramp_steps_;
+        oned_ramp_ref_pressure_ = other.oned_ramp_ref_pressure_;
+        oned_relax_factor_ = other.oned_relax_factor_;
+        ramp_step_count_ = other.ramp_step_count_;
+        P_prev_sent_old_ = other.P_prev_sent_old_;
+        P_prev_sent_new_ = other.P_prev_sent_new_;
+        Q_prev_sent_ = other.Q_prev_sent_;
+        P_neu_prev_ = other.P_neu_prev_;
+        Q_input_prev_old_ = other.Q_input_prev_old_;
+        Q_input_prev_new_ = other.Q_input_prev_new_;
         Qo_ = other.Qo_;
         Qn_ = other.Qn_;
         Po_ = other.Po_;
@@ -206,6 +250,16 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(consts::BoundaryConditionType
 const std::string& CoupledBoundaryCondition::get_block_name() const
 {
     return block_name_;
+}
+
+const std::string& CoupledBoundaryCondition::get_oned_input_file() const
+{
+    return oned_input_file_;
+}
+
+void CoupledBoundaryCondition::set_oned_input_file(const std::string& path)
+{
+    oned_input_file_ = path;
 }
 
 void CoupledBoundaryCondition::set_solution_ids(int flow_id, int pressure_id, double in_out_sign)
@@ -401,6 +455,14 @@ void CoupledBoundaryCondition::distribute(const ComMod& com_mod, const CmMod& cm
     // Distribute block name
     cm.bcast(cm_mod, block_name_);
     
+    // Distribute 1D input file path
+    cm.bcast(cm_mod, oned_input_file_);
+
+    // Distribute 1D ramp and relaxation parameters
+    cm.bcast(cm_mod, &oned_ramp_steps_);
+    cm.bcast(cm_mod, &oned_ramp_ref_pressure_);
+    cm.bcast(cm_mod, &oned_relax_factor_);
+
     // Distribute face name
     cm.bcast(cm_mod, face_name_);
     
@@ -986,7 +1048,7 @@ void CappingSurface::init_cap_face_quadrature(const ComMod& com_mod)
 
     try {
         if (nsd != cap_nsd_) {
-            throw CappingSurfaceBaseException("[CappingSurface::init_cap_face_quadrature] Cap surface requires nsd=3.");
+            throw CappingSurfaceGeometryException("[CappingSurface::init_cap_face_quadrature] Cap surface requires nsd=3.");
         }
         face_->nG = 1;
 
@@ -1084,7 +1146,7 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
     Jac = utils::norm(n);
 
     if (utils::is_zero(Jac)) {
-        throw CappingSurfaceBaseException("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
+        throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
                                               std::to_string(g));
     }
 
@@ -1310,4 +1372,24 @@ void CoupledBoundaryCondition::bcast_coupled_neumann_pressure(const CmMod& cm_mo
     }
     cm.bcast(cm_mod, &pr);
     set_pressure(pr);
+}
+
+void CoupledBoundaryCondition::bcast_coupled_dir_flowrate(const CmMod& cm_mod, cmType& cm)
+{
+    if (cm.seq()) {
+        return;
+    }
+    using namespace consts;
+    if (get_bc_type() != BoundaryConditionType::bType_Dir) {
+        return;
+    }
+    double Qo = 0.0;
+    double Qn = 0.0;
+    if (cm.mas(cm_mod)) {
+        Qo = get_Qo();
+        Qn = get_Qn();
+    }
+    cm.bcast(cm_mod, &Qo);
+    cm.bcast(cm_mod, &Qn);
+    set_flowrates(Qo, Qn);
 }

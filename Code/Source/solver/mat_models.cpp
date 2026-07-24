@@ -5,7 +5,6 @@
 
 #include "mat_models.h"
 
-#include "fft.h"
 #include "mat_fun.h"
 #include "utils.h"
 #include "ArtificialNeuralNetMaterial.h"
@@ -204,25 +203,6 @@ void voigt_to_cc(const int nsd, const Array<double>& Dm, Tensor4<double>& CC)
 
 
 
-/// @brief Compute additional fiber-reinforcement stress.
-///
-/// Reproduces Fortran 'GETFIBSTRESS' subroutine.
-//
-void compute_fib_stress(const ComMod& com_mod, const CepMod& cep_mod, const fibStrsType& Tfl, double& g)
-{
-  using namespace consts;
-
-  g = 0.0;
-
-  if (utils::btest(Tfl.fType, iBC_std)) {
-    g = Tfl.g;
-  } else if (utils::btest(Tfl.fType, iBC_ustd)) { 
-    Vector<double> gv(1), tv(1);
-    ifft(com_mod, Tfl.gt, gv, tv);
-    g = gv[0];
-  }
-}
-
 
 /**
  * @brief Perform the necessary tensor operations to calculate S_iso (isochoric
@@ -307,29 +287,12 @@ Eigen::Matrix<double, nsd, 1> compute_sheet_normal(const Eigen::Matrix<double, n
   }
 }
 
-
-/**
- * @brief Compute 2nd Piola-Kirchhoff stress and material stiffness tensors
- * including both dilational and isochoric components.
- *
- * Reproduces the Fortran 'GETPK2CC' subroutine.
- *
- * @param[in] com_mod Object containing global common variables.
- * @param[in] cep_mod Object containing electrophysiology-specific common variables.
- * @param[in] lDmn Domain object.
- * @param[in] F Deformation gradient tensor.
- * @param[in] nfd Number of fiber directions.
- * @param[in] fl Fiber directions.
- * @param[in] ya Electrophysiology active stress.
- * @param[out] S 2nd Piola-Kirchhoff stress tensor (modified in place).
- * @param[out] Dm Material stiffness tensor (modified in place).
- * @param[out] Ja Jacobian for active strain
- * @return None, but modifies S, Dm, and Ja in place.
- */
-template<size_t nsd>
-void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& lDmn, const Matrix<nsd>& F, const int nfd,
-    const Eigen::Matrix<double, nsd, Eigen::Dynamic> fl, const double ya, Matrix<nsd>& S, Matrix<3*(nsd-1)>& Dm, double& Ja)
-{
+template <size_t nsd>
+void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
+                   const dmnType &lDmn, const Matrix<nsd> &F, const int nfd,
+                   const Eigen::Matrix<double, nsd, Eigen::Dynamic> fl,
+                   const double ya_f, const double ya_s, const double ya_n,
+                   Matrix<nsd> &S, Matrix<3 * (nsd - 1)> &Dm, double &Ja) {
   using namespace consts;
   using namespace mat_fun;
   using namespace utils;
@@ -356,22 +319,19 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
   double nd = static_cast<double>(nsd);
   double Kp = stM.Kpen;
 
-  // Fiber-reinforced stress - compute total active stress
-  double Ta = 0.0;
-  compute_fib_stress(com_mod, cep_mod, stM.Tf, Ta);
-
-  // Distribute total active stress among fiber directions
-  double Tfa = stM.Tf.eta_f * Ta;  // Fiber direction
-  double Tsa = stM.Tf.eta_s * Ta;  // Sheet direction
-  double Tna = stM.Tf.eta_n * Ta;  // Sheet-normal direction
+  // Active stress from active stress models, already distributed among the
+  // fiber, sheet and sheet-normal directions by the active stress model.
+  double Tfa = ya_f;  // Fiber direction
+  double Tsa = ya_s;  // Sheet direction
+  double Tna = ya_n;  // Sheet-normal direction
 
   // Validate directional distribution is supported for this constitutive model
   // Only Guccione, HO, and HO-ma models support sheet and sheet-normal stress contributions
-  bool supports_directional_distribution = (stM.isoType == ConstitutiveModelType::stIso_Gucci || 
+  bool supports_directional_distribution = (stM.isoType == ConstitutiveModelType::stIso_Gucci ||
                                             stM.isoType == ConstitutiveModelType::stIso_HO ||
                                             stM.isoType == ConstitutiveModelType::stIso_HO_ma);
-  
-  if (!supports_directional_distribution && (stM.Tf.eta_s > 0.0 || stM.Tf.eta_n > 0.0)) {
+
+  if (!supports_directional_distribution && (ya_s > 0.0 || ya_n > 0.0)) {
     throw std::runtime_error("Directional distribution of active stress (eta_s > 0 or eta_n > 0) "
       "is only supported for Guccione, Holzapfel-Ogden (HO), and Holzapfel-Ogden Modified Anisotropy (HO-ma) models. "
       "Current model does not support sheet or sheet-normal stress contributions. "
@@ -396,11 +356,6 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
     Hss = fib_dir2 * fib_dir2.transpose();
   } else {
     Hss = Matrix<nsd>::Zero();
-  }
-
-  // Electromechanics coupling - active stress
-  if (cep_mod.cem.aStress) {
-    Tfa = Tfa + ya;
   }
 
   // Electromechanics coupling - active strain
@@ -868,7 +823,7 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
  * 
  */
 void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& lDmn, const Array<double>& F, const int nfd,
-    const Array<double>& fl, const double ya, Array<double>& S, Array<double>& Dm, double& Ja)
+    const Array<double>& fl, const double ya_f, const double ya_s, const double ya_n, Array<double>& S, Array<double>& Dm, double& Ja)
 {
     // Number of spatial dimensions
     int nsd = com_mod.nsd;
@@ -889,7 +844,7 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
         Eigen::Matrix3d Dm_2D = Eigen::Matrix3d::Zero();
 
         // Call templated function
-        compute_pk2cc<2>(com_mod, cep_mod, lDmn, F_2D, nfd, fl_2D, ya, S_2D, Dm_2D, Ja);
+        compute_pk2cc<2>(com_mod, cep_mod, lDmn, F_2D, nfd, fl_2D, ya_f, ya_s, ya_n, S_2D, Dm_2D, Ja);
 
         // Copy results back
         mat_fun::convert_to_array(S_2D, S);
@@ -913,7 +868,7 @@ void compute_pk2cc(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& 
         Dm_3D.setZero();
 
         // Call templated function
-        compute_pk2cc<3>(com_mod, cep_mod, lDmn, F_3D, nfd, fl_3D, ya, S_3D, Dm_3D, Ja);
+        compute_pk2cc<3>(com_mod, cep_mod, lDmn, F_3D, nfd, fl_3D, ya_f, ya_s, ya_n, S_3D, Dm_3D, Ja);
 
         // Copy results back
         mat_fun::convert_to_array(S_3D, S);
