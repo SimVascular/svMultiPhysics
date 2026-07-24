@@ -34,6 +34,8 @@ struct ReferenceCellTraits {
 constexpr double coordinate_validation_tolerance = 1.0e-12;
 constexpr double moment_validation_tolerance = 1.0e-12;
 
+// Exact summation decodes double bit patterns directly, so fail at compile
+// time unless both the binary64 value model and object layout are supported.
 static_assert(
     std::numeric_limits<double>::is_iec559 &&
         std::numeric_limits<double>::radix == 2 &&
