@@ -267,8 +267,8 @@ protected:
      * when every other rule invariant is satisfied.
      * @throws InvalidArgumentException If the family is unsupported, exactness
      * is negative, storage is empty or mismatched, a value is non-finite, a point
-     * is outside the reference cell, the weights do not reproduce its zeroth
-     * moment within the scaled moment tolerance.
+     * is outside the reference cell, or the weights do not reproduce the
+     * reference-cell measure within the scaled measure tolerance.
      */
     explicit QuadratureRule(svmp::CellFamily family, RuleData data);
 
