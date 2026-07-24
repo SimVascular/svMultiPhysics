@@ -28,9 +28,9 @@
  *   \int_{\hat K} f(\hat x)\,d\hat x
  *   \approx \sum_q w_q f(\hat x_q).
  * @f]
- * The zeroth moment is the analytic normalization
+ * The reference-cell measure satisfies
  * @f[
- *   M_0 = \int_{\hat K} 1\,d\hat x = \sum_q w_q.
+ *   |\hat K| = \int_{\hat K} 1\,d\hat x = \sum_q w_q.
  * @f]
  * A rule identifies its reference-cell family, reports its dimension and
  * declared polynomial exactness, and keeps every point paired with its
@@ -71,13 +71,13 @@
  * a separate revalidation step. The constructor rejects unsupported cells,
  * negative exactness, empty or mismatched storage, non-finite coordinates or
  * weights, points outside the declared reference cell, and weights whose sum
- * does not equal the canonical rule's zeroth moment within the scaled moment
- * tolerance. The sum of the stored binary64 weights is evaluated exactly and
- * independently of their order.
+ * does not equal the canonical reference-cell measure within the scaled
+ * measure tolerance. The sum of the stored binary64 weights is evaluated
+ * exactly and independently of their order.
  *
  * Structural validation does not require unique points or nonzero, positive
  * individual weights. It verifies metadata, containment, finiteness, and the
- * zeroth moment; it does not prove higher-order polynomial moments. A
+ * reference-cell measure; it does not prove higher-order polynomial moments. A
  * polynomial exactness of @f$p@f$ guarantees every polynomial of total degree
  * at most @f$p@f$. A rule can integrate selected higher-degree polynomials
  * without increasing that common guarantee. Every concrete provider is
@@ -90,7 +90,7 @@
  * are active, and every inactive component is zero within the coordinate
  * tolerance. The supported canonical domains are:
  *
- * | Cell family | Canonical reference domain | Zeroth moment |
+ * | Cell family | Canonical reference domain | Reference-cell measure |
  * | ----------- | -------------------------- | ------------- |
  * | Point | @f$(0,0,0)@f$ | @f$1@f$ |
  * | Line | @f$[-1,1]@f$ | @f$2@f$ |
@@ -227,19 +227,19 @@ public:
     const std::vector<double>& weights() const noexcept { return weights_; }
 
     /**
-     * @brief Return the rule's zeroth moment.
+     * @brief Return the measure of the canonical reference cell.
      *
      * This is the integral of the constant function one. All supported rules
      * are unweighted rules on complete canonical reference cells, so the
      * constructor derives this value from cell_family() and it equals the
      * geometric measure of that cell.
      * @f[
-     *   M_0 = \int_{\hat K} 1\,d\hat x = \sum_q w_q.
+     *   |\hat K| = \int_{\hat K} 1\,d\hat x = \sum_q w_q.
      * @f]
      *
-     * @return Expected sum of the quadrature weights.
+     * @return Geometric measure of the canonical reference cell.
      */
-    double zeroth_moment() const noexcept { return zeroth_moment_; }
+    double reference_cell_measure() const noexcept { return reference_cell_measure_; }
 
 protected:
     /**
@@ -258,8 +258,8 @@ protected:
     /**
      * @brief Construct and validate one complete immutable rule.
      *
-     * Dimension and zeroth moment are derived from @p family; callers cannot
-     * supply redundant topology metadata.
+     * Dimension and reference-cell measure are derived from @p family; callers
+     * cannot supply redundant topology metadata.
      *
      * @param family Supported canonical reference-cell family.
      * @param data Complete exactness, point, and weight payload.
@@ -278,7 +278,7 @@ private:
         svmp::CellFamily cell_family;
         int dimension;
         int polynomial_exactness;
-        double zeroth_moment;
+        double reference_cell_measure;
         std::vector<QuadPoint> points;
         std::vector<double> weights;
     };
@@ -292,7 +292,7 @@ private:
     const svmp::CellFamily cell_family_;     ///< Canonical reference topology.
     const int dimension_;                    ///< Number of active coordinate components.
     const int polynomial_exactness_;         ///< Exactness declared by the concrete generator.
-    const double zeroth_moment_;              ///< Canonical reference-cell measure.
+    const double reference_cell_measure_;    ///< Canonical reference-cell measure.
     const std::vector<QuadPoint> points_;      ///< Ordered immutable reference coordinates.
     const std::vector<double> weights_;        ///< Immutable weights paired with points_.
 };

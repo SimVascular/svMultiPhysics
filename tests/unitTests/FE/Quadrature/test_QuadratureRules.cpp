@@ -59,7 +59,7 @@ struct SolverRuleCase {
     int dimension;
     int requested_exactness;
     int advertised_exactness;
-    double zeroth_moment;
+    double reference_cell_measure;
     ExpectedSamples samples;
 };
 
@@ -563,13 +563,13 @@ TEST(QuadraturePhase01Baseline, StandardSelectionTableHasOrderedPointWeightData)
         EXPECT_FALSE(c.samples.empty());
         EXPECT_GT(c.requested_exactness, 0);
         EXPECT_GE(c.advertised_exactness, c.requested_exactness);
-        EXPECT_GT(c.zeroth_moment, 0.0);
+        EXPECT_GT(c.reference_cell_measure, 0.0);
 
         double weight_sum = 0.0;
         for (const auto& sample : c.samples) {
             weight_sum += sample.weight;
         }
-        EXPECT_NEAR(weight_sum, c.zeroth_moment, kTol);
+        EXPECT_NEAR(weight_sum, c.reference_cell_measure, kTol);
     }
 }
 
@@ -583,7 +583,9 @@ TEST(QuadraturePhase01Baseline, CanonicalFixturesSatisfyTheRuleAndExactnessContr
         EXPECT_EQ(rule.dimension(), c.dimension);
         EXPECT_EQ(rule.polynomial_exactness(), c.advertised_exactness);
         EXPECT_EQ(rule.num_points(), c.samples.size());
-        EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.zeroth_moment);
+        EXPECT_DOUBLE_EQ(
+            rule.reference_cell_measure(),
+            c.reference_cell_measure);
         expect_samples_in_order(rule, c.samples);
         expect_total_degree_exact(rule, c.advertised_exactness);
     }
@@ -826,7 +828,9 @@ TEST(QuadratureRuleValidation, AcceptsEverySupportedReferenceCell)
             {{c.point[0], c.point[1], c.point[2]}},
             {c.expected_measure});
         EXPECT_EQ(rule.dimension(), c.expected_dimension);
-        EXPECT_DOUBLE_EQ(rule.zeroth_moment(), c.expected_measure);
+        EXPECT_DOUBLE_EQ(
+            rule.reference_cell_measure(),
+            c.expected_measure);
     }
 }
 
@@ -932,7 +936,7 @@ TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
         InvalidArgumentException);
 }
 
-TEST(QuadratureRuleValidation, EnforcesZerothMomentButAllowsNegativeWeights)
+TEST(QuadratureRuleValidation, EnforcesReferenceCellMeasureButAllowsNegativeWeights)
 {
     expect_invalid_argument_with_message(
         [] {
@@ -942,7 +946,7 @@ TEST(QuadratureRuleValidation, EnforcesZerothMomentButAllowsNegativeWeights)
                 {{0.25, 0.25, 0.0}},
                 {1.0});
         },
-        "weights do not reproduce the zeroth moment");
+        "weights do not reproduce the reference-cell measure");
 
     const RuleProbe rule(
         svmp::CellFamily::Triangle,
@@ -952,10 +956,10 @@ TEST(QuadratureRuleValidation, EnforcesZerothMomentButAllowsNegativeWeights)
     EXPECT_LT(rule.weight(0), 0.0);
     EXPECT_DOUBLE_EQ(
         integrate_monomial(rule, 0, 0, 0),
-        rule.zeroth_moment());
+        rule.reference_cell_measure());
 }
 
-TEST(QuadratureRuleValidation, RejectsIncorrectZerothMomentDespiteLargeCancellation)
+TEST(QuadratureRuleValidation, RejectsIncorrectMeasureDespiteLargeCancellation)
 {
     expect_invalid_argument_with_message(
         [] {
@@ -967,10 +971,10 @@ TEST(QuadratureRuleValidation, RejectsIncorrectZerothMomentDespiteLargeCancellat
                  {0.5, 0.0, 0.0}},
                 {1.0e20, 0.0, -1.0e20});
         },
-        "weights do not reproduce the zeroth moment");
+        "weights do not reproduce the reference-cell measure");
 }
 
-TEST(QuadratureRuleValidation, RejectsIncorrectMomentHiddenByCancellation)
+TEST(QuadratureRuleValidation, RejectsIncorrectMeasureHiddenByCancellation)
 {
     const double medium = std::ldexp(1.0, 93);
     const double large = std::ldexp(1.0, 233);
@@ -984,10 +988,10 @@ TEST(QuadratureRuleValidation, RejectsIncorrectMomentHiddenByCancellation)
                 std::vector<QuadPoint>(6u, QuadPoint::Zero()),
                 {-medium, -large, residual, medium, large, 2.0});
         },
-        "weights do not reproduce the zeroth moment");
+        "weights do not reproduce the reference-cell measure");
 }
 
-TEST(QuadratureRuleValidation, ExactMomentValidationIsOrderIndependent)
+TEST(QuadratureRuleValidation, ExactMeasureValidationIsOrderIndependent)
 {
     const double maximum = std::numeric_limits<double>::max();
     std::vector<double> valid_weights{
@@ -1034,7 +1038,7 @@ TEST(QuadratureRuleValidation, ExactMomentValidationIsOrderIndependent)
                         QuadPoint::Zero()),
                     invalid_weights);
             },
-            "weights do not reproduce the zeroth moment");
+            "weights do not reproduce the reference-cell measure");
         ++permutation_count;
     } while (std::next_permutation(
         invalid_weights.begin(),
@@ -1073,7 +1077,7 @@ TEST(QuadratureRuleValidation, HandlesExtremeAndSubnormalCancellation)
                 std::vector<QuadPoint>(2u, QuadPoint::Zero()),
                 {maximum, maximum});
         },
-        "weights do not reproduce the zeroth moment");
+        "weights do not reproduce the reference-cell measure");
 }
 
 TEST(QuadratureRuleValidation, AppliesToleranceToTheExactWeightSum)
@@ -1097,7 +1101,7 @@ TEST(QuadratureRuleValidation, AppliesToleranceToTheExactWeightSum)
                 std::vector<QuadPoint>(4u, QuadPoint::Zero()),
                 {maximum, rejected_residual, -maximum, 2.0});
         },
-        "weights do not reproduce the zeroth moment");
+        "weights do not reproduce the reference-cell measure");
 }
 
 TEST(QuadratureRuleValidation, AcceptsLargePositiveRule)
@@ -1137,7 +1141,7 @@ TEST(QuadratureRuleValidation, AcceptsLargeSignedRule)
     EXPECT_LT(rule.weight(0), 0.0);
     EXPECT_NEAR(
         integrate_monomial(rule, 0, 0, 0),
-        rule.zeroth_moment(),
+        rule.reference_cell_measure(),
         kTol);
 }
 
@@ -1182,7 +1186,7 @@ TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
                 {{0.25, 0.25, 0.0}},
                 {0.5 + rejected_offset});
         },
-        "weights do not reproduce the zeroth moment");
+        "weights do not reproduce the reference-cell measure");
 }
 
 TEST(QuadratureRuleContract, PublishesOnlyACompleteImmutableQueryInterface)
@@ -1219,7 +1223,7 @@ TEST(QuadratureRuleContract, PublishesOnlyACompleteImmutableQueryInterface)
     EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Line);
     EXPECT_EQ(rule.dimension(), 1);
     EXPECT_EQ(rule.polynomial_exactness(), 3);
-    EXPECT_DOUBLE_EQ(rule.zeroth_moment(), 2.0);
+    EXPECT_DOUBLE_EQ(rule.reference_cell_measure(), 2.0);
     ASSERT_EQ(rule.num_points(), 2u);
     ASSERT_EQ(rule.points().size(), 2u);
     ASSERT_EQ(rule.weights().size(), 2u);

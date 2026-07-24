@@ -28,11 +28,11 @@ namespace {
 
 struct ReferenceCellTraits {
     int dimension;
-    double zeroth_moment;
+    double reference_cell_measure;
 };
 
 constexpr double coordinate_validation_tolerance = 1.0e-12;
-constexpr double moment_validation_tolerance = 1.0e-12;
+constexpr double measure_validation_tolerance = 1.0e-12;
 
 // Exact summation decodes double bit patterns directly, so fail at compile
 // time unless both the binary64 value model and object layout are supported.
@@ -328,7 +328,7 @@ ValidationResult validate_point(
 
 ValidationResult validate_weights(
     const std::vector<double>& weights,
-    double zeroth_moment) noexcept
+    double reference_cell_measure) noexcept
 {
     ExactBinary64Sum exact_sum;
 
@@ -338,10 +338,10 @@ ValidationResult validate_weights(
         }
     }
 
-    const double scale = std::max(1.0, std::abs(zeroth_moment));
-    const double error_budget = moment_validation_tolerance * scale;
-    if (!exact_sum.is_within(zeroth_moment, error_budget)) {
-        return {"weights do not reproduce the zeroth moment"};
+    const double scale = std::max(1.0, std::abs(reference_cell_measure));
+    const double error_budget = measure_validation_tolerance * scale;
+    if (!exact_sum.is_within(reference_cell_measure, error_budget)) {
+        return {"weights do not reproduce the reference-cell measure"};
     }
 
     return {};
@@ -372,7 +372,7 @@ ValidationResult validate_rule_data(
         }
     }
 
-    return validate_weights(weights, traits.zeroth_moment);
+    return validate_weights(weights, traits.reference_cell_measure);
 }
 
 std::string validation_failure_message(const ValidationResult& result)
@@ -403,7 +403,7 @@ QuadratureRule::QuadratureRule(ValidatedState state)
     : cell_family_(state.cell_family),
       dimension_(state.dimension),
       polynomial_exactness_(state.polynomial_exactness),
-      zeroth_moment_(state.zeroth_moment),
+      reference_cell_measure_(state.reference_cell_measure),
       points_(std::move(state.points)),
       weights_(std::move(state.weights))
 {
@@ -435,7 +435,7 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
         family,
         traits->dimension,
         data.polynomial_exactness,
-        traits->zeroth_moment,
+        traits->reference_cell_measure,
         std::move(data.points),
         std::move(data.weights),
     };
