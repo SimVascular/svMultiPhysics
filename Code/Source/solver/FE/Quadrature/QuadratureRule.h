@@ -114,7 +114,7 @@
  */
 
 #include "FE/Common/Types.h"
-#include "Math/Vector.h"
+#include "FE/Math/Vector.h"
 
 #include <cstddef>
 #include <vector>
