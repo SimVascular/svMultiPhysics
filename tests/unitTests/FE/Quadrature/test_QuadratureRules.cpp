@@ -23,21 +23,6 @@ using namespace svmp::FE::quadrature;
 
 namespace {
 
-class RuleProbe final : public QuadratureRule {
-public:
-    RuleProbe(svmp::CellFamily family,
-              int polynomial_exactness,
-              std::vector<QuadPoint> points,
-              std::vector<double> weights)
-        : QuadratureRule(
-              family,
-              polynomial_exactness,
-              std::move(points),
-              std::move(weights))
-    {
-    }
-};
-
 constexpr double kTol = 1.0e-12;
 
 using ExpectedPoint = std::array<double, 3>;
@@ -127,7 +112,7 @@ TEST(QuadratureRuleValidation, AcceptsEverySupportedReferenceCell)
     };
 
     for (const auto& c : cases) {
-        const RuleProbe rule(
+        const QuadratureRule rule(
             c.family,
             0,
             {{c.point[0], c.point[1], c.point[2]}},
@@ -143,7 +128,7 @@ TEST(QuadratureRuleValidation, RejectsInvalidMetadata)
 {
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Triangle, -1, {{0.0, 0.0, 0.0}}, {0.5});
         },
         "polynomial exactness must be non-negative");
@@ -157,14 +142,14 @@ TEST(QuadratureRuleValidation, RejectsInvalidMetadata)
         SCOPED_TRACE(static_cast<int>(family));
         expect_invalid_argument_with_message(
             [family] {
-                (void)RuleProbe(family, 1, {{0.0, 0.0, 0.0}}, {1.0});
+                (void)QuadratureRule(family, 1, {{0.0, 0.0, 0.0}}, {1.0});
             },
             "unsupported reference-cell family");
     }
 
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 static_cast<svmp::CellFamily>(255),
                 1,
                 {{0.0, 0.0, 0.0}},
@@ -179,29 +164,29 @@ TEST(QuadratureRuleValidation, RejectsMalformedStorageAndNonfiniteValues)
     const double inf = std::numeric_limits<double>::infinity();
 
     expect_invalid_argument_with_message(
-        [] { (void)RuleProbe(svmp::CellFamily::Line, 1, {}, {}); },
+        [] { (void)QuadratureRule(svmp::CellFamily::Line, 1, {}, {}); },
         "at least one sample");
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{0.0, 0.0, 0.0}}, {});
         },
         "points/weights size mismatch");
     expect_invalid_argument_with_message(
         [nan] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{nan, 0.0, 0.0}}, {2.0});
         },
         "non-finite coordinate at sample 0");
     expect_invalid_argument_with_message(
         [inf] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{0.0, 0.0, 0.0}}, {inf});
         },
         "quadrature weight must be finite at sample 0");
     expect_invalid_argument_with_message(
         [nan] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{0.0, 0.0, 0.0}}, {nan});
         },
         "quadrature weight must be finite at sample 0");
@@ -211,33 +196,33 @@ TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
 {
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Point, 0, {{1.0e-4, 0.0, 0.0}}, {1.0});
         },
         "nonzero inactive coordinate at sample 0");
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{0.0, 1.0e-4, 0.0}}, {2.0});
         },
         "nonzero inactive coordinate at sample 0");
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Triangle, 1, {{0.8, 0.3, 0.0}}, {0.5});
         },
         "outside the canonical reference cell at sample 0");
     EXPECT_THROW(
-        (void)RuleProbe(svmp::CellFamily::Quad, 1, {{0.0, 1.1, 0.0}}, {4.0}),
+        (void)QuadratureRule(svmp::CellFamily::Quad, 1, {{0.0, 1.1, 0.0}}, {4.0}),
         InvalidArgumentException);
     EXPECT_THROW(
-        (void)RuleProbe(svmp::CellFamily::Tetra, 1, {{0.4, 0.4, 0.3}}, {1.0 / 6.0}),
+        (void)QuadratureRule(svmp::CellFamily::Tetra, 1, {{0.4, 0.4, 0.3}}, {1.0 / 6.0}),
         InvalidArgumentException);
     EXPECT_THROW(
-        (void)RuleProbe(svmp::CellFamily::Hex, 1, {{0.0, 0.0, -1.1}}, {8.0}),
+        (void)QuadratureRule(svmp::CellFamily::Hex, 1, {{0.0, 0.0, -1.1}}, {8.0}),
         InvalidArgumentException);
     EXPECT_THROW(
-        (void)RuleProbe(svmp::CellFamily::Wedge, 1, {{0.6, 0.5, 0.0}}, {1.0}),
+        (void)QuadratureRule(svmp::CellFamily::Wedge, 1, {{0.6, 0.5, 0.0}}, {1.0}),
         InvalidArgumentException);
 }
 
@@ -245,7 +230,7 @@ TEST(QuadratureRuleValidation, EnforcesReferenceCellMeasureButAllowsNegativeWeig
 {
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Triangle,
                 1,
                 {{0.25, 0.25, 0.0}},
@@ -253,7 +238,7 @@ TEST(QuadratureRuleValidation, EnforcesReferenceCellMeasureButAllowsNegativeWeig
         },
         "weights do not reproduce the reference-cell measure");
 
-    const RuleProbe rule(
+    const QuadratureRule rule(
         svmp::CellFamily::Triangle,
         0,
         {{1.0 / 3.0, 1.0 / 3.0, 0.0}, {0.2, 0.2, 0.0}},
@@ -268,7 +253,7 @@ TEST(QuadratureRuleValidation, RejectsIncorrectMeasureDespiteLargeCancellation)
 {
     expect_invalid_argument_with_message(
         [] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line,
                 0,
                 {{-0.5, 0.0, 0.0},
@@ -287,7 +272,7 @@ TEST(QuadratureRuleValidation, RejectsIncorrectMeasureHiddenByCancellation)
 
     expect_invalid_argument_with_message(
         [medium, large, residual] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line,
                 0,
                 std::vector<QuadPoint>(6u, QuadPoint::Zero()),
@@ -307,7 +292,7 @@ TEST(QuadratureRuleValidation, ExactMeasureValidationIsOrderIndependent)
     do {
         SCOPED_TRACE(permutation_count);
         EXPECT_NO_THROW(
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line,
                 0,
                 std::vector<QuadPoint>(
@@ -335,7 +320,7 @@ TEST(QuadratureRuleValidation, ExactMeasureValidationIsOrderIndependent)
         SCOPED_TRACE(permutation_count);
         expect_invalid_argument_with_message(
             [&invalid_weights] {
-                (void)RuleProbe(
+                (void)QuadratureRule(
                     svmp::CellFamily::Line,
                     0,
                     std::vector<QuadPoint>(
@@ -361,7 +346,7 @@ TEST(QuadratureRuleValidation, HandlesExtremeAndSubnormalCancellation)
         std::nextafter(minimum_normal, std::numeric_limits<double>::infinity());
 
     EXPECT_NO_THROW(
-        (void)RuleProbe(
+        (void)QuadratureRule(
             svmp::CellFamily::Line,
             0,
             std::vector<QuadPoint>(6u, QuadPoint::Zero()),
@@ -376,7 +361,7 @@ TEST(QuadratureRuleValidation, HandlesExtremeAndSubnormalCancellation)
 
     expect_invalid_argument_with_message(
         [maximum] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line,
                 0,
                 std::vector<QuadPoint>(2u, QuadPoint::Zero()),
@@ -392,7 +377,7 @@ TEST(QuadratureRuleValidation, AppliesToleranceToTheExactWeightSum)
     const double rejected_residual = std::ldexp(1.0, -38);
 
     EXPECT_NO_THROW(
-        (void)RuleProbe(
+        (void)QuadratureRule(
             svmp::CellFamily::Line,
             0,
             std::vector<QuadPoint>(4u, QuadPoint::Zero()),
@@ -400,7 +385,7 @@ TEST(QuadratureRuleValidation, AppliesToleranceToTheExactWeightSum)
 
     expect_invalid_argument_with_message(
         [maximum, rejected_residual] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line,
                 0,
                 std::vector<QuadPoint>(4u, QuadPoint::Zero()),
@@ -418,7 +403,7 @@ TEST(QuadratureRuleValidation, AcceptsLargePositiveRule)
     std::vector<QuadPoint> points(sample_count, QuadPoint::Zero());
     std::vector<double> weights(sample_count, sample_weight);
 
-    const RuleProbe rule(
+    const QuadratureRule rule(
         svmp::CellFamily::Line,
         0,
         std::move(points),
@@ -438,7 +423,7 @@ TEST(QuadratureRuleValidation, AcceptsLargeSignedRule)
     weights[0] = -cancelling_weight;
     weights[1] = cancelling_weight;
 
-    const RuleProbe rule(
+    const QuadratureRule rule(
         svmp::CellFamily::Line,
         0,
         std::move(points),
@@ -453,7 +438,7 @@ TEST(QuadratureRuleValidation, AcceptsLargeSignedRule)
 TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
 {
     constexpr double accepted_offset = 1.0e-14;
-    const RuleProbe rule(
+    const QuadratureRule rule(
         svmp::CellFamily::Line,
         0,
         {{1.0 + accepted_offset, accepted_offset, 0.0}},
@@ -463,7 +448,7 @@ TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
     constexpr double rejected_offset = 1.0e-10;
     expect_invalid_argument_with_message(
         [rejected_offset] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Line,
                 0,
                 {{1.0 + rejected_offset, 0.0, 0.0}},
@@ -475,7 +460,7 @@ TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
 TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
 {
     constexpr double accepted_offset = 1.0e-14;
-    const RuleProbe rule(
+    const QuadratureRule rule(
         svmp::CellFamily::Triangle,
         0,
         {{0.25, 0.25, 0.0}},
@@ -485,7 +470,7 @@ TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
     constexpr double rejected_offset = 1.0e-10;
     expect_invalid_argument_with_message(
         [rejected_offset] {
-            (void)RuleProbe(
+            (void)QuadratureRule(
                 svmp::CellFamily::Triangle,
                 0,
                 {{0.25, 0.25, 0.0}},
@@ -494,32 +479,30 @@ TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
         "weights do not reproduce the reference-cell measure");
 }
 
-TEST(QuadratureRuleContract, PublishesOnlyACompleteImmutableQueryInterface)
+TEST(QuadratureRuleContract, SupportsValueSemanticsAndReadOnlyQueries)
 {
-    static_assert(std::is_abstract_v<QuadratureRule>);
-    static_assert(!std::is_copy_constructible_v<QuadratureRule>);
-    static_assert(!std::is_move_constructible_v<QuadratureRule>);
-    static_assert(!std::is_copy_assignable_v<QuadratureRule>);
-    static_assert(!std::is_move_assignable_v<QuadratureRule>);
-    static_assert(!std::is_copy_constructible_v<RuleProbe>);
-    static_assert(!std::is_move_constructible_v<RuleProbe>);
-    static_assert(!std::is_copy_assignable_v<RuleProbe>);
-    static_assert(!std::is_move_assignable_v<RuleProbe>);
+    static_assert(!std::is_abstract_v<QuadratureRule>);
+    static_assert(std::is_final_v<QuadratureRule>);
+    static_assert(!std::has_virtual_destructor_v<QuadratureRule>);
+    static_assert(std::is_copy_constructible_v<QuadratureRule>);
+    static_assert(std::is_move_constructible_v<QuadratureRule>);
+    static_assert(std::is_copy_assignable_v<QuadratureRule>);
+    static_assert(std::is_move_assignable_v<QuadratureRule>);
     static_assert(
         std::is_same<decltype(std::declval<QuadratureRule&>().point(0)),
                      const QuadPoint&>::value,
-        "A quadrature point must be exposed through an immutable reference");
+        "A quadrature point must be exposed through a const reference");
     static_assert(
         std::is_same<decltype(std::declval<QuadratureRule&>().points()),
                      const std::vector<QuadPoint>&>::value,
-        "Quadrature points must be exposed through an immutable view");
+        "Quadrature points must be exposed through a read-only view");
     static_assert(
         std::is_same<decltype(std::declval<QuadratureRule&>().weights()),
                      const std::vector<double>&>::value,
-        "Quadrature weights must be exposed through an immutable view");
+        "Quadrature weights must be exposed through a read-only view");
 
     const double a = 1.0 / std::sqrt(3.0);
-    const RuleProbe rule(
+    const QuadratureRule rule(
         svmp::CellFamily::Line,
         3,
         {{-a, 0.0, 0.0}, {a, 0.0, 0.0}},

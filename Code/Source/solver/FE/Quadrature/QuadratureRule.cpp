@@ -383,8 +383,6 @@ std::string validation_failure_message(const ValidationResult& result)
 
 } // namespace
 
-QuadratureRule::~QuadratureRule() = default;
-
 int QuadratureRule::dimension() const noexcept
 {
     const int dimension = reference_dimension(cell_family_);

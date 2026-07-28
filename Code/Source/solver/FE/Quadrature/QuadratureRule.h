@@ -6,18 +6,17 @@
 
 /**
  * @file QuadratureRule.h
- * @brief Immutable reference-space quadrature rule contract.
+ * @brief Validated reference-space quadrature rule value type.
  * @ingroup FE_Quadrature
  *
- * This header defines the consumer-facing representation of a finite-element
- * quadrature rule. Rule construction and validation are implemented separately
- * so consumers depend only on the stable query interface.
+ * This header defines an owning quadrature-rule value with read-only access to
+ * its metadata, points, and weights.
  */
 
 /**
  * @defgroup FE_Quadrature Quadrature
  * @ingroup FE
- * @brief Immutable integration rules on canonical finite-element reference cells.
+ * @brief Validated integration rules on canonical finite-element reference cells.
  *
  * @details
  * ## Scope
@@ -49,20 +48,16 @@
  * API. Integration consumers read rule metadata and ordered samples; they do
  * not derive new rules or modify rule storage.
  *
- * Complete-data construction, reference-cell traits, point-containment checks,
- * exact weight summation, concrete generators, caches, and rule-selection
- * facilities are module implementation details.
+ * Reference-cell metadata, point-containment checks, exact weight summation,
+ * concrete generators, caches, and rule-selection facilities are module
+ * implementation details.
  *
- * ## Rule-provider contract
+ * ## Constructing rules
  *
- * Concrete rule providers are the only supported subclasses. A provider
- * computes the declared polynomial exactness, ordered points, and paired
- * weights before invoking the protected constructor and exposes no mutation
- * afterward. It must advertise only exactness established for every rule it
- * supplies through analytic moment tests. Derivation is a provider extension
- * seam, not an integration-consumer customization point. The protected
- * constructor is the only provider extension point; public metadata and sample
- * queries are fixed, nonvirtual operations on validated base-class state.
+ * Construct a QuadratureRule from its cell family, declared polynomial
+ * exactness, ordered points, and paired weights. Rule-generating functions can
+ * compute those values and return the resulting rule. A generator must
+ * advertise only exactness established through analytic moment tests.
  *
  * ## Rule contract
  *
@@ -80,11 +75,10 @@
  * reference-cell measure; it does not prove higher-order polynomial moments. A
  * polynomial exactness of @f$p@f$ guarantees every polynomial of total degree
  * at most @f$p@f$. A rule can integrate selected higher-degree polynomials
- * without increasing that common guarantee. Every concrete provider is
- * responsible for establishing its advertised exactness with analytic moment
- * tests.
+ * without increasing that common guarantee. Rule generators are responsible
+ * for establishing their advertised exactness with analytic moment tests.
  *
- * Points use one fixed-size three-component representation. Providers initialize
+ * Points use one fixed-size three-component representation. Generators initialize
  * all three coordinates explicitly because the Eigen-backed vector is not
  * zero-initialized by default. Only the first dimension() components
  * are active, and every inactive component is zero within the coordinate
@@ -103,14 +97,12 @@
  * Pyramid, Polygon, Polyhedron, and unknown cell families are intentionally
  * unsupported.
  *
- * ## Ownership and lifetime
+ * ## Value semantics and lifetime
  *
- * Rule objects are non-copyable and non-movable. They are intended to be built
- * once, retained through a const owning handle, and shared across integrations.
- * References returned by points() and weights() remain valid for the lifetime
- * of the rule. Consumers should retain that rule rather than copying its point
- * count or samples into parallel authoritative state. Concurrent const access
- * is safe while an owning handle keeps the rule alive.
+ * Rules can be copied, moved, and assigned. Each value owns its points and
+ * weights. References returned by points() and weights() remain valid until
+ * that rule is assigned or destroyed. Concurrent const access is safe while
+ * no thread assigns to the same rule.
  */
 
 #include "FE/Common/Types.h"
@@ -128,41 +120,43 @@ namespace svmp::FE::quadrature {
 /**
  * @brief Three-component coordinate used for every reference quadrature point.
  *
- * Only the first QuadratureRule::dimension() components are active. Providers
+ * Only the first QuadratureRule::dimension() components are active. Generators
  * explicitly zero remaining components, giving point, line, surface, and volume
  * rules a uniform representation directly compatible with FE math consumers.
  */
 using QuadPoint = math::Vector<double, 3>;
 
 /**
- * @brief Immutable consumer interface for a quadrature rule on a reference cell.
+ * @brief Validated quadrature rule on a canonical reference cell.
  *
- * Concrete rule providers initialize the base with a declared polynomial
- * exactness, complete ordered points, and paired weights. The constructor
- * arguments are validated before construction returns, and the object exposes
- * no mutation or assignment path afterward. General solver consumers use only
- * the public const query interface. Providers supply data through the protected
- * constructor; they do not override the fixed metadata or sample queries.
- * Successful construction establishes the rule invariant; no public
- * revalidation operation is required or exposed. Concurrent const access is
- * safe while an owning handle keeps the rule alive.
+ * Construct the rule from its family, declared exactness, ordered points, and
+ * paired weights. Construction validates the supplied data. Public queries do
+ * not permit editing the owned point and weight storage.
  */
-class QuadratureRule {
+class QuadratureRule final {
 public:
-    /** @brief Destroy a quadrature rule through the abstract interface. */
-    virtual ~QuadratureRule() = 0;
-
-    /** @brief Rule objects cannot be copied through the abstract interface. */
-    QuadratureRule(const QuadratureRule&) = delete;
-
-    /** @brief Rule objects cannot be moved through the abstract interface. */
-    QuadratureRule(QuadratureRule&&) = delete;
-
-    /** @brief Rule objects cannot be replaced through base assignment. */
-    QuadratureRule& operator=(const QuadratureRule&) = delete;
-
-    /** @brief Rule objects cannot be replaced through base move assignment. */
-    QuadratureRule& operator=(QuadratureRule&&) = delete;
+    /**
+     * @brief Construct and validate one complete rule.
+     *
+     * Dimension and reference-cell measure are derived from @p family; callers
+     * cannot supply redundant topology metadata.
+     *
+     * @param family Supported canonical reference-cell family.
+     * @param polynomial_exactness Declared total-degree polynomial exactness.
+     * @param points Ordered canonical reference coordinates.
+     * @param weights Weights paired with @p points in the same order.
+     * @note Duplicate points and zero or negative weights remain admissible
+     * when every other rule invariant is satisfied.
+     * @throws InvalidArgumentException If the family is unsupported, exactness
+     * is negative, storage is empty or mismatched, a value is non-finite, a point
+     * is outside the reference cell, or the weights do not reproduce the
+     * reference-cell measure within the scaled measure tolerance.
+     */
+    explicit QuadratureRule(
+        svmp::CellFamily family,
+        int polynomial_exactness,
+        std::vector<QuadPoint> points,
+        std::vector<double> weights);
 
     /**
      * @brief Return the number of ordered point/weight pairs.
@@ -176,7 +170,7 @@ public:
      * A value @f$p@f$ guarantees exact integration of every polynomial with
      * total degree at most @f$p@f$. The rule can also integrate selected
      * higher-degree polynomials. Structural validation does not independently
-     * prove this guarantee; concrete providers establish it through analytic
+     * prove this guarantee; rule generators establish it through analytic
      * moment tests.
      *
      * @return Declared total degree that a conforming rule integrates exactly.
@@ -201,7 +195,7 @@ public:
     /**
      * @brief Return one reference coordinate without bounds checking.
      * @param i Point index in the half-open range `[0, num_points())`.
-     * @return Immutable reference to the indexed quadrature point, valid for
+     * @return Const reference to the indexed quadrature point, valid for
      * the lifetime of this rule.
      * @pre @p i is less than num_points().
      */
@@ -217,13 +211,13 @@ public:
 
     /**
      * @brief Return all reference coordinates in integration order.
-     * @return Immutable point storage, valid for the lifetime of this rule.
+     * @return Read-only point storage, valid for the lifetime of this rule.
      */
     const std::vector<QuadPoint>& points() const noexcept { return points_; }
 
     /**
      * @brief Return all reference weights in point order.
-     * @return Immutable weight storage, valid for the lifetime of this rule.
+     * @return Read-only weight storage, valid for the lifetime of this rule.
      */
     const std::vector<double>& weights() const noexcept { return weights_; }
 
@@ -242,30 +236,6 @@ public:
      */
     double reference_cell_measure() const noexcept { return reference_cell_measure_; }
 
-protected:
-    /**
-     * @brief Construct and validate one complete immutable rule.
-     *
-     * Dimension and reference-cell measure are derived from @p family; callers
-     * cannot supply redundant topology metadata.
-     *
-     * @param family Supported canonical reference-cell family.
-     * @param polynomial_exactness Declared total-degree polynomial exactness.
-     * @param points Ordered canonical reference coordinates.
-     * @param weights Weights paired with @p points in the same order.
-     * @note Duplicate points and zero or negative weights remain admissible
-     * when every other rule invariant is satisfied.
-     * @throws InvalidArgumentException If the family is unsupported, exactness
-     * is negative, storage is empty or mismatched, a value is non-finite, a point
-     * is outside the reference cell, or the weights do not reproduce the
-     * reference-cell measure within the scaled measure tolerance.
-     */
-    explicit QuadratureRule(
-        svmp::CellFamily family,
-        int polynomial_exactness,
-        std::vector<QuadPoint> points,
-        std::vector<double> weights);
-
 private:
     /** @brief Fully checked state used by the delegating constructor. */
     struct ValidatedState {
@@ -276,7 +246,7 @@ private:
         std::vector<double> weights;
     };
 
-    /** @brief Validate constructor arguments before initializing immutable members. */
+    /** @brief Validate constructor arguments before initializing members. */
     static ValidatedState validate(
         svmp::CellFamily family,
         int polynomial_exactness,
@@ -286,11 +256,11 @@ private:
     /** @brief Initialize members from state already checked by validate(). */
     explicit QuadratureRule(ValidatedState state);
 
-    const svmp::CellFamily cell_family_;     ///< Canonical reference topology.
-    const int polynomial_exactness_;         ///< Exactness declared by the concrete generator.
-    const double reference_cell_measure_;    ///< Canonical reference-cell measure.
-    const std::vector<QuadPoint> points_;      ///< Ordered immutable reference coordinates.
-    const std::vector<double> weights_;        ///< Immutable weights paired with points_.
+    svmp::CellFamily cell_family_;          ///< Canonical reference topology.
+    int polynomial_exactness_;              ///< Exactness declared by the generator.
+    double reference_cell_measure_;         ///< Canonical reference-cell measure.
+    std::vector<QuadPoint> points_;          ///< Ordered reference coordinates.
+    std::vector<double> weights_;            ///< Weights paired with points_.
 };
 
 /** @} */
