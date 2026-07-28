@@ -17,6 +17,12 @@ void RDQ20MF::read_model_specific_parameters(
   gamma = params.get_scalar("gamma");
   Kd0 = params.get_scalar("Kd0");
   alphaKd = params.get_scalar("alphaKd");
+  if (alphaKd > 0.0)
+    svmp::raise<svmp::ParseException>(
+        "RDQ20MF: alphaKd must be <= 0 (positive values reduce calcium "
+        "sensitivity with stretch, reversing length-dependent activation, "
+        "and can produce a zero dissociation constant at physiological "
+        "sarcomere lengths).");
   SL0 = params.get_scalar("SL0");
 
   r0 = params.get_scalar("r0");
@@ -53,7 +59,7 @@ void RDQ20MF::distribute_model_specific_parameters(const CmMod &cm_mod,
 }
 
 void RDQ20MF::init_local(Vector<double> &state) const {
-  for (unsigned int i = 0; i < n_states; ++i)
+  for (unsigned int i = 0; i < n_state_variables; ++i)
     state[i] = 0.0;
 
   state[ru_index(0, 0, 0, 0)] = 1.0; // == state[0]
@@ -202,6 +208,10 @@ void RDQ20MF::ru_forward_euler_substep(
     }
 
   // Probability fluxes from the boundary-neighbour transitions.
+  // TL's only neighbour is TC on its right  → rate_right[TC][TL].
+  // TR's only neighbour is TC on its left   → rate_left[TC][TR].
+  // (rate_left == rate_right numerically due to mean-field LR symmetry, so the
+  // result is unchanged, but the names now match the physical convention.)
   double flux_TL[2][2][2][2]; // left tropomyosin
   double flux_TR[2][2][2][2]; // right tropomyosin
   for (int TL = 0; TL < 2; ++TL)
@@ -209,9 +219,9 @@ void RDQ20MF::ru_forward_euler_substep(
       for (int TR = 0; TR < 2; ++TR)
         for (int CC = 0; CC < 2; ++CC) {
           flux_TL[TL][TC][TR][CC] =
-              state_RU[TL][TC][TR][CC] * rate_left[TC][TL];
+              state_RU[TL][TC][TR][CC] * rate_right[TC][TL];
           flux_TR[TL][TC][TR][CC] =
-              state_RU[TL][TC][TR][CC] * rate_right[TC][TR];
+              state_RU[TL][TC][TR][CC] * rate_left[TC][TR];
         }
 
   // Forward-Euler update of the 16 RU probabilities.
