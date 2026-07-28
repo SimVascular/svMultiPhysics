@@ -165,7 +165,7 @@ TEST(QuadratureRuleValidation, RejectsMalformedStorageAndNonfiniteValues)
 
     expect_invalid_argument_with_message(
         [] { (void)QuadratureRule(svmp::CellFamily::Line, 1, {}, {}); },
-        "at least one sample");
+        "at least one point");
     expect_invalid_argument_with_message(
         [] {
             (void)QuadratureRule(
@@ -177,19 +177,19 @@ TEST(QuadratureRuleValidation, RejectsMalformedStorageAndNonfiniteValues)
             (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{nan, 0.0, 0.0}}, {2.0});
         },
-        "non-finite coordinate at sample 0");
+        "non-finite coordinate at point index 0");
     expect_invalid_argument_with_message(
         [inf] {
             (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{0.0, 0.0, 0.0}}, {inf});
         },
-        "quadrature weight must be finite at sample 0");
+        "quadrature weight must be finite at point index 0");
     expect_invalid_argument_with_message(
         [nan] {
             (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{0.0, 0.0, 0.0}}, {nan});
         },
-        "quadrature weight must be finite at sample 0");
+        "quadrature weight must be finite at point index 0");
 }
 
 TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
@@ -199,19 +199,19 @@ TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
             (void)QuadratureRule(
                 svmp::CellFamily::Point, 0, {{1.0e-4, 0.0, 0.0}}, {1.0});
         },
-        "nonzero inactive coordinate at sample 0");
+        "nonzero inactive coordinate at point index 0");
     expect_invalid_argument_with_message(
         [] {
             (void)QuadratureRule(
                 svmp::CellFamily::Line, 1, {{0.0, 1.0e-4, 0.0}}, {2.0});
         },
-        "nonzero inactive coordinate at sample 0");
+        "nonzero inactive coordinate at point index 0");
     expect_invalid_argument_with_message(
         [] {
             (void)QuadratureRule(
                 svmp::CellFamily::Triangle, 1, {{0.8, 0.3, 0.0}}, {0.5});
         },
-        "outside the canonical reference cell at sample 0");
+        "outside the canonical reference cell at point index 0");
     EXPECT_THROW(
         (void)QuadratureRule(svmp::CellFamily::Quad, 1, {{0.0, 1.1, 0.0}}, {4.0}),
         InvalidArgumentException);

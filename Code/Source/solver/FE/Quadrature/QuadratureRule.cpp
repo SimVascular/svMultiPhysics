@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <limits>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace svmp::FE::quadrature {
@@ -209,19 +208,6 @@ private:
     Magnitude negative_{};
 };
 
-struct ValidationResult {
-    static constexpr std::size_t no_sample =
-        std::numeric_limits<std::size_t>::max();
-
-    std::string_view reason{};
-    std::size_t sample{no_sample};
-
-    constexpr bool valid() const noexcept
-    {
-        return reason.empty();
-    }
-};
-
 constexpr int reference_dimension(svmp::CellFamily family) noexcept
 {
     switch (family) {
@@ -241,20 +227,28 @@ constexpr int reference_dimension(svmp::CellFamily family) noexcept
     }
 }
 
-ValidationResult validate_point(
+void validate_point(
     const QuadPoint& point,
     svmp::CellFamily family,
     int dimension,
-    std::size_t sample) noexcept
+    std::size_t point_index)
 {
     for (std::size_t component = 0; component < 3u; ++component) {
         if (!std::isfinite(point[component])) {
-            return {"quadrature point contains a non-finite coordinate", sample};
+            svmp::raise<InvalidArgumentException>(
+                std::string{
+                    "QuadratureRule: quadrature point contains a non-finite "
+                    "coordinate at point index "} +
+                std::to_string(point_index));
         }
         if (component >=
             static_cast<std::size_t>(dimension) &&
             std::abs(point[component]) > coordinate_validation_tolerance) {
-            return {"quadrature point has a nonzero inactive coordinate", sample};
+            svmp::raise<InvalidArgumentException>(
+                std::string{
+                    "QuadratureRule: quadrature point has a nonzero inactive "
+                    "coordinate at point index "} +
+                std::to_string(point_index));
         }
     }
 
@@ -305,80 +299,42 @@ ValidationResult validate_point(
                 in_interval(z, -1.0, 1.0);
             break;
         default:
-            return {"unsupported reference-cell family"};
+            svmp::raise<InvalidArgumentException>(
+                "QuadratureRule: unsupported reference-cell family");
     }
 
     if (!is_contained) {
-        return {
-            "quadrature point lies outside the canonical reference cell",
-            sample};
+        svmp::raise<InvalidArgumentException>(
+            std::string{
+                "QuadratureRule: quadrature point lies outside the canonical "
+                "reference cell at point index "} +
+            std::to_string(point_index));
     }
-    return {};
 }
 
-ValidationResult validate_weights(
+void validate_weights(
     const std::vector<double>& weights,
-    double reference_cell_measure) noexcept
+    double reference_cell_measure)
 {
     ExactBinary64Sum exact_sum;
 
-    for (std::size_t sample = 0; sample < weights.size(); ++sample) {
-        if (!exact_sum.add(weights[sample])) {
-            return {"quadrature weight must be finite", sample};
+    for (std::size_t point_index = 0;
+         point_index < weights.size();
+         ++point_index) {
+        if (!exact_sum.add(weights[point_index])) {
+            svmp::raise<InvalidArgumentException>(
+                std::string{
+                    "QuadratureRule: quadrature weight must be finite at point "
+                    "index "} +
+                std::to_string(point_index));
         }
     }
 
     const double scale = std::max(1.0, std::abs(reference_cell_measure));
     const double error_budget = measure_validation_tolerance * scale;
-    if (!exact_sum.is_within(reference_cell_measure, error_budget)) {
-        return {"weights do not reproduce the reference-cell measure"};
-    }
-
-    return {};
-}
-
-ValidationResult validate_rule_arguments(
-    svmp::CellFamily family,
-    int dimension,
-    double reference_cell_measure,
-    int polynomial_exactness,
-    const std::vector<QuadPoint>& points,
-    const std::vector<double>& weights) noexcept
-{
-    if (polynomial_exactness < 0) {
-        return {"polynomial exactness must be non-negative"};
-    }
-    if (points.empty()) {
-        return {"a rule must contain at least one sample"};
-    }
-    if (points.size() != weights.size()) {
-        return {"points/weights size mismatch"};
-    }
-
-    for (std::size_t sample = 0; sample < points.size(); ++sample) {
-        const auto result =
-            validate_point(points[sample], family, dimension, sample);
-        if (!result.valid()) {
-            return result;
-        }
-    }
-
-    return validate_weights(weights, reference_cell_measure);
-}
-
-std::string validation_failure_message(const ValidationResult& result)
-{
-    if (result.valid()) {
-        return {};
-    }
-
-    std::string message{"QuadratureRule: "};
-    message.append(result.reason);
-    if (result.sample != ValidationResult::no_sample) {
-        message.append(" at sample ");
-        message.append(std::to_string(result.sample));
-    }
-    return message;
+    svmp::check<InvalidArgumentException>(
+        exact_sum.is_within(reference_cell_measure, error_budget),
+        "QuadratureRule: weights do not reproduce the reference-cell measure");
 }
 
 } // namespace
@@ -395,81 +351,63 @@ QuadratureRule::QuadratureRule(
     int polynomial_exactness,
     std::vector<QuadPoint> points,
     std::vector<double> weights)
-    : QuadratureRule(
-          validate(
-              family,
-              polynomial_exactness,
-              std::move(points),
-              std::move(weights)))
+    : cell_family_(family),
+      polynomial_exactness_(polynomial_exactness),
+      reference_cell_measure_(0.0),
+      points_(std::move(points)),
+      weights_(std::move(weights))
 {
-}
-
-QuadratureRule::QuadratureRule(ValidatedState state)
-    : cell_family_(state.cell_family),
-      polynomial_exactness_(state.polynomial_exactness),
-      reference_cell_measure_(state.reference_cell_measure),
-      points_(std::move(state.points)),
-      weights_(std::move(state.weights))
-{
-}
-
-QuadratureRule::ValidatedState QuadratureRule::validate(
-    svmp::CellFamily family,
-    int polynomial_exactness,
-    std::vector<QuadPoint> points,
-    std::vector<double> weights)
-{
-    double reference_cell_measure;
-    switch (family) {
+    switch (cell_family_) {
         case svmp::CellFamily::Point:
-            reference_cell_measure = 1.0;
+            reference_cell_measure_ = 1.0;
             break;
         case svmp::CellFamily::Line:
-            reference_cell_measure = 2.0;
+            reference_cell_measure_ = 2.0;
             break;
         case svmp::CellFamily::Triangle:
-            reference_cell_measure = 0.5;
+            reference_cell_measure_ = 0.5;
             break;
         case svmp::CellFamily::Quad:
-            reference_cell_measure = 4.0;
+            reference_cell_measure_ = 4.0;
             break;
         case svmp::CellFamily::Tetra:
-            reference_cell_measure = 1.0 / 6.0;
+            reference_cell_measure_ = 1.0 / 6.0;
             break;
         case svmp::CellFamily::Hex:
-            reference_cell_measure = 8.0;
+            reference_cell_measure_ = 8.0;
             break;
         case svmp::CellFamily::Wedge:
-            reference_cell_measure = 1.0;
+            reference_cell_measure_ = 1.0;
             break;
         default:
             svmp::raise<InvalidArgumentException>(
-                validation_failure_message(
-                    {"unsupported reference-cell family"}));
+                "QuadratureRule: unsupported reference-cell family");
     }
 
-    const int dimension = reference_dimension(family);
+    svmp::check<InvalidArgumentException>(
+        polynomial_exactness_ >= 0,
+        "QuadratureRule: polynomial exactness must be non-negative");
+    svmp::check<InvalidArgumentException>(
+        !points_.empty(),
+        "QuadratureRule: a rule must contain at least one point");
+    svmp::check<InvalidArgumentException>(
+        points_.size() == weights_.size(),
+        "QuadratureRule: points/weights size mismatch");
+
+    const int dimension = reference_dimension(cell_family_);
     assert(dimension >= 0);
 
-    const auto validation = validate_rule_arguments(
-        family,
-        dimension,
-        reference_cell_measure,
-        polynomial_exactness,
-        points,
-        weights);
-    if (!validation.valid()) {
-        svmp::raise<InvalidArgumentException>(
-            validation_failure_message(validation));
+    for (std::size_t point_index = 0;
+         point_index < points_.size();
+         ++point_index) {
+        validate_point(
+            points_[point_index],
+            cell_family_,
+            dimension,
+            point_index);
     }
 
-    return {
-        family,
-        polynomial_exactness,
-        reference_cell_measure,
-        std::move(points),
-        std::move(weights),
-    };
+    validate_weights(weights_, reference_cell_measure_);
 }
 
 } // namespace svmp::FE::quadrature

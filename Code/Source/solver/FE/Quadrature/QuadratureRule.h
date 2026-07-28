@@ -45,7 +45,7 @@
  *
  * @ref svmp::FE::quadrature::QuadPoint "QuadPoint" and the const query surface
  * of @ref svmp::FE::quadrature::QuadratureRule "QuadratureRule" form the public
- * API. Integration consumers read rule metadata and ordered samples; they do
+ * API. Integration consumers read rule metadata, points, and weights; they do
  * not derive new rules or modify rule storage.
  *
  * Reference-cell metadata, point-containment checks, exact weight summation,
@@ -160,7 +160,7 @@ public:
 
     /**
      * @brief Return the number of ordered point/weight pairs.
-     * @return Quadrature sample count.
+     * @return Quadrature point count.
      */
     std::size_t num_points() const noexcept { return points_.size(); }
 
@@ -237,25 +237,6 @@ public:
     double reference_cell_measure() const noexcept { return reference_cell_measure_; }
 
 private:
-    /** @brief Fully checked state used by the delegating constructor. */
-    struct ValidatedState {
-        svmp::CellFamily cell_family;
-        int polynomial_exactness;
-        double reference_cell_measure;
-        std::vector<QuadPoint> points;
-        std::vector<double> weights;
-    };
-
-    /** @brief Validate constructor arguments before initializing members. */
-    static ValidatedState validate(
-        svmp::CellFamily family,
-        int polynomial_exactness,
-        std::vector<QuadPoint> points,
-        std::vector<double> weights);
-
-    /** @brief Initialize members from state already checked by validate(). */
-    explicit QuadratureRule(ValidatedState state);
-
     svmp::CellFamily cell_family_;          ///< Canonical reference topology.
     int polynomial_exactness_;              ///< Exactness declared by the generator.
     double reference_cell_measure_;         ///< Canonical reference-cell measure.
