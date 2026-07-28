@@ -222,6 +222,25 @@ struct ValidationResult {
     }
 };
 
+constexpr int reference_dimension(svmp::CellFamily family) noexcept
+{
+    switch (family) {
+        case svmp::CellFamily::Point:
+            return 0;
+        case svmp::CellFamily::Line:
+            return 1;
+        case svmp::CellFamily::Triangle:
+        case svmp::CellFamily::Quad:
+            return 2;
+        case svmp::CellFamily::Tetra:
+        case svmp::CellFamily::Hex:
+        case svmp::CellFamily::Wedge:
+            return 3;
+        default:
+            return -1;
+    }
+}
+
 ValidationResult validate_point(
     const QuadPoint& point,
     svmp::CellFamily family,
@@ -366,6 +385,13 @@ std::string validation_failure_message(const ValidationResult& result)
 
 QuadratureRule::~QuadratureRule() = default;
 
+int QuadratureRule::dimension() const noexcept
+{
+    const int dimension = reference_dimension(cell_family_);
+    assert(dimension >= 0);
+    return dimension;
+}
+
 QuadratureRule::QuadratureRule(
     svmp::CellFamily family,
     int polynomial_exactness,
@@ -382,7 +408,6 @@ QuadratureRule::QuadratureRule(
 
 QuadratureRule::QuadratureRule(ValidatedState state)
     : cell_family_(state.cell_family),
-      dimension_(state.dimension),
       polynomial_exactness_(state.polynomial_exactness),
       reference_cell_measure_(state.reference_cell_measure),
       points_(std::move(state.points)),
@@ -396,35 +421,27 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
     std::vector<QuadPoint> points,
     std::vector<double> weights)
 {
-    int dimension;
     double reference_cell_measure;
     switch (family) {
         case svmp::CellFamily::Point:
-            dimension = 0;
             reference_cell_measure = 1.0;
             break;
         case svmp::CellFamily::Line:
-            dimension = 1;
             reference_cell_measure = 2.0;
             break;
         case svmp::CellFamily::Triangle:
-            dimension = 2;
             reference_cell_measure = 0.5;
             break;
         case svmp::CellFamily::Quad:
-            dimension = 2;
             reference_cell_measure = 4.0;
             break;
         case svmp::CellFamily::Tetra:
-            dimension = 3;
             reference_cell_measure = 1.0 / 6.0;
             break;
         case svmp::CellFamily::Hex:
-            dimension = 3;
             reference_cell_measure = 8.0;
             break;
         case svmp::CellFamily::Wedge:
-            dimension = 3;
             reference_cell_measure = 1.0;
             break;
         default:
@@ -432,6 +449,9 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
                 validation_failure_message(
                     {"unsupported reference-cell family"}));
     }
+
+    const int dimension = reference_dimension(family);
+    assert(dimension >= 0);
 
     const auto validation = validate_rule_arguments(
         family,
@@ -447,7 +467,6 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
 
     return {
         family,
-        dimension,
         polynomial_exactness,
         reference_cell_measure,
         std::move(points),

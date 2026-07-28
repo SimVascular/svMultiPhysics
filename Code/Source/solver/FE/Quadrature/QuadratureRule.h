@@ -190,7 +190,7 @@ public:
      *
      * @return Reference dimension, from zero for Point through three for volume cells.
      */
-    int dimension() const noexcept { return dimension_; }
+    int dimension() const noexcept;
 
     /**
      * @brief Return the canonical reference-cell family.
@@ -270,7 +270,6 @@ private:
     /** @brief Fully checked state used by the delegating constructor. */
     struct ValidatedState {
         svmp::CellFamily cell_family;
-        int dimension;
         int polynomial_exactness;
         double reference_cell_measure;
         std::vector<QuadPoint> points;
@@ -288,7 +287,6 @@ private:
     explicit QuadratureRule(ValidatedState state);
 
     const svmp::CellFamily cell_family_;     ///< Canonical reference topology.
-    const int dimension_;                    ///< Number of active coordinate components.
     const int polynomial_exactness_;         ///< Exactness declared by the concrete generator.
     const double reference_cell_measure_;    ///< Canonical reference-cell measure.
     const std::vector<QuadPoint> points_;      ///< Ordered immutable reference coordinates.
