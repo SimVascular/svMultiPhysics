@@ -18,7 +18,7 @@
 #include <iostream>
 #include <math.h>
 
-#include "ionic_model.h"
+#include "IonicModel.h"
 
 extern "C" {
 

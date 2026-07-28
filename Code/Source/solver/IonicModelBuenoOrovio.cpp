@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#include "ionic_bueno_orovio.h"
+#include "IonicModelBuenoOrovio.h"
 
 void BuenoOrovio::read_parameters(const IonicModelParameters &params) {
   IonicModel::read_parameters(params);

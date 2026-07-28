@@ -223,17 +223,17 @@ set(CSRCS
   Timer.h
   ArtificialNeuralNetMaterial.h ArtificialNeuralNetMaterial.cpp
 
-  ionic_model.cpp
-  ionic_aliev_panfilov.cpp
-  ionic_bueno_orovio.cpp
-  ionic_fitzhugh_nagumo.cpp
-  ionic_ttp.cpp
+  IonicModel.cpp
+  IonicModelAlievPanfilov.cpp
+  IonicModelBuenoOrovio.cpp
+  IonicModelFitzHughNagumo.cpp
+  IonicModelTTP.cpp
 
-  active_stress.cpp
-  active_stress_uniform_steady.cpp
-  active_stress_uniform_unsteady.cpp
-  active_stress_ode.cpp
-  active_stress_nash_panfilov.cpp
+  ActiveStress.cpp
+  ActiveStressUniformSteady.cpp
+  ActiveStressUniformUnsteady.cpp
+  ActiveStressODE.cpp
+  ActiveStressNashPanfilov.cpp
   
   SPLIT.c
 

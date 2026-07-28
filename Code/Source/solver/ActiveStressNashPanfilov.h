@@ -4,7 +4,7 @@
 #ifndef ACTIVE_STRESS_NASH_PANFILOV_H
 #define ACTIVE_STRESS_NASH_PANFILOV_H
 
-#include "active_stress_ode.h"
+#include "ActiveStressODE.h"
 
 /**
  * @brief Nash-Panfilov active stress model.

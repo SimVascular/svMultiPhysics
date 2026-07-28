@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#include "ionic_ttp.h"
+#include "IonicModelTTP.h"
 
 void TTP::read_parameters(const IonicModelParameters &params) {
   IonicModel::read_parameters(params);
@@ -455,6 +455,5 @@ Vector<double> TTP::getf(const unsigned int zone_id, const Vector<double> &X,
 
   return dX;
 }
-
 
 REGISTER_IONIC_MODEL("TTP", TTP);

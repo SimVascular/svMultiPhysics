@@ -4,7 +4,7 @@
 #ifndef ACTIVE_STRESS_UNIFORM_STEADY_H
 #define ACTIVE_STRESS_UNIFORM_STEADY_H
 
-#include "active_stress.h"
+#include "ActiveStress.h"
 
 /**
  * @brief Uniform and steady active stress model.

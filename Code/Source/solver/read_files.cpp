@@ -7,10 +7,10 @@
 
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
-#include "active_stress.h"
+#include "ActiveStress.h"
 #include "all_fun.h"
 #include "consts.h"
-#include "ionic_model.h"
+#include "IonicModel.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
 

@@ -12,7 +12,7 @@
 #define CEP_MOD_H
 
 #include "consts.h"
-#include "ionic_model.h"
+#include "IonicModel.h"
 
 #include "Array.h"
 #include "Vector.h"

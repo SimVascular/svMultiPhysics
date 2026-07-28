@@ -4,7 +4,7 @@
 #ifndef IONIC_TTP_H
 #define IONIC_TTP_H
 
-#include "ionic_model.h"
+#include "IonicModel.h"
 
 #include "Parameters.h"
 

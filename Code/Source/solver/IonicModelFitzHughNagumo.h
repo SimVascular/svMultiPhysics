@@ -4,7 +4,7 @@
 #ifndef IONIC_FITZHUGH_NAGUMO_H
 #define IONIC_FITZHUGH_NAGUMO_H
 
-#include "ionic_model.h"
+#include "IonicModel.h"
 
 #include "Vector.h"
 #include "utils.h"

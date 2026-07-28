@@ -4,7 +4,7 @@
 #ifndef ACTIVE_STRESS_ODE_H
 #define ACTIVE_STRESS_ODE_H
 
-#include "active_stress.h"
+#include "ActiveStress.h"
 
 /**
  * @brief Abstract ODE-based active stress model.

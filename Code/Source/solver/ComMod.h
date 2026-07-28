@@ -22,7 +22,7 @@
 #include "SolutionStates.h"
 #include "Timer.h"
 #include "Vector.h"
-#include "active_stress.h"
+#include "ActiveStress.h"
 
 #include "DebugMsg.h"
 

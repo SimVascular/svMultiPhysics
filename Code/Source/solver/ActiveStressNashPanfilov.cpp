@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#include "active_stress_nash_panfilov.h"
+#include "ActiveStressNashPanfilov.h"
 
 void NashPanfilov::read_model_specific_parameters(
     const ActiveStressModelParameters &params) {

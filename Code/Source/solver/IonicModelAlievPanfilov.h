@@ -4,7 +4,7 @@
 #ifndef IONIC_ALIEV_PANFILOV_H
 #define IONIC_ALIEV_PANFILOV_H
 
-#include "ionic_model.h"
+#include "IonicModel.h"
 
 #include "Vector.h"
 

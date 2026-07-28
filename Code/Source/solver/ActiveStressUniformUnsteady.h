@@ -4,9 +4,9 @@
 #ifndef ACTIVE_STRESS_UNIFORM_UNSTEADY_H
 #define ACTIVE_STRESS_UNIFORM_UNSTEADY_H
 
-#include "FourierInterpolation.h"
+#include "ActiveStress.h"
 
-#include "active_stress.h"
+#include "FourierInterpolation.h"
 
 /**
  * @brief Uniform and time dependent active stress model.

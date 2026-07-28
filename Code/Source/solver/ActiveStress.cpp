@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#include "active_stress.h"
+#include "ActiveStress.h"
 
 bool supports_active_stress(const consts::EquationType eq_type) {
   return eq_type == consts::EquationType::phys_struct ||

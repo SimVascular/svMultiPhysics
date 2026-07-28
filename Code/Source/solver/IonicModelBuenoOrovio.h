@@ -4,7 +4,7 @@
 #ifndef IONIC_BUENO_OROVIO_H
 #define IONIC_BUENO_OROVIO_H
 
-#include "ionic_model.h"
+#include "IonicModel.h"
 
 #include "Vector.h"
 #include "utils.h"
