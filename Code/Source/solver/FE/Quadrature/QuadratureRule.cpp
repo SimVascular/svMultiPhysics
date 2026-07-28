@@ -347,7 +347,7 @@ ValidationResult validate_weights(
     return {};
 }
 
-ValidationResult validate_rule_data(
+ValidationResult validate_rule_arguments(
     svmp::CellFamily family,
     const ReferenceCellTraits& traits,
     int polynomial_exactness,
@@ -394,8 +394,17 @@ std::string validation_failure_message(const ValidationResult& result)
 
 QuadratureRule::~QuadratureRule() = default;
 
-QuadratureRule::QuadratureRule(svmp::CellFamily family, RuleData data)
-    : QuadratureRule(validate(family, std::move(data)))
+QuadratureRule::QuadratureRule(
+    svmp::CellFamily family,
+    int polynomial_exactness,
+    std::vector<QuadPoint> points,
+    std::vector<double> weights)
+    : QuadratureRule(
+          validate(
+              family,
+              polynomial_exactness,
+              std::move(points),
+              std::move(weights)))
 {
 }
 
@@ -411,7 +420,9 @@ QuadratureRule::QuadratureRule(ValidatedState state)
 
 QuadratureRule::ValidatedState QuadratureRule::validate(
     svmp::CellFamily family,
-    RuleData data)
+    int polynomial_exactness,
+    std::vector<QuadPoint> points,
+    std::vector<double> weights)
 {
     const auto traits = reference_cell_traits(family);
     if (!traits) {
@@ -420,12 +431,12 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
                 {"unsupported reference-cell family"}));
     }
 
-    const auto validation = validate_rule_data(
+    const auto validation = validate_rule_arguments(
         family,
         *traits,
-        data.polynomial_exactness,
-        data.points,
-        data.weights);
+        polynomial_exactness,
+        points,
+        weights);
     if (!validation.valid()) {
         svmp::raise<InvalidArgumentException>(
             validation_failure_message(validation));
@@ -434,10 +445,10 @@ QuadratureRule::ValidatedState QuadratureRule::validate(
     return {
         family,
         traits->dimension,
-        data.polynomial_exactness,
+        polynomial_exactness,
         traits->reference_cell_measure,
-        std::move(data.points),
-        std::move(data.weights),
+        std::move(points),
+        std::move(weights),
     };
 }
 

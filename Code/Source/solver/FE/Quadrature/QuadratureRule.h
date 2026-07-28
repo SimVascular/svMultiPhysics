@@ -55,14 +55,14 @@
  *
  * ## Rule-provider contract
  *
- * Concrete rule providers are the only supported subclasses. A provider builds
- * one complete RuleData payload before invoking the protected constructor and
- * exposes no mutation afterward. It must advertise only exactness established
- * for every rule it supplies through analytic moment tests. Derivation is a
- * provider extension seam, not an integration-consumer customization point.
- * The protected constructor is the only provider extension point; public
- * metadata and sample queries are fixed, nonvirtual operations on validated
- * base-class state.
+ * Concrete rule providers are the only supported subclasses. A provider
+ * computes the declared polynomial exactness, ordered points, and paired
+ * weights before invoking the protected constructor and exposes no mutation
+ * afterward. It must advertise only exactness established for every rule it
+ * supplies through analytic moment tests. Derivation is a provider extension
+ * seam, not an integration-consumer customization point. The protected
+ * constructor is the only provider extension point; public metadata and sample
+ * queries are fixed, nonvirtual operations on validated base-class state.
  *
  * ## Rule contract
  *
@@ -137,12 +137,13 @@ using QuadPoint = math::Vector<double, 3>;
 /**
  * @brief Immutable consumer interface for a quadrature rule on a reference cell.
  *
- * Concrete rule providers initialize the base with one complete RuleData
- * payload. The payload is validated before construction returns, and the object
- * exposes no mutation or assignment path afterward. General solver consumers
- * use only the public const query interface. Providers supply data through the
- * protected constructor; they do not override the fixed metadata or sample
- * queries. Successful construction establishes the rule invariant; no public
+ * Concrete rule providers initialize the base with a declared polynomial
+ * exactness, complete ordered points, and paired weights. The constructor
+ * arguments are validated before construction returns, and the object exposes
+ * no mutation or assignment path afterward. General solver consumers use only
+ * the public const query interface. Providers supply data through the protected
+ * constructor; they do not override the fixed metadata or sample queries.
+ * Successful construction establishes the rule invariant; no public
  * revalidation operation is required or exposed. Concurrent const access is
  * safe while an owning handle keeps the rule alive.
  */
@@ -243,26 +244,15 @@ public:
 
 protected:
     /**
-     * @brief Complete construction payload used by concrete rule providers.
-     *
-     * Integration consumers do not construct this payload. A provider computes
-     * all three fields before invoking the protected base constructor and must
-     * substantiate its declared exactness with analytic moment tests.
-     */
-    struct RuleData {
-        int polynomial_exactness{-1};    ///< Declared total-degree polynomial exactness.
-        std::vector<QuadPoint> points;   ///< Ordered canonical reference coordinates.
-        std::vector<double> weights;     ///< Weights paired with points in the same order.
-    };
-
-    /**
      * @brief Construct and validate one complete immutable rule.
      *
      * Dimension and reference-cell measure are derived from @p family; callers
      * cannot supply redundant topology metadata.
      *
      * @param family Supported canonical reference-cell family.
-     * @param data Complete exactness, point, and weight payload.
+     * @param polynomial_exactness Declared total-degree polynomial exactness.
+     * @param points Ordered canonical reference coordinates.
+     * @param weights Weights paired with @p points in the same order.
      * @note Duplicate points and zero or negative weights remain admissible
      * when every other rule invariant is satisfied.
      * @throws InvalidArgumentException If the family is unsupported, exactness
@@ -270,7 +260,11 @@ protected:
      * is outside the reference cell, or the weights do not reproduce the
      * reference-cell measure within the scaled measure tolerance.
      */
-    explicit QuadratureRule(svmp::CellFamily family, RuleData data);
+    explicit QuadratureRule(
+        svmp::CellFamily family,
+        int polynomial_exactness,
+        std::vector<QuadPoint> points,
+        std::vector<double> weights);
 
 private:
     /** @brief Fully checked state used by the delegating constructor. */
@@ -283,8 +277,12 @@ private:
         std::vector<double> weights;
     };
 
-    /** @brief Validate a local payload before initializing immutable members. */
-    static ValidatedState validate(svmp::CellFamily family, RuleData data);
+    /** @brief Validate constructor arguments before initializing immutable members. */
+    static ValidatedState validate(
+        svmp::CellFamily family,
+        int polynomial_exactness,
+        std::vector<QuadPoint> points,
+        std::vector<double> weights);
 
     /** @brief Initialize members from state already checked by validate(). */
     explicit QuadratureRule(ValidatedState state);

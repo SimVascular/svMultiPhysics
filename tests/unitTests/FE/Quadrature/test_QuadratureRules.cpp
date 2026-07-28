@@ -31,10 +31,9 @@ public:
               std::vector<double> weights)
         : QuadratureRule(
               family,
-              RuleData{
-                  polynomial_exactness,
-                  std::move(points),
-                  std::move(weights)})
+              polynomial_exactness,
+              std::move(points),
+              std::move(weights))
     {
     }
 };
