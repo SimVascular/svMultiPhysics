@@ -21,7 +21,7 @@
 namespace svmp::FE::quadrature {
 namespace {
 
-constexpr double coordinate_validation_tolerance = 1.0e-12;
+constexpr double inactive_coordinate_tolerance = 1.0e-12;
 constexpr double measure_validation_tolerance = 1.0e-12;
 
 constexpr int reference_dimension(svmp::CellFamily family) noexcept
@@ -45,7 +45,6 @@ constexpr int reference_dimension(svmp::CellFamily family) noexcept
 
 void validate_point(
     const QuadPoint& point,
-    svmp::CellFamily family,
     int dimension,
     std::size_t point_index)
 {
@@ -59,72 +58,13 @@ void validate_point(
         }
         if (component >=
             static_cast<std::size_t>(dimension) &&
-            std::abs(point[component]) > coordinate_validation_tolerance) {
+            std::abs(point[component]) > inactive_coordinate_tolerance) {
             svmp::raise<InvalidArgumentException>(
                 std::string{
                     "QuadratureRule: quadrature point has a nonzero inactive "
                     "coordinate at point index "} +
                 std::to_string(point_index));
         }
-    }
-
-    const auto in_interval = [](double value, double lower, double upper) {
-        return value >= lower - coordinate_validation_tolerance &&
-               value <= upper + coordinate_validation_tolerance;
-    };
-
-    const double x = point[0];
-    const double y = point[1];
-    const double z = point[2];
-
-    bool is_contained = false;
-    switch (family) {
-        case svmp::CellFamily::Point:
-            is_contained = true;
-            break;
-        case svmp::CellFamily::Line:
-            is_contained = in_interval(x, -1.0, 1.0);
-            break;
-        case svmp::CellFamily::Triangle:
-            is_contained =
-                x >= -coordinate_validation_tolerance &&
-                y >= -coordinate_validation_tolerance &&
-                x + y <= 1.0 + coordinate_validation_tolerance;
-            break;
-        case svmp::CellFamily::Quad:
-            is_contained = in_interval(x, -1.0, 1.0) &&
-                           in_interval(y, -1.0, 1.0);
-            break;
-        case svmp::CellFamily::Tetra:
-            is_contained =
-                x >= -coordinate_validation_tolerance &&
-                y >= -coordinate_validation_tolerance &&
-                z >= -coordinate_validation_tolerance &&
-                x + y + z <= 1.0 + coordinate_validation_tolerance;
-            break;
-        case svmp::CellFamily::Hex:
-            is_contained = in_interval(x, -1.0, 1.0) &&
-                           in_interval(y, -1.0, 1.0) &&
-                           in_interval(z, -1.0, 1.0);
-            break;
-        case svmp::CellFamily::Wedge:
-            is_contained =
-                x >= -coordinate_validation_tolerance &&
-                y >= -coordinate_validation_tolerance &&
-                x + y <= 1.0 + coordinate_validation_tolerance &&
-                in_interval(z, -1.0, 1.0);
-            break;
-        default:
-            svmp::raise<InvalidArgumentException>(
-                "QuadratureRule: unsupported reference-cell family");
-    }
-
-    if (!is_contained) {
-        svmp::raise<InvalidArgumentException>(
-            std::string{
-                "QuadratureRule: quadrature point lies outside the canonical "
-                "reference cell at point index "} +
-            std::to_string(point_index));
     }
 }
 
@@ -218,7 +158,6 @@ QuadratureRule::QuadratureRule(
          ++point_index) {
         validate_point(
             points_[point_index],
-            cell_family_,
             dimension,
             point_index);
     }

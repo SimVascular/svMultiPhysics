@@ -64,17 +64,18 @@
  * structurally valid when its constructor returns, and consumers do not perform
  * a separate revalidation step. The constructor rejects unsupported cells,
  * negative exactness, empty or mismatched storage, non-finite coordinates or
- * weights, points outside the declared reference cell, and weights whose sum
- * does not equal the canonical reference-cell measure within the scaled
- * measure tolerance.
+ * weights, nonzero inactive coordinates, and weights whose sum does not equal
+ * the canonical reference-cell measure within the scaled measure tolerance.
  *
  * Structural validation does not require unique points or nonzero, positive
- * individual weights. It verifies metadata, containment, finiteness, and the
- * reference-cell measure; it does not prove higher-order polynomial moments. A
- * polynomial exactness of @f$p@f$ guarantees every polynomial of total degree
- * at most @f$p@f$. A rule can integrate selected higher-degree polynomials
- * without increasing that common guarantee. Rule generators are responsible
- * for establishing their advertised exactness with analytic moment tests.
+ * individual weights. It verifies metadata, storage sizes, finiteness,
+ * inactive coordinates, and the reference-cell measure. Active coordinates
+ * need not lie inside the reference cell, and structural validation does not
+ * prove higher-order polynomial moments. A polynomial exactness of @f$p@f$
+ * guarantees every polynomial of total degree at most @f$p@f$. A rule can
+ * integrate selected higher-degree polynomials without increasing that common
+ * guarantee. Rule generators are responsible for establishing their advertised
+ * exactness with analytic moment tests.
  *
  * Points use one fixed-size three-component representation. Generators initialize
  * all three coordinates explicitly because the Eigen-backed vector is not
@@ -146,8 +147,8 @@ public:
      * @note Duplicate points and zero or negative weights remain admissible
      * when every other rule invariant is satisfied.
      * @throws InvalidArgumentException If the family is unsupported, exactness
-     * is negative, storage is empty or mismatched, a value is non-finite, a point
-     * is outside the reference cell, or the weights do not reproduce the
+     * is negative, storage is empty or mismatched, a value is non-finite, an
+     * inactive coordinate is nonzero, or the weights do not reproduce the
      * reference-cell measure within the scaled measure tolerance.
      */
     explicit QuadratureRule(

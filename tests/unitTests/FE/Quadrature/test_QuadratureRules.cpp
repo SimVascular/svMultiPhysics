@@ -189,7 +189,7 @@ TEST(QuadratureRuleValidation, RejectsMalformedStorageAndNonfiniteValues)
         "quadrature weight must be finite at point index 0");
 }
 
-TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
+TEST(QuadratureRuleValidation, RejectsNonzeroInactiveCoordinates)
 {
     expect_invalid_argument_with_message(
         [] {
@@ -203,24 +203,6 @@ TEST(QuadratureRuleValidation, RejectsInactiveCoordinatesAndOutOfCellPoints)
                 svmp::CellFamily::Line, 1, {{0.0, 1.0e-4, 0.0}}, {2.0});
         },
         "nonzero inactive coordinate at point index 0");
-    expect_invalid_argument_with_message(
-        [] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Triangle, 1, {{0.8, 0.3, 0.0}}, {0.5});
-        },
-        "outside the canonical reference cell at point index 0");
-    EXPECT_THROW(
-        (void)QuadratureRule(svmp::CellFamily::Quad, 1, {{0.0, 1.1, 0.0}}, {4.0}),
-        InvalidArgumentException);
-    EXPECT_THROW(
-        (void)QuadratureRule(svmp::CellFamily::Tetra, 1, {{0.4, 0.4, 0.3}}, {1.0 / 6.0}),
-        InvalidArgumentException);
-    EXPECT_THROW(
-        (void)QuadratureRule(svmp::CellFamily::Hex, 1, {{0.0, 0.0, -1.1}}, {8.0}),
-        InvalidArgumentException);
-    EXPECT_THROW(
-        (void)QuadratureRule(svmp::CellFamily::Wedge, 1, {{0.6, 0.5, 0.0}}, {1.0}),
-        InvalidArgumentException);
 }
 
 TEST(QuadratureRuleValidation, EnforcesReferenceCellMeasureButAllowsNegativeWeights)
@@ -246,15 +228,18 @@ TEST(QuadratureRuleValidation, EnforcesReferenceCellMeasureButAllowsNegativeWeig
         rule.reference_cell_measure());
 }
 
-TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
+TEST(
+    QuadratureRuleValidation,
+    AllowsExteriorActiveCoordinatesAndChecksInactiveTolerance)
 {
     constexpr double accepted_offset = 1.0e-14;
     const QuadratureRule rule(
         svmp::CellFamily::Line,
         0,
-        {{1.0 + accepted_offset, accepted_offset, 0.0}},
+        {{2.0, accepted_offset, 0.0}},
         {2.0});
-    EXPECT_DOUBLE_EQ(rule.point(0)[0], 1.0 + accepted_offset);
+    EXPECT_DOUBLE_EQ(rule.point(0)[0], 2.0);
+    EXPECT_DOUBLE_EQ(rule.point(0)[1], accepted_offset);
 
     constexpr double rejected_offset = 1.0e-10;
     expect_invalid_argument_with_message(
@@ -262,10 +247,10 @@ TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
             (void)QuadratureRule(
                 svmp::CellFamily::Line,
                 0,
-                {{1.0 + rejected_offset, 0.0, 0.0}},
+                {{2.0, rejected_offset, 0.0}},
                 {2.0});
         },
-        "outside the canonical reference cell");
+        "nonzero inactive coordinate");
 }
 
 TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
