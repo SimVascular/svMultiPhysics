@@ -43,6 +43,28 @@ constexpr int reference_dimension(svmp::CellFamily family) noexcept
     }
 }
 
+constexpr double reference_measure(svmp::CellFamily family) noexcept
+{
+    switch (family) {
+        case svmp::CellFamily::Point:
+            return 1.0;
+        case svmp::CellFamily::Line:
+            return 2.0;
+        case svmp::CellFamily::Triangle:
+            return 0.5;
+        case svmp::CellFamily::Quad:
+            return 4.0;
+        case svmp::CellFamily::Tetra:
+            return 1.0 / 6.0;
+        case svmp::CellFamily::Hex:
+            return 8.0;
+        case svmp::CellFamily::Wedge:
+            return 1.0;
+        default:
+            return -1.0;
+    }
+}
+
 void validate_point(
     const QuadPoint& point,
     int dimension,
@@ -102,6 +124,13 @@ int QuadratureRule::dimension() const noexcept
     return dimension;
 }
 
+double QuadratureRule::reference_cell_measure() const noexcept
+{
+    const double measure = reference_measure(cell_family_);
+    assert(measure > 0.0);
+    return measure;
+}
+
 QuadratureRule::QuadratureRule(
     svmp::CellFamily family,
     int polynomial_exactness,
@@ -109,36 +138,13 @@ QuadratureRule::QuadratureRule(
     std::vector<double> weights)
     : cell_family_(family),
       polynomial_exactness_(polynomial_exactness),
-      reference_cell_measure_(0.0),
       points_(std::move(points)),
       weights_(std::move(weights))
 {
-    switch (cell_family_) {
-        case svmp::CellFamily::Point:
-            reference_cell_measure_ = 1.0;
-            break;
-        case svmp::CellFamily::Line:
-            reference_cell_measure_ = 2.0;
-            break;
-        case svmp::CellFamily::Triangle:
-            reference_cell_measure_ = 0.5;
-            break;
-        case svmp::CellFamily::Quad:
-            reference_cell_measure_ = 4.0;
-            break;
-        case svmp::CellFamily::Tetra:
-            reference_cell_measure_ = 1.0 / 6.0;
-            break;
-        case svmp::CellFamily::Hex:
-            reference_cell_measure_ = 8.0;
-            break;
-        case svmp::CellFamily::Wedge:
-            reference_cell_measure_ = 1.0;
-            break;
-        default:
-            svmp::raise<InvalidArgumentException>(
-                "QuadratureRule: unsupported reference-cell family");
-    }
+    const int dimension = reference_dimension(cell_family_);
+    svmp::check<InvalidArgumentException>(
+        dimension >= 0,
+        "QuadratureRule: unsupported reference-cell family");
 
     svmp::check<InvalidArgumentException>(
         polynomial_exactness_ >= 0,
@@ -150,9 +156,6 @@ QuadratureRule::QuadratureRule(
         points_.size() == weights_.size(),
         "QuadratureRule: points/weights size mismatch");
 
-    const int dimension = reference_dimension(cell_family_);
-    assert(dimension >= 0);
-
     for (std::size_t point_index = 0;
          point_index < points_.size();
          ++point_index) {
@@ -162,7 +165,7 @@ QuadratureRule::QuadratureRule(
             point_index);
     }
 
-    validate_weights(weights_, reference_cell_measure_);
+    validate_weights(weights_, reference_cell_measure());
 }
 
 } // namespace svmp::FE::quadrature

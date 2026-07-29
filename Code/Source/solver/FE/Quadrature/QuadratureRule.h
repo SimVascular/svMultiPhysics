@@ -224,21 +224,20 @@ public:
      * @brief Return the measure of the canonical reference cell.
      *
      * This is the integral of the constant function one. All supported rules
-     * are unweighted rules on complete canonical reference cells, so the
-     * constructor derives this value from cell_family() and it equals the
-     * geometric measure of that cell.
+     * are unweighted rules on complete canonical reference cells, so this value
+     * is derived from cell_family() and equals the geometric measure of that
+     * cell.
      * @f[
      *   |\hat K| = \int_{\hat K} 1\,d\hat x = \sum_q w_q.
      * @f]
      *
      * @return Geometric measure of the canonical reference cell.
      */
-    double reference_cell_measure() const noexcept { return reference_cell_measure_; }
+    double reference_cell_measure() const noexcept;
 
 private:
     svmp::CellFamily cell_family_;          ///< Canonical reference topology.
     int polynomial_exactness_;              ///< Exactness declared by the generator.
-    double reference_cell_measure_;         ///< Canonical reference-cell measure.
     std::vector<QuadPoint> points_;          ///< Ordered reference coordinates.
     std::vector<double> weights_;            ///< Weights paired with points_.
 };
