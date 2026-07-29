@@ -48,9 +48,8 @@
  * API. Integration consumers read rule metadata, points, and weights; they do
  * not derive new rules or modify rule storage.
  *
- * Reference-cell metadata, point-containment checks, exact weight summation,
- * concrete generators, caches, and rule-selection facilities are module
- * implementation details.
+ * Reference-cell metadata, validation, concrete generators, caches, and
+ * rule-selection facilities are module implementation details.
  *
  * ## Constructing rules
  *
@@ -67,8 +66,7 @@
  * negative exactness, empty or mismatched storage, non-finite coordinates or
  * weights, points outside the declared reference cell, and weights whose sum
  * does not equal the canonical reference-cell measure within the scaled
- * measure tolerance. The sum of the stored binary64 weights is evaluated
- * exactly and independently of their order.
+ * measure tolerance.
  *
  * Structural validation does not require unique points or nonzero, positive
  * individual weights. It verifies metadata, containment, finiteness, and the

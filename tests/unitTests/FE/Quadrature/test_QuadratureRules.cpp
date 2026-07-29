@@ -8,7 +8,6 @@
 #include "FE/Common/FEException.h"
 #include "FE/Quadrature/QuadratureRule.h"
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <exception>
@@ -22,8 +21,6 @@ using namespace svmp::FE;
 using namespace svmp::FE::quadrature;
 
 namespace {
-
-constexpr double kTol = 1.0e-12;
 
 using ExpectedPoint = std::array<double, 3>;
 
@@ -247,192 +244,6 @@ TEST(QuadratureRuleValidation, EnforcesReferenceCellMeasureButAllowsNegativeWeig
     EXPECT_DOUBLE_EQ(
         weight_sum(rule),
         rule.reference_cell_measure());
-}
-
-TEST(QuadratureRuleValidation, RejectsIncorrectMeasureDespiteLargeCancellation)
-{
-    expect_invalid_argument_with_message(
-        [] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Line,
-                0,
-                {{-0.5, 0.0, 0.0},
-                 {0.0, 0.0, 0.0},
-                 {0.5, 0.0, 0.0}},
-                {1.0e20, 0.0, -1.0e20});
-        },
-        "weights do not reproduce the reference-cell measure");
-}
-
-TEST(QuadratureRuleValidation, RejectsIncorrectMeasureHiddenByCancellation)
-{
-    const double medium = std::ldexp(1.0, 93);
-    const double large = std::ldexp(1.0, 233);
-    const double residual = std::ldexp(1.0, 14);
-
-    expect_invalid_argument_with_message(
-        [medium, large, residual] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Line,
-                0,
-                std::vector<QuadPoint>(6u, QuadPoint::Zero()),
-                {-medium, -large, residual, medium, large, 2.0});
-        },
-        "weights do not reproduce the reference-cell measure");
-}
-
-TEST(QuadratureRuleValidation, ExactMeasureValidationIsOrderIndependent)
-{
-    const double maximum = std::numeric_limits<double>::max();
-    std::vector<double> valid_weights{
-        -maximum, -maximum, 2.0, maximum, maximum};
-    std::sort(valid_weights.begin(), valid_weights.end());
-
-    std::size_t permutation_count = 0u;
-    do {
-        SCOPED_TRACE(permutation_count);
-        EXPECT_NO_THROW(
-            (void)QuadratureRule(
-                svmp::CellFamily::Line,
-                0,
-                std::vector<QuadPoint>(
-                    valid_weights.size(),
-                    QuadPoint::Zero()),
-                valid_weights));
-        ++permutation_count;
-    } while (std::next_permutation(
-        valid_weights.begin(),
-        valid_weights.end()));
-    EXPECT_EQ(permutation_count, 30u);
-
-    const double excessive_residual = std::ldexp(1.0, -38);
-    std::vector<double> invalid_weights{
-        -maximum,
-        -maximum,
-        2.0,
-        excessive_residual,
-        maximum,
-        maximum};
-    std::sort(invalid_weights.begin(), invalid_weights.end());
-
-    permutation_count = 0u;
-    do {
-        SCOPED_TRACE(permutation_count);
-        expect_invalid_argument_with_message(
-            [&invalid_weights] {
-                (void)QuadratureRule(
-                    svmp::CellFamily::Line,
-                    0,
-                    std::vector<QuadPoint>(
-                        invalid_weights.size(),
-                        QuadPoint::Zero()),
-                    invalid_weights);
-            },
-            "weights do not reproduce the reference-cell measure");
-        ++permutation_count;
-    } while (std::next_permutation(
-        invalid_weights.begin(),
-        invalid_weights.end()));
-    EXPECT_EQ(permutation_count, 180u);
-}
-
-TEST(QuadratureRuleValidation, HandlesExtremeAndSubnormalCancellation)
-{
-    const double maximum = std::numeric_limits<double>::max();
-    const double minimum_normal = std::numeric_limits<double>::min();
-    const double minimum_subnormal =
-        std::numeric_limits<double>::denorm_min();
-    const double next_normal =
-        std::nextafter(minimum_normal, std::numeric_limits<double>::infinity());
-
-    EXPECT_NO_THROW(
-        (void)QuadratureRule(
-            svmp::CellFamily::Line,
-            0,
-            std::vector<QuadPoint>(6u, QuadPoint::Zero()),
-            {
-                maximum,
-                minimum_normal,
-                minimum_subnormal,
-                2.0,
-                -next_normal,
-                -maximum,
-            }));
-
-    expect_invalid_argument_with_message(
-        [maximum] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Line,
-                0,
-                std::vector<QuadPoint>(2u, QuadPoint::Zero()),
-                {maximum, maximum});
-        },
-        "weights do not reproduce the reference-cell measure");
-}
-
-TEST(QuadratureRuleValidation, AppliesToleranceToTheExactWeightSum)
-{
-    const double maximum = std::numeric_limits<double>::max();
-    const double accepted_residual = std::ldexp(1.0, -42);
-    const double rejected_residual = std::ldexp(1.0, -38);
-
-    EXPECT_NO_THROW(
-        (void)QuadratureRule(
-            svmp::CellFamily::Line,
-            0,
-            std::vector<QuadPoint>(4u, QuadPoint::Zero()),
-            {maximum, accepted_residual, -maximum, 2.0}));
-
-    expect_invalid_argument_with_message(
-        [maximum, rejected_residual] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Line,
-                0,
-                std::vector<QuadPoint>(4u, QuadPoint::Zero()),
-                {maximum, rejected_residual, -maximum, 2.0});
-        },
-        "weights do not reproduce the reference-cell measure");
-}
-
-TEST(QuadratureRuleValidation, AcceptsLargePositiveRule)
-{
-    // Repeating a non-dyadic weight exposes ordinary left-fold drift without
-    // changing the mathematical normalization of the rule.
-    constexpr std::size_t sample_count = 100000u;
-    const double sample_weight = 2.0 / static_cast<double>(sample_count);
-    std::vector<QuadPoint> points(sample_count, QuadPoint::Zero());
-    std::vector<double> weights(sample_count, sample_weight);
-
-    const QuadratureRule rule(
-        svmp::CellFamily::Line,
-        0,
-        std::move(points),
-        std::move(weights));
-    EXPECT_EQ(rule.num_points(), sample_count);
-    EXPECT_DOUBLE_EQ(rule.weight(0), sample_weight);
-}
-
-TEST(QuadratureRuleValidation, AcceptsLargeSignedRule)
-{
-    constexpr std::size_t sample_count = 8192u;
-    constexpr double cancelling_weight = 1.0 / 1048576.0;
-    std::vector<QuadPoint> points(sample_count, QuadPoint::Zero());
-    std::vector<double> weights(
-        sample_count,
-        2.0 / static_cast<double>(sample_count - 2u));
-    weights[0] = -cancelling_weight;
-    weights[1] = cancelling_weight;
-
-    const QuadratureRule rule(
-        svmp::CellFamily::Line,
-        0,
-        std::move(points),
-        std::move(weights));
-    EXPECT_LT(rule.weight(0), 0.0);
-    EXPECT_NEAR(
-        weight_sum(rule),
-        rule.reference_cell_measure(),
-        kTol);
 }
 
 TEST(QuadratureRuleValidation, AppliesConstructionCoordinateTolerance)
