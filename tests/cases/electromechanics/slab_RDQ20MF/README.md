@@ -50,16 +50,31 @@ directional weights as the NashPanfilov slab case.
 The slab is fixed with a zero-displacement Dirichlet boundary condition on the
 `X1` face, and contracts as the depolarization wave propagates through the tissue.
 
+The (0.7, 0.2, 0.1) fiber/sheet/sheet-normal directional weights are an
+svMultiPhysics extension of the paper's fiber-only active stress formulation; they
+are not prescribed by the RDQ20-MF model itself.
+
 ## Regression Reference
 
-The RDQ20-MF scalar active tension in `result_001.vtu` -- reconstructed as
-`Active_tension_fibers + Active_tension_sheets + Active_tension_normal` (the
-directional weights sum to one) -- was compared node-by-node against the authors'
-RDQ20-MF reference implementation at commit
-`26f05df28891df7b3c69f16bb136cdced6b63c4d`, using the calcium and stretch inputs
-from this one-step test. The results agreed to machine precision. The remaining
-fields in the VTU serve as integrated svMultiPhysics regression references and
-were not independently validated by the RDQ20-MF reference code.
+svMultiPhysics stores `T_code = T̃_act / λ_f` in each per-direction field
+(`Active_tension_fibers`, `Active_tension_sheets`, `Active_tension_normal`), where
+`T̃_act` is the paper tension from Regazzoni et al. (2020) and `λ_f` is the fiber
+stretch; the paper tension is recovered as `T̃_act = λ_f · T_code`. Each
+per-direction field stores `η · T_code`, where `η` is the corresponding directional
+weight; their sum recovers `T_code`.
+
+The active tension fields in `result_001.vtu` were validated node-by-node against
+the C++ reference implementation at commit
+[`26f05df`](https://github.com/FrancescoRegazzoni/cardiac-activation/commit/26f05df28891df7b3c69f16bb136cdced6b63c4d).
+Both implementations use the same implicit-Euler XB scheme, so agreement is
+to machine precision (~1e-16 relative error). The comparison evaluates
+`λ_f · T_code` (i.e. `T̃_act`) from the svMultiPhysics output against the reference
+C++ active tension, using the calcium and sarcomere-length inputs from this one-step
+test. Because this test covers only one time step from the undeformed configuration,
+`λ_f ≈ 1.0` throughout, and the regression reference does not strongly distinguish
+the normalized (`T̃_act / λ_f`) and unnormalized (`T̃_act`) conventions.
+The remaining fields in the VTU serve as integrated svMultiPhysics regression
+references and were not independently validated by the RDQ20-MF reference code.
 
 ## References
 

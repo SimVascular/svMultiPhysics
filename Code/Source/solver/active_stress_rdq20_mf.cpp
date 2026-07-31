@@ -3,7 +3,9 @@
 
 #include "active_stress_rdq20_mf.h"
 
+#include "FE/Common/FEException.h"
 #include "eigen3/Eigen/Dense"
+#include "utils.h"
 
 #include <algorithm>
 #include <cmath>
@@ -133,14 +135,20 @@ void RDQ20MF::advance_time_step_local(const double t, const double dt,
 
 double RDQ20MF::compute_active_tension_local(const Vector<double> &state,
                                              const double fiber_stretch) const {
+  if (utils::is_zero(fiber_stretch))
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+        "RDQ20MF: fiber_stretch is zero or near zero; this indicates a "
+        "degenerate (collapsed) element and is not a valid deformation state.");
+
   const double sarcomere_length = SL0 * fiber_stretch;
 
-  // Active tension from the permissive and non-permissive XB first moments
-  // (state entries 17 and 19), scaled by the single-overlap fraction and the
-  // upscaling factor a_XB. The moments and overlap fraction are dimensionless,
-  // so the returned tension has the same stress unit as a_XB (no conversion).
+  // Compute paper tension T̃_act = a_XB * (μ_P^1 + μ_N^1) * φ(SL) from the
+  // permissive and non-permissive XB first moments (state entries 17 and 19),
+  // scaled by the single-overlap fraction and the upscaling factor a_XB.
+  // Return T̃_act / λ_f so that the assembled first-PK active stress has norm
+  // T̃_act, consistent with the RDQ20-MF paper formulation.
   return a_XB * (state[xb_index(1)] + state[xb_index(3)]) *
-         fraction_single_overlap(sarcomere_length);
+         fraction_single_overlap(sarcomere_length) / fiber_stretch;
 }
 
 void RDQ20MF::ru_transition_rates_tropomyosin(
