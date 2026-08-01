@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef ACTIVE_STRESS_RDQ20_MF_H
-#define ACTIVE_STRESS_RDQ20_MF_H
+#ifndef ACTIVE_STRESS_MEAN_FIELD_H
+#define ACTIVE_STRESS_MEAN_FIELD_H
 
 #include "active_stress.h"
 
 /**
- * @brief RDQ20-MF mean-field active stress model.
+ * @brief Mean-field active stress model (implements the RDQ20-MF formulation).
  *
  * This class implements the mean-field RDQ20-MF sarcomere model of cardiomyocyte
- * force generation described in [1] and is validated against the authors'
- * reference implementation [2]. The node-local state has 20 variables: 16
+ * force generation of Regazzoni, Dedè, and Quarteroni (2020), described in [1]
+ * and validated against the authors' reference implementation [2]. The node-local state has 20 variables: 16
  * regulatory-unit (RU) probabilities (entries 0-15) describing the
  * tropomyosin/troponin configuration of a triplet of neighbouring units, and 4
  * crossbridge (XB) moments (entries 16-19). The RU probabilities are advanced
@@ -40,10 +40,10 @@
  * 1. [Regazzoni, Dede', Quarteroni (2020)](https://doi.org/10.1371/journal.pcbi.1008294)
  * 2. [F. Regazzoni, cardiac-activation reference implementation](https://github.com/FrancescoRegazzoni/cardiac-activation)
  */
-class RDQ20MF : public ActiveStress {
+class MeanFieldActiveStress : public ActiveStress {
 public:
   /// Model label, used for factory registration and XML selection.
-  static inline const std::string label = "RDQ20-MF";
+  static inline const std::string label = "MeanFieldActiveStress";
 
   /// @name State vector layout
   /// @{
@@ -88,8 +88,8 @@ public:
    * solver.xml must instead use the stress unit of the simulation's mechanical
    * configuration.
    *
-   * All parameters are required. A complete @c RDQ20-MF parameter block containing
-   * every parameter must be provided in solver.xml. Any value may be changed to
+   * All parameters are required. A complete @c MeanFieldActiveStress parameter block
+   * containing every parameter must be provided in solver.xml. Any value may be changed to
    * use a different calibration, but omitting a parameter causes a parse error;
    * the registered reference value is not used as an automatic default.
    */
@@ -122,7 +122,7 @@ public:
   /**
    * @brief Constructor.
    */
-  RDQ20MF() : ActiveStress(n_state_variables) {}
+  MeanFieldActiveStress() : ActiveStress(n_state_variables) {}
 
   /**
    * @brief Construct an instance of model parameters.

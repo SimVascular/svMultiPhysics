@@ -133,7 +133,7 @@
     </Viscosity>
 
     <Active_stress>
-      <Model>RDQ20-MF</Model>
+      <Model>MeanFieldActiveStress</Model>
 
       <Directional_distribution>
         <Fiber_direction> 0.7 </Fiber_direction>
@@ -141,7 +141,7 @@
         <Sheet_normal_direction> 0.1 </Sheet_normal_direction>
       </Directional_distribution>
 
-      <RDQ20-MF>
+      <MeanFieldActiveStress>
         <Kbasic> 13.0 </Kbasic>      <!-- s^-1 -->
         <Koff> 100.0 </Koff>         <!-- s^-1 -->
         <Q> 2.0 </Q>                 <!-- - -->
@@ -158,7 +158,7 @@
         <LM> 1.65 </LM>              <!-- um -->
         <LB> 0.18 </LB>              <!-- um -->
         <a_XB> 22.894 </a_XB>        <!-- MPa (= 22.894e3 kPa reference calibration) -->
-      </RDQ20-MF>
+      </MeanFieldActiveStress>
     </Active_stress>
 
     <Output type="Spatial" >

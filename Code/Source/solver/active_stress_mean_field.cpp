@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#include "active_stress_rdq20_mf.h"
+#include "active_stress_mean_field.h"
 
 #include "FE/Common/FEException.h"
 #include "eigen3/Eigen/Dense"
@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cmath>
 
-void RDQ20MF::read_model_specific_parameters(
+void MeanFieldActiveStress::read_model_specific_parameters(
     const ActiveStressModelParameters &params) {
   Kbasic = params.get_scalar("Kbasic");
   Koff = params.get_scalar("Koff");
@@ -21,7 +21,7 @@ void RDQ20MF::read_model_specific_parameters(
   alphaKd = params.get_scalar("alphaKd");
   if (alphaKd > 0.0)
     svmp::raise<svmp::ParseException>(
-        "RDQ20MF: alphaKd must be <= 0 (positive values reduce calcium "
+        "MeanFieldActiveStress: alphaKd must be <= 0 (positive values reduce calcium "
         "sensitivity with stretch, reversing length-dependent activation, "
         "and can produce a zero dissociation constant at physiological "
         "sarcomere lengths).");
@@ -38,8 +38,8 @@ void RDQ20MF::read_model_specific_parameters(
   a_XB = params.get_scalar("a_XB");
 }
 
-void RDQ20MF::distribute_model_specific_parameters(const CmMod &cm_mod,
-                                                   const cmType &cm) {
+void MeanFieldActiveStress::distribute_model_specific_parameters(
+    const CmMod &cm_mod, const cmType &cm) {
   cm.bcast(cm_mod, &Kbasic);
   cm.bcast(cm_mod, &Koff);
   cm.bcast(cm_mod, &Q);
@@ -60,18 +60,17 @@ void RDQ20MF::distribute_model_specific_parameters(const CmMod &cm_mod,
   cm.bcast(cm_mod, &a_XB);
 }
 
-void RDQ20MF::init_local(Vector<double> &state) const {
+void MeanFieldActiveStress::init_local(Vector<double> &state) const {
   for (unsigned int i = 0; i < n_state_variables; ++i)
     state[i] = 0.0;
 
   state[ru_index(0, 0, 0, 0)] = 1.0; // == state[0]
 }
 
-void RDQ20MF::advance_time_step_local(const double t, const double dt,
-                                      const double calcium,
-                                      const double fiber_stretch,
-                                      const double fiber_stretch_rate,
-                                      Vector<double> &state) const {
+void MeanFieldActiveStress::advance_time_step_local(
+    const double t, const double dt, const double calcium,
+    const double fiber_stretch, const double fiber_stretch_rate,
+    Vector<double> &state) const {
   // Convert the svMultiPhysics electromechanics inputs to the reference units.
   const double calcium_microM = calcium * calcium_mM_to_microM;
   const double dt_seconds = dt * time_ms_to_s;
@@ -133,11 +132,11 @@ void RDQ20MF::advance_time_step_local(const double t, const double dt,
     state[xb_index(i)] = state_XB[i];
 }
 
-double RDQ20MF::compute_active_tension_local(const Vector<double> &state,
-                                             const double fiber_stretch) const {
+double MeanFieldActiveStress::compute_active_tension_local(
+    const Vector<double> &state, const double fiber_stretch) const {
   if (utils::is_zero(fiber_stretch))
     svmp::raise<svmp::FE::InvalidArgumentException>(
-        "RDQ20MF: fiber_stretch is zero or near zero; this indicates a "
+        "MeanFieldActiveStress: fiber_stretch is zero or near zero; this indicates a "
         "degenerate (collapsed) element and is not a valid deformation state.");
 
   const double sarcomere_length = SL0 * fiber_stretch;
@@ -151,7 +150,7 @@ double RDQ20MF::compute_active_tension_local(const Vector<double> &state,
          fraction_single_overlap(sarcomere_length) / fiber_stretch;
 }
 
-void RDQ20MF::ru_transition_rates_tropomyosin(
+void MeanFieldActiveStress::ru_transition_rates_tropomyosin(
     double (&rates_T)[2][2][2][2]) const {
   for (int TL = 0; TL < 2; ++TL)
     for (int TR = 0; TR < 2; ++TR) {
@@ -171,7 +170,7 @@ void RDQ20MF::ru_transition_rates_tropomyosin(
     }
 }
 
-void RDQ20MF::ru_forward_euler_substep(
+void MeanFieldActiveStress::ru_forward_euler_substep(
     double dt, const double (&rates_T)[2][2][2][2],
     const double (&rates_C)[2][2], double (&state_RU)[2][2][2][2]) const {
   // Probability fluxes from central-unit transitions.
@@ -244,10 +243,11 @@ void RDQ20MF::ru_forward_euler_substep(
                     flux_CC[TL][TC][TR][CC] + flux_CC[TL][TC][TR][1 - CC]);
 }
 
-void RDQ20MF::xb_implicit_update(double dt, double velocity,
-                                 const double (&rates_T)[2][2][2][2],
-                                 const double (&state_RU)[2][2][2][2],
-                                 double (&state_XB)[4]) const {
+void MeanFieldActiveStress::xb_implicit_update(
+    double dt, double velocity,
+    const double (&rates_T)[2][2][2][2],
+    const double (&state_RU)[2][2][2][2],
+    double (&state_XB)[4]) const {
   // Permissivity and the permissive/non-permissive probability fluxes from the
   // updated RU state.
   double permissivity = 0.0;
@@ -303,7 +303,7 @@ void RDQ20MF::xb_implicit_update(double dt, double velocity,
     state_XB[i] = solution(i);
 }
 
-double RDQ20MF::fraction_single_overlap(double sarcomere_length) const {
+double MeanFieldActiveStress::fraction_single_overlap(double sarcomere_length) const {
   const double SL = sarcomere_length;
   const double half_single_overlap = (LM - LB) * 0.5;
 
@@ -318,4 +318,4 @@ double RDQ20MF::fraction_single_overlap(double sarcomere_length) const {
   return 0.0;
 }
 
-REGISTER_ACTIVE_STRESS_MODEL("RDQ20-MF", RDQ20MF);
+REGISTER_ACTIVE_STRESS_MODEL("MeanFieldActiveStress", MeanFieldActiveStress);
