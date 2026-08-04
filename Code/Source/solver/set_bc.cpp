@@ -1445,11 +1445,10 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
     // Gauss integration 1
     //
     for (int g = 0; g < lFa.nG; g++) {
-      Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, eNoNb, Nx, nV, solutions,
-               consts::MechanicalConfigurationType::reference,
-               /* displacement_index = */ 0);
+      Vector<double> nV = nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
+                                   consts::MechanicalConfigurationType::reference,
+                                   /* displacement_index = */ 0);
       double Jac = utils::norm(nV);
       nV = nV / Jac;
       double w = lFa.w(g) * Jac;
@@ -1754,11 +1753,10 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
     lKd = 0.0;
 
     for (int g = 0; g < lFa.nG; g++) {
-      Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, eNoN, Nx, nV, solutions,
-               consts::MechanicalConfigurationType::reference,
-               /* displacement_index = */ 0);
+      Vector<double> nV = nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
+                                   consts::MechanicalConfigurationType::reference,
+                                   /* displacement_index = */ 0);
       double Jac = utils::norm(nV);
       nV  = nV / Jac;
       double w = lFa.w(g) * Jac; 
@@ -2038,11 +2036,10 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     lR = 0.0;
 
     for (int g = 0; g < lFa.nG; g++) {
-      Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, eNoN, Nx, nV, solutions,
-               consts::MechanicalConfigurationType::reference,
-               /* displacement_index = */ 0);
+      const Vector<double> nV = nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
+                                         consts::MechanicalConfigurationType::reference,
+                                         /* displacement_index = */ 0);
       double Jac = utils::norm(nV);
       double w = lFa.w(g)*Jac;
       N = lFa.N.col(g);

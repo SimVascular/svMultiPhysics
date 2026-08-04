@@ -899,16 +899,21 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
   }
 }
 
-void gnnb(const ComMod &com_mod, const faceType &lFa, const int e, const int g,
-          const int nsd, const int insd, const int eNoNb,
-          const Array<double> &Nx, Vector<double> &n,
-          const SolutionStates &solutions,
-          consts::MechanicalConfigurationType cfg,
-          const unsigned int displacement_index) {
+Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
+                    const int g, const Array<double> &Nx,
+                    const SolutionStates &solutions,
+                    consts::MechanicalConfigurationType cfg,
+                    const unsigned int displacement_index) {
   // Local aliases for displacement arrays
   const auto& Dn = solutions.current.get_displacement();
   const auto& Do = solutions.old.get_displacement();
   auto& cm = com_mod.cm;
+
+  const int nsd = com_mod.nsd;
+  const int insd = Nx.nrows();
+  const int eNoNb = Nx.ncols();
+
+  Vector<double> n(nsd);
 
   #define n_debug_gnnb 
   #ifdef debug_gnnb 
@@ -1034,10 +1039,15 @@ void gnnb(const ComMod &com_mod, const faceType &lFa, const int e, const int g,
 
     // Compute adjoining mesh element normal
     //
-    Array<double> xXi(nsd,nsd-1);
+    // Note that here we use the shell element's shape function derivatives
+    // (msh.Nx), so the relevant intrinsic dimension is that of the shell
+    // element (nsd - 1, a surface), not that of the boundary edge lFa
+    // (which is what the local 'insd' holds).
+    const int msh_insd = nsd - 1;
+    Array<double> xXi(nsd, msh_insd);
 
     for (int a = 0; a < eNoN; a++) {
-      for (int i = 0; i < insd; i++) {
+      for (int i = 0; i < msh_insd; i++) {
         for (int j = 0; j < nsd; j++) {
           xXi(j,i) = xXi(j,i) + lX(j,a)*msh.Nx(i,a,g);
         }
@@ -1081,7 +1091,7 @@ void gnnb(const ComMod &com_mod, const faceType &lFa, const int e, const int g,
       n = -n;
     }
 
-    return;
+    return n;
 
   } else {
 
@@ -1097,21 +1107,23 @@ void gnnb(const ComMod &com_mod, const faceType &lFa, const int e, const int g,
     }
 
     n = utils::cross(xXi);
-  }
 
-  // Changing the sign if neccessary. 'a' locates on the face and 'b'
-  // in the interior of the element. v points outward along ba
-  //
-  a = ptr(0);
-  int b = ptr(lFa.eNoN);
-  Vector<double> v(nsd);
+    // Changing the sign if neccessary. 'a' locates on the face and 'b'
+    // in the interior of the element. v points outward along ba
+    //
+    a = ptr(0);
+    int b = ptr(lFa.eNoN);
+    Vector<double> v(nsd);
 
-  for (int i = 0; i < nsd; i++) {
-    v(i) = lX(i,a) - lX(i,b);
-  }
+    for (int i = 0; i < nsd; i++) {
+      v(i) = lX(i, a) - lX(i, b);
+    }
 
-  if (n * v < 0.0) {
-    n = -n;
+    if (n * v < 0.0) {
+      n = -n;
+    }
+
+    return n;
   }
 }
 

@@ -528,7 +528,6 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
 
   // Compute integral of normal vector over surface element
   if (!flag) {
-    Vector<double> nV(nsd);
     for (int e = 0; e < lFa.nEl; e++) {
 
       if (lFa.eType == ElementType::NRB) {
@@ -538,9 +537,9 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
 
       for (int g = 0; g < lFa.nG; g++) {
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, lFa.eNoN, Nx, nV, solutions,
-                 consts::MechanicalConfigurationType::reference,
-                 /* displacement_index = */ 0);
+        const Vector<double> nV = nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
+                                           consts::MechanicalConfigurationType::reference,
+                                           /* displacement_index = */ 0);
 
         for (int a = 0; a < lFa.eNoN; a++) { 
           int Ac = lFa.IEN(a,e);
@@ -802,11 +801,10 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
           // CALL NRBNNXB(msh(iM),lFa,e)
         }
         for (int g = 0; g < lFa.nG; g++) {
-          Vector<double> n(nsd);
           auto Nx = lFa.Nx.slice(g);
-          nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, lFa.eNoN, Nx, n, solutions,
-                   consts::MechanicalConfigurationType::reference,
-                   /* displacement_index = */ 0);
+          const Vector<double> n = nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
+                                            consts::MechanicalConfigurationType::reference,
+                                            /* displacement_index = */ 0);
 
           for (int a = 0; a < lFa.eNoN; a++) {
             int Ac = lFa.IEN(a,e);
