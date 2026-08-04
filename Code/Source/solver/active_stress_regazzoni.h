@@ -67,13 +67,14 @@ public:
    * reference implementation's serialization (TL outermost, CC innermost) and
    * spans [0, 15].
    */
-  static constexpr int ru_index(int TL, int TC, int TR, int CC) {
+  static constexpr unsigned int ru_index(unsigned int TL, unsigned int TC,
+                                         unsigned int TR, unsigned int CC) {
     return 8 * TL + 4 * TC + 2 * TR + CC;
   }
 
   /// Flat index of the XB moment state @p i (in [0, 3]), spanning [16, 19].
-  static constexpr int xb_index(int i) {
-    return static_cast<int>(n_ru_states) + i;
+  static constexpr unsigned int xb_index(unsigned int i) {
+    return n_ru_states + i;
   }
 
   /// @}
