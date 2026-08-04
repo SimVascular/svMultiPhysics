@@ -10,14 +10,15 @@
  * @brief Mean-field active stress model (implements the RDQ20-MF formulation).
  *
  * This class implements the mean-field RDQ20-MF sarcomere model of cardiomyocyte
- * force generation of Regazzoni, Dedè, and Quarteroni (2020), described in [1]
+ * force generation of Regazzoni, Dede', and Quarteroni (2020), described in [1]
  * and validated against the authors' reference implementation [2]. The node-local state has 20 variables: 16
  * regulatory-unit (RU) probabilities (entries 0-15) describing the
  * tropomyosin/troponin configuration of a triplet of neighbouring units, and 4
  * crossbridge (XB) moments (entries 16-19). The RU probabilities are advanced
- * with an explicit forward-Euler substepping scheme and the XB moments with one
- * implicit-Euler step per time step; the active tension is then reconstructed
- * from the XB first moments.
+ * with an explicit forward-Euler substepping scheme — for every macro time step,
+ * a number of smaller sub-steps are taken to update the RU states — and the XB
+ * moments with one implicit-Euler step per time step; the active tension is then
+ * reconstructed from the XB first moments.
  *
  * The active tension is
  * @f[
