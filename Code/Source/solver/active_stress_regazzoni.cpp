@@ -71,9 +71,6 @@ void RegazzoniActiveStress::advance_time_step_local(
     const double t, const double dt, const double calcium,
     const double fiber_stretch, const double fiber_stretch_rate,
     Vector<double> &state) const {
-  // Convert the svMultiPhysics electromechanics inputs to the reference units.
-  const double calcium_microM = calcium * calcium_mM_to_microM;
-  const double dt_seconds = dt * time_ms_to_s;
   const double sarcomere_length = SL0 * fiber_stretch;
 
   // Calcium/stretch-independent central-tropomyosin transition rates.
@@ -86,7 +83,7 @@ void RegazzoniActiveStress::advance_time_step_local(
   const double calcium_on_rate =
       Koff /
       (Kd0 - alphaKd * (kd_reference_sarcomere_length - sarcomere_length)) *
-      calcium_microM;
+      calcium;
   double rates_C[2][2];
   rates_C[0][0] = calcium_on_rate;
   rates_C[0][1] = calcium_on_rate;
@@ -105,20 +102,19 @@ void RegazzoniActiveStress::advance_time_step_local(
   // Forward-Euler substepping over the outer time step. The final substep is
   // shortened so that the outer step is covered exactly.
   double time_advanced = 0.0;
-  while (time_advanced <= dt_seconds - 1.0e-10) {
-    const double substep = std::min(ru_substep, dt_seconds - time_advanced);
+  while (time_advanced <= dt - 1.0e-10) {
+    const double substep = std::min(ru_substep, dt - time_advanced);
     ru_forward_euler_substep(substep, rates_T, rates_C, state_RU);
     time_advanced += substep;
   }
 
   // Advance the crossbridge moments (entries 16-19) from the updated RU state.
-  // The reference velocity v = -dSL/dt / SL0 reduces to -d(lambda)/dt because
-  // SL = SL0 * lambda; here it is expressed in reference time units [s^-1].
-  const double velocity = -fiber_stretch_rate / time_ms_to_s;
+  // The velocity v = -dSL/dt / SL0 reduces to -d(lambda)/dt because SL = SL0 * lambda.
+  const double velocity = -fiber_stretch_rate;
   double state_XB[4];
   for (int i = 0; i < 4; ++i)
     state_XB[i] = state[xb_index(i)];
-  xb_implicit_update(dt_seconds, velocity, rates_T, state_RU, state_XB);
+  xb_implicit_update(dt, velocity, rates_T, state_RU, state_XB);
 
   // Serialize the updated RU probabilities back into the state vector.
   for (int TL = 0; TL < 2; ++TL)

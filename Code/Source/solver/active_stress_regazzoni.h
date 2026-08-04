@@ -29,13 +29,7 @@
  * fraction of the sarcomere at sarcomere length @f$SL = SL_0 \, \lambda@f$ (with
  * @f$\lambda@f$ the fiber stretch), and @f$a_\text{XB}@f$ is the tension
  * upscaling factor. Because @f$\mu_P^1 + \mu_N^1@f$ and @f$\phi(SL)@f$ are
- * dimensionless, @f$a_\text{XB}@f$ sets the units of the returned active tension;
- * it is stored in the stress units of the simulation, so no separate output
- * conversion is applied.
- *
- * The model is calibrated in a fixed unit system (calcium in [uM], time in [s],
- * length in [um]); the svMultiPhysics inputs are converted to these units at the
- * interface (see the conversion members below).
+ * dimensionless, @f$a_\text{XB}@f$ sets the units of the returned active tension.
  *
  * **References**:
  * 1. [Regazzoni, Dede', Quarteroni (2020)](https://doi.org/10.1371/journal.pcbi.1008294)
@@ -82,37 +76,29 @@ public:
   /**
    * @brief Model parameters class.
    *
-   * Declares the regulatory-unit (RU), crossbridge (XB), geometry, and tension
-   * parameters. The values registered below correspond to the published human
-   * body-temperature calibration of the reference implementation, expressed in
-   * the units documented for each member. The registered value of @c a_XB,
-   * 22.894, expresses the reference calibration in MPa; the value supplied in
-   * solver.xml must instead use the stress unit of the simulation's mechanical
-   * configuration.
-   *
-   * All parameters are required. A complete @c Regazzoni parameter block
-   * containing every parameter must be provided in solver.xml. Any value may be changed to
-   * use a different calibration, but omitting a parameter causes a parse error;
-   * the registered reference value is not used as an automatic default.
+   * Declares the parameters required by the model. All parameters are
+   * marked as required, and omitting a parameter will cause a parse error.
    */
   class Parameters : public ActiveStressModelParameters {
   public:
     Parameters() : ActiveStressModelParameters(label) {
       constexpr bool required = true;
 
-      add_parameter("Kbasic", 13.0, required);
-      add_parameter("Koff", 100.0, required);
+      // Reference values: Regazzoni 2020 human body-temperature calibration,
+      // expressed consistently with the unit system used by this parameter set.
+      add_parameter("Kbasic", 0.013, required);
+      add_parameter("Koff", 0.1, required);
       add_parameter("Q", 2.0, required);
       add_parameter("mu", 10.0, required);
       add_parameter("gamma", 12.0, required);
-      add_parameter("Kd0", 0.381, required);
-      add_parameter("alphaKd", -0.571, required);
+      add_parameter("Kd0", 3.81e-4, required);
+      add_parameter("alphaKd", -5.71e-4, required);
       add_parameter("SL0", 2.2, required);
 
-      add_parameter("r0", 134.31, required);
+      add_parameter("r0", 0.13431, required);
       add_parameter("alpha", 25.184, required);
-      add_parameter("mu0_fP", 32.653, required);
-      add_parameter("mu1_fP", 0.778, required);
+      add_parameter("mu0_fP", 0.032653, required);
+      add_parameter("mu1_fP", 7.78e-4, required);
 
       add_parameter("LA", 1.25, required);
       add_parameter("LM", 1.65, required);
@@ -226,7 +212,7 @@ private:
    * effective boundary-neighbour transitions from the mean-field closure, then
    * updates @p state_RU in place.
    *
-   * @param[in] dt Substep size [s].
+   * @param[in] dt Substep size [time].
    * @param[in] rates_T Central-tropomyosin transition rates,
    *   indexed @c rates_T[TL][TC][TR][CC].
    * @param[in] rates_C Troponin transition rates, indexed @c rates_C[CC][TC].
@@ -245,8 +231,8 @@ private:
    * transition rates from the updated RU probabilities, forms the 4x4 linear
    * system for the implicit update and solves it in place for @p state_XB.
    *
-   * @param[in] dt Outer time step [s].
-   * @param[in] velocity Shortening velocity @f$-\dot{SL}/SL_0@f$ [s^-1].
+   * @param[in] dt Outer time step [time].
+   * @param[in] velocity Shortening velocity @f$-\dot{SL}/SL_0@f$ [1/time].
    * @param[in] rates_T Central-tropomyosin transition rates,
    *   indexed @c rates_T[TL][TC][TR][CC].
    * @param[in] state_RU The updated 16 RU-state probabilities,
@@ -266,61 +252,45 @@ private:
    * thin and thick filaments overlap exactly once, a piecewise-linear function
    * of the sarcomere length built from the filament geometry (LA, LM, LB).
    *
-   * @param[in] sarcomere_length Sarcomere length @f$SL@f$ [um].
+   * @param[in] sarcomere_length Sarcomere length @f$SL@f$ [length].
    */
   double fraction_single_overlap(double sarcomere_length) const;
 
   /// @}
 
-  /// @name Interface unit conversions (svMultiPhysics EM units to reference units)
-  /// @{
+  /// RU forward-Euler substep size [time].
+  static constexpr double ru_substep = 2.5e-2;
 
-  /// Calcium conversion, millimolar [mM] to micromolar [uM].
-  static constexpr double calcium_mM_to_microM = 1.0e3;
-
-  /// Time conversion, milliseconds [ms] to seconds [s].
-  static constexpr double time_ms_to_s = 1.0e-3;
-
-  /// @}
-
-  /// RU forward-Euler substep size [s].
-  static constexpr double ru_substep = 2.5e-5;
-
-  /// Fixed reference sarcomere length [um] in the length-dependent dissociation
+  /// Fixed reference sarcomere length [length] in the length-dependent dissociation
   /// constant (distinct from the parameter SL0).
   static constexpr double kd_reference_sarcomere_length = 2.15;
 
-  /// @name RU model parameters (reference units)
+  /// @name RU model parameters
   /// @{
 
-  double Kbasic;  ///< Basic tropomyosin transition rate [s^-1].
-  double Koff;    ///< Troponin unbinding rate [s^-1].
+  double Kbasic;  ///< Basic tropomyosin transition rate [1/time].
+  double Koff;    ///< Troponin unbinding rate [1/time].
   double Q;       ///< Tropomyosin transition-rate asymmetry factor [-].
   double mu;      ///< Calcium-binding cooperativity factor [-].
   double gamma;   ///< Nearest-neighbour cooperativity factor [-].
-  double Kd0;     ///< Calcium dissociation constant at reference length [uM].
-  double alphaKd; ///< Length dependence of the dissociation constant [uM/um].
-  double SL0;     ///< Reference sarcomere length [um]; maps stretch to length.
+  double Kd0;     ///< Calcium dissociation constant at reference length [calcium].
+  double alphaKd; ///< Length dependence of the dissociation constant [calcium/length].
+  double SL0;     ///< Reference sarcomere length [length]; maps stretch to length.
 
-  double r0;     ///< Combined attachment-detachment rate at zero velocity [s^-1].
+  double r0;     ///< Combined attachment-detachment rate at zero velocity [1/time].
   double alpha;  ///< Coefficient of |v| in r(v) = r0 + alpha * |v| [-].
-  double mu0_fP; ///< Permissive influx into the zeroth-moment crossbridge state [s^-1].
-  double mu1_fP; ///< Permissive influx into the first-moment crossbridge state [s^-1].
+  double mu0_fP; ///< Permissive influx into the zeroth-moment crossbridge state [1/time].
+  double mu1_fP; ///< Permissive influx into the first-moment crossbridge state [1/time].
 
-  double LA; ///< Thin-filament (actin) length [um].
-  double LM; ///< Thick-filament (myosin) length [um].
-  double LB; ///< Length of the myosin bare zone [um].
+  double LA; ///< Thin-filament (actin) length [length].
+  double LM; ///< Thick-filament (myosin) length [length].
+  double LB; ///< Length of the myosin bare zone [length].
 
-  /// Tension upscaling factor.
+  /// Tension upscaling factor [stress].
   ///
   /// Because the crossbridge moments and the overlap fraction are dimensionless,
-  /// a_XB is the only quantity carrying stress units, so the returned active
-  /// tension has the same stress unit as a_XB and no stress-unit conversion is
-  /// performed. a_XB must therefore be expressed in the same stress unit as the
-  /// mechanical configuration. The reference calibration value 22.894 is
-  /// expressed in MPa, consistent with the coupled electromechanics slab case;
-  /// the equivalent values are 22.894e3 in kPa and 22.894e6 in Pa. Provide the
-  /// value matching the case's stress unit.
+  /// a_XB sets the stress unit of the returned active tension. It must be
+  /// expressed in the same stress unit as the mechanical configuration.
   double a_XB;
 
   /// @}

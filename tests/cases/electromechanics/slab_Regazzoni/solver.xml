@@ -142,22 +142,22 @@
       </Directional_distribution>
 
       <Regazzoni>
-        <Kbasic> 13.0 </Kbasic>      <!-- s^-1 -->
-        <Koff> 100.0 </Koff>         <!-- s^-1 -->
-        <Q> 2.0 </Q>                 <!-- - -->
-        <mu> 10.0 </mu>              <!-- - -->
-        <gamma> 12.0 </gamma>        <!-- - -->
-        <Kd0> 0.381 </Kd0>           <!-- uM -->
-        <alphaKd> -0.571 </alphaKd>  <!-- uM/um -->
-        <SL0> 2.2 </SL0>             <!-- um -->
-        <r0> 134.31 </r0>            <!-- s^-1 -->
-        <alpha> 25.184 </alpha>      <!-- - -->
-        <mu0_fP> 32.653 </mu0_fP>    <!-- s^-1 -->
-        <mu1_fP> 0.778 </mu1_fP>     <!-- s^-1 -->
-        <LA> 1.25 </LA>              <!-- um -->
-        <LM> 1.65 </LM>              <!-- um -->
-        <LB> 0.18 </LB>              <!-- um -->
-        <a_XB> 22.894 </a_XB>        <!-- MPa (= 22.894e3 kPa reference calibration) -->
+        <Kbasic> 0.013 </Kbasic>
+        <Koff> 0.1 </Koff>
+        <Q> 2.0 </Q>
+        <mu> 10.0 </mu>
+        <gamma> 12.0 </gamma>
+        <Kd0> 3.81e-4 </Kd0>
+        <alphaKd> -5.71e-4 </alphaKd>
+        <SL0> 2.2 </SL0>
+        <r0> 0.13431 </r0>
+        <alpha> 25.184 </alpha>
+        <mu0_fP> 0.032653 </mu0_fP>
+        <mu1_fP> 7.78e-4 </mu1_fP>
+        <LA> 1.25 </LA>
+        <LM> 1.65 </LM>
+        <LB> 0.18 </LB>
+        <a_XB> 22.894 </a_XB>
       </Regazzoni>
     </Active_stress>
 
