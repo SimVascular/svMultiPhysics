@@ -73,6 +73,18 @@ namespace all_fun {
                const unsigned int displacement_index);
 
   /**
+   * @brief Integrate a scalar field over a boundary face.
+   *
+   * This is the overload to use in the general case. The other overload adds
+   * the ability to integrate over a displaced configuration, which is only
+   * relevant for simulations involving structural displacement. See it for the
+   * meaning of the arguments.
+   */
+  double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
+               const Vector<double> &s, const SolutionStates &solutions,
+               bool pFlag);
+
+  /**
    * @brief Integrate one or more components of a field over a boundary face.
    *
    * Reproduces 'FUNCTION IntegG(lFa, s, l, u, THflag)'. Rows l to u of s are
@@ -120,6 +132,19 @@ namespace all_fun {
                const unsigned int displacement_index);
 
   /**
+   * @brief Integrate one or more components of a field over a boundary face.
+   *
+   * This is the overload to use in the general case. The other overload adds
+   * the ability to integrate over a displaced configuration, which is only
+   * relevant for simulations involving structural displacement. See it for the
+   * meaning of the arguments.
+   */
+  double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
+               const Array<double> &s, const int l,
+               const SolutionStates &solutions, std::optional<int> uo,
+               bool THflag);
+
+  /**
    * @brief Integrate the flux of a vector field over a boundary face.
    *
    * Reproduces 'FUNCTION IntegV(lFa, s)'. The vector field s (one component per
@@ -155,6 +180,17 @@ namespace all_fun {
                const Array<double> &s, const SolutionStates &solutions,
                consts::MechanicalConfigurationType cfg,
                const unsigned int displacement_index);
+
+  /**
+   * @brief Integrate the flux of a vector field over a boundary face.
+   *
+   * This is the overload to use in the general case. The other overload adds
+   * the ability to integrate over a displaced configuration, which is only
+   * relevant for simulations involving structural displacement. See it for the
+   * meaning of the arguments.
+   */
+  double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
+               const Array<double> &s, const SolutionStates &solutions);
 
   bool is_domain(const ComMod& com_mod, const eqType& eq, const int node, const consts::EquationType phys);
 

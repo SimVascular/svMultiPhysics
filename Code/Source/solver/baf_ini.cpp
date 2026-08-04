@@ -338,9 +338,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
     Vector<double> center(3);
     for (int i = 0; i < nsd; i++) {
       center(i) = all_fun::integ(com_mod, cm_mod, lFa, com_mod.x, i, solutions,
-                                 std::nullopt, false,
-                                 consts::MechanicalConfigurationType::reference,
-                                 /* displacement_index = */ 0) /
+                                 std::nullopt, false) /
                   lFa.area;
     }
 
@@ -450,9 +448,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   //
   double tmp = 1.0;
   if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_flx))) {
-    tmp = all_fun::integ(com_mod, cm_mod, lFa, s, solutions, false,
-                         consts::MechanicalConfigurationType::reference,
-                         /* displacement_index = */ 0);
+    tmp = all_fun::integ(com_mod, cm_mod, lFa, s, solutions, false);
     if (is_zero(tmp)) {
       tmp = 1.0;
       throw std::runtime_error("Face '" + lFa.name + "' used for a BC has no non-zero node.");
@@ -494,9 +490,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
   //
   Vector<double> sA(com_mod.tnNo);
   sA = 1.0;
-  double area = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false,
-                               consts::MechanicalConfigurationType::reference,
-                               /* displacement_index = */ 0);
+  double area = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false);
   #ifdef debug_face_ini
   dmsg << "Face '" << lFa.name << "' area: " << area;
   #endif
@@ -537,9 +531,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const Solution
 
       for (int g = 0; g < lFa.nG; g++) {
         auto Nx = lFa.Nx.slice(g);
-        const Vector<double> nV = nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
-                                           consts::MechanicalConfigurationType::reference,
-                                           /* displacement_index = */ 0);
+        const Vector<double> nV = nn::gnnb(com_mod, lFa, e, g, Nx, solutions);
 
         for (int a = 0; a < lFa.eNoN; a++) { 
           int Ac = lFa.IEN(a,e);
@@ -802,9 +794,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
         }
         for (int g = 0; g < lFa.nG; g++) {
           auto Nx = lFa.Nx.slice(g);
-          const Vector<double> n = nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
-                                            consts::MechanicalConfigurationType::reference,
-                                            /* displacement_index = */ 0);
+          const Vector<double> n = nn::gnnb(com_mod, lFa, e, g, Nx, solutions);
 
           for (int a = 0; a < lFa.eNoN; a++) {
             int Ac = lFa.IEN(a,e);

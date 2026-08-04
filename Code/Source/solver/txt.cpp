@@ -466,29 +466,21 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
         if (div) {
           tmp = fa.area;
           tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions,
-                               std::nullopt, false,
-                               consts::MechanicalConfigurationType::reference,
-                               /* displacement_index = */ 0) /
+                               std::nullopt, false) /
                 tmp;
         } else {
           if (pFlag && lTH) {
             tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions,
-                                 std::nullopt, true,
-                                 consts::MechanicalConfigurationType::reference,
-                                 /* displacement_index = */ 0);
+                                 std::nullopt, true);
           } else {
             tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions,
-                                 std::nullopt, false,
-                                 consts::MechanicalConfigurationType::reference,
-                                 /* displacement_index = */ 0);
+                                 std::nullopt, false);
           }
         }
 
       } else if (m == nsd) {
         tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, m - 1,
-                             false,
-                             consts::MechanicalConfigurationType::reference,
-                             /* displacement_index = */ 0);
+                             false);
       } else {
         throw std::runtime_error("WTXT only accepts 1 and nsd");
       }

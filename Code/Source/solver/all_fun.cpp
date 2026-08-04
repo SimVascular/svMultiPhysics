@@ -830,17 +830,16 @@ double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
   return result;
 }
 
-/// @brief This routine integrates vector field s dotted with the face normal n
-/// over the face lFa. For example, if s contains the velocity at each node on 
-/// the face, this function computed the velocity flux through the face.
-///
-/// Reproduces 'FUNCTION IntegV(lFa, s)'
-///
-/// @param lFa face type, representing a face on the computational mesh
-/// @param s an array containing a vector value for each node in the mesh
-/// @param pFlag flag for using Taylor-Hood function space for pressure
-/// @param cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
-//
+double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
+             const Vector<double> &s, const SolutionStates &solutions,
+             bool pFlag) {
+  // The displacement index is not used in the reference configuration.
+  constexpr unsigned int unused_displacement_index = 0;
+  return integ(com_mod, cm_mod, lFa, s, solutions, pFlag,
+               consts::MechanicalConfigurationType::reference,
+               unused_displacement_index);
+}
+
 double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
              const Array<double> &s, const SolutionStates &solutions,
              MechanicalConfigurationType cfg,
@@ -959,23 +958,15 @@ double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
   return result;
 }
 
-/// @brief This routine integrate s(l:u,:) over the surface faId, where s is an
-/// array of scalars or an array of nsd-vectors. This routine calls overloaded
-/// functions to integrate scalars, if s is scalar (i.e. l=u), or vectors if s 
-/// is vector (i.e. l<u).
-///
-/// Note that 'l' and 'u' should be 0-based and are used to index into 's'.
-///
-/// Reproduces 'FUNCTION IntegG(lFa, s, l, uo, THflag)'.
-///
-/// @param lFa face type, representing a face on the computational mesh.
-/// @param s an array containing a vector value for each node in the mesh.
-/// @param l lower index of s
-/// @param uo optional: upper index of s. Default u = l.
-/// @param THlag flag for using Taylor-Hood function space for pressure.
-/// @param cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference.
-///
-//
+double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
+             const Array<double> &s, const SolutionStates &solutions) {
+  // The displacement index is not used in the reference configuration.
+  constexpr unsigned int unused_displacement_index = 0;
+  return integ(com_mod, cm_mod, lFa, s, solutions,
+               consts::MechanicalConfigurationType::reference,
+               unused_displacement_index);
+}
+
 double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
              const Array<double> &s, const int l,
              const SolutionStates &solutions, std::optional<int> uo,
@@ -1050,6 +1041,17 @@ double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
   }
 
   return result;
+}
+
+double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
+             const Array<double> &s, const int l,
+             const SolutionStates &solutions, std::optional<int> uo,
+             bool THflag) {
+  // The displacement index is not used in the reference configuration.
+  constexpr unsigned int unused_displacement_index = 0;
+  return integ(com_mod, cm_mod, lFa, s, l, solutions, uo, THflag,
+               consts::MechanicalConfigurationType::reference,
+               unused_displacement_index);
 }
 
 bool is_domain(const ComMod& com_mod, const eqType& eq, const int node, const consts::EquationType phys)

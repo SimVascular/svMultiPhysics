@@ -1127,6 +1127,16 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
   }
 }
 
+Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
+                    const int g, const Array<double> &Nx,
+                    const SolutionStates &solutions) {
+  // The displacement index is not used in the reference configuration.
+  constexpr unsigned int unused_displacement_index = 0;
+  return gnnb(com_mod, lFa, e, g, Nx, solutions,
+              consts::MechanicalConfigurationType::reference,
+              unused_displacement_index);
+}
+
 /// @brief Compute shell kinematics: normal vector, covariant & contravariant basis vectors
 ///
 /// Replicates 'SUBROUTINE GNNS(eNoN, Nxi, xl, nV, gCov, gCnv)' defined in NN.f.
