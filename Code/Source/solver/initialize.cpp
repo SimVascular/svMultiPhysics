@@ -976,14 +976,23 @@ void zero_init(Simulation* simulation, SolutionStates& solutions)
   }
 
   if (com_mod.Pinit.size() != 0) {
-     #ifdef debug_zero_init
-     dmsg << "Initialize Yo to provided P solution";
-     #endif
-     for (int a = 0; a < com_mod.tnNo; a++) {
-       for (int i = 0; i < nsd; i++) {
-         Yo(nsd,a) = com_mod.Pinit(a);
-       }
-     }
+    #ifdef debug_zero_init
+    dmsg << "Initialize Yo to provided P solution";
+    #endif
+    for (int a = 0; a < com_mod.tnNo; a++) {
+      Yo(nsd,a) = com_mod.Pinit(a);
+    }
+
+  } else if (com_mod.have_initial_pressure_scalar) {
+    #ifdef debug_zero_init
+    dmsg << "Initialize Yo to scalar initial pressure from solver.xml";
+    #endif
+    for (int a = 0; a < com_mod.tnNo; a++) {
+      Yo(nsd,a) = com_mod.initial_pressure_scalar;
+    }
+
+    std::cout << "Initialize 3D pressure field to scalar value: "
+              << com_mod.initial_pressure_scalar << std::endl;
   }
 
   if (com_mod.Dinit.size() != 0) {

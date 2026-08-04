@@ -331,6 +331,8 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.nEq);
     cm.bcast(cm_mod, &com_mod.dt);
     cm.bcast(cm_mod, &com_mod.precompDt);
+    cm.bcast(cm_mod, &com_mod.have_initial_pressure_scalar);
+    cm.bcast(cm_mod, &com_mod.initial_pressure_scalar);
 
     cm.bcast(cm_mod, &com_mod.zeroAve);
     cm.bcast(cm_mod, &com_mod.cmmInit);

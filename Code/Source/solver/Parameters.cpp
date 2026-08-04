@@ -2846,6 +2846,8 @@ GeneralSimulationParameters::GeneralSimulationParameters() {
                 start_saving_after_time_step);
   set_parameter("Starting time step", 0, !required, starting_time_step);
 
+  set_parameter("Initial_pressure_scalar", 0.0, !required,
+                initial_pressure_scalar);
   set_parameter("Time_step_size", 0.0, required, time_step_size);
   set_parameter("Verbose", false, !required, verbose);
   set_parameter("Warning", false, !required, warning);

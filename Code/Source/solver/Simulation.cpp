@@ -61,6 +61,11 @@ void Simulation::set_module_parameters()
   com_mod.startTS = general.starting_time_step.value();
   com_mod.dt = general.time_step_size.value();
 
+  com_mod.have_initial_pressure_scalar = general.initial_pressure_scalar.defined();
+  if (com_mod.have_initial_pressure_scalar) {
+    com_mod.initial_pressure_scalar = general.initial_pressure_scalar.value();
+  }
+
   com_mod.stopTrigName = general.searched_file_name_to_trigger_stop.value();
   com_mod.ichckIEN = general.check_ien_order.value();
   com_mod.saveVTK = general.save_results_to_vtk_format.value();
