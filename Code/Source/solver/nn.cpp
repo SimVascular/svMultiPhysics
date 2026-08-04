@@ -899,18 +899,12 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
   }
 }
 
-/// @brief This routine returns a surface normal vector at element "e" and Gauss point
-/// 'g' of face 'lFa' that is the normal weighted by Jac, i.e.
-/// Jac = norm(n), the Jacobian of the mapping from parent surface element to
-/// reference/old/new configuration.
-///
-/// cfg denotes which configuration (reference/timestep 0, old/timestep n, or new/timestep n+1). Default reference
-///
-/// Reproduce Fortran 'GNNB'.
-//
-void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, const int nsd, const int insd, 
-    const int eNoNb, const Array<double>& Nx, Vector<double>& n, const SolutionStates& solutions, MechanicalConfigurationType cfg)
-{
+void gnnb(const ComMod &com_mod, const faceType &lFa, const int e, const int g,
+          const int nsd, const int insd, const int eNoNb,
+          const Array<double> &Nx, Vector<double> &n,
+          const SolutionStates &solutions,
+          consts::MechanicalConfigurationType cfg,
+          const unsigned int displacement_index) {
   // Local aliases for displacement arrays
   const auto& Dn = solutions.current.get_displacement();
   const auto& Do = solutions.old.get_displacement();
@@ -998,6 +992,10 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
     if (com_mod.mvMsh) {
       for (int i = 0; i < lX.nrows(); i++) {
         // Add mesh displacement
+        // Notice that this assumes that the mesh displacement is stored
+        // starting at the nsd+1 index of the solution array. This is enforced
+        // in read_files, by throwing an exception if the equations are not
+        // ordered correctly.
         lX(i,a) = lX(i,a) + Do(i+nsd+1,Ac);
       }
     }
@@ -1009,13 +1007,13 @@ void gnnb(const ComMod& com_mod, const faceType& lFa, const int e, const int g, 
         case MechanicalConfigurationType::old_timestep:
           for (int i = 0; i < lX.nrows(); i++) {
             // Add displacement at timestep n
-            lX(i,a) = lX(i,a) + Do(i,Ac);
+            lX(i, a) = lX(i, a) + Do(displacement_index + i, Ac);
           }
           break;
         case MechanicalConfigurationType::new_timestep:
           for (int i = 0; i < lX.nrows(); i++) {
             // Add displacement at timestep n+1
-            lX(i,a) = lX(i,a) + Dn(i,Ac);
+            lX(i, a) = lX(i, a) + Dn(displacement_index + i, Ac);
           }
           break;
         default:

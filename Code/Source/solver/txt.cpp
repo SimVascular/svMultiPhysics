@@ -465,17 +465,30 @@ void write_boundary_integral_data(const ComMod& com_mod, CmMod& cm_mod, const eq
       if (m == 1) {
         if (div) {
           tmp = fa.area;
-          tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, std::nullopt, false, consts::MechanicalConfigurationType::reference) / tmp;
+          tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions,
+                               std::nullopt, false,
+                               consts::MechanicalConfigurationType::reference,
+                               /* displacement_index = */ 0) /
+                tmp;
         } else {
           if (pFlag && lTH) {
-            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, std::nullopt, true, consts::MechanicalConfigurationType::reference);
+            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions,
+                                 std::nullopt, true,
+                                 consts::MechanicalConfigurationType::reference,
+                                 /* displacement_index = */ 0);
           } else {
-            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, std::nullopt, false, consts::MechanicalConfigurationType::reference);
+            tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions,
+                                 std::nullopt, false,
+                                 consts::MechanicalConfigurationType::reference,
+                                 /* displacement_index = */ 0);
           }
         }
 
       } else if (m == nsd) {
-        tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, m-1, false, consts::MechanicalConfigurationType::reference);
+        tmp = all_fun::integ(com_mod, cm_mod, fa, tmpV, 0, solutions, m - 1,
+                             false,
+                             consts::MechanicalConfigurationType::reference,
+                             /* displacement_index = */ 0);
       } else {
         throw std::runtime_error("WTXT only accepts 1 and nsd");
       }

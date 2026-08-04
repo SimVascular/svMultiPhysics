@@ -147,12 +147,12 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
 
         const unsigned int equation_offset =
             com_mod.eq[com_mod.cplBC.equationIndex].s;
-        cplBC.fa[ptr].Qo =
-            all_fun::integ(com_mod, cm_mod, fa, Yo, equation_offset, solutions,
-                           equation_offset + nsd - 1, false, cfg_o);
-        cplBC.fa[ptr].Qn =
-            all_fun::integ(com_mod, cm_mod, fa, Yn, equation_offset, solutions,
-                           equation_offset + nsd - 1, false, cfg_n);
+        cplBC.fa[ptr].Qo = all_fun::integ(
+            com_mod, cm_mod, fa, Yo, equation_offset, solutions,
+            equation_offset + nsd - 1, false, cfg_o, equation_offset);
+        cplBC.fa[ptr].Qn = all_fun::integ(
+            com_mod, cm_mod, fa, Yn, equation_offset, solutions,
+            equation_offset + nsd - 1, false, cfg_n, equation_offset);
 
         cplBC.fa[ptr].Po = 0.0;
         cplBC.fa[ptr].Pn = 0.0;
@@ -166,8 +166,19 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
       // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1 
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
-        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
-        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+        cplBC.fa[ptr].Po =
+            all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions,
+                           std::nullopt, false,
+                           MechanicalConfigurationType::reference,
+                           /* displacement_index = */ 0) /
+            area;
+        cplBC.fa[ptr].Pn =
+            all_fun::integ(com_mod, cm_mod, fa, Yn, nsd, solutions,
+                           std::nullopt, false,
+                           MechanicalConfigurationType::reference,
+                           /* displacement_index = */ 0) /
+            area;
+
         cplBC.fa[ptr].Qo = 0.0;
         cplBC.fa[ptr].Qn = 0.0;
         #ifdef debug_calc_der_cpl_bc 
@@ -643,8 +654,15 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& soluti
       if (cplBC.initRCR) {
         auto& fa = com_mod.msh[iM].fa[iFa];
         double area = fa.area;
-        double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions, nsd-1, false, MechanicalConfigurationType::reference);
-        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions, std::nullopt, false, MechanicalConfigurationType::reference) / area;
+        double Qo =
+            all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions, nsd - 1,
+                           false, MechanicalConfigurationType::reference,
+                           /* displacement_index = */ 0);
+        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions,
+                                   std::nullopt, false,
+                                   MechanicalConfigurationType::reference,
+                                   /* displacement_index = */ 0) /
+                    area;
         cplBC.xo[ptr] = Po - (Qo * cplBC.fa[ptr].RCR.Rp);
       } else { 
         cplBC.xo[ptr] = cplBC.fa[ptr].RCR.Xo;
@@ -788,7 +806,10 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
       faceType& lFa = com_mod.msh[iM].fa[iFa];
       Vector<double> sA(com_mod.tnNo);
       sA = 1.0;
-      double area = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false, consts::MechanicalConfigurationType::reference);
+      double area =
+          all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false,
+                         consts::MechanicalConfigurationType::reference,
+                         /* displacement_index = */ 0);
       baf_ini_ns::bc_ini(com_mod, cm_mod, eq.bc[iBc], lFa, solutions);
 
       int ptr = bc.cplBCptr;
@@ -838,10 +859,12 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
               com_mod.eq[com_mod.cplBC.equationIndex].s;
           cplBC.fa[ptr].Qo = all_fun::integ(
               com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo, equation_offset,
-              solutions, equation_offset + nsd - 1, false, cfg_o);
+              solutions, equation_offset + nsd - 1, false, cfg_o,
+              equation_offset);
           cplBC.fa[ptr].Qn = all_fun::integ(
               com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn, equation_offset,
-              solutions, equation_offset + nsd - 1, false, cfg_n);
+              solutions, equation_offset + nsd - 1, false, cfg_n,
+              equation_offset);
 
           cplBC.fa[ptr].Po = 0.0;
           cplBC.fa[ptr].Pn = 0.0;
@@ -853,12 +876,14 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
           cplBC.fa[ptr].Po =
               all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yo,
                              equation_offset + nsd, solutions, std::nullopt,
-                             false, MechanicalConfigurationType::reference) /
+                             false, MechanicalConfigurationType::reference,
+                             /* displacement_index = */ 0) /
               area;
           cplBC.fa[ptr].Pn =
               all_fun::integ(com_mod, cm_mod, com_mod.msh[iM].fa[iFa], Yn,
                              equation_offset + nsd, solutions, std::nullopt,
-                             false, MechanicalConfigurationType::reference) /
+                             false, MechanicalConfigurationType::reference,
+                             /* displacement_index = */ 0) /
               area;
 
           cplBC.fa[ptr].Qo = 0.0;
@@ -1422,7 +1447,9 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoNb, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, eNoNb, Nx, nV, solutions,
+               consts::MechanicalConfigurationType::reference,
+               /* displacement_index = */ 0);
       double Jac = utils::norm(nV);
       nV = nV / Jac;
       double w = lFa.w(g) * Jac;
@@ -1572,37 +1599,43 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
        
        //h(0) = lBc.g;
 
-       double Q_3D = all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions,
-                                    eq.s+nsd-1, false,
-                                    consts::MechanicalConfigurationType::reference);
+       double Q_3D = all_fun::integ(
+           com_mod, cm_mod, lFa, Yn, eq.s, solutions, eq.s + nsd - 1, false,
+           consts::MechanicalConfigurationType::reference,
+           /* displacement_index = */ 0);
 
-         
-         h(0) = lBc.g;
-         //h(0) = lBc.g - lBc.r * std::abs(Q_3D);
-         
-         // Backflow kinetic energy correction: when backflow is detected
-         // (Q < 0), subtract the face-averaged dynamic pressure to further
-         // reduce the applied traction and damp the incoming flow.
-         if (Q_3D < 0.0) {
-           int iM = lFa.iM;
-           int cDmn_local = all_fun::domain(com_mod, com_mod.msh[iM], cEq, lFa.gE(0));
-           double rho  = eq.dmn[cDmn_local].prop.at(
-               consts::PhysicalProperyType::fluid_density);
-           double beta = eq.dmn[cDmn_local].prop.at(
-               consts::PhysicalProperyType::backflow_stab);
-           double A   = lFa.area;
-           if (A > 0.0) {
-             double u_n = Q_3D / A;  // face-averaged normal velocity (< 0)
-             h(0) -= 0.5 * beta * rho * u_n * u_n;
-           }
-         }     
-        } else if (utils::btest(lBc.bType,iBC_res)) {
-       h(0) = lBc.r * all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions, eq.s+nsd-1, false, consts::MechanicalConfigurationType::reference);
+       h(0) = lBc.g;
+       // h(0) = lBc.g - lBc.r * std::abs(Q_3D);
 
-     } else if (utils::btest(lBc.bType,iBC_std)) {
+       // Backflow kinetic energy correction: when backflow is detected
+       // (Q < 0), subtract the face-averaged dynamic pressure to further
+       // reduce the applied traction and damp the incoming flow.
+       if (Q_3D < 0.0) {
+         int iM = lFa.iM;
+         int cDmn_local =
+             all_fun::domain(com_mod, com_mod.msh[iM], cEq, lFa.gE(0));
+         double rho = eq.dmn[cDmn_local].prop.at(
+             consts::PhysicalProperyType::fluid_density);
+         double beta = eq.dmn[cDmn_local].prop.at(
+             consts::PhysicalProperyType::backflow_stab);
+         double A = lFa.area;
+         if (A > 0.0) {
+           double u_n = Q_3D / A; // face-averaged normal velocity (< 0)
+           h(0) -= 0.5 * beta * rho * u_n * u_n;
+         }
+       }
+
+     } else if (utils::btest(lBc.bType, iBC_res)) {
+       h(0) = lBc.r *
+              all_fun::integ(com_mod, cm_mod, lFa, Yn, eq.s, solutions,
+                             eq.s + nsd - 1, false,
+                             consts::MechanicalConfigurationType::reference,
+                             /* displacement_index = */ 0);
+
+     } else if (utils::btest(lBc.bType, iBC_std)) {
        h(0) = lBc.g;
 
-     } else if (utils::btest(lBc.bType,iBC_ustd)) {
+     } else if (utils::btest(lBc.bType, iBC_ustd)) {
        h = lBc.gt.value(com_mod.time);
 
      } else {
@@ -1723,7 +1756,9 @@ void set_bc_rbnl(ComMod& com_mod, const faceType& lFa, const RobinBoundaryCondit
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, eNoN, Nx, nV, solutions,
+               consts::MechanicalConfigurationType::reference,
+               /* displacement_index = */ 0);
       double Jac = utils::norm(nV);
       nV  = nV / Jac;
       double w = lFa.w(g) * Jac; 
@@ -2005,7 +2040,9 @@ void set_bc_trac_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, cons
     for (int g = 0; g < lFa.nG; g++) {
       Vector<double> nV(nsd);
       auto Nx = lFa.Nx.slice(g);
-      nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
+      nn::gnnb(com_mod, lFa, e, g, nsd, nsd - 1, eNoN, Nx, nV, solutions,
+               consts::MechanicalConfigurationType::reference,
+               /* displacement_index = */ 0);
       double Jac = utils::norm(nV);
       double w = lFa.w(g)*Jac;
       N = lFa.N.col(g);

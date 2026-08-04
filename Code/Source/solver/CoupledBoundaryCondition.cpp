@@ -321,12 +321,12 @@ void CoupledBoundaryCondition::compute_flowrates(ComMod& com_mod, const CmMod& c
     const unsigned int equation_offset =
         com_mod.eq[com_mod.cplBC.equationIndex].s;
 
-    Qo_ =
-        all_fun::integ(com_mod, cm_mod, *face_, Yo, equation_offset, solutions,
-                       equation_offset + nsd - 1, false, flowrate_cfg_o_);
-    Qn_ =
-        all_fun::integ(com_mod, cm_mod, *face_, Yn, equation_offset, solutions,
-                       equation_offset + nsd - 1, false, flowrate_cfg_n_);
+    Qo_ = all_fun::integ(com_mod, cm_mod, *face_, Yo, equation_offset,
+                         solutions, equation_offset + nsd - 1, false,
+                         flowrate_cfg_o_, equation_offset);
+    Qn_ = all_fun::integ(com_mod, cm_mod, *face_, Yn, equation_offset,
+                         solutions, equation_offset + nsd - 1, false,
+                         flowrate_cfg_n_, equation_offset);
 
     if (has_cap_) {
         const auto [Qo_cap, Qn_cap] =
@@ -355,10 +355,12 @@ void CoupledBoundaryCondition::compute_pressures(ComMod& com_mod, const CmMod& c
         com_mod.eq[com_mod.cplBC.equationIndex].s;
 
     Po_ = all_fun::integ(com_mod, cm_mod, *face_, Yo, equation_offset + nsd,
-                         solutions, std::nullopt, false, flowrate_cfg_o_) /
+                         solutions, std::nullopt, false, flowrate_cfg_o_,
+                         equation_offset) /
           area;
     Pn_ = all_fun::integ(com_mod, cm_mod, *face_, Yn, equation_offset + nsd,
-                         solutions, std::nullopt, false, flowrate_cfg_n_) /
+                         solutions, std::nullopt, false, flowrate_cfg_n_,
+                         equation_offset) /
           area;
 }
 
