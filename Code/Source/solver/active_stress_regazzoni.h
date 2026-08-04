@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef ACTIVE_STRESS_MEAN_FIELD_H
-#define ACTIVE_STRESS_MEAN_FIELD_H
+#ifndef ACTIVE_STRESS_REGAZZONI_H
+#define ACTIVE_STRESS_REGAZZONI_H
 
 #include "active_stress.h"
 
@@ -40,10 +40,10 @@
  * 1. [Regazzoni, Dede', Quarteroni (2020)](https://doi.org/10.1371/journal.pcbi.1008294)
  * 2. [F. Regazzoni, cardiac-activation reference implementation](https://github.com/FrancescoRegazzoni/cardiac-activation)
  */
-class MeanFieldActiveStress : public ActiveStress {
+class RegazzoniActiveStress : public ActiveStress {
 public:
   /// Model label, used for factory registration and XML selection.
-  static inline const std::string label = "MeanFieldActiveStress";
+  static inline const std::string label = "Regazzoni";
 
   /// @name State vector layout
   /// @{
@@ -88,7 +88,7 @@ public:
    * solver.xml must instead use the stress unit of the simulation's mechanical
    * configuration.
    *
-   * All parameters are required. A complete @c MeanFieldActiveStress parameter block
+   * All parameters are required. A complete @c Regazzoni parameter block
    * containing every parameter must be provided in solver.xml. Any value may be changed to
    * use a different calibration, but omitting a parameter causes a parse error;
    * the registered reference value is not used as an automatic default.
@@ -122,7 +122,7 @@ public:
   /**
    * @brief Constructor.
    */
-  MeanFieldActiveStress() : ActiveStress(n_state_variables) {}
+  RegazzoniActiveStress() : ActiveStress(n_state_variables) {}
 
   /**
    * @brief Construct an instance of model parameters.

@@ -37,7 +37,7 @@ directional weights as the NashPanfilov slab case.
 
 ```
 <Active_stress>
-  <Model>MeanFieldActiveStress</Model>
+  <Model>Regazzoni</Model>
   <Directional_distribution>
     <Fiber_direction> 0.7 </Fiber_direction>
     <Sheet_direction> 0.2 </Sheet_direction>

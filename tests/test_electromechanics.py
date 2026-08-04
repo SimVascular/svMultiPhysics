@@ -28,6 +28,6 @@ def test_slab(n_proc):
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=1)
 
 
-def test_slab_MeanFieldActiveStress(n_proc):
-    test_folder = "slab_MeanFieldActiveStress"
+def test_slab_regazzoni(n_proc):
+    test_folder = "slab_Regazzoni"
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max=1)
