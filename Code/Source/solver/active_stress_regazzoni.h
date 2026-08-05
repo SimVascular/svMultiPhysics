@@ -6,6 +6,8 @@
 
 #include "active_stress.h"
 
+#include <array>
+
 /**
  * @brief Mean-field active stress model (implements the RDQ20-MF formulation).
  *
@@ -173,6 +175,16 @@ protected:
                                const double fiber_stretch) const override;
 
 private:
+  /// Array indexed over the four binary RU configuration variables (TL, TC, TR, CC).
+  using RUArray =
+      std::array<std::array<std::array<std::array<double, 2>, 2>, 2>, 2>;
+
+  /// Array indexed over a pair of binary state variables.
+  using BinaryPairArray = std::array<std::array<double, 2>, 2>;
+
+  /// Array of the four crossbridge moment state variables.
+  using XBArray = std::array<double, 4>;
+
   /// @name Regulatory-unit (RU) dynamics helpers
   /// @{
 
@@ -180,15 +192,15 @@ private:
    * @brief Compute the central-tropomyosin transition rate for each local RU
    * configuration.
    *
-   * Fills @p rates_T, indexed as @c rates_T[TL][TC][TR][CC], where TL, TC and TR
-   * are the binary left, central and right tropomyosin states and CC is the
-   * central troponin calcium-binding state. Each entry is the rate at which the
-   * central tropomyosin changes state for that configuration. Because the rate
-   * depends on the neighbour states TL and TR, nearest-neighbour cooperativity
-   * is retained through the tracked TL-TC-TR configuration. These rates depend
-   * only on the model parameters, not on calcium or stretch.
+   * Returns an @c RUArray where entry @c [TL][TC][TR][CC] is the rate at which
+   * the central tropomyosin changes state for that configuration. Because the
+   * rate depends on the neighbour states TL and TR, nearest-neighbour
+   * cooperativity is retained through the tracked TL-TC-TR configuration.
+   * These rates depend only on the model parameters, not on calcium or stretch.
+   *
+   * @return Central-tropomyosin transition rates, indexed @c [TL][TC][TR][CC].
    */
-  void ru_transition_rates_tropomyosin(double (&rates_T)[2][2][2][2]) const;
+  RUArray ru_transition_rates_tropomyosin() const;
 
   /**
    * @brief Advance the 16 RU-state probabilities by one forward-Euler substep.
@@ -205,16 +217,16 @@ private:
    *   indexed @c state_RU[TL][TC][TR][CC].
    */
   void ru_forward_euler_substep(double dt,
-                                const double (&rates_T)[2][2][2][2],
-                                const double (&rates_C)[2][2],
-                                double (&state_RU)[2][2][2][2]) const;
+                                const RUArray &rates_T,
+                                const BinaryPairArray &rates_C,
+                                RUArray &state_RU) const;
 
   /**
    * @brief Advance the four crossbridge moments by one implicit-Euler step.
    *
    * Computes the permissivity and the effective permissive/non-permissive
    * transition rates from the updated RU probabilities, forms the 4x4 linear
-   * system for the implicit update and solves it in place for @p state_XB.
+   * system for the implicit update, and returns the updated moments.
    *
    * @param[in] dt Outer time step [time].
    * @param[in] velocity Shortening velocity @f$-\dot{SL}/SL_0@f$ [1/time].
@@ -222,13 +234,15 @@ private:
    *   indexed @c rates_T[TL][TC][TR][CC].
    * @param[in] state_RU The updated 16 RU-state probabilities,
    *   indexed @c state_RU[TL][TC][TR][CC].
-   * @param[in,out] state_XB The four crossbridge moments, ordered
+   * @param[in] state_XB The four crossbridge moments (input), ordered
+   *   @f$[\mu_P^0, \mu_P^1, \mu_N^0, \mu_N^1]@f$.
+   * @return Updated crossbridge moments, ordered
    *   @f$[\mu_P^0, \mu_P^1, \mu_N^0, \mu_N^1]@f$.
    */
-  void xb_implicit_update(double dt, double velocity,
-                          const double (&rates_T)[2][2][2][2],
-                          const double (&state_RU)[2][2][2][2],
-                          double (&state_XB)[4]) const;
+  XBArray xb_implicit_update(double dt, double velocity,
+                             const RUArray &rates_T,
+                             const RUArray &state_RU,
+                             const XBArray &state_XB) const;
 
   /**
    * @brief Single-overlap fraction of the sarcomere at a given length.

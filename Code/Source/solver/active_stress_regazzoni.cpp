@@ -76,8 +76,7 @@ void RegazzoniActiveStress::advance_time_step_local(
   const double sarcomere_length = SL0 * fiber_stretch;
 
   // Calcium/stretch-independent central-tropomyosin transition rates.
-  double rates_T[2][2][2][2];
-  ru_transition_rates_tropomyosin(rates_T);
+  const RUArray rates_T = ru_transition_rates_tropomyosin();
 
   // Troponin transition rates rates_C[CC][TC]: the calcium-binding row (CC = 0)
   // depends on calcium and sarcomere length; the unbinding row (CC = 1) does
@@ -86,7 +85,7 @@ void RegazzoniActiveStress::advance_time_step_local(
       Koff /
       (Kd0 - alphaKd * (kd_reference_sarcomere_length - sarcomere_length)) *
       calcium;
-  double rates_C[2][2];
+  BinaryPairArray rates_C;
   rates_C[0][0] = calcium_on_rate;
   rates_C[0][1] = calcium_on_rate;
   rates_C[1][0] = Koff;
@@ -94,7 +93,7 @@ void RegazzoniActiveStress::advance_time_step_local(
 
   // Deserialize the 16 RU probabilities (entries 0-15). The crossbridge moments
   // (entries 16-19) are left untouched by this increment.
-  double state_RU[2][2][2][2];
+  RUArray state_RU;
   for (int TL = 0; TL < 2; ++TL)
     for (int TC = 0; TC < 2; ++TC)
       for (int TR = 0; TR < 2; ++TR)
@@ -113,10 +112,10 @@ void RegazzoniActiveStress::advance_time_step_local(
   // Advance the crossbridge moments (entries 16-19) from the updated RU state.
   // The velocity v = -dSL/dt / SL0 reduces to -d(lambda)/dt because SL = SL0 * lambda.
   const double velocity = -fiber_stretch_rate;
-  double state_XB[4];
+  XBArray state_XB;
   for (int i = 0; i < 4; ++i)
     state_XB[i] = state[xb_index(i)];
-  xb_implicit_update(dt, velocity, rates_T, state_RU, state_XB);
+  state_XB = xb_implicit_update(dt, velocity, rates_T, state_RU, state_XB);
 
   // Serialize the updated RU probabilities back into the state vector.
   for (int TL = 0; TL < 2; ++TL)
@@ -141,8 +140,9 @@ double RegazzoniActiveStress::compute_active_tension_local(
          fraction_single_overlap(sarcomere_length);
 }
 
-void RegazzoniActiveStress::ru_transition_rates_tropomyosin(
-    double (&rates_T)[2][2][2][2]) const {
+RegazzoniActiveStress::RUArray
+RegazzoniActiveStress::ru_transition_rates_tropomyosin() const {
+  RUArray rates_T;
   for (int TL = 0; TL < 2; ++TL)
     for (int TR = 0; TR < 2; ++TR) {
       const int permissive_neighbors = TL + TR;
@@ -159,14 +159,15 @@ void RegazzoniActiveStress::ru_transition_rates_tropomyosin(
       rates_T[TL][0][TR][0] = opening_rate / mu;
       rates_T[TL][0][TR][1] = opening_rate;
     }
+  return rates_T;
 }
 
 void RegazzoniActiveStress::ru_forward_euler_substep(
-    double dt, const double (&rates_T)[2][2][2][2],
-    const double (&rates_C)[2][2], double (&state_RU)[2][2][2][2]) const {
+    double dt, const RUArray &rates_T,
+    const BinaryPairArray &rates_C, RUArray &state_RU) const {
   // Probability fluxes from central-unit transitions.
-  double flux_TC[2][2][2][2]; // central tropomyosin
-  double flux_CC[2][2][2][2]; // central troponin
+  RUArray flux_TC; // central tropomyosin
+  RUArray flux_CC; // central troponin
   for (int TL = 0; TL < 2; ++TL)
     for (int TC = 0; TC < 2; ++TC)
       for (int TR = 0; TR < 2; ++TR)
@@ -180,8 +181,8 @@ void RegazzoniActiveStress::ru_forward_euler_substep(
   // Effective transition rates of the boundary neighbours, obtained from the
   // mean-field closure by conditioning the central-unit flux on the neighbour
   // pair state.
-  double rate_left[2][2];
-  double rate_right[2][2];
+  BinaryPairArray rate_left;
+  BinaryPairArray rate_right;
   for (int TL = 0; TL < 2; ++TL)
     for (int TC = 0; TC < 2; ++TC) {
       double flux_sum = 0.0;
@@ -210,8 +211,8 @@ void RegazzoniActiveStress::ru_forward_euler_substep(
   // TR's only neighbour is TC on its left   → rate_left[TC][TR].
   // (rate_left == rate_right numerically due to mean-field LR symmetry, so the
   // result is unchanged, but the names now match the physical convention.)
-  double flux_TL[2][2][2][2]; // left tropomyosin
-  double flux_TR[2][2][2][2]; // right tropomyosin
+  RUArray flux_TL; // left tropomyosin
+  RUArray flux_TR; // right tropomyosin
   for (int TL = 0; TL < 2; ++TL)
     for (int TC = 0; TC < 2; ++TC)
       for (int TR = 0; TR < 2; ++TR)
@@ -234,11 +235,11 @@ void RegazzoniActiveStress::ru_forward_euler_substep(
                     flux_CC[TL][TC][TR][CC] + flux_CC[TL][TC][TR][1 - CC]);
 }
 
-void RegazzoniActiveStress::xb_implicit_update(
+RegazzoniActiveStress::XBArray RegazzoniActiveStress::xb_implicit_update(
     double dt, double velocity,
-    const double (&rates_T)[2][2][2][2],
-    const double (&state_RU)[2][2][2][2],
-    double (&state_XB)[4]) const {
+    const RUArray &rates_T,
+    const RUArray &state_RU,
+    const XBArray &state_XB) const {
   // Permissivity and the permissive/non-permissive probability fluxes from the
   // updated RU state.
   double permissivity = 0.0;
@@ -290,8 +291,10 @@ void RegazzoniActiveStress::xb_implicit_update(
 
   const Eigen::Matrix<double, 4, 1> solution =
       system.colPivHouseholderQr().solve(rhs);
+  XBArray result;
   for (int i = 0; i < 4; ++i)
-    state_XB[i] = solution(i);
+    result[i] = solution(i);
+  return result;
 }
 
 double RegazzoniActiveStress::fraction_single_overlap(double sarcomere_length) const {
