@@ -20,14 +20,14 @@
  * moments with one implicit-Euler step per time step; the active tension is then
  * reconstructed from the XB first moments.
  *
- * The active tension is
+ * The returned scalar active tension is
  * @f[
- *   T_\text{act} = a_\text{XB} \, (\mu_P^1 + \mu_N^1) \, \phi(SL)\;,
+ *   \Tact = a_\text{XB} \, (\mu_P^1 + \mu_N^1) \, \phi(SL)\;,
  * @f]
  * where @f$\mu_P^1@f$ and @f$\mu_N^1@f$ are the permissive and non-permissive
  * first XB moments (state entries 17 and 19), @f$\phi(SL)@f$ is the single-overlap
- * fraction of the sarcomere at sarcomere length @f$SL = SL_0 \, \lambda@f$ (with
- * @f$\lambda@f$ the fiber stretch), and @f$a_\text{XB}@f$ is the tension
+ * fraction of the sarcomere at sarcomere length @f$SL = SL_0 \, \fiberstretch@f$
+ * (with @f$\fiberstretch@f$ the fiber stretch), and @f$a_\text{XB}@f$ is the tension
  * upscaling factor. Because @f$\mu_P^1 + \mu_N^1@f$ and @f$\phi(SL)@f$ are
  * dimensionless, @f$a_\text{XB}@f$ sets the units of the returned active tension.
  *
@@ -94,6 +94,8 @@ public:
       add_parameter("Kd0", 3.81e-4, required);
       add_parameter("alphaKd", -5.71e-4, required);
       add_parameter("SL0", 2.2, required);
+      add_parameter("ru_substep", 2.5e-2, required);
+      add_parameter("kd_reference_sarcomere_length", 2.15, required);
 
       add_parameter("r0", 0.13431, required);
       add_parameter("alpha", 25.184, required);
@@ -161,17 +163,10 @@ protected:
   /**
    * @brief Compute the scalar active tension for a single node.
    *
-   * Returns the RDQ20-MF scalar active tension
-   * @f$T_\text{act} = a_\text{XB} (\mu_P^1 + \mu_N^1) \phi(SL)@f$
-   * from the XB first moments (state entries 17 and 19) and the single-overlap
-   * fraction at @f$SL = SL_0 \lambda_f@f$. Assembly of this scalar into the
-   * continuum active stress tensor follows the existing svMultiPhysics mechanics
-   * convention; the formulation of that assembly is outside the scope of this class.
-   *
-   * @p fiber_stretch is used to compute the sarcomere length
-   * @f$SL = SL_0 \lambda_f@f$ and therefore the overlap fraction @f$\phi(SL)@f$.
-   *
-   * The returned value has the stress units of @f$a_\text{XB}@f$.
+   * Evaluates @f$\Tact@f$ as defined in the class description, using
+   * @p fiber_stretch to compute the sarcomere length
+   * @f$SL = SL_0 \, \fiberstretch@f$. The returned value has the stress
+   * units of @f$a_\text{XB}@f$.
    */
   virtual double
   compute_active_tension_local(const Vector<double> &state,
@@ -248,13 +243,6 @@ private:
 
   /// @}
 
-  /// RU forward-Euler substep size [time].
-  static constexpr double ru_substep = 2.5e-2;
-
-  /// Fixed reference sarcomere length [length] in the length-dependent dissociation
-  /// constant (distinct from the parameter SL0).
-  static constexpr double kd_reference_sarcomere_length = 2.15;
-
   /// @name RU model parameters
   /// @{
 
@@ -266,6 +254,11 @@ private:
   double Kd0;     ///< Calcium dissociation constant at reference length [calcium].
   double alphaKd; ///< Length dependence of the dissociation constant [calcium/length].
   double SL0;     ///< Reference sarcomere length [length]; maps stretch to length.
+  double ru_substep; ///< RU forward-Euler substep size [time].
+
+  /// Reference sarcomere length [length] used in the length-dependent
+  /// dissociation constant (distinct from the parameter SL0).
+  double kd_reference_sarcomere_length;
 
   double r0;     ///< Combined attachment-detachment rate at zero velocity [1/time].
   double alpha;  ///< Coefficient of |v| in r(v) = r0 + alpha * |v| [-].

@@ -150,6 +150,8 @@
         <Kd0> 3.81e-4 </Kd0>
         <alphaKd> -5.71e-4 </alphaKd>
         <SL0> 2.2 </SL0>
+        <ru_substep> 2.5e-2 </ru_substep>
+        <kd_reference_sarcomere_length> 2.15 </kd_reference_sarcomere_length>
         <r0> 0.13431 </r0>
         <alpha> 25.184 </alpha>
         <mu0_fP> 0.032653 </mu0_fP>

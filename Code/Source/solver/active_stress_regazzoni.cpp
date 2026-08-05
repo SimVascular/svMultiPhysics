@@ -24,6 +24,8 @@ void RegazzoniActiveStress::read_model_specific_parameters(
         "and can produce a zero dissociation constant at physiological "
         "sarcomere lengths).");
   SL0 = params.get_scalar("SL0");
+  ru_substep = params.get_scalar("ru_substep");
+  kd_reference_sarcomere_length = params.get_scalar("kd_reference_sarcomere_length");
 
   r0 = params.get_scalar("r0");
   alpha = params.get_scalar("alpha");
@@ -46,6 +48,8 @@ void RegazzoniActiveStress::distribute_model_specific_parameters(
   cm.bcast(cm_mod, &Kd0);
   cm.bcast(cm_mod, &alphaKd);
   cm.bcast(cm_mod, &SL0);
+  cm.bcast(cm_mod, &ru_substep);
+  cm.bcast(cm_mod, &kd_reference_sarcomere_length);
 
   cm.bcast(cm_mod, &r0);
   cm.bcast(cm_mod, &alpha);
