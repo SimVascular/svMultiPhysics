@@ -1,6 +1,4 @@
 from .conftest import run_with_reference
-import os
-import subprocess
 
 # Common folder for all tests in this file
 base_folder = "electromechanics"
@@ -24,10 +22,12 @@ fields = [
 
 
 def test_slab(n_proc):
-    test_folder = "slab"
-    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=1)
+    run_with_reference(base_folder, "slab", fields, n_proc, t_max=1,
+                       name_inp="solver_NashPanfilov.xml",
+                       name_ref="result_NashPanfilov_001.vtu")
 
 
 def test_slab_regazzoni(n_proc):
-    test_folder = "slab_Regazzoni"
-    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=1)
+    run_with_reference(base_folder, "slab", fields, n_proc, t_max=1,
+                       name_inp="solver_Regazzoni.xml",
+                       name_ref="result_Regazzoni_001.vtu")
