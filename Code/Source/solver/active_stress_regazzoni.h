@@ -159,29 +159,19 @@ protected:
                                        Vector<double> &state) const override;
 
   /**
-   * @brief Compute the PK2 active-tension coefficient for a single node.
+   * @brief Compute the scalar active tension for a single node.
    *
-   * Computes the paper tension
-   * @f$\widetilde{T}_\text{act} = a_\text{XB} (\mu_P^1 + \mu_N^1) \phi(SL)@f$
+   * Returns the RDQ20-MF scalar active tension
+   * @f$T_\text{act} = a_\text{XB} (\mu_P^1 + \mu_N^1) \phi(SL)@f$
    * from the XB first moments (state entries 17 and 19) and the single-overlap
-   * fraction at @f$SL = SL_0 \lambda_f@f$, then returns
-   * @f$\widetilde{T}_\text{act} / \lambda_f@f$.
+   * fraction at @f$SL = SL_0 \lambda_f@f$. Assembly of this scalar into the
+   * continuum active stress tensor follows the existing svMultiPhysics mechanics
+   * convention; the formulation of that assembly is outside the scope of this class.
    *
-   * The division by @f$\lambda_f@f$ is necessary because svMultiPhysics
-   * assembles the active stress as
-   * @f$\mathbf{S}_\text{act} = T_\text{code}\,\mathbf{f}_0\otimes\mathbf{f}_0@f$
-   * (second-PK), so the resulting first-PK active stress satisfies
-   * @f$\|\mathbf{P}_\text{act}\| = \widetilde{T}_\text{act}@f$, matching the
-   * paper's definition of active tension.
+   * @p fiber_stretch is used to compute the sarcomere length
+   * @f$SL = SL_0 \lambda_f@f$ and therefore the overlap fraction @f$\phi(SL)@f$.
    *
    * The returned value has the stress units of @f$a_\text{XB}@f$.
-   *
-   * @note The slab regression test uses a (0.7, 0.2, 0.1) fiber/sheet/normal
-   *   directional distribution, which is an svMultiPhysics extension of the
-   *   paper's fiber-only active stress formulation.
-   *
-   * @throws svmp::FE::InvalidArgumentException if @p fiber_stretch is zero
-   *   or near zero (degenerate/collapsed element).
    */
   virtual double
   compute_active_tension_local(const Vector<double> &state,
