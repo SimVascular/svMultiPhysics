@@ -1208,6 +1208,14 @@ svZeroDSolverInterfaceParameters::svZeroDSolverInterfaceParameters() {
   set_parameter("Initial_flows", 0.0, !required, initial_flows);
   set_parameter("Initial_pressures", 0.0, !required, initial_pressures);
 
+  // Finite-difference perturbation used for the coupled-BC tangent dP/dQ,
+  //   diff = max(rms(Q) * Finite_difference_relative_perturbation,
+  //              Finite_difference_absolute_perturbation).
+  set_parameter("Finite_difference_absolute_perturbation", 1.0e-7, !required,
+                finite_difference_absolute_perturbation);
+  set_parameter("Finite_difference_relative_perturbation", 1.0e-5, !required,
+                finite_difference_relative_perturbation);
+
   set_parameter("Configuration_file", "", required, configuration_file);
 
   set_parameter("Shared_library", "", required, shared_library);

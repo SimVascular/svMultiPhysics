@@ -1669,6 +1669,12 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
         cplBC.useSvZeroD = true;
         cplbc_type_str = eq_params->svzerodsolver_interface_parameters.coupling_type.value();
         cplBC.svzerod_solver_interface.set_data(eq_params->svzerodsolver_interface_parameters);
+        cplBC.finite_difference_absolute_perturbation =
+            eq_params->svzerodsolver_interface_parameters
+                .finite_difference_absolute_perturbation.value();
+        cplBC.finite_difference_relative_perturbation =
+            eq_params->svzerodsolver_interface_parameters
+                .finite_difference_relative_perturbation.value();
       }
 
       if (eq_params->svonedsolver_interface_parameters.defined()) {

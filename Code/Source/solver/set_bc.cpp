@@ -13,11 +13,12 @@
 #include "lhsa.h"
 #include "mat_fun.h"
 #include "nn.h"
+#include "svOneD_interface.h"
+#include "svZeroD_interface.h"
 #include "ustruct.h"
 #include "utils.h"
+#include <cstdio>
 #include <math.h>
-#include "svZeroD_interface.h"
-#include "svOneD_interface.h"
 
 namespace set_bc {
 
@@ -45,10 +46,8 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
   #endif
 
   const int iEq = com_mod.cplBC.equationIndex;
-  // NOTE: For coupling with svZeroDPlus, absTol needs to be > 1e-8 to be compatible with the default convergence tolerance of svZeroDPlus (1e-8)
-  // If this is not true, the finite difference computation of bc.r below results in zero because the perturbation is below the svZeroDPlus tolerance 
-  const double absTol = 1.0e-7;
-  const double relTol = 1.0e-5;
+  const double absTol = com_mod.cplBC.finite_difference_absolute_perturbation;
+  const double relTol = com_mod.cplBC.finite_difference_relative_perturbation;
 
   int nsd = com_mod.nsd;
   auto& eq = com_mod.eq[iEq];
@@ -758,8 +757,6 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
   const auto& Ao = solutions.old.get_acceleration();
   const auto& Yo = solutions.old.get_velocity();
   const auto& Do = solutions.old.get_displacement();
-
-  static double absTol = 1.E-8, relTol = 1.E-5;
 
   using namespace consts;
 

@@ -657,6 +657,17 @@ class CoupleGenBCParameters : public ParameterLists
 //----------------------------------
 // svZeroDSolverInterfaceParameters
 //----------------------------------
+/// @brief Parameters for coupling to the svZeroDSolver (0D lumped-parameter solver).
+///
+/// XML element: \code {.xml}
+/// <svZeroDSolver_interface>
+///   <Coupling_type> implicit </Coupling_type>
+///   <Configuration_file> svzerod_3Dcoupling.json </Configuration_file>
+///   <Shared_library> /path/to/libsvzero_interface </Shared_library>
+///   <Finite_difference_absolute_perturbation> 1.0e-7 </Finite_difference_absolute_perturbation>
+///   <Finite_difference_relative_perturbation> 1.0e-5 </Finite_difference_relative_perturbation>
+/// </svZeroDSolver_interface>
+/// \endcode
 //
 class svZeroDSolverInterfaceParameters : public ParameterLists
 {
@@ -673,6 +684,9 @@ class svZeroDSolverInterfaceParameters : public ParameterLists
 
     Parameter<double> initial_flows;
     Parameter<double> initial_pressures;
+
+    Parameter<double> finite_difference_absolute_perturbation;
+    Parameter<double> finite_difference_relative_perturbation;
 
     Parameter<std::string> shared_library;
 

@@ -828,6 +828,19 @@ class cplBCType
     consts::CplBCType schm = consts::CplBCType::cplBC_NA;
     //int schm = cplBC_NA;
 
+    /// @brief Absolute floor on the flow-rate perturbation used to
+    /// finite-difference the coupled-BC tangent dP/dQ in
+    /// \c set_bc::calc_der_cpl_bc. This is a dimensional quantity, so it must
+    /// be set consistently with the unit system of the simulation.
+    double finite_difference_absolute_perturbation = 1.0e-7;
+
+    /// @brief Flow-rate perturbation used to finite-difference the coupled-BC
+    /// tangent dP/dQ in \c set_bc::calc_der_cpl_bc, relative to the RMS coupled
+    /// flow rate. The perturbation actually applied is
+    /// \c max(rms(Q)*finite_difference_relative_perturbation,
+    /// \c finite_difference_absolute_perturbation).
+    double finite_difference_relative_perturbation = 1.0e-5;
+
     /// @brief Path to the 0D code binary file
     std::string binPath;
 
