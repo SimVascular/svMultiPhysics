@@ -58,6 +58,11 @@ static int numCoupledSrfs;
 static bool writeSvZeroD = true;
 static double svZeroDTime = 0.0;
 
+/// Directory the svZeroD output files (svZeroD_data, Q_svZeroD, P_svZeroD) are
+/// written to, set in init_svZeroD() to the simulation results directory
+/// (chnl_mod.appPath). Includes the trailing separator.
+static std::string svZeroD_output_dir = "";
+
 int num_output_steps;
 int system_size;
 int model_id;
@@ -148,7 +153,7 @@ void write_svZeroD_solution(const double* lpn_time, std::vector<double>& lpn_sol
     std::vector<std::string> variable_names;
     variable_names = interface->variable_names_;
     std::ofstream out_file;
-    out_file.open("svZeroD_data", std::ios::out | std::ios::app);
+    out_file.open(svZeroD_output_dir + "svZeroD_data", std::ios::out | std::ios::app);
     out_file<<system_size<<" ";
     for (int i = 0; i < system_size; i++) {
       out_file<<static_cast<std::string>(variable_names[i])<<" ";
@@ -156,7 +161,7 @@ void write_svZeroD_solution(const double* lpn_time, std::vector<double>& lpn_sol
     out_file<<'\n';
   } else {
     std::ofstream out_file;
-    out_file.open("svZeroD_data", std::ios::out | std::ios::app);
+    out_file.open(svZeroD_output_dir + "svZeroD_data", std::ios::out | std::ios::app);
     out_file<<*lpn_time<<" ";
     for (int i = 0; i < system_size; i++) {
       out_file<<lpn_solution[i]<<" ";
@@ -193,7 +198,8 @@ void get_coupled_QP(ComMod& com_mod, double QCoupled[], double QnCoupled[], doub
 
 void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], double P[]) {
   int nParam = 2;
-  const char* fileNames[2] = {"Q_svZeroD", "P_svZeroD"};
+  const std::string fileNames[2] = {svZeroD_output_dir + "Q_svZeroD",
+                                    svZeroD_output_dir + "P_svZeroD"};
   std::vector<std::vector<double>> R(nParam, std::vector<double>(*nSrfs));
 
   if (*nSrfs == 0) return;
@@ -226,7 +232,7 @@ void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], doubl
 // init_svZeroD
 //--------------
 //
-void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod) 
+void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod, const std::string& appPath)
 {
   using namespace consts;
   
@@ -240,6 +246,8 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod)
   auto& solver_interface = cplBC.svzerod_solver_interface;
   auto& cm = com_mod.cm;
   double dt = com_mod.dt;
+
+  svZeroD_output_dir = appPath;
 
   build_svzero_coupled_bc_idxs(com_mod);
   if (cplBC.nSvZeroD_coupled_bc == 0) {

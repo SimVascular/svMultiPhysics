@@ -163,7 +163,7 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
     }
 
     if (com_mod.cplBC.useSvZeroD) {
-      svZeroD::init_svZeroD(com_mod, cm_mod);
+      svZeroD::init_svZeroD(com_mod, cm_mod, simulation->get_chnl_mod().appPath);
     }
 
     if (com_mod.cplBC.useSvOneD) {

@@ -17,7 +17,21 @@ void get_coupled_QP(ComMod& com_mod, double QCoupled[], double QnCoupled[], doub
 
 void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], double P[]);
 
-void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod);
+/**
+ * @brief Set up the svZeroD model and its coupled boundary conditions.
+ *
+ * Builds the list of svZeroD-coupled boundaries, creates the svZeroD model
+ * from the interface data in \c com_mod.cplBC, applies the initial flows and
+ * pressures, and writes the header of the svZeroD state output file.
+ *
+ * @param[in,out] com_mod Simulation data; the coupled boundary conditions and
+ *   \c cplBC bookkeeping are initialized here.
+ * @param[in] cm_mod MPI communicator data.
+ * @param[in] appPath Directory the simulation results are written to. The
+ *   svZeroD output files (svZeroD_data, Q_svZeroD, P_svZeroD) are written
+ *   there as well.
+ */
+void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod, const std::string& appPath);
 
 void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag);
 
