@@ -36,6 +36,9 @@ void RegazzoniActiveStress::read_model_specific_parameters(
   LM = params.get_scalar("LM");
   LB = params.get_scalar("LB");
   a_XB = params.get_scalar("a_XB");
+
+  disable_force_strain_rate_feedback_ =
+      params.get_bool("Disable_force_strain_rate_feedback");
 }
 
 void RegazzoniActiveStress::distribute_model_specific_parameters(
@@ -60,6 +63,7 @@ void RegazzoniActiveStress::distribute_model_specific_parameters(
   cm.bcast(cm_mod, &LM);
   cm.bcast(cm_mod, &LB);
   cm.bcast(cm_mod, &a_XB);
+  cm.bcast(cm_mod, &disable_force_strain_rate_feedback_);
 }
 
 void RegazzoniActiveStress::init_local(Vector<double> &state) const {
@@ -111,7 +115,8 @@ void RegazzoniActiveStress::advance_time_step_local(
 
   // Advance the crossbridge moments (entries 16-19) from the updated RU state.
   // The velocity v = -dSL/dt / SL0 reduces to -d(lambda)/dt because SL = SL0 * lambda.
-  const double velocity = -fiber_stretch_rate;
+  const double velocity =
+      disable_force_strain_rate_feedback_ ? 0.0 : -fiber_stretch_rate;
   XBArray state_XB;
   for (int i = 0; i < 4; ++i)
     state_XB[i] = state[xb_index(i)];

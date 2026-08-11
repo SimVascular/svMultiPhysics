@@ -36,6 +36,13 @@
  * **References**:
  * 1. [Regazzoni, Dede', Quarteroni (2020)](https://doi.org/10.1371/journal.pcbi.1008294)
  * 2. [F. Regazzoni, cardiac-activation reference implementation](https://github.com/FrancescoRegazzoni/cardiac-activation)
+ *
+ * @note Although this model is governed by a system of ODEs, it inherits from
+ * @c ActiveStress rather than @c ActiveStressODE because it requires a customized
+ * time-stepping scheme to handle the stiffness of the model.
+ *
+ * @todo Force-strain-rate feedback requires a stabilization strategy for robust
+ * use in coupled electromechanics. This will be addressed in a follow-up PR.
  */
 class RegazzoniActiveStress : public ActiveStress {
 public:
@@ -108,6 +115,8 @@ public:
       add_parameter("LM", 1.65, required);
       add_parameter("LB", 0.18, required);
       add_parameter("a_XB", 22.894, required);
+
+      add_parameter("Disable_force_strain_rate_feedback", false, !required);
     }
   };
 
@@ -289,6 +298,11 @@ private:
   /// a_XB sets the stress unit of the returned active tension. It must be
   /// expressed in the same stress unit as the mechanical configuration.
   double a_XB;
+
+  /// Controls force–strain-rate feedback in the XB update.
+  /// - @c false (default): use @f$v = -\dot{\lambda}@f$ as shortening velocity.
+  /// - @c true: set shortening velocity to zero, disabling the feedback.
+  bool disable_force_strain_rate_feedback_ = false;
 
   /// @}
 };
