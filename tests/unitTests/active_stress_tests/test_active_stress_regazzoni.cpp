@@ -2,33 +2,29 @@
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
 #include "active_stress_regazzoni.h"
+#include "active_stress_test_helpers.h"
 #include "Vector.h"
 #include "gtest/gtest.h"
 
 #include <cmath>
 #include <numbers>
+#include <string>
 
-// Harness that exposes the protected node-local methods for direct testing.
-// No production code is modified.
-struct RegazzoniHarness : public RegazzoniActiveStress {
-  using RegazzoniActiveStress::read_model_specific_parameters;
-  using RegazzoniActiveStress::init_local;
-  using RegazzoniActiveStress::advance_time_step_local;
-  using RegazzoniActiveStress::compute_active_tension_local;
-};
-
-// Each test starts from a fresh Regazzoni model with the reference-calibration
-// parameters and a 20-state vector initialized by init_local().
+// Each test starts from a fresh RegazzoniActiveStress model with the
+// reference-calibration default parameters.
+// All calls to node-local virtual methods go through ActiveStress& — required
+// because the derived-class overrides remain protected.
 class RegazzoniActiveStressTest : public ::testing::Test {
 protected:
-  RegazzoniHarness model;
+  RegazzoniActiveStress model_concrete;
+  ActiveStress &model = model_concrete;
   Vector<double> state;
 
   void SetUp() override {
     RegazzoniActiveStress::Parameters params;
-    model.read_model_specific_parameters(params);
+    model.read_model_parameters(params);  // through ActiveStress&
     state = Vector<double>(RegazzoniActiveStress::n_state_variables);
-    model.init_local(state);
+    model.init_local(state);                       // through ActiveStress&
   }
 };
 
@@ -104,135 +100,91 @@ TEST_F(RegazzoniActiveStressTest, Initialization) {
 // ---------------------------------------------------------------------------
 // TwitchTrajectory
 //
-// Expected checkpoint values were generated from the patched Regazzoni C++
-// reference implementation (cardiac-activation, commit 26f05df) using the
-// twitch protocol above.
+// Expected checkpoint values loaded from the external CSV oracle file:
+//   tests/unitTests/reference_data/active_stress_regazzoni_twitch.csv
 //
-// The test below compares the svMultiPhysics RegazzoniActiveStress trajectory
-// against these independent reference values using a scaled tolerance of 1e-10.
+// Formulation source: Regazzoni, Dede', and Quarteroni (2020),
+//   doi:10.1371/journal.pcbi.1008294. Its S3 numerical appendix uses Forward
+//   Euler for RU dynamics and an exponential integrator for XB dynamics.
+// Oracle discretization: patched authors' C++ reference implementation
+//   (cardiac-activation, commit 26f05df), which instead uses Forward-Euler RU
+//   substeps and implicit Euler for XB dynamics. svMultiPhysics follows that
+//   C++ discretization. The oracle uses the custom raised-cosine SL protocol
+//   and forward-difference dSL/dt specified above; patch and unit-conversion
+//   details are recorded in the CSV header.
+// Values were NOT generated from svMP code.
 //
-// Active tension convention: compute_active_tension_local returns T_act [MPa]
-// directly. Oracle conversion:
-//   Ta_svMP [MPa] = Ta_oracle [kPa] / 1000
+// Active tension convention: compute_active_tension_local returns T_act [MPa].
+// CSV column layout: step, Ta, s0, s1, ..., s19. States s0..s15 are the RU
+// probabilities P(TL,TC,TR,CC), ordered by 8*TL + 4*TC + 2*TR + CC; s16..s19
+// are [mu_P^0, mu_P^1, mu_N^0, mu_N^1], matching commit 26f05df.
 // ---------------------------------------------------------------------------
 
 TEST_F(RegazzoniActiveStressTest, TwitchTrajectory) {
-  struct Checkpoint {
-    int    step;
-    double Ta;
-    double state[RegazzoniActiveStress::n_state_variables];
-  };
+  const std::string csv_path =
+      std::string(UNIT_TEST_DATA_DIR) + "/active_stress_regazzoni_twitch.csv";
+  const auto rows = load_csv(csv_path);
+  ASSERT_FALSE(rows.empty()) << "No checkpoint rows in " << csv_path;
 
-  const Checkpoint checkpoints[] = {
-    // step 0 (after first advance, t 0→1 ms)
-    { 0,
-      /* Ta [MPa] */ 2.0769853711984563e-05,
-      { 9.6940717188151537e-01, 2.6381424371446922e-02, 1.3503189084942508e-03,
-        3.4343427180013618e-05, 1.1236588180500891e-03, 2.1053600122563298e-04,
-        4.5470171062514682e-05, 6.7945663780045756e-06, 1.3503189084942508e-03,
-        3.4343427180013618e-05, 1.7672866596113026e-06, 2.9934382365957969e-08,
-        4.5470171062514682e-05, 6.7945663780045756e-06, 1.3909691878929928e-06,
-        1.6659130249734328e-07, 1.6359975630299202e-05, 3.8979760023191681e-07,
-        2.5100933115804985e-05, 5.9806222901712789e-07 } },
-    // step 30 (t 30→31 ms, Ca rising)
-    { 30,
-      /* Ta [MPa] */ 6.3170372259402953e-03,
-      { 2.6970273699972086e-01, 5.8583076955075841e-01, 9.0822857894029864e-03,
-        1.7508306386496711e-02, 3.3942021959741897e-04, 7.2968975122089169e-03,
-        9.2499470591179186e-04, 1.8566812618242029e-02, 9.0822857894029864e-03,
-        1.7508306386496711e-02, 2.5639379411841935e-04, 2.8113908594203660e-04,
-        9.2499470591179197e-04, 1.8566812618242029e-02, 2.1651243065998749e-03,
-        4.1962719530947941e-02, 6.4443780653849255e-03, 1.5352064893374559e-04,
-        6.1681286868829335e-03, 1.4693150647919565e-04 } },
-    // step 99 (t 99→100 ms, near peak tension, shortening)
-    { 99,
-      /* Ta [MPa] */ 5.2391374181279100e-02,
-      { 1.5732019324453009e-01, 2.0979293676465199e-01, 1.5974870723815159e-02,
-        1.9784652352790824e-02, 2.0467839599633408e-04, 2.7398599272003450e-03,
-        2.4988783785102964e-03, 3.3424626830984350e-02, 1.5974870723815156e-02,
-        1.9784652352790824e-02, 1.4617914198968632e-03, 1.6467290361884674e-03,
-        2.4988783785102964e-03, 3.3424626830984350e-02, 3.2887796467786577e-02,
-        4.5057995817154656e-01, 1.0031077325241487e-01, 2.1689572017283237e-03,
-        2.0243620609812121e-02, 4.0035869804356313e-04 } },
-    // step 157 (t 157→158 ms, recovery beginning)
-    { 157,
-      /* Ta [MPa] */ 6.7187773320350211e-02,
-      { 2.1301527707148393e-01, 1.3625459545317387e-01, 2.0337729296022237e-02,
-        1.3890738926677160e-02, 3.0659349196029512e-04, 1.9921891163431895e-03,
-        4.5754093405092769e-03, 3.0894774488222448e-02, 2.0337729296022233e-02,
-        1.3890738926677160e-02, 2.0494138051662127e-03, 1.4910844091695922e-03,
-        4.5754093405092769e-03, 3.0894774488222448e-02, 6.5139706850121340e-02,
-        4.4035383569971798e-01, 1.1765751937916291e-01, 2.7943518198232085e-03,
-        2.4046359000459934e-02, 5.6498445537614308e-04 } },
-    // step 299 (t 299→300 ms, late recovery)
-    { 299,
-      /* Ta [MPa] */ 2.5267281291368970e-02,
-      { 5.7786285533782400e-01, 1.8384587957630338e-01, 1.8534599275919040e-02,
-        6.9531290368771486e-03, 8.4191991802026170e-04, 2.7210981345073609e-03,
-        5.1543170439206937e-03, 1.7849846441656804e-02, 1.8534599275919040e-02,
-        6.9531290368771486e-03, 7.4140640985424593e-04, 3.3804681545467166e-04,
-        5.1543170439206937e-03, 1.7849846441656804e-02, 3.1002750836783124e-02,
-        1.0566225937450435e-01, 3.0689769447400983e-02, 7.6141392250467059e-04,
-        1.7209805063539828e-02, 4.4935336072742248e-04 } },
-    // step 599 (t 599→600 ms, end of twitch)
-    { 599,
-      /* Ta [MPa] */ 2.9208300264620501e-03,
-      { 7.4515028798360583e-01, 2.1148442974808412e-01, 7.5213053864882388e-03,
-        2.1353736195492204e-03, 1.0350098623700802e-03, 2.9375949455035725e-03,
-        1.5060379230515584e-03, 4.2755884037494587e-03, 7.5213053864882388e-03,
-        2.1353736195492204e-03, 7.5955625924313899e-05, 2.1596502712894121e-05,
-        1.5060379230515584e-03, 4.2755884037494587e-03, 2.1927274111406695e-03,
-        6.2257872549735345e-03, 1.5693229395868540e-03, 3.7391150797739044e-05,
-        4.2612557861625277e-03, 1.0152993604368515e-04 } },
-  };
+  // Each CSV row: [step, Ta, s0..s19] — 22 columns.
+  constexpr size_t n_state = RegazzoniActiveStress::n_state_variables;
+  constexpr size_t expected_cols = 2 + n_state;
+  for (size_t r = 0; r < rows.size(); ++r)
+    ASSERT_EQ(rows[r].size(), expected_cols)
+        << "CSV row " << r << " has wrong column count";
 
-  int ck_idx = 0;
-  const int n_checkpoints = sizeof(checkpoints) / sizeof(checkpoints[0]);
+  size_t ck_idx = 0;
 
-  for (int step = 0; step < N_steps; ++step) {
-    const double t_start = step * dt;
-    const double lam     = lam_at(t_start);
-    const double dlam_dt = (lam_at(t_start + dt) - lam) / dt;
-    const double ca      = calcium_at(t_start);
+  auto on_step = [&](int step, const Vector<double> &s, double Ta) {
+    if (ck_idx < rows.size() && static_cast<int>(rows[ck_idx][0]) == step) {
+      const double expected_Ta = rows[ck_idx][1];
 
-    model.advance_time_step_local(t_start, dt, ca, lam, dlam_dt, state);
+      EXPECT_NEAR(Ta, expected_Ta, scaled_tol(expected_Ta))
+          << "step " << step << ", active tension";
 
-    if (ck_idx < n_checkpoints && checkpoints[ck_idx].step == step) {
-      const Checkpoint &ck = checkpoints[ck_idx];
-      const double Ta = model.compute_active_tension_local(state, lam);
-
-      for (unsigned int s = 0; s < RegazzoniActiveStress::n_state_variables; ++s)
-        EXPECT_NEAR(state[s], ck.state[s], scaled_tol(ck.state[s]))
-          << "step " << step << ", state[" << s << "]";
-
-      EXPECT_NEAR(Ta, ck.Ta, scaled_tol(ck.Ta))
-        << "step " << step << ", active tension";
+      for (unsigned int sv = 0; sv < n_state; ++sv)
+        EXPECT_NEAR(s[sv], rows[ck_idx][2 + sv], scaled_tol(rows[ck_idx][2 + sv]))
+            << "step " << step << ", state[" << sv << "]";
 
       ++ck_idx;
     }
-  }
+  };
+
+  run_active_stress_trajectory(
+      model, state, N_steps, dt,
+      [](int step) { return calcium_at(step * dt); },
+      [](int step) { return lam_at(step * dt); },
+      [](int step) {
+        const double lam0 = lam_at(step * dt);
+        const double lam1 = lam_at((step + 1) * dt);
+        return (lam1 - lam0) / dt;
+      },
+      on_step);
+
+  EXPECT_EQ(ck_idx, rows.size()) << "not all oracle checkpoints were reached";
 }
 
 // ---------------------------------------------------------------------------
 
 TEST_F(RegazzoniActiveStressTest, RUProbabilityConservation) {
-  for (int step = 0; step < N_steps; ++step) {
-    const double t_start = step * dt;
-    const double lam     = lam_at(t_start);
-    const double dlam_dt = (lam_at(t_start + dt) - lam) / dt;
-    const double ca      = calcium_at(t_start);
+  run_active_stress_trajectory(
+      model, state, N_steps, dt,
+      [](int step) { return calcium_at(step * dt); },
+      [](int step) { return lam_at(step * dt); },
+      [](int step) {
+        const double lam0 = lam_at(step * dt);
+        const double lam1 = lam_at((step + 1) * dt);
+        return (lam1 - lam0) / dt;
+      },
+      [](int step, const Vector<double> &s, double Ta) {
+        for (unsigned int i = 0; i < RegazzoniActiveStress::n_state_variables; ++i)
+          EXPECT_TRUE(std::isfinite(s[i]))
+              << "step " << step << ", state[" << i << "]";
+        EXPECT_TRUE(std::isfinite(Ta)) << "step " << step << ", active tension";
 
-    model.advance_time_step_local(t_start, dt, ca, lam, dlam_dt, state);
-
-    for (unsigned int i = 0; i < RegazzoniActiveStress::n_state_variables; ++i)
-      EXPECT_TRUE(std::isfinite(state[i])) << "step " << step << ", state[" << i << "]";
-
-    const double Ta = model.compute_active_tension_local(state, lam);
-    EXPECT_TRUE(std::isfinite(Ta)) << "step " << step << ", active tension";
-
-    double ru_sum = 0.0;
-    for (unsigned int i = 0; i < RegazzoniActiveStress::n_ru_states; ++i)
-      ru_sum += state[i];
-    EXPECT_NEAR(ru_sum, 1.0, 1e-10) << "step " << step;
-  }
+        double ru_sum = 0.0;
+        for (unsigned int i = 0; i < RegazzoniActiveStress::n_ru_states; ++i)
+          ru_sum += s[i];
+        EXPECT_NEAR(ru_sum, 1.0, 1e-10) << "step " << step;
+      });
 }

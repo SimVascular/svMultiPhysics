@@ -54,6 +54,17 @@ public:
       add_parameter("calcium_crit", 1.0, required);
       add_parameter("eta_T", 1.0, required);
     }
+
+    /// Set a scalar parameter by name with full double precision.
+    ///
+    /// @c double_parameters is @c protected in @ref ActiveStressModelParameters
+    /// and accessible here because this class is a derived class.
+    /// Throws @c std::out_of_range if @p label is not a registered parameter.
+    void set(const std::string &label, double value) {
+      auto &p = double_parameters.at(label);
+      p.value_    = value;
+      p.value_set_ = true;
+    }
   };
 
   /**

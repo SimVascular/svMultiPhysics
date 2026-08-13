@@ -2,64 +2,66 @@
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
 #include "active_stress_nash_panfilov.h"
+#include "active_stress_test_helpers.h"
 #include "Vector.h"
 #include "gtest/gtest.h"
 
 #include <cmath>
+#include <string>
 
 // ---------------------------------------------------------------------------
 // References
 //   [1] Nash & Panfilov (2004)
 //       doi:10.1016/j.pbiomolbio.2004.01.016
-//       Original Nash-Panfilov active stress ODE.
+//       Introduces the active-tension ODE in Eq. 22c, driven by a
+//       non-dimensional excitation variable V, with the piecewise rate switch
+//       in Eq. 23.
 //   [2] Goktepe & Kuhl (2009)
 //       doi:10.1007/s00466-009-0434-z
-//       Gompertz sigmoid for epsilon(Ca); see Figure 3.
+//       Eq. 46 reformulates the Nash-Panfilov ODE using dimensional
+//       transmembrane potential Phi and resting potential Phi_r:
+//         dT/dt = epsilon(Phi) * (k_sigma * (Phi - Phi_r) - T)
+//       Eq. 47 replaces the piecewise switch from [1] with a smooth Gompertz
+//       rate function:
+//         epsilon(Phi) = eps0 + (eps_inf - eps0)*exp(-exp(-xi*(Phi - Phi_bar)))
+//       Both equations are expressed in terms of transmembrane potential Phi,
+//       not calcium; see Figure 3.
 //
-// The implementation uses the Nash-Panfilov active-stress ODE [1] with the
-// Gompertz form for epsilon(Ca) from [2], using calcium as the activation
-// variable in place of membrane potential u.
+// svMultiPhysics follows the Goktepe-Kuhl form but substitutes intracellular
+// calcium concentration Ca for Phi. The parameter-role mapping is
+//   eta_T        <-> k_sigma       calcium_rest <-> Phi_r
+//   xi_T         <-> xi            calcium_crit <-> Phi_bar.
+// This calcium substitution is an svMultiPhysics-specific adaptation not
+// documented in [1] or [2].
 // ---------------------------------------------------------------------------
 
-// Harness that exposes the protected node-local methods and parameter members for direct testing.
-// No production code is modified.
-struct NashPanfilovHarness : public NashPanfilov {
-  using NashPanfilov::read_model_specific_parameters;
-  using NashPanfilov::init_local;
-  using NashPanfilov::advance_time_step_local;
-  using NashPanfilov::compute_active_tension_local;
-  // Expose protected parameter members so the fixture can assign slab values
-  using NashPanfilov::epsilon_0;
-  using NashPanfilov::epsilon_i;
-  using NashPanfilov::xi_T;
-  using NashPanfilov::eta_T;
-  using NashPanfilov::calcium_rest;
-  using NashPanfilov::calcium_crit;
-};
-
-// Each test starts from a fresh NashPanfilov model with slab-calibration parameters
-// and a 1-state vector initialized by init_local().
+// Each test starts from a fresh NashPanfilov model with slab-calibration
+// parameters configured through NashPanfilov::Parameters.
+// All calls to node-local virtual methods go through ActiveStress& — required
+// because the derived-class overrides remain protected.
 class NashPanfilovActiveStressTest : public ::testing::Test {
 protected:
-  NashPanfilovHarness model;
+  NashPanfilov model_concrete;
+  ActiveStress &model = model_concrete;
   Vector<double> state;
 
   void SetUp() override {
     NashPanfilov::Parameters params;
-    model.read_model_specific_parameters(params);
-
-    // All six NashPanfilov::Parameters defaults are 1.0 (confirmed in the header).
+    // All six NashPanfilov::Parameters defaults are 1.0.
     // Override with calibration values from
-    // tests/cases/electromechanics/slab/solver_NashPanfilov.xml
-    model.epsilon_0    = 0.1;
-    model.epsilon_i    = 1.0;
-    model.xi_T         = 4.0e3;
-    model.eta_T        = 1.0e2;
-    model.calcium_rest = 1.25e-4;
-    model.calcium_crit = 8.0e-4;
+    // tests/cases/electromechanics/slab/solver_NashPanfilov.xml.
+    // NashPanfilov::Parameters::set() sets value_ directly for full double
+    // precision and marks value_set_ = true so check_required() passes.
+    params.set("epsilon_0",    0.1);
+    params.set("epsilon_i",    1.0);
+    params.set("xi_T",         4.0e3);
+    params.set("eta_T",        1.0e2);
+    params.set("calcium_rest", 1.25e-4);
+    params.set("calcium_crit", 8.0e-4);
+    model.read_model_parameters(params);  // through ActiveStress&
 
     state = Vector<double>(1);
-    model.init_local(state);
+    model.init_local(state);                       // through ActiveStress&
   }
 };
 
@@ -110,35 +112,56 @@ TEST_F(NashPanfilovActiveStressTest, Initialization) {
 // ConstantCalciumEquilibrium
 //
 // Closed-form discrete oracle (Oracle A): under constant Ca = Ca_const, the
-// Forward Euler discretization of the Nash-Panfilov ODE [1], using the
-// Gompertz epsilon(Ca) from [2], has the exact solution
+// Forward Euler discretization of the svMultiPhysics calcium adaptation of
+// Eqs. 46--47 in [2] has the exact solution
 //
 //   T^n = beta * (1 - (1 - alpha*dt)^n)
 //
 // where
-//   alpha = epsilon(Ca_const)     [Gompertz sigmoid [2] Fig. 3, at Ca_const]
+//   alpha = epsilon(Ca_const)     [calcium-adapted Gompertz rate from [2]]
 //   beta  = eta_T * (Ca_const - calcium_rest)    [equilibrium tension T_eq]
 //
 // Derived from the model equations independently of svMP code; any bug in
 // getf produces disagreement with the closed form.
+//
+// The Gompertz epsilon and equilibrium tension are recomputed here from the
+// fixture parameter values (read via the public getter get_scalar), so the
+// oracle does not depend on accessing protected model members.
 // ---------------------------------------------------------------------------
 
 TEST_F(NashPanfilovActiveStressTest, ConstantCalciumEquilibrium) {
+  // Read parameters back through the public Parameters getter to build the
+  // oracle — no protected-member access needed.
+  NashPanfilov::Parameters params;
+  params.set("epsilon_0",    0.1);
+  params.set("epsilon_i",    1.0);
+  params.set("xi_T",         4.0e3);
+  params.set("eta_T",        1.0e2);
+  params.set("calcium_rest", 1.25e-4);
+  params.set("calcium_crit", 8.0e-4);
+
   constexpr double Ca_const = cmax;  // 9e-4 mM: T_eq > 0, alpha*dt ≈ 0.56 (stable)
 
-  const double alpha = model.epsilon_0
-      + (model.epsilon_i - model.epsilon_0)
-        * std::exp(-std::exp(-model.xi_T * (Ca_const - model.calcium_crit)));
-  const double beta = model.eta_T * (Ca_const - model.calcium_rest);
+  const double eps0     = params.get_scalar("epsilon_0");
+  const double epsi     = params.get_scalar("epsilon_i");
+  const double xi_T_val = params.get_scalar("xi_T");
+  const double eta_T_val= params.get_scalar("eta_T");
+  const double ca_rest  = params.get_scalar("calcium_rest");
+  const double ca_crit  = params.get_scalar("calcium_crit");
+
+  const double alpha_ep = eps0 + (epsi - eps0)
+      * std::exp(-std::exp(-xi_T_val * (Ca_const - ca_crit)));
+  const double beta = eta_T_val * (Ca_const - ca_rest);
 
   double prev = state[0];
 
   for (int step = 0; step < 30; ++step) {
     const double t_start = step * dt;
+    // Through ActiveStress& — required for public access.
     model.advance_time_step_local(t_start, dt, Ca_const, 1.0, 0.0, state);
 
     const int n = step + 1;
-    const double T_exact = beta * (1.0 - std::pow(1.0 - alpha * dt, n));
+    const double T_exact = beta * (1.0 - std::pow(1.0 - alpha_ep * dt, n));
 
     EXPECT_NEAR(state[0], T_exact, scaled_tol(T_exact))
         << "step " << n << ", closed-form oracle";
@@ -153,73 +176,60 @@ TEST_F(NashPanfilovActiveStressTest, ConstantCalciumEquilibrium) {
 // ---------------------------------------------------------------------------
 // TwitchTrajectory
 //
-// Expected checkpoint values were generated from an independent Python
-// Forward-Euler implementation of the Nash-Panfilov active-stress ODE [1],
-// using the Gompertz epsilon(Ca) from [2] and the slab-calibration parameters.
-// The Ca transient is the double-exponential defined above. The Python script
-// is not committed; checkpoint values are hardcoded here as the oracle.
+// Expected checkpoint values loaded from the external CSV oracle file:
+//   tests/unitTests/reference_data/active_stress_nash_panfilov_twitch.csv
+//
+// Oracle: independent Python Forward-Euler evaluation of the svMultiPhysics
+// calcium adaptation of Eqs. 46--47 in [2], with slab-calibration parameters.
+// Values were NOT generated from svMP code.
 //
 // Active tension convention: compute_active_tension_local returns state[0]
-// directly; the two should agree to machine precision.
+// directly; both should agree to machine precision.
 // ---------------------------------------------------------------------------
 
 TEST_F(NashPanfilovActiveStressTest, TwitchTrajectory) {
-  struct Checkpoint { int step; double Ta; };
+  const std::string csv_path =
+      std::string(UNIT_TEST_DATA_DIR) + "/active_stress_nash_panfilov_twitch.csv";
+  const auto rows = load_csv(csv_path);
+  ASSERT_FALSE(rows.empty()) << "No checkpoint rows in " << csv_path;
 
-  const Checkpoint checkpoints[] = {
-    // step 0 (t 0→1 ms; Ca < Ca_rest → T_act slightly negative)
-    { 0, -2.5000016231668646e-04 },
-    // step 10 (t 10→11 ms; Ca onset, T_act still rising from negative)
-    { 10, -1.7154741323343946e-03 },
-    // step 30 (t 30→31 ms; Ca rising, T_act strongly activated)
-    { 30,  6.9827793067955765e-02 },
-    // step 60 (t 60→61 ms; Ca and T_act both declining from peak)
-    { 60,  6.8649748835108812e-02 },
-    // step 99 (t 99→100 ms; Ca recovering, T_act declining)
-    { 99,  4.0335891448303234e-02 },
-    // step 149 (t 149→150 ms; late recovery)
-    { 149, 1.5642696949229866e-02 },
-    // step 199 (t 199→200 ms; near-baseline end)
-    { 199, 4.3146770362862460e-03 },
-  };
+  size_t ck_idx = 0;
 
-  int ck_idx = 0;
-  const int n_checkpoints = static_cast<int>(sizeof(checkpoints) / sizeof(checkpoints[0]));
+  auto on_step = [&](int step, const Vector<double> &s, double Ta) {
+    if (ck_idx < rows.size() && static_cast<int>(rows[ck_idx][0]) == step) {
+      const double expected_Ta = rows[ck_idx][1];
 
-  for (int step = 0; step < N_steps; ++step) {
-    const double t_start = step * dt;
-    const double ca      = calcium_at(t_start);
-
-    model.advance_time_step_local(t_start, dt, ca, 1.0, 0.0, state);
-
-    if (ck_idx < n_checkpoints && checkpoints[ck_idx].step == step) {
-      const Checkpoint &ck = checkpoints[ck_idx];
-      const double Ta = model.compute_active_tension_local(state, 1.0);
-
-      EXPECT_NEAR(state[0], ck.Ta, scaled_tol(ck.Ta))
+      EXPECT_NEAR(s[0], expected_Ta, scaled_tol(expected_Ta))
           << "step " << step << ", state[0]";
-      EXPECT_NEAR(Ta, ck.Ta, scaled_tol(ck.Ta))
+      EXPECT_NEAR(Ta, expected_Ta, scaled_tol(expected_Ta))
           << "step " << step << ", compute_active_tension_local";
-      EXPECT_NEAR(Ta, state[0], 1e-15)
+      EXPECT_NEAR(Ta, s[0], 1e-15)
           << "step " << step << ", compute_active_tension_local == state[0]";
 
       ++ck_idx;
     }
-  }
-  EXPECT_EQ(ck_idx, n_checkpoints) << "not all oracle checkpoints were reached";
+  };
+
+  run_active_stress_trajectory(
+      model, state, N_steps, dt,
+      [](int step) { return calcium_at(step * dt); },
+      [](int /*step*/) { return 1.0; },
+      [](int /*step*/) { return 0.0; },
+      on_step);
+
+  EXPECT_EQ(ck_idx, rows.size()) << "not all oracle checkpoints were reached";
 }
 
 // ---------------------------------------------------------------------------
 
 TEST_F(NashPanfilovActiveStressTest, FiniteValues) {
-  for (int step = 0; step < N_steps; ++step) {
-    const double t_start = step * dt;
-    const double ca      = calcium_at(t_start);
-
-    model.advance_time_step_local(t_start, dt, ca, 1.0, 0.0, state);
-
-    EXPECT_TRUE(std::isfinite(state[0])) << "step " << step << ", state[0]";
-    EXPECT_TRUE(std::isfinite(model.compute_active_tension_local(state, 1.0)))
-        << "step " << step << ", active tension";
-  }
+  run_active_stress_trajectory(
+      model, state, N_steps, dt,
+      [](int step) { return calcium_at(step * dt); },
+      [](int /*step*/) { return 1.0; },
+      [](int /*step*/) { return 0.0; },
+      [](int step, const Vector<double> &s, double Ta) {
+        EXPECT_TRUE(std::isfinite(s[0])) << "step " << step << ", state[0]";
+        EXPECT_TRUE(std::isfinite(Ta))   << "step " << step << ", active tension";
+      });
 }
