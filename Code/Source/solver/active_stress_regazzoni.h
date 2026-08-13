@@ -11,16 +11,22 @@
 /**
  * @brief Mean-field active stress model (implements the RDQ20-MF formulation).
  *
- * This class implements the mean-field RDQ20-MF sarcomere model of cardiomyocyte
- * force generation of Regazzoni, Dede', and Quarteroni (2020), described in [1]
- * and validated against the authors' reference implementation [2]. The node-local state has 20 variables: 16
- * regulatory-unit (RU) probabilities (entries 0-15) describing the
- * tropomyosin/troponin configuration of a triplet of neighbouring units, and 4
- * crossbridge (XB) moments (entries 16-19). The RU probabilities are advanced
- * with an explicit forward-Euler substepping scheme — for every macro time step,
- * a number of smaller sub-steps are taken to update the RU states — and the XB
- * moments with one implicit-Euler step per time step; the active tension is then
- * reconstructed from the XB first moments.
+ * This class implements the mean-field RDQ20-MF sarcomere formulation of
+ * cardiomyocyte force generation presented by Regazzoni, Dede', and Quarteroni
+ * (2020) [1]. The node-local state has 20 variables: 16 regulatory-unit (RU)
+ * probabilities (entries 0-15) describing the tropomyosin/troponin
+ * configuration of a triplet of neighbouring units, and 4 crossbridge (XB)
+ * moments (entries 16-19).
+ *
+ * The numerical discretization follows the authors' C++ reference
+ * implementation at commit 26f05df [2]: the RU probabilities are advanced
+ * with explicit forward-Euler substeps and the XB moments with one
+ * implicit-Euler step per outer time step. This distinction is important:
+ * Supporting Information S3 of [1] also uses Forward Euler for the RU dynamics,
+ * but specifies an exponential integrator for the XB dynamics. Thus the
+ * implicit-Euler XB update used here is sourced from the pinned reference C++
+ * implementation, not from the paper's S3 numerical scheme. Active tension is
+ * reconstructed from the updated XB first moments.
  *
  * The returned scalar active tension is
  * @f[
@@ -35,7 +41,7 @@
  *
  * **References**:
  * 1. [Regazzoni, Dede', Quarteroni (2020)](https://doi.org/10.1371/journal.pcbi.1008294)
- * 2. [F. Regazzoni, cardiac-activation reference implementation](https://github.com/FrancescoRegazzoni/cardiac-activation)
+ * 2. [F. Regazzoni, cardiac-activation reference implementation, commit 26f05df](https://github.com/FrancescoRegazzoni/cardiac-activation/tree/26f05df28891df7b3c69f16bb136cdced6b63c4d)
  *
  * @note Although this model is governed by a system of ODEs, it inherits from
  * @c ActiveStress rather than @c ActiveStressODE because it requires a customized

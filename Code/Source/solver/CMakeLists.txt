@@ -409,6 +409,14 @@ if(ENABLE_UNIT_TEST)
     pthread   # link pthread on ubuntu20
   )
 
+  # Expose the path to the unit-test reference-data directory as a compile-time
+  # constant. CMAKE_CURRENT_SOURCE_DIR is Code/Source/solver/ regardless of
+  # where cmake is invoked, so the path is stable under the ExternalProject build.
+  # Named generically so future ionic-model tests can share the same directory.
+  target_compile_definitions(run_all_unit_tests PRIVATE
+    UNIT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../tests/unitTests/reference_data"
+  )
+
   # gtest_discover_tests(runUnitTest)
   add_test(NAME all_unit_tests COMMAND run_all_unit_tests)
 

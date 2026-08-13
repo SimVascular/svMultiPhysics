@@ -9,8 +9,15 @@
 /**
  * @brief Nash-Panfilov active stress model.
  *
- * This class implements the Nash-Panfilov active stress model [1], with the
- * modifications introduced by Goktepe and Kuhl [2].
+ * This class implements a calcium-driven svMultiPhysics adaptation of the
+ * Nash-Panfilov active-stress model [1] as reformulated by Goktepe and Kuhl
+ * [2]. Nash and Panfilov introduced an active-tension ODE driven by a
+ * non-dimensional excitation variable, with a piecewise rate switch. Goktepe
+ * and Kuhl rewrote that ODE in terms of dimensional transmembrane potential
+ * and resting potential (Eq. 46) and replaced the piecewise switch by a smooth
+ * Gompertz rate function (Eq. 47). svMultiPhysics makes the additional,
+ * svMultiPhysics-specific substitution of intracellular calcium for
+ * transmembrane potential.
  *
  * The model equations are the following:
  * @f[ \begin{aligned}
@@ -22,9 +29,13 @@
  * \end{aligned} @f]
  * where @f$\eta_\text{T}@f$, @f$\calcium_\text{rest}@f$,
  * @f$\calcium_\text{crit}@f$, @f$\varepsilon_0@f$, @f$\varepsilon_i@f$ and
- * @f$\xi_T@f$ are user-defined model parameters. The function
- * @f$\varepsilon(\calcium)@f$ is a sigmoidal-shaped calcium-dependent time
- * constant (see Figure 3 in [2] for more details).
+ * @f$\xi_T@f$ are user-defined model parameters. Relative to Eqs. 46--47 of
+ * [2], @f$\eta_T@f$ plays the role of @f$k_\sigma@f$,
+ * @f$\calcium_\text{rest}@f$ the role of @f$\Phi_r@f$, @f$\xi_T@f$ the role
+ * of @f$\xi@f$, and @f$\calcium_\text{crit}@f$ the role of @f$\bar\Phi@f$.
+ * The function @f$\varepsilon(\calcium)@f$ is a sigmoidal calcium-dependent
+ * relaxation-rate coefficient. Figure 3 in [2] illustrates the corresponding
+ * potential-dependent function before the svMultiPhysics calcium substitution.
  *
  * @note The sensitivity of the model to calcium is controlled by the paramter
  * @f$\eta_\text{T}@f$, which has the same units of active tension over calcium.
@@ -53,6 +64,17 @@ public:
       add_parameter("calcium_rest", 1.0, required);
       add_parameter("calcium_crit", 1.0, required);
       add_parameter("eta_T", 1.0, required);
+    }
+
+    /// Set a scalar parameter by name with full double precision.
+    ///
+    /// @c double_parameters is @c protected in @ref ActiveStressModelParameters
+    /// and accessible here because this class is a derived class.
+    /// Throws @c std::out_of_range if @p label is not a registered parameter.
+    void set(const std::string &label, double value) {
+      auto &p = double_parameters.at(label);
+      p.value_    = value;
+      p.value_set_ = true;
     }
   };
 
@@ -109,11 +131,11 @@ protected:
   /// @name Model parameters.
   /// @{
 
-  /// Minimum time constant @f$\varepsilon_0@f$. The unit of measure for this
+  /// Minimum relaxation rate @f$\varepsilon_0@f$. The unit of measure for this
   /// parameter must be the inverse of the unit of measure for time.
   double epsilon_0;
 
-  /// Maximum time constant @f$\varepsilon_i@f$. The unit of measure for this
+  /// Maximum relaxation rate @f$\varepsilon_i@f$. The unit of measure for this
   /// parameter must be the inverse of the unit of measure for time.
   double epsilon_i;
 
@@ -126,8 +148,8 @@ protected:
   /// this value.
   double calcium_rest;
 
-  /// Critical calcium value, i.e. the threshold value for switching between
-  /// minimum and maximum time constant.
+  /// Critical calcium value, i.e. the center of the transition between the
+  /// minimum and maximum relaxation rates.
   double calcium_crit;
 
   /// @f$\eta_T@f$. The unit of measure for this parameter must be the ratio of

@@ -201,6 +201,17 @@ public:
    */
   bool needs_fiber_stretch_rate() const { return needs_fiber_stretch_rate_; }
 
+  /**
+   * @brief Configure model-specific parameters from a parameter object.
+   *
+   * Calls @ref read_model_specific_parameters through the polymorphic
+   * interface, allowing callers that hold only an @c ActiveStress& reference
+   * to configure the model without knowing the concrete type.
+   */
+  void read_model_parameters(const ActiveStressModelParameters &params) {
+    read_model_specific_parameters(params);
+  }
+
 protected:
   /**
    * @brief Backing store for @ref needs_fiber_stretch.
@@ -229,7 +240,7 @@ protected:
    * processes.
    */
   virtual void distribute_model_specific_parameters(const CmMod &cm_mod,
-                                                    const cmType &cm) = 0;
+                                                     const cmType &cm) = 0;
 
   /**
    * @brief Initialize the state vector for a single node.

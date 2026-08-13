@@ -101,12 +101,15 @@ addressed separately.
 The active tension fields in `result_Regazzoni_001.vtu` were validated
 node-by-node against the C++ reference implementation at commit
 [`26f05df`](https://github.com/FrancescoRegazzoni/cardiac-activation/commit/26f05df28891df7b3c69f16bb136cdced6b63c4d).
-Both implementations use the same implicit-Euler XB scheme, so agreement is
-to machine precision (~1e-16 relative error). The comparison evaluates `T_act`
-from the svMultiPhysics output directly against the reference C++ active tension,
-using the calcium and sarcomere-length inputs from this one-step test. The remaining
-fields in the VTU serve as integrated svMultiPhysics regression references and were
-not independently validated by the RDQ20-MF reference code.
+Both implementations use the reference C++ code's implicit-Euler XB scheme, so
+agreement is to machine precision (~1e-16 relative error). This discretization
+should be distinguished from Supporting Information S3 of [6], which specifies
+an exponential integrator for the XB dynamics; svMultiPhysics follows the pinned
+C++ implementation instead. The comparison evaluates `T_act` from the
+svMultiPhysics output directly against the reference C++ active tension, using
+the calcium and sarcomere-length inputs from this one-step test. The remaining
+fields in the VTU serve as integrated svMultiPhysics regression references and
+were not independently validated by the RDQ20-MF reference code.
 
 ## References
 
