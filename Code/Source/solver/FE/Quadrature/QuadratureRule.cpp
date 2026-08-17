@@ -11,18 +11,13 @@
 
 #include "FE/Common/FEException.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <numeric>
 #include <string>
 #include <utility>
 
 namespace svmp::FE::quadrature {
 namespace {
-
-constexpr double inactive_coordinate_tolerance = 1.0e-12;
-constexpr double measure_validation_tolerance = 1.0e-12;
 
 constexpr int reference_dimension(svmp::CellFamily family) noexcept
 {
@@ -80,7 +75,7 @@ void validate_point(
         }
         if (component >=
             static_cast<std::size_t>(dimension) &&
-            std::abs(point[component]) > inactive_coordinate_tolerance) {
+            point[component] != 0.0) {
             svmp::raise<InvalidArgumentException>(
                 std::string{
                     "QuadratureRule: quadrature point has a nonzero inactive "
@@ -90,9 +85,7 @@ void validate_point(
     }
 }
 
-void validate_weights(
-    const std::vector<double>& weights,
-    double reference_cell_measure)
+void validate_weights(const std::vector<double>& weights)
 {
     for (std::size_t point_index = 0;
          point_index < weights.size();
@@ -105,14 +98,6 @@ void validate_weights(
                 std::to_string(point_index));
         }
     }
-
-    const double weight_sum =
-        std::accumulate(weights.begin(), weights.end(), 0.0);
-    const double scale = std::max(1.0, std::abs(reference_cell_measure));
-    const double error_budget = measure_validation_tolerance * scale;
-    svmp::check<InvalidArgumentException>(
-        std::abs(weight_sum - reference_cell_measure) <= error_budget,
-        "QuadratureRule: weights do not reproduce the reference-cell measure");
 }
 
 } // namespace
@@ -165,7 +150,7 @@ QuadratureRule::QuadratureRule(
             point_index);
     }
 
-    validate_weights(weights_, reference_cell_measure());
+    validate_weights(weights_);
 }
 
 } // namespace svmp::FE::quadrature

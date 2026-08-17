@@ -6,7 +6,7 @@
 
 /**
  * @file QuadratureRule.h
- * @brief Validated reference-space quadrature rule value type.
+ * @brief Reference-space quadrature rule value type.
  * @ingroup FE_Quadrature
  */
 
@@ -23,8 +23,8 @@
  * @f]
  * Supported families are Point, Line, Triangle, Quad, Tetra, Hex, and Wedge.
  * The family determines the reference dimension and cell measure. Generating
- * code is responsible for establishing declared polynomial exactness through
- * analytic moment tests.
+ * code is responsible for verifying weight normalization and declared
+ * polynomial exactness through analytic moment tests.
  */
 
 #include "FE/Common/Types.h"
@@ -54,13 +54,12 @@ using QuadPoint = math::Vector<double, 3>;
  *
  * - a supported cell family and non-negative polynomial exactness;
  * - at least one point and the same number of points and weights;
- * - finite coordinates and weights, with inactive coordinates equal to zero
- *   within the coordinate tolerance; and
- * - weights whose sum matches the reference-cell measure within the scaled
- *   measure tolerance.
+ * - finite coordinates and weights; and
+ * - inactive coordinates equal to zero.
  *
  * Points may be duplicate or outside the reference cell, and weights may be
- * zero or negative. Construction does not verify polynomial exactness.
+ * zero or negative. Construction does not verify weight normalization or
+ * polynomial exactness.
  */
 class QuadratureRule final {
 public:

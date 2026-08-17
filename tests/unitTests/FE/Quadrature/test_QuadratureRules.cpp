@@ -45,15 +45,6 @@ void expect_invalid_argument_with_message(
     }
 }
 
-double weight_sum(const QuadratureRule& rule)
-{
-    double sum = 0.0;
-    for (const double weight : rule.weights()) {
-        sum += weight;
-    }
-    return sum;
-}
-
 } // namespace
 
 TEST(QuadPointContract, UsesFixedSizeFEVectorRepresentation)
@@ -189,90 +180,56 @@ TEST(QuadratureRuleValidation, RejectsMalformedStorageAndNonfiniteValues)
         "quadrature weight must be finite at point index 0");
 }
 
-TEST(QuadratureRuleValidation, RejectsNonzeroInactiveCoordinates)
+TEST(QuadratureRuleValidation, RejectsAnyNonzeroInactiveCoordinate)
 {
+    constexpr double nonzero = std::numeric_limits<double>::epsilon();
+
     expect_invalid_argument_with_message(
-        [] {
+        [nonzero] {
             (void)QuadratureRule(
-                svmp::CellFamily::Point, 0, {{1.0e-4, 0.0, 0.0}}, {1.0});
+                svmp::CellFamily::Point, 0, {{nonzero, 0.0, 0.0}}, {1.0});
         },
         "nonzero inactive coordinate at point index 0");
     expect_invalid_argument_with_message(
-        [] {
+        [nonzero] {
             (void)QuadratureRule(
-                svmp::CellFamily::Line, 1, {{0.0, 1.0e-4, 0.0}}, {2.0});
+                svmp::CellFamily::Line, 1, {{0.0, -nonzero, 0.0}}, {2.0});
         },
         "nonzero inactive coordinate at point index 0");
 }
 
-TEST(QuadratureRuleValidation, EnforcesReferenceCellMeasureButAllowsNegativeWeights)
+TEST(QuadratureRuleValidation, AllowsZeroAndNegativeWeights)
 {
-    expect_invalid_argument_with_message(
-        [] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Triangle,
-                1,
-                {{0.25, 0.25, 0.0}},
-                {1.0});
-        },
-        "weights do not reproduce the reference-cell measure");
-
     const QuadratureRule rule(
         svmp::CellFamily::Triangle,
         0,
-        {{1.0 / 3.0, 1.0 / 3.0, 0.0}, {0.2, 0.2, 0.0}},
-        {-0.25, 0.75});
+        {{1.0 / 3.0, 1.0 / 3.0, 0.0},
+         {0.2, 0.2, 0.0},
+         {0.1, 0.1, 0.0}},
+        {-0.25, 0.0, 0.75});
     EXPECT_LT(rule.weight(0), 0.0);
-    EXPECT_DOUBLE_EQ(
-        weight_sum(rule),
-        rule.reference_cell_measure());
+    EXPECT_DOUBLE_EQ(rule.weight(1), 0.0);
 }
 
-TEST(
-    QuadratureRuleValidation,
-    AllowsExteriorActiveCoordinatesAndChecksInactiveTolerance)
+TEST(QuadratureRuleValidation, AllowsExteriorActiveCoordinates)
 {
-    constexpr double accepted_offset = 1.0e-14;
     const QuadratureRule rule(
         svmp::CellFamily::Line,
         0,
-        {{2.0, accepted_offset, 0.0}},
+        {{2.0, 0.0, 0.0}},
         {2.0});
     EXPECT_DOUBLE_EQ(rule.point(0)[0], 2.0);
-    EXPECT_DOUBLE_EQ(rule.point(0)[1], accepted_offset);
-
-    constexpr double rejected_offset = 1.0e-10;
-    expect_invalid_argument_with_message(
-        [rejected_offset] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Line,
-                0,
-                {{2.0, rejected_offset, 0.0}},
-                {2.0});
-        },
-        "nonzero inactive coordinate");
 }
 
-TEST(QuadratureRuleValidation, AppliesConstructionWeightTolerance)
+TEST(QuadratureRuleValidation, LeavesWeightNormalizationToGenerators)
 {
-    constexpr double accepted_offset = 1.0e-14;
     const QuadratureRule rule(
         svmp::CellFamily::Triangle,
         0,
         {{0.25, 0.25, 0.0}},
-        {0.5 + accepted_offset});
-    EXPECT_DOUBLE_EQ(rule.weight(0), 0.5 + accepted_offset);
-
-    constexpr double rejected_offset = 1.0e-10;
-    expect_invalid_argument_with_message(
-        [rejected_offset] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Triangle,
-                0,
-                {{0.25, 0.25, 0.0}},
-                {0.5 + rejected_offset});
-        },
-        "weights do not reproduce the reference-cell measure");
+        {1.0});
+    EXPECT_DOUBLE_EQ(rule.weight(0), 1.0);
+    EXPECT_DOUBLE_EQ(rule.reference_cell_measure(), 0.5);
 }
 
 TEST(QuadratureRuleContract, SupportsValueSemanticsAndReadOnlyQueries)
