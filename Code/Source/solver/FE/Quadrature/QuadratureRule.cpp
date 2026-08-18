@@ -102,6 +102,8 @@ void validate_weights(const std::vector<double>& weights)
 
 } // namespace
 
+QuadratureRule::~QuadratureRule() = default;
+
 int QuadratureRule::dimension() const noexcept
 {
     const int dimension = reference_dimension(cell_family_);

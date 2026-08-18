@@ -6,7 +6,7 @@
 
 /**
  * @file QuadratureRule.h
- * @brief Reference-space quadrature rule value type.
+ * @brief Abstract base for reference-space quadrature rules.
  * @ingroup FE_Quadrature
  */
 
@@ -21,10 +21,22 @@
  *   \int_{\hat K} f(\hat x)\,d\hat x
  *   \approx \sum_q w_q f(\hat x_q).
  * @f]
- * Supported families are Point, Line, Triangle, Quad, Tetra, Hex, and Wedge.
- * The family determines the reference dimension and cell measure. Generating
- * code is responsible for verifying weight normalization and declared
- * polynomial exactness through analytic moment tests.
+ * Supported families use these canonical reference cells:
+ *
+ * | Family   | Reference cell                                      | Measure |
+ * |----------|-----------------------------------------------------|---------|
+ * | Point    | @f$(0,0,0)@f$                                      | @f$1@f$ |
+ * | Line     | @f$[-1,1]@f$                                       | @f$2@f$ |
+ * | Triangle | @f$\{(x,y):x,y\geq0,\ x+y\leq1\}@f$             | @f$1/2@f$ |
+ * | Quad     | @f$[-1,1]^2@f$                                     | @f$4@f$ |
+ * | Tetra    | @f$\{(x,y,z):x,y,z\geq0,\ x+y+z\leq1\}@f$       | @f$1/6@f$ |
+ * | Hex      | @f$[-1,1]^3@f$                                     | @f$8@f$ |
+ * | Wedge    | unit triangle @f$\times[-1,1]@f$                   | @f$1@f$ |
+ *
+ * The family therefore determines both reference dimension and cell measure.
+ * Quadrature points are not required to lie inside the reference cell.
+ * Generating code is responsible for verifying weight normalization and
+ * declared polynomial exactness through analytic moment tests.
  */
 
 #include "FE/Common/Types.h"
@@ -48,7 +60,7 @@ namespace svmp::FE::quadrature {
 using QuadPoint = math::Vector<double, 3>;
 
 /**
- * @brief Owning quadrature rule on a canonical reference cell.
+ * @brief Owning abstract base for quadrature rules on canonical reference cells.
  *
  * Construction requires:
  *
@@ -61,21 +73,10 @@ using QuadPoint = math::Vector<double, 3>;
  * zero or negative. Construction does not verify weight normalization or
  * polynomial exactness.
  */
-class QuadratureRule final {
+class QuadratureRule {
 public:
-    /**
-     * @brief Construct a rule from complete point and weight data.
-     * @param family Reference-cell family; also determines dimension and measure.
-     * @param polynomial_exactness Declared total-degree polynomial exactness.
-     * @param points Ordered reference coordinates.
-     * @param weights Weights paired with @p points.
-     * @throws InvalidArgumentException If a construction requirement is violated.
-     */
-    explicit QuadratureRule(
-        svmp::CellFamily family,
-        int polynomial_exactness,
-        std::vector<QuadPoint> points,
-        std::vector<double> weights);
+    /** @brief Enable polymorphic destruction of concrete quadrature rules. */
+    virtual ~QuadratureRule() = 0;
 
     /** @brief Return the number of point/weight pairs. */
     std::size_t num_points() const noexcept { return points_.size(); }
@@ -111,6 +112,26 @@ public:
 
     /** @brief Return the reference-cell measure derived from cell_family(). */
     double reference_cell_measure() const noexcept;
+
+protected:
+    /**
+     * @brief Initialize a concrete rule from complete point and weight data.
+     * @param family Reference-cell family; also determines dimension and measure.
+     * @param polynomial_exactness Declared total-degree polynomial exactness.
+     * @param points Ordered reference coordinates.
+     * @param weights Weights paired with @p points.
+     * @throws InvalidArgumentException If a construction requirement is violated.
+     */
+    explicit QuadratureRule(
+        svmp::CellFamily family,
+        int polynomial_exactness,
+        std::vector<QuadPoint> points,
+        std::vector<double> weights);
+
+    QuadratureRule(const QuadratureRule&) = default;
+    QuadratureRule(QuadratureRule&&) noexcept = default;
+    QuadratureRule& operator=(const QuadratureRule&) = default;
+    QuadratureRule& operator=(QuadratureRule&&) noexcept = default;
 
 private:
     svmp::CellFamily cell_family_;          ///< Canonical reference topology.
