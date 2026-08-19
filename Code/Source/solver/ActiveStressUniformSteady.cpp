@@ -3,14 +3,14 @@
 
 #include "ActiveStressUniformSteady.h"
 
-void UniformSteadyActiveStress::read_model_specific_parameters(
+void ActiveStressUniformSteady::read_model_specific_parameters(
     const ActiveStressModelParameters &params) {
   value = params.get_scalar("Value");
 }
 
-void UniformSteadyActiveStress::distribute_model_specific_parameters(
+void ActiveStressUniformSteady::distribute_model_specific_parameters(
     const CmMod &cm_mod, const cmType &cm) {
   cm.bcast(cm_mod, &value);
 }
 
-REGISTER_ACTIVE_STRESS_MODEL("UniformSteady", UniformSteadyActiveStress);
+REGISTER_ACTIVE_STRESS_MODEL("UniformSteady", ActiveStressUniformSteady);

@@ -15,7 +15,7 @@
  * @f]
  * where @f$g@f$ is a user-defined constant value.
  */
-class UniformSteadyActiveStress : public ActiveStress {
+class ActiveStressUniformSteady : public ActiveStress {
 public:
   /// Model label.
   static inline const std::string label = "UniformSteady";
@@ -33,7 +33,7 @@ public:
   /**
    * @brief Constructor.
    */
-  UniformSteadyActiveStress() : ActiveStress(/* n_states = */ 0) {}
+  ActiveStressUniformSteady() : ActiveStress(/* n_states = */ 0) {}
 
   /**
    * @brief Construct an instance of model parameters.
@@ -78,7 +78,8 @@ protected:
    * @brief Compute the active tension for a single node.
    */
   virtual double
-  compute_active_tension_local(const Vector<double> &state) const override {
+  compute_active_tension_local(const Vector<double> &state,
+                               const double fiber_stretch) const override {
     return value;
   }
 

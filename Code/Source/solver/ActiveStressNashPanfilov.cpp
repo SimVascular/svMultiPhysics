@@ -3,7 +3,7 @@
 
 #include "ActiveStressNashPanfilov.h"
 
-void NashPanfilov::read_model_specific_parameters(
+void ActiveStressNashPanfilov::read_model_specific_parameters(
     const ActiveStressModelParameters &params) {
   ActiveStressODE::read_model_specific_parameters(params);
 
@@ -15,8 +15,8 @@ void NashPanfilov::read_model_specific_parameters(
   eta_T = params.get_scalar("eta_T");
 }
 
-void NashPanfilov::distribute_model_specific_parameters(const CmMod &cm_mod,
-                                                        const cmType &cm) {
+void ActiveStressNashPanfilov::distribute_model_specific_parameters(
+    const CmMod &cm_mod, const cmType &cm) {
   ActiveStressODE::distribute_model_specific_parameters(cm_mod, cm);
 
   cm.bcast(cm_mod, &epsilon_0);
@@ -27,12 +27,14 @@ void NashPanfilov::distribute_model_specific_parameters(const CmMod &cm_mod,
   cm.bcast(cm_mod, &eta_T);
 }
 
-void NashPanfilov::init_local(Vector<double> &state) const { state[0] = 0.0; }
+void ActiveStressNashPanfilov::init_local(Vector<double> &state) const {
+  state[0] = 0.0;
+}
 
-Vector<double> NashPanfilov::getf(const double t, const Vector<double> &state,
-                                  const double calcium,
-                                  const double fiber_stretch,
-                                  const double fiber_stretch_rate) const {
+Vector<double>
+ActiveStressNashPanfilov::getf(const double t, const Vector<double> &state,
+                               const double calcium, const double fiber_stretch,
+                               const double fiber_stretch_rate) const {
   Vector<double> f(1);
 
   const double epsilon =
@@ -44,9 +46,9 @@ Vector<double> NashPanfilov::getf(const double t, const Vector<double> &state,
   return f;
 }
 
-double
-NashPanfilov::compute_active_tension_local(const Vector<double> &state) const {
+double ActiveStressNashPanfilov::compute_active_tension_local(
+    const Vector<double> &state, const double fiber_stretch) const {
   return state[0];
 }
 
-REGISTER_ACTIVE_STRESS_MODEL("NashPanfilov", NashPanfilov);
+REGISTER_ACTIVE_STRESS_MODEL("NashPanfilov", ActiveStressNashPanfilov);
