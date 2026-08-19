@@ -181,9 +181,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a4cb59dee7cb131f7ea568a2f3f59b4dd" id="r_a4cb59dee7cb131f7ea568a2f3f59b4dd"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_nash_panfilov.html#a4cb59dee7cb131f7ea568a2f3f59b4dd">getf</a> (const double t, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state, const double calcium, const double fiber_stretch, const double fiber_stretch_rate) const override</td></tr>
 <tr class="memdesc:a4cb59dee7cb131f7ea568a2f3f59b4dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the rate of change in the state variables.  <br /></td></tr>
 <tr class="separator:a4cb59dee7cb131f7ea568a2f3f59b4dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade2a3f4f27bfba7592923cc3db5ecc93" id="r_ade2a3f4f27bfba7592923cc3db5ecc93"><td class="memItemLeft" align="right" valign="top">virtual double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_nash_panfilov.html#ade2a3f4f27bfba7592923cc3db5ecc93">compute_active_tension_local</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state) const override</td></tr>
-<tr class="memdesc:ade2a3f4f27bfba7592923cc3db5ecc93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension for a single node.  <br /></td></tr>
-<tr class="separator:ade2a3f4f27bfba7592923cc3db5ecc93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc7d6b99e75256a64eba97125b876b55" id="r_adc7d6b99e75256a64eba97125b876b55"><td class="memItemLeft" align="right" valign="top">virtual double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_nash_panfilov.html#adc7d6b99e75256a64eba97125b876b55">compute_active_tension_local</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state, const double fiber_stretch) const override</td></tr>
+<tr class="memdesc:adc7d6b99e75256a64eba97125b876b55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension for a single node.  <br /></td></tr>
+<tr class="separator:adc7d6b99e75256a64eba97125b876b55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_active_stress_o_d_e"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_active_stress_o_d_e')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_active_stress_o_d_e.html">ActiveStressODE</a></td></tr>
 <tr class="memitem:aa5283ccc4061ae705aa1049ce5f60be2 inherit pro_methods_class_active_stress_o_d_e" id="r_aa5283ccc4061ae705aa1049ce5f60be2"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_active_stress_o_d_e.html#aa5283ccc4061ae705aa1049ce5f60be2">advance_time_step_local</a> (const double t, const double dt, const double calcium, const double fiber_stretch, const double fiber_stretch_rate, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state) const override</td></tr>
 <tr class="memdesc:aa5283ccc4061ae705aa1049ce5f60be2 inherit pro_methods_class_active_stress_o_d_e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advance in time for a single node.  <br /></td></tr>
@@ -287,8 +287,8 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ade2a3f4f27bfba7592923cc3db5ecc93" name="ade2a3f4f27bfba7592923cc3db5ecc93"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade2a3f4f27bfba7592923cc3db5ecc93">&#9670;&#160;</a></span>compute_active_tension_local()</h2>
+<a id="adc7d6b99e75256a64eba97125b876b55" name="adc7d6b99e75256a64eba97125b876b55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc7d6b99e75256a64eba97125b876b55">&#9670;&#160;</a></span>compute_active_tension_local()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -300,8 +300,18 @@ Additional Inherited Members</h2></td></tr>
           <td class="memname">double NashPanfilov::compute_active_tension_local </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>state</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>fiber_stretch</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
@@ -313,7 +323,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Compute the active tension for a single node. </p>
 
-<p>Implements <a class="el" href="class_active_stress.html#ad21b2ad355d1847373c272ec16c1a1c8">ActiveStress</a>.</p>
+<p>Implements <a class="el" href="class_active_stress.html#a3e171e3877e22a73731b4cd090c4740a">ActiveStress</a>.</p>
 
 </div>
 </div>

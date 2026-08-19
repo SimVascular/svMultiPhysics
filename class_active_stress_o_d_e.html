@@ -183,9 +183,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a0ad5d13d79edda4638e377f137362226 inherit pro_methods_class_active_stress" id="r_a0ad5d13d79edda4638e377f137362226"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_active_stress.html#a0ad5d13d79edda4638e377f137362226">init_local</a> (<a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state) const =0</td></tr>
 <tr class="memdesc:a0ad5d13d79edda4638e377f137362226 inherit pro_methods_class_active_stress"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the state vector for a single node.  <br /></td></tr>
 <tr class="separator:a0ad5d13d79edda4638e377f137362226 inherit pro_methods_class_active_stress"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad21b2ad355d1847373c272ec16c1a1c8 inherit pro_methods_class_active_stress" id="r_ad21b2ad355d1847373c272ec16c1a1c8"><td class="memItemLeft" align="right" valign="top">virtual double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_active_stress.html#ad21b2ad355d1847373c272ec16c1a1c8">compute_active_tension_local</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state) const =0</td></tr>
-<tr class="memdesc:ad21b2ad355d1847373c272ec16c1a1c8 inherit pro_methods_class_active_stress"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension for a single node.  <br /></td></tr>
-<tr class="separator:ad21b2ad355d1847373c272ec16c1a1c8 inherit pro_methods_class_active_stress"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e171e3877e22a73731b4cd090c4740a inherit pro_methods_class_active_stress" id="r_a3e171e3877e22a73731b4cd090c4740a"><td class="memItemLeft" align="right" valign="top">virtual double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_active_stress.html#a3e171e3877e22a73731b4cd090c4740a">compute_active_tension_local</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state, const double fiber_stretch) const =0</td></tr>
+<tr class="memdesc:a3e171e3877e22a73731b4cd090c4740a inherit pro_methods_class_active_stress"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension for a single node.  <br /></td></tr>
+<tr class="separator:a3e171e3877e22a73731b4cd090c4740a inherit pro_methods_class_active_stress"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -226,14 +226,14 @@ Additional Inherited Members</h2></td></tr>
   \dv{\astressstate}{t} &amp;=
     \mathbf{F}_\text{AS}(t, \astressstate, \calcium, \fiberstretch,
                          \fiberstretchrate)\;, \\
-  \Tact &amp;= \Tact(\astressstate)\;.
+  \Tact &amp;= \Tact(\astressstate, \fiberstretch)\;.
 \end{aligned} \]
 </p>
 <h3><a class="anchor" id="autotoc_md4"></a>
 Numerical methods</h3>
 <p>The ODE system is advanced with one of the methods described in <a class="el" href="class_active_stress_o_d_e.html#a50c04932ee4e1f5f255faf106de1740d">ODESolver</a>. After that, the active tension is computed for every node \(i\) as:  </p><p class="formulaDsp">
 \[
-  {\Tact}_{i}^{n+1} = \Tact(\astressstate_i^{n+1})\;.
+  {\Tact}_{i}^{n+1} = \Tact(\astressstate_i^{n+1}, \fiberstretch_i^{n+1})\;.
 \]
 </p>
 <h3><a class="anchor" id="autotoc_md5"></a>

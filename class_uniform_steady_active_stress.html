@@ -178,9 +178,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a3b83523f49dcc1160ed8ec24d16fe080" id="r_a3b83523f49dcc1160ed8ec24d16fe080"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_uniform_steady_active_stress.html#a3b83523f49dcc1160ed8ec24d16fe080">advance_time_step_local</a> (const double t, const double dt, const double calcium, const double fiber_stretch, const double fiber_stretch_rate, <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state) const override</td></tr>
 <tr class="memdesc:a3b83523f49dcc1160ed8ec24d16fe080"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advance in time for a single node.  <br /></td></tr>
 <tr class="separator:a3b83523f49dcc1160ed8ec24d16fe080"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb9e4a73761519457f92890fec876cd5" id="r_adb9e4a73761519457f92890fec876cd5"><td class="memItemLeft" align="right" valign="top">virtual double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_uniform_steady_active_stress.html#adb9e4a73761519457f92890fec876cd5">compute_active_tension_local</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state) const override</td></tr>
-<tr class="memdesc:adb9e4a73761519457f92890fec876cd5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension for a single node.  <br /></td></tr>
-<tr class="separator:adb9e4a73761519457f92890fec876cd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9561e16cf2ab88a0d3e1a37b5aac149f" id="r_a9561e16cf2ab88a0d3e1a37b5aac149f"><td class="memItemLeft" align="right" valign="top">virtual double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_uniform_steady_active_stress.html#a9561e16cf2ab88a0d3e1a37b5aac149f">compute_active_tension_local</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;state, const double fiber_stretch) const override</td></tr>
+<tr class="memdesc:a9561e16cf2ab88a0d3e1a37b5aac149f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension for a single node.  <br /></td></tr>
+<tr class="separator:a9561e16cf2ab88a0d3e1a37b5aac149f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -316,8 +316,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="adb9e4a73761519457f92890fec876cd5" name="adb9e4a73761519457f92890fec876cd5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adb9e4a73761519457f92890fec876cd5">&#9670;&#160;</a></span>compute_active_tension_local()</h2>
+<a id="a9561e16cf2ab88a0d3e1a37b5aac149f" name="a9561e16cf2ab88a0d3e1a37b5aac149f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9561e16cf2ab88a0d3e1a37b5aac149f">&#9670;&#160;</a></span>compute_active_tension_local()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -329,8 +329,18 @@ Additional Inherited Members</h2></td></tr>
           <td class="memname">virtual double UniformSteadyActiveStress::compute_active_tension_local </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>state</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>fiber_stretch</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
@@ -342,7 +352,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Compute the active tension for a single node. </p>
 
-<p>Implements <a class="el" href="class_active_stress.html#ad21b2ad355d1847373c272ec16c1a1c8">ActiveStress</a>.</p>
+<p>Implements <a class="el" href="class_active_stress.html#a3e171e3877e22a73731b4cd090c4740a">ActiveStress</a>.</p>
 
 </div>
 </div>
