@@ -153,7 +153,7 @@ void write_svZeroD_solution(const double* lpn_time, std::vector<double>& lpn_sol
     std::vector<std::string> variable_names;
     variable_names = interface->variable_names_;
     std::ofstream out_file;
-    out_file.open(svZeroD_output_dir + "svZeroD_data", std::ios::out | std::ios::app);
+    out_file.open(svZeroD_output_dir + "svZeroD_data", std::ios::out);
     out_file<<system_size<<" ";
     for (int i = 0; i < system_size; i++) {
       out_file<<static_cast<std::string>(variable_names[i])<<" ";
