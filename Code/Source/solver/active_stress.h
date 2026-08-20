@@ -225,9 +225,13 @@ protected:
 
   /**
    * @brief Compute the active tension for a single node.
+   *
+   * @param[in] state State vector for a single node.
+   * @param[in] fiber_stretch Fiber stretch at the current node.
    */
   virtual double
-  compute_active_tension_local(const Vector<double> &state) const = 0;
+  compute_active_tension_local(const Vector<double> &state,
+                               const double fiber_stretch) const = 0;
 
   /// Current time. Updated whenever calling @ref advance_time_step.
   double time;

@@ -16,7 +16,7 @@
  *   \dv{\astressstate}{t} &=
  *     \mathbf{F}_\text{AS}(t, \astressstate, \calcium, \fiberstretch,
  *                          \fiberstretchrate)\;, \\
- *   \Tact &= \Tact(\astressstate)\;.
+ *   \Tact &= \Tact(\astressstate, \fiberstretch)\;.
  * \end{aligned} @f]
  *
  * ### Numerical methods
@@ -25,7 +25,7 @@
  * @ref ODESolver. After that, the active tension is computed for every node
  * @f$i@f$ as:
  * @f[
- *   {\Tact}_{i}^{n+1} = \Tact(\astressstate_i^{n+1})\;.
+ *   {\Tact}_{i}^{n+1} = \Tact(\astressstate_i^{n+1}, \fiberstretch_i^{n+1})\;.
  * @f]
  *
  * ### Implementing derived models
