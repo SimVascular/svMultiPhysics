@@ -101,7 +101,7 @@ TEST(QuadratureRuleValidation, AcceptsEverySupportedReferenceCell)
 {
     struct Case {
         svmp::CellFamily family;
-        int expected_dimension;
+        std::size_t expected_dimension;
         double expected_measure;
         ExpectedPoint point;
     };

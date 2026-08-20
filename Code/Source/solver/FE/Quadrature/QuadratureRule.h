@@ -92,7 +92,7 @@ public:
     /**
      * @brief Return the reference dimension and active QuadPoint component count.
      */
-    int dimension() const;
+    std::size_t dimension() const;
 
     /** @brief Return the canonical reference-cell family. */
     svmp::CellFamily cell_family() const noexcept { return cell_family_; }

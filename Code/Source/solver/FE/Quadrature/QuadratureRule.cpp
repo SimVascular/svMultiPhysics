@@ -18,20 +18,20 @@
 namespace svmp::FE::quadrature {
 namespace {
 
-int reference_dimension(svmp::CellFamily family)
+std::size_t reference_dimension(svmp::CellFamily family)
 {
     switch (family) {
         case svmp::CellFamily::Point:
-            return 0;
+            return 0u;
         case svmp::CellFamily::Line:
-            return 1;
+            return 1u;
         case svmp::CellFamily::Triangle:
         case svmp::CellFamily::Quad:
-            return 2;
+            return 2u;
         case svmp::CellFamily::Tetra:
         case svmp::CellFamily::Hex:
         case svmp::CellFamily::Wedge:
-            return 3;
+            return 3u;
         default:
             svmp::raise<InvalidArgumentException>(
                 "QuadratureRule: unsupported reference-cell family");
@@ -63,7 +63,7 @@ double reference_measure(svmp::CellFamily family)
 
 void validate_point(
     const QuadPoint& point,
-    int dimension,
+    std::size_t dimension,
     std::size_t point_index)
 {
     for (std::size_t component = 0; component < 3u; ++component) {
@@ -74,9 +74,7 @@ void validate_point(
                     "coordinate at point index "} +
                 std::to_string(point_index));
         }
-        if (component >=
-            static_cast<std::size_t>(dimension) &&
-            point[component] != 0.0) {
+        if (component >= dimension && point[component] != 0.0) {
             svmp::raise<InvalidArgumentException>(
                 std::string{
                     "QuadratureRule: quadrature point has a nonzero inactive "
@@ -105,7 +103,7 @@ void validate_weights(const std::vector<double>& weights)
 
 QuadratureRule::~QuadratureRule() = default;
 
-int QuadratureRule::dimension() const
+std::size_t QuadratureRule::dimension() const
 {
     return reference_dimension(cell_family_);
 }
@@ -125,7 +123,7 @@ QuadratureRule::QuadratureRule(
       points_(std::move(points)),
       weights_(std::move(weights))
 {
-    const int dimension = reference_dimension(cell_family_);
+    const std::size_t dimension = reference_dimension(cell_family_);
     svmp::check<InvalidArgumentException>(
         polynomial_exactness_ >= 0,
         "QuadratureRule: polynomial exactness must be non-negative");
