@@ -61,44 +61,6 @@ double reference_measure(svmp::CellFamily family)
     }
 }
 
-void validate_point(
-    const QuadPoint& point,
-    std::size_t dimension,
-    std::size_t point_index)
-{
-    for (std::size_t component = 0; component < point.size(); ++component) {
-        if (!std::isfinite(point[component])) {
-            svmp::raise<InvalidArgumentException>(
-                std::string{
-                    "QuadratureRule: quadrature point contains a non-finite "
-                    "coordinate at point index "} +
-                std::to_string(point_index));
-        }
-        if (component >= dimension && point[component] != 0.0) {
-            svmp::raise<InvalidArgumentException>(
-                std::string{
-                    "QuadratureRule: quadrature point has a nonzero inactive "
-                    "coordinate at point index "} +
-                std::to_string(point_index));
-        }
-    }
-}
-
-void validate_weights(const std::vector<double>& weights)
-{
-    for (std::size_t point_index = 0;
-         point_index < weights.size();
-         ++point_index) {
-        if (!std::isfinite(weights[point_index])) {
-            svmp::raise<InvalidArgumentException>(
-                std::string{
-                    "QuadratureRule: quadrature weight must be finite at point "
-                    "index "} +
-                std::to_string(point_index));
-        }
-    }
-}
-
 } // namespace
 
 QuadratureRule::~QuadratureRule() = default;
@@ -137,13 +99,33 @@ QuadratureRule::QuadratureRule(
     for (std::size_t point_index = 0;
          point_index < points_.size();
          ++point_index) {
-        validate_point(
-            points_[point_index],
-            dimension,
-            point_index);
+        const QuadPoint& point = points_[point_index];
+        for (std::size_t component = 0;
+             component < point.size();
+             ++component) {
+            if (!std::isfinite(point[component])) {
+                svmp::raise<InvalidArgumentException>(
+                    std::string{
+                        "QuadratureRule: quadrature point contains a non-finite "
+                        "coordinate at point index "} +
+                    std::to_string(point_index));
+            }
+            if (component >= dimension && point[component] != 0.0) {
+                svmp::raise<InvalidArgumentException>(
+                    std::string{
+                        "QuadratureRule: quadrature point has a nonzero inactive "
+                        "coordinate at point index "} +
+                    std::to_string(point_index));
+            }
+        }
+        if (!std::isfinite(weights_[point_index])) {
+            svmp::raise<InvalidArgumentException>(
+                std::string{
+                    "QuadratureRule: quadrature weight must be finite at point "
+                    "index "} +
+                std::to_string(point_index));
+        }
     }
-
-    validate_weights(weights_);
 }
 
 } // namespace svmp::FE::quadrature
