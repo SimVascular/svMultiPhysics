@@ -23,15 +23,15 @@
  * @f]
  * Supported families use these canonical reference cells:
  *
- * | Family   | Reference cell                                      | Measure |
- * |----------|-----------------------------------------------------|---------|
- * | Point    | @f$(0,0,0)@f$                                      | @f$1@f$ |
- * | Line     | @f$[-1,1]@f$                                       | @f$2@f$ |
- * | Triangle | @f$\{(x,y):x,y\geq0,\ x+y\leq1\}@f$             | @f$1/2@f$ |
- * | Quad     | @f$[-1,1]^2@f$                                     | @f$4@f$ |
- * | Tetra    | @f$\{(x,y,z):x,y,z\geq0,\ x+y+z\leq1\}@f$       | @f$1/6@f$ |
- * | Hex      | @f$[-1,1]^3@f$                                     | @f$8@f$ |
- * | Wedge    | unit triangle @f$\times[-1,1]@f$                   | @f$1@f$ |
+ * | Family   | Reference cell                            | Measure   |
+ * |----------|-------------------------------------------|-----------|
+ * | Point    | @f$(0,0,0)@f$                             | @f$1@f$   |
+ * | Line     | @f$[-1,1]@f$                              | @f$2@f$   |
+ * | Triangle | @f$\{(x,y):x,y\geq0,\ x+y\leq1\}@f$       | @f$1/2@f$ |
+ * | Quad     | @f$[-1,1]^2@f$                            | @f$4@f$   |
+ * | Tetra    | @f$\{(x,y,z):x,y,z\geq0,\ x+y+z\leq1\}@f$ | @f$1/6@f$ |
+ * | Hex      | @f$[-1,1]^3@f$                            | @f$8@f$   |
+ * | Wedge    | unit triangle @f$\times[-1,1]@f$          | @f$1@f$   |
  *
  * The family therefore determines both reference dimension and cell measure.
  * Quadrature points are not required to lie inside the reference cell.
