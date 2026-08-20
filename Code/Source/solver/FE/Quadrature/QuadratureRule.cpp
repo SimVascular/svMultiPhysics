@@ -11,7 +11,6 @@
 
 #include "FE/Common/FEException.h"
 
-#include <cassert>
 #include <cmath>
 #include <string>
 #include <utility>
@@ -19,7 +18,7 @@
 namespace svmp::FE::quadrature {
 namespace {
 
-constexpr int reference_dimension(svmp::CellFamily family) noexcept
+int reference_dimension(svmp::CellFamily family)
 {
     switch (family) {
         case svmp::CellFamily::Point:
@@ -34,11 +33,12 @@ constexpr int reference_dimension(svmp::CellFamily family) noexcept
         case svmp::CellFamily::Wedge:
             return 3;
         default:
-            return -1;
+            svmp::raise<InvalidArgumentException>(
+                "QuadratureRule: unsupported reference-cell family");
     }
 }
 
-constexpr double reference_measure(svmp::CellFamily family) noexcept
+double reference_measure(svmp::CellFamily family)
 {
     switch (family) {
         case svmp::CellFamily::Point:
@@ -56,7 +56,8 @@ constexpr double reference_measure(svmp::CellFamily family) noexcept
         case svmp::CellFamily::Wedge:
             return 1.0;
         default:
-            return -1.0;
+            svmp::raise<InvalidArgumentException>(
+                "QuadratureRule: unsupported reference-cell family");
     }
 }
 
@@ -104,18 +105,14 @@ void validate_weights(const std::vector<double>& weights)
 
 QuadratureRule::~QuadratureRule() = default;
 
-int QuadratureRule::dimension() const noexcept
+int QuadratureRule::dimension() const
 {
-    const int dimension = reference_dimension(cell_family_);
-    assert(dimension >= 0);
-    return dimension;
+    return reference_dimension(cell_family_);
 }
 
-double QuadratureRule::reference_cell_measure() const noexcept
+double QuadratureRule::reference_cell_measure() const
 {
-    const double measure = reference_measure(cell_family_);
-    assert(measure > 0.0);
-    return measure;
+    return reference_measure(cell_family_);
 }
 
 QuadratureRule::QuadratureRule(
@@ -129,10 +126,6 @@ QuadratureRule::QuadratureRule(
       weights_(std::move(weights))
 {
     const int dimension = reference_dimension(cell_family_);
-    svmp::check<InvalidArgumentException>(
-        dimension >= 0,
-        "QuadratureRule: unsupported reference-cell family");
-
     svmp::check<InvalidArgumentException>(
         polynomial_exactness_ >= 0,
         "QuadratureRule: polynomial exactness must be non-negative");
