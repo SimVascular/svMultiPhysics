@@ -65,9 +65,11 @@ using QuadPoint = math::Vector<double, 3>;
  * Construction requires:
  *
  * - a supported cell family and non-negative polynomial exactness;
- * - at least one point and the same number of points and weights;
- * - finite coordinates and weights; and
- * - inactive coordinates equal to zero.
+ * - a vector of points, with at least one element;
+ * - for all points, coordinates must be finite;
+ * - for all points, coordinates beyond the reference dimension of the cell
+ *   family must be equal to zero; and
+ * - a vector of finite weights, with as many elements as the points.
  *
  * Points may be duplicate or outside the reference cell, and weights may be
  * zero or negative. Construction does not verify weight normalization or
