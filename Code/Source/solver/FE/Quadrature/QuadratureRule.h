@@ -71,6 +71,9 @@ using QuadPoint = math::Vector<double, 3>;
  *   family must be equal to zero; and
  * - a vector of finite weights, with as many elements as the points.
  *
+ * The constructor checks each requirement and throws InvalidArgumentException
+ * when one is violated.
+ *
  * Points may be duplicate or outside the reference cell, and weights may be
  * zero or negative. Construction does not verify weight normalization or
  * polynomial exactness.
