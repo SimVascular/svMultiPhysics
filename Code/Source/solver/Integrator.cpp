@@ -464,8 +464,8 @@ void Integrator::predictor()
   Vector<double> fiber_stretch_rate;
 
   // Determine if we need to compute fiber stretch and stretch rate, by going
-  // through all domains of all equations until we find one for which active
-  // stress is enabled.
+  // through all domains of all equations until we find one for which an active
+  // stress model is enabled.
   bool need_fiber_stretch = false;
   bool need_fiber_stretch_rate = false;
   int fiber_stretch_eq_index = -1;
