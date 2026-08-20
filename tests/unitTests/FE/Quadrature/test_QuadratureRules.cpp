@@ -41,6 +41,24 @@ public:
     }
 };
 
+class TwoPointGaussLegendreRule final : public QuadratureRule {
+public:
+    TwoPointGaussLegendreRule()
+        : QuadratureRule(
+              svmp::CellFamily::Line,
+              3,
+              {{-abscissa(), 0.0, 0.0}, {abscissa(), 0.0, 0.0}},
+              {1.0, 1.0})
+    {
+    }
+
+private:
+    static double abscissa() noexcept
+    {
+        return 1.0 / std::sqrt(3.0);
+    }
+};
+
 template <typename Function>
 void expect_invalid_argument_with_message(
     Function&& function,
@@ -256,6 +274,7 @@ TEST(QuadratureRuleContract, SupportsValueSemanticsAndReadOnlyQueries)
     static_assert(!std::is_final_v<QuadratureRule>);
     static_assert(std::has_virtual_destructor_v<QuadratureRule>);
     static_assert(!std::is_abstract_v<TestQuadratureRule>);
+    static_assert(!std::is_abstract_v<TwoPointGaussLegendreRule>);
     static_assert(std::is_copy_constructible_v<TestQuadratureRule>);
     static_assert(std::is_move_constructible_v<TestQuadratureRule>);
     static_assert(std::is_copy_assignable_v<TestQuadratureRule>);
@@ -275,11 +294,7 @@ TEST(QuadratureRuleContract, SupportsValueSemanticsAndReadOnlyQueries)
 
     const double a = 1.0 / std::sqrt(3.0);
     std::unique_ptr<QuadratureRule> owned_rule =
-        std::make_unique<TestQuadratureRule>(
-            svmp::CellFamily::Line,
-            3,
-            std::vector<QuadPoint>{{-a, 0.0, 0.0}, {a, 0.0, 0.0}},
-            std::vector<double>{1.0, 1.0});
+        std::make_unique<TwoPointGaussLegendreRule>();
     const QuadratureRule& rule = *owned_rule;
 
     EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Line);
