@@ -66,7 +66,7 @@ void validate_point(
     std::size_t dimension,
     std::size_t point_index)
 {
-    for (std::size_t component = 0; component < 3u; ++component) {
+    for (std::size_t component = 0; component < point.size(); ++component) {
         if (!std::isfinite(point[component])) {
             svmp::raise<InvalidArgumentException>(
                 std::string{
