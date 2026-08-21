@@ -54,6 +54,6 @@ void ActiveStress::advance_time_step(const double t, const double dt,
                             fiber_stretch_rate[i], state_loc);
     states.set_col(i, state_loc);
 
-    active_tension[i] = compute_active_tension_local(state_loc);
+    active_tension[i] = compute_active_tension_local(state_loc, fiber_stretch[i]);
   }
 }

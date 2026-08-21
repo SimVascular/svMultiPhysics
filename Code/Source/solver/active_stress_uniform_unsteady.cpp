@@ -26,7 +26,7 @@ void UniformUnsteadyActiveStress::distribute_model_specific_parameters(
 }
 
 double UniformUnsteadyActiveStress::compute_active_tension_local(
-    const Vector<double> &state) const {
+    const Vector<double> &state, const double fiber_stretch) const {
   return fourier_interpolation.value(time)[0];
 }
 

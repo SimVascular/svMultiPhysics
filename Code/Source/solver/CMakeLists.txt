@@ -234,7 +234,8 @@ set(CSRCS
   active_stress_uniform_unsteady.cpp
   active_stress_ode.cpp
   active_stress_nash_panfilov.cpp
-  
+  active_stress_regazzoni.cpp
+
   SPLIT.c
 
   svZeroD_interface/LPNSolverInterface.h svZeroD_interface/LPNSolverInterface.cpp

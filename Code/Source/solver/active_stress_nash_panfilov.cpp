@@ -45,7 +45,8 @@ Vector<double> NashPanfilov::getf(const double t, const Vector<double> &state,
 }
 
 double
-NashPanfilov::compute_active_tension_local(const Vector<double> &state) const {
+NashPanfilov::compute_active_tension_local(const Vector<double> &state,
+                                           const double fiber_stretch) const {
   return state[0];
 }
 
