@@ -60,38 +60,11 @@ void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subL
   }
 }
 
-/// @brief Norm of the newest Krylov vector before it was orthogonalized.
-///
-/// Recovered from column 'i' of the Hessenberg matrix: h(j,i) is the component
-/// of the vector along the j-th orthonormal basis vector, and h(i+1,i) is the
-/// part left orthogonal to all of them. Only squares are summed, so the result
-/// is free of cancellation.
-///
-/// @param[in] h Hessenberg matrix, with column 'i' already filled.
-/// @param[in] i Index of the current Arnoldi step.
-///
-/// @return The norm the vector had before orthogonalization.
-double pre_orth_norm(const Array<double> &h, const int i) {
-  double w_norm = h(i + 1, i) * h(i + 1, i);
-
-  for (int j = 0; j <= i; j++) {
-    w_norm = w_norm + h(j, i) * h(j, i);
-  }
-
-  return sqrt(w_norm);
-}
-
 /// @brief Orthogonalize the newest Krylov vector against the preceding ones,
 /// for one unknown per node.
 ///
 /// Applies modified Gram-Schmidt to u(:,i+1), filling column 'i' of the
 /// Hessenberg matrix and normalizing u(:,i+1) in place.
-///
-/// A subdiagonal entry that is negligible against the norm the vector had
-/// before orthogonalization is a lucky breakdown: the Krylov space is invariant
-/// and already contains the solution. In that case h(i+1,i) is set to zero and
-/// the vector is left unnormalized, which drives err(i+1) to zero through the
-/// Givens rotations the caller applies next.
 ///
 /// @param[in] lhs FSILS left-hand side structure, used for its communicator.
 /// @param[in] nNo Number of nodes stored on this process, ghost nodes included.
@@ -111,13 +84,7 @@ void orthogonalize_s(fsi_linear_solver::FSILS_lhsType &lhs, const int nNo,
   }
 
   h(i + 1, i) = norm::fsi_ls_norms(mynNo, lhs.commu, w);
-
-  if (h(i + 1, i) >
-      std::numeric_limits<double>::epsilon() * pre_orth_norm(h, i)) {
-    omp_la::omp_mul_s(nNo, 1.0 / h(i + 1, i), w);
-  } else {
-    h(i + 1, i) = 0.0;
-  }
+  omp_la::omp_mul_s(nNo, 1.0 / h(i + 1, i), w);
 }
 
 /// @brief Orthogonalize the newest Krylov vector against the preceding ones,
@@ -125,12 +92,6 @@ void orthogonalize_s(fsi_linear_solver::FSILS_lhsType &lhs, const int nNo,
 ///
 /// Applies modified Gram-Schmidt to u(:,:,i+1), filling column 'i' of the
 /// Hessenberg matrix and normalizing u(:,:,i+1) in place.
-///
-/// A subdiagonal entry that is negligible against the norm the vector had
-/// before orthogonalization is a lucky breakdown: the Krylov space is invariant
-/// and already contains the solution. In that case h(i+1,i) is set to zero and
-/// the vector is left unnormalized, which drives err(i+1) to zero through the
-/// Givens rotations the caller applies next.
 ///
 /// @param[in] lhs FSILS left-hand side structure, used for its communicator.
 /// @param[in] dof Number of unknowns per node.
@@ -151,13 +112,7 @@ void orthogonalize_v(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
   }
 
   h(i + 1, i) = norm::fsi_ls_normv(dof, mynNo, lhs.commu, w);
-
-  if (h(i + 1, i) >
-      std::numeric_limits<double>::epsilon() * pre_orth_norm(h, i)) {
-    omp_la::omp_mul_v(dof, nNo, 1.0 / h(i + 1, i), w);
-  } else {
-    h(i + 1, i) = 0.0;
-  }
+  omp_la::omp_mul_v(dof, nNo, 1.0 / h(i + 1, i), w);
 }
 
 } // namespace
