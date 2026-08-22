@@ -11,7 +11,27 @@
 /**
  * @brief Aliev-Panfilov ionic model.
  *
- * **Reference**: [Aliev, Panfilov (1996)](https://doi.org/10.1016/0960-0779(95)00089-5)
+ * This class implements the split-parameter Aliev-Panfilov formulation of
+ * Goktepe and Kuhl [2], Eqs. 19--20, derived from the original
+ * Aliev-Panfilov model [1]. In [1], the single parameter @f$a@f$ appears in
+ * both the excitation cubic and the recovery equation. In [2], these roles
+ * are split into @f$\alpha@f$ and @f$b@f$, respectively, while @f$k@f$ is
+ * renamed @f$c@f$ and @f$\varepsilon_0@f$ is renamed @f$\gamma@f$.
+ *
+ * The svMultiPhysics parameter mapping to [2] is:
+ * @f$\texttt{alpha}\leftrightarrow\alpha@f$,
+ * @f$\texttt{b}\leftrightarrow b@f$,
+ * @f$\texttt{a}\leftrightarrow\gamma@f$,
+ * @f$\texttt{c}\leftrightarrow c@f$, and
+ * @f$\texttt{mu1},\texttt{mu2}\leftrightarrow\mu_1,\mu_2@f$.
+ * The parameter defaults, including @f$\texttt{alpha}=0.01@f$, and the
+ * initial recovery value are svMultiPhysics defaults; they are not presented
+ * as the parameter set of either source. Applied and stretch-activated
+ * currents are added using the svMultiPhysics sign convention.
+ *
+ * **References**:
+ * 1. [Aliev, Panfilov (1996)](https://doi.org/10.1016/0960-0779(95)00089-5)
+ * 2. [Goktepe, Kuhl (2009)](https://doi.org/10.1002/nme.2571)
  */
 class AlievPanfilov : public IonicModel {
 public:
@@ -71,20 +91,24 @@ protected:
   /// @name Model parameters
   /// @{
 
-  /// Corresponding to parameter a in Aliev-Panfilov paper [1].
+  /// Excitation threshold @f$\alpha@f$ in Goktepe-Kuhl [2]. Together with
+  /// @c b, this splits the two roles of @f$a@f$ in Aliev-Panfilov [1].
   double alpha = 1.0e-2;
 
-  /// Corresponding to parameter epsilon0 in Aliev-Panfilov paper [1].
+  /// Baseline recovery rate @f$\gamma@f$ in Goktepe-Kuhl [2], corresponding
+  /// to @f$\varepsilon_0@f$ in Aliev-Panfilov [1].
   double a = 2.0e-3;
 
-  /// Corresponding to parameter a in Aliev-Panfilov paper [1].
+  /// Recovery-equation shift @f$b@f$ in Goktepe-Kuhl [2]. Together with
+  /// @c alpha, this splits the two roles of @f$a@f$ in Aliev-Panfilov [1].
   double b = 0.15;
 
-  /// Corresponding to parameter k in Aliev-Panfilov paper [1].
+  /// Kinetic coefficient @f$c@f$ in Goktepe-Kuhl [2], corresponding to
+  /// @f$k@f$ in Aliev-Panfilov [1].
   double c = 8.0;
 
-  double mu1 = 0.20; ///< [1].
-  double mu2 = 0.30; ///< [1].
+  double mu1 = 0.20; ///< @f$\mu_1@f$ in [1, 2].
+  double mu2 = 0.30; ///< @f$\mu_2@f$ in [1, 2].
 
   /// @}
 
