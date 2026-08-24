@@ -997,10 +997,13 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
     if (com_mod.mvMsh) {
       for (int i = 0; i < lX.nrows(); i++) {
         // Add mesh displacement
-        // Notice that this assumes that the mesh displacement is stored
-        // starting at the nsd+1 index of the solution array. This is enforced
-        // in read_files, by throwing an exception if the equations are not
-        // ordered correctly.
+        // @note[michelebucelli] This assumes that the mesh displacement is
+        //   stored starting at the nsd+1 index of the solution array. This is
+        //   enforced by the code through a number of checks and assumptions
+        //   distributed in several files (set_equation_props.h,
+        //   set_equation_dof.h, initialize.cpp), downstream of read_files.cpp
+        //   asserting that FSI must be equation 0, and that if FSI is present
+        //   all other equations must be of type "mesh".
         lX(i,a) = lX(i,a) + Do(i+nsd+1,Ac);
       }
     }
