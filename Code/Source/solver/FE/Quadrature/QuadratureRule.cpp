@@ -63,8 +63,6 @@ double reference_measure(svmp::CellFamily family)
 
 } // namespace
 
-QuadratureRule::~QuadratureRule() = default;
-
 std::size_t QuadratureRule::dimension() const
 {
     return reference_dimension(cell_family_);

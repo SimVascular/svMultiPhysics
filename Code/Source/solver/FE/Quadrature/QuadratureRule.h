@@ -6,7 +6,7 @@
 
 /**
  * @file QuadratureRule.h
- * @brief Abstract base for reference-space quadrature rules.
+ * @brief Value type for reference-space quadrature rules.
  * @ingroup FE_Quadrature
  */
 
@@ -60,7 +60,7 @@ namespace svmp::FE::quadrature {
 using QuadPoint = math::Vector<double, 3>;
 
 /**
- * @brief Owning abstract base for quadrature rules on canonical reference cells.
+ * @brief Owning value type for quadrature rules on canonical reference cells.
  *
  * Construction requires:
  *
@@ -78,10 +78,21 @@ using QuadPoint = math::Vector<double, 3>;
  * zero or negative. Construction does not verify weight normalization or
  * polynomial exactness.
  */
-class QuadratureRule {
+class QuadratureRule final {
 public:
-    /** @brief Enable polymorphic destruction of concrete quadrature rules. */
-    virtual ~QuadratureRule() = 0;
+    /**
+     * @brief Construct a rule from complete point and weight data.
+     * @param family Reference-cell family; also determines dimension and measure.
+     * @param polynomial_exactness Declared total-degree polynomial exactness.
+     * @param points Ordered reference coordinates.
+     * @param weights Weights paired with @p points.
+     * @throws InvalidArgumentException If a construction requirement is violated.
+     */
+    explicit QuadratureRule(
+        svmp::CellFamily family,
+        int polynomial_exactness,
+        std::vector<QuadPoint> points,
+        std::vector<double> weights);
 
     /** @brief Return the number of point/weight pairs. */
     std::size_t num_points() const noexcept { return points_.size(); }
@@ -117,26 +128,6 @@ public:
 
     /** @brief Return the reference-cell measure derived from cell_family(). */
     double reference_cell_measure() const;
-
-protected:
-    /**
-     * @brief Initialize a concrete rule from complete point and weight data.
-     * @param family Reference-cell family; also determines dimension and measure.
-     * @param polynomial_exactness Declared total-degree polynomial exactness.
-     * @param points Ordered reference coordinates.
-     * @param weights Weights paired with @p points.
-     * @throws InvalidArgumentException If a construction requirement is violated.
-     */
-    explicit QuadratureRule(
-        svmp::CellFamily family,
-        int polynomial_exactness,
-        std::vector<QuadPoint> points,
-        std::vector<double> weights);
-
-    QuadratureRule(const QuadratureRule&) = default;
-    QuadratureRule(QuadratureRule&&) noexcept = default;
-    QuadratureRule& operator=(const QuadratureRule&) = default;
-    QuadratureRule& operator=(QuadratureRule&&) noexcept = default;
 
 private:
     svmp::CellFamily cell_family_;          ///< Canonical reference topology.
