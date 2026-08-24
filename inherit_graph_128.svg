@@ -11,9 +11,9 @@
 <!-- Node0 -->
 <g id="Node000000" class="node">
 <title>Node0</title>
-<g id="a_Node000000"><a xlink:href="class_vtk_vtu_data_1_1_vtk_vtu_data_impl.html" target="_top" xlink:title=" ">
+<g id="a_Node000000"><a xlink:href="class_vtk_vtp_data_1_1_vtk_vtp_data_impl.html" target="_top" xlink:title=" ">
 <polygon fill="white" stroke="#666666" points="157,-19 0,-19 0,0 157,0 157,-19"/>
-<text text-anchor="middle" x="78.5" y="-7" font-family="Helvetica,sans-Serif" font-size="10.00">VtkVtuData::VtkVtuDataImpl</text>
+<text text-anchor="middle" x="78.5" y="-7" font-family="Helvetica,sans-Serif" font-size="10.00">VtkVtpData::VtkVtpDataImpl</text>
 </a>
 </g>
 </g>

@@ -1,0 +1,58 @@
+<map id="solver/FE/Quadrature/QuadratureRule.cpp" name="solver/FE/Quadrature/QuadratureRule.cpp">
+<area shape="rect" id="Node000001" title="Internal construction and structural validation for quadrature rules." alt="" coords="864,5,1023,45"/>
+<area shape="rect" id="Node000002" href="$_quadrature_rule_8h.html" title="Value type for reference&#45;space quadrature rules." alt="" coords="253,93,445,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="864,41,459,99,458,94,863,35"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="587,255,646,280"/>
+<area shape="poly" id="edge32_Node000001_Node000007" title=" " alt="" coords="911,48,834,96,725,178,642,248,638,244,722,174,831,91,908,43"/>
+<area shape="rect" id="Node000014" href="$_f_e_exception_8h.html" title="Exception hierarchy for error handling in the FE library." alt="" coords="845,101,1042,126"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="946,46,946,87,941,87,941,46"/>
+<area shape="rect" id="Node000021" title=" " alt="" coords="1456,255,1516,280"/>
+<area shape="poly" id="edge33_Node000001_Node000021" title=" " alt="" coords="976,43,1051,85,1142,131,1308,200,1444,249,1442,254,1306,205,1140,136,1049,90,974,48"/>
+<area shape="rect" id="Node000023" title=" " alt="" coords="1152,101,1215,126"/>
+<area shape="poly" id="edge31_Node000001_Node000023" title=" " alt="" coords="998,43,1134,91,1140,93,1138,98,1132,96,996,48"/>
+<area shape="rect" id="Node000003" href="$_types_8h.html" title="Fundamental type definitions for the finite element library." alt="" coords="335,181,490,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="366,132,396,169,392,172,362,135"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="121,255,192,280"/>
+<area shape="poly" id="edge12_Node000002_Node000005" title=" " alt="" coords="318,136,248,183,179,246,176,242,244,179,315,131"/>
+<area shape="rect" id="Node000010" href="$_f_e_2_math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="53,181,183,207"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="294,136,166,179,164,174,293,131"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="258,181,311,207"/>
+<area shape="poly" id="edge13_Node000002_Node000012" title=" " alt="" coords="335,135,305,172,301,169,331,132"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="671,255,733,280"/>
+<area shape="poly" id="edge14_Node000002_Node000013" title=" " alt="" coords="393,131,664,247,662,252,391,136"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="217,255,273,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="387,209,286,252,284,247,385,204"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="372,209,206,255,204,250,371,204"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="379,255,446,280"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="415,207,415,241,410,241,410,207"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="446,204,575,249,574,254,445,209"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="471,255,563,280"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="431,204,490,244,487,249,428,209"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="297,255,355,280"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="400,209,352,248,349,244,397,205"/>
+<area shape="poly" id="edge11_Node000010_Node000005" title=" " alt="" coords="127,206,146,241,142,244,122,208"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="5,255,97,280"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="109,209,73,246,70,243,105,205"/>
+<area shape="poly" id="edge29_Node000014_Node000007" title=" " alt="" coords="920,128,655,251,653,246,918,124"/>
+<area shape="rect" id="Node000015" href="$_exception_8h_source.html" title=" " alt="" coords="843,181,975,207"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="941,127,922,170,917,168,936,125"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="1357,255,1431,280"/>
+<area shape="poly" id="edge28_Node000014_Node000019" title=" " alt="" coords="954,125,991,165,1017,187,1046,204,1087,222,1123,232,1188,240,1257,242,1343,252,1343,257,1256,248,1188,246,1122,237,1085,227,1043,209,1014,191,988,169,950,128"/>
+<area shape="poly" id="edge30_Node000014_Node000021" title=" " alt="" coords="962,124,1031,169,1096,204,1146,220,1189,229,1265,236,1343,240,1443,252,1442,258,1343,245,1264,242,1188,234,1144,225,1094,209,1028,173,959,128"/>
+<area shape="poly" id="edge17_Node000015_Node000006" title=" " alt="" coords="843,204,673,224,460,257,459,252,673,219,842,199"/>
+<area shape="poly" id="edge22_Node000015_Node000007" title=" " alt="" coords="860,209,660,257,660,257,658,252,659,252,858,204"/>
+<area shape="poly" id="edge24_Node000015_Node000008" title=" " alt="" coords="843,209,577,257,576,252,842,204"/>
+<area shape="poly" id="edge26_Node000015_Node000013" title=" " alt="" coords="876,209,747,253,746,248,875,204"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="1267,255,1332,280"/>
+<area shape="poly" id="edge18_Node000015_Node000016" title=" " alt="" coords="975,202,1101,223,1253,252,1252,257,1100,228,974,208"/>
+<area shape="rect" id="Node000017" title=" " alt="" coords="757,255,844,280"/>
+<area shape="poly" id="edge19_Node000015_Node000017" title=" " alt="" coords="893,209,831,249,828,245,890,204"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="869,255,949,280"/>
+<area shape="poly" id="edge20_Node000015_Node000018" title=" " alt="" coords="911,207,911,241,906,241,906,207"/>
+<area shape="poly" id="edge21_Node000015_Node000019" title=" " alt="" coords="975,202,1343,252,1343,257,974,207"/>
+<area shape="rect" id="Node000020" title=" " alt="" coords="973,255,1071,280"/>
+<area shape="poly" id="edge23_Node000015_Node000020" title=" " alt="" coords="928,204,994,245,991,250,925,209"/>
+<area shape="poly" id="edge25_Node000015_Node000021" title=" " alt="" coords="975,199,1212,223,1443,252,1442,258,1212,228,974,204"/>
+<area shape="rect" id="Node000022" title=" " alt="" coords="1095,255,1243,280"/>
+<area shape="poly" id="edge27_Node000015_Node000022" title=" " alt="" coords="951,204,1114,248,1113,254,950,209"/>
+</map>

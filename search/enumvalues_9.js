@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['quad4_0',['Quad4',['../group___f_e___common_types.html#gga9823727257775dd89648cab1a6c194d4a7e543de6ba602d09b9bd5cb5e1eee77c',1,'svmp::FE']]],
-  ['quad8_1',['Quad8',['../group___f_e___common_types.html#gga9823727257775dd89648cab1a6c194d4a81a164b246c5014e888b66929f52f590',1,'svmp::FE']]],
-  ['quad9_2',['Quad9',['../group___f_e___common_types.html#gga9823727257775dd89648cab1a6c194d4a4387dc11b1e05099fd1a9e68f24707a1',1,'svmp::FE']]],
-  ['quadrilateral_3',['Quadrilateral',['../group___f_e___basis.html#gga5b32f7e0042b0bddc6330a056d80f63dab1aa854f21a681be6412a6df6340ab00',1,'svmp::FE::basis']]]
+  ['scalar_0',['Scalar',['../group___f_e___common_types.html#gga3cdc47ee75a3358783eccc7438f278eaaf60357a8d17e45793298323f1b372a74',1,'svmp::FE']]],
+  ['serendipity_1',['Serendipity',['../group___f_e___common_types.html#gga17f54cf3dfe49c3a6633cfbc84e87665ab67363f8c5a4173d792426b65e31a82b',1,'svmp::FE']]],
+  ['symmetrictensor_2',['SymmetricTensor',['../group___f_e___common_types.html#gga3cdc47ee75a3358783eccc7438f278eaaf90b5ade43e3d990526185afc110ba96',1,'svmp::FE']]]
 ];

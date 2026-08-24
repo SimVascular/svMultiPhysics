@@ -1,0 +1,5 @@
+<map id="solver/FE/Quadrature/QuadratureRule.h" name="solver/FE/Quadrature/QuadratureRule.h">
+<area shape="rect" id="Node000001" title="Value type for reference&#45;space quadrature rules." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$_quadrature_rule_8cpp.html" title="Internal construction and structural validation for quadrature rules." alt="" coords="5,93,164,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,59,87,93,82,93,82,59"/>
+</map>

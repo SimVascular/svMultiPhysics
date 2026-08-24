@@ -1,16 +1,20 @@
 <map id="solver/FE/Math/Vector.h" name="solver/FE/Math/Vector.h">
-<area shape="rect" id="Node000001" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="215,5,389,31"/>
-<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="226,167,453,192"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,38,209,55,184,80,177,99,184,117,199,134,217,147,259,164,256,169,214,151,195,138,180,120,172,99,180,77,205,51,237,33"/>
-<area shape="rect" id="Node000006" href="$_node_ordering_conventions_8h_source.html" title=" " alt="" coords="195,79,409,119"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="305,44,305,79,299,79,299,44"/>
-<area shape="rect" id="Node000007" href="$_matrix_8h.html" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="433,86,611,111"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="348,33,491,83,489,88,346,38"/>
-<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,247,223,273"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="295,199,148,250,146,245,293,194"/>
-<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="247,240,432,280"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="342,206,342,240,337,240,337,206"/>
-<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="456,240,655,280"/>
-<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="384,194,504,237,502,242,382,199"/>
-<area shape="poly" id="edge7_Node000007_Node000002" title=" " alt="" coords="484,119,367,169,365,164,482,114"/>
+<area shape="rect" id="Node000001" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="336,5,511,31"/>
+<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="226,174,453,199"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="324,36,245,54,215,66,196,80,189,95,191,109,200,122,214,134,255,156,298,171,297,176,253,161,211,139,196,126,186,111,184,94,192,77,212,62,244,49,322,30"/>
+<area shape="rect" id="Node000006" href="$_node_ordering_conventions_8h_source.html" title=" " alt="" coords="207,79,421,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="398,41,342,81,339,76,395,36"/>
+<area shape="rect" id="Node000007" href="$_matrix_8h.html" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="445,86,623,111"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="453,37,519,84,516,88,450,41"/>
+<area shape="rect" id="Node000008" href="$_quadrature_rule_8h.html" title="Value type for reference&#45;space quadrature rules." alt="" coords="647,79,805,119"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="481,31,654,76,653,81,480,37"/>
+<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,262,223,287"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="297,207,145,264,143,259,295,202"/>
+<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="247,255,432,295"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="342,213,342,254,337,254,337,213"/>
+<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="456,255,655,295"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="382,202,509,252,507,257,380,207"/>
+<area shape="poly" id="edge7_Node000007_Node000002" title=" " alt="" coords="496,120,367,176,365,171,494,115"/>
+<area shape="rect" id="Node000009" href="$_quadrature_rule_8cpp.html" title="Internal construction and structural validation for quadrature rules." alt="" coords="647,167,805,207"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="729,133,729,166,723,166,723,133"/>
 </map>
