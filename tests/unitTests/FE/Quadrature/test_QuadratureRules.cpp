@@ -233,39 +233,15 @@ TEST(QuadratureRuleValidation, AllowsExteriorActiveCoordinates)
     EXPECT_DOUBLE_EQ(rule.point(0)[0], 2.0);
 }
 
-TEST(QuadratureRuleValidation, RejectsIncorrectReferenceCellMeasure)
+TEST(QuadratureRuleValidation, LeavesWeightNormalizationToGenerators)
 {
-    expect_invalid_argument_with_message(
-        [] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Triangle,
-                0,
-                {{0.25, 0.25, 0.0}},
-                {1.0});
-        },
-        "weights do not reproduce the reference-cell measure");
-}
-
-TEST(QuadratureRuleValidation, AppliesReferenceCellMeasureTolerance)
-{
-    constexpr double accepted_offset = 1.0e-14;
     const QuadratureRule rule(
         svmp::CellFamily::Triangle,
         0,
         {{0.25, 0.25, 0.0}},
-        {0.5 + accepted_offset});
-    EXPECT_DOUBLE_EQ(rule.weight(0), 0.5 + accepted_offset);
-
-    constexpr double rejected_offset = 1.0e-10;
-    expect_invalid_argument_with_message(
-        [rejected_offset] {
-            (void)QuadratureRule(
-                svmp::CellFamily::Triangle,
-                0,
-                {{0.25, 0.25, 0.0}},
-                {0.5 + rejected_offset});
-        },
-        "weights do not reproduce the reference-cell measure");
+        {1.0});
+    EXPECT_DOUBLE_EQ(rule.weight(0), 1.0);
+    EXPECT_DOUBLE_EQ(rule.reference_cell_measure(), 0.5);
 }
 
 TEST(QuadratureRuleContract, SupportsValueSemanticsAndReadOnlyQueries)

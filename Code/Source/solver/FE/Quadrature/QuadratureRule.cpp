@@ -3,7 +3,7 @@
 
 /**
  * @file QuadratureRule.cpp
- * @brief Construction and invariant validation for quadrature rules.
+ * @brief Internal construction and structural validation for quadrature rules.
  * @ingroup FE_Quadrature
  */
 
@@ -11,16 +11,12 @@
 
 #include "FE/Common/FEException.h"
 
-#include <algorithm>
 #include <cmath>
-#include <numeric>
 #include <string>
 #include <utility>
 
 namespace svmp::FE::quadrature {
 namespace {
-
-constexpr double measure_validation_tolerance = 1.0e-12;
 
 std::size_t reference_dimension(svmp::CellFamily family)
 {
@@ -128,15 +124,6 @@ QuadratureRule::QuadratureRule(
                 std::to_string(point_index));
         }
     }
-
-    const double measure = reference_measure(cell_family_);
-    const double weight_sum =
-        std::accumulate(weights_.begin(), weights_.end(), 0.0);
-    const double scale = std::max(1.0, std::abs(measure));
-    svmp::check<InvalidArgumentException>(
-        std::abs(weight_sum - measure) <=
-            measure_validation_tolerance * scale,
-        "QuadratureRule: weights do not reproduce the reference-cell measure");
 }
 
 } // namespace svmp::FE::quadrature
