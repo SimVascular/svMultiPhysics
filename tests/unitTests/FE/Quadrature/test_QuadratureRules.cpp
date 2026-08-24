@@ -12,6 +12,7 @@
 #include <cmath>
 #include <exception>
 #include <limits>
+#include <span>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -258,11 +259,11 @@ TEST(QuadratureRuleContract, SupportsValueSemanticsAndReadOnlyQueries)
         "A quadrature point must be exposed through a const reference");
     static_assert(
         std::is_same<decltype(std::declval<QuadratureRule&>().points()),
-                     const std::vector<QuadPoint>&>::value,
+                     std::span<const QuadPoint>>::value,
         "Quadrature points must be exposed through a read-only view");
     static_assert(
         std::is_same<decltype(std::declval<QuadratureRule&>().weights()),
-                     const std::vector<double>&>::value,
+                     std::span<const double>>::value,
         "Quadrature weights must be exposed through a read-only view");
 
     const double a = 1.0 / std::sqrt(3.0);
@@ -275,6 +276,7 @@ TEST(QuadratureRuleContract, SupportsValueSemanticsAndReadOnlyQueries)
     ASSERT_EQ(rule.num_points(), 2u);
     ASSERT_EQ(rule.points().size(), 2u);
     ASSERT_EQ(rule.weights().size(), 2u);
+    EXPECT_EQ(rule.points().data(), &rule.point(0));
     EXPECT_DOUBLE_EQ(rule.point(0)[0], -a);
     EXPECT_DOUBLE_EQ(rule.point(1)[0], a);
     EXPECT_DOUBLE_EQ(rule.weight(0), 1.0);

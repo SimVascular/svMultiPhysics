@@ -43,6 +43,7 @@
 #include "FE/Math/Vector.h"
 
 #include <cstddef>
+#include <span>
 #include <vector>
 
 namespace svmp::FE::quadrature {
@@ -120,11 +121,11 @@ public:
      */
     double weight(std::size_t i) const noexcept { return weights_[i]; }
 
-    /** @brief Return all points in integration order. */
-    const std::vector<QuadPoint>& points() const noexcept { return points_; }
+    /** @brief Return a read-only view of all points in integration order. */
+    std::span<const QuadPoint> points() const noexcept { return points_; }
 
-    /** @brief Return all weights in point order. */
-    const std::vector<double>& weights() const noexcept { return weights_; }
+    /** @brief Return a read-only view of all weights in point order. */
+    std::span<const double> weights() const noexcept { return weights_; }
 
     /** @brief Return the reference-cell measure derived from cell_family(). */
     double reference_cell_measure() const;
