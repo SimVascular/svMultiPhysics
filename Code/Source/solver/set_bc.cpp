@@ -165,10 +165,10 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
       // Compute avg pressures at 3D Dirichlet boundaries at timesteps n and n+1 
       else if (utils::btest(bc.bType, iBC_Dir)) {
         double area = fa.area;
-        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd,
+        cplBC.fa[ptr].Po = all_fun::integ(com_mod, cm_mod, fa, Yo, eq.s + nsd,
                                           solutions, std::nullopt, false) /
                            area;
-        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, nsd,
+        cplBC.fa[ptr].Pn = all_fun::integ(com_mod, cm_mod, fa, Yn, eq.s + nsd,
                                           solutions, std::nullopt, false) /
                            area;
 
@@ -647,10 +647,10 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& soluti
       if (cplBC.initRCR) {
         auto& fa = com_mod.msh[iM].fa[iFa];
         double area = fa.area;
-        double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, 0, solutions,
+        double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, eq.s, solutions,
                                    nsd - 1, false);
-        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, nsd, solutions,
-                                   std::nullopt, false) /
+        double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, eq.s + nsd,
+                                   solutions, std::nullopt, false) /
                     area;
         cplBC.xo[ptr] = Po - (Qo * cplBC.fa[ptr].RCR.Rp);
       } else { 
