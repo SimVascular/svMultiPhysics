@@ -11,7 +11,6 @@
 #include "fsils_api.hpp"
 
 #include "add_bc_mul.h"
-#include "bcast.h"
 #include "dot.h"
 #include "norm.h"
 #include "omp_la.h"
@@ -20,11 +19,14 @@
 #include "Array3.h"
 #include "DebugMsg.h"
 
+#include <limits>
 #include <math.h>
 
 namespace gmres {
 
-void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLsType& ls, const int dof, 
+namespace {
+
+void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLsType& ls, const int dof,
     const int mynNo, const int nNo)
 {
   int nsd = dof - 1;
@@ -58,15 +60,72 @@ void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subL
   }
 }
 
+/// @brief Orthogonalize the newest Krylov vector against the preceding ones,
+/// for one unknown per node.
+///
+/// Applies modified Gram-Schmidt to u(:,i+1), filling column 'i' of the
+/// Hessenberg matrix and normalizing u(:,i+1) in place.
+///
+/// @param[in] lhs FSILS left-hand side structure, used for its communicator.
+/// @param[in] nNo Number of nodes stored on this process, ghost nodes included.
+/// @param[in] mynNo Number of nodes owned by this process.
+/// @param[in] i Index of the current Arnoldi step.
+/// @param[in,out] u Krylov basis. Column i+1 holds the vector to orthogonalize
+///   and is overwritten with the new orthonormal basis vector.
+/// @param[in,out] h Hessenberg matrix. Column 'i' is overwritten.
+void orthogonalize_s(fsi_linear_solver::FSILS_lhsType &lhs, const int nNo,
+                     const int mynNo, const int i, Array<double> &u,
+                     Array<double> &h) {
+  auto w = u.rcol(i + 1);
+
+  for (int j = 0; j <= i; j++) {
+    h(j, i) = dot::fsils_dot_s(mynNo, lhs.commu, u.rcol(j), w);
+    omp_la::omp_sum_s(nNo, -h(j, i), w, u.rcol(j));
+  }
+
+  h(i + 1, i) = norm::fsi_ls_norms(mynNo, lhs.commu, w);
+  omp_la::omp_mul_s(nNo, 1.0 / h(i + 1, i), w);
+}
+
+/// @brief Orthogonalize the newest Krylov vector against the preceding ones,
+/// for 'dof' unknowns per node.
+///
+/// Applies modified Gram-Schmidt to u(:,:,i+1), filling column 'i' of the
+/// Hessenberg matrix and normalizing u(:,:,i+1) in place.
+///
+/// @param[in] lhs FSILS left-hand side structure, used for its communicator.
+/// @param[in] dof Number of unknowns per node.
+/// @param[in] nNo Number of nodes stored on this process, ghost nodes included.
+/// @param[in] mynNo Number of nodes owned by this process.
+/// @param[in] i Index of the current Arnoldi step.
+/// @param[in,out] u Krylov basis. Slice i+1 holds the vector to orthogonalize
+///   and is overwritten with the new orthonormal basis vector.
+/// @param[in,out] h Hessenberg matrix. Column 'i' is overwritten.
+void orthogonalize_v(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
+                     const int nNo, const int mynNo, const int i,
+                     Array3<double> &u, Array<double> &h) {
+  auto w = u.rslice(i + 1);
+
+  for (int j = 0; j <= i; j++) {
+    h(j, i) = dot::fsils_dot_v(dof, mynNo, lhs.commu, u.rslice(j), w);
+    omp_la::omp_sum_v(dof, nNo, -h(j, i), w, u.rslice(j));
+  }
+
+  h(i + 1, i) = norm::fsi_ls_normv(dof, mynNo, lhs.commu, w);
+  omp_la::omp_mul_v(dof, nNo, 1.0 / h(i + 1, i), w);
+}
+
+} // namespace
+
 /// @brief Solver the system Val * X = R.
 ///
 /// Reproduces the Fortran 'GMRES' subroutine.
 //
-void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLsType& ls, const int dof, 
-    const Array<double>& Val, const Array<double>& R, Array<double>& X)
-{
-  #define n_debug_gmres
-  #ifdef debug_gmres
+void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
+           fsi_linear_solver::FSILS_subLsType &ls, const int dof,
+           const Array<double> &Val, const Array<double> &R, Array<double> &X) {
+#define n_debug_gmres
+#ifdef debug_gmres
   DebugMsg dmsg(__func__,  lhs.commu.task);
   dmsg.banner();
   #endif
@@ -168,25 +227,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLs
         }
       }
 
-      for (int j = 0; j <= i+1; j++) {
-        h(j,i) = dot::fsils_nc_dot_v(dof, mynNo, u.rslice(j), u.rslice(i+1));
-      }
-
-      // h_col is modofied here so don't use 'rcol() method'.
-      auto h_col = h.col(i);
-      bcast::fsils_bcast_v(i+2, h_col, lhs.commu);
-      h.set_col(i, h_col);
-
-      for (int j = 0; j <= i; j++) {
-        auto u_slice_1 = u.rslice(i+1);
-        omp_la::omp_sum_v(dof, nNo, -h(j,i), u_slice_1, u.rslice(j));
-        h(i+1,i) = h(i+1,i) - h(j,i)*h(j,i);
-      }
-
-      h(i+1,i) = sqrt(fabs(h(i+1,i)));
-
-      u_slice_1 = u.rslice(i+1);
-      omp_la::omp_mul_v(dof, nNo, 1.0/h(i+1,i), u_slice_1);
+      orthogonalize_v(lhs, dof, nNo, mynNo, i, u, h);
 
       for (int j = 0; j <= i-1; j++) {
         double tmp = c(j)*h(j,i) + s(j)*h(j+1,i);
@@ -337,25 +378,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       spar_mul::fsils_spar_mul_ss(lhs, lhs.rowPtr, lhs.colPtr, Val, u_col, u_col_1);
       u.set_col(i+1, u_col_1);
 
-      for (int j = 0; j <= i+1; j++) {
-        h(j,i) = dot::fsils_nc_dot_s(mynNo, u.col(j), u.col(i+1));
-      }
-
-      auto h_col = h.col(i);
-      bcast::fsils_bcast_v(i+2, h_col, lhs.commu);
-      h.set_col(i, h_col);
-
-      for (int j = 0; j <= i; j++) {
-        auto u_col_1 = u.col(i+1);
-        omp_la::omp_sum_s(nNo, -h(j,i), u_col_1, u.col(j));
-        u.set_col(i+1, u_col_1);
-        h(i+1,i) = h(i+1,i) - h(j,i)*h(j,i);
-      }
-      h(i+1,i) = sqrt(fabs(h(i+1,i)));
-
-      u_col_1 = u.col(i+1);
-      omp_la::omp_mul_s(nNo, 1.0/h(i+1,i), u_col_1);
-      u.set_col(i+1, u_col_1);
+      orthogonalize_s(lhs, nNo, mynNo, i, u, h);
 
       for (int j = 0; j <= i-1; j++) {
         double tmp = c(j)*h(j,i) + s(j)*h(j+1,i);
@@ -527,26 +550,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
         }
       }
 
-      for (int j = 0; j <= i+1; j++) {
-        h(j,i) = dot::fsils_nc_dot_v(dof, mynNo, u.rslice(j), u.rslice(i+1));
-        #ifdef debug_gmres_v
-        dmsg << "h(j,i): " << h(j,i);
-        #endif
-      }
-
-      auto h_col = h.col(i);
-      bcast::fsils_bcast_v(i+2, h_col, lhs.commu);
-      h.set_col(i, h_col);
-
-      for (int j = 0; j <= i; j++) {
-        auto u_slice_1 = u.rslice(i+1);
-        omp_la::omp_sum_v(dof, nNo, -h(j,i), u_slice_1, u.rslice(j));
-        h(i+1,i) = h(i+1,i) - h(j,i)*h(j,i);
-      }
-      h(i+1,i) = sqrt(fabs(h(i+1,i)));
-
-      u_slice_1 = u.rslice(i+1);
-      omp_la::omp_mul_v(dof, nNo, 1.0/h(i+1,i), u_slice_1);
+      orthogonalize_v(lhs, dof, nNo, mynNo, i, u, h);
 
       for (int j = 0; j <= i-1; j++) {
         double tmp = c(j)*h(j,i) + s(j)*h(j+1,i);
