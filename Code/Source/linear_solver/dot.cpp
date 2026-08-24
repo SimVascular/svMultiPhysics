@@ -68,7 +68,7 @@ double fsils_dot_v(const int dof, const int nNo, FSILS_commuType& commu, const A
       }
     break;
 
-    defualt: 
+    default:
       for (int i = 0; i < nNo; i++) {
         double sum{0.0};
         for (int j = 0; j < U.nrows(); j++) {
