@@ -35,8 +35,9 @@
  *
  * The family therefore determines both reference dimension and cell measure.
  * Quadrature points are not required to lie inside the reference cell.
- * Generating code is responsible for verifying weight normalization and
- * declared polynomial exactness through analytic moment tests.
+ * Construction verifies the constant moment. Generating code is responsible
+ * for verifying the declared higher-order exactness through analytic moment
+ * tests.
  */
 
 #include "FE/Common/Types.h"
@@ -70,14 +71,16 @@ using QuadPoint = math::Vector<double, 3>;
  * - for all points, coordinates must be finite;
  * - for all points, coordinates beyond the reference dimension of the cell
  *   family must be equal to zero; and
- * - a vector of finite weights, with as many elements as the points.
+ * - a vector of finite weights, with as many elements as the points, whose sum
+ *   reproduces the reference-cell measure within
+ *   @f$10^{-12}\max(1, |\hat K|)@f$.
  *
  * The constructor checks each requirement and throws InvalidArgumentException
  * when one is violated.
  *
  * Points may be duplicate or outside the reference cell, and weights may be
- * zero or negative. Construction does not verify weight normalization or
- * polynomial exactness.
+ * zero or negative. Construction does not verify polynomial exactness beyond
+ * the constant moment.
  */
 class QuadratureRule final {
 public:
