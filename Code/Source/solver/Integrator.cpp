@@ -158,8 +158,9 @@ bool Integrator::step(bool save_results) {
     // Writing out the time passed, residual, and etc. The converged iteration
     // is flagged with an 's' when the results of this time step are saved to a
     // file.
-    const int co = (all_converged && save_results) ? 3 : 2;
-    output::output_result(simulation_, com_mod.timeP, co, iEqOld);
+    output::output_result(simulation_, com_mod.timeP,
+                          /* save_results = */ all_converged && save_results,
+                          iEqOld);
 
     // Check if all equations converged
     if (all_converged) {

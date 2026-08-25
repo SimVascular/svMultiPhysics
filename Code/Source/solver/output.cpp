@@ -14,7 +14,7 @@
 
 namespace output {
 
-// Field widths of the convergence table. The rows and the header use the same
+// Field widths of the history table. The rows and the header use the same
 // widths, so that they are vertically aligned. A value wider than its field
 // shifts the rest of the row rather than being truncated.
 constexpr int eq_width = 2;        // equation symbol
@@ -33,28 +33,14 @@ constexpr int iter_width = time_step_width + 4;
 // Number of digits printed after the decimal point in scientific notation.
 constexpr int number_precision = 3;
 
-// Number of characters in a row of the convergence table: the fields above,
+// Number of characters in a row of the history table: the fields above,
 // plus the ten spaces and the four brackets separating them.
 constexpr int table_width = eq_width + iter_width + 4 * number_width +
                             2 * db_width + ls_iter_width + pct_width + 14;
 
-/// @brief Prepares the output of svFSI to the standard output.
-///
-/// Modifies: timeP
-///
-/// \todo NOTE: This is not fully implemented.
-//
-void output_result(Simulation* simulation,  std::array<double,3>& timeP, const int co, const int iEq)
-{
-  #ifdef debug_output_result
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
-  dmsg.banner();
-  #endif
-
+void output_header(const Simulation *simulation, std::array<double, 3> &timeP) {
   auto& com_mod = simulation->com_mod;
-  auto& cm_mod = simulation->cm_mod;
-  auto& eq = com_mod.eq[iEq];
-  auto cTS = com_mod.cTS;
+  auto &cm_mod = simulation->cm_mod;
 
   // Writes to history file and optionally to cout.
   auto& logger = simulation->logger;
@@ -63,42 +49,60 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
     return;
   }
 
-  double tmp = utils::cput();
-  std::string sepLine(table_width,'-');
+  timeP[0] = utils::cput() - timeP[0];
+  timeP[1] = 0.0;
 
-  if (co == 1) {
-     timeP[0] = tmp - timeP[0];
-     timeP[1] = 0.0;
+  // The dash of the "N-i" title sits above the dash separating the time step
+  // from the nonlinear iteration.
+  std::ostringstream header;
+  header << " " << std::left << std::setw(eq_width) << "Eq"
+         << " " << std::setw(iter_width) << "     N-i"
+         << " " << std::right << std::setw(number_width) << "T"
+         << "  " << std::setw(db_width) << "dB"
+         << " " << std::setw(number_width) << "Ri/R1"
+         << " " << std::setw(number_width) << "Ri/R0"
+         << " " << std::setw(number_width) << "R/Ri"
+         << "   " << std::setw(ls_iter_width) << "lsIt"
+         << " " << std::setw(db_width) << "dB"
+         << " " << std::setw(pct_width) << "%t";
 
-     // The dash of the "N-i" title sits above the dash separating the time step
-     // from the nonlinear iteration.
-     std::ostringstream header;
-     header << " " << std::left << std::setw(eq_width) << "Eq"
-            << " " << std::setw(iter_width) << "     N-i"
-            << " " << std::right << std::setw(number_width) << "T"
-            << "  " << std::setw(db_width) << "dB"
-            << " " << std::setw(number_width) << "Ri/R1"
-            << " " << std::setw(number_width) << "Ri/R0"
-            << " " << std::setw(number_width) << "R/Ri"
-            << "   " << std::setw(ls_iter_width) << "lsIt"
-            << " " << std::setw(db_width) << "dB"
-            << " " << std::setw(pct_width) << "%t";
+  std::string sepLine(table_width, '-');
+  logger << sepLine << std::endl;
+  logger << header.str() << std::endl;
+  if (com_mod.nEq == 1) {
+    logger << sepLine << std::endl;
+  }
+}
 
-     logger << sepLine << std::endl;
-     logger << header.str() << std::endl;
-     if (com_mod.nEq == 1) {
-       logger << sepLine << std::endl;
-     }
-     return;
+void output_result(const Simulation *simulation, std::array<double, 3> &timeP,
+                   const bool save_results, const int iEq) {
+#ifdef debug_output_result
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+#endif
+
+  auto &com_mod = simulation->com_mod;
+  auto &cm_mod = simulation->cm_mod;
+  auto &eq = com_mod.eq[iEq];
+  auto cTS = com_mod.cTS;
+
+  // Writes to history file and optionally to cout.
+  auto &logger = simulation->logger;
+
+  if (com_mod.cm.slv(cm_mod)) {
+    return;
   }
 
+  double tmp = utils::cput();
+
   if ((com_mod.nEq > 1) && (iEq == 0) && (eq.itr == 1)) {
+    std::string sepLine(table_width, '-');
     logger << sepLine << std::endl;
   }
 
   // The time step and the nonlinear iteration, flagged with an 's' when the
   // results of this time step are written to a file.
-  const char* save_flag = (co == 3) ? "s" : "";
+  const char *save_flag = save_results ? "s" : "";
   std::ostringstream iter;
   iter << std::setw(time_step_width) << cTS << "-" << eq.itr << save_flag;
 
