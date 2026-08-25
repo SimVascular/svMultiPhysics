@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """
-Updated: Taeouk Kim @ 2026.08.11 
-
 Calculate a common phase-aware RCR initial pressure from:
 
   1) One *.flow file in the current directory

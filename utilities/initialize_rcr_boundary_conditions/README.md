@@ -1,4 +1,3 @@
-# Update: Taeouk Kim 2026.08.11
 # RCR Initial Pressure Utility
 
 This utility calculates a phase-aware initial capacitor pressure for RCR boundary conditions and updates the `Initial_pressure` values of all RCR outlets in an svMultiPhysics `solver.xml` file.
