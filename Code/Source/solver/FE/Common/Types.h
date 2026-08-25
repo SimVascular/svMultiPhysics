@@ -69,10 +69,9 @@ enum class CellFamily {
  * @brief Shared vocabulary types, constants, and exception infrastructure used by every FE module.
  *
  * @details The Common module collects the foundational definitions that the
- * rest of the FE library builds on: index and scalar type aliases; element,
- * basis, quadrature, and field enumerations; sentinel constants and strong
- * type wrappers; and the FE exception hierarchy together with its
- * argument-checking helpers.
+ * rest of the FE library builds on: index and scalar type aliases; shared
+ * enumerations and strong types; sentinel constants; and the FE exception
+ * hierarchy together with its argument-checking helpers.
  */
 
 namespace svmp::FE {
@@ -83,10 +82,10 @@ namespace svmp::FE {
  * @brief Core type aliases, enumerations, constants, geometric types, and compile-time traits.
  *
  * @details This group documents the index and identifier types used for
- * element-local and global numbering, the element/basis/quadrature/field
- * enumerations shared across modules, sentinel constants, reference- and
- * physical-space geometric aliases, and the strong-type utilities that
- * prevent accidental mixing of conceptually distinct values.
+ * element-local and global numbering, the enumerations shared across modules,
+ * sentinel constants, reference- and physical-space geometric aliases, and
+ * the strong-type utilities that prevent accidental mixing of conceptually
+ * distinct values.
  * @{
  */
 
@@ -240,19 +239,6 @@ enum class ElementType : std::uint8_t {
     Point1,      ///< 1-node point element
 
     Unknown      ///< Unrecognized or uninitialized element type
-};
-
-/**
- * @brief Quadrature rule types
- */
-enum class QuadratureType : std::uint8_t {
-    GaussLegendre,     ///< Standard Gaussian quadrature
-    GaussLobatto,      ///< Includes endpoints (for spectral elements)
-    Newton,            ///< Newton-Cotes rules
-    Reduced,           ///< Order-based reduced integration for locking
-    PositionBased,     ///< Position-based reduced integration (legacy compatible)
-    Composite,         ///< Composite rules for adaptivity
-    Custom             ///< User-defined quadrature points
 };
 
 /**

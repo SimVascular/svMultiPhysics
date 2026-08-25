@@ -118,9 +118,8 @@ FourierInterpolation FourierInterpolation::from_time_series(
   for (unsigned int i = 0; i < n_time_points; ++i) {
     times_shifted[i] -= result.initial_time;
     for (unsigned int j = 0; j < n_components; ++j) {
-      values_shifted(j, i) = values_shifted(j, i) -
-                             result.linear_trend_initial_values[j] -
-                             result.linear_trend_slopes[j] * times_shifted[i];
+      values_shifted(j, i) -= result.linear_trend_initial_values[j] +
+                              result.linear_trend_slopes[j] * times_shifted[i];
     }
   }
 
@@ -581,16 +580,8 @@ void FourierInterpolation::evaluate_internal(double time,
       const double K = t * dk;
 
       for (int j = 0; j < n_components; ++j) {
-        // Using value[j] = value[j] + ... instead of value[j] += ..., because
-        // the latter changes the order of operations enough to break some of
-        // the tests.
-        // @todo[michelebucelli] This seems pretty fragile! It happens in a few
-        //   other places in this file as well, where using an increment
-        //   operator (*= or +=) changes the order of operations resulting in
-        //   changes in the test values. This should be investigated and the
-        //   best (i.e. most accurate) operation order should be chosen.
-        value[j] = value[j] + fourier_coefficients_real(j, i) * std::cos(K) -
-                   fourier_coefficients_imaginary(j, i) * std::sin(K);
+        value[j] += fourier_coefficients_real(j, i) * std::cos(K) -
+                    fourier_coefficients_imaginary(j, i) * std::sin(K);
 
         if (evaluate_derivative) {
           derivative[j] -=
