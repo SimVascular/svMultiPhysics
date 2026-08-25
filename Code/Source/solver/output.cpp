@@ -8,29 +8,35 @@
 #include "utils.h"
 
 #include <cstdio>
+#include <iomanip>
 #include <math.h>
+#include <sstream>
 
 namespace output {
 
-// Format of a row of the convergence table. The field widths accommodate a
-// two-character equation symbol, a six-digit time step, a two-digit nonlinear
-// iteration, a three-digit dB value with its sign and a five-digit linear
-// solver iteration count.
-constexpr const char* row_format =
-    " %-2s %-10s %10.3e %c%4d %10.3e %10.3e %10.3e%c %c%5d %4d %4d%c";
+// Field widths of the convergence table. The rows and the header use the same
+// widths, so that they are vertically aligned. A value wider than its field
+// shifts the rest of the row rather than being truncated.
+constexpr int eq_width = 2;        // equation symbol
+constexpr int time_step_width = 6; // time step
+constexpr int number_width = 10;   // numbers in scientific notation
+constexpr int db_width = 4;        // dB columns, three digits and their sign
+constexpr int ls_iter_width = 5;   // linear solver iterations
+constexpr int pct_width =
+    4; // percentage of the time spent in the linear solver
 
-// Format of the header of the convergence table. The field widths match those
-// of row_format, so that the header and the rows are vertically aligned.
-constexpr const char* header_format =
-    " %-2s %-10s %10s %c%4s %10s %10s %10s%c %c%5s %4s %4s";
+// Width of the time step and nonlinear iteration column: the time step, the
+// dash separating it from the two-digit nonlinear iteration, and the 's'
+// flagging a time step whose results are written to a file.
+constexpr int iter_width = time_step_width + 4;
 
-// Number of characters in a row of the convergence table.
-constexpr int table_width = 83;
+// Number of digits printed after the decimal point in scientific notation.
+constexpr int number_precision = 3;
 
-// Size of the buffers holding a row of the convergence table. Larger than
-// table_width, so that a value exceeding the width of its field is printed in
-// full rather than truncated.
-constexpr int row_buffer_size = 2*table_width;
+// Number of characters in a row of the convergence table: the fields above,
+// plus the ten spaces and the four brackets separating them.
+constexpr int table_width = eq_width + iter_width + 4 * number_width +
+                            2 * db_width + ls_iter_width + pct_width + 14;
 
 /// @brief Prepares the output of svFSI to the standard output.
 ///
@@ -57,7 +63,6 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
     return;
   }
 
-  int fid = 1;
   double tmp = utils::cput();
   std::string sepLine(table_width,'-');
 
@@ -65,14 +70,22 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
      timeP[0] = tmp - timeP[0];
      timeP[1] = 0.0;
 
-     // The dash of the "N-i" header sits above the dash separating the time
-     // step from the nonlinear iteration.
-     char header[row_buffer_size];
-     snprintf(header, sizeof(header), header_format, "Eq", "     N-i", "T", ' ', "dB",
-         "Ri/R1", "Ri/R0", "R/Ri", ' ', ' ', "lsIt", "dB", "%t");
+     // The dash of the "N-i" title sits above the dash separating the time step
+     // from the nonlinear iteration.
+     std::ostringstream header;
+     header << " " << std::left << std::setw(eq_width) << "Eq"
+            << " " << std::setw(iter_width) << "     N-i"
+            << " " << std::right << std::setw(number_width) << "T"
+            << "  " << std::setw(db_width) << "dB"
+            << " " << std::setw(number_width) << "Ri/R1"
+            << " " << std::setw(number_width) << "Ri/R0"
+            << " " << std::setw(number_width) << "R/Ri"
+            << "   " << std::setw(ls_iter_width) << "lsIt"
+            << " " << std::setw(db_width) << "dB"
+            << " " << std::setw(pct_width) << "%t";
 
      logger << sepLine << std::endl;
-     logger << header << std::endl;
+     logger << header.str() << std::endl;
      if (com_mod.nEq == 1) {
        logger << sepLine << std::endl;
      }
@@ -86,8 +99,8 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
   // The time step and the nonlinear iteration, flagged with an 's' when the
   // results of this time step are written to a file.
   const char* save_flag = (co == 3) ? "s" : "";
-  char iter_str[row_buffer_size];
-  snprintf(iter_str, sizeof(iter_str), "%6d-%d%s", cTS, eq.itr, save_flag);
+  std::ostringstream iter;
+  iter << std::setw(time_step_width) << cTS << "-" << eq.itr << save_flag;
 
   timeP[2] = tmp - timeP[0];
 
@@ -109,8 +122,8 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
 
   // The residuals are bracketed by '!' when the nonlinear residual has grown by
   // more than 20 dB.
-  const char nl_open  = (i > 20) ? '!' : '[';
-  const char nl_close = (i > 20) ? '!' : ']';
+  const char *nl_open = (i > 20) ? "!" : "[";
+  const char *nl_close = (i > 20) ? "!" : "]";
 
   double eps = std::numeric_limits<double>::epsilon();
 
@@ -127,20 +140,26 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
   }
 
   // Add a warning if the solution to the linear system did not converge.
-  const char ls_open  = eq.FSILS.RI.success ? '[' : '!';
-  const char ls_close = eq.FSILS.RI.success ? ']' : '!';
+  const char *ls_open = eq.FSILS.RI.success ? "[" : "!";
+  const char *ls_close = eq.FSILS.RI.success ? "]" : "!";
   std::string convergence_msg;
   if (!eq.FSILS.RI.success) {
     convergence_msg = "  WARNING: The linear system solution has not converged";
   }
 
-  char row[row_buffer_size];
-  snprintf(row, sizeof(row), row_format, eq.sym.c_str(), iter_str, timeP[2],
-      nl_open, i, tmp1, tmp, tmp2, nl_close,
-      ls_open, eq.FSILS.RI.itr, static_cast<int>(round(eq.FSILS.RI.dB)),
-      static_cast<int>(round(solver_pct)), ls_close);
+  std::ostringstream row;
+  row << " " << std::left << std::setw(eq_width) << eq.sym << " "
+      << std::setw(iter_width) << iter.str() << " " << std::right
+      << std::scientific << std::setprecision(number_precision)
+      << std::setw(number_width) << timeP[2] << " " << nl_open
+      << std::setw(db_width) << i << " " << std::setw(number_width) << tmp1
+      << " " << std::setw(number_width) << tmp << " " << std::setw(number_width)
+      << tmp2 << nl_close << " " << ls_open << std::setw(ls_iter_width)
+      << eq.FSILS.RI.itr << " " << std::setw(db_width)
+      << static_cast<int>(round(eq.FSILS.RI.dB)) << " " << std::setw(pct_width)
+      << static_cast<int>(round(solver_pct)) << ls_close;
 
-  logger << row << convergence_msg << std::endl;
+  logger << row.str() << convergence_msg << std::endl;
 
   // Print a warning message if the maximum number of nonlinear iterations has been exceeded.
   if (eq.itr > eq.maxItr) {
