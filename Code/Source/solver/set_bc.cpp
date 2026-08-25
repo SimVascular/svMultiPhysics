@@ -648,7 +648,7 @@ void rcr_init(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& soluti
         auto& fa = com_mod.msh[iM].fa[iFa];
         double area = fa.area;
         double Qo = all_fun::integ(com_mod, cm_mod, fa, Yo, eq.s, solutions,
-                                   nsd - 1, false);
+                                   eq.s + nsd - 1, false);
         double Po = all_fun::integ(com_mod, cm_mod, fa, Yo, eq.s + nsd,
                                    solutions, std::nullopt, false) /
                     area;
