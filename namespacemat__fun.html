@@ -199,9 +199,6 @@ Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>mat_
 <tr class="memitem:a7e7e91ed6a7fbc8f265080bb032b93c1" id="r_a7e7e91ed6a7fbc8f265080bb032b93c1"><td class="memItemLeft" align="right" valign="top">Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1">transpose</a> (const Array&lt; double &gt; &amp;A)</td></tr>
 <tr class="memdesc:a7e7e91ed6a7fbc8f265080bb032b93c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reproduces Fortran TRANSPOSE.  <br /></td></tr>
 <tr class="separator:a7e7e91ed6a7fbc8f265080bb032b93c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4fceb5170d96ba4f07c6f1a4d7b65a3" id="r_af4fceb5170d96ba4f07c6f1a4d7b65a3"><td class="memItemLeft" align="right" valign="top"><a id="af4fceb5170d96ba4f07c6f1a4d7b65a3" name="af4fceb5170d96ba4f07c6f1a4d7b65a3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>mat_mul6x3</b> (const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, Array&lt; double &gt; &amp;C)</td></tr>
-<tr class="separator:af4fceb5170d96ba4f07c6f1a4d7b65a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a794d3d6acffd6e76311a63a7ec81e877" id="r_a794d3d6acffd6e76311a63a7ec81e877"><td class="memTemplParams" colspan="2"><a id="a794d3d6acffd6e76311a63a7ec81e877" name="a794d3d6acffd6e76311a63a7ec81e877"></a>
 template&lt;typename MatrixType &gt; </td></tr>
 <tr class="memitem:a794d3d6acffd6e76311a63a7ec81e877"><td class="memTemplItemLeft" align="right" valign="top">MatrixType&#160;</td><td class="memTemplItemRight" valign="bottom"><b>convert_to_eigen_matrix</b> (const Array&lt; double &gt; &amp;src)</td></tr>
@@ -222,6 +219,14 @@ template&lt;int nsd&gt; </td></tr>
 template&lt;int nsd&gt; </td></tr>
 <tr class="memitem:a2879f10328583d9c9c31526b87fbed09"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><b>double_dot_product</b> (const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</td></tr>
 <tr class="separator:a2879f10328583d9c9c31526b87fbed09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef16dabb2561c60d32d5f0562bb02c41" id="r_aef16dabb2561c60d32d5f0562bb02c41"><td class="memTemplParams" colspan="2">template&lt;int M, int K, int N&gt; </td></tr>
+<tr class="memitem:aef16dabb2561c60d32d5f0562bb02c41"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#aef16dabb2561c60d32d5f0562bb02c41">mat_mul</a> (const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, Array&lt; double &gt; &amp;C)</td></tr>
+<tr class="memdesc:aef16dabb2561c60d32d5f0562bb02c41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Matrix product with the operand shape supplied at compile time.  <br /></td></tr>
+<tr class="separator:aef16dabb2561c60d32d5f0562bb02c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a36bcb6d3b2f5be4ff4ad6c1e7ed61a38" id="r_a36bcb6d3b2f5be4ff4ad6c1e7ed61a38"><td class="memTemplParams" colspan="2">template&lt;int M, int K&gt; </td></tr>
+<tr class="memitem:a36bcb6d3b2f5be4ff4ad6c1e7ed61a38"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a36bcb6d3b2f5be4ff4ad6c1e7ed61a38">mat_mul</a> (const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, Array&lt; double &gt; &amp;C)</td></tr>
+<tr class="memdesc:a36bcb6d3b2f5be4ff4ad6c1e7ed61a38"><td class="mdescLeft">&#160;</td><td class="mdescRight">As above, but with the column count known only at run time.  <br /></td></tr>
+<tr class="separator:a36bcb6d3b2f5be4ff4ad6c1e7ed61a38"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbbee355035575333a0beda4d7ddc577" id="r_abbbee355035575333a0beda4d7ddc577"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
 <tr class="memitem:abbbee355035575333a0beda4d7ddc577"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577">double_dot_product</a> (const Tensor&lt; nsd &gt; &amp;A, const std::array&lt; int, 2 &gt; &amp;dimsA, const Tensor&lt; nsd &gt; &amp;B, const std::array&lt; int, 2 &gt; &amp;dimsB)</td></tr>
 <tr class="memdesc:abbbee355035575333a0beda4d7ddc577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contracts two 4th order tensors A and B over two dimensions,.  <br /></td></tr>
@@ -615,7 +620,7 @@ template&lt;int nsd&gt; </div>
 </div>
 </div>
 <a id="aa546e3d16c049da7c1a3d42b2c782866" name="aa546e3d16c049da7c1a3d42b2c782866"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa546e3d16c049da7c1a3d42b2c782866">&#9670;&#160;</a></span>mat_mul() <span class="overload">[1/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa546e3d16c049da7c1a3d42b2c782866">&#9670;&#160;</a></span>mat_mul() <span class="overload">[1/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -641,12 +646,112 @@ template&lt;int nsd&gt; </div>
 </div><div class="memdoc">
 
 <p>Multiply a matrix by a matrix. </p>
-<p>Reproduces Fortran MATMUL. </p>
+<p>Multiply two matrices, returning A*B.</p>
+<p>Allocates the result and hands it to the in-place overload, so the two share one implementation and both reach the fixed-shape paths.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">A</td><td>left operand. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">B</td><td>right operand, with as many rows as A has columns. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the product, of size rows(A) by cols(B).</dd></dl>
+<p>Throws InvalidArgumentException if the sizes are incompatible. The result is freshly allocated, so the operands may alias it, as in A = mat_mul(A, B). </p>
+
+</div>
+</div>
+<a id="aef16dabb2561c60d32d5f0562bb02c41" name="aef16dabb2561c60d32d5f0562bb02c41"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef16dabb2561c60d32d5f0562bb02c41">&#9670;&#160;</a></span>mat_mul() <span class="overload">[2/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int M, int K, int N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void mat_fun::mat_mul </td>
+          <td>(</td>
+          <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>B</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>C</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Matrix product with the operand shape supplied at compile time. </p>
+<p>Overloads of mat_mul rather than differently named helpers, so a call site states the shape and otherwise reads exactly as before:</p>
+<div class="fragment"><div class="line"><a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(Dm, Bm.rslice(b), DBm);        <span class="comment">// runtime shape check</span></div>
+<div class="line">mat_mul&lt;6, 6, 3&gt;(Dm, Bm.rslice(b), DBm);  <span class="comment">// no check, same arguments</span></div>
+<div class="ttc" id="anamespacemat__fun_html_a7f258f8d7f62a92cd85f0b12dd354203"><div class="ttname"><a href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_fun::mat_mul</a></div><div class="ttdeci">Vector&lt; double &gt; mat_mul(const Array&lt; double &gt; &amp;A, const Vector&lt; double &gt; &amp;v)</div><div class="ttdoc">Multiply a matrix by a vector.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:465</div></div>
+</div><!-- fragment --><p>The generic mat_mul overload above will dispatch to this overload when the shapes are known at compile time.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">M</td><td>rows of A and of the result </td></tr>
+    <tr><td class="paramname">K</td><td>columns of A and rows of B, the contracted dimension </td></tr>
+    <tr><td class="paramname">N</td><td>columns of B and of the result </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a36bcb6d3b2f5be4ff4ad6c1e7ed61a38" name="a36bcb6d3b2f5be4ff4ad6c1e7ed61a38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a36bcb6d3b2f5be4ff4ad6c1e7ed61a38">&#9670;&#160;</a></span>mat_mul() <span class="overload">[3/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int M, int K&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void mat_fun::mat_mul </td>
+          <td>(</td>
+          <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>B</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>C</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>As above, but with the column count known only at run time. </p>
+<p>For operands with one column per element node, where the width depends on the element type. The row counts are still compile-time, which is where most of the benefit comes from. </p>
 
 </div>
 </div>
 <a id="a676f2d97dad7d3c511d3847b65573c37" name="a676f2d97dad7d3c511d3847b65573c37"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a676f2d97dad7d3c511d3847b65573c37">&#9670;&#160;</a></span>mat_mul() <span class="overload">[2/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a676f2d97dad7d3c511d3847b65573c37">&#9670;&#160;</a></span>mat_mul() <span class="overload">[4/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -678,12 +783,22 @@ template&lt;int nsd&gt; </div>
 </div><div class="memdoc">
 
 <p>Multiply a matrix by a matrix. </p>
-<p>Compute result directly into the passed argument. </p>
+<p>Multiply two matrices, writing A*B into an existing result.</p>
+<p>Dispatches the shapes that dominate the element loops to fixed-size Eigen products, and falls back to a general triple loop otherwise.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">A</td><td>left operand. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">B</td><td>right operand, with as many rows as A has columns. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">result</td><td>the product. The caller sizes it rows(A) by cols(B).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Throws InvalidArgumentException if the sizes are incompatible. Preferred in loops, where it reuses the caller's storage instead of allocating a result on every call. The result must not alias A or B. </p>
 
 </div>
 </div>
 <a id="a7f258f8d7f62a92cd85f0b12dd354203" name="a7f258f8d7f62a92cd85f0b12dd354203"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f258f8d7f62a92cd85f0b12dd354203">&#9670;&#160;</a></span>mat_mul() <span class="overload">[3/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f258f8d7f62a92cd85f0b12dd354203">&#9670;&#160;</a></span>mat_mul() <span class="overload">[5/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -709,7 +824,16 @@ template&lt;int nsd&gt; </div>
 </div><div class="memdoc">
 
 <p>Multiply a matrix by a vector. </p>
-<p>Reproduces Fortran MATMUL. </p>
+<p>Multiply a matrix by a vector, returning A*v.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">A</td><td>matrix with as many columns as v has entries. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">v</td><td>vector. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the product, of size rows(A).</dd></dl>
+<p>Throws InvalidArgumentException if the sizes are incompatible. </p>
 
 </div>
 </div>
