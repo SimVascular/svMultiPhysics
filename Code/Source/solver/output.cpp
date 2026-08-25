@@ -14,16 +14,16 @@
 
 namespace output {
 
+namespace {
 // Field widths of the history table. The rows and the header use the same
 // widths, so that they are vertically aligned. A value wider than its field
 // shifts the rest of the row rather than being truncated.
-constexpr int eq_width = 2;        // equation symbol
-constexpr int time_step_width = 6; // time step
-constexpr int number_width = 10;   // numbers in scientific notation
-constexpr int db_width = 4;        // dB columns, three digits and their sign
-constexpr int ls_iter_width = 5;   // linear solver iterations
-constexpr int pct_width =
-    4; // percentage of the time spent in the linear solver
+constexpr int eq_width        = 2;  // equation symbol
+constexpr int time_step_width = 6;  // time step
+constexpr int number_width    = 10; // numbers in scientific notation
+constexpr int db_width        = 4;  // dB columns, three digits and their sign
+constexpr int ls_iter_width   = 5;  // linear solver iterations
+constexpr int pct_width       = 4;  // percentage of the time spent in the linear solver
 
 // Width of the time step and nonlinear iteration column: the time step, the
 // dash separating it from the two-digit nonlinear iteration, and the 's'
@@ -37,6 +37,10 @@ constexpr int number_precision = 3;
 // plus the ten spaces and the four brackets separating them.
 constexpr int table_width = eq_width + iter_width + 4 * number_width +
                             2 * db_width + ls_iter_width + pct_width + 14;
+
+// Separator line of the history table.
+std::string separator_line() { return std::string(table_width, '-'); }
+} // namespace
 
 void output_header(const Simulation *simulation, std::array<double, 3> &timeP) {
   auto& com_mod = simulation->com_mod;
@@ -66,11 +70,10 @@ void output_header(const Simulation *simulation, std::array<double, 3> &timeP) {
          << " " << std::setw(db_width) << "dB"
          << " " << std::setw(pct_width) << "%t";
 
-  std::string sepLine(table_width, '-');
-  logger << sepLine << std::endl;
+  logger << separator_line() << std::endl;
   logger << header.str() << std::endl;
   if (com_mod.nEq == 1) {
-    logger << sepLine << std::endl;
+    logger << separator_line() << std::endl;
   }
 }
 
@@ -96,8 +99,7 @@ void output_result(const Simulation *simulation, std::array<double, 3> &timeP,
   double tmp = utils::cput();
 
   if ((com_mod.nEq > 1) && (iEq == 0) && (eq.itr == 1)) {
-    std::string sepLine(table_width, '-');
-    logger << sepLine << std::endl;
+    logger << separator_line() << std::endl;
   }
 
   // The time step and the nonlinear iteration, flagged with an 's' when the
