@@ -58,10 +58,6 @@ void Integrator::initialize_arrays() {
   solutions_.current.get_velocity() = solutions_.old.get_velocity();
 }
 
-//------------------------
-// step
-//------------------------
-/// @brief Execute one Newton iteration loop for the current time step
 bool Integrator::step(bool save_results) {
   using namespace consts;
 
@@ -159,8 +155,9 @@ bool Integrator::step(bool save_results) {
     // Solution is obtained, now updating (Corrector) and check for convergence
     bool all_converged = corrector_and_check_convergence();
 
-    // Writing out the time passed, residual, and etc. The converged iteration is
-    // flagged with an 's' when the results of this time step are saved to a file.
+    // Writing out the time passed, residual, and etc. The converged iteration
+    // is flagged with an 's' when the results of this time step are saved to a
+    // file.
     const int co = (all_converged && save_results) ? 3 : 2;
     output::output_result(simulation_, com_mod.timeP, co, iEqOld);
 

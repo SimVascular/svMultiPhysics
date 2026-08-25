@@ -7,9 +7,30 @@
 #include "output.h"
 #include "utils.h"
 
+#include <cstdio>
 #include <math.h>
 
 namespace output {
+
+// Format of a row of the convergence table. The field widths accommodate a
+// two-character equation symbol, a six-digit time step, a two-digit nonlinear
+// iteration, a three-digit dB value with its sign and a five-digit linear
+// solver iteration count.
+constexpr const char* row_format =
+    " %-2s %-10s %10.3e %c%4d %10.3e %10.3e %10.3e%c %c%5d %4d %4d%c";
+
+// Format of the header of the convergence table. The field widths match those
+// of row_format, so that the header and the rows are vertically aligned.
+constexpr const char* header_format =
+    " %-2s %-10s %10s %c%4s %10s %10s %10s%c %c%5s %4s %4s";
+
+// Number of characters in a row of the convergence table.
+constexpr int table_width = 83;
+
+// Size of the buffers holding a row of the convergence table. Larger than
+// table_width, so that a value exceeding the width of its field is printed in
+// full rather than truncated.
+constexpr int row_buffer_size = 2*table_width;
 
 /// @brief Prepares the output of svFSI to the standard output.
 ///
@@ -38,18 +59,22 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
 
   int fid = 1;
   double tmp = utils::cput();
-  std::string sepLine(69,'-');
+  std::string sepLine(table_width,'-');
 
   if (co == 1) {
      timeP[0] = tmp - timeP[0];
      timeP[1] = 0.0;
+
+     // The dash of the "N-i" header sits above the dash separating the time
+     // step from the nonlinear iteration.
+     char header[row_buffer_size];
+     snprintf(header, sizeof(header), header_format, "Eq", "     N-i", "T", ' ', "dB",
+         "Ri/R1", "Ri/R0", "R/Ri", ' ', ' ', "lsIt", "dB", "%t");
+
      logger << sepLine << std::endl;
-     logger << " Eq     N-i     T       dB  Ri/R1   Ri/R0    R/Ri     lsIt   dB  %t" << std::endl;
-     //std::cout << sepLine << std::endl;
-     //std::cout << " Eq     N-i     T       dB  Ri/R1   Ri/R0    R/Ri     lsIt   dB  %t" << std::endl;
+     logger << header << std::endl;
      if (com_mod.nEq == 1) {
        logger << sepLine << std::endl;
-       //std::cout << sepLine << std::endl;
      }
      return;
   }
@@ -58,20 +83,13 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
     logger << sepLine << std::endl;
   }
 
-  std::string c1 = " ";
-  std::string c2 = " ";
+  // The time step and the nonlinear iteration, flagged with an 's' when the
+  // results of this time step are written to a file.
+  const char* save_flag = (co == 3) ? "s" : "";
+  char iter_str[row_buffer_size];
+  snprintf(iter_str, sizeof(iter_str), "%6d-%d%s", cTS, eq.itr, save_flag);
 
-  if (co == 3) {
-    c1 = "s";
-  }
-
-  // NS     1-2  3.82E1  [ -62 7.92E-4 7.92E-4 3.60E-4]  [   5  -15  23]
-  //-------------------
-  //
   timeP[2] = tmp - timeP[0];
-  char time_str[20];
-  sprintf(time_str, "%4.3e", timeP[2]);
-  std::string sOut = " " + eq.sym + " " + std::to_string(cTS) + "-" + std::to_string(eq.itr) + c1 + " " + time_str;
 
   int i;
   double tmp1 = 1.0;
@@ -89,22 +107,11 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
     i = static_cast<int>(20.0*log10(tmp1));
   }
 
-  if (i > 20) {
-    c1 = "!"; 
-    c2 = "!";
-  } else {
-    c1 = "["; 
-    c2 = "]";
-  }
+  // The residuals are bracketed by '!' when the nonlinear residual has grown by
+  // more than 20 dB.
+  const char nl_open  = (i > 20) ? '!' : '[';
+  const char nl_close = (i > 20) ? '!' : ']';
 
-  char norm1_str[20], norm2_str[20], norm3_str[20];
-  sprintf(norm1_str, "%4.3e", tmp);
-  sprintf(norm2_str, "%4.3e", tmp1);
-  sprintf(norm3_str, "%4.3e", tmp2);
-
-  // NS     1-2  3.82E1  [ -62 7.92E-4 7.92E-4 3.60E-4]  [   5  -15  23] 
-  //                       ----------------------------
-  sOut += "  " + c1 + std::to_string(i) + " " + norm2_str  + " " + norm1_str + " " + norm3_str + c2;
   double eps = std::numeric_limits<double>::epsilon();
 
   if (utils::is_zero(timeP[2],timeP[1])) {
@@ -113,35 +120,27 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
 
   // Percent of time in solver?
   //
-  tmp = 100.0 * eq.FSILS.RI.callD / (timeP[2] - timeP[1]);
+  double solver_pct = 100.0 * eq.FSILS.RI.callD / (timeP[2] - timeP[1]);
   timeP[1] = timeP[2];
-  if (fabs(tmp) > 100.0) {
-    tmp = 100.0;
+  if (fabs(solver_pct) > 100.0) {
+    solver_pct = 100.0;
   }
 
   // Add a warning if the solution to the linear system did not converge.
+  const char ls_open  = eq.FSILS.RI.success ? '[' : '!';
+  const char ls_close = eq.FSILS.RI.success ? ']' : '!';
   std::string convergence_msg;
-  if (eq.FSILS.RI.success) {
-    c1 = "[";
-    c2 = "]";
-  } else {
-    c1 = "!";
-    c2 = "!";
+  if (!eq.FSILS.RI.success) {
     convergence_msg = "  WARNING: The linear system solution has not converged";
   }
 
-  // NS     1-2  3.82E1  [ -62 7.92E-4 7.92E-4 3.60E-4]  [   5  -15  23] 
-  //                                                      -------------
-  auto db_str = std::to_string(static_cast<int>(round(eq.FSILS.RI.dB)));
-  auto calld_str = std::to_string(static_cast<int>(round(tmp)));
-  sOut += "  " + c1 + std::to_string(eq.FSILS.RI.itr) + " " + db_str + " " + calld_str + c2;
-  sOut += convergence_msg; 
+  char row[row_buffer_size];
+  snprintf(row, sizeof(row), row_format, eq.sym.c_str(), iter_str, timeP[2],
+      nl_open, i, tmp1, tmp, tmp2, nl_close,
+      ls_open, eq.FSILS.RI.itr, static_cast<int>(round(eq.FSILS.RI.dB)),
+      static_cast<int>(round(solver_pct)), ls_close);
 
-  if (com_mod.nEq > 1) {
-    logger << sOut << std::endl;
-  } else {
-    logger << sOut << std::endl;
-  }
+  logger << row << convergence_msg << std::endl;
 
   // Print a warning message if the maximum number of nonlinear iterations has been exceeded.
   if (eq.itr > eq.maxItr) {
