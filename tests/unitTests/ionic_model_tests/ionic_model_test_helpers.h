@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstddef>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -43,6 +44,15 @@ struct IonicModelTrajectoryConfiguration {
 
   double tolerance = 1.0e-10;
   double stimulus = 0.0;
+
+  /**
+   * @brief Optional stimulus evaluated once per update at the old-state time.
+   *
+   * When set, this function supplies the stimulus instead of the constant
+   * value above.
+   */
+  std::function<double(double)> stimulus_at_time;
+
   double sac_coefficient = 0.0;
 };
 
@@ -107,8 +117,9 @@ public:
       const double time =
           static_cast<double>(completed_updates - 1) *
           configuration_.time_step;
+      const double stimulus = evaluate_stimulus(time);
       model_->integ(solver, configuration_.zone_id, time,
-                    configuration_.time_step, configuration_.stimulus,
+                    configuration_.time_step, stimulus,
                     configuration_.sac_coefficient, X, Xg);
       compare_checkpoint_if_present(completed_updates, X, Xg,
                                     checkpoint_index);
@@ -211,6 +222,18 @@ private:
                      [](double value) { return std::isfinite(value); }))
       throw std::invalid_argument("IonicModel initial " + state_name +
                                   " override must contain finite values");
+  }
+
+  double evaluate_stimulus(double time) const
+  {
+    const double stimulus = configuration_.stimulus_at_time
+                                ? configuration_.stimulus_at_time(time)
+                                : configuration_.stimulus;
+    if (!std::isfinite(stimulus))
+      throw std::runtime_error(
+          "IonicModel trajectory stimulus must be finite at time " +
+          std::to_string(time));
+    return stimulus;
   }
 
   static void
