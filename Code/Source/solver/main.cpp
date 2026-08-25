@@ -253,7 +253,6 @@ void iterate_solution(Simulation* simulation)
 
   bool l1 = false;
   bool l2 = false;
-  bool l3 = false;
 
   #ifdef debug_iterate_solution
   dmsg << "Start Outer Loop ..." << std::endl;
@@ -349,8 +348,11 @@ void iterate_solution(Simulation* simulation)
     dmsg << "Starting Newton iteration via Integrator ..." << std::endl;
     #endif
 
-    int iEqOld = cEq;
-    integrator.step();
+    // Results of this time step are written to a VTU file
+    const bool save_vtu = com_mod.saveVTK && cTS % com_mod.saveIncr == 0 &&
+                          cTS >= com_mod.saveATS;
+
+    integrator.step(save_vtu);
 
     #ifdef debug_iterate_solution
     dmsg << ">>> End of Newton iteration" << std::endl;
@@ -471,28 +473,13 @@ void iterate_solution(Simulation* simulation)
     // Writing results into the disk with VTU format
     //
     #ifdef debug_iterate_solution
-    dmsg; 
-    dmsg << "saveVTK: " << com_mod.saveVTK; 
+    dmsg;
+    dmsg << "saveVTK: " << com_mod.saveVTK;
+    dmsg << "save_vtu: " << save_vtu;
     #endif
 
-    if (com_mod.saveVTK) {
-      l2 = ((cTS % com_mod.saveIncr) == 0);
-      l3 = (cTS >= com_mod.saveATS);
-      #ifdef debug_iterate_solution
-      dmsg << "l2: " << l2; 
-      dmsg << "l3: " << l3; 
-      #endif
-
-      if (l2 && l3) {
-        output::output_result(simulation, com_mod.timeP, 3, iEqOld);
-        bool lAvg = false;
-        vtk_xml::write_vtus(simulation, solutions, lAvg);
-      } else {
-        output::output_result(simulation, com_mod.timeP, 2, iEqOld);
-      }
-
-    } else {
-      output::output_result(simulation, com_mod.timeP, 2, iEqOld);
+    if (save_vtu) {
+      vtk_xml::write_vtus(simulation, solutions, /* lAvg = */ false);
     }
 
     // [NOTE] Not implemented.
@@ -536,7 +523,7 @@ void iterate_solution(Simulation* simulation)
       }
 
       if (cm.mas(cm_mod)) {
-        if (l2 && l3) {
+        if (save_vtu) {
           uris::uris_write_vtus(com_mod);
         }
       }
