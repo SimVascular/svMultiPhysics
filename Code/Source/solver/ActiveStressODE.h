@@ -92,8 +92,12 @@ public:
    * @brief Constructor.
    *
    * @param n_states Number of state variables for this model.
+   * @param needs_fiber_stretch See @ref ActiveStress::ActiveStress.
+   * @param needs_fiber_stretch_rate See @ref ActiveStress::ActiveStress.
    */
-  ActiveStressODE(const unsigned int n_states) : ActiveStress(n_states) {}
+  ActiveStressODE(const unsigned int n_states, const bool needs_fiber_stretch,
+                  const bool needs_fiber_stretch_rate)
+      : ActiveStress(n_states, needs_fiber_stretch, needs_fiber_stretch_rate) {}
 
 protected:
   /**

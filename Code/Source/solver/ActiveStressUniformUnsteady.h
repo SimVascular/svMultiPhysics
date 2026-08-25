@@ -37,7 +37,10 @@ public:
   /**
    * @brief Constructor.
    */
-  ActiveStressUniformUnsteady() : ActiveStress(/* n_states = */ 0) {}
+  ActiveStressUniformUnsteady()
+      : ActiveStress(/* n_states = */ 0,
+                     /* needs_fiber_stretch = */ false,
+                     /* needs_fiber_stretch_rate = */ false) {}
 
   /**
    * @brief Construct an instance of model parameters.

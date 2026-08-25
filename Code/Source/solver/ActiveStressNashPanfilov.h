@@ -59,7 +59,10 @@ public:
   /**
    * @brief Constructor.
    */
-  ActiveStressNashPanfilov() : ActiveStressODE(1) {}
+  ActiveStressNashPanfilov()
+      : ActiveStressODE(/* n_state_variables = */ 1,
+                        /* needs_fiber_stretch = */ false,
+                        /* needs_fiber_stretch_rate = */ false) {}
 
   /**
    * @brief Construct an instance of model parameters.
