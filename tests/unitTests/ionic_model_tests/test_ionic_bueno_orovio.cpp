@@ -12,8 +12,8 @@ namespace {
 
 // The independent Forward-Euler oracles follow the equations of Bueno-Orovio,
 // Cherry, and Fenton (2008). The M reference uses the current svMP tau_s2
-// default documented in its CSV. A non-rest initial voltage starts each
-// trajectory without stimulus or stretch-activated current.
+// default documented in its CSV. A half-open pulse initiates one action
+// potential from the published/default resting state without stretch current.
 void run_bueno_orovio_trajectory(
     int zone_id,
     std::size_t update_count,
@@ -26,11 +26,12 @@ void run_bueno_orovio_trajectory(
   configuration.zone_id = zone_id;
   configuration.time_step = 0.01;
   configuration.update_count = update_count;
-  configuration.initial_X_override = {{-41.15, 1.0, 1.0, 0.0}};
   configuration.reference_csv_filename = reference_csv_filename;
   configuration.state_reference_columns = {"V_mV", "v", "w", "s"};
   configuration.tolerance = 1.0e-10;
-  configuration.stimulus = 0.0;
+  configuration.stimulus_at_time = [](double time) {
+    return 10.0 <= time && time < 12.0 ? -35.714 : 0.0;
+  };
   configuration.sac_coefficient = 0.0;
 
   IonicModelTrajectoryTest<BuenoOrovio> trajectory(parameters, configuration);
