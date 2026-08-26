@@ -151,6 +151,12 @@ include(${VTK_USE_FILE})
 
 set(lib ${SV_LIB_SVFSI_NAME})
 
+add_subdirectory(Core)
+
+set(SVMP_ARCHITECTURE_TARGETS
+  svmp_core
+)
+
 set(CSRCS 
   Array3.h Array3.cpp 
   Array.h Array.cpp
@@ -303,6 +309,7 @@ simvascular_add_executable(${SV_MULTIPHYSICS_EXE}
   INSTALL_DESTINATION ${SV_INSTALL_RUNTIME_DIR})
 
 target_link_libraries(${SV_MULTIPHYSICS_EXE}
+  ${SVMP_ARCHITECTURE_TARGETS}
   ${GLOBAL_LIBRARIES}
   ${INTELRUNTIME_LIBRARIES}
   ${ZLIB_LIBRARY}
@@ -406,6 +413,7 @@ if(ENABLE_UNIT_TEST)
 
   # libraries
   target_link_libraries(run_all_unit_tests
+    ${SVMP_ARCHITECTURE_TARGETS}
     ${GLOBAL_LIBRARIES}
     ${INTELRUNTIME_LIBRARIES}
     ${ZLIB_LIBRARY}
