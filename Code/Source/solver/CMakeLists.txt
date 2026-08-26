@@ -154,6 +154,7 @@ set(lib ${SV_LIB_SVFSI_NAME})
 add_subdirectory(Core)
 add_subdirectory(FE/Common)
 add_subdirectory(FE/Math)
+add_subdirectory(FE/Basis)
 
 set(SVMP_ARCHITECTURE_TARGETS
   svmp_core
