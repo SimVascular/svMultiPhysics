@@ -94,10 +94,79 @@ namespace mat_fun {
     Array<double> mat_inv_ge(const Array<double>& A, const int nd, bool debug = false);
     Array<double> mat_inv_lp(const Array<double>& A, const int nd);
 
+    /// @brief Multiply a matrix by a vector, returning A*v.
+    ///
+    /// @param[in] A matrix with as many columns as v has entries.
+    /// @param[in] v vector.
+    /// @return the product, of size rows(A).
+    ///
+    /// Throws InvalidArgumentException if the sizes are incompatible.
     Vector<double> mat_mul(const Array<double>& A, const Vector<double>& v);
+
+    /// @brief Multiply two matrices, returning A*B.
+    ///
+    /// @param[in] A left operand.
+    /// @param[in] B right operand, with as many rows as A has columns.
+    /// @return the product, of size rows(A) by cols(B).
+    ///
+    /// Throws InvalidArgumentException if the sizes are incompatible. The
+    /// result is freshly allocated, so the operands may alias it, as in
+    /// A = mat_mul(A, B).
     Array<double> mat_mul(const Array<double>& A, const Array<double>& B);
+
+    /// @brief Multiply two matrices, writing A*B into an existing result.
+    ///
+    /// @param[in]  A left operand.
+    /// @param[in]  B right operand, with as many rows as A has columns.
+    /// @param[out] result the product. The caller sizes it rows(A) by cols(B).
+    ///
+    /// Throws InvalidArgumentException if the sizes are incompatible. Preferred
+    /// in loops, where it reuses the caller's storage instead of allocating a
+    /// result on every call. The result must not alias A or B.
     void mat_mul(const Array<double>& A, const Array<double>& B, Array<double>& result);
-    void mat_mul6x3(const Array<double>& A, const Array<double>& B, Array<double>& C);
+
+    /// @brief Matrix product with the operand shape supplied at compile time.
+    ///
+    /// Overloads of mat_mul rather than differently named helpers, so a call
+    /// site states the shape and otherwise reads exactly as before:
+    ///
+    /// @code
+    ///   mat_mul(Dm, Bm.rslice(b), DBm);        // runtime shape check
+    ///   mat_mul<6, 6, 3>(Dm, Bm.rslice(b), DBm);  // no check, same arguments
+    /// @endcode
+    ///
+    /// The generic mat_mul overload above will dispatch to this overload
+    /// when the shapes are known at compile time.
+    ///
+    /// @tparam M rows of A and of the result
+    /// @tparam K columns of A and rows of B, the contracted dimension
+    /// @tparam N columns of B and of the result
+    template <int M, int K, int N>
+    void mat_mul(const Array<double>& A, const Array<double>& B,
+                 Array<double>& C)
+    {
+      Eigen::Map<const Eigen::Matrix<double, M, K>> a(A.data());
+      Eigen::Map<const Eigen::Matrix<double, K, N>> b(B.data());
+      Eigen::Map<Eigen::Matrix<double, M, N>>       c(C.data());
+
+      c.noalias() = a * b;
+    }
+
+    /// @brief As above, but with the column count known only at run time.
+    ///
+    /// For operands with one column per element node, where the width depends on
+    /// the element type. The row counts are still compile-time, which is where
+    /// most of the benefit comes from.
+    template <int M, int K>
+    void mat_mul(const Array<double>& A, const Array<double>& B,
+                 Array<double>& C)
+    {
+      Eigen::Map<const Eigen::Matrix<double, M, K>> a(A.data());
+      Eigen::Map<const Eigen::Matrix<double, K, Eigen::Dynamic>> b(B.data(), K, B.ncols());
+      Eigen::Map<Eigen::Matrix<double, M, Eigen::Dynamic>>       c(C.data(), M, C.ncols());
+
+      c.noalias() = a * b;
+    }
 
     Array<double> mat_symm(const Array<double>& A, const int nd);
     Array<double> mat_symm_prod(const Vector<double>& u, const Vector<double>& v, const int nd);

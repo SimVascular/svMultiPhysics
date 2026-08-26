@@ -1692,9 +1692,10 @@ void compute_visc_stress_newtonian(const double mu, const int eNoN, const Array<
                 Nx_Fi(i,a) += Nx(j,a) * Fi(j,i);
             }
         }
-        ddev_Nx_Fi = mat_mul(ddev, Nx_Fi);
-        vx_Fi_Nx_Fi = mat_mul(vx_Fi, Nx_Fi);
     }
+
+    mat_mul(ddev,  Nx_Fi, ddev_Nx_Fi);
+    mat_mul(vx_Fi, Nx_Fi, vx_Fi_Nx_Fi);
 
     // 2nd Piola-Kirchhoff stress due to viscosity
     // Svis = 2 * mu * J * F^-1 * d_dev * F^-T

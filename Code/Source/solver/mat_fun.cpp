@@ -6,6 +6,7 @@
 #include "consts.h"
 
 #include "utils.h"
+#include "FE/Common/FEException.h"
 
 #include <math.h>
 
@@ -459,8 +460,6 @@ mat_inv_lp_eigen(const Array<double>& A, const int nd)
 }
 
 /// @brief Multiply a matrix by a vector.
-///
-/// Reproduces Fortran MATMUL.
 //
 Vector<double> 
 mat_mul(const Array<double>& A, const Vector<double>& v)
@@ -468,10 +467,10 @@ mat_mul(const Array<double>& A, const Vector<double>& v)
   int num_rows = A.nrows();
   int num_cols = A.ncols();
 
-  if (num_cols != v.size()) {
-    throw std::runtime_error("[mat_mul] The number of columns of A (" + std::to_string(num_cols) + ") does not equal the size of v (" + 
-        std::to_string(v.size()) + ").");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      num_cols != v.size(),
+      "[mat_mul] The number of columns of A (" + std::to_string(num_cols) +
+          ") does not equal the size of v (" + std::to_string(v.size()) + ").");
 
   Vector<double> result(num_rows);
 
@@ -490,7 +489,8 @@ mat_mul(const Array<double>& A, const Vector<double>& v)
 
 /// @brief Multiply a matrix by a matrix.
 ///
-/// Reproduces Fortran MATMUL.
+/// Allocates the result and hands it to the in-place overload, so the two
+/// share one implementation and both reach the fixed-shape paths.
 //
 Array<double> 
 mat_mul(const Array<double>& A, const Array<double>& B)
@@ -500,41 +500,60 @@ mat_mul(const Array<double>& A, const Array<double>& B)
   int B_num_rows = B.nrows();
   int B_num_cols = B.ncols();
 
-  if (A_num_cols != B_num_rows) {
-    throw std::runtime_error("[mat_mul] The number of columns of A (" + std::to_string(A_num_cols) + ") does not equal " +
-        " the number of rows of B (" + std::to_string(B_num_rows) + ").");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      A_num_cols != B_num_rows,
+      "[mat_mul] The number of columns of A (" + std::to_string(A_num_cols) +
+          ") does not equal the number of rows of B (" +
+          std::to_string(B_num_rows) + ").");
 
   Array<double> result(A_num_rows, B_num_cols);
 
-  for (int i = 0; i < A_num_rows; i++) {
-    for (int j = 0; j < B_num_cols; j++) {
-      double sum = 0.0;
-      for (int k = 0; k < A_num_cols; k++) {
-        sum += A(i,k) * B(k,j);
-      }
-    result(i,j) = sum;
-    }
-  }
+  // Fall back onto the overload of this function that takes the result matrix
+  // as an output argument.
+  mat_mul(A, B, result);
 
   return result;
 }
 
 /// @brief Multiply a matrix by a matrix.
 ///
-/// Compute result directly into the passed argument.
+/// Dispatches the shapes that dominate the element loops to fixed-size Eigen
+/// products, and falls back to a general triple loop otherwise.
 //
 void mat_mul(const Array<double>& A, const Array<double>& B, Array<double>& result)
 { 
+  // Fixed-shape fast paths for the products that dominate the element loops.
+  //
+  //   3x3 * 3x3     F*S in struct_3d; vx*Fi, ddev*Fit, Fi*ddev_Fit and the
+  //                 potential-viscosity products in mat_models; F^T*F in cep
+  //   3x3 * 3xeNoN  ddev*Nx_Fi and vx_Fi*Nx_Fi in the viscous tangent
+  //   6x6 * 6x3     the material stiffness product D*B in struct_3d/ustruct_3d_m
+  if (A.nrows() == 3 && A.ncols() == 3 && B.nrows() == 3 &&
+      result.nrows() == 3 && result.ncols() == B.ncols()) {
+    if (B.ncols() == 3) {
+      mat_mul<3, 3, 3>(A, B, result);
+    } else {
+      mat_mul<3, 3>(A, B, result);
+    }
+    return;
+  }
+
+  if (A.nrows() == 6 && A.ncols() == 6 && B.nrows() == 6 && B.ncols() == 3 &&
+      result.nrows() == 6 && result.ncols() == 3) {
+    mat_mul<6, 6, 3>(A, B, result);
+    return;
+  }
+
   int A_num_rows = A.nrows();
   int A_num_cols = A.ncols();
   int B_num_rows = B.nrows();
   int B_num_cols = B.ncols();
   
-  if (A_num_cols != B_num_rows) {
-    throw std::runtime_error("[mat_mul] The number of columns of A (" + std::to_string(A_num_cols) + ") does not equal " +
-        " the number of rows of B (" + std::to_string(B_num_rows) + ").");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+      A_num_cols != B_num_rows,
+      "[mat_mul] The number of columns of A (" + std::to_string(A_num_cols) +
+          ") does not equal the number of rows of B (" +
+          std::to_string(B_num_rows) + ").");
   
   for (int i = 0; i < A_num_rows; i++) { 
     for (int j = 0; j < B_num_cols; j++) {
@@ -900,36 +919,6 @@ transpose(const Array<double>& A)
   return result;
 }
 
-void mat_mul6x3(const Array<double>& A, const Array<double>& B, Array<double>& C)
-{
- #define mat_mul6x3_unroll 
-  #ifdef mat_mul6x3_unroll 
-  auto a = A.data();
-  auto b = B.data();
-  auto c = C.data();
-
-  c[0] = a[0]*b[0] + a[6]*b[1] + a[12]*b[2] + a[18]*b[3] + a[24]*b[4] + a[30]*b[5];
-  c[1] = a[1]*b[0] + a[7]*b[1] + a[13]*b[2] + a[19]*b[3] + a[25]*b[4] + a[31]*b[5];
-  c[2] = a[2]*b[0] + a[8]*b[1] + a[14]*b[2] + a[20]*b[3] + a[26]*b[4] + a[32]*b[5];
-  c[3] = a[3]*b[0] + a[9]*b[1] + a[15]*b[2] + a[21]*b[3] + a[27]*b[4] + a[33]*b[5];
-  c[4] = a[4]*b[0] + a[10]*b[1] + a[16]*b[2] + a[22]*b[3] + a[28]*b[4] + a[34]*b[5];
-  c[5] = a[5]*b[0] + a[11]*b[1] + a[17]*b[2] + a[23]*b[3] + a[29]*b[4] + a[35]*b[5];
-
-  c[6] =  a[0]*b[6] + a[6]*b[7] + a[12]*b[8] + a[18]*b[9] + a[24]*b[10] + a[30]*b[11];
-  c[7] =  a[1]*b[6] + a[7]*b[7] + a[13]*b[8] + a[19]*b[9] + a[25]*b[10] + a[31]*b[11];
-  c[8] =  a[2]*b[6] + a[8]*b[7] + a[14]*b[8] + a[20]*b[9] + a[26]*b[10] + a[32]*b[11];
-  c[9] =  a[3]*b[6] + a[9]*b[7] + a[15]*b[8] + a[21]*b[9] + a[27]*b[10] + a[33]*b[11];
-  c[10] = a[4]*b[6] + a[10]*b[7] + a[16]*b[8] + a[22]*b[9] + a[28]*b[10] + a[34]*b[11];
-  c[11] = a[5]*b[6] + a[11]*b[7] + a[17]*b[8] + a[23]*b[9] + a[29]*b[10] + a[35]*b[11];
-
-  c[12] = a[0]*b[12] + a[6]*b[13] + a[12]*b[14] + a[18]*b[15] + a[24]*b[16] + a[30]*b[17];
-  c[13] = a[1]*b[12] + a[7]*b[13] + a[13]*b[14] + a[19]*b[15] + a[25]*b[16] + a[31]*b[17];
-  c[14] = a[2]*b[12] + a[8]*b[13] + a[14]*b[14] + a[20]*b[15] + a[26]*b[16] + a[32]*b[17];
-  c[15] = a[3]*b[12] + a[9]*b[13] + a[15]*b[14] + a[21]*b[15] + a[27]*b[16] + a[33]*b[17];
-  c[16] = a[4]*b[12] + a[10]*b[13] + a[16]*b[14] + a[22]*b[15] + a[28]*b[16] + a[34]*b[17];
-  c[17] = a[5]*b[12] + a[11]*b[13] + a[17]*b[14] + a[23]*b[15] + a[29]*b[16] + a[35]*b[17];
-  #endif
-}
 
 };
 
