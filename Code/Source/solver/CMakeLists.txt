@@ -160,6 +160,9 @@ add_subdirectory(FE/Quadrature)
 set(SVMP_ARCHITECTURE_TARGETS
   svmp_core
   svmp_fe_common
+  svmp_fe_math
+  svmp_fe_basis
+  svmp_fe_quadrature
 )
 
 set(CSRCS 
@@ -255,40 +258,6 @@ set(CSRCS
   BoundaryCondition.h BoundaryCondition.cpp
   RobinBoundaryCondition.h RobinBoundaryCondition.cpp
   CoupledBoundaryCondition.h CoupledBoundaryCondition.cpp
-)
-
-file(GLOB SOLVER_CORE_SRCS CONFIGURE_DEPENDS
-  Core/*.cpp
-  Core/*.h
-  Core/*.inl
-)
-
-file(GLOB SOLVER_FE_COMMON_SRCS CONFIGURE_DEPENDS
-  FE/Common/*.cpp
-  FE/Common/*.h
-)
-
-file(GLOB SOLVER_FE_BASIS_SRCS CONFIGURE_DEPENDS
-  FE/Basis/*.cpp
-  FE/Basis/*.h
-)
-
-file(GLOB SOLVER_FE_MATH_SRCS CONFIGURE_DEPENDS
-  FE/Math/*.cpp
-  FE/Math/*.h
-)
-
-file(GLOB SOLVER_FE_QUADRATURE_SRCS CONFIGURE_DEPENDS
-  FE/Quadrature/*.cpp
-  FE/Quadrature/*.h
-)
-
-list(APPEND CSRCS
-  ${SOLVER_CORE_SRCS}
-  ${SOLVER_FE_COMMON_SRCS}
-  ${SOLVER_FE_BASIS_SRCS}
-  ${SOLVER_FE_MATH_SRCS}
-  ${SOLVER_FE_QUADRATURE_SRCS}
 )
 
   # Set PETSc interace code.
