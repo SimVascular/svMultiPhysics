@@ -152,9 +152,11 @@ include(${VTK_USE_FILE})
 set(lib ${SV_LIB_SVFSI_NAME})
 
 add_subdirectory(Core)
+add_subdirectory(FE/Common)
 
 set(SVMP_ARCHITECTURE_TARGETS
   svmp_core
+  svmp_fe_common
 )
 
 set(CSRCS 
