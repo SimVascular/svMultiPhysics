@@ -151,6 +151,40 @@ include(${VTK_USE_FILE})
 
 set(lib ${SV_LIB_SVFSI_NAME})
 
+# coverage
+if(ENABLE_COVERAGE)
+  # set compiler flags
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage")
+
+  # find required tools
+  find_program(LCOV lcov REQUIRED)
+  find_program(GENHTML genhtml REQUIRED)
+
+  # add coverage target
+  add_custom_target(coverage
+    # gather data
+    COMMAND ${LCOV} --directory . --capture --output-file coverage.info --ignore-errors mismatch --rc geninfo_unexecuted_blocks=1
+    # exclude externals
+    COMMAND ${LCOV} --remove coverage.info -o coverage.info '/usr/*' '/opt/*' "${PROJECT_SOURCE_DIR}/ThirdParty/*" '/Library/*' 'v1/*' --ignore-errors unused
+    # generate report
+    COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
+
+add_subdirectory(Core)
+add_subdirectory(FE/Common)
+add_subdirectory(FE/Math)
+add_subdirectory(FE/Basis)
+add_subdirectory(FE/Quadrature)
+
+set(SVMP_ARCHITECTURE_TARGETS
+  svmp_core
+  svmp_fe_common
+  svmp_fe_math
+  svmp_fe_basis
+  svmp_fe_quadrature
+)
+
 set(CSRCS 
   Array3.h Array3.cpp 
   Array.h Array.cpp
@@ -246,40 +280,6 @@ set(CSRCS
   CoupledBoundaryCondition.h CoupledBoundaryCondition.cpp
 )
 
-file(GLOB SOLVER_CORE_SRCS CONFIGURE_DEPENDS
-  Core/*.cpp
-  Core/*.h
-  Core/*.inl
-)
-
-file(GLOB SOLVER_FE_COMMON_SRCS CONFIGURE_DEPENDS
-  FE/Common/*.cpp
-  FE/Common/*.h
-)
-
-file(GLOB SOLVER_FE_BASIS_SRCS CONFIGURE_DEPENDS
-  FE/Basis/*.cpp
-  FE/Basis/*.h
-)
-
-file(GLOB SOLVER_FE_MATH_SRCS CONFIGURE_DEPENDS
-  FE/Math/*.cpp
-  FE/Math/*.h
-)
-
-file(GLOB SOLVER_FE_QUADRATURE_SRCS CONFIGURE_DEPENDS
-  FE/Quadrature/*.cpp
-  FE/Quadrature/*.h
-)
-
-list(APPEND CSRCS
-  ${SOLVER_CORE_SRCS}
-  ${SOLVER_FE_COMMON_SRCS}
-  ${SOLVER_FE_BASIS_SRCS}
-  ${SOLVER_FE_MATH_SRCS}
-  ${SOLVER_FE_QUADRATURE_SRCS}
-)
-
   # Set PETSc interace code.
   #if(USE_PETSC)
   #   set(CSRCS ${CSRCS} petsc_linear_solver.h petsc_linear_solver.c)
@@ -303,6 +303,7 @@ simvascular_add_executable(${SV_MULTIPHYSICS_EXE}
   INSTALL_DESTINATION ${SV_INSTALL_RUNTIME_DIR})
 
 target_link_libraries(${SV_MULTIPHYSICS_EXE}
+  ${SVMP_ARCHITECTURE_TARGETS}
   ${GLOBAL_LIBRARIES}
   ${INTELRUNTIME_LIBRARIES}
   ${ZLIB_LIBRARY}
@@ -327,26 +328,6 @@ endif()
 
 if(USE_PETSC)
   target_link_libraries(${SV_MULTIPHYSICS_EXE} ${PETSC_LIBRARY_DIRS})
-endif()
-
-# coverage
-if(ENABLE_COVERAGE)
-  # set compiler flags
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage")
-
-  # find required tools
-  find_program(LCOV lcov REQUIRED)
-  find_program(GENHTML genhtml REQUIRED)
-
-  # add coverage target
-  add_custom_target(coverage
-    # gather data
-    COMMAND ${LCOV} --directory . --capture --output-file coverage.info --ignore-errors mismatch --rc geninfo_unexecuted_blocks=1
-    # exclude externals
-    COMMAND ${LCOV} --remove coverage.info -o coverage.info '/usr/*' '/opt/*' "${PROJECT_SOURCE_DIR}/ThirdParty/*" '/Library/*' 'v1/*' --ignore-errors unused
-    # generate report
-    COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
 
 # unit tests and Google Test
@@ -406,6 +387,7 @@ if(ENABLE_UNIT_TEST)
 
   # libraries
   target_link_libraries(run_all_unit_tests
+    ${SVMP_ARCHITECTURE_TARGETS}
     ${GLOBAL_LIBRARIES}
     ${INTELRUNTIME_LIBRARIES}
     ${ZLIB_LIBRARY}
