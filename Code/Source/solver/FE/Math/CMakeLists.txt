@@ -5,7 +5,7 @@ file(GLOB SVMP_FE_MATH_FILES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/*.inl"
 )
 
-add_library(svmp_fe_math ${SV_LIBRARY_TYPE}
+add_library(svmp_fe_math OBJECT
   ${SVMP_FE_MATH_FILES}
 )
 
@@ -21,11 +21,3 @@ target_include_directories(svmp_fe_math PUBLIC
 target_link_libraries(svmp_fe_math PUBLIC
   svmp_fe_common
 )
-
-if(SV_INSTALL_LIBS)
-  install(TARGETS svmp_fe_math
-    RUNTIME DESTINATION ${SV_INSTALL_RUNTIME_DIR} COMPONENT CoreExecutables
-    LIBRARY DESTINATION ${SV_INSTALL_LIBRARY_DIR} COMPONENT CoreLibraries
-    ARCHIVE DESTINATION ${SV_INSTALL_ARCHIVE_DIR} COMPONENT CoreLibraries
-  )
-endif()
