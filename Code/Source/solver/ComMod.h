@@ -1604,9 +1604,6 @@ class ComMod {
     /// @brief Whether any file being saved
     bool savedOnce = false;
 
-    /// @brief Whether to use separator in output
-    bool sepOutput = false;
-
     /// @brief Whether start from beginning or from simulations
     bool stFileFlag = false;
 

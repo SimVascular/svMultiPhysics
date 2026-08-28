@@ -19,7 +19,6 @@ ComMod::ComMod()
   bin2VTK            = false;
   saveAve            = false;
   alwaysSaveDomainID = false;
-  sepOutput          = false;
   saveATS            = 1;
   saveIncr           = 10;
   nITs               = 0;
