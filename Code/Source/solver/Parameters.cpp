@@ -2828,6 +2828,8 @@ GeneralSimulationParameters::GeneralSimulationParameters() {
 
   set_parameter("Save_averaged_results", false, !required,
                 save_averaged_results);
+  set_parameter("Save_domain_ID_in_every_file", false, !required,
+                save_domain_id_in_every_file);
   set_parameter("Save_results_in_folder", "", !required,
                 save_results_in_folder);
   set_parameter("Save_results_to_VTK_format", false, required,

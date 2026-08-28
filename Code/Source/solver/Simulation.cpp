@@ -69,6 +69,7 @@ void Simulation::set_module_parameters()
   com_mod.saveIncr = general.increment_in_saving_vtk_files.value();
   com_mod.saveATS = general.start_saving_after_time_step.value();
   com_mod.saveAve = general.save_averaged_results.value();
+  com_mod.alwaysSaveDomainID = general.save_domain_id_in_every_file.value();
   com_mod.zeroAve = general.start_averaging_from_zero.value();
   com_mod.stFileRepl = general.overwrite_restart_file.value();
   com_mod.stFileName = chnl_mod.appPath + general.restart_file_name.value();

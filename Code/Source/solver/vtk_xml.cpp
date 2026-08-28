@@ -183,7 +183,9 @@ void int_msh_data(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM,
   //
   int m = nOute;
 
-  if (!com_mod.savedOnce || com_mod.nMsh > 1) {
+  // This condition selects the same xe columns as the one in write_vtus that
+  // reads them back. The two must agree.
+  if (!com_mod.savedOnce || com_mod.nMsh > 1 || com_mod.alwaysSaveDomainID) {
     if (com_mod.savedOnce) {
       m = m + 1;
     } else { 
@@ -230,7 +232,7 @@ void int_msh_data(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM,
 
   // If files have not been written or there are multiple meshes.
   // 
-  if (!com_mod.savedOnce || com_mod.nMsh > 1) {
+  if (!com_mod.savedOnce || com_mod.nMsh > 1 || com_mod.alwaysSaveDomainID) {
     #ifdef debug_int_msh_data
     dmsg << "!com_mod.savedOnce || com_mod.nMsh > 1 ";
     dmsg << "com_mod.dmnId.size(): " << com_mod.dmnId.size();
@@ -1538,7 +1540,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   //
   int ne = -1;
 
-  if (!com_mod.savedOnce || nMsh > 1) {
+  if (!com_mod.savedOnce || nMsh > 1 || com_mod.alwaysSaveDomainID) {
     Array<int> tmpI(1,nEl);
 
     // Write the domain ID

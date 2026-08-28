@@ -1594,6 +1594,10 @@ class ComMod {
     /// @brief Whether to averaged results
     bool saveAve = false;
 
+    /// @brief Whether to save the domain ID to every VTK file rather than to
+    /// the first one only
+    bool alwaysSaveDomainID = false;
+
     /// @brief Whether to save to VTK files
     bool saveVTK = false;
 
