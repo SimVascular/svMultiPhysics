@@ -79,15 +79,15 @@ void output_header(const Simulation *simulation, std::array<double, 3> &timeP) {
 
 void output_result(const Simulation *simulation, std::array<double, 3> &timeP,
                    const bool save_results, const int iEq) {
-#ifdef debug_output_result
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
-  dmsg.banner();
-#endif
-
   auto &com_mod = simulation->com_mod;
   auto &cm_mod = simulation->cm_mod;
   auto &eq = com_mod.eq[iEq];
   auto cTS = com_mod.cTS;
+
+#ifdef debug_output_result
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+#endif
 
   // Writes to history file and optionally to cout.
   auto &logger = simulation->logger;
