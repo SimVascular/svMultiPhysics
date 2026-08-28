@@ -33,6 +33,16 @@ class VtkData {
     virtual void set_points(const Array<double>& points) = 0;
     virtual void set_connectivity(const int nsd, const Array<int>& conn, const int pid = 0) = 0;
 
+    /// @brief Store a time value as field data, using the VTK convention for
+    /// time meta-data in XML files.
+    ///
+    /// The value is written as a single-tuple Float64 field data array named
+    /// 'TimeValue'. VTK XML readers such as ParaView turn this array into the
+    /// pipeline time of the data object.
+    ///
+    /// @param[in] time The time value to associate with the data.
+    virtual void set_time_value(const double time) = 0;
+
     virtual bool has_cell_data(const std::string& data_name) = 0;
     virtual bool has_point_data(const std::string& data_name) = 0;
 
@@ -103,6 +113,7 @@ class VtkVtpData : public VtkData {
     virtual void set_point_data(const std::string& data_name, const Vector<int>& data) override;
 
     virtual void set_points(const Array<double>& points) override;
+    virtual void set_time_value(const double time) override;
     virtual void write() override;
 
   private:
@@ -151,6 +162,7 @@ class VtkVtuData : public VtkData {
     virtual void set_point_data(const std::string& data_name, const Vector<int>& data) override;
 
     virtual void set_points(const Array<double>& points) override;
+    virtual void set_time_value(const double time) override;
     virtual void write() override;
 
   private:

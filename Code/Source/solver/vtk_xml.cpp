@@ -1467,6 +1467,11 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   fName = com_mod.saveName + "_" + fName + ".vtu";
   auto vtk_writer = VtkData::create_writer(fName);
 
+  // No time field is assigned for time-averaged output.
+  if (!lAve) {
+    vtk_writer->set_time_value(com_mod.time);
+  }
+
   // Writing the position data
   //
   int iOut = 0;

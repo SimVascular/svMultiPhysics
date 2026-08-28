@@ -5,9 +5,12 @@
 #include "Array.h"
 #include "DebugMsg.h"
 
-#include <vtkDoubleArray.h>
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
+#include <map>
+#include <string>
+#include <vtkDataObject.h>
+#include <vtkDoubleArray.h>
 #include <vtkGenericCell.h>
 #include <vtkIntArray.h>
 #include <vtkPointData.h>
@@ -19,12 +22,27 @@
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridWriter.h>
-#include <string>
-#include <map>
 
 /////////////////////////////////////////////////////////////////
 //        I n t e r n a l   I m p l e m e n t a t i o n        //
 /////////////////////////////////////////////////////////////////
+
+/// @brief Add a 'TimeValue' field data array to a VTK data object.
+///
+/// The VTK XML readers use a single-tuple Float64 field data array named
+/// 'TimeValue' as the pipeline time of the data object. An array of that name
+/// already present in the field data is replaced.
+///
+/// @param[in,out] data The data object being written.
+/// @param[in] time The time value to associate with the data object.
+static void set_time_value_field_data(vtkDataObject *data, const double time) {
+  auto time_array = vtkSmartPointer<vtkDoubleArray>::New();
+  time_array->SetName("TimeValue");
+  time_array->SetNumberOfComponents(1);
+  time_array->SetNumberOfTuples(1);
+  time_array->SetValue(0, time);
+  data->GetFieldData()->AddArray(time_array);
+}
 
 /////////////////////////////////////////////////////////////////
 //                    V t k V t p D a t a                      //
@@ -39,6 +57,7 @@ class VtkVtpData::VtkVtpDataImpl {
     void set_connectivity(const int nsd, const Array<int>& conn, const int pid);
     void set_point_data(const std::string& data_name, const Vector<int>& data);
     void set_points(const Array<double>& points);
+    void set_time_value(const double time);
     void write(const std::string& file_name);
 
     vtkSmartPointer<vtkPolyData> vtk_polydata;
@@ -246,6 +265,10 @@ void VtkVtpData::VtkVtpDataImpl::set_points(const Array<double>& points)
   vtk_polydata->GetPointData()->AddArray(node_ids);
 }
 
+void VtkVtpData::VtkVtpDataImpl::set_time_value(const double time) {
+  set_time_value_field_data(vtk_polydata, time);
+}
+
 void VtkVtpData::VtkVtpDataImpl::write(const std::string& file_name)
 {
   #ifdef debug_vtk_data
@@ -276,6 +299,7 @@ class VtkVtuData::VtkVtuDataImpl {
     void set_point_data(const std::string& data_name, const Vector<int>& data);
 
     void set_points(const Array<double>& points);
+    void set_time_value(const double time);
     void write(const std::string& file_name);
 
     template<typename T1, typename T2>
@@ -524,6 +548,10 @@ void VtkVtuData::VtkVtuDataImpl::set_points(const Array<double>& points)
   }
 
   vtk_ugrid->SetPoints(node_coords);
+}
+
+void VtkVtuData::VtkVtuDataImpl::set_time_value(const double time) {
+  set_time_value_field_data(vtk_ugrid, time);
 }
 
 void VtkVtuData::VtkVtuDataImpl::write(const std::string& file_name)
@@ -937,6 +965,10 @@ void VtkVtpData::set_points(const Array<double>& points)
   impl->set_points(points);
 }
 
+void VtkVtpData::set_time_value(const double time) {
+  impl->set_time_value(time);
+}
+
 void VtkVtpData::write()
 {
   impl->write(file_name);
@@ -1285,6 +1317,10 @@ void VtkVtuData::set_point_data(const std::string& data_name, const Vector<int>&
 void VtkVtuData::set_points(const Array<double>& points)
 {
   impl->set_points(points);
+}
+
+void VtkVtuData::set_time_value(const double time) {
+  impl->set_time_value(time);
 }
 
 void VtkVtuData::write()
