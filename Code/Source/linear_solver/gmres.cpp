@@ -340,6 +340,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     ls.callD = std::numeric_limits<double>::epsilon();
     ls.dB = 0.0;
     ls.success = true;
+    R = X;
     return; 
   }
 
@@ -494,6 +495,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     ls.callD = std::numeric_limits<double>::epsilon();
     ls.dB = 0.0;
     ls.success = true;
+    R = X;
     return; 
   }
 
