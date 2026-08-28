@@ -2807,9 +2807,9 @@ GeneralSimulationParameters::GeneralSimulationParameters() {
   set_parameter("Debug", false, !required, debug);
 
   set_parameter("Include_xml", "", !required, include_xml);
-  set_parameter("Increment_in_saving_restart_files", 0, !required,
+  set_parameter("Increment_in_saving_restart_files", 1, !required,
                 increment_in_saving_restart_files);
-  set_parameter("Increment_in_saving_VTK_files", 0, !required,
+  set_parameter("Increment_in_saving_VTK_files", 1, !required,
                 increment_in_saving_vtk_files);
 
   set_parameter("Name_prefix_of_saved_VTK_files", "", !required,
@@ -2912,9 +2912,22 @@ void GeneralSimulationParameters::set_values(tinyxml2::XMLElement *xml_element,
     item = item->NextSiblingElement();
   }
 
-  // Check that required parameters have been set.
   if (!from_external_xml) {
+    // Check that required parameters have been set.
     check_required();
+
+    // The saving increments select the time steps to save by taking the
+    // remainder of the time step number, so they cannot be zero.
+    svmp::check<svmp::ParseException>(
+        increment_in_saving_restart_files.value() >= 1,
+        "The GeneralSimulationParameters element "
+        "'Increment_in_saving_restart_files' must be greater than or equal "
+        "to 1.");
+
+    svmp::check<svmp::ParseException>(
+        increment_in_saving_vtk_files.value() >= 1,
+        "The GeneralSimulationParameters element "
+        "'Increment_in_saving_VTK_files' must be greater than or equal to 1.");
   }
 }
 
