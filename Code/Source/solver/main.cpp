@@ -266,6 +266,13 @@ void iterate_solution(Simulation* simulation)
   //Array<double>::write_enabled = true;
   //Array3<double>::write_enabled = true;
 
+  // Write the initial condition, which the Integrator has copied into the
+  // current solution. cTS is non-zero when restarting from a file or when
+  // continuing after remeshing, where the time step has already been written.
+  if (com_mod.saveVTK && cTS == 0 && com_mod.saveATS == 0) {
+    vtk_xml::write_vtus(simulation, solutions, /* lAvg = */ false);
+  }
+
   // Outer loop for marching in time. When entering this loop, all old
   // variables are completely set and satisfy BCs.
   // 
