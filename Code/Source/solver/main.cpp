@@ -251,10 +251,6 @@ void iterate_solution(Simulation* simulation)
   auto& Yn = solutions.current.get_velocity();     // New variables (velocity)
   auto& Dn = solutions.current.get_displacement(); // New integrated variables (displacement)
 
-  bool l1 = false;
-  bool l2 = false;
-  bool l3 = false;
-
   #ifdef debug_iterate_solution
   dmsg << "Start Outer Loop ..." << std::endl;
   #endif
@@ -356,8 +352,11 @@ void iterate_solution(Simulation* simulation)
     dmsg << "Starting Newton iteration via Integrator ..." << std::endl;
     #endif
 
-    int iEqOld = cEq;
-    integrator.step();
+    // Results of this time step are written to a VTU file
+    const bool save_vtu = com_mod.saveVTK && cTS % com_mod.saveIncr == 0 &&
+                          cTS >= com_mod.saveATS;
+
+    integrator.step(save_vtu);
 
     #ifdef debug_iterate_solution
     dmsg << ">>> End of Newton iteration" << std::endl;
@@ -410,39 +409,33 @@ void iterate_solution(Simulation* simulation)
 
     txt_ns::txt(simulation, false, solutions);
 
-    // If remeshing is required then save current solution.
-    //
-    if (com_mod.rmsh.isReqd) {
-      l1 = ((cTS % com_mod.rmsh.cpVar) == 0);
-      if (l1) {
-        #ifdef debug_iterate_solution
-        dmsg << "Saving last solution for remeshing." << std::endl; 
-        #endif
-        com_mod.rmsh.rTS = cTS - 1;
-        com_mod.rmsh.time = time - dt;
-        for (int i = 0; i < com_mod.rmsh.iNorm.size(); i++) {
-          com_mod.rmsh.iNorm(i) = com_mod.eq[i].iNorm;
-        }
-
-        com_mod.rmsh.A0 = Ao;
-        com_mod.rmsh.Y0 = Yo;
-        com_mod.rmsh.D0 = Do;
+    if (com_mod.rmsh.isReqd &&           // remeshing is required...
+        cTS % com_mod.rmsh.cpVar == 0) { // ...and this is a time step when the
+                                         // solution is saved for remeshing
+      #ifdef debug_iterate_solution
+      dmsg << "Saving last solution for remeshing." << std::endl;
+      #endif
+      com_mod.rmsh.rTS = cTS - 1;
+      com_mod.rmsh.time = time - dt;
+      for (int i = 0; i < com_mod.rmsh.iNorm.size(); i++) {
+        com_mod.rmsh.iNorm(i) = com_mod.eq[i].iNorm;
       }
+
+      com_mod.rmsh.A0 = Ao;
+      com_mod.rmsh.Y0 = Yo;
+      com_mod.rmsh.D0 = Do;
     }
 
     // Look for a file containg a time step to stop the simulation.
     //
     // stopTrigName = "STOP_SIM"
     //
-    auto& stopTrigName = com_mod.stopTrigName;
-    bool l1 = false;
+    auto &stopTrigName = com_mod.stopTrigName;
     int stopTS = 0;
-    int count = -1;
 
     if (cm.mas(cm_mod)) {
       if (FILE *fp = fopen(stopTrigName.c_str(), "r")) {
-        l1 = true;
-        count = fscanf(fp, "%d", &stopTS);
+        const int count = fscanf(fp, "%d", &stopTS);
 
         if (count == 0) {
           stopTS = cTS;
@@ -460,46 +453,31 @@ void iterate_solution(Simulation* simulation)
 
     cm.bcast(cm_mod, &stopTS);
 
-    l1 = (cTS >= stopTS);
-    l2 = ((cTS % com_mod.stFileIncr) == 0);
+    const bool reached_stop_time_step = cTS >= stopTS;
+    const bool is_restart_output_step = cTS % com_mod.stFileIncr == 0;
 
     #ifdef debug_iterate_solution
-    dmsg; 
-    dmsg << "stFileIncr: " << com_mod.stFileIncr; 
-    dmsg << "l1: " << l1; 
-    dmsg << "l2: " << l2; 
+    dmsg;
+    dmsg << "stFileIncr: " << com_mod.stFileIncr;
+    dmsg << "reached_stop_time_step: " << reached_stop_time_step;
+    dmsg << "is_restart_output_step: " << is_restart_output_step;
     #endif
 
     // Saving the result to restart bin file
-    if (l1 || l2) {
-       output::write_restart(simulation, com_mod.timeP, solutions);
+    if (reached_stop_time_step || is_restart_output_step) {
+      output::write_restart(simulation, com_mod.timeP, solutions);
     }
 
     // Writing results into the disk with VTU format
     //
     #ifdef debug_iterate_solution
-    dmsg; 
-    dmsg << "saveVTK: " << com_mod.saveVTK; 
+    dmsg;
+    dmsg << "saveVTK: " << com_mod.saveVTK;
+    dmsg << "save_vtu: " << save_vtu;
     #endif
 
-    if (com_mod.saveVTK) {
-      l2 = ((cTS % com_mod.saveIncr) == 0);
-      l3 = (cTS >= com_mod.saveATS);
-      #ifdef debug_iterate_solution
-      dmsg << "l2: " << l2; 
-      dmsg << "l3: " << l3; 
-      #endif
-
-      if (l2 && l3) {
-        output::output_result(simulation, com_mod.timeP, 3, iEqOld);
-        bool lAvg = false;
-        vtk_xml::write_vtus(simulation, solutions, lAvg);
-      } else {
-        output::output_result(simulation, com_mod.timeP, 2, iEqOld);
-      }
-
-    } else {
-      output::output_result(simulation, com_mod.timeP, 2, iEqOld);
+    if (save_vtu) {
+      vtk_xml::write_vtus(simulation, solutions, /* lAvg = */ false);
     }
 
     // [NOTE] Not implemented.
@@ -543,15 +521,14 @@ void iterate_solution(Simulation* simulation)
       }
 
       if (cm.mas(cm_mod)) {
-        if (l2 && l3) {
+        if (save_vtu) {
           uris::uris_write_vtus(com_mod);
         }
       }
     }
-    // end RIS/URIS stuff 
+    // end RIS/URIS stuff
 
-    // Exiting outer loop if l1
-    if (l1) {
+    if (reached_stop_time_step) {
       break;
     }
 
