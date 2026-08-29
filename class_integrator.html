@@ -111,9 +111,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3e97d2ea12a13ff4ab448404f3f2b210" id="r_a3e97d2ea12a13ff4ab448404f3f2b210"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_integrator.html#a3e97d2ea12a13ff4ab448404f3f2b210">Integrator</a> (<a class="el" href="class_simulation.html">Simulation</a> *simulation, <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;&amp;solutions)</td></tr>
 <tr class="memdesc:a3e97d2ea12a13ff4ab448404f3f2b210"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> object.  <br /></td></tr>
 <tr class="separator:a3e97d2ea12a13ff4ab448404f3f2b210"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abfb6cb62626abbd866f3d6f710dc7bab" id="r_abfb6cb62626abbd866f3d6f710dc7bab"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_integrator.html#abfb6cb62626abbd866f3d6f710dc7bab">step</a> ()</td></tr>
-<tr class="memdesc:abfb6cb62626abbd866f3d6f710dc7bab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute one time step with Newton iteration loop.  <br /></td></tr>
-<tr class="separator:abfb6cb62626abbd866f3d6f710dc7bab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1602455d859896e9187ff586d2a2aec" id="r_aa1602455d859896e9187ff586d2a2aec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_integrator.html#aa1602455d859896e9187ff586d2a2aec">step</a> (bool save_results=false)</td></tr>
+<tr class="memdesc:aa1602455d859896e9187ff586d2a2aec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute one time step with Newton iteration loop.  <br /></td></tr>
+<tr class="separator:aa1602455d859896e9187ff586d2a2aec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc20c8caeb6e1b6d80034afb70605d1c" id="r_adc20c8caeb6e1b6d80034afb70605d1c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_integrator.html#adc20c8caeb6e1b6d80034afb70605d1c">predictor</a> ()</td></tr>
 <tr class="memdesc:adc20c8caeb6e1b6d80034afb70605d1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform predictor step for next time step.  <br /></td></tr>
 <tr class="separator:adc20c8caeb6e1b6d80034afb70605d1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -325,8 +325,8 @@ const <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;&
 
 </div>
 </div>
-<a id="abfb6cb62626abbd866f3d6f710dc7bab" name="abfb6cb62626abbd866f3d6f710dc7bab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abfb6cb62626abbd866f3d6f710dc7bab">&#9670;&#160;</a></span>step()</h2>
+<a id="aa1602455d859896e9187ff586d2a2aec" name="aa1602455d859896e9187ff586d2a2aec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa1602455d859896e9187ff586d2a2aec">&#9670;&#160;</a></span>step()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -334,15 +334,21 @@ const <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;&
         <tr>
           <td class="memname">bool Integrator::step </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>save_results</em> = <code>false</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Execute one time step with Newton iteration loop. </p>
-<p>Execute one Newton iteration loop for the current time step.</p>
-<p>Performs the complete Newton iteration sequence including initialization, assembly, boundary condition application, linear solve, and convergence check.</p>
+<p>Performs the complete Newton iteration sequence including initialization, assembly, boundary condition application, linear solve, and convergence check. One line is written to the standard output and to the history file for every Newton iteration, including the converged one.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">save_results</td><td>True if the results of this time step are written to a VTU file, which flags the converged iteration with an 's' in the standard output.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>True if all equations converged, false otherwise </dd></dl>
 
 </div>
