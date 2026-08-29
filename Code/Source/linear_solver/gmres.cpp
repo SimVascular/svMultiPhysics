@@ -26,9 +26,8 @@ namespace gmres {
 
 namespace {
 
-void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_subLsType& ls, const int dof,
-    const int mynNo, const int nNo)
-{
+void bc_pre(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
+            const int mynNo, const int nNo) {
   int nsd = dof - 1;
   Array<double> v(nsd,nNo);
 
