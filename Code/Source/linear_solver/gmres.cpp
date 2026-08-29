@@ -318,10 +318,6 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   dmsg << "ls.relTol: " << ls.relTol;
   #endif
 
-  Array<double> h(ls.sD+1,ls.sD);
-  Array<double> u(nNo,ls.sD+1);
-  Vector<double> X(nNo), y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD+1);
-
   ls.callD = fsi_linear_solver::fsils_cpu_t();
   ls.success = false;
   double eps = norm::fsi_ls_norms(mynNo, lhs.commu, R);
@@ -339,9 +335,13 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     ls.callD = std::numeric_limits<double>::epsilon();
     ls.dB = 0.0;
     ls.success = true;
-    R = X;
-    return; 
+    R = 0.0;
+    return;
   }
+
+  Array<double> h(ls.sD + 1, ls.sD);
+  Array<double> u(nNo, ls.sD + 1);
+  Vector<double> X(nNo), y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD + 1);
 
   for (int l = 0; l < ls.mItr; l++) {
     #ifdef debug_gmres_s
@@ -470,11 +470,6 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   dmsg << "ls.relTol: " << ls.relTol;
   #endif
 
-  Array<double> h(ls.sD+1,ls.sD), X(dof,nNo);
-  Array3<double> u(dof,nNo,ls.sD+1);
-  Array<double> unCondU(dof,nNo);
-  Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD+1);
-
   ls.callD = fsi_linear_solver::fsils_cpu_t();
   ls.success = false;
   double eps = norm::fsi_ls_normv(dof, mynNo, lhs.commu, R);
@@ -488,15 +483,20 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   dmsg << "eps: " << eps;
   #endif
 
-  bc_pre(lhs, ls, dof, mynNo, nNo);
+  bc_pre(lhs, dof, mynNo, nNo);
 
   if (ls.iNorm <= ls.absTol) {
     ls.callD = std::numeric_limits<double>::epsilon();
     ls.dB = 0.0;
     ls.success = true;
-    R = X;
+    R = 0.0;
     return; 
   }
+
+  Array<double> h(ls.sD + 1, ls.sD), X(dof, nNo);
+  Array3<double> u(dof, nNo, ls.sD + 1);
+  Array<double> unCondU(dof, nNo);
+  Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD + 1);
 
   for (int l = 0; l < ls.mItr; l++) {
     #ifdef debug_gmres_v
