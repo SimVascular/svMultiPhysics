@@ -47,12 +47,12 @@
 
 TEST(ActiveStressTrajectory, NashPanfilov) {
   NashPanfilov::Parameters params;
-  params.set("epsilon_0",    0.1);
-  params.set("epsilon_i",    1.0);
-  params.set("xi_T",         4.0e3);
-  params.set("eta_T",        1.0e2);
-  params.set("calcium_rest", 1.25e-4);
-  params.set("calcium_crit", 8.0e-4);
+  params.set_scalar("epsilon_0",    0.1);
+  params.set_scalar("epsilon_i",    1.0);
+  params.set_scalar("xi_T",         4.0e3);
+  params.set_scalar("eta_T",        1.0e2);
+  params.set_scalar("calcium_rest", 1.25e-4);
+  params.set_scalar("calcium_crit", 8.0e-4);
 
   ActiveStressTrajectoryTest<NashPanfilov> trajectory(
       params, 200.0, 1.0, "active_stress_nash_panfilov_twitch.csv",
