@@ -5,6 +5,8 @@
 #define ACTIVE_STRESS_TEST_HELPERS_H
 
 #include "active_stress.h"
+#include "Core/Exception.h"
+#include "FE/Common/FEException.h"
 #include "Vector.h"
 #include "gtest/gtest.h"
 
@@ -110,8 +112,9 @@ public:
         checkpoints_(load_reference_data(reference_path_, model_->n_states,
                                          n_steps_, state_reference_columns))
   {
-    if (!(tolerance_ > 0.0) || !std::isfinite(tolerance_))
-      throw std::invalid_argument("ActiveStress test tolerance must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(tolerance_ > 0.0) || !std::isfinite(tolerance_),
+        "ActiveStress test tolerance must be finite and positive");
   }
 
   /** @brief Execute the common twitch protocol and compare every checkpoint. */
@@ -170,20 +173,22 @@ private:
   /// Validate the time configuration and return the number of simulation steps.
   static int number_of_steps(double final_time, double time_step)
   {
-    if (!(final_time > 0.0) || !std::isfinite(final_time))
-      throw std::invalid_argument("ActiveStress test final time must be finite and positive");
-    if (!(time_step > 0.0) || !std::isfinite(time_step))
-      throw std::invalid_argument("ActiveStress test time step must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(final_time > 0.0) || !std::isfinite(final_time),
+        "ActiveStress test final time must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(time_step > 0.0) || !std::isfinite(time_step),
+        "ActiveStress test time step must be finite and positive");
 
     const double step_count = final_time / time_step;
     const double rounded_step_count = std::round(step_count);
     const double scale = std::max(1.0, std::fabs(step_count));
-    if (std::fabs(step_count - rounded_step_count) >
-        1.0e-12 * scale)
-      throw std::invalid_argument(
-          "ActiveStress test final time must be an integer multiple of the time step");
-    if (rounded_step_count > std::numeric_limits<int>::max())
-      throw std::invalid_argument("ActiveStress test has too many time steps");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        std::fabs(step_count - rounded_step_count) > 1.0e-12 * scale,
+        "ActiveStress test final time must be an integer multiple of the time step");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        rounded_step_count > std::numeric_limits<int>::max(),
+        "ActiveStress test has too many time steps");
 
     return static_cast<int>(rounded_step_count);
   }
@@ -225,13 +230,15 @@ private:
     try {
       value = std::stod(field, &parsed_characters);
     } catch (const std::exception &) {
-      throw std::runtime_error("Invalid number in " + path + " at line " +
-                               std::to_string(line_number));
+      svmp::raise<svmp::ParseException>(
+          "Invalid number in " + path + " at line " +
+          std::to_string(line_number));
     }
 
-    if (parsed_characters != field.size() || !std::isfinite(value))
-      throw std::runtime_error("Invalid number in " + path + " at line " +
-                               std::to_string(line_number));
+    svmp::throw_if<svmp::ParseException>(
+        parsed_characters != field.size() || !std::isfinite(value),
+        "Invalid number in " + path + " at line " +
+            std::to_string(line_number));
     return value;
   }
 
@@ -243,8 +250,7 @@ private:
                       const std::vector<std::string> &requested_state_columns)
   {
     std::ifstream file(path);
-    if (!file.is_open())
-      throw std::runtime_error("Cannot open reference CSV: " + path);
+    svmp::throw_if<svmp::FileNotFoundException>(!file.is_open(), path);
 
     std::vector<std::string> header;
     std::vector<size_t> state_columns;
@@ -260,10 +266,10 @@ private:
 
       if (header.empty()) {
         header = split_csv_row(stripped_line);
-        if (header.size() < 2 || header[0] != "step" || header[1] != "Ta")
-          throw std::runtime_error(
-              "ActiveStress reference CSV must begin with columns step,Ta: " +
-              path);
+        svmp::throw_if<svmp::ParseException>(
+            header.size() < 2 || header[0] != "step" || header[1] != "Ta",
+            "ActiveStress reference CSV must begin with columns step,Ta: " +
+                path);
 
         std::vector<std::string> state_column_names = requested_state_columns;
         if (state_column_names.empty()) {
@@ -271,22 +277,22 @@ private:
           for (unsigned int state = 0; state < n_states; ++state)
             state_column_names.push_back("s" + std::to_string(state));
         }
-        if (state_column_names.size() != n_states)
-          throw std::runtime_error(
-              "ActiveStress reference state-column mapping has the wrong size: " +
-              path);
+        svmp::throw_if<svmp::ParseException>(
+            state_column_names.size() != n_states,
+            "ActiveStress reference state-column mapping has the wrong size: " +
+                path);
 
         state_columns.reserve(n_states);
         for (const std::string &column_name : state_column_names) {
           const auto column = std::find(header.begin(), header.end(), column_name);
-          if (column == header.end())
-            throw std::runtime_error(
-                "ActiveStress reference CSV is missing state column " +
-                column_name + ": " + path);
-          if (std::find(column + 1, header.end(), column_name) != header.end())
-            throw std::runtime_error(
-                "ActiveStress reference CSV has duplicate column " +
-                column_name + ": " + path);
+          svmp::throw_if<svmp::ParseException>(
+              column == header.end(),
+              "ActiveStress reference CSV is missing state column " +
+                  column_name + ": " + path);
+          svmp::throw_if<svmp::ParseException>(
+              std::find(column + 1, header.end(), column_name) != header.end(),
+              "ActiveStress reference CSV has duplicate column " +
+                  column_name + ": " + path);
           state_columns.push_back(
               static_cast<size_t>(std::distance(header.begin(), column)));
         }
@@ -294,18 +300,19 @@ private:
       }
 
       const auto fields = split_csv_row(stripped_line);
-      if (fields.size() != header.size())
-        throw std::runtime_error("Wrong column count in " + path + " at line " +
-                                 std::to_string(line_number));
+      svmp::throw_if<svmp::ParseException>(
+          fields.size() != header.size(),
+          "Wrong column count in " + path + " at line " +
+              std::to_string(line_number));
 
       const double step_value =
           parse_double(fields[0], path, line_number);
       const double rounded_step = std::round(step_value);
-      if (std::fabs(step_value - rounded_step) > 1.0e-12 ||
-          rounded_step < 0.0 || rounded_step >= n_steps)
-        throw std::runtime_error("Invalid checkpoint step in " + path +
-                                 " at line " +
-                                 std::to_string(line_number));
+      svmp::throw_if<svmp::ParseException>(
+          std::fabs(step_value - rounded_step) > 1.0e-12 ||
+              rounded_step < 0.0 || rounded_step >= n_steps,
+          "Invalid checkpoint step in " + path + " at line " +
+              std::to_string(line_number));
 
       Checkpoint checkpoint;
       checkpoint.step = static_cast<int>(rounded_step);
@@ -316,19 +323,19 @@ private:
         checkpoint.state.push_back(
             parse_double(fields[column], path, line_number));
 
-      if (!checkpoints.empty() &&
-          checkpoint.step <= checkpoints.back().step)
-        throw std::runtime_error(
-            "ActiveStress reference checkpoints must be strictly increasing: " +
-            path);
+      svmp::throw_if<svmp::ParseException>(
+          !checkpoints.empty() &&
+              checkpoint.step <= checkpoints.back().step,
+          "ActiveStress reference checkpoints must be strictly increasing: " +
+              path);
       checkpoints.push_back(std::move(checkpoint));
     }
 
-    if (header.empty())
-      throw std::runtime_error("ActiveStress reference CSV has no header: " + path);
-    if (checkpoints.empty())
-      throw std::runtime_error("ActiveStress reference CSV has no checkpoints: " +
-                               path);
+    svmp::throw_if<svmp::ParseException>(
+        header.empty(), "ActiveStress reference CSV has no header: " + path);
+    svmp::throw_if<svmp::ParseException>(
+        checkpoints.empty(),
+        "ActiveStress reference CSV has no checkpoints: " + path);
     return checkpoints;
   }
 

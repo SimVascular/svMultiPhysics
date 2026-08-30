@@ -5,6 +5,8 @@
 #define IONIC_MODEL_TEST_HELPERS_H
 
 #include "ionic_model.h"
+#include "Core/Exception.h"
+#include "FE/Common/FEException.h"
 #include "Vector.h"
 #include "gtest/gtest.h"
 
@@ -151,60 +153,60 @@ private:
     case TimeIntegrationType::CN2:
       break;
     default:
-      throw std::invalid_argument(
+      svmp::raise<svmp::FE::InvalidArgumentException>(
           "IonicModel trajectory integration type must be FE, RK4, or CN2");
     }
 
-    if (configuration_.zone_id <= 0)
-      throw std::invalid_argument(
-          "IonicModel trajectory zone_id must be positive");
-    if (!(configuration_.time_step > 0.0) ||
-        !std::isfinite(configuration_.time_step))
-      throw std::invalid_argument(
-          "IonicModel trajectory time step must be finite and positive");
-    if (configuration_.update_count == 0)
-      throw std::invalid_argument(
-          "IonicModel trajectory update count must be positive");
-    if (!std::isfinite(configuration_.time_step *
-                       static_cast<double>(configuration_.update_count)))
-      throw std::invalid_argument(
-          "IonicModel trajectory final time must be finite");
-    if (!(configuration_.tolerance > 0.0) ||
-        !std::isfinite(configuration_.tolerance))
-      throw std::invalid_argument(
-          "IonicModel trajectory tolerance must be finite and positive");
-    if (!std::isfinite(configuration_.stimulus) ||
-        !std::isfinite(configuration_.sac_coefficient))
-      throw std::invalid_argument(
-          "IonicModel trajectory stimulus and SAC coefficient must be finite");
-    if (configuration_.reference_csv_filename.empty())
-      throw std::invalid_argument(
-          "IonicModel trajectory reference CSV filename must not be empty");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        configuration_.zone_id <= 0,
+        "IonicModel trajectory zone_id must be positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(configuration_.time_step > 0.0) ||
+            !std::isfinite(configuration_.time_step),
+        "IonicModel trajectory time step must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        configuration_.update_count == 0,
+        "IonicModel trajectory update count must be positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !std::isfinite(configuration_.time_step *
+                       static_cast<double>(configuration_.update_count)),
+        "IonicModel trajectory final time must be finite");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(configuration_.tolerance > 0.0) ||
+            !std::isfinite(configuration_.tolerance),
+        "IonicModel trajectory tolerance must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !std::isfinite(configuration_.stimulus) ||
+            !std::isfinite(configuration_.sac_coefficient),
+        "IonicModel trajectory stimulus and SAC coefficient must be finite");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        configuration_.reference_csv_filename.empty(),
+        "IonicModel trajectory reference CSV filename must not be empty");
 
     validate_override(configuration_.initial_X_override, model_->nX(), "X");
     validate_override(configuration_.initial_Xg_override, model_->nG(), "Xg");
 
     const std::size_t state_count = model_->nX() + model_->nG();
-    if (configuration_.state_reference_columns.size() != state_count)
-      throw std::invalid_argument(
-          "IonicModel reference state-column mapping must contain all X "
-          "columns followed by all Xg columns");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        configuration_.state_reference_columns.size() != state_count,
+        "IonicModel reference state-column mapping must contain all X "
+        "columns followed by all Xg columns");
 
     for (std::size_t i = 0;
          i < configuration_.state_reference_columns.size(); ++i) {
       const auto &name = configuration_.state_reference_columns[i];
-      if (name.empty())
-        throw std::invalid_argument(
-            "IonicModel reference state-column names must not be empty");
-      if (name == "step")
-        throw std::invalid_argument(
-            "IonicModel reference state-column mapping cannot use step");
-      if (std::find(configuration_.state_reference_columns.begin(),
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(
+          name.empty(),
+          "IonicModel reference state-column names must not be empty");
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(
+          name == "step",
+          "IonicModel reference state-column mapping cannot use step");
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(
+          std::find(configuration_.state_reference_columns.begin(),
                     configuration_.state_reference_columns.begin() + i,
                     name) !=
-          configuration_.state_reference_columns.begin() + i)
-        throw std::invalid_argument(
-            "IonicModel reference state-column names must be unique");
+              configuration_.state_reference_columns.begin() + i,
+          "IonicModel reference state-column names must be unique");
     }
   }
 
@@ -215,13 +217,14 @@ private:
   {
     if (!values)
       return;
-    if (values->size() != expected_size)
-      throw std::invalid_argument("IonicModel initial " + state_name +
-                                  " override has the wrong size");
-    if (!std::all_of(values->begin(), values->end(),
-                     [](double value) { return std::isfinite(value); }))
-      throw std::invalid_argument("IonicModel initial " + state_name +
-                                  " override must contain finite values");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        values->size() != expected_size,
+        "IonicModel initial " + state_name + " override has the wrong size");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !std::all_of(values->begin(), values->end(),
+                     [](double value) { return std::isfinite(value); }),
+        "IonicModel initial " + state_name +
+            " override must contain finite values");
   }
 
   double evaluate_stimulus(double time) const
@@ -229,10 +232,10 @@ private:
     const double stimulus = configuration_.stimulus_at_time
                                 ? configuration_.stimulus_at_time(time)
                                 : configuration_.stimulus;
-    if (!std::isfinite(stimulus))
-      throw std::runtime_error(
-          "IonicModel trajectory stimulus must be finite at time " +
-          std::to_string(time));
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !std::isfinite(stimulus),
+        "IonicModel trajectory stimulus must be finite at time " +
+            std::to_string(time));
     return stimulus;
   }
 
@@ -282,22 +285,23 @@ private:
     try {
       value = std::stod(field, &parsed_characters);
     } catch (const std::exception &) {
-      throw std::runtime_error("Invalid number in " + path + " at line " +
-                               std::to_string(line_number));
+      svmp::raise<svmp::ParseException>(
+          "Invalid number in " + path + " at line " +
+          std::to_string(line_number));
     }
 
-    if (parsed_characters != field.size() || !std::isfinite(value))
-      throw std::runtime_error("Invalid number in " + path + " at line " +
-                               std::to_string(line_number));
+    svmp::throw_if<svmp::ParseException>(
+        parsed_characters != field.size() || !std::isfinite(value),
+        "Invalid number in " + path + " at line " +
+            std::to_string(line_number));
     return value;
   }
 
   std::vector<Checkpoint> load_reference_data() const
   {
     std::ifstream file(reference_path_);
-    if (!file.is_open())
-      throw std::runtime_error("Cannot open IonicModel reference CSV: " +
-                               reference_path_);
+    svmp::throw_if<svmp::FileNotFoundException>(!file.is_open(),
+                                                reference_path_);
 
     std::vector<std::string> header;
     std::vector<std::size_t> state_columns;
@@ -318,27 +322,27 @@ private:
       }
 
       const auto fields = split_csv_row(stripped_line);
-      if (fields.size() != header.size())
-        throw std::runtime_error(
-            "Wrong column count in " + reference_path_ + " at line " +
-            std::to_string(line_number));
+      svmp::throw_if<svmp::ParseException>(
+          fields.size() != header.size(),
+          "Wrong column count in " + reference_path_ + " at line " +
+              std::to_string(line_number));
 
       const double completed_updates_value =
           parse_double(fields[0], reference_path_, line_number);
       const double rounded_completed_updates =
           std::round(completed_updates_value);
-      if (std::fabs(completed_updates_value - rounded_completed_updates) >
-              1.0e-12 ||
-          rounded_completed_updates < 0.0)
-        throw std::runtime_error(
-            "Invalid checkpoint step in " + reference_path_ + " at line " +
-            std::to_string(line_number));
+      svmp::throw_if<svmp::ParseException>(
+          std::fabs(completed_updates_value - rounded_completed_updates) >
+                  1.0e-12 ||
+              rounded_completed_updates < 0.0,
+          "Invalid checkpoint step in " + reference_path_ + " at line " +
+              std::to_string(line_number));
 
-      if (rounded_completed_updates >
-          static_cast<double>(configuration_.update_count))
-        throw std::runtime_error(
-            "Checkpoint step is outside the configured update range in " +
-            reference_path_ + " at line " + std::to_string(line_number));
+      svmp::throw_if<svmp::ParseException>(
+          rounded_completed_updates >
+              static_cast<double>(configuration_.update_count),
+          "Checkpoint step is outside the configured update range in " +
+              reference_path_ + " at line " + std::to_string(line_number));
 
       Checkpoint checkpoint;
       checkpoint.completed_updates =
@@ -348,42 +352,42 @@ private:
         checkpoint.state.push_back(
             parse_double(fields[column], reference_path_, line_number));
 
-      if (!checkpoints.empty() &&
-          checkpoint.completed_updates <=
-              checkpoints.back().completed_updates)
-        throw std::runtime_error(
-            "IonicModel reference checkpoints must be strictly increasing: " +
-            reference_path_);
+      svmp::throw_if<svmp::ParseException>(
+          !checkpoints.empty() &&
+              checkpoint.completed_updates <=
+                  checkpoints.back().completed_updates,
+          "IonicModel reference checkpoints must be strictly increasing: " +
+              reference_path_);
       checkpoints.push_back(std::move(checkpoint));
     }
 
-    if (header.empty())
-      throw std::runtime_error("IonicModel reference CSV has no header: " +
-                               reference_path_);
-    if (checkpoints.empty())
-      throw std::runtime_error(
-          "IonicModel reference CSV has no checkpoints: " + reference_path_);
+    svmp::throw_if<svmp::ParseException>(
+        header.empty(),
+        "IonicModel reference CSV has no header: " + reference_path_);
+    svmp::throw_if<svmp::ParseException>(
+        checkpoints.empty(),
+        "IonicModel reference CSV has no checkpoints: " + reference_path_);
     return checkpoints;
   }
 
   void validate_header(const std::vector<std::string> &header,
                        std::vector<std::size_t> &state_columns) const
   {
-    if (header.size() < 2 || header.front() != "step")
-      throw std::runtime_error(
-          "IonicModel reference CSV must begin with a step column: " +
-          reference_path_);
+    svmp::throw_if<svmp::ParseException>(
+        header.size() < 2 || header.front() != "step",
+        "IonicModel reference CSV must begin with a step column: " +
+            reference_path_);
 
     for (std::size_t i = 0; i < header.size(); ++i) {
-      if (header[i].empty())
-        throw std::runtime_error(
-            "IonicModel reference CSV has an empty column name: " +
-            reference_path_);
-      if (std::find(header.begin(), header.begin() + i, header[i]) !=
-          header.begin() + i)
-        throw std::runtime_error(
-            "IonicModel reference CSV has duplicate column " + header[i] +
-            ": " + reference_path_);
+      svmp::throw_if<svmp::ParseException>(
+          header[i].empty(),
+          "IonicModel reference CSV has an empty column name: " +
+              reference_path_);
+      svmp::throw_if<svmp::ParseException>(
+          std::find(header.begin(), header.begin() + i, header[i]) !=
+              header.begin() + i,
+          "IonicModel reference CSV has duplicate column " + header[i] +
+              ": " + reference_path_);
     }
 
     state_columns.reserve(configuration_.state_reference_columns.size());
@@ -391,10 +395,10 @@ private:
          configuration_.state_reference_columns) {
       const auto column =
           std::find(header.begin(), header.end(), column_name);
-      if (column == header.end())
-        throw std::runtime_error(
-            "IonicModel reference CSV is missing state column " + column_name +
-            ": " + reference_path_);
+      svmp::throw_if<svmp::ParseException>(
+          column == header.end(),
+          "IonicModel reference CSV is missing state column " + column_name +
+              ": " + reference_path_);
       state_columns.push_back(
           static_cast<std::size_t>(std::distance(header.begin(), column)));
     }
