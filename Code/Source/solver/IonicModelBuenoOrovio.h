@@ -13,6 +13,10 @@
  * @brief Bueno-Orovio ionic model.
  *
  * **Reference**: [Bueno-Orovio, Cherry, Fenton (2008)](https://doi.org/10.1016/j.jtbi.2008.03.029)
+ *
+ * @warning The M-cell value of @c tau_s2 is the third entry in the
+ * EPI/ENDO/M parameter list. svMultiPhysics uses 2 ms, while Bueno-Orovio et
+ * al. (2008), Table 1, reports 4 ms.
  */
 class BuenoOrovio : public IonicModel {
 public:
@@ -58,8 +62,6 @@ public:
       add_parameter("k_so", {2.04580, 2., 2.1}, required);
       add_parameter("u_so", {0.650, 0.65, 0.6}, required);
       add_parameter("tau_s1", {2.73420, 2.7342, 2.7342}, required);
-      // svMP currently uses 2 ms for the M-cell tau_s2 default;
-      // Bueno-Orovio et al. (2008), Table 1, reports 4 ms.
       add_parameter("tau_s2", {16.0, 2., 2.}, required);
       add_parameter("k_s", {2.09940, 2.0994, 2.0994}, required);
       add_parameter("u_s", {0.90870, 0.9087, 0.9087}, required);
