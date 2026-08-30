@@ -25,23 +25,53 @@
 #include <vector>
 
 /**
- * @brief Run a trusted-reference trajectory test for an ActiveStress model.
+ * @brief Run a twitch experiment on the ActiveStress model passed as template
+ * argument and compare the simulated trajectory with a trusted external
+ * reference solution loaded from a CSV file.
  *
- * A test-only adapter derived from the concrete model exposes the protected
- * node-local interface needed to run the trajectory experiment.
- * By default, state values are read from CSV columns @c s0 through @c sN.
- * The constructor's state-column mapping can explicitly select other columns
- * when an existing reference file uses a different, documented layout.
+ * If the simulated result does not match the reference within the prescribed
+ * tolerance, GoogleTest records a failed expectation and the test fails.
  *
- * Checkpoint indices are zero based: checkpoint @c N is compared with the
- * state after advance @c N, which advances the interval
- * [N * time_step, (N + 1) * time_step].
+ * The twitch experiment uses a prescribed calcium transient to trigger
+ * contraction in the active stress model (see @ref calcium_at). Fiber stretch
+ * is also prescribed (see @ref fiber_stretch_at), and fiber stretch rate is
+ * obtained from the prescribed stretch trajectory.
+ *
+ * The active stress model is solved standalone, i.e. only one system of ODEs
+ * is solved rather than a coupled three-dimensional mechanics problem.
+ * Therefore, the test verifies the active stress ODE definition and time
+ * stepping independently of the mechanics solver.
+ *
+ * ### Format of the reference solution
+ *
+ * The reference CSV contains a header followed by reference values at selected
+ * simulation steps. The first two columns are @c step and @c Ta, containing the
+ * simulation step and active tension, respectively. If the model has additional
+ * internal state variables, their values follow in subsequent columns.
+ *
+ * The state variables are assumed by default to have the same order as in the
+ * concrete model being tested. If necessary, an optional constructor argument
+ * supplies the CSV column name corresponding to each state variable, in the
+ * concrete model's state order.
+ *
+ * Comparisons are performed only at the checkpoints listed in the reference
+ * CSV; the file does not need to contain every simulated time step. At each
+ * checkpoint, active tension and each state variable are compared pointwise
+ * with the corresponding reference value.
+ *
+ * Checkpoints are integer simulation-step indices and must coincide with
+ * simulated time steps; intermediate checkpoints are not interpolated.
+ * Checkpoint @c N is compared after the update starting at
+ * @f$ t = N \Delta t @f$, which advances the interval
+ * @f$[N\Delta t,(N+1)\Delta t]@f$.
  */
 template <class ConcreteModel>
 class ActiveStressTrajectoryTest {
   static_assert(std::is_base_of_v<ActiveStress, ConcreteModel>,
                 "ConcreteModel must derive from ActiveStress");
 
+  /// Test-only adapter that exposes the concrete model's protected node-local
+  /// operations to the trajectory test.
   class TestAdapter : public ConcreteModel {
   public:
     using ConcreteModel::advance_time_step_local;
@@ -51,8 +81,20 @@ class ActiveStressTrajectoryTest {
   };
 
 public:
+  /// Parameter type defined by the concrete active-stress model.
   using Parameters = typename ConcreteModel::Parameters;
 
+  /**
+   * @brief Configure a standalone trajectory test and load its reference CSV.
+   *
+   * @param parameters Model-specific parameters.
+   * @param final_time End time of the simulated trajectory.
+   * @param time_step Time-step size.
+   * @param reference_csv_filename Reference filename under UNIT_TEST_DATA_DIR.
+   * @param state_reference_columns CSV column name for each model state, in
+   *   model-state order; an empty vector selects @c s0, @c s1, and so on.
+   * @param tolerance Base tolerance for pointwise comparisons.
+   */
   ActiveStressTrajectoryTest(const Parameters &parameters,
                              double final_time,
                              double time_step,
@@ -104,12 +146,19 @@ public:
   }
 
 private:
+  /// Reference values for one simulation-step checkpoint.
   struct Checkpoint {
+    /// Trajectory update index.
     int step;
+
+    /// Expected active tension.
     double active_tension;
+
+    /// Expected state values in concrete-model state order.
     std::vector<double> state;
   };
 
+  /// Construct the test adapter and load its model-specific parameters.
   static std::unique_ptr<TestAdapter>
   make_configured_model(const Parameters &parameters)
   {
@@ -118,6 +167,7 @@ private:
     return model;
   }
 
+  /// Validate the time configuration and return the number of simulation steps.
   static int number_of_steps(double final_time, double time_step)
   {
     if (!(final_time > 0.0) || !std::isfinite(final_time))
@@ -138,6 +188,7 @@ private:
     return static_cast<int>(rounded_step_count);
   }
 
+  /// Remove leading and trailing whitespace.
   static std::string trim(const std::string &value)
   {
     size_t begin = 0;
@@ -153,6 +204,7 @@ private:
     return value.substr(begin, end - begin);
   }
 
+  /// Split a CSV row and trim each field.
   static std::vector<std::string> split_csv_row(const std::string &line)
   {
     std::vector<std::string> fields;
@@ -163,6 +215,7 @@ private:
     return fields;
   }
 
+  /// Parse one finite floating-point value from a CSV field.
   static double parse_double(const std::string &field,
                              const std::string &path,
                              size_t line_number)
@@ -182,6 +235,7 @@ private:
     return value;
   }
 
+  /// Load and validate the reference checkpoints and state-column mapping.
   static std::vector<Checkpoint>
   load_reference_data(const std::string &path,
                       unsigned int n_states,
@@ -278,6 +332,37 @@ private:
     return checkpoints;
   }
 
+  /**
+   * @brief Evaluate the prescribed calcium transient at @p time.
+   *
+   * The calcium concentration is
+   * @f[
+   * C(t) =
+   * \begin{cases}
+   * C_0, & t < t_0, \\[4pt]
+   * C_0 + (C_{\max}-C_0)
+   * \dfrac{
+   * e^{-(t-t_0)/\tau_d} - e^{-(t-t_0)/\tau_r}
+   * }{
+   * e^{-t_p/\tau_d} - e^{-t_p/\tau_r}
+   * }, & t \ge t_0,
+   * \end{cases}
+   * @f]
+   * where
+   * @f[
+   * C_0 = 10^{-4}\,\mathrm{mM}, \quad
+   * C_{\max} = 9\times10^{-4}\,\mathrm{mM}, \quad
+   * \tau_r = 20\,\mathrm{ms}, \quad
+   * \tau_d = 50\,\mathrm{ms}, \quad
+   * t_0 = 10\,\mathrm{ms},
+   * @f]
+   * and
+   * @f[
+   * t_p =
+   * \frac{\log(\tau_r/\tau_d)\tau_r\tau_d}
+   * {\tau_r-\tau_d}.
+   * @f]
+   */
   static double calcium_at(double time)
   {
     constexpr double baseline_calcium = 1.0e-4;
@@ -302,6 +387,40 @@ private:
            (peak_calcium - baseline_calcium) * raw_calcium / peak_raw_factor;
   }
 
+  /**
+   * @brief Evaluate the prescribed fiber stretch at @p time.
+   *
+   * Fiber stretch is defined as
+   * @f[
+   * \lambda(t) = \frac{L(t)}{L_0},
+   * @f]
+   * with
+   * @f[
+   * L(t) =
+   * \begin{cases}
+   * L_0, & t < t_s, \\[4pt]
+   * L_0 - \dfrac{L_0-L_{\min}}{2}
+   * \left[
+   * 1-\cos\left(\pi\frac{t-t_s}{t_m-t_s}\right)
+   * \right],
+   * & t_s \le t \le t_m, \\[8pt]
+   * L_{\min} + \dfrac{L_0-L_{\min}}{2}
+   * \left[
+   * 1-\cos\left(\pi\frac{t-t_m}{t_r-t_m}\right)
+   * \right],
+   * & t_m < t \le t_r, \\[8pt]
+   * L_0, & t > t_r,
+   * \end{cases}
+   * @f]
+   * where
+   * @f[
+   * L_0 = 2.2\,\mu\mathrm{m}, \quad
+   * L_{\min} = 2.134\,\mu\mathrm{m}, \quad
+   * t_s = 30\,\mathrm{ms}, \quad
+   * t_m = 150\,\mathrm{ms}, \quad
+   * t_r = 350\,\mathrm{ms}.
+   * @f]
+   */
   double fiber_stretch_at(double time) const
   {
     constexpr double resting_sarcomere_length = 2.2;
@@ -330,11 +449,13 @@ private:
     return sarcomere_length / resting_sarcomere_length;
   }
 
+  /// Return the pointwise tolerance @f$\mathrm{tol}(1 + |expected|)@f$.
   double scaled_tolerance(double expected) const
   {
     return tolerance_ * (1.0 + std::fabs(expected));
   }
 
+  /// Compare active tension and every state value at one checkpoint.
   void compare_checkpoint(const Checkpoint &checkpoint,
                           const Vector<double> &state,
                           double active_tension) const
@@ -352,11 +473,22 @@ private:
     }
   }
 
+  /// Configured test-only model adapter.
   std::unique_ptr<TestAdapter> model_;
+
+  /// Time-step size.
   double time_step_;
+
+  /// Base pointwise comparison tolerance.
   double tolerance_;
+
+  /// Number of trajectory updates.
   int n_steps_;
+
+  /// Full path to the reference CSV.
   std::string reference_path_;
+
+  /// Parsed reference checkpoints in increasing step order.
   std::vector<Checkpoint> checkpoints_;
 };
 
