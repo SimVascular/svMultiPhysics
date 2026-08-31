@@ -26,6 +26,28 @@
 #include <utility>
 #include <vector>
 
+/** @brief Configure one standalone trusted-reference ActiveStress trajectory. */
+struct ActiveStressTrajectoryConfiguration {
+  /// End time of the simulated trajectory.
+  double final_time = 0.0;
+
+  /// Time-step size used for every trajectory update.
+  double time_step = 0.0;
+
+  /// Reference filename under UNIT_TEST_DATA_DIR.
+  std::string reference_csv_filename;
+
+  /**
+   * @brief CSV column name for each model state, in model-state order.
+   *
+   * An empty vector selects @c s0, @c s1, and so on.
+   */
+  std::vector<std::string> state_reference_columns;
+
+  /// Base tolerance in the pointwise comparison formula.
+  double tolerance = 1.0e-10;
+};
+
 /**
  * @brief Run a twitch experiment on the ActiveStress model passed as template
  * argument and compare the simulated trajectory with a trusted external
@@ -49,7 +71,7 @@
  * internal state variables, their values follow in subsequent columns.
  *
  * The state variables are assumed by default to have the same order as in the
- * concrete model being tested. If necessary, an optional constructor argument
+ * concrete model being tested. If necessary, @c state_reference_columns
  * supplies the CSV column name corresponding to each state variable, in the
  * concrete model's state order.
  *
@@ -85,35 +107,30 @@ public:
   /// Parameter type defined by the concrete active-stress model.
   using Parameters = typename ConcreteModel::Parameters;
 
+  static_assert(std::is_base_of_v<ActiveStressModelParameters, Parameters>,
+                "ConcreteModel::Parameters must derive from "
+                "ActiveStressModelParameters");
+
   /**
    * @brief Configure a standalone trajectory test and load its reference CSV.
    *
    * @param parameters Model-specific parameters.
-   * @param final_time End time of the simulated trajectory.
-   * @param time_step Time-step size.
-   * @param reference_csv_filename Reference filename under UNIT_TEST_DATA_DIR.
-   * @param state_reference_columns CSV column name for each model state, in
-   *   model-state order; an empty vector selects @c s0, @c s1, and so on.
-   * @param tolerance Base tolerance for pointwise comparisons.
+   * @param configuration Trajectory inputs and reference-data mapping.
    */
-  ActiveStressTrajectoryTest(const Parameters &parameters,
-                             double final_time,
-                             double time_step,
-                             const std::string &reference_csv_filename,
-                             std::vector<std::string> state_reference_columns = {},
-                             double tolerance = 1.0e-10)
+  ActiveStressTrajectoryTest(
+      const Parameters &parameters,
+      ActiveStressTrajectoryConfiguration configuration)
       : model_(make_configured_model(parameters)),
-        time_step_(time_step),
-        tolerance_(tolerance),
-        n_steps_(number_of_steps(final_time, time_step)),
-        reference_path_(std::string(UNIT_TEST_DATA_DIR) + "/" +
-                        reference_csv_filename),
-        checkpoints_(load_reference_data(reference_path_, model_->n_states,
-                                         n_steps_, state_reference_columns))
+        configuration_(std::move(configuration)),
+        n_steps_(number_of_steps(configuration_.final_time,
+                                 configuration_.time_step))
   {
-    svmp::throw_if<svmp::FE::InvalidArgumentException>(
-        !(tolerance_ > 0.0) || !std::isfinite(tolerance_),
-        "ActiveStress test tolerance must be finite and positive");
+    validate_configuration();
+    reference_path_ = std::string(UNIT_TEST_DATA_DIR) + "/" +
+                      configuration_.reference_csv_filename;
+    checkpoints_ = load_reference_data(
+        reference_path_, model_->n_states, n_steps_,
+        configuration_.state_reference_columns);
   }
 
   /** @brief Execute the common twitch protocol and compare every checkpoint. */
@@ -124,23 +141,20 @@ public:
 
     size_t checkpoint_index = 0;
     for (int step = 0; step < n_steps_; ++step) {
-      const double time = step * time_step_;
+      const double time = step * configuration_.time_step;
       const double calcium = calcium_at(time);
       const double fiber_stretch = fiber_stretch_at(time);
       const double fiber_stretch_rate =
-          (fiber_stretch_at(time + time_step_) - fiber_stretch) / time_step_;
+          (fiber_stretch_at(time + configuration_.time_step) - fiber_stretch) /
+          configuration_.time_step;
 
-      model_->advance_time_step_local(time, time_step_, calcium, fiber_stretch,
-                                      fiber_stretch_rate, state);
+      model_->advance_time_step_local(time, configuration_.time_step, calcium,
+                                      fiber_stretch, fiber_stretch_rate, state);
       const double active_tension =
           model_->compute_active_tension_local(state, fiber_stretch);
 
-      if (checkpoint_index < checkpoints_.size() &&
-          checkpoints_[checkpoint_index].step == step) {
-        compare_checkpoint(checkpoints_[checkpoint_index], state,
-                           active_tension);
-        ++checkpoint_index;
-      }
+      compare_checkpoint_if_present(step, state, active_tension,
+                                    checkpoint_index);
     }
 
     EXPECT_EQ(checkpoint_index, checkpoints_.size())
@@ -167,6 +181,45 @@ private:
     auto model = std::make_unique<TestAdapter>();
     model->read_model_specific_parameters(parameters);
     return model;
+  }
+
+  /// Validate the trajectory inputs and resolve default state-column names.
+  void validate_configuration()
+  {
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(configuration_.tolerance > 0.0) ||
+            !std::isfinite(configuration_.tolerance),
+        "ActiveStress test tolerance must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        configuration_.reference_csv_filename.empty(),
+        "ActiveStress trajectory reference CSV filename must not be empty");
+
+    if (configuration_.state_reference_columns.empty()) {
+      configuration_.state_reference_columns.reserve(model_->n_states);
+      for (unsigned int state = 0; state < model_->n_states; ++state)
+        configuration_.state_reference_columns.push_back(
+            "s" + std::to_string(state));
+    }
+
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        configuration_.state_reference_columns.size() != model_->n_states,
+        "ActiveStress reference state-column mapping has the wrong size");
+
+    for (size_t i = 0; i < configuration_.state_reference_columns.size(); ++i) {
+      const auto &name = configuration_.state_reference_columns[i];
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(
+          name.empty(),
+          "ActiveStress reference state-column names must not be empty");
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(
+          name == "step",
+          "ActiveStress reference state-column mapping cannot use step");
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(
+          std::find(configuration_.state_reference_columns.begin(),
+                    configuration_.state_reference_columns.begin() + i,
+                    name) !=
+              configuration_.state_reference_columns.begin() + i,
+          "ActiveStress reference state-column names must be unique");
+    }
   }
 
   /// Validate the time configuration and return the number of simulation steps.
@@ -208,7 +261,7 @@ private:
     return value.substr(begin, end - begin);
   }
 
-  /// Split a CSV row and trim each field.
+  /// Split a CSV row, trim its fields, and preserve a trailing empty field.
   static std::vector<std::string> split_csv_row(const std::string &line)
   {
     std::vector<std::string> fields;
@@ -216,6 +269,8 @@ private:
     std::string field;
     while (std::getline(stream, field, ','))
       fields.push_back(trim(field));
+    if (!line.empty() && line.back() == ',')
+      fields.emplace_back();
     return fields;
   }
 
@@ -270,27 +325,23 @@ private:
             "ActiveStress reference CSV must begin with columns step,Ta: " +
                 path);
 
-        std::vector<std::string> state_column_names = requested_state_columns;
-        if (state_column_names.empty()) {
-          state_column_names.reserve(n_states);
-          for (unsigned int state = 0; state < n_states; ++state)
-            state_column_names.push_back("s" + std::to_string(state));
+        for (size_t i = 0; i < header.size(); ++i) {
+          svmp::throw_if<svmp::ParseException>(
+              header[i].empty(),
+              "ActiveStress reference CSV has an empty column name: " + path);
+          svmp::throw_if<svmp::ParseException>(
+              std::find(header.begin(), header.begin() + i, header[i]) !=
+                  header.begin() + i,
+              "ActiveStress reference CSV has duplicate column " + header[i] +
+                  ": " + path);
         }
-        svmp::throw_if<svmp::ParseException>(
-            state_column_names.size() != n_states,
-            "ActiveStress reference state-column mapping has the wrong size: " +
-                path);
 
         state_columns.reserve(n_states);
-        for (const std::string &column_name : state_column_names) {
+        for (const std::string &column_name : requested_state_columns) {
           const auto column = std::find(header.begin(), header.end(), column_name);
           svmp::throw_if<svmp::ParseException>(
               column == header.end(),
               "ActiveStress reference CSV is missing state column " +
-                  column_name + ": " + path);
-          svmp::throw_if<svmp::ParseException>(
-              std::find(column + 1, header.end(), column_name) != header.end(),
-              "ActiveStress reference CSV has duplicate column " +
                   column_name + ": " + path);
           state_columns.push_back(
               static_cast<size_t>(std::distance(header.begin(), column)));
@@ -458,7 +509,21 @@ private:
   /// Return the pointwise tolerance @f$\mathrm{tol}(1 + |expected|)@f$.
   double scaled_tolerance(double expected) const
   {
-    return tolerance_ * (1.0 + std::fabs(expected));
+    return configuration_.tolerance * (1.0 + std::fabs(expected));
+  }
+
+  /// Compare the checkpoint matching @p step, if one is listed.
+  void compare_checkpoint_if_present(int step,
+                                     const Vector<double> &state,
+                                     double active_tension,
+                                     size_t &checkpoint_index) const
+  {
+    if (checkpoint_index >= checkpoints_.size() ||
+        checkpoints_[checkpoint_index].step != step)
+      return;
+
+    compare_checkpoint(checkpoints_[checkpoint_index], state, active_tension);
+    ++checkpoint_index;
   }
 
   /// Compare active tension and every state value at one checkpoint.
@@ -468,25 +533,26 @@ private:
   {
     EXPECT_NEAR(active_tension, checkpoint.active_tension,
                 scaled_tolerance(checkpoint.active_tension))
-        << "step " << checkpoint.step << ", active tension";
+        << "checkpoint at trajectory update index " << checkpoint.step
+        << ", active tension column Ta";
 
     ASSERT_EQ(state.size(), checkpoint.state.size())
-        << "step " << checkpoint.step << ", state-vector size";
+        << "checkpoint at trajectory update index " << checkpoint.step
+        << ", state-vector size";
     for (unsigned int index = 0; index < state.size(); ++index) {
       EXPECT_NEAR(state[index], checkpoint.state[index],
                   scaled_tolerance(checkpoint.state[index]))
-          << "step " << checkpoint.step << ", state[" << index << "]";
+          << "checkpoint at trajectory update index " << checkpoint.step
+          << ", state[" << index << "] column "
+          << configuration_.state_reference_columns[index];
     }
   }
 
   /// Configured test-only model adapter.
   std::unique_ptr<TestAdapter> model_;
 
-  /// Time-step size.
-  double time_step_;
-
-  /// Base pointwise comparison tolerance.
-  double tolerance_;
+  /// Validated trajectory inputs and reference-column mapping.
+  ActiveStressTrajectoryConfiguration configuration_;
 
   /// Number of trajectory updates.
   int n_steps_;

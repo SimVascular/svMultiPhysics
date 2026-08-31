@@ -21,7 +21,14 @@
  */
 TEST(ActiveStressTrajectory, Regazzoni) {
   RegazzoniActiveStress::Parameters params;
+
+  ActiveStressTrajectoryConfiguration configuration;
+  configuration.final_time = 600.0;
+  configuration.time_step = 1.0;
+  configuration.reference_csv_filename =
+      "active_stress_regazzoni_twitch.csv";
+
   ActiveStressTrajectoryTest<RegazzoniActiveStress> trajectory(
-      params, 600.0, 1.0, "active_stress_regazzoni_twitch.csv");
+      params, configuration);
   trajectory.run();
 }

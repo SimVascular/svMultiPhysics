@@ -25,8 +25,13 @@ TEST(ActiveStressTrajectory, NashPanfilov) {
   params.set_scalar("calcium_rest", 1.25e-4);
   params.set_scalar("calcium_crit", 8.0e-4);
 
-  ActiveStressTrajectoryTest<NashPanfilov> trajectory(
-      params, 200.0, 1.0, "active_stress_nash_panfilov_twitch.csv",
-      {"Ta"});
+  ActiveStressTrajectoryConfiguration configuration;
+  configuration.final_time = 200.0;
+  configuration.time_step = 1.0;
+  configuration.reference_csv_filename =
+      "active_stress_nash_panfilov_twitch.csv";
+  configuration.state_reference_columns = {"Ta"};
+
+  ActiveStressTrajectoryTest<NashPanfilov> trajectory(params, configuration);
   trajectory.run();
 }
