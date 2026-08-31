@@ -2,15 +2,13 @@
 # SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 # University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
-"""Regenerate and verify all unit-test reference trajectories."""
+"""Regenerate and verify the in-repository unit-test reference generators."""
 
 from __future__ import annotations
 
 import argparse
-import csv
 from dataclasses import dataclass
 import hashlib
-import math
 from pathlib import Path
 import subprocess
 import sys
@@ -18,10 +16,6 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parent
-REGAZZONI_ABS_TOLERANCE = 5.0e-15
-REGAZZONI_REL_TOLERANCE = 5.0e-13
-
-
 @dataclass(frozen=True)
 class ReferenceSpecification:
     label: str
@@ -92,13 +86,11 @@ def sha256(path: Path) -> str:
 def run_generator(
     specification: ReferenceSpecification,
     output: Path,
-    extra_arguments: tuple[str, ...] = (),
 ) -> None:
     command = [
         sys.executable,
         str(specification.generator),
         *specification.arguments,
-        *extra_arguments,
         "--output",
         str(output),
     ]
@@ -113,12 +105,11 @@ def run_generator(
 def generate_twice(
     specification: ReferenceSpecification,
     directory: Path,
-    extra_arguments: tuple[str, ...] = (),
 ) -> Path:
     first = directory / f"first-{specification.filename}"
     second = directory / f"second-{specification.filename}"
-    run_generator(specification, first, extra_arguments)
-    run_generator(specification, second, extra_arguments)
+    run_generator(specification, first)
+    run_generator(specification, second)
     if first.read_bytes() != second.read_bytes():
         raise RuntimeError(
             f"nondeterministic output: {sha256(first)} != {sha256(second)}"
@@ -134,66 +125,10 @@ def compare_bytes(generated: Path, reference: Path) -> None:
         )
 
 
-def csv_structure(path: Path) -> tuple[tuple[str, ...], list[dict[str, str]]]:
-    with path.open(newline="", encoding="utf-8") as stream:
-        lines = [line for line in stream if line.strip() and not line.startswith("#")]
-    reader = csv.DictReader(lines)
-    if reader.fieldnames is None:
-        raise RuntimeError(f"CSV has no header: {path}")
-    return tuple(reader.fieldnames), list(reader)
-
-
-def compare_regazzoni(generated: Path, reference: Path) -> tuple[float, float]:
-    generated_header, generated_rows = csv_structure(generated)
-    reference_header, reference_rows = csv_structure(reference)
-    if generated_header != reference_header:
-        raise RuntimeError(
-            f"Regazzoni schema mismatch: {generated_header} != {reference_header}"
-        )
-    if len(generated_rows) != len(reference_rows):
-        raise RuntimeError("Regazzoni checkpoint counts differ")
-
-    maximum_absolute = 0.0
-    maximum_scaled = 0.0
-    for generated_row, reference_row in zip(
-        generated_rows, reference_rows, strict=True
-    ):
-        if generated_row["step"] != reference_row["step"]:
-            raise RuntimeError("Regazzoni checkpoint ordering differs")
-        for column in generated_header[1:]:
-            actual = float(generated_row[column])
-            expected = float(reference_row[column])
-            absolute = abs(actual - expected)
-            scaled = absolute / max(1.0, abs(expected))
-            maximum_absolute = max(maximum_absolute, absolute)
-            maximum_scaled = max(maximum_scaled, scaled)
-            if not math.isclose(
-                actual,
-                expected,
-                rel_tol=REGAZZONI_REL_TOLERANCE,
-                abs_tol=REGAZZONI_ABS_TOLERANCE,
-            ):
-                raise RuntimeError(
-                    f"Regazzoni mismatch at step {generated_row['step']}, {column}: "
-                    f"generated={actual:.17g}, reference={expected:.17g}"
-                )
-    return maximum_absolute, maximum_scaled
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, required=True)
-    parser.add_argument("--regazzoni-reference-repo", type=Path)
-    parser.add_argument("--skip-regazzoni", action="store_true")
-    parser.add_argument("--regazzoni-eigen-include", type=Path)
-    parser.add_argument("--regazzoni-boost-include", type=Path)
-    parser.add_argument("--cxx")
-    args = parser.parse_args()
-    if not args.skip_regazzoni and args.regazzoni_reference_repo is None:
-        parser.error(
-            "--regazzoni-reference-repo is required unless --skip-regazzoni is used"
-        )
-    return args
+    return parser.parse_args()
 
 
 def main() -> int:
@@ -215,40 +150,12 @@ def main() -> int:
                 failures += 1
                 print(f"{specification.label} FAIL {error}")
 
-        if args.skip_regazzoni:
-            print("Regazzoni SKIP")
-        else:
-            specification = ReferenceSpecification(
-                "Regazzoni",
-                ROOT / "active_stress/regazzoni/generate_regazzoni.py",
-                "active_stress_regazzoni_twitch.csv",
-            )
-            extra = (
-                "--reference-repo",
-                str(args.regazzoni_reference_repo.resolve()),
-            )
-            if args.regazzoni_eigen_include is not None:
-                extra += ("--eigen-include", str(args.regazzoni_eigen_include))
-            if args.regazzoni_boost_include is not None:
-                extra += ("--boost-include", str(args.regazzoni_boost_include))
-            if args.cxx is not None:
-                extra += ("--cxx", args.cxx)
-            try:
-                generated = generate_twice(specification, work, extra)
-                maximum_absolute, maximum_scaled = compare_regazzoni(
-                    generated, reference_directory / specification.filename
-                )
-                print(
-                    "Regazzoni PASS "
-                    f"sha256={sha256(generated)} "
-                    f"max_abs={maximum_absolute:.3e} "
-                    f"max_scaled={maximum_scaled:.3e}"
-                )
-            except Exception as error:  # noqa: BLE001 - concise aggregate report
-                failures += 1
-                print(f"Regazzoni FAIL {error}")
+        print(
+            "Regazzoni NOT CHECKED -- no in-repository generator; see "
+            "active_stress/regazzoni/README.md"
+        )
 
-    print(f"summary: {len(PURE_PYTHON_REFERENCES) + (not args.skip_regazzoni) - failures} PASS, {failures} FAIL")
+    print(f"summary: {len(PURE_PYTHON_REFERENCES) - failures} PASS, {failures} FAIL")
     return 0 if failures == 0 else 1
 
 
