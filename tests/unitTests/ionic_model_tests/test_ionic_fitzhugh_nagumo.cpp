@@ -7,10 +7,18 @@
 
 #include <vector>
 
-// The independent Forward-Euler oracle starts at the exact unstable
-// equilibrium, applies a short positive stimulus, and follows the first
-// excitation/repolarization cycle. It stops before the next autonomous
-// upstroke; checkpoint N is the state after exactly N completed updates.
+/**
+ * @test Advance FitzHughNagumo from the exact equilibrium
+ * @f$(u,w)=(0,0)@f$ for 3000 Forward-Euler updates with
+ * @f$\Delta t=0.0005@f$ in model-time units.
+ *
+ * The test applies @f$I_\mathrm{stim}=0.5@f$ for @f$0.10\leq t<0.12@f$ and
+ * sets @f$K_\mathrm{sac}=0@f$. It follows the first triggered
+ * excitation/repolarization cycle until @f$t=1.5@f$, before the next
+ * autonomous upstroke. The trusted reference is generated independently by
+ * @c reference_generators/ionic_model/fitzhugh_nagumo/generate_fitzhugh_nagumo.py,
+ * not by svMultiPhysics. See @ref FitzHughNagumo for the model formulation.
+ */
 TEST(IonicModelTrajectory, FitzHughNagumo)
 {
   FitzHughNagumo::Parameters parameters;

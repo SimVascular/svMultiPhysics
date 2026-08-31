@@ -26,6 +26,12 @@
  * @f$\varepsilon(\calcium)@f$ is a sigmoidal-shaped calcium-dependent time
  * constant (see Figure 3 in [2] for more details).
  *
+ * @note The published formulations [1,2] are driven by transmembrane
+ * potential. This implementation substitutes intracellular calcium, with
+ * @f$\eta_T@f$, @f$\calcium_\text{rest}@f$, @f$\xi_T@f$, and
+ * @f$\calcium_\text{crit}@f$ corresponding to @f$k_\sigma@f$,
+ * @f$\Phi_r@f$, @f$\xi@f$, and @f$\bar{\Phi}@f$ in [2], respectively.
+ *
  * @note The sensitivity of the model to calcium is controlled by the paramter
  * @f$\eta_\text{T}@f$, which has the same units of active tension over calcium.
  * Therefore, if the ionic model providing the calcium is phenomenological (see
