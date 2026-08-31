@@ -5,10 +5,17 @@
 #include "ionic_model_test_helpers.h"
 #include "gtest/gtest.h"
 
-// The reference trajectory is an independent Forward-Euler evaluation of the
-// split Aliev-Panfilov kinetics described by Goktepe and Kuhl (2009),
-// doi:10.1002/nme.2571. A half-open stimulus initiates a complete action
-// potential from the default resting state without stretch current.
+/**
+ * @test Advance AlievPanfilov from its default state
+ * @f$(-80\,\mathrm{mV},0.001)@f$ for 6000 Forward-Euler updates with
+ * @f$\Delta t=0.1\,\mathrm{ms}@f$.
+ *
+ * The test applies @f$I_\mathrm{stim}=-35.714@f$ for
+ * @f$10\leq t<12\,\mathrm{ms}@f$ and sets @f$K_\mathrm{sac}=0@f$. The trusted
+ * reference is generated independently by
+ * @c reference_generators/ionic_model/aliev_panfilov/generate_aliev_panfilov.py,
+ * not by svMultiPhysics. See @ref AlievPanfilov for the equations and scaling.
+ */
 TEST(IonicModelTrajectory, AlievPanfilov)
 {
   AlievPanfilov::Parameters parameters;

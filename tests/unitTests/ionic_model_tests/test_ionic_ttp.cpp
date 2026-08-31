@@ -18,9 +18,6 @@ public:
   }
 };
 
-// The independent oracles follow the TP06 equations and public svMP
-// FE/Rush-Larsen split. A half-open pulse initiates one beat from the
-// published phenotype-specific initial state without stretch current.
 void run_ttp_trajectory(
     const TTP::Parameters &parameters,
     int zone_id,
@@ -54,14 +51,35 @@ void run_ttp_trajectory(
 
 } // namespace
 
+/**
+ * @test Advance the EPI TTP model (zone 1) from the curated CellML EPI initial
+ * state for 600 ms with @f$\Delta t=0.005\,\mathrm{ms}@f$.
+ *
+ * The seven main states use Forward Euler and the twelve gates use
+ * Rush--Larsen. The test applies @f$I_\mathrm{stim}=-52\,\mathrm{pA/pF}@f$
+ * for @f$10\leq t<11\,\mathrm{ms}@f$, sets @f$K_\mathrm{sac}=0@f$, and uses
+ * no pre-pacing. The reference is generated independently; see
+ * @c reference_generators/ionic_model/ten_tusscher_panfilov/README.md for
+ * source provenance and reproduction details. See @ref TTP for model details.
+ */
 TEST(IonicModelTrajectory, TTPEpi)
 {
   TTP::Parameters parameters;
   run_ttp_trajectory(parameters, 1, "ionic_ttp_epi_trajectory.csv");
 }
 
-// The ENDO oracle uses the published TP06 initial state and G_to conductance;
-// zone 2 selects the endocardial s-gate kinetics through the public interface.
+/**
+ * @test Advance the ENDO TTP model (zone 2) from the curated CellML ENDO
+ * initial state, with @f$G_\mathrm{to}=0.073@f$, for 600 ms using
+ * @f$\Delta t=0.005\,\mathrm{ms}@f$.
+ *
+ * The seven main states use Forward Euler and the twelve gates use
+ * Rush--Larsen. The test applies @f$I_\mathrm{stim}=-52\,\mathrm{pA/pF}@f$
+ * for @f$10\leq t<11\,\mathrm{ms}@f$, sets @f$K_\mathrm{sac}=0@f$, and uses
+ * no pre-pacing. The reference is generated independently; see
+ * @c reference_generators/ionic_model/ten_tusscher_panfilov/README.md for
+ * source provenance and reproduction details. See @ref TTP for model details.
+ */
 TEST(IonicModelTrajectory, TTPEndo)
 {
   TTPTestParameters parameters;
@@ -73,8 +91,18 @@ TEST(IonicModelTrajectory, TTPEndo)
        3.164e-5, 0.8009, 0.9778, 0.9953, 0.3212, 2.235e-8});
 }
 
-// The M oracle uses the published TP06 initial state and G_Ks conductance;
-// zone 3 selects the zone-dependent gate kinetics through the public interface.
+/**
+ * @test Advance the M-cell TTP model (zone 3) from the curated CellML M-cell
+ * initial state, with @f$G_\mathrm{Ks}=0.098@f$, for 600 ms using
+ * @f$\Delta t=0.005\,\mathrm{ms}@f$.
+ *
+ * The seven main states use Forward Euler and the twelve gates use
+ * Rush--Larsen. The test applies @f$I_\mathrm{stim}=-52\,\mathrm{pA/pF}@f$
+ * for @f$10\leq t<11\,\mathrm{ms}@f$, sets @f$K_\mathrm{sac}=0@f$, and uses
+ * no pre-pacing. The reference is generated independently; see
+ * @c reference_generators/ionic_model/ten_tusscher_panfilov/README.md for
+ * source provenance and reproduction details. See @ref TTP for model details.
+ */
 TEST(IonicModelTrajectory, TTPM)
 {
   TTPTestParameters parameters;

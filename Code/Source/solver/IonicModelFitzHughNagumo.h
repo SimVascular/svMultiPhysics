@@ -12,9 +12,14 @@
 /**
  * @brief FitzHugh-Nagumo ionic model.
  *
+ * The reaction terms and default parameters follow equations 14--15 and
+ * Figure 3 of [3]. This parameterization is self-oscillatory, with an unstable
+ * equilibrium at zero.
+ *
  * **References**:
- * - [FitzHugh (1961)](https://doi.org/10.1016/S0006-3495(61)86902-6)
- * - [Nagumo, Arimoto, Yoshizawa (1962)](https://doi.org/10.1109/JRPROC.1962.288235)
+ * 1. [FitzHugh (1961)](https://doi.org/10.1016/S0006-3495(61)86902-6)
+ * 2. [Nagumo, Arimoto, Yoshizawa (1962)](https://doi.org/10.1109/JRPROC.1962.288235)
+ * 3. [Goktepe, Kuhl (2009)](https://doi.org/10.1002/nme.2571)
  */
 class FitzHughNagumo : public IonicModel {
 public:

@@ -11,7 +11,12 @@
 /**
  * @brief Aliev-Panfilov ionic model.
  *
- * **Reference**: [Aliev, Panfilov (1996)](https://doi.org/10.1016/0960-0779(95)00089-5)
+ * The reaction terms and voltage/time scaling follow equations 19, 20, and 26
+ * of [2].
+ *
+ * **References**:
+ * 1. [Aliev, Panfilov (1996)](https://doi.org/10.1016/0960-0779(95)00089-5)
+ * 2. [Goktepe, Kuhl (2009)](https://doi.org/10.1002/nme.2571)
  */
 class AlievPanfilov : public IonicModel {
 public:
