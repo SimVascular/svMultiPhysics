@@ -1,34 +1,3 @@
-# formulation source: Regazzoni, Dede', Quarteroni (2020), PLOS Comput. Biol.,
-#   doi:10.1371/journal.pcbi.1008294. Supporting Information S3 uses Forward
-#   Euler for RU dynamics and an exponential integrator for XB dynamics.
-# oracle discretization: authors' C++ reference implementation,
-#   https://github.com/FrancescoRegazzoni/cardiac-activation,
-#   commit 26f05df28891df7b3c69f16bb136cdced6b63c4d. That implementation uses
-#   Forward-Euler RU substeps and implicit Euler for XB dynamics, which is the
-#   discretization followed by svMultiPhysics. The following code patch was
-#   applied before running the oracle:
-#   - XB_A initialization: the reference code declares
-#       Eigen::Matrix<double,4,4> XB_A;
-#     and sets only 10 of 16 entries, leaving 6 off-diagonal entries as
-#     uninitialized memory (undefined behavior). The oracle was generated with
-#     XB_A.setZero() inserted before entry population, matching the
-#     svMultiPhysics implementation which uses Eigen::Matrix<double,4,4>::Zero().
-# SL protocol: the raised-cosine ramp below is a custom oracle driver protocol;
-#   the reference main.cpp uses an exponential SL sigmoid. At outer-step start
-#   t, the driver supplies SL(t) and the forward-difference velocity
-#     dSL/dt = [SL(t+dt) - SL(t)] / dt.
-# State ordering: s0..s15 are RU probabilities P(TL,TC,TR,CC), with
-#   index = 8*TL + 4*TC + 2*TR + CC (TL outermost, CC innermost); s16..s19 are
-#   [mu_P^0, mu_P^1, mu_N^0, mu_N^1], matching the reference serialization.
-# Parameters: Regazzoni 2020 human body-temperature calibration defaults.
-# Ca transient: double-exponential, c0=1e-4 mM, cmax=9e-4 mM,
-#               tau_rise=20ms, tau_decay=50ms, onset=10ms.
-# SL: raised-cosine ramp, SL0=2.2um, SL_min=2.134um,
-#     shortening onset=30ms, minimum at 150ms, recovery complete at 350ms.
-# dt=1ms, 600 steps.
-# Active tension units: reference uses kPa; values in this file are in MPa
-#   (divided by 1000; a_XB=22.894 MPa in svMP corresponds to 22894 kPa in ref).
-# Values extracted from the existing test without modification.
 step,Ta,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18,s19
 0,2.0769853711984563e-05,9.6940717188151537e-01,2.6381424371446922e-02,1.3503189084942508e-03,3.4343427180013618e-05,1.1236588180500891e-03,2.1053600122563298e-04,4.5470171062514682e-05,6.7945663780045756e-06,1.3503189084942508e-03,3.4343427180013618e-05,1.7672866596113026e-06,2.9934382365957969e-08,4.5470171062514682e-05,6.7945663780045756e-06,1.3909691878929928e-06,1.6659130249734328e-07,1.6359975630299202e-05,3.8979760023191681e-07,2.5100933115804985e-05,5.9806222901712789e-07
 30,6.3170372259402953e-03,2.6970273699972086e-01,5.8583076955075841e-01,9.0822857894029864e-03,1.7508306386496711e-02,3.3942021959741897e-04,7.2968975122089169e-03,9.2499470591179186e-04,1.8566812618242029e-02,9.0822857894029864e-03,1.7508306386496711e-02,2.5639379411841935e-04,2.8113908594203660e-04,9.2499470591179197e-04,1.8566812618242029e-02,2.1651243065998749e-03,4.1962719530947941e-02,6.4443780653849255e-03,1.5352064893374559e-04,6.1681286868829335e-03,1.4693150647919565e-04
