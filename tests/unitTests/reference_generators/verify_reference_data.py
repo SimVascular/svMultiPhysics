@@ -143,18 +143,7 @@ def csv_structure(path: Path) -> tuple[tuple[str, ...], list[dict[str, str]]]:
     return tuple(reader.fieldnames), list(reader)
 
 
-def comment_lines(path: Path) -> tuple[str, ...]:
-    return tuple(
-        line
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.startswith("#")
-    )
-
-
 def compare_regazzoni(generated: Path, reference: Path) -> tuple[float, float]:
-    if comment_lines(generated) != comment_lines(reference):
-        raise RuntimeError("Regazzoni provenance/protocol comments differ")
-
     generated_header, generated_rows = csv_structure(generated)
     reference_header, reference_rows = csv_structure(reference)
     if generated_header != reference_header:

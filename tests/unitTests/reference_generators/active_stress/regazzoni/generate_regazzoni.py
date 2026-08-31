@@ -45,39 +45,10 @@ REFERENCE_SOURCE_PATHS = (
     "params/params_RDQ20-MF_human_body-temperature.json",
 )
 
-COMPATIBLE_PREAMBLE = """# formulation source: Regazzoni, Dede', Quarteroni (2020), PLOS Comput. Biol.,
-#   doi:10.1371/journal.pcbi.1008294. Supporting Information S3 uses Forward
-#   Euler for RU dynamics and an exponential integrator for XB dynamics.
-# oracle discretization: authors' C++ reference implementation,
-#   https://github.com/FrancescoRegazzoni/cardiac-activation,
-#   commit 26f05df28891df7b3c69f16bb136cdced6b63c4d. That implementation uses
-#   Forward-Euler RU substeps and implicit Euler for XB dynamics, which is the
-#   discretization followed by svMultiPhysics. The following code patch was
-#   applied before running the oracle:
-#   - XB_A initialization: the reference code declares
-#       Eigen::Matrix<double,4,4> XB_A;
-#     and sets only 10 of 16 entries, leaving 6 off-diagonal entries as
-#     uninitialized memory (undefined behavior). The oracle was generated with
-#     XB_A.setZero() inserted before entry population, matching the
-#     svMultiPhysics implementation which uses Eigen::Matrix<double,4,4>::Zero().
-# SL protocol: the raised-cosine ramp below is a custom oracle driver protocol;
-#   the reference main.cpp uses an exponential SL sigmoid. At outer-step start
-#   t, the driver supplies SL(t) and the forward-difference velocity
-#     dSL/dt = [SL(t+dt) - SL(t)] / dt.
-# State ordering: s0..s15 are RU probabilities P(TL,TC,TR,CC), with
-#   index = 8*TL + 4*TC + 2*TR + CC (TL outermost, CC innermost); s16..s19 are
-#   [mu_P^0, mu_P^1, mu_N^0, mu_N^1], matching the reference serialization.
-# Parameters: Regazzoni 2020 human body-temperature calibration defaults.
-# Ca transient: double-exponential, c0=1e-4 mM, cmax=9e-4 mM,
-#               tau_rise=20ms, tau_decay=50ms, onset=10ms.
-# SL: raised-cosine ramp, SL0=2.2um, SL_min=2.134um,
-#     shortening onset=30ms, minimum at 150ms, recovery complete at 350ms.
-# dt=1ms, 600 steps.
-# Active tension units: reference uses kPa; values in this file are in MPa
-#   (divided by 1000; a_XB=22.894 MPa in svMP corresponds to 22894 kPa in ref).
-# Values extracted from the existing test without modification.
-step,Ta,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18,s19
-"""
+COMPATIBLE_HEADER = (
+    "step,Ta,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,"
+    "s16,s17,s18,s19\n"
+)
 
 DRIVER_SOURCE = r'''// Narrow driver for the pinned authors' RDQ20-MF model.
 #include "model_RDQ20_MF.hpp"
@@ -388,7 +359,7 @@ def compatible_csv(rows: list[dict[str, float]]) -> bytes:
     if tuple(step for step in CHECKPOINT_STEPS if step in by_step) != CHECKPOINT_STEPS:
         raise ValueError("one or more required checkpoints are missing")
 
-    lines = [COMPATIBLE_PREAMBLE]
+    lines = [COMPATIBLE_HEADER]
     for step in CHECKPOINT_STEPS:
         row = by_step[step]
         values = [row["Ta_kPa"] / 1000.0]

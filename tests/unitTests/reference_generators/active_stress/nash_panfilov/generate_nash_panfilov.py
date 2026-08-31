@@ -108,27 +108,6 @@ def canonical_csv() -> str:
     sample_times = tuple((step + 1) * BASE_DT_MS for step in CHECKPOINT_STEPS)
     values = fe_solution(BASE_DT_MS, sample_times)
     output = io.StringIO(newline="")
-    output.write(
-        "# provenance: independent Python Forward-Euler oracle. Equation sources:\n"
-        "#   Nash & Panfilov (2004), doi:10.1016/j.pbiomolbio.2004.01.016,\n"
-        "#     Eq. 22c introduces an excitation-driven active-tension ODE and Eq. 23\n"
-        "#     supplies its piecewise rate switch.\n"
-        "#   Goktepe & Kuhl (2009), doi:10.1007/s00466-009-0434-z,\n"
-        "#     Eq. 46 reformulates the ODE using dimensional transmembrane potential Phi\n"
-        "#     and resting potential Phi_r; Eq. 47 replaces the piecewise switch with a\n"
-        "#     smooth Gompertz relaxation-rate coefficient.\n"
-        "#   svMultiPhysics-specific adaptation (not documented in either source):\n"
-        "#     substitute intracellular calcium Ca for Phi, with parameter roles\n"
-        "#       eta_T <-> k_sigma, calcium_rest <-> Phi_r,\n"
-        "#       xi_T <-> xi, calcium_crit <-> Phi_bar.\n"
-        "#     The oracle evaluates\n"
-        "#       dT/dt = epsilon(Ca)*(eta_T*(Ca-calcium_rest)-T).\n"
-        "# Parameters: epsilon_0=0.1, epsilon_i=1.0, xi_T=4e3, eta_T=1e2,\n"
-        "#             calcium_rest=1.25e-4, calcium_crit=8e-4 (slab calibration).\n"
-        "# Ca transient: double-exponential, c0=1e-4 mM, cmax=9e-4 mM,\n"
-        "#               tau_rise=20ms, tau_decay=50ms, onset=10ms. dt=1ms, 200 steps.\n"
-        "# Values extracted from the existing test without modification.\n"
-    )
     writer = csv.writer(output, lineterminator="\n")
     writer.writerow(("step", "Ta"))
     for step, time in zip(CHECKPOINT_STEPS, sample_times, strict=True):
