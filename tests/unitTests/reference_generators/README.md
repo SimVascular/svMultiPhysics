@@ -1,29 +1,26 @@
 # Unit-test reference generators
 
 These tools generate the trusted trajectory CSVs stored in
-`tests/unitTests/reference_data`. They implement the cited model equations or
-run a pinned authors' reference implementation; none reads svMultiPhysics
-output.
+`tests/unitTests/reference_data`. They implement the cited model equations;
+none reads svMultiPhysics output. The separately produced Regazzoni reference
+is documented under `active_stress/regazzoni` but is not regenerated in-repo.
 
 Generators are grouped by tested interface:
 
 ```text
-active_stress/   Nash-Panfilov and Regazzoni
+active_stress/   Nash-Panfilov generator and Regazzoni reference documentation
 ionic_model/     Aliev-Panfilov, FitzHugh-Nagumo, Bueno-Orovio, and TP06
 ```
 
-Each model README records its source, protocol, caveats, and generation
-command. Generators write only to an explicit `--output` path or stdout and do
-not modify repository reference data.
+Generator READMEs record their source, protocol, caveats, and generation
+command. The Regazzoni README instead records how its external reference was
+produced. Generators write only to an explicit `--output` path or stdout and
+do not modify repository reference data.
 
 ## Requirements
 
 The Python reference generators and verifier require Python 3.10+ and use only
 the standard library.
-
-The Regazzoni generator additionally requires Git, `patch`, a C++17 compiler,
-Eigen, Boost `property_tree`, and a local clone of the authors'
-`cardiac-activation` repository containing the pinned reference commit.
 
 For example:
 
@@ -35,10 +32,8 @@ python3 ionic_model/bueno_orovio/generate_bueno_orovio.py \
 Verify all generated references against an svMultiPhysics checkout with:
 
 ```bash
-python3 verify_reference_data.py --repo /path/to/svMultiPhysics \
-  --regazzoni-reference-repo /path/to/cardiac-activation
+python3 verify_reference_data.py --repo /path/to/svMultiPhysics
 ```
 
-Use `--skip-regazzoni` if its external C++ dependencies are unavailable. The
-verifier uses byte comparison for Python-generated references and strict
-numerical comparison for Regazzoni; it never overwrites canonical files.
+The verifier checks the nine in-repository generators byte-for-byte and reports
+that Regazzoni is not checked. It never overwrites canonical files.
