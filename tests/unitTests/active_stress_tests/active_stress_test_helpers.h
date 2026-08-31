@@ -31,9 +31,6 @@
  * argument and compare the simulated trajectory with a trusted external
  * reference solution loaded from a CSV file.
  *
- * If the simulated result does not match the reference within the prescribed
- * tolerance, GoogleTest records a failed expectation and the test fails.
- *
  * The twitch experiment uses a prescribed calcium transient to trigger
  * contraction in the active stress model (see @ref calcium_at). Fiber stretch
  * is also prescribed (see @ref fiber_stretch_at), and fiber stretch rate is
@@ -59,7 +56,9 @@
  * Comparisons are performed only at the checkpoints listed in the reference
  * CSV; the file does not need to contain every simulated time step. At each
  * checkpoint, active tension and each state variable are compared pointwise
- * with the corresponding reference value.
+ * with the corresponding reference value. If a pointwise difference exceeds
+ * the prescribed tolerance, GoogleTest records a failed expectation and the
+ * test fails.
  *
  * Checkpoints are integer simulation-step indices and must coincide with
  * simulated time steps; intermediate checkpoints are not interpolated.
