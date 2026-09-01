@@ -581,8 +581,8 @@ void read_vtu(const std::string& file_name, mshType& mesh)
   #define n_read_vtu_use_VtkData 
   #ifdef read_vtu_use_VtkData 
   auto vtk_data = VtkData::create_reader(file_name);
-  int num_elems = vtk_data->num_elems(); 
-  int np_elem = vtk_data->np_elem(); 
+  int num_elems = vtk_data->num_elems();
+  int np_elem = vtk_data->num_points_per_elem();
   int elem_type = vtk_data->elem_type(); 
 
   // Set mesh data.
@@ -629,7 +629,7 @@ void read_precomputed_solution_vtu(const std::string& file_name, const std::stri
   #ifdef read_vtu_use_VtkData
   auto vtk_data = VtkData::create_reader(file_name);
   int num_elems = vtk_data->num_elems();
-  int np_elem = vtk_data->np_elem();
+  int np_elem = vtk_data->num_points_per_elem();
 
   // Set mesh data.
   mesh.nEl = num_elems;

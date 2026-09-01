@@ -993,7 +993,7 @@ void CappingSurface::load_from_vtp(const std::string& vtp_file_path, const faceT
     int vtk_cell_type = 0;
     try {
         conn = vtp_data.get_connectivity();
-        eNoN = vtp_data.np_elem();
+        eNoN = vtp_data.num_points_per_elem();
         vtk_cell_type = vtp_data.elem_type();
     } catch (const std::exception& e) {
         throw CappingSurfaceVtpException("Failed to get connectivity from VTP file '" + vtp_file_path + "': " +
