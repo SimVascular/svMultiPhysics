@@ -46,6 +46,9 @@ class VtkData {
 
     /**
      * @brief Read the mesh data from a VTK file.
+     *
+     * @throws svmp::FileFormatException if the file cannot be read, or if it
+     *   contains no points or no elements
      */
     virtual void read_file(const std::string &file_name);
 
@@ -60,6 +63,8 @@ class VtkData {
 
     /**
      * @brief Write the mesh data to a VTK file.
+     *
+     * @throws svmp::CoreException if the file cannot be written
      */
     virtual void write() const = 0;
 
@@ -105,7 +110,10 @@ class VtkData {
      * @brief Set a double-valued element data array.
      *
      * @param[in] data_name The name of the data array to set.
-     * @param[in] data The data array to set.
+     * @param[in] data The data array to set, holding one value per element.
+     *
+     * @throws svmp::FE::InvalidArgumentException if the number of values
+     *   differs from the number of elements of the mesh
      */
     void set_element_data(const std::string &data_name,
                           const Array<double> &data);
@@ -114,7 +122,10 @@ class VtkData {
      * @brief Set an int-valued element data array.
      *
      * @param[in] data_name The name of the data array to set.
-     * @param[in] data The data array to set.
+     * @param[in] data The data array to set, holding one value per element.
+     *
+     * @throws svmp::FE::InvalidArgumentException if the number of values
+     *   differs from the number of elements of the mesh
      */
     void set_element_data(const std::string &data_name, const Array<int> &data);
 
@@ -122,7 +133,10 @@ class VtkData {
      * @brief Set a double-valued point data array.
      *
      * @param[in] data_name The name of the data array to set.
-     * @param[in] data The data array to set.
+     * @param[in] data The data array to set, holding one value per point.
+     *
+     * @throws svmp::FE::InvalidArgumentException if the number of values
+     *   differs from the number of points of the mesh
      */
     void set_point_data(const std::string &data_name,
                         const Array<double> &data);
@@ -131,7 +145,10 @@ class VtkData {
      * @brief Set an int-valued point data array.
      *
      * @param[in] data_name The name of the data array to set.
-     * @param[in] data The data array to set.
+     * @param[in] data The data array to set, holding one value per point.
+     *
+     * @throws svmp::FE::InvalidArgumentException if the number of values
+     *   differs from the number of points of the mesh
      */
     void set_point_data(const std::string &data_name, const Array<int> &data);
 
@@ -139,12 +156,20 @@ class VtkData {
      * @brief Set an int-valued point data array.
      *
      * @param[in] data_name The name of the data array to set.
-     * @param[in] data The data array to set.
+     * @param[in] data The data array to set, holding one value per point.
+     *
+     * @throws svmp::FE::InvalidArgumentException if the number of values
+     *   differs from the number of points of the mesh
      */
     void set_point_data(const std::string &data_name, const Vector<int> &data);
 
     /**
      * @brief Set the point coordinates of the mesh.
+     *
+     * @param[in] points The coordinates, of size (3, num_points).
+     *
+     * @throws svmp::FE::InvalidArgumentException if there are no points or
+     *   fewer than three coordinates are given for each point
      */
     void set_points(const Array<double> &points);
 
@@ -158,6 +183,9 @@ class VtkData {
      *   number of points per element determines the element type.
      * @param[in] conn The connectivity, of size (num_points_per_elem,
      *   num_elems). Each column holds the point indices of one element.
+     *
+     * @throws svmp::FE::InvalidArgumentException if a point index does not
+     *   refer to one of the points of the mesh
      */
     void set_connectivity(const int nsd, const Array<int> &conn);
 
@@ -187,6 +215,9 @@ class VtkData {
      *
      * @param[out] points The array to copy the mesh points into. It must be
      *   of size (3, num_points).
+     *
+     * @throws svmp::FE::InvalidArgumentException if the points do not fit in
+     *   the array
      */
     void copy_points(Array<double> &points) const;
 
@@ -196,6 +227,10 @@ class VtkData {
      * @param[in] data_name The name of the point data array to copy.
      * @param[out] mesh_data The array to copy the point data into. It must be
      *   of size (num_components, num_points).
+     *
+     * @throws svmp::FE::InvalidArgumentException if the mesh has no
+     *   double-valued point data array with the given name, or if its values do
+     *   not fit in mesh_data
      */
     void copy_point_data(const std::string &data_name,
                          Array<double> &mesh_data) const;
@@ -206,6 +241,10 @@ class VtkData {
      * @param[in] data_name The name of the point data array to copy.
      * @param[out] mesh_data The vector to copy the point data into. It must be
      *   of size (num_points).
+     *
+     * @throws svmp::FE::InvalidArgumentException if the mesh has no
+     *   double-valued point data array with the given name, or if its values do
+     *   not fit in mesh_data
      */
     void copy_point_data(const std::string &data_name,
                          Vector<double> &mesh_data) const;
@@ -217,6 +256,10 @@ class VtkData {
      * @param[in] data_name The name of the point data array to copy.
      * @param[out] mesh_data The vector to copy the point data into. It must be
      *   of size (num_points).
+     *
+     * @throws svmp::FE::InvalidArgumentException if the mesh has no int-valued
+     *   point data array with the given name, or if its values do not fit in
+     *   mesh_data
      */
     void copy_point_data(const std::string &data_name,
                          Vector<int> &mesh_data) const;
@@ -227,6 +270,10 @@ class VtkData {
      * @param[in] data_name The name of the cell data array to copy.
      * @param[out] mesh_data The array to copy the cell data into. It must be
      *   of size (num_components, num_cells).
+     *
+     * @throws svmp::FE::InvalidArgumentException if the mesh has no
+     *   double-valued cell data array with the given name, or if its values do
+     *   not fit in mesh_data
      */
     void copy_cell_data(const std::string &data_name,
                         Array<double> &mesh_data) const;
@@ -237,6 +284,10 @@ class VtkData {
      * @param[in] data_name The name of the cell data array to copy.
      * @param[out] mesh_data The vector to copy the cell data into. It must be
      *   of size (num_points).
+     *
+     * @throws svmp::FE::InvalidArgumentException if the mesh has no
+     *   double-valued cell data array with the given name, or if its values do
+     *   not fit in mesh_data
      */
     void copy_cell_data(const std::string &data_name,
                         Vector<double> &mesh_data) const;
@@ -248,12 +299,19 @@ class VtkData {
      * @param[in] data_name The name of the cell data array to copy.
      * @param[out] mesh_data The vector to copy the cell data into. It must be
      *   of size (num_points).
+     *
+     * @throws svmp::FE::InvalidArgumentException if the mesh has no int-valued
+     *   cell data array with the given name, or if its values do not fit in
+     *   mesh_data
      */
     void copy_cell_data(const std::string &data_name,
                         Vector<int> &mesh_data) const;
 
     /**
      * @brief Get an array of point data from the mesh.
+     *
+     * @throws svmp::FE::InvalidArgumentException if the mesh has no
+     *   double-valued point data array with the given name
      *
      * @todo[michelebucelli] This should fall back onto copy_point_data.
      */
@@ -291,7 +349,8 @@ class VtkData {
      * @return A pointer to a newly allocated object holding the mesh read from
      *   the file. The caller owns the object and must delete it.
      *
-     * @throws std::runtime_error if the file extension is not 'vtp' or 'vtu'
+     * @throws svmp::FE::InvalidArgumentException if the file extension is not
+     *   'vtp' or 'vtu'
      */
     static VtkData *create_reader(const std::string &file_name);
 
@@ -307,7 +366,8 @@ class VtkData {
      * @return A pointer to a newly allocated object holding an empty mesh. The
      *   caller owns the object and must delete it.
      *
-     * @throws std::runtime_error if the file extension is not 'vtp' or 'vtu'
+     * @throws svmp::FE::InvalidArgumentException if the file extension is not
+     *   'vtp' or 'vtu'
      */
     static VtkData *create_writer(const std::string &file_name);
 
@@ -328,6 +388,9 @@ class VtkData {
      * Derived classes must override this to implement the appropriate mapping
      * from the number of spatial dimensions and number of points per element to
      * the VTK cell type.
+     *
+     * @throws svmp::FE::InvalidArgumentException if there is no cell type that
+     *   the file format can hold for the given element
      */
     virtual int cell_type(int nsd, int np_elem) const = 0;
 

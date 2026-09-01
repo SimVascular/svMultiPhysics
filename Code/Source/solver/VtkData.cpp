@@ -3,14 +3,17 @@
 
 #include "VtkData.h"
 
+#include "Core/Exception.h"
+#include "FE/Common/FEException.h"
+
 #include <cstring>
-#include <stdexcept>
 #include <string>
 
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellType.h>
 #include <vtkDoubleArray.h>
+#include <vtkErrorCode.h>
 #include <vtkFieldData.h>
 #include <vtkGenericCell.h>
 #include <vtkIntArray.h>
@@ -28,12 +31,15 @@ void VtkData::read_file(const std::string &file_name) {
 
   // Extract metadata (number of cells, points, cell type).
   {
+    // A failed read leaves the data object empty, without any points.
+    const auto points = vtk_data->GetPoints();
+    num_points_ = (points == nullptr) ? 0 : points->GetNumberOfPoints();
+    svmp::check<svmp::FileFormatException>(num_points_ != 0, file_name,
+                                           "The file has no points.");
+
     num_elems_ = vtk_data->GetNumberOfCells();
-    num_points_ = vtk_data->GetPoints()->GetNumberOfPoints();
-    if (num_points_ == 0) {
-      throw std::runtime_error("Error reading the VTK file '" + file_name +
-                               "'.");
-    }
+    svmp::check<svmp::FileFormatException>(num_elems_ != 0, file_name,
+                                           "The file has no elements.");
 
     // Get the cell type.
     auto cell = vtkGenericCell::New();
@@ -90,6 +96,12 @@ void VtkData::set_element_data(const std::string &data_name,
   const int num_vals = data.ncols();
   const int num_components = data.nrows();
 
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_vals == vtk_data->GetNumberOfCells(),
+      "The element data array named '" + data_name + "' holds " +
+          std::to_string(num_vals) + " values, while the mesh has " +
+          std::to_string(vtk_data->GetNumberOfCells()) + " elements.");
+
   auto data_array = vtkSmartPointer<vtkDoubleArray>::New();
   data_array->SetNumberOfComponents(num_components);
   data_array->Allocate(num_vals, 1000);
@@ -109,6 +121,12 @@ void VtkData::set_element_data(const std::string &data_name,
   const int num_vals = data.ncols();
   const int num_components = data.nrows();
 
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_vals == vtk_data->GetNumberOfCells(),
+      "The element data array named '" + data_name + "' holds " +
+          std::to_string(num_vals) + " values, while the mesh has " +
+          std::to_string(vtk_data->GetNumberOfCells()) + " elements.");
+
   auto data_array = vtkSmartPointer<vtkIntArray>::New();
   data_array->SetNumberOfComponents(num_components);
   data_array->Allocate(num_vals, 1000);
@@ -127,6 +145,12 @@ void VtkData::set_point_data(const std::string &data_name,
                              const Array<double> &data) {
   const int num_vals = data.ncols();
   const int num_comp = data.nrows();
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_vals == vtk_data->GetNumberOfPoints(),
+      "The point data array named '" + data_name + "' holds " +
+          std::to_string(num_vals) + " values, while the mesh has " +
+          std::to_string(vtk_data->GetNumberOfPoints()) + " points.");
 
   auto data_array = vtkSmartPointer<vtkDoubleArray>::New();
   data_array->SetNumberOfComponents(num_comp);
@@ -148,6 +172,12 @@ void VtkData::set_point_data(const std::string &data_name,
   int num_vals = data.ncols();
   int num_comp = data.nrows();
 
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_vals == vtk_data->GetNumberOfPoints(),
+      "The point data array named '" + data_name + "' holds " +
+          std::to_string(num_vals) + " values, while the mesh has " +
+          std::to_string(vtk_data->GetNumberOfPoints()) + " points.");
+
   auto data_array = vtkSmartPointer<vtkIntArray>::New();
   data_array->SetNumberOfComponents(num_comp);
   data_array->Allocate(num_vals, 1000);
@@ -167,6 +197,12 @@ void VtkData::set_point_data(const std::string &data_name,
                              const Vector<int> &data) {
   const int num_vals = data.size();
 
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_vals == vtk_data->GetNumberOfPoints(),
+      "The point data array named '" + data_name + "' holds " +
+          std::to_string(num_vals) + " values, while the mesh has " +
+          std::to_string(vtk_data->GetNumberOfPoints()) + " points.");
+
   auto data_array = vtkSmartPointer<vtkIntArray>::New();
   data_array->SetNumberOfComponents(1);
   data_array->Allocate(num_vals);
@@ -181,10 +217,14 @@ void VtkData::set_point_data(const std::string &data_name,
 
 void VtkData::set_points(const Array<double> &points) {
   const int num_coords = points.ncols();
-  if (num_coords == 0) {
-    throw std::runtime_error(
-        "Error in vtkData::set_points: the number of points is zero.");
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_coords != 0, "The number of points is zero.");
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      points.nrows() >= 3,
+      "The point coordinates are given as an array of " +
+          std::to_string(points.nrows()) +
+          " rows, while three coordinates per point are needed.");
 
   auto node_coords = vtkSmartPointer<vtkPoints>::New();
   node_coords->Allocate(num_coords, 1000);
@@ -201,6 +241,8 @@ void VtkData::set_connectivity(const int nsd, const Array<int> &conn) {
   int num_elems = conn.ncols();
   int np_elem = conn.nrows();
 
+  const vtkIdType num_points = vtk_data->GetNumberOfPoints();
+
   auto elem_nodes = vtkSmartPointer<vtkIdList>::New();
   elem_nodes->Allocate(np_elem);
   elem_nodes->Initialize();
@@ -208,7 +250,18 @@ void VtkData::set_connectivity(const int nsd, const Array<int> &conn) {
 
   for (int i = 0; i < num_elems; i++) {
     for (int j = 0; j < np_elem; j++) {
-      elem_nodes->SetId(j, conn(j, i));
+      const int node_id = conn(j, i);
+
+      // The check is written out to keep the error message from being composed
+      // for every point of every element.
+      if (node_id < 0 || node_id >= num_points) {
+        svmp::raise<svmp::FE::InvalidArgumentException>(
+            "Element " + std::to_string(i) + " refers to point " +
+            std::to_string(node_id) + ", which is not among the " +
+            std::to_string(num_points) + " points of the mesh.");
+      }
+
+      elem_nodes->SetId(j, node_id);
     }
 
     insert_cell(cell_type(nsd, np_elem), elem_nodes);
@@ -230,7 +283,8 @@ bool VtkData::has_cell_data(const std::string &data_name) const {
   const int num_arrays = vtk_data->GetCellData()->GetNumberOfArrays();
 
   for (int i = 0; i < num_arrays; i++) {
-    if (!strcmp(vtk_data->GetCellData()->GetArrayName(i), data_name.c_str())) {
+    const char *array_name = vtk_data->GetCellData()->GetArrayName(i);
+    if (array_name != nullptr && !strcmp(array_name, data_name.c_str())) {
       return true;
     }
   }
@@ -242,7 +296,8 @@ bool VtkData::has_point_data(const std::string &data_name) const {
   const int num_arrays = vtk_data->GetPointData()->GetNumberOfArrays();
 
   for (int i = 0; i < num_arrays; i++) {
-    if (!strcmp(vtk_data->GetPointData()->GetArrayName(i), data_name.c_str())) {
+    const char *array_name = vtk_data->GetPointData()->GetArrayName(i);
+    if (array_name != nullptr && !strcmp(array_name, data_name.c_str())) {
       return true;
     }
   }
@@ -253,6 +308,13 @@ bool VtkData::has_point_data(const std::string &data_name) const {
 void VtkData::copy_points(Array<double> &points) const {
   auto vtk_points = vtk_data->GetPoints();
   auto num_points = vtk_points->GetNumberOfPoints();
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      points.nrows() >= 3 && points.ncols() >= num_points,
+      "The " + std::to_string(num_points) + " points of the VTK file '" +
+          file_name_ + "' do not fit in an array of " +
+          std::to_string(points.nrows()) + " rows and " +
+          std::to_string(points.ncols()) + " columns.");
 
   double point[3];
   for (int i = 0; i < num_points; i++) {
@@ -267,18 +329,22 @@ void VtkData::copy_point_data(const std::string &data_name,
                               Array<double> &mesh_data) const {
   const auto vtk_array = vtkDoubleArray::SafeDownCast(
       vtk_data->GetPointData()->GetArray(data_name.c_str()));
-  if (vtk_array == nullptr) {
-    // @todo[michelebucelli] This should probably be an exception.
-    return;
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      vtk_array != nullptr,
+      "There is no double-valued point data array named '" + data_name +
+          "' in the VTK file '" + file_name_ + "'.");
 
   const int num_data = vtk_array->GetNumberOfTuples();
-  if (num_data == 0) {
-    // @todo[michelebucelli] This should probably be an exception.
-    return;
-  }
-
   const int num_comp = vtk_array->GetNumberOfComponents();
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_data <= mesh_data.ncols() && num_comp <= mesh_data.nrows(),
+      "The point data array named '" + data_name + "' of the VTK file '" +
+          file_name_ + "' has " + std::to_string(num_comp) +
+          " components and " + std::to_string(num_data) +
+          " tuples, which do not fit in an array of " +
+          std::to_string(mesh_data.nrows()) + " rows and " +
+          std::to_string(mesh_data.ncols()) + " columns.");
 
   // Set the data.
   for (int i = 0; i < num_data; i++) {
@@ -293,14 +359,19 @@ void VtkData::copy_point_data(const std::string &data_name,
                               Vector<double> &mesh_data) const {
   const auto vtk_array = vtkDoubleArray::SafeDownCast(
       vtk_data->GetPointData()->GetArray(data_name.c_str()));
-  if (vtk_array == nullptr) {
-    return;
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      vtk_array != nullptr,
+      "There is no double-valued point data array named '" + data_name +
+          "' in the VTK file '" + file_name_ + "'.");
 
   int num_data = vtk_array->GetNumberOfTuples();
-  if (num_data == 0) {
-    return;
-  }
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_data <= mesh_data.size(),
+      "The point data array named '" + data_name + "' of the VTK file '" +
+          file_name_ + "' has " + std::to_string(num_data) +
+          " values, which do not fit in a vector of size " +
+          std::to_string(mesh_data.size()) + ".");
 
   // Set the data.
   for (int i = 0; i < num_data; i++) {
@@ -312,14 +383,19 @@ void VtkData::copy_point_data(const std::string &data_name,
                               Vector<int> &mesh_data) const {
   const auto vtk_array = vtkIntArray::SafeDownCast(
       vtk_data->GetPointData()->GetArray(data_name.c_str()));
-  if (vtk_array == nullptr) {
-    return;
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      vtk_array != nullptr, "There is no int-valued point data array named '" +
+                                data_name + "' in the VTK file '" + file_name_ +
+                                "'.");
 
   int num_data = vtk_array->GetNumberOfTuples();
-  if (num_data == 0) {
-    return;
-  }
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_data <= mesh_data.size(),
+      "The point data array named '" + data_name + "' of the VTK file '" +
+          file_name_ + "' has " + std::to_string(num_data) +
+          " values, which do not fit in a vector of size " +
+          std::to_string(mesh_data.size()) + ".");
 
   // Set the data.
   for (int i = 0; i < num_data; i++) {
@@ -331,16 +407,22 @@ void VtkData::copy_cell_data(const std::string &data_name,
                              Array<double> &mesh_data) const {
   const auto vtk_array = vtkDoubleArray::SafeDownCast(
       vtk_data->GetCellData()->GetArray(data_name.c_str()));
-  if (vtk_array == nullptr) {
-    return;
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      vtk_array != nullptr,
+      "There is no double-valued element data array named '" + data_name +
+          "' in the VTK file '" + file_name_ + "'.");
 
   const int num_data = vtk_array->GetNumberOfTuples();
-  if (num_data == 0) {
-    return;
-  }
-
   const int num_comp = vtk_array->GetNumberOfComponents();
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_data <= mesh_data.ncols() && num_comp <= mesh_data.nrows(),
+      "The element data array named '" + data_name + "' of the VTK file '" +
+          file_name_ + "' has " + std::to_string(num_comp) +
+          " components and " + std::to_string(num_data) +
+          " tuples, which do not fit in an array of " +
+          std::to_string(mesh_data.nrows()) + " rows and " +
+          std::to_string(mesh_data.ncols()) + " columns.");
 
   // Set the data.
   for (int i = 0; i < num_data; i++) {
@@ -355,14 +437,19 @@ void VtkData::copy_cell_data(const std::string &data_name,
                              Vector<double> &mesh_data) const {
   const auto vtk_array = vtkDoubleArray::SafeDownCast(
       vtk_data->GetCellData()->GetArray(data_name.c_str()));
-  if (vtk_array == nullptr) {
-    return;
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      vtk_array != nullptr,
+      "There is no double-valued element data array named '" + data_name +
+          "' in the VTK file '" + file_name_ + "'.");
 
   const int num_data = vtk_array->GetNumberOfTuples();
-  if (num_data == 0) {
-    return;
-  }
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_data <= mesh_data.size(),
+      "The element data array named '" + data_name + "' of the VTK file '" +
+          file_name_ + "' has " + std::to_string(num_data) +
+          " values, which do not fit in a vector of size " +
+          std::to_string(mesh_data.size()) + ".");
 
   // Set the data.
   for (int i = 0; i < num_data; i++) {
@@ -374,14 +461,19 @@ void VtkData::copy_cell_data(const std::string &data_name,
                              Vector<int> &mesh_data) const {
   const auto vtk_array = vtkIntArray::SafeDownCast(
       vtk_data->GetCellData()->GetArray(data_name.c_str()));
-  if (vtk_array == nullptr) {
-    return;
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      vtk_array != nullptr,
+      "There is no int-valued element data array named '" + data_name +
+          "' in the VTK file '" + file_name_ + "'.");
 
   const int num_data = vtk_array->GetNumberOfTuples();
-  if (num_data == 0) {
-    return;
-  }
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_data <= mesh_data.size(),
+      "The element data array named '" + data_name + "' of the VTK file '" +
+          file_name_ + "' has " + std::to_string(num_data) +
+          " values, which do not fit in a vector of size " +
+          std::to_string(mesh_data.size()) + ".");
 
   // Set the data.
   for (int i = 0; i < num_data; i++) {
@@ -392,15 +484,12 @@ void VtkData::copy_cell_data(const std::string &data_name,
 Array<double> VtkData::get_point_data(const std::string &data_name) const {
   auto vtk_array = vtkDoubleArray::SafeDownCast(
       vtk_data->GetPointData()->GetArray(data_name.c_str()));
-  if (vtk_array == nullptr) {
-    return Array<double>();
-  }
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      vtk_array != nullptr,
+      "There is no double-valued point data array named '" + data_name +
+          "' in the VTK file '" + file_name_ + "'.");
 
   int num_data = vtk_array->GetNumberOfTuples();
-  if (num_data == 0) {
-    return Array<double>();
-  }
-
   int num_comp = vtk_array->GetNumberOfComponents();
 
   // Set the data.
@@ -445,7 +534,7 @@ VtkData *VtkData::create_reader(const std::string &file_name) {
     return new VtkVtuData(file_name);
   }
 
-  throw std::runtime_error(
+  svmp::raise<svmp::FE::InvalidArgumentException>(
       "Error in VtkData::create_reader: the file '" + file_name +
       "' has the extension '" + file_ext + "', which is not 'vtp' or 'vtu'.");
 }
@@ -459,7 +548,7 @@ VtkData *VtkData::create_writer(const std::string &file_name) {
     return new VtkVtuData(file_name, reader);
   }
 
-  throw std::runtime_error(
+  svmp::raise<svmp::FE::InvalidArgumentException>(
       "Error in VtkData::create_writer: the file '" + file_name +
       "' has the extension '" + file_ext + "', which is not 'vtp' or 'vtu'.");
 }
@@ -490,13 +579,25 @@ void VtkVtpData::write() const {
   auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   writer->SetInputDataObject(vtk_polydata);
   writer->SetFileName(file_name_.c_str());
-  writer->Write();
+
+  const int status = writer->Write();
+  svmp::check<svmp::CoreException>(
+      status != 0,
+      "Error writing the VTK file '" + file_name_ + "': " +
+          vtkErrorCode::GetStringFromErrorCode(writer->GetErrorCode()) + ".",
+      svmp::StatusCode::IOError);
 }
 
 void VtkVtpData::read_file_internal(const std::string &file_name) {
   auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
   reader->SetFileName(file_name.c_str());
   reader->Update();
+
+  svmp::check<svmp::FileFormatException>(
+      reader->GetErrorCode() == vtkErrorCode::NoError, file_name,
+      std::string("Error reading VTK file: ") +
+          vtkErrorCode::GetStringFromErrorCode(reader->GetErrorCode()) + ".");
+
   vtk_polydata = reader->GetOutput();
   vtk_data = vtk_polydata;
 }
@@ -506,40 +607,24 @@ int VtkVtpData::cell_type(int nsd, int np_elem) const {
     return VTK_LINE;
   }
 
-  if (nsd == 2) {
-    switch (np_elem) {
-    case 3:
-      return VTK_TRIANGLE;
-    case 4:
-      return VTK_QUAD;
-    case 6:
-      return VTK_QUADRATIC_TRIANGLE;
-    case 8:
-      return VTK_QUADRATIC_QUAD;
-    case 9:
-      return VTK_BIQUADRATIC_QUAD;
-    }
-  } else if (nsd == 3) {
-    switch (np_elem) {
-    case 3:
-      return VTK_TRIANGLE;
-    case 4:
-      return VTK_QUAD;
-    case 6:
-      return VTK_QUADRATIC_TRIANGLE;
-    case 8:
-      return VTK_HEXAHEDRON;
-    case 10:
-      return VTK_QUADRATIC_TETRA;
-    case 20:
-      return VTK_QUADRATIC_HEXAHEDRON;
-    case 27:
-      return VTK_TRIQUADRATIC_HEXAHEDRON;
-    }
+  // A vtkPolyData holds surface elements only, whose type is determined by the
+  // number of points alone.
+  switch (np_elem) {
+  case 3:
+    return VTK_TRIANGLE;
+  case 4:
+    return VTK_QUAD;
+  case 6:
+    return VTK_QUADRATIC_TRIANGLE;
+  case 8:
+    return VTK_QUADRATIC_QUAD;
+  case 9:
+    return VTK_BIQUADRATIC_QUAD;
   }
 
-  throw std::runtime_error(
-      "Error in VtkVtpData::cell_type: no cell type for an element with " +
+  svmp::raise<svmp::FE::InvalidArgumentException>(
+      "Error in VtkVtpData::cell_type: no surface cell type for an element "
+      "with " +
       std::to_string(np_elem) + " points in " + std::to_string(nsd) +
       " dimensions.");
 }
@@ -577,13 +662,25 @@ void VtkVtuData::write() const {
   auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
   writer->SetInputDataObject(vtk_ugrid);
   writer->SetFileName(file_name_.c_str());
-  writer->Write();
+
+  const int status = writer->Write();
+  svmp::check<svmp::CoreException>(
+      status != 0,
+      "Error writing the VTK file '" + file_name_ + "': " +
+          vtkErrorCode::GetStringFromErrorCode(writer->GetErrorCode()) + ".",
+      svmp::StatusCode::IOError);
 }
 
 void VtkVtuData::read_file_internal(const std::string &file_name) {
   auto reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
   reader->SetFileName(file_name.c_str());
   reader->Update();
+
+  svmp::check<svmp::FileFormatException>(
+      reader->GetErrorCode() == vtkErrorCode::NoError, file_name,
+      std::string("Error reading VTK file: ") +
+          vtkErrorCode::GetStringFromErrorCode(reader->GetErrorCode()) + ".");
+
   vtk_ugrid = reader->GetOutput();
   vtk_data = vtk_ugrid;
 }
@@ -625,7 +722,7 @@ int VtkVtuData::cell_type(int nsd, int np_elem) const {
     }
   }
 
-  throw std::runtime_error(
+  svmp::raise<svmp::FE::InvalidArgumentException>(
       "Error in VtkVtuData::cell_type: no cell type for an element with " +
       std::to_string(np_elem) + " points in " + std::to_string(nsd) +
       " dimensions.");
