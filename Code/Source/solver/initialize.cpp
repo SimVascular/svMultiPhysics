@@ -909,10 +909,8 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   init_txt_solutions.old.get_displacement() = Do;
   txt_ns::txt(simulation, true, init_txt_solutions);
 
-  // Printing the first line and initializing timeP
-  int co = 1;
-  int iEq = 0;
-  output::output_result(simulation, com_mod.timeP, co, iEq);
+  // Printing the header of the history table and initializing timeP
+  output::output_header(simulation, com_mod.timeP);
 
   std::fill(com_mod.rmsh.flag.begin(), com_mod.rmsh.flag.end(), false);
   com_mod.resetSim = false;

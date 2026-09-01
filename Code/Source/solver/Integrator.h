@@ -37,10 +37,16 @@ public:
    *
    * Performs the complete Newton iteration sequence including initialization,
    * assembly, boundary condition application, linear solve, and convergence check.
+   * One line is written to the standard output and to the history file for every
+   * Newton iteration, including the converged one.
+   *
+   * @param[in] save_results True if the results of this time step are written to a
+   *   VTU file, which flags the converged iteration with an 's' in the standard
+   *   output.
    *
    * @return True if all equations converged, false otherwise
    */
-  bool step();
+  bool step(bool save_results = false);
 
   /**
    * @brief Perform predictor step for next time step

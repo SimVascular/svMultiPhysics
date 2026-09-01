@@ -7,27 +7,45 @@
 #include "output.h"
 #include "utils.h"
 
+#include <cstdio>
+#include <iomanip>
+#include <limits>
 #include <math.h>
+#include <sstream>
 
 namespace output {
 
-/// @brief Prepares the output of svFSI to the standard output.
-///
-/// Modifies: timeP
-///
-/// \todo NOTE: This is not fully implemented.
-//
-void output_result(Simulation* simulation,  std::array<double,3>& timeP, const int co, const int iEq)
-{
-  #ifdef debug_output_result
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
-  dmsg.banner();
-  #endif
+namespace {
+// Field widths of the history table. The rows and the header use the same
+// widths, so that they are vertically aligned. A value wider than its field
+// shifts the rest of the row rather than being truncated.
+constexpr int eq_width        = 2;  // equation symbol
+constexpr int time_step_width = 6;  // time step
+constexpr int number_width    = 10; // numbers in scientific notation
+constexpr int db_width        = 4;  // dB columns, three digits and their sign
+constexpr int ls_iter_width   = 5;  // linear solver iterations
+constexpr int pct_width       = 4;  // percentage of the time spent in the linear solver
 
+// Width of the time step and nonlinear iteration column: the time step, the
+// dash separating it from the two-digit nonlinear iteration, and the 's'
+// flagging a time step whose results are written to a file.
+constexpr int iter_width = time_step_width + 4;
+
+// Number of digits printed after the decimal point in scientific notation.
+constexpr int number_precision = 3;
+
+// Number of characters in a row of the history table: the fields above,
+// plus the ten spaces and the four brackets separating them.
+constexpr int table_width = eq_width + iter_width + 4 * number_width +
+                            2 * db_width + ls_iter_width + pct_width + 14;
+
+// Separator line of the history table.
+std::string separator_line() { return std::string(table_width, '-'); }
+} // namespace
+
+void output_header(const Simulation *simulation, std::array<double, 3> &timeP) {
   auto& com_mod = simulation->com_mod;
-  auto& cm_mod = simulation->cm_mod;
-  auto& eq = com_mod.eq[iEq];
-  auto cTS = com_mod.cTS;
+  auto &cm_mod = simulation->cm_mod;
 
   // Writes to history file and optionally to cout.
   auto& logger = simulation->logger;
@@ -36,42 +54,62 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
     return;
   }
 
-  int fid = 1;
-  double tmp = utils::cput();
-  std::string sepLine(69,'-');
+  timeP[0] = utils::cput() - timeP[0];
+  timeP[1] = 0.0;
 
-  if (co == 1) {
-     timeP[0] = tmp - timeP[0];
-     timeP[1] = 0.0;
-     logger << sepLine << std::endl;
-     logger << " Eq     N-i     T       dB  Ri/R1   Ri/R0    R/Ri     lsIt   dB  %t" << std::endl;
-     //std::cout << sepLine << std::endl;
-     //std::cout << " Eq     N-i     T       dB  Ri/R1   Ri/R0    R/Ri     lsIt   dB  %t" << std::endl;
-     if (com_mod.nEq == 1) {
-       logger << sepLine << std::endl;
-       //std::cout << sepLine << std::endl;
-     }
-     return;
+  // The dash of the "N-i" title sits above the dash separating the time step
+  // from the nonlinear iteration.
+  std::ostringstream header;
+  header << " " << std::left << std::setw(eq_width) << "Eq"
+         << " " << std::setw(iter_width) << "     N-i"
+         << " " << std::right << std::setw(number_width) << "T"
+         << "  " << std::setw(db_width) << "dB"
+         << " " << std::setw(number_width) << "Ri/R1"
+         << " " << std::setw(number_width) << "Ri/R0"
+         << " " << std::setw(number_width) << "R/Ri"
+         << "   " << std::setw(ls_iter_width) << "lsIt"
+         << " " << std::setw(db_width) << "dB"
+         << " " << std::setw(pct_width) << "%t";
+
+  logger << separator_line() << std::endl;
+  logger << header.str() << std::endl;
+  if (com_mod.nEq == 1) {
+    logger << separator_line() << std::endl;
   }
+}
+
+void output_result(const Simulation *simulation, std::array<double, 3> &timeP,
+                   const bool save_results, const int iEq) {
+  auto &com_mod = simulation->com_mod;
+  auto &cm_mod = simulation->cm_mod;
+  auto &eq = com_mod.eq[iEq];
+  auto cTS = com_mod.cTS;
+
+#ifdef debug_output_result
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+#endif
+
+  // Writes to history file and optionally to cout.
+  auto &logger = simulation->logger;
+
+  if (com_mod.cm.slv(cm_mod)) {
+    return;
+  }
+
+  double tmp = utils::cput();
 
   if ((com_mod.nEq > 1) && (iEq == 0) && (eq.itr == 1)) {
-    logger << sepLine << std::endl;
+    logger << separator_line() << std::endl;
   }
 
-  std::string c1 = " ";
-  std::string c2 = " ";
+  // The time step and the nonlinear iteration, flagged with an 's' when the
+  // results of this time step are written to a file.
+  const char *save_flag = save_results ? "s" : "";
+  std::ostringstream iter;
+  iter << std::setw(time_step_width) << cTS << "-" << eq.itr << save_flag;
 
-  if (co == 3) {
-    c1 = "s";
-  }
-
-  // NS     1-2  3.82E1  [ -62 7.92E-4 7.92E-4 3.60E-4]  [   5  -15  23]
-  //-------------------
-  //
   timeP[2] = tmp - timeP[0];
-  char time_str[20];
-  sprintf(time_str, "%4.3e", timeP[2]);
-  std::string sOut = " " + eq.sym + " " + std::to_string(cTS) + "-" + std::to_string(eq.itr) + c1 + " " + time_str;
 
   int i;
   double tmp1 = 1.0;
@@ -89,22 +127,11 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
     i = static_cast<int>(20.0*log10(tmp1));
   }
 
-  if (i > 20) {
-    c1 = "!"; 
-    c2 = "!";
-  } else {
-    c1 = "["; 
-    c2 = "]";
-  }
+  // The residuals are bracketed by '!' when the nonlinear residual has grown by
+  // more than 20 dB.
+  const char *nl_open = (i > 20) ? "!" : "[";
+  const char *nl_close = (i > 20) ? "!" : "]";
 
-  char norm1_str[20], norm2_str[20], norm3_str[20];
-  sprintf(norm1_str, "%4.3e", tmp);
-  sprintf(norm2_str, "%4.3e", tmp1);
-  sprintf(norm3_str, "%4.3e", tmp2);
-
-  // NS     1-2  3.82E1  [ -62 7.92E-4 7.92E-4 3.60E-4]  [   5  -15  23] 
-  //                       ----------------------------
-  sOut += "  " + c1 + std::to_string(i) + " " + norm2_str  + " " + norm1_str + " " + norm3_str + c2;
   double eps = std::numeric_limits<double>::epsilon();
 
   if (utils::is_zero(timeP[2],timeP[1])) {
@@ -113,35 +140,33 @@ void output_result(Simulation* simulation,  std::array<double,3>& timeP, const i
 
   // Percent of time in solver?
   //
-  tmp = 100.0 * eq.FSILS.RI.callD / (timeP[2] - timeP[1]);
+  double solver_pct = 100.0 * eq.FSILS.RI.callD / (timeP[2] - timeP[1]);
   timeP[1] = timeP[2];
-  if (fabs(tmp) > 100.0) {
-    tmp = 100.0;
+  if (fabs(solver_pct) > 100.0) {
+    solver_pct = 100.0;
   }
 
   // Add a warning if the solution to the linear system did not converge.
+  const char *ls_open = eq.FSILS.RI.success ? "[" : "!";
+  const char *ls_close = eq.FSILS.RI.success ? "]" : "!";
   std::string convergence_msg;
-  if (eq.FSILS.RI.success) {
-    c1 = "[";
-    c2 = "]";
-  } else {
-    c1 = "!";
-    c2 = "!";
+  if (!eq.FSILS.RI.success) {
     convergence_msg = "  WARNING: The linear system solution has not converged";
   }
 
-  // NS     1-2  3.82E1  [ -62 7.92E-4 7.92E-4 3.60E-4]  [   5  -15  23] 
-  //                                                      -------------
-  auto db_str = std::to_string(static_cast<int>(round(eq.FSILS.RI.dB)));
-  auto calld_str = std::to_string(static_cast<int>(round(tmp)));
-  sOut += "  " + c1 + std::to_string(eq.FSILS.RI.itr) + " " + db_str + " " + calld_str + c2;
-  sOut += convergence_msg; 
+  std::ostringstream row;
+  row << " " << std::left << std::setw(eq_width) << eq.sym << " "
+      << std::setw(iter_width) << iter.str() << " " << std::right
+      << std::scientific << std::setprecision(number_precision)
+      << std::setw(number_width) << timeP[2] << " " << nl_open
+      << std::setw(db_width) << i << " " << std::setw(number_width) << tmp1
+      << " " << std::setw(number_width) << tmp << " " << std::setw(number_width)
+      << tmp2 << nl_close << " " << ls_open << std::setw(ls_iter_width)
+      << eq.FSILS.RI.itr << " " << std::setw(db_width)
+      << static_cast<int>(round(eq.FSILS.RI.dB)) << " " << std::setw(pct_width)
+      << static_cast<int>(round(solver_pct)) << ls_close;
 
-  if (com_mod.nEq > 1) {
-    logger << sOut << std::endl;
-  } else {
-    logger << sOut << std::endl;
-  }
+  logger << row.str() << convergence_msg << std::endl;
 
   // Print a warning message if the maximum number of nonlinear iterations has been exceeded.
   if (eq.itr > eq.maxItr) {
