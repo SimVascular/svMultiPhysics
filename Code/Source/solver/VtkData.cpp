@@ -327,8 +327,7 @@ void VtkData::copy_points(Array<double> &points) const {
 
 void VtkData::copy_point_data(const std::string &data_name,
                               Array<double> &mesh_data) const {
-  const auto vtk_array = vtkDoubleArray::SafeDownCast(
-      vtk_data->GetPointData()->GetArray(data_name.c_str()));
+  const auto vtk_array = vtk_data->GetPointData()->GetArray(data_name.c_str());
   svmp::check<svmp::FE::InvalidArgumentException>(
       vtk_array != nullptr,
       "There is no double-valued point data array named '" + data_name +
@@ -405,8 +404,7 @@ void VtkData::copy_point_data(const std::string &data_name,
 
 void VtkData::copy_cell_data(const std::string &data_name,
                              Array<double> &mesh_data) const {
-  const auto vtk_array = vtkDoubleArray::SafeDownCast(
-      vtk_data->GetCellData()->GetArray(data_name.c_str()));
+  const auto vtk_array = vtk_data->GetCellData()->GetArray(data_name.c_str());
   svmp::check<svmp::FE::InvalidArgumentException>(
       vtk_array != nullptr,
       "There is no double-valued element data array named '" + data_name +
