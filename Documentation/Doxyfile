@@ -107,7 +107,10 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 INPUT                  = \
                          Documentation/internal.md \
-                         Code/Source
+                         Code/Source \
+                         tests/unitTests/ionic_model_tests \
+                         tests/unitTests/active_stress_tests \
+                         tests/unitTests/reference_generators
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.cpp \
                          *.h \

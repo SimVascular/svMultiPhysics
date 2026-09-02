@@ -54,14 +54,79 @@ struct ActiveStressTrajectoryConfiguration {
  * reference solution loaded from a CSV file.
  *
  * The twitch experiment uses a prescribed calcium transient to trigger
- * contraction in the active stress model (see @ref calcium_at). Fiber stretch
- * is also prescribed (see @ref fiber_stretch_at), and fiber stretch rate is
- * obtained from the prescribed stretch trajectory.
+ * contraction in the active stress model (see @ref active_stress_calcium_transient).
+ * Fiber stretch is also prescribed (see @ref active_stress_fiber_stretch), and
+ * fiber stretch rate is obtained from the prescribed stretch trajectory.
  *
  * The active stress model is solved standalone, i.e. only one system of ODEs
  * is solved rather than a coupled three-dimensional mechanics problem.
  * Therefore, the test verifies the active stress ODE definition and time
  * stepping independently of the mechanics solver.
+ *
+ * @anchor active_stress_calcium_transient
+ * ### Prescribed calcium transient
+ *
+ * The calcium concentration is
+ * @f[
+ * C(t) =
+ * \begin{cases}
+ * C_0, & t < t_0, \\[4pt]
+ * C_0 + (C_{\max}-C_0)
+ * \dfrac{
+ * e^{-(t-t_0)/\tau_d} - e^{-(t-t_0)/\tau_r}
+ * }{
+ * e^{-t_p/\tau_d} - e^{-t_p/\tau_r}
+ * }, & t \ge t_0,
+ * \end{cases}
+ * @f]
+ * where
+ * @f[
+ * C_0 = 10^{-4}\,\mathrm{mM}, \quad
+ * C_{\max} = 9\times10^{-4}\,\mathrm{mM}, \quad
+ * \tau_r = 20\,\mathrm{ms}, \quad
+ * \tau_d = 50\,\mathrm{ms}, \quad
+ * t_0 = 10\,\mathrm{ms},
+ * @f]
+ * and
+ * @f[
+ * t_p =
+ * \frac{\log(\tau_r/\tau_d)\tau_r\tau_d}
+ * {\tau_r-\tau_d}.
+ * @f]
+ *
+ * @anchor active_stress_fiber_stretch
+ * ### Prescribed fiber stretch
+ *
+ * Fiber stretch is defined as
+ * @f[
+ * \lambda(t) = \frac{L(t)}{L_0},
+ * @f]
+ * with
+ * @f[
+ * L(t) =
+ * \begin{cases}
+ * L_0, & t < t_s, \\[4pt]
+ * L_0 - \dfrac{L_0-L_{\min}}{2}
+ * \left[
+ * 1-\cos\left(\pi\frac{t-t_s}{t_m-t_s}\right)
+ * \right],
+ * & t_s \le t \le t_m, \\[8pt]
+ * L_{\min} + \dfrac{L_0-L_{\min}}{2}
+ * \left[
+ * 1-\cos\left(\pi\frac{t-t_m}{t_r-t_m}\right)
+ * \right],
+ * & t_m < t \le t_r, \\[8pt]
+ * L_0, & t > t_r,
+ * \end{cases}
+ * @f]
+ * where
+ * @f[
+ * L_0 = 2.2\,\mu\mathrm{m}, \quad
+ * L_{\min} = 2.134\,\mu\mathrm{m}, \quad
+ * t_s = 30\,\mathrm{ms}, \quad
+ * t_m = 150\,\mathrm{ms}, \quad
+ * t_r = 350\,\mathrm{ms}.
+ * @f]
  *
  * ### Format of the reference solution
  *
@@ -389,37 +454,7 @@ private:
     return checkpoints;
   }
 
-  /**
-   * @brief Evaluate the prescribed calcium transient at @p time.
-   *
-   * The calcium concentration is
-   * @f[
-   * C(t) =
-   * \begin{cases}
-   * C_0, & t < t_0, \\[4pt]
-   * C_0 + (C_{\max}-C_0)
-   * \dfrac{
-   * e^{-(t-t_0)/\tau_d} - e^{-(t-t_0)/\tau_r}
-   * }{
-   * e^{-t_p/\tau_d} - e^{-t_p/\tau_r}
-   * }, & t \ge t_0,
-   * \end{cases}
-   * @f]
-   * where
-   * @f[
-   * C_0 = 10^{-4}\,\mathrm{mM}, \quad
-   * C_{\max} = 9\times10^{-4}\,\mathrm{mM}, \quad
-   * \tau_r = 20\,\mathrm{ms}, \quad
-   * \tau_d = 50\,\mathrm{ms}, \quad
-   * t_0 = 10\,\mathrm{ms},
-   * @f]
-   * and
-   * @f[
-   * t_p =
-   * \frac{\log(\tau_r/\tau_d)\tau_r\tau_d}
-   * {\tau_r-\tau_d}.
-   * @f]
-   */
+  /// Evaluate the prescribed calcium transient at @p time.
   static double calcium_at(double time)
   {
     constexpr double baseline_calcium = 1.0e-4;
@@ -444,40 +479,7 @@ private:
            (peak_calcium - baseline_calcium) * raw_calcium / peak_raw_factor;
   }
 
-  /**
-   * @brief Evaluate the prescribed fiber stretch at @p time.
-   *
-   * Fiber stretch is defined as
-   * @f[
-   * \lambda(t) = \frac{L(t)}{L_0},
-   * @f]
-   * with
-   * @f[
-   * L(t) =
-   * \begin{cases}
-   * L_0, & t < t_s, \\[4pt]
-   * L_0 - \dfrac{L_0-L_{\min}}{2}
-   * \left[
-   * 1-\cos\left(\pi\frac{t-t_s}{t_m-t_s}\right)
-   * \right],
-   * & t_s \le t \le t_m, \\[8pt]
-   * L_{\min} + \dfrac{L_0-L_{\min}}{2}
-   * \left[
-   * 1-\cos\left(\pi\frac{t-t_m}{t_r-t_m}\right)
-   * \right],
-   * & t_m < t \le t_r, \\[8pt]
-   * L_0, & t > t_r,
-   * \end{cases}
-   * @f]
-   * where
-   * @f[
-   * L_0 = 2.2\,\mu\mathrm{m}, \quad
-   * L_{\min} = 2.134\,\mu\mathrm{m}, \quad
-   * t_s = 30\,\mathrm{ms}, \quad
-   * t_m = 150\,\mathrm{ms}, \quad
-   * t_r = 350\,\mathrm{ms}.
-   * @f]
-   */
+  /// Evaluate the prescribed fiber stretch at @p time.
   double fiber_stretch_at(double time) const
   {
     constexpr double resting_sarcomere_length = 2.2;

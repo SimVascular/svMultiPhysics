@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
+/// @file
+
 #include "ionic_fitzhugh_nagumo.h"
 #include "ionic_model_test_helpers.h"
 #include "gtest/gtest.h"
@@ -15,9 +17,11 @@
  * The test applies @f$I_\mathrm{stim}=0.5@f$ for @f$0.10\leq t<0.12@f$ and
  * sets @f$K_\mathrm{sac}=0@f$. It follows the first triggered
  * excitation/repolarization cycle until @f$t=1.5@f$, before the next
- * autonomous upstroke. The trusted reference is generated independently by
- * @c reference_generators/ionic_model/fitzhugh_nagumo/generate_fitzhugh_nagumo.py,
- * not by svMultiPhysics. See @ref FitzHughNagumo for the model formulation.
+ * autonomous upstroke. The reference generator uses adapted Physiome
+ * CellML-generated FitzHugh (1961) code; see the
+ * [generator README](../reference_generators/ionic_model/fitzhugh_nagumo/README.md)
+ * for provenance and reproduction. See @ref FitzHughNagumo for the model
+ * formulation.
  */
 TEST(IonicModelTrajectory, FitzHughNagumo)
 {

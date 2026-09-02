@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
+/// @file
+
 #include "active_stress_regazzoni.h"
 #include "active_stress_test_helpers.h"
 #include "gtest/gtest.h"
