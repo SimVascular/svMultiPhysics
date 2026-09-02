@@ -47,7 +47,7 @@
    <Tolerance> 1e-9 </Tolerance> 
    <Use_taylor_hood_type_basis> true </Use_taylor_hood_type_basis> 
 
-   <Viscosity model=>"Constant" >
+   <Viscosity model="Constant" >
      <Value> 1.0 </Value>
    </Viscosity>
 

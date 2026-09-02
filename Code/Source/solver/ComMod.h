@@ -1611,14 +1611,15 @@ class ComMod {
     /// @brief Whether to averaged results
     bool saveAve = false;
 
+    /// @brief Whether to save the domain ID to every VTK file rather than to
+    /// the first one only
+    bool alwaysSaveDomainID = false;
+
     /// @brief Whether to save to VTK files
     bool saveVTK = false;
 
     /// @brief Whether any file being saved
     bool savedOnce = false;
-
-    /// @brief Whether to use separator in output
-    bool sepOutput = false;
 
     /// @brief Whether start from beginning or from simulations
     bool stFileFlag = false;

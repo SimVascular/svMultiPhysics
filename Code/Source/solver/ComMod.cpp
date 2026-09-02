@@ -11,31 +11,30 @@
 //
 ComMod::ComMod() 
 {
-  mvMsh        = false;
+  mvMsh              = false;
 
-  stFileFlag   = false;
-  stFileRepl   = false;
+  stFileFlag         = false;
+  stFileRepl         = false;
 
-  bin2VTK      = false;
-  saveAve      = false;
-  sepOutput    = false;
-  saveATS      = 1;
-  saveIncr     = 10;
-  nITs         = 0;
-  startTS      = 0;
-  stFileName   = "stFile";
-  iniFilePath  = "";
-  stopTrigName = "STOP_SIM";
-  ichckIEN     = true; 
-  zeroAve      = false;
-  cmmInit      = false;
-  cmmVarWall   = false;
-  shlEq        = false;
-  pstEq        = false;
-  sstEq        = false;
-  ibFlag       = false;
-  risFlag      = false;
-
+  bin2VTK            = false;
+  saveAve            = false;
+  alwaysSaveDomainID = false;
+  saveATS            = 1;
+  saveIncr           = 10;
+  nITs               = 0;
+  startTS            = 0;
+  stFileName         = "stFile";
+  iniFilePath        = "";
+  stopTrigName       = "STOP_SIM";
+  ichckIEN           = true;
+  zeroAve            = false;
+  cmmInit            = false;
+  cmmVarWall         = false;
+  shlEq              = false;
+  pstEq              = false;
+  sstEq              = false;
+  ibFlag             = false;
+  risFlag            = false;
 }
 
 //---------

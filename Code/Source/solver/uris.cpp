@@ -1107,6 +1107,8 @@ void uris_write_vtus(ComMod& com_mod) {
     std::string fName = com_mod.saveName + "_uris_" + uris_obj.name + "_" + fName_num + ".vtu";
 
     auto vtk_writer = VtkData::create_writer(fName);
+    vtk_writer->set_time_value(com_mod.time);
+
     // Writing the position data
     int iOut = 0;
     int s = outS(iOut);

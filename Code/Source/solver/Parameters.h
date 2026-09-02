@@ -1833,6 +1833,7 @@ class GeneralSimulationParameters : public ParameterLists
     Parameter<bool> debug;
     Parameter<bool> overwrite_restart_file;
     Parameter<bool> save_averaged_results;
+    Parameter<bool> save_domain_id_in_every_file;
     Parameter<bool> save_results_to_vtk_format;
     Parameter<bool> simulation_requires_remeshing;
     Parameter<bool> start_averaging_from_zero;

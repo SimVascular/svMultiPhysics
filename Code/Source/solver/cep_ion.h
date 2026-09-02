@@ -16,7 +16,19 @@
 
 namespace cep_ion {
 
-void cep_init(Simulation *simulation);
+/// @brief Initialize the ionic model state variables and the action potential
+/// of the initial solution.
+///
+/// The state variables of each CEP domain's ionic model are stored in
+/// cep_mod.Xion. Its first row, the membrane potential, is also copied into the
+/// row of the old velocity reserved for the CEP equation, so that the initial
+/// solution agrees with the ionic model.
+///
+/// @param[in,out] simulation The simulation, whose cep_mod.Xion is filled with
+///   the initial ionic model state variables.
+/// @param[in,out] solutions The solution states, whose old velocity receives
+///   the initial action potential.
+void cep_init(Simulation *simulation, SolutionStates &solutions);
 
 void cep_integ(Simulation *simulation, const int iEq, const int iDof,
                SolutionStates &solutions, const Vector<double> &I4f);

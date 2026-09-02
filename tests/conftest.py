@@ -1,10 +1,12 @@
 import numpy as np
 
+import math
 import pytest
 import os
 import shutil
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 import meshio
 
 this_file_dir = os.path.abspath(os.path.dirname(__file__))
@@ -101,8 +103,33 @@ RTOL = {
     "Active_tension_normal": 1.0e-10,
 }
 
+# Relative tolerance for the TimeValue field data. The solver accumulates the
+# time as time += dt while the test computes t_max * dt, so the two differ only
+# by floating point round-off.
+RTOL_TIME_VALUE = 1.0e-12
+
 # Number of processors to test
 PROCS = [1, 3, 4]
+
+
+def read_time_step_size(name_inp):
+    """
+    Read the time step size from a svMultiPhysics input file
+    Args:
+        name_inp: path to the svMultiPhysics input file (.xml)
+
+    Returns:
+    Time step size
+    """
+    general = ET.parse(name_inp).getroot().find("GeneralSimulationParameters")
+    if general is None:
+        raise ValueError("No GeneralSimulationParameters in " + name_inp)
+
+    time_step_size = general.find("Time_step_size")
+    if time_step_size is None:
+        raise ValueError("No Time_step_size in " + name_inp)
+
+    return float(time_step_size.text)
 
 
 # Fixture to parametrize the number of processors for all tests
@@ -178,6 +205,7 @@ def run_with_reference(
     t_max=1,
     name_ref=None,
     name_inp="solver.xml",
+    check_time_value=True,
 ):
     """
     Run a test case and compare it to a stored reference solution
@@ -187,7 +215,9 @@ def run_with_reference(
         n_proc: number of processors
         t_max: time step to compare
         name_inp: name of svMultiPhysics input file (.xml)
-        name_ref: name of refence file (.vtu)
+        name_ref: name of reference file (.vtu)
+        check_time_value: whether to compare the TimeValue field data against
+            the time reached at time step t_max
     """
     # default reference name
     if not name_ref:
@@ -203,6 +233,22 @@ def run_with_reference(
 
     # check results
     msg = ""
+
+    # check the time attached to the result as field data. This assumes a
+    # constant time step size, which does not hold if the case sets
+    # Number_of_initialization_time_steps.
+    if check_time_value:
+        if "TimeValue" not in res.field_data.keys():
+            raise ValueError("Field data TimeValue not in simulation result")
+
+        time_value = res.field_data["TimeValue"][0]
+        time_expected = t_max * read_time_step_size(os.path.join(folder, name_inp))
+
+        if not math.isclose(time_value, time_expected, rel_tol=RTOL_TIME_VALUE):
+            msg += "Test failed in field data TimeValue."
+            msg += " Result is " + str(time_value)
+            msg += " instead of " + str(time_expected) + ".\n"
+
     for f in fields:
         # extract field
         if f not in res.point_data.keys():

@@ -697,7 +697,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   //
   if (cep_mod.cepEq) {
     cep_mod.Xion.resize(cep_mod.nXion,tnNo);
-    cep_ion::cep_init(simulation);
+    cep_ion::cep_init(simulation, initial_solutions);
   }
 
   // Electromechanics.
