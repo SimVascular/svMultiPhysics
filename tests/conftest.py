@@ -215,7 +215,7 @@ def run_with_reference(
         n_proc: number of processors
         t_max: time step to compare
         name_inp: name of svMultiPhysics input file (.xml)
-        name_ref: name of refence file (.vtu)
+        name_ref: name of reference file (.vtu)
         check_time_value: whether to compare the TimeValue field data against
             the time reached at time step t_max
     """
