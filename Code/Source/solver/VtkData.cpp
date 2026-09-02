@@ -42,7 +42,7 @@ void VtkData::read_file(const std::string &file_name) {
                                            "The file has no elements.");
 
     // Get the cell type.
-    auto cell = vtkGenericCell::New();
+    auto cell = vtkSmartPointer<vtkGenericCell>::New();
     vtk_data->GetCell(0, cell);
     num_points_per_elem_ = cell->GetNumberOfPoints();
     elem_type_ = cell->GetCellType();
