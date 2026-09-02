@@ -141,6 +141,28 @@ void VtkData::set_element_data(const std::string &data_name,
   vtk_data->GetCellData()->AddArray(data_array);
 }
 
+void VtkData::set_element_data(const std::string &data_name,
+                               const Vector<int> &data) {
+  const int num_vals = data.size();
+
+  svmp::check<svmp::FE::InvalidArgumentException>(
+      num_vals == vtk_data->GetNumberOfCells(),
+      "The element data array named '" + data_name + "' holds " +
+          std::to_string(num_vals) + " values, while the mesh has " +
+          std::to_string(vtk_data->GetNumberOfCells()) + " elements.");
+
+  auto data_array = vtkSmartPointer<vtkIntArray>::New();
+  data_array->SetNumberOfComponents(1);
+  data_array->Allocate(num_vals);
+  data_array->SetName(data_name.c_str());
+
+  for (int i = 0; i < num_vals; ++i) {
+    data_array->InsertNextTuple1(data(i));
+  }
+
+  vtk_data->GetCellData()->AddArray(data_array);
+}
+
 void VtkData::set_point_data(const std::string &data_name,
                              const Array<double> &data) {
   const int num_vals = data.ncols();

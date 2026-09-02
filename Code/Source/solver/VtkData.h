@@ -130,6 +130,18 @@ class VtkData {
     void set_element_data(const std::string &data_name, const Array<int> &data);
 
     /**
+     * @brief Set an int-valued element data vector.
+     *
+     * @param[in] data_name The name of the data array to set.
+     * @param[in] data The data vector to set, holding one value per element.
+     *
+     * @throws svmp::FE::InvalidArgumentException if the number of values
+     *   differs from the number of elements of the mesh
+     */
+    void set_element_data(const std::string &data_name,
+                          const Vector<int> &data);
+
+    /**
      * @brief Set a double-valued point data array.
      *
      * @param[in] data_name The name of the data array to set.

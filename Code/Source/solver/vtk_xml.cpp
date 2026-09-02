@@ -841,7 +841,7 @@ void write_vtp(ComMod& com_mod, faceType& lFa, const std::string& fName)
   }
 
   if (lFa.gE.size() != 0) {
-    vtk_writer->set_point_data("GlobalElementID", lFa.gE);
+    vtk_writer->set_element_data("GlobalElementID", lFa.gE);
   }
 
   vtk_writer->write();
