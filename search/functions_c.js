@@ -11,9 +11,11 @@ var searchData=
   ['nodes_8',['nodes',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a53fd52f02e29e3e88053f29e593dafb4',1,'svmp::FE::basis::BasisFunction::nodes()'],['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#ae57cec738607a9484d287902b76131d1',1,'svmp::FE::basis::LagrangeBasis::nodes()'],['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#aa26f44ed45f5f483d7266b26f59e05ef',1,'svmp::FE::basis::SerendipityBasis::nodes()']]],
   ['normal_5fdirection_5fonly_9',['normal_direction_only',['../class_robin_boundary_condition.html#a56681064753046d869529bbc6cf260e6',1,'RobinBoundaryCondition']]],
   ['notinitializedexception_10',['NotInitializedException',['../classsvmp_1_1_f_e_1_1_not_initialized_exception.html#a0cf10a0b1ce6ccd0ab95f2132177942c',1,'svmp::FE::NotInitializedException']]],
-  ['num_5fnodes_11',['num_nodes',['../classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html#a13f9dec59e497a9d070a1ae830212461',1,'svmp::FE::basis::ReferenceNodeLayout']]],
-  ['num_5fpoints_12',['num_points',['../classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html#a67453a248885d1f6094f08be63d16e33',1,'svmp::FE::quadrature::QuadratureRule']]],
-  ['numerical_5fgradient_13',['numerical_gradient',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#acc73a246a9cfc53cea96b06c9cc06bd3',1,'svmp::FE::basis::BasisFunction']]],
-  ['numerical_5fhessian_14',['numerical_hessian',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a517589822f5c94cad790aaa29ce4e484',1,'svmp::FE::basis::BasisFunction']]],
-  ['nx_15',['nX',['../class_ionic_model.html#a516e246df2500757969cd51039c21ed6',1,'IonicModel']]]
+  ['num_5felems_11',['num_elems',['../class_vtk_data.html#a11c22c71894f5c66155b78ce35aff78b',1,'VtkData']]],
+  ['num_5fnodes_12',['num_nodes',['../classsvmp_1_1_f_e_1_1basis_1_1_reference_node_layout.html#a13f9dec59e497a9d070a1ae830212461',1,'svmp::FE::basis::ReferenceNodeLayout']]],
+  ['num_5fpoints_13',['num_points',['../classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html#a67453a248885d1f6094f08be63d16e33',1,'svmp::FE::quadrature::QuadratureRule::num_points()'],['../class_vtk_data.html#a59d74b27bc7662239c86770a9f87d5d2',1,'VtkData::num_points() const']]],
+  ['num_5fpoints_5fper_5felem_14',['num_points_per_elem',['../class_vtk_data.html#a114b712fece4492e9e22a3069c7e4f09',1,'VtkData']]],
+  ['numerical_5fgradient_15',['numerical_gradient',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#acc73a246a9cfc53cea96b06c9cc06bd3',1,'svmp::FE::basis::BasisFunction']]],
+  ['numerical_5fhessian_16',['numerical_hessian',['../classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a517589822f5c94cad790aaa29ce4e484',1,'svmp::FE::basis::BasisFunction']]],
+  ['nx_17',['nX',['../class_ionic_model.html#a516e246df2500757969cd51039c21ed6',1,'IonicModel']]]
 ];

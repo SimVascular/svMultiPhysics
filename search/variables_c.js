@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['n_0',['n',['../classib_comm_type.html#a896bcb6d7f4f4bcb9b0d1006555cb631',1,'ibCommType::n'],['../classmsh_type.html#a14952aebe301a67a398b7c46cc5156e8',1,'mshType::N'],['../classutils_1_1stack_type.html#aab9fe6a4b9b4cdada815fc2b6346be46',1,'utils::stackType::n'],['../structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#a9845e755c3dde4646477c00682784b2d',1,'svmp::FE::math::DenseLUSolver::n']]],
+  ['n_0',['n',['../structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#a9845e755c3dde4646477c00682784b2d',1,'svmp::FE::math::DenseLUSolver::n'],['../classib_comm_type.html#a896bcb6d7f4f4bcb9b0d1006555cb631',1,'ibCommType::n'],['../classmsh_type.html#a14952aebe301a67a398b7c46cc5156e8',1,'mshType::N'],['../classutils_1_1stack_type.html#aab9fe6a4b9b4cdada815fc2b6346be46',1,'utils::stackType::n']]],
   ['n_5fcomponents_1',['n_components',['../structsvmp_1_1_f_e_1_1_field_value_entry.html#a8a2ddbfa067ad400f41035831df68ed8',1,'svmp::FE::FieldValueEntry']]],
   ['n_5fru_5fstates_2',['n_ru_states',['../class_regazzoni_active_stress.html#a53a6f5ef0f03110258a859891c315cbd',1,'RegazzoniActiveStress']]],
   ['n_5fstate_5fvariables_3',['n_state_variables',['../class_regazzoni_active_stress.html#aac039df314222ca7e7fe1d0324543d22',1,'RegazzoniActiveStress']]],
@@ -39,12 +39,15 @@ var searchData=
   ['nsvzerod_5fcoupled_5fbc_36',['nSvZeroD_coupled_bc',['../classcpl_b_c_type.html#a609c83af7fa899ab363f861f54dc3a74',1,'cplBCType']]],
   ['nsymd_37',['nsymd',['../class_com_mod.html#a42d8db5bf10f90358aff5cc5b079045b',1,'ComMod']]],
   ['nts_38',['nTS',['../class_com_mod.html#ac8c5f7afe5fcc37e0c39347e215b9ec2',1,'ComMod']]],
-  ['num_5fleads_39',['num_leads',['../classecg_leads_type.html#a7451b7e1caea28147f1f795c1a2d5bf6',1,'ecgLeadsType']]],
-  ['nuris_40',['nUris',['../class_com_mod.html#aa8f740abdfe7812b6c36c5d8a37ec023',1,'ComMod']]],
-  ['nv_41',['nV',['../classmsh_type.html#abd4b3d01290cb3653305009d824cb351',1,'mshType']]],
-  ['nw_42',['nW',['../classmsh_type.html#ace5ec618859ac45c6acaeb9598427d09',1,'mshType']]],
-  ['nx_43',['nx',['../classmsh_type.html#acfa922ac71083771d7c1f58554a0373d',1,'mshType::Nx'],['../classcep_model_type.html#a7f18cba9550474e1003ba6905260a55e',1,'cepModelType::nX'],['../classcpl_b_c_type.html#a1b52f2119c8dd1948d694fa1a2c4d279',1,'cplBCType::nX']]],
-  ['nxion_44',['nXion',['../class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2',1,'CepMod']]],
-  ['nxp_45',['nXp',['../classcpl_b_c_type.html#ae766cb7798304a67b8d03535de6cd0b0',1,'cplBCType']]],
-  ['nxx_46',['Nxx',['../classmsh_type.html#a3bb2df3b406465e8586ec681e9dba36e',1,'mshType']]]
+  ['num_5felems_5f_39',['num_elems_',['../class_vtk_data.html#a1f9977eea31cb57ad53be16666ed904a',1,'VtkData']]],
+  ['num_5fleads_40',['num_leads',['../classecg_leads_type.html#a7451b7e1caea28147f1f795c1a2d5bf6',1,'ecgLeadsType']]],
+  ['num_5fpoints_5f_41',['num_points_',['../class_vtk_data.html#a098e3e098130ae0d5cfe7aae2f26acfe',1,'VtkData']]],
+  ['num_5fpoints_5fper_5felem_5f_42',['num_points_per_elem_',['../class_vtk_data.html#a2f975bd2915e977bbafd28df53e3a209',1,'VtkData']]],
+  ['nuris_43',['nUris',['../class_com_mod.html#aa8f740abdfe7812b6c36c5d8a37ec023',1,'ComMod']]],
+  ['nv_44',['nV',['../classmsh_type.html#abd4b3d01290cb3653305009d824cb351',1,'mshType']]],
+  ['nw_45',['nW',['../classmsh_type.html#ace5ec618859ac45c6acaeb9598427d09',1,'mshType']]],
+  ['nx_46',['nx',['../classmsh_type.html#acfa922ac71083771d7c1f58554a0373d',1,'mshType::Nx'],['../classcep_model_type.html#a7f18cba9550474e1003ba6905260a55e',1,'cepModelType::nX'],['../classcpl_b_c_type.html#a1b52f2119c8dd1948d694fa1a2c4d279',1,'cplBCType::nX']]],
+  ['nxion_47',['nXion',['../class_cep_mod.html#a05aeaa019c86dab7d9bea3b96270c5c2',1,'CepMod']]],
+  ['nxp_48',['nXp',['../classcpl_b_c_type.html#ae766cb7798304a67b8d03535de6cd0b0',1,'cplBCType']]],
+  ['nxx_49',['Nxx',['../classmsh_type.html#a3bb2df3b406465e8586ec681e9dba36e',1,'mshType']]]
 ];

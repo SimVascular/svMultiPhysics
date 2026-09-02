@@ -125,15 +125,15 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a71b390091a09b1bf65935c0b4cda8c9e" id="r_a71b390091a09b1bf65935c0b4cda8c9e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_com_mod.html#a71b390091a09b1bf65935c0b4cda8c9e">saveAve</a> = false</td></tr>
 <tr class="memdesc:a71b390091a09b1bf65935c0b4cda8c9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether to averaged results.  <br /></td></tr>
 <tr class="separator:a71b390091a09b1bf65935c0b4cda8c9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7f55e787a0953b07dea92b0d1058747" id="r_aa7f55e787a0953b07dea92b0d1058747"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_com_mod.html#aa7f55e787a0953b07dea92b0d1058747">alwaysSaveDomainID</a> = false</td></tr>
+<tr class="memdesc:aa7f55e787a0953b07dea92b0d1058747"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether to save the domain ID to every VTK file rather than to the first one only.  <br /></td></tr>
+<tr class="separator:aa7f55e787a0953b07dea92b0d1058747"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a723ca0efe8d7e8a2d41db33e0181f090" id="r_a723ca0efe8d7e8a2d41db33e0181f090"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_com_mod.html#a723ca0efe8d7e8a2d41db33e0181f090">saveVTK</a> = false</td></tr>
 <tr class="memdesc:a723ca0efe8d7e8a2d41db33e0181f090"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether to save to VTK files.  <br /></td></tr>
 <tr class="separator:a723ca0efe8d7e8a2d41db33e0181f090"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17b04d16443bc036844a83ecab3f9c92" id="r_a17b04d16443bc036844a83ecab3f9c92"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_com_mod.html#a17b04d16443bc036844a83ecab3f9c92">savedOnce</a> = false</td></tr>
 <tr class="memdesc:a17b04d16443bc036844a83ecab3f9c92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether any file being saved.  <br /></td></tr>
 <tr class="separator:a17b04d16443bc036844a83ecab3f9c92"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1ab82c475b0e3475aa8c23366c300da" id="r_ab1ab82c475b0e3475aa8c23366c300da"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_com_mod.html#ab1ab82c475b0e3475aa8c23366c300da">sepOutput</a> = false</td></tr>
-<tr class="memdesc:ab1ab82c475b0e3475aa8c23366c300da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether to use separator in output.  <br /></td></tr>
-<tr class="separator:ab1ab82c475b0e3475aa8c23366c300da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabff77506de319f5bd507a364e5e5d91" id="r_aabff77506de319f5bd507a364e5e5d91"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_com_mod.html#aabff77506de319f5bd507a364e5e5d91">stFileFlag</a> = false</td></tr>
 <tr class="memdesc:aabff77506de319f5bd507a364e5e5d91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether start from beginning or from simulations.  <br /></td></tr>
 <tr class="separator:aabff77506de319f5bd507a364e5e5d91"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -428,6 +428,22 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>debug_active</b> = fa
 </div><div class="memdoc">
 
 <p>Time derivative of displacement. </p>
+
+</div>
+</div>
+<a id="aa7f55e787a0953b07dea92b0d1058747" name="aa7f55e787a0953b07dea92b0d1058747"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa7f55e787a0953b07dea92b0d1058747">&#9670;&#160;</a></span>alwaysSaveDomainID</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ComMod::alwaysSaveDomainID = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether to save the domain ID to every VTK file rather than to the first one only. </p>
 
 </div>
 </div>
@@ -1452,22 +1468,6 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>debug_active</b> = fa
 </div><div class="memdoc">
 
 <p>Whether to save to VTK files. </p>
-
-</div>
-</div>
-<a id="ab1ab82c475b0e3475aa8c23366c300da" name="ab1ab82c475b0e3475aa8c23366c300da"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab1ab82c475b0e3475aa8c23366c300da">&#9670;&#160;</a></span>sepOutput</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool ComMod::sepOutput = false</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Whether to use separator in output. </p>
 
 </div>
 </div>

@@ -1,5 +1,5 @@
 <map id="VtkVtpData" name="VtkVtpData">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,79,103,104"/>
-<area shape="rect" id="Node000002" href="$class_vtk_data.html" title=" " alt="" coords="17,5,91,31"/>
+<area shape="rect" id="Node000001" title="A mesh stored in the VTK XML polygonal data format (&#39;.vtp&#39; files)." alt="" coords="5,79,103,104"/>
+<area shape="rect" id="Node000002" href="$class_vtk_data.html" title="A mesh stored in one of the VTK XML file formats." alt="" coords="17,5,91,31"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="57,44,57,79,51,79,51,44"/>
 </map>

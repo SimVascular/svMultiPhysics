@@ -11,7 +11,5 @@ var searchData=
   ['vtkdata_8',['VtkData',['../class_vtk_data.html',1,'']]],
   ['vtkfileextentions_9',['VtkFileExtentions',['../classvtk__xml__parser_1_1_vtk_file_extentions.html',1,'vtk_xml_parser']]],
   ['vtkvtpdata_10',['VtkVtpData',['../class_vtk_vtp_data.html',1,'']]],
-  ['vtkvtpdataimpl_11',['VtkVtpDataImpl',['../class_vtk_vtp_data_1_1_vtk_vtp_data_impl.html',1,'VtkVtpData']]],
-  ['vtkvtudata_12',['VtkVtuData',['../class_vtk_vtu_data.html',1,'']]],
-  ['vtkvtudataimpl_13',['VtkVtuDataImpl',['../class_vtk_vtu_data_1_1_vtk_vtu_data_impl.html',1,'VtkVtuData']]]
+  ['vtkvtudata_11',['VtkVtuData',['../class_vtk_vtu_data.html',1,'']]]
 ];

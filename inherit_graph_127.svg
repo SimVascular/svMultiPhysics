@@ -11,7 +11,7 @@
 <!-- Node0 -->
 <g id="Node000000" class="node">
 <title>Node0</title>
-<g id="a_Node000000"><a xlink:href="class_vtk_data.html" target="_top" xlink:title=" ">
+<g id="a_Node000000"><a xlink:href="class_vtk_data.html" target="_top" xlink:title="A mesh stored in one of the VTK XML file formats.">
 <polygon fill="white" stroke="#666666" points="56,-37 0,-37 0,-18 56,-18 56,-37"/>
 <text text-anchor="middle" x="28" y="-25" font-family="Helvetica,sans-Serif" font-size="10.00">VtkData</text>
 </a>
@@ -20,7 +20,7 @@
 <!-- Node1 -->
 <g id="Node000001" class="node">
 <title>Node1</title>
-<g id="a_Node000001"><a xlink:href="class_vtk_vtp_data.html" target="_top" xlink:title=" ">
+<g id="a_Node000001"><a xlink:href="class_vtk_vtp_data.html" target="_top" xlink:title="A mesh stored in the VTK XML polygonal data format (&#39;.vtp&#39; files).">
 <polygon fill="white" stroke="#666666" points="165,-56 92,-56 92,-37 165,-37 165,-56"/>
 <text text-anchor="middle" x="128.5" y="-44" font-family="Helvetica,sans-Serif" font-size="10.00">VtkVtpData</text>
 </a>
@@ -38,7 +38,7 @@
 <!-- Node2 -->
 <g id="Node000002" class="node">
 <title>Node2</title>
-<g id="a_Node000002"><a xlink:href="class_vtk_vtu_data.html" target="_top" xlink:title=" ">
+<g id="a_Node000002"><a xlink:href="class_vtk_vtu_data.html" target="_top" xlink:title="A mesh stored in the VTK XML unstructured grid format (&#39;.vtu&#39; files).">
 <polygon fill="white" stroke="#666666" points="165,-19 92,-19 92,0 165,0 165,-19"/>
 <text text-anchor="middle" x="128.5" y="-7" font-family="Helvetica,sans-Serif" font-size="10.00">VtkVtuData</text>
 </a>
