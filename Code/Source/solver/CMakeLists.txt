@@ -409,6 +409,12 @@ if(ENABLE_UNIT_TEST)
     pthread   # link pthread on ubuntu20
   )
 
+  # Define the path to the unit-test reference-data directory as a preprocessor
+  # macro.
+  target_compile_definitions(run_all_unit_tests PRIVATE
+    UNIT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../tests/unitTests/reference_data"
+  )
+
   # gtest_discover_tests(runUnitTest)
   add_test(NAME all_unit_tests COMMAND run_all_unit_tests)
 

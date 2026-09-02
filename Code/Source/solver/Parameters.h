@@ -1437,6 +1437,17 @@ public:
     return double_parameters.at(label).value();
   }
 
+  /// Set the value of a scalar parameter by label.
+  void set_scalar(const std::string &label, double value) {
+    auto parameter = double_parameters.find(label);
+    svmp::check<svmp::FE::InvalidArgumentException>(
+        parameter != double_parameters.end(),
+        "Active stress model parameter '" + label + "' not found.");
+
+    parameter->second.value_ = value;
+    parameter->second.value_set_ = true;
+  }
+
   /// Get the value of a string parameter by label.
   std::string get_string(const std::string &label) const {
     return string_parameters.at(label).value();
