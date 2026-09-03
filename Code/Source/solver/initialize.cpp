@@ -455,9 +455,9 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     //
     std::tie(eq.dof, eq.sym) = equation_dof_map.at(eq.phys);
 
-    if (std::set<EquationType>{Equation_fluid, Equation_heatF, Equation_heatS, Equation_CEP, Equation_stokes}.count(eq.phys) == 0) {
-      dFlag = true;
-    }
+    if (std::set<EquationType>{Equation_CEP, Equation_darcy, Equation_fluid, Equation_heatF, Equation_heatS, Equation_stokes}.count(eq.phys) == 0) {
+       dFlag = true;
+     }
 
     // For second order eqs. 
     if (std::set<EquationType>{Equation_lElas, Equation_struct, Equation_shell, Equation_mesh}.count(eq.phys) != 0) {

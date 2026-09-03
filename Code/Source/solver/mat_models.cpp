@@ -1472,11 +1472,11 @@ void compute_tau(const ComMod& com_mod, const dmnType& lDmn, const double detF, 
   using namespace consts;
 
   double he = 0.50 * pow(Je,1.0/static_cast<double>(com_mod.nsd));
-  double rho0 = lDmn.prop.at(PhysicalProperyType::solid_density);
-  double Em   = lDmn.prop.at(PhysicalProperyType::elasticity_modulus);
-  double nu   = lDmn.prop.at(PhysicalProperyType::poisson_ratio);
-  double ctM  = lDmn.prop.at(PhysicalProperyType::ctau_M);
-  double ctC  = lDmn.prop.at(PhysicalProperyType::ctau_C);
+  double rho0 = lDmn.prop.at(PhysicalPropertyType::solid_density);
+  double Em   = lDmn.prop.at(PhysicalPropertyType::elasticity_modulus);
+  double nu   = lDmn.prop.at(PhysicalPropertyType::poisson_ratio);
+  double ctM  = lDmn.prop.at(PhysicalPropertyType::ctau_M);
+  double ctC  = lDmn.prop.at(PhysicalPropertyType::ctau_C);
 
   double mu = 0.50*Em / (1.0 + nu);
   double c = 0.0;
@@ -1513,7 +1513,7 @@ void g_vol_pen(const ComMod& com_mod, const dmnType& lDmn, const double p,
 {
   using namespace consts;
 
-  ro = lDmn.prop.at(PhysicalProperyType::solid_density) / Ja;
+  ro = lDmn.prop.at(PhysicalPropertyType::solid_density) / Ja;
   bt  = 0.0;
   dbt = 0.0;
   dro = 0.0;

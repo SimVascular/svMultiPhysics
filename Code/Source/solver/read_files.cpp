@@ -10,6 +10,7 @@
 #include "ActiveStress.h"
 #include "all_fun.h"
 #include "consts.h"
+#include "darcy.h"
 #include "IonicModel.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
@@ -206,8 +207,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 
   if (effective_direction.size() != 0) {
     if (effective_direction.size() != com_mod.nsd) {
-      auto effective_size = (std::stringstream() << "(" << effective_direction.size() << ")").str();
-      auto space_dim = (std::stringstream() << "(" << com_mod.nsd << ")").str();
+      auto effective_size = "(" + std::to_string(effective_direction.size()) + ")";
+      auto space_dim = "(" + std::to_string(com_mod.nsd) + ")";
       svmp::raise<svmp::ParseException>("The size of the effective direction " + effective_size + 
           " does not equal the number of space dimensions " + space_dim); 
     }
@@ -1513,59 +1514,59 @@ void read_domain(Simulation* simulation, EquationParameters* eq_params, eqType& 
         auto prop = propList[iProp][iPhys];
 
         switch (prop) {
-          case PhysicalProperyType::backflow_stab:
+          case PhysicalPropertyType::backflow_stab:
             rtmp = domain_params->backflow_stabilization_coefficient.value();
           break;
 
-          case PhysicalProperyType::conductivity:
+          case PhysicalPropertyType::conductivity:
             rtmp = domain_params->conductivity.value();
           break;
 
-          case PhysicalProperyType::ctau_C:
+          case PhysicalPropertyType::ctau_C:
             rtmp = domain_params->continuity_stabilization_coefficient.value(); 
           break;
 
-          case PhysicalProperyType::ctau_M:
+          case PhysicalPropertyType::ctau_M:
             rtmp = domain_params->momentum_stabilization_coefficient.value();
           break;
 
-          case PhysicalProperyType::damping:
+          case PhysicalPropertyType::damping:
             rtmp = domain_params->mass_damping.value();
           break;
 
-          case PhysicalProperyType::elasticity_modulus:
+          case PhysicalPropertyType::elasticity_modulus:
             rtmp = domain_params->elasticity_modulus.value();
           break;
 
-          case PhysicalProperyType::f_x:
+          case PhysicalPropertyType::f_x:
             rtmp = domain_params->force_x.value();
           break;
 
-          case PhysicalProperyType::f_y:
+          case PhysicalPropertyType::f_y:
             rtmp = domain_params->force_y.value();
           break;
 
-          case PhysicalProperyType::f_z:
+          case PhysicalPropertyType::f_z:
             rtmp = domain_params->force_z.value();
           break;
 
-          case PhysicalProperyType::fluid_density:
-            if (lEq.phys == EquationType::phys_CMM) {
+          case PhysicalPropertyType::fluid_density:
+            if (lEq.phys == EquationType::phys_CMM || lEq.phys == EquationType::phys_darcy) {
               rtmp = domain_params->fluid_density.value();
             } else {
               rtmp = domain_params->density.value();
             }
           break;
 
-          case PhysicalProperyType::poisson_ratio:
+          case PhysicalPropertyType::poisson_ratio:
             rtmp = domain_params->poisson_ratio.value();
           break;
 
-          case PhysicalProperyType::shell_thickness:
+          case PhysicalPropertyType::shell_thickness:
             rtmp = domain_params->shell_thickness.value();
           break;
 
-          case PhysicalProperyType::solid_density:
+          case PhysicalPropertyType::solid_density:
             if (lEq.phys == EquationType::phys_CMM) {
               rtmp = domain_params->solid_density.value();
             } else {
@@ -1573,12 +1574,24 @@ void read_domain(Simulation* simulation, EquationParameters* eq_params, eqType& 
             }
           break;
 
-          case PhysicalProperyType::source_term:
+          case PhysicalPropertyType::source_term:
             rtmp = domain_params->source_term.value();
           break;
 
-          case PhysicalProperyType::inverse_darcy_permeability:
-            rtmp = domain_params->inverse_darcy_permeability.value();
+          case PhysicalPropertyType::brinkman_inverse_permeability:
+            rtmp = domain_params->brinkman_inverse_permeability.value();
+          break;
+
+          case PhysicalPropertyType::darcy_permeability:
+            rtmp = domain_params->darcy_permeability.value();
+          break;
+
+          case PhysicalPropertyType::darcy_media_compressibility:
+            rtmp = domain_params->darcy_media_compressibility.value();
+          break;
+
+          case PhysicalPropertyType::darcy_fluid_viscosity:
+            rtmp = domain_params->darcy_fluid_viscosity.value();
           break;
         }
 
@@ -1728,7 +1741,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   if (eq_params->use_taylor_hood_type_basis.defined()) { 
     THflag = eq_params->use_taylor_hood_type_basis.value(); 
   }
-  EquationProps propL{consts::PhysicalProperyType::NA};
+  EquationProps propL{consts::PhysicalPropertyType::NA};
   EquationOutputs outPuts;
   EquationNdop nDOP;
 
@@ -2240,8 +2253,8 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
   using namespace consts;
 
   // Domain properties: elasticity modulus, poisson ratio
-  double E = lDmn.prop[PhysicalProperyType::elasticity_modulus];
-  double nu = lDmn.prop[PhysicalProperyType::poisson_ratio];
+  double E = lDmn.prop[PhysicalPropertyType::elasticity_modulus];
+  double nu = lDmn.prop[PhysicalPropertyType::poisson_ratio];
 
   // Shear modulus
   double mu  = 0.5 * E / (1.0 + nu);

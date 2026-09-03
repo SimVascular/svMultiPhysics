@@ -188,11 +188,11 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   const double dt = com_mod.dt;
 
   // Define parameters
-  double rho = eq.dmn[cDmn].prop.at(PhysicalProperyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalProperyType::damping);
-  double ht = eq.dmn[cDmn].prop.at(PhysicalProperyType::shell_thickness);
-  Vector<double> fb({dmn.prop.at(PhysicalProperyType::f_x), dmn.prop.at(PhysicalProperyType::f_y), 
-      dmn.prop.at(PhysicalProperyType::f_z)});
+  double rho = eq.dmn[cDmn].prop.at(PhysicalPropertyType::solid_density);
+  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  double ht = eq.dmn[cDmn].prop.at(PhysicalPropertyType::shell_thickness);
+  Vector<double> fb({dmn.prop.at(PhysicalPropertyType::f_x), dmn.prop.at(PhysicalPropertyType::f_y), 
+      dmn.prop.at(PhysicalPropertyType::f_z)});
   double amd = eq.am * rho  +  eq.af * eq.gam * dt * dmp;
   double afl = eq.af * eq.beta * dt * dt;
 
@@ -561,8 +561,8 @@ void shell_bend_cst(ComMod& com_mod, const mshType& lM, const int e, const Vecto
   auto& dmn = eq.dmn[cDmn];
 
   // Define parameters
-  double rho = eq.dmn[cDmn].prop.at(PhysicalProperyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalProperyType::damping);
+  double rho = eq.dmn[cDmn].prop.at(PhysicalPropertyType::solid_density);
+  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
 
   int nsd = com_mod.nsd;
   int eNoN = 2 * lM.eNoN;
@@ -1206,12 +1206,12 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   #endif
 
   // Define parameters
-  double rho = eq.dmn[cDmn].prop.at(PhysicalProperyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalProperyType::damping);
-  double ht = eq.dmn[cDmn].prop.at(PhysicalProperyType::shell_thickness);
-  Vector<double> fb({dmn.prop.at(PhysicalProperyType::f_x), 
-                     dmn.prop.at(PhysicalProperyType::f_y), 
-                     dmn.prop.at(PhysicalProperyType::f_z)});
+  double rho = eq.dmn[cDmn].prop.at(PhysicalPropertyType::solid_density);
+  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  double ht = eq.dmn[cDmn].prop.at(PhysicalPropertyType::shell_thickness);
+  Vector<double> fb({dmn.prop.at(PhysicalPropertyType::f_x), 
+                     dmn.prop.at(PhysicalPropertyType::f_y), 
+                     dmn.prop.at(PhysicalPropertyType::f_z)});
   double amd = eq.am * rho  +  eq.af * eq.gam * dt * dmp;
   double afl = eq.af * eq.beta * dt * dt;
 
@@ -1721,8 +1721,8 @@ void shl_strs_res(const ComMod& com_mod, const dmnType& lDmn, const int nFn, con
   #endif
 
   // Set shell thickness
-  double ht = lDmn.prop.at(PhysicalProperyType::shell_thickness); 
-  double nu = lDmn.prop.at(PhysicalProperyType::poisson_ratio); 
+  double ht = lDmn.prop.at(PhysicalPropertyType::shell_thickness); 
+  double nu = lDmn.prop.at(PhysicalPropertyType::poisson_ratio); 
 
   // Check for incompressibility
   bool flag = false;

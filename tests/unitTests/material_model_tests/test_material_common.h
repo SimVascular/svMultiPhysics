@@ -380,7 +380,7 @@ public:
      */
     void g_vol_pen(const double p, const double rho0, double &rho, double &beta, double &drho, double &dbeta, const double Ja) {
         auto &dmn = com_mod.mockEq.mockDmn;
-        dmn.prop[consts::PhysicalProperyType::solid_density] = rho0; // Set initial solid density
+        dmn.prop[consts::PhysicalPropertyType::solid_density] = rho0; // Set initial solid density
 
         mat_models::g_vol_pen(com_mod, dmn, p, rho, beta, drho, dbeta, Ja);
     }

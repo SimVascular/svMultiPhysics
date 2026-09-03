@@ -287,9 +287,11 @@ enum class EquationType
   phys_CMM = 209, 
   phys_CEP = 210,
   phys_ustruct = 211,  // Nonlinear elastodynamics using mixed VMS-stabilized formulation 
-  phys_stokes = 212
+  phys_stokes = 212,
+  phys_darcy = 213
 };
 
+constexpr auto Equation_darcy = EquationType::phys_darcy;
 constexpr auto Equation_CMM = EquationType::phys_CMM;
 constexpr auto Equation_CEP = EquationType::phys_CEP;
 constexpr auto Equation_fluid = EquationType::phys_fluid;
@@ -347,6 +349,7 @@ enum class OutputNameType {
   outGrp_activeTensionFibers = 529,
   outGrp_activeTensionSheets = 530,
   outGrp_activeTensionNormal = 531,
+  outGrp_darcyFlux = 532,
 
   out_velocity = 599,
   out_pressure = 598,
@@ -380,7 +383,9 @@ enum class OutputNameType {
   out_fibStretchRate = 570,
   out_activeTensionFibers = 569,
   out_activeTensionSheets = 568,
-  out_activeTensionNormal = 567
+  out_activeTensionNormal = 567,
+  out_darcyPressure = 566,
+  out_darcyFlux = 565
 };
 
 /// @brief Simulation output file types. 
@@ -396,7 +401,7 @@ extern const std::map<std::string,OutputType> output_type_name_to_type;
 
 /// @brief Possible physical properties. Current maxNPror is 20.
 //
-enum class PhysicalProperyType 
+enum class PhysicalPropertyType 
 {
   NA = 0, 
   fluid_density = 1, 
@@ -413,7 +418,10 @@ enum class PhysicalProperyType
   shell_thickness = 12, 
   ctau_M = 13,                 // stabilization coeffs. for USTRUCT (momentum, continuity)
   ctau_C = 14,
-  inverse_darcy_permeability = 15
+  brinkman_inverse_permeability = 15,
+  darcy_permeability = 16,
+  darcy_media_compressibility = 17,
+  darcy_fluid_viscosity = 18
 };
 
 enum class PreconditionerType 

@@ -5,6 +5,7 @@
 
 #include "FE/Common/FEException.h"
 #include "all_fun.h"
+#include "darcy.h"
 #include "fluid.h"
 #include "fs.h"
 #include "initialize.h"
@@ -842,6 +843,10 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
   bool FSIeq = false;
   auto& eq = com_mod.eq[iEq];
 
+  if (outGrp == OutputNameType::outGrp_darcyFlux) {
+    darcy::validate_element_support(lM);
+  }
+
   if (eq.phys == EquationType::phys_FSI) {
     FSIeq = true;
   }
@@ -853,7 +858,7 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
   int nsd = com_mod.nsd;
 
   if ((outGrp == OutputNameType::outGrp_eFlx) && (com_mod.dmnId.size() == 0)) {
-    double rho = eq.dmn[0].prop[PhysicalProperyType::fluid_density];
+    double rho = eq.dmn[0].prop[PhysicalPropertyType::fluid_density];
     for (int a = 0; a < lM.nNo; a++) {
       int Ac = lM.gN(a);
       double p  = lY(nsd,Ac);
@@ -960,7 +965,7 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
       //  Energy flux calculation   
       //
       } else if (outGrp == OutputNameType::outGrp_eFlx) {
-        double rho = eq.dmn[cDmn].prop[PhysicalProperyType::fluid_density];
+        double rho = eq.dmn[cDmn].prop[PhysicalPropertyType::fluid_density];
         double p = 0.0;
         Vector<double> u(nsd);
         Vector<double> lRes(maxNSD);
@@ -980,7 +985,7 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
       // Heat flux calculation   
       //
       } else if (outGrp == OutputNameType::outGrp_hFlx) {
-        double kappa = eq.dmn[cDmn].prop[PhysicalProperyType::conductivity];
+        double kappa = eq.dmn[cDmn].prop[PhysicalPropertyType::conductivity];
         int i = eq.s;
 
         if (eq.phys == EquationType::phys_heatF) {
@@ -1009,6 +1014,28 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
           for (int j = 0; j < nsd; j++) {
             lRes(j) = -kappa * q(j);
           }
+        }
+
+      // Darcy flux, derived from pressure:
+      // q = -(K/mu) grad(p).
+      } else if (outGrp == OutputNameType::outGrp_darcyFlux) {
+        const double permeability =
+            eq.dmn[cDmn].prop[PhysicalPropertyType::darcy_permeability];
+        const double viscosity =
+            eq.dmn[cDmn].prop[PhysicalPropertyType::darcy_fluid_viscosity];
+        const double mobility = permeability / viscosity;
+        const int equation_index = eq.s;
+
+        Vector<double> grad_p(nsd);
+
+        for (int a = 0; a < eNoN; a++) {
+          for (int j = 0; j < nsd; j++) {
+            grad_p(j) = grad_p(j) + Nx(j,a) * yl(equation_index,a);
+          }
+        }
+         
+        for (int j = 0; j < nsd; j++) {
+          lRes(j) = -mobility * grad_p(j);
         }
 
       // Strain tensor invariants calculation   
@@ -1260,8 +1287,8 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
     //if (lM.eType .EQ. eType_NRB) CALL NRBNNX(lM, e)
 
     // Get shell properties
-    double nu = eq.dmn[cDmn].prop.at(PhysicalProperyType::poisson_ratio);
-    double ht = eq.dmn[cDmn].prop.at(PhysicalProperyType::shell_thickness);
+    double nu = eq.dmn[cDmn].prop.at(PhysicalPropertyType::poisson_ratio);
+    double ht = eq.dmn[cDmn].prop.at(PhysicalPropertyType::shell_thickness);
 
     // Check for incompressibility
     //
@@ -1734,8 +1761,8 @@ void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>
     double w = 0.0; 
 
     if (cPhys == EquationType::phys_lElas) {
-      elM = eq.dmn[cDmn].prop[PhysicalProperyType::elasticity_modulus];
-      nu = eq.dmn[cDmn].prop[PhysicalProperyType::poisson_ratio];
+      elM = eq.dmn[cDmn].prop[PhysicalPropertyType::elasticity_modulus];
+      nu = eq.dmn[cDmn].prop[PhysicalPropertyType::poisson_ratio];
       lambda = elM*nu / (1.0 + nu) / (1.0 - 2.0*nu);
       mu = 0.5*elM / (1.0 + nu);
     }

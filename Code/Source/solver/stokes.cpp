@@ -231,11 +231,11 @@ void stokes_2d_c(ComMod& com_mod, const int lStab, const int eNoNw, const int eN
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
   double mu = dmn.fluid_visc.mu_i;
-  double ctM = dmn.prop[PhysicalProperyType::ctau_M];
+  double ctM = dmn.prop[PhysicalPropertyType::ctau_M];
 
   Vector<double> fb(2);
-  fb[0] = dmn.prop[PhysicalProperyType::f_x];
-  fb[1] = dmn.prop[PhysicalProperyType::f_y];
+  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
+  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
   double wm = w * eq.am;
   double wf = w * eq.af * eq.gam * dt;
 
@@ -355,8 +355,8 @@ void stokes_2d_m(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
 
   double mu = dmn.fluid_visc.mu_i;
   Vector<double> fb(2);
-  fb[0] = dmn.prop[PhysicalProperyType::f_x];
-  fb[1] = dmn.prop[PhysicalProperyType::f_y];
+  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
+  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
 
   double af = eq.af * eq.gam * dt;
   double wf = w * af;
@@ -464,12 +464,12 @@ void stokes_3d_c(ComMod& com_mod, const int lStab, const int eNoNw, const int eN
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
   double mu = dmn.fluid_visc.mu_i;
-  double ctM = dmn.prop[PhysicalProperyType::ctau_M];
+  double ctM = dmn.prop[PhysicalPropertyType::ctau_M];
 
   Vector<double> fb(3);
-  fb[0] = dmn.prop[PhysicalProperyType::f_x];
-  fb[1] = dmn.prop[PhysicalProperyType::f_y];
-  fb[2] = dmn.prop[PhysicalProperyType::f_z];
+  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
+  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
+  fb[2] = dmn.prop[PhysicalPropertyType::f_z];
 
   double wm = w * eq.am;
   double wf = w * eq.af * eq.gam * dt;
@@ -581,9 +581,9 @@ void stokes_3d_m(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
 
   double mu = dmn.fluid_visc.mu_i;
   Vector<double> fb(3);
-  fb[0] = dmn.prop[PhysicalProperyType::f_x];
-  fb[1] = dmn.prop[PhysicalProperyType::f_y];
-  fb[2] = dmn.prop[PhysicalProperyType::f_z];
+  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
+  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
+  fb[2] = dmn.prop[PhysicalPropertyType::f_z];
 
   double af = eq.af * eq.gam * dt;
   double wf = w * af;

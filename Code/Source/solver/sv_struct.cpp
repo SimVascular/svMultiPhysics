@@ -368,9 +368,9 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
 
   // Set parameters
   //
-  double rho = dmn.prop.at(PhysicalProperyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalProperyType::damping);
-  Vector<double> fb({dmn.prop.at(PhysicalProperyType::f_x), dmn.prop.at(PhysicalProperyType::f_y)});
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  Vector<double> fb({dmn.prop.at(PhysicalPropertyType::f_x), dmn.prop.at(PhysicalPropertyType::f_y)});
   double afu = eq.af * eq.beta*dt*dt;
   double afv = eq.af * eq.gam*dt;
   double amd = eq.am * rho  +  eq.af * eq.gam * dt * dmp;
@@ -566,11 +566,11 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
 
   // Set parameters
   //
-  double rho = dmn.prop.at(PhysicalProperyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalProperyType::damping);
-  Vector<double> fb({dmn.prop.at(PhysicalProperyType::f_x), 
-                     dmn.prop.at(PhysicalProperyType::f_y), 
-                     dmn.prop.at(PhysicalProperyType::f_z)});
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  Vector<double> fb({dmn.prop.at(PhysicalPropertyType::f_x), 
+                     dmn.prop.at(PhysicalPropertyType::f_y), 
+                     dmn.prop.at(PhysicalPropertyType::f_z)});
 
   double afu = eq.af * eq.beta*dt*dt;
   double afv = eq.af * eq.gam*dt;

@@ -1592,9 +1592,9 @@ void set_bc_neu_l(ComMod& com_mod, const CmMod& cm_mod, const bcType& lBc, const
          int cDmn_local =
              all_fun::domain(com_mod, com_mod.msh[iM], cEq, lFa.gE(0));
          double rho = eq.dmn[cDmn_local].prop.at(
-             consts::PhysicalProperyType::fluid_density);
+             consts::PhysicalPropertyType::fluid_density);
          double beta = eq.dmn[cDmn_local].prop.at(
-             consts::PhysicalProperyType::backflow_stab);
+             consts::PhysicalPropertyType::backflow_stab);
          double A = lFa.area;
          if (A > 0.0) {
            double u_n = Q_3D / A; // face-averaged normal velocity (< 0)

@@ -212,6 +212,7 @@ set(CSRCS
   cmm.h cmm.cpp
   consts.h consts.cpp
   contact.h contact.cpp
+  darcy.h darcy.cpp
   distribute.h distribute.cpp
   eq_assem.h eq_assem.cpp
   fluid.h fluid.cpp

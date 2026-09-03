@@ -1165,7 +1165,8 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
           case OutputNameType::outGrp_hFlx: 
           case OutputNameType::outGrp_stInv: 
           case OutputNameType::outGrp_vortex: 
-          case OutputNameType::outGrp_Visc: 
+          case OutputNameType::outGrp_Visc:
+          case OutputNameType::outGrp_darcyFlux: 
             post::post(simulation, msh, tmpV, solutions, oGrp, iEq);
             for (int a = 0; a < msh.nNo; a++) {
               int Ac = msh.gN(a);

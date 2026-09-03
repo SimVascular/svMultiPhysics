@@ -321,6 +321,7 @@ void txt(Simulation* simulation, const bool init_write, const SolutionStates& so
         case OutputNameType::outGrp_divV: 
         case OutputNameType::outGrp_J: 
         case OutputNameType::outGrp_mises:
+        case OutputNameType::outGrp_darcyFlux:
           post::all_post(simulation, tmpV, solutions, oGrp, iEq);
         break;
 
