@@ -10,14 +10,6 @@
 
 namespace {
 
-class TTPTestParameters : public TTP::Parameters {
-public:
-  void set_parameter_value(const std::string &name, double value)
-  {
-    parameters.at(name).set(name, true, value);
-  }
-};
-
 void run_ttp_trajectory(
     const TTP::Parameters &parameters,
     int zone_id,
@@ -82,8 +74,8 @@ TEST(IonicModelTrajectory, TTPEpi)
  */
 TEST(IonicModelTrajectory, TTPEndo)
 {
-  TTPTestParameters parameters;
-  parameters.set_parameter_value("G_to", 0.073);
+  TTP::Parameters parameters;
+  parameters.set_scalar("G_to", 0.073);
   run_ttp_trajectory(
       parameters, 2, "ionic_ttp_endo_trajectory.csv",
       {-86.709, 138.4, 10.355, 1.3e-4, 3.6e-4, 3.715, 0.9068},
@@ -105,8 +97,8 @@ TEST(IonicModelTrajectory, TTPEndo)
  */
 TEST(IonicModelTrajectory, TTPM)
 {
-  TTPTestParameters parameters;
-  parameters.set_parameter_value("G_Ks", 0.098);
+  TTP::Parameters parameters;
+  parameters.set_scalar("G_Ks", 0.098);
   run_ttp_trajectory(
       parameters, 3, "ionic_ttp_m_trajectory.csv",
       {-85.423, 138.52, 10.132, 1.53e-4, 4.2e-4, 4.272, 0.8978},

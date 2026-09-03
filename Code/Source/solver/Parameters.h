@@ -1376,6 +1376,18 @@ public:
     return parameters.at(label).value();
   }
 
+  /// Set the value of a scalar parameter by label.
+  void set_scalar(const std::string &label, double value) {
+    auto parameter = parameters.find(label);
+    svmp::check<svmp::FE::InvalidArgumentException>(
+        parameter != parameters.end(),
+        "Ionic model parameter '" + label + "' not found.");
+
+    parameter->second.value_ = value;
+    parameter->second.value_set_ = true;
+    value_set = true;
+  }
+
   /// Get the value of a vector parameter by label.
   Vector<double> get_vector(const std::string &label) const {
     auto param_value = vector_parameters.at(label).value();
@@ -1460,6 +1472,7 @@ public:
 
     parameter->second.value_ = value;
     parameter->second.value_set_ = true;
+    value_set = true;
   }
 
   /// Get the value of a string parameter by label.
