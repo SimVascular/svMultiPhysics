@@ -4,7 +4,7 @@ var searchData=
   ['x_5fcoords_1',['x_coords',['../classecg_leads_type.html#a536e03afd275147af4e3e6b9431da08b',1,'ecgLeadsType']]],
   ['x_5fprev_2',['x_prev',['../classuris_type.html#ab64d0fcb045e2e1ddb9865fc029dcc70',1,'urisType']]],
   ['xi_3',['xi',['../classmsh_type.html#a938df71cbca95a3e41c8cace5be5ea52',1,'mshType']]],
-  ['xi_5ft_4',['xi_T',['../class_nash_panfilov.html#afb17de11065715d651e5c30b08a07375',1,'NashPanfilov']]],
+  ['xi_5ft_4',['xi_T',['../class_active_stress_nash_panfilov.html#ac9512a8a9fc4edcb55eaccebd35f28eb',1,'ActiveStressNashPanfilov']]],
   ['xib_5',['xib',['../classmsh_type.html#a222ddc20df07906d425d569089a7f80a',1,'mshType']]],
   ['xion_6',['Xion',['../class_cep_mod.html#ae7baf616df1bb36d54d022665444e17e',1,'CepMod']]],
   ['xml_5felement_5fname_7',['xml_element_name',['../class_ionic_initial_state_parameters.html#ad867dd1cfbbfba0f974e617655c87a8a',1,'IonicInitialStateParameters::xml_element_name'],['../class_active_stress_parameters.html#a669946d1514405bd7ed11cc9bc25dfbd',1,'ActiveStressParameters::xml_element_name'],['../class_active_stress_model_parameters.html#af9a877e4a0689e3d1841bd73886c30f8',1,'ActiveStressModelParameters::xml_element_name'],['../class_ionic_model_parameters.html#a5beaa91398636347951c6453df0b4fe8',1,'IonicModelParameters::xml_element_name']]],

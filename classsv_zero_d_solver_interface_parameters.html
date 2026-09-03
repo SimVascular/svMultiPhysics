@@ -102,6 +102,11 @@ $(function() {
   <div class="headertitle"><div class="title">svZeroDSolverInterfaceParameters Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p><a class="el" href="class_parameters.html" title="The Parameters class stores parameter values read in from a solver input file.">Parameters</a> for coupling to the svZeroDSolver (0D lumped-parameter solver).  
+ <a href="classsv_zero_d_solver_interface_parameters.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="_parameters_8h_source.html">Parameters.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for svZeroDSolverInterfaceParameters:</div>
 <div class="dyncontent">
@@ -171,6 +176,12 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:aca8ac153ab76cb5343549485af960bfb" id="r_aca8ac153ab76cb5343549485af960bfb"><td class="memItemLeft" align="right" valign="top"><a id="aca8ac153ab76cb5343549485af960bfb" name="aca8ac153ab76cb5343549485af960bfb"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>initial_pressures</b></td></tr>
 <tr class="separator:aca8ac153ab76cb5343549485af960bfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28de51e03e38fb61ae6b009a672dc49c" id="r_a28de51e03e38fb61ae6b009a672dc49c"><td class="memItemLeft" align="right" valign="top"><a id="a28de51e03e38fb61ae6b009a672dc49c" name="a28de51e03e38fb61ae6b009a672dc49c"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>finite_difference_absolute_perturbation</b></td></tr>
+<tr class="separator:a28de51e03e38fb61ae6b009a672dc49c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1ad7573b08a24aebc7a6f5482d311f6" id="r_ad1ad7573b08a24aebc7a6f5482d311f6"><td class="memItemLeft" align="right" valign="top"><a id="ad1ad7573b08a24aebc7a6f5482d311f6" name="ad1ad7573b08a24aebc7a6f5482d311f6"></a>
+<a class="el" href="class_parameter.html">Parameter</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>finite_difference_relative_perturbation</b></td></tr>
+<tr class="separator:ad1ad7573b08a24aebc7a6f5482d311f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c6c6e80cdde4bbbd8dde4b86d930f4e" id="r_a9c6c6e80cdde4bbbd8dde4b86d930f4e"><td class="memItemLeft" align="right" valign="top"><a id="a9c6c6e80cdde4bbbd8dde4b86d930f4e" name="a9c6c6e80cdde4bbbd8dde4b86d930f4e"></a>
 <a class="el" href="class_parameter.html">Parameter</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>shared_library</b></td></tr>
 <tr class="separator:a9c6c6e80cdde4bbbd8dde4b86d930f4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -190,7 +201,16 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:ad434b5461a5bcb0934290d90d7e33f0c" id="r_ad434b5461a5bcb0934290d90d7e33f0c"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsv_zero_d_solver_interface_parameters.html#ad434b5461a5bcb0934290d90d7e33f0c">xml_element_name_</a></td></tr>
 <tr class="separator:ad434b5461a5bcb0934290d90d7e33f0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Data Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p><a class="el" href="class_parameters.html" title="The Parameters class stores parameter values read in from a solver input file.">Parameters</a> for coupling to the svZeroDSolver (0D lumped-parameter solver). </p>
+<p>XML element: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">svZeroDSolver_interface</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">Coupling_type</span>&gt; <span class="keyword">implicit</span> &lt;/<span class="keywordtype">Coupling_type</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">Configuration_file</span>&gt; <span class="keyword">svzerod_3Dcoupling.json</span> &lt;/<span class="keywordtype">Configuration_file</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">Shared_library</span>&gt; /<span class="keyword">path</span>/<span class="keyword">to</span>/<span class="keyword">libsvzero_interface</span> &lt;/<span class="keywordtype">Shared_library</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">Finite_difference_absolute_perturbation</span>&gt; 1.0<span class="keyword">e-7</span> &lt;/<span class="keywordtype">Finite_difference_absolute_perturbation</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">Finite_difference_relative_perturbation</span>&gt; 1.0<span class="keyword">e-5</span> &lt;/<span class="keywordtype">Finite_difference_relative_perturbation</span>&gt;</div>
+<div class="line">&lt;/<span class="keywordtype">svZeroDSolver_interface</span>&gt;</div>
+</div><!-- fragment --> </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="ad434b5461a5bcb0934290d90d7e33f0c" name="ad434b5461a5bcb0934290d90d7e33f0c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad434b5461a5bcb0934290d90d7e33f0c">&#9670;&#160;</a></span>xml_element_name_</h2>
 

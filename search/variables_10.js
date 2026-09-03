@@ -2,7 +2,7 @@ var searchData=
 [
   ['r_0',['r',['../class_com_mod.html#a8ffc7b5a1f3675c8c8afa3a71b3e7f8b',1,'ComMod::R'],['../classib_type.html#a421579f2ca85781e526e1a266773fe9f',1,'ibType::R']]],
   ['r_5f_1',['R_',['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#ad9cb01e2c4e0dd8cad2e2dc01d3524bf',1,'TrilinosLinearAlgebra::TrilinosImpl']]],
-  ['ramp_2',['ramp',['../class_uniform_unsteady_active_stress.html#a07719ed805a6a32fbc383dcf7f3877d1',1,'UniformUnsteadyActiveStress']]],
+  ['ramp_2',['ramp',['../class_active_stress_uniform_unsteady.html#a986c12e4d0b0fa03a92cb21e2820d071',1,'ActiveStressUniformUnsteady']]],
   ['rank_3',['rank',['../structsvmp_1_1_f_e_1_1math_1_1_dense_pseudo_inverse_result.html#a1f62f9ac571b97a03c92a07f2c21632e',1,'svmp::FE::math::DensePseudoInverseResult::rank'],['../structsvmp_1_1_f_e_1_1math_1_1_dense_matrix_diagnostics.html#a02babe944d9350d9039ba27f039495df',1,'svmp::FE::math::DenseMatrixDiagnostics::rank']]],
   ['rc_4',['Rc',['../class_t_t_p.html#a3c7df257aa25861d48a63a2772d2c0f5',1,'TTP']]],
   ['rd_5',['Rd',['../class_com_mod.html#a8137e426297b6b90ce11e09055828377',1,'ComMod']]],
@@ -10,7 +10,7 @@ var searchData=
   ['relax_5ffactor_7',['relax_factor',['../classuris_type.html#ad145a14cc19e72b4e45df49482d0d3e8',1,'urisType']]],
   ['reltol_8',['reltol',['../classls_type.html#acb851846402df623d3480030b5831932',1,'lsType::relTol'],['../classode_type.html#a09c0984b088e1276c1421aeb932067aa',1,'odeType::relTol']]],
   ['required_9',['required',['../class_ionic_initial_state_parameters.html#a3c9947e781967690c7040c4bf4784461',1,'IonicInitialStateParameters']]],
-  ['res_10',['res',['../classris_face_type.html#a544b7898420665b210b52d79c595b3ff',1,'risFaceType::Res'],['../classmsh_type.html#a819347035a740b8c77a70ff96e818d47',1,'mshType::res']]],
+  ['res_10',['res',['../classmsh_type.html#a819347035a740b8c77a70ff96e818d47',1,'mshType::res'],['../classris_face_type.html#a544b7898420665b210b52d79c595b3ff',1,'risFaceType::Res']]],
   ['reserve_11',['reserve',['../classls_type.html#a3fc715baede9e9d7b40de26169ead4a0',1,'lsType']]],
   ['resetsim_12',['resetSim',['../class_com_mod.html#a884b8c0797550cf10a71eee30be8bf05',1,'ComMod']]],
   ['resistance_13',['resistance',['../classuris_type.html#af6aef2917cd8c726e9c23cd3ca1f458b',1,'urisType']]],

@@ -108,6 +108,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
+<tr class="memitem:a9c68de3a94967a262983d8fcc65852fd" id="r_a9c68de3a94967a262983d8fcc65852fd"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcpl_b_c_type.html#a9c68de3a94967a262983d8fcc65852fd">equationIndex</a> = 0</td></tr>
+<tr class="memdesc:a9c68de3a94967a262983d8fcc65852fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Index of the equation that this condition is associated with.  <br /></td></tr>
+<tr class="separator:a9c68de3a94967a262983d8fcc65852fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab291c550fb77862c37888f9eeb82081" id="r_aab291c550fb77862c37888f9eeb82081"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcpl_b_c_type.html#aab291c550fb77862c37888f9eeb82081">coupled</a> = false</td></tr>
 <tr class="memdesc:aab291c550fb77862c37888f9eeb82081"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is multi-domain active.  <br /></td></tr>
 <tr class="separator:aab291c550fb77862c37888f9eeb82081"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,6 +144,12 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a04ba27d74406837d5ff665176a05535d" id="r_a04ba27d74406837d5ff665176a05535d"><td class="memItemLeft" align="right" valign="top">consts::CplBCType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcpl_b_c_type.html#a04ba27d74406837d5ff665176a05535d">schm</a> = consts::CplBCType::cplBC_NA</td></tr>
 <tr class="memdesc:a04ba27d74406837d5ff665176a05535d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit/Explicit/Semi-implicit schemes.  <br /></td></tr>
 <tr class="separator:a04ba27d74406837d5ff665176a05535d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac41af27db23cf2f7f55140c0285bcac3" id="r_ac41af27db23cf2f7f55140c0285bcac3"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcpl_b_c_type.html#ac41af27db23cf2f7f55140c0285bcac3">finite_difference_absolute_perturbation</a> = 1.0e-7</td></tr>
+<tr class="memdesc:ac41af27db23cf2f7f55140c0285bcac3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Absolute floor on the flow-rate perturbation used to finite-difference the coupled-BC tangent dP/dQ in <code>set_bc::calc_der_cpl_bc</code>. This is a dimensional quantity, so it must be set consistently with the unit system of the simulation.  <br /></td></tr>
+<tr class="separator:ac41af27db23cf2f7f55140c0285bcac3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8929d74bb5fbf3ebef658041ec788c45" id="r_a8929d74bb5fbf3ebef658041ec788c45"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcpl_b_c_type.html#a8929d74bb5fbf3ebef658041ec788c45">finite_difference_relative_perturbation</a> = 1.0e-5</td></tr>
+<tr class="memdesc:a8929d74bb5fbf3ebef658041ec788c45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flow-rate perturbation used to finite-difference the coupled-BC tangent dP/dQ in <code>set_bc::calc_der_cpl_bc</code>, relative to the RMS coupled flow rate. The perturbation actually applied is <code>max</code>(rms(Q)*finite_difference_relative_perturbation, <code>finite_difference_absolute_perturbation</code>).  <br /></td></tr>
+<tr class="separator:a8929d74bb5fbf3ebef658041ec788c45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8cd85265d73d2e9ebdb21c097d24cf70" id="r_a8cd85265d73d2e9ebdb21c097d24cf70"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcpl_b_c_type.html#a8cd85265d73d2e9ebdb21c097d24cf70">binPath</a></td></tr>
 <tr class="memdesc:a8cd85265d73d2e9ebdb21c097d24cf70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Path to the 0D code binary file.  <br /></td></tr>
 <tr class="separator:a8cd85265d73d2e9ebdb21c097d24cf70"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -220,6 +229,22 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a9c68de3a94967a262983d8fcc65852fd" name="a9c68de3a94967a262983d8fcc65852fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c68de3a94967a262983d8fcc65852fd">&#9670;&#160;</a></span>equationIndex</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int cplBCType::equationIndex = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Index of the equation that this condition is associated with. </p>
+
+</div>
+</div>
 <a id="ab532fef3c4545dbe31c303a654d5cb9a" name="ab532fef3c4545dbe31c303a654d5cb9a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab532fef3c4545dbe31c303a654d5cb9a">&#9670;&#160;</a></span>fa</h2>
 
@@ -233,6 +258,38 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Data structure used for communicating with 0D code. </p>
+
+</div>
+</div>
+<a id="ac41af27db23cf2f7f55140c0285bcac3" name="ac41af27db23cf2f7f55140c0285bcac3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac41af27db23cf2f7f55140c0285bcac3">&#9670;&#160;</a></span>finite_difference_absolute_perturbation</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double cplBCType::finite_difference_absolute_perturbation = 1.0e-7</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Absolute floor on the flow-rate perturbation used to finite-difference the coupled-BC tangent dP/dQ in <code>set_bc::calc_der_cpl_bc</code>. This is a dimensional quantity, so it must be set consistently with the unit system of the simulation. </p>
+
+</div>
+</div>
+<a id="a8929d74bb5fbf3ebef658041ec788c45" name="a8929d74bb5fbf3ebef658041ec788c45"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8929d74bb5fbf3ebef658041ec788c45">&#9670;&#160;</a></span>finite_difference_relative_perturbation</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double cplBCType::finite_difference_relative_perturbation = 1.0e-5</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Flow-rate perturbation used to finite-difference the coupled-BC tangent dP/dQ in <code>set_bc::calc_der_cpl_bc</code>, relative to the RMS coupled flow rate. The perturbation actually applied is <code>max</code>(rms(Q)*finite_difference_relative_perturbation, <code>finite_difference_absolute_perturbation</code>). </p>
 
 </div>
 </div>
