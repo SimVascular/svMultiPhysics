@@ -1,0 +1,113 @@
+{
+  "simulation_parameters": {
+    "coupled_simulation": true,
+    "number_of_time_pts": 100,
+    "output_all_cycles": true,
+    "steady_initial": false
+  },
+  "boundary_conditions": [
+    {
+      "bc_name": "RCR_brachiocephalic",
+      "bc_type": "RCR",
+      "bc_values": {
+        "Rp": 643.931,
+        "Rd": 5599.4,
+        "C": 0.000865154,
+        "Pd": 0.0
+      }
+    },
+    {
+      "bc_name": "RCR_left_common_carotid",
+      "bc_type": "RCR",
+      "bc_values": {
+        "Rp": 1226.82,
+        "Rd": 10668.0,
+        "C": 0.000454101,
+        "Pd": 0.0
+      }
+    },
+    {
+      "bc_name": "RCR_left_subclavian",
+      "bc_type": "RCR",
+      "bc_values": {
+        "Rp": 1441.98,
+        "Rd": 12538.9,
+        "C": 0.000386344,
+        "Pd": 0.0
+      }
+    },
+    {
+      "bc_name": "RCR_lower_outlet",
+      "bc_type": "RCR",
+      "bc_values": {
+        "Rp": 242.808,
+        "Rd": 2111.37,
+        "C": 0.0022944,
+        "Pd": 0.0
+      }
+    }
+  ],
+  "external_solver_coupling_blocks": [
+    {
+      "name": "RCR_coupling_brachiocephalic",
+      "type": "FLOW",
+      "location": "inlet",
+      "connected_block": "RCR_brachiocephalic",
+      "periodic": false,
+      "values": {
+        "t": [0.0, 1.0],
+        "Q": [1.0, 1.0]
+      }
+    },
+    {
+      "name": "RCR_coupling_left_common_carotid",
+      "type": "FLOW",
+      "location": "inlet",
+      "connected_block": "RCR_left_common_carotid",
+      "periodic": false,
+      "values": {
+        "t": [0.0, 1.0],
+        "Q": [1.0, 1.0]
+      }
+    },
+    {
+      "name": "RCR_coupling_left_subclavian",
+      "type": "FLOW",
+      "location": "inlet",
+      "connected_block": "RCR_left_subclavian",
+      "periodic": false,
+      "values": {
+        "t": [0.0, 1.0],
+        "Q": [1.0, 1.0]
+      }
+    },
+    {
+      "name": "RCR_coupling_lower_outlet",
+      "type": "FLOW",
+      "location": "inlet",
+      "connected_block": "RCR_lower_outlet",
+      "periodic": false,
+      "values": {
+        "t": [0.0, 1.0],
+        "Q": [1.0, 1.0]
+      }
+    }
+  ],
+  "vessels": [],
+  "junctions": [],
+  "initial_condition": {
+    "pressure_c:RCR_brachiocephalic": 73374.686719,
+    "flow:RCR_coupling_brachiocephalic:RCR_brachiocephalic": 15.841850047,
+    "pressure:RCR_coupling_brachiocephalic:RCR_brachiocephalic": 83575.745061,
+    "pressure_c:RCR_left_common_carotid": 73145.039375,
+    "flow:RCR_coupling_left_common_carotid:RCR_left_common_carotid": 8.421578495,
+    "pressure:RCR_coupling_left_common_carotid:RCR_left_common_carotid": 83476.800304,
+    "pressure_c:RCR_left_subclavian": 73259.076819,
+    "flow:RCR_coupling_left_subclavian:RCR_left_subclavian": 7.1239639966,
+    "pressure:RCR_coupling_left_subclavian:RCR_left_subclavian": 83531.690423,
+    "pressure_c:RCR_lower_outlet": 73464.14661,
+    "flow:RCR_coupling_lower_outlet:RCR_lower_outlet": 21.800384227,
+    "pressure:RCR_coupling_lower_outlet:RCR_lower_outlet": 78757.454303
+  }
+}
+
