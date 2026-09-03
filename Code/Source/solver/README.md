@@ -178,8 +178,8 @@ C++ functions are defined within a `namespace` defined for each Fortran file. Fo
              - [<b> fs::get_thood_fs(com_mod, fs, lM, vmsStab, 1) </b>](#)
              - [<b> nn::gnn(fs[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix) </b>](#)
              - [<b> nn::gn_nxx(l, fs[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx) </b>](#)
-             - [<b> fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)</b>](#) - If nsd=3
-             - [<b> fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)</b>](#) - If nsd=2
+             - [<b> fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)</b>](#) - If nsd=3
+             - [<b> fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)</b>](#) - If nsd=2
              - [<b> trilinos_doassem_(const_cast<int&>(eNoN), ptr.data(), lK.data(), lR.data())</b>](#) - If using Trilinos
              - [<b> lhsa_ns::do_assem(com_mod, eNoN, ptr, lK, lR)</b>](#do_assem) - If not using Trilinos
          - [<b> set_bc::set_bc_neu(com_mod, cm_mod, Yg, Dg) </b>](#set_bc_neu)
@@ -1492,9 +1492,9 @@ strongly or weakly.
  
  - `nn::gn_nxx(l, fs[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx)`
  
- - `fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)` - If nsd=3
+ - `fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)` - If nsd=3
  
- - `fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)` - If nsd=2
+ - `fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)` - If nsd=2
  
  - `trilinos_doassem_(const_cast<int&>(eNoN), ptr.data(), lK.data(), lR.data())` - If using Trilinos
  

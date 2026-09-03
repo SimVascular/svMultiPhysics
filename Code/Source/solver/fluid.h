@@ -26,23 +26,23 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& s
 void fluid_2d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
     const Array<double>& Nwxx, const Array<double>& al, const Array<double>& yl, const Array<double>& bfl, 
-    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeabilityx);
+    Array<double>& lR, Array3<double>& lK, double brinkman_inverse_permeability);
 
 void fluid_2d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
     const Array<double>& Nwxx, const Array<double>& al, const Array<double>& yl, const Array<double>& bfl, 
-    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability);
+    Array<double>& lR, Array3<double>& lK, double brinkman_inverse_permeability);
 
 void fluid_3d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
     const Array<double>& Nwxx, const Array<double>& al, const Array<double>& yl, const Array<double>& bfl, 
-    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability, 
+    Array<double>& lR, Array3<double>& lK, double brinkman_inverse_permeability,
     const double urisFactorTotal, const Vector<double>& urisValveVelTotal);
 
 void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int eNoNq, const double w, const Array<double>& Kxi, 
     const Vector<double>& Nw, const Vector<double>& Nq, const Array<double>& Nwx, const Array<double>& Nqx, 
     const Array<double>& Nwxx, const Array<double>& al, const Array<double>& yl, const Array<double>& bfl, 
-    Array<double>& lR, Array3<double>& lK, double K_inverse_darcy_permeability, 
+    Array<double>& lR, Array3<double>& lK, double brinkman_inverse_permeability,
     const double urisFactorTotal, const Vector<double>& urisValveVelTotal);
 
 void get_viscosity(const ComMod& com_mod, const dmnType& lDmn, double& gamma, double& mu, double& mu_s, double& mu_x);
@@ -50,4 +50,3 @@ void get_viscosity(const ComMod& com_mod, const dmnType& lDmn, double& gamma, do
 };
 
 #endif
-

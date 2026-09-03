@@ -1640,8 +1640,10 @@ class DomainParameters : public ParameterLists
     Parameter<double> darcy_permeability;
     Parameter<double> darcy_media_compressibility;
     Parameter<double> darcy_fluid_viscosity;
-    // Inverse of Darcy permeability. Default value of 0.0 for Navier-Stokes and non-zero for Navier-Stokes-Brinkman
-    Parameter<double> inverse_darcy_permeability;
+
+    // Inverse permeability K^{-1} used in the Brinkman drag term
+    // mu K^{-1} u. A value of zero disables Brinkman drag.
+    Parameter<double> brinkman_inverse_permeability;
 };
 
 /// @brief The RemesherParameters class stores parameters for the 
@@ -1761,9 +1763,6 @@ class EquationParameters : public ParameterLists
     // are solved to convergence using the mesh displacement from the previous time step,
     // and only then is the mesh equation solved.
     Parameter<bool> explicit_geometric_coupling;
-
-    // Inverse of Darcy permeability. Default value of 0.0 for Navier-Stokes and non-zero for Navier-Stokes-Brinkman
-    Parameter<double> inverse_darcy_permeability;
 
     // Sub-element parameters.
     //

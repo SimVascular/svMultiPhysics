@@ -10,6 +10,7 @@
 #include "ActiveStress.h"
 #include "all_fun.h"
 #include "consts.h"
+#include "darcy.h"
 #include "IonicModel.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
@@ -1577,8 +1578,8 @@ void read_domain(Simulation* simulation, EquationParameters* eq_params, eqType& 
             rtmp = domain_params->source_term.value();
           break;
 
-          case PhysicalPropertyType::inverse_darcy_permeability:
-            rtmp = domain_params->inverse_darcy_permeability.value();
+          case PhysicalPropertyType::brinkman_inverse_permeability:
+            rtmp = domain_params->brinkman_inverse_permeability.value();
           break;
 
           case PhysicalPropertyType::darcy_permeability:

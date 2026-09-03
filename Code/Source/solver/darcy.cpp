@@ -1,52 +1,64 @@
 #include "darcy.h"
 
+#include "Core/Exception.h"
 #include "all_fun.h"
 #include "mat_fun.h"
 #include "nn.h"
 #include "utils.h"
 
+#include <iomanip>
+#include <limits>
+#include <sstream>
+
 namespace darcy {
-/*
- This code implements the Darcy Equation for 2D and 3D
- problems in perfusion of porous media.
- -------------------------------------------------------------
- Assumptions:
-    - Homogeneous Permeability
-    - Homogeneous Density
-    - Isotropic Permeability
-    - Assumptions of Stokes Flow
-    - Steady-State
- -------------------------------------------------------------
- * Strong form of the Single-Compartment Darcy equation:
- * \f[ u = -K\nabla P \f]
- * \f[ \nabla \cdot u = \beta_0(P_{source} - P) - \beta_1(P - P_{sink}) \f]
- * Note: See equations 8(a)/(b) in https://doi.org/10.1007/s10439-020-02681-z
- * 
- * Combined Strong form:
- * \f[ -\nabla \cdot (K \nabla P) - \beta_0(P_{source} - P) + \beta_1(P - P_{sink}) = 0 \f]
- * 
- * Where:
- *  - \f$ u \f$ : Darcy flux
- *  - \f$ K \f$ : Permeability tensor
- *  - \f$ P \f$ : Pressure
- *  - \f$ P_{source} \f$ : Source pressure (e.g., arterial pressure) 
- *  - \f$ P_{sink} \f$ : Sink pressure (e.g., venous/extraction pressure)
- *  - \f$ \beta_0 \f$ : Source coupling term (describes conductance of flow entering myocardium)
- *  - \f$ \beta_1 \f$ : Sink coupling term (describes conductance of flow exiting myocardium)
- * 
- * -------------------------------------------------------------
- * 
- * Weak form of the Single-Compartment Darcy equation:
- * \f[ -\int_{\Omega} (\nabla q \cdot \nabla P) d\Omega - \lambda \int_{\Omega} q P d\Omega = \int_{\Omega} q F d\Omega - \int_{\Gamma} q (\nabla P \cdot n) d\Gamma \f]
- * 
- * Where:
- *  - \f$ q \f$ : Test function
- *  - \f$ \lambda \f$ : \f$ \frac{\beta_0 + \beta_1}{K} \f$
- *  - \f$ F \f$ : \f$ -\frac{\beta_0 P_{source} + \beta_1 P_{sink}}{K} \f$
- *  - \f$ n \f$ : Normal vector to the boundary
- *  - \f$ \Omega \f$ : Computational domain
- *  - \f$ \Gamma \f$ : Domain boundary
-*/
+
+void validate_material_properties(const dmnType& domain)
+{
+  using consts::PhysicalPropertyType;
+
+  const auto validate = [&domain](const char* name, const double value,
+                                  const bool is_valid,
+                                  const char* requirement) {
+    if (is_valid) {
+      return;
+    }
+
+    std::ostringstream message;
+    message << std::setprecision(std::numeric_limits<double>::max_digits10)
+            << "Darcy domain " << domain.Id << " has invalid " << name
+            << " value " << value << "; expected " << requirement << ".";
+    svmp::raise<svmp::ParseException>(message.str());
+  };
+
+  const double permeability =
+      domain.prop.at(PhysicalPropertyType::darcy_permeability);
+  validate("Darcy_permeability", permeability, permeability > 0.0,
+           "a value greater than zero");
+
+  const double viscosity =
+      domain.prop.at(PhysicalPropertyType::darcy_fluid_viscosity);
+  validate("Darcy_fluid_viscosity", viscosity, viscosity > 0.0,
+           "a value greater than zero");
+
+  const double density = domain.prop.at(PhysicalPropertyType::fluid_density);
+  validate("Fluid_density", density, density > 0.0,
+           "a value greater than zero");
+
+  const double compressibility =
+      domain.prop.at(PhysicalPropertyType::darcy_media_compressibility);
+  validate("Darcy_media_compressibility", compressibility,
+           compressibility >= 0.0,
+           "a value greater than or equal to zero");
+}
+
+void validate_element_support(const mshType& mesh)
+{
+  if (mesh.lFib) {
+    svmp::raise<svmp::NotImplementedException>(
+        "The Darcy equation supports only 2D and 3D meshes; lFib marks an "
+        "embedded one-dimensional mesh, which is not supported.");
+  }
+}
 
 void b_darcy(ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, const double h, Array<double>& lR)
 {
@@ -57,6 +69,8 @@ void b_darcy(ComMod& com_mod, const int eNoN, const double w, const Vector<doubl
 
 void construct_darcy(ComMod& com_mod, const mshType& lM, const SolutionStates& solutions)
 {
+  validate_element_support(lM);
+
   const auto& Ag = solutions.intermediate.get_acceleration();
   const auto& Yg = solutions.intermediate.get_velocity();
   #define n_debug_construct_darcy
@@ -75,10 +89,7 @@ void construct_darcy(ComMod& com_mod, const mshType& lM, const SolutionStates& s
   auto& cDmn = com_mod.cDmn;
 
   int eNoN = lM.eNoN;
-  int insd = nsd;
-  if (lM.lFib) {
-    insd = 1;
-  }
+  const int insd = nsd;
   #ifdef debug_construct_darcy
   dmsg << "cEq: " << cEq;
   dmsg << "cDmn: " << cDmn;
