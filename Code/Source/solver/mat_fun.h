@@ -169,6 +169,35 @@ namespace mat_fun {
     }
 
     Array<double> mat_symm(const Array<double>& A, const int nd);
+
+    /**
+     * @brief Symmetric part of a 2nd order tensor, 0.5 * (A + A^T).
+     *
+     * Fixed-size overload for the Eigen matrices used by the element kernels.
+     *
+     * @tparam nsd Number of spatial dimensions.
+     * @param[in] A Second order tensor.
+     * @return The symmetric part of A.
+     */
+    template <int nsd>
+    Matrix<nsd> mat_symm(const Matrix<nsd>& A) {
+        return 0.5 * (A + A.transpose());
+    }
+
+    /**
+     * @brief Deviatoric part of a 2nd order tensor, A - tr(A)/nsd * I.
+     *
+     * Fixed-size overload for the Eigen matrices used by the element kernels.
+     *
+     * @tparam nsd Number of spatial dimensions.
+     * @param[in] A Second order tensor.
+     * @return The deviatoric part of A.
+     */
+    template <int nsd>
+    Matrix<nsd> mat_dev(const Matrix<nsd>& A) {
+        return A - (A.trace() / nsd) * Matrix<nsd>::Identity();
+    }
+
     Array<double> mat_symm_prod(const Vector<double>& u, const Vector<double>& v, const int nd);
 
     double mat_trace(const Array<double>& A, const int nd);

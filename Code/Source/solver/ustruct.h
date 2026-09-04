@@ -37,7 +37,9 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Array<double> &dl, const Array<double> &bfl,
                   const Array<double> &fN, const Vector<double> &ya_l_f,
                   const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
-                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd);
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
+                  Array<double> &Svis, Array3<double> &Kvis_u, Array3<double> &Kvis_v,
+                  const bool recompute_visc);
 
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
@@ -53,7 +55,9 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Array<double> &dl, const Array<double> &bfl,
                   const Array<double> &fN, const Vector<double> &ya_l_f,
                   const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
-                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd);
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
+                  Array<double> &Svis, Array3<double> &Kvis_u, Array3<double> &Kvis_v,
+                  const bool recompute_visc);
 
 void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd, 
     const Array3<double>& lK, const Array<double>& lR);
