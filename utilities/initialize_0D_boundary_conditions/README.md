@@ -42,13 +42,13 @@ python3 -m pip install numpy vtk
 Basic (print-only):
 
 ```bash
-python3 update_coupled_json_initial_conditions.py path/to/solver_vtu_and_bcs.xml
+python3 initialize_0D_boundary_conditions.py path/to/solver_vtu_and_bcs.xml
 ```
 
 Write changes into the JSON configuration file referenced by the XML:
 
 ```bash
-python3 update_coupled_json_initial_conditions.py path/to/solver_vtu_and_bcs.xml --write
+python3 initialize_0D_boundary_conditions.py path/to/solver_vtu_and_bcs.xml --write
 ```
 
 Options
@@ -58,37 +58,40 @@ Options
 - `--pressure-array` : VTU point-data array name for pressure (default: `Pressure`).
 - `--velocity-array` : VTU point-data array name for velocity (default: `Velocity`).
 
-## Compact example template
+## Example using `tests/cases/fluid/pipe_RCR_sv0D`
 
-A small, portable configuration-only example is available in:
-
-```./example_template/
-```
-
-It contains:
-
-- `solver.xml`: svMultiPhysics setup with one inlet, one wall, and four coupled RCR outlets.
-- `svzerod_3Dcoupling.json`: matching svZeroD coupling blocks and example
-  `initial_condition` values generated from a longer simulation.
-- `inlet.flow`: a tiny dummy inlet waveform.
-
-The compact example intentionally does not include mesh, surface, or restart
-files. The paths in `./example_template/solver.xml` show the expected layout:
-
-```
-mesh-complete/mesh-complete.mesh.vtu
-mesh-complete/mesh-surfaces/*.vtp
-num-procs/result_6000.vtu
-```
-
-To make the compact example runnable, add those files or update the paths in
-`solver.xml`, then run:
+This directory includes a lightweight example XML that reuses the mesh, surface,
+restart, and svZeroD JSON files from:
 
 ```bash
-python3 ../update_coupled_json_initial_conditions.py solver.xml --write
+./tests/cases/fluid/pipe_RCR_sv0D
 ```
 
-from inside `./example_template`.
+If those test assets are present as Git LFS pointer files in your checkout, fetch
+the LFS contents before running the example.
+
+Run it from the repository root in print-only mode:
+
+```bash
+python3 utilities/initialize_0D_boundary_conditions/initialize_0D_boundary_conditions.py \
+  utilities/initialize_0D_boundary_conditions/pipe_RCR_sv0D_example/solver_initial_conditions.xml
+```
+
+The example XML adds the `Initial_pressures_file_path` and
+`Initial_velocities_file_path` entries needed by this utility and points both to
+`tests/cases/fluid/pipe_RCR_sv0D/result_002.vtu`. It also reuses the test case's
+`lumen_outlet` coupled boundary and `RCR_coupling` svZeroD block.
+
+To update the test case JSON in place, rerun with `--write`:
+
+```bash
+python3 utilities/initialize_0D_boundary_conditions/initialize_0D_boundary_conditions.py \
+  utilities/initialize_0D_boundary_conditions/pipe_RCR_sv0D_example/solver_initial_conditions.xml \
+  --write
+```
+
+By default, `--write` creates
+`tests/cases/fluid/pipe_RCR_sv0D/svzerod_3Dcoupling.json.bak`.
 
 ## Notes & assumptions
 
@@ -120,11 +123,13 @@ a `.bak` copy unless `--no-backup` is specified).
 ## Example
 
 ```bash
-python3 update_coupled_json_initial_conditions.py solver_vtu_and_bcs.xml --write
+python3 initialize_0D_boundary_conditions.py solver_vtu_and_bcs.xml --write
 ```
 
 ## Troubleshooting
 
 - If the script errors about missing point arrays, confirm the array names with a
   VTU inspector and pass `--pressure-array`/`--velocity-array` accordingly.
+- If the script says a VTU or VTP is a Git LFS pointer file, install/enable Git
+  LFS and fetch the real test assets before running the example.
 - If surfaces report zero area, inspect the VTP files for degenerate cells.

@@ -40,7 +40,22 @@ def resolve_path(base_dir: Path, raw_path: str) -> Path:
     return base_dir / path
 
 
+def validate_vtk_xml_file(path: Path) -> None:
+    try:
+        with path.open("rb") as file:
+            header = file.read(128)
+    except OSError as error:
+        raise RuntimeError(f"Could not open VTK XML file {path}: {error}") from error
+
+    if header.startswith(b"version https://git-lfs.github.com/spec/v1"):
+        raise RuntimeError(
+            f"{path} is a Git LFS pointer file, not downloaded VTK data. "
+            "Fetch the LFS contents before running this utility."
+        )
+
+
 def read_unstructured_grid(path: Path) -> vtk.vtkUnstructuredGrid:
+    validate_vtk_xml_file(path)
     reader = vtk.vtkXMLUnstructuredGridReader()
     reader.SetFileName(str(path))
     reader.Update()
@@ -51,6 +66,7 @@ def read_unstructured_grid(path: Path) -> vtk.vtkUnstructuredGrid:
 
 
 def read_polydata(path: Path) -> vtk.vtkPolyData:
+    validate_vtk_xml_file(path)
     reader = vtk.vtkXMLPolyDataReader()
     reader.SetFileName(str(path))
     reader.Update()
