@@ -14,14 +14,7 @@ from pathlib import Path
 import sys
 from typing import Iterable
 
-
-# Slab-calibration parameters used by the canonical reference experiment.
-EPSILON_0 = 0.1
-EPSILON_INF = 1.0
-XI_T = 4.0e3
-ETA_T = 1.0e2
-CALCIUM_REST = 1.25e-4
-CALCIUM_CRIT = 8.0e-4
+import nash_panfilov_2004 as model
 
 # Canonical calcium protocol.
 C0 = 1.0e-4
@@ -32,19 +25,6 @@ ONSET_MS = 10.0
 BASE_DT_MS = 1.0
 BASE_STEPS = 200
 CHECKPOINT_STEPS = (0, 10, 30, 60, 99, 149, 199)
-
-
-def gompertz_rate(calcium: float) -> float:
-    """Calcium-adapted Göktepe--Kuhl Eq. 47 rate coefficient."""
-    return EPSILON_0 + (EPSILON_INF - EPSILON_0) * math.exp(
-        -math.exp(-XI_T * (calcium - CALCIUM_CRIT))
-    )
-
-
-def tension_rhs(tension: float, calcium: float) -> float:
-    """Calcium-adapted Göktepe--Kuhl Eq. 46."""
-    equilibrium_tension = ETA_T * (calcium - CALCIUM_REST)
-    return gompertz_rate(calcium) * (equilibrium_tension - tension)
 
 
 def peak_raw_calcium_factor() -> float:
@@ -81,19 +61,33 @@ def fe_solution(dt_ms: float, sample_times_ms: Iterable[float]) -> dict[float, f
         if not math.isclose(index * dt_ms, time, rel_tol=0.0, abs_tol=1.0e-12):
             raise ValueError(f"sample time {time} is not aligned with dt={dt_ms}")
 
-    tension = 0.0
+    states = model.create_states_array()
+    rates = [math.nan] * model.STATE_COUNT
+    variables = model.create_variables_array()
+    states[0] = 0.0
+
+    def prescribed_calcium(voi, states, rates, variables, variable_index):
+        return calcium_at(voi)
+
+    model.initialise_variables(
+        0.0, states, rates, variables, prescribed_calcium
+    )
+
     values: dict[float, float] = {}
     final_index = max(sample_indices)
     for index in range(final_index):
         t_ms = index * dt_ms
-        tension += dt_ms * tension_rhs(tension, calcium_at(t_ms))
-        if not math.isfinite(tension):
+        model.compute_rates(
+            t_ms, states, rates, variables, prescribed_calcium
+        )
+        states[0] += dt_ms * rates[0]
+        if not math.isfinite(states[0]):
             raise FloatingPointError(
                 f"non-finite Nash-Panfilov state at step {index + 1}"
             )
         completed_steps = index + 1
         if completed_steps in sample_indices:
-            values[sample_indices[completed_steps]] = tension
+            values[sample_indices[completed_steps]] = states[0]
     return values
 
 

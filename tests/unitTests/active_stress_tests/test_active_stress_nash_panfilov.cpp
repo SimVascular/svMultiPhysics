@@ -12,11 +12,12 @@
  * @f$\Delta t=1\,\mathrm{ms}@f$, the prescribed calcium transient, and the
  * slab-calibration parameters configured below.
  *
- * The trusted reference is generated independently with Forward Euler by
- * @c reference_generators/active_stress/nash_panfilov/generate_nash_panfilov.py,
- * not by svMultiPhysics. Because active tension is the model's sole state, the
- * reference @c Ta column is used for both comparisons. See @ref NashPanfilov
- * for the model equations and calcium adaptation.
+ * The trusted reference uses libCellML-generated code adapted from the pinned
+ * Physiome Nash--Panfilov 2004 CellML model. See the
+ * [generator README](../reference_generators/active_stress/nash_panfilov/README.md)
+ * for provenance and reproduction. Because active tension is the model's sole
+ * state, the reference @c Ta column is used for both comparisons. See
+ * @ref NashPanfilov for the model equations and calcium adaptation.
  */
 TEST(ActiveStressTrajectory, NashPanfilov) {
   NashPanfilov::Parameters params;
