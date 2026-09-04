@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
+/// @file
+
 #include "ionic_model_test_helpers.h"
 #include "ionic_ttp.h"
 #include "gtest/gtest.h"
@@ -50,9 +52,9 @@ void run_ttp_trajectory(
  * The seven main states use Forward Euler and the twelve gates use
  * Rush--Larsen. The test applies @f$I_\mathrm{stim}=-52\,\mathrm{pA/pF}@f$
  * for @f$10\leq t<11\,\mathrm{ms}@f$, sets @f$K_\mathrm{sac}=0@f$, and uses
- * no pre-pacing. The reference is generated independently; see
- * @c reference_generators/ionic_model/ten_tusscher_panfilov/README.md for
- * source provenance and reproduction details. See @ref TTP for model details.
+ * no pre-pacing. The reference uses adapted Physiome CellML-generated TP06
+ * EPI code; see the [generator README](../reference_generators/ionic_model/ten_tusscher_panfilov/README.md)
+ * for provenance and reproduction. See @ref TTP for the model formulation.
  */
 TEST(IonicModelTrajectory, TTPEpi)
 {
@@ -68,9 +70,9 @@ TEST(IonicModelTrajectory, TTPEpi)
  * The seven main states use Forward Euler and the twelve gates use
  * Rush--Larsen. The test applies @f$I_\mathrm{stim}=-52\,\mathrm{pA/pF}@f$
  * for @f$10\leq t<11\,\mathrm{ms}@f$, sets @f$K_\mathrm{sac}=0@f$, and uses
- * no pre-pacing. The reference is generated independently; see
- * @c reference_generators/ionic_model/ten_tusscher_panfilov/README.md for
- * source provenance and reproduction details. See @ref TTP for model details.
+ * no pre-pacing. The reference uses adapted Physiome CellML-generated TP06
+ * ENDO code; see the [generator README](../reference_generators/ionic_model/ten_tusscher_panfilov/README.md)
+ * for provenance and reproduction. See @ref TTP for the model formulation.
  */
 TEST(IonicModelTrajectory, TTPEndo)
 {
@@ -91,9 +93,9 @@ TEST(IonicModelTrajectory, TTPEndo)
  * The seven main states use Forward Euler and the twelve gates use
  * Rush--Larsen. The test applies @f$I_\mathrm{stim}=-52\,\mathrm{pA/pF}@f$
  * for @f$10\leq t<11\,\mathrm{ms}@f$, sets @f$K_\mathrm{sac}=0@f$, and uses
- * no pre-pacing. The reference is generated independently; see
- * @c reference_generators/ionic_model/ten_tusscher_panfilov/README.md for
- * source provenance and reproduction details. See @ref TTP for model details.
+ * no pre-pacing. The reference uses adapted Physiome CellML-generated TP06
+ * M-cell code; see the [generator README](../reference_generators/ionic_model/ten_tusscher_panfilov/README.md)
+ * for provenance and reproduction. See @ref TTP for the model formulation.
  */
 TEST(IonicModelTrajectory, TTPM)
 {
