@@ -1,6 +1,6 @@
-# update_coupled_json_initial_conditions.py
+# Initialize svZeroD boundary conditions
 
-Generate svZeroD coupled `initial_condition` values from an svMultiPhysics VTU restart.
+A Python script used to initialize svZeroD boundary conditions from the VTU file used by svMultiPhysics for velocity and pressure initial conditions. 
 
 ## Purpose
 
