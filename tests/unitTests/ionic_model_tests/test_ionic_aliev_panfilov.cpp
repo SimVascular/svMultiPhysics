@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 
+/// @file
+
 #include "ionic_aliev_panfilov.h"
 #include "ionic_model_test_helpers.h"
 #include "gtest/gtest.h"
@@ -11,10 +13,12 @@
  * @f$\Delta t=0.1\,\mathrm{ms}@f$.
  *
  * The test applies @f$I_\mathrm{stim}=-35.714@f$ for
- * @f$10\leq t<12\,\mathrm{ms}@f$ and sets @f$K_\mathrm{sac}=0@f$. The trusted
- * reference is generated independently by
- * @c reference_generators/ionic_model/aliev_panfilov/generate_aliev_panfilov.py,
- * not by svMultiPhysics. See @ref AlievPanfilov for the equations and scaling.
+ * @f$10\leq t<12\,\mathrm{ms}@f$ and sets @f$K_\mathrm{sac}=0@f$. The
+ * reference uses libCellML-generated code adapted from the pinned Physiome
+ * Aliev--Panfilov CellML model; see the
+ * [generator README](../reference_generators/ionic_model/aliev_panfilov/README.md)
+ * for provenance and reproduction. See @ref AlievPanfilov for the model
+ * formulation.
  */
 TEST(IonicModelTrajectory, AlievPanfilov)
 {

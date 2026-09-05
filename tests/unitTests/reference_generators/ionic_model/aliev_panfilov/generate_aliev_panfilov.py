@@ -13,17 +13,15 @@ import math
 from pathlib import Path
 from typing import Iterable
 
+from aliev_panfilov_1996 import (
+    compute_computed_constants,
+    compute_rates,
+    create_states_array,
+    create_variables_array,
+    initialise_variables,
+)
 
-ALPHA = 0.01
-GAMMA = 0.002  # svMultiPhysics parameter name: a
-B = 0.15
-C = 8.0
-MU1 = 0.2
-MU2 = 0.3
 
-VOLTAGE_SCALE_MV = 100.0
-VOLTAGE_OFFSET_MV = -80.0
-TIME_SCALE_MS = 12.90
 BASE_DT_MS = 0.1
 BASE_STEPS = 6000
 INITIAL_V_MV = -80.0
@@ -36,22 +34,6 @@ CHECKPOINT_STEPS = (
 )
 
 
-def ap_rhs(
-    u: float, w: float, stimulus: float = 0.0, stretch_current: float = 0.0
-) -> tuple[float, float]:
-    """Göktepe--Kuhl split AP equations with svMP current-sign convention."""
-    du = C * u * (u - ALPHA) * (1.0 - u) - u * w
-    du += -stimulus + stretch_current
-    dw = (GAMMA + MU1 * w / (MU2 + u)) * (
-        -w - C * u * (u - B - 1.0)
-    )
-    return du, dw
-
-
-def voltage_from_u(u: float) -> float:
-    return VOLTAGE_SCALE_MV * u + VOLTAGE_OFFSET_MV
-
-
 def public_stimulus_at_time(time_ms: float) -> float:
     """Return public stimulus; negative current is depolarizing for AP."""
     if STIMULUS_START_MS <= time_ms < STIMULUS_END_MS:
@@ -59,8 +41,15 @@ def public_stimulus_at_time(time_ms: float) -> float:
     return 0.0
 
 
-def internal_stimulus_at_time(time_ms: float) -> float:
-    return public_stimulus_at_time(time_ms) * TIME_SCALE_MS / VOLTAGE_SCALE_MV
+def cellml_stimulus(
+    time_ms: float,
+    states: list[float],
+    rates: list[float],
+    variables: list[float],
+    variable_index: int,
+) -> float:
+    """Map svMP public stimulus to the CellML current convention."""
+    return -variables[0] * public_stimulus_at_time(time_ms)
 
 
 def fe_solution(
@@ -74,11 +63,17 @@ def fe_solution(
         if not math.isclose(index * dt_ms, time, rel_tol=0.0, abs_tol=1.0e-12):
             raise ValueError(f"sample time {time} is not aligned with dt={dt_ms}")
 
-    u = (INITIAL_V_MV - VOLTAGE_OFFSET_MV) / VOLTAGE_SCALE_MV
-    w = INITIAL_W
+    states = create_states_array()
+    rates = create_states_array()
+    variables = create_variables_array()
+    initialise_variables(0.0, states, rates, variables, cellml_stimulus)
+    states[0] = INITIAL_V_MV
+    states[1] = INITIAL_W
+    compute_computed_constants(variables)
+
     values: dict[float, tuple[float, float]] = {}
     if 0 in sample_indices:
-        values[sample_indices[0]] = (u, w)
+        values[sample_indices[0]] = (states[0], states[1])
     final_index = max(sample_indices)
     if final_time_ms is not None:
         requested_final_index = round(final_time_ms / dt_ms)
@@ -90,17 +85,16 @@ def fe_solution(
         ):
             raise ValueError(f"final time {final_time_ms} is not aligned with dt={dt_ms}")
         final_index = max(final_index, requested_final_index)
-    dt_tau = dt_ms / TIME_SCALE_MS
+
     for index in range(final_index):
-        stimulus = internal_stimulus_at_time(index * dt_ms)
-        du, dw = ap_rhs(u, w, stimulus=stimulus)
-        u += dt_tau * du
-        w += dt_tau * dw
-        if not (math.isfinite(u) and math.isfinite(w)):
+        compute_rates(index * dt_ms, states, rates, variables, cellml_stimulus)
+        states[0] += dt_ms * rates[0]
+        states[1] += dt_ms * rates[1]
+        if not all(math.isfinite(value) for value in states):
             raise FloatingPointError(f"non-finite AP state at step {index + 1}")
         completed_steps = index + 1
         if completed_steps in sample_indices:
-            values[sample_indices[completed_steps]] = (u, w)
+            values[sample_indices[completed_steps]] = (states[0], states[1])
     return values
 
 
@@ -111,8 +105,8 @@ def write_oracle(output: Path, samples: dict[float, tuple[float, float]]) -> Non
         writer.writerow(("step", "V_mV", "w"))
         for step in CHECKPOINT_STEPS:
             time_ms = step * BASE_DT_MS
-            u, w = samples[time_ms]
-            writer.writerow((step, f"{voltage_from_u(u):.16e}", f"{w:.16e}"))
+            voltage, w = samples[time_ms]
+            writer.writerow((step, f"{voltage:.16e}", f"{w:.16e}"))
 
 
 def main() -> None:
