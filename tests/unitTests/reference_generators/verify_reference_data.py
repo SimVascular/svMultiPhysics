@@ -16,6 +16,8 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parent
+
+
 @dataclass(frozen=True)
 class ReferenceSpecification:
     label: str
@@ -39,24 +41,6 @@ PURE_PYTHON_REFERENCES = (
         "FitzHugh-Nagumo",
         ROOT / "ionic_model/fitzhugh_nagumo/generate_fitzhugh_nagumo.py",
         "ionic_fitzhugh_nagumo_fe_trajectory.csv",
-    ),
-    ReferenceSpecification(
-        "Bueno-Orovio EPI",
-        ROOT / "ionic_model/bueno_orovio/generate_bueno_orovio.py",
-        "ionic_bueno_orovio_epi_trajectory.csv",
-        ("--profile", "epi"),
-    ),
-    ReferenceSpecification(
-        "Bueno-Orovio ENDO",
-        ROOT / "ionic_model/bueno_orovio/generate_bueno_orovio.py",
-        "ionic_bueno_orovio_endo_trajectory.csv",
-        ("--profile", "endo"),
-    ),
-    ReferenceSpecification(
-        "Bueno-Orovio M",
-        ROOT / "ionic_model/bueno_orovio/generate_bueno_orovio.py",
-        "ionic_bueno_orovio_m_trajectory.csv",
-        ("--profile", "m"),
     ),
     ReferenceSpecification(
         "TP06 EPI",
@@ -150,6 +134,11 @@ def main() -> int:
                 failures += 1
                 print(f"{specification.label} FAIL {error}")
 
+        for label in ("Bueno-Orovio EPI", "Bueno-Orovio ENDO", "Bueno-Orovio M"):
+            print(
+                f"{label} NOT CHECKED -- no in-repository generator; see "
+                "ionic_model/bueno_orovio/README.md"
+            )
         print(
             "Regazzoni NOT CHECKED -- no in-repository generator; see "
             "active_stress/regazzoni/README.md"

@@ -1,21 +1,22 @@
 # Unit-test reference generators
 
 These tools generate the trusted trajectory CSVs stored in
-`tests/unitTests/reference_data`. They implement the cited model equations;
-none reads svMultiPhysics output. The separately produced Regazzoni reference
-is documented under `active_stress/regazzoni` but is not regenerated in-repo.
+`tests/unitTests/reference_data`. They use the cited external model sources;
+none reads svMultiPhysics output. The separately produced Bueno--Orovio and
+Regazzoni references are documented in their model directories but are not
+regenerated in-repo.
 
 Generators are grouped by tested interface:
 
 ```text
 active_stress/   Nash-Panfilov generator and Regazzoni reference documentation
-ionic_model/     Aliev-Panfilov, FitzHugh-Nagumo, Bueno-Orovio, and TP06
+ionic_model/     Aliev-Panfilov, FitzHugh-Nagumo, TP06, and BO documentation
 ```
 
-Generator READMEs record their source, protocol, caveats, and generation
-command. The Regazzoni README instead records how its external reference was
-produced. Generators write only to an explicit `--output` path or stdout and
-do not modify repository reference data.
+Generator READMEs record their source, protocol, adaptations, and generation
+command. The Bueno--Orovio and Regazzoni READMEs instead record how their
+external references were produced. Generators write only to an explicit
+`--output` path or stdout and do not modify repository reference data.
 
 ## Requirements
 
@@ -25,15 +26,17 @@ the standard library.
 For example:
 
 ```bash
-python3 ionic_model/bueno_orovio/generate_bueno_orovio.py \
-  --profile epi --output /tmp/ionic_bueno_orovio_epi_trajectory.csv
+python3 ionic_model/aliev_panfilov/generate_aliev_panfilov.py \
+  --output /tmp/ionic_aliev_panfilov_stimulated_trajectory.csv
 ```
 
-Verify all generated references against an svMultiPhysics checkout with:
+Verify all in-repository generated references against an svMultiPhysics
+checkout with:
 
 ```bash
 python3 verify_reference_data.py --repo /path/to/svMultiPhysics
 ```
 
-The verifier checks the nine in-repository generators byte-for-byte and reports
-that Regazzoni is not checked. It never overwrites canonical files.
+The verifier checks the six in-repository generated references byte-for-byte
+and reports that Bueno--Orovio and Regazzoni are not checked. It never
+overwrites canonical files.
