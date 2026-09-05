@@ -37,6 +37,8 @@ checkout with:
 python3 verify_reference_data.py --repo /path/to/svMultiPhysics
 ```
 
-The verifier checks the six in-repository generated references byte-for-byte
-and reports that Bueno--Orovio and Regazzoni are not checked. It never
-overwrites canonical files.
+The verifier runs each generator twice to confirm deterministic output, then
+compares the result byte-for-byte against the committed canonical CSV.
+Bueno--Orovio and Regazzoni are reported as NOT CHECKED (intentional — no
+in-repository generator exists for them). The verifier never overwrites
+canonical files.
