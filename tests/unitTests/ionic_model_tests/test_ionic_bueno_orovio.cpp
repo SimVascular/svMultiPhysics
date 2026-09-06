@@ -3,7 +3,7 @@
 
 /// @file
 
-#include "ionic_bueno_orovio.h"
+#include "IonicModelBuenoOrovio.h"
 #include "ionic_model_test_helpers.h"
 #include "gtest/gtest.h"
 

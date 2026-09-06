@@ -3,7 +3,7 @@
 
 /// @file
 
-#include "ionic_aliev_panfilov.h"
+#include "IonicModelAlievPanfilov.h"
 #include "ionic_model_test_helpers.h"
 #include "gtest/gtest.h"
 

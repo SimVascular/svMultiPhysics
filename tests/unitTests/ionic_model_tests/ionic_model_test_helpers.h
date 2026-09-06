@@ -4,7 +4,7 @@
 #ifndef IONIC_MODEL_TEST_HELPERS_H
 #define IONIC_MODEL_TEST_HELPERS_H
 
-#include "ionic_model.h"
+#include "IonicModel.h"
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "Vector.h"

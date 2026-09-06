@@ -4,7 +4,7 @@
 #ifndef ACTIVE_STRESS_TEST_HELPERS_H
 #define ACTIVE_STRESS_TEST_HELPERS_H
 
-#include "active_stress.h"
+#include "ActiveStress.h"
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "Vector.h"

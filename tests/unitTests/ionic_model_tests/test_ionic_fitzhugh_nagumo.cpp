@@ -3,7 +3,7 @@
 
 /// @file
 
-#include "ionic_fitzhugh_nagumo.h"
+#include "IonicModelFitzHughNagumo.h"
 #include "ionic_model_test_helpers.h"
 #include "gtest/gtest.h"
 

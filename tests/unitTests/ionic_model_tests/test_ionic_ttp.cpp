@@ -4,7 +4,7 @@
 /// @file
 
 #include "ionic_model_test_helpers.h"
-#include "ionic_ttp.h"
+#include "IonicModelTTP.h"
 #include "gtest/gtest.h"
 
 #include <string>
