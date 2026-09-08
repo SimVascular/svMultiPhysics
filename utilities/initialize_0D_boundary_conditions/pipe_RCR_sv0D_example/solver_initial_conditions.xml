@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svMultiPhysicsFile version="0.1">
+
+<Add_mesh name="msh">
+  <Mesh_file_path> ../../../tests/cases/fluid/pipe_RCR_sv0D/mesh-complete/mesh-complete.mesh.vtu </Mesh_file_path>
+  <Initial_pressures_file_path> ../../../tests/cases/fluid/pipe_RCR_sv0D/result_002.vtu </Initial_pressures_file_path>
+  <Initial_velocities_file_path> ../../../tests/cases/fluid/pipe_RCR_sv0D/result_002.vtu </Initial_velocities_file_path>
+
+  <Add_face name="lumen_inlet">
+    <Face_file_path> ../../../tests/cases/fluid/pipe_RCR_sv0D/mesh-complete/mesh-surfaces/lumen_inlet.vtp </Face_file_path>
+  </Add_face>
+
+  <Add_face name="lumen_outlet">
+    <Face_file_path> ../../../tests/cases/fluid/pipe_RCR_sv0D/mesh-complete/mesh-surfaces/lumen_outlet.vtp </Face_file_path>
+  </Add_face>
+
+  <Add_face name="lumen_wall">
+    <Face_file_path> ../../../tests/cases/fluid/pipe_RCR_sv0D/mesh-complete/mesh-surfaces/lumen_wall.vtp </Face_file_path>
+  </Add_face>
+</Add_mesh>
+
+<Add_equation type="fluid">
+  <svZeroDSolver_interface>
+    <Configuration_file> ../../../tests/cases/fluid/pipe_RCR_sv0D/svzerod_3Dcoupling.json </Configuration_file>
+  </svZeroDSolver_interface>
+
+  <Add_BC name="lumen_outlet">
+    <Type> Neu </Type>
+    <Time_dependence> Coupled </Time_dependence>
+    <Coupling_interface>
+      <svZeroDSolver_block> RCR_coupling </svZeroDSolver_block>
+    </Coupling_interface>
+  </Add_BC>
+</Add_equation>
+
+</svMultiPhysicsFile>
