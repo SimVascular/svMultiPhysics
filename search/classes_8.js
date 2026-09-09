@@ -12,12 +12,14 @@ var searchData=
   ['ionicinitialstateparameters_9',['IonicInitialStateParameters',['../class_ionic_initial_state_parameters.html',1,'']]],
   ['ionicmodel_10',['IonicModel',['../class_ionic_model.html',1,'']]],
   ['ionicmodelparameters_11',['IonicModelParameters',['../class_ionic_model_parameters.html',1,'']]],
-  ['iotype_12',['ioType',['../classio_type.html',1,'']]],
-  ['is_5ffield_5ftype_13',['is_field_type',['../structsvmp_1_1_f_e_1_1is__field__type.html',1,'svmp::FE']]],
-  ['is_5ffield_5ftype_3c_20fieldtype_20_3e_14',['is_field_type&lt; FieldType &gt;',['../structsvmp_1_1_f_e_1_1is__field__type_3_01_field_type_01_4.html',1,'svmp::FE']]],
-  ['is_5findex_5ftype_15',['is_index_type',['../structsvmp_1_1_f_e_1_1is__index__type.html',1,'svmp::FE']]],
-  ['is_5findex_5ftype_3c_20dofindex_20_3e_16',['is_index_type&lt; DofIndex &gt;',['../structsvmp_1_1_f_e_1_1is__index__type_3_01_dof_index_01_4.html',1,'svmp::FE']]],
-  ['is_5findex_5ftype_3c_20globalindex_20_3e_17',['is_index_type&lt; GlobalIndex &gt;',['../structsvmp_1_1_f_e_1_1is__index__type_3_01_global_index_01_4.html',1,'svmp::FE']]],
-  ['is_5findex_5ftype_3c_20localindex_20_3e_18',['is_index_type&lt; LocalIndex &gt;',['../structsvmp_1_1_f_e_1_1is__index__type_3_01_local_index_01_4.html',1,'svmp::FE']]],
-  ['iterator_19',['Iterator',['../class_vector_1_1_iterator.html',1,'Vector']]]
+  ['ionicmodeltrajectoryconfiguration_12',['IonicModelTrajectoryConfiguration',['../struct_ionic_model_trajectory_configuration.html',1,'']]],
+  ['ionicmodeltrajectorytest_13',['IonicModelTrajectoryTest',['../class_ionic_model_trajectory_test.html',1,'']]],
+  ['iotype_14',['ioType',['../classio_type.html',1,'']]],
+  ['is_5ffield_5ftype_15',['is_field_type',['../structsvmp_1_1_f_e_1_1is__field__type.html',1,'svmp::FE']]],
+  ['is_5ffield_5ftype_3c_20fieldtype_20_3e_16',['is_field_type&lt; FieldType &gt;',['../structsvmp_1_1_f_e_1_1is__field__type_3_01_field_type_01_4.html',1,'svmp::FE']]],
+  ['is_5findex_5ftype_17',['is_index_type',['../structsvmp_1_1_f_e_1_1is__index__type.html',1,'svmp::FE']]],
+  ['is_5findex_5ftype_3c_20dofindex_20_3e_18',['is_index_type&lt; DofIndex &gt;',['../structsvmp_1_1_f_e_1_1is__index__type_3_01_dof_index_01_4.html',1,'svmp::FE']]],
+  ['is_5findex_5ftype_3c_20globalindex_20_3e_19',['is_index_type&lt; GlobalIndex &gt;',['../structsvmp_1_1_f_e_1_1is__index__type_3_01_global_index_01_4.html',1,'svmp::FE']]],
+  ['is_5findex_5ftype_3c_20localindex_20_3e_20',['is_index_type&lt; LocalIndex &gt;',['../structsvmp_1_1_f_e_1_1is__index__type_3_01_local_index_01_4.html',1,'svmp::FE']]],
+  ['iterator_21',['Iterator',['../class_vector_1_1_iterator.html',1,'Vector']]]
 ];

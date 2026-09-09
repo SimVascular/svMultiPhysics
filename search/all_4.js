@@ -55,9 +55,10 @@ var searchData=
   ['boundaryconditionvtparrayexception_52',['BoundaryConditionVtpArrayException',['../class_boundary_condition_vtp_array_exception.html',1,'']]],
   ['bs_53',['bs',['../classmsh_type.html#aec1de46a85638c002dcdb97e0b5743e9',1,'mshType']]],
   ['bstype_54',['bsType',['../classbs_type.html',1,'']]],
-  ['buenoorovio_55',['buenoorovio',['../class_bueno_orovio.html#af148545a19f3324ea55feb53c17d5da5',1,'BuenoOrovio::BuenoOrovio()'],['../class_bueno_orovio.html',1,'BuenoOrovio']]],
-  ['buf_5fc_56',['Buf_c',['../class_t_t_p.html#ade5a3229a1ef8076b85903f732b5c346',1,'TTP']]],
-  ['buf_5fsr_57',['Buf_sr',['../class_t_t_p.html#a05dde0cbe69b460a0adc14244786da38',1,'TTP']]],
-  ['buf_5fss_58',['Buf_ss',['../class_t_t_p.html#a88767bdc20c4b90b25bcd3b8a89ea8a6',1,'TTP']]],
-  ['by_20element_20assembly_20trilinos_20native_59',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]]
+  ['bueno_20ndash_20orovio_20ionic_20references_55',['Bueno&amp;ndash;Orovio ionic references',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener4982de9a8dd4e554ab4ba3c9597b0af4.html',1,'']]],
+  ['buenoorovio_56',['buenoorovio',['../class_bueno_orovio.html#af148545a19f3324ea55feb53c17d5da5',1,'BuenoOrovio::BuenoOrovio()'],['../class_bueno_orovio.html',1,'BuenoOrovio']]],
+  ['buf_5fc_57',['Buf_c',['../class_t_t_p.html#ade5a3229a1ef8076b85903f732b5c346',1,'TTP']]],
+  ['buf_5fsr_58',['Buf_sr',['../class_t_t_p.html#a05dde0cbe69b460a0adc14244786da38',1,'TTP']]],
+  ['buf_5fss_59',['Buf_ss',['../class_t_t_p.html#a88767bdc20c4b90b25bcd3b8a89ea8a6',1,'TTP']]],
+  ['by_20element_20assembly_20trilinos_20native_60',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]]
 ];

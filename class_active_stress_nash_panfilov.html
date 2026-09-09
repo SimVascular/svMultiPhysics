@@ -265,7 +265,9 @@ Additional Inherited Members</h2></td></tr>
 \end{aligned} \]
 </p>
 <p> where \(\eta_\text{T}\), \(\calcium_\text{rest}\), \(\calcium_\text{crit}\), \(\varepsilon_0\), \(\varepsilon_i\) and \(\xi_T\) are user-defined model parameters. The function \(\varepsilon(\calcium)\) is a sigmoidal-shaped calcium-dependent time constant (see Figure 3 in [2] for more details).</p>
-<dl class="section note"><dt>Note</dt><dd>The sensitivity of the model to calcium is controlled by the paramter \(\eta_\text{T}\), which has the same units of active tension over calcium. Therefore, if the ionic model providing the calcium is phenomenological (see <a class="el" href="class_ionic_model.html">IonicModel</a>) and calcium is non-dimensional, this parameter may need to be rescaled as well. Similar considerations apply to \(\xi_T\).</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The published formulations [1,2] are driven by transmembrane potential. This implementation substitutes intracellular calcium, with \(\eta_T\), \(\calcium_\text{rest}\), \(\xi_T\), and \(\calcium_\text{crit}\) corresponding to \(k_\sigma\), \(\Phi_r\), \(\xi\), and \(\bar{\Phi}\) in [2], respectively.</dd>
+<dd>
+The sensitivity of the model to calcium is controlled by the paramter \(\eta_\text{T}\), which has the same units of active tension over calcium. Therefore, if the ionic model providing the calcium is phenomenological (see <a class="el" href="class_ionic_model.html">IonicModel</a>) and calcium is non-dimensional, this parameter may need to be rescaled as well. Similar considerations apply to \(\xi_T\).</dd></dl>
 <p><b>References</b>:</p><ol type="1">
 <li><a href="https://doi.org/10.1016/j.pbiomolbio.2004.01.016">Nash, Panfilov (2004)</a></li>
 <li><a href="https://doi.org/10.1007/s00466-009-0434-z">Goktepe, Kuhl (2009)</a> </li>

@@ -11,11 +11,12 @@ var searchData=
   ['reference_5fcell_5fmeasure_8',['reference_cell_measure',['../classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html#a7e090c7a7dfec7c1fe57ec75975331bf',1,'svmp::FE::quadrature::QuadratureRule']]],
   ['register_5fchild_9',['register_child',['../class_factory.html#a3efe82007189092f5b0a8f54a529dab6',1,'Factory']]],
   ['residual_10',['residual',['../classsvmp_1_1_f_e_1_1_convergence_exception.html#a4a6b809c746038c54cb7e16b49472f9b',1,'svmp::FE::ConvergenceException']]],
-  ['resize_11',['resize',['../class_array3.html#ad8f9340b441a4bab8f407ed4441fb71e',1,'Array3::resize()'],['../class_vector.html#ac2a45f807b626339a4b9b74747080f30',1,'Vector::resize()']]],
+  ['resize_11',['resize',['../class_vector.html#ac2a45f807b626339a4b9b74747080f30',1,'Vector::resize()'],['../class_array3.html#ad8f9340b441a4bab8f407ed4441fb71e',1,'Array3::resize()']]],
   ['restore_5fstate_12',['restore_state',['../class_coupled_boundary_condition.html#ac0d9f60e60bbf259893aacb497968ab6',1,'CoupledBoundaryCondition']]],
   ['return_5fsolution_13',['return_solution',['../class_one_d_solver_interface.html#ac1245bee1a45efed71ca16b33232cecb',1,'OneDSolverInterface']]],
   ['robinboundarycondition_14',['robinboundarycondition',['../class_robin_boundary_condition.html#a197219739f29af0ca1818abb4c3b7b98',1,'RobinBoundaryCondition::RobinBoundaryCondition()'],['../class_robin_boundary_condition.html#a2817bad3b49d5e28f0adc481992c33c7',1,'RobinBoundaryCondition::RobinBoundaryCondition(const std::string &amp;vtp_file_path, bool normal_only, const faceType &amp;face, SimulationLogger &amp;logger)'],['../class_robin_boundary_condition.html#a479ac0caa00ca6a3b284555c7555f974',1,'RobinBoundaryCondition::RobinBoundaryCondition(double uniform_stiffness, double uniform_damping, bool normal_only, const faceType &amp;face, SimulationLogger &amp;logger)']]],
   ['rslice_15',['rslice',['../class_array3.html#a68a1f9ccf53d2a5ca9b7afca1ba4f5a2',1,'Array3']]],
   ['ru_5findex_16',['ru_index',['../class_active_stress_regazzoni.html#a4fbb48cc43309759e3dd03a460470b78',1,'ActiveStressRegazzoni']]],
-  ['run_5fsimulation_17',['run_simulation',['../class_one_d_solver_interface.html#a163e23b1dc2d1022c074de5e2463a0aa',1,'OneDSolverInterface']]]
+  ['run_17',['run',['../class_ionic_model_trajectory_test.html#a1fb4703cfe5d4686043a7e7e59ea2a44',1,'IonicModelTrajectoryTest::run()'],['../class_active_stress_trajectory_test.html#a5ac279d05701beafe05d0e72d2428e9e',1,'ActiveStressTrajectoryTest::run()']]],
+  ['run_5fsimulation_18',['run_simulation',['../class_one_d_solver_interface.html#a163e23b1dc2d1022c074de5e2463a0aa',1,'OneDSolverInterface']]]
 ];
