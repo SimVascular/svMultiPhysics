@@ -3,7 +3,9 @@
 
 #include "post.h"
 
+#include "Core/Exception.h"
 #include "FE/Common/FEException.h"
+#include "FE/Math/DenseLinearAlgebra.h"
 #include "all_fun.h"
 #include "darcy.h"
 #include "fluid.h"
@@ -15,7 +17,10 @@
 #include "shells.h"
 #include "utils.h"
 #include "vtk_xml.h"
+#include <algorithm>
+#include <cmath>
 #include <math.h>
+#include <vector>
 
 namespace post {
 
@@ -880,6 +885,13 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
   Array<double> Nx(nsd,eNoN); 
   Vector<double> N(eNoN);
 
+  // Linear-simplex flux is constant; lumped recovery is already exact.
+  const bool project_flux = outGrp == OutputNameType::outGrp_darcyFlux &&
+      lM.eType != ElementType::TRI3 && lM.eType != ElementType::TET4;
+  // DenseLinearAlgebra expects row-major matrices and multiple right-hand sides.
+  std::vector<double> mass(project_flux ? eNoN * eNoN : 0);
+  std::vector<double> flux_rhs(project_flux ? eNoN * nsd : 0);
+
   int insd = nsd;
   if (lM.lFib) {
     insd = 1;
@@ -890,6 +902,10 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
     if (cDmn == -1) {
       continue;
     } 
+    std::fill(mass.begin(), mass.end(), 0.0);
+    std::fill(flux_rhs.begin(), flux_rhs.end(), 0.0);
+    double element_volume = 0.0;
+
     if (lM.eType == ElementType::NRB) {
       // CALL NRBNNX(lM, e)
     }
@@ -1098,12 +1114,48 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
         throw std::runtime_error("Error in the post() function.");
       }
 
-      // Mapping Tau into the nodes by assembling it into a local vector
-      for (int a = 0; a < eNoN; a++) {
-        int Ac = lM.IEN(a,e);
-        sA(Ac) = sA(Ac) + w*N(a);
-        for (int i = 0; i < maxNSD; i++) {
-          sF(i,Ac) = sF(i,Ac) + w*N(a)*lRes(i);
+      if (project_flux) {
+        // M_ab = integral(N_a N_b), B_ai = integral(N_a q_i).
+        // Consistent projection avoids zero lumped weights on affine nodes.
+        element_volume += w;
+        for (int a = 0; a < eNoN; ++a) {
+          const double weighted_shape = w * N(a);
+          for (int b = 0; b < eNoN; ++b) {
+            mass[a * eNoN + b] += weighted_shape * N(b);
+          }
+          for (int i = 0; i < nsd; ++i) {
+            flux_rhs[a * nsd + i] += weighted_shape * lRes(i);
+          }
+        }
+      } else {
+        // Mapping Tau into the nodes by assembling it into a local vector
+        for (int a = 0; a < eNoN; a++) {
+          int Ac = lM.IEN(a,e);
+          sA(Ac) = sA(Ac) + w*N(a);
+          for (int i = 0; i < maxNSD; i++) {
+            sF(i,Ac) = sF(i,Ac) + w*N(a)*lRes(i);
+          }
+        }
+      }
+    }
+
+    if (project_flux) {
+      svmp::check<svmp::InternalErrorException>(
+          std::isfinite(element_volume) && element_volume > 0.0,
+          "Darcy flux projection requires a positive element volume.");
+
+      // Solve (M / volume) Q = B for volume-weighted flux directly.
+      // Normalizing M keeps the pivot tolerance independent of element size.
+      for (double& value : mass) {
+        value /= element_volume;
+      }
+      svmp::FE::math::factor_dense_matrix(mass, eNoN, "Darcy flux mass matrix").solve_in_place(flux_rhs, nsd);
+
+      for (int a = 0; a < eNoN; ++a) {
+        const int Ac = lM.IEN(a,e);
+        sA(Ac) += element_volume;
+        for (int i = 0; i < nsd; ++i) {
+          sF(i,Ac) += flux_rhs[a * nsd + i];
         }
       }
     }
@@ -1114,6 +1166,11 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
 
   for (int a = 0; a < lM.nNo; a++) {
     int Ac = lM.gN(a);
+    if (project_flux) {
+      svmp::check<svmp::InternalErrorException>(
+          std::isfinite(sA(Ac)) && sA(Ac) > 0.0,
+          "Darcy flux projection requires a positive nodal volume weight.");
+    }
     for (int i = 0; i < maxNSD; i++) {
       res(i,a) = sF(i,Ac) / sA(Ac);
     }
