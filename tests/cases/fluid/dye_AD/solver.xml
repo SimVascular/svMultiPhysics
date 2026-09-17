@@ -56,10 +56,6 @@
    <Output type="Spatial" >
       <Velocity> true </Velocity>
       <Pressure> true </Pressure>
-      <Traction> true </Traction>
-      <Vorticity> true</Vorticity>
-      <Divergence> true</Divergence>
-      <WSS> true </WSS>
    </Output>
 
    <Output type="Boundary_integral" >
@@ -110,6 +106,10 @@
 
    <Conductivity> 1e-8 </Conductivity>
    <Source_term> 0.0  </Source_term>
+
+   <Output type="Spatial" >
+     <Temperature> true </Temperature>
+   </Output>
 
    <Output type="Volume_integral" >
      <Temperature> true </Temperature>
