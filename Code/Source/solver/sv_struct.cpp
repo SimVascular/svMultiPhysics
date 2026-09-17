@@ -294,7 +294,12 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     Array<double> ksix(nsd,nsd);
 
     for (int g = 0; g < lM.nG; g++) {
-      if (g == 0 || !lM.lShpF) {
+      // Shape function gradients and the viscous response are constant
+      // within linear simplex elements (tetrahedra, triangles). Bi- and
+      // trilinear hexahedra are sometimes called linear but do not qualify.
+      const bool recompute_visc = (g == 0 || !lM.lShpF);
+
+      if (recompute_visc) {
         auto Nx_g = lM.Nx.slice(g);
         nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -307,7 +312,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       if (nsd == 3) {
         struct_3d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fN,
-                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK);
+                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK, recompute_visc);
 
 #if 0
         if (e == 0 && g == 0) {
@@ -321,7 +326,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       } else if (nsd == 2) {
         struct_2d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fN,
-                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK);
+                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK, recompute_visc);
       }
 
       // Prestress
@@ -349,7 +354,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                const Array<double> &fN, const Array<double> &pS0l,
                Vector<double> &pSl, const Vector<double> &ya_l_f,
                const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
-               Array<double> &lR, Array3<double> &lK) {
+               Array<double> &lR, Array3<double> &lK,
+               const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
 
@@ -440,11 +446,15 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                             ya_g_n, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
-  Array<double> Svis(2,2);
-  Array3<double> Kvis_u(4, eNoN, eNoN);
-  Array3<double> Kvis_v(4, eNoN, eNoN);
+  static Array<double> Svis(2,2);
+  static Array3<double> Kvis_u, Kvis_v;
+  if (Kvis_u.ncols() != eNoN) {
+    Kvis_u.resize(4, eNoN, eNoN);
+    Kvis_v.resize(4, eNoN, eNoN);
+  }
 
-  mat_models::compute_visc_stress_and_tangent(dmn, eNoN, Nx, vx, F, Svis, Kvis_u, Kvis_v);
+  mat_models::compute_visc_stress_and_tangent(dmn, eNoN, Nx, vx, F, Svis, Kvis_u, Kvis_v,
+                                              recompute_visc);
 
   // Elastic + Viscous stresses
   S = S + Svis;
@@ -545,7 +555,8 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                const Array<double> &fN, const Array<double> &pS0l,
                Vector<double> &pSl, const Vector<double> &ya_l_f,
                const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
-               Array<double> &lR, Array3<double> &lK) {
+               Array<double> &lR, Array3<double> &lK,
+               const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
 
@@ -659,11 +670,15 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                             ya_g_n, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
-  Array<double> Svis(3,3);
-  Array3<double> Kvis_u(9, eNoN, eNoN);
-  Array3<double> Kvis_v(9, eNoN, eNoN);
-  
-  mat_models::compute_visc_stress_and_tangent(dmn, eNoN, Nx, vx, F, Svis, Kvis_u, Kvis_v);
+  static Array<double> Svis(3,3);
+  static Array3<double> Kvis_u, Kvis_v;
+  if (Kvis_u.ncols() != eNoN) {
+    Kvis_u.resize(9, eNoN, eNoN);
+    Kvis_v.resize(9, eNoN, eNoN);
+  }
+
+  mat_models::compute_visc_stress_and_tangent(dmn, eNoN, Nx, vx, F, Svis, Kvis_u, Kvis_v,
+                                              recompute_visc);
 
   // Elastic + Viscous stresses
   S = S + Svis;

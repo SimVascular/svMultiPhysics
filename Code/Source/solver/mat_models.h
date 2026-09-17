@@ -66,14 +66,21 @@ void compute_svol_p(const ComMod& com_mod, const CepMod& cep_mod, const stModelT
 void g_vol_pen(const ComMod& com_mod, const dmnType& lDmn, const double p, 
     double& ro, double& bt, double& dro, double& dbt, const double Ja);
 
-void compute_visc_stress_potential(const double mu, const int eNoN, const Array<double>& Nx, const double vx, const double F,
-                        Array<double>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v);
 
-void compute_visc_stress_newtonian(const double mu, const int eNoN, const Array<double>& Nx, const Array<double>& vx, const Array<double>& F,
-                        Array<double>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v);
-
+/// @brief Computes viscous PK2 stress and tangent
+/// for the viscosity model configured for the domain.
+///
+/// @param[in] lDmn Domain, supplying the viscosity model and its parameters.
+/// @param[in] eNoN Number of element nodes.
+/// @param[in] Nx Shape function spatial derivatives.
+/// @param[in] vx Velocity gradient.
+/// @param[in] F Deformation gradient.
+/// @param[out] Svis Viscous 2nd Piola-Kirchhoff stress.
+/// @param[out] Kvis_u,Kvis_v Tangent contributions w.r.t. displacement and velocity.
+/// @param[in] recompute False when the outputs are still valid from the previous call.
 void compute_visc_stress_and_tangent(const dmnType& lDmn, const int eNoN, const Array<double>& Nx, const  Array<double>& vx, const  Array<double>& F,
-                        Array<double>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v);
+                        Array<double>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v,
+                        const bool recompute_visc);
 };
 
 #endif

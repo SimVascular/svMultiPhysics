@@ -186,7 +186,12 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         }
       }
 
-      if (g == 0 || !fs_1[0].lShpF) {
+      // Shape function gradients and the viscous response, are constant
+      // within linear simplex elements (tetrahedra, triangles). Bi- and
+      // trilinear hexahedra are sometimes called linear but do not qualify.
+      const bool recompute_visc = (g == 0 || !fs_1[0].lShpF);
+
+      if (recompute_visc) {
         auto Nx = fs_1[0].Nx.rslice(g);
         nn::gnn(fs_1[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -220,7 +225,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
                                  Nwx, al, yl, dl, bfl, fN, pS0l, pSl, ya_l_f,
-                                 ya_l_s, ya_l_n, lR, lK);
+                                 ya_l_s, ya_l_n, lR, lK, recompute_visc);
           } break;
           case Equation_lElas:
             throw std::runtime_error("[construct_fsi] LELAS3D not implemented");
@@ -233,7 +238,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
                                   fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al,
                                   yl, dl, bfl, fN, ya_l_f, ya_l_s, ya_l_n, lR,
-                                  lK, lKd);
+                                  lK, lKd, recompute_visc);
             break;
           }
 
@@ -256,7 +261,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
                                  Nwx, al, yl, dl, bfl, fN, pS0l, pSl, ya_l_f,
-                                 ya_l_s, ya_l_n, lR, lK);
+                                 ya_l_s, ya_l_n, lR, lK, recompute_visc);
           } break;
 
           case Equation_ustruct:

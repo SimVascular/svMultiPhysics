@@ -25,7 +25,7 @@ SetElementPropsMapType set_3d_element_props = {
     mesh.nG = 6;
     mesh.vtkType = 13;
     mesh.nEf = 3;
-    mesh.lShpF = true;
+    mesh.lShpF = false;
     }
   },
 
