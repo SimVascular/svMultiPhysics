@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['read_5ffiles_5fns_0',['read_files_ns',['../namespaceread__files__ns.html',1,'']]]
+  ['mat_5ffun_0',['mat_fun',['../namespacemat__fun.html',1,'']]]
 ];

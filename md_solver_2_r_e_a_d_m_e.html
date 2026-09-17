@@ -308,8 +308,8 @@ ComMod</h2>
 <li>"" "&lt;b&gt; fs::get_thood_fs(com_mod, fs, lM, vmsStab, 1) &lt;/b&gt;"</li>
 <li>"" "&lt;b&gt; nn::gnn(fs[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix) &lt;/b&gt;"</li>
 <li>"" "&lt;b&gt; nn::gn_nxx(l, fs[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx) &lt;/b&gt;"</li>
-<li>"" "&lt;b&gt; fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)&lt;/b&gt;" - If nsd=3</li>
-<li>"" "&lt;b&gt; fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)&lt;/b&gt;" - If nsd=2</li>
+<li>"" "&lt;b&gt; fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)&lt;/b&gt;" - If nsd=3</li>
+<li>"" "&lt;b&gt; fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)&lt;/b&gt;" - If nsd=2</li>
 <li>"" "&lt;b&gt; trilinos_doassem_(const_cast&lt;int&amp;&gt;(eNoN), ptr.data(), lK.data(), lR.data())&lt;/b&gt;" - If using <a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a></li>
 <li>&lt;b&gt; lhsa_ns::do_assem(com_mod, eNoN, ptr, lK, lR)&lt;/b&gt; - If not using <a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a></li>
 </ul>
@@ -1394,9 +1394,9 @@ strongly or weakly.
 
  - &lt;tt&gt;nn::gn_nxx(l, fs[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx)&lt;/tt&gt;
 
- - &lt;tt&gt;fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)&lt;/tt&gt; - If nsd=3
+ - &lt;tt&gt;fluid_3d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)&lt;/tt&gt; - If nsd=3
 
- - &lt;tt&gt;fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inverse_darcy_permeability)&lt;/tt&gt; - If nsd=2
+ - &lt;tt&gt;fluid_2d_m(com_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, brinkman_inverse_permeability)&lt;/tt&gt; - If nsd=2
 
  - &lt;tt&gt;trilinos_doassem_(const_cast\&lt;int\&amp;\&gt;(eNoN), ptr.data(), lK.data(), lR.data())&lt;/tt&gt; - If using Trilinos
 
