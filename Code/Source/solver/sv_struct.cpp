@@ -229,9 +229,6 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
                 bfl(nsd,eNoN), fN(nsd,nFn), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN);
 
-  Array<double> Svis(nsd,nsd);
-  Array3<double> Kvis_u(nsd*nsd,eNoN,eNoN), Kvis_v(nsd*nsd,eNoN,eNoN);
-
   // Loop over all elements of mesh
 
   for (int e = 0; e < lM.nEl; e++) {
@@ -297,7 +294,9 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     Array<double> ksix(nsd,nsd);
 
     for (int g = 0; g < lM.nG; g++) {
-      // Viscosity is constant at all Gauss points for linear elements
+      // Shape function gradients and the viscous response are constant
+      // within linear simplex elements (tetrahedra, triangles). Bi- and
+      // trilinear hexahedra are sometimes called linear but do not qualify.
       const bool recompute_visc = (g == 0 || !lM.lShpF);
 
       if (recompute_visc) {
@@ -313,8 +312,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       if (nsd == 3) {
         struct_3d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fN,
-                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK,
-                  Svis, Kvis_u, Kvis_v, recompute_visc);
+                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK, recompute_visc);
 
 #if 0
         if (e == 0 && g == 0) {
@@ -328,8 +326,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       } else if (nsd == 2) {
         struct_2d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fN,
-                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK,
-                  Svis, Kvis_u, Kvis_v, recompute_visc);
+                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK, recompute_visc);
       }
 
       // Prestress
@@ -358,7 +355,6 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                Vector<double> &pSl, const Vector<double> &ya_l_f,
                const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
                Array<double> &lR, Array3<double> &lK,
-               Array<double> &Svis, Array3<double> &Kvis_u, Array3<double> &Kvis_v,
                const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
@@ -450,6 +446,13 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                             ya_g_n, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
+  static Array<double> Svis(2,2);
+  static Array3<double> Kvis_u, Kvis_v;
+  if (Kvis_u.ncols() != eNoN) {
+    Kvis_u.resize(4, eNoN, eNoN);
+    Kvis_v.resize(4, eNoN, eNoN);
+  }
+
   mat_models::compute_visc_stress_and_tangent(dmn, eNoN, Nx, vx, F, Svis, Kvis_u, Kvis_v,
                                               recompute_visc);
 
@@ -553,7 +556,6 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                Vector<double> &pSl, const Vector<double> &ya_l_f,
                const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
                Array<double> &lR, Array3<double> &lK,
-               Array<double> &Svis, Array3<double> &Kvis_u, Array3<double> &Kvis_v,
                const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
@@ -668,6 +670,13 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                             ya_g_n, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
+  static Array<double> Svis(3,3);
+  static Array3<double> Kvis_u, Kvis_v;
+  if (Kvis_u.ncols() != eNoN) {
+    Kvis_u.resize(9, eNoN, eNoN);
+    Kvis_v.resize(9, eNoN, eNoN);
+  }
+
   mat_models::compute_visc_stress_and_tangent(dmn, eNoN, Nx, vx, F, Svis, Kvis_u, Kvis_v,
                                               recompute_visc);
 

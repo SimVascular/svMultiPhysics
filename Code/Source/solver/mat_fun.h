@@ -176,7 +176,7 @@ namespace mat_fun {
      * Fixed-size overload for the Eigen matrices used by the element kernels.
      *
      * @tparam nsd Number of spatial dimensions.
-     * @param[in] A Second order tensor.
+     * @param[in] A second order tensor.
      * @return The symmetric part of A.
      */
     template <int nsd>
@@ -190,7 +190,7 @@ namespace mat_fun {
      * Fixed-size overload for the Eigen matrices used by the element kernels.
      *
      * @tparam nsd Number of spatial dimensions.
-     * @param[in] A Second order tensor.
+     * @param[in] A second order tensor.
      * @return The deviatoric part of A.
      */
     template <int nsd>

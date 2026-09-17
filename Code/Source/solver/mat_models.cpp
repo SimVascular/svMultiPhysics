@@ -1568,8 +1568,6 @@ constexpr int MAX_ELEMENT_NODES = 27;
 template <int nsd>
 using NodalMatrix = Eigen::Matrix<double, nsd, Eigen::Dynamic, 0, nsd, MAX_ELEMENT_NODES>;
 
-} // namespace
-
 /**
  * @brief Viscous PK2 stress and tangent contributions for the viscous
  * pseudo-potential model.
@@ -1716,6 +1714,8 @@ void compute_visc_stress_newtonian(const double mu, const int eNoN, const Array<
     }
 }
 
+} // namespace
+
 /**
  * @brief Get the solid viscous PK2 stress and corresponding tangent matrix contributions
  * Calls the appropriate function based on the viscosity type, either viscous
@@ -1736,7 +1736,8 @@ void compute_visc_stress_and_tangent(const dmnType& lDmn, const int eNoN, const 
 
     switch (lDmn.solid_visc.viscType) {
       case consts::SolidViscosityModelType::viscType_Newtonian:
-        // Viscosity is constant at all Gauss points for linear elements
+        // Constant at all Gauss points for linear simplex elements (triangle / tetrahedra),
+        // so the caller can ask for the previous result to be kept.
         if (!recompute_visc) {
           return;
         }
@@ -1748,7 +1749,8 @@ void compute_visc_stress_and_tangent(const dmnType& lDmn, const int eNoN, const 
       break;
 
       case consts::SolidViscosityModelType::viscType_Potential:
-        // Viscosity is constant at all Gauss points for linear elements
+        // Constant at all Gauss points for linear simplex elements (triangle / tetrahedra),
+        // so the caller can ask for the previous result to be kept.
         if (!recompute_visc) {
           return;
         }
