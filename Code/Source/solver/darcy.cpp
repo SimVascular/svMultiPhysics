@@ -134,7 +134,7 @@ void construct_darcy(ComMod& com_mod, const mshType& lM, const SolutionStates& s
         auto Nx_g = lM.Nx.slice(g);
         nn::gnn(eNoN, nsd, insd, Nx_g, xl, Nx, Jac, ksix);
         if (utils::is_zero(Jac)) {
-          svmp::InternalErrorException("[construct_darcy] Jacobian for element " + std::to_string(e) + " is < 0.");
+          svmp::InternalErrorException("Jacobian for element " + std::to_string(e) + " is < 0.");
         }
       }
 
@@ -146,7 +146,7 @@ void construct_darcy(ComMod& com_mod, const mshType& lM, const SolutionStates& s
       } else if (insd == 2) {
         darcy_2d(com_mod, eNoN, w, N, Nx, al, yl, lR, lK);
       } else {
-        svmp::raise<svmp::FE::InvalidArgumentException>("[construct_darcy] insd must be 2 or 3.");
+        svmp::raise<svmp::FE::InvalidArgumentException>("insd must be 2 or 3.");
       }
     }
 
