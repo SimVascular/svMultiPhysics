@@ -765,14 +765,21 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
 
   if (!utils::is_zero(Tsa) || !utils::is_zero(active_tension.d_sheets)) {
     svmp::check<svmp::InternalErrorException>(
-        nfd >= 2, "Directional distribution of active stress (eta_s > 0) "
-                  "requires a sheet direction, "
-                  "but only one fiber direction is defined.");
+        nfd >= 2, "Applying active stress along sheets (eta_s > 0) requires a "
+                  "sheet direction, but only " +
+                      std::to_string(nfd) + " fiber directions are defined.");
+
     S += Tsa * Hss;
     dS_act += active_tension.d_sheets * Hss;
   }
 
   if (!utils::is_zero(Tna) || !utils::is_zero(active_tension.d_sheet_normals)) {
+    svmp::check<svmp::InternalErrorException>(
+        nfd >= 2,
+        "Applying active stress along normals (eta_n > 0) requires both a "
+        "fiber and a sheet direction, but only " +
+            std::to_string(nfd) + " fiber directions are defined.");
+
     auto fib_dir3 = compute_sheet_normal<nsd>(fl);
     const Matrix<nsd> Hnn = fib_dir3 * fib_dir3.transpose();
     S += Tna * Hnn;
