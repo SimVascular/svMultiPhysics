@@ -45,12 +45,9 @@
  * @c ActiveStress rather than @c ActiveStressODE because it requires a
  * customized time-stepping scheme to handle the stiffness of the model.
  *
- * @note Both the direct dependence of @f$\Tact@f$ on the fiber stretch and the
- * force-strain-rate feedback make the active tension a function of the
- * mechanics solution. Treating those dependences explicitly can be unstable in
- * time. The direct one is always resolved within the nonlinear iterations of
- * the mechanics problem; enabling @c Implicit_state_coupling resolves the
- * indirect one there too (see @ref ActiveStress).
+ * @todo[michelebucelli] Force-strain-rate feedback requires a stabilization
+ *   strategy for robust use in coupled electromechanics. This will be addressed
+ *   in a follow-up PR.
  */
 class ActiveStressRegazzoni : public ActiveStress {
 public:
