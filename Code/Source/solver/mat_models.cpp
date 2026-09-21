@@ -113,20 +113,27 @@ void cc_to_voigt_eigen(const Tensor<nsd>& CC, Matrix<3*(nsd-1)>& Dm)
 {
   // Index pairs of the tensor corresponding to each index in Voigt notation.
   constexpr int n_voigt = 3 * (nsd - 1);
-  constexpr int voigt_row[6] = {0, 1, 2, 0, 1, 2};
-  constexpr int voigt_col[6] = {0, 1, 2, 1, 2, 0};
 
-  // In 2D the only shear index is (0,1), which sits in the fourth entry of the
-  // maps above rather than in the third.
-  constexpr int voigt_2d_row[3] = {0, 1, 0};
-  constexpr int voigt_2d_col[3] = {0, 1, 1};
+  constexpr std::array<int, n_voigt> voigt_row = []() {
+    if constexpr (nsd == 3)
+      return std::array{0, 1, 2, 0, 1, 2};
+    else
+      return std::array{0, 1, 0};
+  }();
+
+  constexpr std::array<int, n_voigt> voigt_col = []() {
+    if constexpr (nsd == 3)
+      return std::array{0, 1, 2, 1, 2, 0};
+    else
+      return std::array{0, 1, 1};
+  }();
 
   for (int i = 0; i < n_voigt; i++) {
     for (int j = 0; j < n_voigt; j++) {
-      const int i_row = (nsd == 3) ? voigt_row[i] : voigt_2d_row[i];
-      const int i_col = (nsd == 3) ? voigt_col[i] : voigt_2d_col[i];
-      const int j_row = (nsd == 3) ? voigt_row[j] : voigt_2d_row[j];
-      const int j_col = (nsd == 3) ? voigt_col[j] : voigt_2d_col[j];
+      const int i_row = voigt_row[i];
+      const int i_col = voigt_col[i];
+      const int j_row = voigt_row[j];
+      const int j_col = voigt_col[j];
 
       Dm(i,j) = CC(i_row, i_col, j_row, j_col);
     }
