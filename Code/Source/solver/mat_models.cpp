@@ -759,16 +759,15 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
       nfd >= 1,
       "At least one fiber direction must be defined for active stress.");
 
-  // Derivative of the active stress with respect to the fiber stretch, at fixed
-  // state of the active stress model. Accumulated along with the active stress
-  // itself, and used below to build its tangent.
-  const bool has_tangent = !utils::is_zero(active_tension.d_fibers) ||
-                           !utils::is_zero(active_tension.d_sheets) ||
-                           !utils::is_zero(active_tension.d_sheet_normals);
+  const bool has_tangent_f = !utils::is_zero(active_tension.d_fibers);
+  const bool has_tangent_s = !utils::is_zero(active_tension.d_sheets);
+  const bool has_tangent_n = !utils::is_zero(active_tension.d_sheet_normals);
 
-  Matrix<nsd> dS_act = active_tension.d_fibers * Hff;
+  Matrix<nsd> dS_act;
 
   S += Tfa * Hff;
+  if (has_tangent_f)
+    dS_act = active_tension.d_fibers * Hff;
 
   if (!utils::is_zero(Tsa) || !utils::is_zero(active_tension.d_sheets)) {
     svmp::check<svmp::InternalErrorException>(
@@ -777,7 +776,8 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
                       std::to_string(nfd) + " fiber directions are defined.");
 
     S += Tsa * Hss;
-    dS_act += active_tension.d_sheets * Hss;
+    if (has_tangent_s)
+      dS_act += active_tension.d_sheets * Hss;
   }
 
   if (!utils::is_zero(Tna) || !utils::is_zero(active_tension.d_sheet_normals)) {
@@ -790,7 +790,9 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
     auto fib_dir3 = compute_sheet_normal<nsd>(fl);
     const Matrix<nsd> Hnn = fib_dir3 * fib_dir3.transpose();
     S += Tna * Hnn;
-    dS_act += active_tension.d_sheet_normals * Hnn;
+
+    if (has_tangent_n)
+      dS_act += active_tension.d_sheet_normals * Hnn;
   }
 
   // Tangent of the active stress.
@@ -807,13 +809,8 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   // Only the direct dependence of the active stress on the fiber stretch is
   // differentiated here. The active stress also depends on it through the state
   // of the active stress model, but differentiating that would mean
-  // differentiating through the ODE solver of the model, so it is left to the
-  // nonlinear iterations of the mechanics problem to resolve.
-  //
-  // Notice that this tangent is not major symmetric, unless the active stress
-  // acts along the fiber direction alone: the active stress does not derive
-  // from a strain energy, so nothing requires it to be.
-  if (has_tangent) {
+  // differentiating through the ODE solver of the model.
+  if (has_tangent_f || has_tangent_s || has_tangent_n) {
     const double fiber_stretch = sqrt(fib_dir1.dot(C * fib_dir1));
     CC += (1.0 / fiber_stretch) * dyadic_product<nsd>(dS_act, Hff);
   }
