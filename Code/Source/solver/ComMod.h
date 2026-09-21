@@ -387,7 +387,7 @@ class dmnType
 
     // General physical properties such as density, elastic modulus...
     // FIX davep double prop[maxNProp] ;
-    std::map<consts::PhysicalProperyType,double> prop;
+    std::map<consts::PhysicalPropertyType,double> prop;
     //double prop[consts::maxNProp];
 
     // Electrophysiology model

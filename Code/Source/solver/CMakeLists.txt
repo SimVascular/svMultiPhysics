@@ -212,6 +212,7 @@ set(CSRCS
   cmm.h cmm.cpp
   consts.h consts.cpp
   contact.h contact.cpp
+  darcy.h darcy.cpp
   distribute.h distribute.cpp
   eq_assem.h eq_assem.cpp
   fluid.h fluid.cpp
@@ -407,6 +408,12 @@ if(ENABLE_UNIT_TEST)
     gtest
     GTest::gtest_main 
     pthread   # link pthread on ubuntu20
+  )
+
+  # Define the path to the unit-test reference-data directory as a preprocessor
+  # macro.
+  target_compile_definitions(run_all_unit_tests PRIVATE
+    UNIT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../tests/unitTests/reference_data"
   )
 
   # gtest_discover_tests(runUnitTest)

@@ -21,6 +21,7 @@ std::map<consts::EquationType, EquationDofType> equation_dof_map =
   {EquationType::phys_FSI,      std::make_tuple(nsd+1, "FS") },
   {EquationType::phys_mesh,     std::make_tuple(nsd,   "MS") },
   {EquationType::phys_CEP,      std::make_tuple(1,     "EP") },
-  {EquationType::phys_stokes,   std::make_tuple(nsd+1, "SS") }
+  {EquationType::phys_stokes,   std::make_tuple(nsd+1, "SS") },
+  {EquationType::phys_darcy,    std::make_tuple(1,     "DR") }
 };
 

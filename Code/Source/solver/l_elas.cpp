@@ -168,12 +168,12 @@ void l_elas_2d(ComMod& com_mod, const int eNoN, const double w, const Vector<dou
   #endif
 
   const double dt = com_mod.dt;
-  double rho = dmn.prop.at(PhysicalProperyType::solid_density);
-  double elM = dmn.prop.at(PhysicalProperyType::elasticity_modulus);
-  double nu = dmn.prop.at(PhysicalProperyType::poisson_ratio);
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
+  double elM = dmn.prop.at(PhysicalPropertyType::elasticity_modulus);
+  double nu = dmn.prop.at(PhysicalPropertyType::poisson_ratio);
 
-  Vector<double> f({dmn.prop.at(PhysicalProperyType::f_x),
-                    dmn.prop.at(PhysicalProperyType::f_y),});
+  Vector<double> f({dmn.prop.at(PhysicalPropertyType::f_x),
+                    dmn.prop.at(PhysicalPropertyType::f_y),});
 
   int i = eq.s;
   int j = i + 1;
@@ -269,13 +269,13 @@ void l_elas_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<dou
   #endif
 
   const double dt = com_mod.dt;
-  double rho = dmn.prop.at(PhysicalProperyType::solid_density);
-  double elM = dmn.prop.at(PhysicalProperyType::elasticity_modulus);
-  double nu = dmn.prop.at(PhysicalProperyType::poisson_ratio);
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
+  double elM = dmn.prop.at(PhysicalPropertyType::elasticity_modulus);
+  double nu = dmn.prop.at(PhysicalPropertyType::poisson_ratio);
 
-  Vector<double> f({dmn.prop.at(PhysicalProperyType::f_x),
-                    dmn.prop.at(PhysicalProperyType::f_y),
-                    dmn.prop.at(PhysicalProperyType::f_z)});
+  Vector<double> f({dmn.prop.at(PhysicalPropertyType::f_x),
+                    dmn.prop.at(PhysicalPropertyType::f_y),
+                    dmn.prop.at(PhysicalPropertyType::f_z)});
 
   int i = eq.s;
   int j = i + 1;

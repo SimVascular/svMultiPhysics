@@ -37,10 +37,10 @@ void cmm_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<double
   const double ctM = 1.0;
   const double ctC = 36.0;
 
-  double rho = dmn.prop.at(PhysicalProperyType::fluid_density);
-  Vector<double> f({dmn.prop.at(PhysicalProperyType::f_x), 
-                    dmn.prop.at(PhysicalProperyType::f_y), 
-                    dmn.prop.at(PhysicalProperyType::f_z)});
+  double rho = dmn.prop.at(PhysicalPropertyType::fluid_density);
+  Vector<double> f({dmn.prop.at(PhysicalPropertyType::f_x), 
+                    dmn.prop.at(PhysicalPropertyType::f_y), 
+                    dmn.prop.at(PhysicalPropertyType::f_z)});
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am/T1;
@@ -429,10 +429,10 @@ void cmm_mass(ComMod& com_mod, const double w, const Vector<double>& N, const Ar
   #endif
 
   Vector<double> f(3);
-  double rho = eq.dmn[cDmn].prop.at(PhysicalProperyType::solid_density);
-  f(0) = eq.dmn[cDmn].prop.at(PhysicalProperyType::f_x);
-  f(1) = eq.dmn[cDmn].prop.at(PhysicalProperyType::f_y);
-  f(2) = eq.dmn[cDmn].prop.at(PhysicalProperyType::f_z);
+  double rho = eq.dmn[cDmn].prop.at(PhysicalPropertyType::solid_density);
+  f(0) = eq.dmn[cDmn].prop.at(PhysicalPropertyType::f_x);
+  f(1) = eq.dmn[cDmn].prop.at(PhysicalPropertyType::f_y);
+  f(2) = eq.dmn[cDmn].prop.at(PhysicalPropertyType::f_z);
   #ifdef debug_cmm_mass
   dmsg << "rho: " << rho ;
   dmsg << "f: " << f ;
@@ -444,7 +444,7 @@ void cmm_mass(ComMod& com_mod, const double w, const Vector<double>& N, const Ar
   if (com_mod.cmmVarWall) { 
     ht = vwp(0);
   } else { 
-    ht = eq.dmn[cDmn].prop.at(PhysicalProperyType::shell_thickness);
+    ht = eq.dmn[cDmn].prop.at(PhysicalPropertyType::shell_thickness);
   }
 
   double wl = w * ht * rho;
@@ -497,7 +497,7 @@ void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double
   const double dt = com_mod.dt;
   const auto cDmn = com_mod.cDmn;
 
-  double nu = eq.dmn[cDmn].prop.at(PhysicalProperyType::poisson_ratio);
+  double nu = eq.dmn[cDmn].prop.at(PhysicalPropertyType::poisson_ratio);
   double ht, elM; 
 
   if (com_mod.cmmVarWall) {
@@ -507,8 +507,8 @@ void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double
     // elasticity modulus
     elM = vwp[1];
   } else { 
-    ht = eq.dmn[cDmn].prop.at(PhysicalProperyType::shell_thickness);
-    elM = eq.dmn[cDmn].prop.at(PhysicalProperyType::elasticity_modulus);
+    ht = eq.dmn[cDmn].prop.at(PhysicalPropertyType::shell_thickness);
+    elM = eq.dmn[cDmn].prop.at(PhysicalPropertyType::elasticity_modulus);
   }
 
   double lam = elM /(1.0 - nu*nu);

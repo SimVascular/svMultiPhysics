@@ -11,6 +11,7 @@
 
 #include "cep.h"
 #include "cmm.h"
+#include "darcy.h"
 #include "fluid.h"
 #include "fsi.h"
 #include "heatf.h"
@@ -108,6 +109,10 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 
         case EquationType::phys_heatF:
           heatf::b_heatf(com_mod, eNoN, w, N, y, h, nV, lR, lK);
+        break;
+
+        case EquationType::phys_darcy:
+          darcy::b_darcy(com_mod, eNoN, w, N, h, lR);
         break;
 
         case EquationType::phys_lElas:
@@ -404,6 +409,10 @@ void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const 
 
     case EquationType::phys_heatS:
       heats::construct_heats(com_mod, lM, solutions);
+    break;
+
+    case EquationType::phys_darcy:
+      darcy::construct_darcy(com_mod, lM, solutions);
     break;
 
     case EquationType::phys_lElas:

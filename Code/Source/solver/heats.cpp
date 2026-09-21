@@ -128,9 +128,9 @@ void heats_2d(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
   const double dt = com_mod.dt;
   const int i = eq.s;
 
-  double nu = dmn.prop.at(PhysicalProperyType::conductivity);
-  double s = dmn.prop.at(PhysicalProperyType::source_term);
-  double rho = dmn.prop.at(PhysicalProperyType::solid_density);
+  double nu = dmn.prop.at(PhysicalPropertyType::conductivity);
+  double s = dmn.prop.at(PhysicalPropertyType::source_term);
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am * rho / T1;
@@ -193,9 +193,9 @@ void heats_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
   const double dt = com_mod.dt;
   const int i = eq.s;
 
-  double nu = dmn.prop.at(PhysicalProperyType::conductivity);
-  double s = dmn.prop.at(PhysicalProperyType::source_term);
-  double rho = dmn.prop.at(PhysicalProperyType::solid_density);
+  double nu = dmn.prop.at(PhysicalPropertyType::conductivity);
+  double s = dmn.prop.at(PhysicalPropertyType::source_term);
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am * rho / T1;

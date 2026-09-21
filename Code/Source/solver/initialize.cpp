@@ -455,9 +455,9 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     //
     std::tie(eq.dof, eq.sym) = equation_dof_map.at(eq.phys);
 
-    if (std::set<EquationType>{Equation_fluid, Equation_heatF, Equation_heatS, Equation_CEP, Equation_stokes}.count(eq.phys) == 0) {
-      dFlag = true;
-    }
+    if (std::set<EquationType>{Equation_CEP, Equation_darcy, Equation_fluid, Equation_heatF, Equation_heatS, Equation_stokes}.count(eq.phys) == 0) {
+       dFlag = true;
+     }
 
     // For second order eqs. 
     if (std::set<EquationType>{Equation_lElas, Equation_struct, Equation_shell, Equation_mesh}.count(eq.phys) != 0) {
@@ -992,9 +992,15 @@ void zero_init(Simulation* simulation, SolutionStates& solutions)
      #ifdef debug_zero_init
      dmsg << "Initialize Yo to provided P solution";
      #endif
-     for (int a = 0; a < com_mod.tnNo; a++) {
-       for (int i = 0; i < nsd; i++) {
-         Yo(nsd,a) = com_mod.Pinit(a);
+     for (const auto& eq : com_mod.eq) {
+       const bool is_darcy = eq.phys == consts::EquationType::phys_darcy;
+       // Skip equations without a pressure unknown.
+       if (!is_darcy && eq.dof != nsd + 1) {
+         continue;
+       }
+       const int pressure_dof = eq.s + (is_darcy ? 0 : nsd);
+       for (int a = 0; a < com_mod.tnNo; ++a) {
+         Yo(pressure_dof,a) = com_mod.Pinit(a);
        }
      }
   }

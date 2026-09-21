@@ -56,7 +56,7 @@
       <Viscosity model="Constant" >
          <Value> 1.111111111111111e-06 </Value>
       </Viscosity>
-      <Inverse_darcy_permeability> 1e11 </Inverse_darcy_permeability>
+      <Brinkman_inverse_permeability> 1e11 </Brinkman_inverse_permeability>
    </Domain>
 
    <Domain id="2" >
@@ -65,7 +65,7 @@
       <Viscosity model="Constant" >
          <Value> 1e-06 </Value>
       </Viscosity>
-      <Inverse_darcy_permeability> 0.0 </Inverse_darcy_permeability> 
+      <Brinkman_inverse_permeability> 0.0 </Brinkman_inverse_permeability>
    </Domain>
 
    <Output type="Spatial" >

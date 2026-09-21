@@ -1376,6 +1376,18 @@ public:
     return parameters.at(label).value();
   }
 
+  /// Set the value of a scalar parameter by label.
+  void set_scalar(const std::string &label, double value) {
+    auto parameter = parameters.find(label);
+    svmp::check<svmp::FE::InvalidArgumentException>(
+        parameter != parameters.end(),
+        "Ionic model parameter '" + label + "' not found.");
+
+    parameter->second.value_ = value;
+    parameter->second.value_set_ = true;
+    value_set = true;
+  }
+
   /// Get the value of a vector parameter by label.
   Vector<double> get_vector(const std::string &label) const {
     auto param_value = vector_parameters.at(label).value();
@@ -1449,6 +1461,18 @@ public:
   /// Get the value of a parameter by label.
   double get_scalar(const std::string &label) const {
     return double_parameters.at(label).value();
+  }
+
+  /// Set the value of a scalar parameter by label.
+  void set_scalar(const std::string &label, double value) {
+    auto parameter = double_parameters.find(label);
+    svmp::check<svmp::FE::InvalidArgumentException>(
+        parameter != double_parameters.end(),
+        "Active stress model parameter '" + label + "' not found.");
+
+    parameter->second.value_ = value;
+    parameter->second.value_set_ = true;
+    value_set = true;
   }
 
   /// Get the value of a string parameter by label.
@@ -1645,8 +1669,13 @@ class DomainParameters : public ParameterLists
     Parameter<double> source_term;
     Parameter<double> time_step_for_integration;
     
-    // Inverse of Darcy permeability. Default value of 0.0 for Navier-Stokes and non-zero for Navier-Stokes-Brinkman
-    Parameter<double> inverse_darcy_permeability;
+    Parameter<double> darcy_permeability;
+    Parameter<double> darcy_compressibility;
+    Parameter<double> darcy_fluid_viscosity;
+
+    // Inverse permeability K^{-1} used in the Brinkman drag term
+    // mu K^{-1} u. A value of zero disables Brinkman drag.
+    Parameter<double> brinkman_inverse_permeability;
 };
 
 /// @brief The RemesherParameters class stores parameters for the 
@@ -1766,9 +1795,6 @@ class EquationParameters : public ParameterLists
     // are solved to convergence using the mesh displacement from the previous time step,
     // and only then is the mesh equation solved.
     Parameter<bool> explicit_geometric_coupling;
-
-    // Inverse of Darcy permeability. Default value of 0.0 for Navier-Stokes and non-zero for Navier-Stokes-Brinkman
-    Parameter<double> inverse_darcy_permeability;
 
     // Sub-element parameters.
     //

@@ -19,7 +19,7 @@ namespace read_files_ns {
   using EquationNdop = std::array<int, 4>;
   using EquationOutputs = std::array<consts::OutputNameType, maxOutput>;
   using EquationPhys = std::vector<consts::EquationType>;
-  using EquationProps = std::array<std::array<consts::PhysicalProperyType, consts::maxNProp>, 20>;
+  using EquationProps = std::array<std::array<consts::PhysicalPropertyType, consts::maxNProp>, 20>;
 
   void face_match(ComMod& com_mod, faceType& lFa, faceType& gFa, Vector<int>& ptr);
 

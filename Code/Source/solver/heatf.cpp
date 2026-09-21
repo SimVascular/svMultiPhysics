@@ -158,8 +158,8 @@ void heatf_2d(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am / T1;
-  double nu = dmn.prop.at(PhysicalProperyType::conductivity);
-  double s = dmn.prop.at(PhysicalProperyType::source_term);
+  double nu = dmn.prop.at(PhysicalPropertyType::conductivity);
+  double s = dmn.prop.at(PhysicalPropertyType::source_term);
   double wl = w * T1;
 
   #ifdef debug_heats_2d 
@@ -248,8 +248,8 @@ void heatf_3d(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am / T1;
-  double nu = dmn.prop.at(PhysicalProperyType::conductivity);
-  double s = dmn.prop.at(PhysicalProperyType::source_term);
+  double nu = dmn.prop.at(PhysicalPropertyType::conductivity);
+  double s = dmn.prop.at(PhysicalPropertyType::source_term);
   double wl = w * T1;
 
   #ifdef debug_heatf_3d 

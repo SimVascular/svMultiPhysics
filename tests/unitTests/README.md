@@ -32,6 +32,24 @@ Or run the test executable directly:
 ./run_all_unit_tests
 ```
 
+## Cellular ODE Trajectory Tests
+
+The `active_stress_tests/` and `ionic_model_tests/` directories contain
+standalone trajectory tests for cellular ODE models. Each test advances one
+model with prescribed inputs and compares selected trajectory checkpoints with
+trusted data in `reference_data/`. Source provenance and regeneration
+instructions are provided in `reference_generators/`.
+
+Current coverage includes the Nash-Panfilov and Regazzoni active-stress models,
+and the Aliev-Panfilov, FitzHugh-Nagumo, Bueno-Orovio, and ten
+Tusscher-Panfilov ionic models. Run all of these trajectory tests from the
+repository root with:
+
+```bash
+build/svMultiPhysics-build/bin/run_all_unit_tests \
+  --gtest_filter='ActiveStressTrajectory.*:IonicModelTrajectory.*'
+```
+
 ## Common Files
 ### `test_common.h`
 - Contains mock objects for svMultiPhysics components

@@ -23,6 +23,11 @@
  *
  * Model parameters are from reference 2 above. Default parameters are for
  * epicardium state (source: https://models.cellml.org/e/80d)
+ *
+ * @note The zone identifier selects the transient-outward-current @c s-gate
+ * kinetics: zones 1 and 3 use the EPI/M equations, while zone 2 uses the ENDO
+ * equations. Phenotype-specific conductances and initial conditions are
+ * configured separately.
  */
 class TTP : public IonicModel {
 public:
