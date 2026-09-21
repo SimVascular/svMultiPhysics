@@ -119,8 +119,7 @@ bool Integrator::step(bool save_results) {
       Vector<double> fiber_stretch_rate;
       compute_fiber_stretch(fiber_stretch, fiber_stretch_rate);
 
-      update_active_stress(eq, fiber_stretch, fiber_stretch_rate,
-                           /* within_nonlinear_iterations = */ true);
+      update_active_stress(eq, fiber_stretch, fiber_stretch_rate);
     }
 
     // Assemble equations
@@ -487,26 +486,26 @@ bool Integrator::has_implicit_active_stress_state_coupling() const {
   return false;
 }
 
+void Integrator::time_advance_active_stress(eqType &eq) {
+  for (auto &dmn : eq.dmn) {
+    if (dmn.active_stress != nullptr) {
+      dmn.active_stress->time_advance();
+    }
+  }
+}
+
 //------------------------
 // update_active_stress
 //------------------------
-void Integrator::update_active_stress(eqType& eq, const Vector<double>& fiber_stretch,
-    const Vector<double>& fiber_stretch_rate, const bool within_nonlinear_iterations) {
+void Integrator::update_active_stress(
+    eqType &eq, const Vector<double> &fiber_stretch,
+    const Vector<double> &fiber_stretch_rate) {
   auto& com_mod = simulation_->com_mod;
   auto& cep_mod = simulation_->get_cep_mod();
 
   for (auto &dmn : eq.dmn) {
     if (dmn.active_stress == nullptr)
       continue;
-
-    // Models with explicit state coupling keep the state computed by the
-    // predictor for the whole time step, so they are only updated once.
-    if (within_nonlinear_iterations &&
-        !dmn.active_stress->implicit_state_coupling())
-      continue;
-
-    if (!within_nonlinear_iterations)
-      dmn.active_stress->time_advance();
 
     dmn.active_stress->update(com_mod.time, com_mod.dt, cep_mod.calcium,
                               fiber_stretch, fiber_stretch_rate);
@@ -557,7 +556,6 @@ void Integrator::update_active_stress(eqType& eq, const Vector<double>& fiber_st
     }
   }
 }
-
 
 // The code here replicates the Fortran code in PIC.f.
 //
@@ -685,8 +683,8 @@ void Integrator::predictor()
 
     // active stress
     if (supports_active_stress(eq.phys)) {
-      update_active_stress(eq, fiber_stretch, fiber_stretch_rate,
-                           /* within_nonlinear_iterations = */ false);
+      time_advance_active_stress(eq);
+      update_active_stress(eq, fiber_stretch, fiber_stretch_rate);
     }
 
     // eqn 86 of Bazilevs 2007

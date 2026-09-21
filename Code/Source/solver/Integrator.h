@@ -192,6 +192,11 @@ private:
   bool has_implicit_active_stress_state_coupling() const;
 
   /**
+   * @brief Advance active stress models of an equation to the next time step.
+   */
+  void time_advance_active_stress(eqType &eq);
+
+  /**
    * @brief Update the active stress models of an equation and the resulting
    * nodal active tension.
    *
@@ -204,9 +209,8 @@ private:
    *   the time step. False when called once per time step from the predictor,
    *   in which case all models store that state and are advanced from it.
    */
-  void update_active_stress(eqType& eq, const Vector<double>& fiber_stretch,
-                            const Vector<double>& fiber_stretch_rate,
-                            const bool within_nonlinear_iterations);
+  void update_active_stress(eqType &eq, const Vector<double> &fiber_stretch,
+                            const Vector<double> &fiber_stretch_rate);
 
   /**
    * @brief Initiator function for generalized-alpha method (initiator)
