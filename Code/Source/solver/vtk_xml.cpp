@@ -1066,6 +1066,23 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
     for (int iEq = 0; iEq < nEq; iEq++) {
       auto& eq = eqs[iEq];
 
+      // Active tension along fibers, sheets and sheet normals, computed
+      // lazily the first time any of the three is requested below, and
+      // reused for the others.
+      Vector<double> active_tension_f, active_tension_s, active_tension_n;
+      bool active_tension_computed = false;
+      auto compute_active_tension = [&]() {
+        if (active_tension_computed) {
+          return;
+        }
+        active_tension_f.resize(msh.nNo);
+        active_tension_s.resize(msh.nNo);
+        active_tension_n.resize(msh.nNo);
+        post::active_tension(simulation->com_mod, iEq, msh, solutions.current.get_displacement(),
+            active_tension_f, active_tension_s, active_tension_n);
+        active_tension_computed = true;
+      };
+
       for (int iOut = 0; iOut < eq.nOutput; iOut++) {
         if (!eq.output[iOut].options.spatial) {
           continue;
@@ -1335,23 +1352,23 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
           } break;
 
           case OutputNameType::outGrp_activeTensionFibers: {
+            compute_active_tension();
             for (int a = 0; a < msh.nNo; a++) {
-              int Ac = msh.gN(a);
-              d[iM].x(is, a) = simulation->cep_mod.cem.Ya_f[Ac];
+              d[iM].x(is, a) = active_tension_f[a];
             }
           } break;
 
           case OutputNameType::outGrp_activeTensionSheets: {
+            compute_active_tension();
             for (int a = 0; a < msh.nNo; a++) {
-              int Ac = msh.gN(a);
-              d[iM].x(is, a) = simulation->cep_mod.cem.Ya_s[Ac];
+              d[iM].x(is, a) = active_tension_s[a];
             }
           } break;
 
           case OutputNameType::outGrp_activeTensionNormal: {
+            compute_active_tension();
             for (int a = 0; a < msh.nNo; a++) {
-              int Ac = msh.gN(a);
-              d[iM].x(is, a) = simulation->cep_mod.cem.Ya_n[Ac];
+              d[iM].x(is, a) = active_tension_n[a];
             }
           } break;
 

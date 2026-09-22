@@ -510,51 +510,6 @@ void Integrator::update_active_stress(
     dmn.active_stress->update(com_mod.time, com_mod.dt, cep_mod.calcium,
                               fiber_stretch, fiber_stretch_rate);
   }
-
-  // Fill in the nodal active tension vector. This is what gets written to the
-  // output and restart files; the mechanics problem does not read it, because
-  // it evaluates the active tension at its quadrature points instead (see
-  // ActiveStress::Evaluator).
-  //
-  // We go through all mesh nodes, find the domain they are associated with,
-  // and get the active stress from that domain. If a point is associated to
-  // multiple domains (which happens for points on domain interfaces), we
-  // average the active stresses from the domains.
-  for (int Ac = 0; Ac < com_mod.tnNo; Ac++) {
-    double Ta_f = 0.0;
-    double Ta_s = 0.0;
-    double Ta_n = 0.0;
-    unsigned int n_domains = 0;
-
-    for (auto &dmn : eq.dmn) {
-      // Domains whose equations do not allow for active stress (e.g. fluid
-      // domains) do not contribute to the average, but domains that do
-      // allow for active stress (e.g. struct) for which active stress is
-      // not enabled contribute a zero value to the average.
-      if (!supports_active_stress(dmn.phys))
-        continue;
-
-      // Only domains that node Ac actually belongs to contribute to its
-      // average. Note that if there is only one domain dmnId may not be
-      // populated, so we only check domain membership if eq.nDmn > 1.
-      if (eq.nDmn > 1 && !utils::btest(com_mod.dmnId(Ac), dmn.Id))
-        continue;
-
-      if (dmn.active_stress != nullptr) {
-        Ta_f += dmn.active_stress->get_tension_fibers(Ac);
-        Ta_s += dmn.active_stress->get_tension_sheets(Ac);
-        Ta_n += dmn.active_stress->get_tension_sheet_normals(Ac);
-      }
-
-      n_domains++;
-    }
-
-    if (n_domains > 0) {
-      cep_mod.cem.Ya_f[Ac] = Ta_f / n_domains;
-      cep_mod.cem.Ya_s[Ac] = Ta_s / n_domains;
-      cep_mod.cem.Ya_n[Ac] = Ta_n / n_domains;
-    }
-  }
 }
 
 // The code here replicates the Fortran code in PIC.f.

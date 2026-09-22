@@ -810,6 +810,64 @@ void fib_stretch(const ComMod &com_mod, const int iEq, const mshType &lM,
   }
 }
 
+/// @brief Compute active tension along fibers, sheets and sheet normals at
+/// every mesh node.
+//
+void active_tension(const ComMod &com_mod, const int iEq, const mshType &lM,
+                    const Array<double> &lD, Vector<double> &res_f,
+                    Vector<double> &res_s, Vector<double> &res_n) {
+  auto &eq = com_mod.eq[iEq];
+
+  Vector<double> fiber_stretch(lM.nNo);
+  if (lM.nFn != 0) {
+    fib_stretch(com_mod, iEq, lM, lD, fiber_stretch);
+  }
+
+  res_f = 0.0;
+  res_s = 0.0;
+  res_n = 0.0;
+
+  for (int a = 0; a < lM.nNo; a++) {
+    int Ac = lM.gN(a);
+
+    double Ta_f = 0.0;
+    double Ta_s = 0.0;
+    double Ta_n = 0.0;
+    unsigned int n_domains = 0;
+
+    for (auto &dmn : eq.dmn) {
+      // Domains whose equations do not allow for active stress (e.g. fluid
+      // domains) do not contribute to the average, but domains that do
+      // allow for active stress (e.g. struct) for which active stress is
+      // not enabled contribute a zero value to the average.
+      if (!supports_active_stress(dmn.phys))
+        continue;
+
+      // Only domains that node Ac actually belongs to contribute to its
+      // average. Note that if there is only one domain dmnId may not be
+      // populated, so we only check domain membership if eq.nDmn > 1.
+      if (eq.nDmn > 1 && !utils::btest(com_mod.dmnId(Ac), dmn.Id))
+        continue;
+
+      if (dmn.active_stress != nullptr) {
+        auto tension = dmn.active_stress->compute_tension(
+            dmn.active_stress->get_state(Ac), fiber_stretch[a]);
+        Ta_f += tension.fibers;
+        Ta_s += tension.sheets;
+        Ta_n += tension.sheet_normals;
+      }
+
+      n_domains++;
+    }
+
+    if (n_domains > 0) {
+      res_f[a] = Ta_f / n_domains;
+      res_s[a] = Ta_s / n_domains;
+      res_n[a] = Ta_n / n_domains;
+    }
+  }
+}
+
 /// @brief Compute fiber stretch rate dλ/dt via backward finite difference.
 //
 void fib_stretch_rate(const ComMod &com_mod, const int iEq, const mshType &lM,

@@ -197,8 +197,7 @@ private:
   void time_advance_active_stress(eqType &eq);
 
   /**
-   * @brief Update the active stress models of an equation and the resulting
-   * nodal active tension.
+   * @brief Update the active stress models of an equation.
    *
    * @param[in,out] eq Equation whose domains carry the active stress models.
    * @param[in] fiber_stretch Fiber stretch at every node.

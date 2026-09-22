@@ -50,9 +50,9 @@ bool supports_active_stress(const consts::EquationType eq_type);
  * The expression assumed above implies that the active tension is a local
  * function of the variables it depends on, that is the active tension at a
  * given point only depends on the value of other variables at that same point.
- * Accordingly, this class works nodally, by evaluating the active tension at
- * every mesh node and storing it in a vector, whose values can be accessed
- * through @ref ActiveStress::get_tension_fibers.
+ * Accordingly, this class works nodally, storing the state of contraction at
+ * every mesh node and evaluating the active tension from it, on demand,
+ * through @ref ActiveStress::compute_tension.
  *
  * ## Directional distribution of active stress {#activestress-directions}
  *
@@ -78,10 +78,9 @@ bool supports_active_stress(const consts::EquationType eq_type);
  * @f$\eta_f + \eta_s + \eta_n = 1@f$.
  *
  * This class stores the values of @f$\eta_f@f$, @f$\eta_s@f$ and @f$\eta_n@f$,
- * and provides the functions @ref ActiveStress::get_tension_fibers,
- * @ref ActiveStress::get_tension_sheets and @ref
- * ActiveStress::get_tension_sheet_normals to access @f$\eta_f \Tact@f$,
- * @f$\eta_s \Tact@f$ and @f$\eta_n \Tact@f$, respectively.
+ * and applies them in @ref ActiveStress::compute_tension, which returns
+ * @f$\eta_f \Tact@f$, @f$\eta_s \Tact@f$ and @f$\eta_n \Tact@f$, bundled in an
+ * @ref ActiveTension.
  *
  * ## Implementing concrete active stress models {#activestress-implementing}
  *
@@ -263,25 +262,12 @@ public:
   void distribute_parameters(const CmMod &cm_mod, const cmType &cm);
 
   /**
-   * @brief Get the tension along fibers @f$\eta_f \Tact@f$ at a given point.
+   * @brief Get the state vector at a given mesh node.
+   *
+   * @param[in] Ac Index of the mesh node.
    */
-  double get_tension_fibers(const int idx) const {
-    return eta_f * active_tension[idx];
-  }
-
-  /**
-   * @brief Get the tension along sheets @f$\eta_s \Tact@f$ at a given point.
-   */
-  double get_tension_sheets(const int idx) const {
-    return eta_s * active_tension[idx];
-  }
-
-  /**
-   * @brief Get the tension along sheet normals @f$\eta_n \Tact@f$ at a given
-   * point.
-   */
-  double get_tension_sheet_normals(const int idx) const {
-    return eta_n * active_tension[idx];
+  Vector<double> get_state(const unsigned int Ac) const {
+    return states.col(Ac);
   }
 
   /**
@@ -323,11 +309,10 @@ public:
   virtual void time_advance();
 
   /**
-   * @brief Update the state and the active tension over the current time step.
+   * @brief Update the state over the current time step.
    *
    * Advances the state stored by @ref time_advance over one time step, using
-   * the given calcium, fiber stretch and fiber stretch rate, and recomputes the
-   * active tension at every node.
+   * the given calcium, fiber stretch and fiber stretch rate.
    *
    * This function may be called more than once per time step: every call
    * restarts from the state stored by @ref time_advance, so the resulting state
@@ -459,15 +444,6 @@ protected:
    * of every call within the time step.
    */
   Array<double> states_at_time_step_start;
-
-  /**
-   * @brief Active tension at every node.
-   *
-   * This is only used for postprocessing and output purposes. When assembling
-   * structural mechanics problems, the active tension is evaluated at
-   * quadrature points through the class @ref Evaluator.
-   */
-  Vector<double> active_tension;
 
   /**
    * @brief Whether the state of this model is updated within the nonlinear
