@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>svMultiPhysics: /home/runner/work/svMultiPhysics/svMultiPhysics/tests/unitTests/active_stress_tests/test_active_stress_regazzoni.cpp File Reference</title>
+<title>svMultiPhysics: /home/runner/work/svMultiPhysics/svMultiPhysics/tests/unitTests/linear_solver_tests/test_precond_rcs.cpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -94,61 +94,40 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_59425e443f801f1f2fd8bbe4959a3ccf.html">tests</a></li><li class="navelem"><a class="el" href="dir_3322993225688b69f673c52129ab3e59.html">unitTests</a></li><li class="navelem"><a class="el" href="dir_9699fddee48c207a9827f53d0f59a6a2.html">active_stress_tests</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_59425e443f801f1f2fd8bbe4959a3ccf.html">tests</a></li><li class="navelem"><a class="el" href="dir_3322993225688b69f673c52129ab3e59.html">unitTests</a></li><li class="navelem"><a class="el" href="dir_b1cd6b4104b867ab4f3ee2b8257962d8.html">linear_solver_tests</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
-  <div class="summary">
-<a href="#func-members">Functions</a>  </div>
-  <div class="headertitle"><div class="title">test_active_stress_regazzoni.cpp File Reference</div></div>
+  <div class="headertitle"><div class="title">test_precond_rcs.cpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;ActiveStressRegazzoni.h&quot;</code><br />
-<code>#include &quot;active_stress_test_helpers.h&quot;</code><br />
-<code>#include &quot;gtest/gtest.h&quot;</code><br />
+
+<p>Matrix regression test for FSILS row and column scaling (RCS).  
+<a href="#details">More...</a></p>
+<div class="textblock"><code>#include &quot;precond.h&quot;</code><br />
+<code>#include &quot;FE/Math/DenseLinearAlgebra.h&quot;</code><br />
+<code>#include &lt;gtest/gtest.h&gt;</code><br />
+<code>#include &lt;cmath&gt;</code><br />
+<code>#include &lt;tuple&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
-Include dependency graph for test_active_stress_regazzoni.cpp:</div>
+Include dependency graph for test_precond_rcs.cpp:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="test__active__stress__regazzoni_8cpp__incl.svg" width="2819" height="696"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="test__precond__rcs_8cpp__incl.svg" width="955" height="315"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
-</div><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a26ea300fa781d7cfb434ecd4b1d9df92" id="r_a26ea300fa781d7cfb434ecd4b1d9df92"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="test__active__stress__regazzoni_8cpp.html#a26ea300fa781d7cfb434ecd4b1d9df92">TEST</a> (ActiveStressTrajectory, Regazzoni)</td></tr>
-<tr class="separator:a26ea300fa781d7cfb434ecd4b1d9df92"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="a26ea300fa781d7cfb434ecd4b1d9df92" name="a26ea300fa781d7cfb434ecd4b1d9df92"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a26ea300fa781d7cfb434ecd4b1d9df92">&#9670;&#160;</a></span>TEST()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">TEST </td>
-          <td>(</td>
-          <td class="paramtype">ActiveStressTrajectory&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Regazzoni&#160;</td>
-          <td class="paramname">&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<dl class="test"><dt><b><a class="el" href="test.html#_test000011">Test:</a></b></dt><dd>Run a standalone <a class="el" href="class_active_stress_regazzoni.html" title="Mean-field active stress model (implements the RDQ20-MF formulation).">ActiveStressRegazzoni</a> twitch for 600 updates with \(\Delta t=1\,\mathrm{ms}\) and the prescribed calcium and fiber-stretch trajectories.</dd></dl>
-<p>The trusted reference was produced with the authors' <a href="https://github.com/FrancescoRegazzoni/cardiac-activation">cardiac-activation</a> C++ implementation at commit <code>26f05df28891df7b3c69f16bb136cdced6b63c4d</code>; it was not generated by svMultiPhysics. See <code>reference_generators/active_stress/regazzoni/README.md</code> for source provenance and reproduction details, and <a class="el" href="class_active_stress_regazzoni.html">ActiveStressRegazzoni</a> for the model equations, numerical update, and state ordering. </p>
-
-</div>
-</div>
-</div><!-- contents -->
+</div><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Matrix regression test for FSILS row and column scaling (RCS). </p>
+<dl class="test"><dt><b><a class="el" href="test.html#_test000001">Test:</a></b></dt><dd>RcsPreconditioner.PreservesConstrainedSystem verifies that precond::precond_rcs preserves a Dirichlet-constrained system and its solution.</dd></dl>
+<dl class="section user"><dt>Setup and coverage</dt><dd>A serial, three-node block tridiagonal matrix is stored in dense and FSILS formats. The exact solution is zero at fixed components and <code>row + 1</code> elsewhere; <code>b = A * exact</code> supplies the reference right-hand side. The 75 cases combine <code>(dof, scale, boundary)</code>:<ul>
+<li>Block sizes 1&ndash;5 exercise specialized and general scaling paths.</li>
+<li>Scales <code>1</code>, <code>1e-11</code>, <code>1e-15</code>, <code>1e-17</code>, and <code>1e-20</code> expose diagonal cancellation in the former update <code>(a - 1) + 1</code>.</li>
+<li>Boundary modes 0, 1, and 2 exclude the face, fix the first component of node 0, or fix all its components. Constrained rows retain only a unit diagonal, exposing omissions in row maxima; coupled blocks expose incomplete column scaling.</li>
+</ul>
+</dd></dl>
+<dl class="section user"><dt>Checks</dt><dd>Weights must be finite and positive. Removing the returned scaling must recover the expected constrained operator and right-hand side. A dense solve followed by right scaling must recover the exact solution and satisfy the original free equations. Matrix, right-hand-side, and residual errors are normalized by <code>scale</code> (unit diagonals use one), so erased small entries cannot pass through an absolute tolerance.</dd></dl>
+<dl class="section user"><dt>Reusing and running the test</dt><dd>Keep an independent dense reference and a known solution when adapting this example. Update the FSILS block indices and diagonal pointers with the stencil, and choose coefficient scales that expose the target failure. Build with <code>-DENABLE_UNIT_TEST=ON</code>, then run beside the unit-test executable: <div class="fragment"><div class="line">./run_all_unit_tests --gtest_filter=&#39;Blocks/RcsPreconditioner.*&#39;</div>
+</div><!-- fragment --> </dd></dl>
+</div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
