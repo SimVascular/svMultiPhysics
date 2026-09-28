@@ -725,10 +725,8 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
 
       // Compute and store invariants and derivatives wrt C in array of
       // matrices/tensors
-      // @todo[michelebucelli] Tfa is unused in this call, and it should
-      //   probably be removed from the function signature. Active stress is
-      //   added below in any case.
-      CANNModel.computeInvariantsAndDerivatives<nsd>(C, fl, nfd, J2d, J4d, Ci, Idm, Tfa, N1, psi, Inv, dInv, ddInv);
+      CANNModel.computeInvariantsAndDerivatives<nsd>(
+          C, fl, nfd, J2d, J4d, Ci, Idm, N1, psi, Inv, dInv, ddInv);
 
       // Strain energy function and derivatives
       CANNModel.evaluate(Inv, psi, dpsi, ddpsi);
