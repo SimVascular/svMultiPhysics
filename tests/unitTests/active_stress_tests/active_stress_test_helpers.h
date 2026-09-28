@@ -46,6 +46,13 @@ struct ActiveStressTrajectoryConfiguration {
 
   /// Base tolerance in the pointwise comparison formula.
   double tolerance = 1.0e-10;
+
+  /// Fiber-stretch increment of the central finite difference used to check
+  /// the active tension derivative.
+  double derivative_step = 1.0e-6;
+
+  /// Base tolerance in the active tension derivative comparison formula.
+  double derivative_tolerance = 1.0e-8;
 };
 
 /**
@@ -152,6 +159,18 @@ struct ActiveStressTrajectoryConfiguration {
  * Checkpoint @c N is compared after the update starting at
  * @f$ t = N \Delta t @f$, which advances the interval
  * @f$[N\Delta t,(N+1)\Delta t]@f$.
+ *
+ * ### Active tension derivative
+ *
+ * After every update, the partial derivative of the active tension with
+ * respect to the fiber stretch, at fixed state, is compared with the central
+ * finite difference
+ * @f[
+ * \frac{T_a(\mathbf{s}, \lambda + h) - T_a(\mathbf{s}, \lambda - h)}{2h},
+ * @f]
+ * where @f$\mathbf{s}@f$ is the updated state and @f$h@f$ is
+ * @c derivative_step. This check needs no reference data, and is performed at
+ * every simulation step rather than only at the checkpoints.
  */
 template <class ConcreteModel>
 class ActiveStressTrajectoryTest {
@@ -164,6 +183,7 @@ class ActiveStressTrajectoryTest {
   public:
     using ConcreteModel::advance_time_step_local;
     using ConcreteModel::compute_active_tension_local;
+    using ConcreteModel::compute_active_tension_derivative_local;
     using ConcreteModel::init_local;
     using ConcreteModel::read_model_specific_parameters;
   };
@@ -218,6 +238,19 @@ public:
       const double active_tension =
           model_->compute_active_tension_local(state, fiber_stretch);
 
+      const double h = configuration_.derivative_step;
+      const double active_tension_derivative =
+          model_->compute_active_tension_derivative_local(state, fiber_stretch);
+      const double finite_difference =
+          (model_->compute_active_tension_local(state, fiber_stretch + h) -
+           model_->compute_active_tension_local(state, fiber_stretch - h)) /
+          (2.0 * h);
+      EXPECT_NEAR(active_tension_derivative, finite_difference,
+                  configuration_.derivative_tolerance *
+                      (1.0 + std::fabs(finite_difference)))
+          << "trajectory update index " << step
+          << ", active tension derivative with respect to fiber stretch";
+
       compare_checkpoint_if_present(step, state, active_tension,
                                     checkpoint_index);
     }
@@ -255,6 +288,14 @@ private:
         !(configuration_.tolerance > 0.0) ||
             !std::isfinite(configuration_.tolerance),
         "ActiveStress test tolerance must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(configuration_.derivative_step > 0.0) ||
+            !std::isfinite(configuration_.derivative_step),
+        "ActiveStress test derivative step must be finite and positive");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !(configuration_.derivative_tolerance > 0.0) ||
+            !std::isfinite(configuration_.derivative_tolerance),
+        "ActiveStress test derivative tolerance must be finite and positive");
     svmp::throw_if<svmp::FE::InvalidArgumentException>(
         configuration_.reference_csv_filename.empty(),
         "ActiveStress trajectory reference CSV filename must not be empty");
