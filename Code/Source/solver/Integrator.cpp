@@ -119,7 +119,8 @@ bool Integrator::step(bool save_results) {
       Vector<double> fiber_stretch_rate;
       compute_fiber_stretch(fiber_stretch, fiber_stretch_rate);
 
-      update_active_stress(eq, fiber_stretch, fiber_stretch_rate);
+      update_active_stress(eq, fiber_stretch, fiber_stretch_rate,
+                           /* within_nonlinear_iterations = */ true);
     }
 
     // Assemble equations
@@ -499,12 +500,18 @@ void Integrator::time_advance_active_stress(eqType &eq) {
 //------------------------
 void Integrator::update_active_stress(
     eqType &eq, const Vector<double> &fiber_stretch,
-    const Vector<double> &fiber_stretch_rate) {
+    const Vector<double> &fiber_stretch_rate,
+    const bool within_nonlinear_iterations) {
   auto& com_mod = simulation_->com_mod;
   auto& cep_mod = simulation_->get_cep_mod();
 
   for (auto &dmn : eq.dmn) {
     if (dmn.active_stress == nullptr)
+      continue;
+
+    // Models with explicit coupling keep the state computed in the predictor.
+    if (within_nonlinear_iterations &&
+        !dmn.active_stress->implicit_state_coupling())
       continue;
 
     dmn.active_stress->update(com_mod.time, com_mod.dt, cep_mod.calcium,
@@ -639,7 +646,8 @@ void Integrator::predictor()
     // active stress
     if (supports_active_stress(eq.phys)) {
       time_advance_active_stress(eq);
-      update_active_stress(eq, fiber_stretch, fiber_stretch_rate);
+      update_active_stress(eq, fiber_stretch, fiber_stretch_rate,
+                           /* within_nonlinear_iterations = */ false);
     }
 
     // eqn 86 of Bazilevs 2007

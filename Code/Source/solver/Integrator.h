@@ -206,10 +206,11 @@ private:
    *   nonlinear iterations, in which case only the models with implicit
    *   coupling are advanced again, from the state stored at the beginning of
    *   the time step. False when called once per time step from the predictor,
-   *   in which case all models store that state and are advanced from it.
+   *   in which case all models are advanced from that state.
    */
   void update_active_stress(eqType &eq, const Vector<double> &fiber_stretch,
-                            const Vector<double> &fiber_stretch_rate);
+                            const Vector<double> &fiber_stretch_rate,
+                            const bool within_nonlinear_iterations);
 
   /**
    * @brief Initiator function for generalized-alpha method (initiator)
