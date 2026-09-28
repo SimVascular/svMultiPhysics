@@ -215,7 +215,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   dmsg << "lM.nFs: " << lM.nFs;
   #endif
 
-  auto& cem = cep_mod.cem;
   const int nsd  = com_mod.nsd;
   const int tDof = com_mod.tDof;
   const int dof = com_mod.dof;

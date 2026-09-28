@@ -536,7 +536,6 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   if (com_mod.sstEq) i = i + nsd;
   if (cep_mod.cepEq) {
     i = i + cep_mod.nXion;
-    if (cep_mod.cem.cpld) i = i + 1;
   }
   if (com_mod.risFlag) {
     i = i + com_mod.ris.nbrRIS;

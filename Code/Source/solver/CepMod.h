@@ -186,19 +186,6 @@ class cepModelType
     std::shared_ptr<IonicModel> ionic_model;
 };
 
-/// @brief Cardiac electromechanics model type
-class cemModelType
-{
-  public:
-    /// @brief  Whether electrophysiology and mechanics are coupled
-    bool cpld = false;
-    //bool cpld = .FALSE.
-
-    /// @brief  Whether active strain formulation is employed
-    bool aStrain = false;
-    //bool aStrain = .FALSE.
-};
-
 class CepMod 
 {
   public:
@@ -214,9 +201,6 @@ class CepMod
 
     /// @brief Calcium vector at all nodes.
     Vector<double> calcium;
-
-    /// @brief Cardiac electromechanics type
-    cemModelType cem;
 
     /// @brief ECG leads
     ecgLeadsType ecgleads;

@@ -47,7 +47,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
   }
 
   // l = 3, if nsd==2 ; else 6;
-  auto& cem = cep_mod.cem;
   const int l = com_mod.nsymd;
   const int nsd  = com_mod.nsd;
   const int tDof = com_mod.tDof;

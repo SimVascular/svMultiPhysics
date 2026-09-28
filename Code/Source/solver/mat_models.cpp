@@ -336,16 +336,6 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   Matrix<nsd> Fa = Matrix<nsd>::Identity();
   Matrix<nsd> Fai = Fa;
 
-  // This commented block implements the active strain formulation, taken from svFSI
-  // It is commented out because the active strain formulation is not used in the 
-  // current implementation. However, it is left here for reference when we decide to
-  // implement it.
-  // if (cep_mod.cem.aStrain) {
-  //   actv_strain(com_mod, cep_mod, ya, nfd, fl, Fa);
-  //   Fai = Fa.inverse();
-  //   Fe = F * Fai;
-  // }
-
   Ja = Fa.determinant();
   double J = Fe.determinant();
   double J2d = pow(J, (-2.0/nd));
@@ -613,14 +603,6 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
       auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
       S += S_iso;
       CC += CC_iso;
-
-      // Modify S and CC if using active strain
-      if (cep_mod.cem.aStrain) {
-        S = Fa * S * Fai.transpose();
-        CC_bar = dyadic_product<nsd>(Fai, Fai); // Reusing CC_bar
-        CC = double_dot_product<nsd>(CC, {2,3}, CC_bar, {1,3});
-        CC = double_dot_product<nsd>(CC_bar, {1,3}, CC, {0,1});
-      }
     } break;
 
     //  HO (Holzapfel-Ogden)-MA model for myocardium with full invariants for the anisotropy terms (modified-anisotropy)

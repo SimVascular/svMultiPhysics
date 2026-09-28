@@ -1599,14 +1599,6 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
     }
   }
 
-  // Distribute cardiac electromechanics parameters
-  //
-  cm.bcast(cm_mod, &cep_mod.cem.cpld);
-
-  if (cep_mod.cem.cpld) {
-    cm.bcast(cm_mod, &cep_mod.cem.aStrain);
-  }
-
   if (com_mod.ibFlag) {
     if (cm.slv(cm_mod)) {
       lEq.dmnIB.resize(lEq.nDmnIB);

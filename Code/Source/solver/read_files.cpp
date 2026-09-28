@@ -1340,7 +1340,7 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     lDmn.cep.odes.relTol = domain_params->relative_tolerance.value();
   }
 
-  if (domain_params->feedback_parameter_for_stretch_activated_currents.defined() && cep_mod.cem.cpld) { 
+  if (domain_params->feedback_parameter_for_stretch_activated_currents.defined()) {
     lDmn.cep.Ksac = domain_params->feedback_parameter_for_stretch_activated_currents.value();
   } else {
     lDmn.cep.Ksac = 0.0;
@@ -2060,51 +2060,30 @@ void read_files(Simulation* simulation, const std::string& file_name)
         read_cep_equation(&cep_mod, simulation, eq_params);
       }
     }
-  }
 
-  if (cep_mod.cem.cpld) {
-    if (nEq == 1) {
-      throw std::runtime_error("Min equations (2) not solved for electro-mechanics coupling");
-    }
+    // Stretch-activated currents require the fiber stretch, which is computed
+    // only when an equation solving for the displacement is present.
+    bool has_sac = false;
+    bool has_displacement_eq = false;
 
-    int i = 0;
     for (int iEq = 0; iEq < nEq; iEq++) {
       auto& eq = com_mod.eq[iEq];
-      if ((eq.phys == EquationType::phys_CEP) || (eq.phys == EquationType::phys_struct) || 
-          (eq.phys == EquationType::phys_ustruct)) {
-        i = i + 1;
-      }
-    }
 
-    if (i != 2) {
-      throw std::runtime_error("Both electrophysiology and struct have to be solved for electro-mechanics");
-    }
-
-    if (cep_mod.cem.aStrain) {
-      if (com_mod.nsd != 3) {
-        throw std::runtime_error("Active strain coupling is allowed only for 3D bodies");
+      if (supports_active_stress(eq.phys)) {
+        has_displacement_eq = true;
       }
 
-      for (int iEq = 0; iEq < nEq; iEq++) {
-        auto& eq = com_mod.eq[iEq];
-        for (int i = 0; i < eq.nDmn; i++) {
-          auto& dmn = eq.dmn[i];
-
-          if ((dmn.phys != EquationType::phys_ustruct) && (dmn.phys != EquationType::phys_struct)) { 
-            continue; 
-          }
-
-          if (dmn.active_stress != nullptr) {
-            svmp::raise<svmp::FE::InvalidArgumentException>(
-                "Active strain and active stress cannot be used together.");
-          }
-
-          if ((dmn.stM.isoType != ConstitutiveModelType::stIso_HO)) {
-            throw std::runtime_error("Active strain is allowed with Holzapfel-Ogden passive constitutive model only");
-          }
+      for (int iDmn = 0; iDmn < eq.nDmn; iDmn++) {
+        auto& dmn = eq.dmn[iDmn];
+        if ((dmn.phys == EquationType::phys_CEP) && (dmn.cep.Ksac != 0.0)) {
+          has_sac = true;
         }
       }
     }
+
+    svmp::throw_if<svmp::ParseException>(has_sac && !has_displacement_eq,
+        "Feedback_parameter_for_stretch_activated_currents requires an "
+        "equation solving for the displacement (struct, ustruct or FSI).");
   }
 
   // [NOTE] what's going on here?
