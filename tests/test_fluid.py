@@ -82,11 +82,13 @@ def test_driven_cavity_2d_porous(n_proc):
 
 def test_dye_AD(n_proc):
     test_folder = "dye_AD"
-    run_with_reference(base_folder, test_folder, fields, n_proc)
+    run_with_reference(base_folder, test_folder, ['Pressure', 'Velocity', 'Concentration'], n_proc)
+
 
 def test_precomputed_dye_AD(n_proc):
     test_folder = "precomputed_dye_AD"
     run_with_reference(base_folder, test_folder, ['Velocity', 'Concentration'], n_proc)
+
 
 def test_newtonian(n_proc):
     test_folder = "newtonian"
