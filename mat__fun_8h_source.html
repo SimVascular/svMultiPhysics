@@ -117,347 +117,459 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;Array.h&quot;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;Tensor4.h&quot;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;Vector.h&quot;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;<a class="code" href="_f_e_exception_8h.html">FE/Common/FEException.h</a>&quot;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment"></span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment">/// @brief The classes defined here duplicate the data structures in the </span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">/// Fortran MATFUN module defined in MATFUN.f. </span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">///</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment">/// This module defines data structures for generally performed matrix and tensor operations.</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment">///</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment">/// \todo [TODO:DaveP] this should just be a namespace?</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment"></span><span class="comment">//</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacemat__fun.html">mat_fun</a> {</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="comment">// Define templated type aliases for Eigen matrices and tensors for convenience</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> nsd&gt;</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">using </span><a class="code hl_typedef" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">Matrix</a> = Eigen::Matrix&lt;double, nsd, nsd&gt;;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> nsd&gt;</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keyword">using </span>Tensor = Eigen::TensorFixedSize&lt;double, Eigen::Sizes&lt;nsd, nsd, nsd, nsd&gt;&gt;;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="comment">// Function to convert Array&lt;double&gt; to Eigen::Matrix</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> MatrixType&gt;</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    MatrixType convert_to_eigen_matrix(<span class="keyword">const</span> Array&lt;double&gt;&amp; src) {</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        MatrixType mat;</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mat.rows(); ++i)</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; mat.cols(); ++j)</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>                mat(i, j) = src(i, j);</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        <span class="keywordflow">return</span> mat;</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    }</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="comment">// Function to convert Eigen::Matrix to Array&lt;double&gt;</span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> MatrixType&gt;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordtype">void</span> convert_to_array(<span class="keyword">const</span> MatrixType&amp; mat, Array&lt;double&gt;&amp; dest) {</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mat.rows(); ++i)</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; mat.cols(); ++j)</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                dest(i, j) = mat(i, j);</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    }</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;consts.h&quot;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;Tensor4.h&quot;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;Vector.h&quot;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;<a class="code" href="_f_e_exception_8h.html">FE/Common/FEException.h</a>&quot;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"></span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">/// @brief The classes defined here duplicate the data structures in the </span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">/// Fortran MATFUN module defined in MATFUN.f. </span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment">///</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment">/// This module defines data structures for generally performed matrix and tensor operations.</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment">///</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment">/// \todo [TODO:DaveP] this should just be a namespace?</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"></span><span class="comment">//</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacemat__fun.html">mat_fun</a> {<span class="comment"></span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment">    /// @brief A 2nd order tensor, nsd x nsd, fixed size and stack allocated.</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment">    /// Used for the deformation gradient, stresses and similar quantities that</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment">    /// have a known size at compile time.</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"></span>    <span class="keyword">template</span>&lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">   29</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a> = Eigen::Matrix&lt;double, nsd, nsd&gt;;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="comment"></span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="comment">    /// @brief A 4th order tensor, nsd x nsd x nsd x nsd, fixed size and stack</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment">    /// allocated. Used for the material elasticity tensor and other 4th order tensors</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="comment">    /// that have a known size at compile time.</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment"></span>    <span class="keyword">template</span>&lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">   35</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a> = Eigen::TensorFixedSize&lt;double, Eigen::Sizes&lt;nsd, nsd, nsd, nsd&gt;&gt;;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment"></span> </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment">    /// @brief One nsd-vector per element node, so nsd x eNoN. Row count is fixed</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment">    /// at compile time while column count is the element&#39;s node count, known only</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment">    /// at run time, so it is bounded by consts::maxNoN to stay stack allocated.</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment">    /// Used for shape function gradients and other per-node vector quantities.</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a3c32e4eef15a5308f1f7fb997b71e5b2">   42</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespacemat__fun.html#a3c32e4eef15a5308f1f7fb997b71e5b2">NodalMatrix</a> = Eigen::Matrix&lt;double, nsd, Eigen::Dynamic, 0, nsd, consts::maxNoN&gt;;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="comment"></span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="comment">    /// @brief One scalar per element node, so eNoN entries. Dynamic length bounded</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="comment">    /// by consts::maxNoN to stay stack allocated, as for NodalMatrix. Used for shape</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="comment">    /// function values and other per-node scalar quantities.</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#ad0002b188687e1919ef94ebaf04c568c">   47</a></span><span class="comment"></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespacemat__fun.html#ad0002b188687e1919ef94ebaf04c568c">NodalVector</a> = Eigen::Matrix&lt;double, Eigen::Dynamic, 1, 0, consts::maxNoN, 1&gt;;</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="comment">// Function to convert a higher-dimensional array like Dm</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> MatrixType&gt;</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="keywordtype">void</span> copy_Dm(<span class="keyword">const</span> MatrixType&amp; mat, Array&lt;double&gt;&amp; dest) {</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="keywordflow">if</span> ((mat.rows() != dest.nrows()) || (mat.cols() != dest.ncols())) {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>          <span class="keyword">const</span> std::string mat_dims = <span class="stringliteral">&quot;(&quot;</span> + std::to_string(mat.rows()) + <span class="stringliteral">&quot;x&quot;</span> + std::to_string(mat.cols()) + <span class="stringliteral">&quot;)&quot;</span>;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>          <span class="keyword">const</span> std::string dest_dims = <span class="stringliteral">&quot;(&quot;</span> + std::to_string(dest.nrows()) + <span class="stringliteral">&quot;x&quot;</span> + std::to_string(dest.ncols()) + <span class="stringliteral">&quot;)&quot;</span>;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>          svmp::raise&lt;svmp::FE::InvalidArgumentException&gt;(</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>              <span class="stringliteral">&quot;The &#39;mat&quot;</span> + mat_dims + <span class="stringliteral">&quot;&#39; and &#39;dest&quot;</span> + dest_dims +</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>              <span class="stringliteral">&quot;&#39; arrays have incompatible sizes.&quot;</span>);</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        }</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mat.rows(); ++i) {</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; mat.cols(); ++j) {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                dest(i, j) = mat(i, j);</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            }</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        }</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    }</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    Eigen::Matrix&lt;double, nsd, 1&gt; cross_product(<span class="keyword">const</span> Eigen::Matrix&lt;double, nsd, 1&gt;&amp; u, <span class="keyword">const</span> Eigen::Matrix&lt;double, nsd, 1&gt;&amp; v) {</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (nsd == 2) {</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>            <span class="keywordflow">return</span> Eigen::Matrix&lt;double, 2, 1&gt;(v(1), - v(0));</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        }</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (nsd == 3) {</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            <span class="keywordflow">return</span> u.cross(v);</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        }</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;[cross_product] Invalid number of spatial dimensions &#39;&quot;</span> + std::to_string(nsd) + <span class="stringliteral">&quot;&#39;. Valid dimensions are 2 or 3.&quot;</span>);</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        }</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    }</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordtype">double</span> <a class="code hl_function" href="namespacemat__fun.html#ad504ada70491864776462a52dbc73246">mat_ddot</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    </div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keywordtype">double</span> double_dot_product(<span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; A, <span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; B) {</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <span class="keywordflow">return</span> A.cwiseProduct(B).sum();</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    }</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">double</span> mat_det(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    Array&lt;double&gt; mat_dev(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ad05ac7a2eaf066914a30549c9e489a6d">mat_dyad_prod</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; u, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    Array&lt;double&gt; mat_id(<span class="keyword">const</span> <span class="keywordtype">int</span> nsd);</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ab37105ea0bd5731ef3ba24889a33d236">mat_inv</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd, <span class="keywordtype">bool</span> debug = <span class="keyword">false</span>);</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ab7cf0a25ec503065254317903b7f0fcf">mat_inv_ge</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd, <span class="keywordtype">bool</span> debug = <span class="keyword">false</span>);</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#aa0e1aca3444929b9530b92d2e46eb92b">mat_inv_lp</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="comment"></span> </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="comment">    /// @brief Multiply a matrix by a vector, returning A*v.</span></div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="comment">    /// @param[in] A matrix with as many columns as v has entries.</span></div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="comment">    /// @param[in] v vector.</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="comment">    /// @return the product, of size rows(A).</span></div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="comment">    /// Throws InvalidArgumentException if the sizes are incompatible.</span></div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="comment"></span>    <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v);</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="comment"></span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="comment">    /// @brief Multiply two matrices, returning A*B.</span></div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="comment">    /// @param[in] A left operand.</span></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="comment">    /// @param[in] B right operand, with as many rows as A has columns.</span></div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="comment">    /// @return the product, of size rows(A) by cols(B).</span></div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="comment">    /// Throws InvalidArgumentException if the sizes are incompatible. The</span></div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><span class="comment">    /// result is freshly allocated, so the operands may alias it, as in</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="comment">    /// A = mat_mul(A, B).</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="comment"></span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B);</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="comment"></span> </div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="comment">    /// @brief Multiply two matrices, writing A*B into an existing result.</span></div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="comment">    /// @param[in]  A left operand.</span></div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="comment">    /// @param[in]  B right operand, with as many rows as A has columns.</span></div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="comment">    /// @param[out] result the product. The caller sizes it rows(A) by cols(B).</span></div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="comment">    /// Throws InvalidArgumentException if the sizes are incompatible. Preferred</span></div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="comment">    /// in loops, where it reuses the caller&#39;s storage instead of allocating a</span></div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="comment">    /// result on every call. The result must not alias A or B.</span></div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="comment"></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, Array&lt;double&gt;&amp; result);</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="comment"></span> </div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="comment">    /// @brief Matrix product with the operand shape supplied at compile time.</span></div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span><span class="comment">    /// Overloads of mat_mul rather than differently named helpers, so a call</span></div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="comment">    /// site states the shape and otherwise reads exactly as before:</span></div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="comment">    /// @code</span></div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span><span class="comment">    ///   mat_mul(Dm, Bm.rslice(b), DBm);        // runtime shape check</span></div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span><span class="comment">    ///   mat_mul&lt;6, 6, 3&gt;(Dm, Bm.rslice(b), DBm);  // no check, same arguments</span></div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="comment">    /// @endcode</span></div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="comment">    /// The generic mat_mul overload above will dispatch to this overload</span></div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="comment">    /// when the shapes are known at compile time.</span></div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span><span class="comment">    /// @tparam M rows of A and of the result</span></div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span><span class="comment">    /// @tparam K columns of A and rows of B, the contracted dimension</span></div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><span class="comment">    /// @tparam N columns of B and of the result</span></div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> M, <span class="keywordtype">int</span> K, <span class="keywordtype">int</span> N&gt;</div>
-<div class="foldopen" id="foldopen00145" data-start="{" data-end="}">
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#aef16dabb2561c60d32d5f0562bb02c41">  145</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B,</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>                 Array&lt;double&gt;&amp; C)</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    {</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, M, K&gt;&gt; a(A.data());</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, K, N&gt;&gt; b(B.data());</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>      Eigen::Map&lt;Eigen::Matrix&lt;double, M, N&gt;&gt;       c(C.data());</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span> </div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>      c.noalias() = a * b;</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    }</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="comment">// The eigen_view overloads below wrap an Array or Vector in an Eigen::Map that</span></div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="comment">// shares its storage, so the container must outlive the view.</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="comment"></span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="comment">    /// @brief Read-only Eigen view of an Array, sharing its storage.</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="comment">    /// @tparam rows Row count, fixed at compile time; the columns are taken from the Array.</span></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> rows&gt;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    Eigen::Map&lt;const Eigen::Matrix&lt;double, rows, Eigen::Dynamic&gt;&gt;</div>
+<div class="foldopen" id="foldopen00057" data-start="{" data-end="}">
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a36bfdedd98c3ca41c40ced9101ee0270">   57</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a36bfdedd98c3ca41c40ced9101ee0270">eigen_view</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A) {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keywordflow">if</span> (A.nrows() != rows) {</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>          svmp::raise&lt;svmp::FE::InvalidArgumentException&gt;(</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>              <span class="stringliteral">&quot;A view of &quot;</span> + std::to_string(rows) + <span class="stringliteral">&quot; rows was requested for an array with &quot;</span> +</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>              std::to_string(A.nrows()) + <span class="stringliteral">&quot; rows.&quot;</span>);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        }</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keywordflow">return</span> {A.data(), rows, A.ncols()};</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    }</div>
 </div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span><span class="comment"></span> </div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span><span class="comment">    /// @brief As above, but with the column count known only at run time.</span></div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span><span class="comment">    /// For operands with one column per element node, where the width depends on</span></div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span><span class="comment">    /// the element type. The row counts are still compile-time, which is where</span></div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span><span class="comment">    /// most of the benefit comes from.</span></div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> M, <span class="keywordtype">int</span> K&gt;</div>
-<div class="foldopen" id="foldopen00161" data-start="{" data-end="}">
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a36bcb6d3b2f5be4ff4ad6c1e7ed61a38">  161</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B,</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>                 Array&lt;double&gt;&amp; C)</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    {</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, M, K&gt;&gt; a(A.data());</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, K, Eigen::Dynamic&gt;&gt; b(B.data(), K, B.ncols());</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>      Eigen::Map&lt;Eigen::Matrix&lt;double, M, Eigen::Dynamic&gt;&gt;       c(C.data(), M, C.ncols());</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span> </div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>      c.noalias() = a * b;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="comment"></span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="comment">    /// @brief Read-only Eigen view of a whole Array, sharing its storage.</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="comment"></span>    <span class="keyword">inline</span> Eigen::Map&lt;const Eigen::MatrixXd&gt;</div>
+<div class="foldopen" id="foldopen00068" data-start="{" data-end="}">
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a5554a60b1c78edc9a25be48c372ee357">   68</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a36bfdedd98c3ca41c40ced9101ee0270">eigen_view</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A) {</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        <span class="keywordflow">return</span> {A.data(), A.nrows(), A.ncols()};</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    }</div>
+</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="comment"></span> </div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="comment">    /// @brief Read-only Eigen view of a band of rows of an Array, sharing its storage.</span></div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="comment">    /// Used where an Array contains several fields and only a contiguous band is viewed.</span></div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="comment">    /// For example,</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="comment">    ///     A = [ A00, A01, A02 ;         eigen_view_rows&lt;2&gt;(A, 1) = [ A10, A11, A12 ;</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="comment">    ///           A10, A11, A12 ;                                      A20, A21, A22 ]</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="comment">    ///           A20, A21, A22 ;</span></div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="comment">    ///           A30, A31, A32 ]</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="comment">    /// @param A The Array to view.</span></div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="comment">    /// @param first Index of the band&#39;s first row within the Array.</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="comment">    /// @tparam rows Number of rows, fixed at compile time, typically nsd.</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> rows&gt;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    Eigen::Map&lt;const Eigen::Matrix&lt;double, rows, Eigen::Dynamic&gt;, 0, Eigen::OuterStride&lt;&gt;&gt;</div>
+<div class="foldopen" id="foldopen00087" data-start="{" data-end="}">
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#abd9e75a414e4ca001769288ad084d282">   87</a></span>    <a class="code hl_function" href="namespacemat__fun.html#abd9e75a414e4ca001769288ad084d282">eigen_view_rows</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> first) {</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keywordflow">if</span> (first &lt; 0 || first + rows &gt; A.nrows()) {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>          svmp::raise&lt;svmp::FE::InvalidArgumentException&gt;(</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>              <span class="stringliteral">&quot;A view of &quot;</span> + std::to_string(rows) + <span class="stringliteral">&quot; rows starting at row &quot;</span> + std::to_string(first) +</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>              <span class="stringliteral">&quot; was requested for an array with &quot;</span> + std::to_string(A.nrows()) + <span class="stringliteral">&quot; rows.&quot;</span>);</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        }</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        <span class="keywordflow">return</span> {A.data() + first, rows, A.ncols(), Eigen::OuterStride&lt;&gt;(A.nrows())};</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    }</div>
+</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="comment"></span> </div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="comment">    /// @brief Writable Eigen view of a whole Array, sharing its storage.</span></div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="comment"></span>    <span class="keyword">inline</span> Eigen::Map&lt;Eigen::MatrixXd&gt;</div>
+<div class="foldopen" id="foldopen00098" data-start="{" data-end="}">
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a2a20f1eb9f6c0093bd785b5c4c8083af">   98</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a2a20f1eb9f6c0093bd785b5c4c8083af">eigen_view_mutable</a>(Array&lt;double&gt;&amp; A) {</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        <span class="keywordflow">return</span> {A.data(), A.nrows(), A.ncols()};</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    }</div>
+</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="comment"></span> </div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="comment">    /// @brief Read-only Eigen view of a whole Vector, sharing its storage.</span></div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="comment"></span>    <span class="keyword">inline</span> Eigen::Map&lt;const Eigen::VectorXd&gt;</div>
+<div class="foldopen" id="foldopen00104" data-start="{" data-end="}">
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a79a067f3e020b6cd626c26e176d06bd4">  104</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a36bfdedd98c3ca41c40ced9101ee0270">eigen_view</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v) {</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        <span class="keywordflow">return</span> {v.data(), v.size()};</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    }</div>
+</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="comment"></span> </div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="comment">    /// @brief Read-only Eigen view of a Vector, sharing its storage.</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="comment">    /// @tparam rows Entry count, fixed at compile time.</span></div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> rows&gt;</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    Eigen::Map&lt;const Eigen::Matrix&lt;double, rows, 1&gt;&gt;</div>
+<div class="foldopen" id="foldopen00113" data-start="{" data-end="}">
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#ad173c416ce24c12331bf5b4d1870926e">  113</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a36bfdedd98c3ca41c40ced9101ee0270">eigen_view</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v) {</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        <span class="keywordflow">if</span> (v.size() != rows) {</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>          svmp::raise&lt;svmp::FE::InvalidArgumentException&gt;(</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>              <span class="stringliteral">&quot;A view of &quot;</span> + std::to_string(rows) + <span class="stringliteral">&quot; entries was requested for a vector with &quot;</span> +</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>              std::to_string(v.size()) + <span class="stringliteral">&quot; entries.&quot;</span>);</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        }</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        <span class="keywordflow">return</span> Eigen::Map&lt;const Eigen::Matrix&lt;double, rows, 1&gt;&gt;(v.data());</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    }</div>
+</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="comment">// Function to convert Array&lt;double&gt; to Eigen::Matrix</span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> MatrixType&gt;</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    MatrixType convert_to_eigen_matrix(<span class="keyword">const</span> Array&lt;double&gt;&amp; src) {</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        MatrixType mat;</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mat.rows(); ++i)</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; mat.cols(); ++j)</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                mat(i, j) = src(i, j);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <span class="keywordflow">return</span> mat;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    }</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    <span class="comment">// Function to convert Eigen::Matrix to Array&lt;double&gt;</span></div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> MatrixType&gt;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="keywordtype">void</span> convert_to_array(<span class="keyword">const</span> MatrixType&amp; mat, Array&lt;double&gt;&amp; dest) {</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mat.rows(); ++i)</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; mat.cols(); ++j)</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>                dest(i, j) = mat(i, j);</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    }</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    <span class="comment">// Function to convert a higher-dimensional array like Dm</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> MatrixType&gt;</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="keywordtype">void</span> copy_Dm(<span class="keyword">const</span> MatrixType&amp; mat, Array&lt;double&gt;&amp; dest) {</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>        <span class="keywordflow">if</span> ((mat.rows() != dest.nrows()) || (mat.cols() != dest.ncols())) {</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>          <span class="keyword">const</span> std::string mat_dims = <span class="stringliteral">&quot;(&quot;</span> + std::to_string(mat.rows()) + <span class="stringliteral">&quot;x&quot;</span> + std::to_string(mat.cols()) + <span class="stringliteral">&quot;)&quot;</span>;</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>          <span class="keyword">const</span> std::string dest_dims = <span class="stringliteral">&quot;(&quot;</span> + std::to_string(dest.nrows()) + <span class="stringliteral">&quot;x&quot;</span> + std::to_string(dest.ncols()) + <span class="stringliteral">&quot;)&quot;</span>;</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>          svmp::raise&lt;svmp::FE::InvalidArgumentException&gt;(</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>              <span class="stringliteral">&quot;The &#39;mat&quot;</span> + mat_dims + <span class="stringliteral">&quot;&#39; and &#39;dest&quot;</span> + dest_dims +</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>              <span class="stringliteral">&quot;&#39; arrays have incompatible sizes.&quot;</span>);</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        }</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mat.rows(); ++i) {</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; mat.cols(); ++j) {</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                dest(i, j) = mat(i, j);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>            }</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        }</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    }</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    Eigen::Matrix&lt;double, nsd, 1&gt; cross_product(<span class="keyword">const</span> Eigen::Matrix&lt;double, nsd, 1&gt;&amp; u, <span class="keyword">const</span> Eigen::Matrix&lt;double, nsd, 1&gt;&amp; v) {</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (nsd == 2) {</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>            <span class="keywordflow">return</span> Eigen::Matrix&lt;double, 2, 1&gt;(v(1), - v(0));</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        }</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (nsd == 3) {</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>            <span class="keywordflow">return</span> u.cross(v);</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        }</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;[cross_product] Invalid number of spatial dimensions &#39;&quot;</span> + std::to_string(nsd) + <span class="stringliteral">&quot;&#39;. Valid dimensions are 2 or 3.&quot;</span>);</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        }</div>
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    }</div>
-</div>
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a6ecffe7c0c2beba571579b3071f6da91">mat_symm</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ac74e37f69fc09901dd23652f89a4f7e1">mat_symm_prod</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; u, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span> </div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <span class="keywordtype">double</span> <a class="code hl_function" href="namespacemat__fun.html#a80fd0b01661fb60e285f4d1a94ad3eeb">mat_trace</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#af3367681f82e87222e557415681edd4a">ten_asym_prod12</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a9359f973f503f358d24a8db8c5630846">ten_ddot</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#ae77741e0486f9d35108bc57ffbc3bdb4">ten_ddot_2412</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> ten_ddot_3424(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span><span class="comment"></span> </div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span><span class="comment">    /**</span></div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span><span class="comment">     * @brief Contracts two 4th order tensors A and B over two dimensions, </span></div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span><span class="comment">     * </span></div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    Tensor&lt;nsd&gt;</div>
-<div class="foldopen" id="foldopen00187" data-start="{" data-end="}">
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577">  187</a></span>    double_dot_product(<span class="keyword">const</span> Tensor&lt;nsd&gt;&amp; A, <span class="keyword">const</span> std::array&lt;int, 2&gt;&amp; dimsA, </div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>                        <span class="keyword">const</span> Tensor&lt;nsd&gt;&amp; B, <span class="keyword">const</span> std::array&lt;int, 2&gt;&amp; dimsB) {</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        </div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>        <span class="comment">// Define the contraction dimensions</span></div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>        Eigen::array&lt;Eigen::IndexPair&lt;int&gt;, 2&gt; contractionDims = {</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>            Eigen::IndexPair&lt;int&gt;(dimsA[0], dimsB[0]), <span class="comment">// Contract A&#39;s dimsA[0] with B&#39;s dimsB[0]</span></div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>            Eigen::IndexPair&lt;int&gt;(dimsA[1], dimsB[1])  <span class="comment">// Contract A&#39;s dimsA[1] with B&#39;s dimsB[1]</span></div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        };</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span> </div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        <span class="comment">// Return the double dot product</span></div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        <span class="keywordflow">return</span> A.contract(B, contractionDims);</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span> </div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        <span class="comment">// For some reason, in this case the Eigen::Tensor contract function is</span></div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        <span class="comment">// faster than a for loop implementation.</span></div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    }</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    <span class="keywordtype">double</span> <a class="code hl_function" href="namespacemat__fun.html#ad504ada70491864776462a52dbc73246">mat_ddot</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    </div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <span class="keywordtype">double</span> double_dot_product(<span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; A, <span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; B) {</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        <span class="keywordflow">return</span> A.cwiseProduct(B).sum();</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    }</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    </div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keywordtype">double</span> mat_det(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    Array&lt;double&gt; mat_dev(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ad05ac7a2eaf066914a30549c9e489a6d">mat_dyad_prod</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; u, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    Array&lt;double&gt; mat_id(<span class="keyword">const</span> <span class="keywordtype">int</span> nsd);</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ab37105ea0bd5731ef3ba24889a33d236">mat_inv</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd, <span class="keywordtype">bool</span> debug = <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ab7cf0a25ec503065254317903b7f0fcf">mat_inv_ge</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd, <span class="keywordtype">bool</span> debug = <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#aa0e1aca3444929b9530b92d2e46eb92b">mat_inv_lp</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span><span class="comment"></span> </div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span><span class="comment">    /// @brief Multiply a matrix by a vector, returning A*v.</span></div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span><span class="comment">    /// @param[in] A matrix with as many columns as v has entries.</span></div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span><span class="comment">    /// @param[in] v vector.</span></div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span><span class="comment">    /// @return the product, of size rows(A).</span></div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span><span class="comment">    /// Throws InvalidArgumentException if the sizes are incompatible.</span></div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span><span class="comment"></span>    <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v);</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span><span class="comment"></span> </div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span><span class="comment">    /// @brief Multiply two matrices, returning A*B.</span></div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span><span class="comment">    /// @param[in] A left operand.</span></div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><span class="comment">    /// @param[in] B right operand, with as many rows as A has columns.</span></div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span><span class="comment">    /// @return the product, of size rows(A) by cols(B).</span></div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span><span class="comment">    /// Throws InvalidArgumentException if the sizes are incompatible. The</span></div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span><span class="comment">    /// result is freshly allocated, so the operands may alias it, as in</span></div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="comment">    /// A = mat_mul(A, B).</span></div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span><span class="comment"></span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B);</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span><span class="comment"></span> </div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="comment">    /// @brief Multiply two matrices, writing A*B into an existing result.</span></div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span><span class="comment">    /// @param[in]  A left operand.</span></div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span><span class="comment">    /// @param[in]  B right operand, with as many rows as A has columns.</span></div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span><span class="comment">    /// @param[out] result the product. The caller sizes it rows(A) by cols(B).</span></div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span><span class="comment">    /// Throws InvalidArgumentException if the sizes are incompatible. Preferred</span></div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span><span class="comment">    /// in loops, where it reuses the caller&#39;s storage instead of allocating a</span></div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span><span class="comment">    /// result on every call. The result must not alias A or B.</span></div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span><span class="comment"></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, Array&lt;double&gt;&amp; result);</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span><span class="comment"></span> </div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span><span class="comment">    /// @brief Matrix product with the operand shape supplied at compile time.</span></div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="comment">    /// Overloads of mat_mul rather than differently named helpers, so a call</span></div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span><span class="comment">    /// site states the shape and otherwise reads exactly as before:</span></div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span><span class="comment">    /// @code</span></div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span><span class="comment">    ///   mat_mul(Dm, Bm.rslice(b), DBm);        // runtime shape check</span></div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span><span class="comment">    ///   mat_mul&lt;6, 6, 3&gt;(Dm, Bm.rslice(b), DBm);  // no check, same arguments</span></div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span><span class="comment">    /// @endcode</span></div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span><span class="comment">    /// The generic mat_mul overload above will dispatch to this overload</span></div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span><span class="comment">    /// when the shapes are known at compile time.</span></div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="comment">    /// @tparam M rows of A and of the result</span></div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span><span class="comment">    /// @tparam K columns of A and rows of B, the contracted dimension</span></div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="comment">    /// @tparam N columns of B and of the result</span></div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> M, <span class="keywordtype">int</span> K, <span class="keywordtype">int</span> N&gt;</div>
+<div class="foldopen" id="foldopen00236" data-start="{" data-end="}">
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#aef16dabb2561c60d32d5f0562bb02c41">  236</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B,</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>                 Array&lt;double&gt;&amp; C)</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    {</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, M, K&gt;&gt; a(A.data());</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, K, N&gt;&gt; b(B.data());</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>      Eigen::Map&lt;Eigen::Matrix&lt;double, M, N&gt;&gt;       c(C.data());</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span> </div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>      c.noalias() = a * b;</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    }</div>
 </div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a998c0fc509c870bc57677032ef09034e">ten_dyad_prod</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="comment"></span></div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="comment">    /**</span></div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span><span class="comment">     * @brief Compute the dyadic product of two 2nd order tensors A and B, C_ijkl = A_ij * B_kl</span></div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span><span class="comment">     * </span></div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="comment">     * @tparam nsd, the number of spatial dimensions</span></div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span><span class="comment">     * @param A, the first 2nd order tensor</span></div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span><span class="comment">     * @param B, the second 2nd order tensor</span></div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span><span class="comment">     * @return Tensor&lt;nsd&gt;</span></div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    Tensor&lt;nsd&gt; </div>
-<div class="foldopen" id="foldopen00215" data-start="{" data-end="}">
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">  215</a></span>    <a class="code hl_function" href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">dyadic_product</a>(<span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; A, <span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; B) {</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="comment">// Initialize the result tensor</span></div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        Tensor&lt;nsd&gt; C;</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span> </div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>        <span class="comment">// Compute the dyadic product: C_ijkl = A_ij * B_kl</span></div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nsd; ++i) {</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; nsd; ++j) {</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0; k &lt; nsd; ++k) {</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> l = 0; l &lt; nsd; ++l) {</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>                        C(i,j,k,l) = A(i,j) * B(k,l);</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>                    }</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                }</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>            }</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>        }</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>        <span class="comment">// For some reason, in this case the Eigen::Tensor contract function is </span></div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>        <span class="comment">// slower than the for loop implementation</span></div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span> </div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>        <span class="keywordflow">return</span> C;</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    }</div>
-</div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span> </div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a6f90a43cf65bdb492935c0fb0f0a6bf7">ten_ids</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment"></span> </div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span><span class="comment">    /**</span></div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="comment">     * @brief Create a 4th order identity tensor:</span></div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="comment">     * I_ijkl = 0.5 * (δ_ik * δ_jl + δ_il * δ_jk)</span></div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span><span class="comment">     * </span></div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span><span class="comment">     * @tparam nsd, the number of spatial dimensions</span></div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="comment">     * @return Tensor&lt;nsd&gt; </span></div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    Tensor&lt;nsd&gt;</div>
-<div class="foldopen" id="foldopen00246" data-start="{" data-end="}">
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">  246</a></span>    <a class="code hl_function" href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">fourth_order_identity</a>() {</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>        <span class="comment">// Initialize as zero</span></div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        Tensor&lt;nsd&gt; I;</div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>        I.setZero();</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span> </div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>        <span class="comment">// Set only non-zero entries</span></div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nsd; ++i) {</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; nsd; ++j) {</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>                I(i,j,i,j) += 0.5;</div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>                I(i,j,j,i) += 0.5;</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>            }</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>        }</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="comment"></span> </div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span><span class="comment">    /// @brief As above, but with the column count known only at run time.</span></div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="comment">    /// For operands with one column per element node, where the width depends on</span></div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span><span class="comment">    /// the element type. The row counts are still compile-time, which is where</span></div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span><span class="comment">    /// most of the benefit comes from.</span></div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> M, <span class="keywordtype">int</span> K&gt;</div>
+<div class="foldopen" id="foldopen00252" data-start="{" data-end="}">
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a36bcb6d3b2f5be4ff4ad6c1e7ed61a38">  252</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a7f258f8d7f62a92cd85f0b12dd354203">mat_mul</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B,</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>                 Array&lt;double&gt;&amp; C)</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    {</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, M, K&gt;&gt; a(A.data());</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>      Eigen::Map&lt;const Eigen::Matrix&lt;double, K, Eigen::Dynamic&gt;&gt; b(B.data(), K, B.ncols());</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>      Eigen::Map&lt;Eigen::Matrix&lt;double, M, Eigen::Dynamic&gt;&gt;       c(C.data(), M, C.ncols());</div>
 <div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>        <span class="keywordflow">return</span> I;</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>      c.noalias() = a * b;</div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    }</div>
 </div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span> </div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a537a2b432aceb0959b8b0522410f12a8">ten_mddot</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span> </div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a36539d086d29370c7c0649df4a132645">ten_symm_prod</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    <span class="comment"></span></div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span><span class="comment">    /// @brief Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)</span></div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span><span class="comment">    ///</span></div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span><span class="comment">    /// Reproduces &#39;FUNCTION TEN_SYMMPROD(A, B, nd) RESULT(C)&#39;.</span></div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span><span class="comment"></span>    <span class="comment">//</span></div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    Tensor&lt;nsd&gt;</div>
-<div class="foldopen" id="foldopen00272" data-start="{" data-end="}">
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">  272</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">symmetric_dyadic_product</a>(<span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; A, <span class="keyword">const</span> Matrix&lt;nsd&gt;&amp; B) {</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        </div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        <span class="comment">// Initialize the result tensor</span></div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        Tensor&lt;nsd&gt; C;</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span> </div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>        <span class="comment">// Compute the symmetric product: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)</span></div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nsd; ++i) {</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; nsd; ++j) {</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0; k &lt; nsd; ++k) {</div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> l = 0; l &lt; nsd; ++l) {</div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>                        C(i,j,k,l) = 0.5 * (A(i,k) * B(j,l) + A(i,l) * B(j,k));</div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>                    }</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                }</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>            }</div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>        }</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>        <span class="comment">// For some reason, in this case the for loop implementation is faster </span></div>
-<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>        <span class="comment">// than the Eigen::Tensor contract method</span></div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span> </div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        <span class="comment">// Return the symmetric product</span></div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>        <span class="keywordflow">return</span> C;</div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>    }</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a6ecffe7c0c2beba571579b3071f6da91">mat_symm</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#ac74e37f69fc09901dd23652f89a4f7e1">mat_symm_prod</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; u, <span class="keyword">const</span> <a class="code hl_class" href="class_vector.html">Vector&lt;double&gt;</a>&amp; v, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span> </div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    <span class="keywordtype">double</span> <a class="code hl_function" href="namespacemat__fun.html#a80fd0b01661fb60e285f4d1a94ad3eeb">mat_trace</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span> </div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#af3367681f82e87222e557415681edd4a">ten_asym_prod12</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a9359f973f503f358d24a8db8c5630846">ten_ddot</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#ae77741e0486f9d35108bc57ffbc3bdb4">ten_ddot_2412</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> ten_ddot_3424(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span><span class="comment"></span> </div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span><span class="comment">    /**</span></div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span><span class="comment">     * @brief Contracts two 4th order tensors A and B over two dimensions.</span></div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span><span class="comment">     * For example, if dimsA = {0, 1} and dimsB = {2, 3} this is</span></div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span><span class="comment">     *  C_klmn = A_ijkl B_mnij   (sum over i, j)</span></div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span><span class="comment">     * @tparam nsd Number of spatial dimensions; each tensor is nsd^4.</span></div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span><span class="comment">     * @param[in] A,B Fourth order tensors to contract.</span></div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span><span class="comment">     * @param[in] dimsA,dimsB Indices of the contracted dimensions of A and B.</span></div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span><span class="comment">     * @return The contracted tensor.</span></div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>    Tensor&lt;nsd&gt;</div>
+<div class="foldopen" id="foldopen00285" data-start="{" data-end="}">
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577">  285</a></span>    double_dot_product(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a>&amp; A, <span class="keyword">const</span> std::array&lt;int, 2&gt;&amp; dimsA, </div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>                        <span class="keyword">const</span> <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a>&amp; B, <span class="keyword">const</span> std::array&lt;int, 2&gt;&amp; dimsB) {</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>        </div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>        <span class="comment">// Fast path for dimsA = dimsB = {2,3}: C_ijmn = A_ijkl * B_mnkl.</span></div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>        <span class="keywordflow">if</span> (dimsA[0] == 2 &amp;&amp; dimsA[1] == 3 &amp;&amp; dimsB[0] == 2 &amp;&amp; dimsB[1] == 3) {</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>            <span class="keyword">constexpr</span> <span class="keywordtype">int</span> N = nsd * nsd;</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>            <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a> C;</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>            Eigen::Map&lt;const Eigen::Matrix&lt;double, N, N&gt;&gt; a(A.data());</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>            Eigen::Map&lt;const Eigen::Matrix&lt;double, N, N&gt;&gt; b(B.data());</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>            Eigen::Map&lt;Eigen::Matrix&lt;double, N, N&gt;&gt; c(C.data());</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>            c.noalias() = a * b.transpose();</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>            <span class="keywordflow">return</span> C;</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>        }</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span> </div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>        <span class="comment">// Define the contraction dimensions</span></div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>        Eigen::array&lt;Eigen::IndexPair&lt;int&gt;, 2&gt; contractionDims = {</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>            Eigen::IndexPair&lt;int&gt;(dimsA[0], dimsB[0]), <span class="comment">// Contract A&#39;s dimsA[0] with B&#39;s dimsB[0]</span></div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>            Eigen::IndexPair&lt;int&gt;(dimsA[1], dimsB[1])  <span class="comment">// Contract A&#39;s dimsA[1] with B&#39;s dimsB[1]</span></div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>        };</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span> </div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>        <span class="comment">// Return the double dot product</span></div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>        <span class="keywordflow">return</span> A.contract(B, contractionDims);</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>    }</div>
 </div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span> </div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> ten_transpose(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span><span class="comment"></span> </div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="comment">    /**</span></div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="comment">     * @brief Performs a tensor transpose operation on a 4th order tensor A, B_ijkl = A_klij</span></div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span><span class="comment">     * </span></div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span><span class="comment">     * @tparam nsd, the number of spatial dimensions</span></div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span><span class="comment">     * @param A, the input 4th order tensor</span></div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span><span class="comment">     * @return Tensor&lt;nsd&gt;</span></div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    Tensor&lt;nsd&gt;</div>
-<div class="foldopen" id="foldopen00305" data-start="{" data-end="}">
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91">  305</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1">transpose</a>(<span class="keyword">const</span> Tensor&lt;nsd&gt;&amp; A) {</div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span> </div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>        <span class="comment">// Initialize the result tensor</span></div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>        Tensor&lt;nsd&gt; B;</div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span> </div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>        <span class="comment">// Permute the tensor indices to perform the transpose operation</span></div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nsd; ++i) {</div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; nsd; ++j) {</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0; k &lt; nsd; ++k) {</div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> l = 0; l &lt; nsd; ++l) {</div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>                        B(i,j,k,l) = A(k,l,i,j);</div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>                    }</div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>                }</div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>            }</div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>        }</div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span> </div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>        <span class="keywordflow">return</span> B;</div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>    }</div>
-</div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span> </div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1">transpose</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A);</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span> </div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a998c0fc509c870bc57677032ef09034e">ten_dyad_prod</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>    <span class="comment"></span></div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span><span class="comment">    /**</span></div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span><span class="comment">     * @brief Compute the dyadic product of two 2nd order tensors A and B, C_ijkl = A_ij * B_kl</span></div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span><span class="comment">     * </span></div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span><span class="comment">     * @tparam nsd, the number of spatial dimensions</span></div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span><span class="comment">     * @param A, the first 2nd order tensor</span></div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span><span class="comment">     * @param B, the second 2nd order tensor</span></div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span><span class="comment">     * @return Tensor&lt;nsd&gt;</span></div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>    Tensor&lt;nsd&gt; </div>
+<div class="foldopen" id="foldopen00321" data-start="{" data-end="}">
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">  321</a></span>    <a class="code hl_function" href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">dyadic_product</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix&lt;nsd&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix&lt;nsd&gt;</a>&amp; B) {</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>        <span class="comment">// Initialize the result tensor</span></div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>        <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a> C;</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>        <span class="keyword">constexpr</span> <span class="keywordtype">int</span> N = nsd * nsd;</div>
 <div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span> </div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a31191bf7be4deec4c4ce4dd1a238e7e5">ten_init</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>};</div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span> </div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>        <span class="comment">// Column-major storage flattens index pairs: c(ij,kl) = a(ij) * b(kl).</span></div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>        Eigen::Map&lt;const Eigen::Matrix&lt;double, N, 1&gt;&gt; a(A.data());</div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>        Eigen::Map&lt;const Eigen::Matrix&lt;double, N, 1&gt;&gt; b(B.data());</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>        Eigen::Map&lt;Eigen::Matrix&lt;double, N, N&gt;&gt; c(C.data());</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>        c.noalias() = a * b.transpose();</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>        <span class="keywordflow">return</span> C;</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>    }</div>
+</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span> </div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a6f90a43cf65bdb492935c0fb0f0a6bf7">ten_ids</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span><span class="comment"></span> </div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span><span class="comment">    /**</span></div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span><span class="comment">     * @brief Create a 4th order identity tensor:</span></div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span><span class="comment">     * I_ijkl = 0.5 * (δ_ik * δ_jl + δ_il * δ_jk)</span></div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span><span class="comment">     * </span></div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span><span class="comment">     * @tparam nsd, the number of spatial dimensions</span></div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span><span class="comment">     * @return Tensor&lt;nsd&gt; </span></div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>    Tensor&lt;nsd&gt;</div>
+<div class="foldopen" id="foldopen00345" data-start="{" data-end="}">
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">  345</a></span>    <a class="code hl_function" href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">fourth_order_identity</a>() {</div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>        <span class="comment">// Initialize as zero</span></div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>        <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a> I;</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>        I.setZero();</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span> </div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>        <span class="comment">// Set only non-zero entries</span></div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nsd; ++i) {</div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; nsd; ++j) {</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>                I(i,j,i,j) += 0.5;</div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>                I(i,j,j,i) += 0.5;</div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>            }</div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>        }</div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span> </div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>        <span class="keywordflow">return</span> I;</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    }</div>
+</div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span> </div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a537a2b432aceb0959b8b0522410f12a8">ten_mddot</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span> </div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> <a class="code hl_function" href="namespacemat__fun.html#a36539d086d29370c7c0649df4a132645">ten_symm_prod</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A, <span class="keyword">const</span> Array&lt;double&gt;&amp; B, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    <span class="comment"></span></div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span><span class="comment">    /// @brief Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)</span></div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span><span class="comment">    ///</span></div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span><span class="comment">    /// @tparam nsd Number of spatial dimensions.</span></div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span><span class="comment">    /// @param[in] A,B Second order tensors.</span></div>
+<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span><span class="comment">    /// @return The resulting 4th order tensor.</span></div>
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span><span class="comment"></span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>    Tensor&lt;nsd&gt;</div>
+<div class="foldopen" id="foldopen00372" data-start="{" data-end="}">
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">  372</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">symmetric_dyadic_product</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix&lt;nsd&gt;</a>&amp; A, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix&lt;nsd&gt;</a>&amp; B) {</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>        </div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>        <span class="comment">// Initialize the result tensor</span></div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>        <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a> C;</div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span> </div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>        <span class="comment">// Compute the symmetric product: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)</span></div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> l = 0; l &lt; nsd; ++l) {</div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0; k &lt; nsd; ++k) {</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>                <span class="comment">// blk views the (k,l) block of C, so blk(i,j) is C(i,j,k,l).</span></div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>                Eigen::Map&lt;Eigen::Matrix&lt;double, nsd, nsd&gt;&gt; blk(C.data() + nsd * nsd * (k + nsd * l));</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>                blk.noalias() = 0.5 * (A.col(k) * B.col(l).transpose()</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>                                     + A.col(l) * B.col(k).transpose());</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>            }</div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>        }</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span> </div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>        <span class="comment">// Return the symmetric product</span></div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>        <span class="keywordflow">return</span> C;</div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>    }</div>
+</div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span> </div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a> ten_transpose(<span class="keyword">const</span> <a class="code hl_class" href="class_tensor4.html">Tensor4&lt;double&gt;</a>&amp; A, <span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="comment"></span> </div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span><span class="comment">    /**</span></div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="comment">     * @brief Performs a tensor transpose operation on a 4th order tensor A, B_ijkl = A_klij</span></div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span><span class="comment">     * </span></div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span><span class="comment">     * @tparam nsd, the number of spatial dimensions</span></div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span><span class="comment">     * @param A, the input 4th order tensor</span></div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span><span class="comment">     * @return Tensor&lt;nsd&gt;</span></div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    <span class="keyword">template</span> &lt;<span class="keywordtype">int</span> nsd&gt;</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>    Tensor&lt;nsd&gt;</div>
+<div class="foldopen" id="foldopen00402" data-start="{" data-end="}">
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno"><a class="line" href="namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91">  402</a></span>    <a class="code hl_function" href="namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1">transpose</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a>&amp; A) {</div>
+<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span> </div>
+<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>        <span class="comment">// Initialize the result tensor</span></div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>        <a class="code hl_typedef" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor&lt;nsd&gt;</a> B;</div>
+<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span> </div>
+<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span>        <span class="comment">// Permute the tensor indices to perform the transpose operation</span></div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nsd; ++i) {</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; nsd; ++j) {</div>
+<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0; k &lt; nsd; ++k) {</div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> l = 0; l &lt; nsd; ++l) {</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>                        B(i,j,k,l) = A(k,l,i,j);</div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>                    }</div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>                }</div>
+<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>            }</div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>        }</div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span> </div>
+<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>        <span class="keywordflow">return</span> B;</div>
+<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>    }</div>
+</div>
+<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span> </div>
+<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>    Array&lt;double&gt; <a class="code hl_function" href="namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1">transpose</a>(<span class="keyword">const</span> Array&lt;double&gt;&amp; A);</div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span> </div>
+<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="namespacemat__fun.html#a31191bf7be4deec4c4ce4dd1a238e7e5">ten_init</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> nd);</div>
+<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span> </div>
+<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>};</div>
+<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span> </div>
+<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="a_f_e_exception_8h_html"><div class="ttname"><a href="_f_e_exception_8h.html">FEException.h</a></div><div class="ttdoc">Exception hierarchy for error handling in the FE library.</div></div>
 <div class="ttc" id="aclass_tensor4_html"><div class="ttname"><a href="class_tensor4.html">Tensor4</a></div><div class="ttdoc">The Tensor4 template class implements a simple interface to 4th order tensors.</div><div class="ttdef"><b>Definition</b> Tensor4.h:20</div></div>
 <div class="ttc" id="aclass_vector_html"><div class="ttname"><a href="class_vector.html">Vector</a></div><div class="ttdoc">The Vector template class is used for storing int and double data.</div><div class="ttdef"><b>Definition</b> Vector.h:26</div></div>
-<div class="ttc" id="agroup___f_e___matrix_math_html_ga19fc0a30233b15bff8a1716d65fb42cd"><div class="ttname"><a href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">svmp::FE::math::Matrix</a></div><div class="ttdeci">Eigen::Matrix&lt; T, static_cast&lt; int &gt;(M), static_cast&lt; int &gt;(N)&gt; Matrix</div><div class="ttdoc">Fixed-size matrix for element-level computations.</div><div class="ttdef"><b>Definition</b> Matrix.h:41</div></div>
 <div class="ttc" id="anamespacemat__fun_html"><div class="ttname"><a href="namespacemat__fun.html">mat_fun</a></div><div class="ttdoc">The classes defined here duplicate the data structures in the Fortran MATFUN module defined in MATFUN...</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:15</div></div>
-<div class="ttc" id="anamespacemat__fun_html_a1ac506079f38e325c16e6f23acc29dbe"><div class="ttname"><a href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">mat_fun::symmetric_dyadic_product</a></div><div class="ttdeci">Tensor&lt; nsd &gt; symmetric_dyadic_product(const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</div><div class="ttdoc">Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0....</div><div class="ttdef"><b>Definition</b> mat_fun.h:272</div></div>
+<div class="ttc" id="anamespacemat__fun_html_a08c6284789e31d0f22dd0e0f23cc51cf"><div class="ttname"><a href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">mat_fun::Matrix</a></div><div class="ttdeci">Eigen::Matrix&lt; double, nsd, nsd &gt; Matrix</div><div class="ttdoc">A 2nd order tensor, nsd x nsd, fixed size and stack allocated. Used for the deformation gradient,...</div><div class="ttdef"><b>Definition</b> mat_fun.h:29</div></div>
+<div class="ttc" id="anamespacemat__fun_html_a1ac506079f38e325c16e6f23acc29dbe"><div class="ttname"><a href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">mat_fun::symmetric_dyadic_product</a></div><div class="ttdeci">Tensor&lt; nsd &gt; symmetric_dyadic_product(const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</div><div class="ttdoc">Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0....</div><div class="ttdef"><b>Definition</b> mat_fun.h:372</div></div>
+<div class="ttc" id="anamespacemat__fun_html_a2a20f1eb9f6c0093bd785b5c4c8083af"><div class="ttname"><a href="namespacemat__fun.html#a2a20f1eb9f6c0093bd785b5c4c8083af">mat_fun::eigen_view_mutable</a></div><div class="ttdeci">Eigen::Map&lt; Eigen::MatrixXd &gt; eigen_view_mutable(Array&lt; double &gt; &amp;A)</div><div class="ttdoc">Writable Eigen view of a whole Array, sharing its storage.</div><div class="ttdef"><b>Definition</b> mat_fun.h:98</div></div>
 <div class="ttc" id="anamespacemat__fun_html_a31191bf7be4deec4c4ce4dd1a238e7e5"><div class="ttname"><a href="namespacemat__fun.html#a31191bf7be4deec4c4ce4dd1a238e7e5">mat_fun::ten_init</a></div><div class="ttdeci">void ten_init(const int nd)</div><div class="ttdoc">Initialize tensor index pointer.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:779</div></div>
 <div class="ttc" id="anamespacemat__fun_html_a36539d086d29370c7c0649df4a132645"><div class="ttname"><a href="namespacemat__fun.html#a36539d086d29370c7c0649df4a132645">mat_fun::ten_symm_prod</a></div><div class="ttdeci">Tensor4&lt; double &gt; ten_symm_prod(const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, const int nd)</div><div class="ttdoc">Create a 4th order tensor from symmetric outer product of two matrices.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:871</div></div>
+<div class="ttc" id="anamespacemat__fun_html_a36bfdedd98c3ca41c40ced9101ee0270"><div class="ttname"><a href="namespacemat__fun.html#a36bfdedd98c3ca41c40ced9101ee0270">mat_fun::eigen_view</a></div><div class="ttdeci">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, Eigen::Dynamic &gt; &gt; eigen_view(const Array&lt; double &gt; &amp;A)</div><div class="ttdoc">Read-only Eigen view of an Array, sharing its storage.</div><div class="ttdef"><b>Definition</b> mat_fun.h:57</div></div>
+<div class="ttc" id="anamespacemat__fun_html_a3c32e4eef15a5308f1f7fb997b71e5b2"><div class="ttname"><a href="namespacemat__fun.html#a3c32e4eef15a5308f1f7fb997b71e5b2">mat_fun::NodalMatrix</a></div><div class="ttdeci">Eigen::Matrix&lt; double, nsd, Eigen::Dynamic, 0, nsd, consts::maxNoN &gt; NodalMatrix</div><div class="ttdoc">One nsd-vector per element node, so nsd x eNoN. Row count is fixed at compile time while column count...</div><div class="ttdef"><b>Definition</b> mat_fun.h:42</div></div>
 <div class="ttc" id="anamespacemat__fun_html_a537a2b432aceb0959b8b0522410f12a8"><div class="ttname"><a href="namespacemat__fun.html#a537a2b432aceb0959b8b0522410f12a8">mat_fun::ten_mddot</a></div><div class="ttdeci">Array&lt; double &gt; ten_mddot(const Tensor4&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, const int nd)</div><div class="ttdoc">Double dot product of a 4th order tensor and a 2nd order tensor.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:841</div></div>
 <div class="ttc" id="anamespacemat__fun_html_a6ecffe7c0c2beba571579b3071f6da91"><div class="ttname"><a href="namespacemat__fun.html#a6ecffe7c0c2beba571579b3071f6da91">mat_fun::mat_symm</a></div><div class="ttdeci">Array&lt; double &gt; mat_symm(const Array&lt; double &gt; &amp;A, const int nd)</div><div class="ttdoc">Symmetric part of a matrix, S = (A + A.T)/2.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:574</div></div>
 <div class="ttc" id="anamespacemat__fun_html_a6f90a43cf65bdb492935c0fb0f0a6bf7"><div class="ttname"><a href="namespacemat__fun.html#a6f90a43cf65bdb492935c0fb0f0a6bf7">mat_fun::ten_ids</a></div><div class="ttdeci">Tensor4&lt; double &gt; ten_ids(const int nd)</div><div class="ttdoc">Create a 4th order order symmetric identity tensor.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:822</div></div>
@@ -469,13 +581,16 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="anamespacemat__fun_html_aa0e1aca3444929b9530b92d2e46eb92b"><div class="ttname"><a href="namespacemat__fun.html#aa0e1aca3444929b9530b92d2e46eb92b">mat_fun::mat_inv_lp</a></div><div class="ttdeci">Array&lt; double &gt; mat_inv_lp(const Array&lt; double &gt; &amp;A, const int nd)</div><div class="ttdoc">This function computes inverse of a square matrix using Lapack functions (DGETRF + DGETRI)</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:397</div></div>
 <div class="ttc" id="anamespacemat__fun_html_ab37105ea0bd5731ef3ba24889a33d236"><div class="ttname"><a href="namespacemat__fun.html#ab37105ea0bd5731ef3ba24889a33d236">mat_fun::mat_inv</a></div><div class="ttdeci">Array&lt; double &gt; mat_inv(const Array&lt; double &gt; &amp;A, const int nd, bool debug)</div><div class="ttdoc">This function computes inverse of a square matrix.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:110</div></div>
 <div class="ttc" id="anamespacemat__fun_html_ab7cf0a25ec503065254317903b7f0fcf"><div class="ttname"><a href="namespacemat__fun.html#ab7cf0a25ec503065254317903b7f0fcf">mat_fun::mat_inv_ge</a></div><div class="ttdeci">Array&lt; double &gt; mat_inv_ge(const Array&lt; double &gt; &amp;Ain, const int n, bool debug)</div><div class="ttdoc">This function computes inverse of a square matrix using Gauss Elimination method.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:167</div></div>
+<div class="ttc" id="anamespacemat__fun_html_abd9e75a414e4ca001769288ad084d282"><div class="ttname"><a href="namespacemat__fun.html#abd9e75a414e4ca001769288ad084d282">mat_fun::eigen_view_rows</a></div><div class="ttdeci">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, Eigen::Dynamic &gt;, 0, Eigen::OuterStride&lt;&gt; &gt; eigen_view_rows(const Array&lt; double &gt; &amp;A, const int first)</div><div class="ttdoc">Read-only Eigen view of a band of rows of an Array, sharing its storage.</div><div class="ttdef"><b>Definition</b> mat_fun.h:87</div></div>
 <div class="ttc" id="anamespacemat__fun_html_ac74e37f69fc09901dd23652f89a4f7e1"><div class="ttname"><a href="namespacemat__fun.html#ac74e37f69fc09901dd23652f89a4f7e1">mat_fun::mat_symm_prod</a></div><div class="ttdeci">Array&lt; double &gt; mat_symm_prod(const Vector&lt; double &gt; &amp;u, const Vector&lt; double &gt; &amp;v, const int nd)</div><div class="ttdoc">Create a matrix from symmetric product of two vectors.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:591</div></div>
+<div class="ttc" id="anamespacemat__fun_html_acbc3701ff3b1c00c4c34e501c5396f1f"><div class="ttname"><a href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">mat_fun::Tensor</a></div><div class="ttdeci">Eigen::TensorFixedSize&lt; double, Eigen::Sizes&lt; nsd, nsd, nsd, nsd &gt; &gt; Tensor</div><div class="ttdoc">A 4th order tensor, nsd x nsd x nsd x nsd, fixed size and stack allocated. Used for the material elas...</div><div class="ttdef"><b>Definition</b> mat_fun.h:35</div></div>
+<div class="ttc" id="anamespacemat__fun_html_ad0002b188687e1919ef94ebaf04c568c"><div class="ttname"><a href="namespacemat__fun.html#ad0002b188687e1919ef94ebaf04c568c">mat_fun::NodalVector</a></div><div class="ttdeci">Eigen::Matrix&lt; double, Eigen::Dynamic, 1, 0, consts::maxNoN, 1 &gt; NodalVector</div><div class="ttdoc">One scalar per element node, so eNoN entries. Dynamic length bounded by consts::maxNoN to stay stack ...</div><div class="ttdef"><b>Definition</b> mat_fun.h:47</div></div>
 <div class="ttc" id="anamespacemat__fun_html_ad05ac7a2eaf066914a30549c9e489a6d"><div class="ttname"><a href="namespacemat__fun.html#ad05ac7a2eaf066914a30549c9e489a6d">mat_fun::mat_dyad_prod</a></div><div class="ttdeci">Array&lt; double &gt; mat_dyad_prod(const Vector&lt; double &gt; &amp;u, const Vector&lt; double &gt; &amp;v, const int nd)</div><div class="ttdoc">Create a matrix from outer product of two vectors.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:82</div></div>
-<div class="ttc" id="anamespacemat__fun_html_ad1be24b26bf2e35a1d8f171f808da125"><div class="ttname"><a href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">mat_fun::fourth_order_identity</a></div><div class="ttdeci">Tensor&lt; nsd &gt; fourth_order_identity()</div><div class="ttdoc">Create a 4th order identity tensor: I_ijkl = 0.5 * (δ_ik * δ_jl + δ_il * δ_jk)</div><div class="ttdef"><b>Definition</b> mat_fun.h:246</div></div>
+<div class="ttc" id="anamespacemat__fun_html_ad1be24b26bf2e35a1d8f171f808da125"><div class="ttname"><a href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">mat_fun::fourth_order_identity</a></div><div class="ttdeci">Tensor&lt; nsd &gt; fourth_order_identity()</div><div class="ttdoc">Create a 4th order identity tensor: I_ijkl = 0.5 * (δ_ik * δ_jl + δ_il * δ_jk)</div><div class="ttdef"><b>Definition</b> mat_fun.h:345</div></div>
 <div class="ttc" id="anamespacemat__fun_html_ad504ada70491864776462a52dbc73246"><div class="ttname"><a href="namespacemat__fun.html#ad504ada70491864776462a52dbc73246">mat_fun::mat_ddot</a></div><div class="ttdeci">double mat_ddot(const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, const int nd)</div><div class="ttdoc">Double dot product of 2 square matrices.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:21</div></div>
 <div class="ttc" id="anamespacemat__fun_html_ae77741e0486f9d35108bc57ffbc3bdb4"><div class="ttname"><a href="namespacemat__fun.html#ae77741e0486f9d35108bc57ffbc3bdb4">mat_fun::ten_ddot_2412</a></div><div class="ttdeci">Tensor4&lt; double &gt; ten_ddot_2412(const Tensor4&lt; double &gt; &amp;A, const Tensor4&lt; double &gt; &amp;B, const int nd)</div><div class="ttdoc">T_ijkl = A_imjn * B_mnkl.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:690</div></div>
 <div class="ttc" id="anamespacemat__fun_html_af3367681f82e87222e557415681edd4a"><div class="ttname"><a href="namespacemat__fun.html#af3367681f82e87222e557415681edd4a">mat_fun::ten_asym_prod12</a></div><div class="ttdeci">Tensor4&lt; double &gt; ten_asym_prod12(const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, const int nd)</div><div class="ttdoc">Create a 4th order tensor from antisymmetric outer product of two matrices.</div><div class="ttdef"><b>Definition</b> mat_fun.cpp:623</div></div>
-<div class="ttc" id="anamespacemat__fun_html_afa83612e70dad93bbf2bcc8134c0fb54"><div class="ttname"><a href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">mat_fun::dyadic_product</a></div><div class="ttdeci">Tensor&lt; nsd &gt; dyadic_product(const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</div><div class="ttdoc">Compute the dyadic product of two 2nd order tensors A and B, C_ijkl = A_ij * B_kl.</div><div class="ttdef"><b>Definition</b> mat_fun.h:215</div></div>
+<div class="ttc" id="anamespacemat__fun_html_afa83612e70dad93bbf2bcc8134c0fb54"><div class="ttname"><a href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">mat_fun::dyadic_product</a></div><div class="ttdeci">Tensor&lt; nsd &gt; dyadic_product(const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</div><div class="ttdoc">Compute the dyadic product of two 2nd order tensors A and B, C_ijkl = A_ij * B_kl.</div><div class="ttdef"><b>Definition</b> mat_fun.h:321</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

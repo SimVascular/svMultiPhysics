@@ -15,7 +15,7 @@ var searchData=
   ['mat_5ftrace_12',['mat_trace',['../namespacemat__fun.html#a80fd0b01661fb60e285f4d1a94ad3eeb',1,'mat_fun']]],
   ['math_13',['Math',['../group___f_e___math.html',1,'']]],
   ['mathematical_20model_14',['Mathematical model',['../class_ionic_model.html#autotoc_md18',1,'']]],
-  ['matrix_15',['matrix',['../group___f_e___matrix_math.html',1,'Matrix'],['../group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd',1,'svmp::FE::math::Matrix']]],
+  ['matrix_15',['matrix',['../group___f_e___matrix_math.html',1,'Matrix'],['../group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd',1,'svmp::FE::math::Matrix'],['../namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf',1,'mat_fun::Matrix']]],
   ['matrix_20construction_20details_16',['Graph and Matrix Construction Details',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md51',1,'']]],
   ['matrix_20vector_20printing_17',['Matrix/Vector Printing',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md56',1,'']]],
   ['matrix_2eh_18',['Matrix.h',['../_matrix_8h.html',1,'']]],

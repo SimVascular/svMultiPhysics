@@ -107,14 +107,21 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a08c6284789e31d0f22dd0e0f23cc51cf" id="r_a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memTemplParams" colspan="2"><a id="a08c6284789e31d0f22dd0e0f23cc51cf" name="a08c6284789e31d0f22dd0e0f23cc51cf"></a>
-template&lt;size_t nsd&gt; </td></tr>
-<tr class="memitem:a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Matrix</b> = Eigen::Matrix&lt; double, nsd, nsd &gt;</td></tr>
+<tr class="memitem:a08c6284789e31d0f22dd0e0f23cc51cf" id="r_a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a> = Eigen::Matrix&lt; double, nsd, nsd &gt;</td></tr>
+<tr class="memdesc:a08c6284789e31d0f22dd0e0f23cc51cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">A 2nd order tensor, nsd x nsd, fixed size and stack allocated. Used for the deformation gradient, stresses and similar quantities that have a known size at compile time.  <br /></td></tr>
 <tr class="separator:a08c6284789e31d0f22dd0e0f23cc51cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acbc3701ff3b1c00c4c34e501c5396f1f" id="r_acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memTemplParams" colspan="2"><a id="acbc3701ff3b1c00c4c34e501c5396f1f" name="acbc3701ff3b1c00c4c34e501c5396f1f"></a>
-template&lt;size_t nsd&gt; </td></tr>
-<tr class="memitem:acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Tensor</b> = Eigen::TensorFixedSize&lt; double, Eigen::Sizes&lt; nsd, nsd, nsd, nsd &gt; &gt;</td></tr>
+<tr class="memitem:acbc3701ff3b1c00c4c34e501c5396f1f" id="r_acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a> = Eigen::TensorFixedSize&lt; double, Eigen::Sizes&lt; nsd, nsd, nsd, nsd &gt; &gt;</td></tr>
+<tr class="memdesc:acbc3701ff3b1c00c4c34e501c5396f1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">A 4th order tensor, nsd x nsd x nsd x nsd, fixed size and stack allocated. Used for the material elasticity tensor and other 4th order tensors that have a known size at compile time.  <br /></td></tr>
 <tr class="separator:acbc3701ff3b1c00c4c34e501c5396f1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c32e4eef15a5308f1f7fb997b71e5b2" id="r_a3c32e4eef15a5308f1f7fb997b71e5b2"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:a3c32e4eef15a5308f1f7fb997b71e5b2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a3c32e4eef15a5308f1f7fb997b71e5b2">NodalMatrix</a> = Eigen::Matrix&lt; double, nsd, Eigen::Dynamic, 0, nsd, consts::maxNoN &gt;</td></tr>
+<tr class="memdesc:a3c32e4eef15a5308f1f7fb997b71e5b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">One nsd-vector per element node, so nsd x eNoN. Row count is fixed at compile time while column count is the element's node count, known only at run time, so it is bounded by consts::maxNoN to stay stack allocated. Used for shape function gradients and other per-node vector quantities.  <br /></td></tr>
+<tr class="separator:a3c32e4eef15a5308f1f7fb997b71e5b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0002b188687e1919ef94ebaf04c568c" id="r_ad0002b188687e1919ef94ebaf04c568c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#ad0002b188687e1919ef94ebaf04c568c">NodalVector</a> = Eigen::Matrix&lt; double, Eigen::Dynamic, 1, 0, consts::maxNoN, 1 &gt;</td></tr>
+<tr class="memdesc:ad0002b188687e1919ef94ebaf04c568c"><td class="mdescLeft">&#160;</td><td class="mdescRight">One scalar per element node, so eNoN entries. Dynamic length bounded by consts::maxNoN to stay stack allocated, as for NodalMatrix. Used for shape function values and other per-node scalar quantities.  <br /></td></tr>
+<tr class="separator:ad0002b188687e1919ef94ebaf04c568c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -199,6 +206,27 @@ Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>mat_
 <tr class="memitem:a7e7e91ed6a7fbc8f265080bb032b93c1" id="r_a7e7e91ed6a7fbc8f265080bb032b93c1"><td class="memItemLeft" align="right" valign="top">Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a7e7e91ed6a7fbc8f265080bb032b93c1">transpose</a> (const Array&lt; double &gt; &amp;A)</td></tr>
 <tr class="memdesc:a7e7e91ed6a7fbc8f265080bb032b93c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reproduces Fortran TRANSPOSE.  <br /></td></tr>
 <tr class="separator:a7e7e91ed6a7fbc8f265080bb032b93c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a36bfdedd98c3ca41c40ced9101ee0270" id="r_a36bfdedd98c3ca41c40ced9101ee0270"><td class="memTemplParams" colspan="2">template&lt;int rows&gt; </td></tr>
+<tr class="memitem:a36bfdedd98c3ca41c40ced9101ee0270"><td class="memTemplItemLeft" align="right" valign="top">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, Eigen::Dynamic &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a36bfdedd98c3ca41c40ced9101ee0270">eigen_view</a> (const Array&lt; double &gt; &amp;A)</td></tr>
+<tr class="memdesc:a36bfdedd98c3ca41c40ced9101ee0270"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read-only Eigen view of an Array, sharing its storage.  <br /></td></tr>
+<tr class="separator:a36bfdedd98c3ca41c40ced9101ee0270"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5554a60b1c78edc9a25be48c372ee357" id="r_a5554a60b1c78edc9a25be48c372ee357"><td class="memItemLeft" align="right" valign="top">Eigen::Map&lt; const Eigen::MatrixXd &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a5554a60b1c78edc9a25be48c372ee357">eigen_view</a> (const Array&lt; double &gt; &amp;A)</td></tr>
+<tr class="memdesc:a5554a60b1c78edc9a25be48c372ee357"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read-only Eigen view of a whole Array, sharing its storage.  <br /></td></tr>
+<tr class="separator:a5554a60b1c78edc9a25be48c372ee357"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd9e75a414e4ca001769288ad084d282" id="r_abd9e75a414e4ca001769288ad084d282"><td class="memTemplParams" colspan="2">template&lt;int rows&gt; </td></tr>
+<tr class="memitem:abd9e75a414e4ca001769288ad084d282"><td class="memTemplItemLeft" align="right" valign="top">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, Eigen::Dynamic &gt;, 0, Eigen::OuterStride&lt;&gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#abd9e75a414e4ca001769288ad084d282">eigen_view_rows</a> (const Array&lt; double &gt; &amp;A, const int first)</td></tr>
+<tr class="memdesc:abd9e75a414e4ca001769288ad084d282"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read-only Eigen view of a band of rows of an Array, sharing its storage.  <br /></td></tr>
+<tr class="separator:abd9e75a414e4ca001769288ad084d282"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a20f1eb9f6c0093bd785b5c4c8083af" id="r_a2a20f1eb9f6c0093bd785b5c4c8083af"><td class="memItemLeft" align="right" valign="top">Eigen::Map&lt; Eigen::MatrixXd &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a2a20f1eb9f6c0093bd785b5c4c8083af">eigen_view_mutable</a> (Array&lt; double &gt; &amp;A)</td></tr>
+<tr class="memdesc:a2a20f1eb9f6c0093bd785b5c4c8083af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writable Eigen view of a whole Array, sharing its storage.  <br /></td></tr>
+<tr class="separator:a2a20f1eb9f6c0093bd785b5c4c8083af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79a067f3e020b6cd626c26e176d06bd4" id="r_a79a067f3e020b6cd626c26e176d06bd4"><td class="memItemLeft" align="right" valign="top">Eigen::Map&lt; const Eigen::VectorXd &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a79a067f3e020b6cd626c26e176d06bd4">eigen_view</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;v)</td></tr>
+<tr class="memdesc:a79a067f3e020b6cd626c26e176d06bd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read-only Eigen view of a whole <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>, sharing its storage.  <br /></td></tr>
+<tr class="separator:a79a067f3e020b6cd626c26e176d06bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad173c416ce24c12331bf5b4d1870926e" id="r_ad173c416ce24c12331bf5b4d1870926e"><td class="memTemplParams" colspan="2">template&lt;int rows&gt; </td></tr>
+<tr class="memitem:ad173c416ce24c12331bf5b4d1870926e"><td class="memTemplItemLeft" align="right" valign="top">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, 1 &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#ad173c416ce24c12331bf5b4d1870926e">eigen_view</a> (const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;v)</td></tr>
+<tr class="memdesc:ad173c416ce24c12331bf5b4d1870926e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read-only Eigen view of a <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>, sharing its storage.  <br /></td></tr>
+<tr class="separator:ad173c416ce24c12331bf5b4d1870926e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a794d3d6acffd6e76311a63a7ec81e877" id="r_a794d3d6acffd6e76311a63a7ec81e877"><td class="memTemplParams" colspan="2"><a id="a794d3d6acffd6e76311a63a7ec81e877" name="a794d3d6acffd6e76311a63a7ec81e877"></a>
 template&lt;typename MatrixType &gt; </td></tr>
 <tr class="memitem:a794d3d6acffd6e76311a63a7ec81e877"><td class="memTemplItemLeft" align="right" valign="top">MatrixType&#160;</td><td class="memTemplItemRight" valign="bottom"><b>convert_to_eigen_matrix</b> (const Array&lt; double &gt; &amp;src)</td></tr>
@@ -217,7 +245,7 @@ template&lt;int nsd&gt; </td></tr>
 <tr class="separator:af95b6d49ae33323576bbfcf0f9708769"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2879f10328583d9c9c31526b87fbed09" id="r_a2879f10328583d9c9c31526b87fbed09"><td class="memTemplParams" colspan="2"><a id="a2879f10328583d9c9c31526b87fbed09" name="a2879f10328583d9c9c31526b87fbed09"></a>
 template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:a2879f10328583d9c9c31526b87fbed09"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><b>double_dot_product</b> (const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</td></tr>
+<tr class="memitem:a2879f10328583d9c9c31526b87fbed09"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><b>double_dot_product</b> (const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;A, const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;B)</td></tr>
 <tr class="separator:a2879f10328583d9c9c31526b87fbed09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef16dabb2561c60d32d5f0562bb02c41" id="r_aef16dabb2561c60d32d5f0562bb02c41"><td class="memTemplParams" colspan="2">template&lt;int M, int K, int N&gt; </td></tr>
 <tr class="memitem:aef16dabb2561c60d32d5f0562bb02c41"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#aef16dabb2561c60d32d5f0562bb02c41">mat_mul</a> (const Array&lt; double &gt; &amp;A, const Array&lt; double &gt; &amp;B, Array&lt; double &gt; &amp;C)</td></tr>
@@ -228,23 +256,23 @@ template&lt;int nsd&gt; </td></tr>
 <tr class="memdesc:a36bcb6d3b2f5be4ff4ad6c1e7ed61a38"><td class="mdescLeft">&#160;</td><td class="mdescRight">As above, but with the column count known only at run time.  <br /></td></tr>
 <tr class="separator:a36bcb6d3b2f5be4ff4ad6c1e7ed61a38"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbbee355035575333a0beda4d7ddc577" id="r_abbbee355035575333a0beda4d7ddc577"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:abbbee355035575333a0beda4d7ddc577"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577">double_dot_product</a> (const Tensor&lt; nsd &gt; &amp;A, const std::array&lt; int, 2 &gt; &amp;dimsA, const Tensor&lt; nsd &gt; &amp;B, const std::array&lt; int, 2 &gt; &amp;dimsB)</td></tr>
-<tr class="memdesc:abbbee355035575333a0beda4d7ddc577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contracts two 4th order tensors A and B over two dimensions,.  <br /></td></tr>
+<tr class="memitem:abbbee355035575333a0beda4d7ddc577"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#abbbee355035575333a0beda4d7ddc577">double_dot_product</a> (const <a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; &amp;A, const std::array&lt; int, 2 &gt; &amp;dimsA, const <a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; &amp;B, const std::array&lt; int, 2 &gt; &amp;dimsB)</td></tr>
+<tr class="memdesc:abbbee355035575333a0beda4d7ddc577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contracts two 4th order tensors A and B over two dimensions.  <br /></td></tr>
 <tr class="separator:abbbee355035575333a0beda4d7ddc577"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa83612e70dad93bbf2bcc8134c0fb54" id="r_afa83612e70dad93bbf2bcc8134c0fb54"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:afa83612e70dad93bbf2bcc8134c0fb54"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">dyadic_product</a> (const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</td></tr>
+<tr class="memitem:afa83612e70dad93bbf2bcc8134c0fb54"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#afa83612e70dad93bbf2bcc8134c0fb54">dyadic_product</a> (const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;A, const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;B)</td></tr>
 <tr class="memdesc:afa83612e70dad93bbf2bcc8134c0fb54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the dyadic product of two 2nd order tensors A and B, C_ijkl = A_ij * B_kl.  <br /></td></tr>
 <tr class="separator:afa83612e70dad93bbf2bcc8134c0fb54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1be24b26bf2e35a1d8f171f808da125" id="r_ad1be24b26bf2e35a1d8f171f808da125"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:ad1be24b26bf2e35a1d8f171f808da125"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">fourth_order_identity</a> ()</td></tr>
+<tr class="memitem:ad1be24b26bf2e35a1d8f171f808da125"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#ad1be24b26bf2e35a1d8f171f808da125">fourth_order_identity</a> ()</td></tr>
 <tr class="memdesc:ad1be24b26bf2e35a1d8f171f808da125"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a 4th order identity tensor: I_ijkl = 0.5 * (δ_ik * δ_jl + δ_il * δ_jk)  <br /></td></tr>
 <tr class="separator:ad1be24b26bf2e35a1d8f171f808da125"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ac506079f38e325c16e6f23acc29dbe" id="r_a1ac506079f38e325c16e6f23acc29dbe"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:a1ac506079f38e325c16e6f23acc29dbe"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">symmetric_dyadic_product</a> (const Matrix&lt; nsd &gt; &amp;A, const Matrix&lt; nsd &gt; &amp;B)</td></tr>
+<tr class="memitem:a1ac506079f38e325c16e6f23acc29dbe"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a1ac506079f38e325c16e6f23acc29dbe">symmetric_dyadic_product</a> (const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;A, const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;B)</td></tr>
 <tr class="memdesc:a1ac506079f38e325c16e6f23acc29dbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)  <br /></td></tr>
 <tr class="separator:a1ac506079f38e325c16e6f23acc29dbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c62ffa3fe5c3b76894a7de2c4e73b91" id="r_a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91">transpose</a> (const Tensor&lt; nsd &gt; &amp;A)</td></tr>
+<tr class="memitem:a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemat__fun.html#a5c62ffa3fe5c3b76894a7de2c4e73b91">transpose</a> (const <a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; &amp;A)</td></tr>
 <tr class="memdesc:a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Performs a tensor transpose operation on a 4th order tensor A, B_ijkl = A_klij.  <br /></td></tr>
 <tr class="separator:a5c62ffa3fe5c3b76894a7de2c4e73b91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -258,7 +286,78 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 <div class="textblock"><p>The classes defined here duplicate the data structures in the Fortran MATFUN module defined in MATFUN.f. </p>
 <p>This module defines data structures for generally performed matrix and tensor operations.</p>
 <dl class="todo"><dt><b><a class="el" href="todo.html#_todo000008">Todo:</a></b></dt><dd>[TODO:DaveP] this should just be a namespace? </dd></dl>
-</div><h2 class="groupheader">Function Documentation</h2>
+</div><h2 class="groupheader">Typedef Documentation</h2>
+<a id="a08c6284789e31d0f22dd0e0f23cc51cf" name="a08c6284789e31d0f22dd0e0f23cc51cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08c6284789e31d0f22dd0e0f23cc51cf">&#9670;&#160;</a></span>Matrix</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">mat_fun::Matrix</a> = typedef Eigen::Matrix&lt;double, nsd, nsd&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A 2nd order tensor, nsd x nsd, fixed size and stack allocated. Used for the deformation gradient, stresses and similar quantities that have a known size at compile time. </p>
+
+</div>
+</div>
+<a id="a3c32e4eef15a5308f1f7fb997b71e5b2" name="a3c32e4eef15a5308f1f7fb997b71e5b2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c32e4eef15a5308f1f7fb997b71e5b2">&#9670;&#160;</a></span>NodalMatrix</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacemat__fun.html#a3c32e4eef15a5308f1f7fb997b71e5b2">mat_fun::NodalMatrix</a> = typedef Eigen::Matrix&lt;double, nsd, Eigen::Dynamic, 0, nsd, consts::maxNoN&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>One nsd-vector per element node, so nsd x eNoN. Row count is fixed at compile time while column count is the element's node count, known only at run time, so it is bounded by consts::maxNoN to stay stack allocated. Used for shape function gradients and other per-node vector quantities. </p>
+
+</div>
+</div>
+<a id="ad0002b188687e1919ef94ebaf04c568c" name="ad0002b188687e1919ef94ebaf04c568c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0002b188687e1919ef94ebaf04c568c">&#9670;&#160;</a></span>NodalVector</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacemat__fun.html#ad0002b188687e1919ef94ebaf04c568c">mat_fun::NodalVector</a> = typedef Eigen::Matrix&lt;double, Eigen::Dynamic, 1, 0, consts::maxNoN, 1&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>One scalar per element node, so eNoN entries. Dynamic length bounded by consts::maxNoN to stay stack allocated, as for NodalMatrix. Used for shape function values and other per-node scalar quantities. </p>
+
+</div>
+</div>
+<a id="acbc3701ff3b1c00c4c34e501c5396f1f" name="acbc3701ff3b1c00c4c34e501c5396f1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acbc3701ff3b1c00c4c34e501c5396f1f">&#9670;&#160;</a></span>Tensor</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int nsd&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">mat_fun::Tensor</a> = typedef Eigen::TensorFixedSize&lt;double, Eigen::Sizes&lt;nsd, nsd, nsd, nsd&gt; &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A 4th order tensor, nsd x nsd x nsd x nsd, fixed size and stack allocated. Used for the material elasticity tensor and other 4th order tensors that have a known size at compile time. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
 <a id="abbbee355035575333a0beda4d7ddc577" name="abbbee355035575333a0beda4d7ddc577"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abbbee355035575333a0beda4d7ddc577">&#9670;&#160;</a></span>double_dot_product()</h2>
 
@@ -268,9 +367,9 @@ Array&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>t_ind</
 template&lt;int nsd&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">Tensor&lt; nsd &gt; mat_fun::double_dot_product </td>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; mat_fun::double_dot_product </td>
           <td>(</td>
-          <td class="paramtype">const Tensor&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; &amp;&#160;</td>
           <td class="paramname"><em>A</em>, </td>
         </tr>
         <tr>
@@ -282,7 +381,7 @@ template&lt;int nsd&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Tensor&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; &amp;&#160;</td>
           <td class="paramname"><em>B</em>, </td>
         </tr>
         <tr>
@@ -299,7 +398,22 @@ template&lt;int nsd&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Contracts two 4th order tensors A and B over two dimensions,. </p>
+<p>Contracts two 4th order tensors A and B over two dimensions. </p>
+<p>For example, if dimsA = {0, 1} and dimsB = {2, 3} this is C_klmn = A_ijkl B_mnij (sum over i, j)</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">nsd</td><td>Number of spatial dimensions; each tensor is nsd^4. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">A,B</td><td>Fourth order tensors to contract. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">dimsA,dimsB</td><td>Indices of the contracted dimensions of A and B. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The contracted tensor. </dd></dl>
 
 </div>
 </div>
@@ -312,15 +426,15 @@ template&lt;int nsd&gt; </div>
 template&lt;int nsd&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">Tensor&lt; nsd &gt; mat_fun::dyadic_product </td>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; mat_fun::dyadic_product </td>
           <td>(</td>
-          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;&#160;</td>
           <td class="paramname"><em>A</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;&#160;</td>
           <td class="paramname"><em>B</em>&#160;</td>
         </tr>
         <tr>
@@ -349,6 +463,195 @@ template&lt;int nsd&gt; </div>
 
 </div>
 </div>
+<a id="a36bfdedd98c3ca41c40ced9101ee0270" name="a36bfdedd98c3ca41c40ced9101ee0270"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a36bfdedd98c3ca41c40ced9101ee0270">&#9670;&#160;</a></span>eigen_view() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int rows&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, Eigen::Dynamic &gt; &gt; mat_fun::eigen_view </td>
+          <td>(</td>
+          <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read-only Eigen view of an Array, sharing its storage. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">rows</td><td>Row count, fixed at compile time; the columns are taken from the Array. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a5554a60b1c78edc9a25be48c372ee357" name="a5554a60b1c78edc9a25be48c372ee357"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5554a60b1c78edc9a25be48c372ee357">&#9670;&#160;</a></span>eigen_view() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Eigen::Map&lt; const Eigen::MatrixXd &gt; mat_fun::eigen_view </td>
+          <td>(</td>
+          <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Read-only Eigen view of a whole Array, sharing its storage. </p>
+
+</div>
+</div>
+<a id="a79a067f3e020b6cd626c26e176d06bd4" name="a79a067f3e020b6cd626c26e176d06bd4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79a067f3e020b6cd626c26e176d06bd4">&#9670;&#160;</a></span>eigen_view() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Eigen::Map&lt; const Eigen::VectorXd &gt; mat_fun::eigen_view </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>v</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Read-only Eigen view of a whole <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>, sharing its storage. </p>
+
+</div>
+</div>
+<a id="ad173c416ce24c12331bf5b4d1870926e" name="ad173c416ce24c12331bf5b4d1870926e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad173c416ce24c12331bf5b4d1870926e">&#9670;&#160;</a></span>eigen_view() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int rows&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, 1 &gt; &gt; mat_fun::eigen_view </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>v</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read-only Eigen view of a <a class="el" href="class_vector.html" title="The Vector template class is used for storing int and double data.">Vector</a>, sharing its storage. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">rows</td><td>Entry count, fixed at compile time. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a2a20f1eb9f6c0093bd785b5c4c8083af" name="a2a20f1eb9f6c0093bd785b5c4c8083af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a20f1eb9f6c0093bd785b5c4c8083af">&#9670;&#160;</a></span>eigen_view_mutable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Eigen::Map&lt; Eigen::MatrixXd &gt; mat_fun::eigen_view_mutable </td>
+          <td>(</td>
+          <td class="paramtype">Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Writable Eigen view of a whole Array, sharing its storage. </p>
+
+</div>
+</div>
+<a id="abd9e75a414e4ca001769288ad084d282" name="abd9e75a414e4ca001769288ad084d282"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd9e75a414e4ca001769288ad084d282">&#9670;&#160;</a></span>eigen_view_rows()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int rows&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">Eigen::Map&lt; const Eigen::Matrix&lt; double, rows, Eigen::Dynamic &gt;, 0, Eigen::OuterStride&lt;&gt; &gt; mat_fun::eigen_view_rows </td>
+          <td>(</td>
+          <td class="paramtype">const Array&lt; double &gt; &amp;&#160;</td>
+          <td class="paramname"><em>A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>first</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read-only Eigen view of a band of rows of an Array, sharing its storage. </p>
+<p>Used where an Array contains several fields and only a contiguous band is viewed. For example, </p><pre class="fragment">A = [ A00, A01, A02 ;         eigen_view_rows&lt;2&gt;(A, 1) = [ A10, A11, A12 ;
+      A10, A11, A12 ;                                      A20, A21, A22 ]
+      A20, A21, A22 ;
+      A30, A31, A32 ]
+</pre> <dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">A</td><td>The Array to view. </td></tr>
+    <tr><td class="paramname">first</td><td>Index of the band's first row within the Array. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">rows</td><td>Number of rows, fixed at compile time, typically nsd. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ad1be24b26bf2e35a1d8f171f808da125" name="ad1be24b26bf2e35a1d8f171f808da125"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad1be24b26bf2e35a1d8f171f808da125">&#9670;&#160;</a></span>fourth_order_identity()</h2>
 
@@ -358,7 +661,7 @@ template&lt;int nsd&gt; </div>
 template&lt;int nsd&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">Tensor&lt; nsd &gt; mat_fun::fourth_order_identity </td>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; mat_fun::fourth_order_identity </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -942,15 +1245,15 @@ template&lt;int M, int K&gt; </div>
 template&lt;int nsd&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">Tensor&lt; nsd &gt; mat_fun::symmetric_dyadic_product </td>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; mat_fun::symmetric_dyadic_product </td>
           <td>(</td>
-          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;&#160;</td>
           <td class="paramname"><em>A</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Matrix&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Matrix</a>&lt; nsd &gt; &amp;&#160;</td>
           <td class="paramname"><em>B</em>&#160;</td>
         </tr>
         <tr>
@@ -962,7 +1265,19 @@ template&lt;int nsd&gt; </div>
 </div><div class="memdoc">
 
 <p>Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk) </p>
-<p>Reproduces 'FUNCTION TEN_SYMMPROD(A, B, nd) RESULT(C)'. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">nsd</td><td>Number of spatial dimensions. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">A,B</td><td>Second order tensors. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The resulting 4th order tensor. </dd></dl>
 
 </div>
 </div>
@@ -1255,9 +1570,9 @@ template&lt;int nsd&gt; </div>
 template&lt;int nsd&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">Tensor&lt; nsd &gt; mat_fun::transpose </td>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; mat_fun::transpose </td>
           <td>(</td>
-          <td class="paramtype">const Tensor&lt; nsd &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="namespacemat__fun.html#acbc3701ff3b1c00c4c34e501c5396f1f">Tensor</a>&lt; nsd &gt; &amp;&#160;</td>
           <td class="paramname"><em>A</em></td><td>)</td>
           <td></td>
         </tr>

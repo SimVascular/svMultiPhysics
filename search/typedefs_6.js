@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['matrix_0',['Matrix',['../group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd',1,'svmp::FE::math']]],
+  ['matrix_0',['matrix',['../group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd',1,'svmp::FE::math::Matrix'],['../namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf',1,'mat_fun::Matrix']]],
   ['meshglobalid_1',['MeshGlobalId',['../group___f_e___common_types.html#ga4051c26b241301881b0698c2d986be07',1,'svmp::FE']]],
   ['meshindex_2',['MeshIndex',['../group___f_e___common_types.html#ga9d9f8179e8f1d23451edc4328d4d340e',1,'svmp::FE']]],
   ['meshoffset_3',['MeshOffset',['../group___f_e___common_types.html#gaae92b725297ddf88b61d656ca70e450a',1,'svmp::FE']]],
