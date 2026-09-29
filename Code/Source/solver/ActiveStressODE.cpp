@@ -9,6 +9,8 @@ void ActiveStressODE::read_model_specific_parameters(
 
   if (solver_str == "FE") {
     ode_solver = ODESolver::ForwardEuler;
+  } else if (solver_str == "RK4" || solver_str == "RK") {
+    ode_solver = ODESolver::RungeKutta4;
   } else {
     svmp::raise<svmp::ParseException>("Unknown ODE solver " + solver_str +
                                       " for active stress models.");
@@ -29,6 +31,19 @@ void ActiveStressODE::advance_time_step_local(const double t, const double dt,
     const Vector<double> f =
         getf(t - dt, state, calcium, fiber_stretch, fiber_stretch_rate);
     state.add(dt, f);
+  } else if (ode_solver == ODESolver::RungeKutta4) {
+    const Vector<double> k1 =
+        getf(t - dt, state, calcium, fiber_stretch, fiber_stretch_rate);
+    const Vector<double> k2 =
+        getf(t - 0.5 * dt, state + 0.5 * dt * k1, calcium, fiber_stretch,
+             fiber_stretch_rate);
+    const Vector<double> k3 =
+        getf(t - 0.5 * dt, state + 0.5 * dt * k2, calcium, fiber_stretch,
+             fiber_stretch_rate);
+    const Vector<double> k4 = getf(t, state + dt * k3, calcium, fiber_stretch,
+                                   fiber_stretch_rate);
+
+    state.add(dt / 6.0, k1 + 2.0 * (k2 + k3) + k4);
   } else {
     svmp::raise<svmp::InternalErrorException>(
         "Unknown ODE solver " + std::to_string(static_cast<int>(ode_solver)) +
