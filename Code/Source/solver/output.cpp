@@ -233,7 +233,6 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
   auto& Ad = com_mod.Ad;
   auto& pS0 = com_mod.pS0;
   auto& Xion = cep_mod.Xion;
-  auto& cem = cep_mod.cem;
 
   #ifdef debug_write_restart
   dmsg << "stFileName: " << stFileName;
@@ -311,9 +310,6 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
         } else if (cepEq) {
           restart_file.write((char*)Ad.data(), Ad.msize());
           restart_file.write((char*)Xion.data(), Xion.msize());
-          restart_file.write((char*)cem.Ya_f.data(), cem.Ya_f.msize());
-          restart_file.write((char*)cem.Ya_s.data(), cem.Ya_s.msize());
-          restart_file.write((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           restart_file.write((char*)Ad.data(), Ad.msize());
@@ -336,9 +332,6 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
 
         } else if (cepEq) {
           restart_file.write((char*)Xion.data(), Xion.msize());
-          restart_file.write((char*)cem.Ya_f.data(), cem.Ya_f.msize());
-          restart_file.write((char*)cem.Ya_s.data(), cem.Ya_s.msize());
-          restart_file.write((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           write_ris_data(com_mod, restart_file);

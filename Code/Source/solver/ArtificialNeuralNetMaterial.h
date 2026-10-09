@@ -57,12 +57,13 @@ class ArtificialNeuralNetMaterial
     void evaluate(const double aInv[9], double &psi, double (&dpsi)[9], double (&ddpsi)[9]) const;
 
     // Helper for compute_pk2cc
-    template<size_t nsd>
+    template <size_t nsd>
     void computeInvariantsAndDerivatives(
-    const Matrix<nsd>& C, const Matrix<nsd>& fl, int nfd, double J2d, double J4d, const Matrix<nsd>& Ci,
-    const Matrix<nsd>& Idm, const double Tfa, Matrix<nsd>& N1, double& psi, double (&Inv)[9], std::array<Matrix<nsd>,9>& dInv,
-    std::array<Tensor<nsd>,9>& ddInv) const; 
-    
+        const Matrix<nsd> &C, const Matrix<nsd> &fl, int nfd, double J2d,
+        double J4d, const Matrix<nsd> &Ci, const Matrix<nsd> &Idm,
+        Matrix<nsd> &N1, double &psi, double (&Inv)[9],
+        std::array<Matrix<nsd>, 9> &dInv,
+        std::array<Tensor<nsd>, 9> &ddInv) const;
 };
 
 #endif // ArtificialNeuralNet_model_H

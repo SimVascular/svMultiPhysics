@@ -32,8 +32,8 @@
 
 namespace ustruct {
 
-void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, 
-    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV, 
+void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N,
+    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV,
     Array<double>& lR, Array3<double>& lK, Array3<double>& lKd)
 {
   int cEq = com_mod.cEq;
@@ -45,10 +45,10 @@ void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const V
   int i = eq.s;
   int j = i + 1;
 
-  Vector<double> nFi(2);  
+  Vector<double> nFi(2);
   Array<double> NxFi(2,eNoN);
 
-  Array<double> F(2,2); 
+  Array<double> F(2,2);
   F(0,0) = 1.0;
   F(1,1) = 1.0;
 
@@ -90,8 +90,8 @@ void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const V
 }
 
 /// @brief Add follower pressure load contributions to the local residual and stiffness matrix.
-/// @param com_mod 
-/// @param eNoN 
+/// @param com_mod
+/// @param eNoN
 /// @param w  Gauss point weight times reference configuration area
 /// @param N  Shape function values at the Gauss point
 /// @param Nx Shape function derivatives at the Gauss point
@@ -101,8 +101,8 @@ void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const V
 /// @param lR Local residual
 /// @param lK Local stiffness matrix
 /// @param lKd Local stiffness matrix (displacement)
-void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, 
-    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV, 
+void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N,
+    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV,
     Array<double>& lR, Array3<double>& lK, Array3<double>& lKd)
 {
   int cEq = com_mod.cEq;
@@ -115,10 +115,10 @@ void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const V
   int j = i + 1;
   int k = j + 1;
 
-  Vector<double> nFi(3);  
+  Vector<double> nFi(3);
   Array<double> NxFi(3,eNoN);
 
-  Array<double> F(3,3); 
+  Array<double> F(3,3);
   F(0,0) = 1.0;
   F(1,1) = 1.0;
   F(2,2) = 1.0;
@@ -186,17 +186,17 @@ void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const V
 /// @brief Check is a constitutive model is valid for the ustruct equation.
 //
 bool constitutive_model_is_valid(consts::ConstitutiveModelType model)
-{ 
+{
   using namespace consts;
-    
-  static std::set<ConstitutiveModelType> unsupported_models { 
+
+  static std::set<ConstitutiveModelType> unsupported_models {
     ConstitutiveModelType::stIso_lin,
     ConstitutiveModelType::stIso_StVK,
     ConstitutiveModelType::stIso_mStVK
   };
 
   return unsupported_models.count(model) == 0;
-}   
+}
 
 /// @brief Reproduces Fortran CONSTRUCT_uSOLID.
 //
@@ -215,7 +215,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   dmsg << "lM.nFs: " << lM.nFs;
   #endif
 
-  auto& cem = cep_mod.cem;
   const int nsd  = com_mod.nsd;
   const int tDof = com_mod.tDof;
   const int dof = com_mod.dof;
@@ -249,10 +248,11 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
   // USTRUCT: dof = nsd+1
   Vector<int> ptr(eNoN);
-  Vector<double> pSl(nsymd), ya_l_f(eNoN), ya_l_s(eNoN), ya_l_n(eNoN), N(eNoN);
+  Vector<double> pSl(nsymd), N(eNoN);
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
                 bfl(nsd,eNoN), fN(nsd,nFn), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN), lKd(dof*nsd,eNoN,eNoN);
+  ActiveStress::Evaluator active_stress_evaluator;
 
   for (int e = 0; e < lM.nEl; e++) {
     // Change the current domain which will be used in later function calls.
@@ -264,9 +264,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
     // Create local copies
     fN  = 0.0;
-    ya_l_f = 0.0;
-    ya_l_s = 0.0;
-    ya_l_n = 0.0;
 
     if (lM.fN.size() != 0) {
       for (int iFn = 0; iFn < nFn; iFn++) {
@@ -290,12 +287,12 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         dl(i,a) = Dg(i,Ac);
         yl(i,a) = Yg(i,Ac);
       }
+    }
 
-      if (eq.dmn[cDmn].active_stress != nullptr) {
-        ya_l_f(a) = cep_mod.cem.Ya_f[Ac];
-        ya_l_s(a) = cep_mod.cem.Ya_s[Ac];
-        ya_l_n(a) = cep_mod.cem.Ya_n[Ac];
-      }
+    if (eq.dmn[cDmn].active_stress != nullptr) {
+      active_stress_evaluator.update(*eq.dmn[cDmn].active_stress, ptr);
+    } else {
+      active_stress_evaluator.clear();
     }
 
     // Initialize residual and tangents
@@ -345,15 +342,15 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l_f, ya_l_s,
-                     ya_l_n, lR, lK, lKd, recompute_visc);
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN,
+                     active_stress_evaluator, lR, lK, lKd, recompute_visc);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN, ya_l_f, ya_l_s,
-                     ya_l_n, lR, lK, lKd, recompute_visc);
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN,
+                     active_stress_evaluator, lR, lK, lKd, recompute_visc);
       }
 
     } // for g = 0 to fs[0].nG
@@ -385,13 +382,13 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx, 
+        ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
             Nqx, al, yl, dl, bfl, lR, lK, lKd);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx, 
+        ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
             Nqx, al, yl, dl, bfl, lR, lK, lKd);
       }
 
@@ -411,25 +408,25 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN)
   int left = rowPtr(rowN);
   int right = rowPtr(rowN+1);
   int ptr = (right + left) / 2;
- 
+
   while (colN != colPtr(ptr)) {
     if (colN > colPtr(ptr)) {
       left  = ptr;
-    } else { 
+    } else {
       right = ptr;
     }
     ptr = (right + left) / 2;
   }
 
   return ptr;
-} 
+}
 
 /// @brief Reproduces Fortran USTRUCT2D_C.
 //
 void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
-    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
+    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -489,7 +486,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   double Jac = F.determinant();
   const Matrix<2> Fi = F.inverse();
 
-  // Pressure and its gradients 
+  // Pressure and its gradients
   //
   double p = 0.0;
   double pd = 0.0;
@@ -556,7 +553,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     for (int a = 0; a < eNoNq; a++) {
       NxNx = NqxFi.col(a).dot(NwxFi.col(b));
 
-      // dC/dV_1 + af/am *dC/dU_1 
+      // dC/dV_1 + af/am *dC/dU_1
       //
       T0 = Nq(a)*(rC*NwxFi(0,b) - VxNwx(0,b));
       T1 = tauM*(rMNqx(a)*NwxFi(0,b) - rMNwx(b)*NqxFi(0,a));
@@ -567,7 +564,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
       T1  = (am*tauM*rho)*NqxFi(0,a)*Nw(b) + af*Nq(a)*NwxFi(0,b);
       lK(6,a,b) += w*Jac*T1 + afm*Ku;
 
-      // dC/dV_2 + af/am *dC/dU_2 
+      // dC/dV_2 + af/am *dC/dU_2
       T0 = Nq(a)*(rC*NwxFi(1,b) - VxNwx(1,b));
       T1 = tauM*(rMNqx(a)*NwxFi(1,b) - rMNwx(b)*NqxFi(1,a));
       T2 = -tauM*NxNx*PxFi(1);
@@ -595,8 +592,8 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 //
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
-    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
+    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -657,7 +654,7 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   double Jac = F.determinant();
   const Matrix<3> Fi = F.inverse();
 
-  // Pressure and its gradients 
+  // Pressure and its gradients
   //
   double p = 0.0;
   double pd = 0.0;
@@ -726,7 +723,7 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     for (int a = 0; a < eNoNq; a++) {
       NxNx = NqxFi.col(a).dot(NwxFi.col(b));
 
-      // dC/dV_1 + af/am *dC/dU_1 
+      // dC/dV_1 + af/am *dC/dU_1
       //
       T0 = Nq(a)*(rC*NwxFi(0,b) - VxNwx(0,b));
       T1 = tauM*(rMNqx(a)*NwxFi(0,b) - rMNwx(b)*NqxFi(0,a));
@@ -737,7 +734,7 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
       T1  = (am*tauM*rho)*NqxFi(0,a)*Nw(b) + af*Nq(a)*NwxFi(0,b);
       lK(12,a,b) += w*Jac*T1 + afm*Ku;
 
-      // dC/dV_2 + af/am *dC/dU_2 
+      // dC/dV_2 + af/am *dC/dU_2
       T0 = Nq(a)*(rC*NwxFi(1,b) - VxNwx(1,b));
       T1 = tauM*(rMNqx(a)*NwxFi(1,b) - rMNwx(b)*NqxFi(1,a));
       T2 = -tauM*NxNx*PxFi(1);
@@ -747,7 +744,7 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
       T1 = (am*tauM*rho)*NqxFi(1,a)*Nw(b) + af*Nq(a)*NwxFi(1,b);
       lK(13,a,b) += w*Jac*T1 + afm*Ku;
 
-      // dC/dV_3 + af/am *dC/dU_3 
+      // dC/dV_3 + af/am *dC/dU_3
       //
       T0 = Nq(a)*(rC*NwxFi(2,b) - VxNwx(2,b));
       T1 = tauM*(rMNqx(a)*NwxFi(2,b) - rMNwx(b)*NqxFi(2,a));
@@ -780,8 +777,8 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN, const Vector<double> &ya_l_f,
-                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  const Array<double> &fN,
+                  const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
                   const bool recompute_visc) {
   using namespace consts;
@@ -835,17 +832,15 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Eigen::Vector2d v  = vel * Nwm;
   const Eigen::Vector2d vd = (acc - bfm) * Nwm - fb;
 
-  // Active stress activation along fiber, sheet and sheet-normal
-  const double ya_g_f = eigen_view(ya_l_f).dot(Nwm);
-  const double ya_g_s = eigen_view(ya_l_s).dot(Nwm);
-  const double ya_g_n = eigen_view(ya_l_n).dot(Nwm);
-
   // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
   const Matrix<2> vx = vel * Nwxm.transpose();
   const Matrix<2> F  = Matrix<2>::Identity() + disp * Nwxm.transpose();
 
   double Jac = F.determinant();
   const Matrix<2> Fi = F.inverse();
+
+  // Active tension, evaluated here from the fiber stretch of F.
+  const auto Ta = active_stress_evaluator.evaluate<2>(Nwm, F, eigen_view<2>(fN));
 
   // Pressure and its time derivative
   //
@@ -862,8 +857,8 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   Matrix<2> Siso;
   Matrix<3> Dm;
   double Ja = 0;
-  mat_models::compute_pk2cc<2>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<2>(fN), ya_g_f,
-                            ya_g_s, ya_g_n, Siso, Dm, Ja);
+  mat_models::compute_pk2cc<2>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<2>(fN),
+                               Ta, Siso, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions. Reuse the
   // previous Gauss point's when shape function gradients are constant within an
@@ -930,7 +925,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
   // Tangent (stiffness) matrices
   //
-  double NxSNx{0.0}, BtDB{0.0}, 
+  double NxSNx{0.0}, BtDB{0.0},
       T1{0.0}, T2{0.0}, T3{0.0},
       Tv{0.0}, Ku{0.0};
 
@@ -1026,8 +1021,8 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN, const Vector<double> &ya_l_f,
-                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  const Array<double> &fN,
+                  const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
                   const bool recompute_visc) {
   using namespace consts;
@@ -1083,17 +1078,15 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Eigen::Vector3d v  = vel * Nwm;
   const Eigen::Vector3d vd = (acc - bfm) * Nwm - fb;
 
-  // Active stress activation along fiber, sheet and sheet-normal
-  const double ya_g_f = eigen_view(ya_l_f).dot(Nwm);
-  const double ya_g_s = eigen_view(ya_l_s).dot(Nwm);
-  const double ya_g_n = eigen_view(ya_l_n).dot(Nwm);
-
   // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
   const Matrix<3> vx = vel * Nwxm.transpose();
   const Matrix<3> F  = Matrix<3>::Identity() + disp * Nwxm.transpose();
 
   double Jac = F.determinant();
   const Matrix<3> Fi = F.inverse();
+
+  // Active tension, evaluated here from the fiber stretch of F.
+  const auto Ta = active_stress_evaluator.evaluate<3>(Nwm, F, eigen_view<3>(fN));
 
   // Pressure and its time derivative
   //
@@ -1111,8 +1104,8 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   Matrix<3> Siso;
   Matrix<6> Dm;
   double Ja = 0;
-  mat_models::compute_pk2cc<3>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<3>(fN), ya_g_f,
-                            ya_g_s, ya_g_n, Siso, Dm, Ja);
+  mat_models::compute_pk2cc<3>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<3>(fN),
+                               Ta, Siso, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions. Reuse the
   // previous Gauss point's when shape function gradients are constant within an
@@ -1134,7 +1127,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
   if (vmsFlag) {
     mat_models::compute_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
-  } else { 
+  } else {
     tauM = 0.0;
     tauC = 0.0;
   }
@@ -1198,10 +1191,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       BtDB = Bm[a].col(0).dot(DBm.col(0));
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(0,b);
- 
+
       Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(0,a,b));
       lKd(0,a,b) += Ku;
- 
+
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(0,a)*NxFi(0,b);
       Tv   = af*visc.dv(0,a,b);
@@ -1212,10 +1205,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(1,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(1,b);
       T3   = Jac*rCl*(NxFi(0,a)*NxFi(1,b) - NxFi(1,a)*NxFi(0,b));
- 
+
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(1,a,b));
       lKd(1,a,b) += Ku;
- 
+
       T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(1,b);
       Tv   = af*visc.dv(1,a,b);
       lK(1,a,b) += w*(T2 + Tv) + afm*Ku;
@@ -1226,10 +1219,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(2,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(2,b);
       T3   = Jac*rCl*(NxFi(0,a)*NxFi(2,b) - NxFi(2,a)*NxFi(0,b));
- 
+
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(2,a,b));
       lKd(2,a,b) += Ku;
- 
+
       T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(2,b);
       Tv   = af*visc.dv(2,a,b);
       lK(2,a,b) += w*(T2 + Tv) + afm*Ku;
@@ -1241,10 +1234,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       T1   = Jac*rho*vd(1)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(0,b);
       T3   = Jac*rCl*(NxFi(1,a)*NxFi(0,b) - NxFi(0,a)*NxFi(1,b));
- 
+
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(3,a,b));
       lKd(3,a,b) += Ku;
- 
+
       T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(0,b);
       Tv   = af*visc.dv(3,a,b);
 
@@ -1258,10 +1251,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(1,b);
 
- 
+
       Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(4,a,b));
       lKd(4,a,b) += Ku;
- 
+
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(1,a)*NxFi(1,b);
       Tv   = af*visc.dv(4,a,b);
@@ -1275,10 +1268,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(2,b);
       T3   = Jac*rCl*(NxFi(1,a)*NxFi(2,b) - NxFi(2,a)*NxFi(1,b));
 
- 
+
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(5,a,b));
       lKd(5,a,b) += Ku;
- 
+
       T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(2,b);
       Tv   = af*visc.dv(5,a,b);
       lK(6,a,b) += w*(T2 + Tv) + afm*Ku;
@@ -1290,10 +1283,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       T1   = Jac*rho*vd(2)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(2,a)*VxNx(0,b);
       T3   = Jac*rCl*(NxFi(2,a)*NxFi(0,b) - NxFi(0,a)*NxFi(2,b));
- 
+
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(6,a,b));
       lKd(6,a,b) += Ku;
- 
+
       T2   = af*Jac*tauC*rho*NxFi(2,a)*NxFi(0,b);
       Tv   = af*visc.dv(6,a,b);
       lK(8,a,b) += w*(T2 + Tv) + afm*Ku;
@@ -1305,10 +1298,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       T1   = Jac*rho*vd(2)*Nw(a)*NxFi(1,b);
       T2   = -tauC*Jac*NxFi(2,a)*VxNx(1,b);
       T3   = Jac*rCl*(NxFi(2,a)*NxFi(1,b) - NxFi(1,a)*NxFi(2,b));
- 
+
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(7,a,b));
       lKd(7,a,b) += Ku;
- 
+
       T2   = af*Jac*tauC*rho*NxFi(2,a)*NxFi(1,b);
       Tv   = af*visc.dv(7,a,b);
 
@@ -1320,10 +1313,10 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
       T1   = Jac*rho*vd(2)*Nw(a)*NxFi(2,b);
       T2   = -tauC*Jac*NxFi(2,a)*VxNx(2,b);
- 
+
       Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(8,a,b));
       lKd(8,a,b) += Ku;
- 
+
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(2,a)*NxFi(2,b);
       Tv   = af*visc.dv(8,a,b);
@@ -1356,7 +1349,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 //
 /// @brief Replicates 'SUBROUTINE USTRUCT_DOASSEM(d, eqN, lKd, lK, lR)'
 //
-void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd, 
+void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd,
     const Array3<double>& lK, const Array<double>& lR)
 {
   const int nsd = com_mod.nsd;
@@ -1438,7 +1431,7 @@ void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, cons
       }
     }
 
-  } else { 
+  } else {
 
     // Stiffness matrix (A) is assembled using mapped rows and columns
     // Gradient matrix (B) is assembled using mapped row but unmapped
@@ -1508,8 +1501,8 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   const auto& Yg = solutions.intermediate.get_velocity();
   using namespace consts;
 
-  #define n_debug_ustruct_r 
-  #ifdef debug_ustruct_r 
+  #define n_debug_ustruct_r
+  #ifdef debug_ustruct_r
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
@@ -1518,7 +1511,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   const auto& eq = com_mod.eq[cEq];
 
   if (eq.phys != EquationType::phys_ustruct && eq.phys != EquationType::phys_FSI) {
-    return; 
+    return;
   }
 
   const int tnNo = com_mod.tnNo;
@@ -1535,7 +1528,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   int s = eq.s;
   double amg = (eq.gam - eq.am) / (eq.gam - 1.0);
   double ami = 1.0 / eq.am;
-  #ifdef debug_ustruct_r 
+  #ifdef debug_ustruct_r
   dmsg << "nsd: " << nsd;
   dmsg << "s: " << s;
   dmsg << "eq.itr: " << eq.itr;
@@ -1546,7 +1539,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   if (eq.itr > 1) {
      Rd = 0.0;
   } else {
-    for (int a = 0; a < tnNo; a++) { 
+    for (int a = 0; a < tnNo; a++) {
       if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_ustruct)) {
         continue;
       }
@@ -1558,7 +1551,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
     if (nsd == 3) {
       Array<double> KU(4,tnNo);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_ustruct)) {
           continue;
         }
@@ -1575,7 +1568,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
 
       all_fun::commu(com_mod, KU);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         R(0,a) = R(0,a) - ami*KU(0,a);
         R(1,a) = R(1,a) - ami*KU(1,a);
         R(2,a) = R(2,a) - ami*KU(2,a);
@@ -1584,7 +1577,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
     } else {
       Array<double> KU(3,tnNo);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_ustruct)) {
           continue;
         }
@@ -1599,14 +1592,14 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
 
       all_fun::commu(com_mod, KU);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         R(0,a) = R(0,a) - ami*KU(0,a);
         R(1,a) = R(1,a) - ami*KU(1,a);
         R(2,a) = R(2,a) - ami*KU(2,a);
       }
     }
-  } 
-} 
+  }
+}
 
 };
 

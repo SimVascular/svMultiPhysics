@@ -1908,9 +1908,13 @@ void ActiveStressModelParameters::set_values(
 const std::string ActiveStressParameters::xml_element_name = "Active_stress";
 
 ActiveStressParameters::ActiveStressParameters() {
+  constexpr bool required = true;
+
   model_name = Parameter<std::string>("Model", "", true);
 
-  set_parameter("Model", "", /* required = */ true, model_name);
+  set_parameter("Model", "", required, model_name);
+  set_parameter("Implicit_state_coupling", false, !required,
+                implicit_state_coupling);
 
   ActiveStressFactory::visit(
       [this](const std::string &name, const ActiveStress &model) {
@@ -1982,6 +1986,10 @@ double ActiveStressParameters::get_eta_s() const {
 
 double ActiveStressParameters::get_eta_n() const {
   return directional_distribution.sheet_normal_direction.value();
+}
+
+bool ActiveStressParameters::get_implicit_state_coupling() const {
+  return implicit_state_coupling.value();
 }
 
 const ActiveStressModelParameters &

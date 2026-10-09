@@ -105,7 +105,6 @@ void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
   auto& cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
-  const auto& cem = cep_mod.cem;
 
   Vector<double> Dani(nFn), Vx(2), Ls(nFn), DVx(2);
   Array<double> F(2,2), C(2,2), fl(2,nFn), D(2,2), DNx(2,eNoN);
@@ -137,65 +136,17 @@ void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
   Ls = 1.0;
   int i;
 
-  if (cem.cpld) { 
-    for (int a = 0; a < com_mod.nEq; a++) { 
-      if (com_mod.eq[a].phys == EquationType::phys_struct || 
-          com_mod.eq[a].phys == EquationType::phys_ustruct) {
-        i = com_mod.eq[a].s;
-        break;
-      }
-    }
+  D = 0.0;
+  D(0, 0) = Diso;
+  D(1, 1) = Diso;
+  fl = fN;
 
-    // Compute deformation gradient tensor
-    //
-    F(0,0) = 1.0;
-    F(1,1) = 1.0;
+  for (int i = 0; i < nFn; i++) {
+    D(0, 0) = D(0, 0) + Dani(i) * fl(0, i) * fl(0, i);
+    D(0, 1) = D(0, 1) + Dani(i) * fl(0, i) * fl(1, i);
 
-    for (int a = 0; a < eNoN; a++) {
-      F(0,0) = F(0,0) + Nx(0,a)*dl(i,a);
-      F(0,1) = F(0,1) + Nx(1,a)*dl(i,a);
-      F(1,0) = F(1,0) + Nx(0,a)*dl(i+1,a);
-      F(1,1) = F(1,1) + Nx(1,a)*dl(i+1,a);
-    }
-
-    // Jacobian
-    double Jac = mat_fun::mat_det(F, 2);
-
-    // Compute Cauchy-Green tensor and its inverse
-    C = mat_mul(transpose(F), F);
-    C = mat_inv(C, 2);
-
-    // Compute fiber stretch
-    for (int i = 0; i < nFn; i++) {
-      Ls(i) = sqrt(fN.rcol(i) * mat_mul(C, fN.rcol(i)));
-      for (int j = 0; j < 2; j++) {
-        fl(j,i) = fN(j,i) / Ls(i);
-      }
-    }
-
-    if (Ls(0) <= 1.0) {
-      Ls(0) = 1.0;
-    }
-
-    // Diffusion tensor - spatial isotropy
-    //
-    Diso = Diso * Jac;
-    Dani = Dani * Jac;
-    D = Diso * C;
-
-  } else { 
-    D  = 0.0;
-    D(0,0) = Diso;
-    D(1,1) = Diso;
-    fl = fN;
-  }
-
-  for (int i = 0 ; i < nFn; i++) {
-     D(0,0) = D(0,0) + Dani(i)*fl(0,i)*fl(0,i);
-     D(0,1) = D(0,1) + Dani(i)*fl(0,i)*fl(1,i);
-
-     D(1,0) = D(1,0) + Dani(i)*fl(1,i)*fl(0,i);
-     D(1,1) = D(1,1) + Dani(i)*fl(1,i)*fl(1,i);
+    D(1, 0) = D(1, 0) + Dani(i) * fl(1, i) * fl(0, i);
+    D(1, 1) = D(1, 1) + Dani(i) * fl(1, i) * fl(1, i);
   }
 
   i = eq.s;
@@ -252,7 +203,6 @@ void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
   auto& cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
-  const auto& cem = cep_mod.cem;
 
   Vector<double> Dani(nFn), Vx(3), Ls(nFn), DVx(3);
   Array<double> F(3,3), C(3,3), fl(3,nFn), D(3,3), DNx(3,eNoN);
@@ -283,65 +233,10 @@ void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
   Ls = 1.0;
   int i = 0;
 
-  if (cem.cpld) {
-    // Get the displacement degrees of freedom
-    for (int a = 0; a < com_mod.nEq; a++) {
-      if (com_mod.eq[a].phys == EquationType::phys_struct || 
-          com_mod.eq[a].phys == EquationType::phys_ustruct) {
-        i = com_mod.eq[a].s;
-        break; 
-      }
-    }
-
-    // Compute deformation gradient tensor
-    //
-    F(0,0) = 1.0;
-    F(1,1) = 1.0;
-    F(2,2) = 1.0;
-
-    for (int a = 0; a < eNoN; a++) {
-      F(0,0) = F(0,0) + Nx(0,a)*dl(i,a);
-      F(0,1) = F(0,1) + Nx(1,a)*dl(i,a);
-      F(0,2) = F(0,2) + Nx(2,a)*dl(i,a);
-      F(1,0) = F(1,0) + Nx(0,a)*dl(i+1,a);
-      F(1,1) = F(1,1) + Nx(1,a)*dl(i+1,a);
-      F(1,2) = F(1,2) + Nx(2,a)*dl(i+1,a);
-      F(2,0) = F(2,0) + Nx(0,a)*dl(i+2,a);
-      F(2,1) = F(2,1) + Nx(1,a)*dl(i+2,a);
-      F(2,2) = F(2,2) + Nx(2,a)*dl(i+2,a);
-    }
-
-    // Jacobian
-    double Jac = mat_fun::mat_det(F, 3);
-
-    // Compute Cauchy-Green tensor and its inverse
-    C = mat_mul(transpose(F), F);
-    C = mat_inv(C, 3);
-
-    // Compute fiber stretch
-    for (int i = 0; i < nFn; i++) {
-      Ls(i) = sqrt(fN.rcol(i) * mat_mul(C, fN.rcol(i)));
-      for (int j = 0; j < 3; j++) {
-        fl(j,i) = fN(j,i) / Ls(i);
-      }
-    }
-
-    if (Ls(0) <= 1.0) {
-      Ls(0) = 1.0;
-    }
-
-    // Diffusion tensor - spatial isotropy
-    //
-    Diso = Diso * Jac;
-    Dani = Dani * Jac;
-    D = Diso * C;
-
-  } else {
-    D(0,0)  = Diso;
-    D(1,1)  = Diso;
-    D(2,2)  = Diso;
-    fl= fN;
-  }
+  D(0, 0) = Diso;
+  D(1, 1) = Diso;
+  D(2, 2) = Diso;
+  fl = fN;
 
   // Compute anisotropic components of diffusion tensor
   //

@@ -1558,6 +1558,10 @@ public:
   /// Get the active tension coefficient along sheet normals.
   double get_eta_n() const;
 
+  /// Get whether the state of the active stress model is updated within the
+  /// nonlinear iterations of the mechanics problem.
+  bool get_implicit_state_coupling() const;
+
   /// Get the parameters for a given active stress model.
   const ActiveStressModelParameters &
   get_parameters(const std::string &model_name) const;
@@ -1568,6 +1572,10 @@ public:
 protected:
   /// Parameter for the model name.
   Parameter<std::string> model_name;
+
+  /// Parameter selecting whether the state of the active stress model is
+  /// updated within the nonlinear iterations of the mechanics problem.
+  Parameter<bool> implicit_state_coupling;
 
   /// Parameters for the directional distribution of active tension.
   DirectionalDistributionParameters directional_distribution;

@@ -3,6 +3,7 @@
 
 #include "post.h"
 
+#include "ActiveStress.h"
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "FE/Math/DenseLinearAlgebra.h"
@@ -798,6 +799,65 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
     int Ac = lM.gN(a);
     if (!utils::is_zero(sA(Ac))) {
       res(a) = res(a) + sF(Ac) / sA(Ac);
+    }
+  }
+}
+
+/// @brief Compute active tension along fibers, sheets and sheet normals at
+/// every mesh node.
+//
+void active_tension(const ComMod& com_mod, const int iEq, const mshType& lM,
+    const Array<double>& lD, Vector<double>& res_f, Vector<double>& res_s,
+    Vector<double>& res_n)
+{
+  auto& eq = com_mod.eq[iEq];
+
+  Vector<double> fiber_stretch(lM.nNo);
+  if (lM.nFn != 0) {
+    fib_stretch(com_mod, iEq, lM, lD, fiber_stretch);
+  }
+
+  res_f = 0.0;
+  res_s = 0.0;
+  res_n = 0.0;
+
+  for (int a = 0; a < lM.nNo; a++) {
+    int Ac = lM.gN(a);
+
+    double Ta_f = 0.0;
+    double Ta_s = 0.0;
+    double Ta_n = 0.0;
+    unsigned int n_domains = 0;
+
+    for (auto& dmn : eq.dmn) {
+      // Domains whose equations do not allow for active stress (e.g. fluid
+      // domains) do not contribute to the average, but domains that do
+      // allow for active stress (e.g. struct) for which active stress is
+      // not enabled contribute a zero value to the average.
+      if (!supports_active_stress(dmn.phys))
+        continue;
+
+      // Only domains that node Ac actually belongs to contribute to its
+      // average. Note that if there is only one domain dmnId may not be
+      // populated, so we only check domain membership if eq.nDmn > 1.
+      if (eq.nDmn > 1 && !utils::btest(com_mod.dmnId(Ac), dmn.Id))
+        continue;
+
+      if (dmn.active_stress != nullptr) {
+        auto tension = dmn.active_stress->compute_tension(
+            dmn.active_stress->get_state(Ac), fiber_stretch[a]);
+        Ta_f += tension.fibers;
+        Ta_s += tension.sheets;
+        Ta_n += tension.sheet_normals;
+      }
+
+      n_domains++;
+    }
+
+    if (n_domains > 0) {
+      res_f[a] = Ta_f / n_domains;
+      res_s[a] = Ta_s / n_domains;
+      res_n[a] = Ta_n / n_domains;
     }
   }
 }
@@ -1795,6 +1855,8 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
   Vector<double> resl(m); 
   Array<double> Nx(nsd,fs.eNoN); 
   Vector<double> N(fs.eNoN);
+  Vector<int> element_nodes(fs.eNoN);
+  ActiveStress::Evaluator active_stress_evaluator;
 
   int insd = nsd;
   if (lM.lFib) {
@@ -1844,6 +1906,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
 
     for (int a = 0; a < fs.eNoN; a++) {
       int Ac = lM.IEN(a,e);
+      element_nodes(a) = Ac;
       for (int i = 0; i < nsd; i++) {
         xl(i,a) = com_mod.x(i,Ac);
       }
@@ -1851,6 +1914,12 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
         dl(i,a) = lD(i,Ac);
         yl(i,a) = lY(i,Ac);
       }
+    }
+
+    if (eq.dmn[cDmn].active_stress != nullptr) {
+      active_stress_evaluator.update(*eq.dmn[cDmn].active_stress, element_nodes);
+    } else {
+      active_stress_evaluator.clear();
     }
 
     Je = 0.0;
@@ -1950,20 +2019,10 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
           Matrix<nsd> sigma = Matrix<nsd>::Zero();
           Matrix<nsd> S = Matrix<nsd>::Zero();
 
-          // Interpolate the active stress from active stress models to the
-          // current Gauss point so that the active contribution is included in
-          // the reported stress, consistently with the residual assembly.
-          double ya_g_f = 0.0;
-          double ya_g_s = 0.0;
-          double ya_g_n = 0.0;
-          if (eq.dmn[cDmn].active_stress != nullptr) {
-            for (int a = 0; a < fs.eNoN; a++) {
-              int Ac = lM.IEN(a,e);
-              ya_g_f = ya_g_f + N(a)*cep_mod.cem.Ya_f[Ac];
-              ya_g_s = ya_g_s + N(a)*cep_mod.cem.Ya_s[Ac];
-              ya_g_n = ya_g_n + N(a)*cep_mod.cem.Ya_n[Ac];
-            }
-          }
+          // Evaluate the active stress at the current Gauss point, the same
+          // way the residual assembly does, so that the active contribution to
+          // the reported stress matches the one the solver used.
+          const auto Ta = active_stress_evaluator.evaluate<nsd>(eigen_view(N), F, eigen_view<nsd>(fN));
 
           if (cPhys == EquationType::phys_lElas) {
             if (nsd == 3) {
@@ -1997,7 +2056,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
             Matrix<3*(nsd-1)> Dm;
             double Ja;
             mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
-                eigen_view<nsd>(fN), ya_g_f, ya_g_s, ya_g_n, S, Dm, Ja);
+                eigen_view<nsd>(fN), Ta, S, Dm, Ja);
 
             // TODO: Add viscous stress
 
@@ -2015,7 +2074,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
             Matrix<3*(nsd-1)> Dm;
             double Ja;
             mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
-                eigen_view<nsd>(fN), ya_g_f, ya_g_s, ya_g_n, S, Dm, Ja);
+                eigen_view<nsd>(fN), Ta, S, Dm, Ja);
 
             // TODO: Add viscous stress
 

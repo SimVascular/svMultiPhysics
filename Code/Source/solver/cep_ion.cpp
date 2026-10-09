@@ -140,14 +140,12 @@ void cep_integ(Simulation *simulation, const int iEq, const int iDof,
   double time = com_mod.time;
 
   auto &cep_mod = simulation->cep_mod;
-  auto &cem = cep_mod.cem;
   auto &eq = com_mod.eq[iEq];
 
   auto &Xion = cep_mod.Xion;
   int nXion = cep_mod.nXion;
 
 #ifdef debug_cep_integ
-  dmsg << "cem.cpld: " << cem.cpld;
   dmsg << "time: " << time;
 #endif
 
@@ -222,10 +220,6 @@ void cep_integ(Simulation *simulation, const int iEq, const int iDof,
     all_fun::commu(com_mod, sA);
     all_fun::commu(com_mod, sF);
     all_fun::commu(com_mod, cep_mod.calcium);
-
-    if (cem.cpld) {
-      all_fun::commu(com_mod, sY);
-    }
 
     for (int Ac = 0; Ac < tnNo; Ac++) {
       if (!utils::is_zero(sA(Ac))) {

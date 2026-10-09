@@ -45,8 +45,9 @@
  * @c ActiveStress rather than @c ActiveStressODE because it requires a
  * customized time-stepping scheme to handle the stiffness of the model.
  *
- * @todo Force-strain-rate feedback requires a stabilization strategy for robust
- * use in coupled electromechanics. This will be addressed in a follow-up PR.
+ * @todo[michelebucelli] Force-strain-rate feedback requires a stabilization
+ *   strategy for robust use in coupled electromechanics. This will be addressed
+ *   in a follow-up PR.
  */
 class ActiveStressRegazzoni : public ActiveStress {
 public:
@@ -190,6 +191,22 @@ protected:
   compute_active_tension_local(const Vector<double> &state,
                                const double fiber_stretch) const override;
 
+  /**
+   * @brief Compute the derivative of the active tension with respect to the
+   * fiber stretch, at fixed state, for a single node.
+   *
+   * The state enters @ref compute_active_tension_local as a factor, so the
+   * derivative is that same factor times the derivative of the single-overlap
+   * fraction, chained through @f$SL = SL_0 \, \fiberstretch@f$:
+   * @f[
+   *   \pdv{\Tact}{\fiberstretch} = a_\text{XB}
+   *     \left(\mu_P^1 + \mu_N^1\right) SL_0 \, \phi'(SL)\;.
+   * @f]
+   */
+  virtual double compute_active_tension_derivative_local(
+      const Vector<double> &state,
+      const double fiber_stretch) const override;
+
 private:
   /// Array indexed over the four binary RU configuration variables (TL, TC, TR,
   /// CC).
@@ -269,6 +286,19 @@ private:
    * @param[in] sarcomere_length Sarcomere length @f$SL@f$ [length].
    */
   double fraction_single_overlap(double sarcomere_length) const;
+
+  /**
+   * @brief Derivative of the single-overlap fraction with respect to the
+   * sarcomere length.
+   *
+   * @ref fraction_single_overlap is piecewise linear, so this is piecewise
+   * constant and jumps at the ends of its pieces. It is taken to be the
+   * derivative from the left there, matching the intervals of
+   * @ref fraction_single_overlap.
+   *
+   * @param[in] sarcomere_length Sarcomere length @f$SL@f$ [length].
+   */
+  double fraction_single_overlap_derivative(double sarcomere_length) const;
 
   /// @}
 

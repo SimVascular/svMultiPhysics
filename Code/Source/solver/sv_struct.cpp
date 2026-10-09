@@ -199,7 +199,6 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   dmsg.banner();
   #endif
 
-  auto& cem = cep_mod.cem;
   const int nsd  = com_mod.nsd;
   const int tDof = com_mod.tDof;
   const int dof = com_mod.dof;
@@ -229,7 +228,8 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   // STRUCT: dof = nsd
 
   Vector<int> ptr(eNoN);
-  Vector<double> pSl(nsymd), ya_l_f(eNoN), ya_l_s(eNoN), ya_l_n(eNoN), N(eNoN);
+  Vector<double> pSl(nsymd), N(eNoN);
+  ActiveStress::Evaluator active_stress_evaluator;
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN), 
                 bfl(nsd,eNoN), fN(nsd,nFn), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN);
@@ -252,9 +252,6 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     // Create local copies
     fN  = 0.0;
     pS0l = 0.0;
-    ya_l_f = 0.0;
-    ya_l_s = 0.0;
-    ya_l_n = 0.0;
 
     if (lM.fN.size() != 0) {
       for (int iFn = 0; iFn < nFn; iFn++) {
@@ -282,12 +279,12 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (pS0.size() != 0) { 
         pS0l.set_col(a, pS0.col(Ac));
       }
+    }
 
-      if (eq.dmn[cDmn].active_stress != nullptr) {
-        ya_l_f(a) = cep_mod.cem.Ya_f[Ac];
-        ya_l_s(a) = cep_mod.cem.Ya_s[Ac];
-        ya_l_n(a) = cep_mod.cem.Ya_n[Ac];
-      }
+    if (eq.dmn[cDmn].active_stress != nullptr) {
+      active_stress_evaluator.update(*eq.dmn[cDmn].active_stress, ptr);
+    } else {
+      active_stress_evaluator.clear();
     }
 
     // Gauss integration
@@ -316,7 +313,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       if (nsd == 3) {
         struct_3d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fN,
-                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK, recompute_visc);
+                  pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
 
 #if 0
         if (e == 0 && g == 0) {
@@ -330,7 +327,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       } else if (nsd == 2) {
         struct_2d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fN,
-                  pS0l, pSl, ya_l_f, ya_l_s, ya_l_n, lR, lK, recompute_visc);
+                  pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
       }
 
       // Prestress
@@ -356,8 +353,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
                const Array<double> &fN, const Array<double> &pS0l,
-               Vector<double> &pSl, const Vector<double> &ya_l_f,
-               const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+               Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
@@ -406,36 +402,33 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   // Inertia, damping and body force: the term the residual weights with N
   const Eigen::Vector2d ud = (rho*(acc - bfm) + dmp*vel) * Nm - rho * fb;
 
-  // Active stress activation along fiber, sheet and sheet-normal
-  const double ya_g_f = eigen_view(ya_l_f).dot(Nm);
-  const double ya_g_s = eigen_view(ya_l_s).dot(Nm);
-  const double ya_g_n = eigen_view(ya_l_n).dot(Nm);
-
   // Prestress at this Gauss point, in Voigt order [11, 22, 12]
   const Eigen::Vector<double,3> pS0g = eigen_view<3>(pS0l) * Nm;
 
   Matrix<2> S0;
   S0 << pS0g(0), pS0g(2),
         pS0g(2), pS0g(1);
-  
-  #ifdef debug_struct_2d 
-  dmsg << "ud: " << ud(0) << " " << ud(1);
-  dmsg << "F: " << F(0,0);
-  dmsg << "ya_g_f: " << ya_g_f;
-  dmsg << "ya_g_s: " << ya_g_s;
-  dmsg << "ya_g_n: " << ya_g_n;
-#endif
 
   // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
   const Matrix<2> vx = vel * Nxm.transpose();
   const Matrix<2> F  = Matrix<2>::Identity() + disp * Nxm.transpose();
 
+  // Active tension, evaluated here from the fiber stretch of F.
+  const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, eigen_view<2>(fN));
+  
+  #ifdef debug_struct_2d 
+  dmsg << "ud: " << ud(0) << " " << ud(1);
+  dmsg << "F: " << F(0,0);
+  dmsg << "Ta.fibers: " << Ta.fibers;
+  dmsg << "Ta.sheets: " << Ta.sheets;
+  dmsg << "Ta.sheet_normals: " << Ta.sheet_normals;
+  #endif
+
   // 2nd Piola-Kirchhoff stress (S) and material stiffness tensor in Voight notation (Dm)
   Matrix<2> S;
   Matrix<3> Dm;
   double Ja;
-  mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, eigen_view<2>(fN), ya_g_f, ya_g_s,
-                            ya_g_n, S, Dm, Ja);
+  mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, eigen_view<2>(fN), Ta, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
   // Reuse from the previous Gauss point when shape function gradients
@@ -520,8 +513,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
                const Array<double> &fN, const Array<double> &pS0l,
-               Vector<double> &pSl, const Vector<double> &ya_l_f,
-               const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+               Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc) {          
   using namespace consts;
   using namespace mat_fun;
@@ -575,11 +567,6 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   // Inertia, damping and body force.
   const Eigen::Vector3d ud = (rho*(acc - bfm) + dmp*vel) * Nm - rho * fb;
 
-  // Active stress activation along fiber, sheet and sheet-normal
-  const double ya_g_f = eigen_view(ya_l_f).dot(Nm);
-  const double ya_g_s = eigen_view(ya_l_s).dot(Nm);
-  const double ya_g_n = eigen_view(ya_l_n).dot(Nm);
-
   // Prestress at this Gauss point, in Voigt order [11, 22, 33, 12, 23, 31]
   const Eigen::Vector<double,6> pS0g = eigen_view<6>(pS0l) * Nm;
 
@@ -592,14 +579,16 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   const Matrix<3> vx = vel * Nxm.transpose();
   const Matrix<3> F  = Matrix<3>::Identity() + disp * Nxm.transpose();
 
+  // Active tension, evaluated here from the fiber stretch of F.
+  const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, eigen_view<3>(fN));
+
   // 2nd Piola-Kirchhoff tensor (S) and material stiffness tensor in
   // Voigt notation (Dm)
   //
   Matrix<3> S;
   Matrix<6> Dm;
   double Ja;
-  mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, eigen_view<3>(fN), ya_g_f, ya_g_s,
-                            ya_g_n, S, Dm, Ja);
+  mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, eigen_view<3>(fN), Ta, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
   // Reuse from the previous Gauss point when shape function gradients

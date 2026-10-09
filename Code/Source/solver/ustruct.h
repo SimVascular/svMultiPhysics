@@ -4,6 +4,7 @@
 #ifndef USTRUCT_H 
 #define USTRUCT_H 
 
+#include "ActiveStress.h"
 #include "ComMod.h"
 #include "SolutionStates.h"
 
@@ -35,8 +36,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN, const Vector<double> &ya_l_f,
-                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  const Array<double> &fN, const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
                   const bool recompute_visc);
 
@@ -52,8 +52,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN, const Vector<double> &ya_l_f,
-                  const Vector<double> &ya_l_s, const Vector<double> &ya_l_n,
+                  const Array<double> &fN, const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
                   const bool recompute_visc);
 

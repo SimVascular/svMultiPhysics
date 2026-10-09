@@ -69,7 +69,6 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   auto const recLn = com_mod.recLn;
   auto& cm_mod = simulation->cm_mod;
   auto& cep_mod = simulation->cep_mod;
-  auto& cem = cep_mod.cem;
 
   bool ibFlag = com_mod.ibFlag;
   bool dFlag = com_mod.dFlag;
@@ -128,13 +127,10 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
         } else if (cepEq) {
           bin_file.read((char*)Ad.data(), Ad.msize());
           bin_file.read((char*)Xion.data(), Xion.msize());
-          bin_file.read((char*)cem.Ya_f.data(), cem.Ya_f.msize());
-          bin_file.read((char*)cem.Ya_s.data(), cem.Ya_s.msize());
-          bin_file.read((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           bin_file.read((char*)Ad.data(), Ad.msize());
-          init_ris_data(com_mod, bin_file); 
+          init_ris_data(com_mod, bin_file);
 
         } else if (urisFlag) {
           bin_file.read((char*)Ad.data(), Ad.msize());
@@ -151,12 +147,9 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 
         } else if (cepEq) {
           bin_file.read((char*)Xion.data(), Xion.msize());
-          bin_file.read((char*)cem.Ya_f.data(), cem.Ya_f.msize());
-          bin_file.read((char*)cem.Ya_s.data(), cem.Ya_s.msize());
-          bin_file.read((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
-          init_ris_data(com_mod, bin_file); 
+          init_ris_data(com_mod, bin_file);
 
         } else if (urisFlag) {
           init_uris_data(com_mod, bin_file);
@@ -543,7 +536,6 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   if (com_mod.sstEq) i = i + nsd;
   if (cep_mod.cepEq) {
     i = i + cep_mod.nXion;
-    if (cep_mod.cem.cpld) i = i + 1;
   }
   if (com_mod.risFlag) {
     i = i + com_mod.ris.nbrRIS;
@@ -707,9 +699,6 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   //   initialized.
   {
     cep_mod.calcium.resize(tnNo);
-    cep_mod.cem.Ya_f.resize(tnNo);
-    cep_mod.cem.Ya_s.resize(tnNo);
-    cep_mod.cem.Ya_n.resize(tnNo);
   }
 
   // Setup the initial conditions for the active stress models.

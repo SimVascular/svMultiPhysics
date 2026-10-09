@@ -152,6 +152,14 @@ double ActiveStressRegazzoni::compute_active_tension_local(
          fraction_single_overlap(sarcomere_length);
 }
 
+double ActiveStressRegazzoni::compute_active_tension_derivative_local(
+    const Vector<double> &state, const double fiber_stretch) const {
+  const double sarcomere_length = SL0 * fiber_stretch;
+
+  return a_XB * (state[xb_index(1)] + state[xb_index(3)]) * SL0 *
+         fraction_single_overlap_derivative(sarcomere_length);
+}
+
 ActiveStressRegazzoni::RUArray
 ActiveStressRegazzoni::ru_transition_rates_tropomyosin() const {
   RUArray rates_T;
@@ -319,6 +327,22 @@ ActiveStressRegazzoni::fraction_single_overlap(double sarcomere_length) const {
     return 1.0;
   if (SL > 2.0 * LA + LB && SL <= 2.0 * LA + LM)
     return (LM + 2.0 * LA - SL) * 0.5 / half_single_overlap;
+  return 0.0;
+}
+
+double ActiveStressRegazzoni::fraction_single_overlap_derivative(
+    double sarcomere_length) const {
+  const double SL = sarcomere_length;
+  const double half_single_overlap = (LM - LB) * 0.5;
+
+  if (SL > LA && SL <= LM)
+    return 1.0 / half_single_overlap;
+  if (SL > LM && SL <= 2.0 * LA - LB)
+    return 0.5 / half_single_overlap;
+  if (SL > 2.0 * LA - LB && SL <= 2.0 * LA + LB)
+    return 0.0;
+  if (SL > 2.0 * LA + LB && SL <= 2.0 * LA + LM)
+    return -0.5 / half_single_overlap;
   return 0.0;
 }
 

@@ -111,93 +111,116 @@ void ArtificialNeuralNetMaterial::evaluate(const double aInv[9], double &psi, do
     }
 }
 
-template<size_t nsd>
+template <size_t nsd>
 void ArtificialNeuralNetMaterial::computeInvariantsAndDerivatives(
-const Matrix<nsd>& C, const Matrix<nsd>& fl, int nfd, double J2d, double J4d, const Matrix<nsd>& Ci,
-const Matrix<nsd>& Idm, const double Tfa, Matrix<nsd>& N1, double& psi, double (&Inv)[9],std::array<Matrix<nsd>,9>& dInv,
-std::array<Tensor<nsd>,9>& ddInv) const {
+    const Matrix<nsd> &C, const Matrix<nsd> &fl, int nfd, double J2d,
+    double J4d, const Matrix<nsd> &Ci, const Matrix<nsd> &Idm, Matrix<nsd> &N1,
+    double &psi, double (&Inv)[9], std::array<Matrix<nsd>, 9> &dInv,
+    std::array<Tensor<nsd>, 9> &ddInv) const {
 
-    // double Inv[9] = {0};
-    Matrix<nsd> C2 = C * C;
+  // double Inv[9] = {0};
+  Matrix<nsd> C2 = C * C;
 
-    Inv[0] = J2d * C.trace();
-    Inv[1] = 0.50 * (Inv[0]*Inv[0] - J4d * (C*C).trace());
-    Inv[2] = C.determinant();
-    Inv[3] = J2d * (fl.col(0).dot(C * fl.col(0)));
-    Inv[4] = J4d * (fl.col(0).dot(C2 * fl.col(0)));
+  Inv[0] = J2d * C.trace();
+  Inv[1] = 0.50 * (Inv[0] * Inv[0] - J4d * (C * C).trace());
+  Inv[2] = C.determinant();
+  Inv[3] = J2d * (fl.col(0).dot(C * fl.col(0)));
+  Inv[4] = J4d * (fl.col(0).dot(C2 * fl.col(0)));
 
-    Matrix<nsd> dInv1 = -Inv[0]/3 * Ci + J2d * Idm;
-    Matrix<nsd> dInv2 = (C2.trace()/3)*Ci + Inv[0]*dInv1 + J4d*C;
-    Matrix<nsd> dInv3 = Inv[2]*Ci;
-    N1 = fl.col(0)*fl.col(0).transpose();
-    Matrix<nsd> dInv4 = -Inv[3]/3*Ci + J2d*N1;
-    Matrix<nsd> dInv5 = J4d*(N1*C + C*N1) - Inv[4]/3*Ci;
+  Matrix<nsd> dInv1 = -Inv[0] / 3 * Ci + J2d * Idm;
+  Matrix<nsd> dInv2 = (C2.trace() / 3) * Ci + Inv[0] * dInv1 + J4d * C;
+  Matrix<nsd> dInv3 = Inv[2] * Ci;
+  N1 = fl.col(0) * fl.col(0).transpose();
+  Matrix<nsd> dInv4 = -Inv[3] / 3 * Ci + J2d * N1;
+  Matrix<nsd> dInv5 = J4d * (N1 * C + C * N1) - Inv[4] / 3 * Ci;
 
-    Matrix<nsd> dInv6, dInv7, dInv8, dInv9;
-    Tensor<nsd> ddInv6, ddInv7, ddInv8, ddInv9;
-    // initialize to 0
-    dInv6.setZero();
-    dInv7.setZero();
-    dInv8.setZero();
-    dInv9.setZero();
-    ddInv6.setZero();
-    ddInv7.setZero();
-    ddInv8.setZero();
-    ddInv9.setZero();
+  Matrix<nsd> dInv6, dInv7, dInv8, dInv9;
+  Tensor<nsd> ddInv6, ddInv7, ddInv8, ddInv9;
+  // initialize to 0
+  dInv6.setZero();
+  dInv7.setZero();
+  dInv8.setZero();
+  dInv9.setZero();
+  ddInv6.setZero();
+  ddInv7.setZero();
+  ddInv8.setZero();
+  ddInv9.setZero();
 
-    Tensor<nsd> dCidC = -symmetric_dyadic_product<nsd>(Ci, Ci);
-    Matrix<nsd> dJ4ddC = -2.0/3.0 * J4d * Ci;
+  Tensor<nsd> dCidC = -symmetric_dyadic_product<nsd>(Ci, Ci);
+  Matrix<nsd> dJ4ddC = -2.0 / 3.0 * J4d * Ci;
 
-    Tensor<nsd> ddInv1 = (-1.0/3.0)*(dyadic_product<nsd>(dInv1,Ci) + Inv[0]*dCidC + J2d*dyadic_product(Ci,Idm));
-    Tensor<nsd> ddInv2 = dyadic_product<nsd>(dInv1,dInv1) + Inv[0]*ddInv1 + (1.0/3.0)*C2.trace()*dCidC 
-                        + (1.0/3.0)*dyadic_product<nsd>((C2.trace()*dJ4ddC + 2*J4d*C),Ci) 
-                        + dyadic_product<nsd>(dJ4ddC,C) - J4d*fourth_order_identity<nsd>();
-    Tensor<nsd> ddInv3 = dyadic_product<nsd>(dInv3,Ci) + Inv[2]*dCidC;
-    Tensor<nsd> ddInv4 = (-1.0/3.0)*(dyadic_product<nsd>(dInv4,Ci) + J2d*dyadic_product<nsd>(Ci,N1) + Inv[3]*dCidC);
-    Matrix<nsd> sum1 = (N1*C + C*N1);
-    Tensor<nsd> ddInv5 = (-1.0/3.0)*(dyadic_product<nsd>(dInv5,Ci) + Inv[4]*dCidC + 2*J4d*dyadic_product(Ci,sum1))
-                        + J4d*(2*symmetric_dyadic_product(N1,Idm) - dyadic_product(N1,Idm)
-                        + 2*symmetric_dyadic_product(Idm,N1) - dyadic_product(Idm,N1));
+  Tensor<nsd> ddInv1 =
+      (-1.0 / 3.0) * (dyadic_product<nsd>(dInv1, Ci) + Inv[0] * dCidC +
+                      J2d * dyadic_product(Ci, Idm));
+  Tensor<nsd> ddInv2 =
+      dyadic_product<nsd>(dInv1, dInv1) + Inv[0] * ddInv1 +
+      (1.0 / 3.0) * C2.trace() * dCidC +
+      (1.0 / 3.0) *
+          dyadic_product<nsd>((C2.trace() * dJ4ddC + 2 * J4d * C), Ci) +
+      dyadic_product<nsd>(dJ4ddC, C) - J4d * fourth_order_identity<nsd>();
+  Tensor<nsd> ddInv3 = dyadic_product<nsd>(dInv3, Ci) + Inv[2] * dCidC;
+  Tensor<nsd> ddInv4 =
+      (-1.0 / 3.0) * (dyadic_product<nsd>(dInv4, Ci) +
+                      J2d * dyadic_product<nsd>(Ci, N1) + Inv[3] * dCidC);
+  Matrix<nsd> sum1 = (N1 * C + C * N1);
+  Tensor<nsd> ddInv5 =
+      (-1.0 / 3.0) * (dyadic_product<nsd>(dInv5, Ci) + Inv[4] * dCidC +
+                      2 * J4d * dyadic_product(Ci, sum1)) +
+      J4d * (2 * symmetric_dyadic_product(N1, Idm) - dyadic_product(N1, Idm) +
+             2 * symmetric_dyadic_product(Idm, N1) - dyadic_product(Idm, N1));
 
-    if (nfd == 2) {
-        Inv[5] = J2d * (fl.col(0).dot(C * fl.col(1)));
-        Inv[6] = J4d * (fl.col(0).dot(C2 * fl.col(1)));
-        Inv[7] = J2d * (fl.col(1).dot(C * fl.col(1)));
-        Inv[8] = J4d * (fl.col(1).dot(C2 * fl.col(1)));
+  if (nfd == 2) {
+    Inv[5] = J2d * (fl.col(0).dot(C * fl.col(1)));
+    Inv[6] = J4d * (fl.col(0).dot(C2 * fl.col(1)));
+    Inv[7] = J2d * (fl.col(1).dot(C * fl.col(1)));
+    Inv[8] = J4d * (fl.col(1).dot(C2 * fl.col(1)));
 
-        Matrix<nsd> N2 = fl.col(1)*fl.col(1).transpose();
-        Matrix<nsd> N12 = 0.5*(fl.col(0)*fl.col(1).transpose() + fl.col(1)*fl.col(0).transpose());
-        
+    Matrix<nsd> N2 = fl.col(1) * fl.col(1).transpose();
+    Matrix<nsd> N12 = 0.5 * (fl.col(0) * fl.col(1).transpose() +
+                             fl.col(1) * fl.col(0).transpose());
 
-        dInv6 = -Inv[5]/3*Ci + J2d*N12;
-        dInv7 = J4d*(N12*C + C*N12) - Inv[6]/3*Ci;
-        dInv8 = -Inv[7]/3*Ci + J2d*N2;
-        dInv9 = J4d*(N2*C + C*N2) - Inv[8]/3*Ci;
+    dInv6 = -Inv[5] / 3 * Ci + J2d * N12;
+    dInv7 = J4d * (N12 * C + C * N12) - Inv[6] / 3 * Ci;
+    dInv8 = -Inv[7] / 3 * Ci + J2d * N2;
+    dInv9 = J4d * (N2 * C + C * N2) - Inv[8] / 3 * Ci;
 
-        ddInv6 = -1.0/3.0*(dyadic_product(dInv6,Ci) + J2d*dyadic_product(Ci,N12) + Inv[5]*dCidC);
-        Matrix<nsd> sum12 = (N12*C + C*N12);
-        ddInv7 = -1.0/3.0*(dyadic_product(dInv7,Ci) + Inv[6]*dCidC + 2*J4d*dyadic_product(Ci,sum12))
-                + J4d*(2*symmetric_dyadic_product(N12,Idm) - dyadic_product(N12,Idm)
-                + 2*symmetric_dyadic_product(Idm,N12) - dyadic_product(Idm,N12));
-        ddInv8 = -1.0/3.0*(dyadic_product(dInv8,Ci) + J2d*dyadic_product(Ci,N2) + Inv[7]*dCidC);
-        Matrix<nsd> sum2 = (N2*C + C*N2);
-        ddInv9 = -1.0/3.0*(dyadic_product(dInv9,Ci) + Inv[8]*dCidC + 2*J4d*dyadic_product(Ci,sum2))
-                + J4d*(2*symmetric_dyadic_product(N2,Idm) - dyadic_product(N2,Idm)
-                + 2*symmetric_dyadic_product(Idm,N2) - dyadic_product(Idm,N2));
-    }
+    ddInv6 = -1.0 / 3.0 *
+             (dyadic_product(dInv6, Ci) + J2d * dyadic_product(Ci, N12) +
+              Inv[5] * dCidC);
+    Matrix<nsd> sum12 = (N12 * C + C * N12);
+    ddInv7 =
+        -1.0 / 3.0 *
+            (dyadic_product(dInv7, Ci) + Inv[6] * dCidC +
+             2 * J4d * dyadic_product(Ci, sum12)) +
+        J4d *
+            (2 * symmetric_dyadic_product(N12, Idm) - dyadic_product(N12, Idm) +
+             2 * symmetric_dyadic_product(Idm, N12) - dyadic_product(Idm, N12));
+    ddInv8 = -1.0 / 3.0 *
+             (dyadic_product(dInv8, Ci) + J2d * dyadic_product(Ci, N2) +
+              Inv[7] * dCidC);
+    Matrix<nsd> sum2 = (N2 * C + C * N2);
+    ddInv9 =
+        -1.0 / 3.0 *
+            (dyadic_product(dInv9, Ci) + Inv[8] * dCidC +
+             2 * J4d * dyadic_product(Ci, sum2)) +
+        J4d * (2 * symmetric_dyadic_product(N2, Idm) - dyadic_product(N2, Idm) +
+               2 * symmetric_dyadic_product(Idm, N2) - dyadic_product(Idm, N2));
+  }
 
-    dInv = {dInv1, dInv2, dInv3, dInv4, dInv5, dInv6, dInv7, dInv8, dInv9};
-    ddInv = {ddInv1, ddInv2, ddInv3, ddInv4, ddInv5, ddInv6, ddInv7, ddInv8, ddInv9};
+  dInv = {dInv1, dInv2, dInv3, dInv4, dInv5, dInv6, dInv7, dInv8, dInv9};
+  ddInv = {ddInv1, ddInv2, ddInv3, ddInv4, ddInv5,
+           ddInv6, ddInv7, ddInv8, ddInv9};
 }
-
 
 // Template instantiation
 template void ArtificialNeuralNetMaterial::computeInvariantsAndDerivatives<2>(
-const Matrix<2>& C, const Matrix<2>& fl, int nfd, double J2d, double J4d, const Matrix<2>& Ci,
-const Matrix<2>& Idm, const double Tfa, Matrix<2>& N1, double& psi, double (&Inv)[9], std::array<Matrix<2>,9>& dInv,
-std::array<Tensor<2>,9>& ddInv) const;
+    const Matrix<2> &C, const Matrix<2> &fl, int nfd, double J2d, double J4d,
+    const Matrix<2> &Ci, const Matrix<2> &Idm, Matrix<2> &N1, double &psi,
+    double (&Inv)[9], std::array<Matrix<2>, 9> &dInv,
+    std::array<Tensor<2>, 9> &ddInv) const;
 
 template void ArtificialNeuralNetMaterial::computeInvariantsAndDerivatives<3>(
-const Matrix<3>& C, const Matrix<3>& fl, int nfd, double J2d, double J4d, const Matrix<3>& Ci,
-const Matrix<3>& Idm, const double Tfa, Matrix<3>& N1, double& psi, double (&Inv)[9], std::array<Matrix<3>,9>& dInv,
-std::array<Tensor<3>,9>& ddInv) const;
+    const Matrix<3> &C, const Matrix<3> &fl, int nfd, double J2d, double J4d,
+    const Matrix<3> &Ci, const Matrix<3> &Idm, Matrix<3> &N1, double &psi,
+    double (&Inv)[9], std::array<Matrix<3>, 9> &dInv,
+    std::array<Tensor<3>, 9> &ddInv) const;
