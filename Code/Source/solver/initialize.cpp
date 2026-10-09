@@ -11,7 +11,7 @@
 
 #include "all_fun.h"
 #include "baf_ini.h"
-#include "cep_ion.h"
+#include "electrophysiology/cep_ion.h"
 #include "consts.h"
 #include "fs.h"
 #include "lhsa.h"
@@ -1016,4 +1016,3 @@ void zero_init(Simulation* simulation, SolutionStates& solutions)
      }
   }
 }
-

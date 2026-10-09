@@ -18,7 +18,7 @@
 #include <iostream>
 #include <math.h>
 
-#include "IonicModel.h"
+#include "electrophysiology/IonicModel.h"
 
 extern "C" {
 

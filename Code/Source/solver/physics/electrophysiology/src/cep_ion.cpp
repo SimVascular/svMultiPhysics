@@ -1,0 +1,314 @@
+// SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
+// University of California, and others. SPDX-License-Identifier: BSD-3-Clause
+
+#include "electrophysiology/cep_ion.h"
+
+#include "FE/Common/FEException.h"
+#include "all_fun.h"
+#include "post.h"
+#include "utils.h"
+#include <math.h>
+
+namespace cep_ion {
+
+void cep_init(Simulation *simulation, SolutionStates &solutions) {
+  using namespace consts;
+  auto &com_mod = simulation->com_mod;
+
+#define n_debug_cep_init
+#ifdef debug_cep_init
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+#endif
+
+  auto &cm = com_mod.cm;
+  auto &cep_mod = simulation->cep_mod;
+  const int nsd = com_mod.nsd;
+  const int tnNo = com_mod.tnNo;
+  const int nXion = cep_mod.nXion;
+#ifdef debug_cep_init
+  dmsg << "tnNo: " << tnNo;
+  dmsg << "nXion: " << nXion;
+#endif
+
+  for (auto &eq : com_mod.eq) {
+    if (eq.phys != EquationType::phys_CEP) {
+      continue;
+    }
+
+    if (com_mod.dmnId.size() != 0) {
+      Vector<double> sA(tnNo);
+      Array<double> sF(nXion, tnNo);
+
+      for (int a = 0; a < tnNo; a++) {
+        if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_CEP)) {
+          continue;
+        }
+        for (int iDmn = 0; iDmn < eq.nDmn; iDmn++) {
+          auto cPhys = eq.dmn[iDmn].phys;
+          int dID = eq.dmn[iDmn].Id;
+          if ((cPhys != EquationType::phys_CEP) ||
+              (dID >= 0 && !utils::btest(com_mod.dmnId(a), dID))) {
+            continue;
+          }
+          int nX = eq.dmn[iDmn].cep.nX;
+          int nG = eq.dmn[iDmn].cep.nG;
+
+          Vector<double> Xl(nX);
+          Vector<double> Xgl(nG);
+
+          eq.dmn[iDmn].cep.ionic_model->init(Xl, Xgl);
+
+          sA(a) = sA(a) + 1.0;
+
+          for (int i = 0; i < nX; i++) {
+            sF(i, a) = sF(i, a) + Xl(i);
+          }
+
+          for (int i = 0; i < nG; i++) {
+            sF(i + nX, a) = sF(i + nX, a) + Xgl(i);
+          }
+        }
+      }
+
+      all_fun::commu(com_mod, sA);
+      all_fun::commu(com_mod, sF);
+
+      for (int a = 0; a < tnNo; a++) {
+        if (!utils::is_zero(sA(a))) {
+          for (int i = 0; i < cep_mod.Xion.nrows(); i++) {
+            cep_mod.Xion(i, a) = sF(i, a) / sA(a);
+          }
+        }
+      }
+
+    } else {
+      for (int a = 0; a < tnNo; a++) {
+        if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_CEP)) {
+          continue;
+        }
+        int nX = eq.dmn[0].cep.nX;
+        int nG = eq.dmn[0].cep.nG;
+        Vector<double> Xl(nX);
+        Vector<double> Xgl(nG);
+
+        eq.dmn[0].cep.ionic_model->init(Xl, Xgl);
+
+        for (int i = 0; i < nX; i++) {
+          cep_mod.Xion(i, a) = Xl(i);
+        }
+        for (int i = 0; i < nG; i++) {
+          cep_mod.Xion(i + nX, a) = Xgl(i);
+        }
+      }
+    }
+
+    // Copy the action potential into the solution vector, as cep_integ does at
+    // every time step. Without this the initial solution holds a zero potential
+    // while the ionic model rests at its own initial value.
+    auto &Yo = solutions.old.get_velocity();
+
+    for (int Ac = 0; Ac < tnNo; Ac++) {
+      Yo(eq.e, Ac) = cep_mod.Xion(0, Ac);
+    }
+  }
+}
+
+//-----------
+// cep_integ
+//-----------
+// State variable integration.
+//
+void cep_integ(Simulation *simulation, const int iEq, const int iDof,
+               SolutionStates &solutions, const Vector<double> &I4f) {
+  auto &Yo = solutions.old.get_velocity();
+  static bool IPASS = true;
+
+  using namespace consts;
+
+  auto &com_mod = simulation->com_mod;
+
+#define n_debug_cep_integ
+#ifdef debug_cep_integ
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+#endif
+
+  auto &cm = com_mod.cm;
+  int tnNo = com_mod.tnNo;
+  double dt = com_mod.dt;
+  double time = com_mod.time;
+
+  auto &cep_mod = simulation->cep_mod;
+  auto &cem = cep_mod.cem;
+  auto &eq = com_mod.eq[iEq];
+
+  auto &Xion = cep_mod.Xion;
+  int nXion = cep_mod.nXion;
+
+#ifdef debug_cep_integ
+  dmsg << "cem.cpld: " << cem.cpld;
+  dmsg << "time: " << time;
+#endif
+
+  //  Ignore first pass as Xion is already initialized
+  if (IPASS) {
+    IPASS = false;
+
+    // Copy action potential after diffusion as first state variable
+  } else {
+    for (int Ac = 0; Ac < tnNo; Ac++) {
+      Xion(0, Ac) = Yo(iDof, Ac);
+    }
+  }
+
+  // Integrate electric potential based on cellular activation model
+  //
+  if (com_mod.dmnId.size() != 0) {
+    Vector<double> sA(tnNo);
+    Array<double> sF(nXion, tnNo);
+    Vector<double> sY(tnNo);
+
+    cep_mod.calcium = 0.0;
+
+    for (int Ac = 0; Ac < tnNo; Ac++) {
+      if (!all_fun::is_domain(com_mod, eq, Ac, Equation_CEP)) {
+        continue;
+      }
+
+      for (int iDmn = 0; iDmn < eq.nDmn; iDmn++) {
+        auto &dmn = eq.dmn[iDmn];
+        auto cPhys = dmn.phys;
+        int dID = dmn.Id;
+
+        if (cPhys != Equation_CEP ||
+            (dID >= 0 && !utils::btest(com_mod.dmnId(Ac), dID))) {
+          continue;
+        }
+
+        int nX = dmn.cep.nX;
+        int nG = dmn.cep.nG;
+#ifdef debug_cep_integ
+        dmsg << "nX: " << nX;
+        dmsg << "nG: " << nG;
+#endif
+
+        auto Xl = Xion.rows(0, nX - 1, Ac);
+
+        // [NOTE] nG can be 0.
+        Vector<double> Xgl;
+        if (nG != 0) {
+          Xgl.resize(nG);
+          for (int i = 0; i < nG; i++) {
+            Xgl(i) = Xion(i + nX, Ac);
+          }
+        }
+
+        cep_integ_l(cep_mod, dmn.cep, Xl, Xgl, time - dt, I4f(Ac), dt,
+                    com_mod.x.col(Ac));
+        cep_mod.calcium[Ac] += Xl[dmn.cep.ionic_model->get_calcium_index()];
+
+        sA(Ac) = sA(Ac) + 1.0;
+        for (int i = 0; i < nX; i++) {
+          sF(i, Ac) += Xl(i);
+        }
+
+        for (int i = 0; i < nG; i++) {
+          sF(nX + i, Ac) += Xgl(i);
+        }
+      }
+    }
+
+    all_fun::commu(com_mod, sA);
+    all_fun::commu(com_mod, sF);
+    all_fun::commu(com_mod, cep_mod.calcium);
+
+    if (cem.cpld) {
+      all_fun::commu(com_mod, sY);
+    }
+
+    for (int Ac = 0; Ac < tnNo; Ac++) {
+      if (!utils::is_zero(sA(Ac))) {
+        Xion.set_col(Ac, sF.col(Ac) / sA(Ac));
+        cep_mod.calcium[Ac] = cep_mod.calcium[Ac] / sA(Ac);
+      }
+    }
+
+  } else {
+    for (int Ac = 0; Ac < tnNo; Ac++) {
+      if (!all_fun::is_domain(com_mod, eq, Ac, Equation_CEP)) {
+        continue;
+      }
+
+      int nX = eq.dmn[0].cep.nX;
+      int nG = eq.dmn[0].cep.nG;
+      auto Xl = Xion.rows(0, nX - 1, Ac);
+      auto Xgl = Xion.rows(nX, nX + nG - 1, Ac);
+
+      cep_integ_l(cep_mod, eq.dmn[0].cep, Xl, Xgl, time - dt, I4f(Ac), dt,
+                  com_mod.x.col(Ac));
+      cep_mod.calcium[Ac] = Xl[eq.dmn[0].cep.ionic_model->get_calcium_index()];
+
+      for (int i = 0; i < nX; i++) {
+        Xion(i, Ac) = Xl(i);
+      }
+
+      for (int i = 0; i < nG; i++) {
+        Xion(nX + i, Ac) = Xgl(i);
+      }
+    }
+  }
+
+  for (int Ac = 0; Ac < tnNo; Ac++) {
+    Yo(iDof, Ac) = Xion(0, Ac);
+  }
+}
+
+//-------------
+// cep_integ_l
+//-------------
+// Integrate local electrophysiology variables from t1 to t1+dt. Also
+// integrate excitation-activation variables form coupled electro-
+// mechanics. The equations are integrated at domain nodes.
+//
+void cep_integ_l(CepMod &cep_mod, cepModelType &cep, Vector<double> &X,
+                 Vector<double> &Xg, const double t1, const double I4f,
+                 const double dt, const Vector<double> &x) {
+  using namespace consts;
+
+#define n_debug_cep_integ_l
+#ifdef debug_cep_integ_l
+  DebugMsg dmsg(__func__, cep_mod.cm.idcm());
+  dmsg.banner();
+#endif
+
+  // Feedback coefficient for stretch-activated-currents
+  const double Ksac = I4f > 1.0 ? cep.Ksac * (sqrt(I4f) - 1.0) : 0.0;
+
+  // Total time steps
+  const unsigned nt = static_cast<unsigned int>(dt / cep.dt);
+
+#ifdef debug_cep_integ_l
+  dmsg << "nt: " << nt;
+  dmsg << "Ksac: " << Ksac;
+  dmsg << "cep.cepType: " << cep.cepType;
+  dmsg << "cep.odes.tIntTyp: " << cep.odes.tIntType;
+#endif
+
+  svmp::check_not_null<svmp::FE::NotInitializedException>(
+      cep.ionic_model, "ionic model was not constructed.");
+
+  for (unsigned int i = 0; i < nt; ++i) {
+    const double t = t1 + i * cep.dt;
+    const double Istim = cep.stimulus_value(t, x);
+
+    cep.ionic_model->integ(cep.odes, cep.imyo, t, cep.dt, Istim, Ksac, X, Xg);
+  }
+
+  if (isnan(X(0))) {
+    throw std::runtime_error(
+        "[cep_integ_l] A NaN has been computed during time integration of "
+        "electrophysiology variables.");
+  }
+}
+} // namespace cep_ion
