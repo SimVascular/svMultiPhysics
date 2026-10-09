@@ -2022,7 +2022,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
           // Evaluate the active stress at the current Gauss point, the same
           // way the residual assembly does, so that the active contribution to
           // the reported stress matches the one the solver used.
-          const auto Ta = active_stress_evaluator.evaluate(N, F, fN);
+          const auto Ta = active_stress_evaluator.evaluate<nsd>(eigen_view(N), F, eigen_view<nsd>(fN));
 
           if (cPhys == EquationType::phys_lElas) {
             if (nsd == 3) {

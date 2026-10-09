@@ -414,7 +414,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   const Matrix<2> F  = Matrix<2>::Identity() + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate(N, F, fN);
+  const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, eigen_view<2>(fN));
   
   #ifdef debug_struct_2d 
   dmsg << "ud: " << ud(0) << " " << ud(1);
@@ -580,7 +580,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   const Matrix<3> F  = Matrix<3>::Identity() + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate(N, F, fN);
+  const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, eigen_view<3>(fN));
 
   // 2nd Piola-Kirchhoff tensor (S) and material stiffness tensor in
   // Voigt notation (Dm)

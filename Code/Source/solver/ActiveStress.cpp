@@ -4,7 +4,6 @@
 #include "ActiveStress.h"
 
 #include "mat_fun.h"
-#include "utils.h"
 
 bool supports_active_stress(const consts::EquationType eq_type) {
   return eq_type == consts::EquationType::phys_struct ||
@@ -18,8 +17,11 @@ void ActiveStress::Evaluator::update(const ActiveStress &active_stress,
 
   const unsigned int n_states = active_stress.n_states;
 
-  if (state_.nrows() != n_states || state_.ncols() != nodes.size())
-    state_.resize(n_states, nodes.size());
+  state_.resize(n_states, nodes.size());
+
+  // Vector::resize reallocates even when the size is unchanged.
+  if (interpolated_state.size() != n_states)
+    interpolated_state.resize(n_states);
 
   // Friend access to active_stress.states, so that gathering the state of an
   // element does not need to go through an accessor.
@@ -28,9 +30,11 @@ void ActiveStress::Evaluator::update(const ActiveStress &active_stress,
       state_(j, a) = active_stress.states(j, nodes(a));
 }
 
+template <int nsd>
 ActiveStress::ActiveTension ActiveStress::Evaluator::evaluate(
-    const Vector<double> &N, const Array<double> &F,
-    const Array<double> &fN) const {
+    const Eigen::Ref<const Eigen::VectorXd> &N, const mat_fun::Matrix<nsd> &F,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>> &fN)
+    const {
   if (active_stress_ == nullptr)
     return {};
 
@@ -39,27 +43,23 @@ ActiveStress::ActiveTension ActiveStress::Evaluator::evaluate(
   // directions, where fN is zero and the stretch would come out zero too.
   double fiber_stretch = 1.0;
 
-  if (active_stress_->needs_fiber_stretch()) {
-    const int nsd = F.nrows();
-
-    Vector<double> fiber_direction(nsd);
-    for (int i = 0; i < nsd; ++i)
-      fiber_direction(i) = fN(i, 0);
-
-    fiber_stretch = utils::norm(mat_fun::mat_mul(F, fiber_direction));
-  }
+  if (active_stress_->needs_fiber_stretch())
+    fiber_stretch = (F * fN.col(0)).norm();
 
   // Interpolate the nodal state to the quadrature point.
-  Vector<double> state(state_.nrows());
-  for (int j = 0; j < state_.nrows(); ++j) {
-    double value = 0.0;
-    for (int a = 0; a < state_.ncols(); ++a)
-      value += N(a) * state_(j, a);
-    state(j) = value;
-  }
+  Eigen::Map<Eigen::VectorXd>(interpolated_state.data(),
+                              interpolated_state.size()) = state_ * N;
 
-  return active_stress_->compute_tension(state, fiber_stretch);
+  return active_stress_->compute_tension(interpolated_state, fiber_stretch);
 }
+
+template ActiveStress::ActiveTension ActiveStress::Evaluator::evaluate<2>(
+    const Eigen::Ref<const Eigen::VectorXd> &, const mat_fun::Matrix<2> &,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &) const;
+
+template ActiveStress::ActiveTension ActiveStress::Evaluator::evaluate<3>(
+    const Eigen::Ref<const Eigen::VectorXd> &, const mat_fun::Matrix<3> &,
+    const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &) const;
 
 void ActiveStress::read_parameters(const ActiveStressParameters &params) {
   eta_f = params.get_eta_f();

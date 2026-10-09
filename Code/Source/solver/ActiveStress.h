@@ -9,6 +9,7 @@
 #include "Vector.h"
 #include "consts.h"
 #include "factory.h"
+#include "mat_fun.h"
 
 #include "CmMod.h"
 
@@ -201,15 +202,21 @@ public:
      * @param[in] N Shape functions at the quadrature point, of the same nodes
      *   the state was gathered at by @ref update.
      * @param[in] F Deformation gradient at the quadrature point.
-     * @param[in] fN Fiber directions of the element, the first column being
-     *   the fiber direction itself.
+     * @param[in] fN Fiber directions of the element, one per column, the first
+     *   column being the fiber direction itself.
      *
      * @return Active tension along fibers, sheets and sheet normals, and their
      *   derivatives with respect to the fiber stretch, bundled in an object of
      *   type @ref ActiveTension.
+     *
+     * @tparam nsd Number of spatial dimensions.
      */
-    ActiveTension evaluate(const Vector<double> &N, const Array<double> &F,
-                           const Array<double> &fN) const;
+    template <int nsd>
+    ActiveTension
+    evaluate(const Eigen::Ref<const Eigen::VectorXd> &N,
+             const mat_fun::Matrix<nsd> &F,
+             const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>
+                 &fN) const;
 
   private:
     /// Active stress model of the domain the element belongs to, or null if
@@ -218,7 +225,12 @@ public:
 
     /// State variables at the element nodes, of size (n_states, element
     /// nodes).
-    Array<double> state_;
+    Eigen::MatrixXd state_;
+
+    /// State variables interpolated at the quadrature point, of size
+    /// n_states. Scratch storage for @ref evaluate, mutable so that it can
+    /// stay const.
+    mutable Vector<double> interpolated_state;
   };
 
   /// Grants @ref Evaluator direct access to @ref states.

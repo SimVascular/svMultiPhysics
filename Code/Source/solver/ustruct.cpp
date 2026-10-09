@@ -840,7 +840,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Matrix<2> Fi = F.inverse();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate(Nw, F, fN);
+  const auto Ta = active_stress_evaluator.evaluate<2>(Nwm, F, eigen_view<2>(fN));
 
   // Pressure and its time derivative
   //
@@ -1086,7 +1086,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Matrix<3> Fi = F.inverse();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate(Nw, F, fN);
+  const auto Ta = active_stress_evaluator.evaluate<3>(Nwm, F, eigen_view<3>(fN));
 
   // Pressure and its time derivative
   //
