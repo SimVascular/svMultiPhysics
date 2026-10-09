@@ -42,7 +42,7 @@ runs:
       shell: bash
       run: |
         conda create -n svmultiphysics python=3.9
-        conda run -n svmultiphysics pip install pytest pytest-cov pytest-mock numpy meshio pandas
+        conda run -n svmultiphysics pip install pytest pytest-cov pytest-mock numpy meshio pandas vtk
         
     - name: Run integration tests
       shell: bash

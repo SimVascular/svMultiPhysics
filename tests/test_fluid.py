@@ -1,6 +1,9 @@
-from .conftest import run_with_reference, skip_if_no_petsc, skip_if_no_trilinos
+from .conftest import (add_test_boundary_face, make_interior_node_case, run_by_name,
+                       run_with_reference, skip_if_no_petsc, skip_if_no_trilinos)
+import numpy as np
 import os
 import subprocess
+import xml.etree.ElementTree as ET
 
 # Common folder for all tests in this file
 base_folder = "fluid"
@@ -119,3 +122,33 @@ def test_quadratic_tet10(n_proc):
     t_max = 3
     fields = ["Velocity", "Pressure", "Vorticity", "Divergence"]
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max) 
+
+def test_interior_node_with_coupled_face(tmp_path):
+    root, points, cells, ids = make_interior_node_case(tmp_path, 3)
+    add_test_boundary_face(root, tmp_path, points, cells)
+    equation = root.find("Add_equation")
+    equation.set("type", "fluid")
+    for child in list(equation):
+        if child.tag.startswith("Darcy_") or child.tag in ("Fluid_density", "Source_term"):
+            equation.remove(child)
+    ET.SubElement(equation, "Density").text = "1"
+    ET.SubElement(ET.SubElement(equation, "Viscosity", model="Constant"), "Value").text = "1"
+    equation.find("LS").set("type", "GMRES")
+    equation.find("LS/Linear_algebra/Preconditioner").text = "fsils"
+    equation.find("Output/Darcy_pressure").tag = "Velocity"
+    bc = equation.find("Add_BC")
+    bc.remove(bc.find("Temporal_and_spatial_values_file_path"))
+    bc.find("Time_dependence").text = "Steady"
+    ET.SubElement(bc, "Value").text = "0.02"
+    outlet = ET.SubElement(equation, "Add_BC", name="surface")
+    ET.SubElement(outlet, "Type").text = "Neumann"
+    ET.SubElement(outlet, "Time_dependence").text = "RCR"
+    rcr = ET.SubElement(outlet, "RCR_values")
+    for tag, value in [("Capacitance", "1"), ("Proximal_resistance", "1"),
+                       ("Distal_resistance", "1"), ("Distal_pressure", "0"), ("Initial_pressure", "0")]:
+        ET.SubElement(rcr, tag).text = value
+    ET.ElementTree(root).write(tmp_path / "solver.xml")
+    result = run_by_name(tmp_path, "solver.xml", 2)
+    order = [np.argmin(np.linalg.norm(result.points - points[i-1], axis=1)) for i in ids]
+    np.testing.assert_allclose(result.point_data["Velocity"][order], 0.02, atol=1e-10)
+    assert np.isfinite(result.point_data["Velocity"]).all()

@@ -862,6 +862,8 @@ class BoundaryConditionParameters : public ParameterLists
 
     // Add_BC XML elements.
     //
+    Parameter<std::string> mesh_name;
+    Parameter<std::string> node_set;
     Parameter<bool> apply_along_normal_direction;
     Parameter<std::string> bct_file_path;
 
@@ -1904,6 +1906,18 @@ class FaceParameters : public ParameterLists
     Parameter<double> quadrature_modifier_TRI3;
 };
 
+/// @brief A named selection of one-based input mesh point indices.
+class NodeSetParameters : public ParameterLists
+{
+  public:
+    NodeSetParameters();
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    Parameter<std::string> name;
+    Parameter<std::string> node_ids_file_path;
+    std::vector<int> node_ids;
+};
+
 /// @brief The MeshParameters class is used to store paramaters for the
 /// 'Add_mesh' XML element.
 ///
@@ -1940,6 +1954,8 @@ class MeshParameters : public ParameterLists
     std::string get_path() const { return mesh_file_path.value(); };
 
     std::vector<FaceParameters*> face_parameters;
+    // ParameterLists holds member pointers, so definitions need stable addresses.
+    std::vector<std::unique_ptr<NodeSetParameters>> node_sets;
 
     // Add_mesh name= 
     Parameter<std::string> name;

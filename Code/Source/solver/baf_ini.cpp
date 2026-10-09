@@ -23,6 +23,95 @@
 
 namespace baf_ini_ns {
 
+namespace {
+
+void register_dirichlet(ComMod& com_mod, bcType& bc, const Vector<int>& nodes, int& lsPtr)
+{
+  if (bc.weakDir) {
+    bc.lsPtr = -1;
+    return;
+  }
+  bc.lsPtr = ++lsPtr;
+  Array<double> mask(com_mod.nsd, nodes.size());
+  const bool selective = std::any_of(bc.eDrn.begin(), bc.eDrn.end(), [](int value) { return value != 0; });
+  if (selective) {
+    mask = 1.0;
+    for (int i = 0; i < com_mod.nsd; ++i) {
+      if (bc.eDrn(i) != 0 && mask.size() != 0) {
+        mask.set_row(i, 0.0);
+      }
+    }
+  }
+  fsi_linear_solver::fsils_bc_create(com_mod.lhs, lsPtr, nodes.size(), com_mod.nsd,
+      fsi_linear_solver::BcType::BC_TYPE_Dir, nodes, mask);
+}
+
+/// @brief Check node-set component masks and reject a node-set component that
+/// any other strong Dirichlet condition also prescribes, so the applied value
+/// never depends on input order. Overlapping face conditions are unchanged.
+void check_node_sets(const ComMod& com_mod, const CmMod& cm_mod, const eqType& eq)
+{
+  using namespace consts;
+
+  if (std::none_of(eq.bc.begin(), eq.bc.end(), [](const bcType& bc) { return !bc.node_set_name.empty(); })) {
+    return;
+  }
+
+  // Components a condition prescribes, following set_bc_dir().
+  const int nsd = com_mod.nsd;
+  const int components = eq.dof == nsd + 1 ? nsd : eq.dof;
+  const auto prescribed = [&](const bcType& bc) {
+    const bool selective = std::any_of(bc.eDrn.begin(), bc.eDrn.end(), [](int value) { return value != 0; });
+    std::vector<int> result;
+    for (int i = 0; i < nsd; ++i) {
+      if (selective ? bc.eDrn(i) != 0 : i < components) {
+        result.push_back(i);
+      }
+    }
+    return result;
+  };
+
+  Array<int> count(nsd, com_mod.tnNo);
+  for (const auto& bc : eq.bc) {
+    const bool coupled_dir = utils::btest(bc.bType, iBC_Coupled) &&
+        bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir;
+    if (bc.weakDir || !(utils::btest(bc.bType, iBC_Dir) || coupled_dir)) {
+      continue;
+    }
+    const auto selected = prescribed(bc);
+    for (const int node : all_fun::bc_nodes(com_mod, bc)) {
+      for (const int i : selected) {
+        ++count(i, node);
+      }
+    }
+  }
+
+  for (const auto& bc : eq.bc) {
+    if (bc.node_set_name.empty()) {
+      continue;
+    }
+    const auto selected = prescribed(bc);
+    if (selected.empty() || selected.back() >= components) {
+      throw std::runtime_error("Dirichlet node set '" + bc.node_set_name + "': invalid component mask.");
+    }
+    if (bc.gm.defined() && bc.gm.dof != static_cast<int>(selected.size())) {
+      throw std::runtime_error("Dirichlet node set '" + bc.node_set_name + "': inconsistent component count in general values.");
+    }
+    int overlap = 0;
+    for (const int node : bc.node_ids) {
+      for (const int i : selected) {
+        overlap |= count(i, node) > 1;
+      }
+    }
+    if (com_mod.cm.reduce(cm_mod, overlap, MPI_MAX) != 0) {
+      throw std::runtime_error("Dirichlet node set '" + bc.node_set_name +
+          "' prescribes a component that another Dirichlet condition also prescribes.");
+    }
+  }
+}
+
+}
+
 /// @brief This routine initializes required structure for boundaries,
 /// faces, those that interface with FSILS and cplBC.
 ///
@@ -88,12 +177,18 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
       auto& bc = eq.bc[iBc];
       int iFa = bc.iFa;
       int iM = bc.iM;
+      if (!bc.node_set_name.empty()) {
+        bc.gx.resize(bc.node_ids.size());
+        bc.gx = 1.0;
+        continue;
+      }
       bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], solutions);
 
       if (com_mod.msh[iM].lShl) {
         shl_bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], com_mod.msh[iM], solutions);
       }
     }
+    check_node_sets(com_mod, cm_mod, eq);
   }
 
   // cplBC faces are initialized here
@@ -210,7 +305,11 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
       int iFa = bc.iFa;
       int iM = bc.iM;
       bc.lsPtr = 0;
-      fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr, solutions);
+      if (!bc.node_set_name.empty()) {
+        register_dirichlet(com_mod, bc, bc.node_ids, lsPtr);
+      } else {
+        fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr, solutions);
+      }
     }
   }
 
@@ -739,6 +838,11 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
   dmsg << "lsPtr: " << lsPtr;
   #endif
 
+  if (btest(lBc.bType, iBC_Dir)) {
+    register_dirichlet(com_mod, lBc, lFa.gN, lsPtr);
+    return;
+  }
+
   int iM = lFa.iM;
   int nNo = lFa.nNo;
 
@@ -752,33 +856,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
     gNodes(a) = lFa.gN(a);
   }
 
-  if (btest(lBc.bType, iBC_Dir)) {
-    if (lBc.weakDir) {
-      lBc.lsPtr = -1;
-    } else {
-      lsPtr = lsPtr + 1;
-      lBc.lsPtr = lsPtr;
-      sVl = 0.0;
-      bool eDrn = false;
-      for (int i = 0; i < nsd; i++) {
-        if (lBc.eDrn(i) != 0) {
-          eDrn = true;
-          break;
-        }
-      }
-
-      if (eDrn) {
-        sVl = 1.0;
-        for (int i = 0; i < nsd; i++) {
-          if ((lBc.eDrn(i) != 0) && (sVl.size() != 0)) {
-            sVl.set_row(i, 0.0);
-          }
-        }
-      }
-      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
-    }
-    
-  } else if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_Coupled)) {
+  if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_Coupled)) {
     // For Coupled-DIR BCs: iBC_Dir was cleared in read_files but the face DOFs must still
     // be excluded from the linear solve (Ax=b). Register as BC_TYPE_Dir so the
     // preconditioner zeros out those rows/columns, preventing the solver from

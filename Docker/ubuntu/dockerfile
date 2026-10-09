@@ -491,7 +491,7 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
     
 RUN conda create -y -n svmultiphysics && \
-    conda run -n svmultiphysics pip install pytest pytest-cov pytest-mock numpy meshio pandas
+    conda run -n svmultiphysics pip install pytest pytest-cov pytest-mock numpy meshio pandas vtk
 
 # Set libraries environment
 ENV PATH="/google:/vtk:/openmpi/bin:/cmake/bin:/trilinos/lib/cmake/Trilinos:${PATH}"

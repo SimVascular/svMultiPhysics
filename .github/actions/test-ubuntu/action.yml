@@ -52,6 +52,7 @@ runs:
       run: |
         git config --global --add safe.directory /__w/svMultiPhysics/svMultiPhysics
         git lfs pull
+        conda run -n svmultiphysics python -m pip install vtk
         cd tests
         conda run -n svmultiphysics pytest -v -rfEP --durations=0
         

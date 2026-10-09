@@ -171,6 +171,11 @@ void find_face(const std::vector<mshType>& mesh_list, const std::string& faceNam
   }
 }
 
+const Vector<int>& bc_nodes(const ComMod& com_mod, const bcType& bc)
+{
+  return bc.node_set_name.empty() ? com_mod.msh[bc.iM].fa[bc.iFa].gN : bc.node_ids;
+}
+
 /// @brief Find the mesh ID based on the mesh name.
 //
 void find_msh(const std::vector<mshType>& mesh_list, const std::string& mesh_name, int& iM)

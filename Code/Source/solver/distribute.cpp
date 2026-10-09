@@ -615,7 +615,7 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   #endif
 
   int task_id = cm.idcm();
-  bool is_slave = cm.slv(cm_mod);
+  const bool is_non_root = !cm.mas(cm_mod);
   cm.bcast(cm_mod, &lBc.cplBCptr);
   cm.bcast(cm_mod, &lBc.bType);
   cm.bcast(cm_mod, &lBc.clsFlgRis);
@@ -624,10 +624,10 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   #ifdef debug_dist_bc
   dmsg << "nsd: " << nsd;
   dmsg << "lBc.bType: " << lBc.bType;
-  dmsg << "is_slave: " << is_slave;
+  dmsg << "is_non_root: " << is_non_root;
   #endif
 
-  if (is_slave) {
+  if (is_non_root) {
     lBc.eDrn.resize(nsd); 
     lBc.h.resize(nsd);
   }
@@ -636,6 +636,37 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
 
   cm.bcast(cm_mod, &lBc.iFa);
   cm.bcast(cm_mod, &lBc.iM);
+  cm.bcast(cm_mod, lBc.node_set_name);
+  Vector<int> original_nodes;
+  if (!lBc.node_set_name.empty()) {
+    int count = lBc.node_ids.size();
+    cm.bcast(cm_mod, &count);
+    if (is_non_root) {
+      original_nodes.resize(count);
+    } else {
+      original_nodes = lBc.node_ids;
+    }
+    cm.bcast(cm_mod, original_nodes);
+    int local_count = 0;
+    for (int a = 0; a < count; ++a) {
+      if (gmtl[original_nodes[a]] != -1) {
+        ++local_count;
+      }
+    }
+    lBc.node_ids.clear();
+    lBc.node_ids.resize(local_count);
+    int local = 0;
+    for (int a = 0; a < count; ++a) {
+      const int node = gmtl[original_nodes[a]];
+      if (node != -1) {
+        lBc.node_ids[local++] = node;
+      }
+    }
+  }
+  // Keep the original ordering until all value and profile columns are copied.
+  const auto& global_nodes = lBc.node_set_name.empty() ? tMs[lBc.iM].fa[lBc.iFa].gN : original_nodes;
+  const auto& local_nodes = all_fun::bc_nodes(com_mod, lBc);
+
   cm.bcast(cm_mod, &lBc.r);
   cm.bcast(cm_mod, &lBc.g);
   cm.bcast(cm_mod, lBc.h);
@@ -660,7 +691,7 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   cm.bcast(cm_mod, &flag);
   
   if (flag) {
-    if (is_slave) {
+    if (is_non_root) {
       //lBc.gm = new MBType;
     }
 
@@ -672,12 +703,12 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
     int nTp = lBc.gm.nTP;
     int iDof = lBc.gm.dof;
 
-    if (is_slave) {
+    if (is_non_root) {
      lBc.gm.t.resize(nTp);
     }
 
     cm.bcast(cm_mod, lBc.gm.t);
-    int nNo = tMs[lBc.iM].fa[lBc.iFa].nNo;
+    int nNo = global_nodes.size();
     int a = nTp*iDof*nNo;
 
     // Allocating the container and copying the nodes which belong to
@@ -685,7 +716,7 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
     //
     Vector<double> tmp(a);
 
-    if (!is_slave) {
+    if (!is_non_root) {
       // Copy data row-wise to tmp.
       int n = 0;
       for (int k = 0; k < lBc.gm.d.nslices(); k++) {
@@ -701,12 +732,13 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
     cm.bcast(cm_mod, tmp);
 
     // This is the new number of nodes
-    a = com_mod.msh[lBc.iM].fa[lBc.iFa].nNo;
+    a = local_nodes.size();
+    lBc.gm.d.clear();
     lBc.gm.d.resize(iDof, a, nTp);
     int b = 0;
 
     for (int a = 0; a < nNo; a++) {
-      int Ac = tMs[lBc.iM].fa[lBc.iFa].gN[a];
+      int Ac = global_nodes[a];
       Ac = gmtl[Ac];
       if (Ac != -1) {
         for (int i = 0; i < nTp; i++) {
@@ -726,9 +758,9 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
   cm.bcast(cm_mod, &flag);
 
   if (flag) {
-    int nNo = tMs[lBc.iM].fa[lBc.iFa].nNo;
+    int nNo = global_nodes.size();
     Vector<double> tmp(nNo);
-    if (!is_slave) {
+    if (!is_non_root) {
       tmp = lBc.gx;
       lBc.gx.clear();
     }
@@ -736,11 +768,11 @@ void dist_bc(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, bcType& lBc
     cm.bcast(cm_mod, tmp);
 
     // This is the new number of nodes
-    int a = com_mod.msh[lBc.iM].fa[lBc.iFa].nNo;
+    int a = local_nodes.size();
     lBc.gx.resize(a);
     int b = 0;
     for (int a = 0; a < nNo; a++) {
-      int Ac = tMs[lBc.iM].fa[lBc.iFa].gN[a];
+      int Ac = global_nodes[a];
       Ac = gmtl[Ac];
       if (Ac != -1) {
         lBc.gx[b] = tmp[a];

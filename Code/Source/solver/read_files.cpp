@@ -22,10 +22,12 @@
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
 
+#include <charconv>
 #include <fstream>
 #include <functional>
 #include <math.h>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
 
 namespace read_files_ns {
@@ -130,6 +132,47 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
 {
   using namespace consts;
   auto bc_type = bc_params->type.value();
+  if (!lBc.node_set_name.empty()) {
+    const auto reject = [&](bool invalid, const char* option) {
+      if (invalid) {
+        svmp::raise<svmp::ParseException>("Dirichlet node set '" + lBc.node_set_name +
+            "': unsupported " + option + ".");
+      }
+    };
+    reject(bc_type != "Dirichlet" && bc_type != "Dir", "non-Dirichlet Type");
+    reject(bc_params->weakly_applied.value(), "Weakly_applied");
+    reject(bc_params->apply_along_normal_direction.value(), "Apply_along_normal_direction");
+    reject(bc_params->impose_flux.value(), "Impose_flux");
+    reject(bc_params->zero_out_perimeter.value(), "Zero_out_perimeter");
+    reject(bc_params->profile.value() != "Flat", "Profile (use Flat)");
+    reject(bc_params->spatial_profile_file_path.defined(), "Spatial_profile_file_path");
+    reject(bc_params->spatial_values_file_path.defined(), "Spatial_values_file_path");
+    reject(bc_params->bct_file_path.defined(), "Bct_file_path");
+    reject(bc_params->traction_values_file_path.defined(), "Traction_values_file_path");
+    reject(bc_params->cst_shell_bc_type.defined(), "CST_shell_bc_type");
+    reject(bc_params->coupling_interface.value_set, "Coupling_interface");
+    reject(bc_params->undeforming_neu_face.value(), "Undeforming_neu_face");
+    reject(bc_params->follower_pressure_load.value(), "Follower_pressure_load");
+    const auto& time = bc_params->time_dependence.value();
+    reject(time != "Steady" && time != "Unsteady" && time != "General", "Time_dependence");
+    reject(simulation->com_mod.rmsh.isReqd, "topology-changing remeshing");
+    reject(lEq.phys == EquationType::phys_ustruct ||
+        (lEq.phys == EquationType::phys_FSI && simulation->com_mod.sstEq), "ustruct equation");
+    reject(bc_params->initial_displacements_file_path.defined(),
+        "Initial_displacements_file_path");
+    reject(bc_params->prestress_file_path.defined(),
+        "Prestress_file_path");
+    reject(bc_params->penalty_parameter_normal.defined(),
+        "Penalty_parameter_normal");
+    reject(bc_params->penalty_parameter_tangential.defined(),
+        "Penalty_parameter_tangential");
+    reject(
+        std::set<EquationType>{
+            Equation_CEP, Equation_darcy, Equation_heatF, Equation_heatS
+        }.count(lEq.phys) != 0 &&
+            bc_params->impose_on_state_variable_integral.value(),
+        "Impose_on_state_variable_integral for a scalar equation");
+  }
   BoundaryConditionType coupled_bc_type = BoundaryConditionType::bType_Neu;
   std::string oned_input_file;
 
@@ -509,7 +552,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
     } else {
       if (bc_params->temporal_and_spatial_values_file_path.defined()) {
         auto file_name = bc_params->temporal_and_spatial_values_file_path.value(); 
-        read_temp_spat_values(com_mod, com_mod.msh[iM], com_mod.msh[iM].fa[iFa], file_name, lBc); 
+        const auto& target_name = lBc.node_set_name.empty() ? com_mod.msh[iM].fa[iFa].name : lBc.node_set_name;
+        read_temp_spat_values(com_mod, com_mod.msh[iM], all_fun::bc_nodes(com_mod, lBc), target_name, file_name, lBc);
       } else {
         throw std::runtime_error("[read_bc] No bct.vtp input file provided for General BC.");
       }
@@ -694,7 +738,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   // effective flux to Q*(interior_area/full_area) instead of Q.
   //
   ltmp = false; 
-  ltmp = utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Dir)) || is_coupled_dir;
+  ltmp = (lBc.node_set_name.empty() && utils::btest(lBc.bType, enum_int(BoundaryConditionType::bType_Dir))) || is_coupled_dir;
 
   if (bc_params->zero_out_perimeter.defined()) {
     ltmp = bc_params->zero_out_perimeter.value();
@@ -1790,12 +1834,46 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   for (int iBc = 0; iBc < num_bcs; iBc++) {
     auto& bc_params = eq_params->boundary_conditions[iBc];
     auto bc_name = bc_params->name.value();
-    int iM, iFa;
-
-    all_fun::find_face(com_mod.msh, bc_name, iM, iFa);
-
-    lEq.bc[iBc].iM = iM; 
-    lEq.bc[iBc].iFa = iFa;
+    auto& bc = lEq.bc[iBc];
+    if (bc_params->mesh_name.defined() != bc_params->node_set.defined()) {
+      svmp::raise<svmp::ParseException>("BC '" + bc_name + "' requires Mesh_name and Node_set together.");
+    }
+    if (bc_params->node_set.defined()) {
+      const auto mesh_name = bc_params->mesh_name.value();
+      all_fun::find_msh(com_mod.msh, mesh_name, bc.iM);
+      if (bc.iM < 0) {
+        svmp::raise<svmp::ParseException>("Unknown mesh '" + mesh_name + "' for node set.");
+      }
+      if (std::count_if(com_mod.msh.begin(), com_mod.msh.end(), [&](const auto& mesh) {
+            return mesh.name == mesh_name;
+          }) != 1) {
+        svmp::raise<svmp::ParseException>("Ambiguous mesh name '" + mesh_name + "' for node set.");
+      }
+      const auto& mesh = com_mod.msh[bc.iM];
+      const auto& sets = simulation->parameters.mesh_parameters[bc.iM]->node_sets;
+      bc.node_set_name = bc_params->node_set.value();
+      auto found = std::find_if(sets.begin(), sets.end(), [&](const auto& set) {
+        return set->name.value() == bc.node_set_name;
+      });
+      if (found == sets.end()) {
+        svmp::raise<svmp::ParseException>("Unknown node set '" + bc.node_set_name + "' in mesh '" + mesh_name + "'.");
+      }
+      const auto& ids = (*found)->node_ids;
+      bc.node_ids.resize(ids.size());
+      for (int a = 0; a < ids.size(); ++a) {
+        const int node = mesh.gN[ids[a] - 1];
+        bc.node_ids[a] = node;
+        const bool active = std::any_of(lEq.dmn.begin(), lEq.dmn.end(), [&](const auto& domain) {
+          return domain.phys != EquationType::phys_NA && (domain.Id == -1 ||
+              (com_mod.dmnId.size() != 0 && utils::btest(com_mod.dmnId(node), domain.Id)));
+        });
+        if (!active) {
+          svmp::raise<svmp::ParseException>("Node set '" + bc.node_set_name + "' contains a node without active equation degrees of freedom.");
+        }
+      }
+    } else {
+      all_fun::find_face(com_mod.msh, bc_name, bc.iM, bc.iFa);
+    }
 
     read_bc(simulation, eq_params, lEq, bc_params, lEq.bc[iBc]);
   }
@@ -1945,6 +2023,22 @@ void read_files(Simulation* simulation, const std::string& file_name)
   dmsg << "Read mesh and BCs data " << " ... ";
   #endif
   read_msh_ns::read_msh(simulation);
+
+  // Check every definition, including sets not referenced by a BC.
+  for (int iM = 0; iM < com_mod.nMsh; ++iM) {
+    const auto& mesh = com_mod.msh[iM];
+    for (const auto& set : simulation->parameters.mesh_parameters[iM]->node_sets) {
+      std::set<int> resolved;
+      for (const int id : set->node_ids) {
+        if (id > mesh.gnNo) {
+          svmp::raise<svmp::ParseException>("Node set '" + set->name.value() + "': node ID " + std::to_string(id) + " is outside mesh '" + mesh.name + "'.");
+        }
+        if (!resolved.insert(mesh.gN[id - 1]).second) {
+          svmp::raise<svmp::ParseException>("Node set '" + set->name.value() + "' contains duplicate merged node IDs.");
+        }
+      }
+    }
+  }
 
   // Reading immersed boundary mesh data.
   //
@@ -2508,103 +2602,67 @@ void read_spatial_values(const ComMod& com_mod, const mshType& msh, const faceTy
 //
 // There is no equivalent Fortran subroutine.
 //
-void read_temp_spat_values(const ComMod& com_mod, const mshType& msh, const faceType& lFa, 
-    const std::string& file_name, bcType& lBc)
+void read_temp_spat_values(const ComMod& com_mod, const mshType& msh, const Vector<int>& nodes,
+    const std::string& target_name, const std::string& file_name, bcType& lBc)
 {
-  std::ifstream file_stream;
-  file_stream.open(file_name);
-  if (!file_stream.is_open()) {
-    throw std::runtime_error("Failed to open the temporal and spatial values file '" + file_name + "'.");
-  }
+  const std::string context = "The temporal and spatial values file '" + file_name +
+      "' for target '" + target_name + "': ";
+  const auto require = [&](bool valid, const std::string& message) {
+    if (!valid) {
+      svmp::raise<svmp::ParseException>(context + message);
+    }
+  };
+  std::ifstream input(file_name);
+  require(input.is_open(), "cannot open file.");
+  const auto read_integer = [&]() {
+    std::string token;
+    require(static_cast<bool>(input >> token), "missing integer count or node ID.");
+    int value = 0;
+    auto [end, error] = std::from_chars(token.data(), token.data() + token.size(), value);
+    require(error == std::errc{} && end == token.data() + token.size(), "invalid integer '" + token + "'.");
+    return value;
+  };
+  const int ndof = read_integer(), num_ts = read_integer(), num_nodes = read_integer();
+  require(ndof >= 1 && ndof <= com_mod.nsd, "invalid component count.");
+  require(num_ts >= 2, "at least two time points are required.");
+  require(num_nodes == nodes.size() && num_nodes > 0, "node count does not match the target.");
 
-  int ndof, num_ts, num_nodes;
-  file_stream >> ndof >> num_ts >> num_nodes;
-  if ((ndof == 0) || (num_ts == 0) || (num_nodes == 0)) {
-    throw std::runtime_error("Error reading the first line of the temporal and spatial values file '" + file_name + "'.");
-  }
-
-  if (num_nodes != lFa.nNo) {
-    throw std::runtime_error("The number of nodes (" + std::to_string(num_nodes) + ") in the temporal and spatial values file '" + 
-        file_name + "' are not equal to the number of nodes (" + std::to_string(lFa.nNo) + ") in face '" + lFa.name + "'");
-  }
-
-  if ((ndof < 1) || (ndof > com_mod.nsd)) { 
-    throw std::runtime_error("The number of degrees of freedom (" + std::to_string(ndof) + ") in the temporal and spatial values file '" +
-        file_name + "' don't agree with the number of degrees of freedom (" + std::to_string(com_mod.nsd) + ") of the simulation.");
-  }
-
-  lBc.gm.t.resize(num_ts); 
-  lBc.gm.d.resize(ndof,num_nodes,num_ts); 
+  lBc.gm.t.resize(num_ts);
+  lBc.gm.d.resize(ndof, num_nodes, num_ts);
   lBc.gm.dof = ndof;
   lBc.gm.nTP = num_ts;
-
-  Vector<int> ptr(msh.gnNo);
-  ptr = -1;
-
-  // Preparing the pointer array
-  for (int a = 0; a < lFa.nNo; a++) {
-    int Ac = lFa.gN[a];
-    Ac = msh.lN[Ac];
-    if (Ac == -1) {
-      throw std::runtime_error("Incorrect global node number detected for BC for mesh '" + msh.name + 
-          "' and face '" + lFa.name + "' for node " + std::to_string(a) + ".");
-    }
-    ptr[Ac] = a;
+  for (int i = 0; i < num_ts; ++i) {
+    double time = 0.0;
+    require(static_cast<bool>(input >> time) && std::isfinite(time), "invalid time value.");
+    require(i == 0 ? utils::is_zero(time) : time > lBc.gm.t[i-1],
+        "times must start at zero and increase strictly.");
+    lBc.gm.t[i] = time;
   }
-
-  // Read time sequence.
-  //
-  for (int i = 0; i < num_ts; i++) {
-    double rtmp;
-    file_stream >> rtmp;
-    lBc.gm.t[i] = rtmp;
-
-    if (i == 0) {
-      if (!utils::is_zero(rtmp)) { 
-        throw std::runtime_error("The first time step (" + std::to_string(rtmp) + 
-            ") in the temporal and spatial values file '" + file_name + " is not zero.");
-      }
-
-    } else { 
-      rtmp = rtmp - lBc.gm.t[i-1];
-      if (utils::is_zero(rtmp) || (rtmp < 0.0)) { 
-        throw std::runtime_error("A non-increasing time step was found in the temporal and spatial values file '" + 
-            file_name + ".");
-      }
-    }
-  }
-
   lBc.gm.period = lBc.gm.t[num_ts-1];
 
-  // Read in data.
-  //
-  // Note: This file contains node IDs so be careful
-  // to subbtract 1 from them.
-  //
-  for (int b = 0; b < lFa.nNo; b++) {
-    int Ac;
-    file_stream >> Ac;
-    Ac -= 1;
-
-    if ((Ac >= msh.gnNo) || (Ac < 0)) {
-      throw std::runtime_error("The node number " + std::to_string(Ac) + 
-            " in the temporal and spatial values file '" + file_name + " is larger than the number of nodes in the mesh.");
-    }     
-
-    int a = ptr[Ac];
-    if (a == -1) {
-      throw std::runtime_error("The node number " + std::to_string(Ac) + 
-            " from the temporal and spatial values file '" + file_name + " does not belong to the face '" + lFa.name + "'."); 
-    }     
-
-    for (int i = 0; i < num_ts; i++) { 
-      double value;
-      for (int k = 0; k < ndof; k++) { 
-        file_stream >> value;
+  std::unordered_map<int, int> positions;
+  for (int a = 0; a < nodes.size(); ++a) {
+    positions.emplace(nodes[a], a);
+  }
+  std::vector<bool> seen(num_nodes, false);
+  for (int b = 0; b < num_nodes; ++b) {
+    const int id = read_integer();
+    require(id >= 1 && id <= msh.gnNo, "invalid mesh node ID.");
+    auto position = positions.find(msh.gN[id-1]);
+    require(position != positions.end(), "node ID " + std::to_string(id) + " is outside the target.");
+    const int a = position->second;
+    require(!seen[a], "duplicate node ID " + std::to_string(id) + ".");
+    seen[a] = true;
+    for (int i = 0; i < num_ts; ++i) {
+      for (int k = 0; k < ndof; ++k) {
+        double value = 0.0;
+        require(static_cast<bool>(input >> value) && std::isfinite(value), "missing or nonfinite value.");
         lBc.gm.d(k,a,i) = value;
       }
-    } 
-  } 
+    }
+  }
+  std::string extra;
+  require(!(input >> extra), "unexpected extra records.");
 }
 
 //-----------------------
