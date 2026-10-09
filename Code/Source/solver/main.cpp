@@ -25,7 +25,7 @@
 #include "remesh.h"
 #include "set_bc.h"
 #include "txt.h"
-#include "ustruct.h"
+#include "solid/ustruct.h"
 #include "vtk_xml.h"
 #include "ris.h"
 #include "uris.h"

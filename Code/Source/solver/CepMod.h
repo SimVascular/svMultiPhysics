@@ -12,7 +12,7 @@
 #define CEP_MOD_H
 
 #include "consts.h"
-#include "IonicModel.h"
+#include "electrophysiology/IonicModel.h"
 
 #include "Array.h"
 #include "Vector.h"
@@ -241,4 +241,3 @@ class CepMod
 };
 
 #endif
-

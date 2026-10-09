@@ -10,8 +10,8 @@
 #include "ActiveStress.h"
 #include "all_fun.h"
 #include "consts.h"
-#include "darcy.h"
-#include "IonicModel.h"
+#include "porous/darcy.h"
+#include "electrophysiology/IonicModel.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
 
@@ -33,7 +33,6 @@ namespace read_files_ns {
 #include "set_equation_props.h"
 #include "set_material_props.h"
 //#include "set_output_props.h"
-#include "set_viscosity_props.h"
 
 /// @brief Match two faces?
 ///
@@ -2877,86 +2876,6 @@ void read_rmsh(Simulation* simulation, EquationParameters* eq_param)
   dmsg << "rmsh.freq: " << rmsh.freq;
   dmsg << "rmsh.cpVar: " << rmsh.cpVar;
   #endif
-}
-
-//-----------------
-// read_fluid_visc_model
-//-----------------
-// Set the fluid viscosity material model parameters for the given domain.
-//
-void read_fluid_visc_model(Simulation* simulation, EquationParameters* eq_params, DomainParameters* domain_params, dmnType& lDmn)
-{ 
-  using namespace consts;
-
-  // Get viscosity model.
-  //
-  FluidViscosityModelType vmodel_type;
-  std::string vmodel_str; 
-
-  if (domain_params->fluid_viscosity.model.defined()) {
-    vmodel_str = domain_params->fluid_viscosity.model.value();
-    std::transform(vmodel_str.begin(), vmodel_str.end(), vmodel_str.begin(), ::tolower);
-
-    try {
-      vmodel_type = fluid_viscosity_model_name_to_type.at(vmodel_str);
-    } catch (const std::out_of_range& exception) {
-      throw std::runtime_error("Unknown fluid viscosity model '" + vmodel_str + "'.");
-    }
-  } else {
-    vmodel_type = FluidViscosityModelType::viscType_Const;
-  }
-
-  // Set the parameters for the given viscosity model.
-  //
-  auto& viscosity_params = domain_params->fluid_viscosity;
-
-  try {
-    set_fluid_viscosity_props[vmodel_type](simulation, viscosity_params, lDmn);
-   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("[read_fluid_visc_model] Viscosity model '" + vmodel_str + "' is not supported.");
-  }
-
-  if ((lDmn.phys == EquationType::phys_stokes) && (lDmn.fluid_visc.viscType != FluidViscosityModelType::viscType_Const)) {
-    throw std::runtime_error("Only constant viscosity is allowed for Stokes flow.");
-  }
-}
-
-//-----------------
-// read_solid_visc_model
-//-----------------
-// Set the solid viscosity material model parameters for the given domain.
-//
-void read_solid_visc_model(Simulation* simulation, EquationParameters* eq_params, DomainParameters* domain_params, dmnType& lDmn)
-{ 
-  using namespace consts;
-
-  // Get viscosity model.
-  //
-  SolidViscosityModelType vmodel_type;
-  std::string vmodel_str; 
-
-  if (domain_params->solid_viscosity.model.defined()) {
-    vmodel_str = domain_params->solid_viscosity.model.value();
-    std::transform(vmodel_str.begin(), vmodel_str.end(), vmodel_str.begin(), ::tolower);
-
-    try {
-      vmodel_type = solid_viscosity_model_name_to_type.at(vmodel_str);
-    } catch (const std::out_of_range& exception) {
-      throw std::runtime_error("Unknown solid viscosity model '" + vmodel_str + "'.");
-    }
-  } else {
-    vmodel_type = SolidViscosityModelType::viscType_Newtonian;
-  }
-
-  // Set the parameters for the given viscosity model.
-  //
-  auto& viscosity_params = domain_params->solid_viscosity;
-
-  try {
-    set_solid_viscosity_props[vmodel_type](simulation, viscosity_params, lDmn);
-   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("[read_solid_visc_model] Viscosity model '" + vmodel_str + "' is not supported.");
-  }
 }
 
 //--------------------

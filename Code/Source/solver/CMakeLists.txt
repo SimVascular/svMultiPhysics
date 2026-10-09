@@ -36,6 +36,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FE)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FE/Common)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/fluid/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/solid/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/thermal/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/porous/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/electrophysiology/include)
 
 # Find Trilinos package if requested
 if(SV_USE_TRILINOS)
@@ -207,27 +212,19 @@ set(CSRCS
   all_fun.h all_fun.cpp
   baf_ini.h baf_ini.cpp
   bf.h bf.cpp
-  cep.h cep.cpp
-  cep_ion.h cep_ion.cpp
   cmm.h cmm.cpp
   consts.h consts.cpp
   contact.h contact.cpp
-  darcy.h darcy.cpp
   distribute.h distribute.cpp
   eq_assem.h eq_assem.cpp
-  fluid.h fluid.cpp
   fsi.h fsi.cpp
   fs.h fs.cpp
-  heatf.h heatf.cpp
-  heats.h heats.cpp
   initialize.h initialize.cpp
   Integrator.h Integrator.cpp
-  l_elas.h l_elas.cpp
   lhsa.h lhsa.cpp
   ls.h ls.cpp
   main.cpp
   mat_fun.h mat_fun.cpp
-  mat_models.h mat_models.cpp
   mesh.h mesh.cpp
   nn.h nn.cpp
   output.h output.cpp
@@ -238,14 +235,10 @@ set(CSRCS
   remesh.h remesh.cpp
   remeshTet.cpp
   set_bc.h set_bc.cpp
-  shells.h shells.cpp
-  stokes.h stokes.cpp
-  sv_struct.h sv_struct.cpp
   svZeroD_interface.h svZeroD_interface.cpp
   svOneD_interface.h svOneD_interface.cpp
   txt.h txt.cpp
   utils.h utils.cpp
-  ustruct.h ustruct.cpp
   vtk_xml.h vtk_xml.cpp
   vtk_xml_parser.h vtk_xml_parser.cpp
   ris.h ris.cpp
@@ -258,11 +251,29 @@ set(CSRCS
   Timer.h
   ArtificialNeuralNetMaterial.h ArtificialNeuralNetMaterial.cpp
 
-  IonicModel.cpp
-  IonicModelAlievPanfilov.cpp
-  IonicModelBuenoOrovio.cpp
-  IonicModelFitzHughNagumo.cpp
-  IonicModelTTP.cpp
+  physics/fluid/include/fluid/fluid.h physics/fluid/src/fluid.cpp
+  physics/fluid/include/fluid/stokes.h physics/fluid/src/stokes.cpp
+  physics/fluid/src/fluid_viscosity.cpp physics/fluid/src/viscosity_props.h
+
+  physics/solid/include/solid/sv_struct.h physics/solid/src/sv_struct.cpp
+  physics/solid/include/solid/ustruct.h physics/solid/src/ustruct.cpp
+  physics/solid/include/solid/l_elas.h physics/solid/src/l_elas.cpp
+  physics/solid/include/solid/shells.h physics/solid/src/shells.cpp
+  physics/solid/include/solid/mat_models.h physics/solid/src/mat_models.cpp
+  physics/solid/src/solid_viscosity.cpp physics/solid/src/viscosity_props.h
+
+  physics/thermal/include/thermal/heats.h physics/thermal/src/heats.cpp
+  physics/thermal/include/thermal/heatf.h physics/thermal/src/heatf.cpp
+
+  physics/porous/include/porous/darcy.h physics/porous/src/darcy.cpp
+
+  physics/electrophysiology/include/electrophysiology/cep.h physics/electrophysiology/src/cep.cpp
+  physics/electrophysiology/include/electrophysiology/cep_ion.h physics/electrophysiology/src/cep_ion.cpp
+  physics/electrophysiology/include/electrophysiology/IonicModel.h physics/electrophysiology/src/IonicModel.cpp
+  physics/electrophysiology/src/IonicModelAlievPanfilov.h physics/electrophysiology/src/IonicModelAlievPanfilov.cpp
+  physics/electrophysiology/src/IonicModelBuenoOrovio.h physics/electrophysiology/src/IonicModelBuenoOrovio.cpp
+  physics/electrophysiology/src/IonicModelFitzHughNagumo.h physics/electrophysiology/src/IonicModelFitzHughNagumo.cpp
+  physics/electrophysiology/src/IonicModelTTP.h physics/electrophysiology/src/IonicModelTTP.cpp
 
   ActiveStress.cpp
   ActiveStressUniformSteady.cpp
@@ -377,6 +388,8 @@ if(ENABLE_UNIT_TEST)
 
   # include source files (same as what svMultiPhysics does except for main.cpp)
   add_executable(run_all_unit_tests ${CSRCS})
+  target_include_directories(run_all_unit_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/physics/electrophysiology/src)
   
   if(USE_TRILINOS)
     target_link_libraries(run_all_unit_tests ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})

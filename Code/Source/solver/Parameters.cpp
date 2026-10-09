@@ -49,7 +49,7 @@
 #include "Parameters.h"
 #include "LinearAlgebra.h"
 #include "consts.h"
-#include "ustruct.h"
+#include "solid/ustruct.h"
 
 #include <algorithm>
 #include <cctype>
