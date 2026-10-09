@@ -113,7 +113,7 @@ void ArtificialNeuralNetMaterial::evaluate(const double aInv[9], double &psi, do
 
 template<size_t nsd>
 void ArtificialNeuralNetMaterial::computeInvariantsAndDerivatives(
-const Matrix<nsd>& C, const Matrix<nsd>& fl, int nfd, double J2d, double J4d, const Matrix<nsd>& Ci,
+const Matrix<nsd>& C, const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fl, int nfd, double J2d, double J4d, const Matrix<nsd>& Ci,
 const Matrix<nsd>& Idm, const double Tfa, Matrix<nsd>& N1, double& psi, double (&Inv)[9],std::array<Matrix<nsd>,9>& dInv,
 std::array<Tensor<nsd>,9>& ddInv) const {
 
@@ -193,11 +193,11 @@ std::array<Tensor<nsd>,9>& ddInv) const {
 
 // Template instantiation
 template void ArtificialNeuralNetMaterial::computeInvariantsAndDerivatives<2>(
-const Matrix<2>& C, const Matrix<2>& fl, int nfd, double J2d, double J4d, const Matrix<2>& Ci,
+const Matrix<2>& C, const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>& fl, int nfd, double J2d, double J4d, const Matrix<2>& Ci,
 const Matrix<2>& Idm, const double Tfa, Matrix<2>& N1, double& psi, double (&Inv)[9], std::array<Matrix<2>,9>& dInv,
 std::array<Tensor<2>,9>& ddInv) const;
 
 template void ArtificialNeuralNetMaterial::computeInvariantsAndDerivatives<3>(
-const Matrix<3>& C, const Matrix<3>& fl, int nfd, double J2d, double J4d, const Matrix<3>& Ci,
+const Matrix<3>& C, const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>& fl, int nfd, double J2d, double J4d, const Matrix<3>& Ci,
 const Matrix<3>& Idm, const double Tfa, Matrix<3>& N1, double& psi, double (&Inv)[9], std::array<Matrix<3>,9>& dInv,
 std::array<Tensor<3>,9>& ddInv) const;

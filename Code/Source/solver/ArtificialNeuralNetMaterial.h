@@ -59,7 +59,7 @@ class ArtificialNeuralNetMaterial
     // Helper for compute_pk2cc
     template<size_t nsd>
     void computeInvariantsAndDerivatives(
-    const Matrix<nsd>& C, const Matrix<nsd>& fl, int nfd, double J2d, double J4d, const Matrix<nsd>& Ci,
+    const Matrix<nsd>& C, const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fl, int nfd, double J2d, double J4d, const Matrix<nsd>& Ci,
     const Matrix<nsd>& Idm, const double Tfa, Matrix<nsd>& N1, double& psi, double (&Inv)[9], std::array<Matrix<nsd>,9>& dInv,
     std::array<Tensor<nsd>,9>& ddInv) const; 
     
