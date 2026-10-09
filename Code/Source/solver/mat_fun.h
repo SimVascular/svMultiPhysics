@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include "Array.h"
+#include "consts.h"
 #include "Tensor4.h"
 #include "Vector.h"
 #include "FE/Common/FEException.h"
@@ -21,12 +22,102 @@
 /// \todo [TODO:DaveP] this should just be a namespace?
 //
 namespace mat_fun {
-    // Define templated type aliases for Eigen matrices and tensors for convenience
-    template<size_t nsd>
+    /// @brief A 2nd order tensor, nsd x nsd, fixed size and stack allocated.
+    /// Used for the deformation gradient, stresses and similar quantities that
+    /// have a known size at compile time.
+    template<int nsd>
     using Matrix = Eigen::Matrix<double, nsd, nsd>;
 
-    template<size_t nsd>
+    /// @brief A 4th order tensor, nsd x nsd x nsd x nsd, fixed size and stack
+    /// allocated. Used for the material elasticity tensor and other 4th order tensors
+    /// that have a known size at compile time.
+    template<int nsd>
     using Tensor = Eigen::TensorFixedSize<double, Eigen::Sizes<nsd, nsd, nsd, nsd>>;
+
+    /// @brief One nsd-vector per element node, so nsd x eNoN. Row count is fixed
+    /// at compile time while column count is the element's node count, known only
+    /// at run time, so it is bounded by consts::maxNoN to stay stack allocated.
+    /// Used for shape function gradients and other per-node vector quantities.
+    template <int nsd>
+    using NodalMatrix = Eigen::Matrix<double, nsd, Eigen::Dynamic, 0, nsd, consts::maxNoN>;
+
+    /// @brief One scalar per element node, so eNoN entries. Dynamic length bounded
+    /// by consts::maxNoN to stay stack allocated, as for NodalMatrix. Used for shape
+    /// function values and other per-node scalar quantities.
+    using NodalVector = Eigen::Matrix<double, Eigen::Dynamic, 1, 0, consts::maxNoN, 1>;
+
+    // The eigen_view overloads below wrap an Array or Vector in an Eigen::Map that
+    // shares its storage, so the container must outlive the view.
+
+    /// @brief Read-only Eigen view of an Array, sharing its storage.
+    ///
+    /// @tparam rows Row count, fixed at compile time; the columns are taken from the Array.
+    template <int rows>
+    Eigen::Map<const Eigen::Matrix<double, rows, Eigen::Dynamic>>
+    eigen_view(const Array<double>& A) {
+        if (A.nrows() != rows) {
+          svmp::raise<svmp::FE::InvalidArgumentException>(
+              "A view of " + std::to_string(rows) + " rows was requested for an array with " +
+              std::to_string(A.nrows()) + " rows.");
+        }
+        return {A.data(), rows, A.ncols()};
+    }
+
+    /// @brief Read-only Eigen view of a whole Array, sharing its storage.
+    inline Eigen::Map<const Eigen::MatrixXd>
+    eigen_view(const Array<double>& A) {
+        return {A.data(), A.nrows(), A.ncols()};
+    }
+
+    /// @brief Read-only Eigen view of a band of rows of an Array, sharing its storage.
+    ///
+    /// Used where an Array contains several fields and only a contiguous band is viewed.
+    /// For example,
+    ///
+    ///     A = [ A00, A01, A02 ;         eigen_view_rows<2>(A, 1) = [ A10, A11, A12 ;
+    ///           A10, A11, A12 ;                                      A20, A21, A22 ]
+    ///           A20, A21, A22 ;
+    ///           A30, A31, A32 ]
+    ///
+    /// @param A The Array to view.
+    /// @param first Index of the band's first row within the Array.
+    /// @tparam rows Number of rows, fixed at compile time, typically nsd.
+    template <int rows>
+    Eigen::Map<const Eigen::Matrix<double, rows, Eigen::Dynamic>, 0, Eigen::OuterStride<>>
+    eigen_view_rows(const Array<double>& A, const int first) {
+        if (first < 0 || first + rows > A.nrows()) {
+          svmp::raise<svmp::FE::InvalidArgumentException>(
+              "A view of " + std::to_string(rows) + " rows starting at row " + std::to_string(first) +
+              " was requested for an array with " + std::to_string(A.nrows()) + " rows.");
+        }
+        return {A.data() + first, rows, A.ncols(), Eigen::OuterStride<>(A.nrows())};
+    }
+
+    /// @brief Writable Eigen view of a whole Array, sharing its storage.
+    inline Eigen::Map<Eigen::MatrixXd>
+    eigen_view_mutable(Array<double>& A) {
+        return {A.data(), A.nrows(), A.ncols()};
+    }
+
+    /// @brief Read-only Eigen view of a whole Vector, sharing its storage.
+    inline Eigen::Map<const Eigen::VectorXd>
+    eigen_view(const Vector<double>& v) {
+        return {v.data(), v.size()};
+    }
+
+    /// @brief Read-only Eigen view of a Vector, sharing its storage.
+    ///
+    /// @tparam rows Entry count, fixed at compile time.
+    template <int rows>
+    Eigen::Map<const Eigen::Matrix<double, rows, 1>>
+    eigen_view(const Vector<double>& v) {
+        if (v.size() != rows) {
+          svmp::raise<svmp::FE::InvalidArgumentException>(
+              "A view of " + std::to_string(rows) + " entries was requested for a vector with " +
+              std::to_string(v.size()) + " entries.");
+        }
+        return Eigen::Map<const Eigen::Matrix<double, rows, 1>>(v.data());
+    }
 
     // Function to convert Array<double> to Eigen::Matrix
     template <typename MatrixType>
@@ -179,14 +270,32 @@ namespace mat_fun {
     Tensor4<double> ten_ddot_3424(const Tensor4<double>& A, const Tensor4<double>& B, const int nd);
 
     /**
-     * @brief Contracts two 4th order tensors A and B over two dimensions, 
-     * 
+     * @brief Contracts two 4th order tensors A and B over two dimensions.
+     *
+     * For example, if dimsA = {0, 1} and dimsB = {2, 3} this is
+     *  C_klmn = A_ijkl B_mnij   (sum over i, j)
+     *
+     * @tparam nsd Number of spatial dimensions; each tensor is nsd^4.
+     * @param[in] A,B Fourth order tensors to contract.
+     * @param[in] dimsA,dimsB Indices of the contracted dimensions of A and B.
+     * @return The contracted tensor.
      */
     template <int nsd>
     Tensor<nsd>
     double_dot_product(const Tensor<nsd>& A, const std::array<int, 2>& dimsA, 
                         const Tensor<nsd>& B, const std::array<int, 2>& dimsB) {
         
+        // Fast path for dimsA = dimsB = {2,3}: C_ijmn = A_ijkl * B_mnkl.
+        if (dimsA[0] == 2 && dimsA[1] == 3 && dimsB[0] == 2 && dimsB[1] == 3) {
+            constexpr int N = nsd * nsd;
+            Tensor<nsd> C;
+            Eigen::Map<const Eigen::Matrix<double, N, N>> a(A.data());
+            Eigen::Map<const Eigen::Matrix<double, N, N>> b(B.data());
+            Eigen::Map<Eigen::Matrix<double, N, N>> c(C.data());
+            c.noalias() = a * b.transpose();
+            return C;
+        }
+
         // Define the contraction dimensions
         Eigen::array<Eigen::IndexPair<int>, 2> contractionDims = {
             Eigen::IndexPair<int>(dimsA[0], dimsB[0]), // Contract A's dimsA[0] with B's dimsB[0]
@@ -195,9 +304,6 @@ namespace mat_fun {
 
         // Return the double dot product
         return A.contract(B, contractionDims);
-
-        // For some reason, in this case the Eigen::Tensor contract function is
-        // faster than a for loop implementation.
     }
 
     Tensor4<double> ten_dyad_prod(const Array<double>& A, const Array<double>& B, const int nd);
@@ -215,20 +321,13 @@ namespace mat_fun {
     dyadic_product(const Matrix<nsd>& A, const Matrix<nsd>& B) {
         // Initialize the result tensor
         Tensor<nsd> C;
+        constexpr int N = nsd * nsd;
 
-        // Compute the dyadic product: C_ijkl = A_ij * B_kl
-        for (int i = 0; i < nsd; ++i) {
-            for (int j = 0; j < nsd; ++j) {
-                for (int k = 0; k < nsd; ++k) {
-                    for (int l = 0; l < nsd; ++l) {
-                        C(i,j,k,l) = A(i,j) * B(k,l);
-                    }
-                }
-            }
-        }
-        // For some reason, in this case the Eigen::Tensor contract function is 
-        // slower than the for loop implementation
-
+        // Column-major storage flattens index pairs: c(ij,kl) = a(ij) * b(kl).
+        Eigen::Map<const Eigen::Matrix<double, N, 1>> a(A.data());
+        Eigen::Map<const Eigen::Matrix<double, N, 1>> b(B.data());
+        Eigen::Map<Eigen::Matrix<double, N, N>> c(C.data());
+        c.noalias() = a * b.transpose();
         return C;
     }
 
@@ -265,8 +364,9 @@ namespace mat_fun {
     
     /// @brief Create a 4th order tensor from symmetric outer product of two matrices: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)
     ///
-    /// Reproduces 'FUNCTION TEN_SYMMPROD(A, B, nd) RESULT(C)'.
-    //
+    /// @tparam nsd Number of spatial dimensions.
+    /// @param[in] A,B Second order tensors.
+    /// @return The resulting 4th order tensor.
     template <int nsd>
     Tensor<nsd>
     symmetric_dyadic_product(const Matrix<nsd>& A, const Matrix<nsd>& B) {
@@ -275,17 +375,14 @@ namespace mat_fun {
         Tensor<nsd> C;
 
         // Compute the symmetric product: C_ijkl = 0.5 * (A_ik * B_jl + A_il * B_jk)
-        for (int i = 0; i < nsd; ++i) {
-            for (int j = 0; j < nsd; ++j) {
-                for (int k = 0; k < nsd; ++k) {
-                    for (int l = 0; l < nsd; ++l) {
-                        C(i,j,k,l) = 0.5 * (A(i,k) * B(j,l) + A(i,l) * B(j,k));
-                    }
-                }
+        for (int l = 0; l < nsd; ++l) {
+            for (int k = 0; k < nsd; ++k) {
+                // blk views the (k,l) block of C, so blk(i,j) is C(i,j,k,l).
+                Eigen::Map<Eigen::Matrix<double, nsd, nsd>> blk(C.data() + nsd * nsd * (k + nsd * l));
+                blk.noalias() = 0.5 * (A.col(k) * B.col(l).transpose()
+                                     + A.col(l) * B.col(k).transpose());
             }
         }
-        // For some reason, in this case the for loop implementation is faster 
-        // than the Eigen::Tensor contract method
 
         // Return the symmetric product
         return C;

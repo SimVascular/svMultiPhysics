@@ -37,7 +37,7 @@ void ppbin2vtk(Simulation* simulation);
 void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<double>& res, 
     Vector<double>& resE, const SolutionStates& solutions, const int iEq, consts::OutputNameType outGrp);
 
-void tpost(Simulation* simulation, const mshType& lM, const int m, Array<double>& res, Vector<double>& resE,
+void tensor_post(Simulation* simulation, const mshType& lM, const int m, Array<double>& res, Vector<double>& resE,
     const SolutionStates& solutions, const int iEq, consts::OutputNameType outGrp);
 
 };

@@ -99,6 +99,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     fN  = 0.0;
     pS0l = 0.0;
 
+    if (lM.fN.size() != 0) {
+      for (int iFn = 0; iFn < nFn; iFn++) {
+        for (int i = 0; i < nsd; i++) {
+          fN(i,iFn) = lM.fN(i+nsd*iFn,e);
+        }
+      }
+    }
+
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
       ptr(a) = Ac;
@@ -111,14 +119,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         al(i,a) = Ag(i,Ac);
         yl(i,a) = Yg(i,Ac);
         dl(i,a) = Dg(i,Ac);
-      }
-
-      if (lM.fN.size() != 0) {
-        for (int iFn = 0; iFn < nFn; iFn++) {
-          for (int i = 0; i < nsd; i++) {
-            fN(i,iFn) = lM.fN(i+nsd*iFn,e);
-          }
-        }
       }
 
       if (pS0.size() != 0) {
@@ -184,7 +184,11 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         }
       }
 
-      if (g == 0 || !fs_1[0].lShpF) {
+      // Shape function gradients and the viscous response are constant
+      // within linear triangles and tetrahedra.
+      const bool recompute_visc = (g == 0 || !fs_1[0].lShpF);
+
+      if (recompute_visc) {
         auto Nx = fs_1[0].Nx.rslice(g);
         nn::gnn(fs_1[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -218,7 +222,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
                                  Nwx, al, yl, dl, bfl, fN, pS0l, pSl,
-                                 active_stress_evaluator, lR, lK);
+                                 active_stress_evaluator, lR, lK, recompute_visc);
           } break;
           case Equation_lElas:
             throw std::runtime_error("[construct_fsi] LELAS3D not implemented");
@@ -231,7 +235,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
                                   fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al,
                                   yl, dl, bfl, fN, active_stress_evaluator, lR,
-                                  lK, lKd);
+                                  lK, lKd, recompute_visc);
             break;
           }
 
@@ -254,7 +258,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
                                  Nwx, al, yl, dl, bfl, fN, pS0l, pSl,
-                                 active_stress_evaluator, lR, lK);
+                                 active_stress_evaluator, lR, lK, recompute_visc);
           } break;
 
           case Equation_ustruct:

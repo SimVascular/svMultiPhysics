@@ -1258,7 +1258,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
               //CALL SHLPOST(msh(iM), l, tmpV, tmpVe, lD, iEq,oGrp)
             } else { 
               if (!com_mod.cmmInit) {
-                post::tpost(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
+                post::tensor_post(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
               }
             }
 
@@ -1294,7 +1294,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
               post::shl_post(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
               //CALL SHLPOST(msh(iM), l, tmpV, tmpVe, lD, iEq,oGrp)
             } else {
-              post::tpost(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
+              post::tensor_post(simulation, msh, l, tmpV, tmpVe, solutions, iEq, oGrp);
             }
 
             for (int a = 0; a < msh.nNo; a++) {

@@ -27,13 +27,13 @@
 #include "mat_models.h"
 #include "nn.h"
 #include "utils.h"
-
+#include <array>
 #include <math.h>
 
 namespace ustruct {
 
-void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, 
-    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV, 
+void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N,
+    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV,
     Array<double>& lR, Array3<double>& lK, Array3<double>& lKd)
 {
   int cEq = com_mod.cEq;
@@ -45,10 +45,10 @@ void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const V
   int i = eq.s;
   int j = i + 1;
 
-  Vector<double> nFi(2);  
+  Vector<double> nFi(2);
   Array<double> NxFi(2,eNoN);
 
-  Array<double> F(2,2); 
+  Array<double> F(2,2);
   F(0,0) = 1.0;
   F(1,1) = 1.0;
 
@@ -90,8 +90,8 @@ void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const V
 }
 
 /// @brief Add follower pressure load contributions to the local residual and stiffness matrix.
-/// @param com_mod 
-/// @param eNoN 
+/// @param com_mod
+/// @param eNoN
 /// @param w  Gauss point weight times reference configuration area
 /// @param N  Shape function values at the Gauss point
 /// @param Nx Shape function derivatives at the Gauss point
@@ -101,8 +101,8 @@ void b_ustruct_2d(const ComMod& com_mod, const int eNoN, const double w, const V
 /// @param lR Local residual
 /// @param lK Local stiffness matrix
 /// @param lKd Local stiffness matrix (displacement)
-void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, 
-    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV, 
+void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N,
+    const Array<double>& Nx, const Array<double>& dl, const Vector<double>& hl, const Vector<double>& nV,
     Array<double>& lR, Array3<double>& lK, Array3<double>& lKd)
 {
   int cEq = com_mod.cEq;
@@ -115,10 +115,10 @@ void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const V
   int j = i + 1;
   int k = j + 1;
 
-  Vector<double> nFi(3);  
+  Vector<double> nFi(3);
   Array<double> NxFi(3,eNoN);
 
-  Array<double> F(3,3); 
+  Array<double> F(3,3);
   F(0,0) = 1.0;
   F(1,1) = 1.0;
   F(2,2) = 1.0;
@@ -186,17 +186,17 @@ void b_ustruct_3d(const ComMod& com_mod, const int eNoN, const double w, const V
 /// @brief Check is a constitutive model is valid for the ustruct equation.
 //
 bool constitutive_model_is_valid(consts::ConstitutiveModelType model)
-{ 
+{
   using namespace consts;
-    
-  static std::set<ConstitutiveModelType> unsupported_models { 
+
+  static std::set<ConstitutiveModelType> unsupported_models {
     ConstitutiveModelType::stIso_lin,
     ConstitutiveModelType::stIso_StVK,
     ConstitutiveModelType::stIso_mStVK
   };
 
   return unsupported_models.count(model) == 0;
-}   
+}
 
 /// @brief Reproduces Fortran CONSTRUCT_uSOLID.
 //
@@ -265,6 +265,14 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     // Create local copies
     fN  = 0.0;
 
+    if (lM.fN.size() != 0) {
+      for (int iFn = 0; iFn < nFn; iFn++) {
+        for (int i = 0; i < nsd; i++) {
+          fN(i,iFn) = lM.fN(i+nsd*iFn,e);
+        }
+      }
+    }
+
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
       ptr(a) = Ac;
@@ -279,15 +287,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         dl(i,a) = Dg(i,Ac);
         yl(i,a) = Yg(i,Ac);
       }
-
-      if (lM.fN.size() != 0) {
-        for (int iFn = 0; iFn < nFn; iFn++) {
-          for (int i = 0; i < nsd; i++) {
-            fN(i,iFn) = lM.fN(i+nsd*iFn,e);
-          }
-        }
-      }
-
     }
 
     if (eq.dmn[cDmn].active_stress != nullptr) {
@@ -325,7 +324,11 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     Array<double> ksix(nsd,nsd);
 
     for (int g = 0; g < fs[0].nG; g++) {
-      if (g == 0 || !fs[0].lShpF) {
+      // Shape function gradients and the viscous response are constant
+      // within linear triangles and tetrahedra. triangles).
+      const bool recompute_visc = (g == 0 || !fs[0].lShpF);
+
+      if (recompute_visc) {
         auto Nx = fs[0].Nx.slice(g);
         nn::gnn(fs[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -340,14 +343,14 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         auto N1 = fs[1].N.col(g);
         ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
                      Jac, N0, N1, Nwx, al, yl, dl, bfl, fN,
-                     active_stress_evaluator, lR, lK, lKd);
+                     active_stress_evaluator, lR, lK, lKd, recompute_visc);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
                      Jac, N0, N1, Nwx, al, yl, dl, bfl, fN,
-                     active_stress_evaluator, lR, lK, lKd);
+                     active_stress_evaluator, lR, lK, lKd, recompute_visc);
       }
 
     } // for g = 0 to fs[0].nG
@@ -379,13 +382,13 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx, 
+        ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
             Nqx, al, yl, dl, bfl, lR, lK, lKd);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx, 
+        ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
             Nqx, al, yl, dl, bfl, lR, lK, lKd);
       }
 
@@ -405,25 +408,25 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN)
   int left = rowPtr(rowN);
   int right = rowPtr(rowN+1);
   int ptr = (right + left) / 2;
- 
+
   while (colN != colPtr(ptr)) {
     if (colN > colPtr(ptr)) {
       left  = ptr;
-    } else { 
+    } else {
       right = ptr;
     }
     ptr = (right + left) / 2;
   }
 
   return ptr;
-} 
+}
 
 /// @brief Reproduces Fortran USTRUCT2D_C.
 //
 void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
-    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
+    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -446,19 +449,16 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
-  Vector<double> fb(2);
-  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
-  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
-  fb[2] = dmn.prop[PhysicalPropertyType::f_z];
+  const Eigen::Vector2d fb{dmn.prop[PhysicalPropertyType::f_x],
+                           dmn.prop[PhysicalPropertyType::f_y]};
 
   double am = eq.am;
   double af = eq.af * eq.gam * dt;
   double afm = af / am;
 
-  // {i,j} := velocity dofs; {k} := pressure dof
+  // Velocity dofs start at i; k is the pressure dof.
   int i = eq.s;
-  int j = i + 1;
-  int k = j + 1;
+  int k = i + 2;
 
   #ifdef debug_ustruct_2d_c
   dmsg << "am: " << am;
@@ -467,37 +467,26 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   dmsg << "i: " << i;
   #endif
 
-  // Inertia (velocity and acceleration), body force, fiber directions,
-  // and deformation tensor (F) at integration point
-  //
-  Vector<double> vd{-fb[0], -fb[1]};
-  Vector<double> v(2);
-  Array<double> vx(2,2), F(2,2);
-  F(0,0) = 1.0;
-  F(1,1) = 1.0;
+  // This element's nodal fields, as Eigen views over the caller's storage
+  const auto Nwxm = eigen_view<2>(Nwx);               // grad(N_a) per column
+  const auto Nwm  = eigen_view(Nw);                   // shape functions
+  const auto disp = eigen_view_rows<2>(dl, i);        // nodal displacements
+  const auto vel  = eigen_view_rows<2>(yl, i);        // nodal velocities
+  const auto acc  = eigen_view_rows<2>(al, i);        // nodal accelerations
+  const auto bfm  = eigen_view<2>(bfl);               // nodal body force
 
-  for (int a = 0; a < eNoNw; a++) {
-    v(0) = v(0) + Nw(a)*yl(i,a);
-    v(1) = v(1) + Nw(a)*yl(j,a);
+  // Velocity and inertia at this Gauss point
+  const Eigen::Vector2d v  = vel * Nwm;
+  const Eigen::Vector2d vd = (acc - bfm) * Nwm - fb;
 
-    vd(0) = vd(0) + Nw(a)*(al(i,a)-bfl(0,a));
-    vd(1) = vd(1) + Nw(a)*(al(j,a)-bfl(1,a));
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  const Matrix<2> vx = vel * Nwxm.transpose();
+  const Matrix<2> F  = Matrix<2>::Identity() + disp * Nwxm.transpose();
 
-    vx(0,0) = vx(0,0) + Nwx(0,a)*yl(i,a);
-    vx(0,1) = vx(0,1) + Nwx(1,a)*yl(i,a);
-    vx(1,0) = vx(1,0) + Nwx(0,a)*yl(j,a);
-    vx(1,1) = vx(1,1) + Nwx(1,a)*yl(j,a);
+  double Jac = F.determinant();
+  const Matrix<2> Fi = F.inverse();
 
-    F(0,0) = F(0,0) + Nwx(0,a)*dl(i,a);
-    F(0,1) = F(0,1) + Nwx(1,a)*dl(i,a);
-    F(1,0) = F(1,0) + Nwx(0,a)*dl(j,a);
-    F(1,1) = F(1,1) + Nwx(1,a)*dl(j,a);
-  }
-
-  double Jac = mat_fun::mat_det(F, 2);
-  auto Fi = mat_fun::mat_inv(F, 2);
-
-  // Pressure and its gradients 
+  // Pressure and its gradients
   //
   double p = 0.0;
   double pd = 0.0;
@@ -506,8 +495,8 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   for (int a = 0; a < eNoNq; a++) {
     p = p + Nq(a)*yl(k,a);
     pd = pd + Nq(a)*al(k,a);
-    px(0) = px(0) + Nqx(0,a)*yl(k,a);
-    px(1) = px(1) + Nqx(1,a)*yl(k,a);
+    px(0) += Nqx(0,a)*yl(k,a);
+    px(1) += Nqx(1,a)*yl(k,a);
   }
 
   // Compute rho and beta depending on the volumetric penalty model
@@ -530,30 +519,13 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     tauC = 0.0;
   }
 
-  Array<double> NwxFi(2,eNoNw);
+  const NodalMatrix<2> NwxFi = Fi.transpose() * Nwxm;
 
-  for (int a = 0; a < eNoNw; a++) {
-    NwxFi(0,a) = Nwx(0,a)*Fi(0,0) + Nwx(1,a)*Fi(1,0);
-    NwxFi(1,a) = Nwx(0,a)*Fi(0,1) + Nwx(1,a)*Fi(1,1);
-  }
+  const NodalMatrix<2> NqxFi = Fi.transpose() * eigen_view<2>(Nqx);
 
-  Array<double> NqxFi(2,eNoNw);
+  const Matrix<2> VxFi = vx * Fi;
 
-  for (int a = 0; a < eNoNq; a++) {
-    NqxFi(0,a) = Nqx(0,a)*Fi(0,0) + Nqx(1,a)*Fi(1,0);
-    NqxFi(1,a) = Nqx(0,a)*Fi(0,1) + Nqx(1,a)*Fi(1,1);
-  }
-
-  Array<double> VxFi(2,2);
-
-  VxFi(0,0) = vx(0,0)*Fi(0,0) + vx(0,1)*Fi(1,0);
-  VxFi(0,1) = vx(0,0)*Fi(0,1) + vx(0,1)*Fi(1,1);
-  VxFi(1,0) = vx(1,0)*Fi(0,0) + vx(1,1)*Fi(1,0);
-  VxFi(1,1) = vx(1,0)*Fi(0,1) + vx(1,1)*Fi(1,1);
-
-  Vector<double> PxFi(2);
-  PxFi(0) = px(0)*Fi(0,0) + px(1)*Fi(1,0);
-  PxFi(1) = px(0)*Fi(0,1) + px(1)*Fi(1,1);
+  const Eigen::Vector2d PxFi = Fi.transpose() * eigen_view<2>(px);
 
   double rC  = beta*pd + VxFi(0,0) + VxFi(1,1);
 
@@ -563,21 +535,15 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 
   // Local residual
   //
-  Vector<double> rMNqx(eNoNq);
+  const NodalVector rMNqx = NqxFi.transpose() * eigen_view<2>(rM);
 
   for (int a = 0; a < eNoNq; a++) {
-    rMNqx(a) = rM(0)*NqxFi(0,a) + rM(1)*NqxFi(1,a);
-    lR(2,a) = lR(2,a) + w*Jac*(Nq(a)*rC + tauM*rMNqx(a));
+    lR(2,a) += w*Jac*(Nq(a)*rC + tauM*rMNqx(a));
   }
 
-  Vector<double> rMNwx(eNoNw);
-  Array<double> VxNwx(3,eNoNw);
+  const NodalMatrix<2> VxNwx = VxFi.transpose() * NwxFi;
 
-  for (int a = 0; a < eNoNw; a++) {
-    rMNwx(a) = rM(0)*NwxFi(0,a) + rM(1)*NwxFi(1,a);
-    VxNwx(0,a) = VxFi(0,0)*NwxFi(0,a) + VxFi(1,0)*NwxFi(1,a);
-    VxNwx(1,a) = VxFi(0,1)*NwxFi(0,a) + VxFi(1,1)*NwxFi(1,a);
-  }
+  const NodalVector rMNwx = NwxFi.transpose() * eigen_view<2>(rM);
 
   // Tangent (stiffness) matrices
   //
@@ -585,39 +551,39 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 
   for (int b = 0; b < eNoNw; b++) {
     for (int a = 0; a < eNoNq; a++) {
-      NxNx = NqxFi(0,a)*NwxFi(0,b) + NqxFi(1,a)*NwxFi(1,b);
+      NxNx = NqxFi.col(a).dot(NwxFi.col(b));
 
-      // dC/dV_1 + af/am *dC/dU_1 
+      // dC/dV_1 + af/am *dC/dU_1
       //
       T0 = Nq(a)*(rC*NwxFi(0,b) - VxNwx(0,b));
       T1 = tauM*(rMNqx(a)*NwxFi(0,b) - rMNwx(b)*NqxFi(0,a));
       T2 = -tauM*NxNx*PxFi(0);
       Ku = w*af*Jac*(T0 + T1 + T2);
-      lKd(4,a,b) = lKd(4,a,b) + Ku;
+      lKd(4,a,b) += Ku;
 
       T1  = (am*tauM*rho)*NqxFi(0,a)*Nw(b) + af*Nq(a)*NwxFi(0,b);
-      lK(6,a,b) = lK(6,a,b) + w*Jac*T1 + afm*Ku;
+      lK(6,a,b) += w*Jac*T1 + afm*Ku;
 
-      // dC/dV_2 + af/am *dC/dU_2 
+      // dC/dV_2 + af/am *dC/dU_2
       T0 = Nq(a)*(rC*NwxFi(1,b) - VxNwx(1,b));
       T1 = tauM*(rMNqx(a)*NwxFi(1,b) - rMNwx(b)*NqxFi(1,a));
       T2 = -tauM*NxNx*PxFi(1);
       Ku = w*af*Jac*(T0 + T1 + T2);
-      lKd(5,a,b) = lKd(5,a,b) + Ku;
+      lKd(5,a,b) += Ku;
 
       T1 = (am*tauM*rho)*NqxFi(1,a)*Nw(b) + af*Nq(a)*NwxFi(1,b);
-      lK(8,a,b) = lK(8,a,b) + w*Jac*T1 + afm*Ku;
+      lK(8,a,b) += w*Jac*T1 + afm*Ku;
     }
   }
 
   for (int b = 0; b < eNoNq; b++) {
     for (int a = 0; a < eNoNq; a++) {
       // dC/dP
-      NxNx = NqxFi(0,a)*NqxFi(0,b) + NqxFi(1,a)*NqxFi(1,b);
+      NxNx = NqxFi.col(a).dot(NqxFi.col(b));
       T0 = (am*beta + af*dbeta*pd)*Nq(a)*Nq(b);
-      T1 = NqxFi(0,a)*vd(0) + NqxFi(1,a)*vd(1);
+      T1 = NqxFi.col(a).dot(vd);
       T2 = T0 + af*tauM*(NxNx + drho*T1*Nq(b));
-      lK(9,a,b) = lK(9,a,b) + w*Jac*T2;
+      lK(9,a,b) += w*Jac*T2;
     }
   }
 }
@@ -626,8 +592,8 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 //
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
-    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
+    const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -650,20 +616,17 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
-  Vector<double> fb(3);
-  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
-  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
-  fb[2] = dmn.prop[PhysicalPropertyType::f_z];
+  const Eigen::Vector3d fb{dmn.prop[PhysicalPropertyType::f_x],
+                           dmn.prop[PhysicalPropertyType::f_y],
+                           dmn.prop[PhysicalPropertyType::f_z]};
 
   double am = eq.am;
   double af = eq.af * eq.gam * dt;
   double afm = af / am;
 
-  // {i,j} := velocity dofs; {k} := pressure dof
+  // Velocity dofs start at i; l is the pressure dof.
   int i = eq.s;
-  int j = i + 1;
-  int k = j + 1;
-  int l = k + 1;
+  int l = i + 3;
 
   #ifdef debug_ustruct_3d_c
   dmsg << "am: " << am;
@@ -672,54 +635,26 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   dmsg << "i: " << i;
   #endif
 
-  // Inertia (velocity and acceleration), body force, fiber directions,
-  // and deformation tensor (F) at integration point
-  //
-  Vector<double> vd{-fb[0], -fb[1], -fb[2]};
-  Vector<double> v(3);
-  Array<double> vx(3,3), F(3,3);
-  F(0,0) = 1.0;
-  F(1,1) = 1.0;
-  F(2,2) = 1.0;
+  // This element's nodal fields, as Eigen views over the caller's storage
+  const auto Nwxm = eigen_view<3>(Nwx);               // grad(N_a) per column
+  const auto Nwm  = eigen_view(Nw);                   // shape functions
+  const auto disp = eigen_view_rows<3>(dl, i);        // nodal displacements
+  const auto vel  = eigen_view_rows<3>(yl, i);        // nodal velocities
+  const auto acc  = eigen_view_rows<3>(al, i);        // nodal accelerations
+  const auto bfm  = eigen_view<3>(bfl);               // nodal body force
 
-  for (int a = 0; a < eNoNw; a++) {
-    v(0) = v(0) + Nw(a)*yl(i,a);
-    v(1) = v(1) + Nw(a)*yl(j,a);
-    v(2) = v(2) + Nw(a)*yl(k,a);
+  // Velocity and inertia at this Gauss point
+  const Eigen::Vector3d v  = vel * Nwm;
+  const Eigen::Vector3d vd = (acc - bfm) * Nwm - fb;
 
-    vd(0) = vd(0) + Nw(a)*(al(i,a)-bfl(0,a));
-    vd(1) = vd(1) + Nw(a)*(al(j,a)-bfl(1,a));
-    vd(2) = vd(2) + Nw(a)*(al(k,a)-bfl(2,a));
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  const Matrix<3> vx = vel * Nwxm.transpose();
+  const Matrix<3> F  = Matrix<3>::Identity() + disp * Nwxm.transpose();
 
-    vx(0,0) = vx(0,0) + Nwx(0,a)*yl(i,a);
-    vx(0,1) = vx(0,1) + Nwx(1,a)*yl(i,a);
-    vx(0,2) = vx(0,2) + Nwx(2,a)*yl(i,a);
+  double Jac = F.determinant();
+  const Matrix<3> Fi = F.inverse();
 
-    vx(1,0) = vx(1,0) + Nwx(0,a)*yl(j,a);
-    vx(1,1) = vx(1,1) + Nwx(1,a)*yl(j,a);
-    vx(1,2) = vx(1,2) + Nwx(2,a)*yl(j,a);
-
-    vx(2,0) = vx(2,0) + Nwx(0,a)*yl(k,a);
-    vx(2,1) = vx(2,1) + Nwx(1,a)*yl(k,a);
-    vx(2,2) = vx(2,2) + Nwx(2,a)*yl(k,a);
-
-    F(0,0) = F(0,0) + Nwx(0,a)*dl(i,a);
-    F(0,1) = F(0,1) + Nwx(1,a)*dl(i,a);
-    F(0,2) = F(0,2) + Nwx(2,a)*dl(i,a);
-
-    F(1,0) = F(1,0) + Nwx(0,a)*dl(j,a);
-    F(1,1) = F(1,1) + Nwx(1,a)*dl(j,a);
-    F(1,2) = F(1,2) + Nwx(2,a)*dl(j,a);
-
-    F(2,0) = F(2,0) + Nwx(0,a)*dl(k,a);
-    F(2,1) = F(2,1) + Nwx(1,a)*dl(k,a);
-    F(2,2) = F(2,2) + Nwx(2,a)*dl(k,a);
-  }
-
-  double Jac = mat_fun::mat_det(F, 3);
-  auto Fi = mat_fun::mat_inv(F, 3);
-
-  // Pressure and its gradients 
+  // Pressure and its gradients
   //
   double p = 0.0;
   double pd = 0.0;
@@ -728,9 +663,9 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   for (int a = 0; a < eNoNq; a++) {
     p = p + Nq(a)*yl(l,a);
     pd = pd + Nq(a)*al(l,a);
-    px(0) = px(0) + Nqx(0,a)*yl(l,a);
-    px(1) = px(1) + Nqx(1,a)*yl(l,a);
-    px(2) = px(2) + Nqx(2,a)*yl(l,a);
+    px(0) += Nqx(0,a)*yl(l,a);
+    px(1) += Nqx(1,a)*yl(l,a);
+    px(2) += Nqx(2,a)*yl(l,a);
   }
 
   // Compute rho and beta depending on the volumetric penalty model
@@ -753,40 +688,13 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     tauC = 0.0;
   }
 
-  Array<double> NwxFi(3,eNoNw);
+  const NodalMatrix<3> NwxFi = Fi.transpose() * Nwxm;
 
-  for (int a = 0; a < eNoNw; a++) {
-    NwxFi(0,a) = Nwx(0,a)*Fi(0,0) + Nwx(1,a)*Fi(1,0) + Nwx(2,a)*Fi(2,0);
-    NwxFi(1,a) = Nwx(0,a)*Fi(0,1) + Nwx(1,a)*Fi(1,1) + Nwx(2,a)*Fi(2,1);
-    NwxFi(2,a) = Nwx(0,a)*Fi(0,2) + Nwx(1,a)*Fi(1,2) + Nwx(2,a)*Fi(2,2);
-  }
+  const NodalMatrix<3> NqxFi = Fi.transpose() * eigen_view<3>(Nqx);
 
-  Array<double> NqxFi(3,eNoNw);
+  const Matrix<3> VxFi = vx * Fi;
 
-  for (int a = 0; a < eNoNq; a++) {
-    NqxFi(0,a) = Nqx(0,a)*Fi(0,0) + Nqx(1,a)*Fi(1,0) + Nqx(2,a)*Fi(2,0);
-    NqxFi(1,a) = Nqx(0,a)*Fi(0,1) + Nqx(1,a)*Fi(1,1) + Nqx(2,a)*Fi(2,1);
-    NqxFi(2,a) = Nqx(0,a)*Fi(0,2) + Nqx(1,a)*Fi(1,2) + Nqx(2,a)*Fi(2,2);
-  }
-
-  Array<double> VxFi(3,3);
-
-  VxFi(0,0) = vx(0,0)*Fi(0,0) + vx(0,1)*Fi(1,0) + vx(0,2)*Fi(2,0);
-  VxFi(0,1) = vx(0,0)*Fi(0,1) + vx(0,1)*Fi(1,1) + vx(0,2)*Fi(2,1);
-  VxFi(0,2) = vx(0,0)*Fi(0,2) + vx(0,1)*Fi(1,2) + vx(0,2)*Fi(2,2);
-
-  VxFi(1,0) = vx(1,0)*Fi(0,0) + vx(1,1)*Fi(1,0) + vx(1,2)*Fi(2,0);
-  VxFi(1,1) = vx(1,0)*Fi(0,1) + vx(1,1)*Fi(1,1) + vx(1,2)*Fi(2,1);
-  VxFi(1,2) = vx(1,0)*Fi(0,2) + vx(1,1)*Fi(1,2) + vx(1,2)*Fi(2,2);
-
-  VxFi(2,0) = vx(2,0)*Fi(0,0) + vx(2,1)*Fi(1,0) + vx(2,2)*Fi(2,0);
-  VxFi(2,1) = vx(2,0)*Fi(0,1) + vx(2,1)*Fi(1,1) + vx(2,2)*Fi(2,1);
-  VxFi(2,2) = vx(2,0)*Fi(0,2) + vx(2,1)*Fi(1,2) + vx(2,2)*Fi(2,2);
-
-  Vector<double> PxFi(3);
-  PxFi(0) = px(0)*Fi(0,0) + px(1)*Fi(1,0) + px(2)*Fi(2,0);
-  PxFi(1) = px(0)*Fi(0,1) + px(1)*Fi(1,1) + px(2)*Fi(2,1);
-  PxFi(2) = px(0)*Fi(0,2) + px(1)*Fi(1,2) + px(2)*Fi(2,2);
+  const Eigen::Vector3d PxFi = Fi.transpose() * eigen_view<3>(px);
 
   double rC  = beta*pd + VxFi(0,0) + VxFi(1,1) + VxFi(2,2);
 
@@ -797,22 +705,15 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 
   // Local residual
   //
-  Vector<double> rMNqx(eNoNq);
+  const NodalVector rMNqx = NqxFi.transpose() * eigen_view<3>(rM);
 
   for (int a = 0; a < eNoNq; a++) {
-    rMNqx(a) = rM(0)*NqxFi(0,a) + rM(1)*NqxFi(1,a) + rM(2)*NqxFi(2,a);
-    lR(3,a) = lR(3,a) + w*Jac*(Nq(a)*rC + tauM*rMNqx(a));
+    lR(3,a) += w*Jac*(Nq(a)*rC + tauM*rMNqx(a));
   }
 
-  Vector<double> rMNwx(eNoNw);
-  Array<double> VxNwx(3,eNoNw);
+  const NodalMatrix<3> VxNwx = VxFi.transpose() * NwxFi;
 
-  for (int a = 0; a < eNoNw; a++) {
-    rMNwx(a) = rM(0)*NwxFi(0,a) + rM(1)*NwxFi(1,a) + rM(2)*NwxFi(2,a);
-    VxNwx(0,a) = VxFi(0,0)*NwxFi(0,a) + VxFi(1,0)*NwxFi(1,a) + VxFi(2,0)*NwxFi(2,a);
-    VxNwx(1,a) = VxFi(0,1)*NwxFi(0,a) + VxFi(1,1)*NwxFi(1,a) + VxFi(2,1)*NwxFi(2,a);
-    VxNwx(2,a) = VxFi(0,2)*NwxFi(0,a) + VxFi(1,2)*NwxFi(1,a) + VxFi(2,2)*NwxFi(2,a);
-  }
+  const NodalVector rMNwx = NwxFi.transpose() * eigen_view<3>(rM);
 
   // Tangent (stiffness) matrices
   //
@@ -820,50 +721,50 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 
   for (int b = 0; b < eNoNw; b++) {
     for (int a = 0; a < eNoNq; a++) {
-      NxNx = NqxFi(0,a)*NwxFi(0,b) + NqxFi(1,a)*NwxFi(1,b) + NqxFi(2,a)*NwxFi(2,b);
+      NxNx = NqxFi.col(a).dot(NwxFi.col(b));
 
-      // dC/dV_1 + af/am *dC/dU_1 
+      // dC/dV_1 + af/am *dC/dU_1
       //
       T0 = Nq(a)*(rC*NwxFi(0,b) - VxNwx(0,b));
       T1 = tauM*(rMNqx(a)*NwxFi(0,b) - rMNwx(b)*NqxFi(0,a));
       T2 = -tauM*NxNx*PxFi(0);
       Ku = w*af*Jac*(T0 + T1 + T2);
-      lKd(9,a,b) = lKd(9,a,b) + Ku;
+      lKd(9,a,b) += Ku;
 
       T1  = (am*tauM*rho)*NqxFi(0,a)*Nw(b) + af*Nq(a)*NwxFi(0,b);
-      lK(12,a,b) = lK(12,a,b) + w*Jac*T1 + afm*Ku;
+      lK(12,a,b) += w*Jac*T1 + afm*Ku;
 
-      // dC/dV_2 + af/am *dC/dU_2 
+      // dC/dV_2 + af/am *dC/dU_2
       T0 = Nq(a)*(rC*NwxFi(1,b) - VxNwx(1,b));
       T1 = tauM*(rMNqx(a)*NwxFi(1,b) - rMNwx(b)*NqxFi(1,a));
       T2 = -tauM*NxNx*PxFi(1);
       Ku = w*af*Jac*(T0 + T1 + T2);
-      lKd(10,a,b) = lKd(10,a,b) + Ku;
+      lKd(10,a,b) += Ku;
 
       T1 = (am*tauM*rho)*NqxFi(1,a)*Nw(b) + af*Nq(a)*NwxFi(1,b);
-      lK(13,a,b) = lK(13,a,b) + w*Jac*T1 + afm*Ku;
+      lK(13,a,b) += w*Jac*T1 + afm*Ku;
 
-      // dC/dV_3 + af/am *dC/dU_3 
+      // dC/dV_3 + af/am *dC/dU_3
       //
       T0 = Nq(a)*(rC*NwxFi(2,b) - VxNwx(2,b));
       T1 = tauM*(rMNqx(a)*NwxFi(2,b) - rMNwx(b)*NqxFi(2,a));
       T2 = -tauM*NxNx*PxFi(2);
       Ku = w*af*Jac*(T0 + T1 + T2);
-      lKd(11,a,b) = lKd(11,a,b) + Ku;
+      lKd(11,a,b) += Ku;
 
       T1 = (am*tauM*rho)*NqxFi(2,a)*Nw(b) + af*Nq(a)*NwxFi(2,b);
-      lK(14,a,b) = lK(14,a,b) + w*Jac*T1 + afm*Ku;
+      lK(14,a,b) += w*Jac*T1 + afm*Ku;
     }
   }
 
   for (int b = 0; b < eNoNq; b++) {
     for (int a = 0; a < eNoNq; a++) {
       // dC/dP
-      NxNx = NqxFi(0,a)*NqxFi(0,b) + NqxFi(1,a)*NqxFi(1,b) + NqxFi(2,a)*NqxFi(2,b);
+      NxNx = NqxFi.col(a).dot(NqxFi.col(b));
       T0 = (am*beta + af*dbeta*pd)*Nq(a)*Nq(b);
-      T1 = NqxFi(0,a)*vd(0) + NqxFi(1,a)*vd(1) + NqxFi(2,a)*vd(2);
+      T1 = NqxFi.col(a).dot(vd);
       T2 = T0 + af*tauM*(NxNx + drho*T1*Nq(b));
-      lK(15,a,b) = lK(15,a,b) + w*Jac*T2;
+      lK(15,a,b) += w*Jac*T2;
     }
   }
 }
@@ -878,7 +779,8 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Array<double> &dl, const Array<double> &bfl,
                   const Array<double> &fN,
                   const ActiveStress::Evaluator &active_stress_evaluator,
-                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd) {
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
+                  const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
 
@@ -899,18 +801,16 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
   // Define parameters
   //
-  Vector<double> fb(2);
-  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
-  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
+  const Eigen::Vector2d fb{dmn.prop[PhysicalPropertyType::f_x],
+                           dmn.prop[PhysicalPropertyType::f_y]};
 
   double am = eq.am;
   double af = eq.af * eq.gam * dt;
   double afm = af / am;
 
-  // {i,j} := velocity dofs; {k} := pressure dof
+  // Velocity dofs start at i; k is the pressure dof.
   int i = eq.s;
-  int j = i + 1;
-  int k = j + 1;
+  int k = i + 2;
 
   #ifdef debug_ustruct_2d_m
   dmsg << "am: " << am;
@@ -919,37 +819,25 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   dmsg << "i: " << i;
   #endif
 
-  // Inertia (velocity and acceleration), body force, fiber directions,
-  // and deformation tensor (F) at integration point
-  //
-  Vector<double> vd{-fb[0], -fb[1]};
-  Vector<double> v(2);
-  Array<double> vx(2,2), F(2,2);
+  // This element's nodal fields, as Eigen views over the caller's storage
+  const auto Nwxm = eigen_view<2>(Nwx);                   // grad(N_a) per column
+  const auto Nwm  = eigen_view(Nw);                       // shape functions
+  const auto disp = eigen_view_rows<2>(dl, i);            // nodal displacements
+  const auto vel  = eigen_view_rows<2>(yl, i);            // nodal velocities
+  const auto acc  = eigen_view_rows<2>(al, i);            // nodal accelerations
+  const auto bfm  = eigen_view<2>(bfl);                   // nodal body force
+  auto       lRv  = eigen_view_mutable(lR).topRows<2>();  // rows this kernel adds to
 
-  F(0,0) = 1.0;
-  F(1,1) = 1.0;
+  // Velocity and inertia at this Gauss point
+  const Eigen::Vector2d v  = vel * Nwm;
+  const Eigen::Vector2d vd = (acc - bfm) * Nwm - fb;
 
-  for (int a = 0; a < eNoNw; a++) {
-    v(0) = v(0) + Nw(a)*yl(i,a);
-    v(1) = v(1) + Nw(a)*yl(j,a);
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  const Matrix<2> vx = vel * Nwxm.transpose();
+  const Matrix<2> F  = Matrix<2>::Identity() + disp * Nwxm.transpose();
 
-    vd(0) = vd(0) + Nw(a)*(al(i,a)-bfl(0,a));
-    vd(1) = vd(1) + Nw(a)*(al(j,a)-bfl(1,a));
-
-    vx(0,0) = vx(0,0) + Nwx(0,a)*yl(i,a);
-    vx(0,1) = vx(0,1) + Nwx(1,a)*yl(i,a);
-    vx(1,0) = vx(1,0) + Nwx(0,a)*yl(j,a);
-    vx(1,1) = vx(1,1) + Nwx(1,a)*yl(j,a);
-
-    F(0,0) = F(0,0) + Nwx(0,a)*dl(i,a);
-    F(0,1) = F(0,1) + Nwx(1,a)*dl(i,a);
-    F(1,0) = F(1,0) + Nwx(0,a)*dl(j,a);
-    F(1,1) = F(1,1) + Nwx(1,a)*dl(j,a);
-
-  }
-
-  double Jac = mat_fun::mat_det(F, 2);
-  auto Fi = mat_fun::mat_inv(F, 2);
+  double Jac = F.determinant();
+  const Matrix<2> Fi = F.inverse();
 
   // Active tension, evaluated here from the fiber stretch of F.
   const auto Ta = active_stress_evaluator.evaluate(Nw, F, fN);
@@ -966,17 +854,18 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
   // Compute deviatoric 2nd Piola-Kirchhoff stress tensor (Siso) and
   // isochoric elasticity tensor in Voigt notation (Dm)
-  Array<double> Siso(2,2), Dm(3,3);
+  Matrix<2> Siso;
+  Matrix<3> Dm;
   double Ja = 0;
-  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, Ta,
-                            Siso, Dm, Ja);
+  mat_models::compute_pk2cc<2>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<2>(fN),
+                               Ta, Siso, Dm, Ja);
 
-  // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
-  Array<double> Svis(2,2);
-  Array3<double> Kvis_u(4, eNoNw, eNoNw);
-  Array3<double> Kvis_v(4, eNoNw, eNoNw);
-  
-  mat_models::compute_visc_stress_and_tangent(dmn, eNoNw, Nwx, vx, F, Svis, Kvis_u, Kvis_v);
+  // Viscous 2nd Piola-Kirchhoff stress and tangent contributions. Reuse the
+  // previous Gauss point's when shape function gradients are constant within an
+  // element (e.g. linear triangles and tetrahedra).
+  static mat_models::ViscousResponse<2> visc;
+
+  visc.update(dmn, eNoNw, Nwx, vx, F, recompute_visc);
 
   // Compute rho and beta depending on the volumetric penalty model
   //
@@ -998,143 +887,113 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   }
 
   // Total isochoric 2nd Piola-Kirchhoff stress (Elastic + Viscous)
-  Siso = Siso + Svis;
+  Siso += visc.S();
 
   // Deviatoric 1st Piola-Kirchhoff tensor (P)
   //
-  auto Pdev = mat_fun::mat_mul(F, Siso);
-
+  const Matrix<2> Pdev = F * Siso;
 
   // Shape function gradients in the current configuration
   //
-  Array<double> NxFi(2,eNoNw);
-
-  for (int a = 0; a < eNoNw; a++) {
-    NxFi(0,a) = Nwx(0,a)*Fi(0,0) + Nwx(1,a)*Fi(1,0);
-    NxFi(1,a) = Nwx(0,a)*Fi(0,1) + Nwx(1,a)*Fi(1,1);
-  }
+  const NodalMatrix<2> NxFi = Fi.transpose() * Nwxm;
 
    // Velocity gradient in current configuration
-  auto VxFi = mat_mul(vx, Fi);
-  double rC  = beta*pd + VxFi(1,1) + VxFi(2,2);
+  const Matrix<2> VxFi = vx * Fi;
+  double rC  = beta*pd + VxFi(0,0) + VxFi(1,1);
   double rCl = -p + tauC*rC;
 
   // Local residual
   //
-  for (int a = 0; a < eNoNw; a++) {
-    double T1 = Jac*rho*vd(0)*Nw(a);
-    double T2 = Pdev(0,0)*Nwx(0,a) + Pdev(0,1)*Nwx(1,a);
-    double T3 = Jac*rCl*NxFi(0,a);
-    lR(0,a) = lR(0,a) + w*(T1 + T2 + T3);
+  // Inertia, the divergence of Pdev, and the pressure/volumetric term
+  lRv += w * (Jac*rho * vd * Nwm.transpose() + Pdev * Nwxm + Jac*rCl * NxFi);
 
-    T1 = Jac*rho*vd(1)*Nw(a);
-    T2 = Pdev(1,0)*Nwx(0,a) + Pdev(1,1)*Nwx(1,a);
-    T3 = Jac*rCl*NxFi(1,a);
-    lR(1,a) = lR(1,a) + w*(T1 + T2 + T3);
-  }
-
-  // Auxilary quantities for computing stiffness tensors
+  // Strain-displacement matrix; Bm[a] maps node a to Voigt strain
   //
-  Array3<double> Bm(3,2,eNoNw);
+  std::array<Eigen::Matrix<double, 3, 2>, consts::maxNoN> Bm;
+
+  const Matrix<2> Ft = F.transpose();
 
   for (int a = 0; a < eNoNw; a++) {
-    Bm(0,0,a) = Nwx(0,a)*F(0,0);
-    Bm(0,1,a) = Nwx(0,a)*F(1,0);
+    const auto g = Nwxm.col(a);   // grad(N_a)
 
-    Bm(1,0,a) = Nwx(1,a)*F(0,1);
-    Bm(1,1,a) = Nwx(1,a)*F(1,1);
-
-    Bm(2,0,a) = Nwx(2,a)*F(0,2) + F(0,0)*Nwx(1,a);
-    Bm(2,1,a) = Nwx(2,a)*F(1,2) + F(1,0)*Nwx(1,a);
+    Bm[a].row(0) = g(0) * Ft.row(0);                     // dE_11
+    Bm[a].row(1) = g(1) * Ft.row(1);                     // dE_22
+    Bm[a].row(2) = g(0) * Ft.row(1) + g(1) * Ft.row(0);  // 2 dE_12
   }
 
-  Array<double> VxNx(2,eNoNw);
-
-  for (int a = 0; a < eNoNw; a++) {
-    VxNx(0,a) = VxFi(0,0)*NxFi(0,a) + VxFi(1,0)*NxFi(1,a);
-    VxNx(1,a) = VxFi(0,1)*NxFi(0,a) + VxFi(1,1)*NxFi(1,a);
-  }
+  const NodalMatrix<2> VxNx = VxFi.transpose() * NxFi;
 
   // Tangent (stiffness) matrices
   //
-  double NxSNx{0.0}, BtDB{0.0}, 
+  double NxSNx{0.0}, BtDB{0.0},
       T1{0.0}, T2{0.0}, T3{0.0},
       Tv{0.0}, Ku{0.0};
 
-  Array<double> DBm(3,2);
-
   for (int b = 0; b < eNoNw; b++) {
+
+    const Eigen::Matrix<double, 3, 2> DBm = Dm * Bm[b];
+
+    // Geometric stiffness: Siso*grad(N_b)
+    const Eigen::Vector2d SisoNx = Siso * Nwxm.col(b);
+
     for (int a = 0; a < eNoNw; a++) {
-      NxSNx = Nwx(0,a)*Siso(0,0)*Nwx(0,b)
-            + Nwx(0,a)*Siso(0,1)*Nwx(1,b)
-            + Nwx(1,a)*Siso(1,0)*Nwx(0,b)
-            + Nwx(1,a)*Siso(1,1)*Nwx(1,b);
-
-      DBm(0,0) = Dm(0,0)*Bm(0,0,b) + Dm(0,1)*Bm(1,0,b) + Dm(0,2)*Bm(2,0,b);
-      DBm(0,1) = Dm(0,0)*Bm(0,1,b) + Dm(0,1)*Bm(1,1,b) + Dm(0,2)*Bm(2,1,b);
-
-      DBm(1,0) = Dm(1,0)*Bm(0,0,b) + Dm(1,1)*Bm(1,0,b) + Dm(1,2)*Bm(2,0,b);
-      DBm(1,1) = Dm(1,0)*Bm(0,1,b) + Dm(1,1)*Bm(1,1,b) + Dm(1,2)*Bm(2,1,b);
-
-      DBm(2,0) = Dm(2,0)*Bm(0,0,b) + Dm(2,1)*Bm(1,0,b) + Dm(2,2)*Bm(2,0,b);
-      DBm(2,1) = Dm(2,0)*Bm(0,1,b) + Dm(2,1)*Bm(1,1,b) + Dm(2,2)*Bm(2,1,b);
-
+      NxSNx = Nwxm.col(a).dot(SisoNx);
 
       // dM1_dV1 + af/am *dM_1/dU_1
       //
-      BtDB = Bm(0,0,a)*DBm(0,0) + Bm(1,0,a)*DBm(1,0) + Bm(2,0,a)*DBm(2,0);
+      BtDB = Bm[a].col(0).dot(DBm.col(0));
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(0,b);
 
-      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + Kvis_u(0,a,b));
-      lKd(0,a,b) = lKd(0,a,b) + Ku;
+      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(0,a,b));
+      lKd(0,a,b) += Ku;
 
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(0,a)*NxFi(0,b);
-      Tv   = af*Kvis_v(0,a,b);
-      lK(0,a,b)  = lK(0,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(0,a,b);
+      lK(0,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_1/dV_2 + af/am *dM_1/dU_2
       //
-      BtDB = Bm(0,0,a)*DBm(0,1) + Bm(1,0,a)*DBm(1,1) + Bm(2,0,a)*DBm(2,1);
+      BtDB = Bm[a].col(0).dot(DBm.col(1));
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(1,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(1,b);
       T3   = Jac*rCl*(NxFi(0,a)*NxFi(1,b) - NxFi(1,a)*NxFi(0,b));
 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(1,a,b));
-      lKd(1,a,b) = lKd(1,a,b) + Ku;
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(1,a,b));
+      lKd(1,a,b) += Ku;
 
       T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(1,b);
-      Tv   = af*Kvis_v(1,a,b);
-      lK(1,a,b) = lK(1,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(1,a,b);
+      lK(1,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_2/dV_1 + af/am *dM_2/dU_1
       //
-      BtDB = Bm(0,1,a)*DBm(0,0) + Bm(1,1,a)*DBm(1,0) + Bm(2,1,a)*DBm(2,0);
+      BtDB = Bm[a].col(1).dot(DBm.col(0));
       T1   = Jac*rho*vd(1)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(0,b);
       T3   = Jac*rCl*(NxFi(1,a)*NxFi(0,b) - NxFi(0,a)*NxFi(1,b));
 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(2,a,b));
-      lKd(2,a,b) = lKd(2,a,b) + Ku;
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(2,a,b));
+      lKd(2,a,b) += Ku;
 
       T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(0,b);
-      Tv   = af*Kvis_v(2,a,b);
-      lK(3,a,b) = lK(3,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(2,a,b);
+      lK(3,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_2/dV_2 + af/am *dM_2/dU_2
       //
-      BtDB = Bm(0,1,a)*DBm(0,1) + Bm(1,1,a)*DBm(1,1) + Bm(2,1,a)*DBm(2,1);
+      BtDB = Bm[a].col(1).dot(DBm.col(1));
       T1   = Jac*rho*vd(1)*Nw(a)*NxFi(1,b);
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(1,b);
 
-      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + Kvis_u(3,a,b));
-      lKd(3,a,b) = lKd(3,a,b) + Ku;
+      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(3,a,b));
+      lKd(3,a,b) += Ku;
 
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(1,a)*NxFi(1,b);
-      Tv   = af*Kvis_v(3,a,b);
-      lK(4,a,b) = lK(4,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(3,a,b);
+      lK(4,a,b) += w*(T2 + Tv) + afm*Ku;
     }
   }
 
@@ -1145,11 +1004,11 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       // dM_0/dP
       T0 = am*tauC*beta + af*(tauC*dbeta*pd - 1.0);
       T1 = T0*NxFi(0,a)*Nq(b) + af*drho*vd(0)*Nw(a)*Nq(b);
-      lK(2,a,b) = lK(2,a,b) + w*Jac*T1;
+      lK(2,a,b) += w*Jac*T1;
 
       // dM_1/dP
       T1 = T0*NxFi(1,a)*Nq(b) + af*drho*vd(1)*Nw(a)*Nq(b);
-      lK(6,a,b) = lK(6,a,b) + w*Jac*T1;
+      lK(6,a,b) += w*Jac*T1;
     }
   }
 }
@@ -1164,7 +1023,8 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Array<double> &dl, const Array<double> &bfl,
                   const Array<double> &fN,
                   const ActiveStress::Evaluator &active_stress_evaluator,
-                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd) {
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
+                  const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
 
@@ -1185,20 +1045,17 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
   // Define parameters
 
-  Vector<double> fb(3);
-  fb[0] = dmn.prop[PhysicalPropertyType::f_x];
-  fb[1] = dmn.prop[PhysicalPropertyType::f_y];
-  fb[2] = dmn.prop[PhysicalPropertyType::f_z];
+  const Eigen::Vector3d fb{dmn.prop[PhysicalPropertyType::f_x],
+                           dmn.prop[PhysicalPropertyType::f_y],
+                           dmn.prop[PhysicalPropertyType::f_z]};
 
   double am = eq.am;
   double af = eq.af * eq.gam * dt;
   double afm = af / am;
 
-  // {i,j} := velocity dofs; {k} := pressure dof
+  // Velocity dofs start at i; l is the pressure dof.
   int i = eq.s;
-  int j = i + 1;
-  int k = j + 1;
-  int l = k + 1;
+  int l = i + 3;
 
   #ifdef debug_ustruct_3d_m
   dmsg << "fb: " << fb;
@@ -1208,54 +1065,25 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   dmsg << "i: " << i;
   #endif
 
-  // Inertia (velocity and acceleration), body force, fiber directions,
-  // and deformation tensor (F) at integration point
-  //
-  Vector<double> vd{-fb[0], -fb[1], -fb[2]};
-  Vector<double> v(3);
-  Array<double> vx(3,3), F(3,3);
+  // This element's nodal fields, as Eigen views over the caller's storage
+  const auto Nwxm = eigen_view<3>(Nwx);                   // grad(N_a) per column
+  const auto Nwm  = eigen_view(Nw);                       // shape functions
+  const auto disp = eigen_view_rows<3>(dl, i);            // nodal displacements
+  const auto vel  = eigen_view_rows<3>(yl, i);            // nodal velocities
+  const auto acc  = eigen_view_rows<3>(al, i);            // nodal accelerations
+  const auto bfm  = eigen_view<3>(bfl);                   // nodal body force
+  auto       lRv  = eigen_view_mutable(lR).topRows<3>();  // rows this kernel adds to
 
-  F(0,0) = 1.0;
-  F(1,1) = 1.0;
-  F(2,2) = 1.0;
+  // Velocity, and the inertia less body force, at this Gauss point
+  const Eigen::Vector3d v  = vel * Nwm;
+  const Eigen::Vector3d vd = (acc - bfm) * Nwm - fb;
 
-  for (int a = 0; a < eNoNw; a++) {
-    v(0) = v(0) + Nw(a)*yl(i,a);
-    v(1) = v(1) + Nw(a)*yl(j,a);
-    v(2) = v(2) + Nw(a)*yl(k,a);
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  const Matrix<3> vx = vel * Nwxm.transpose();
+  const Matrix<3> F  = Matrix<3>::Identity() + disp * Nwxm.transpose();
 
-    vd(0) = vd(0) + Nw(a)*(al(i,a)-bfl(0,a));
-    vd(1) = vd(1) + Nw(a)*(al(j,a)-bfl(1,a));
-    vd(2) = vd(2) + Nw(a)*(al(k,a)-bfl(2,a));
-
-    vx(0,0) = vx(0,0) + Nwx(0,a)*yl(i,a);
-    vx(0,1) = vx(0,1) + Nwx(1,a)*yl(i,a);
-    vx(0,2) = vx(0,2) + Nwx(2,a)*yl(i,a);
-
-    vx(1,0) = vx(1,0) + Nwx(0,a)*yl(j,a);
-    vx(1,1) = vx(1,1) + Nwx(1,a)*yl(j,a);
-    vx(1,2) = vx(1,2) + Nwx(2,a)*yl(j,a);
-
-    vx(2,0) = vx(2,0) + Nwx(0,a)*yl(k,a);
-    vx(2,1) = vx(2,1) + Nwx(1,a)*yl(k,a);
-    vx(2,2) = vx(2,2) + Nwx(2,a)*yl(k,a);
-
-    F(0,0) = F(0,0) + Nwx(0,a)*dl(i,a);
-    F(0,1) = F(0,1) + Nwx(1,a)*dl(i,a);
-    F(0,2) = F(0,2) + Nwx(2,a)*dl(i,a);
-
-    F(1,0) = F(1,0) + Nwx(0,a)*dl(j,a);
-    F(1,1) = F(1,1) + Nwx(1,a)*dl(j,a);
-    F(1,2) = F(1,2) + Nwx(2,a)*dl(j,a);
-
-    F(2,0) = F(2,0) + Nwx(0,a)*dl(k,a);
-    F(2,1) = F(2,1) + Nwx(1,a)*dl(k,a);
-    F(2,2) = F(2,2) + Nwx(2,a)*dl(k,a);
-
-  }
-
-  double Jac = mat_fun::mat_det(F, 3);
-  auto Fi = mat_fun::mat_inv(F, 3);
+  double Jac = F.determinant();
+  const Matrix<3> Fi = F.inverse();
 
   // Active tension, evaluated here from the fiber stretch of F.
   const auto Ta = active_stress_evaluator.evaluate(Nw, F, fN);
@@ -1273,18 +1101,17 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   // Compute deviatoric 2nd Piola-Kirchhoff stress tensor (Siso) and
   // isochoric elasticity tensor in Voigt notation (Dm)
   //
-  Array<double> Siso(3,3), Dm(6,6);
+  Matrix<3> Siso;
+  Matrix<6> Dm;
   double Ja = 0;
-  mat_models::compute_pk2cc(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fN, Ta,
-                            Siso, Dm, Ja);
+  mat_models::compute_pk2cc<3>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<3>(fN),
+                               Ta, Siso, Dm, Ja);
 
-  // Viscous 2nd Piola-Kirchhoff stress and tangent contributions
-  Array<double> Svis(3,3);
-  Array3<double> Kvis_u(9, eNoNw, eNoNw);
-  Array3<double> Kvis_v(9, eNoNw, eNoNw);
-  
-  mat_models::compute_visc_stress_and_tangent(dmn, eNoNw, Nwx, vx, F, Svis, Kvis_u, Kvis_v);
-
+  // Viscous 2nd Piola-Kirchhoff stress and tangent contributions. Reuse the
+  // previous Gauss point's when shape function gradients are constant within an
+  // element (e.g. linear triangles and tetrahedra).
+  static mat_models::ViscousResponse<3> visc;
+  visc.update(dmn, eNoNw, Nwx, vx, F, recompute_visc);
 
   // Compute rho and beta depending on the volumetric penalty model
   //
@@ -1300,266 +1127,201 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
   if (vmsFlag) {
     mat_models::compute_tau(com_mod, eq.dmn[cDmn], Jac, Je, tauM, tauC);
-  } else { 
+  } else {
     tauM = 0.0;
     tauC = 0.0;
   }
 
   // Total isochoric 2nd Piola-Kirchhoff stress (Elastic + Viscous)
-  Siso = Siso + Svis;
+  Siso += visc.S();
 
   // Deviatoric 1st Piola-Kirchhoff tensor (P)
   //
-  auto Pdev = mat_fun::mat_mul(F, Siso);
+  const Matrix<3> Pdev = F * Siso;
 
   // Shape function gradients in the current configuration
   //
-  Array<double> NxFi(3,eNoNw);
-
-  for (int a = 0; a < eNoNw; a++) {
-    NxFi(0,a) = Nwx(0,a)*Fi(0,0) + Nwx(1,a)*Fi(1,0) + Nwx(2,a)*Fi(2,0);
-    NxFi(1,a) = Nwx(0,a)*Fi(0,1) + Nwx(1,a)*Fi(1,1) + Nwx(2,a)*Fi(2,1);
-    NxFi(2,a) = Nwx(0,a)*Fi(0,2) + Nwx(1,a)*Fi(1,2) + Nwx(2,a)*Fi(2,2);
-  } 
+  const NodalMatrix<3> NxFi = Fi.transpose() * Nwxm;
 
   // Velocity gradient in current configuration
-  auto VxFi = mat_mul(vx, Fi);
+  const Matrix<3> VxFi = vx * Fi;
   double rC  = beta*pd + VxFi(0,0) + VxFi(1,1) + VxFi(2,2);
   double rCl = -p + tauC*rC;
 
-  // Local residual
+  // Inertia, the divergence of Pdev, and the pressure/volumetric term
+  lRv += w * (Jac*rho * vd * Nwm.transpose() + Pdev * Nwxm + Jac*rCl * NxFi);
+
+  // Strain-displacement matrix; Bm[a] maps node a to Voigt strain
   //
-  double T1, T2, T3;
+  std::array<Eigen::Matrix<double, 6, 3>, consts::maxNoN> Bm;
+
+  const Matrix<3> Ft = F.transpose();
 
   for (int a = 0; a < eNoNw; a++) {
-    T1 = Jac*rho*vd(0)*Nw(a);
-    T2 = Pdev(0,0)*Nwx(0,a) + Pdev(0,1)*Nwx(1,a) + Pdev(0,2)*Nwx(2,a);
-    T3 = Jac*rCl*NxFi(0,a);
-    lR(0,a) = lR(0,a) + w*(T1 + T2 + T3);
+    const auto g = Nwxm.col(a);   // grad(N_a)
 
-    T1 = Jac*rho*vd(1)*Nw(a);
-    T2 = Pdev(1,0)*Nwx(0,a) + Pdev(1,1)*Nwx(1,a) + Pdev(1,2)*Nwx(2,a);
-    T3 = Jac*rCl*NxFi(1,a);
-    lR(1,a) = lR(1,a) + w*(T1 + T2 + T3);
-
-    T1 = Jac*rho*vd(2)*Nw(a);
-    T2 = Pdev(2,0)*Nwx(0,a) + Pdev(2,1)*Nwx(1,a) + Pdev(2,2)*Nwx(2,a);
-    T3 = Jac*rCl*NxFi(2,a);
-    lR(2,a) = lR(2,a) + w*(T1 + T2 + T3);
+    Bm[a].row(0) = g(0) * Ft.row(0);                     // dE_11
+    Bm[a].row(1) = g(1) * Ft.row(1);                     // dE_22
+    Bm[a].row(2) = g(2) * Ft.row(2);                     // dE_33
+    Bm[a].row(3) = g(0) * Ft.row(1) + g(1) * Ft.row(0);  // 2 dE_12
+    Bm[a].row(4) = g(1) * Ft.row(2) + g(2) * Ft.row(1);  // 2 dE_23
+    Bm[a].row(5) = g(2) * Ft.row(0) + g(0) * Ft.row(2);  // 2 dE_31
   }
 
-  // Auxilary quantities for computing stiffness tensors
-  //
-  Array3<double> Bm(6,3,eNoNw);
-
-  for (int a = 0; a < eNoNw; a++) {
-    Bm(0,0,a) = Nwx(0,a)*F(0,0);
-    Bm(0,1,a) = Nwx(0,a)*F(1,0);
-    Bm(0,2,a) = Nwx(0,a)*F(2,0);
-
-    Bm(1,0,a) = Nwx(1,a)*F(0,1);
-    Bm(1,1,a) = Nwx(1,a)*F(1,1);
-    Bm(1,2,a) = Nwx(1,a)*F(2,1);
-
-    Bm(2,0,a) = Nwx(2,a)*F(0,2);
-    Bm(2,1,a) = Nwx(2,a)*F(1,2);
-    Bm(2,2,a) = Nwx(2,a)*F(2,2);
-
-    Bm(3,0,a) = (Nwx(0,a)*F(0,1) + F(0,0)*Nwx(1,a));
-    Bm(3,1,a) = (Nwx(0,a)*F(1,1) + F(1,0)*Nwx(1,a));
-    Bm(3,2,a) = (Nwx(0,a)*F(2,1) + F(2,0)*Nwx(1,a));
-
-    Bm(4,0,a) = (Nwx(1,a)*F(0,2) + F(0,1)*Nwx(2,a));
-    Bm(4,1,a) = (Nwx(1,a)*F(1,2) + F(1,1)*Nwx(2,a));
-    Bm(4,2,a) = (Nwx(1,a)*F(2,2) + F(2,1)*Nwx(2,a));
-
-    Bm(5,0,a) = (Nwx(2,a)*F(0,0) + F(0,2)*Nwx(0,a));
-    Bm(5,1,a) = (Nwx(2,a)*F(1,0) + F(1,2)*Nwx(0,a));
-    Bm(5,2,a) = (Nwx(2,a)*F(2,0) + F(2,2)*Nwx(0,a));
-  }
-
-  Array<double> VxNx(3,eNoNw);
-
-  for (int a = 0; a < eNoNw; a++) {
-    VxNx(0,a) = VxFi(0,0)*NxFi(0,a) + VxFi(1,0)*NxFi(1,a) + VxFi(2,0)*NxFi(2,a);
-    VxNx(1,a) = VxFi(0,1)*NxFi(0,a) + VxFi(1,1)*NxFi(1,a) + VxFi(2,1)*NxFi(2,a);
-    VxNx(2,a) = VxFi(0,2)*NxFi(0,a) + VxFi(1,2)*NxFi(1,a) + VxFi(2,2)*NxFi(2,a);
-  }
+  const NodalMatrix<3> VxNx = VxFi.transpose() * NxFi;
 
   // Tangent (stiffness) matrices
   //
   double r13 = 1.0 / 3.0;
   double r23 = 2.0 / 3.0;
-  double NxSNx{0.0}, BtDB{0.0};
+  double NxSNx{0.0}, BtDB{0.0}, T1{0.0}, T2{0.0}, T3{0.0};
   double Tv{0.0}, Ku{0.0};
-
-  Array<double> DBm(6,3);
 
   for (int b = 0; b < eNoNw; b++) {
 
-    mat_mul(Dm, Bm.rslice(b), DBm);
+    const Eigen::Matrix<double, 6, 3> DBm = Dm * Bm[b];
+
+    // Geometric stiffness: Siso*grad(N_b)
+    const Eigen::Vector3d SisoNx = Siso * Nwxm.col(b);
 
     for (int a = 0; a < eNoNw; a++) {
-      NxSNx = Nwx(0,a)*Siso(0,0)*Nwx(0,b)
-       + Nwx(0,a)*Siso(0,1)*Nwx(1,b) + Nwx(0,a)*Siso(0,2)*Nwx(2,b)
-       + Nwx(1,a)*Siso(1,0)*Nwx(0,b) + Nwx(1,a)*Siso(1,1)*Nwx(1,b)
-       + Nwx(1,a)*Siso(1,2)*Nwx(2,b) + Nwx(2,a)*Siso(2,0)*Nwx(0,b)
-       + Nwx(2,a)*Siso(2,1)*Nwx(1,b) + Nwx(2,a)*Siso(2,2)*Nwx(2,b);
+      NxSNx = Nwxm.col(a).dot(SisoNx);
 
       // dM1_dV1 + af/am *dM_1/dU_1
-      BtDB = Bm(0,0,a)*DBm(0,0) + Bm(1,0,a)*DBm(1,0) +
-             Bm(2,0,a)*DBm(2,0) + Bm(3,0,a)*DBm(3,0) +
-             Bm(4,0,a)*DBm(4,0) + Bm(5,0,a)*DBm(5,0);
+      BtDB = Bm[a].col(0).dot(DBm.col(0));
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(0,b);
- 
-      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + Kvis_u(0,a,b));
-      lKd(0,a,b) = lKd(0,a,b) + Ku;
- 
+
+      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(0,a,b));
+      lKd(0,a,b) += Ku;
+
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(0,a)*NxFi(0,b);
-      Tv   = af*Kvis_v(0,a,b);
-      lK(0,a,b)  = lK(0,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(0,a,b);
+      lK(0,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_1/dV_2 + af/am *dM_1/dU_2
-      BtDB = Bm(0,0,a)*DBm(0,1) + Bm(1,0,a)*DBm(1,1) +
-             Bm(2,0,a)*DBm(2,1) + Bm(3,0,a)*DBm(3,1) +
-             Bm(4,0,a)*DBm(4,1) + Bm(5,0,a)*DBm(5,1);
+      BtDB = Bm[a].col(0).dot(DBm.col(1));
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(1,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(1,b);
       T3   = Jac*rCl*(NxFi(0,a)*NxFi(1,b) - NxFi(1,a)*NxFi(0,b));
- 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(1,a,b));
-      lKd(1,a,b) = lKd(1,a,b) + Ku;
- 
+
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(1,a,b));
+      lKd(1,a,b) += Ku;
+
       T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(1,b);
-      Tv   = af*Kvis_v(1,a,b);
-      lK(1,a,b) = lK(1,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(1,a,b);
+      lK(1,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_1/dV_3 + af/am *dM_1/dU_3
       //
-      BtDB = Bm(0,0,a)*DBm(0,2) + Bm(1,0,a)*DBm(1,2) +
-             Bm(2,0,a)*DBm(2,2) + Bm(3,0,a)*DBm(3,2) +
-             Bm(4,0,a)*DBm(4,2) + Bm(5,0,a)*DBm(5,2);
+      BtDB = Bm[a].col(0).dot(DBm.col(2));
       T1   = Jac*rho*vd(0)*Nw(a)*NxFi(2,b);
       T2   = -tauC*Jac*NxFi(0,a)*VxNx(2,b);
       T3   = Jac*rCl*(NxFi(0,a)*NxFi(2,b) - NxFi(2,a)*NxFi(0,b));
- 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(2,a,b));
-      lKd(2,a,b) = lKd(2,a,b) + Ku;
- 
+
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(2,a,b));
+      lKd(2,a,b) += Ku;
+
       T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(2,b);
-      Tv   = af*Kvis_v(2,a,b);
-      lK(2,a,b) = lK(2,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(2,a,b);
+      lK(2,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_2/dV_1 + af/am *dM_2/dU_1
       //
-      BtDB = Bm(0,1,a)*DBm(0,0) + Bm(1,1,a)*DBm(1,0) +
-             Bm(2,1,a)*DBm(2,0) + Bm(3,1,a)*DBm(3,0) +
-             Bm(4,1,a)*DBm(4,0) + Bm(5,1,a)*DBm(5,0);
+      BtDB = Bm[a].col(1).dot(DBm.col(0));
 
       T1   = Jac*rho*vd(1)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(0,b);
       T3   = Jac*rCl*(NxFi(1,a)*NxFi(0,b) - NxFi(0,a)*NxFi(1,b));
- 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(3,a,b));
-      lKd(3,a,b) = lKd(3,a,b) + Ku;
- 
-      T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(0,b);
-      Tv   = af*Kvis_v(3,a,b);
 
-      lK(4,a,b) = lK(4,a,b) + w*(T2 + Tv) + afm*Ku;
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(3,a,b));
+      lKd(3,a,b) += Ku;
+
+      T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(0,b);
+      Tv   = af*visc.dv(3,a,b);
+
+      lK(4,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_2/dV_2 + af/am *dM_2/dU_2
       //
-      BtDB = Bm(0,1,a)*DBm(0,1) + Bm(1,1,a)*DBm(1,1) +
-             Bm(2,1,a)*DBm(2,1) + Bm(3,1,a)*DBm(3,1) +
-             Bm(4,1,a)*DBm(4,1) + Bm(5,1,a)*DBm(5,1);
+      BtDB = Bm[a].col(1).dot(DBm.col(1));
 
       T1   = Jac*rho*vd(1)*Nw(a)*NxFi(1,b);
 
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(1,b);
 
- 
-      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + Kvis_u(4,a,b));
-      lKd(4,a,b) = lKd(4,a,b) + Ku;
- 
+
+      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(4,a,b));
+      lKd(4,a,b) += Ku;
+
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(1,a)*NxFi(1,b);
-      Tv   = af*Kvis_v(4,a,b);
-      lK(5,a,b) = lK(5,a,b) + w*(T2 + Tv) + afm*Ku;
-
+      Tv   = af*visc.dv(4,a,b);
+      lK(5,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_2/dV_3 + af/am *dM_2/dU_3
       //
-      BtDB = Bm(0,1,a)*DBm(0,2) + Bm(1,1,a)*DBm(1,2) +
-             Bm(2,1,a)*DBm(2,2) + Bm(3,1,a)*DBm(3,2) +
-             Bm(4,1,a)*DBm(4,2) + Bm(5,1,a)*DBm(5,2);
+      BtDB = Bm[a].col(1).dot(DBm.col(2));
 
       T1   = Jac*rho*vd(1)*Nw(a)*NxFi(2,b);
       T2   = -tauC*Jac*NxFi(1,a)*VxNx(2,b);
       T3   = Jac*rCl*(NxFi(1,a)*NxFi(2,b) - NxFi(2,a)*NxFi(1,b));
 
- 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(5,a,b));
-      lKd(5,a,b) = lKd(5,a,b) + Ku;
- 
+
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(5,a,b));
+      lKd(5,a,b) += Ku;
+
       T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(2,b);
-      Tv   = af*Kvis_v(5,a,b);
-      lK(6,a,b) = lK(6,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(5,a,b);
+      lK(6,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_3/dV_1 + af/am *dM_3/dU_1
       //
-      BtDB = Bm(0,2,a)*DBm(0,0) + Bm(1,2,a)*DBm(1,0) +
-             Bm(2,2,a)*DBm(2,0) + Bm(3,2,a)*DBm(3,0) +
-             Bm(4,2,a)*DBm(4,0) + Bm(5,2,a)*DBm(5,0);
+      BtDB = Bm[a].col(2).dot(DBm.col(0));
 
       T1   = Jac*rho*vd(2)*Nw(a)*NxFi(0,b);
       T2   = -tauC*Jac*NxFi(2,a)*VxNx(0,b);
       T3   = Jac*rCl*(NxFi(2,a)*NxFi(0,b) - NxFi(0,a)*NxFi(2,b));
- 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(6,a,b));
-      lKd(6,a,b) = lKd(6,a,b) + Ku;
- 
+
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(6,a,b));
+      lKd(6,a,b) += Ku;
+
       T2   = af*Jac*tauC*rho*NxFi(2,a)*NxFi(0,b);
-      Tv   = af*Kvis_v(6,a,b);
-      lK(8,a,b) = lK(8,a,b) + w*(T2 + Tv) + afm*Ku;
+      Tv   = af*visc.dv(6,a,b);
+      lK(8,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_3/dV_2 + af/am *dM_3/dU_2
       //
-      BtDB = Bm(0,2,a)*DBm(0,1) + Bm(1,2,a)*DBm(1,1) +
-             Bm(2,2,a)*DBm(2,1) + Bm(3,2,a)*DBm(3,1) +
-             Bm(4,2,a)*DBm(4,1) + Bm(5,2,a)*DBm(5,1);
+      BtDB = Bm[a].col(2).dot(DBm.col(1));
 
       T1   = Jac*rho*vd(2)*Nw(a)*NxFi(1,b);
       T2   = -tauC*Jac*NxFi(2,a)*VxNx(1,b);
       T3   = Jac*rCl*(NxFi(2,a)*NxFi(1,b) - NxFi(1,a)*NxFi(2,b));
- 
-      Ku   = w*af*(T1 + T2 + T3 + BtDB + Kvis_u(7,a,b));
-      lKd(7,a,b) = lKd(7,a,b) + Ku;
- 
-      T2   = af*Jac*tauC*rho*NxFi(2,a)*NxFi(1,b);
-      Tv   = af*Kvis_v(7,a,b);
 
-      lK(9,a,b) = lK(9,a,b) + w*(T2 + Tv) + afm*Ku;
+      Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(7,a,b));
+      lKd(7,a,b) += Ku;
+
+      T2   = af*Jac*tauC*rho*NxFi(2,a)*NxFi(1,b);
+      Tv   = af*visc.dv(7,a,b);
+
+      lK(9,a,b) += w*(T2 + Tv) + afm*Ku;
 
       // dM_3/dV_3 + af/am *dM_3/dU_3
       //
-      BtDB = Bm(0,2,a)*DBm(0,2) + Bm(1,2,a)*DBm(1,2) +
-             Bm(2,2,a)*DBm(2,2) + Bm(3,2,a)*DBm(3,2) +
-             Bm(4,2,a)*DBm(4,2) + Bm(5,2,a)*DBm(5,2);
+      BtDB = Bm[a].col(2).dot(DBm.col(2));
 
       T1   = Jac*rho*vd(2)*Nw(a)*NxFi(2,b);
       T2   = -tauC*Jac*NxFi(2,a)*VxNx(2,b);
- 
-      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + Kvis_u(8,a,b));
-      lKd(8,a,b) = lKd(8,a,b) + Ku;
- 
+
+      Ku   = w*af*(T1 + T2 + BtDB + NxSNx + visc.du(8,a,b));
+      lKd(8,a,b) += Ku;
+
       T1   = am*Jac*rho*Nw(a)*Nw(b);
       T2   = T1 + af*Jac*tauC*rho*NxFi(2,a)*NxFi(2,b);
-      Tv   = af*Kvis_v(8,a,b);
+      Tv   = af*visc.dv(8,a,b);
 
-      lK(10,a,b) = lK(10,a,b) + w*(T2 + Tv) + afm*Ku;
+      lK(10,a,b) += w*(T2 + Tv) + afm*Ku;
     }
   }
 
@@ -1570,22 +1332,24 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       // dM_0/dP
       T0 = am*tauC*beta + af*(tauC*dbeta*pd - 1.0);
       T1 = T0*NxFi(0,a)*Nq(b) + af*drho*vd(0)*Nw(a)*Nq(b);
-      lK(3,a,b) = lK(3,a,b) + w*Jac*T1;
+      lK(3,a,b) += w*Jac*T1;
 
       // dM_1/dP
       T1 = T0*NxFi(1,a)*Nq(b) + af*drho*vd(1)*Nw(a)*Nq(b);
-      lK(7,a,b) = lK(7,a,b) + w*Jac*T1;
+      lK(7,a,b) += w*Jac*T1;
 
       // dM_2/dP
       T1 = T0*NxFi(2,a)*Nq(b) + af*drho*vd(2)*Nw(a)*Nq(b);
-      lK(11,a,b) = lK(11,a,b) + w*Jac*T1;
+      lK(11,a,b) += w*Jac*T1;
     }
   }
 }
 
 /// @brief Replicates 'SUBROUTINE USTRUCT_DOASSEM(d, eqN, lKd, lK, lR)'
 //
-void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd, 
+/// @brief Replicates 'SUBROUTINE USTRUCT_DOASSEM(d, eqN, lKd, lK, lR)'
+//
+void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd,
     const Array3<double>& lK, const Array<double>& lR)
 {
   const int nsd = com_mod.nsd;
@@ -1667,7 +1431,7 @@ void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, cons
       }
     }
 
-  } else { 
+  } else {
 
     // Stiffness matrix (A) is assembled using mapped rows and columns
     // Gradient matrix (B) is assembled using mapped row but unmapped
@@ -1737,8 +1501,8 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   const auto& Yg = solutions.intermediate.get_velocity();
   using namespace consts;
 
-  #define n_debug_ustruct_r 
-  #ifdef debug_ustruct_r 
+  #define n_debug_ustruct_r
+  #ifdef debug_ustruct_r
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   #endif
@@ -1747,7 +1511,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   const auto& eq = com_mod.eq[cEq];
 
   if (eq.phys != EquationType::phys_ustruct && eq.phys != EquationType::phys_FSI) {
-    return; 
+    return;
   }
 
   const int tnNo = com_mod.tnNo;
@@ -1764,7 +1528,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   int s = eq.s;
   double amg = (eq.gam - eq.am) / (eq.gam - 1.0);
   double ami = 1.0 / eq.am;
-  #ifdef debug_ustruct_r 
+  #ifdef debug_ustruct_r
   dmsg << "nsd: " << nsd;
   dmsg << "s: " << s;
   dmsg << "eq.itr: " << eq.itr;
@@ -1775,7 +1539,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
   if (eq.itr > 1) {
      Rd = 0.0;
   } else {
-    for (int a = 0; a < tnNo; a++) { 
+    for (int a = 0; a < tnNo; a++) {
       if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_ustruct)) {
         continue;
       }
@@ -1787,7 +1551,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
     if (nsd == 3) {
       Array<double> KU(4,tnNo);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_ustruct)) {
           continue;
         }
@@ -1804,7 +1568,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
 
       all_fun::commu(com_mod, KU);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         R(0,a) = R(0,a) - ami*KU(0,a);
         R(1,a) = R(1,a) - ami*KU(1,a);
         R(2,a) = R(2,a) - ami*KU(2,a);
@@ -1813,7 +1577,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
     } else {
       Array<double> KU(3,tnNo);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         if (!all_fun::is_domain(com_mod, eq, a, EquationType::phys_ustruct)) {
           continue;
         }
@@ -1828,14 +1592,14 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
 
       all_fun::commu(com_mod, KU);
 
-      for (int a = 0; a < tnNo; a++) { 
+      for (int a = 0; a < tnNo; a++) {
         R(0,a) = R(0,a) - ami*KU(0,a);
         R(1,a) = R(1,a) - ami*KU(1,a);
         R(2,a) = R(2,a) - ami*KU(2,a);
       }
     }
-  } 
-} 
+  }
+}
 
 };
 

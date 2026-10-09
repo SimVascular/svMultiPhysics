@@ -1456,9 +1456,6 @@ void fluid_3d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   double start_time = utils::cput();
   #endif
   
-  // Maximum size of arrays sized by (3,eNoNw) -> (3,MAX_SIZE).
-  const int MAX_SIZE = 27;
-
   using namespace consts;
 
   int cEq = com_mod.cEq;
@@ -1583,7 +1580,7 @@ void fluid_3d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   es[1][2] = es[2][1];
   es[2][0] = es[0][2];
 
-  double esNx[3][MAX_SIZE];
+  double esNx[3][maxNoN];
 
   for (int a = 0; a < eNoNw; a++) {
     esNx[0][a] = es[0][0]*Nwx(0,a) + es[1][0]*Nwx(1,a) + es[2][0]*Nwx(2,a);
@@ -1647,7 +1644,7 @@ void fluid_3d_c(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   // Stabilization parameters
   //
   double up[3] = {};
-  double updu[3][3][MAX_SIZE] = {};
+  double updu[3][3][maxNoN] = {};
   double tauM = 0.0;
 
   if (vmsFlag) {
@@ -1781,9 +1778,6 @@ void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   dmsg << "w: " << w;
   double start_time = utils::cput();
   #endif
-
-  // Maximum size of arrays sized by (3,eNoNw) -> (3,MAX_SIZE).
-  const int MAX_SIZE = 27;
 
   using namespace consts;
 
@@ -1927,7 +1921,7 @@ void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   es[1][2] = es[2][1];
   es[2][0] = es[0][2];
 
-  double esNx[3][MAX_SIZE];
+  double esNx[3][maxNoN];
 
   for (int a = 0; a < eNoNw; a++) {
     esNx[0][a] = es[0][0]*Nwx(0,a) + es[1][0]*Nwx(1,a) + es[2][0]*Nwx(2,a);
@@ -2100,10 +2094,10 @@ void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
 
   //  Local residual
   //
-  double updu[3][3][MAX_SIZE] = {};
-  double uNx[MAX_SIZE] = {};
-  double upNx[MAX_SIZE] = {}; 
-  double uaNx[MAX_SIZE] = {}; 
+  double updu[3][3][maxNoN] = {};
+  double uNx[maxNoN] = {};
+  double upNx[maxNoN] = {}; 
+  double uaNx[maxNoN] = {}; 
 
   for (int a = 0; a < eNoNw; a++) {
     lR(0,a) = lR(0,a) + wr*Nw(a)*rV[0] + w*(Nwx(0,a)*rM[0][0] + Nwx(1,a)*rM[1][0] + Nwx(2,a)*rM[2][0]);

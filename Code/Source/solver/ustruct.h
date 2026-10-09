@@ -36,9 +36,9 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN,
-                  const ActiveStress::Evaluator &active_stress_evaluator,
-                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd);
+                  const Array<double> &fN, const ActiveStress::Evaluator &active_stress_evaluator,
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
+                  const bool recompute_visc);
 
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
@@ -52,9 +52,9 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN,
-                  const ActiveStress::Evaluator &active_stress_evaluator,
-                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd);
+                  const Array<double> &fN, const ActiveStress::Evaluator &active_stress_evaluator,
+                  Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
+                  const bool recompute_visc);
 
 void ustruct_do_assem(ComMod& com_mod, const int d, const Vector<int>& eqN, const Array3<double>& lKd, 
     const Array3<double>& lK, const Array<double>& lR);

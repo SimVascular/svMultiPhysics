@@ -16,11 +16,13 @@
 
 namespace consts {
 
-const int maxNSD = 3;
+constexpr int maxNSD = 3;
 
-const int maxNProp = 20;
+constexpr int maxNoN = 27; // Max node count in nn_elem_props.h
 
-const int maxOutput = 5;
+constexpr int maxNProp = 20;
+
+constexpr int maxOutput = 5;
 
 /// Use inf numeric values to represent a value that is not set.
 const int int_inf = std::numeric_limits<int>::infinity();
