@@ -81,21 +81,33 @@ void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_t
 
     if (Ac > 1) {
       lhs.face[faIn].sharedFlag = true;
-      Array<double> v(dof,lhs.nNo);
+      // Neumann values are assembled contributions; Dirichlet values are
+      // component masks. Average the latter over ranks containing each node
+      // so a free component remains one, regardless of partition multiplicity.
+      const bool dirichlet = BC_type == BcType::BC_TYPE_Dir;
+      const int rows = dof + (dirichlet ? 1 : 0);
+      Array<double> v(rows,lhs.nNo);
 
       for (int a = 0; a < nNo; a++) {
         int Ac = lhs.face[faIn].glob(a);
         for (int i = 0; i < dof; i++) {
           v(i,Ac) = lhs.face[faIn].val(i,a);
         }
+        if (dirichlet) {
+          v(dof,Ac) = 1.0;
+        }
       }
 
-      fsils_commuv(lhs, dof, v); 
+      fsils_commuv(lhs, rows, v);
 
       for (int a = 0; a < nNo; a++) {
         int Ac = lhs.face[faIn].glob(a);
         for (int i = 0; i < dof; i++) {
-          lhs.face[faIn].val(i,a) = v(i,Ac);
+          if (dirichlet) {
+            lhs.face[faIn].val(i,a) = v(i,Ac) / v(dof,Ac);
+          } else {
+            lhs.face[faIn].val(i,a) = v(i,Ac);
+          }
         }
       }
     }

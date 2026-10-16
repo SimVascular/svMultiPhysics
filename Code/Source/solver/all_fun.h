@@ -17,6 +17,8 @@
 
 namespace all_fun {
 
+  const Vector<int>& bc_nodes(const ComMod& com_mod, const bcType& bc);
+
   double aspect_ratio(ComMod& com_mod, const int nDim, const int eNoN, const Array<double>& x);
 
   void commu(const ComMod& com_mod, Vector<double>& u);
