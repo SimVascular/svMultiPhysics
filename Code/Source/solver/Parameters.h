@@ -1876,6 +1876,7 @@ class GeneralSimulationParameters : public ParameterLists
 
     Parameter<double> spectral_radius_of_infinite_time_step;
     Parameter<double> time_step_size;
+    Parameter<double> initial_homogeneous_pressure;
 
     Parameter<std::string> include_xml;
     Parameter<int> increment_in_saving_restart_files;

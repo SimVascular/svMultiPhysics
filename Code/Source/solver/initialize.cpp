@@ -978,20 +978,35 @@ void zero_init(Simulation* simulation, SolutionStates& solutions)
   }
 
   if (com_mod.Pinit.size() != 0) {
-     #ifdef debug_zero_init
-     dmsg << "Initialize Yo to provided P solution";
-     #endif
-     for (const auto& eq : com_mod.eq) {
-       const bool is_darcy = eq.phys == consts::EquationType::phys_darcy;
-       // Skip equations without a pressure unknown.
-       if (!is_darcy && eq.dof != nsd + 1) {
-         continue;
-       }
-       const int pressure_dof = eq.s + (is_darcy ? 0 : nsd);
-       for (int a = 0; a < com_mod.tnNo; ++a) {
-         Yo(pressure_dof,a) = com_mod.Pinit(a);
-       }
-     }
+    #ifdef debug_zero_init
+    dmsg << "Initialize Yo to provided P solution";
+    #endif
+    for (const auto& eq : com_mod.eq) {
+      const bool is_darcy = eq.phys == consts::EquationType::phys_darcy;
+      // Skip equations without a pressure unknown.
+      if (!is_darcy && eq.dof != nsd + 1) {
+        continue;
+      }
+      const int pressure_dof = eq.s + (is_darcy ? 0 : nsd);
+      for (int a = 0; a < com_mod.tnNo; ++a) {
+        Yo(pressure_dof,a) = com_mod.Pinit(a);
+      }
+    }
+  } else if (com_mod.have_initial_homogeneous_pressure) {
+    #ifdef debug_zero_init
+    dmsg << "Initialize Yo to homogeneous initial pressure from solver.xml";
+    #endif
+    for (const auto& eq : com_mod.eq) {
+      const bool is_darcy = eq.phys == consts::EquationType::phys_darcy;
+      // Skip equations without a pressure unknown.
+      if (!is_darcy && eq.dof != nsd + 1) {
+        continue;
+      }
+      const int pressure_dof = eq.s + (is_darcy ? 0 : nsd);
+      for (int a = 0; a < com_mod.tnNo; ++a) {
+        Yo(pressure_dof,a) = com_mod.initial_homogeneous_pressure;
+      }
+    }
   }
 
   if (com_mod.Dinit.size() != 0) {

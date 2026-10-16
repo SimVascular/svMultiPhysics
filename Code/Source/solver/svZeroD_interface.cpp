@@ -10,6 +10,7 @@
 #include "svZeroD_interface/LPNSolverInterface.h"
 #include "ComMod.h"
 #include "utils.h"
+#include "Core/Exception.h"
 
 #include <map>
 #include <algorithm>
@@ -232,7 +233,9 @@ void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], doubl
 // init_svZeroD
 //--------------
 //
-void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod, const std::string& appPath)
+void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod,
+                  const SolutionStates& solutions,
+                  const std::string& appPath)
 {
   using namespace consts;
   
@@ -365,6 +368,32 @@ void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod, const std::string& appPa
       int flag = 0;
       write_svZeroD_solution(&svZeroDTime, lpn_state_y, &flag);
     }
+  }
+
+  for (int s = 0; s < numCoupledSrfs; ++s) {
+    bcType* bc = nullptr;
+    svmp::check<svmp::InternalErrorException>(
+        nth_coupled_bc(com_mod, s, &bc),
+        "Could not resolve Coupled BC for initialization history.");
+
+    // Compute initial face flow on all ranks, including collective cap integration.
+    bc->coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
+
+    // Read pressure from the 3D state only if the coupled equation has
+    // a pressure unknown. Otherwise, retain the initialized 0D pressure.
+    const auto& coupled_eq = com_mod.eq[com_mod.cplBC.equationIndex];
+    if (coupled_eq.dof == com_mod.nsd + 1) {
+      bc->coupled_bc.compute_pressures(com_mod, cm_mod, solutions);
+    }
+
+    const double Q_init = bc->coupled_bc.get_Qo();
+    const double P_init = bc->coupled_bc.get_Po();
+
+    bc->coupled_bc.set_Q_prev_sent(Q_init);
+    bc->coupled_bc.set_Q_input_prev(Q_init, Q_init);
+    bc->coupled_bc.set_P_prev_sent(P_init, P_init);
+    bc->coupled_bc.set_P_neu_prev(P_init);
+    bc->coupled_bc.set_pressure(P_init);
   }
 
   // Broadcast initial values to follower processes
