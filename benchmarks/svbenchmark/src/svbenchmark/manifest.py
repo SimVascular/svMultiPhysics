@@ -7,7 +7,7 @@ from typing import Callable, Self
 
 from .evaluation import EvaluationCriterion
 from .execution import NamedCommand, SolverRun
-from ._expect import expect_str, expect_table
+from ._expect import expect_int, expect_str, expect_table
 
 @dataclass(frozen=True, kw_only=True)
 class Benchmark:
@@ -15,6 +15,8 @@ class Benchmark:
     Holds the manifest of declarative Benchmark definition
     """
     name : str
+    schema : int
+    reference_source : str
     base_dir : Path
     preprocess : tuple[NamedCommand,...]  = tuple()
     solver : tuple[SolverRun,...]
@@ -49,6 +51,8 @@ class Benchmark:
         # parse the toml_dictionary
         base_dir = base_dir.resolve()
         name = expect_str(data['name'], "name")
+        schema = expect_int(data['schema'], "schema")
+        reference_source = expect_str(data['reference_source'], "reference_source")
 
         ###  go through each phase, unpacking as needed
         # preprocess
@@ -80,7 +84,9 @@ class Benchmark:
         else:
             cleanup_data = tuple()
 
-        return cls(name = name, 
+        return cls(schema = schema,
+                   name = name, 
+                   reference_source = reference_source,
                    base_dir = base_dir, 
                    preprocess = preprocess_data,
                    solver = solver_data, 
