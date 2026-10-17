@@ -20,4 +20,5 @@ target_include_directories(svmp_fe_basis PUBLIC
 target_link_libraries(svmp_fe_basis PUBLIC
   svmp_fe_common
   svmp_fe_math
+  svmp_fe_quadrature
 )

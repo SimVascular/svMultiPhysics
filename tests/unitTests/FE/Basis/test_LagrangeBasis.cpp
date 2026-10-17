@@ -869,7 +869,8 @@ TEST(LagrangeBasis, TensorAxisNodesAreGaussLobattoLegendre) {
     EXPECT_EQ(line_coord_pm_one(1, 2), double(0));
     EXPECT_EQ(line_coord_pm_one(2, 2), double(1));
 
-    for (int order = 1; order <= 12; ++order) {
+    // Higher orders also guard against inheriting Quadrature's 128-point cap.
+    for (const int order : {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 128, 129, 256}) {
         EXPECT_EQ(line_coord_pm_one(0, order), double(-1)) << "order=" << order;
         EXPECT_EQ(line_coord_pm_one(order, order), double(1)) << "order=" << order;
 
@@ -889,4 +890,5 @@ TEST(LagrangeBasis, TensorAxisNodesAreGaussLobattoLegendre) {
     // the endpoints. At order 4 the first interior node is -sqrt(3/7) ~ -0.6547,
     // past the equispaced position -0.5.
     EXPECT_LT(line_coord_pm_one(1, 4), double(-0.5) - double(1e-6));
+    EXPECT_EQ(line_coord_pm_one(0, 0), double(0));
 }

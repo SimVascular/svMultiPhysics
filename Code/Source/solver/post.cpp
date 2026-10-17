@@ -8,14 +8,14 @@
 #include "FE/Common/FEException.h"
 #include "FE/Math/DenseLinearAlgebra.h"
 #include "all_fun.h"
-#include "darcy.h"
-#include "fluid.h"
+#include "porous/darcy.h"
+#include "fluid/fluid.h"
 #include "fs.h"
 #include "initialize.h"
 #include "mat_fun.h"
-#include "mat_models.h"
+#include "solid/mat_models.h"
 #include "nn.h"
-#include "shells.h"
+#include "solid/shells.h"
 #include "utils.h"
 #include "vtk_xml.h"
 #include <algorithm>
@@ -1926,7 +1926,10 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
     double Jac = 0.0;
 
     for (int g = 0; g < fs.nG; g++) {
-      if (g == 0  ||  !fs.lShpF) {
+      // Shape gradients and viscous response can be reused for linear triangular and tetrahedral elements.
+      const bool recompute_visc = (g == 0 || !fs.lShpF);
+
+      if (recompute_visc) {
         auto Nx_g = fs.Nx.slice(g);
         nn::gnn(fs.eNoN, nsd, insd, Nx_g, xl, Nx, Jac, ksix);
       }
@@ -1937,6 +1940,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
 
       const auto Nxm  = eigen_view<nsd>(Nx);          // grad(N_a)
       const auto disp = eigen_view_rows<nsd>(dl, i);  // nodal displacements
+      const auto vel  = eigen_view_rows<nsd>(yl, i);  // nodal velocities
 
       // Deformation gradient: F = I + Grad(u)
       const Matrix<nsd> F = Im + disp * Nxm.transpose();
@@ -2018,6 +2022,33 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
         case OutputNameType::outGrp_mises:
           Matrix<nsd> sigma = Matrix<nsd>::Zero();
           Matrix<nsd> S = Matrix<nsd>::Zero();
+          Matrix<nsd> S0 = Matrix<nsd>::Zero();
+          const Matrix<nsd> vx = vel * Nxm.transpose();
+
+          // Interpolate prestress to the current Gauss point.
+          if (com_mod.pS0.size() != 0) {
+            for (int a = 0; a < fs.eNoN; a++) {
+              int Ac = lM.IEN(a,e);
+              if (nsd == 3) {
+                S0(0,0) = S0(0,0) + N(a)*com_mod.pS0(0,Ac);
+                S0(1,1) = S0(1,1) + N(a)*com_mod.pS0(1,Ac);
+                S0(2,2) = S0(2,2) + N(a)*com_mod.pS0(2,Ac);
+                S0(0,1) = S0(0,1) + N(a)*com_mod.pS0(3,Ac);
+                S0(1,2) = S0(1,2) + N(a)*com_mod.pS0(4,Ac);
+                S0(2,0) = S0(2,0) + N(a)*com_mod.pS0(5,Ac);
+              } else {
+                S0(0,0) = S0(0,0) + N(a)*com_mod.pS0(0,Ac);
+                S0(1,1) = S0(1,1) + N(a)*com_mod.pS0(1,Ac);
+                S0(0,1) = S0(0,1) + N(a)*com_mod.pS0(2,Ac);
+              }
+            }
+
+            S0(1,0) = S0(0,1);
+            if (nsd == 3) {
+              S0(2,1) = S0(1,2);
+              S0(0,2) = S0(2,0);
+            }
+          }
 
           // Evaluate the active stress at the current Gauss point, the same
           // way the residual assembly does, so that the active contribution to
@@ -2058,7 +2089,10 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
             mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
                 eigen_view<nsd>(fN), Ta, S, Dm, Ja);
 
-            // TODO: Add viscous stress
+            static mat_models::ViscousResponse<nsd> visc;
+            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            // Match assembly: elastic + viscous + prestress.
+            S = S + visc.S() + S0;
 
             // Add pressure
             const Matrix<nsd> C = F.transpose() * F;
@@ -2076,7 +2110,10 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
             mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
                 eigen_view<nsd>(fN), Ta, S, Dm, Ja);
 
-            // TODO: Add viscous stress
+            static mat_models::ViscousResponse<nsd> visc;
+            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            // Match assembly: elastic + viscous + prestress.
+            S = S + visc.S() + S0;
 
             sigma = F * S * F.transpose();
 

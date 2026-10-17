@@ -52,6 +52,16 @@ def test_block_compression(n_proc):
     test_folder = "block_compression"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_block_compression_prestress(n_proc):
+    test_folder = "block_compression_prestress"
+    prestress_fields = [
+        "Cauchy_stress",
+        "Displacement",
+        "Stress",
+        "VonMises_stress",
+    ]
+    run_with_reference(base_folder, test_folder, prestress_fields, n_proc)
+
 def test_block_compression_CANN(n_proc):
     test_folder = "block_compression_CANN"
     run_with_reference(base_folder, test_folder, fields, n_proc)

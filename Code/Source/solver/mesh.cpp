@@ -5,12 +5,12 @@
 
 #include "all_fun.h"
 #include "consts.h"
-#include "fluid.h"
+#include "fluid/fluid.h"
 #include "fs.h"
-#include "l_elas.h"
+#include "solid/l_elas.h"
 #include "lhsa.h"
 #include "nn.h"
-#include "sv_struct.h"
+#include "solid/sv_struct.h"
 #include "utils.h"
 
 #include <array>

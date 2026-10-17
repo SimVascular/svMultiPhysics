@@ -3,6 +3,8 @@ name: Tests
 on:
   pull_request:
   push:
+    branches:
+      - main
 
 jobs:
   # Check if there are any changes to important code files

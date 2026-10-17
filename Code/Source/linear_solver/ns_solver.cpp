@@ -13,13 +13,13 @@
 #include "add_bc_mul.h"
 #include "cgrad.h"
 #include "dot.h"
-#include "ge.h"
 #include "gmres.h"
 #include "norm.h"
 #include "spar_mul.h"
 
 #include "Array3.h"
 
+#include <Eigen/QR>
 #include <math.h>
 
 namespace ns_solver {
@@ -201,8 +201,21 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
 
   ls.CG.itr   = 0;
   ls.GM.itr   = 0;
+  ls.RI.itr   = 0;
+  ls.RI.dB    = 0.0;
   ls.RI.success = false;
   eps = std::max(ls.RI.absTol, ls.RI.relTol*eps);
+  const bool finite_norm = std::isfinite(ls.RI.iNorm);
+  if (!finite_norm || ls.RI.iNorm <= eps) {
+    Ri = 0.0;
+    ls.RI.success = finite_norm;
+    ls.Resc = finite_norm && ls.RI.fNorm > 0.0 ? static_cast<int>(100.0 *
+        pow(norm::fsi_ls_norms(mynNo, lhs.commu, Rc), 2.0) / ls.RI.fNorm) : 0;
+    ls.Resm = finite_norm && ls.RI.fNorm > 0.0 ? 100 - ls.Resc : 0;
+    ls.RI.fNorm = ls.RI.iNorm;
+    ls.RI.callD = fsi_linear_solver::fsils_cpu_t() - ls.RI.callD;
+    return;
+  }
   #ifdef debug_ns_solver
   dmsg << "eps: " << eps;
   dmsg << "ls.RI.iNorm: " << ls.RI.iNorm;
@@ -232,9 +245,6 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
   #ifdef debug_ns_solver
   dmsg << "Loop i on ls.RI.mItr ... ";
   #endif
-  int iBB{0}; 
-  int i_count{0};
- 
   // Note: iB and iBB appear to index into arrays.
   //
   for (int i = 0; i < ls.RI.mItr; i++) {
@@ -245,9 +255,8 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
     #endif
    
     int iB = 2*i;
-    iBB = 2*i + 1;
+    int iBB = 2*i + 1;
     ls.RI.dB = ls.RI.fNorm;
-    i_count = i;
     #ifdef debug_ns_solver
     dmsg << "iB: " << iB;
     dmsg << "iBB: " << iBB;
@@ -337,7 +346,7 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
       tmp = tmpG;
     }
 
-    // Set arrays for Gauss elimination
+    // Assemble the Gram matrix of the velocity and pressure direction images.
     //
     c = 0;
 
@@ -352,42 +361,25 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
       c  = c + 1;
     }
 
-    xB = B;
-
-    // Perform Gauss elimination.
-    //
-    if (ge::ge(nB, iBB+1, A, xB)) {
-      oldxB = xB;
-
-    } else { 
-      if (lhs.commu.masF) {
-        throw std::runtime_error("FSILS: Singular matrix detected");
-      }
-
-      xB = oldxB;
-
-      if (i > 0) {
-        iB = iB - 2;
-        iBB = iBB - 2;
-      }
-      break;
+    // Inner solves can return zero or dependent directions even for an
+    // invertible flow operator. Solve this small projection with rank-revealing
+    // QR, scaling each direction so its magnitude does not determine its rank.
+    const int size = iBB + 1;
+    Eigen::MatrixXd projection(size, size);
+    Eigen::VectorXd scale(size), projected_rhs(size);
+    for (int j = 0; j < size; ++j) {
+      scale(j) = A(j,j) == 0.0 ? 1.0 : sqrt(A(j,j));
+      projected_rhs(j) = B(j) / scale(j);
     }
-
-    //dmsg << "Compute sum ... " ;
-    double sum = 0.0;
-    for (int i = 0; i <= iBB; i++) { 
-      sum += xB(i) * B(i);
+    for (int k = 0; k < size; ++k) {
+      for (int j = 0; j < size; ++j) projection(j,k) = A(j,k) / scale(j) / scale(k);
     }
-    ls.RI.fNorm = pow(ls.RI.iNorm,2.0) - sum;
-    #ifdef debug_ns_solver
-    dmsg << "sum: " << sum;
-    dmsg << "ls.RI.fNorm: " << ls.RI.fNorm;
-    #endif
-
-    if (ls.RI.fNorm < eps*eps) {
-      ls.RI.success = true;
-      break;
-    }
+    if (!projection.allFinite() || !projected_rhs.allFinite()) break;
+    const Eigen::VectorXd coefficients = projection.completeOrthogonalDecomposition()
+        .solve(projected_rhs).cwiseQuotient(scale);
+    if (!coefficients.allFinite()) break;
+    oldxB = xB;
+    for (int j = 0; j < size; ++j) xB(j) = coefficients(j);
 
     Rm = Rmi - xB(0)*MU.slice(0);
     Rc = Rci - xB(0)*MP.col(0);
@@ -397,21 +389,32 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
       Rc = Rc - xB(j)*MP.col(j);
     }
 
+    // Avoid cancellation in ||r0||^2 - xB.B, and retain the best correction
+    // if the projection cannot make progress. Rank loss alone is not failure.
+    const double residual2 = pow(norm::fsi_ls_normv(nsd, mynNo, lhs.commu, Rm), 2.0)
+                           + pow(norm::fsi_ls_norms(mynNo, lhs.commu, Rc), 2.0);
+    if (!std::isfinite(residual2) || residual2 >= ls.RI.fNorm) {
+      xB = oldxB;
+      break;
+    }
+    ls.RI.fNorm = residual2;
+    // Only accepted projections contribute to the returned correction.
+    ls.RI.itr = i + 1;
+    if (ls.RI.fNorm <= eps*eps) {
+      ls.RI.success = true;
+      break;
+    }
+
   } // for i = 0; i < ls.RI.mItr
 
-  if (i_count >= ls.RI.mItr) {
-    ls.RI.itr = ls.RI.mItr;
-  } else { 
-    ls.RI.itr = i_count;
-    Rc = Rci - xB(0)*MP.col(0);
-
-    for (int j = 1; j <= iBB; j++) {
-      Rc = Rc - xB(j)*MP.col(j);
-    }
+  Rc = Rci;
+  for (int j = 0; j < 2*ls.RI.itr; ++j) {
+    Rc = Rc - xB(j)*MP.col(j);
   }
 
-  ls.Resc = static_cast<int>(100.0 * pow(norm::fsi_ls_norms(mynNo, lhs.commu, Rc),2.0) / ls.RI.fNorm);
-  ls.Resm = 100 - ls.Resc;
+  ls.Resc = ls.RI.fNorm > 0.0 ? static_cast<int>(100.0 *
+      pow(norm::fsi_ls_norms(mynNo, lhs.commu, Rc),2.0) / ls.RI.fNorm) : 0;
+  ls.Resm = ls.RI.fNorm > 0.0 ? 100 - ls.Resc : 0;
 
   #ifdef debug_ns_solver
   dmsg << "ls.Resc: " << ls.Resc;
@@ -419,10 +422,10 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
   dmsg << "ls.RI.itr: " << ls.RI.itr;
   #endif
 
-  Rmi = xB(1) * U.slice(0);
-  Rci = xB(0) * P.col(0);
+  Rmi = 0.0;
+  Rci = 0.0;
 
-  for (int i = 1; i <= ls.RI.itr; i++) {
+  for (int i = 0; i < ls.RI.itr; i++) {
     int iB = 2*i;
     int iBB = 2*i + 1;
     Rmi = Rmi + xB(iBB) * U.slice(i);
@@ -432,18 +435,8 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
   // Set Calling duration.
   ls.RI.callD = fsi_linear_solver::fsils_cpu_t() - ls.RI.callD;
 
-  ls.RI.dB = 5.0 * log(ls.RI.fNorm / ls.RI.dB);
-
-  if (ls.Resc < 0.0 || ls.Resm < 0.0) {
-    ls.Resc = 0;
-    ls.Resm = 0;
-    ls.RI.dB = 0;
-    ls.RI.fNorm = 0.0;
-
-    if (lhs.commu.masF) {
-      std::cout << "[svMultiPhysics] WARNING: The NS solver has computed an ill-conditioned LHS matrix." << std::endl; 
-    }
-  }
+  ls.RI.dB = ls.RI.fNorm > 0.0 && ls.RI.dB > 0.0
+      ? 5.0 * log(ls.RI.fNorm / ls.RI.dB) : 0.0;
 
   ls.RI.fNorm = sqrt(ls.RI.fNorm);
   #ifdef debug_ns_solver

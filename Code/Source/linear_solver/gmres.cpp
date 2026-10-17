@@ -185,15 +185,18 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
     #ifdef debug_gmres
     dmsg << "err(1): " << err[0];
     #endif
-    if (err[0] == 0.0) { 
-      throw std::runtime_error("FSILS: A zero matrix norm has been computed. This is probably caused by ill-posed boundary conditions.");
-    }
-
     if (l == 0) {
       eps = err[0];
       ls.iNorm = eps;
       ls.fNorm = eps;
       eps = std::max(ls.absTol, ls.relTol*eps);
+    }
+    // A zero residual is convergence, including an initially zero RHS.
+    if (err[0] == 0.0) {
+      ls.success = true;
+      ls.fNorm = ls.dB = 0.0;
+      ls.callD += fsi_linear_solver::fsils_cpu_t() - time;
+      return;
     }
     #ifdef debug_gmres
     dmsg << "eps: " << eps;

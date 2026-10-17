@@ -5,7 +5,7 @@
 #include "Core/Exception.h"
 #include "all_fun.h"
 #include "bf.h"
-#include "cep_ion.h"
+#include "electrophysiology/cep_ion.h"
 #include "contact.h"
 #include "eq_assem.h"
 #include "fs.h"
@@ -15,7 +15,7 @@
 #include "post.h"
 #include "ris.h"
 #include "set_bc.h"
-#include "ustruct.h"
+#include "solid/ustruct.h"
 #include "utils.h"
 
 #include <algorithm>

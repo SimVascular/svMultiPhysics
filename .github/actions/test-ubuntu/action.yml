@@ -20,7 +20,9 @@ runs:
         cd svZeroDSolver
         mkdir build
         cd build
-        cmake ..
+        cmake .. \
+          -DCMAKE_PROJECT_svZeroDSolver_INCLUDE="$GITHUB_WORKSPACE/Code/ThirdParty/eigen/share/eigen3/cmake/Eigen3Config.cmake" \
+          -DFETCHCONTENT_SOURCE_DIR_EIGEN="$GITHUB_WORKSPACE/Code/ThirdParty/eigen"
         make -j2
         
     - name: Build svMultiPhysics

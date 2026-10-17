@@ -31,7 +31,6 @@
 #include <map>
 #include <math.h>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <span>
 #include <string>
@@ -133,11 +132,10 @@ bool supports_face_basis_adapter_for(consts::ElementType eType)
 /// first use. Basis construction is not free (node-lattice generation, and a
 /// Vandermonde inversion for quadrilateral serendipity), while callers invoke
 /// this per Gauss point or per probe point, so instances are cached per
-/// element type. Sharing is safe: bases are immutable after construction,
-/// evaluation is const, and BasisFunction scratch state is thread_local.
+/// element type. Bases are immutable after construction. The solver accesses
+/// this cache from a single thread per MPI rank.
 const febasis::BasisFunction& basis_for_solver_element(consts::ElementType eType)
 {
-  static std::mutex cache_mutex;
   static std::map<consts::ElementType, std::shared_ptr<febasis::BasisFunction>> cache;
 
   const auto fe_type = to_fe_element_type(eType);
@@ -145,7 +143,6 @@ const febasis::BasisFunction& basis_for_solver_element(consts::ElementType eType
     svmp::raise<febasis::BasisElementCompatibilityException>("No FE Basis selection for solver element " + solver_element_name(eType));
   }
 
-  const std::lock_guard<std::mutex> lock(cache_mutex);
   auto it = cache.find(eType);
   if (it == cache.end()) {
     it = cache.emplace(eType, febasis::basis_factory::create_default_for(*fe_type)).first;
