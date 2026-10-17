@@ -4,7 +4,7 @@ from enum import Enum, auto
 from pathlib import Path
 import subprocess
 from typing import Self, assert_never
-from .execution import Command
+from .execution import Command, capture_command
 from ._expect import expect_float, expect_float_positive, expect_str
 
 @dataclass(frozen=True, kw_only=True)
@@ -93,12 +93,12 @@ def evaluate_criterion(criterion : EvaluationCriterion, cwd : Path) -> Evaluatio
 
     try:
         # extract value
-        run_result = subprocess.run(criterion.command.argv, cwd = cwd, capture_output=True, text=True, check=True)
+        capture_result = capture_command(criterion.command, cwd = cwd)
     except subprocess.CalledProcessError as e:
         e.add_note(f"Error during script run for criterion evaluation.{criterion.name}")
         raise
 
-    value = float(run_result.stdout.strip()) # cast as a float
+    value = float(capture_result.stdout.strip()) # cast as a float
 
     # handle the two tolerance types
     match criterion.tolerance:
@@ -110,7 +110,7 @@ def evaluate_criterion(criterion : EvaluationCriterion, cwd : Path) -> Evaluatio
                 status = EvaluationStatus.FAILED
 
         case RelativeTolerance(value=rtol):
-            if abs(value - criterion.reference) < rtol*criterion.reference:
+            if abs(value - criterion.reference) < abs(rtol*criterion.reference):
                 status = EvaluationStatus.PASSED
             else:
                 status = EvaluationStatus.FAILED

@@ -108,6 +108,12 @@ class RunResult:
     run_time : float
     returncode : int
 
+@dataclass(frozen=True)
+class CaptureResult:
+    run_result : RunResult
+    stdout : str
+    stderr : str
+
 def run_command(command : Command, cwd : Path) -> RunResult:
     """ 
     Runs a step based on its context which provides a run.
@@ -119,4 +125,21 @@ def run_command(command : Command, cwd : Path) -> RunResult:
 
     return(RunResult(run_cmd=command.to_str(), 
                      run_time=end_time-start_time, 
-                     returncode=result.returncode))
+                     returncode=result.returncode,)
+                     )
+
+def capture_command(command : Command, cwd : Path) -> CaptureResult:
+    """ 
+    Captures a command run, the command call does not print to terminal.
+    """
+
+    start_time = time.perf_counter()
+    result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), capture_output=True, text=True)
+    end_time = time.perf_counter()
+
+    run_result = RunResult(run_cmd=command.to_str(), 
+                     run_time=end_time-start_time, 
+                     returncode=result.returncode,)
+
+    return(CaptureResult(run_result=run_result, stdout=result.stdout, stderr=result.stderr)
+                     )
