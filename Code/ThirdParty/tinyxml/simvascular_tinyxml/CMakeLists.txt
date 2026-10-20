@@ -29,7 +29,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Set  the minimum  required version  of cmake  for a  project.
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22...4.4)
 project(TINYXML)
 
 # source files for tinyxml
