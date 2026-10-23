@@ -1,10 +1,10 @@
 
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import StrEnum
 from pathlib import Path
 import subprocess
 from typing import Self, assert_never
-from .execution import Command, capture_command
+from .execution import Command, RunResult, capture_command
 from ._expect import expect_float, expect_float_positive, expect_str
 
 @dataclass(frozen=True, kw_only=True)
@@ -80,10 +80,11 @@ class EvaluationCriterionResult:
     tolerance : RelativeTolerance | AbsoluteTolerance | None
     value : float
     status : EvaluationStatus
+    run_result : RunResult
 
-class EvaluationStatus(Enum):
-        PASSED = auto()
-        FAILED = auto()
+class EvaluationStatus(StrEnum):
+        PASSED = 'pass'
+        FAILED = 'fail'
 
 def evaluate_criterion(criterion : EvaluationCriterion, cwd : Path) -> EvaluationCriterionResult :
     """
@@ -97,7 +98,7 @@ def evaluate_criterion(criterion : EvaluationCriterion, cwd : Path) -> Evaluatio
     except subprocess.CalledProcessError as e:
         e.add_note(f"Error during script run for criterion evaluation.{criterion.name}")
         raise
-
+    
     value = float(capture_result.stdout.strip()) # cast as a float
 
     # handle the two tolerance types
@@ -124,4 +125,5 @@ def evaluate_criterion(criterion : EvaluationCriterion, cwd : Path) -> Evaluatio
     return EvaluationCriterionResult(reference = criterion.reference,
                                      tolerance = criterion.tolerance,
                                      value = value,
-                                     status = status)
+                                     status = status,
+                                     run_result=capture_result.run_result)
