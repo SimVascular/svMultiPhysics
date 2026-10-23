@@ -6,6 +6,9 @@ from pathlib import Path
 import subprocess
 import time
 from typing import Self
+from platform import uname
+from os import cpu_count
+from datetime import datetime, UTC
 
 from ._expect import expect_str, expect_str_array
 
@@ -15,6 +18,32 @@ def run_solver(solver : SolverRun, context : SolveExecutionContext, cwd : Path) 
     """
     command = solver.build_command(context)
     return run_command(command, cwd)
+
+
+@dataclass(frozen=True)
+class ExecutionEnvironment:
+    """
+    This class automatically holds the execution environment (i.e. hardware) as best as possible
+    """
+    system: str
+    release: str
+    version: str
+    machine: str
+    processor: str
+    cpus : int | None
+
+    @classmethod
+    def capture(cls):
+        info = uname()
+        cpus = cpu_count()
+        return cls(
+            system=info.system,
+            release=info.release,
+            version=info.version,
+            machine=info.machine,
+            processor=info.processor,
+            cpus=cpus
+        )
 
 @dataclass(frozen=True, kw_only=True)
 class SolveExecutionContext:
@@ -26,6 +55,7 @@ class SolveExecutionContext:
     with the TOML defined intent
     """
     solver_executable: Path
+    solver_notes : str = ""
     mpi_launcher: str = "mpirun"
     mpi_args: tuple[str, ...] = ()
     mpi_ranks: int = 1
@@ -107,6 +137,8 @@ class RunResult:
     run_cmd : str
     run_time : float
     returncode : int
+    execution_environment : ExecutionEnvironment
+    utc : datetime
 
 @dataclass(frozen=True)
 class CaptureResult:
@@ -118,28 +150,32 @@ def run_command(command : Command, cwd : Path) -> RunResult:
     """ 
     Runs a step based on its context which provides a run.
     """
-
+    execution_environment = ExecutionEnvironment.capture()
     start_time = time.perf_counter()
     result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd))
     end_time = time.perf_counter()
 
     return(RunResult(run_cmd=command.to_str(), 
                      run_time=end_time-start_time, 
-                     returncode=result.returncode,)
+                     returncode=result.returncode,
+                     execution_environment=execution_environment,
+                     utc=datetime.now(UTC))
                      )
 
 def capture_command(command : Command, cwd : Path) -> CaptureResult:
     """ 
     Captures a command run, the command call does not print to terminal.
     """
-
+    execution_environment = ExecutionEnvironment.capture()
     start_time = time.perf_counter()
     result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), capture_output=True, text=True)
     end_time = time.perf_counter()
 
     run_result = RunResult(run_cmd=command.to_str(), 
                      run_time=end_time-start_time, 
-                     returncode=result.returncode,)
+                     returncode=result.returncode,
+                     execution_environment=execution_environment,
+                     utc=datetime.now(UTC))
 
     return(CaptureResult(run_result=run_result, stdout=result.stdout, stderr=result.stderr)
                      )
