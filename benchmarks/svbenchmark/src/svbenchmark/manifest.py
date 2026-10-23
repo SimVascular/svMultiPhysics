@@ -1,12 +1,13 @@
 
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 import tomllib
-from typing import Callable, Self
+from typing import Callable, Mapping, Self
 
-from .evaluation import EvaluationCriterion
-from .execution import NamedCommand, SolverRun
+from .evaluation import EvaluationCriterion, EvaluationCriterionResult
+from .execution import NamedCommand, RunResult, SolverRun
 from ._expect import expect_int, expect_str, expect_table
 
 @dataclass(frozen=True, kw_only=True)
@@ -17,7 +18,7 @@ class Benchmark:
     name : str
     schema : int
     reference_source : str
-    base_dir : Path
+    base_directory : Path
     preprocess : tuple[NamedCommand,...]  = tuple()
     solver : tuple[SolverRun,...]
     postprocess : tuple[NamedCommand,...] = tuple()
@@ -25,7 +26,7 @@ class Benchmark:
     cleanup : tuple[NamedCommand,...]     = tuple()
 
     @classmethod
-    def from_toml_dict(cls, base_dir : Path, data : dict[str, object]) -> Self:
+    def from_toml_dict(cls, base_directory : Path, data : dict[str, object]) -> Self:
         """
         Creates a Benchmark from a TOML dict. The base_dir is the directory where the paths/files in the benchmark
         are relative to. For a TOML file, this is just the TOML parent directory itself
@@ -49,7 +50,7 @@ class Benchmark:
             return tuple(l)
 
         # parse the toml_dictionary
-        base_dir = base_dir.resolve()
+        base_directory = base_directory.resolve()
         name = expect_str(data['name'], "name")
         schema = expect_int(data['schema'], "schema")
         reference_source = expect_str(data['reference_source'], "reference_source")
@@ -87,7 +88,7 @@ class Benchmark:
         return cls(schema = schema,
                    name = name, 
                    reference_source = reference_source,
-                   base_dir = base_dir, 
+                   base_directory = base_directory, 
                    preprocess = preprocess_data,
                    solver = solver_data, 
                    postprocess = postprocess_data, 
@@ -107,4 +108,48 @@ def load_benchmark(path : Path | str) -> Benchmark:
     """
     path = Path(path) # cast to path, if not already
     return Benchmark.read_toml_file(path)
-   
+
+@dataclass(frozen=True)
+class BenchmarkRunResult:
+    """
+    A complete benchmark result needs all phases populated (they can be empty dictionaries)
+    """
+    # benchmark information
+    name : str
+    base_directory : Path
+
+    # results
+    preprocess : Mapping[str, RunResult]
+    solver : Mapping[str, RunResult]
+    postprocess : Mapping[str, RunResult]
+    evaluation : Mapping[str, EvaluationCriterionResult]
+    cleanup : Mapping[str, RunResult]
+
+    @classmethod
+    def from_results(cls, benchmark : Benchmark, 
+                     preprocess : Mapping[str, RunResult], 
+                     solver : Mapping[str, RunResult], 
+                     postprocess : Mapping[str, RunResult], 
+                     evaluation : Mapping[str, EvaluationCriterionResult], 
+                     cleanup:Mapping[str, RunResult]) -> Self:
+        return cls(
+            name = benchmark.name,
+            base_directory = benchmark.base_directory,
+            preprocess = preprocess,
+            solver = solver,
+            postprocess = postprocess,
+            evaluation = evaluation,
+            cleanup = cleanup
+        )
+
+def get_utc_earliest(benchmark_result : BenchmarkRunResult) -> datetime:
+    """
+    Gets the earliest datetime (UTC) present in the benchmark
+    """
+    # loop through the run call (up to solvers, since those are always required), return the first one encountered
+    if len(benchmark_result.preprocess) > 0:
+        preprocess_results = sorted(benchmark_result.preprocess.values(), key=lambda r: r.utc)
+        return preprocess_results[0].utc
+    else:
+        solver_results = sorted(benchmark_result.solver.values(), key=lambda r: r.utc)
+        return solver_results[0].utc
