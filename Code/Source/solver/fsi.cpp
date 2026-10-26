@@ -92,10 +92,11 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         (cPhys != Equation_struct) && (cPhys != Equation_ustruct)) {
       continue;
     }
-    const auto fiber_representation =
+    const bool orthonormalize_fibers =
       cPhys == Equation_struct || cPhys == Equation_ustruct
-      ? mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType)
-      : Fibers::Representation::raw;
+      ? mat_models::requires_orthonormal_fiber_basis(
+          eq.dmn[cDmn].stM.isoType)
+      : false;
 
     // Update shape functions for NURBS
     //if (lM.eType == eType_NRB) CALL NRBNNX(lM, e)
@@ -172,12 +173,11 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     }
 
     for (int g = 0; g < fs_1[0].nG; g++) {
-      using FiberMap =
-        Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>;
-      const FiberMap fibers = !mesh_has_fibers
-        ? Fibers::zero_eigen_fibers(nsd)
-        : lM.fibers.get_eigen_fibers(
-            nsd, g, e, fiber_representation);
+      const auto fiber_values = !mesh_has_fibers
+        ? Fibers::zero_fibers(nsd)
+        : lM.fibers.get_quadrature_fibers(
+            nsd, g, e, orthonormalize_fibers);
+      const auto fibers = mat_fun::eigen_view(fiber_values);
       const int nFn = fibers.cols();
 
       if (g == 0 || !fs_1[1].lShpF) {

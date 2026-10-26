@@ -16,17 +16,13 @@
 namespace mat_models {
 
 
-Fibers::Representation fiber_representation(
+bool requires_orthonormal_fiber_basis(
   const consts::ConstitutiveModelType model)
 {
   using consts::ConstitutiveModelType;
-  const bool requires_basis =
-    model == ConstitutiveModelType::stIso_Gucci ||
-    model == ConstitutiveModelType::stIso_HO ||
-    model == ConstitutiveModelType::stIso_HO_ma;
-  return requires_basis
-    ? Fibers::Representation::orthonormal_basis
-    : Fibers::Representation::raw;
+  return model == ConstitutiveModelType::stIso_Gucci ||
+         model == ConstitutiveModelType::stIso_HO ||
+         model == ConstitutiveModelType::stIso_HO_ma;
 }
 
 
@@ -450,60 +446,60 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
       if constexpr (nsd != 3) {
         throw std::runtime_error(
             "The Guccione material model requires a 3D fiber basis.");
-      } else {
-        // Compute isochoric component of E
-        Matrix<nsd> E = 0.50 * (J2d*C - Idm);
-
-        // Local orthogonal fiber basis (fiber, sheet, sheet-normal)
-        Matrix<nsd> Rm;
-        Rm.col(0) = fib_dir1;
-        Rm.col(1) = fib_dir2;
-        Rm.col(2) = fibers.col(2);
-
-        // Project E to local orthogonal coordinate system
-        Matrix<nsd> Es = Rm.transpose() * E * Rm;
-
-        // Compute preliminary quantities
-        double g1 = stM.bff;
-        double g2 = stM.bss;
-        double g3 = stM.bfs;
-
-        double QQ = g1 *  Es(0,0)*Es(0,0) +
-                    g2 * (Es(1,1)*Es(1,1) + Es(2,2)*Es(2,2) + Es(1,2)*Es(1,2) + Es(2,1)*Es(2,1)) +
-                    g3 * (Es(0,1)*Es(0,1) + Es(1,0)*Es(1,0) + Es(0,2)*Es(0,2) + Es(2,0)*Es(2,0));
-
-        double r2 = stM.C10 * exp(QQ);
-
-        Matrix<nsd> RmRm_00 = Rm.col(0) * Rm.col(0).transpose();
-        Matrix<nsd> RmRm_11 = Rm.col(1) * Rm.col(1).transpose();
-        Matrix<nsd> RmRm_22 = Rm.col(2) * Rm.col(2).transpose();
-        Matrix<nsd> RmRm_01 = 0.5 * (Rm.col(0) * Rm.col(1).transpose() + Rm.col(1) * Rm.col(0).transpose());
-        Matrix<nsd> RmRm_12 = 0.5 * (Rm.col(1) * Rm.col(2).transpose() + Rm.col(2) * Rm.col(1).transpose());
-        Matrix<nsd> RmRm_20 = 0.5 * (Rm.col(2) * Rm.col(0).transpose() + Rm.col(0) * Rm.col(2).transpose());
-
-        // Compute fictious stress and elasticity tensor
-        Matrix<nsd> S_bar = g1 *  Es(0,0) * RmRm_00 +
-                                 g2 * (Es(1,1) * RmRm_11 + Es(2,2)*RmRm_22 + 2.0*Es(1,2)*RmRm_12) +
-                           2.0 * g3 * (Es(0,1) * RmRm_01 + Es(0,2)*RmRm_20);
-
-        Tensor<nsd> CC_bar = 2.0*dyadic_product<nsd>(S_bar, S_bar);
-
-        S_bar = S_bar * r2;
-
-        r2  = r2*J4d;
-        CC_bar += g1 * dyadic_product<nsd>(RmRm_00, RmRm_00);
-        CC_bar += g2 * (dyadic_product<nsd>(RmRm_11, RmRm_11) +
-                        dyadic_product<nsd>(RmRm_22, RmRm_22) +
-                  2.0 * dyadic_product<nsd>(RmRm_12, RmRm_12));
-        CC_bar += 2.0 * g3 * (dyadic_product<nsd>(RmRm_01, RmRm_01) +
-                        dyadic_product<nsd>(RmRm_20, RmRm_20));
-        CC_bar = r2 * CC_bar;
-
-        // Compute and add isochoric stress and elasticity tensor
-        auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
-        S += S_iso;
-        CC += CC_iso;
       }
+
+      // Compute isochoric component of E
+      Matrix<nsd> E = 0.50 * (J2d*C - Idm);
+
+      // Local orthogonal fiber basis (fiber, sheet, sheet-normal)
+      Matrix<nsd> Rm;
+      Rm.col(0) = fib_dir1;
+      Rm.col(1) = fib_dir2;
+      Rm.col(2) = fibers.col(2);
+
+      // Project E to local orthogonal coordinate system
+      Matrix<nsd> Es = Rm.transpose() * E * Rm;
+
+      // Compute preliminary quantities
+      double g1 = stM.bff;
+      double g2 = stM.bss;
+      double g3 = stM.bfs;
+
+      double QQ = g1 *  Es(0,0)*Es(0,0) +
+                  g2 * (Es(1,1)*Es(1,1) + Es(2,2)*Es(2,2) + Es(1,2)*Es(1,2) + Es(2,1)*Es(2,1)) +
+                  g3 * (Es(0,1)*Es(0,1) + Es(1,0)*Es(1,0) + Es(0,2)*Es(0,2) + Es(2,0)*Es(2,0));
+
+      double r2 = stM.C10 * exp(QQ);
+
+      Matrix<nsd> RmRm_00 = Rm.col(0) * Rm.col(0).transpose();
+      Matrix<nsd> RmRm_11 = Rm.col(1) * Rm.col(1).transpose();
+      Matrix<nsd> RmRm_22 = Rm.col(2) * Rm.col(2).transpose();
+      Matrix<nsd> RmRm_01 = 0.5 * (Rm.col(0) * Rm.col(1).transpose() + Rm.col(1) * Rm.col(0).transpose());
+      Matrix<nsd> RmRm_12 = 0.5 * (Rm.col(1) * Rm.col(2).transpose() + Rm.col(2) * Rm.col(1).transpose());
+      Matrix<nsd> RmRm_20 = 0.5 * (Rm.col(2) * Rm.col(0).transpose() + Rm.col(0) * Rm.col(2).transpose());
+
+      // Compute fictious stress and elasticity tensor
+      Matrix<nsd> S_bar = g1 *  Es(0,0) * RmRm_00 +
+                               g2 * (Es(1,1) * RmRm_11 + Es(2,2)*RmRm_22 + 2.0*Es(1,2)*RmRm_12) +
+                         2.0 * g3 * (Es(0,1) * RmRm_01 + Es(0,2)*RmRm_20);
+
+      Tensor<nsd> CC_bar = 2.0*dyadic_product<nsd>(S_bar, S_bar);
+
+      S_bar = S_bar * r2;
+
+      r2  = r2*J4d;
+      CC_bar += g1 * dyadic_product<nsd>(RmRm_00, RmRm_00);
+      CC_bar += g2 * (dyadic_product<nsd>(RmRm_11, RmRm_11) +
+                      dyadic_product<nsd>(RmRm_22, RmRm_22) +
+                2.0 * dyadic_product<nsd>(RmRm_12, RmRm_12));
+      CC_bar += 2.0 * g3 * (dyadic_product<nsd>(RmRm_01, RmRm_01) +
+                      dyadic_product<nsd>(RmRm_20, RmRm_20));
+      CC_bar = r2 * CC_bar;
+
+      // Compute and add isochoric stress and elasticity tensor
+      auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
+      S += S_iso;
+      CC += CC_iso;
     } break;
 
     //  HO (Holzapfel-Ogden) model for myocardium (2009)

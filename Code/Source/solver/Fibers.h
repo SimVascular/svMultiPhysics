@@ -7,8 +7,6 @@
 #include "Array.h"
 #include "Array3.h"
 
-#include "eigen3/Eigen/Core"
-
 class ComMod;
 class CmMod;
 class MeshParameters;
@@ -31,12 +29,6 @@ public:
     constant
   };
 
-  /// Fiber representation requested by a physics or output consumer.
-  enum class Representation {
-    raw,
-    orthonormal_basis
-  };
-
   /**
    * @brief Clears the fiber directions.
    */
@@ -54,84 +46,38 @@ public:
                   mshType &mesh);
 
   /**
-   * @brief Builds a completed orthonormal basis into @ref quadrature_fiber_basis.
-   *
-   * Returns immediately when a basis has already been built. Raw
-   * @ref quadrature_fibers are left unchanged. The input must contain
-   * nsd - 1 or nsd mutually orthogonal unit directions. For point data, the
-   * independently interpolated directions are Gram--Schmidt orthonormalized at
-   * every quadrature point.
-   */
-  void initialize_fiber_bases(int nsd);
-
-  /**
    * @brief Returns the location of the fiber directions in the input.
    */
   DataLocation get_data_location() const { return data_location; }
 
-  /**
-   * @brief Returns the number of directions supplied by the user.
-   */
-  int get_num_input_directions() const { return num_input_fibers; }
+  /// Returns the number of raw directions supplied by the user.
+  int get_num_directions() const { return num_input_fibers; }
 
   /**
-   * @brief Returns the number of directions in the completed basis.
+   * @brief Returns fibers at a quadrature point.
    *
-   * Returns zero when no completed basis is available.
-   */
-  int get_num_basis_directions() const { return num_basis_fibers; }
-
-  /**
-   * @brief Returns the number of directions in a requested representation.
-   */
-  int get_num_directions(Representation representation) const;
-
-  /**
-   * @brief Returns the completed basis when available, otherwise raw fibers.
-   */
-  Representation get_default_representation() const
-  {
-    return has_orthonormal_basis()
-      ? Representation::orthonormal_basis
-      : Representation::raw;
-  }
-
-  /**
-   * @brief Returns whether a completed orthonormal basis is available.
-   */
-  bool has_orthonormal_basis() const { return num_basis_fibers != 0; }
-
-  /**
-   * @brief Returns a requested fiber representation at a quadrature point.
+   * Raw directions are returned by default. When @p orthonormalize is true,
+   * an owned, completed orthonormal basis is returned without modifying or
+   * caching the raw fibers.
    */
   Array<double> get_quadrature_fibers(int nsd, int g, int e,
-                                      Representation representation) const;
+                                      bool orthonormalize = false) const;
 
   /**
-   * @brief Evaluates a requested representation with supplied basis values.
+   * @brief Evaluates fibers with supplied basis-function values.
+   *
+   * For point data, raw directions are re-interpolated with the supplied
+   * values before optional orthonormalization.
    */
   Array<double> get_quadrature_fibers(
       int nsd, const Vector<double> &basis_functions, int e,
-      Representation representation) const;
+      bool orthonormalize = false) const;
 
   /**
-   * @brief Gathers the representation used for timestep-zero output.
-   *
-   * Raw directions are returned when no completed basis exists. Otherwise a
-   * completed basis is returned at the original input association.
+   * @brief Gathers raw fibers for timestep-zero output.
    */
   Array<double> gather_fibers(const ComMod &com_mod, const CmMod &cm_mod,
                               const mshType &mesh, int nsd) const;
-
-  /**
-   * @brief Returns a read-only Eigen view of a requested representation.
-   *
-   * The map aliases @ref quadrature_fibers or @ref quadrature_fiber_basis
-   * and remains valid until those arrays are resized or cleared.
-   */
-  Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-  get_eigen_fibers(int nsd, int g, int e,
-                   Representation representation) const;
 
   /**
    * @brief Returns true if there are fiber directions.
@@ -142,15 +88,6 @@ public:
    * @brief Returns an nsd-by-1 zero fiber matrix for meshes with no directions.
    */
   static Array<double> zero_fibers(int nsd);
-
-  /**
-   * @brief Returns a read-only Eigen view of a zero nsd-by-1 fiber matrix.
-   *
-   * Backed by thread-local storage; valid until the next call to
-   * zero_eigen_fibers on the same thread.
-   */
-  static Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
-  zero_eigen_fibers(int nsd);
 
 private:
   /**
@@ -170,14 +107,6 @@ private:
   Array3<double> quadrature_fibers;
 
   /**
-   * @brief Completed orthonormal fiber basis at the quadrature points.
-   *
-   * Empty until @ref initialize_fiber_bases. Sized nsd*nsd components per
-   * location.
-   */
-  Array3<double> quadrature_fiber_basis;
-
-  /**
    * @brief Point-associated input fibers gathered at each element's nodes.
    *
    * Keeping this element-local representation allows interpolation with
@@ -191,8 +120,8 @@ private:
   /// Number of fiber directions supplied as input.
   int num_input_fibers = 0;
 
-  /// Number of directions in the completed basis, or zero when absent.
-  int num_basis_fibers = 0;
+  /// Whether every raw input location contains mutually orthogonal directions.
+  bool basis_input_is_orthogonal = true;
 
   /**
    * @brief Reads fiber directions from VTK files.
@@ -214,21 +143,14 @@ private:
   void check_input_fibers_unit(int nsd) const;
 
   /**
-   * @brief Checks mutual orthogonality of the input directions.
+   * @brief Returns whether input directions are mutually orthogonal.
    */
-  void check_input_fibers_orthogonal(int nsd) const;
+  bool input_fibers_are_orthogonal(int nsd) const;
 
   /**
    * @brief Populates the raw quadrature representation.
    */
   void populate_quadrature_fibers(const mshType &mesh, int nsd);
-
-  /**
-   * @brief Completes already-orthonormal input fibers to an nsd-dimensional
-   * basis via cross product (3D) or 90-degree rotation (2D).
-   */
-  void complete_fiber_basis(Array<double> &fibers, int nsd,
-                            int num_directions) const;
 
   /**
    * @brief Interpolates the original point directions for one element.

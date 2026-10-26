@@ -319,9 +319,7 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     }
     // Fiber-only anisotropy uses the raw fiber family. Sheet / sheet-normal
     // conductivity needs a completed orthonormal basis.
-    const auto fiber_representation = fiber_conductivities.size() > 1
-      ? Fibers::Representation::orthonormal_basis
-      : Fibers::Representation::raw;
+    const bool orthonormalize_fibers = fiber_conductivities.size() > 1;
 
     // Update shape functions for NURBS
     //if (lM.eType .EQ. eType_NRB) CALL NRBNNX(lM, e)
@@ -374,7 +372,7 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         Array<double> fibers;
         if (fiber_conductivities.size() != 0) {
           fibers = lM.fibers.get_quadrature_fibers(
-            nsd, g, e, fiber_representation);
+            nsd, g, e, orthonormalize_fibers);
         }
         cep_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
 
@@ -382,7 +380,7 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         Array<double> fibers;
         if (fiber_conductivities.size() != 0) {
           fibers = lM.fibers.get_quadrature_fibers(
-            nsd, g, e, fiber_representation);
+            nsd, g, e, orthonormalize_fibers);
         }
         cep_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
 

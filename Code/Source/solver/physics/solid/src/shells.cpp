@@ -33,7 +33,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "input fiber directions: "
-       << lM.fibers.get_num_input_directions();
+       << lM.fibers.get_num_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   dmsg << "lM.eNoN: " << lM.eNoN;
   #endif
@@ -70,8 +70,9 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     if (cPhys != EquationType::phys_shell) {
       continue;
     }
-    const auto fiber_representation =
-      mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType);
+    const bool orthonormalize_fibers =
+      mat_models::requires_orthonormal_fiber_basis(
+        eq.dmn[cDmn].stM.isoType);
 
 #if 0
     dmsg << " " << " ";
@@ -134,7 +135,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
         fibers = Fibers::zero_fibers(nsd);
       } else {
         fibers = lM.fibers.get_quadrature_fibers(
-          nsd, 0, e, fiber_representation);
+          nsd, 0, e, orthonormalize_fibers);
       }
       const int nFn = fibers.ncols();
       shell_cst(com_mod, lM, e, eNoN, nFn, fibers, al, yl, dl, xl, bfl, ptr);
@@ -153,7 +154,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
           fibers = Fibers::zero_fibers(nsd);
         } else {
           fibers = lM.fibers.get_quadrature_fibers(
-            nsd, g, e, fiber_representation);
+            nsd, g, e, orthonormalize_fibers);
         }
         const int nFn = fibers.ncols();
         shell_3d(com_mod, lM, g, eNoN, nFn, fibers, al, yl, dl, xl, bfl, lR, lK);
@@ -1203,7 +1204,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
   dmsg << "input fiber directions: "
-       << lM.fibers.get_num_input_directions();
+       << lM.fibers.get_num_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   dmsg << "dof: " << dof;
   dmsg << "eNoN: " << eNoN;

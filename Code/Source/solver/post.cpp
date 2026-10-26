@@ -577,8 +577,7 @@ void fib_algn_post(Simulation* simulation, const mshType& lM, Array<double>& res
     Array<double> F;
 
     for (int g = 0; g < lM.nG; g++) {
-      const auto fibers = lM.fibers.get_quadrature_fibers(
-        nsd, g, e, lM.fibers.get_default_representation());
+      const auto fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
 
       double Jac = 0.0;
 
@@ -670,8 +669,7 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
     double Jac = 0.0;
 
     for (int g = 0; g < lM.nG; g++) {
-      const auto fibers = lM.fibers.get_quadrature_fibers(
-        nsd, g, e, lM.fibers.get_default_representation());
+      const auto fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
       const int num_fiber_dirs = fibers.ncols();
 
       if (g == 0 || !lM.lShpF) {
@@ -767,8 +765,7 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
 
       // Compute fiber stretch based on 4th invariant: I_{4,f} = F.f.F.f
       Vector<double> fiber(nsd);
-      const auto fibers = lM.fibers.get_quadrature_fibers(
-        nsd, g, e, Fibers::Representation::raw);
+      const auto fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
       for (int component = 0; component < nsd; ++component) {
         fiber[component] = fibers(component, 0);
       }
@@ -1390,8 +1387,9 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
     if (cPhys != EquationType::phys_shell) {
       continue;
     }
-    const auto fiber_representation =
-      mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType);
+    const bool orthonormalize_fibers =
+      mat_models::requires_orthonormal_fiber_basis(
+        eq.dmn[cDmn].stM.isoType);
     //if (lM.eType .EQ. eType_NRB) CALL NRBNNX(lM, e)
 
     // Get shell properties
@@ -1468,7 +1466,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
         fibers = Fibers::zero_fibers(nsd);
       } else {
         fibers = lM.fibers.get_quadrature_fibers(
-          nsd, g, e, fiber_representation);
+          nsd, g, e, orthonormalize_fibers);
       }
       nFn = fibers.ncols();
       if (fNa0.nrows() != 2 || fNa0.ncols() != nFn) {
@@ -1864,11 +1862,12 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
     if (cPhys != EquationType::phys_struct && cPhys != EquationType::phys_ustruct && cPhys != EquationType::phys_lElas) {
       continue; 
     } 
-    const auto fiber_representation =
+    const bool orthonormalize_fibers =
       (cPhys == EquationType::phys_struct ||
        cPhys == EquationType::phys_ustruct)
-      ? mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType)
-      : Fibers::Representation::raw;
+      ? mat_models::requires_orthonormal_fiber_basis(
+          eq.dmn[cDmn].stM.isoType)
+      : false;
 
     double elM = 0.0; 
     double nu = 0.0; 
@@ -1916,7 +1915,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
         fibers = Fibers::zero_fibers(nsd);
       } else {
         fibers = lM.fibers.get_quadrature_fibers(
-          nsd, fs.N.col(g), e, fiber_representation);
+          nsd, fs.N.col(g), e, orthonormalize_fibers);
       }
       nFn = fibers.ncols();
 

@@ -43,7 +43,6 @@
   <Domain_file_path> ./mesh/cylinder_domain.dat </Domain_file_path>
 
    <Fiber_direction_from_file_cells> ./mesh/cylinder_fiber.vtu </Fiber_direction_from_file_cells>
-   <Fiber_direction_from_file_cells> ./mesh/cylinder_sheet.vtu </Fiber_direction_from_file_cells>
    <Mesh_scale_factor> 10 </Mesh_scale_factor>
 
 </Add_mesh>
@@ -62,23 +61,23 @@
   
    <Domain id="1" >
       <Electrophysiology_model> TTP </Electrophysiology_model>
+      <Include_xml> ../ttp_parameters/ttp_midmyocardium_parameters.xml </Include_xml>
       <Isotropic_conductivity> 0.05 </Isotropic_conductivity>
       <Fiber_conductivity> 0.05 </Fiber_conductivity>
-      <Include_xml> ../ttp_parameters/ttp_midmyocardium_parameters.xml </Include_xml>
       <ODE_solver> RK </ODE_solver>
    </Domain>
 
    <Domain id="2" >
       <Electrophysiology_model> TTP </Electrophysiology_model>
-      <Isotropic_conductivity> 1.1 </Isotropic_conductivity>
       <Include_xml> ../ttp_parameters/ttp_endocardium_parameters.xml </Include_xml>
+      <Isotropic_conductivity> 1.1 </Isotropic_conductivity>
       <ODE_solver> RK </ODE_solver>
    </Domain> 
 
    <Domain id="3" >
       <Electrophysiology_model> TTP </Electrophysiology_model>
-      <Isotropic_conductivity> 1.1 </Isotropic_conductivity>
       <Include_xml> ../ttp_parameters/ttp_endocardium_parameters.xml </Include_xml>
+      <Isotropic_conductivity> 1.1 </Isotropic_conductivity>
       <ODE_solver> RK </ODE_solver>
       <Stimulus type="Istim" >
          <Amplitude> -52.0 </Amplitude>

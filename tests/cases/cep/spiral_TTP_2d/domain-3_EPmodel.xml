@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-
 <svMultiPhysicsFile version="0.1">
 
-
-
 <Isotropic_conductivity> 0.1 </Isotropic_conductivity>
+
 <Myocardial_zone> epicardium </Myocardial_zone>
 
 <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>

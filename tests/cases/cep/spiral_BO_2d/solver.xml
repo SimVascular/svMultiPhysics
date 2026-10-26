@@ -44,7 +44,6 @@
 
   <Domain_file_path> mesh/spiral_domain_info.dat </Domain_file_path>
 
-  <Fiber_direction_constant> (1, 0) </Fiber_direction_constant>
 </Add_mesh>
 
 <Add_equation type="CEP" > 

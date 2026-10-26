@@ -8,7 +8,6 @@
 #include "Array.h"
 #include "CepMod.h"
 #include "ComMod.h"
-#include "Fibers.h"
 #include "Tensor4.h"
 
 #include "mat_fun.h"
@@ -24,9 +23,8 @@ using mat_fun::Tensor;
 using mat_fun::NodalMatrix;
 using mat_fun::eigen_view;
 
-/// Returns the fiber representation required by a material model.
-Fibers::Representation fiber_representation(
-    consts::ConstitutiveModelType model);
+/// Returns whether a material model requires an orthonormal fiber basis.
+bool requires_orthonormal_fiber_basis(consts::ConstitutiveModelType model);
 
 void actv_strain(const ComMod& com_mod, const CepMod& cep_mod, const double gf,
     const int nfd, const Array<double>& fiber_basis, Array<double>& Fa);

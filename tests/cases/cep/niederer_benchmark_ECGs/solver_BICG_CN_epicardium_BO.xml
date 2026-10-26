@@ -52,7 +52,6 @@
   </Add_face>
 
   <Fiber_direction_constant> (1, 0, 0) </Fiber_direction_constant>
-  <Fiber_direction_constant> (0, 1, 0) </Fiber_direction_constant>
 
   <Domain_file_path> mesh/h0.1/domain_info.dat </Domain_file_path>
 
@@ -66,9 +65,9 @@
 
    <Domain id="1" >
        <Electrophysiology_model> BO </Electrophysiology_model>
+
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
        <Fiber_conductivity> 0.082715 </Fiber_conductivity>
-
 
        <Myocardial_zone> epicardium </Myocardial_zone>
 
@@ -115,9 +114,9 @@
   
    <Domain id="2" >
        <Electrophysiology_model> BO </Electrophysiology_model>
+
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
        <Fiber_conductivity> 0.082715 </Fiber_conductivity>
-
 
        <Myocardial_zone> epicardium </Myocardial_zone>
 

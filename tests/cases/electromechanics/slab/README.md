@@ -23,8 +23,7 @@ The mesh is a rectangular slab (`mesh/`) with two boundary faces `X0` and `X1`.
 The propagation of the transmembrane potential is modeled with the
 ten-Tusscher-Panfilov (`TTP`) cell activation model [2, 3], using epicardial
 parameters (included from `../../cep/ttp_parameters/ttp_epicardium_parameters.xml`)
-and orthotropic conductivity along the fiber, sheet, and sheet-normal directions.
-The domain is split
+and anisotropic conductivity aligned with the fiber direction. The domain is split
 into two `Domain`s: an unstimulated region (`domain 1`) and a stimulated region
 (`domain 2`) where an external `Istim` stimulus initiates depolarization.
 
