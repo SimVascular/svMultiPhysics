@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    # Keep in sync with the relevant filter in tests.yml.
+    paths:
+      - 'Code/**'
+      - 'tests/**'
+      - '.github/**'
   pull_request:
     types: [labeled, synchronize]
   workflow_dispatch:
