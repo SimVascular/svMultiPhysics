@@ -1387,7 +1387,6 @@ void dist_uris_msh(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, mshTy
   cm.bcast(cm_mod, &lM.gnNo);
   cm.bcast(cm_mod, &lM.nFa);
   cm.bcast(cm_mod, &lM.nFs);
-  cm.bcast(cm_mod, &lM.fibers.nfibers);
   cm.bcast(cm_mod, &lM.nG);
   cm.bcast(cm_mod, &lM.vtkType);
   cm.bcast(cm_mod, &lM.scF);
@@ -2011,7 +2010,6 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   cm.bcast(cm_mod, &lM.gnEl);
   cm.bcast(cm_mod, &lM.gnNo);
   cm.bcast(cm_mod, lM.name);
-  cm.bcast(cm_mod, &lM.fibers.nfibers);
   cm.bcast(cm_mod, &lM.scF);
   cm.bcast(cm_mod, &lM.qmTET4);
 

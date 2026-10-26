@@ -959,6 +959,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   std::vector<Array<double>> initial_fiber_bases(nMsh);
   bool has_point_fiber_basis = false;
   bool has_cell_fiber_basis = false;
+  int num_initial_fiber_directions = 0;
   if (write_initial_fiber_basis) {
     for (int iM = 0; iM < nMsh; ++iM) {
       const auto& mesh = meshes[iM];
@@ -968,6 +969,11 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
 
       initial_fiber_bases[iM] =
         mesh.fibers.gather_fibers(com_mod, cm_mod, mesh, nsd);
+      const auto representation =
+        mesh.fibers.get_default_representation();
+      num_initial_fiber_directions = std::max(
+        num_initial_fiber_directions,
+        mesh.fibers.get_num_directions(representation));
       switch (mesh.fibers.get_data_location()) {
         case Fibers::DataLocation::point:
           has_point_fiber_basis = true;
@@ -1004,7 +1010,10 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
       if (oGrp == OutputNameType::outGrp_fN) {
         nFn = 1;
         for (int iM = 0; iM < nMsh; iM++) {
-          nFn = std::max(nFn, meshes[iM].fibers.get_num_directions());
+          const auto representation =
+            meshes[iM].fibers.get_default_representation();
+          nFn = std::max(nFn,
+            meshes[iM].fibers.get_num_directions(representation));
         }
         nOut = nOut + nFn;
         outDof = outDof + eq.output[iOut].l * nFn;
@@ -1255,7 +1264,8 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
 
           case OutputNameType::outGrp_fA:
             tmpV.resize(1,msh.nNo);
-            if (msh.fibers.get_num_directions() >= 2) {
+            if (msh.fibers.get_num_directions(
+                  msh.fibers.get_default_representation()) >= 2) {
               post::fib_algn_post(simulation, msh, tmpV, solutions, iEq);
             }
             for (int a = 0; a < msh.nNo; a++) {
@@ -1541,7 +1551,8 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   vtk_writer->set_points(tmpV);
 
   if (has_point_fiber_basis) {
-    for (int direction = 0; direction < nsd; ++direction) {
+    for (int direction = 0; direction < num_initial_fiber_directions;
+         ++direction) {
       Array<double> fiber_direction(nsd, nNo);
       fiber_direction = 0.0;
       int node_offset = 0;
@@ -1549,7 +1560,9 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
       for (int iM = 0; iM < nMsh; ++iM) {
         const auto& fiber_basis = initial_fiber_bases[iM];
         if (meshes[iM].fibers.get_data_location() ==
-            Fibers::DataLocation::point) {
+              Fibers::DataLocation::point &&
+            direction < meshes[iM].fibers.get_num_directions(
+              meshes[iM].fibers.get_default_representation())) {
           for (int a = 0; a < d[iM].nNo; ++a) {
             for (int component = 0; component < nsd; ++component) {
               fiber_direction(component, node_offset + a) =
@@ -1561,7 +1574,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
       }
 
       vtk_writer->set_point_data(
-        "Fiber_basis" + std::to_string(direction + 1), fiber_direction);
+        "Fiber_direction" + std::to_string(direction + 1), fiber_direction);
     }
   }
 
@@ -1586,7 +1599,8 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   }
 
   if (has_cell_fiber_basis) {
-    for (int direction = 0; direction < nsd; ++direction) {
+    for (int direction = 0; direction < num_initial_fiber_directions;
+         ++direction) {
       Array<double> fiber_direction(nsd, nEl);
       fiber_direction = 0.0;
       int element_offset = 0;
@@ -1596,6 +1610,11 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
         const auto data_location = meshes[iM].fibers.get_data_location();
         if (data_location == Fibers::DataLocation::cell ||
             data_location == Fibers::DataLocation::constant) {
+          if (direction >= meshes[iM].fibers.get_num_directions(
+                meshes[iM].fibers.get_default_representation())) {
+            element_offset += d[iM].nEl;
+            continue;
+          }
           for (int e = 0; e < d[iM].nEl; ++e) {
             for (int component = 0; component < nsd; ++component) {
               fiber_direction(component, element_offset + e) =
@@ -1607,7 +1626,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
       }
 
       vtk_writer->set_element_data(
-        "Fiber_basis" + std::to_string(direction + 1), fiber_direction);
+        "Fiber_direction" + std::to_string(direction + 1), fiber_direction);
     }
   }
 

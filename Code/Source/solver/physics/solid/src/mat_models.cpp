@@ -16,6 +16,19 @@
 namespace mat_models {
 
 
+Fibers::Representation fiber_representation(
+  const consts::ConstitutiveModelType model)
+{
+  using consts::ConstitutiveModelType;
+  const bool requires_basis =
+    model == ConstitutiveModelType::stIso_Gucci ||
+    model == ConstitutiveModelType::stIso_HO ||
+    model == ConstitutiveModelType::stIso_HO_ma;
+  return requires_basis
+    ? Fibers::Representation::orthonormal_basis
+    : Fibers::Representation::raw;
+}
+
 
 /// @brief Compute active component of deformation gradient tensor for
 /// electromechanics coupling based on active strain formulation
@@ -29,6 +42,10 @@ void actv_strain(const ComMod& com_mod, const CepMod& cep_mod, const double gf,
 
   int nsd = com_mod.nsd;
 
+  if (nfd < 3) {
+    throw std::runtime_error(
+      "[actv_strain] A completed 3D fiber basis is required.");
+  }
   auto af = fiber_basis.col(0);
   auto as = fiber_basis.col(1);
   auto an = fiber_basis.col(2);
@@ -239,7 +256,7 @@ std::pair<Matrix<nsd>, Tensor<nsd>> bar_to_iso(
 template <int nsd>
 void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
                    const dmnType &lDmn, const Matrix<nsd> &F, const int nfd,
-                   const FiberRef<nsd> &fiber_basis,
+                   const FiberRef<nsd> &fibers,
                    const ActiveStress::ActiveTension &active_tension,
                    Matrix<nsd> &S, Matrix<3 * (nsd - 1)> &Dm, double &Ja) {
   using namespace consts;
@@ -256,12 +273,6 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   if (lDmn.phys != EquationType::phys_struct && lDmn.phys != EquationType::phys_ustruct && lDmn.phys != EquationType::phys_FSI) {
     throw std::runtime_error("[compute_pk2cc] This function is only valid for struct, ustruct, or fsi physics.");
   }
-
-  svmp::check<svmp::InternalErrorException>(
-      fiber_basis.cols() == nsd,
-      "The material-model fiber basis must contain exactly " +
-          std::to_string(nsd) + " directions, but contains " +
-          std::to_string(fiber_basis.cols()) + ".");
 
   // ustruct flag
   bool ustruct = (lDmn.phys == EquationType::phys_ustruct);
@@ -281,12 +292,12 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   double Tna = active_tension.sheet_normals;  // Sheet-normal direction
 
   // Aliases for fiber directions
-  const auto& fib_dir1 = fiber_basis.col(0);
+  const auto& fib_dir1 = fibers.col(0);
 
   // fib_dir2 only exists when nfd >= 2
   Eigen::Matrix<double, nsd, 1> fib_dir2;
   if (nfd >= 2) {
-    fib_dir2 = fiber_basis.col(1);
+    fib_dir2 = fibers.col(1);
   } else {
     fib_dir2 = Eigen::Matrix<double, nsd, 1>::Zero();
   }
@@ -395,7 +406,7 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
     // HGO (Holzapfel-Gasser-Ogden) model with additive splitting of
     // the anisotropic fiber-based strain-energy terms
     case ConstitutiveModelType::stIso_HGO: {
-      if (nfd != nsd) {
+      if (nfd != 2) {
         throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for HGO material model.");
       }
 
@@ -436,67 +447,63 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
       if (nfd != nsd) {
         throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for Guccione material model.");
       }
-
-      Eigen::Matrix<double, nsd, 1> fib_dir3;
-      if constexpr (nsd == 2) {
+      if constexpr (nsd != 3) {
         throw std::runtime_error(
             "The Guccione material model requires a 3D fiber basis.");
       } else {
-        fib_dir3 = fiber_basis.col(2);
+        // Compute isochoric component of E
+        Matrix<nsd> E = 0.50 * (J2d*C - Idm);
+
+        // Local orthogonal fiber basis (fiber, sheet, sheet-normal)
+        Matrix<nsd> Rm;
+        Rm.col(0) = fib_dir1;
+        Rm.col(1) = fib_dir2;
+        Rm.col(2) = fibers.col(2);
+
+        // Project E to local orthogonal coordinate system
+        Matrix<nsd> Es = Rm.transpose() * E * Rm;
+
+        // Compute preliminary quantities
+        double g1 = stM.bff;
+        double g2 = stM.bss;
+        double g3 = stM.bfs;
+
+        double QQ = g1 *  Es(0,0)*Es(0,0) +
+                    g2 * (Es(1,1)*Es(1,1) + Es(2,2)*Es(2,2) + Es(1,2)*Es(1,2) + Es(2,1)*Es(2,1)) +
+                    g3 * (Es(0,1)*Es(0,1) + Es(1,0)*Es(1,0) + Es(0,2)*Es(0,2) + Es(2,0)*Es(2,0));
+
+        double r2 = stM.C10 * exp(QQ);
+
+        Matrix<nsd> RmRm_00 = Rm.col(0) * Rm.col(0).transpose();
+        Matrix<nsd> RmRm_11 = Rm.col(1) * Rm.col(1).transpose();
+        Matrix<nsd> RmRm_22 = Rm.col(2) * Rm.col(2).transpose();
+        Matrix<nsd> RmRm_01 = 0.5 * (Rm.col(0) * Rm.col(1).transpose() + Rm.col(1) * Rm.col(0).transpose());
+        Matrix<nsd> RmRm_12 = 0.5 * (Rm.col(1) * Rm.col(2).transpose() + Rm.col(2) * Rm.col(1).transpose());
+        Matrix<nsd> RmRm_20 = 0.5 * (Rm.col(2) * Rm.col(0).transpose() + Rm.col(0) * Rm.col(2).transpose());
+
+        // Compute fictious stress and elasticity tensor
+        Matrix<nsd> S_bar = g1 *  Es(0,0) * RmRm_00 +
+                                 g2 * (Es(1,1) * RmRm_11 + Es(2,2)*RmRm_22 + 2.0*Es(1,2)*RmRm_12) +
+                           2.0 * g3 * (Es(0,1) * RmRm_01 + Es(0,2)*RmRm_20);
+
+        Tensor<nsd> CC_bar = 2.0*dyadic_product<nsd>(S_bar, S_bar);
+
+        S_bar = S_bar * r2;
+
+        r2  = r2*J4d;
+        CC_bar += g1 * dyadic_product<nsd>(RmRm_00, RmRm_00);
+        CC_bar += g2 * (dyadic_product<nsd>(RmRm_11, RmRm_11) +
+                        dyadic_product<nsd>(RmRm_22, RmRm_22) +
+                  2.0 * dyadic_product<nsd>(RmRm_12, RmRm_12));
+        CC_bar += 2.0 * g3 * (dyadic_product<nsd>(RmRm_01, RmRm_01) +
+                        dyadic_product<nsd>(RmRm_20, RmRm_20));
+        CC_bar = r2 * CC_bar;
+
+        // Compute and add isochoric stress and elasticity tensor
+        auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
+        S += S_iso;
+        CC += CC_iso;
       }
-
-      // Compute isochoric component of E
-      Matrix<nsd> E = 0.50 * (J2d*C - Idm);
-
-      // Construct local orthogonal coordinate system
-      Matrix<nsd> Rm;
-      Rm.col(0) = fib_dir1;
-      Rm.col(1) = fib_dir2;
-      Rm.col(2) = fib_dir3;
-
-      // Project E to local orthogonal coordinate system
-      Matrix<nsd> Es = Rm.transpose() * E * Rm;
-
-      // Compute preliminary quantities
-      double g1 = stM.bff;
-      double g2 = stM.bss;
-      double g3 = stM.bfs;
-
-      double QQ = g1 *  Es(0,0)*Es(0,0) + 
-                  g2 * (Es(1,1)*Es(1,1) + Es(2,2)*Es(2,2) + Es(1,2)*Es(1,2) + Es(2,1)*Es(2,1)) +
-                  g3 * (Es(0,1)*Es(0,1) + Es(1,0)*Es(1,0) + Es(0,2)*Es(0,2) + Es(2,0)*Es(2,0));
-
-      double r2 = stM.C10 * exp(QQ);
-
-      Matrix<nsd> RmRm_00 = Rm.col(0) * Rm.col(0).transpose();
-      Matrix<nsd> RmRm_11 = Rm.col(1) * Rm.col(1).transpose();
-      Matrix<nsd> RmRm_22 = Rm.col(2) * Rm.col(2).transpose();
-      Matrix<nsd> RmRm_01 = 0.5 * (Rm.col(0) * Rm.col(1).transpose() + Rm.col(1) * Rm.col(0).transpose());
-      Matrix<nsd> RmRm_12 = 0.5 * (Rm.col(1) * Rm.col(2).transpose() + Rm.col(2) * Rm.col(1).transpose());
-      Matrix<nsd> RmRm_20 = 0.5 * (Rm.col(2) * Rm.col(0).transpose() + Rm.col(0) * Rm.col(2).transpose());
-
-      // Compute fictious stress and elasticity tensor
-      Matrix<nsd> S_bar = g1 *  Es(0,0) * RmRm_00 + 
-                               g2 * (Es(1,1) * RmRm_11 + Es(2,2)*RmRm_22 + 2.0*Es(1,2)*RmRm_12) +
-                         2.0 * g3 * (Es(0,1) * RmRm_01 + Es(0,2)*RmRm_20);
-
-      Tensor<nsd> CC_bar = 2.0*dyadic_product<nsd>(S_bar, S_bar);
-
-      S_bar = S_bar * r2;
-
-      r2  = r2*J4d;
-      CC_bar += g1 * dyadic_product<nsd>(RmRm_00, RmRm_00);
-      CC_bar += g2 * (dyadic_product<nsd>(RmRm_11, RmRm_11) +
-                      dyadic_product<nsd>(RmRm_22, RmRm_22) +
-                2.0 * dyadic_product<nsd>(RmRm_12, RmRm_12));
-      CC_bar += 2.0 * g3 * (dyadic_product<nsd>(RmRm_01, RmRm_01) +
-                      dyadic_product<nsd>(RmRm_20, RmRm_20));
-      CC_bar = r2 * CC_bar;
-
-      // Compute and add isochoric stress and elasticity tensor
-      auto [S_iso, CC_iso] = bar_to_iso<nsd>(S_bar, CC_bar, J2d, C, Ci);
-      S += S_iso;
-      CC += CC_iso;
     } break;
 
     //  HO (Holzapfel-Ogden) model for myocardium (2009)
@@ -682,7 +689,7 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
       // Compute and store invariants and derivatives wrt C in array of
       // matrices/tensors
       CANNModel.computeInvariantsAndDerivatives<nsd>(
-          C, fiber_basis, nfd, J2d, J4d, Ci, Idm, N1, psi, Inv, dInv, ddInv);
+          C, fibers, nfd, J2d, J4d, Ci, Idm, N1, psi, Inv, dInv, ddInv);
 
       // Strain energy function and derivatives
       CANNModel.evaluate(Inv, psi, dpsi, ddpsi);
@@ -736,12 +743,11 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   if (!utils::is_zero(Tna) || !utils::is_zero(active_tension.d_sheet_normals)) {
     svmp::check<svmp::InternalErrorException>(
         nfd >= 3,
-        "Applying active stress along normals (eta_n > 0) requires a 3D "
+        "Applying active stress along normals (eta_n > 0) requires a completed "
         "fiber basis, but only " +
             std::to_string(nfd) + " fiber directions are defined.");
 
-    auto fib_dir3 = fiber_basis.col(2);
-    const Matrix<nsd> Hnn = fib_dir3 * fib_dir3.transpose();
+    const Matrix<nsd> Hnn = fibers.col(2) * fibers.col(2).transpose();
     S += Tna * Hnn;
 
     if (has_tangent_n)

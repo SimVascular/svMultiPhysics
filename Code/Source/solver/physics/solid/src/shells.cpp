@@ -32,7 +32,8 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
   #ifdef debug_construct_shell
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "lM.fibers.get_num_directions: " << lM.fibers.get_num_directions();
+  dmsg << "input fiber directions: "
+       << lM.fibers.get_num_input_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   dmsg << "lM.eNoN: " << lM.eNoN;
   #endif
@@ -50,11 +51,6 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     eNoN = 2 * eNoN;
   }
 
-  int nFn = lM.fibers.get_num_directions();
-  if (nFn == 0) {
-    nFn = 1;
-  }
-
   // Initialize tensor operations
   mat_fun::ten_init(2);
 
@@ -62,9 +58,8 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
   //
   Vector<int> ptr(eNoN);
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
-                bfl(nsd,eNoN), default_fibers(3,nFn), lR(dof,eNoN);
+                bfl(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN); 
-  default_fibers = 0.0;
 
   // Loop over all elements of mesh
   //
@@ -75,6 +70,8 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     if (cPhys != EquationType::phys_shell) {
       continue;
     }
+    const auto fiber_representation =
+      mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType);
 
 #if 0
     dmsg << " " << " ";
@@ -132,9 +129,14 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     //  Constant strain triangles, no numerical integration
     //
     if (lM.eType == ElementType::TRI3) {
-      const auto fibers = lM.fibers.has_fibers()
-        ? lM.fibers.get_quadrature_fibers(nsd, 0, e)
-        : Array<double>(3, nFn, default_fibers.data());
+      Array<double> fibers;
+      if (!lM.fibers.has_fibers()) {
+        fibers = Fibers::zero_fibers(nsd);
+      } else {
+        fibers = lM.fibers.get_quadrature_fibers(
+          nsd, 0, e, fiber_representation);
+      }
+      const int nFn = fibers.ncols();
       shell_cst(com_mod, lM, e, eNoN, nFn, fibers, al, yl, dl, xl, bfl, ptr);
 
     } else {
@@ -146,9 +148,14 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
 
       // Gauss integration
       for (int g = 0; g < lM.nG; g++) {
-        const auto fibers = lM.fibers.has_fibers()
-          ? lM.fibers.get_quadrature_fibers(nsd, g, e)
-          : Array<double>(3, nFn, default_fibers.data());
+        Array<double> fibers;
+        if (!lM.fibers.has_fibers()) {
+          fibers = Fibers::zero_fibers(nsd);
+        } else {
+          fibers = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, fiber_representation);
+        }
+        const int nFn = fibers.ncols();
         shell_3d(com_mod, lM, g, eNoN, nFn, fibers, al, yl, dl, xl, bfl, lR, lK);
       }
     }
@@ -1195,7 +1202,8 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   #ifdef debug_shell_cst 
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "lM.fibers.get_num_directions: " << lM.fibers.get_num_directions();
+  dmsg << "input fiber directions: "
+       << lM.fibers.get_num_input_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   dmsg << "dof: " << dof;
   dmsg << "eNoN: " << eNoN;

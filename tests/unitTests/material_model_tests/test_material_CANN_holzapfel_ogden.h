@@ -120,8 +120,11 @@ public:
        
         dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
 
-        // Complete orthonormal fiber basis (fiber, sheet, fiber × sheet)
-        set_fiber_basis(params.f, params.s);
+        // CANN consumes the two supplied fiber families directly.
+        nFn = 2;
+        fN = Array<double>(com_mod.nsd, nFn);
+        fN.set_col(0, params.f);
+        fN.set_col(1, params.s);
     }
 
 /**

@@ -16,7 +16,9 @@ namespace cep {
 namespace {
 
 /// Build the diffusion tensor D = D_iso I + Σ_i D[i] f_i ⊗ f_i from the
-/// isotropic conductivity and the available directions in the completed basis.
+/// isotropic conductivity and the fiber directions supplied for this domain
+/// (raw family for fiber-only anisotropy, completed basis when sheet or
+/// sheet-normal conductivity is present).
 Array<double> diffusion_tensor(const int nsd, const double isotropic_conductivity,
                                const Vector<double>& conductivities,
                                const Array<double>& fibers)
@@ -315,6 +317,11 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           "[construct_cep] Directional conductivity requires fiber "
           "directions on mesh '" + lM.name + "'.");
     }
+    // Fiber-only anisotropy uses the raw fiber family. Sheet / sheet-normal
+    // conductivity needs a completed orthonormal basis.
+    const auto fiber_representation = fiber_conductivities.size() > 1
+      ? Fibers::Representation::orthonormal_basis
+      : Fibers::Representation::raw;
 
     // Update shape functions for NURBS
     //if (lM.eType .EQ. eType_NRB) CALL NRBNNX(lM, e)
@@ -366,14 +373,16 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       if (insd == 3) {
         Array<double> fibers;
         if (fiber_conductivities.size() != 0) {
-          fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
+          fibers = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, fiber_representation);
         }
         cep_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
 
       } else if (insd == 2) {
         Array<double> fibers;
         if (fiber_conductivities.size() != 0) {
-          fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
+          fibers = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, fiber_representation);
         }
         cep_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
 

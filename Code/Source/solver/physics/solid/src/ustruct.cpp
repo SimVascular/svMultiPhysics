@@ -211,7 +211,8 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   #ifdef debug_construct_usolid
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "lM.fibers.get_num_directions: " << lM.fibers.get_num_directions();
+  dmsg << "input fiber directions: "
+       << lM.fibers.get_num_input_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   #endif
 
@@ -228,10 +229,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   bool pstEq = com_mod.pstEq;
 
   int eNoN = lM.eNoN;
-  int nFn = lM.fibers.get_num_directions();
-  if (nFn == 0) {
-    nFn = 1;
-  }
   const bool mesh_has_fibers = lM.fibers.has_fibers();
 
   bool vmsStab = false;
@@ -262,6 +259,8 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     if (cPhys != EquationType::phys_ustruct) {
       continue;
     }
+    const auto fiber_representation =
+      mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType);
 
     // Create local copies
     for (int a = 0; a < eNoN; a++) {
@@ -315,16 +314,13 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     Array<double> ksix(nsd,nsd);
 
     for (int g = 0; g < fs[0].nG; g++) {
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> default_fibers;
-      const double* fiber_data = nullptr;
-      if (mesh_has_fibers) {
-        fiber_data = lM.fibers.get_eigen_fibers(nsd, g, e).data();
-      } else {
-        default_fibers.setZero(nsd, nsd);
-        fiber_data = default_fibers.data();
-      }
-      const Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> fibers(
-          fiber_data, nsd, nsd);
+      using FiberMap =
+        Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>;
+      const FiberMap fibers = !mesh_has_fibers
+        ? Fibers::zero_eigen_fibers(nsd)
+        : lM.fibers.get_eigen_fibers(
+            nsd, g, e, fiber_representation);
+      const int nFn = fibers.cols();
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra. triangles).

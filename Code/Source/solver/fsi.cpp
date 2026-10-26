@@ -9,6 +9,7 @@
 #include "fs.h"
 #include "lhsa.h"
 #include "nn.h"
+#include "solid/mat_models.h"
 #include "solid/sv_struct.h"
 #include "solid/ustruct.h"
 #include "utils.h"
@@ -49,8 +50,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
   // l = 3, if nsd==2 ; else 6;
   const int l = com_mod.nsymd;
   const int nsd  = com_mod.nsd;
-  int nFn  = lM.fibers.get_num_directions();
-  if (nFn == 0) nFn = 1;
   const int tDof = com_mod.tDof;
   const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
@@ -93,6 +92,10 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         (cPhys != Equation_struct) && (cPhys != Equation_ustruct)) {
       continue;
     }
+    const auto fiber_representation =
+      cPhys == Equation_struct || cPhys == Equation_ustruct
+      ? mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType)
+      : Fibers::Representation::raw;
 
     // Update shape functions for NURBS
     //if (lM.eType == eType_NRB) CALL NRBNNX(lM, e)
@@ -169,16 +172,13 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     }
 
     for (int g = 0; g < fs_1[0].nG; g++) {
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> default_fibers;
-      const double* fiber_data = nullptr;
-      if (mesh_has_fibers) {
-        fiber_data = lM.fibers.get_eigen_fibers(nsd, g, e).data();
-      } else {
-        default_fibers.setZero(nsd, nsd);
-        fiber_data = default_fibers.data();
-      }
-      const Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> fibers(
-          fiber_data, nsd, nsd);
+      using FiberMap =
+        Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>;
+      const FiberMap fibers = !mesh_has_fibers
+        ? Fibers::zero_eigen_fibers(nsd)
+        : lM.fibers.get_eigen_fibers(
+            nsd, g, e, fiber_representation);
+      const int nFn = fibers.cols();
 
       if (g == 0 || !fs_1[1].lShpF) {
         auto Nx = fs_1[1].Nx.rslice(g);

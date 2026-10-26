@@ -577,7 +577,8 @@ void fib_algn_post(Simulation* simulation, const mshType& lM, Array<double>& res
     Array<double> F;
 
     for (int g = 0; g < lM.nG; g++) {
-      const auto fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
+      const auto fibers = lM.fibers.get_quadrature_fibers(
+        nsd, g, e, lM.fibers.get_default_representation());
 
       double Jac = 0.0;
 
@@ -589,11 +590,9 @@ void fib_algn_post(Simulation* simulation, const mshType& lM, Array<double>& res
       double w = lM.w(g)*Jac;
       auto F = deformation_gradient(Nx, dl, nsd, eNoN, i);
       for (int iFn = 0; iFn < 2; iFn++) {
-        for (int i = 0; i < nsd; i++) {
-          auto fiber = fibers.col(iFn);
-          auto F_fN = mat_fun::mat_mul(F, fiber);
-          fl.set_col(iFn, F_fN / utils::norm(F_fN));
-        }
+        const auto fiber = fibers.col(iFn);
+        const auto F_fN = mat_fun::mat_mul(F, fiber);
+        fl.set_col(iFn, F_fN / utils::norm(F_fN));
       }
 
       double sHat = fl.rcol(0) * fl.rcol(1);
@@ -645,9 +644,7 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
   Array<double> sF(nFn*nsd,tnNo); 
   Array<double> xl(nsd,eNoN); 
   Array<double> dl(tDof,eNoN); 
-  const int num_fiber_dirs = lM.fibers.get_num_directions();
-  Array<double> fibers(nsd, num_fiber_dirs);
-  Array<double> fl(nsd, num_fiber_dirs);
+  Array<double> fl(nsd, nFn);
   Array<double> Nx(nsd,eNoN); 
   Vector<double> N(eNoN);
 
@@ -673,12 +670,9 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
     double Jac = 0.0;
 
     for (int g = 0; g < lM.nG; g++) {
-      const auto quadrature_fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
-      for (int iFn = 0; iFn < num_fiber_dirs; ++iFn) {
-        for (int i = 0; i < nsd; ++i) {
-          fibers(i, iFn) = quadrature_fibers(i, iFn);
-        }
-      }
+      const auto fibers = lM.fibers.get_quadrature_fibers(
+        nsd, g, e, lM.fibers.get_default_representation());
+      const int num_fiber_dirs = fibers.ncols();
 
       if (g == 0 || !lM.lShpF) {
         auto Nxi = lM.Nx.slice(g);
@@ -690,11 +684,9 @@ void fib_dir_post(Simulation* simulation, const mshType& lM, const int nFn, Arra
       F = deformation_gradient(Nx, dl, nsd, eNoN, i);
 
       for (int iFn = 0; iFn < num_fiber_dirs; iFn++) {
-        for (int i = 0; i < nsd; i++) {
-          auto fiber = fibers.col(iFn);
-          auto F_fN = mat_fun::mat_mul(F, fiber);
-          fl.set_col(iFn, F_fN / utils::norm(F_fN));
-        }
+        const auto fiber = fibers.col(iFn);
+        const auto F_fN = mat_fun::mat_mul(F, fiber);
+        fl.set_col(iFn, F_fN / utils::norm(F_fN));
       }
 
       for (int a = 0; a < eNoN; a++) {
@@ -775,7 +767,8 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
 
       // Compute fiber stretch based on 4th invariant: I_{4,f} = F.f.F.f
       Vector<double> fiber(nsd);
-      const auto fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
+      const auto fibers = lM.fibers.get_quadrature_fibers(
+        nsd, g, e, Fibers::Representation::raw);
       for (int component = 0; component < nsd; ++component) {
         fiber[component] = fibers(component, 0);
       }
@@ -1359,10 +1352,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
   int j = i + 1;
   int k = j + 1;
 
-  int nFn = lM.fibers.get_num_directions();
-  if (nFn == 0) {
-    nFn = 1;
-  }
+  int nFn = 1;
 
   // Set shell dimension := 2
   int insd = nsd-1;
@@ -1381,7 +1371,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
   Vector<double> sA(tnNo), sE(lM.nEl), resl(m), N(lM.eNoN);
   Vector<int> ptr(eNoN);
   Array<double> sF(m,tnNo), dl(tDof,eNoN), x0(3,eNoN), xc(3,eNoN), 
-      fibers(3,nFn), fNa0(2,eNoN), Nx(2,lM.eNoN);
+      fibers, fNa0, Nx(2,lM.eNoN);
   Array3<double> Bb(3,3,6);
 
   // Initialize arrays
@@ -1400,6 +1390,8 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
     if (cPhys != EquationType::phys_shell) {
       continue;
     }
+    const auto fiber_representation =
+      mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType);
     //if (lM.eType .EQ. eType_NRB) CALL NRBNNX(lM, e)
 
     // Get shell properties
@@ -1472,14 +1464,15 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
     Array<double> Nxx, Nx;
 
     for (int g = 0; g < nwg; g++) {
-      fibers = 0.0;
-      if (lM.fibers.has_fibers()) {
-        const auto quadrature_fibers = lM.fibers.get_quadrature_fibers(nsd, g, e);
-        for (int iFn = 0; iFn < nFn; ++iFn) {
-          for (int i = 0; i < 3; ++i) {
-            fibers(i, iFn) = quadrature_fibers(i, iFn);
-          }
-        }
+      if (!lM.fibers.has_fibers()) {
+        fibers = Fibers::zero_fibers(nsd);
+      } else {
+        fibers = lM.fibers.get_quadrature_fibers(
+          nsd, g, e, fiber_representation);
+      }
+      nFn = fibers.ncols();
+      if (fNa0.nrows() != 2 || fNa0.ncols() != nFn) {
+        fNa0.resize(2, nFn);
       }
 
       double w = 0.0;
@@ -1795,10 +1788,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
   int j = i + 1;
   int k = j + 1;
 
-  int nFn = lM.fibers.get_num_directions();
-  if (nFn == 0) {
-    nFn = 1;
-  }
+  int nFn = 1;
 
   #ifdef debug_tensor_post
   dmsg << "i: " << i;
@@ -1852,7 +1842,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
   Array<double> xl(nsd,fs.eNoN); 
   Array<double> dl(tDof,fs.eNoN); 
   Array<double> yl(tDof,fs.eNoN); 
-  Array<double> fibers(nsd,nsd);
+  Array<double> fibers;
   Vector<double> resl(m); 
   Array<double> Nx(nsd,fs.eNoN); 
   Vector<double> N(fs.eNoN);
@@ -1874,6 +1864,11 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
     if (cPhys != EquationType::phys_struct && cPhys != EquationType::phys_ustruct && cPhys != EquationType::phys_lElas) {
       continue; 
     } 
+    const auto fiber_representation =
+      (cPhys == EquationType::phys_struct ||
+       cPhys == EquationType::phys_ustruct)
+      ? mat_models::fiber_representation(eq.dmn[cDmn].stM.isoType)
+      : Fibers::Representation::raw;
 
     double elM = 0.0; 
     double nu = 0.0; 
@@ -1917,16 +1912,13 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
     double Jac = 0.0;
 
     for (int g = 0; g < fs.nG; g++) {
-      fibers = 0.0;
-      if (lM.fibers.has_fibers()) {
-        const auto quadrature_fibers =
-          lM.fibers.get_quadrature_fibers(nsd, fs.N.col(g), e);
-        for (int l = 0; l < nsd; ++l) {
-          for (int i = 0; i < nsd; ++i) {
-            fibers(i, l) = quadrature_fibers(i, l);
-          }
-        }
+      if (!lM.fibers.has_fibers()) {
+        fibers = Fibers::zero_fibers(nsd);
+      } else {
+        fibers = lM.fibers.get_quadrature_fibers(
+          nsd, fs.N.col(g), e, fiber_representation);
       }
+      nFn = fibers.ncols();
 
       // Shape gradients and viscous response can be reused for linear triangular and tetrahedral elements.
       const bool recompute_visc = (g == 0 || !fs.lShpF);

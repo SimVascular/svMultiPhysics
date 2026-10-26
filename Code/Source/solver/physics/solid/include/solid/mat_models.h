@@ -8,6 +8,7 @@
 #include "Array.h"
 #include "CepMod.h"
 #include "ComMod.h"
+#include "Fibers.h"
 #include "Tensor4.h"
 
 #include "mat_fun.h"
@@ -23,6 +24,10 @@ using mat_fun::Tensor;
 using mat_fun::NodalMatrix;
 using mat_fun::eigen_view;
 
+/// Returns the fiber representation required by a material model.
+Fibers::Representation fiber_representation(
+    consts::ConstitutiveModelType model);
+
 void actv_strain(const ComMod& com_mod, const CepMod& cep_mod, const double gf,
     const int nfd, const Array<double>& fiber_basis, Array<double>& Fa);
 
@@ -30,9 +35,7 @@ void cc_to_voigt(const int nsd, const Tensor4<double>& CC, Array<double>& Dm);
 
 void voigt_to_cc(const int nsd, const Array<double>& Dm, Tensor4<double>& CC);
 
-/// @brief Complete orthonormal fiber basis at a Gauss point, one basis vector
-/// per column, with row count fixed at compile time to the number of spatial
-/// dimensions. Columns are fiber, sheet/transverse, and (in 3D) sheet normal.
+/// @brief Fiber directions at a Gauss point, one direction per column.
 template <int nsd>
 using FiberRef =
     Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>;
@@ -46,10 +49,9 @@ using FiberRef =
  *   variables.
  * @param[in] lDmn Domain object.
  * @param[in] F Deformation gradient tensor.
- * @param[in] nfd Number of completed fiber directions (equal to @p nsd when
- *   fibers are present).
- * @param[in] fiber_basis Complete orthonormal fiber basis with @p nsd columns
- *   (fiber, sheet/transverse, and in 3D sheet normal).
+ * @param[in] nfd Number of fiber directions in @p fibers.
+ * @param[in] fibers Raw fiber families or a completed basis, as required by
+ *   the material model.
  * @param[in] active_tension Active tension along the fiber, sheet and
  *   sheet-normal directions, and its derivatives with respect to the fiber
  *   stretch. The derivatives contribute the tangent of the active stress to
@@ -66,7 +68,7 @@ using FiberRef =
 template <int nsd>
 void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
                    const dmnType &lDmn, const Matrix<nsd> &F, const int nfd,
-                   const FiberRef<nsd> &fiber_basis,
+                   const FiberRef<nsd> &fibers,
                    const ActiveStress::ActiveTension &active_tension,
                    Matrix<nsd> &S, Matrix<3 * (nsd - 1)> &Dm, double &Ja);
 

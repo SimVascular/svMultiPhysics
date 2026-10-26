@@ -312,10 +312,9 @@ public:
         dmn.stM.isoType = matType;                            // Mat_model
         dmn.stM.volType = penType;                            // Dilational_penalty_model
         
-        // Initialize a complete nsd x nsd orthonormal fiber basis (zeros until
-        // set). nFn is the completed basis size, matching Fibers::nfibers.
-        nFn = nsd;
-        fN = Array<double>(nsd, nsd);
+        // Initialize the two raw fiber families used by non-cardiac models.
+        nFn = 2;
+        fN = Array<double>(nsd, nFn);
         active_tension = ActiveStress::ActiveTension{}; // No active tension.
 
         // Flag to use struct or ustruct material models

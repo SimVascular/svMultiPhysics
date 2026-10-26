@@ -8,12 +8,15 @@
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "ActiveStress.h"
+#include "Fibers.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "porous/darcy.h"
 #include "electrophysiology/IonicModel.h"
 #include "read_msh.h"
+#include "solid/mat_models.h"
 #include "vtk_xml.h"
+#include "utils.h"
 
 #include "Array.h"
 #include "CepMod.h"
@@ -2114,6 +2117,51 @@ void read_files(Simulation* simulation, const std::string& file_name)
     svmp::throw_if<svmp::ParseException>(has_sac && !has_displacement_eq,
         "Feedback_parameter_for_stretch_activated_currents requires an "
         "equation solving for the displacement (struct, ustruct or FSI).");
+  }
+
+  // Build completed fiber bases on meshes that need them so distribute can
+  // ship both the raw quadrature fibers and the orthonormal basis.
+  for (int iM = 0; iM < com_mod.nMsh; ++iM) {
+    auto& mesh = com_mod.msh[iM];
+    if (!mesh.fibers.has_fibers()) {
+      continue;
+    }
+
+    bool needs_basis = false;
+    for (int iEq = 0; iEq < com_mod.nEq && !needs_basis; ++iEq) {
+      const auto& eq = com_mod.eq[iEq];
+      for (int iDmn = 0; iDmn < eq.nDmn && !needs_basis; ++iDmn) {
+        const auto& dmn = eq.dmn[iDmn];
+        // CEP needs a completed basis only when sheet (or sheet-normal)
+        // conductivity is present. Fiber-only anisotropy uses raw directions.
+        const bool domain_needs_basis =
+          (dmn.phys == EquationType::phys_CEP && !mesh.lFib &&
+           dmn.cep.D.size() > 1) ||
+          ((dmn.phys == EquationType::phys_struct ||
+            dmn.phys == EquationType::phys_ustruct ||
+            dmn.phys == EquationType::phys_shell) &&
+           mat_models::fiber_representation(dmn.stM.isoType) ==
+             Fibers::Representation::orthonormal_basis);
+        if (!domain_needs_basis) {
+          continue;
+        }
+        if (dmn.Id == -1 || mesh.eId.size() == 0) {
+          needs_basis = true;
+          break;
+        }
+        const int num_elements = mesh.gnEl > 0 ? mesh.gnEl : mesh.nEl;
+        for (int e = 0; e < num_elements; ++e) {
+          if (utils::btest(mesh.eId[e], dmn.Id)) {
+            needs_basis = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (needs_basis) {
+      mesh.fibers.initialize_fiber_bases(com_mod.nsd);
+    }
   }
 
   // [NOTE] what's going on here?

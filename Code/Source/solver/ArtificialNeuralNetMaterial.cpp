@@ -168,10 +168,8 @@ std::array<Tensor<nsd>,9>& ddInv) const {
       J4d * (2 * symmetric_dyadic_product(N1, Idm) - dyadic_product(N1, Idm) +
              2 * symmetric_dyadic_product(Idm, N1) - dyadic_product(Idm, N1));
 
-  // Sheet / fiber-sheet invariants (I6–I9) need fiber + sheet. Under the
-  // completed-basis convention nfd == nsd, so that is nfd == 3 in 3D
-  // (was nfd == 2 when nfd counted only user-supplied directions).
-  if (nfd == 3) {
+  // Sheet / fiber-sheet invariants (I6-I9) need two supplied families.
+  if (nfd == 2) {
     Inv[5] = J2d * (fl.col(0).dot(C * fl.col(1)));
     Inv[6] = J4d * (fl.col(0).dot(C2 * fl.col(1)));
     Inv[7] = J2d * (fl.col(1).dot(C * fl.col(1)));

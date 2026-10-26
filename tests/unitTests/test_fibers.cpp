@@ -24,6 +24,9 @@
 
 namespace {
 
+constexpr auto raw_fibers = Fibers::Representation::raw;
+constexpr auto fiber_basis = Fibers::Representation::orthonormal_basis;
+
 mshType make_single_element_mesh()
 {
   mshType mesh;
@@ -90,7 +93,7 @@ void write_nodal_fiber_file(
 
 } // namespace
 
-TEST(Fibers, ReadsOrthonormalConstantDirections)
+TEST(Fibers, LoadsRawThenOrthonormalizesConstantDirections)
 {
   MeshParameters parameters;
   parameters.fiber_directions.emplace_back("Fiber_direction_constant",
@@ -102,16 +105,35 @@ TEST(Fibers, ReadsOrthonormalConstantDirections)
   Fibers fibers;
 
   EXPECT_FALSE(fibers.has_fibers());
-  EXPECT_EQ(fibers.get_num_directions(), 0);
+  EXPECT_EQ(fibers.get_num_input_directions(), 0);
+  {
+    const auto zeros = Fibers::zero_fibers(3);
+    ASSERT_EQ(zeros.nrows(), 3);
+    ASSERT_EQ(zeros.ncols(), 1);
+    EXPECT_DOUBLE_EQ(zeros(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(zeros(1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(zeros(2, 0), 0.0);
+
+    const auto eigen_zeros = Fibers::zero_eigen_fibers(3);
+    ASSERT_EQ(eigen_zeros.rows(), 3);
+    ASSERT_EQ(eigen_zeros.cols(), 1);
+    EXPECT_DOUBLE_EQ(eigen_zeros(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(eigen_zeros(1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(eigen_zeros(2, 0), 0.0);
+  }
   fibers.read(parameters, mesh, 3);
 
   ASSERT_TRUE(fibers.has_fibers());
-  ASSERT_EQ(fibers.nfibers, 3);
-  ASSERT_EQ(fibers.get_num_directions(), 3);
+  ASSERT_EQ(fibers.get_num_input_directions(), 2);
+  ASSERT_EQ(fibers.get_num_basis_directions(), 0);
+  EXPECT_FALSE(fibers.has_orthonormal_basis());
+  EXPECT_EQ(fibers.get_default_representation(),
+    Fibers::Representation::raw);
+  EXPECT_EQ(fibers.get_num_directions(Fibers::Representation::raw), 2);
 
-  const auto quadrature_fibers = fibers.get_quadrature_fibers(3, 0, 0);
+  auto quadrature_fibers = fibers.get_quadrature_fibers(3, 0, 0, raw_fibers);
   ASSERT_EQ(quadrature_fibers.nrows(), 3);
-  ASSERT_EQ(quadrature_fibers.ncols(), 3);
+  ASSERT_EQ(quadrature_fibers.ncols(), 2);
   EXPECT_DOUBLE_EQ(quadrature_fibers(0, 0), 1.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(1, 0), 0.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(2, 0), 0.0);
@@ -119,16 +141,30 @@ TEST(Fibers, ReadsOrthonormalConstantDirections)
   EXPECT_DOUBLE_EQ(quadrature_fibers(1, 1), 1.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(2, 1), 0.0);
 
-  const auto& input_fibers = fibers.get_input_fibers();
-  ASSERT_EQ(input_fibers.nrows(), 9);
-  ASSERT_EQ(input_fibers.ncols(), 1);
-  EXPECT_DOUBLE_EQ(input_fibers(0, 0), 1.0);
-  EXPECT_DOUBLE_EQ(input_fibers(4, 0), 1.0);
-  EXPECT_DOUBLE_EQ(input_fibers(8, 0), 1.0);
+  fibers.initialize_fiber_bases(3);
+  EXPECT_TRUE(fibers.has_orthonormal_basis());
+  ASSERT_EQ(fibers.get_num_input_directions(), 2);
+  ASSERT_EQ(fibers.get_num_basis_directions(), 3);
+  EXPECT_EQ(fibers.get_default_representation(),
+    Fibers::Representation::orthonormal_basis);
+  EXPECT_EQ(fibers.get_num_directions(
+    Fibers::Representation::orthonormal_basis), 3);
+  const auto raw_after = fibers.get_quadrature_fibers(3, 0, 0, raw_fibers);
+  ASSERT_EQ(raw_after.ncols(), 2);
+  EXPECT_DOUBLE_EQ(raw_after(0, 0), 1.0);
+  const auto basis = fibers.get_quadrature_fibers(3, 0, 0, fiber_basis);
+  const auto selected = fibers.get_quadrature_fibers(
+    3, 0, 0, fibers.get_default_representation());
+  const auto* basis_data = basis.data();
+  ASSERT_EQ(basis.ncols(), 3);
+  EXPECT_EQ(selected.data(), basis.data());
+  EXPECT_DOUBLE_EQ(basis(2, 2), 1.0);
+  fibers.initialize_fiber_bases(3);
+  EXPECT_EQ(fibers.get_quadrature_fibers(3, 0, 0, fiber_basis).data(), basis_data);
 
   fibers.clear();
   EXPECT_FALSE(fibers.has_fibers());
-  EXPECT_EQ(fibers.get_num_directions(), 0);
+  EXPECT_EQ(fibers.get_num_input_directions(), 0);
 }
 
 TEST(Fibers, ConstantDirectionsShareStorageAcrossQueries)
@@ -145,17 +181,18 @@ TEST(Fibers, ConstantDirectionsShareStorageAcrossQueries)
 
   Fibers fibers;
   fibers.read(parameters, mesh, 3);
+  fibers.initialize_fiber_bases(3);
 
-  const auto reference = fibers.get_quadrature_fibers(3, 0, 0);
-  const auto eigen_fibers = fibers.get_eigen_fibers(3, 1, 1);
+  const auto reference = fibers.get_quadrature_fibers(3, 0, 0, fiber_basis);
+  const auto eigen_fibers = fibers.get_eigen_fibers(3, 1, 1, fiber_basis);
   EXPECT_EQ(eigen_fibers.data(), reference.data());
-  EXPECT_EQ(fibers.get_quadrature_fibers(3, 1, 1).data(), reference.data());
+  EXPECT_EQ(fibers.get_quadrature_fibers(3, 1, 1, fiber_basis).data(), reference.data());
   EXPECT_DOUBLE_EQ(eigen_fibers(0, 2), 0.0);
   EXPECT_DOUBLE_EQ(eigen_fibers(1, 2), 0.0);
   EXPECT_DOUBLE_EQ(eigen_fibers(2, 2), 1.0);
 }
 
-TEST(Fibers, RejectsWrongNumberOfConstantDirections)
+TEST(Fibers, AcceptsRawCountRejectedByBasisInitialization)
 {
   MeshParameters parameters;
   parameters.fiber_directions.emplace_back("Fiber_direction_constant",
@@ -163,7 +200,21 @@ TEST(Fibers, RejectsWrongNumberOfConstantDirections)
 
   auto mesh = make_single_element_mesh();
   Fibers fibers;
-  EXPECT_THROW(fibers.read(parameters, mesh, 3), svmp::ParseException);
+  EXPECT_NO_THROW(fibers.read(parameters, mesh, 3));
+  EXPECT_EQ(fibers.get_num_input_directions(), 1);
+  EXPECT_THROW(fibers.initialize_fiber_bases(3), svmp::ParseException);
+}
+
+TEST(Fibers, AcceptsNoDirections)
+{
+  MeshParameters parameters;
+  auto mesh = make_single_element_mesh();
+  Fibers fibers;
+
+  EXPECT_NO_THROW(fibers.read(parameters, mesh, 3));
+  EXPECT_FALSE(fibers.has_fibers());
+  EXPECT_EQ(fibers.get_num_input_directions(), 0);
+  EXPECT_EQ(fibers.get_num_basis_directions(), 0);
 }
 
 TEST(Fibers, RejectsConstantDirectionWithWrongComponentCount)
@@ -185,6 +236,47 @@ TEST(Fibers, RejectsConstantDirectionWithWrongComponentCount)
       "Fiber_direction_constant 1 has 2 components, but exactly 3 are "
       "required for a 3D mesh.");
   }
+}
+
+TEST(Fibers, AcceptsArbitraryRawDirectionCount)
+{
+  MeshParameters parameters;
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{1.0, 0.0, 0.0}, false);
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{0.0, 1.0, 0.0}, false);
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{0.0, 0.0, 1.0}, false);
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{-1.0, 0.0, 0.0}, false);
+
+  auto mesh = make_single_element_mesh();
+  Fibers fibers;
+  EXPECT_NO_THROW(fibers.read(parameters, mesh, 3));
+  EXPECT_EQ(fibers.get_num_input_directions(), 4);
+  EXPECT_EQ(fibers.get_quadrature_fibers(3, 0, 0, raw_fibers).ncols(), 4);
+  EXPECT_THROW(fibers.initialize_fiber_bases(3), svmp::ParseException);
+}
+
+TEST(Fibers, PreservesCompleteLeftHandedBasis)
+{
+  MeshParameters parameters;
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{1.0, 0.0, 0.0}, false);
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{0.0, 1.0, 0.0}, false);
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{0.0, 0.0, -1.0}, false);
+
+  auto mesh = make_single_element_mesh();
+  Fibers fibers;
+  fibers.read(parameters, mesh, 3);
+  fibers.initialize_fiber_bases(3);
+
+  const auto basis = fibers.get_quadrature_fibers(3, 0, 0, fiber_basis);
+  ASSERT_EQ(basis.ncols(), 3);
+  EXPECT_DOUBLE_EQ(basis(2, 2), -1.0);
+  EXPECT_EQ(fibers.get_quadrature_fibers(3, 0, 0, raw_fibers).ncols(), 3);
 }
 
 TEST(Fibers, RejectsNonUnitConstantDirection)
@@ -223,7 +315,11 @@ TEST(Fibers, RejectsNonOrthogonalConstantDirections)
 
   auto mesh = make_single_element_mesh();
   Fibers fibers;
-  EXPECT_THROW(fibers.read(parameters, mesh, 3), svmp::ParseException);
+  EXPECT_NO_THROW(fibers.read(parameters, mesh, 3));
+  const auto raw = fibers.get_quadrature_fibers(3, 0, 0, raw_fibers);
+  EXPECT_DOUBLE_EQ(raw(0, 1), 0.6);
+  EXPECT_DOUBLE_EQ(raw(1, 1), 0.8);
+  EXPECT_THROW(fibers.initialize_fiber_bases(3), svmp::ParseException);
 }
 
 TEST(Fibers, RejectsAntiparallelConstantDirections)
@@ -236,7 +332,8 @@ TEST(Fibers, RejectsAntiparallelConstantDirections)
 
   auto mesh = make_single_element_mesh();
   Fibers fibers;
-  EXPECT_THROW(fibers.read(parameters, mesh, 3), svmp::ParseException);
+  EXPECT_NO_THROW(fibers.read(parameters, mesh, 3));
+  EXPECT_THROW(fibers.initialize_fiber_bases(3), svmp::ParseException);
 }
 
 TEST(Fibers, LoadsCellDirectionsFromVtu)
@@ -252,12 +349,12 @@ TEST(Fibers, LoadsCellDirectionsFromVtu)
   fibers.read(parameters, mesh, 3);
 
   ASSERT_TRUE(fibers.has_fibers());
-  ASSERT_EQ(fibers.nfibers, 3);
-  ASSERT_EQ(fibers.get_num_directions(), 3);
+  ASSERT_EQ(fibers.get_num_input_directions(), 2);
+  ASSERT_EQ(fibers.get_num_basis_directions(), 0);
 
-  const auto quadrature_fibers = fibers.get_quadrature_fibers(3, 0, 0);
+  const auto quadrature_fibers = fibers.get_quadrature_fibers(3, 0, 0, raw_fibers);
   ASSERT_EQ(quadrature_fibers.nrows(), 3);
-  ASSERT_EQ(quadrature_fibers.ncols(), 3);
+  ASSERT_EQ(quadrature_fibers.ncols(), 2);
   EXPECT_DOUBLE_EQ(quadrature_fibers(0, 0), 1.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(1, 0), 0.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(2, 0), 0.0);
@@ -279,8 +376,8 @@ TEST(Fibers, CellDirectionsShareStorageAcrossQuadraturePoints)
   Fibers fibers;
   fibers.read(parameters, mesh, 3);
 
-  const auto reference = fibers.get_quadrature_fibers(3, 0, 0);
-  EXPECT_EQ(fibers.get_quadrature_fibers(3, 1, 0).data(), reference.data());
+  const auto reference = fibers.get_quadrature_fibers(3, 0, 0, raw_fibers);
+  EXPECT_EQ(fibers.get_quadrature_fibers(3, 1, 0, raw_fibers).data(), reference.data());
 }
 
 TEST(Fibers, LoadsPointDirectionsFromVtu)
@@ -294,12 +391,15 @@ TEST(Fibers, LoadsPointDirectionsFromVtu)
   auto mesh = make_single_element_mesh();
   Fibers fibers;
   fibers.read(parameters, mesh, 3);
+  fibers.initialize_fiber_bases(3);
 
   ASSERT_TRUE(fibers.has_fibers());
-  ASSERT_EQ(fibers.nfibers, 3);
-  ASSERT_EQ(fibers.get_num_directions(), 3);
+  ASSERT_EQ(fibers.get_num_input_directions(), 2);
+  ASSERT_EQ(fibers.get_num_basis_directions(), 3);
 
-  const auto quadrature_fibers = fibers.get_quadrature_fibers(3, 0, 0);
+  const auto raw = fibers.get_quadrature_fibers(3, 0, 0, raw_fibers);
+  ASSERT_EQ(raw.ncols(), 2);
+  const auto quadrature_fibers = fibers.get_quadrature_fibers(3, 0, 0, fiber_basis);
   ASSERT_EQ(quadrature_fibers.nrows(), 3);
   ASSERT_EQ(quadrature_fibers.ncols(), 3);
   EXPECT_DOUBLE_EQ(quadrature_fibers(0, 0), 0.0);
@@ -311,13 +411,6 @@ TEST(Fibers, LoadsPointDirectionsFromVtu)
   EXPECT_DOUBLE_EQ(quadrature_fibers(0, 2), 0.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(1, 2), 0.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(2, 2), -1.0);
-
-  const auto& input_fibers = fibers.get_input_fibers();
-  ASSERT_EQ(input_fibers.nrows(), 9);
-  ASSERT_EQ(input_fibers.ncols(), 1);
-  EXPECT_DOUBLE_EQ(input_fibers(6, 0), 0.0);
-  EXPECT_DOUBLE_EQ(input_fibers(7, 0), 0.0);
-  EXPECT_DOUBLE_EQ(input_fibers(8, 0), -1.0);
 }
 
 TEST(Fibers, CompletesTwoDimensionalPointBasisWithPositiveOrientation)
@@ -330,8 +423,10 @@ TEST(Fibers, CompletesTwoDimensionalPointBasisWithPositiveOrientation)
   auto mesh = make_single_element_mesh();
   Fibers fibers;
   fibers.read(parameters, mesh, 2);
+  fibers.initialize_fiber_bases(2);
 
-  const auto quadrature_fibers = fibers.get_quadrature_fibers(2, 0, 0);
+  EXPECT_EQ(fibers.get_quadrature_fibers(2, 0, 0, raw_fibers).ncols(), 1);
+  const auto quadrature_fibers = fibers.get_quadrature_fibers(2, 0, 0, fiber_basis);
   ASSERT_EQ(quadrature_fibers.nrows(), 2);
   ASSERT_EQ(quadrature_fibers.ncols(), 2);
   EXPECT_DOUBLE_EQ(quadrature_fibers(0, 0), 0.0);
@@ -359,14 +454,44 @@ TEST(Fibers, InterpolatesNodalFibersAtWeightedQuadraturePoints)
   Fibers fibers;
   fibers.read(parameters, mesh, 2);
 
-  ASSERT_EQ(fibers.nfibers, 2);
-  ASSERT_EQ(fibers.get_num_directions(), 2);
-  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 0, 0)(0, 0), 1.0, 1.0e-12);
-  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 0, 0)(1, 0), 0.0, 1.0e-12);
-  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 1, 0)(0, 0), 0.0, 1.0e-12);
-  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 1, 0)(1, 0), 1.0, 1.0e-12);
+  ASSERT_EQ(fibers.get_num_input_directions(), 1);
+  ASSERT_EQ(fibers.get_num_basis_directions(), 0);
+  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 0, 0, raw_fibers)(0, 0), 1.0, 1.0e-12);
+  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 0, 0, raw_fibers)(1, 0), 0.0, 1.0e-12);
+  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 1, 0, raw_fibers)(0, 0), 0.0, 1.0e-12);
+  EXPECT_NEAR(fibers.get_quadrature_fibers(2, 1, 0, raw_fibers)(1, 0), 1.0, 1.0e-12);
 
   std::filesystem::remove(file_name);
+}
+
+TEST(Fibers, RejectsLinearDependenceCreatedByPointInterpolation)
+{
+  const std::string fiber_file =
+      ::testing::TempDir() + "dependent_interpolated_fiber.vtu";
+  const std::string sheet_file =
+      ::testing::TempDir() + "dependent_interpolated_sheet.vtu";
+  write_nodal_fiber_file(
+    fiber_file, {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}});
+  write_nodal_fiber_file(
+    sheet_file, {{0.0, 1.0, 0.0}, {-1.0, 0.0, 0.0}});
+
+  MeshParameters parameters;
+  parameters.fiber_direction_file_paths_points.set(
+      "Fiber_direction_from_file_points", false,
+      {fiber_file, sheet_file});
+
+  auto mesh = make_two_node_line_mesh();
+  Fibers fibers;
+  ASSERT_NO_THROW(fibers.read(parameters, mesh, 3));
+
+  const auto raw = fibers.get_quadrature_fibers(3, 0, 0, raw_fibers);
+  ASSERT_EQ(raw.ncols(), 2);
+  EXPECT_NEAR(std::abs(raw.col(0).dot(raw.col(1))), 1.0, 1.0e-12);
+  EXPECT_THROW(fibers.initialize_fiber_bases(3),
+    svmp::ParseException);
+
+  std::filesystem::remove(fiber_file);
+  std::filesystem::remove(sheet_file);
 }
 
 TEST(Fibers, DyadicInterpolationDoesNotCancelOppositeDirections)
@@ -383,7 +508,7 @@ TEST(Fibers, DyadicInterpolationDoesNotCancelOppositeDirections)
   Fibers fibers;
   fibers.read(parameters, mesh, 2);
 
-  const auto direction = fibers.get_quadrature_fibers(2, 0, 0);
+  const auto direction = fibers.get_quadrature_fibers(2, 0, 0, raw_fibers);
   EXPECT_NEAR(std::abs(direction(0, 0)), 1.0, 1.0e-12);
   EXPECT_NEAR(direction(1, 0), 0.0, 1.0e-12);
 
@@ -408,7 +533,7 @@ TEST(Fibers, DyadicInterpolationReturnsPrincipalDirection)
   Fibers fibers;
   fibers.read(parameters, mesh, 2);
 
-  const auto direction = fibers.get_quadrature_fibers(2, 0, 0);
+  const auto direction = fibers.get_quadrature_fibers(2, 0, 0, raw_fibers);
   EXPECT_NEAR(direction(0, 0), std::cos(std::numbers::pi / 8.0), 1.0e-12);
   EXPECT_NEAR(direction(1, 0), std::sin(std::numbers::pi / 8.0), 1.0e-12);
 
