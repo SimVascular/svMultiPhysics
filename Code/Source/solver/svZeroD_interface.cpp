@@ -425,7 +425,7 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
   const int nCoupledBc = cplBC.nSvZeroD_coupled_bc;
 
   if (cm.mas(cm_mod)) {
-    double QCoupled[numCoupledSrfs], QnCoupled[numCoupledSrfs], PCoupled[numCoupledSrfs], PnCoupled[numCoupledSrfs];
+    std::vector<double> QCoupled(numCoupledSrfs), QnCoupled(numCoupledSrfs), PCoupled(numCoupledSrfs), PnCoupled(numCoupledSrfs);
     double params[2];
     double times[2];
     int error_code;
@@ -438,12 +438,12 @@ void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag)
     std::vector<double> Q_relaxed_arr(numCoupledSrfs, 0.0);
     std::vector<double> P_relaxed_arr(numCoupledSrfs, 0.0);
     
-    get_coupled_QP(com_mod, QCoupled, QnCoupled, PCoupled, PnCoupled);
+    get_coupled_QP(com_mod, QCoupled.data(), QnCoupled.data(), PCoupled.data(), PnCoupled.data());
 
     if (writeSvZeroD == 1) {
       if (BCFlag == 'L') {
         int i = numCoupledSrfs;
-        print_svZeroD(&i, nsrflistCoupled, QCoupled, PCoupled);
+        print_svZeroD(&i, nsrflistCoupled, QCoupled.data(), PCoupled.data());
       }
     }
 
