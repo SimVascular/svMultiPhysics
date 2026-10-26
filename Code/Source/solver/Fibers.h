@@ -58,7 +58,8 @@ public:
    *
    * Raw directions are returned by default. When @p orthonormalize is true,
    * an owned, completed orthonormal basis is returned without modifying or
-   * caching the raw fibers.
+   * caching the raw fibers. Constant and cell directions are completed
+   * directly; interpolated point directions are first orthonormalized.
    */
   Array<double> get_quadrature_fibers(int nsd, int g, int e,
                                       bool orthonormalize = false) const;

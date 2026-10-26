@@ -26,6 +26,37 @@
 
 namespace {
 
+void complete_fiber_basis(Eigen::MatrixXd& basis,
+    const int num_input_fibers)
+{
+  const int nsd = basis.rows();
+  if (basis.cols() != nsd ||
+      (num_input_fibers != nsd - 1 && num_input_fibers != nsd)) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+      "Fiber basis completion requires an nsd-by-nsd matrix containing "
+      "nsd - 1 or nsd directions.");
+  }
+
+  // A complete input basis keeps its supplied orientation, including a
+  // left-handed one.
+  if (num_input_fibers == nsd) {
+    return;
+  }
+
+  // Complete a partial basis with a right-handed normal.
+  if (nsd == 3) {
+    const Eigen::Vector3d fiber = basis.col(0);
+    const Eigen::Vector3d sheet = basis.col(1);
+    basis.col(2) = fiber.cross(sheet);
+  } else if (nsd == 2) {
+    basis(0, 1) = -basis(1, 0);
+    basis(1, 1) = basis(0, 0);
+  } else if (nsd != 1) {
+    svmp::raise<svmp::FE::InvalidArgumentException>(
+      "Fiber basis completion is only supported for spatial dimensions 1, 2, or 3.");
+  }
+}
+
 Eigen::MatrixXd orthonormalize_fiber_basis(
     const Eigen::Ref<const Eigen::MatrixXd>& input,
     const std::string& location)
@@ -60,24 +91,7 @@ Eigen::MatrixXd orthonormalize_fiber_basis(
     basis.col(direction) = candidate / norm;
   }
 
-  // A partial input basis is completed with a right-handed normal. A complete
-  // input basis keeps its supplied orientation, including a left-handed one.
-  if (num_input_fibers == nsd) {
-    return basis;
-  }
-
-  if (nsd == 3) {
-    const Eigen::Vector3d fiber = basis.col(0);
-    const Eigen::Vector3d sheet = basis.col(1);
-    basis.col(2) = fiber.cross(sheet);
-  } else if (nsd == 2) {
-    basis(0, 1) = -basis(1, 0);
-    basis(1, 1) = basis(0, 0);
-  } else if (nsd != 1) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-      "Fiber basis completion is only supported for spatial dimensions 1, 2, or 3.");
-  }
-
+  complete_fiber_basis(basis, num_input_fibers);
   return basis;
 }
 
@@ -696,9 +710,19 @@ Array<double> Fibers::get_quadrature_fibers(
   const Array<double> raw_fibers(nsd, num_components / nsd, data);
   const Eigen::Map<const Eigen::MatrixXd> input(
     raw_fibers.data(), nsd, num_input_fibers);
-  const auto basis = orthonormalize_fiber_basis(
-    input, "at quadrature point " + std::to_string(g) +
-    " of element " + std::to_string(e));
+  Eigen::MatrixXd basis;
+  if (data_location == DataLocation::point) {
+    // Independently interpolated point directions can lose orthogonality.
+    basis = orthonormalize_fiber_basis(
+      input, "at quadrature point " + std::to_string(g) +
+      " of element " + std::to_string(e));
+  } else {
+    // Constant and cell directions were validated at this input location.
+    // Preserve them exactly and only complete a partial basis.
+    basis = Eigen::MatrixXd::Zero(nsd, nsd);
+    basis.leftCols(num_input_fibers) = input;
+    complete_fiber_basis(basis, num_input_fibers);
+  }
 
   Array<double> result(nsd, nsd);
   Eigen::Map<Eigen::MatrixXd>(result.data(), nsd, nsd) = basis;

@@ -90,7 +90,7 @@ void write_nodal_fiber_file(
 
 } // namespace
 
-TEST(Fibers, LoadsRawThenOrthonormalizesConstantDirections)
+TEST(Fibers, LoadsRawThenCompletesConstantDirections)
 {
   MeshParameters parameters;
   parameters.fiber_directions.emplace_back("Fiber_direction_constant",
@@ -156,6 +156,43 @@ TEST(Fibers, AcceptsRawCountRejectedByOrthonormalization)
   EXPECT_EQ(fibers.get_num_directions(), 1);
   EXPECT_THROW(fibers.get_quadrature_fibers(3, 0, 0, true),
     svmp::ParseException);
+}
+
+TEST(Fibers, PreservesConstantDirectionsWhenCompletingBasis)
+{
+  constexpr double fiber_x = 1.0 + 5.0e-7;
+  constexpr double sheet_y = 1.0 - 5.0e-7;
+  MeshParameters parameters;
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{fiber_x, 0.0, 0.0}, false);
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{0.0, sheet_y, 0.0}, false);
+
+  auto mesh = make_single_element_mesh();
+  Fibers fibers;
+  fibers.read(parameters, mesh, 3);
+
+  const auto basis = fibers.get_quadrature_fibers(3, 0, 0, true);
+  EXPECT_DOUBLE_EQ(basis(0, 0), fiber_x);
+  EXPECT_DOUBLE_EQ(basis(1, 1), sheet_y);
+  EXPECT_DOUBLE_EQ(basis(2, 2), fiber_x * sheet_y);
+}
+
+TEST(Fibers, CompletesTwoDimensionalConstantBasisByRotation)
+{
+  MeshParameters parameters;
+  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+      std::vector<double>{0.6, 0.8}, false);
+
+  auto mesh = make_single_element_mesh();
+  Fibers fibers;
+  fibers.read(parameters, mesh, 2);
+
+  const auto basis = fibers.get_quadrature_fibers(2, 0, 0, true);
+  EXPECT_DOUBLE_EQ(basis(0, 0), 0.6);
+  EXPECT_DOUBLE_EQ(basis(1, 0), 0.8);
+  EXPECT_DOUBLE_EQ(basis(0, 1), -0.8);
+  EXPECT_DOUBLE_EQ(basis(1, 1), 0.6);
 }
 
 TEST(Fibers, AcceptsNoDirections)
@@ -244,6 +281,12 @@ TEST(Fibers, LoadsCellDirectionsFromVtu)
   EXPECT_DOUBLE_EQ(quadrature_fibers(0, 1), 0.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(1, 1), 1.0);
   EXPECT_DOUBLE_EQ(quadrature_fibers(2, 1), 0.0);
+
+  const auto basis = fibers.get_quadrature_fibers(3, 0, 0, true);
+  ASSERT_EQ(basis.ncols(), 3);
+  EXPECT_DOUBLE_EQ(basis(0, 0), quadrature_fibers(0, 0));
+  EXPECT_DOUBLE_EQ(basis(1, 1), quadrature_fibers(1, 1));
+  EXPECT_DOUBLE_EQ(basis(2, 2), 1.0);
 }
 
 TEST(Fibers, LoadsPointDirectionsFromVtu)
