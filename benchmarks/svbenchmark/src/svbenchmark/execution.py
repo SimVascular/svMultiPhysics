@@ -152,7 +152,7 @@ def run_command(command : Command, cwd : Path) -> RunResult:
     """
     execution_environment = ExecutionEnvironment.capture()
     start_time = time.perf_counter()
-    result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd))
+    result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), check=True)
     end_time = time.perf_counter()
 
     return(RunResult(run_cmd=command.to_str(), 
@@ -168,7 +168,7 @@ def capture_command(command : Command, cwd : Path) -> CaptureResult:
     """
     execution_environment = ExecutionEnvironment.capture()
     start_time = time.perf_counter()
-    result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), capture_output=True, text=True)
+    result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), capture_output=True, text=True, check = True)
     end_time = time.perf_counter()
 
     run_result = RunResult(run_cmd=command.to_str(), 
