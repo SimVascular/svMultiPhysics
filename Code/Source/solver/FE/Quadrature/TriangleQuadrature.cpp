@@ -13,10 +13,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <span>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace svmp::FE::quadrature {
 namespace {
