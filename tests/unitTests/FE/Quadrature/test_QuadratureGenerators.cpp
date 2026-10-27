@@ -3,7 +3,7 @@
 
 /**
  * @file test_QuadratureGenerators.cpp
- * @brief Tests for exactness-requested one-dimensional quadrature generators.
+ * @brief Tests for line and triangle quadrature generators.
  */
 
 #include <gtest/gtest.h>
@@ -14,8 +14,10 @@
 #include "FE/Quadrature/GaussLobattoQuadrature.h"
 #include "FE/Quadrature/GaussQuadrature.h"
 #include "FE/Quadrature/QuadratureRule.h"
+#include "FE/Quadrature/TriangleQuadrature.h"
 #include "ReferenceMonomialIntegrals.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -26,6 +28,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 using namespace svmp::FE;
 using namespace svmp::FE::quadrature;
@@ -544,6 +547,76 @@ TEST(GaussLobattoNodes, RejectsInvalidRefinementRequests)
     }
 }
 
+namespace {
+
+static_assert(std::is_same_v<decltype(&make_triangle_centroid_rule), QuadratureRule (*)()>);
+
+struct CompensatedSum {
+    long double sum = 0.0L;
+    long double correction = 0.0L;
+
+    void add(long double term)
+    {
+        const long double next = sum + term;
+        correction += std::abs(sum) >= std::abs(term)
+            ? (sum - next) + term : (term - next) + sum;
+        sum = next;
+    }
+
+    long double value() const { return sum + correction; }
+};
+
+// Group only samples whose actual returned x is exactly equal. For each group,
+// sum actual w*y^b, then multiply by actual x^a. This is the full sample sum,
+// algebraically regrouped: no assumption about row lengths, y, or weights.
+// Entry [a][b] holds the moment of x^a y^b for a+b <= degree.
+std::vector<std::vector<CompensatedSum>> triangle_moments(const QuadratureRule& rule, int degree)
+{
+    const std::size_t size = static_cast<std::size_t>(degree + 1);
+    std::vector<std::vector<CompensatedSum>> moments(size, std::vector<CompensatedSum>(size));
+    std::vector<CompensatedSum> row(size);
+    for (std::size_t first = 0; first < rule.num_points();) {
+        std::fill(row.begin(), row.end(), CompensatedSum{});
+        const long double x = rule.point(first)[0];
+        std::size_t end = first;
+        do {
+            const long double y = rule.point(end)[1];
+            long double power = 1.0L;
+            for (int b = 0; b <= degree; ++b) {
+                row[b].add(static_cast<long double>(rule.weight(end)) * power);
+                power *= y;
+            }
+            ++end;
+        } while (end < rule.num_points() && rule.point(end)[0] == x);
+        long double power = 1.0L;
+        for (int a = 0; a <= degree; ++a) {
+            for (int b = 0; b <= degree - a; ++b) {
+                moments[a][b].add(power * row[b].value());
+            }
+            power *= x;
+        }
+        first = end;
+    }
+    return moments;
+}
+
+void expect_same_ordered_rule(const QuadratureRule& left, const QuadratureRule& right)
+{
+    ASSERT_EQ(left.num_points(), right.num_points());
+    EXPECT_EQ(left.cell_family(), right.cell_family());
+    EXPECT_EQ(left.dimension(), right.dimension());
+    EXPECT_EQ(left.reference_cell_measure(), right.reference_cell_measure());
+    EXPECT_EQ(left.polynomial_exactness(), right.polynomial_exactness());
+    for (std::size_t q = 0; q < left.num_points(); ++q) {
+        for (std::size_t axis = 0; axis < 3; ++axis) {
+            EXPECT_EQ(left.point(q)[axis], right.point(q)[axis]) << "point=" << q << ", axis=" << axis;
+        }
+        EXPECT_EQ(left.weight(q), right.weight(q)) << "point=" << q;
+    }
+}
+
+} // namespace
+
 TEST(QuadratureMonomialReferences, MatchesIndependentValuesAndRejectsNegativePowers)
 {
     EXPECT_EQ(reference::line_monomial_integral(0), 2.0L);
@@ -574,4 +647,35 @@ TEST(QuadratureMonomialReferences, MatchesIndependentValuesAndRejectsNegativePow
     EXPECT_THROW(reference::line_monomial_integral(std::numeric_limits<int>::min()), std::invalid_argument);
     EXPECT_THROW(reference::triangle_monomial_integral(-1, 0), std::invalid_argument);
     EXPECT_THROW(reference::triangle_monomial_integral(0, -1), std::invalid_argument);
+}
+
+TEST(QuadratureGeneratorTestSupport, GroupsOnlyEqualActualCoordinates)
+{
+    const QuadratureRule samples(svmp::CellFamily::Triangle, 0,
+        {{0.25, 0.125, 0.0}, {0.25, 0.5, 0.0}, {0.5, 0.25, 0.0},
+         {0.25, 0.0, 0.0}, {0.0, 0.75, 0.0}}, {0.5, -0.125, 0.25, 0.0, 0.125});
+    constexpr int degree = 6;
+    const auto moments = triangle_moments(samples, degree);
+    for (int a = 0; a <= degree; ++a) {
+        for (int b = 0; b <= degree - a; ++b) {
+            CompensatedSum direct;
+            for (std::size_t q = 0; q < samples.num_points(); ++q) {
+                direct.add(samples.weight(q) * std::pow(static_cast<long double>(samples.point(q)[0]), a)
+                    * std::pow(static_cast<long double>(samples.point(q)[1]), b));
+            }
+            EXPECT_EQ(moments[a][b].value(), direct.value());
+        }
+    }
+}
+
+TEST(TriangleCentroidImplementation, IntegratesLinearButNotQuadraticMonomials)
+{
+    const auto rule = make_triangle_centroid_rule();
+    expect_same_ordered_rule(rule, QuadratureRule(svmp::CellFamily::Triangle, 1,
+        {{1.0 / 3.0, 1.0 / 3.0, 0.0}}, {0.5}));
+    const auto moments = triangle_moments(rule, 2);
+    EXPECT_EQ(moments[0][0].value(), 0.5L);
+    EXPECT_NEAR(moments[0][1].value(), 1.0L / 6.0L, kFixtureTolerance);
+    EXPECT_NEAR(moments[1][0].value(), 1.0L / 6.0L, kFixtureTolerance);
+    EXPECT_GT(std::abs(moments[2][0].value() - 1.0L / 12.0L), 0.02L);
 }
