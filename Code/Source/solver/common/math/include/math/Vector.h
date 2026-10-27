@@ -27,14 +27,13 @@
 
 /**
  * @defgroup SVMP_Math Math
- * @ingroup FE
  * @brief Linear algebra vocabulary types and dense utilities for finite-element computations.
  *
  * @details The Math module defines the fixed-size vector and matrix types
  * used in element-level kernels (as aliases of Eigen types) and dense linear
  * algebra utilities used by basis construction and local transforms.
  *
- * @defgroup FE_VectorMath Vector
+ * @defgroup SVMP_Math_Vector Vector
  * @ingroup SVMP_Math
  * @brief Fixed-size vector type aliases.
  */
@@ -43,7 +42,7 @@ namespace svmp::math {
 
 /**
  * @brief Fixed-size column vector for element-level computations
- * @ingroup FE_VectorMath
+ * @ingroup SVMP_Math_Vector
  * @tparam T Scalar type (float, double)
  * @tparam N Vector dimension
  */

@@ -23,7 +23,7 @@
 #include <cstddef>
 
 /**
- * @defgroup FE_MatrixMath Matrix
+ * @defgroup SVMP_Math_Matrix Matrix
  * @ingroup SVMP_Math
  * @brief Fixed-size matrix type aliases.
  */
@@ -32,7 +32,7 @@ namespace svmp::math {
 
 /**
  * @brief Fixed-size matrix for element-level computations
- * @ingroup FE_MatrixMath
+ * @ingroup SVMP_Math_Matrix
  * @tparam T Scalar type (float, double)
  * @tparam M Number of rows
  * @tparam N Number of columns
