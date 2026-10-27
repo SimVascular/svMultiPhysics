@@ -44,14 +44,12 @@ bool reproduces_measure(std::span<const double> weights, double measure)
     double sum = 0.0;
     double sum_correction = 0.0;
     double scale = 0.0;
-    double scale_correction = 0.0;
     for (const double weight : weights) {
         const double scaled_weight = weight * kValidationSumScale;
         add_compensated(scaled_weight, sum, sum_correction);
-        add_compensated(std::abs(scaled_weight), scale, scale_correction);
+        scale += std::abs(scaled_weight);
     }
     sum += sum_correction;
-    scale += scale_correction;
     const double scaled_measure = measure * kValidationSumScale;
     return std::isfinite(sum) && std::isfinite(scale) &&
         std::abs(sum - scaled_measure) <= kValidationTolerance * std::max(scaled_measure, scale);
