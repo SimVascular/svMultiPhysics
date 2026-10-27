@@ -135,7 +135,7 @@ class RunResult:
     Holds the information pertaining to a single command run result
     """
     run_cmd : str
-    run_time : float
+    run_time_seconds : float
     returncode : int
     execution_environment : ExecutionEnvironment
     utc : datetime
@@ -156,7 +156,7 @@ def run_command(command : Command, cwd : Path) -> RunResult:
     end_time = time.perf_counter()
 
     return(RunResult(run_cmd=command.to_str(), 
-                     run_time=end_time-start_time, 
+                     run_time_seconds=end_time-start_time, 
                      returncode=result.returncode,
                      execution_environment=execution_environment,
                      utc=datetime.now(UTC))
@@ -172,7 +172,7 @@ def capture_command(command : Command, cwd : Path) -> CaptureResult:
     end_time = time.perf_counter()
 
     run_result = RunResult(run_cmd=command.to_str(), 
-                     run_time=end_time-start_time, 
+                     run_time_seconds=end_time-start_time, 
                      returncode=result.returncode,
                      execution_environment=execution_environment,
                      utc=datetime.now(UTC))
