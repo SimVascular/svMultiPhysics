@@ -14,6 +14,7 @@
 #include "FE/Quadrature/GaussLobattoQuadrature.h"
 #include "FE/Quadrature/GaussQuadrature.h"
 #include "FE/Quadrature/QuadratureRule.h"
+#include "ReferenceMonomialIntegrals.h"
 
 #include <array>
 #include <cmath>
@@ -21,6 +22,7 @@
 #include <exception>
 #include <limits>
 #include <span>
+#include <stdexcept>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -29,6 +31,8 @@ using namespace svmp::FE;
 using namespace svmp::FE::quadrature;
 
 namespace {
+
+namespace reference = svmp::FE::quadrature::test;
 
 // Exhaustive supported-domain sweeps observed structure, measure, and moment
 // errors below 1.2e-15; these envelopes retain cross-toolchain headroom
@@ -58,14 +62,6 @@ enum class LineEndpointPolicy {
     Excluded,
     Included,
 };
-
-long double analytic_line_monomial_integral(std::size_t power)
-{
-    if (power % 2u != 0u) {
-        return 0.0L;
-    }
-    return 2.0L / (static_cast<long double>(power) + 1.0L);
-}
 
 long double accumulate_line_moment(
     const QuadratureRule& rule,
@@ -191,7 +187,7 @@ void expect_advertised_line_exactness(const QuadratureRule& rule)
             static_cast<std::size_t>(power);
         const long double error = std::abs(
             accumulate_line_moment(rule, nonnegative_power) -
-            analytic_line_monomial_integral(nonnegative_power));
+            reference::line_monomial_integral(power));
         EXPECT_LE(error, static_cast<long double>(kMomentTolerance));
     }
 }
@@ -255,7 +251,7 @@ void expect_canonical_rule(
         static_cast<std::size_t>(expected_exactness + 1);
     const long double first_unadvertised_error = std::abs(
         accumulate_line_moment(rule, first_unadvertised_even_power) -
-        analytic_line_monomial_integral(first_unadvertised_even_power));
+        reference::line_monomial_integral(expected_exactness + 1));
     EXPECT_GT(first_unadvertised_error, static_cast<long double>(kMomentTolerance));
 }
 
@@ -306,12 +302,12 @@ TEST(QuadratureGeneratorTestSupport, ExercisesSharedLineRuleChecks)
         {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}},
         {1.0, 1.0});
 
-    EXPECT_EQ(analytic_line_monomial_integral(0u), 2.0L);
-    EXPECT_EQ(analytic_line_monomial_integral(1u), 0.0L);
+    EXPECT_EQ(reference::line_monomial_integral(0), 2.0L);
+    EXPECT_EQ(reference::line_monomial_integral(1), 0.0L);
     EXPECT_EQ(
-        analytic_line_monomial_integral(2u),
+        reference::line_monomial_integral(2),
         2.0L / 3.0L);
-    EXPECT_EQ(analytic_line_monomial_integral(255u), 0.0L);
+    EXPECT_EQ(reference::line_monomial_integral(255), 0.0L);
     EXPECT_LE(
         std::abs(accumulate_line_moment(interior_rule, 255u)),
         static_cast<long double>(kMomentTolerance));
@@ -546,4 +542,36 @@ TEST(GaussLobattoNodes, RejectsInvalidRefinementRequests)
         EXPECT_THROW((void)detail::refine_gauss_lobatto_node(4, 0, tolerance),
                      InvalidArgumentException);
     }
+}
+
+TEST(QuadratureMonomialReferences, MatchesIndependentValuesAndRejectsNegativePowers)
+{
+    EXPECT_EQ(reference::line_monomial_integral(0), 2.0L);
+    EXPECT_EQ(reference::line_monomial_integral(1), 0.0L);
+    EXPECT_EQ(reference::line_monomial_integral(254), 2.0L / 255.0L);
+    EXPECT_EQ(reference::triangle_monomial_integral(0, 0), 0.5L);
+    EXPECT_EQ(reference::triangle_monomial_integral(1, 0), 1.0L / 6.0L);
+    EXPECT_EQ(reference::triangle_monomial_integral(0, 1), 1.0L / 6.0L);
+    EXPECT_EQ(reference::triangle_monomial_integral(2, 0), 1.0L / 12.0L);
+    EXPECT_EQ(reference::triangle_monomial_integral(1, 1), 1.0L / 24.0L);
+    // Independently evaluated with exact integer factorials and 65-digit division.
+    // Headroom for at most 127 ratio multiplications, also when long double
+    // has binary64 precision.
+    constexpr long double reference_tolerance = 512.0L * std::numeric_limits<long double>::epsilon();
+    constexpr long double balanced = 1.05804760028269023389812750598454900539e-80L;
+    constexpr long double unbalanced = 6.87153782458757607635065222401753811610e-27L;
+    EXPECT_LE(std::abs(reference::triangle_monomial_integral(127, 127) / balanced - 1.0L), reference_tolerance);
+    EXPECT_LE(std::abs(reference::triangle_monomial_integral(32, 48) / unbalanced - 1.0L), reference_tolerance);
+    for (int a = 0; a <= 254; ++a) {
+        for (int b = 0; b <= 254 - a; ++b) {
+            const long double value = reference::triangle_monomial_integral(a, b);
+            EXPECT_TRUE(std::isfinite(value));
+            ASSERT_GT(value, 0.0L);
+            EXPECT_EQ(value, reference::triangle_monomial_integral(b, a));
+        }
+    }
+    EXPECT_THROW(reference::line_monomial_integral(-1), std::invalid_argument);
+    EXPECT_THROW(reference::line_monomial_integral(std::numeric_limits<int>::min()), std::invalid_argument);
+    EXPECT_THROW(reference::triangle_monomial_integral(-1, 0), std::invalid_argument);
+    EXPECT_THROW(reference::triangle_monomial_integral(0, -1), std::invalid_argument);
 }
