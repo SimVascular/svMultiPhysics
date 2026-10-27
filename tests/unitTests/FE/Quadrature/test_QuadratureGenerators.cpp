@@ -853,8 +853,8 @@ TEST(TriangleDuffyImplementation, BoundsTheProductForUnequalFactorSizes)
             std::vector<QuadPoint>(n, QuadPoint{0.5, 0.25, 0.0}), std::vector<double>(n, 0.5 / n));
         expect_same_ordered_rule(make_triangle_rule(0, single, many), expected);
         expect_same_ordered_rule(make_triangle_rule(0, many, single), expected);
-        EXPECT_THROW(make_triangle_rule(0, many, two), InvalidArgumentException);
-        EXPECT_THROW(make_triangle_rule(0, two, many), InvalidArgumentException);
+        EXPECT_THROW((void)make_triangle_rule(0, many, two), InvalidArgumentException);
+        EXPECT_THROW((void)make_triangle_rule(0, two, many), InvalidArgumentException);
     }
 }
 
@@ -930,10 +930,10 @@ TEST(TriangleDuffyImplementation, RejectsInvalidFactorContracts)
 TEST(TriangleDuffyImplementation, ReportsNumericalFailureWithoutRepairingSamples)
 {
     const QuadratureRule false_metadata(svmp::CellFamily::Line, 1, {{0.5, 0.0, 0.0}}, {2.0});
-    EXPECT_THROW(make_triangle_rule(0, false_metadata), ConvergenceException);
+    EXPECT_THROW((void)make_triangle_rule(0, false_metadata), ConvergenceException);
     const QuadratureRule overflow(svmp::CellFamily::Line, 1,
         {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}, {1.0e200, -1.0e200, 2.0});
-    EXPECT_THROW(make_triangle_rule(0, overflow), ConvergenceException);
+    EXPECT_THROW((void)make_triangle_rule(0, overflow), ConvergenceException);
 }
 
 TEST(TriangleDuffyQualification, IntegratesEveryGaussBackedRequest)
@@ -969,7 +969,7 @@ TEST(TriangleDuffyQualification, IntegratesIndependentGaussAndLobattoFactors)
             }
             expect_triangle_moments(rule, p);
             if (p == pair.maximum_degree) {
-                EXPECT_THROW(make_triangle_rule(p + 1, u, v), InvalidArgumentException);
+                EXPECT_THROW((void)make_triangle_rule(p + 1, u, v), InvalidArgumentException);
             }
         }
     }
