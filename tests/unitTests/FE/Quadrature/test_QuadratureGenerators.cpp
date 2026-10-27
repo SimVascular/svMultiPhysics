@@ -549,7 +549,12 @@ TEST(GaussLobattoNodes, RejectsInvalidRefinementRequests)
 
 namespace {
 
+static_assert(max_triangle_exactness() == 254);
+static_assert(noexcept(max_triangle_exactness()));
 static_assert(std::is_same_v<decltype(&make_triangle_centroid_rule), QuadratureRule (*)()>);
+static_assert(std::is_same_v<decltype(make_triangle_rule(0, std::declval<const QuadratureRule&>())), QuadratureRule>);
+static_assert(std::is_same_v<decltype(make_triangle_rule(0,
+    std::declval<const QuadratureRule&>(), std::declval<const QuadratureRule&>())), QuadratureRule>);
 
 struct CompensatedSum {
     long double sum = 0.0L;
@@ -678,4 +683,173 @@ TEST(TriangleCentroidImplementation, IntegratesLinearButNotQuadraticMonomials)
     EXPECT_NEAR(moments[0][1].value(), 1.0L / 6.0L, kFixtureTolerance);
     EXPECT_NEAR(moments[1][0].value(), 1.0L / 6.0L, kFixtureTolerance);
     EXPECT_GT(std::abs(moments[2][0].value() - 1.0L / 12.0L), 0.02L);
+}
+
+TEST(TriangleDuffyImplementation, PreservesIndependentOrderedFixtureAndInputOwnership)
+{
+    const QuadratureRule factor(svmp::CellFamily::Line, 1,
+        {{-0.5, 0.0, 0.0}, {0.5, 0.0, 0.0}}, {1.0, 1.0});
+    const auto snapshot = factor;
+    const auto rule = make_triangle_rule(0, factor);
+    const QuadratureRule expected(svmp::CellFamily::Triangle, 0,
+        {{0.25, 0.1875, 0.0}, {0.25, 0.5625, 0.0}, {0.75, 0.0625, 0.0}, {0.75, 0.1875, 0.0}},
+        {0.1875, 0.1875, 0.0625, 0.0625});
+    expect_same_ordered_rule(rule, expected);
+    expect_same_ordered_rule(factor, snapshot);
+    expect_same_ordered_rule(rule, make_triangle_rule(0, factor));
+    // The temporary factor is destroyed before inspecting the result.
+    const auto owned = make_triangle_rule(0, QuadratureRule(factor));
+    expect_same_ordered_rule(owned, expected);
+    const QuadratureRule reversed(svmp::CellFamily::Line, 1,
+        {{0.5, 0.0, 0.0}, {-0.5, 0.0, 0.0}}, {1.0, 1.0});
+    expect_same_ordered_rule(make_triangle_rule(0, reversed),
+        QuadratureRule(svmp::CellFamily::Triangle, 0,
+            {expected.points().rbegin(), expected.points().rend()},
+            {expected.weights().rbegin(), expected.weights().rend()}));
+}
+
+TEST(TriangleDuffyImplementation, UsesSuppliedFactorForLowRequestsAndReportsDeliveredDegree)
+{
+    expect_same_ordered_rule(make_triangle_rule(0, make_gauss_legendre_rule(1)),
+        QuadratureRule(svmp::CellFamily::Triangle, 0, {{0.5, 0.25, 0.0}}, {0.5}));
+    const auto factor = make_gauss_legendre_rule(7);
+    const auto zero = make_triangle_rule(0, factor);
+    EXPECT_EQ(zero.num_points(), 16u);
+    EXPECT_EQ(zero.polynomial_exactness(), 6);
+    expect_same_ordered_rule(zero, make_triangle_rule(1, factor));
+    expect_same_ordered_rule(make_triangle_rule(0, make_gauss_lobatto_rule(1)),
+        QuadratureRule(svmp::CellFamily::Triangle, 0,
+            {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}},
+            {0.25, 0.25, 0.0, 0.0}));
+}
+
+TEST(TriangleDuffyImplementation, PreservesUnequalOrderedFactorsAndOwnsTheirProduct)
+{
+    const QuadratureRule u(svmp::CellFamily::Line, 1,
+        {{-0.5, 0.0, 0.0}, {0.5, 0.0, 0.0}}, {1.0, 1.0});
+    // Unsorted endpoints, a duplicate, and signed/zero weights; only degree zero.
+    const QuadratureRule v(svmp::CellFamily::Line, 0,
+        {{1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}, {3.0, -1.0, 0.0});
+    const auto u_snapshot = u;
+    const auto v_snapshot = v;
+    const QuadratureRule expected(svmp::CellFamily::Triangle, 0,
+        {{0.25, 0.75, 0.0}, {0.25, 0.0, 0.0}, {0.25, 0.75, 0.0},
+         {0.75, 0.25, 0.0}, {0.75, 0.0, 0.0}, {0.75, 0.25, 0.0}},
+        {0.5625, -0.1875, 0.0, 0.1875, -0.0625, 0.0});
+    expect_same_ordered_rule(make_triangle_rule(0, u, v), expected);
+    expect_same_ordered_rule(u, u_snapshot);
+    expect_same_ordered_rule(v, v_snapshot);
+    const auto owned = make_triangle_rule(0, QuadratureRule(u), QuadratureRule(v));
+    expect_same_ordered_rule(owned, expected);
+}
+
+TEST(TriangleDuffyImplementation, EnforcesDirectionalExactnessAndReportsTheLimitingFactor)
+{
+    const auto high = make_gauss_legendre_rule(7);
+    const auto low = make_gauss_legendre_rule(5);
+    const auto rule = make_triangle_rule(5, high, low);
+    EXPECT_EQ(rule.num_points(), 12u);
+    EXPECT_EQ(rule.polynomial_exactness(), 5);
+    expect_same_ordered_rule(make_triangle_rule(0, high, low), rule);
+    EXPECT_EQ(make_triangle_rule(0, low, high).polynomial_exactness(), 4);
+    expect_invalid_argument_with_message([&] { (void)make_triangle_rule(5, low, high); }, "exactness");
+    expect_invalid_argument_with_message([&] { (void)make_triangle_rule(6, high, low); }, "exactness");
+    const QuadratureRule zero(svmp::CellFamily::Line, 0, {{0.0, 0.0, 0.0}}, {2.0});
+    expect_invalid_argument_with_message([&] { (void)make_triangle_rule(0, zero, high); }, "exactness");
+}
+
+TEST(TriangleDuffyImplementation, BoundsTheProductForUnequalFactorSizes)
+{
+    const auto single = make_gauss_legendre_rule(1);
+    const auto two = make_gauss_legendre_rule(3);
+    // Non-dyadic weights also exercise accumulation error near the capacity.
+    for (const std::size_t n : {10000u, 16383u, 16384u}) {
+        SCOPED_TRACE(::testing::Message() << "factor points=" << n);
+        const QuadratureRule many(svmp::CellFamily::Line, 1,
+            std::vector<QuadPoint>(n, QuadPoint::Zero()), std::vector<double>(n, 2.0 / n));
+        const QuadratureRule expected(svmp::CellFamily::Triangle, 0,
+            std::vector<QuadPoint>(n, QuadPoint{0.5, 0.25, 0.0}), std::vector<double>(n, 0.5 / n));
+        expect_same_ordered_rule(make_triangle_rule(0, single, many), expected);
+        expect_same_ordered_rule(make_triangle_rule(0, many, single), expected);
+        EXPECT_THROW(make_triangle_rule(0, many, two), InvalidArgumentException);
+        EXPECT_THROW(make_triangle_rule(0, two, many), InvalidArgumentException);
+    }
+}
+
+TEST(TriangleDuffyImplementation, PreservesSignedZeroAndDuplicateSamples)
+{
+    const QuadratureRule factor(svmp::CellFamily::Line, 1,
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}, {3.0, -1.0, 0.0});
+    expect_same_ordered_rule(make_triangle_rule(0, factor),
+        QuadratureRule(svmp::CellFamily::Triangle, 0,
+            std::vector<QuadPoint>(9, QuadPoint{0.5, 0.25, 0.0}),
+            {1.125, -0.375, 0.0, -0.375, 0.125, 0.0, 0.0, 0.0, 0.0}));
+}
+
+TEST(TriangleDuffyImplementation, AcceptsFiniteProductsWithLargeSignedWeights)
+{
+    const QuadratureRule factor(svmp::CellFamily::Line, 1,
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}, {3.0e154, -3.0e154, 2.0});
+    // Each product is finite, but their absolute sum exceeds binary64 range.
+    const auto rule = make_triangle_rule(0, factor);
+    ASSERT_EQ(rule.num_points(), 9u);
+    for (double weight : rule.weights()) {
+        EXPECT_TRUE(std::isfinite(weight));
+    }
+    EXPECT_EQ(rule.weight(0), -rule.weight(1));
+    EXPECT_EQ(rule.weight(3), -rule.weight(4));
+    EXPECT_EQ(rule.weight(2), -rule.weight(5));
+    EXPECT_EQ(rule.weight(6), -rule.weight(7));
+    EXPECT_EQ(rule.weight(8), 0.5);
+}
+
+TEST(TriangleDuffyImplementation, RejectsInvalidRequestsBeforeDegreeArithmetic)
+{
+    const auto factor = make_gauss_legendre_rule(255);
+    for (const int p : {std::numeric_limits<int>::min(), -1, 255, std::numeric_limits<int>::max()}) {
+        expect_invalid_argument_with_message([&] { (void)make_triangle_rule(p, factor); }, "requested_exactness");
+        expect_invalid_argument_with_message([&] { (void)make_triangle_rule(p, factor, factor); }, "requested_exactness");
+    }
+}
+
+TEST(TriangleDuffyImplementation, RejectsInvalidFactorContracts)
+{
+    const auto qualified = make_gauss_legendre_rule(255);
+    const auto reject = [&](const QuadratureRule& invalid, std::string_view condition) {
+        expect_invalid_argument_with_message([&] { (void)make_triangle_rule(0, invalid); }, condition);
+        expect_invalid_argument_with_message([&] { (void)make_triangle_rule(0, invalid, qualified); }, condition);
+        expect_invalid_argument_with_message([&] { (void)make_triangle_rule(0, qualified, invalid); }, condition);
+    };
+    const auto insufficient = make_gauss_legendre_rule(1);
+    const auto snapshot = insufficient;
+    expect_invalid_argument_with_message([&] { (void)make_triangle_rule(1, insufficient); }, "exactness");
+    expect_same_ordered_rule(insufficient, snapshot);
+    const QuadratureRule degree_zero(svmp::CellFamily::Line, 0, {{0.0, 0.0, 0.0}}, {2.0});
+    expect_invalid_argument_with_message([&] { (void)make_triangle_rule(0, degree_zero); }, "exactness");
+    reject(make_triangle_centroid_rule(), "Line");
+    for (const double x : {-1.0001, 1.0001}) {
+        const QuadratureRule exterior(svmp::CellFamily::Line, 1, {{x, 0.0, 0.0}}, {2.0});
+        reject(exterior, "[-1,1]");
+    }
+    const QuadratureRule wrong_measure(svmp::CellFamily::Line, 1, {{0.0, 0.0, 0.0}}, {3.0});
+    reject(wrong_measure, "normalization");
+    auto emptied = make_gauss_legendre_rule(1);
+    const auto retained = std::move(emptied);
+    ASSERT_EQ(emptied.num_points(), 0u);
+    reject(emptied, "empty");
+    EXPECT_EQ(retained.num_points(), 1u);
+    const QuadratureRule oversized(svmp::CellFamily::Line, 255,
+        std::vector<QuadPoint>(129, QuadPoint::Zero()), std::vector<double>(129, 2.0 / 129.0));
+    reject(oversized, "16384");
+    const auto largest_lobatto = make_gauss_lobatto_rule(253);
+    expect_invalid_argument_with_message([&] { (void)make_triangle_rule(253, largest_lobatto); }, "exactness");
+}
+
+TEST(TriangleDuffyImplementation, ReportsNumericalFailureWithoutRepairingSamples)
+{
+    const QuadratureRule false_metadata(svmp::CellFamily::Line, 1, {{0.5, 0.0, 0.0}}, {2.0});
+    EXPECT_THROW(make_triangle_rule(0, false_metadata), ConvergenceException);
+    const QuadratureRule overflow(svmp::CellFamily::Line, 1,
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}, {1.0e200, -1.0e200, 2.0});
+    EXPECT_THROW(make_triangle_rule(0, overflow), ConvergenceException);
 }
