@@ -1,7 +1,7 @@
 var searchData=
 [
   ['validate_5farray_5fvalue_0',['validate_array_value',['../class_boundary_condition.html#a7e8dacf0ae64116c1104160918f9e8c3',1,'BoundaryCondition::validate_array_value()'],['../class_robin_boundary_condition.html#a78bf7f3df1a195623a405c533bdd90a9',1,'RobinBoundaryCondition::validate_array_value()']]],
-  ['validate_5fdense_5finverse_5fdiagnostics_1',['validate_dense_inverse_diagnostics',['../group___f_e___math.html#ga7ee0325cd599002be7bf7628aefe3e88',1,'svmp::FE::math']]],
+  ['validate_5fdense_5finverse_5fdiagnostics_1',['validate_dense_inverse_diagnostics',['../group___s_v_m_p___math.html#ga0490e230d23d80980b553f45ef983043',1,'svmp::math']]],
   ['validate_5felement_5fsupport_2',['validate_element_support',['../namespacedarcy.html#a8d2b7fb456a16805ab6d04a282a7a148',1,'darcy']]],
   ['validate_5fmaterial_5fproperties_3',['validate_material_properties',['../namespacedarcy.html#a2818e027c56e2a9bcdf3406c6b4bbc45',1,'darcy']]],
   ['valm_4',['valM',['../class_capping_surface.html#a3e9e871a83f2d94a9c174a13e963d073',1,'CappingSurface']]],

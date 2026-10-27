@@ -6,7 +6,7 @@ var searchData=
   ['face_5fmatch_3',['face_match',['../namespaceread__files__ns.html#a6efc237e196580d73a5eb1df52003a05',1,'read_files_ns']]],
   ['faceparameters_4',['FaceParameters',['../class_face_parameters.html',1,'']]],
   ['facetype_5',['faceType',['../classface_type.html',1,'']]],
-  ['factor_5fdense_5fmatrix_6',['factor_dense_matrix',['../group___f_e___math.html#gafbfbf9edd00158b025d11e77912cfff0',1,'svmp::FE::math']]],
+  ['factor_5fdense_5fmatrix_6',['factor_dense_matrix',['../group___s_v_m_p___math.html#ga8b8e8f91457032429b85fe9a226d19e2',1,'svmp::math']]],
   ['factory_7',['factory',['../class_factory.html#a3c53cfe8305847558413e93e65da1707',1,'Factory::Factory()'],['../class_factory.html',1,'Factory&lt; BaseType &gt;']]],
   ['fc_8',['Fc',['../class_t_t_p.html#af641f7ac9e063f0ee577eb592cef17d4',1,'TTP']]],
   ['fe_20library_9',['FE Library',['../group___f_e.html',1,'']]],

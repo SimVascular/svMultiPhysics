@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>svMultiPhysics: solver/FE/Math/Matrix.h File Reference</title>
+<title>svMultiPhysics: solver/common/math/include/math/Matrix.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -94,7 +94,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_efbd6dac86ba3db355ec311a66674d80.html">solver</a></li><li class="navelem"><a class="el" href="dir_edb35bb30936176f05c4bb64c6d7790d.html">FE</a></li><li class="navelem"><a class="el" href="dir_b7fda2faaa39b4870652831d75e88b3c.html">Math</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_efbd6dac86ba3db355ec311a66674d80.html">solver</a></li><li class="navelem"><a class="el" href="dir_14dde7a1249eddbc1139bface84a02c3.html">common</a></li><li class="navelem"><a class="el" href="dir_173f97c1106fa312d9b7585345775dc6.html">math</a></li><li class="navelem"><a class="el" href="dir_b014cc16392c1c99425c2f07abb4d710.html">include</a></li><li class="navelem"><a class="el" href="dir_e9e04f09ac20b43620f62a0b55b7c732.html">math</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -106,28 +106,28 @@ $(function() {
 
 <p>Fixed-size matrix types for FE computations, backed by Eigen.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;<a class="el" href="_f_e_2_math_2_vector_8h_source.html">Vector.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="common_2math_2include_2math_2_vector_8h_source.html">Vector.h</a>&quot;</code><br />
 <code>#include &lt;Eigen/Core&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for Matrix.h:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="_matrix_8h__incl.svg" width="219" height="183"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="_matrix_8h__incl.svg" width="219" height="198"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 </div><div class="textblock"><div class="dynheader">
 This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="_matrix_8h__dep__incl.svg" width="660" height="198"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="_matrix_8h__dep__incl.svg" width="660" height="212"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 </div>
 <p><a href="_matrix_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ga19fc0a30233b15bff8a1716d65fb42cd" id="r_ga19fc0a30233b15bff8a1716d65fb42cd"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">typename</a> T , std::size_t M, std::size_t N&gt; </td></tr>
-<tr class="memitem:ga19fc0a30233b15bff8a1716d65fb42cd"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">svmp::FE::math::Matrix</a> = Eigen::Matrix&lt; T, <a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">static_cast</a>&lt; <a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">int</a> &gt;(<a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">M</a>), <a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">static_cast</a>&lt; <a class="el" href="group___f_e___matrix_math.html#ga19fc0a30233b15bff8a1716d65fb42cd">int</a> &gt;(N)&gt;</td></tr>
-<tr class="memdesc:ga19fc0a30233b15bff8a1716d65fb42cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed-size matrix for element-level computations.  <br /></td></tr>
-<tr class="separator:ga19fc0a30233b15bff8a1716d65fb42cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9898d0d531c702bc1d3cc857bc476b6d" id="r_ga9898d0d531c702bc1d3cc857bc476b6d"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">typename</a> T , std::size_t M, std::size_t N&gt; </td></tr>
+<tr class="memitem:ga9898d0d531c702bc1d3cc857bc476b6d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">svmp::math::Matrix</a> = Eigen::Matrix&lt; T, <a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">static_cast</a>&lt; <a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">int</a> &gt;(<a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">M</a>), <a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">static_cast</a>&lt; <a class="el" href="group___s_v_m_p___math___matrix.html#ga9898d0d531c702bc1d3cc857bc476b6d">int</a> &gt;(N)&gt;</td></tr>
+<tr class="memdesc:ga9898d0d531c702bc1d3cc857bc476b6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed-size matrix for element-level computations.  <br /></td></tr>
+<tr class="separator:ga9898d0d531c702bc1d3cc857bc476b6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Fixed-size matrix types for FE computations, backed by Eigen. </p>

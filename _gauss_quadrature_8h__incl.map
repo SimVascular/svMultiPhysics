@@ -1,17 +1,17 @@
 <map id="solver/FE/Quadrature/GaussQuadrature.h" name="solver/FE/Quadrature/GaussQuadrature.h">
-<area shape="rect" id="Node000001" title="Bounded Gauss&#45;Legendre quadrature generation on the reference line." alt="" coords="490,5,649,45"/>
-<area shape="rect" id="Node000002" href="$_quadrature_rule_8h.html" title="Value type for reference&#45;space quadrature rules." alt="" coords="473,93,665,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="572,46,572,79,567,79,567,46"/>
+<area shape="rect" id="Node000001" title="Bounded Gauss&#45;Legendre quadrature generation on the reference line." alt="" coords="481,5,639,45"/>
+<area shape="rect" id="Node000002" href="$_quadrature_rule_8h.html" title="Value type for reference&#45;space quadrature rules." alt="" coords="464,93,656,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="563,46,563,79,557,79,557,46"/>
 <area shape="rect" id="Node000003" href="$_types_8h.html" title="Fundamental type definitions for the finite element library." alt="" coords="248,181,403,207"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="512,136,375,180,373,174,510,131"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="505,136,373,180,372,175,503,131"/>
 <area shape="rect" id="Node000005" title=" " alt="" coords="459,255,530,280"/>
-<area shape="poly" id="edge12_Node000002_Node000005" title=" " alt="" coords="538,135,513,156,494,182,488,212,491,241,486,242,483,212,490,180,510,152,535,131"/>
-<area shape="rect" id="Node000010" href="$_f_e_2_math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="504,181,635,207"/>
-<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="572,134,572,167,567,167,567,134"/>
-<area shape="rect" id="Node000012" title=" " alt="" coords="659,181,712,207"/>
-<area shape="poly" id="edge13_Node000002_Node000012" title=" " alt="" coords="599,131,658,171,655,176,596,136"/>
-<area shape="rect" id="Node000013" title=" " alt="" coords="737,181,799,207"/>
-<area shape="poly" id="edge14_Node000002_Node000013" title=" " alt="" coords="618,131,727,174,725,179,616,136"/>
+<area shape="poly" id="edge12_Node000002_Node000005" title=" " alt="" coords="534,135,512,156,494,182,489,212,491,241,486,241,484,212,490,180,507,153,530,131"/>
+<area shape="rect" id="Node000010" href="$common_2math_2include_2math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="504,181,616,207"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="563,134,563,167,557,167,557,134"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="640,181,693,207"/>
+<area shape="poly" id="edge13_Node000002_Node000012" title=" " alt="" coords="587,131,641,171,638,175,584,136"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="718,181,781,207"/>
+<area shape="poly" id="edge14_Node000002_Node000013" title=" " alt="" coords="606,131,710,173,708,178,604,136"/>
 <area shape="rect" id="Node000004" title=" " alt="" coords="379,255,435,280"/>
 <area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="340,205,385,244,381,248,337,209"/>
 <area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="354,204,455,247,453,252,352,209"/>
@@ -23,7 +23,7 @@
 <area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="311,209,254,249,251,244,308,205"/>
 <area shape="rect" id="Node000009" title=" " alt="" coords="296,255,355,280"/>
 <area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="328,207,328,241,323,241,323,207"/>
-<area shape="poly" id="edge11_Node000010_Node000005" title=" " alt="" coords="559,209,519,247,515,243,556,205"/>
+<area shape="poly" id="edge11_Node000010_Node000005" title=" " alt="" coords="551,209,516,246,513,243,547,205"/>
 <area shape="rect" id="Node000011" title=" " alt="" coords="554,255,646,280"/>
-<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="577,206,592,241,587,243,572,208"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="569,206,589,241,584,244,564,208"/>
 </map>

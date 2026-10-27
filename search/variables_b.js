@@ -1,7 +1,7 @@
 var searchData=
 [
   ['max_5ffield_5fvalue_5fcomponents_0',['MAX_FIELD_VALUE_COMPONENTS',['../group___f_e___common_types.html#ga823e8a125e1fa37653a26d4fbfd38ffe',1,'svmp::FE']]],
-  ['max_5fpivot_1',['max_pivot',['../structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#ae2b956db39e1535962e57aa5d59862cb',1,'svmp::FE::math::DenseLUSolver']]],
+  ['max_5fpivot_1',['max_pivot',['../structsvmp_1_1math_1_1_dense_l_u_solver.html#a25a0ab460a0e45efcafeb63cb898e4c4',1,'svmp::math::DenseLUSolver']]],
   ['max_5fsr_2',['max_sr',['../class_t_t_p.html#a6d4786caa1fc09b70069f9ae428c6789',1,'TTP']]],
   ['maxedgesize_3',['maxEdgeSize',['../classrmsh_type.html#af290abdffc627a1e6f1662e7fb5e936d',1,'rmshType']]],
   ['maxitr_4',['maxitr',['../classode_type.html#ad24afe40416393519ff181274c376365',1,'odeType::maxItr'],['../classeq_type.html#a0cafc20771bb1a11e82d45a5c43a18d5',1,'eqType::maxItr']]],
@@ -11,7 +11,7 @@ var searchData=
   ['meanpd_8',['meanPD',['../classuris_type.html#a4a054781c5da9564dde0420ea8ad2384',1,'urisType']]],
   ['meanpu_9',['meanPU',['../classuris_type.html#affcf50b696a1aaa94efa638b3978a29d',1,'urisType']]],
   ['method_10',['method',['../classrmsh_type.html#acffb60e8685c9d258e16c921fa0be6c1',1,'rmshType']]],
-  ['min_5fpivot_11',['min_pivot',['../structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver.html#a8cb79ac7907df596a4fdd4fd8a378928',1,'svmp::FE::math::DenseLUSolver']]],
+  ['min_5fpivot_11',['min_pivot',['../structsvmp_1_1math_1_1_dense_l_u_solver.html#a42205391dd678c844c94435b858bcef4',1,'svmp::math::DenseLUSolver']]],
   ['min_5fsr_12',['min_sr',['../class_t_t_p.html#a8365eb81c4e3aa87f12563cb2516dfd6',1,'TTP']]],
   ['mindihedang_13',['minDihedAng',['../classrmsh_type.html#ad5609b14f1ed0e2b2adbb947785fbbfd',1,'rmshType']]],
   ['minitr_14',['minItr',['../classeq_type.html#afb78f4d0d3be74c89f9cb3ae4843d65e',1,'eqType']]],

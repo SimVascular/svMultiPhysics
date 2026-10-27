@@ -24,7 +24,7 @@ var searchData=
   ['sheet_5fnormals_21',['sheet_normals',['../struct_active_stress_1_1_active_tension.html#a0da636d53b829b1f3931826145f20546',1,'ActiveStress::ActiveTension']]],
   ['sheets_22',['sheets',['../struct_active_stress_1_1_active_tension.html#aa0f064d05d1f3f4cfdc479d9289c8c19',1,'ActiveStress::ActiveTension']]],
   ['shleq_23',['shlEq',['../class_com_mod.html#ab94d1b72bf24148fe48a1106731a4023',1,'ComMod']]],
-  ['smallest_5fretained_5fsingular_5fvalue_24',['smallest_retained_singular_value',['../structsvmp_1_1_f_e_1_1math_1_1_dense_pseudo_inverse_result.html#ac1c5a17921bc17bce8152b05e036c34a',1,'svmp::FE::math::DensePseudoInverseResult::smallest_retained_singular_value'],['../structsvmp_1_1_f_e_1_1math_1_1_dense_matrix_diagnostics.html#a772cce4d40f3d6244f8b05aae170e8b8',1,'svmp::FE::math::DenseMatrixDiagnostics::smallest_retained_singular_value']]],
+  ['smallest_5fretained_5fsingular_5fvalue_24',['smallest_retained_singular_value',['../structsvmp_1_1math_1_1_dense_pseudo_inverse_result.html#ab9cc08c407312defb1034c8ee5464b1f',1,'svmp::math::DensePseudoInverseResult::smallest_retained_singular_value'],['../structsvmp_1_1math_1_1_dense_matrix_diagnostics.html#aac1e51f821ef35e1367cdb2ecdf9f340',1,'svmp::math::DenseMatrixDiagnostics::smallest_retained_singular_value']]],
   ['solver_5flibrary_25',['solver_library',['../classsv_one_d_solver_interface_data.html#a7f485f9524c91adb6c6b983b88531f63',1,'svOneDSolverInterfaceData']]],
   ['spatially_5fvariable_26',['spatially_variable',['../class_boundary_condition.html#a8db6c121cd41f8ebbe5ceadf77748e06',1,'BoundaryCondition']]],
   ['ssteq_27',['sstEq',['../class_com_mod.html#afee120d485cad75438312953ccad3b46',1,'ComMod']]],

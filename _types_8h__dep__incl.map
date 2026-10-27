@@ -1,39 +1,35 @@
 <map id="solver/FE/Common/Types.h" name="solver/FE/Common/Types.h">
-<area shape="rect" id="Node000001" title="Fundamental type definitions for the finite element library." alt="" coords="593,5,792,31"/>
-<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="283,196,510,221"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="587,35,496,54,460,66,436,81,416,108,405,140,400,172,399,196,394,196,395,171,400,139,412,106,432,77,457,62,495,49,585,30"/>
-<area shape="rect" id="Node000006" href="$_basis_traits_8h.html" title="Reference&#45;topology vocabulary (BasisTopology) and the internal ElementType/topology/order maps." alt="" coords="447,86,653,111"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="661,40,572,88,570,83,658,35"/>
-<area shape="rect" id="Node000007" href="$_node_ordering_conventions_8h_source.html" title=" " alt="" coords="585,189,800,229"/>
-<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="695,45,695,189,690,189,690,45"/>
-<area shape="rect" id="Node000009" href="$_dense_linear_algebra_8h_source.html" title=" " alt="" coords="1271,79,1475,119"/>
-<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="805,30,1271,83,1270,88,805,35"/>
-<area shape="rect" id="Node000011" href="$_quadrature_rule_8h.html" title="Value type for reference&#45;space quadrature rules." alt="" coords="896,79,1055,119"/>
-<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="747,32,908,76,907,81,746,37"/>
-<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,321,223,346"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="359,229,141,323,139,318,357,224"/>
-<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="469,313,655,353"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="425,228,538,311,535,315,422,232"/>
-<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="247,313,445,353"/>
-<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="389,235,356,314,351,312,384,233"/>
-<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="524,121,414,198,411,194,521,117"/>
-<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="554,125,564,313,558,313,549,126"/>
-<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="578,118,669,186,666,191,575,122"/>
-<area shape="rect" id="Node000008" href="$test___quadrature_generators_8cpp.html" title="Tests for exactness&#45;requested one&#45;dimensional quadrature generators." alt="" coords="708,299,939,368"/>
-<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="725,236,789,296,785,300,721,240"/>
-<area shape="rect" id="Node000010" href="$test__precond__rcs_8cpp.html" title="Matrix regression test for FSILS row and column scaling (RCS)." alt="" coords="1466,167,1663,251"/>
-<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="1419,123,1493,164,1491,169,1416,128"/>
-<area shape="poly" id="edge14_Node000011_Node000008" title=" " alt="" coords="915,127,888,145,865,168,848,200,836,234,827,299,821,298,831,233,843,198,861,165,885,141,912,123"/>
-<area shape="rect" id="Node000012" href="$_gauss_lobatto_quadrature_8h.html" title="Bounded Gauss&#45;Lobatto&#45;Legendre quadrature generation on the reference line." alt="" coords="875,189,1075,229"/>
-<area shape="poly" id="edge15_Node000011_Node000012" title=" " alt="" coords="978,132,978,188,973,188,973,132"/>
-<area shape="rect" id="Node000014" href="$_gauss_quadrature_8h.html" title="Bounded Gauss&#45;Legendre quadrature generation on the reference line." alt="" coords="1100,189,1259,229"/>
-<area shape="poly" id="edge18_Node000011_Node000014" title=" " alt="" coords="1024,123,1145,186,1142,191,1022,127"/>
-<area shape="rect" id="Node000016" href="$_quadrature_rule_8cpp.html" title="Internal construction and structural validation for quadrature rules." alt="" coords="1283,189,1441,229"/>
-<area shape="poly" id="edge21_Node000011_Node000016" title=" " alt="" coords="1069,113,1168,135,1272,164,1326,186,1324,191,1270,169,1166,140,1068,119"/>
-<area shape="poly" id="edge16_Node000012_Node000008" title=" " alt="" coords="943,239,867,300,864,296,940,235"/>
-<area shape="rect" id="Node000013" href="$_gauss_lobatto_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Lobatto&#45;Legendre line rules." alt="" coords="963,313,1177,353"/>
-<area shape="poly" id="edge17_Node000012_Node000013" title=" " alt="" coords="1001,239,1057,311,1053,315,997,242"/>
-<area shape="poly" id="edge19_Node000014_Node000008" title=" " alt="" coords="1128,237,1088,253,940,302,938,297,1086,248,1126,232"/>
-<area shape="rect" id="Node000015" href="$_gauss_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Legendre line rules." alt="" coords="1201,313,1368,353"/>
-<area shape="poly" id="edge20_Node000014_Node000015" title=" " alt="" coords="1207,238,1270,311,1266,315,1203,241"/>
+<area shape="rect" id="Node000001" title="Fundamental type definitions for the finite element library." alt="" coords="524,5,723,31"/>
+<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="286,174,513,199"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="518,37,475,54,437,81,421,103,411,129,403,174,397,173,406,127,416,100,433,77,472,49,516,32"/>
+<area shape="rect" id="Node000006" href="$_basis_traits_8h.html" title="Reference&#45;topology vocabulary (BasisTopology) and the internal ElementType/topology/order maps." alt="" coords="448,86,655,111"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="605,43,564,88,560,84,601,39"/>
+<area shape="rect" id="Node000007" href="$_node_ordering_conventions_8h_source.html" title=" " alt="" coords="588,167,803,207"/>
+<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="644,40,668,77,685,125,695,166,690,167,680,126,664,80,640,43"/>
+<area shape="rect" id="Node000009" href="$_quadrature_rule_8h.html" title="Value type for reference&#45;space quadrature rules." alt="" coords="985,79,1144,119"/>
+<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="701,30,986,81,985,86,700,36"/>
+<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,277,223,302"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="355,206,147,279,145,274,353,201"/>
+<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="469,269,655,309"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="431,204,533,267,530,271,428,209"/>
+<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="247,269,445,309"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="389,213,358,270,354,268,384,210"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="520,121,421,176,419,171,518,116"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="555,125,564,269,558,269,550,126"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="584,116,665,164,662,169,581,121"/>
+<area shape="rect" id="Node000008" href="$test___quadrature_generators_8cpp.html" title="Tests for exactness&#45;requested one&#45;dimensional quadrature generators." alt="" coords="939,255,1169,324"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="776,208,939,253,938,258,775,213"/>
+<area shape="poly" id="edge12_Node000009_Node000008" title=" " alt="" coords="1065,133,1059,255,1053,254,1060,132"/>
+<area shape="rect" id="Node000010" href="$_gauss_lobatto_quadrature_8h.html" title="Bounded Gauss&#45;Lobatto&#45;Legendre quadrature generation on the reference line." alt="" coords="827,167,1027,207"/>
+<area shape="poly" id="edge13_Node000009_Node000010" title=" " alt="" coords="1024,128,959,169,956,164,1021,124"/>
+<area shape="rect" id="Node000012" href="$_gauss_quadrature_8h.html" title="Bounded Gauss&#45;Legendre quadrature generation on the reference line." alt="" coords="1103,167,1261,207"/>
+<area shape="poly" id="edge16_Node000009_Node000012" title=" " alt="" coords="1103,125,1158,164,1154,169,1100,129"/>
+<area shape="rect" id="Node000014" href="$_quadrature_rule_8cpp.html" title="Internal construction and structural validation for quadrature rules." alt="" coords="1285,167,1444,207"/>
+<area shape="poly" id="edge19_Node000009_Node000014" title=" " alt="" coords="1145,120,1300,164,1298,169,1143,125"/>
+<area shape="poly" id="edge14_Node000010_Node000008" title=" " alt="" coords="963,213,1013,252,1010,256,960,217"/>
+<area shape="rect" id="Node000011" href="$_gauss_lobatto_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Lobatto&#45;Legendre line rules." alt="" coords="700,269,915,309"/>
+<area shape="poly" id="edge15_Node000010_Node000011" title=" " alt="" coords="896,218,832,271,828,267,892,214"/>
+<area shape="poly" id="edge17_Node000012_Node000008" title=" " alt="" coords="1149,217,1099,256,1095,252,1146,213"/>
+<area shape="rect" id="Node000013" href="$_gauss_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Legendre line rules." alt="" coords="1193,269,1360,309"/>
+<area shape="poly" id="edge18_Node000012_Node000013" title=" " alt="" coords="1211,215,1261,267,1257,271,1207,219"/>
 </map>

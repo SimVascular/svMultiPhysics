@@ -16,10 +16,10 @@
 <area shape="poly" id="edge35_Node000002_Node000018" title=" " alt="" coords="386,113,321,120,250,130,190,146,167,157,153,168,147,181,146,196,156,227,151,228,141,197,141,180,149,165,165,152,188,141,249,125,320,114,386,108"/>
 <area shape="rect" id="Node000020" title=" " alt="" coords="321,313,391,339"/>
 <area shape="poly" id="edge36_Node000002_Node000020" title=" " alt="" coords="402,121,364,139,347,152,334,168,327,184,323,201,325,237,334,271,346,300,341,302,329,273,320,238,318,201,322,182,330,165,344,148,361,134,400,116"/>
-<area shape="rect" id="Node000022" href="$_matrix_8h.html" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="345,167,458,192"/>
+<area shape="rect" id="Node000022" href="$_matrix_8h.html" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="344,167,459,192"/>
 <area shape="poly" id="edge28_Node000002_Node000022" title=" " alt="" coords="443,120,419,157,414,154,438,118"/>
-<area shape="rect" id="Node000023" href="$_f_e_2_math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="441,240,516,265"/>
-<area shape="poly" id="edge34_Node000002_Node000023" title=" " alt="" coords="456,118,472,166,480,226,475,226,467,167,451,120"/>
+<area shape="rect" id="Node000023" href="$common_2math_2include_2math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="441,240,516,265"/>
+<area shape="poly" id="edge34_Node000002_Node000023" title=" " alt="" coords="456,118,473,166,481,226,475,226,468,167,451,120"/>
 <area shape="poly" id="edge37_Node000002_Node000025" title=" " alt="" coords="511,116,620,137,743,164,744,164,742,169,742,169,619,142,510,121"/>
 <area shape="rect" id="Node000004" href="$_f_e_exception_8h.html" title="Exception hierarchy for error handling in the FE library." alt="" coords="651,240,765,265"/>
 <area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="671,191,695,227,691,230,667,194"/>

@@ -136,40 +136,40 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5c1871161570e656efc713cfcdfe9bf0" id="r_a5c1871161570e656efc713cfcdfe9bf0"><td class="memItemLeft" align="right" valign="top">virtual std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a5c1871161570e656efc713cfcdfe9bf0">size</a> () const noexcept=0</td></tr>
 <tr class="memdesc:a5c1871161570e656efc713cfcdfe9bf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of basis functions and reference nodes.  <br /></td></tr>
 <tr class="separator:a5c1871161570e656efc713cfcdfe9bf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a53fd52f02e29e3e88053f29e593dafb4" id="r_a53fd52f02e29e3e88053f29e593dafb4"><td class="memItemLeft" align="right" valign="top">virtual const std::vector&lt; <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a53fd52f02e29e3e88053f29e593dafb4">nodes</a> () const noexcept</td></tr>
+<tr class="memitem:a53fd52f02e29e3e88053f29e593dafb4" id="r_a53fd52f02e29e3e88053f29e593dafb4"><td class="memItemLeft" align="right" valign="top">virtual const std::vector&lt; <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a53fd52f02e29e3e88053f29e593dafb4">nodes</a> () const noexcept</td></tr>
 <tr class="memdesc:a53fd52f02e29e3e88053f29e593dafb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the reference interpolation nodes in basis ordering.  <br /></td></tr>
 <tr class="separator:a53fd52f02e29e3e88053f29e593dafb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c77881eb8e202f1d0438513e3a34491" id="r_a2c77881eb8e202f1d0438513e3a34491"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a2c77881eb8e202f1d0438513e3a34491">evaluate_values</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; double &gt; &amp;values) const</td></tr>
+<tr class="memitem:a2c77881eb8e202f1d0438513e3a34491" id="r_a2c77881eb8e202f1d0438513e3a34491"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a2c77881eb8e202f1d0438513e3a34491">evaluate_values</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; double &gt; &amp;values) const</td></tr>
 <tr class="memdesc:a2c77881eb8e202f1d0438513e3a34491"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate basis function values at a reference coordinate.  <br /></td></tr>
 <tr class="separator:a2c77881eb8e202f1d0438513e3a34491"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0338d518f13aee8ae004a89fc679ea78" id="r_a0338d518f13aee8ae004a89fc679ea78"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a0338d518f13aee8ae004a89fc679ea78">evaluate_gradients</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Gradient &gt; &amp;gradients) const</td></tr>
+<tr class="memitem:a0338d518f13aee8ae004a89fc679ea78" id="r_a0338d518f13aee8ae004a89fc679ea78"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a0338d518f13aee8ae004a89fc679ea78">evaluate_gradients</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Gradient &gt; &amp;gradients) const</td></tr>
 <tr class="memdesc:a0338d518f13aee8ae004a89fc679ea78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate basis gradients at a reference coordinate.  <br /></td></tr>
 <tr class="separator:a0338d518f13aee8ae004a89fc679ea78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2b6ab2246e77fd52637389da00b7ff1" id="r_ab2b6ab2246e77fd52637389da00b7ff1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ab2b6ab2246e77fd52637389da00b7ff1">evaluate_hessians</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Hessian &gt; &amp;hessians) const</td></tr>
+<tr class="memitem:ab2b6ab2246e77fd52637389da00b7ff1" id="r_ab2b6ab2246e77fd52637389da00b7ff1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ab2b6ab2246e77fd52637389da00b7ff1">evaluate_hessians</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Hessian &gt; &amp;hessians) const</td></tr>
 <tr class="memdesc:ab2b6ab2246e77fd52637389da00b7ff1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate basis Hessians at a reference coordinate.  <br /></td></tr>
 <tr class="separator:ab2b6ab2246e77fd52637389da00b7ff1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5aee1229b185ec7ebb4af6e400ea3a43" id="r_a5aee1229b185ec7ebb4af6e400ea3a43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a5aee1229b185ec7ebb4af6e400ea3a43">evaluate_all</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; double &gt; &amp;values, std::vector&lt; Gradient &gt; &amp;gradients, std::vector&lt; Hessian &gt; &amp;hessians) const</td></tr>
+<tr class="memitem:a5aee1229b185ec7ebb4af6e400ea3a43" id="r_a5aee1229b185ec7ebb4af6e400ea3a43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a5aee1229b185ec7ebb4af6e400ea3a43">evaluate_all</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; double &gt; &amp;values, std::vector&lt; Gradient &gt; &amp;gradients, std::vector&lt; Hessian &gt; &amp;hessians) const</td></tr>
 <tr class="memdesc:a5aee1229b185ec7ebb4af6e400ea3a43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate values, gradients, and Hessians together.  <br /></td></tr>
 <tr class="separator:a5aee1229b185ec7ebb4af6e400ea3a43"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf651f1919c298f776939a5ced295971" id="r_aaf651f1919c298f776939a5ced295971"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#aaf651f1919c298f776939a5ced295971">evaluate_values_to</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; double &gt; values_out) const =0</td></tr>
+<tr class="memitem:aaf651f1919c298f776939a5ced295971" id="r_aaf651f1919c298f776939a5ced295971"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#aaf651f1919c298f776939a5ced295971">evaluate_values_to</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; double &gt; values_out) const =0</td></tr>
 <tr class="memdesc:aaf651f1919c298f776939a5ced295971"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate basis values into caller-provided storage.  <br /></td></tr>
 <tr class="separator:aaf651f1919c298f776939a5ced295971"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25a1fdc4f1f853d2b967e1a3f092585c" id="r_a25a1fdc4f1f853d2b967e1a3f092585c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a25a1fdc4f1f853d2b967e1a3f092585c">evaluate_gradients_to</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; Gradient &gt; gradients_out) const</td></tr>
+<tr class="memitem:a25a1fdc4f1f853d2b967e1a3f092585c" id="r_a25a1fdc4f1f853d2b967e1a3f092585c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a25a1fdc4f1f853d2b967e1a3f092585c">evaluate_gradients_to</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; Gradient &gt; gradients_out) const</td></tr>
 <tr class="memdesc:a25a1fdc4f1f853d2b967e1a3f092585c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate basis gradients into caller-provided storage.  <br /></td></tr>
 <tr class="separator:a25a1fdc4f1f853d2b967e1a3f092585c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a889246684972c223400fb370c03d60b1" id="r_a889246684972c223400fb370c03d60b1"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a889246684972c223400fb370c03d60b1">evaluate_hessians_to</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; Hessian &gt; hessians_out) const</td></tr>
+<tr class="memitem:a889246684972c223400fb370c03d60b1" id="r_a889246684972c223400fb370c03d60b1"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a889246684972c223400fb370c03d60b1">evaluate_hessians_to</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; Hessian &gt; hessians_out) const</td></tr>
 <tr class="memdesc:a889246684972c223400fb370c03d60b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate basis Hessians into caller-provided storage.  <br /></td></tr>
 <tr class="separator:a889246684972c223400fb370c03d60b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:ad6f1a5b8e6cdbcd4c24d03242ec8c4dc" id="r_ad6f1a5b8e6cdbcd4c24d03242ec8c4dc"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ad6f1a5b8e6cdbcd4c24d03242ec8c4dc">evaluate_all_to</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; double &gt; values_out, std::span&lt; Gradient &gt; gradients_out, std::span&lt; Hessian &gt; hessians_out) const</td></tr>
+<tr class="memitem:ad6f1a5b8e6cdbcd4c24d03242ec8c4dc" id="r_ad6f1a5b8e6cdbcd4c24d03242ec8c4dc"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#ad6f1a5b8e6cdbcd4c24d03242ec8c4dc">evaluate_all_to</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::span&lt; double &gt; values_out, std::span&lt; Gradient &gt; gradients_out, std::span&lt; Hessian &gt; hessians_out) const</td></tr>
 <tr class="memdesc:ad6f1a5b8e6cdbcd4c24d03242ec8c4dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate any non-empty subset of values, gradients, and Hessians into caller-provided storage in a single pass.  <br /></td></tr>
 <tr class="separator:ad6f1a5b8e6cdbcd4c24d03242ec8c4dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc73a246a9cfc53cea96b06c9cc06bd3" id="r_acc73a246a9cfc53cea96b06c9cc06bd3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#acc73a246a9cfc53cea96b06c9cc06bd3">numerical_gradient</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Gradient &gt; &amp;gradients, double eps=double(1e-6)) const</td></tr>
+<tr class="memitem:acc73a246a9cfc53cea96b06c9cc06bd3" id="r_acc73a246a9cfc53cea96b06c9cc06bd3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#acc73a246a9cfc53cea96b06c9cc06bd3">numerical_gradient</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Gradient &gt; &amp;gradients, double eps=double(1e-6)) const</td></tr>
 <tr class="memdesc:acc73a246a9cfc53cea96b06c9cc06bd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Approximate gradients by centered finite differences of values.  <br /></td></tr>
 <tr class="separator:acc73a246a9cfc53cea96b06c9cc06bd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a517589822f5c94cad790aaa29ce4e484" id="r_a517589822f5c94cad790aaa29ce4e484"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a517589822f5c94cad790aaa29ce4e484">numerical_hessian</a> (const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Hessian &gt; &amp;hessians, double eps=double(1e-5)) const</td></tr>
+<tr class="memitem:a517589822f5c94cad790aaa29ce4e484" id="r_a517589822f5c94cad790aaa29ce4e484"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsvmp_1_1_f_e_1_1basis_1_1_basis_function.html#a517589822f5c94cad790aaa29ce4e484">numerical_hessian</a> (const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;xi, std::vector&lt; Hessian &gt; &amp;hessians, double eps=double(1e-5)) const</td></tr>
 <tr class="memdesc:a517589822f5c94cad790aaa29ce4e484"><td class="mdescLeft">&#160;</td><td class="mdescRight">Approximate Hessians by centered finite differences of gradients.  <br /></td></tr>
 <tr class="separator:a517589822f5c94cad790aaa29ce4e484"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -274,7 +274,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::evaluate_all </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -329,7 +329,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::evaluate_all_to </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -386,7 +386,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::evaluate_gradients </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -433,7 +433,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::evaluate_gradients_to </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -484,7 +484,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::evaluate_hessians </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -531,7 +531,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::evaluate_hessians_to </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -582,7 +582,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::evaluate_values </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -623,7 +623,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">virtual void svmp::FE::basis::BasisFunction::evaluate_values_to </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -669,7 +669,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const std::vector&lt; <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &gt; &amp; svmp::FE::basis::BasisFunction::nodes </td>
+          <td class="memname">const std::vector&lt; <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &gt; &amp; svmp::FE::basis::BasisFunction::nodes </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -702,7 +702,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::numerical_gradient </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>
@@ -747,7 +747,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void svmp::FE::basis::BasisFunction::numerical_hessian </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="group___f_e___vector_math.html#ga8d0a705dd5362f5164e776c7e5f4110a">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="group___s_v_m_p___math___vector.html#ga3a4ccb1bd85a8920a66ca06c6e41f8f5">math::Vector</a>&lt; double, 3 &gt; &amp;&#160;</td>
           <td class="paramname"><em>xi</em>, </td>
         </tr>
         <tr>

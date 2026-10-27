@@ -2,7 +2,7 @@ var searchData=
 [
   ['ibcommtype_0',['ibCommType',['../classib_comm_type.html',1,'']]],
   ['ibtype_1',['ibType',['../classib_type.html',1,'']]],
-  ['impl_2',['Impl',['../structsvmp_1_1_f_e_1_1math_1_1_dense_l_u_solver_1_1_impl.html',1,'svmp::FE::math::DenseLUSolver']]],
+  ['impl_2',['Impl',['../structsvmp_1_1math_1_1_dense_l_u_solver_1_1_impl.html',1,'svmp::math::DenseLUSolver']]],
   ['includeparametersfile_3',['IncludeParametersFile',['../class_include_parameters_file.html',1,'']]],
   ['indexoutofrangeexception_4',['IndexOutOfRangeException',['../classsvmp_1_1_index_out_of_range_exception.html',1,'svmp']]],
   ['integrator_5',['Integrator',['../class_integrator.html',1,'']]],

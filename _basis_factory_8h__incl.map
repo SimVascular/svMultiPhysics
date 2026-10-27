@@ -21,8 +21,8 @@
 <area shape="poly" id="edge36_Node000002_Node000020" title=" " alt="" coords="433,101,405,107,378,118,353,133,333,154,325,169,321,186,322,222,332,256,345,285,340,288,327,258,317,222,315,185,320,167,329,150,349,129,375,113,404,102,432,95"/>
 <area shape="rect" id="Node000022" href="$_matrix_8h.html" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="343,152,457,177"/>
 <area shape="poly" id="edge28_Node000002_Node000022" title=" " alt="" coords="481,106,428,146,425,141,478,102"/>
-<area shape="rect" id="Node000023" href="$_f_e_2_math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="393,225,468,251"/>
-<area shape="poly" id="edge34_Node000002_Node000023" title=" " alt="" coords="495,105,485,139,470,178,449,215,445,212,466,176,480,137,489,104"/>
+<area shape="rect" id="Node000023" href="$common_2math_2include_2math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="393,225,468,251"/>
+<area shape="poly" id="edge34_Node000002_Node000023" title=" " alt="" coords="495,105,486,139,472,178,450,215,445,213,467,176,481,137,490,104"/>
 <area shape="rect" id="Node000025" title=" " alt="" coords="532,152,585,177"/>
 <area shape="poly" id="edge37_Node000002_Node000025" title=" " alt="" coords="507,103,541,140,537,144,503,106"/>
 <area shape="rect" id="Node000004" href="$_f_e_exception_8h.html" title="Exception hierarchy for error handling in the FE library." alt="" coords="623,225,737,251"/>

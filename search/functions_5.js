@@ -2,7 +2,7 @@ var searchData=
 [
   ['face_0',['face',['../class_capping_surface.html#aaf00a11f893d9b74e90a300dcbb0ec2b',1,'CappingSurface']]],
   ['face_5fmatch_1',['face_match',['../namespaceread__files__ns.html#a6efc237e196580d73a5eb1df52003a05',1,'read_files_ns']]],
-  ['factor_5fdense_5fmatrix_2',['factor_dense_matrix',['../group___f_e___math.html#gafbfbf9edd00158b025d11e77912cfff0',1,'svmp::FE::math']]],
+  ['factor_5fdense_5fmatrix_2',['factor_dense_matrix',['../group___s_v_m_p___math.html#ga8b8e8f91457032429b85fe9a226d19e2',1,'svmp::math']]],
   ['factory_3',['Factory',['../class_factory.html#a3c53cfe8305847558413e93e65da1707',1,'Factory']]],
   ['feexception_4',['FEException',['../classsvmp_1_1_f_e_1_1_f_e_exception.html#a2ffb38f01139b144244c118de5a0571f',1,'svmp::FE::FEException']]],
   ['finalize_5',['finalize',['../class_fsils_linear_algebra.html#a8e09a6f326486bd1cb2b3d99750f37a1',1,'FsilsLinearAlgebra::finalize()'],['../class_trilinos_linear_algebra.html#a9fac4eee782809b2ca1c6ae4ff0c77bd',1,'TrilinosLinearAlgebra::finalize()']]],
