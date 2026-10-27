@@ -114,7 +114,7 @@ if(NOT "${SV_PETSC_DIR}" STREQUAL "")
    endif()
 
   set(PETSC_INCLUDE_DIRS "${SV_PETSC_DIR}/include;${SV_PETSC_DIR}/../include")
-  set(PETSC_LIBRARY_DIRS "-L${SV_PETSC_DIR}/lib -lpetsc")
+  find_library(PETSC_LIBRARY_DIRS NAMES petsc libpetsc PATHS "${SV_PETSC_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
   message("\nBuilding with the PETSc package; the include and libraries directories are: ")
   message("  PETSC_LIBRARY_DIRS = ${PETSC_LIBRARY_DIRS}")
   message("  PETSC_INCLUDE_DIRS = ${PETSC_INCLUDE_DIRS}")
@@ -281,6 +281,7 @@ set(CSRCS
   ActiveStressODE.cpp
   ActiveStressNashPanfilov.cpp
   ActiveStressRegazzoni.cpp
+  ActiveStressLandNiederer.cpp
 
   SPLIT.c
 

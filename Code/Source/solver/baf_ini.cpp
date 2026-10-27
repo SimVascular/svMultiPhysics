@@ -149,27 +149,6 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
       }
     }
 
-    if (!com_mod.stFileFlag) {
-      // Create temporary SolutionStates for set_bc calls
-      SolutionStates temp_solutions;
-      temp_solutions.old.get_acceleration() = Ao;
-      temp_solutions.old.get_displacement() = Do;
-      temp_solutions.old.get_velocity() = Yo;
-      set_bc::rcr_init(com_mod, cm_mod, temp_solutions);
-    }
-
-    if (com_mod.cplBC.useGenBC) {
-      set_bc::genBC_Integ_X(com_mod, cm_mod, "I");
-    }
-
-    if (com_mod.cplBC.useSvZeroD) {
-      svZeroD::init_svZeroD(com_mod, cm_mod, simulation->get_chnl_mod().appPath);
-    }
-
-    if (com_mod.cplBC.useSvOneD) {
-      svOneD::init_svOneD(com_mod, cm_mod);
-    }
-
     // Initialize cap integration for Coupled boundary conditions
     for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
       auto& eq = com_mod.eq[iEq];
@@ -182,6 +161,33 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
         }
       }
     }
+
+    // Create temporary SolutionStates from the initialized 3D state.
+    SolutionStates init_solutions;
+    init_solutions.old.get_acceleration() = Ao;
+    init_solutions.old.get_displacement() = Do;
+    init_solutions.old.get_velocity() = Yo;
+    init_solutions.current.get_acceleration() = Ao;
+    init_solutions.current.get_displacement() = Do;
+    init_solutions.current.get_velocity() = Yo;
+    if (!com_mod.stFileFlag) {
+      set_bc::rcr_init(com_mod, cm_mod, init_solutions);
+    }
+
+    if (com_mod.cplBC.useGenBC) {
+      set_bc::genBC_Integ_X(com_mod, cm_mod, "I");
+    }
+
+    if (com_mod.cplBC.useSvZeroD) {
+      svZeroD::init_svZeroD(com_mod, cm_mod, init_solutions,
+                     simulation->get_chnl_mod().appPath);
+    }
+
+    if (com_mod.cplBC.useSvOneD) {
+      svOneD::init_svOneD(com_mod, cm_mod, init_solutions);
+    }
+
+
 
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
       // Create temporary SolutionStates for set_bc calls

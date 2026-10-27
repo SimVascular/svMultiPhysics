@@ -5,6 +5,7 @@
 // This file contains PetscImpl and PETSc-dependent functions. 
 
 #include "petsc_impl.h"
+#include <filesystem>
 #include <locale.h>
 
 LHSCtx plhs;       /* PETSc lhs */
@@ -38,7 +39,8 @@ void petsc_initialize(const PetscInt nNo, const PetscInt mynNo, const PetscInt n
 {   
     // char* in_file = rm_blank(inp);
     char* in_file = inp;
-    if (access(in_file, F_OK) == 0) {
+    std::error_code error;
+    if (std::filesystem::exists(in_file, error)) {
         PetscInitialize(NULL, NULL, in_file, NULL);
         PetscPrintf(MPI_COMM_WORLD, " <PETSC_INITIALIZE>: "
                 "use linear solver config. from file.\n");
@@ -305,7 +307,7 @@ void petsc_solve(PetscReal *resNorm,  PetscReal *initNorm,  PetscReal *dB,
 
     /* Get convergence info. */
     if (usepreonly){
-        *resNorm   = __DBL_EPSILON__;
+        *resNorm   = PETSC_MACHINE_EPSILON;
     }
     else {
         KSPGetResidualHistory(psol[cEq].ksp, (const PetscReal **) &a, &na);
@@ -513,7 +515,7 @@ PetscErrorCode petsc_create_bc(const PetscInt dof, const PetscInt cEq, \
 {   
     PetscInt  i, j, cc, ii;
     PetscInt *row1, *row2;
-    PetscReal eps = 1.0e6*__DBL_EPSILON__;
+    PetscReal eps = 1.0e6*PETSC_MACHINE_EPSILON;
 
     PetscFunctionBeginUser;
 

@@ -44,6 +44,10 @@ struct ActiveStressTrajectoryConfiguration {
    */
   std::vector<std::string> state_reference_columns;
 
+  /// Factor applied to the prescribed calcium (given in mM) before it is passed
+  /// to the model, mirroring @c Calcium_scaling_factor in ActiveStress::update.
+  double calcium_scaling_factor = 1.0;
+
   /// Base tolerance in the pointwise comparison formula.
   double tolerance = 1.0e-10;
 
@@ -227,7 +231,8 @@ public:
     size_t checkpoint_index = 0;
     for (int step = 0; step < n_steps_; ++step) {
       const double time = step * configuration_.time_step;
-      const double calcium = calcium_at(time);
+      const double calcium =
+          configuration_.calcium_scaling_factor * calcium_at(time);
       const double fiber_stretch = fiber_stretch_at(time);
       const double fiber_stretch_rate =
           (fiber_stretch_at(time + configuration_.time_step) - fiber_stretch) /

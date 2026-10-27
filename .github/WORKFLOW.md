@@ -4,26 +4,37 @@ This directory contains GitHub Actions workflows that run various actions (tests
 
 ## Workflows
 
-### 1. Tests Workflow (`workflows/tests.yml`)
+### 1. Fast Tests Workflow (`workflows/tests.yml`)
 
-**Purpose**: Runs comprehensive integration tests on both Ubuntu and macOS platforms when relevant code changes are detected. The integration tests can be found in the `tests/` directory and use `pytest`.
+**Purpose**: Runs optimized one- and three-rank integration tests on Ubuntu and macOS when relevant code changes are detected.
 
 **Triggers**: 
 - Pull requests
-- Pushes to any branch
+- Pushes to `main`
 
 **Key Features**:
-- **Smart Change Detection**: Only runs full test suite when changes are made to important directories (`Code/`, `tests/`, `.github/`)
+- **Smart Change Detection**: Only runs integration tests when changes are made to important directories (`Code/`, `tests/`, `.github/`)
 - **Multi-Platform Testing**: Runs tests on both Ubuntu (using Docker container) and macOS
-- **Coverage Reporting**: Generates and uploads code coverage reports to Codecov
+- **No Coverage Reporting**: Coverage and array-index checking are reserved for the full workflow
 
 **Jobs**:
-1. `check-for-changes`: Determines if full test suite should run based on file changes in important directories. Uses `dorny/paths-filter@v3` to filter directories. 
+1. `check-for-changes`: Determines if fast tests should run based on file changes in important directories. Uses `dorny/paths-filter@v3` to filter directories.
 2. `test-ubuntu`: Runs tests in Ubuntu environment through `actions/test-ubuntu/action.yml`. Triggered only if `check-for-changes` returns `run_full_tests = true`
 3. `test-macos`: Runs tests on macOS through `actions/test-macos/action.yml`. Triggered only if `check-for-changes` returns `run_full_tests = true`
 4. `all-tests`: Coordinates test results for branch protection rules. If `test-ubuntu` and `test-macos` run, returns success status only if both `test-ubuntu` and `test-macos` return success. If `test-ubuntu` and `test-macos` are skipped, always returns success. This test must pass for a pull request to be merged, as set by branch protection rules.
 
-### 2. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
+### 2. Full Tests Workflow (`workflows/full-tests.yml`)
+
+**Purpose**: Runs ranks 1, 3, and 4 with coverage and array-index checking on Ubuntu and macOS.
+
+**Triggers**:
+- Pushes to `main`
+- Manual dispatch selecting `main` (jobs are skipped for other refs)
+- Applying the `full-tests` label to a pull request; subsequent commits rerun the full tests while the label remains
+
+For a risky pull request, a maintainer can apply the repository's `full-tests` label to test its merge result. The label must exist before this trigger can be used. Remove the label to stop full tests on later commits. PR-triggered runs use the pull request's security and cache scope; do not use a manual dispatch to check out PR code. The Ubuntu job saves its coverage report as a GitHub Actions artifact. Only pushes to `main` upload coverage to Codecov.
+
+### 3. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
 
 **Purpose**: Builds and publishes Docker images for the solver component.
 
@@ -36,7 +47,7 @@ This directory contains GitHub Actions workflows that run various actions (tests
 3. Builds the Docker image using `Docker/solver/dockerfile`
 4. Pushes the image to `simvascular/solver:latest`
 
-### 3. Documentation Workflow (`workflows/documentation.yml`)
+### 4. Documentation Workflow (`workflows/documentation.yml`)
 
 **Purpose**: Builds and deploys HTML documentation using Doxygen.
 
@@ -49,7 +60,7 @@ This directory contains GitHub Actions workflows that run various actions (tests
 3. Uploads documentation as an artifact
 4. Deploys documentation to GitHub Pages (only for `main` branch)
 
-### 4. Copyright Workflow (`workflows/copyright.yml`)
+### 5. Copyright Workflow (`workflows/copyright.yml`)
 
 **Purpose**: Ensures all source files contain proper copyright headers.
 

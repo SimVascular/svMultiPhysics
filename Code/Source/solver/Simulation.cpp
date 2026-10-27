@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include "Core/Exception.h"
 
 Simulation::Simulation() 
 {
@@ -60,6 +61,21 @@ void Simulation::set_module_parameters()
   com_mod.nITs = general.number_of_initialization_time_steps.value();
   com_mod.startTS = general.starting_time_step.value();
   com_mod.dt = general.time_step_size.value();
+
+  com_mod.have_initial_homogeneous_pressure =
+      general.initial_homogeneous_pressure.defined();
+
+  if (com_mod.have_initial_homogeneous_pressure) {
+    for (const auto& mesh_param : parameters.mesh_parameters) {
+      svmp::throw_if<svmp::ParseException>(
+          mesh_param->initial_pressures_file_path.defined(),
+          "Cannot specify both Initial_homogeneous_pressure and a mesh "
+          "initial pressure file. Choose one pressure initialization method.");
+    }
+
+    com_mod.initial_homogeneous_pressure =
+        general.initial_homogeneous_pressure.value();
+  }
 
   com_mod.stopTrigName = general.searched_file_name_to_trigger_stop.value();
   com_mod.ichckIEN = general.check_ien_order.value();

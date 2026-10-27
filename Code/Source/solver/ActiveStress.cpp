@@ -68,6 +68,14 @@ void ActiveStress::read_parameters(const ActiveStressParameters &params) {
 
   implicit_state_coupling_ = params.get_implicit_state_coupling();
 
+  calcium_scaling_factor_ = params.get_calcium_scaling_factor();
+  disable_force_strain_rate_feedback_ =
+      params.get_disable_force_strain_rate_feedback();
+
+  // With the feedback disabled the stretch rate computation can be skipped.
+  // Models that never use the stretch rate must not be switched on.
+  needs_fiber_stretch_rate_ &= !disable_force_strain_rate_feedback_;
+
   read_model_specific_parameters(
       params.get_parameters(params.get_model_name()));
 }
@@ -79,6 +87,10 @@ void ActiveStress::distribute_parameters(const CmMod &cm_mod,
   cm.bcast(cm_mod, &eta_n);
 
   cm.bcast(cm_mod, &implicit_state_coupling_);
+
+  cm.bcast(cm_mod, &calcium_scaling_factor_);
+  cm.bcast(cm_mod, &disable_force_strain_rate_feedback_);
+  cm.bcast(cm_mod, &needs_fiber_stretch_rate_);
 
   distribute_model_specific_parameters(cm_mod, cm);
 }
@@ -110,8 +122,10 @@ void ActiveStress::update(const double t, const double dt,
   // Advance the state from the beginning of the time step.
   for (int i = 0; i < states.ncols(); ++i) {
     Vector<double> state_loc = states_at_time_step_start.col(i);
-    advance_time_step_local(t, dt, calcium[i], fiber_stretch[i],
-                            fiber_stretch_rate[i], state_loc);
+    advance_time_step_local(
+        t, dt, calcium_scaling_factor_ * calcium[i], fiber_stretch[i],
+        disable_force_strain_rate_feedback_ ? 0.0 : fiber_stretch_rate[i],
+        state_loc);
     states.set_col(i, state_loc);
   }
 }

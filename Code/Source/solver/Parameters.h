@@ -1562,6 +1562,12 @@ public:
   /// nonlinear iterations of the mechanics problem.
   bool get_implicit_state_coupling() const;
 
+  /// Get the factor applied to calcium before it is passed to the model.
+  double get_calcium_scaling_factor() const;
+
+  /// Get whether the fiber stretch rate passed to the model is set to zero.
+  bool get_disable_force_strain_rate_feedback() const;
+
   /// Get the parameters for a given active stress model.
   const ActiveStressModelParameters &
   get_parameters(const std::string &model_name) const;
@@ -1576,6 +1582,14 @@ protected:
   /// Parameter selecting whether the state of the active stress model is
   /// updated within the nonlinear iterations of the mechanics problem.
   Parameter<bool> implicit_state_coupling;
+
+  /// Parameter for the factor applied to calcium before it is passed to the
+  /// model.
+  Parameter<double> calcium_scaling_factor;
+
+  /// Parameter selecting whether the fiber stretch rate passed to the model is
+  /// set to zero, disabling the force-strain-rate feedback.
+  Parameter<bool> disable_force_strain_rate_feedback;
 
   /// Parameters for the directional distribution of active tension.
   DirectionalDistributionParameters directional_distribution;
@@ -1876,6 +1890,7 @@ class GeneralSimulationParameters : public ParameterLists
 
     Parameter<double> spectral_radius_of_infinite_time_step;
     Parameter<double> time_step_size;
+    Parameter<double> initial_homogeneous_pressure;
 
     Parameter<std::string> include_xml;
     Parameter<int> increment_in_saving_restart_files;

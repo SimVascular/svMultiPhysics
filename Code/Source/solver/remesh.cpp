@@ -1444,11 +1444,11 @@ void remesh_restart(Simulation* simulation)
   dmsg << "rmsh.rTS: " << rmsh.rTS;
   dmsg << "tDof: " << com_mod.tDof;
   #endif
-  std::filesystem::remove(sTmp);
 
   // Create the file.
   //
   if (cm.mas(cm_mod)) {
+    std::filesystem::remove(sTmp);
     std::ofstream restart_file(sTmp, std::ios::out | std::ios::binary);
     restart_file.close();
   }

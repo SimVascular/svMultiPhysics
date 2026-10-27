@@ -27,6 +27,7 @@ bool supports_active_stress(const consts::EquationType eq_type);
  * ## Table of contents
  *
  * - @ref activestress-overview
+ * - @ref activestress-inputs
  * - @ref activestress-directions
  * - @ref activestress-implementing
  * - @ref activestress-coupling
@@ -54,6 +55,21 @@ bool supports_active_stress(const consts::EquationType eq_type);
  * Accordingly, this class works nodally, storing the state of contraction at
  * every mesh node and evaluating the active tension from it, on demand,
  * through @ref ActiveStress::compute_tension.
+ *
+ * ## Preprocessing of model inputs {#activestress-inputs}
+ *
+ * Two parameters, set at the top level of the @c <Active_stress> XML element
+ * and shared by all models, modify the inputs before they reach the model:
+ *
+ * - @c Calcium_scaling_factor (default @c 1.0): calcium is multiplied by this
+ *   factor, e.g. to convert between the units of the electrophysiology model
+ *   and those expected by the active stress model.
+ * - @c Disable_force_strain_rate_feedback (default @c false): if @c true, the
+ *   fiber stretch rate is set to zero, and its computation is skipped.
+ *
+ * Both are applied once, in @ref update, so that @ref advance_time_step_local
+ * receives already scaled calcium and an already zeroed stretch rate. Models
+ * that do not use calcium or the stretch rate ignore them.
  *
  * ## Directional distribution of active stress {#activestress-directions}
  *
@@ -106,6 +122,10 @@ bool supports_active_stress(const consts::EquationType eq_type);
  * Notice that if the model is expressed in terms of a system of ODEs, it can
  * be implemented by deriving from @ref ActiveStressODE, which already addresses
  * some of the points above.
+ *
+ * Models need no code of their own for calcium scaling or for disabling the
+ * force-strain-rate feedback, as these are applied by this class (see
+ * @ref activestress-inputs).
  *
  * ## Coupling with the structural mechanics problem {#activestress-coupling}
  *
@@ -400,9 +420,11 @@ protected:
    *
    * @param[in] t Current time (i.e. the time instant being advanced to).
    * @param[in] dt Time step size.
-   * @param[in] calcium Calcium concentration at the current node.
+   * @param[in] calcium Calcium concentration at the current node, already
+   *   multiplied by @ref calcium_scaling_factor_.
    * @param[in] fiber_stretch Fiber stretch at the current node.
-   * @param[in] fiber_stretch_rate Fiber stretch rate at the current node.
+   * @param[in] fiber_stretch_rate Fiber stretch rate at the current node, or
+   *   zero if @ref disable_force_strain_rate_feedback_ is set.
    * @param[in,out] state State vector for a single node, to be updated by
    *   this function.
    */
@@ -462,6 +484,14 @@ protected:
    * iterations of the mechanics problem.
    */
   bool implicit_state_coupling_;
+
+  /// Factor applied to calcium in @ref update before it is passed to
+  /// @ref advance_time_step_local.
+  double calcium_scaling_factor_ = 1.0;
+
+  /// If true, the fiber stretch rate passed to @ref advance_time_step_local is
+  /// set to zero, disabling the force-strain-rate feedback.
+  bool disable_force_strain_rate_feedback_ = false;
 
   /// Active tension coefficient along the fiber direction.
   double eta_f;

@@ -10,52 +10,75 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Report Ubuntu runner hardware
+      shell: bash
+      run: |
+        echo "Architecture: $(uname -m)"
+        echo "Available CPUs: $(nproc)"
+        lscpu | grep -E '^(Model name|CPU\(s\)|Thread\(s\) per core|Core\(s\) per socket):'
+        free -h
+
+    - name: Install compiler cache
+      shell: bash
+      run: |
+        if ! command -v ccache >/dev/null 2>&1; then
+          apt-get update -qq
+          apt-get install -y --no-install-recommends ccache
+        fi
+        echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+
+    - name: Restore compiler cache
+      uses: actions/cache/restore@v4
+      with:
+        path: .ccache
+        key: ubuntu-${{ env.SVMP_OPTIMIZED_CI == 'true' && 'ccache-v1' || 'ccache-full-v1' }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: ubuntu-${{ env.SVMP_OPTIMIZED_CI == 'true' && 'ccache-v1' || 'ccache-full-v1' }}-
+
+    - name: Initialize compiler cache
+      shell: bash
+      run: |
+        ccache -M 1G
+        ccache -z
+
     - name: Build svZeroDSolver
       shell: bash
       run: |
         conda init
         source /conda/etc/profile.d/conda.sh
         conda activate svmultiphysics
-        git clone https://github.com/SimVascular/svZeroDSolver.git
-        cd svZeroDSolver
-        mkdir build
-        cd build
-        cmake .. \
-          -DCMAKE_PROJECT_svZeroDSolver_INCLUDE="$GITHUB_WORKSPACE/Code/ThirdParty/eigen/share/eigen3/cmake/Eigen3Config.cmake" \
-          -DFETCHCONTENT_SOURCE_DIR_EIGEN="$GITHUB_WORKSPACE/Code/ThirdParty/eigen"
-        make -j2
+        source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+        ci_build_svzerodsolver "$(nproc)"
         
     - name: Build svMultiPhysics
       shell: bash
       run: |
-        if [ -d "build" ]; then
-          rm -rf "build"
-        fi
-        mkdir build
-        cd build
-        cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON -DSV_USE_TRILINOS:BOOL=ON ..
-        make -j2
-        cd ..
+        source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+        ci_build_solver build "$(nproc)" -DSV_USE_TRILINOS:BOOL=ON
         
     - name: Build svMultiPhysics (PETSc)
       shell: bash
       run: |
-        if [ -d "build-petsc" ]; then
-          rm -rf "build-petsc"
-        fi
-        mkdir build-petsc
-        cd build-petsc
-        cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON -DSV_PETSC_DIR:STRING=/petsc ..
-        make -j2
-        cd ..
+        source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+        ci_build_solver build-petsc "$(nproc)" -DSV_PETSC_DIR:STRING=/petsc
+
+    - name: Report compiler cache statistics
+      shell: bash
+      run: ccache -s
+
+    - name: Save compiler cache
+      uses: actions/cache/save@v4
+      with:
+        path: .ccache
+        key: ubuntu-${{ env.SVMP_OPTIMIZED_CI == 'true' && 'ccache-v1' || 'ccache-full-v1' }}-${{ github.run_id }}-${{ github.run_attempt }}
         
     - name: Run integration tests
       shell: bash
       run: |
         git config --global --add safe.directory /__w/svMultiPhysics/svMultiPhysics
-        git lfs pull
-        cd tests
-        conda run -n svmultiphysics pytest -v -rfEP --durations=0
+        source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+        ci_run_integration_tests 2 1
         
     - name: Run unit tests
       shell: bash
@@ -64,18 +87,21 @@ runs:
         ctest --verbose
         
     - name: Generate code coverage
+      if: ${{ env.SVMP_OPTIMIZED_CI != 'true' }}
       shell: bash
       run: |
         cd build/svMultiPhysics-build
         make coverage
         
     - name: Save coverage report
+      if: ${{ env.SVMP_OPTIMIZED_CI != 'true' }}
       uses: actions/upload-artifact@v4
       with:
         name: coverage_report
         path: build/svMultiPhysics-build/coverage
         
     - name: Upload coverage reports to Codecov
+      if: ${{ env.SVMP_OPTIMIZED_CI != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ inputs.codecov-token }}

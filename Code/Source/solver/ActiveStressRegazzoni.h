@@ -120,8 +120,6 @@ public:
       add_parameter("LM", 1.65, required);
       add_parameter("LB", 0.18, required);
       add_parameter("a_XB", 22.894, required);
-
-      add_parameter("Disable_force_strain_rate_feedback", false, !required);
     }
   };
 
@@ -338,11 +336,6 @@ private:
   /// It must be expressed in the same stress unit as the mechanical
   /// configuration.
   double a_XB;
-
-  /// Controls force–strain-rate feedback in the XB update.
-  /// - @c false (default): use @f$v = -\dot{\lambda}@f$ as shortening velocity.
-  /// - @c true: set shortening velocity to zero, disabling the feedback.
-  bool disable_force_strain_rate_feedback_ = false;
 
   /// @}
 };
