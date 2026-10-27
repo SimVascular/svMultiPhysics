@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <exception>
 #include <limits>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <string_view>
@@ -556,6 +557,10 @@ static_assert(std::is_same_v<decltype(make_triangle_rule(0, std::declval<const Q
 static_assert(std::is_same_v<decltype(make_triangle_rule(0,
     std::declval<const QuadratureRule&>(), std::declval<const QuadratureRule&>())), QuadratureRule>);
 
+// Exhaustive qualification observed relative errors below 6e-14. This retains
+// over 30-fold cross-toolchain headroom and stays meaningful for tiny moments.
+constexpr long double kTriangleRelativeTolerance = 2.0e-12L;
+
 struct CompensatedSum {
     long double sum = 0.0L;
     long double correction = 0.0L;
@@ -605,6 +610,21 @@ std::vector<std::vector<CompensatedSum>> triangle_moments(const QuadratureRule& 
     return moments;
 }
 
+// A relative bound keeps tiny high-order moments from passing as zero.
+void expect_triangle_moments(const QuadratureRule& rule, int degree)
+{
+    const auto moments = triangle_moments(rule, degree);
+    for (int a = 0; a <= degree; ++a) {
+        for (int b = 0; b <= degree - a; ++b) {
+            const long double expected = reference::triangle_monomial_integral(a, b);
+            const long double actual = moments[a][b].value();
+            EXPECT_GT(actual, 0.0L) << "a=" << a << ", b=" << b;
+            EXPECT_LE(std::abs(actual - expected) / expected, kTriangleRelativeTolerance)
+                << "a=" << a << ", b=" << b;
+        }
+    }
+}
+
 void expect_same_ordered_rule(const QuadratureRule& left, const QuadratureRule& right)
 {
     ASSERT_EQ(left.num_points(), right.num_points());
@@ -618,6 +638,68 @@ void expect_same_ordered_rule(const QuadratureRule& left, const QuadratureRule& 
         }
         EXPECT_EQ(left.weight(q), right.weight(q)) << "point=" << q;
     }
+}
+
+void expect_every_triangle_rule(LineEndpointPolicy endpoint_policy)
+{
+    const bool lobatto = endpoint_policy == LineEndpointPolicy::Included;
+    const int last_request = lobatto ? 252 : 254;
+    int distinct_rules = 0;
+    std::optional<QuadratureRule> previous;
+    for (int p = 0; p <= last_request; ++p) {
+        SCOPED_TRACE(::testing::Message() << "request=" << p << ", Lobatto=" << lobatto);
+        const auto factor = lobatto ? make_gauss_lobatto_rule(p + 1)
+                                    : make_gauss_legendre_rule(p + 1);
+        const auto rule = make_triangle_rule(p, factor);
+        expect_same_ordered_rule(rule, make_triangle_rule(p, factor, factor));
+        const std::size_t n = static_cast<std::size_t>((p + 1) / 2 + (lobatto ? 2 : 1));
+        const int degree = 2 * static_cast<int>(n) - (lobatto ? 4 : 2);
+        ASSERT_EQ(factor.num_points(), n);
+        ASSERT_EQ(rule.num_points(), n * n);
+        ASSERT_EQ(rule.polynomial_exactness(), degree);
+        EXPECT_GE(degree, p);
+        EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Triangle);
+        EXPECT_EQ(rule.dimension(), 2u);
+        EXPECT_EQ(rule.reference_cell_measure(), 0.5);
+        for (std::size_t q = 0; q < rule.num_points(); ++q) {
+            const double x = rule.point(q)[0];
+            const double y = rule.point(q)[1];
+            EXPECT_TRUE(std::isfinite(x) && std::isfinite(y) && std::isfinite(rule.weight(q)));
+            EXPECT_EQ(rule.point(q)[2], 0.0);
+            if (lobatto) {
+                EXPECT_GE(x, 0.0);
+                EXPECT_GE(y, 0.0);
+                EXPECT_LE(x + y, 1.0 + kStructureTolerance);
+                EXPECT_GE(rule.weight(q), 0.0);
+            } else {
+                EXPECT_GT(x, 0.0);
+                EXPECT_GT(y, 0.0);
+                EXPECT_LT(x + y, 1.0);
+                EXPECT_GT(rule.weight(q), 0.0);
+            }
+        }
+        if (lobatto) {
+            EXPECT_EQ(rule.point(0)[0], 0.0);
+            EXPECT_EQ(rule.point(0)[1], 0.0);
+            EXPECT_EQ(rule.point(n - 1)[1], 1.0);
+            for (std::size_t j = 0; j < n; ++j) {
+                const auto q = (n - 1) * n + j;
+                EXPECT_EQ(rule.point(q)[0], 1.0);
+                EXPECT_EQ(rule.point(q)[1], 0.0);
+                EXPECT_EQ(rule.weight(q), 0.0);
+                EXPECT_EQ(rule.point(j * n)[1], 0.0);
+            }
+        }
+        if (previous && previous->polynomial_exactness() == degree) {
+            expect_same_ordered_rule(*previous, rule);
+        } else {
+            ++distinct_rules;
+            expect_triangle_moments(rule, degree);
+        }
+        previous = rule;
+    }
+    EXPECT_EQ(previous->num_points(), 16384u);
+    EXPECT_EQ(distinct_rules, lobatto ? 127 : 128);
 }
 
 } // namespace
@@ -852,4 +934,43 @@ TEST(TriangleDuffyImplementation, ReportsNumericalFailureWithoutRepairingSamples
     const QuadratureRule overflow(svmp::CellFamily::Line, 1,
         {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}, {1.0e200, -1.0e200, 2.0});
     EXPECT_THROW(make_triangle_rule(0, overflow), ConvergenceException);
+}
+
+TEST(TriangleDuffyQualification, IntegratesEveryGaussBackedRequest)
+{
+    expect_every_triangle_rule(LineEndpointPolicy::Excluded);
+}
+
+TEST(TriangleDuffyQualification, IntegratesEveryLobattoBackedRequest)
+{
+    expect_every_triangle_rule(LineEndpointPolicy::Included);
+}
+
+TEST(TriangleDuffyQualification, IntegratesIndependentGaussAndLobattoFactors)
+{
+    struct Pair {
+        bool u_lobatto;
+        bool v_lobatto;
+        int maximum_degree;
+        std::size_t degree_five_points;
+    };
+    for (const auto pair : {Pair{false, false, 254, 12}, Pair{false, true, 253, 16},
+                           Pair{true, false, 252, 15}, Pair{true, true, 252, 20}}) {
+        for (const int p : {0, 1, 2, 5, 31, 127, pair.maximum_degree}) {
+            SCOPED_TRACE(::testing::Message() << "degree=" << p
+                << ", u Lobatto=" << pair.u_lobatto << ", v Lobatto=" << pair.v_lobatto);
+            const auto u = pair.u_lobatto ? make_gauss_lobatto_rule(p + 1) : make_gauss_legendre_rule(p + 1);
+            const auto v = pair.v_lobatto ? make_gauss_lobatto_rule(p) : make_gauss_legendre_rule(p);
+            const auto rule = make_triangle_rule(p, u, v);
+            ASSERT_EQ(rule.polynomial_exactness(), p);
+            EXPECT_EQ(rule.num_points(), u.num_points() * v.num_points());
+            if (p == 5) {
+                EXPECT_EQ(rule.num_points(), pair.degree_five_points);
+            }
+            expect_triangle_moments(rule, p);
+            if (p == pair.maximum_degree) {
+                EXPECT_THROW(make_triangle_rule(p + 1, u, v), InvalidArgumentException);
+            }
+        }
+    }
 }
