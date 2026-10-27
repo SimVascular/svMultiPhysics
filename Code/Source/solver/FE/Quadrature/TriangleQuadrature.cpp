@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-/** @file TriangleQuadrature.cpp
+/**
+ * @file TriangleQuadrature.cpp
  * @brief Validated composition of supplied line quadrature into triangle rules.
  * @ingroup FE_Quadrature
  */
