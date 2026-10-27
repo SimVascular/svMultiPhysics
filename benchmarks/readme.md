@@ -1,6 +1,7 @@
 # Benchmarking
 
-*This Readme is a work in progress*
+> [!CAUTION]
+> This Readme and `svbenchmark` is currently a work in progress, and may change in the future.
 
 Benchmarking is an important part of solver development. Here, we are specifically refering to three different types of benchmarks:
 
@@ -16,17 +17,19 @@ You can add a new benchmark by making a new folder under the relevant domain in 
 
 ## Running a Benchmark
 
+The easiest way to run the benchmark is to use the `svbenchmark` Python package. To run the benchmark, use a Python script to set the execution environment (probably a local path if on your local computer) and run the `benchmark.toml`.
+
 ### svbenchmark
 
 `svbenchmark` is the harness layer that pytest uses to run the TOML specifid Benchmark. This is also useful for debugging your benchmark before uploading so that it can run automatically.
 
 ## Benchmark Structure
 
-Each benchmark *must* consist of a `benchmark.toml`.
+Each benchmark *must* contain a `benchmark.toml`.
 
-The `benchmark.toml` is the Benchmark Manifest and it contains directions for how to run and evaluate the benchmark. It is formatted as a TOML file (Tom's Obvious Markup Language) which is a lightweight and readable markup format.
+The `benchmark.toml` is the Benchmark Specification and it contains directions for how to run and evaluate the benchmark. It is formatted as a TOML file (Tom's Obvious Markup Language) which is a lightweight and readable markup format.
 
-Specifically, the Benchmark Manifest contains:
+Specifically, the Benchmark Specification contains:
 
 1. name (Required) - The general name of the benchmark
 2. reference_source (Required) - The basis of the reference
@@ -36,10 +39,12 @@ Specifically, the Benchmark Manifest contains:
 6. evaluation (Required) - Description of what is being evaluated and how to extract it (see below)
 7. cleanup (Optional) - Command that runs any cleanup at the end
 
-An optional but highly suggested `readme.md` is the long description of the benchmark. The format is decided by the writer of the benchmark, however it is recommended to contain at least the following two items:
+```mermaid
+flowchart LR
+A["svBenchmark"] <-->|benchmark.toml| B["Your Benchmark"]
+```
 
-1. A longer description of the benchmark and setup
-2. The set of evaluation criteria and a justification for any reference values
+An optional but highly suggested `readme.md` is the long description of the benchmark. The format is decided by the writer of the benchmark, however it is recommended to contain at least the following two items:
 
 ## Benchmark Execution
 
@@ -53,7 +58,6 @@ C --> D["4. Evaluation (Required)"]
 D --> E["5. Clean Up (Optional)"]
 ```
 
-### Execution Environment
 
 ## Evaluation Criteria
 
