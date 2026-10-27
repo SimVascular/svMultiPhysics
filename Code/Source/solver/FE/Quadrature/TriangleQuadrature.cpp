@@ -117,9 +117,10 @@ QuadratureRule make_triangle_rule(
     svmp::check<ConvergenceException>(reproduces_measure(weights, 0.5),
         "Triangle Duffy generator: output weights do not reproduce measure 1/2");
 
-    return QuadratureRule(svmp::CellFamily::Triangle,
-        std::min(u_rule.polynomial_exactness() - 1, v_rule.polynomial_exactness()),
-        std::move(points), std::move(weights));
+    // x^a y^b maps to u^a (1-u)^(b+1) v^b, so u_rule needs one degree more than it delivers.
+    const int polynomial_exactness = std::min(u_rule.polynomial_exactness() - 1, v_rule.polynomial_exactness());
+    return QuadratureRule(
+        svmp::CellFamily::Triangle, polynomial_exactness, std::move(points), std::move(weights));
 }
 
 QuadratureRule make_triangle_rule(int requested_exactness, const QuadratureRule& line_rule)
