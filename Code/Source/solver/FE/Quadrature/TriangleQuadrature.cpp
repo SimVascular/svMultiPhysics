@@ -82,7 +82,8 @@ QuadratureRule make_triangle_rule(
 {
     svmp::check<InvalidArgumentException>(
         requested_exactness >= 0 && requested_exactness <= max_triangle_exactness(),
-        "Triangle Duffy generator: requested_exactness must be in [0, 254]");
+        "Triangle Duffy generator: requested_exactness must be in [0, " +
+            std::to_string(max_triangle_exactness()) + ']');
     const std::size_t n_u = u_rule.num_points();
     const std::size_t n_v = v_rule.num_points();
     svmp::check<InvalidArgumentException>(
@@ -90,7 +91,7 @@ QuadratureRule make_triangle_rule(
     // Bound the product and both validation sums before multiplication or allocation.
     svmp::check<InvalidArgumentException>(
         n_u <= kMaximumProductPoints / n_v,
-        "Triangle Duffy generator: product exceeds 16384 samples");
+        "Triangle Duffy generator: product exceeds " + std::to_string(kMaximumProductPoints) + " samples");
     validate_line_rule(u_rule, requested_exactness + 1, "u_rule");
     validate_line_rule(v_rule, requested_exactness, "v_rule");
 
