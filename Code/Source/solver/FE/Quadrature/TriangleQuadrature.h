@@ -69,7 +69,9 @@ namespace svmp::FE::quadrature {
  * @throws InvalidArgumentException If the request or factors violate these
  *         contracts, or @f$n_u n_v@f$ exceeds 16384; checked before product
  *         allocation.
- * @throws ConvergenceException If mapped data fail numerical validation.
+ * @throws ConvergenceException If the mapped weights do not reproduce measure
+ *         @f$1/2@f$, for example after an overflowed product or when @p u_rule
+ *         does not integrate linear functions exactly.
  */
 [[nodiscard]] QuadratureRule make_triangle_rule(
     int requested_exactness, const QuadratureRule& u_rule, const QuadratureRule& v_rule);
