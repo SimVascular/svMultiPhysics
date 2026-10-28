@@ -58,6 +58,26 @@ C --> D["4. Evaluation (Required)"]
 D --> E["5. Clean Up (Optional)"]
 ```
 
+### Example Local Execution
+
+```python
+from pathlib import Path
+import svbenchmark
+
+benchmark = svbenchmark.load_benchmark("benchmark.toml")
+
+# define the context of the solve
+SOLVER_PATH = Path("YOUR_PATH_TO_SVMULTIPHYSICS")
+
+local_solve_context = svbenchmark.SolveExecutionContext(
+    solver_executable=SOLVER_PATH,
+    mpi_ranks=4
+)
+# run the benchmark
+benchmark_results = svbenchmark.run_benchmark(benchmark, local_solve_context)
+# write the results
+svbenchmark.write_benchmark_json(benchmark_results, Path("results.json"))
+```
 
 ## Evaluation Criteria
 
