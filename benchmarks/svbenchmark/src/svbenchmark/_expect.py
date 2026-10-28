@@ -15,9 +15,7 @@ def expect_int(value: object, location: str) -> int:
     Checks if value is int, returning it if so. Otherwise throws an error
     """
     if not isinstance(value, int) or isinstance(value, bool):
-        raise ValueError(
-            f"Expected '{location}' to be int, got {type(value).__name__}"
-        )
+        raise ValueError(f"Expected '{location}' to be int, got {type(value).__name__}")
     return value
 
 
@@ -30,6 +28,7 @@ def expect_float(value: object, location: str) -> float:
             f"Expected '{location}' to be numeric, got {type(value).__name__}"
         )
     return float(value)
+
 
 def expect_float_positive(value: object, location: str) -> float:
     """
@@ -44,14 +43,13 @@ def expect_float_positive(value: object, location: str) -> float:
 
     return result
 
+
 def expect_str(value: object, location: str) -> str:
     """
     Checks if value is str, returning it if so. Otherwise throws an error
     """
     if not isinstance(value, str):
-        raise ValueError(
-            f"Expected '{location}' to be str, got {type(value).__name__}"
-        )
+        raise ValueError(f"Expected '{location}' to be str, got {type(value).__name__}")
     return value
 
 
@@ -65,9 +63,7 @@ def expect_table(value: object, location: str) -> dict[str, object]:
         )
 
     if not all(isinstance(key, str) for key in value):
-        raise ValueError(
-            f"Expected '{location}' to have string keys"
-        )
+        raise ValueError(f"Expected '{location}' to have string keys")
 
     return cast(dict[str, object], value)
 
@@ -76,11 +72,7 @@ def expect_str_array(value: object, location: str) -> tuple[str, ...]:
     """
     Checks if value is [str,...], returning it as a tuple if so. Otherwise throws an error
     """
-    if not isinstance(value, list) or not all(
-        isinstance(item, str) for item in value
-    ):
-        raise ValueError(
-            f"Expected '{location}' to be an array of strings"
-        )
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError(f"Expected '{location}' to be an array of strings")
 
     return tuple(value)

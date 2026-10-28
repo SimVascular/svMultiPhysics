@@ -1,6 +1,3 @@
-
-
-
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
@@ -12,7 +9,10 @@ from datetime import datetime, UTC
 
 from ._expect import expect_str, expect_str_array
 
-def run_solver(solver : SolverRun, context : SolveExecutionContext, cwd : Path) -> RunResult:
+
+def run_solver(
+    solver: SolverRun, context: SolveExecutionContext, cwd: Path
+) -> RunResult:
     """
     Runs the solver using the execution context and a working directory
     """
@@ -25,12 +25,13 @@ class ExecutionEnvironment:
     """
     This class automatically holds the execution environment (i.e. hardware) as best as possible
     """
+
     system: str
     release: str
     version: str
     machine: str
     processor: str
-    cpus : int | None
+    cpus: int | None
 
     @classmethod
     def capture(cls):
@@ -42,8 +43,9 @@ class ExecutionEnvironment:
             version=info.version,
             machine=info.machine,
             processor=info.processor,
-            cpus=cpus
+            cpus=cpus,
         )
+
 
 @dataclass(frozen=True, kw_only=True)
 class SolveExecutionContext:
@@ -54,26 +56,26 @@ class SolveExecutionContext:
     This is used in combination with the dataset TOML defined definitions to realize an actual command call to run
     with the TOML defined intent
     """
+
     solver_executable: Path
-    solver_notes : str = ""
+    solver_notes: str = ""
     mpi_launcher: str = "mpirun"
     mpi_args: tuple[str, ...] = ()
     mpi_ranks: int = 1
 
+
 @dataclass(frozen=True)
 class SolverRun:
-    name : str
-    input : Path
-    cwd : Path
+    name: str
+    input: Path
+    cwd: Path
 
     @classmethod
-    def from_dict(cls, name : str, data : dict[str, object]) -> Self:
-        input_str = expect_str(data['input'], 'input')
-        cwd = Path(expect_str(data.get('cwd', ''), 'cwd'))
-        
-        return cls(name = name,
-                   input = Path(input_str),
-                   cwd = cwd)
+    def from_dict(cls, name: str, data: dict[str, object]) -> Self:
+        input_str = expect_str(data["input"], "input")
+        cwd = Path(expect_str(data.get("cwd", ""), "cwd"))
+
+        return cls(name=name, input=Path(input_str), cwd=cwd)
 
     def build_command(
         self,
@@ -89,39 +91,40 @@ class SolverRun:
                 str(context.solver_executable),
                 str(self.input),
             ),
-            cwd = self.cwd
+            cwd=self.cwd,
         )
-    def build_named_command(self, context : SolveExecutionContext):
+
+    def build_named_command(self, context: SolveExecutionContext):
         return NamedCommand(self.name, self.build_command(context))
+
 
 @dataclass(frozen=True)
 class Command:
-    argv : tuple[str, ...]
-    cwd : Path
+    argv: tuple[str, ...]
+    cwd: Path
 
     def to_str(self) -> str:
-        return ' '.join(self.argv)
+        return " ".join(self.argv)
 
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> Self:
-        """ 
+        """
         Creates a Command from a dictionary, raises errors if the argv does not exist or is incorrectly
         formatted
         """
-        argv = expect_str_array(data["argv"], 'argv')
-        cwd = Path(expect_str(data.get('cwd', ''), 'cwd'))
+        argv = expect_str_array(data["argv"], "argv")
+        cwd = Path(expect_str(data.get("cwd", ""), "cwd"))
         return cls(argv=tuple(argv), cwd=cwd)
 
 
 @dataclass(frozen=True)
 class NamedCommand:
-    name : str
-    command : Command
-
+    name: str
+    command: Command
 
     @classmethod
-    def from_dict(cls, name : str, data: dict[str, object]) -> Self:
-        """ 
+    def from_dict(cls, name: str, data: dict[str, object]) -> Self:
+        """
         Creates a Command from a dictionary, raises errors if the argv does not exist or is incorrectly
         formatted
         """
@@ -129,25 +132,29 @@ class NamedCommand:
 
         return cls(name, command)
 
+
 @dataclass(frozen=True)
 class RunResult:
     """
     Holds the information pertaining to a single command run result
     """
-    run_cmd : str
-    run_time_seconds : float
-    returncode : int
-    execution_environment : ExecutionEnvironment
-    utc : datetime
+
+    run_cmd: str
+    run_time_seconds: float
+    returncode: int
+    execution_environment: ExecutionEnvironment
+    utc: datetime
+
 
 @dataclass(frozen=True)
 class CaptureResult:
-    run_result : RunResult
-    stdout : str
-    stderr : str
+    run_result: RunResult
+    stdout: str
+    stderr: str
 
-def run_command(command : Command, cwd : Path) -> RunResult:
-    """ 
+
+def run_command(command: Command, cwd: Path) -> RunResult:
+    """
     Runs a step based on its context which provides a run.
     """
     execution_environment = ExecutionEnvironment.capture()
@@ -155,27 +162,38 @@ def run_command(command : Command, cwd : Path) -> RunResult:
     result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), check=True)
     end_time = time.perf_counter()
 
-    return(RunResult(run_cmd=command.to_str(), 
-                     run_time_seconds=end_time-start_time, 
-                     returncode=result.returncode,
-                     execution_environment=execution_environment,
-                     utc=datetime.now(UTC))
-                     )
+    return RunResult(
+        run_cmd=command.to_str(),
+        run_time_seconds=end_time - start_time,
+        returncode=result.returncode,
+        execution_environment=execution_environment,
+        utc=datetime.now(UTC),
+    )
 
-def capture_command(command : Command, cwd : Path) -> CaptureResult:
-    """ 
+
+def capture_command(command: Command, cwd: Path) -> CaptureResult:
+    """
     Captures a command run, the command call does not print to terminal.
     """
     execution_environment = ExecutionEnvironment.capture()
     start_time = time.perf_counter()
-    result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), capture_output=True, text=True, check = True)
+    result = subprocess.run(
+        command.argv,
+        cwd=cwd.joinpath(command.cwd),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     end_time = time.perf_counter()
 
-    run_result = RunResult(run_cmd=command.to_str(), 
-                     run_time_seconds=end_time-start_time, 
-                     returncode=result.returncode,
-                     execution_environment=execution_environment,
-                     utc=datetime.now(UTC))
+    run_result = RunResult(
+        run_cmd=command.to_str(),
+        run_time_seconds=end_time - start_time,
+        returncode=result.returncode,
+        execution_environment=execution_environment,
+        utc=datetime.now(UTC),
+    )
 
-    return(CaptureResult(run_result=run_result, stdout=result.stdout, stderr=result.stderr)
-                     )
+    return CaptureResult(
+        run_result=run_result, stdout=result.stdout, stderr=result.stderr
+    )
