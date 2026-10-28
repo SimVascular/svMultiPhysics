@@ -3,7 +3,8 @@
 
 #include "SerendipityBasis.h"
 #include "NodeOrderingConventions.h"
-#include "Math/DenseLinearAlgebra.h"
+#include "Core/Exception.h"
+#include "math/DenseLinearAlgebra.h"
 
 #include <algorithm>
 #include <array>
@@ -195,21 +196,21 @@ std::vector<double> build_inverse_vandermonde(
     // too.
     const double norm_v = matrix_norm_inf(vandermonde, n);
 
-    // invert_dense_matrix raises a generic FEException if the Vandermonde is
+    // invert_dense_matrix raises a generic CoreException if the Vandermonde is
     // exactly singular (a rank-deficient pivot). For a serendipity family that
     // means the node set is not unisolvent at this order -- a construction failure
     // in basis terms -- so translate it to BasisConstructionException, presenting
     // the singular and the ill-conditioned cases (below) as one catchable type in
     // one vocabulary. The matrix was just built n-by-n from n modes, so a
-    // size-mismatch FEException cannot originate here; rank deficiency is the only
-    // FEException this call can raise. (Defensive: the supported node sets are
+    // size-mismatch CoreException cannot originate here; rank deficiency is the only
+    // CoreException this call can raise. (Defensive: the supported node sets are
     // provably unisolvent, so this branch is not reachable for the shipped orders.)
     std::vector<double> inverse;
     try {
         inverse = math::invert_dense_matrix(
             std::move(vandermonde), n,
             "SerendipityBasis interpolation matrix for " + label);
-    } catch (const FEException&) {
+    } catch (const CoreException&) {
         svmp::raise<BasisConstructionException>("SerendipityBasis: " + label +
                 " interpolation matrix is singular; the serendipity node set is not "
                 "unisolvent at the requested order");
