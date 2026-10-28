@@ -122,24 +122,24 @@ void iterate_precomputed_time(Simulation* simulation, SolutionStates& solutions)
     // This loop is used to interpolate between known time values of the precomputed
     // state-variable solution
     for (int l = 0; l < com_mod.nMsh; l++) {
-      auto lM = com_mod.msh[l];
-      if (lM.Ys.nslices() > 1) {
+      auto& Ys = com_mod.msh[l].Ys;
+      if (Ys.nslices() > 1) {
         // If there is only one temporal slice, then the solution is assumed constant
         // in time and no interpolation is performed
         // If there are multiple temporal slices, then the solution is linearly interpolated
         // between the known time values and the current time.
         double precompDt = com_mod.precompDt;
-        double preTT = precompDt * (lM.Ys.nslices() - 1);
+        double preTT = precompDt * (Ys.nslices() - 1);
         double cT = cTS * dt;
         double rT = std::fmod(cT, preTT);
         int n1, n2;
         double alpha;
         if (precompDt == dt) {
           alpha =  0.0;
-          if (cTS < lM.Ys.nslices()) {
+          if (cTS < Ys.nslices()) {
             n1 = cTS - 1;
           } else {
-            n1 = cTS % lM.Ys.nslices() - 1;
+            n1 = cTS % Ys.nslices() - 1;
           }
         } else {
           n1 = static_cast<int>(rT / precompDt) - 1;
@@ -149,16 +149,16 @@ void iterate_precomputed_time(Simulation* simulation, SolutionStates& solutions)
         for (int i = 0; i < tnNo; i++) {
           for (int j = 0; j < nsd; j++) {
             if (alpha == 0.0) {
-              Yn(j, i) = lM.Ys(j, i, n2);
+              Yn(j, i) = Ys(j, i, n2);
             } else {
-              Yn(j, i) = (1.0 - alpha) * lM.Ys(j, i, n1) + alpha * lM.Ys(j, i, n2);
+              Yn(j, i) = (1.0 - alpha) * Ys(j, i, n1) + alpha * Ys(j, i, n2);
             }
           }
         }
       } else {
         for (int i = 0; i < tnNo; i++) {
           for (int j = 0; j < nsd; j++) {
-            Yn(j, i) = lM.Ys(j, i, 0);
+            Yn(j, i) = Ys(j, i, 0);
           }
         }
       }
