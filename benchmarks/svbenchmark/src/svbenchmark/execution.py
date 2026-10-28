@@ -99,6 +99,33 @@ class SolverRun:
 
 
 @dataclass(frozen=True)
+class SolverRunResult:
+    """
+    Holds the information pertaining to a single command run result
+    """
+
+    run_cmd: str
+    run_time_seconds: float
+    returncode: int
+    execution_environment: ExecutionEnvironment
+    utc: datetime
+    solve_execution_context: SolveExecutionContext
+
+    @classmethod
+    def from_run_result(
+        cls, run_result: RunResult, execution_context: SolveExecutionContext
+    ) -> Self:
+        return cls(
+            run_cmd=run_result.run_cmd,
+            run_time_seconds=run_result.run_time_seconds,
+            returncode=run_result.returncode,
+            execution_environment=run_result.execution_environment,
+            utc=run_result.utc,
+            solve_execution_context=execution_context,
+        )
+
+
+@dataclass(frozen=True)
 class Command:
     argv: tuple[str, ...]
     cwd: Path

@@ -17,12 +17,13 @@ from .evaluation import (
 from .manifest import BenchmarkRunResult
 
 
+def benchmark_to_json(result: BenchmarkRunResult) -> str:
+    return json.dumps(asdict_handles_as_str(result))
+
+
 def write_benchmark_json(benchmark_result: BenchmarkRunResult, json_fp: Path):
-    """
-    Write a JSONified version of the benchmark results to file
-    """
     with open(json_fp, "w", encoding="utf-8") as f:
-        f.write(json.dumps(asdict_handles_as_str(benchmark_result)))
+            f.write(benchmark_to_json(benchmark_result))
 
 
 def render_benchmark_summary(benchmark_result: BenchmarkRunResult, out: TextIO):

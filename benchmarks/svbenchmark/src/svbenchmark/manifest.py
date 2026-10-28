@@ -5,7 +5,7 @@ import tomllib
 from typing import Callable, Mapping, Self
 
 from .evaluation import EvaluationCriterion, EvaluationCriterionResult
-from .execution import NamedCommand, RunResult, SolverRun
+from .execution import NamedCommand, RunResult, SolverRun, SolverRunResult
 from ._expect import expect_int, expect_str, expect_table
 
 
@@ -134,7 +134,7 @@ class BenchmarkRunResult:
 
     # results
     preprocess: Mapping[str, RunResult]
-    solver: Mapping[str, RunResult]
+    solver: Mapping[str, SolverRunResult]
     postprocess: Mapping[str, RunResult]
     evaluation: Mapping[str, EvaluationCriterionResult]
     cleanup: Mapping[str, RunResult]
@@ -144,7 +144,7 @@ class BenchmarkRunResult:
         cls,
         benchmark: Benchmark,
         preprocess: Mapping[str, RunResult],
-        solver: Mapping[str, RunResult],
+        solver: Mapping[str, SolverRunResult],
         postprocess: Mapping[str, RunResult],
         evaluation: Mapping[str, EvaluationCriterionResult],
         cleanup: Mapping[str, RunResult],

@@ -2,7 +2,13 @@ from pathlib import Path
 from typing import Mapping
 
 from .manifest import Benchmark, BenchmarkRunResult
-from .execution import SolveExecutionContext, NamedCommand, RunResult, run_command
+from .execution import (
+    SolveExecutionContext,
+    NamedCommand,
+    RunResult,
+    run_command,
+    SolverRunResult,
+)
 from .evaluation import EvaluationCriterionResult, evaluate_criterion
 
 
@@ -50,7 +56,7 @@ def run_preprocess(benchmark: Benchmark) -> Mapping[str, RunResult]:
 
 def run_solver(
     benchmark: Benchmark, context: SolveExecutionContext
-) -> Mapping[str, RunResult]:
+) -> Mapping[str, SolverRunResult]:
     """
     Runs the solver definitions, returning a mapping between the defined solve and its result
 
@@ -59,7 +65,18 @@ def run_solver(
     named_commands: tuple[NamedCommand, ...] = tuple(
         r.build_named_command(context) for r in benchmark.solver
     )
-    return _run_named_commands(named_commands, benchmark.base_directory)
+
+    # run the solver commands, build the results manually because we want to attach the execution context to the
+    # result
+    return_dict: dict[str, SolverRunResult] = {}
+    for _named_command in named_commands:
+        run_result = run_command(_named_command.command, benchmark.base_directory)
+
+        return_dict[_named_command.name] = SolverRunResult.from_run_result(
+            run_result, context
+        )
+
+    return return_dict
 
 
 def run_postprocess(benchmark: Benchmark) -> Mapping[str, RunResult]:
