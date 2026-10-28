@@ -1,8 +1,6 @@
 
-from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Mapping, Self
+from typing import Mapping
 
 from .manifest import Benchmark, BenchmarkRunResult
 from .execution import SolveExecutionContext, NamedCommand, RunResult, run_command
@@ -32,7 +30,7 @@ def run_benchmark(benchmark : Benchmark, context : SolveExecutionContext) -> Ben
 
 def _run_named_commands(named_commands : tuple[NamedCommand,...], cwd : Path) -> Mapping[str, RunResult]:
     """
-    Helper function that runs through the named commands, and collates them into a dict[name : str, result : RunResult]
+    Helper function that runs through the named commands, and collects them into a dict[name : str, result : RunResult]
     """
     return_dict : dict[str, RunResult] = {}
     for _named_command in named_commands:

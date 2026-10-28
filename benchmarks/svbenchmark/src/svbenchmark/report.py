@@ -39,10 +39,7 @@ def render_evaluation_criterion_summary(name : str, eval_result : EvaluationCrit
             tolerance = f"ERROR"    # define tolerance here so the type checker know tolerance is str
             assert_never(unexpected)
 
-    status = {
-        EvaluationStatus.PASSED: "PASS",
-        EvaluationStatus.FAILED: "FAIL",
-    }[eval_result.status]
+    status = str(eval_result.status)
 
     # print to the TextIO
     print(
