@@ -177,15 +177,15 @@ if(ENABLE_COVERAGE)
 endif()
 
 add_subdirectory(Core)
+add_subdirectory(common/math)
 add_subdirectory(FE/Common)
-add_subdirectory(FE/Math)
 add_subdirectory(FE/Quadrature)
 add_subdirectory(FE/Basis)
 
 set(SVMP_ARCHITECTURE_TARGETS
   svmp_core
   svmp_fe_common
-  svmp_fe_math
+  svmp_math
   svmp_fe_basis
   svmp_fe_quadrature
 )

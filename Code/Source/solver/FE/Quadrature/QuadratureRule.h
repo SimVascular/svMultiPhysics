@@ -40,7 +40,7 @@
  */
 
 #include "FE/Common/Types.h"
-#include "FE/Math/Vector.h"
+#include "math/Vector.h"
 
 #include <cstddef>
 #include <span>

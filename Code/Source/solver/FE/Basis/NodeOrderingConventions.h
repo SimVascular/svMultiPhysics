@@ -5,7 +5,7 @@
 #define SVMP_FE_BASIS_NODEORDERINGCONVENTIONS_H
 
 #include "BasisTraits.h"
-#include "Math/Vector.h"
+#include "math/Vector.h"
 #include "Types.h"
 
 #include <array>

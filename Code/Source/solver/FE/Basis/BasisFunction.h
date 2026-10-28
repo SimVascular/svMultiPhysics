@@ -6,8 +6,8 @@
 
 #include "BasisExceptions.h"
 #include "BasisTraits.h"
-#include "Math/Matrix.h"
-#include "Math/Vector.h"
+#include "math/Matrix.h"
+#include "math/Vector.h"
 #include "Types.h"
 
 #include <cstddef>
