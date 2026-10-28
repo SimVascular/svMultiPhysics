@@ -290,7 +290,7 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   // Aliases for fiber directions
   const auto& fib_dir1 = fibers.col(0);
 
-  // fib_dir2 only exists when nfd >= 2
+  // fib_dir2 / fib_dir3 only exist when nfd is large enough
   Eigen::Matrix<double, nsd, 1> fib_dir2;
   if (nfd >= 2) {
     fib_dir2 = fibers.col(1);
@@ -298,8 +298,15 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
     fib_dir2 = Eigen::Matrix<double, nsd, 1>::Zero();
   }
 
+  Eigen::Matrix<double, nsd, 1> fib_dir3;
+  if (nfd >= 3) {
+    fib_dir3 = fibers.col(2);
+  } else {
+    fib_dir3 = Eigen::Matrix<double, nsd, 1>::Zero();
+  }
+
   // Precompute outer products (used by anisotropic models)
-  auto Hff = fib_dir1 * fib_dir1.transpose();
+  Matrix<nsd> Hff = fib_dir1 * fib_dir1.transpose();
   Matrix<nsd> Hss;
   if (nfd >= 2) {
     Hss = fib_dir2 * fib_dir2.transpose();
@@ -402,9 +409,9 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
     // HGO (Holzapfel-Gasser-Ogden) model with additive splitting of
     // the anisotropic fiber-based strain-energy terms
     case ConstitutiveModelType::stIso_HGO: {
-      if (nfd != 2) {
-        throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for HGO material model.");
-      }
+      svmp::check<svmp::InternalErrorException>(
+          nfd >= 2,
+          "HGO requires at least 2 fiber directions (fiber + sheet).");
 
       // Compute preliminary quantities
       double kap = stM.kap;
@@ -440,13 +447,10 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
 
     // Guccione (1995) transversely isotropic model
     case ConstitutiveModelType::stIso_Gucci: {
-      if (nfd != nsd) {
-        throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for Guccione material model.");
-      }
-      if constexpr (nsd != 3) {
-        throw std::runtime_error(
-            "The Guccione material model requires a 3D fiber basis.");
-      }
+      svmp::check<svmp::InternalErrorException>(
+          nsd == 3 && nfd >= nsd,
+          "Guccione requires a completed 3D fiber basis (fiber + sheet + "
+          "sheet-normal).");
 
       // Compute isochoric component of E
       Matrix<nsd> E = 0.50 * (J2d*C - Idm);
@@ -455,7 +459,7 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
       Matrix<nsd> Rm;
       Rm.col(0) = fib_dir1;
       Rm.col(1) = fib_dir2;
-      Rm.col(2) = fibers.col(2);
+      Rm.col(2) = fib_dir3;
 
       // Project E to local orthogonal coordinate system
       Matrix<nsd> Es = Rm.transpose() * E * Rm;
@@ -504,9 +508,9 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
 
     //  HO (Holzapfel-Ogden) model for myocardium (2009)
     case ConstitutiveModelType::stIso_HO: {
-      if (nfd != nsd) {
-        throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for Holzapfel material model.");
-      }
+      svmp::check<svmp::InternalErrorException>(
+          nfd >= 2,
+          "Holzapfel-Ogden requires at least 2 fiber directions (fiber + sheet).");
 
       // Compute cross fiber-sheet structure tensor
       Matrix<nsd> Hfs = 0.5 * (fib_dir1 * fib_dir2.transpose() + fib_dir2 * fib_dir1.transpose());
@@ -584,9 +588,9 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
 
     //  HO (Holzapfel-Ogden)-MA model for myocardium with full invariants for the anisotropy terms (modified-anisotropy)
     case ConstitutiveModelType::stIso_HO_ma: {
-      if (nfd != nsd) {
-        throw std::runtime_error("[compute_pk2cc] Min fiber directions not defined for Holzapfel material model.");
-      }
+      svmp::check<svmp::InternalErrorException>(
+          nfd >= 2,
+          "Holzapfel-Ogden-MA requires at least 2 fiber directions (fiber + sheet).");
 
       // Compute cross fiber-sheet structure tensor
       auto Hfs = 0.5 * (fib_dir1 * fib_dir2.transpose() + fib_dir2 * fib_dir1.transpose());
@@ -743,7 +747,7 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
         "fiber basis, but only " +
             std::to_string(nfd) + " fiber directions are defined.");
 
-    const Matrix<nsd> Hnn = fibers.col(2) * fibers.col(2).transpose();
+    const Matrix<nsd> Hnn = fib_dir3 * fib_dir3.transpose();
     S += Tna * Hnn;
 
     if (has_tangent_n)
@@ -932,9 +936,9 @@ void compute_pk2cc_shlc(const ComMod& com_mod, const dmnType& lDmn, const int nf
 
          // Shells receive the completed ambient basis (nsd directions); at least
          // fiber and sheet are required for this model.
-         if (nfd < 2) {
-           throw std::runtime_error("Min fiber directions not defined for Holzapfel material model (1)");
-         }
+         svmp::check<svmp::InternalErrorException>(
+             nfd >= 2,
+             "Holzapfel-Ogden-MA requires at least 2 fiber directions (fiber + sheet).");
      
          Array3<double> fl(2,2,nfd);
 
@@ -1218,9 +1222,9 @@ void compute_pk2cc_shli(const ComMod& com_mod, const dmnType& lDmn, const int nf
 
       // Shells receive the completed ambient basis (nsd directions); at least
       // fiber and sheet are required for this model.
-      if (nfd < 2) {
-        throw std::runtime_error("Min fiber directions not defined for Holzapfel material model (1)");
-      }
+      svmp::check<svmp::InternalErrorException>(
+          nfd >= 2,
+          "Holzapfel-Ogden-MA requires at least 2 fiber directions (fiber + sheet).");
 
       for (int iFn = 0; iFn < nfd; iFn++) {
         fl(0,0,iFn) = fNa0(0,iFn)*fNa0(0,iFn);

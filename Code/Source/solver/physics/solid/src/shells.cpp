@@ -137,8 +137,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
         fibers = lM.fibers.get_quadrature_fibers(
           nsd, 0, e, orthonormalize_fibers);
       }
-      const int nFn = fibers.ncols();
-      shell_cst(com_mod, lM, e, eNoN, nFn, fibers, al, yl, dl, xl, bfl, ptr);
+      shell_cst(com_mod, lM, e, eNoN, fibers, al, yl, dl, xl, bfl, ptr);
 
     } else {
       lR = 0.0;
@@ -156,8 +155,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
           fibers = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
         }
-        const int nFn = fibers.ncols();
-        shell_3d(com_mod, lM, g, eNoN, nFn, fibers, al, yl, dl, xl, bfl, lR, lK);
+        shell_3d(com_mod, lM, g, eNoN, fibers, al, yl, dl, xl, bfl, lR, lK);
       }
     }
 
@@ -173,7 +171,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
 // Construct shell mechanics for higher order elements/NURBS
 //
 void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN, 
-    const int nFn, const Array<double>& fibers,
+    const Array<double>& fibers,
     const Array<double>& al, const Array<double>& yl, const Array<double>& dl, const Array<double>& xl,
     const Array<double>& bfl, Array<double>& lR, Array3<double>& lK)
 {
@@ -183,6 +181,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   using namespace consts;
   using namespace mat_fun;
 
+  const int nFn = fibers.ncols();
   const int nsd = com_mod.nsd;
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
@@ -346,7 +345,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   Array<double> Sm(3,2);
   double lam3;
 
-  shl_strs_res(com_mod, dmn, nFn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
+  shl_strs_res(com_mod, dmn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
 
   // Variation in the membrane strain
   //
@@ -1185,12 +1184,13 @@ void shell_bf(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
 //
 // Reproduces Fortran SHELLCST.
 //
-void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, const int nFn, const Array<double>& fibers,
+void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, const Array<double>& fibers,
     const Array<double>& al, const Array<double>& yl, const Array<double>& dl, const Array<double>& xl, 
     const Array<double>& bfl, const Vector<int>& ptr)
 {
   using namespace consts;
 
+  const int nFn = fibers.ncols();
   const int nsd = com_mod.nsd;
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
@@ -1396,7 +1396,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   Array3<double> Dm(3,3,3); 
   Array<double> Sm(3,2);
   double lam3;
-  shl_strs_res(com_mod, dmn, nFn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
+  shl_strs_res(com_mod, dmn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
 
   /*
   dmsg << " " << " ";
@@ -1713,11 +1713,13 @@ void shell_fp(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
 //
 // Reproduces Fortan SHL_STRS_RES.
 //
-void shl_strs_res(const ComMod& com_mod, const dmnType& lDmn, const int nFn, const Array<double>& fNa0, 
+void shl_strs_res(const ComMod& com_mod, const dmnType& lDmn, const Array<double>& fNa0, 
     const double aa_0[2][2], const double aa_x[2][2], const double bb_0[2][2], const double bb_x[2][2], 
     double& lam3, Array<double>& Sm, Array3<double>& Dm)
 {
   using namespace consts;
+
+  const int nFn = fNa0.ncols();
 
   #define n_debug_shl_strs_res
   #ifdef debug_shl_strs_res

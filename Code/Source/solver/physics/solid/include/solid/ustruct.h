@@ -31,7 +31,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     Array3<double>& lKd);
 
 void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
-                  const int eNoNw, const int eNoNq, const int nFn,
+                  const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
@@ -48,7 +48,7 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
     Array3<double>& lKd);
 
 void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
-                  const int eNoNw, const int eNoNq, const int nFn,
+                  const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,

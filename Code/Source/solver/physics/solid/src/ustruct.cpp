@@ -320,7 +320,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         : lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       const auto fibers = mat_fun::eigen_view(fiber_values);
-      const int nFn = fibers.cols();
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra. triangles).
@@ -339,14 +338,14 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
+        ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
                      Jac, N0, N1, Nwx, al, yl, dl, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
+        ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
                      Jac, N0, N1, Nwx, al, yl, dl, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
       }
@@ -770,7 +769,7 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 /// @brief Replicates Fortran USTRUCT2D_M.
 //
 void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
-                  const int eNoNw, const int eNoNq, const int nFn,
+                  const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
@@ -781,6 +780,8 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
+
+  const int nFn = fibers.cols();
 
   #define n_debug_ustruct_2d_m
   #ifdef debug_ustruct_2d_m
@@ -1014,7 +1015,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 /// @brief Reproduces Fortran USTRUCT3D_M.
 //
 void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
-                  const int eNoNw, const int eNoNq, const int nFn,
+                  const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
@@ -1025,6 +1026,8 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
+
+  const int nFn = fibers.cols();
 
   #define n_debug_ustruct_3d_m
   #ifdef debug_ustruct_3d_m

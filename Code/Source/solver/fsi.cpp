@@ -178,7 +178,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         : lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       const auto fibers = mat_fun::eigen_view(fiber_values);
-      const int nFn = fibers.cols();
 
       if (g == 0 || !fs_1[1].lShpF) {
         auto Nx = fs_1[1].Nx.rslice(g);
@@ -224,7 +223,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
-            struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
+            struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
                                  Nwx, al, yl, dl, bfl, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;
@@ -237,7 +236,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             auto N1 = fs_1[1].N.col(g);
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
-                                  fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al,
+                                  fs_1[1].eNoN, w, Jac, N0, N1, Nwx, al,
                                   yl, dl, bfl, fibers, active_stress_evaluator, lR,
                                   lK, lKd, recompute_visc);
           } break;
@@ -260,7 +259,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
-            struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
+            struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
                                  Nwx, al, yl, dl, bfl, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;

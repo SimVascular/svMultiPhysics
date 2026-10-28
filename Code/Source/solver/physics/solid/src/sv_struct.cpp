@@ -293,7 +293,6 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         : lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       const auto fibers = mat_fun::eigen_view(fiber_values);
-      const int nFn = fibers.cols();
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
@@ -311,7 +310,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       pSl = 0.0;
 
       if (nsd == 3) {
-        struct_3d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fibers,
+        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
 
 #if 0
@@ -325,7 +324,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 #endif
 
       } else if (nsd == 2) {
-        struct_2d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, bfl, fibers,
+        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
       }
 
@@ -347,7 +346,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
 /// @brief Reproduces Fortran 'STRUCT2D' subroutine.
 //
-void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
+void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
@@ -364,6 +363,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   dmsg.banner();
   #endif
 
+  const int nFn = fibers.cols();
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
@@ -508,7 +508,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
 }
 
 /// @brief Reproduces Fortran 'STRUCT3D' subroutine.
-void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
+void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
@@ -518,6 +518,8 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc) {          
   using namespace consts;
   using namespace mat_fun;
+
+  const int nFn = fibers.cols();
 
   #define n_debug_struct_3d 
   #ifdef debug_struct_3d 

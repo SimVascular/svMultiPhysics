@@ -1626,7 +1626,7 @@ void shl_post(Simulation* simulation, const mshType& lM, const int m, Array<doub
       //
       Array<double> Sm(3,2);       
       Array3<double> Dm(3,3,3);
-      shells::shl_strs_res(com_mod, eq.dmn[cDmn], nFn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
+      shells::shl_strs_res(com_mod, eq.dmn[cDmn], fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
 
       // Shell in-plane deformation gradient tensor
       //
