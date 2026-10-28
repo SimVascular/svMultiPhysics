@@ -7,8 +7,6 @@ Follows semantics of Rust "expect(...)" to raise an error if the type is not cor
 
 from typing import cast
 from math import isfinite
-from collections.abc import Callable
-
 
 def expect_int(value: object, location: str) -> int:
     """

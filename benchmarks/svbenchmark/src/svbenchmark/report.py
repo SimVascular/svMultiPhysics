@@ -12,7 +12,6 @@ from .execution import RunResult
 from .evaluation import (
     AbsoluteTolerance,
     EvaluationCriterionResult,
-    EvaluationStatus,
     RelativeTolerance,
 )
 from .manifest import BenchmarkRunResult
