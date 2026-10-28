@@ -29,27 +29,22 @@ constexpr double kValidationTolerance = 256.0 * std::numeric_limits<double>::eps
 // within binary64 range. Stored weights and relative tolerances are unchanged.
 constexpr double kValidationSumScale = 0.5 / static_cast<double>(kMaximumProductPoints);
 
-// Compensate rounding in long factor/product sums, including signed cancellation.
-void add_compensated(double term, double& sum, double& correction)
-{
-    const double next = sum + term;
-    correction += std::abs(sum) >= std::abs(term) ? (sum - next) + term : (term - next) + sum;
-    sum = next;
-}
-
 // Return whether abs(sum(w)-measure) <= tau*max(measure,sum(abs(w))) for at most
 // kMaximumProductPoints weights. Any non-finite weight fails.
 bool reproduces_measure(std::span<const double> weights, double measure)
 {
     double sum = 0.0;
-    double sum_correction = 0.0;
+    double correction = 0.0;
     double scale = 0.0;
     for (const double weight : weights) {
-        const double scaled_weight = weight * kValidationSumScale;
-        add_compensated(scaled_weight, sum, sum_correction);
-        scale += std::abs(scaled_weight);
+        const double term = weight * kValidationSumScale;
+        // Neumaier compensation keeps long signed sums accurate.
+        const double next = sum + term;
+        correction += std::abs(sum) >= std::abs(term) ? (sum - next) + term : (term - next) + sum;
+        sum = next;
+        scale += std::abs(term);
     }
-    sum += sum_correction;
+    sum += correction;
     const double scaled_measure = measure * kValidationSumScale;
     return std::isfinite(sum) && std::isfinite(scale) &&
         std::abs(sum - scaled_measure) <= kValidationTolerance * std::max(scaled_measure, scale);
