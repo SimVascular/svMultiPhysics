@@ -78,7 +78,7 @@ class TestEvaluationCriterion:
 
         # setup a mock capture for testing the return value only
         mock_capture = Mock(
-            return_value=SimpleNamespace(stdout=f"{value}")
+            return_value=SimpleNamespace(stdout=f"{value}", run_result = None)
         )
 
         monkeypatch.setattr(
@@ -113,7 +113,7 @@ class TestEvaluationCriterion:
         }
 
         mock_capture = Mock(
-            return_value=SimpleNamespace(stdout=f"{value}")
+            return_value=SimpleNamespace(stdout=f"{value}", run_result = None)
         )
 
         monkeypatch.setattr(
