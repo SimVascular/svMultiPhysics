@@ -94,7 +94,6 @@ endif()
 # add trilinos flags and defines
 if(USE_TRILINOS)
   ADD_DEFINITIONS(-DWITH_TRILINOS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}")
 endif()
 
 # Build with the PETSc linear algebra package.
