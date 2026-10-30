@@ -77,8 +77,7 @@ void dist_msh_srf(ComMod& com_mod, ChnlMod& chnl_mod, faceType& lFa, mshType& lM
   #endif
 
   std::string sTmp = chnl_mod.appPath + "/" + ".remesh_tmp.dir";
-  auto mkdir_arg = std::string("mkdir -p ") + sTmp;
-  std::system(mkdir_arg.c_str());
+  std::filesystem::create_directories(sTmp);
 
   for (int e = 0; e < lFa.nEl; e++) {
     for (int a = 0; a < lFa.eNoN; a++) {
@@ -1484,8 +1483,10 @@ void remesh_restart(Simulation* simulation)
   restart_file.close();
 
   if (cm.mas(cm_mod)) {
-    std::string link_cmd = "ln -f " + fTmp + " " + sTmp;
-    std::system(link_cmd.c_str());
+    std::error_code error;
+    std::filesystem::remove(sTmp, error);
+    std::filesystem::create_hard_link(fTmp, sTmp, error);
+    if (error) std::cerr << "Could not link " << sTmp << " to " << fTmp << ": " << error.message() << std::endl;
   }
 
   auto& x = com_mod.x;

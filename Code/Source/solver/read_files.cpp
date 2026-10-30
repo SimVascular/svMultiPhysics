@@ -22,6 +22,7 @@
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <math.h>
@@ -1925,8 +1926,7 @@ void read_files(Simulation* simulation, const std::string& file_name)
     std::string hist_file_name;
 
     if (chnl_mod.appPath != "") { 
-      auto mkdir_arg = std::string("mkdir -p ") + chnl_mod.appPath;
-      std::system(mkdir_arg.c_str());
+      std::filesystem::create_directories(chnl_mod.appPath);
       hist_file_name = chnl_mod.appPath + "/" + simulation->history_file_name;
     } else {
       hist_file_name = simulation->history_file_name;

@@ -128,6 +128,12 @@ class Parameter
     /// @brief Set the parameter value from a string.
     void set(const std::string& str_value)
     {
+      if constexpr (std::is_same_v<T, std::string>) {
+        value_ = str_value.substr(0, str_value.find_last_not_of(" \t\r\n") + 1);
+        value_.erase(0, value_.find_first_not_of(" \t\r\n"));
+        value_set_ = true;
+        return;
+      }
       if (str_value == "") {
         value_ = T{0};
       }
