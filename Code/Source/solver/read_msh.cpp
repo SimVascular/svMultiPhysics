@@ -9,12 +9,12 @@
 
 #include "all_fun.h"
 #include "consts.h"
+#include "Fibers.h"
 #include "load_msh.h"
 #include "nn.h"
 #include "read_msh.h"
 #include "utils.h"
 #include "vtk_xml.h"
-#include "vtk_xml_parser.h"
 
 #include "uris.h"
 
@@ -1035,17 +1035,6 @@ void match_faces(const ComMod& com_mod, const faceType& lFa, const faceType& pFa
 
 } 
 
-/// @brief Read fiber direction from a vtu file.
-///
-/// The fiber orientations data is copied into mesh.fN. 
-///
-/// Reproduces Fortran READFIBNFF.
-//
-void read_fib_nff(Simulation* simulation, mshType& mesh, const std::string& fName, const std::string& kwrd, const int idx)
-{
-  vtk_xml_parser::load_fiber_direction_vtu(fName, kwrd, idx, simulation->com_mod.nsd, mesh);
-}
-
 /// @brief For each mesh defined for the simulation 
 ///
 ///   1) Set mesh parameters 
@@ -1520,65 +1509,10 @@ void read_msh(Simulation* simulation)
     }
   }
 
-  // Read fiber orientation.
-  //
-  flag = false;
-
-  for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    auto mesh_param = simulation->parameters.mesh_parameters[iM];
-    int num_paths = mesh_param->fiber_direction_file_paths.size();
-    int num_dirs = mesh_param->fiber_directions.size();
-    if ((num_paths != 0) || (num_dirs != 0)) {
-      flag = true;
-      break; 
-    }
-  }
-
-  int nsd = com_mod.nsd;
-
-  if (flag) {
-    for (int iM = 0; iM < com_mod.nMsh; iM++) {
-      auto mesh_param = simulation->parameters.mesh_parameters[iM];
-      int num_paths = mesh_param->fiber_direction_file_paths.size();
-      if (num_paths != 0) {
-        com_mod.msh[iM].nFn = num_paths;
-        int num_elems = com_mod.msh[iM].gnEl;
-        com_mod.msh[iM].fN = Array<double>(num_paths*nsd, num_elems);
-        com_mod.msh[iM].fN = 0.0;
-        auto fiber_paths = mesh_param->fiber_direction_file_paths();
-
-        // Read fiber directions from vtk format files.
-        for (int i = 0; i < com_mod.msh[iM].nFn; i++) {
-          auto cTmp = fiber_paths[i];
-          read_fib_nff(simulation, com_mod.msh[iM], cTmp, "FIB_DIR", i);
-        }
-      } else { 
-        int num_dirs = mesh_param->fiber_directions.size();
-
-        if (num_dirs != 0) {
-          com_mod.msh[iM].nFn = num_dirs; 
-          int num_elems = com_mod.msh[iM].gnEl;
-          com_mod.msh[iM].fN = Array<double>(num_dirs*nsd, num_elems);
-          com_mod.msh[iM].fN = 0.0;
-          auto fiber_dirs = mesh_param->fiber_directions;
-
-          for (int i = 0; i < com_mod.msh[iM].nFn; i++) {
-            auto fibN = fiber_dirs[i]();
-            double rtmp = sqrt(fibN[0]*fibN[0] + fibN[1]*fibN[1] + fibN[2]*fibN[2]);
-            if (!utils::is_zero(rtmp)) {
-              fibN[0] = fibN[0] / rtmp;
-              fibN[1] = fibN[1] / rtmp;
-              fibN[2] = fibN[2] / rtmp;
-            }
-            for (int e = 0; e < com_mod.msh[iM].gnEl; e++) {
-              for (int j = 0; j < nsd; j++) {
-                com_mod.msh[iM].fN(i*nsd+j,e) = fibN[j];
-              }
-            }
-          }
-        }
-      }
-    }
+  // Read fiber orientations after all meshes have their global element counts.
+  for (int iM = 0; iM < com_mod.nMsh; ++iM) {
+    com_mod.msh[iM].fibers.read(*simulation->parameters.mesh_parameters[iM],
+        com_mod.msh[iM], com_mod.nsd);
   }
 
   // Read prestress data.

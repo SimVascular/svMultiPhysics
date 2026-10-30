@@ -51,7 +51,7 @@
       <Face_file_path> mesh/h0.1/mesh-surfaces/Z1.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction> (1, 0, 0) </Fiber_direction>
+  <Fiber_direction_constant> (1, 0, 0) </Fiber_direction_constant>
 
   <Domain_file_path> mesh/h0.1/domain_info.dat </Domain_file_path>
 
@@ -67,7 +67,7 @@
        <Electrophysiology_model> TTP </Electrophysiology_model>
 
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
-       <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
+       <Fiber_conductivity> 0.082715 </Fiber_conductivity>
 
        <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 
@@ -84,7 +84,7 @@
        <Electrophysiology_model> TTP </Electrophysiology_model>
 
        <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
-       <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
+       <Fiber_conductivity> 0.082715 </Fiber_conductivity>
 
        <Include_xml> ../ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 

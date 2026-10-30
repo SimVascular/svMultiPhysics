@@ -310,9 +310,9 @@ public:
         dmn.stM.isoType = matType;                            // Mat_model
         dmn.stM.volType = penType;                            // Dilational_penalty_model
         
-        // Initialize fibers and other material parameters
-        nFn = 2;                          // Number of fiber directions
-        fN = Array<double>(nsd, nFn);     // Fiber directions array (initialized to zeros)
+        // Initialize the two raw fiber families used by non-cardiac models.
+        nFn = 2;
+        fN = Array<double>(nsd, nFn);
         active_tension = ActiveStress::ActiveTension{}; // No active tension.
 
         // Flag to use struct or ustruct material models
@@ -328,6 +328,28 @@ public:
 
     // Pure virtual method for computing Strain Energy
     virtual double computeStrainEnergy(const Array<double> &F) = 0;
+
+    /**
+     * @brief Sets a complete orthonormal fiber basis from fiber and sheet
+     * directions (3D). Column 2 is completed as fiber × sheet.
+     */
+    void set_fiber_basis(const Vector<double>& fiber, const Vector<double>& sheet) {
+        const int nsd = com_mod.nsd;
+        if (nsd != 3) {
+            throw std::runtime_error("set_fiber_basis(fiber, sheet) requires 3D.");
+        }
+        if (fN.nrows() != nsd || fN.ncols() != nsd) {
+            fN = Array<double>(nsd, nsd);
+        }
+        nFn = nsd;
+        fN.set_col(0, fiber);
+        fN.set_col(1, sheet);
+        Vector<double> normal(nsd);
+        normal[0] = fiber[1] * sheet[2] - fiber[2] * sheet[1];
+        normal[1] = fiber[2] * sheet[0] - fiber[0] * sheet[2];
+        normal[2] = fiber[0] * sheet[1] - fiber[1] * sheet[0];
+        fN.set_col(2, normal);
+    }
 
     /**
      * @brief Computes the PK2 stress tensor S and material elasticity tensor Dm for a given deformation gradient F.

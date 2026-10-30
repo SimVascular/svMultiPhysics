@@ -40,8 +40,8 @@
       <Face_file_path> mesh/mesh-surfaces/top.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction_file_path> mesh/fibersLong.vtu </Fiber_direction_file_path>
-  <Fiber_direction_file_path> mesh/fibersSheet.vtu </Fiber_direction_file_path>
+  <Fiber_direction_from_file_cells> mesh/fibersLong.vtu </Fiber_direction_from_file_cells>
+  <Fiber_direction_from_file_cells> mesh/fibersSheet.vtu </Fiber_direction_from_file_cells>
 
 </Add_mesh>
 

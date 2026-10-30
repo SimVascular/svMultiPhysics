@@ -52,8 +52,8 @@
       <Face_file_path> mesh/mesh-surfaces/Z1.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction> (0.0, 0.0, 1.0)  </Fiber_direction>
-  <Fiber_direction> (1.0, 0.0, 0.0)  </Fiber_direction>
+  <Fiber_direction_constant> (0.0, 0.0, 1.0)  </Fiber_direction_constant>
+  <Fiber_direction_constant> (1.0, 0.0, 0.0)  </Fiber_direction_constant>
 
   <Mesh_scale_factor> 1.0 </Mesh_scale_factor> 
 

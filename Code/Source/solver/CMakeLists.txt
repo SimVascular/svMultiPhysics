@@ -218,6 +218,7 @@ set(CSRCS
   contact.h contact.cpp
   distribute.h distribute.cpp
   eq_assem.h eq_assem.cpp
+  Fibers.h Fibers.cpp
   fsi.h fsi.cpp
   fs.h fs.cpp
   initialize.h initialize.cpp

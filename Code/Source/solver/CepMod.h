@@ -155,9 +155,6 @@ class cepModelType
     /// @brief Number of gating variables
     int nG = 0;
 
-    /// @brief  Number of fiber directions
-    int nFn = 0;
-
     /// @brief  Myocardium zone id, default to epicardium.
     int imyo = 1;
 
@@ -167,11 +164,14 @@ class cepModelType
     /// @brief  Constant for stretch-activated-currents
     double Ksac = 0.0;
 
-    /// @brief  Isotropic conductivity
+    /// @brief Isotropic conductivity contribution.
     double Diso = 0.0;
 
-    /// @brief  Anisotropic conductivity
-    Vector<double> Dani;
+    /// @brief Additive conductivities along the fiber, sheet, and sheet-normal directions.
+    /// D[0]=D_f, optional D[1]=D_s, and optional D[2]=D_n. The number of stored
+    /// terms may not exceed the intrinsic mesh dimension.
+    /// The diffusion tensor is D = Diso I + Σ_i D[i] f_i ⊗ f_i.
+    Vector<double> D;
 
     /// @brief  External stimuli applied within this domain.
     std::vector<stimType> Istim;

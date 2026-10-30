@@ -1387,15 +1387,10 @@ void dist_uris_msh(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, mshTy
   cm.bcast(cm_mod, &lM.gnNo);
   cm.bcast(cm_mod, &lM.nFa);
   cm.bcast(cm_mod, &lM.nFs);
-  cm.bcast(cm_mod, &lM.nFn);
   cm.bcast(cm_mod, &lM.nG);
   cm.bcast(cm_mod, &lM.vtkType);
   cm.bcast(cm_mod, &lM.scF);
   cm.bcast(cm_mod, &lM.dx);
-  // cm.bcast(cm_mod, &lM.fib.nFn);
-  // cm.bcast(cm_mod, &lM.fib.locNd);
-  // cm.bcast(cm_mod, &lM.fib.locEl);
-  // cm.bcast(cm_mod, &lM.fib.locGP);
 
   if (cm.slv(cm_mod)) { 
     lM.nNo = lM.gnNo;
@@ -1405,19 +1400,12 @@ void dist_uris_msh(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, mshTy
     lM.IEN.resize(lM.eNoN, lM.nEl);
     lM.fa.resize(lM.nFa);
     nn::select_ele(com_mod, lM);
-    // if (lM.fib.locNd) {lM.fib.fN.resize(nsd*lM.fib.nFn, 1, lM.nNo);}
-    // if (lM.fib.locEl) {lM.fib.fN.resize(nsd*lM.fib.nFn, 1, lM.nEl);}
-    // if (lM.fib.locGP) {lM.fib.fN.resize(nsd*lM.fib.nFn, lM.nG, lM.nEl);}
   }
   
   // // [HZ] Broadcasting here causes problem, similar reason to the RIS map list
   // cm.bcast(cm_mod, lM.gN);
   // cm.bcast(cm_mod, lM.lN);
   // cm.bcast(cm_mod, lM.IEN);
-
-  // if (lM.fib.locNd || lM.fib.locEl || lM.fib.locGP) {
-  //   cm.bcast(com_mod, &lM.fib.fN)
-  // }
 
   if (lM.eType == ElementType::NRB) {
     cm.bcast(cm_mod, &lM.nSl);
@@ -1541,17 +1529,19 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
 
       cm.bcast(cm_mod, &cep.nX);
       cm.bcast(cm_mod, &cep.nG);
-      cm.bcast(cm_mod, &cep.nFn);
       cm.bcast(cm_mod, &cep.imyo);
       cm.bcast(cm_mod, &cep.dt);
       cm.bcast(cm_mod, &cep.Ksac);
       cm.bcast(cm_mod, &cep.Diso);
 
+      int n_cond = cep.D.size();
+      cm.bcast(cm_mod, &n_cond);
       if (cm.slv(cm_mod)) {
-        cep.Dani.resize(cep.nFn);
-      } 
-
-      cm.bcast(cm_mod, cep.Dani);
+        cep.D.resize(n_cond);
+      }
+      if (n_cond != 0) {
+        cm.bcast(cm_mod, cep.D);
+      }
 
       int n_stim = cep.Istim.size();
       cm.bcast(cm_mod, &n_stim);
@@ -2020,12 +2010,8 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   cm.bcast(cm_mod, &lM.gnEl);
   cm.bcast(cm_mod, &lM.gnNo);
   cm.bcast(cm_mod, lM.name);
-  cm.bcast(cm_mod, &lM.nFn);
   cm.bcast(cm_mod, &lM.scF);
   cm.bcast(cm_mod, &lM.qmTET4);
-
-  // Number of fibers.
-  int nFn = lM.nFn;
 
   // Set integration dimension.
   int nsd = com_mod.nsd;
@@ -2265,9 +2251,7 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   part.clear();
 
   Array<int> tempIEN;
-  Array<double> tmpFn;
   flag = false;
-  bool fnFlag = false;
 
   #ifdef dbg_part_msh
   dmsg << "sCount: " << sCount;
@@ -2353,17 +2337,6 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
       lM.eId.clear();
     }
 
-    // This it to distribute fN, if allocated
-    if (lM.fN.size() != 0) {
-      fnFlag = true;
-      tmpFn.resize(nFn*nsd, lM.gnEl);
-      for (int e = 0; e < lM.gnEl; e++) {
-        int Ec = lM.otnIEN[e];
-        tmpFn.set_col(Ec, lM.fN.col(e));
-      }
-      lM.fN.clear();
-    }
-
   } else { 
     lM.otnIEN.clear();
   }
@@ -2371,7 +2344,6 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   gPart.clear();
 
   cm.bcast(cm_mod, &flag);
-  cm.bcast(cm_mod, &fnFlag);
   cm.bcast(cm_mod, lM.eDist);
   if (com_mod.risFlag) {
     cm.bcast(cm_mod, lM.partRIS);
@@ -2404,28 +2376,8 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
     part.clear();
   }
 
-  // Communicating fN, if neccessary
-  //
-  if (fnFlag) { 
-    #ifdef dbg_part_msh
-    dmsg << "Communicating fN " << " ...";
-    dmsg << "nFn: " << nFn;
-    dmsg << "nsd: " << nsd;
-    dmsg << "nEl: " << nEl;
-    dmsg << "tmpFn.size(): " << tmpFn.size();
-    #endif
-    lM.fN.resize(nFn*nsd,nEl);
-    if (tmpFn.size() == 0) {
-      // ALLOCATE(tmpFn(0,0))
-    }
-    for (int i = 0; i < num_proc; i++) { 
-      disp[i] = lM.eDist[i] * nFn * nsd;
-      sCount[i] = lM.eDist[i+1] * nFn * nsd - disp[i];
-    }
-    MPI_Scatterv(tmpFn.data(), sCount.data(), disp.data(), cm_mod::mpreal, lM.fN.data(), nEl*nFn*nsd, 
-        cm_mod::mpreal, cm_mod.master, cm.com());
-    tmpFn.clear();
-  }
+  // Reorder and distribute fiber directions with their owning mesh.
+  lM.fibers.distribute(com_mod, cm_mod, cm, lM);
 
   // Now scattering the sorted lM%IEN to all processors.
   //

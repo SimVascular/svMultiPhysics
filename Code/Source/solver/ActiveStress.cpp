@@ -33,18 +33,18 @@ void ActiveStress::Evaluator::update(const ActiveStress &active_stress,
 template <int nsd>
 ActiveStress::ActiveTension ActiveStress::Evaluator::evaluate(
     const Eigen::Ref<const Eigen::VectorXd> &N, const mat_fun::Matrix<nsd> &F,
-    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>> &fN)
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>> &fibers)
     const {
   if (active_stress_ == nullptr)
     return {};
 
   // The fiber stretch is only computed for the models that use it. Besides
   // saving the work, this keeps the other models usable on a mesh with no fiber
-  // directions, where fN is zero and the stretch would come out zero too.
+  // directions, where fibers is zero and the stretch would come out zero too.
   double fiber_stretch = 1.0;
 
   if (active_stress_->needs_fiber_stretch())
-    fiber_stretch = (F * fN.col(0)).norm();
+    fiber_stretch = (F * fibers.col(0)).norm();
 
   // Interpolate the nodal state to the quadrature point.
   Eigen::Map<Eigen::VectorXd>(interpolated_state.data(),

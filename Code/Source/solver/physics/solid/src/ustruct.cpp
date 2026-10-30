@@ -211,7 +211,8 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   #ifdef debug_construct_usolid
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "lM.nFn: " << lM.nFn;
+  dmsg << "input fiber directions: "
+       << lM.fibers.get_num_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   #endif
 
@@ -228,10 +229,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   bool pstEq = com_mod.pstEq;
 
   int eNoN = lM.eNoN;
-  int nFn = lM.nFn;
-  if (nFn == 0) {
-    nFn = 1;
-  }
+  const bool mesh_has_fibers = lM.fibers.has_fibers();
 
   bool vmsStab = false;
 
@@ -250,7 +248,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   Vector<int> ptr(eNoN);
   Vector<double> pSl(nsymd), N(eNoN);
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
-                bfl(nsd,eNoN), fN(nsd,nFn), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
+                bfl(nsd,eNoN), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN), lKd(dof*nsd,eNoN,eNoN);
   ActiveStress::Evaluator active_stress_evaluator;
 
@@ -261,18 +259,11 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     if (cPhys != EquationType::phys_ustruct) {
       continue;
     }
+    const bool orthonormalize_fibers =
+      mat_models::requires_orthonormal_fiber_basis(
+        eq.dmn[cDmn].stM.isoType);
 
     // Create local copies
-    fN  = 0.0;
-
-    if (lM.fN.size() != 0) {
-      for (int iFn = 0; iFn < nFn; iFn++) {
-        for (int i = 0; i < nsd; i++) {
-          fN(i,iFn) = lM.fN(i+nsd*iFn,e);
-        }
-      }
-    }
-
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
       ptr(a) = Ac;
@@ -324,6 +315,12 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     Array<double> ksix(nsd,nsd);
 
     for (int g = 0; g < fs[0].nG; g++) {
+      const auto fiber_values = !mesh_has_fibers
+        ? Fibers::zero_fibers(nsd)
+        : lM.fibers.get_quadrature_fibers(
+            nsd, g, e, orthonormalize_fibers);
+      const auto fibers = mat_fun::eigen_view(fiber_values);
+
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra. triangles).
       const bool recompute_visc = (g == 0 || !fs[0].lShpF);
@@ -341,15 +338,15 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN,
+        ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, nFn, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fN,
+        ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
       }
 
@@ -772,17 +769,19 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 /// @brief Replicates Fortran USTRUCT2D_M.
 //
 void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
-                  const int eNoNw, const int eNoNq, const int nFn,
+                  const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN,
+                  const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
                   const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
+
+  const int nFn = fibers.cols();
 
   #define n_debug_ustruct_2d_m
   #ifdef debug_ustruct_2d_m
@@ -840,7 +839,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Matrix<2> Fi = F.inverse();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate<2>(Nwm, F, eigen_view<2>(fN));
+  const auto Ta = active_stress_evaluator.evaluate<2>(Nwm, F, fibers);
 
   // Pressure and its time derivative
   //
@@ -857,7 +856,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   Matrix<2> Siso;
   Matrix<3> Dm;
   double Ja = 0;
-  mat_models::compute_pk2cc<2>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<2>(fN),
+  mat_models::compute_pk2cc<2>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fibers,
                                Ta, Siso, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions. Reuse the
@@ -1016,17 +1015,19 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 /// @brief Reproduces Fortran USTRUCT3D_M.
 //
 void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
-                  const int eNoNw, const int eNoNq, const int nFn,
+                  const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Array<double> &fN,
+                  const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
                   const bool recompute_visc) {
   using namespace consts;
   using namespace mat_fun;
+
+  const int nFn = fibers.cols();
 
   #define n_debug_ustruct_3d_m
   #ifdef debug_ustruct_3d_m
@@ -1086,7 +1087,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Matrix<3> Fi = F.inverse();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate<3>(Nwm, F, eigen_view<3>(fN));
+  const auto Ta = active_stress_evaluator.evaluate<3>(Nwm, F, fibers);
 
   // Pressure and its time derivative
   //
@@ -1104,7 +1105,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   Matrix<3> Siso;
   Matrix<6> Dm;
   double Ja = 0;
-  mat_models::compute_pk2cc<3>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, eigen_view<3>(fN),
+  mat_models::compute_pk2cc<3>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn, fibers,
                                Ta, Siso, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions. Reuse the

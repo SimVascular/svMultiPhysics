@@ -13,6 +13,34 @@
 
 namespace cep {
 
+namespace {
+
+/// Build the diffusion tensor D = D_iso I + Σ_i D[i] f_i ⊗ f_i from the
+/// isotropic conductivity and the fiber directions supplied for this domain
+/// (raw family for fiber-only anisotropy, completed basis when sheet or
+/// sheet-normal conductivity is present).
+Array<double> diffusion_tensor(const int nsd, const double isotropic_conductivity,
+                               const Vector<double>& conductivities,
+                               const Array<double>& fibers)
+{
+  Array<double> D(nsd, nsd);
+  D = 0.0;
+  for (int i = 0; i < nsd; ++i) {
+    D(i, i) = isotropic_conductivity;
+  }
+  for (int i = 0; i < conductivities.size(); ++i) {
+    const double Di = conductivities[i];
+    for (int row = 0; row < nsd; ++row) {
+      for (int col = 0; col < nsd; ++col) {
+        D(row, col) += Di * fibers(row, i) * fibers(col, i);
+      }
+    }
+  }
+  return D;
+}
+
+} // namespace
+
 void b_cep(ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, const double h, Array<double>& lR)
 {
   double f = w*h;
@@ -28,7 +56,7 @@ void b_cep(ComMod& com_mod, const int eNoN, const double w, const Vector<double>
 ///
 /// Reproduces Fortran 'CEP1D' subroutine.
 // 
-void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w,
+void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl,
     Array<double>& lR, Array3<double>& lK)
 {
@@ -50,13 +78,16 @@ void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am / T1;
-  double Diso = dmn.cep.Diso;
+  double Df = dmn.cep.Diso;
+  if (dmn.cep.D.size() != 0) {
+    Df += dmn.cep.D[0];
+  }
   int i = eq.s;
   double wl = w*T1;
   #ifdef debug_cep_1d 
   dmsg << "T1: " << T1;
   dmsg << "amd: " << amd;
-  dmsg << "Diso: " << Diso;
+  dmsg << "Df: " << Df;
   dmsg << "i: " << i;
   #endif
 
@@ -67,11 +98,11 @@ void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
   for (int a = 0; a < eNoN; a++) {
     Td = Td + N(a)*al(i,a);
     Tx = Tx + Nx(0,a)*yl(i,a);
-    DNx(a) = Diso*Nx(0,a);
+    DNx(a) = Df*Nx(0,a);
   }
 
   for (int a = 0; a < eNoN; a++) {
-    lR(0,a) = lR(0,a) + w*(N(a)*Td + Nx(0,a)*Diso*Tx);
+    lR(0,a) = lR(0,a) + w*(N(a)*Td + Nx(0,a)*Df*Tx);
 
     for (int b = 0; b < eNoN; b++) {
       lK(0,a,b) = lK(0,a,b) + wl*(N(a)*N(b)*amd + Nx(0,a)*DNx(b));
@@ -84,9 +115,9 @@ void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
 //--------
 // Reproduces Fortran 'CEP2D' subroutine.
 // 
-void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w,
+void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& fN, Array<double>& lR, Array3<double>& lK)
+    const Array<double>& dl, const Array<double>& fibers, Array<double>& lR, Array3<double>& lK)
 {
   #define n_debug_cep_2d 
   #ifdef debug_cep_2d 
@@ -97,59 +128,22 @@ void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
   using namespace consts;
   using namespace mat_fun;
 
-  const int nsd = com_mod.nsd;
-  const int tDof = com_mod.tDof;
-  const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
   auto& cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
-  Vector<double> Dani(nFn), Vx(2), Ls(nFn), DVx(2);
-  Array<double> F(2,2), C(2,2), fl(2,nFn), D(2,2), DNx(2,eNoN);
-
-  if (nFn < dmn.cep.nFn) { 
-    throw std::runtime_error("[cep_2d] No. of anisotropic conductivies exceed mesh fibers.");
-  }
+  Vector<double> Vx(2), DVx(2);
+  Array<double> DNx(2,eNoN);
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am / T1;
   double wl = w * T1;
-  double Diso = dmn.cep.Diso;
-  #ifdef debug_cep_2d 
-  dmsg << "Diso: " << Diso;
-  #endif
 
-  for (int i = 0; i < nFn; i++) {
-    if (i+1 <= dmn.cep.nFn) {
-      Dani(i) = dmn.cep.Dani(i);
-    } else { 
-      Dani(i) = Dani(i-1);
-    }
-  }
+  const auto D = diffusion_tensor(2, dmn.cep.Diso, dmn.cep.D, fibers);
 
-  // Compute the isotropic part of diffusion tensor based on spatial
-  // isotropy for electromechanics. This models stretch induced changes
-  // in conduction velocities
-  //
-  Ls = 1.0;
-  int i;
-
-  D = 0.0;
-  D(0, 0) = Diso;
-  D(1, 1) = Diso;
-  fl = fN;
-
-  for (int i = 0; i < nFn; i++) {
-    D(0, 0) = D(0, 0) + Dani(i) * fl(0, i) * fl(0, i);
-    D(0, 1) = D(0, 1) + Dani(i) * fl(0, i) * fl(1, i);
-
-    D(1, 0) = D(1, 0) + Dani(i) * fl(1, i) * fl(0, i);
-    D(1, 1) = D(1, 1) + Dani(i) * fl(1, i) * fl(1, i);
-  }
-
-  i = eq.s;
+  int i = eq.s;
   double Vd = 0.0;
   Vx = 0.0;
 
@@ -180,81 +174,41 @@ void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, con
 //--------
 // Reproduces Fortran 'CEP3D' subroutine.
 // 
-void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w,
+void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& fN, Array<double>& lR, Array3<double>& lK)
+    const Array<double>& dl, const Array<double>& fibers, Array<double>& lR, Array3<double>& lK)
 {
   #define n_debug_cep_3d 
   #ifdef debug_cep_3d 
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "nFn: " << nFn;
   dmsg << "w: " << w;
   #endif
 
   using namespace consts;
   using namespace mat_fun;
 
-  const int nsd = com_mod.nsd;
-  const int tDof = com_mod.tDof;
-  const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
   auto& cDmn = com_mod.cDmn;
   auto& dmn = eq.dmn[cDmn];
   const double dt = com_mod.dt;
 
-  Vector<double> Dani(nFn), Vx(3), Ls(nFn), DVx(3);
-  Array<double> F(3,3), C(3,3), fl(3,nFn), D(3,3), DNx(3,eNoN);
+  Vector<double> Vx(3), DVx(3);
+  Array<double> DNx(3,eNoN);
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am / T1;
   double wl = w * T1;
-  double Diso = dmn.cep.Diso;
   #ifdef debug_cep_3d 
   dmsg << "T1: " << T1;
   dmsg << "amd: " << amd;
   dmsg << "wl: " << wl;
-  dmsg << "Diso: " << Diso;
   #endif
 
-  for (int i = 0; i < nFn; i++) {
-    if (i+1 <= dmn.cep.nFn) {
-      Dani(i) = dmn.cep.Dani(i);
-    } else {
-      Dani(i) = Dani(i-1);
-    }
-  }
+  const auto D = diffusion_tensor(3, dmn.cep.Diso, dmn.cep.D, fibers);
 
-  // Compute the isotropic part of diffusion tensor based on spatial
-  // isotropy for electromechanics. This models stretch induced changes
-  // in conduction velocities
-  //
-  Ls = 1.0;
-  int i = 0;
-
-  D(0, 0) = Diso;
-  D(1, 1) = Diso;
-  D(2, 2) = Diso;
-  fl = fN;
-
-  // Compute anisotropic components of diffusion tensor
-  //
-  for (int i = 0 ; i < nFn; i++) {
-    D(0,0) = D(0,0) + Dani(i)*fl(0,i)*fl(0,i);
-    D(0,1) = D(0,1) + Dani(i)*fl(0,i)*fl(1,i);
-    D(0,2) = D(0,2) + Dani(i)*fl(0,i)*fl(2,i);
-
-    D(1,0) = D(1,0) + Dani(i)*fl(1,i)*fl(0,i);
-    D(1,1) = D(1,1) + Dani(i)*fl(1,i)*fl(1,i);
-    D(1,2) = D(1,2) + Dani(i)*fl(1,i)*fl(2,i);
-
-    D(2,0) = D(2,0) + Dani(i)*fl(2,i)*fl(0,i);
-    D(2,1) = D(2,1) + Dani(i)*fl(2,i)*fl(1,i);
-    D(2,2) = D(2,2) + Dani(i)*fl(2,i)*fl(2,i);
-  }
-
-  i = eq.s;
+  int i = eq.s;
   double Vd = 0.0;
   Vx = 0.0;
 
@@ -309,10 +263,10 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
   int insd = nsd;
   const int eNoN = lM.eNoN;
-  int nFn  = lM.nFn;
 
-  if (lM.lFib) insd = 1;
-  if (nFn == 0) nFn = 1;
+  if (lM.lFib) {
+    insd = 1;
+  }
   #ifdef debug_construct_cep 
   dmsg << "lM.nEl: " << lM.nEl;
   dmsg << "insd: " << insd;
@@ -324,8 +278,8 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
   // CEP: dof = 1
   Vector<int> ptr(eNoN); 
-  Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN), 
-      fN(nsd,nFn), Nx(insd,eNoN), lR(dof,eNoN);
+  Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
+      Nx(insd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN);
   Vector<double>  N(eNoN); 
   
@@ -346,12 +300,31 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       continue;
     }
 
+    // Directional conductivity contributions must fit the intrinsic mesh
+    // dimension. Purely isotropic domains do not require fiber directions.
+    const auto& fiber_conductivities = eq.dmn[cDmn].cep.D;
+    if (fiber_conductivities.size() > insd) {
+      throw std::runtime_error(
+          "[construct_cep] CEP domain " +
+          std::to_string(eq.dmn[cDmn].Id) + " defines " +
+          std::to_string(fiber_conductivities.size()) + " directional conductivity "
+          "value(s), but mesh '" + lM.name + "' supports at most " +
+          std::to_string(insd) + ".");
+    }
+    if (fiber_conductivities.size() != 0 && !lM.lFib &&
+        !lM.fibers.has_fibers()) {
+      throw std::runtime_error(
+          "[construct_cep] Directional conductivity requires fiber "
+          "directions on mesh '" + lM.name + "'.");
+    }
+    // Fiber-only anisotropy uses the raw fiber family. Sheet / sheet-normal
+    // conductivity needs a completed orthonormal basis.
+    const bool orthonormalize_fibers = fiber_conductivities.size() > 1;
+
     // Update shape functions for NURBS
     //if (lM.eType .EQ. eType_NRB) CALL NRBNNX(lM, e)
 
     // Create local copies
-    fN = 0.0;
-
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
       ptr(a) = Ac;
@@ -364,14 +337,6 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         al(i,a) = Ag(i,Ac);
         yl(i,a) = Yg(i,Ac);
         dl(i,a) = Dg(i,Ac);
-      }
-
-      if (lM.fN.size() != 0) {
-        for (int iFn = 0; iFn < nFn; iFn++) { 
-          for (int i = 0; i < nsd; i++) {
-            fN(i,iFn) = lM.fN(i+nsd*iFn,e);
-          }
-        }
       }
     }
 
@@ -404,13 +369,23 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       #endif
 
       if (insd == 3) {
-        cep_3d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, fN, lR, lK);
+        Array<double> fibers;
+        if (fiber_conductivities.size() != 0) {
+          fibers = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, orthonormalize_fibers);
+        }
+        cep_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
 
       } else if (insd == 2) {
-        cep_2d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, fN, lR, lK);
+        Array<double> fibers;
+        if (fiber_conductivities.size() != 0) {
+          fibers = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, orthonormalize_fibers);
+        }
+        cep_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
 
       } else if (insd == 1) {
-        cep_1d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, lR, lK);
+        cep_1d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, lR, lK);
       }
 
       // ECG computation

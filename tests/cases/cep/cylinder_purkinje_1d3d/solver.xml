@@ -42,7 +42,7 @@
 
   <Domain_file_path> ./mesh/cylinder_domain.dat </Domain_file_path>
 
-   <Fiber_direction_file_path> ./mesh/cylinder_fiber.vtu </Fiber_direction_file_path>
+   <Fiber_direction_from_file_cells> ./mesh/cylinder_fiber.vtu </Fiber_direction_from_file_cells>
    <Mesh_scale_factor> 10 </Mesh_scale_factor>
 
 </Add_mesh>
@@ -63,7 +63,7 @@
       <Electrophysiology_model> TTP </Electrophysiology_model>
       <Include_xml> ../ttp_parameters/ttp_midmyocardium_parameters.xml </Include_xml>
       <Isotropic_conductivity> 0.05 </Isotropic_conductivity>
-      <Anisotropic_conductivity> 0.05 </Anisotropic_conductivity>
+      <Fiber_conductivity> 0.05 </Fiber_conductivity>
       <ODE_solver> RK </ODE_solver>
    </Domain>
 

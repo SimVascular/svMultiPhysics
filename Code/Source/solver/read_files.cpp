@@ -8,12 +8,14 @@
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "ActiveStress.h"
+#include "Fibers.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "porous/darcy.h"
 #include "electrophysiology/IonicModel.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
+#include "utils.h"
 
 #include "Array.h"
 #include "CepMod.h"
@@ -1269,20 +1271,51 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     cep_mod.nXion = lDmn.cep.nX + lDmn.cep.nG;
   } 
 
-  // Set conductivity.
-  lDmn.cep.Diso = domain_params->isotropic_conductivity();
+  // Isotropic and directional conductivity contributions:
+  // D = D_iso I + D_f f⊗f + D_s s⊗s + D_n n⊗n
+  // (in 3D; fewer directional terms in 2D/1D).
+  //
+  // The number of allowed directional terms depends on the intrinsic mesh
+  // dimension, not the spatial dimension. In particular, an lFib mesh
+  // is one dimensional even when embedded in 3D. Store the terms supplied here
+  // and validate their count once the active mesh and domain are known.
+  const bool isotropic_defined =
+      domain_params->isotropic_conductivity.defined();
+  const bool fiber_defined = domain_params->fiber_conductivity.defined();
+  const bool sheet_defined = domain_params->sheet_conductivity.defined();
+  const bool sheet_normal_defined =
+      domain_params->sheet_normal_conductivity.defined();
 
-  // Set the number of fiber directions (nFn) determined by the
-  // given number of anisotropic conductivity values.
-  lDmn.cep.nFn = domain_params->anisotropic_conductivity.size(); 
-  if (lDmn.cep.nFn == 0) { 
-    lDmn.cep.nFn = 1;
+  if (!isotropic_defined && !fiber_defined) {
+    throw std::runtime_error(
+        "[read_cep_domain] CEP domains require Isotropic_conductivity, "
+        "Fiber_conductivity, or both.");
+  }
+  if (sheet_defined && !fiber_defined) {
+    throw std::runtime_error(
+        "[read_cep_domain] Sheet_conductivity cannot be specified without "
+        "Fiber_conductivity.");
+  }
+  if (sheet_normal_defined && !sheet_defined) {
+    throw std::runtime_error(
+        "[read_cep_domain] Sheet_normal_conductivity cannot be specified "
+        "without Sheet_conductivity.");
   }
 
-  // Set the anisotropic conductivity values. 
-  lDmn.cep.Dani.resize(lDmn.cep.nFn);
-  for (int i = 0; i < domain_params->anisotropic_conductivity.size(); i++) {
-    lDmn.cep.Dani[i] = domain_params->anisotropic_conductivity[i];
+  lDmn.cep.Diso = domain_params->isotropic_conductivity();
+
+  const int num_conductivities = static_cast<int>(fiber_defined) +
+      static_cast<int>(sheet_defined) +
+      static_cast<int>(sheet_normal_defined);
+  lDmn.cep.D.resize(num_conductivities);
+  if (fiber_defined) {
+    lDmn.cep.D[0] = domain_params->fiber_conductivity();
+  }
+  if (sheet_defined) {
+    lDmn.cep.D[1] = domain_params->sheet_conductivity();
+  }
+  if (sheet_normal_defined) {
+    lDmn.cep.D[2] = domain_params->sheet_normal_conductivity();
   }
 
   // Set myocardium zone id.
