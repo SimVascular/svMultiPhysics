@@ -1,0 +1,3 @@
+"""
+This scripts runs successfully
+"""
