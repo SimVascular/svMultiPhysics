@@ -1,0 +1,7 @@
+<map id="solver/FE/Quadrature/TriangleQuadrature.h" name="solver/FE/Quadrature/TriangleQuadrature.h">
+<area shape="rect" id="Node000001" title="Centroid and bounded Duffy quadrature on the unit right triangle." alt="" coords="153,5,315,45"/>
+<area shape="rect" id="Node000002" href="$test___quadrature_generators_8cpp.html" title="Tests for line and triangle quadrature generators." alt="" coords="5,93,236,163"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,57,161,95,157,91,201,53"/>
+<area shape="rect" id="Node000003" href="$_triangle_quadrature_8cpp.html" title="Validated composition of supplied line quadrature into triangle rules." alt="" coords="260,108,437,148"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="268,52,329,106,325,110,264,56"/>
+</map>

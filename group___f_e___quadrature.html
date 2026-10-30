@@ -131,6 +131,12 @@ Files</h2></td></tr>
 <tr class="memitem:_quadrature_rule_8h" id="r__quadrature_rule_8h"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_quadrature_rule_8h.html">QuadratureRule.h</a></td></tr>
 <tr class="memdesc:_quadrature_rule_8h"><td class="mdescLeft">&#160;</td><td class="mdescRight">Value type for reference-space quadrature rules. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:_triangle_quadrature_8cpp" id="r__triangle_quadrature_8cpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_triangle_quadrature_8cpp.html">TriangleQuadrature.cpp</a></td></tr>
+<tr class="memdesc:_triangle_quadrature_8cpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validated composition of supplied line quadrature into triangle rules. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:_triangle_quadrature_8h" id="r__triangle_quadrature_8h"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_triangle_quadrature_8h.html">TriangleQuadrature.h</a></td></tr>
+<tr class="memdesc:_triangle_quadrature_8h"><td class="mdescLeft">&#160;</td><td class="mdescRight">Centroid and bounded Duffy quadrature on the unit right triangle. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
@@ -158,6 +164,18 @@ Functions</h2></td></tr>
 <tr class="memitem:ga80ed633f39880e6080f67a9b969fee32" id="r_ga80ed633f39880e6080f67a9b969fee32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___f_e___quadrature.html#ga80ed633f39880e6080f67a9b969fee32">svmp::FE::quadrature::make_gauss_legendre_rule</a> (int requested_exactness)</td></tr>
 <tr class="memdesc:ga80ed633f39880e6080f67a9b969fee32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a Gauss-Legendre rule on \([-1,1]\) with at least the requested exactness.  <br /></td></tr>
 <tr class="separator:ga80ed633f39880e6080f67a9b969fee32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaebb9d6448dd5086d9c4da139dbbdf9bd" id="r_gaebb9d6448dd5086d9c4da139dbbdf9bd"><td class="memItemLeft" align="right" valign="top">constexpr int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___f_e___quadrature.html#gaebb9d6448dd5086d9c4da139dbbdf9bd">svmp::FE::quadrature::max_triangle_exactness</a> () noexcept</td></tr>
+<tr class="memdesc:gaebb9d6448dd5086d9c4da139dbbdf9bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the project bound on requested triangle exactness.  <br /></td></tr>
+<tr class="separator:gaebb9d6448dd5086d9c4da139dbbdf9bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1cd73259a6b9251c3039b7c9817f8bf0" id="r_ga1cd73259a6b9251c3039b7c9817f8bf0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___f_e___quadrature.html#ga1cd73259a6b9251c3039b7c9817f8bf0">svmp::FE::quadrature::make_triangle_centroid_rule</a> ()</td></tr>
+<tr class="memdesc:ga1cd73259a6b9251c3039b7c9817f8bf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the degree-one centroid rule: point \((1/3,1/3,0)\), weight \(1/2\).  <br /></td></tr>
+<tr class="separator:ga1cd73259a6b9251c3039b7c9817f8bf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaad730f62654b0ad6bbd2d649087b3a5e" id="r_gaad730f62654b0ad6bbd2d649087b3a5e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___f_e___quadrature.html#gaad730f62654b0ad6bbd2d649087b3a5e">svmp::FE::quadrature::make_triangle_rule</a> (int requested_exactness, const <a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> &amp;u_rule, const <a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> &amp;v_rule)</td></tr>
+<tr class="memdesc:gaad730f62654b0ad6bbd2d649087b3a5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compose two canonical line rules into a Duffy triangle rule.  <br /></td></tr>
+<tr class="separator:gaad730f62654b0ad6bbd2d649087b3a5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga966b6df1b4eace19ba34223e279eeade" id="r_ga966b6df1b4eace19ba34223e279eeade"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___f_e___quadrature.html#ga966b6df1b4eace19ba34223e279eeade">svmp::FE::quadrature::make_triangle_rule</a> (int requested_exactness, const <a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> &amp;line_rule)</td></tr>
+<tr class="memdesc:ga966b6df1b4eace19ba34223e279eeade"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reuse one line rule in both Duffy directions.  <br /></td></tr>
+<tr class="separator:ga966b6df1b4eace19ba34223e279eeade"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Integration rules on canonical reference cells. </p>
@@ -278,6 +296,125 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ga1cd73259a6b9251c3039b7c9817f8bf0" name="ga1cd73259a6b9251c3039b7c9817f8bf0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga1cd73259a6b9251c3039b7c9817f8bf0">&#9670;&#160;</a></span>make_triangle_centroid_rule()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> svmp::FE::quadrature::make_triangle_centroid_rule </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return the degree-one centroid rule: point \((1/3,1/3,0)\), weight \(1/2\). </p>
+<dl class="section return"><dt>Returns</dt><dd>Owning CellFamily::Triangle rule for constant or linear integration. </dd></dl>
+
+</div>
+</div>
+<a id="ga966b6df1b4eace19ba34223e279eeade" name="ga966b6df1b4eace19ba34223e279eeade"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga966b6df1b4eace19ba34223e279eeade">&#9670;&#160;</a></span>make_triangle_rule() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> svmp::FE::quadrature::make_triangle_rule </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>requested_exactness</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> &amp;&#160;</td>
+          <td class="paramname"><em>line_rule</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reuse one line rule in both Duffy directions. </p>
+<p>Equivalent to make_triangle_rule(requested_exactness, line_rule, line_rule), with the same validation and sample-preservation contracts. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">requested_exactness</td><td>Minimum total degree \(p\); must be in [0, 254], inclusive (see <a class="el" href="group___f_e___quadrature.html#gaebb9d6448dd5086d9c4da139dbbdf9bd" title="Return the project bound on requested triangle exactness.">max_triangle_exactness()</a>). </td></tr>
+    <tr><td class="paramname">line_rule</td><td>Canonical Line rule with \(1\leq n\leq128\) points and trusted exactness \(e\geq p+1\). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Owning Triangle rule with exactness \(e-1\) and \(n^2\) samples. </dd></dl>
+
+</div>
+</div>
+<a id="gaad730f62654b0ad6bbd2d649087b3a5e" name="gaad730f62654b0ad6bbd2d649087b3a5e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaad730f62654b0ad6bbd2d649087b3a5e">&#9670;&#160;</a></span>make_triangle_rule() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> svmp::FE::quadrature::make_triangle_rule </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>requested_exactness</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> &amp;&#160;</td>
+          <td class="paramname"><em>u_rule</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classsvmp_1_1_f_e_1_1quadrature_1_1_quadrature_rule.html">QuadratureRule</a> &amp;&#160;</td>
+          <td class="paramname"><em>v_rule</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Compose two canonical line rules into a Duffy triangle rule. </p>
+<p>Duffy maps the unit square onto \(x,y\geq0,\ x+y\leq1\) by \((x,y)=(u,(1-u)v)\), collapsing the edge \(u=1\) to vertex \((1,0)\). For supplied points \(\xi_i,\eta_j\) and weights \(a_i,b_j\),  </p><p class="formulaDsp">
+\[
+u_i=(\xi_i+1)/2,\quad v_j=(\eta_j+1)/2,\quad
+\mathbf{x}_{ij}=(u_i,(1-u_i)v_j,0),\quad W_{ij}=a_i b_j(1-u_i)/4.
+\]
+</p>
+<p> Weights include the Jacobian \(1-u\) and both interval scalings. Including the Jacobian, \(x^a y^b\) becomes \(u^a(1-u)^{b+1}v^b\); total degree \(p\) therefore requires \(e_u\geq p+1\) and \(e_v\geq p\).</p>
+<p>Factors may come from different line generators and have different point counts; both are used as supplied. Select <a class="el" href="group___f_e___quadrature.html#ga1cd73259a6b9251c3039b7c9817f8bf0" title="Return the degree-one centroid rule: point , weight .">make_triangle_centroid_rule()</a> for the centroid. All samples are kept in input order (i outer, j inner), including duplicates and collapsed points. Signed/zero weights are allowed. Duffy rules are not permutation-symmetric triangle tables.</p>
+<p>Each rule requires \(|\sum w-M|\leq\tau\max(M,\sum|w|)\), with \(M=2\) for each line, \(M=1/2\) for the triangle, and \(\tau=256\epsilon\) for binary64 machine epsilon \(\epsilon\). Mapped points lie in the triangle up to rounding; no clipping or weight rescaling is performed.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">requested_exactness</td><td>Minimum total degree \(p\); must be in [0, 254], inclusive (see <a class="el" href="group___f_e___quadrature.html#gaebb9d6448dd5086d9c4da139dbbdf9bd" title="Return the project bound on requested triangle exactness.">max_triangle_exactness()</a>). </td></tr>
+    <tr><td class="paramname">u_rule</td><td>Nonempty canonical Line rule on \([-1,1]\) with trusted \(e_u\geq p+1\). </td></tr>
+    <tr><td class="paramname">v_rule</td><td>Nonempty canonical Line rule on \([-1,1]\) with trusted \(e_v\geq p\). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Owning Triangle rule with exactness \(\min(e_u-1,e_v)\) and \(n_u n_v\) samples. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classsvmp_1_1_f_e_1_1_invalid_argument_exception.html" title="An argument failed validation.">InvalidArgumentException</a></td><td>If the request or factors violate these contracts, or \(n_u n_v\) exceeds 16384; checked before product allocation. </td></tr>
+    <tr><td class="paramname"><a class="el" href="classsvmp_1_1_f_e_1_1_convergence_exception.html" title="Iterative process failed to converge.">ConvergenceException</a></td><td>If the mapped weights do not reproduce measure \(1/2\), for example after an overflowed product or when <code>u_rule</code> does not integrate linear functions exactly. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ga208d5d7639710707f6daecba7e5e5151" name="ga208d5d7639710707f6daecba7e5e5151"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga208d5d7639710707f6daecba7e5e5151">&#9670;&#160;</a></span>max_gauss_legendre_exactness()</h2>
 
@@ -331,6 +468,34 @@ Functions</h2></td></tr>
 
 <p>Return the largest supported Gauss-Lobatto-Legendre exactness request. </p>
 <p>Degree 253 corresponds to the internal 128-point project support bound, including both endpoints, which limits generator work and downstream product-rule growth; it is not a mathematical or convergence limit. </p><dl class="section return"><dt>Returns</dt><dd>The inclusive requested-exactness limit, 253. </dd></dl>
+
+</div>
+</div>
+<a id="gaebb9d6448dd5086d9c4da139dbbdf9bd" name="gaebb9d6448dd5086d9c4da139dbbdf9bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaebb9d6448dd5086d9c4da139dbbdf9bd">&#9670;&#160;</a></span>max_triangle_exactness()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr int svmp::FE::quadrature::max_triangle_exactness </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the project bound on requested triangle exactness. </p>
+<dl class="section return"><dt>Returns</dt><dd>254, permitting a 128-point Gauss factor. </dd></dl>
 
 </div>
 </div>

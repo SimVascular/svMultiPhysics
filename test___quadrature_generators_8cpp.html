@@ -104,7 +104,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Tests for exactness-requested one-dimensional quadrature generators.  
+<p>Tests for line and triangle quadrature generators.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;gtest/gtest.h&gt;</code><br />
 <code>#include &quot;FE/Basis/NodeOrderingConventions.h&quot;</code><br />
@@ -113,19 +113,25 @@ $(function() {
 <code>#include &quot;<a class="el" href="_gauss_lobatto_quadrature_8h_source.html">FE/Quadrature/GaussLobattoQuadrature.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="_gauss_quadrature_8h_source.html">FE/Quadrature/GaussQuadrature.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="_quadrature_rule_8h_source.html">FE/Quadrature/QuadratureRule.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="_triangle_quadrature_8h_source.html">FE/Quadrature/TriangleQuadrature.h</a>&quot;</code><br />
+<code>#include &quot;ReferenceMonomialIntegrals.h&quot;</code><br />
+<code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;cmath&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;exception&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
+<code>#include &lt;optional&gt;</code><br />
 <code>#include &lt;span&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;type_traits&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for test_QuadratureGenerators.cpp:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="test___quadrature_generators_8cpp__incl.svg" width="2238" height="403"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="test___quadrature_generators_8cpp__incl.svg" width="2686" height="403"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
@@ -152,9 +158,57 @@ Functions</h2></td></tr>
 <tr class="memitem:a39633f4df27df753e0d43861b35c3008" id="r_a39633f4df27df753e0d43861b35c3008"><td class="memItemLeft" align="right" valign="top"><a id="a39633f4df27df753e0d43861b35c3008" name="a39633f4df27df753e0d43861b35c3008"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (GaussLobattoNodes, RejectsInvalidRefinementRequests)</td></tr>
 <tr class="separator:a39633f4df27df753e0d43861b35c3008"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8eccaea2aa627c5e16a8b3f8ea4a9db" id="r_ae8eccaea2aa627c5e16a8b3f8ea4a9db"><td class="memItemLeft" align="right" valign="top"><a id="ae8eccaea2aa627c5e16a8b3f8ea4a9db" name="ae8eccaea2aa627c5e16a8b3f8ea4a9db"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (QuadratureMonomialReferences, MatchesIndependentValuesAndRejectsNegativePowers)</td></tr>
+<tr class="separator:ae8eccaea2aa627c5e16a8b3f8ea4a9db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01cfafe7e2c2c5fb236995631a3e8ce0" id="r_a01cfafe7e2c2c5fb236995631a3e8ce0"><td class="memItemLeft" align="right" valign="top"><a id="a01cfafe7e2c2c5fb236995631a3e8ce0" name="a01cfafe7e2c2c5fb236995631a3e8ce0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (QuadratureGeneratorTestSupport, GroupsOnlyEqualActualCoordinates)</td></tr>
+<tr class="separator:a01cfafe7e2c2c5fb236995631a3e8ce0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ed0962f1798d877a5f0ce7741b99e0d" id="r_a0ed0962f1798d877a5f0ce7741b99e0d"><td class="memItemLeft" align="right" valign="top"><a id="a0ed0962f1798d877a5f0ce7741b99e0d" name="a0ed0962f1798d877a5f0ce7741b99e0d"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleCentroidImplementation, IntegratesLinearButNotQuadraticMonomials)</td></tr>
+<tr class="separator:a0ed0962f1798d877a5f0ce7741b99e0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd0567b181bcd51776fa57e611fd1c85" id="r_acd0567b181bcd51776fa57e611fd1c85"><td class="memItemLeft" align="right" valign="top"><a id="acd0567b181bcd51776fa57e611fd1c85" name="acd0567b181bcd51776fa57e611fd1c85"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, PreservesIndependentOrderedFixtureAndInputOwnership)</td></tr>
+<tr class="separator:acd0567b181bcd51776fa57e611fd1c85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1aca8f5b7a07e78d33d028710c345f6c" id="r_a1aca8f5b7a07e78d33d028710c345f6c"><td class="memItemLeft" align="right" valign="top"><a id="a1aca8f5b7a07e78d33d028710c345f6c" name="a1aca8f5b7a07e78d33d028710c345f6c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, UsesSuppliedFactorForLowRequestsAndReportsDeliveredDegree)</td></tr>
+<tr class="separator:a1aca8f5b7a07e78d33d028710c345f6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0412d0ad384a365624ab3dffaec2f1a" id="r_ab0412d0ad384a365624ab3dffaec2f1a"><td class="memItemLeft" align="right" valign="top"><a id="ab0412d0ad384a365624ab3dffaec2f1a" name="ab0412d0ad384a365624ab3dffaec2f1a"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, PreservesUnequalOrderedFactorsAndOwnsTheirProduct)</td></tr>
+<tr class="separator:ab0412d0ad384a365624ab3dffaec2f1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a525a231cff5da72233de8b73a8e98884" id="r_a525a231cff5da72233de8b73a8e98884"><td class="memItemLeft" align="right" valign="top"><a id="a525a231cff5da72233de8b73a8e98884" name="a525a231cff5da72233de8b73a8e98884"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, EnforcesDirectionalExactnessAndReportsTheLimitingFactor)</td></tr>
+<tr class="separator:a525a231cff5da72233de8b73a8e98884"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55790d3f9ce780e3bcd4cca6de07672c" id="r_a55790d3f9ce780e3bcd4cca6de07672c"><td class="memItemLeft" align="right" valign="top"><a id="a55790d3f9ce780e3bcd4cca6de07672c" name="a55790d3f9ce780e3bcd4cca6de07672c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, BoundsTheProductForUnequalFactorSizes)</td></tr>
+<tr class="separator:a55790d3f9ce780e3bcd4cca6de07672c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a26b7c59c185d29bac468a458dbb046" id="r_a5a26b7c59c185d29bac468a458dbb046"><td class="memItemLeft" align="right" valign="top"><a id="a5a26b7c59c185d29bac468a458dbb046" name="a5a26b7c59c185d29bac468a458dbb046"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, PreservesSignedZeroAndDuplicateSamples)</td></tr>
+<tr class="separator:a5a26b7c59c185d29bac468a458dbb046"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa80afb82f0f8d759fd9f107f005200bd" id="r_aa80afb82f0f8d759fd9f107f005200bd"><td class="memItemLeft" align="right" valign="top"><a id="aa80afb82f0f8d759fd9f107f005200bd" name="aa80afb82f0f8d759fd9f107f005200bd"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, AcceptsFiniteProductsWithLargeSignedWeights)</td></tr>
+<tr class="separator:aa80afb82f0f8d759fd9f107f005200bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a261d6f48298fd65a4e027513ce350eea" id="r_a261d6f48298fd65a4e027513ce350eea"><td class="memItemLeft" align="right" valign="top"><a id="a261d6f48298fd65a4e027513ce350eea" name="a261d6f48298fd65a4e027513ce350eea"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, RejectsInvalidRequestsBeforeDegreeArithmetic)</td></tr>
+<tr class="separator:a261d6f48298fd65a4e027513ce350eea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e2ccb860596528d3c5ab2c966083d3b" id="r_a2e2ccb860596528d3c5ab2c966083d3b"><td class="memItemLeft" align="right" valign="top"><a id="a2e2ccb860596528d3c5ab2c966083d3b" name="a2e2ccb860596528d3c5ab2c966083d3b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, RejectsInvalidFactorContracts)</td></tr>
+<tr class="separator:a2e2ccb860596528d3c5ab2c966083d3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a047d45a9a2364fddeae51d5a9ca34a1a" id="r_a047d45a9a2364fddeae51d5a9ca34a1a"><td class="memItemLeft" align="right" valign="top"><a id="a047d45a9a2364fddeae51d5a9ca34a1a" name="a047d45a9a2364fddeae51d5a9ca34a1a"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyImplementation, ReportsNumericalFailureWithoutRepairingSamples)</td></tr>
+<tr class="separator:a047d45a9a2364fddeae51d5a9ca34a1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25dd000598f1cf9e54b0842a95727084" id="r_a25dd000598f1cf9e54b0842a95727084"><td class="memItemLeft" align="right" valign="top"><a id="a25dd000598f1cf9e54b0842a95727084" name="a25dd000598f1cf9e54b0842a95727084"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyQualification, IntegratesEveryGaussBackedRequest)</td></tr>
+<tr class="separator:a25dd000598f1cf9e54b0842a95727084"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a294724bd2faa7c1e71bd617cba1d8d7d" id="r_a294724bd2faa7c1e71bd617cba1d8d7d"><td class="memItemLeft" align="right" valign="top"><a id="a294724bd2faa7c1e71bd617cba1d8d7d" name="a294724bd2faa7c1e71bd617cba1d8d7d"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyQualification, IntegratesEveryLobattoBackedRequest)</td></tr>
+<tr class="separator:a294724bd2faa7c1e71bd617cba1d8d7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b8ee2bd6bf2c9651d099d3655a403fb" id="r_a0b8ee2bd6bf2c9651d099d3655a403fb"><td class="memItemLeft" align="right" valign="top"><a id="a0b8ee2bd6bf2c9651d099d3655a403fb" name="a0b8ee2bd6bf2c9651d099d3655a403fb"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TEST</b> (TriangleDuffyQualification, IntegratesIndependentGaussAndLobattoFactors)</td></tr>
+<tr class="separator:a0b8ee2bd6bf2c9651d099d3655a403fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Tests for exactness-requested one-dimensional quadrature generators. </p>
+<div class="textblock"><p>Tests for line and triangle quadrature generators. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="aa39090d6d55479c3040e33cfdccae49b" name="aa39090d6d55479c3040e33cfdccae49b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa39090d6d55479c3040e33cfdccae49b">&#9670;&#160;</a></span>TEST() <span class="overload">[1/8]</span></h2>

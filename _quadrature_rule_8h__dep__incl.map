@@ -1,17 +1,22 @@
 <map id="solver/FE/Quadrature/QuadratureRule.h" name="solver/FE/Quadrature/QuadratureRule.h">
-<area shape="rect" id="Node000001" title="Value type for reference&#45;space quadrature rules." alt="" coords="339,5,497,45"/>
-<area shape="rect" id="Node000002" href="$test___quadrature_generators_8cpp.html" title="Tests for exactness&#45;requested one&#45;dimensional quadrature generators." alt="" coords="244,181,475,251"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="403,58,387,94,375,139,367,182,361,181,369,138,382,92,398,56"/>
+<area shape="rect" id="Node000001" title="Value type for reference&#45;space quadrature rules." alt="" coords="397,5,556,45"/>
+<area shape="rect" id="Node000002" href="$test___quadrature_generators_8cpp.html" title="Tests for line and triangle quadrature generators." alt="" coords="244,181,475,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="429,55,406,73,387,95,376,116,369,138,363,182,357,181,364,137,371,114,382,92,402,69,426,51"/>
 <area shape="rect" id="Node000003" href="$_gauss_lobatto_quadrature_8h.html" title="Bounded Gauss&#45;Lobatto&#45;Legendre quadrature generation on the reference line." alt="" coords="122,93,322,133"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="364,53,266,96,264,91,362,48"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="409,52,279,96,277,91,407,47"/>
 <area shape="rect" id="Node000005" href="$_gauss_quadrature_8h.html" title="Bounded Gauss&#45;Legendre quadrature generation on the reference line." alt="" coords="397,93,556,133"/>
-<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="441,55,466,92,461,95,436,58"/>
-<area shape="rect" id="Node000007" href="$_quadrature_rule_8cpp.html" title="Internal construction and structural validation for quadrature rules." alt="" coords="580,93,739,133"/>
-<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="485,47,607,91,606,96,483,52"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="479,59,479,93,474,93,474,59"/>
+<area shape="rect" id="Node000007" href="$_quadrature_rule_8cpp.html" title="Internal construction and structural validation for quadrature rules." alt="" coords="768,93,927,133"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="570,45,769,91,767,96,569,51"/>
+<area shape="rect" id="Node000008" href="$_triangle_quadrature_8h.html" title="Centroid and bounded Duffy quadrature on the unit right triangle." alt="" coords="581,93,743,133"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="531,49,623,91,620,96,529,54"/>
 <area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="260,139,315,179,311,183,257,144"/>
 <area shape="rect" id="Node000004" href="$_gauss_lobatto_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Lobatto&#45;Legendre line rules." alt="" coords="5,196,220,236"/>
 <area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="193,145,135,198,131,194,189,141"/>
 <area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="446,144,401,183,397,179,443,140"/>
 <area shape="rect" id="Node000006" href="$_gauss_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Legendre line rules." alt="" coords="499,196,665,236"/>
 <area shape="poly" id="edge7_Node000005_Node000006" title=" " alt="" coords="508,141,564,194,560,198,505,145"/>
+<area shape="poly" id="edge10_Node000008_Node000002" title=" " alt="" coords="593,140,461,184,460,179,592,135"/>
+<area shape="rect" id="Node000009" href="$_triangle_quadrature_8cpp.html" title="Validated composition of supplied line quadrature into triangle rules." alt="" coords="689,196,867,236"/>
+<area shape="poly" id="edge11_Node000008_Node000009" title=" " alt="" coords="696,140,758,194,755,198,692,144"/>
 </map>
