@@ -1174,6 +1174,45 @@ class eqType
     /// @brief Accepted relative tolerance
     double tol = 0.0;
 
+    /// @name Line search settings.
+    /// @{
+
+    /// @brief Toggle line search for this equation.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    bool line_search_enabled = false;
+
+    /// @brief Minimum decrease of the residual norm for line search.
+    ///
+    /// A step is accepted if it decreases the residual norm by at least this
+    /// fraction, relative to the norm at the start of the step.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    double line_search_minimum_decrease = 0.0;
+
+    /// @brief Line search step reduction factor.
+    ///
+    /// If a step is rejected, the step length is multiplied by this factor for
+    /// the next trial. Must be in the range (0, 1).
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    double line_search_step_reduction_factor = 0.0;
+
+    /// @brief Line search minimum step length.
+    ///
+    /// A line search step shorter than or equal to this length is accepted
+    /// unconditionally. Must be non-negative.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    double line_search_minimum_step_length = 0.0;
+
+    /// @brief If enabled, report line search progress to stdout.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    bool line_search_verbose = false;
+
+    /// @}
+
     /// @brief Equation symbol
     std::string sym;
     //std::string(LEN=2) :: sym = "NA";

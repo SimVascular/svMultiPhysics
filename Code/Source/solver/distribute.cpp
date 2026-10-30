@@ -1470,8 +1470,13 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
   cm.bcast(cm_mod, &lEq.useTLS);
   cm.bcast(cm_mod, &lEq.assmTLS);
   cm.bcast(cm_mod, &lEq.expl_geom_cpl);
+  cm.bcast(cm_mod, &lEq.line_search_enabled);
+  cm.bcast(cm_mod, &lEq.line_search_minimum_decrease);
+  cm.bcast(cm_mod, &lEq.line_search_step_reduction_factor);
+  cm.bcast(cm_mod, &lEq.line_search_minimum_step_length);
+  cm.bcast(cm_mod, &lEq.line_search_verbose);
 
-  #ifdef dist_eq
+#ifdef dist_eq
   dmsg << "lEq.nOutput: " << lEq.nOutput;
   dmsg << "lEq.nDmn: " << lEq.nDmn;
   dmsg << "lEq.phys: " << lEq.phys;

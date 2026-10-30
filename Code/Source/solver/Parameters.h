@@ -1753,6 +1753,54 @@ class ContactParameters : public ParameterLists
     Parameter<double> penalty_constant;
 };
 
+//----------------------
+// LineSearchParameters
+//----------------------
+/// @brief Parameters of the line search shortening the increments of the
+/// nonlinear iterations of an equation.
+///
+/// The line search is enabled by the presence of the XML element and disabled
+/// by its absence.
+///
+/// XML element: \code {.xml}
+/// <Line_search>
+///   <Minimum_decrease> 1.0e-4 </Minimum_decrease>
+///   <Step_reduction_factor> 0.5 </Step_reduction_factor>
+///   <Minimum_step_length> 0.015625 </Minimum_step_length>
+///   <Verbose> false </Verbose>
+/// </Line_search>
+/// \endcode
+//
+class LineSearchParameters : public ParameterLists
+{
+  public:
+    LineSearchParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+    void print_parameters();
+
+    /// @brief Decrease of the residual norm that a step length must achieve to
+    /// be accepted, as a fraction of the norm it starts from per unit step
+    /// length. Any value small enough accepts every step that decreases the
+    /// residual.
+    Parameter<double> minimum_decrease;
+
+    /// @brief Factor by which a rejected step length is multiplied.
+    Parameter<double> step_reduction_factor;
+
+    /// @brief Shortest step length that is tried. It is applied without being
+    /// measured, since there is no shorter one to fall back on.
+    Parameter<double> minimum_step_length;
+
+    /// @brief Report the step lengths that are rejected and accepted.
+    Parameter<bool> verbose;
+
+    bool value_set = false;
+};
+
 /// @brief The EquationParameters class stores parameters for the 'Add_equation'
 /// XML element used to specify an equation to be solved (e.g. fluid).
 ///
@@ -1827,6 +1875,8 @@ class EquationParameters : public ParameterLists
     std::vector<DomainParameters*> domains;
 
     LinearSolverParameters linear_solver;
+
+    LineSearchParameters line_search;
 
     std::vector<OutputParameters*> outputs;
 

@@ -433,7 +433,27 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     }
   }
 
-  #ifdef debug_initialize
+  for (const auto &eq : com_mod.eq) {
+    // A prestress run accumulates the nodal stress over the assemblies of a
+    // time step, so the assemblies a line search performs to measure a trial
+    // solution would contribute to it as well. Line search for prestress runs
+    // would have to exclude those assemblies from the accumulation, which is
+    // not implemented.
+    svmp::throw_if<svmp::NotImplementedException>(
+        eq.line_search_enabled && com_mod.pstEq,
+        "Line search (the " + LineSearchParameters::xml_element_name_ +
+            " XML element) is not implemented for prestress simulations.");
+
+    // Line search relies on data structures that are not allocated if using
+    // native Trilinos assembly.
+    svmp::throw_if<svmp::NotImplementedException>(
+        eq.line_search_enabled &&
+            eq.linear_algebra_type == consts::LinearAlgebraType::trilinos &&
+            eq.linear_algebra_assembly_type != consts::LinearAlgebraType::fsils,
+        "Line search is not implemented for native Trilinos assembly.");
+  }
+
+#ifdef debug_initialize
   dmsg << "nFacesLS: " << nFacesLS;
   dmsg << "com_mod.cplBC.coupled: " << com_mod.cplBC.coupled;
   #endif

@@ -2602,6 +2602,65 @@ void ContactParameters::set_values(tinyxml2::XMLElement *xml_elem) {
 }
 
 //////////////////////////////////////////////////////////
+//                 LineSearchParameters                 //
+//////////////////////////////////////////////////////////
+
+const std::string LineSearchParameters::xml_element_name_ = "Line_search";
+
+LineSearchParameters::LineSearchParameters() {
+  // The XML element as a whole is optional, but every parameter within it has
+  // to be given.
+  bool required = true;
+
+  set_xml_element_name(xml_element_name_);
+
+  set_parameter("Minimum_decrease", 1.0e-4, required, minimum_decrease);
+  set_parameter("Step_reduction_factor", 0.5, required, step_reduction_factor);
+  set_parameter("Minimum_step_length", 1.0 / 64.0, required,
+                minimum_step_length);
+  set_parameter("Verbose", false, required, verbose);
+}
+
+void LineSearchParameters::set_values(tinyxml2::XMLElement *xml_elem) {
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  std::function<void(const std::string &, const std::string &)> ftpr =
+      std::bind(&LineSearchParameters::set_parameter_value, *this, _1, _2);
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+
+  check_required();
+
+  auto is_in_range = [](double value, double lower, double upper) {
+    return lower < value && value < upper;
+  };
+
+  svmp::check<svmp::ParseException>(
+      is_in_range(minimum_decrease.value(), 0.0, 1.0),
+      "Line_search Minimum_decrease must be in (0, 1).");
+  svmp::check<svmp::ParseException>(
+      is_in_range(step_reduction_factor.value(), 0.0, 1.0),
+      "Line_search Step_reduction_factor must be in (0, 1).");
+  svmp::check<svmp::ParseException>(
+      is_in_range(minimum_step_length.value(), 0.0, 1.0),
+      "Line_search Minimum_step_length must be in [0, 1].");
+
+  value_set = true;
+}
+
+void LineSearchParameters::print_parameters() {
+  std::cout << std::endl;
+  std::cout << "----------------------" << std::endl;
+  std::cout << "Line Search Parameters" << std::endl;
+  std::cout << "----------------------" << std::endl;
+
+  auto params_name_value = get_parameter_list();
+  for (auto &[key, value] : params_name_value) {
+    std::cout << key << ": " << value << std::endl;
+  }
+}
+
+//////////////////////////////////////////////////////////
 //                  EquationParameters                  //
 //////////////////////////////////////////////////////////
 
@@ -2739,6 +2798,9 @@ void EquationParameters::set_values(tinyxml2::XMLElement *eq_elem,
 
     } else if (name == LinearSolverParameters::xml_element_name_) {
       linear_solver.set_values(item);
+
+    } else if (name == LineSearchParameters::xml_element_name_) {
+      line_search.set_values(item);
 
     } else if (name == OutputParameters::xml_element_name_) {
       auto output_params = new OutputParameters();

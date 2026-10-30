@@ -1657,6 +1657,21 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   lEq.tol = eq_params->tolerance.value();
   lEq.expl_geom_cpl = eq_params->explicit_geometric_coupling.value();
 
+  auto &line_search_params = eq_params->line_search;
+
+  // If the line search element is present, enable line search for this equation
+  // and set its parameters. Line search is disabled by default.
+  if (line_search_params.defined()) {
+    lEq.line_search_enabled = true;
+    lEq.line_search_minimum_decrease =
+        line_search_params.minimum_decrease.value();
+    lEq.line_search_step_reduction_factor =
+        line_search_params.step_reduction_factor.value();
+    lEq.line_search_minimum_step_length =
+        line_search_params.minimum_step_length.value();
+    lEq.line_search_verbose = line_search_params.verbose.value();
+  }
+
   // Initialize coupled BC.
   //
   auto& chnl_mod = simulation->chnl_mod;
