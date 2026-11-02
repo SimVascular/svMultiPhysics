@@ -139,16 +139,18 @@ if(ENABLE_ARRAY_INDEX_CHECKING)
 endif()
 
 # svMultiPhysics requires LAPACK
+set(BLA_SIZEOF_INTEGER 4)
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
 # Include VTK either from a local build using SV_LOCAL_VTK_PATH
 # or from a default installed version.
 #
+set(SV_VTK_COMPONENTS CommonCore CommonDataModel CommonMisc FiltersGeometry IOXML)
 if("${SV_LOCAL_VTK_PATH}" STREQUAL "")
-  find_package(VTK REQUIRED ) 
+  find_package(VTK REQUIRED COMPONENTS ${SV_VTK_COMPONENTS})
 else()
-  find_package(VTK PATHS ${SV_LOCAL_VTK_PATH} NO_DEFAULT_PATH REQUIRED) 
+  find_package(VTK PATHS ${SV_LOCAL_VTK_PATH} NO_DEFAULT_PATH REQUIRED COMPONENTS ${SV_VTK_COMPONENTS})
 endif()
 
 include(${VTK_USE_FILE})
@@ -420,7 +422,7 @@ if(ENABLE_UNIT_TEST)
     run_all_unit_tests
     gtest
     GTest::gtest_main 
-    pthread   # link pthread on ubuntu20
+    Threads::Threads
   )
 
   # Define the path to the unit-test reference-data directory as a preprocessor
