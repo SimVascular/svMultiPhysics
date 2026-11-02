@@ -27,11 +27,14 @@ void print_svZeroD(int* nSrfs, const std::vector<int>& surfID, double Q[], doubl
  * @param[in,out] com_mod Simulation data; the coupled boundary conditions and
  *   \c cplBC bookkeeping are initialized here.
  * @param[in] cm_mod MPI communicator data.
+ * @param[in] solutions Initialized 3D solution states.
  * @param[in] appPath Directory the simulation results are written to. The
  *   svZeroD output files (svZeroD_data, Q_svZeroD, P_svZeroD) are written
  *   there as well.
  */
-void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod, const std::string& appPath);
+void init_svZeroD(ComMod& com_mod, const CmMod& cm_mod,
+                  const SolutionStates& solutions,
+                  const std::string& appPath);
 
 void calc_svZeroD(ComMod& com_mod, const CmMod& cm_mod, char BCFlag);
 

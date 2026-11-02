@@ -5,12 +5,12 @@
 
 #include "all_fun.h"
 #include "consts.h"
-#include "fluid.h"
+#include "fluid/fluid.h"
 #include "fs.h"
-#include "l_elas.h"
+#include "solid/l_elas.h"
 #include "lhsa.h"
 #include "nn.h"
-#include "sv_struct.h"
+#include "solid/sv_struct.h"
 #include "utils.h"
 
 #include <array>
@@ -32,7 +32,6 @@ void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const S
 
   using namespace consts;
 
-  auto& cem = cep_mod.cem;
   const int nsd  = com_mod.nsd;
   const int tDof = com_mod.tDof;
   const int dof = com_mod.dof;

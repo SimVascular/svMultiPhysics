@@ -86,6 +86,18 @@ protected:
     return value;
   }
 
+  /**
+   * @brief Compute the partial derivative of the active tension with respect
+   * to the fiber stretch, at fixed state, for a single node.
+   *
+   * The active tension does not depend on the fiber stretch, so this is zero.
+   */
+  virtual double compute_active_tension_derivative_local(
+      const Vector<double> &state,
+      const double fiber_stretch) const override {
+    return 0.0;
+  }
+
   /// Active tension value.
   double value;
 };

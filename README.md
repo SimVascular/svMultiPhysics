@@ -13,6 +13,7 @@
 **[Running the svMultiPhysics Program](#running_svmultiphysics)**<br> 
 **[Docker Container](#docker_container)**<br>
 **[Testing](tests/README.md)**<br>
+**[Development Principles](DEVELOPMENT_PRINCIPLES.md)**<br>
 
 
 <!--- =================================================================================== -->
@@ -184,7 +185,7 @@ These packages may be not be available for the latest version using a package-ma
 The following CMake command-line arguments are used to build svMultiPhysics with external linear algebra packages
 ```
 -DSV_USE_TRILINOS:BOOL=ON - Sets an option for CMake to look for the Trilinos package
--DSV_PETSC_DIR:PathToPetsInstall - Sets the location where the PETSc package is installed
+-DSV_PETSC_DIR=PathToPetsInstall - Sets the location where the PETSc package is installed
 ```
 
 When built with an external linear algebra package svMultiPhysics can be run using that package by setting the **Linear_algebra** parameter in the solver input file.

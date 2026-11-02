@@ -11,7 +11,7 @@
 
 #include "all_fun.h"
 #include "baf_ini.h"
-#include "cep_ion.h"
+#include "electrophysiology/cep_ion.h"
 #include "consts.h"
 #include "fs.h"
 #include "lhsa.h"
@@ -71,7 +71,6 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   auto const recLn = com_mod.recLn;
   auto& cm_mod = simulation->cm_mod;
   auto& cep_mod = simulation->cep_mod;
-  auto& cem = cep_mod.cem;
 
   bool ibFlag = com_mod.ibFlag;
   bool dFlag = com_mod.dFlag;
@@ -130,13 +129,10 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
         } else if (cepEq) {
           bin_file.read((char*)Ad.data(), Ad.msize());
           bin_file.read((char*)Xion.data(), Xion.msize());
-          bin_file.read((char*)cem.Ya_f.data(), cem.Ya_f.msize());
-          bin_file.read((char*)cem.Ya_s.data(), cem.Ya_s.msize());
-          bin_file.read((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
           bin_file.read((char*)Ad.data(), Ad.msize());
-          init_ris_data(com_mod, bin_file); 
+          init_ris_data(com_mod, bin_file);
 
         } else if (urisFlag) {
           bin_file.read((char*)Ad.data(), Ad.msize());
@@ -153,12 +149,9 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 
         } else if (cepEq) {
           bin_file.read((char*)Xion.data(), Xion.msize());
-          bin_file.read((char*)cem.Ya_f.data(), cem.Ya_f.msize());
-          bin_file.read((char*)cem.Ya_s.data(), cem.Ya_s.msize());
-          bin_file.read((char*)cem.Ya_n.data(), cem.Ya_n.msize());
 
         } else if (risFlag) {
-          init_ris_data(com_mod, bin_file); 
+          init_ris_data(com_mod, bin_file);
 
         } else if (urisFlag) {
           init_uris_data(com_mod, bin_file);
@@ -545,7 +538,6 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   if (com_mod.sstEq) i = i + nsd;
   if (cep_mod.cepEq) {
     i = i + cep_mod.nXion;
-    if (cep_mod.cem.cpld) i = i + 1;
   }
   if (com_mod.risFlag) {
     i = i + com_mod.ris.nbrRIS;
@@ -712,9 +704,6 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   //   initialized.
   {
     cep_mod.calcium.resize(tnNo);
-    cep_mod.cem.Ya_f.resize(tnNo);
-    cep_mod.cem.Ya_s.resize(tnNo);
-    cep_mod.cem.Ya_n.resize(tnNo);
   }
 
   // Setup the initial conditions for the active stress models.
@@ -994,20 +983,35 @@ void zero_init(Simulation* simulation, SolutionStates& solutions)
   }
 
   if (com_mod.Pinit.size() != 0) {
-     #ifdef debug_zero_init
-     dmsg << "Initialize Yo to provided P solution";
-     #endif
-     for (const auto& eq : com_mod.eq) {
-       const bool is_darcy = eq.phys == consts::EquationType::phys_darcy;
-       // Skip equations without a pressure unknown.
-       if (!is_darcy && eq.dof != nsd + 1) {
-         continue;
-       }
-       const int pressure_dof = eq.s + (is_darcy ? 0 : nsd);
-       for (int a = 0; a < com_mod.tnNo; ++a) {
-         Yo(pressure_dof,a) = com_mod.Pinit(a);
-       }
-     }
+    #ifdef debug_zero_init
+    dmsg << "Initialize Yo to provided P solution";
+    #endif
+    for (const auto& eq : com_mod.eq) {
+      const bool is_darcy = eq.phys == consts::EquationType::phys_darcy;
+      // Skip equations without a pressure unknown.
+      if (!is_darcy && eq.dof != nsd + 1) {
+        continue;
+      }
+      const int pressure_dof = eq.s + (is_darcy ? 0 : nsd);
+      for (int a = 0; a < com_mod.tnNo; ++a) {
+        Yo(pressure_dof,a) = com_mod.Pinit(a);
+      }
+    }
+  } else if (com_mod.have_initial_homogeneous_pressure) {
+    #ifdef debug_zero_init
+    dmsg << "Initialize Yo to homogeneous initial pressure from solver.xml";
+    #endif
+    for (const auto& eq : com_mod.eq) {
+      const bool is_darcy = eq.phys == consts::EquationType::phys_darcy;
+      // Skip equations without a pressure unknown.
+      if (!is_darcy && eq.dof != nsd + 1) {
+        continue;
+      }
+      const int pressure_dof = eq.s + (is_darcy ? 0 : nsd);
+      for (int a = 0; a < com_mod.tnNo; ++a) {
+        Yo(pressure_dof,a) = com_mod.initial_homogeneous_pressure;
+      }
+    }
   }
 
   if (com_mod.Dinit.size() != 0) {
@@ -1021,4 +1025,3 @@ void zero_init(Simulation* simulation, SolutionStates& solutions)
      }
   }
 }
-

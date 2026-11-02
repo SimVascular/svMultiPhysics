@@ -9,7 +9,7 @@
 #include "cmm.h"
 #include "consts.h"
 #include "lhsa.h"
-#include "shells.h"
+#include "solid/shells.h"
 #include "utils.h"
 
 namespace bf {
@@ -209,5 +209,4 @@ void set_bf_l(ComMod& com_mod, bfType& lBf, mshType& lM, const SolutionStates& s
 }
 
 };
-
 

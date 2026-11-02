@@ -38,12 +38,6 @@ void ActiveStressRegazzoni::read_model_specific_parameters(
   LM = params.get_scalar("LM");
   LB = params.get_scalar("LB");
   a_XB = params.get_scalar("a_XB");
-
-  disable_force_strain_rate_feedback_ =
-      params.get_bool("Disable_force_strain_rate_feedback");
-
-  // With the feedback disabled the stretch rate computation can be skipped.
-  needs_fiber_stretch_rate_ = !disable_force_strain_rate_feedback_;
 }
 
 void ActiveStressRegazzoni::distribute_model_specific_parameters(
@@ -68,8 +62,6 @@ void ActiveStressRegazzoni::distribute_model_specific_parameters(
   cm.bcast(cm_mod, &LM);
   cm.bcast(cm_mod, &LB);
   cm.bcast(cm_mod, &a_XB);
-  cm.bcast(cm_mod, &disable_force_strain_rate_feedback_);
-  cm.bcast(cm_mod, &needs_fiber_stretch_rate_);
 }
 
 void ActiveStressRegazzoni::init_local(Vector<double> &state) const {
@@ -122,8 +114,7 @@ void ActiveStressRegazzoni::advance_time_step_local(
   // Advance the crossbridge moments (entries 16-19) from the updated RU state.
   // The velocity v = -dSL/dt / SL0 reduces to -d(lambda)/dt because SL = SL0 *
   // lambda.
-  const double velocity =
-      disable_force_strain_rate_feedback_ ? 0.0 : -fiber_stretch_rate;
+  const double velocity = -fiber_stretch_rate;
   XBArray state_XB;
   for (int i = 0; i < 4; ++i)
     state_XB[i] = state[xb_index(i)];
@@ -150,6 +141,14 @@ double ActiveStressRegazzoni::compute_active_tension_local(
   // scaled by the single-overlap fraction and the upscaling factor a_XB.
   return a_XB * (state[xb_index(1)] + state[xb_index(3)]) *
          fraction_single_overlap(sarcomere_length);
+}
+
+double ActiveStressRegazzoni::compute_active_tension_derivative_local(
+    const Vector<double> &state, const double fiber_stretch) const {
+  const double sarcomere_length = SL0 * fiber_stretch;
+
+  return a_XB * (state[xb_index(1)] + state[xb_index(3)]) * SL0 *
+         fraction_single_overlap_derivative(sarcomere_length);
 }
 
 ActiveStressRegazzoni::RUArray
@@ -319,6 +318,22 @@ ActiveStressRegazzoni::fraction_single_overlap(double sarcomere_length) const {
     return 1.0;
   if (SL > 2.0 * LA + LB && SL <= 2.0 * LA + LM)
     return (LM + 2.0 * LA - SL) * 0.5 / half_single_overlap;
+  return 0.0;
+}
+
+double ActiveStressRegazzoni::fraction_single_overlap_derivative(
+    double sarcomere_length) const {
+  const double SL = sarcomere_length;
+  const double half_single_overlap = (LM - LB) * 0.5;
+
+  if (SL > LA && SL <= LM)
+    return 1.0 / half_single_overlap;
+  if (SL > LM && SL <= 2.0 * LA - LB)
+    return 0.5 / half_single_overlap;
+  if (SL > 2.0 * LA - LB && SL <= 2.0 * LA + LB)
+    return 0.0;
+  if (SL > 2.0 * LA + LB && SL <= 2.0 * LA + LM)
+    return -0.5 / half_single_overlap;
   return 0.0;
 }
 

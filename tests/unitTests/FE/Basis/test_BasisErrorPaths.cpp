@@ -48,7 +48,7 @@ public:
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values_to(const math::Vector<double, 3>&,
+    void evaluate_values_to(const svmp::math::Vector<double, 3>&,
                             std::span<double> values_out) const override
     {
         std::fill(values_out.begin(), values_out.end(), double(0));
@@ -70,7 +70,7 @@ public:
     int order() const noexcept override { return 2; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values_to(const math::Vector<double, 3>& xi,
+    void evaluate_values_to(const svmp::math::Vector<double, 3>& xi,
                             std::span<double> values_out) const override
     {
         const double x = xi[0];
@@ -84,7 +84,7 @@ public:
                         x * y + x * z - y * z;
     }
 
-    void evaluate_gradients_to(const math::Vector<double, 3>& xi,
+    void evaluate_gradients_to(const svmp::math::Vector<double, 3>& xi,
                                std::span<Gradient> gradients_out) const override
     {
         const double x = xi[0];
@@ -122,14 +122,14 @@ public:
     int order() const noexcept override { return 1; }
     std::size_t size() const noexcept override { return 2u; }
 
-    void evaluate_values_to(const math::Vector<double, 3>& xi,
+    void evaluate_values_to(const svmp::math::Vector<double, 3>& xi,
                             std::span<double> values_out) const override
     {
         values_out[0] = double(1) + xi[0];
         values_out[1] = double(2) + xi[1];
     }
 
-    void evaluate_gradients_to(const math::Vector<double, 3>&,
+    void evaluate_gradients_to(const svmp::math::Vector<double, 3>&,
                                std::span<Gradient> gradients_out) const override
     {
         gradients_out[0] = Gradient::Zero();
@@ -138,7 +138,7 @@ public:
         gradients_out[1][1] = double(1);
     }
 
-    void evaluate_hessians_to(const math::Vector<double, 3>& xi,
+    void evaluate_hessians_to(const svmp::math::Vector<double, 3>& xi,
                               std::span<Hessian> hessians_out) const override
     {
         for (std::size_t d = 0; d < size(); ++d) {
@@ -350,7 +350,7 @@ TEST(BasisErrorPaths, NodeOrderingInvalidNodeThrows) {
 
 TEST(BasisErrorPaths, BasisFunctionDefaultsThrowForMissingDerivatives) {
     MinimalScalarBasis basis;
-    const math::Vector<double, 3> xi{double(0), double(0), double(0)};
+    const svmp::math::Vector<double, 3> xi{double(0), double(0), double(0)};
     std::vector<Gradient> gradients;
     std::vector<Hessian> hessians;
 
@@ -360,7 +360,7 @@ TEST(BasisErrorPaths, BasisFunctionDefaultsThrowForMissingDerivatives) {
 
 TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
     ExactQuadraticBasis basis;
-    const math::Vector<double, 3> xi{double(0.2), double(-0.35), double(0.4)};
+    const svmp::math::Vector<double, 3> xi{double(0.2), double(-0.35), double(0.4)};
 
     // On a quadratic, centered differences are exact except for the round-off
     // floor ~ eps_machine/step. The tolerances below are a few times
@@ -401,7 +401,7 @@ TEST(BasisErrorPaths, NumericalDerivativeHelpersMatchAnalyticDerivatives) {
 
 TEST(BasisErrorPaths, BasisFunctionVectorOverloadsForwardToSpanPrimitives) {
     SpanPrimitiveBasis basis;
-    const math::Vector<double, 3> point{double(0.25), double(0.5), double(-0.25)};
+    const svmp::math::Vector<double, 3> point{double(0.25), double(0.5), double(-0.25)};
 
     // Reference results taken directly from the span primitives the basis defines.
     std::vector<double> span_values(basis.size());

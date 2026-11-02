@@ -9,19 +9,19 @@
 #include "nn.h"
 #include "utils.h"
 
-#include "cep.h"
+#include "electrophysiology/cep.h"
 #include "cmm.h"
-#include "darcy.h"
-#include "fluid.h"
+#include "porous/darcy.h"
+#include "fluid/fluid.h"
 #include "fsi.h"
-#include "heatf.h"
-#include "heats.h"
-#include "l_elas.h"
+#include "thermal/heatf.h"
+#include "thermal/heats.h"
+#include "solid/l_elas.h"
 #include "mesh.h"
-#include "shells.h"
-#include "stokes.h"
-#include "sv_struct.h"
-#include "ustruct.h"
+#include "solid/shells.h"
+#include "fluid/stokes.h"
+#include "solid/sv_struct.h"
+#include "solid/ustruct.h"
 
 #include <fsils_api.hpp>
 
@@ -462,5 +462,4 @@ void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const 
 }
 
 };
-
 

@@ -49,7 +49,7 @@
 #include "Parameters.h"
 #include "LinearAlgebra.h"
 #include "consts.h"
-#include "ustruct.h"
+#include "solid/ustruct.h"
 
 #include <algorithm>
 #include <cctype>
@@ -1908,9 +1908,17 @@ void ActiveStressModelParameters::set_values(
 const std::string ActiveStressParameters::xml_element_name = "Active_stress";
 
 ActiveStressParameters::ActiveStressParameters() {
+  constexpr bool required = true;
+
   model_name = Parameter<std::string>("Model", "", true);
 
-  set_parameter("Model", "", /* required = */ true, model_name);
+  set_parameter("Model", "", required, model_name);
+  set_parameter("Implicit_state_coupling", false, !required,
+                implicit_state_coupling);
+  set_parameter("Calcium_scaling_factor", 1.0, !required,
+                calcium_scaling_factor);
+  set_parameter("Disable_force_strain_rate_feedback", false, !required,
+                disable_force_strain_rate_feedback);
 
   ActiveStressFactory::visit(
       [this](const std::string &name, const ActiveStress &model) {
@@ -1982,6 +1990,18 @@ double ActiveStressParameters::get_eta_s() const {
 
 double ActiveStressParameters::get_eta_n() const {
   return directional_distribution.sheet_normal_direction.value();
+}
+
+bool ActiveStressParameters::get_implicit_state_coupling() const {
+  return implicit_state_coupling.value();
+}
+
+double ActiveStressParameters::get_calcium_scaling_factor() const {
+  return calcium_scaling_factor.value();
+}
+
+bool ActiveStressParameters::get_disable_force_strain_rate_feedback() const {
+  return disable_force_strain_rate_feedback.value();
 }
 
 const ActiveStressModelParameters &
@@ -2865,6 +2885,8 @@ GeneralSimulationParameters::GeneralSimulationParameters() {
                 start_saving_after_time_step);
   set_parameter("Starting time step", 0, !required, starting_time_step);
 
+  set_parameter("Initial_homogeneous_pressure", 0.0, !required,
+                initial_homogeneous_pressure);
   set_parameter("Time_step_size", 0.0, required, time_step_size);
   set_parameter("Verbose", false, !required, verbose);
   set_parameter("Warning", false, !required, warning);

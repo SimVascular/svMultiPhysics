@@ -10,8 +10,8 @@
 #include "ActiveStress.h"
 #include "all_fun.h"
 #include "consts.h"
-#include "darcy.h"
-#include "IonicModel.h"
+#include "porous/darcy.h"
+#include "electrophysiology/IonicModel.h"
 #include "read_msh.h"
 #include "vtk_xml.h"
 
@@ -33,7 +33,6 @@ namespace read_files_ns {
 #include "set_equation_props.h"
 #include "set_material_props.h"
 //#include "set_output_props.h"
-#include "set_viscosity_props.h"
 
 /// @brief Match two faces?
 ///
@@ -1340,7 +1339,7 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     lDmn.cep.odes.relTol = domain_params->relative_tolerance.value();
   }
 
-  if (domain_params->feedback_parameter_for_stretch_activated_currents.defined() && cep_mod.cem.cpld) { 
+  if (domain_params->feedback_parameter_for_stretch_activated_currents.defined()) {
     lDmn.cep.Ksac = domain_params->feedback_parameter_for_stretch_activated_currents.value();
   } else {
     lDmn.cep.Ksac = 0.0;
@@ -2087,51 +2086,30 @@ void read_files(Simulation* simulation, const std::string& file_name)
         read_cep_equation(&cep_mod, simulation, eq_params);
       }
     }
-  }
 
-  if (cep_mod.cem.cpld) {
-    if (nEq == 1) {
-      throw std::runtime_error("Min equations (2) not solved for electro-mechanics coupling");
-    }
+    // Stretch-activated currents require the fiber stretch, which is computed
+    // only when an equation solving for the displacement is present.
+    bool has_sac = false;
+    bool has_displacement_eq = false;
 
-    int i = 0;
     for (int iEq = 0; iEq < nEq; iEq++) {
       auto& eq = com_mod.eq[iEq];
-      if ((eq.phys == EquationType::phys_CEP) || (eq.phys == EquationType::phys_struct) || 
-          (eq.phys == EquationType::phys_ustruct)) {
-        i = i + 1;
-      }
-    }
 
-    if (i != 2) {
-      throw std::runtime_error("Both electrophysiology and struct have to be solved for electro-mechanics");
-    }
-
-    if (cep_mod.cem.aStrain) {
-      if (com_mod.nsd != 3) {
-        throw std::runtime_error("Active strain coupling is allowed only for 3D bodies");
+      if (supports_active_stress(eq.phys)) {
+        has_displacement_eq = true;
       }
 
-      for (int iEq = 0; iEq < nEq; iEq++) {
-        auto& eq = com_mod.eq[iEq];
-        for (int i = 0; i < eq.nDmn; i++) {
-          auto& dmn = eq.dmn[i];
-
-          if ((dmn.phys != EquationType::phys_ustruct) && (dmn.phys != EquationType::phys_struct)) { 
-            continue; 
-          }
-
-          if (dmn.active_stress != nullptr) {
-            svmp::raise<svmp::FE::InvalidArgumentException>(
-                "Active strain and active stress cannot be used together.");
-          }
-
-          if ((dmn.stM.isoType != ConstitutiveModelType::stIso_HO)) {
-            throw std::runtime_error("Active strain is allowed with Holzapfel-Ogden passive constitutive model only");
-          }
+      for (int iDmn = 0; iDmn < eq.nDmn; iDmn++) {
+        auto& dmn = eq.dmn[iDmn];
+        if ((dmn.phys == EquationType::phys_CEP) && (dmn.cep.Ksac != 0.0)) {
+          has_sac = true;
         }
       }
     }
+
+    svmp::throw_if<svmp::ParseException>(has_sac && !has_displacement_eq,
+        "Feedback_parameter_for_stretch_activated_currents requires an "
+        "equation solving for the displacement (struct, ustruct or FSI).");
   }
 
   // [NOTE] what's going on here?
@@ -2904,86 +2882,6 @@ void read_rmsh(Simulation* simulation, EquationParameters* eq_param)
   dmsg << "rmsh.freq: " << rmsh.freq;
   dmsg << "rmsh.cpVar: " << rmsh.cpVar;
   #endif
-}
-
-//-----------------
-// read_fluid_visc_model
-//-----------------
-// Set the fluid viscosity material model parameters for the given domain.
-//
-void read_fluid_visc_model(Simulation* simulation, EquationParameters* eq_params, DomainParameters* domain_params, dmnType& lDmn)
-{ 
-  using namespace consts;
-
-  // Get viscosity model.
-  //
-  FluidViscosityModelType vmodel_type;
-  std::string vmodel_str; 
-
-  if (domain_params->fluid_viscosity.model.defined()) {
-    vmodel_str = domain_params->fluid_viscosity.model.value();
-    std::transform(vmodel_str.begin(), vmodel_str.end(), vmodel_str.begin(), ::tolower);
-
-    try {
-      vmodel_type = fluid_viscosity_model_name_to_type.at(vmodel_str);
-    } catch (const std::out_of_range& exception) {
-      throw std::runtime_error("Unknown fluid viscosity model '" + vmodel_str + "'.");
-    }
-  } else {
-    vmodel_type = FluidViscosityModelType::viscType_Const;
-  }
-
-  // Set the parameters for the given viscosity model.
-  //
-  auto& viscosity_params = domain_params->fluid_viscosity;
-
-  try {
-    set_fluid_viscosity_props[vmodel_type](simulation, viscosity_params, lDmn);
-   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("[read_fluid_visc_model] Viscosity model '" + vmodel_str + "' is not supported.");
-  }
-
-  if ((lDmn.phys == EquationType::phys_stokes) && (lDmn.fluid_visc.viscType != FluidViscosityModelType::viscType_Const)) {
-    throw std::runtime_error("Only constant viscosity is allowed for Stokes flow.");
-  }
-}
-
-//-----------------
-// read_solid_visc_model
-//-----------------
-// Set the solid viscosity material model parameters for the given domain.
-//
-void read_solid_visc_model(Simulation* simulation, EquationParameters* eq_params, DomainParameters* domain_params, dmnType& lDmn)
-{ 
-  using namespace consts;
-
-  // Get viscosity model.
-  //
-  SolidViscosityModelType vmodel_type;
-  std::string vmodel_str; 
-
-  if (domain_params->solid_viscosity.model.defined()) {
-    vmodel_str = domain_params->solid_viscosity.model.value();
-    std::transform(vmodel_str.begin(), vmodel_str.end(), vmodel_str.begin(), ::tolower);
-
-    try {
-      vmodel_type = solid_viscosity_model_name_to_type.at(vmodel_str);
-    } catch (const std::out_of_range& exception) {
-      throw std::runtime_error("Unknown solid viscosity model '" + vmodel_str + "'.");
-    }
-  } else {
-    vmodel_type = SolidViscosityModelType::viscType_Newtonian;
-  }
-
-  // Set the parameters for the given viscosity model.
-  //
-  auto& viscosity_params = domain_params->solid_viscosity;
-
-  try {
-    set_solid_viscosity_props[vmodel_type](simulation, viscosity_params, lDmn);
-   } catch (const std::bad_function_call& exception) {
-    throw std::runtime_error("[read_solid_visc_model] Viscosity model '" + vmodel_str + "' is not supported.");
-  }
 }
 
 //--------------------

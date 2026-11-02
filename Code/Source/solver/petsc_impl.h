@@ -8,7 +8,6 @@
 
 #include <petscksp.h>
 #include <petscao.h>
-#include <unistd.h>
 #include <stdbool.h>
 
 #include "consts.h"

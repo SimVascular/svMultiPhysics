@@ -1,0 +1,16 @@
+name: Review policy events
+
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions: {}
+
+jobs:
+  review-event:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # Fork reviews cannot access secrets. Completion wakes the trusted workflow.
+      - name: Signal a review update
+        run: echo 'Review state will be fetched by the policy workflow.'

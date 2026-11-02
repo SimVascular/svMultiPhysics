@@ -6,12 +6,12 @@
 #include "all_fun.h"
 #include "prestrain.h"
 #include "consts.h"
-#include "fluid.h"
+#include "fluid/fluid.h"
 #include "fs.h"
 #include "lhsa.h"
 #include "nn.h"
-#include "sv_struct.h"
-#include "ustruct.h"
+#include "solid/sv_struct.h"
+#include "solid/ustruct.h"
 #include "utils.h"
 #include "ris.h"
 #include "uris.h"
@@ -48,7 +48,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
   }
 
   // l = 3, if nsd==2 ; else 6;
-  auto& cem = cep_mod.cem;
   const int l = com_mod.nsymd;
   const int nsd  = com_mod.nsd;
   const int tDof = com_mod.tDof;
@@ -70,7 +69,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
   Array3<double> lK(dof*dof,eNoN,eNoN), lKd(dof*nsd,eNoN,eNoN);
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN), bfl(nsd,eNoN), 
       fN(nsd,nFn), pS0l(nsymd,eNoN), lR(dof,eNoN);
-  Vector<double> pSl(nsymd), ya_l_f(eNoN), ya_l_s(eNoN), ya_l_n(eNoN);
+  Vector<double> pSl(nsymd);
+  ActiveStress::Evaluator active_stress_evaluator;
 
   std::array<fsType,2> fs_1;
   fs::get_thood_fs(com_mod, fs_1, lM, vmsStab, 1);
@@ -99,9 +99,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     // Create local copies
     fN  = 0.0;
     pS0l = 0.0;
-    ya_l_f = 0.0;
-    ya_l_s = 0.0;
-    ya_l_n = 0.0;
 
     if (lM.fN.size() != 0) {
       for (int iFn = 0; iFn < nFn; iFn++) {
@@ -129,11 +126,12 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         pS0l.set_col(a, pS0.col(Ac));
       }
 
-      if (eq.dmn[cDmn].active_stress != nullptr) {
-        ya_l_f(a) = cep_mod.cem.Ya_f[Ac];
-        ya_l_s(a) = cep_mod.cem.Ya_s[Ac];
-        ya_l_n(a) = cep_mod.cem.Ya_n[Ac];
-      }
+    }
+
+    if (eq.dmn[cDmn].active_stress != nullptr) {
+      active_stress_evaluator.update(*eq.dmn[cDmn].active_stress, ptr);
+    } else {
+      active_stress_evaluator.clear();
     }
 
     // For FSI, fluid domain should be in the current configuration
@@ -234,8 +232,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
             struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
-                                 Nwx, al, yl, dl, F0, bfl, fN, pS0l, pSl, ya_l_f,
-                                 ya_l_s, ya_l_n, lR, lK, recompute_visc);
+                                 Nwx, al, yl, dl, F0, bfl, fN, pS0l, pSl,
+                                 active_stress_evaluator, lR, lK, recompute_visc);
           } break;
           case Equation_lElas:
             throw std::runtime_error("[construct_fsi] LELAS3D not implemented");
@@ -248,7 +246,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
                                   fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al,
-                                  yl, dl, F0, bfl, fN, ya_l_f, ya_l_s, ya_l_n, lR,
+                                  yl, dl, F0, bfl, fN, active_stress_evaluator, lR,
                                   lK, lKd, recompute_visc);
           } break;
           }
@@ -272,8 +270,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             const auto F0 = prestrain::deformation_gradient<2>(lM, e, g);
             struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
-                                 Nwx, al, yl, dl, F0, bfl, fN, pS0l, pSl, ya_l_f,
-                                 ya_l_s, ya_l_n, lR, lK, recompute_visc);
+                                 Nwx, al, yl, dl, F0, bfl, fN, pS0l, pSl,
+                                 active_stress_evaluator, lR, lK, recompute_visc);
           } break;
 
           case Equation_ustruct:

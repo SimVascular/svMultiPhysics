@@ -1,0 +1,69 @@
+name: Review policy
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled, closed, ready_for_review, converted_to_draft]
+  workflow_run:
+    workflows: [Review policy events]
+    types: [completed]
+  label:
+    types: [created, edited, deleted]
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/review-policy*'
+      - '.github/workflows/review-policy*'
+  schedule:
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Evaluate without changing checks or labels
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+# Every run reads all open PRs, so replacing a pending run loses no individual PR event.
+concurrency:
+  group: review-policy
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    if: github.repository == 'SimVascular/svMultiPhysics' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: review-policy
+    steps:
+      - name: Check out trusted policy code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Create review policy token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ vars.REVIEW_POLICY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.REVIEW_POLICY_APP_PRIVATE_KEY }}
+          owner: SimVascular
+          repositories: svMultiPhysics
+          permission-checks: write
+          permission-pull-requests: write
+          permission-members: read
+
+      - name: Evaluate current review policy
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            node .github/scripts/review-policy.mjs
+          else
+            node .github/scripts/review-policy.mjs --apply
+          fi

@@ -4,18 +4,19 @@
 #include "post.h"
 #include "prestrain.h"
 
+#include "ActiveStress.h"
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
-#include "FE/Math/DenseLinearAlgebra.h"
+#include "math/DenseLinearAlgebra.h"
 #include "all_fun.h"
-#include "darcy.h"
-#include "fluid.h"
+#include "porous/darcy.h"
+#include "fluid/fluid.h"
 #include "fs.h"
 #include "initialize.h"
 #include "mat_fun.h"
-#include "mat_models.h"
+#include "solid/mat_models.h"
 #include "nn.h"
-#include "shells.h"
+#include "solid/shells.h"
 #include "utils.h"
 #include "vtk_xml.h"
 #include <algorithm>
@@ -811,6 +812,65 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
   }
 }
 
+/// @brief Compute active tension along fibers, sheets and sheet normals at
+/// every mesh node.
+//
+void active_tension(const ComMod& com_mod, const int iEq, const mshType& lM,
+    const Array<double>& lD, Vector<double>& res_f, Vector<double>& res_s,
+    Vector<double>& res_n)
+{
+  auto& eq = com_mod.eq[iEq];
+
+  Vector<double> fiber_stretch(lM.nNo);
+  if (lM.nFn != 0) {
+    fib_stretch(com_mod, iEq, lM, lD, fiber_stretch);
+  }
+
+  res_f = 0.0;
+  res_s = 0.0;
+  res_n = 0.0;
+
+  for (int a = 0; a < lM.nNo; a++) {
+    int Ac = lM.gN(a);
+
+    double Ta_f = 0.0;
+    double Ta_s = 0.0;
+    double Ta_n = 0.0;
+    unsigned int n_domains = 0;
+
+    for (auto& dmn : eq.dmn) {
+      // Domains whose equations do not allow for active stress (e.g. fluid
+      // domains) do not contribute to the average, but domains that do
+      // allow for active stress (e.g. struct) for which active stress is
+      // not enabled contribute a zero value to the average.
+      if (!supports_active_stress(dmn.phys))
+        continue;
+
+      // Only domains that node Ac actually belongs to contribute to its
+      // average. Note that if there is only one domain dmnId may not be
+      // populated, so we only check domain membership if eq.nDmn > 1.
+      if (eq.nDmn > 1 && !utils::btest(com_mod.dmnId(Ac), dmn.Id))
+        continue;
+
+      if (dmn.active_stress != nullptr) {
+        auto tension = dmn.active_stress->compute_tension(
+            dmn.active_stress->get_state(Ac), fiber_stretch[a]);
+        Ta_f += tension.fibers;
+        Ta_s += tension.sheets;
+        Ta_n += tension.sheet_normals;
+      }
+
+      n_domains++;
+    }
+
+    if (n_domains > 0) {
+      res_f[a] = Ta_f / n_domains;
+      res_s[a] = Ta_s / n_domains;
+      res_n[a] = Ta_n / n_domains;
+    }
+  }
+}
+
 /// @brief Compute fiber stretch rate dλ/dt via backward finite difference.
 //
 void fib_stretch_rate(const ComMod& com_mod, const int iEq, const mshType& lM, const SolutionStates& solutions, Vector<double>& res)
@@ -1158,7 +1218,7 @@ void post(Simulation* simulation, const mshType& lM, Array<double>& res, const S
       for (double& value : mass) {
         value /= element_volume;
       }
-      svmp::FE::math::factor_dense_matrix(mass, eNoN, "Darcy flux mass matrix").solve_in_place(flux_rhs, nsd);
+      svmp::math::factor_dense_matrix(mass, eNoN, "Darcy flux mass matrix").solve_in_place(flux_rhs, nsd);
 
       for (int a = 0; a < eNoN; ++a) {
         const int Ac = lM.IEN(a,e);
@@ -1806,6 +1866,8 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
   const bool prestrained = (lM.F0.size() != 0);
   Array<double> Nx(nsd,fs.eNoN); 
   Vector<double> N(fs.eNoN);
+  Vector<int> element_nodes(fs.eNoN);
+  ActiveStress::Evaluator active_stress_evaluator;
 
   int insd = nsd;
   if (lM.lFib) {
@@ -1855,6 +1917,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
 
     for (int a = 0; a < fs.eNoN; a++) {
       int Ac = lM.IEN(a,e);
+      element_nodes(a) = Ac;
       for (int i = 0; i < nsd; i++) {
         xl(i,a) = com_mod.x(i,Ac);
       }
@@ -1864,11 +1927,20 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
       }
     }
 
+    if (eq.dmn[cDmn].active_stress != nullptr) {
+      active_stress_evaluator.update(*eq.dmn[cDmn].active_stress, element_nodes);
+    } else {
+      active_stress_evaluator.clear();
+    }
+
     Je = 0.0;
     double Jac = 0.0;
 
     for (int g = 0; g < fs.nG; g++) {
-      if (g == 0  ||  !fs.lShpF) {
+      // Shape gradients and viscous response can be reused for linear triangular and tetrahedral elements.
+      const bool recompute_visc = (g == 0 || !fs.lShpF);
+
+      if (recompute_visc) {
         auto Nx_g = fs.Nx.slice(g);
         nn::gnn(fs.eNoN, nsd, insd, Nx_g, xl, Nx, Jac, ksix);
       }
@@ -1879,6 +1951,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
 
       const auto Nxm  = eigen_view<nsd>(Nx);          // grad(N_a)
       const auto disp = eigen_view_rows<nsd>(dl, i);  // nodal displacements
+      const auto vel  = eigen_view_rows<nsd>(yl, i);  // nodal velocities
 
       // Deformation gradient from the stress-free configuration: F = (I + Grad u) F0.
       // Output of a quadratic element uses a linear one's quadrature, so takes
@@ -1967,21 +2040,38 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
         case OutputNameType::outGrp_mises:
           Matrix<nsd> sigma = Matrix<nsd>::Zero();
           Matrix<nsd> S = Matrix<nsd>::Zero();
+          Matrix<nsd> S0 = Matrix<nsd>::Zero();
+          const Matrix<nsd> vx = vel * Nxm.transpose();
 
-          // Interpolate the active stress from active stress models to the
-          // current Gauss point so that the active contribution is included in
-          // the reported stress, consistently with the residual assembly.
-          double ya_g_f = 0.0;
-          double ya_g_s = 0.0;
-          double ya_g_n = 0.0;
-          if (eq.dmn[cDmn].active_stress != nullptr) {
+          // Interpolate prestress to the current Gauss point.
+          if (com_mod.pS0.size() != 0) {
             for (int a = 0; a < fs.eNoN; a++) {
               int Ac = lM.IEN(a,e);
-              ya_g_f = ya_g_f + N(a)*cep_mod.cem.Ya_f[Ac];
-              ya_g_s = ya_g_s + N(a)*cep_mod.cem.Ya_s[Ac];
-              ya_g_n = ya_g_n + N(a)*cep_mod.cem.Ya_n[Ac];
+              if (nsd == 3) {
+                S0(0,0) = S0(0,0) + N(a)*com_mod.pS0(0,Ac);
+                S0(1,1) = S0(1,1) + N(a)*com_mod.pS0(1,Ac);
+                S0(2,2) = S0(2,2) + N(a)*com_mod.pS0(2,Ac);
+                S0(0,1) = S0(0,1) + N(a)*com_mod.pS0(3,Ac);
+                S0(1,2) = S0(1,2) + N(a)*com_mod.pS0(4,Ac);
+                S0(2,0) = S0(2,0) + N(a)*com_mod.pS0(5,Ac);
+              } else {
+                S0(0,0) = S0(0,0) + N(a)*com_mod.pS0(0,Ac);
+                S0(1,1) = S0(1,1) + N(a)*com_mod.pS0(1,Ac);
+                S0(0,1) = S0(0,1) + N(a)*com_mod.pS0(2,Ac);
+              }
+            }
+
+            S0(1,0) = S0(0,1);
+            if (nsd == 3) {
+              S0(2,1) = S0(1,2);
+              S0(0,2) = S0(2,0);
             }
           }
+
+          // Evaluate the active stress at the current Gauss point, the same
+          // way the residual assembly does, so that the active contribution to
+          // the reported stress matches the one the solver used.
+          const auto Ta = active_stress_evaluator.evaluate<nsd>(eigen_view(N), F, eigen_view<nsd>(fN));
 
           if (cPhys == EquationType::phys_lElas) {
             if (nsd == 3) {
@@ -2015,9 +2105,12 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
             Matrix<3*(nsd-1)> Dm;
             double Ja;
             mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
-                eigen_view<nsd>(fN), ya_g_f, ya_g_s, ya_g_n, S, Dm, Ja);
+                eigen_view<nsd>(fN), Ta, S, Dm, Ja);
 
-            // TODO: Add viscous stress
+            static mat_models::ViscousResponse<nsd> visc;
+            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            // Match assembly: elastic + viscous + prestress.
+            S = S + visc.S() + S0;
 
             // Add pressure
             const Matrix<nsd> C = F.transpose() * F;
@@ -2033,9 +2126,12 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
             Matrix<3*(nsd-1)> Dm;
             double Ja;
             mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, eq.dmn[cDmn], F, nFn,
-                eigen_view<nsd>(fN), ya_g_f, ya_g_s, ya_g_n, S, Dm, Ja);
+                eigen_view<nsd>(fN), Ta, S, Dm, Ja);
 
-            // TODO: Add viscous stress
+            static mat_models::ViscousResponse<nsd> visc;
+            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            // Match assembly: elastic + viscous + prestress.
+            S = S + visc.S() + S0;
 
             sigma = F * S * F.transpose();
 

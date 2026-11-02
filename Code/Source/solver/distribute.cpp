@@ -18,7 +18,7 @@
 #include <iostream>
 #include <math.h>
 
-#include "IonicModel.h"
+#include "electrophysiology/IonicModel.h"
 
 extern "C" {
 
@@ -332,6 +332,8 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.nEq);
     cm.bcast(cm_mod, &com_mod.dt);
     cm.bcast(cm_mod, &com_mod.precompDt);
+    cm.bcast(cm_mod, &com_mod.have_initial_homogeneous_pressure);
+    cm.bcast(cm_mod, &com_mod.initial_homogeneous_pressure);
 
     cm.bcast(cm_mod, &com_mod.zeroAve);
     cm.bcast(cm_mod, &com_mod.cmmInit);
@@ -1602,14 +1604,6 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
         (dmn.phys == EquationType::phys_CMM && !com_mod.cmmInit)) {
       dist_fluid_visc_model(com_mod, cm_mod, cm, dmn.fluid_visc);
     }
-  }
-
-  // Distribute cardiac electromechanics parameters
-  //
-  cm.bcast(cm_mod, &cep_mod.cem.cpld);
-
-  if (cep_mod.cem.cpld) {
-    cm.bcast(cm_mod, &cep_mod.cem.aStrain);
   }
 
   if (com_mod.ibFlag) {

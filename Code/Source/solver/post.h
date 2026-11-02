@@ -13,6 +13,9 @@ namespace post {
 void all_post(Simulation* simulation, Array<double>& res, const SolutionStates& solutions,
     consts::OutputNameType outGrp, const int iEq);
 
+void active_tension(const ComMod& com_mod, const int iEq, const mshType& lM, const Array<double>& lD,
+    Vector<double>& res_f, Vector<double>& res_s, Vector<double>& res_n);
+
 void bpost(Simulation* simulation, const mshType& lM, Array<double>& res, const SolutionStates& solutions,
     consts::OutputNameType outGrp);
 

@@ -36,6 +36,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FE)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FE/Common)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/fluid/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/solid/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/thermal/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/porous/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/physics/electrophysiology/include)
 
 # Find Trilinos package if requested
 if(SV_USE_TRILINOS)
@@ -89,7 +94,6 @@ endif()
 # add trilinos flags and defines
 if(USE_TRILINOS)
   ADD_DEFINITIONS(-DWITH_TRILINOS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}")
 endif()
 
 # Build with the PETSc linear algebra package.
@@ -109,7 +113,7 @@ if(NOT "${SV_PETSC_DIR}" STREQUAL "")
    endif()
 
   set(PETSC_INCLUDE_DIRS "${SV_PETSC_DIR}/include;${SV_PETSC_DIR}/../include")
-  set(PETSC_LIBRARY_DIRS "-L${SV_PETSC_DIR}/lib -lpetsc")
+  find_library(PETSC_LIBRARY_DIRS NAMES petsc libpetsc PATHS "${SV_PETSC_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
   message("\nBuilding with the PETSc package; the include and libraries directories are: ")
   message("  PETSC_LIBRARY_DIRS = ${PETSC_LIBRARY_DIRS}")
   message("  PETSC_INCLUDE_DIRS = ${PETSC_INCLUDE_DIRS}")
@@ -135,16 +139,18 @@ if(ENABLE_ARRAY_INDEX_CHECKING)
 endif()
 
 # svMultiPhysics requires LAPACK
+set(BLA_SIZEOF_INTEGER 4)
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
 # Include VTK either from a local build using SV_LOCAL_VTK_PATH
 # or from a default installed version.
 #
+set(SV_VTK_COMPONENTS CommonCore CommonDataModel CommonMisc FiltersGeometry IOXML)
 if("${SV_LOCAL_VTK_PATH}" STREQUAL "")
-  find_package(VTK REQUIRED ) 
+  find_package(VTK REQUIRED COMPONENTS ${SV_VTK_COMPONENTS})
 else()
-  find_package(VTK PATHS ${SV_LOCAL_VTK_PATH} NO_DEFAULT_PATH REQUIRED) 
+  find_package(VTK PATHS ${SV_LOCAL_VTK_PATH} NO_DEFAULT_PATH REQUIRED COMPONENTS ${SV_VTK_COMPONENTS})
 endif()
 
 include(${VTK_USE_FILE})
@@ -172,15 +178,15 @@ if(ENABLE_COVERAGE)
 endif()
 
 add_subdirectory(Core)
+add_subdirectory(common/math)
 add_subdirectory(FE/Common)
-add_subdirectory(FE/Math)
-add_subdirectory(FE/Basis)
 add_subdirectory(FE/Quadrature)
+add_subdirectory(FE/Basis)
 
 set(SVMP_ARCHITECTURE_TARGETS
   svmp_core
   svmp_fe_common
-  svmp_fe_math
+  svmp_math
   svmp_fe_basis
   svmp_fe_quadrature
 )
@@ -207,28 +213,20 @@ set(CSRCS
   all_fun.h all_fun.cpp
   baf_ini.h baf_ini.cpp
   bf.h bf.cpp
-  cep.h cep.cpp
-  cep_ion.h cep_ion.cpp
   cmm.h cmm.cpp
   consts.h consts.cpp
   contact.h contact.cpp
-  darcy.h darcy.cpp
   distribute.h distribute.cpp
   eq_assem.h eq_assem.cpp
-  fluid.h fluid.cpp
   fsi.h fsi.cpp
   fs.h fs.cpp
-  heatf.h heatf.cpp
-  heats.h heats.cpp
   initialize.h initialize.cpp
   Integrator.h Integrator.cpp
   PseudoTransientContinuation.h PseudoTransientContinuation.cpp
-  l_elas.h l_elas.cpp
   lhsa.h lhsa.cpp
   ls.h ls.cpp
   main.cpp
   mat_fun.h mat_fun.cpp
-  mat_models.h mat_models.cpp
   mesh.h mesh.cpp
   nn.h nn.cpp
   output.h output.cpp
@@ -240,14 +238,10 @@ set(CSRCS
   remeshTet.cpp
   prestrain.h prestrain.cpp
   set_bc.h set_bc.cpp
-  shells.h shells.cpp
-  stokes.h stokes.cpp
-  sv_struct.h sv_struct.cpp
   svZeroD_interface.h svZeroD_interface.cpp
   svOneD_interface.h svOneD_interface.cpp
   txt.h txt.cpp
   utils.h utils.cpp
-  ustruct.h ustruct.cpp
   vtk_xml.h vtk_xml.cpp
   vtk_xml_parser.h vtk_xml_parser.cpp
   ris.h ris.cpp
@@ -260,11 +254,29 @@ set(CSRCS
   Timer.h
   ArtificialNeuralNetMaterial.h ArtificialNeuralNetMaterial.cpp
 
-  IonicModel.cpp
-  IonicModelAlievPanfilov.cpp
-  IonicModelBuenoOrovio.cpp
-  IonicModelFitzHughNagumo.cpp
-  IonicModelTTP.cpp
+  physics/fluid/include/fluid/fluid.h physics/fluid/src/fluid.cpp
+  physics/fluid/include/fluid/stokes.h physics/fluid/src/stokes.cpp
+  physics/fluid/src/fluid_viscosity.cpp physics/fluid/src/viscosity_props.h
+
+  physics/solid/include/solid/sv_struct.h physics/solid/src/sv_struct.cpp
+  physics/solid/include/solid/ustruct.h physics/solid/src/ustruct.cpp
+  physics/solid/include/solid/l_elas.h physics/solid/src/l_elas.cpp
+  physics/solid/include/solid/shells.h physics/solid/src/shells.cpp
+  physics/solid/include/solid/mat_models.h physics/solid/src/mat_models.cpp
+  physics/solid/src/solid_viscosity.cpp physics/solid/src/viscosity_props.h
+
+  physics/thermal/include/thermal/heats.h physics/thermal/src/heats.cpp
+  physics/thermal/include/thermal/heatf.h physics/thermal/src/heatf.cpp
+
+  physics/porous/include/porous/darcy.h physics/porous/src/darcy.cpp
+
+  physics/electrophysiology/include/electrophysiology/cep.h physics/electrophysiology/src/cep.cpp
+  physics/electrophysiology/include/electrophysiology/cep_ion.h physics/electrophysiology/src/cep_ion.cpp
+  physics/electrophysiology/include/electrophysiology/IonicModel.h physics/electrophysiology/src/IonicModel.cpp
+  physics/electrophysiology/src/IonicModelAlievPanfilov.h physics/electrophysiology/src/IonicModelAlievPanfilov.cpp
+  physics/electrophysiology/src/IonicModelBuenoOrovio.h physics/electrophysiology/src/IonicModelBuenoOrovio.cpp
+  physics/electrophysiology/src/IonicModelFitzHughNagumo.h physics/electrophysiology/src/IonicModelFitzHughNagumo.cpp
+  physics/electrophysiology/src/IonicModelTTP.h physics/electrophysiology/src/IonicModelTTP.cpp
 
   ActiveStress.cpp
   ActiveStressUniformSteady.cpp
@@ -272,6 +284,7 @@ set(CSRCS
   ActiveStressODE.cpp
   ActiveStressNashPanfilov.cpp
   ActiveStressRegazzoni.cpp
+  ActiveStressLandNiederer.cpp
 
   SPLIT.c
 
@@ -345,7 +358,6 @@ if(ENABLE_UNIT_TEST)
           googletest
           GIT_REPOSITORY https://github.com/google/googletest.git
           GIT_TAG v1.17.0
-          DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   )
   FetchContent_MakeAvailable(googletest)
 
@@ -379,6 +391,8 @@ if(ENABLE_UNIT_TEST)
 
   # include source files (same as what svMultiPhysics does except for main.cpp)
   add_executable(run_all_unit_tests ${CSRCS})
+  target_include_directories(run_all_unit_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/physics/electrophysiology/src)
   
   if(USE_TRILINOS)
     target_link_libraries(run_all_unit_tests ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
@@ -409,7 +423,7 @@ if(ENABLE_UNIT_TEST)
     run_all_unit_tests
     gtest
     GTest::gtest_main 
-    pthread   # link pthread on ubuntu20
+    Threads::Threads
   )
 
   # Define the path to the unit-test reference-data directory as a preprocessor

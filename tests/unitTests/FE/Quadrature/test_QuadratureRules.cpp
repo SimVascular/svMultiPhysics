@@ -60,7 +60,7 @@ void expect_invalid_argument_with_message(
 
 TEST(QuadPointContract, UsesFixedSizeFEVectorRepresentation)
 {
-    static_assert(std::is_same_v<QuadPoint, math::Vector<double, 3>>);
+    static_assert(std::is_same_v<QuadPoint, svmp::math::Vector<double, 3>>);
     static_assert(QuadPoint::RowsAtCompileTime == 3);
     static_assert(QuadPoint::ColsAtCompileTime == 1);
 

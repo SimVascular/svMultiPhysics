@@ -16,8 +16,8 @@ using namespace svmp::FE::basis;
 
 namespace {
 
-void expect_nodes_close(const std::vector<math::Vector<double, 3>>& lhs,
-                        const std::vector<math::Vector<double, 3>>& rhs,
+void expect_nodes_close(const std::vector<svmp::math::Vector<double, 3>>& lhs,
+                        const std::vector<svmp::math::Vector<double, 3>>& rhs,
                         double tol)
 {
     ASSERT_EQ(lhs.size(), rhs.size());
@@ -46,7 +46,7 @@ void expect_kronecker_at_nodes(const LagrangeBasis& basis, double tol)
 }
 
 void expect_partition_gradient_hessian_sums(const LagrangeBasis& basis,
-                                            const std::vector<math::Vector<double, 3>>& points,
+                                            const std::vector<svmp::math::Vector<double, 3>>& points,
                                             double value_tol,
                                             double derivative_tol)
 {
@@ -83,7 +83,7 @@ void expect_partition_gradient_hessian_sums(const LagrangeBasis& basis,
 }
 
 void expect_all_entries_finite(const LagrangeBasis& basis,
-                               const math::Vector<double, 3>& xi)
+                               const svmp::math::Vector<double, 3>& xi)
 {
     std::vector<double> values;
     std::vector<Gradient> gradients;

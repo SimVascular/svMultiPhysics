@@ -4,9 +4,10 @@
 #include "NodeOrderingConventions.h"
 #include "BasisExceptions.h"
 #include "BasisTraits.h"
+#include "FE/Quadrature/GaussLobattoNodes.h"
 
 #include <array>
-#include <cmath>
+#include <cstddef>
 #include <map>
 #include <span>
 #include <utility>
@@ -22,11 +23,8 @@ namespace {
 using Point = math::Vector<double, 3>;
 using Lattice = std::array<int, 3>;
 
-// Gauss-Lobatto-Legendre nodes on [-1, 1] for a degree-`order` distribution
-// (order + 1 nodes). The endpoints are -1 and +1; the interior nodes are the
-// roots of P'_order, found by Newton iteration on f(x) = x P_order(x) -
-// P_{order-1}(x) -- whose roots are exactly the GLL nodes -- from the
-// Chebyshev-Gauss-Lobatto seed.
+// Cache GLL tensor-axis nodes by interpolation order; Quadrature owns the
+// shared refinement, while Basis retains its correction tolerance and errors.
 const std::vector<double>& gll_points(int order) {
     thread_local std::map<int, std::vector<double>> cache;
     const auto found = cache.find(order);
@@ -34,62 +32,22 @@ const std::vector<double>& gll_points(int order) {
         return found->second;
     }
 
-    // Newton converges quadratically from the Chebyshev-Gauss-Lobatto seed, so a
-    // few iterations suffice for any practical order; the cap is only a safety
-    // bound. Reaching it without meeting the tolerance signals a real failure
-    constexpr int kMaxNewtonIterations = 100;
-    constexpr double kNewtonTolerance = double(1e-15);
-
-    std::vector<double> pts(static_cast<std::size_t>(order + 1), double(0));
-    if (order >= 1) {
-        pts.front() = double(-1);
-        pts.back() = double(1);
-    }
-    const double pi = std::acos(double(-1));
-    const int half = order / 2;
-    for (int j = 1; j <= half; ++j) {
-        if (2 * j == order) {
-            pts[static_cast<std::size_t>(j)] = double(0);  // exact center, even order
-            continue;
+    constexpr double kNewtonTolerance = 1.0e-15;
+    const std::size_t num_points = static_cast<std::size_t>(order) + 1;
+    std::vector<double> pts(num_points, 0.0);
+    pts.front() = -1.0;
+    pts.back() = 1.0;
+    try {
+        for (std::size_t half_root_index = 0;
+             half_root_index < (num_points - 1) / 2; ++half_root_index) {
+            const auto node = quadrature::detail::refine_gauss_lobatto_node(
+                num_points, half_root_index, kNewtonTolerance);
+            pts[1u + half_root_index] = -node.coordinate;
+            pts[num_points - 2u - half_root_index] = node.coordinate;
         }
-        double x = -std::cos(pi * static_cast<double>(j) / static_cast<double>(order));
-        bool converged = false;
-        for (int iter = 0; iter < kMaxNewtonIterations; ++iter) {
-            // Legendre P_k and P'_k up to k = order at x, by the three-term
-            // recurrences (regular at x = +/-1).
-            double p_km1 = double(1);   // P_0
-            double p_k = x;             // P_1
-            double d_km1 = double(0);   // P'_0
-            double d_k = double(1);     // P'_1
-            for (int k = 1; k < order; ++k) {
-                const double kk = static_cast<double>(k);
-                const double inv = double(1) / (kk + double(1));
-                const double p_kp1 =
-                    ((double(2) * kk + double(1)) * x * p_k - kk * p_km1) * inv;
-                const double d_kp1 =
-                    ((double(2) * kk + double(1)) * (p_k + x * d_k) - kk * d_km1) * inv;
-                p_km1 = p_k;
-                p_k = p_kp1;
-                d_km1 = d_k;
-                d_k = d_kp1;
-            }
-            // p_k = P_order, p_km1 = P_{order-1}, d_k = P'_order, d_km1 = P'_{order-1}.
-            const double f = x * p_k - p_km1;
-            const double f_prime = p_k + x * d_k - d_km1;
-            const double dx = f / f_prime;
-            x -= dx;
-            if (std::abs(dx) <= kNewtonTolerance) {
-                converged = true;
-                break;
-            }
-        }
-        svmp::throw_if<BasisConstructionException>(
-            !converged, "ReferenceNodeLayout: Gauss-Lobatto-Legendre Newton iteration did not converge "
-            "(order outside the trustworthy range)");
-        pts[static_cast<std::size_t>(j)] = x;
-    }
-    for (int j = half + 1; j < order; ++j) {
-        pts[static_cast<std::size_t>(j)] = -pts[static_cast<std::size_t>(order - j)];
+    } catch (const ConvergenceException& error) {
+        svmp::raise<BasisConstructionException>(
+            "ReferenceNodeLayout: " + error.message());
     }
 
     auto inserted = cache.emplace(order, std::move(pts));

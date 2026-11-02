@@ -8,7 +8,7 @@
 #include "FE/Basis/LagrangeBasis.h"
 #include "FE/Basis/NodeOrderingConventions.h"
 #include "FE/Basis/SerendipityBasis.h"
-#include "FE/Math/DenseLinearAlgebra.h"
+#include "math/DenseLinearAlgebra.h"
 
 #include <algorithm>
 #include <array>
@@ -21,7 +21,7 @@ using namespace svmp::FE::basis;
 namespace {
 
 void expect_partition_of_unity(const SerendipityBasis& basis,
-                               const math::Vector<double, 3>& xi,
+                               const svmp::math::Vector<double, 3>& xi,
                                double tolerance = double(1e-10))
 {
     std::vector<double> values;
@@ -47,7 +47,7 @@ void expect_partition_of_unity(const SerendipityBasis& basis,
 }
 
 void expect_nodal_delta(const SerendipityBasis& basis,
-                        const std::vector<math::Vector<double, 3>>& nodes,
+                        const std::vector<svmp::math::Vector<double, 3>>& nodes,
                         double tolerance)
 {
     ASSERT_EQ(nodes.size(), basis.size());
@@ -62,10 +62,10 @@ void expect_nodal_delta(const SerendipityBasis& basis,
     }
 }
 
-std::vector<math::Vector<double, 3>> reference_nodes(ElementType type,
+std::vector<svmp::math::Vector<double, 3>> reference_nodes(ElementType type,
                                                    std::size_t count)
 {
-    std::vector<math::Vector<double, 3>> nodes;
+    std::vector<svmp::math::Vector<double, 3>> nodes;
     nodes.reserve(count);
     for (std::size_t i = 0; i < count; ++i) {
         nodes.push_back(ReferenceNodeLayout::node_coord_at(type, i));
@@ -75,7 +75,7 @@ std::vector<math::Vector<double, 3>> reference_nodes(ElementType type,
 
 template<typename Function>
 double interpolate_nodal_function(const SerendipityBasis& basis,
-                                const math::Vector<double, 3>& xi,
+                                const svmp::math::Vector<double, 3>& xi,
                                 Function&& nodal_function)
 {
     std::vector<double> values;
@@ -129,14 +129,14 @@ double integer_power_for_test(double base, int exponent) {
     return result;
 }
 
-double monomial_value_for_test(const math::Vector<double, 3>& p,
+double monomial_value_for_test(const svmp::math::Vector<double, 3>& p,
                              const std::array<int, 2>& exponent) {
     return integer_power_for_test(p[0], exponent[0]) *
            integer_power_for_test(p[1], exponent[1]);
 }
 
 std::vector<double> quadrilateral_vandermonde_for_test(
-    const std::vector<math::Vector<double, 3>>& nodes,
+    const std::vector<svmp::math::Vector<double, 3>>& nodes,
     const std::vector<std::array<int, 2>>& exponents)
 {
     const std::size_t n = nodes.size();
@@ -150,7 +150,7 @@ std::vector<double> quadrilateral_vandermonde_for_test(
     return vandermonde;
 }
 
-void expect_no_duplicate_nodes(const std::vector<math::Vector<double, 3>>& nodes,
+void expect_no_duplicate_nodes(const std::vector<svmp::math::Vector<double, 3>>& nodes,
                                double tolerance)
 {
     for (std::size_t a = 0; a < nodes.size(); ++a) {
@@ -163,8 +163,8 @@ void expect_no_duplicate_nodes(const std::vector<math::Vector<double, 3>>& nodes
     }
 }
 
-void expect_nodes_near(const std::vector<math::Vector<double, 3>>& actual,
-                       const std::vector<math::Vector<double, 3>>& expected,
+void expect_nodes_near(const std::vector<svmp::math::Vector<double, 3>>& actual,
+                       const std::vector<svmp::math::Vector<double, 3>>& expected,
                        double tolerance)
 {
     ASSERT_EQ(actual.size(), expected.size());
@@ -178,7 +178,7 @@ void expect_nodes_near(const std::vector<math::Vector<double, 3>>& actual,
 
 // Every monomial here has superlinear degree at most three, so it lies in the
 // order-three quadrilateral serendipity space.
-double cubic_serendipity_function(const math::Vector<double, 3>& p) {
+double cubic_serendipity_function(const svmp::math::Vector<double, 3>& p) {
     const double x = p[0];
     const double y = p[1];
     return double(1) + double(2) * x - y + double(3) * x * y +
@@ -186,7 +186,7 @@ double cubic_serendipity_function(const math::Vector<double, 3>& p) {
            double(0.5) * x * x * x * y - double(0.25) * x * y * y * y;
 }
 
-double bilinear_function(const math::Vector<double, 3>& p) {
+double bilinear_function(const svmp::math::Vector<double, 3>& p) {
     return double(2) - double(3) * p[0] + double(4) * p[1] + double(0.5) * p[0] * p[1];
 }
 
@@ -197,7 +197,7 @@ double bilinear_function(const math::Vector<double, 3>& p) {
 // each serendipity space, independently of the production tables in
 // SerendipityBasis.cpp
 
-double monomial_value_3d_for_test(const math::Vector<double, 3>& p,
+double monomial_value_3d_for_test(const svmp::math::Vector<double, 3>& p,
                                 const std::array<int, 3>& exponent) {
     return integer_power_for_test(p[0], exponent[0]) *
            integer_power_for_test(p[1], exponent[1]) *
@@ -205,7 +205,7 @@ double monomial_value_3d_for_test(const math::Vector<double, 3>& p,
 }
 
 std::vector<double> vandermonde_3d_for_test(
-    const std::vector<math::Vector<double, 3>>& nodes,
+    const std::vector<svmp::math::Vector<double, 3>>& nodes,
     const std::vector<std::array<int, 3>>& exponents) {
     const std::size_t n = nodes.size();
     std::vector<double> vandermonde(n * n, double(0));
@@ -300,8 +300,8 @@ std::vector<std::array<int, 3>> wedge15_serendipity_exponents_for_test() {
 
 // Independent Hex20 reference layout: the eight cube corners followed by the
 // twelve edge midpoints, in the corner/edge order the reference layout uses.
-std::vector<math::Vector<double, 3>> hex20_reference_nodes_for_test() {
-    std::vector<math::Vector<double, 3>> corners;
+std::vector<svmp::math::Vector<double, 3>> hex20_reference_nodes_for_test() {
+    std::vector<svmp::math::Vector<double, 3>> corners;
     corners.push_back({double(-1), double(-1), double(-1)});
     corners.push_back({double(1), double(-1), double(-1)});
     corners.push_back({double(1), double(1), double(-1)});
@@ -317,9 +317,9 @@ std::vector<math::Vector<double, 3>> hex20_reference_nodes_for_test() {
         {0, 4}, {1, 5}, {2, 6}, {3, 7},
     };
 
-    std::vector<math::Vector<double, 3>> nodes = corners;
+    std::vector<svmp::math::Vector<double, 3>> nodes = corners;
     for (const auto& edge : edges) {
-        const math::Vector<double, 3> midpoint =
+        const svmp::math::Vector<double, 3> midpoint =
             (corners[static_cast<std::size_t>(edge[0])] +
              corners[static_cast<std::size_t>(edge[1])]) * double(0.5);
         nodes.push_back(midpoint);
@@ -329,8 +329,8 @@ std::vector<math::Vector<double, 3>> hex20_reference_nodes_for_test() {
 
 // Independent Wedge15 reference layout: the six prism corners followed by the
 // nine edge midpoints, in reference-layout order.
-std::vector<math::Vector<double, 3>> wedge15_reference_nodes_for_test() {
-    std::vector<math::Vector<double, 3>> corners;
+std::vector<svmp::math::Vector<double, 3>> wedge15_reference_nodes_for_test() {
+    std::vector<svmp::math::Vector<double, 3>> corners;
     corners.push_back({double(0), double(0), double(-1)});
     corners.push_back({double(1), double(0), double(-1)});
     corners.push_back({double(0), double(1), double(-1)});
@@ -344,9 +344,9 @@ std::vector<math::Vector<double, 3>> wedge15_reference_nodes_for_test() {
         {0, 3}, {1, 4}, {2, 5},
     };
 
-    std::vector<math::Vector<double, 3>> nodes = corners;
+    std::vector<svmp::math::Vector<double, 3>> nodes = corners;
     for (const auto& edge : edges) {
-        const math::Vector<double, 3> midpoint =
+        const svmp::math::Vector<double, 3> midpoint =
             (corners[static_cast<std::size_t>(edge[0])] +
              corners[static_cast<std::size_t>(edge[1])]) * double(0.5);
         nodes.push_back(midpoint);
@@ -357,8 +357,8 @@ std::vector<math::Vector<double, 3>> wedge15_reference_nodes_for_test() {
 // Independent Quad8 reference layout: the four quad corners followed by the four
 // edge midpoints, in the corner/edge order the reference layout uses (the VTK
 // quad boundary traversal). Mirrors the Hex20/Wedge15 anchors above.
-std::vector<math::Vector<double, 3>> quad8_reference_nodes_for_test() {
-    std::vector<math::Vector<double, 3>> corners;
+std::vector<svmp::math::Vector<double, 3>> quad8_reference_nodes_for_test() {
+    std::vector<svmp::math::Vector<double, 3>> corners;
     corners.push_back({double(-1), double(-1), double(0)});
     corners.push_back({double(1), double(-1), double(0)});
     corners.push_back({double(1), double(1), double(0)});
@@ -366,9 +366,9 @@ std::vector<math::Vector<double, 3>> quad8_reference_nodes_for_test() {
 
     const int edges[4][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
 
-    std::vector<math::Vector<double, 3>> nodes = corners;
+    std::vector<svmp::math::Vector<double, 3>> nodes = corners;
     for (const auto& edge : edges) {
-        const math::Vector<double, 3> midpoint =
+        const svmp::math::Vector<double, 3> midpoint =
             (corners[static_cast<std::size_t>(edge[0])] +
              corners[static_cast<std::size_t>(edge[1])]) * double(0.5);
         nodes.push_back(midpoint);
@@ -394,7 +394,7 @@ double legendre_value_for_test(double x, int degree) {
     return p_k;
 }
 
-double legendre_mode_for_test(const math::Vector<double, 3>& p,
+double legendre_mode_for_test(const svmp::math::Vector<double, 3>& p,
                               const std::array<int, 3>& mode) {
     return legendre_value_for_test(p[0], mode[0]) *
            legendre_value_for_test(p[1], mode[1]) *
@@ -416,7 +416,7 @@ double matrix_norm_inf_for_test(const std::vector<double>& matrix, std::size_t n
 // Infinity-norm condition number of the Legendre generalized Vandermonde the
 // production basis inverts, rebuilt from the basis nodes and the re-derived
 // serendipity modes (an independent check that Source B is fixed).
-double legendre_vandermonde_condition(const std::vector<math::Vector<double, 3>>& nodes,
+double legendre_vandermonde_condition(const std::vector<svmp::math::Vector<double, 3>>& nodes,
                                       const std::vector<std::array<int, 3>>& modes) {
     const std::size_t n = nodes.size();
     std::vector<double> v(n * n, double(0));
@@ -426,7 +426,7 @@ double legendre_vandermonde_condition(const std::vector<math::Vector<double, 3>>
         }
     }
     const double norm_v = matrix_norm_inf_for_test(v, n);
-    const auto inverse = math::invert_dense_matrix(v, n, "test Legendre Vandermonde");
+    const auto inverse = svmp::math::invert_dense_matrix(v, n, "test Legendre Vandermonde");
     return norm_v * matrix_norm_inf_for_test(inverse, n);
 }
 
@@ -452,7 +452,7 @@ double serendipity_lebesgue_constant(const SerendipityBasis& basis, int samples)
         for (int j = 0; j <= samples; ++j) {
             const int kmax = (dim >= 3) ? samples : 0;
             for (int k = 0; k <= kmax; ++k) {
-                const math::Vector<double, 3> xi{
+                const svmp::math::Vector<double, 3> xi{
                     axis(i), axis(j), dim >= 3 ? axis(k) : double(0)};
                 basis.evaluate_values(xi, values);
                 double sum = double(0);
@@ -690,7 +690,7 @@ TEST(SerendipityBasis, QuadrilateralNodesFollowDocumentedConstructionThroughOrde
 TEST(SerendipityBasis, QuadrilateralOrderOneReproducesBilinearFunctions) {
     SerendipityBasis basis(BasisTopology::Quadrilateral, 1);
 
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.25), double(-0.4), double(0)},
         {double(-0.7), double(0.6), double(0)},
     };
@@ -704,7 +704,7 @@ TEST(SerendipityBasis, QuadrilateralOrderOneReproducesBilinearFunctions) {
 TEST(SerendipityBasis, QuadrilateralOrderThreeReproducesSerendipityCubics) {
     SerendipityBasis basis(BasisTopology::Quadrilateral, 3);
 
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.25), double(-0.4), double(0)},
         {double(-0.7), double(0.6), double(0)},
     };
@@ -716,7 +716,7 @@ TEST(SerendipityBasis, QuadrilateralOrderThreeReproducesSerendipityCubics) {
 }
 
 TEST(SerendipityBasis, QuadrilateralOrdersReproduceEverySerendipityMonomial) {
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.25), double(-0.4), double(0)},
         {double(-0.7), double(0.6), double(0)},
         {double(0.11), double(0.23), double(0)},
@@ -737,7 +737,7 @@ TEST(SerendipityBasis, QuadrilateralOrdersReproduceEverySerendipityMonomial) {
                     interpolate_nodal_function(
                         basis,
                         xi,
-                        [&exponent](const math::Vector<double, 3>& node) {
+                        [&exponent](const svmp::math::Vector<double, 3>& node) {
                             return monomial_value_for_test(node, exponent);
                         });
                 const double expected = monomial_value_for_test(xi, exponent);
@@ -760,7 +760,7 @@ TEST(SerendipityBasis, QuadrilateralVandermondeHasFullRankThroughOrderTen) {
 
         ASSERT_EQ(exponents.size(), n) << "order=" << order;
         ASSERT_EQ(vandermonde.size(), n * n) << "order=" << order;
-        EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n)
+        EXPECT_EQ(svmp::math::dense_matrix_rank(vandermonde, n, n), n)
             << "order=" << order;
     }
 }
@@ -779,7 +779,7 @@ TEST(SerendipityBasis, TrilinearHexMatchesLagrangeHex8) {
                        reference_nodes(ElementType::Hex8, serendipity.size()),
                        double(1e-12));
 
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(-0.1), double(0.3)},
         {double(-0.35), double(0.25), double(-0.15)},
     };
@@ -818,7 +818,7 @@ TEST(SerendipityBasis, Hex20VandermondeHasFullRank) {
     ASSERT_EQ(exponents.size(), n);
     const auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
     ASSERT_EQ(vandermonde.size(), n * n);
-    EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n);
+    EXPECT_EQ(svmp::math::dense_matrix_rank(vandermonde, n, n), n);
 }
 
 TEST(SerendipityBasis, Wedge15VandermondeHasFullRank) {
@@ -828,7 +828,7 @@ TEST(SerendipityBasis, Wedge15VandermondeHasFullRank) {
     ASSERT_EQ(exponents.size(), n);
     const auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
     ASSERT_EQ(vandermonde.size(), n * n);
-    EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n);
+    EXPECT_EQ(svmp::math::dense_matrix_rank(vandermonde, n, n), n);
 }
 
 // V * C == I guard: independently invert the Vandermonde and confirm the basis
@@ -841,9 +841,9 @@ TEST(SerendipityBasis, Hex20MatchesIndependentlyInvertedVandermonde) {
     ASSERT_EQ(exponents.size(), n);
     auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
     const auto coefficients =
-        math::invert_dense_matrix(std::move(vandermonde), n, "Hex20 test Vandermonde");
+        svmp::math::invert_dense_matrix(std::move(vandermonde), n, "Hex20 test Vandermonde");
 
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(-0.1), double(0.3)},
         {double(-0.35), double(0.25), double(-0.15)},
         {double(0.11), double(0.23), double(-0.42)},
@@ -870,9 +870,9 @@ TEST(SerendipityBasis, Wedge15MatchesIndependentlyInvertedVandermonde) {
     ASSERT_EQ(exponents.size(), n);
     auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
     const auto coefficients =
-        math::invert_dense_matrix(std::move(vandermonde), n, "Wedge15 test Vandermonde");
+        svmp::math::invert_dense_matrix(std::move(vandermonde), n, "Wedge15 test Vandermonde");
 
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(0.3), double(0.1)},
         {double(0.25), double(0.25), double(-0.4)},
         {double(0.1), double(0.6), double(0.5)},
@@ -899,7 +899,7 @@ TEST(SerendipityBasis, Hex20ReproducesEverySerendipityMonomial) {
     const auto exponents = hex20_serendipity_exponents_for_test();
     ASSERT_EQ(exponents.size(), basis.size());
 
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(-0.1), double(0.3)},
         {double(-0.35), double(0.25), double(-0.15)},
         {double(0.11), double(0.23), double(-0.42)},
@@ -908,7 +908,7 @@ TEST(SerendipityBasis, Hex20ReproducesEverySerendipityMonomial) {
         for (const auto& xi : points) {
             const double interpolated = interpolate_nodal_function(
                 basis, xi,
-                [&exponent](const math::Vector<double, 3>& node) {
+                [&exponent](const svmp::math::Vector<double, 3>& node) {
                     return monomial_value_3d_for_test(node, exponent);
                 });
             EXPECT_NEAR(interpolated, monomial_value_3d_for_test(xi, exponent),
@@ -924,7 +924,7 @@ TEST(SerendipityBasis, Wedge15ReproducesEverySerendipityMonomial) {
     const auto exponents = wedge15_serendipity_exponents_for_test();
     ASSERT_EQ(exponents.size(), basis.size());
 
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(0.3), double(0.1)},
         {double(0.25), double(0.25), double(-0.4)},
         {double(0.1), double(0.6), double(0.5)},
@@ -933,7 +933,7 @@ TEST(SerendipityBasis, Wedge15ReproducesEverySerendipityMonomial) {
         for (const auto& xi : points) {
             const double interpolated = interpolate_nodal_function(
                 basis, xi,
-                [&exponent](const math::Vector<double, 3>& node) {
+                [&exponent](const svmp::math::Vector<double, 3>& node) {
                     return monomial_value_3d_for_test(node, exponent);
                 });
             EXPECT_NEAR(interpolated, monomial_value_3d_for_test(xi, exponent),
@@ -1044,12 +1044,12 @@ TEST(SerendipityBasis, HexahedralSerendipityVandermondeHasFullRankThroughOrderSi
         ASSERT_EQ(exponents.size(), n) << "order=" << order;
         const auto vandermonde = vandermonde_3d_for_test(basis.nodes(), exponents);
         ASSERT_EQ(vandermonde.size(), n * n) << "order=" << order;
-        EXPECT_EQ(math::dense_matrix_rank(vandermonde, n, n), n) << "order=" << order;
+        EXPECT_EQ(svmp::math::dense_matrix_rank(vandermonde, n, n), n) << "order=" << order;
     }
 }
 
 TEST(SerendipityBasis, HexahedralTopologyIsNodalAndPartitionsUnity) {
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(-0.1), double(0.3)},
         {double(-0.35), double(0.25), double(-0.15)},
     };
@@ -1071,7 +1071,7 @@ TEST(SerendipityBasis, HexahedralTopologyIsNodalAndPartitionsUnity) {
 // monomial in its span at interior points, pinning the production monomial space
 // against the re-derived verification.
 TEST(SerendipityBasis, HexahedralTopologyReproducesEverySerendipityMonomial) {
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(-0.1), double(0.3)},
         {double(-0.35), double(0.25), double(-0.15)},
         {double(0.11), double(0.23), double(-0.42)},
@@ -1084,7 +1084,7 @@ TEST(SerendipityBasis, HexahedralTopologyReproducesEverySerendipityMonomial) {
             for (const auto& xi : points) {
                 const double interpolated = interpolate_nodal_function(
                     basis, xi,
-                    [&exponent](const math::Vector<double, 3>& node) {
+                    [&exponent](const svmp::math::Vector<double, 3>& node) {
                         return monomial_value_3d_for_test(node, exponent);
                     });
                 EXPECT_NEAR(interpolated, monomial_value_3d_for_test(xi, exponent),
@@ -1102,7 +1102,7 @@ TEST(SerendipityBasis, NamedHexLayoutsMatchTopologyConstruction) {
         {ElementType::Hex8, 1},
         {ElementType::Hex20, 2},
     };
-    const std::vector<math::Vector<double, 3>> points = {
+    const std::vector<svmp::math::Vector<double, 3>> points = {
         {double(0.2), double(-0.1), double(0.3)},
         {double(-0.35), double(0.25), double(-0.15)},
         {double(0.11), double(0.23), double(-0.42)},

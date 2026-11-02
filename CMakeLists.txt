@@ -33,7 +33,7 @@
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22...4.4)
 
 #-----------------------------------------------------------------------------
 Project(SV_TOP)
@@ -118,6 +118,7 @@ ExternalProject_Add(svMultiPhysics
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Code
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/svMultiPhysics-build
   DEPENDS Externals
+  BUILD_ALWAYS TRUE
   DOWNLOAD_COMMAND ""
   UPDATE_COMMAND ""
   INSTALL_COMMAND ""

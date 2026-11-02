@@ -6,7 +6,7 @@
 #include "cmm.h"
 
 #include "all_fun.h"
-#include "fluid.h"
+#include "fluid/fluid.h"
 #include "lhsa.h"
 #include "mat_fun.h"
 #include "nn.h"
