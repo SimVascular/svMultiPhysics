@@ -19,9 +19,11 @@
  * - Newton iteration loop with convergence checking
  * - Linear system assembly and solve
  * - Boundary condition application
- * - Pseudo-transient continuation, when enabled: every step starts from rest,
- *   takes one Newton iteration, hands its update to a registered client and
- *   adapts the pseudo time step (see PseudoTransientContinuation.h)
+ * - Pseudo-transient continuation, when enabled: reports each step's update
+ *   and, if asked, adapts the pseudo time step to the residual (see
+ *   PseudoTransientContinuation.h)
+ * - Prestrain: each step starts from rest, once the displacement the previous
+ *   step reached has been composed into the prestrain (see prestrain.h)
  *
  * Related to GitHub issue #442: Encapsulate the Newton iteration in main.cpp
  */
