@@ -137,7 +137,7 @@
     <Max_iterations> 100 </Max_iterations>
     <Tolerance> 1e-9 </Tolerance>
 
-    <Line_search>
+    <Line_search_experimental>
       <!-- Minimum decrease is high enough to trigger step rejection in the
            first few iterations, so that line search is tested. A more
            realistic value would be much smaller, e.g., 1e-4. -->
@@ -145,7 +145,7 @@
       <Step_reduction_factor> 0.5 </Step_reduction_factor>
       <Minimum_step_length> 1e-2 </Minimum_step_length>
       <Verbose> true </Verbose>
-    </Line_search>
+    </Line_search_experimental>
 
     <Domain id="0">
       <Equation> struct </Equation>

@@ -2605,7 +2605,8 @@ void ContactParameters::set_values(tinyxml2::XMLElement *xml_elem) {
 //                 LineSearchParameters                 //
 //////////////////////////////////////////////////////////
 
-const std::string LineSearchParameters::xml_element_name_ = "Line_search";
+const std::string LineSearchParameters::xml_element_name_ =
+    "Line_search_experimental";
 
 LineSearchParameters::LineSearchParameters() {
   // The XML element as a whole is optional, but every parameter within it has
