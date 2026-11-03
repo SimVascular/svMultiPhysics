@@ -502,8 +502,10 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 # Python 3.14 with meshio failed to read an integration-test VTU file (Base64
 # padding error); the same tests passed with Python 3.12.
 RUN conda create -y -n svmultiphysics python=3.12 pip && \
-    conda run -n svmultiphysics python -m pip install pytest pytest-cov pytest-mock numpy meshio pandas
-
+    conda run -n svmultiphysics python -m pip install pytest pytest-cov pytest-mock numpy meshio pandas && \
+    conda run -n svmultiphysics python --version && \
+    conda list -n svmultiphysics --explicit && \
+    conda run -n svmultiphysics python -m pip freeze
 # Set libraries environment
 ENV PATH="/google:/vtk:/openmpi/bin:/cmake/bin:/trilinos/lib/cmake/Trilinos:${PATH}"
 ENV LD_LIBRARY_PATH="/openmpi/lib:/petsc/lib:/lapack"
