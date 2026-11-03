@@ -1124,3 +1124,32 @@ TEST(SymmetricTriangleQualification, EveryTableIsExactContainedAndNormalized)
         EXPECT_EQ(negative_weights, table.degree == 3 || table.degree == 7 ? 1 : 0);
     }
 }
+
+TEST(SymmetricTriangleCompatibility, MatchesLegacyTri3AndTri6Samples)
+{
+    // Volume/face samples of nn_elem_gip.h in legacy order, each paired with its
+    // generic index. TRI6 uses the legacy 15-digit decimals.
+    struct LegacySample {
+        int degree;
+        std::size_t generic;
+        double x;
+        double y;
+        double weight;
+    };
+    constexpr double s0 = 2.0 / 3.0, t0 = 1.0 / 6.0, w0 = 1.0 / 6.0;
+    constexpr double c = 0.333333333333333;
+    constexpr double s1 = 0.797426985353087, t1 = 0.101286507323456, w1 = 0.125939180544827 / 2.0;
+    constexpr double s2 = 0.059715871789770, t2 = 0.470142064105115, w2 = 0.132394152788506 / 2.0;
+    constexpr LegacySample legacy[] = {
+        {2, 1, t0, t0, w0}, {2, 2, s0, t0, w0}, {2, 0, t0, s0, w0},
+        {5, 0, c, c, 0.225 / 2.0}, {5, 6, s1, t1, w1}, {5, 4, t1, s1, w1}, {5, 5, t1, t1, w1},
+        {5, 3, s2, t2, w2}, {5, 1, t2, s2, w2}, {5, 2, t2, t2, w2},
+    };
+    for (const auto& [degree, generic, x, y, weight] : legacy) {
+        SCOPED_TRACE(::testing::Message() << "degree=" << degree << ", generic=" << generic);
+        const auto rule = make_symmetric_triangle_rule(degree);
+        EXPECT_NEAR(rule.point(generic)[0], x, kFixtureTolerance);
+        EXPECT_NEAR(rule.point(generic)[1], y, kFixtureTolerance);
+        EXPECT_NEAR(rule.weight(generic), weight, kFixtureTolerance);
+    }
+}
