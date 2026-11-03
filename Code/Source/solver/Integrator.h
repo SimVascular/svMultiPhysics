@@ -251,8 +251,7 @@ private:
    * norm ignores the rows the linear solve eliminates, whose residual is a
    * reaction rather than an equation left to be satisfied.
    *
-   * The resulting norm is the one the convergence of the nonlinear iterations
-   * is tested with, and it is dimensionally homogeneous across the degrees of
+   * The resulting norm is dimensionally homogeneous across the degrees of
    * freedom of an equation, which a norm of the residual entries themselves is
    * not.
    *
