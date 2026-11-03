@@ -19,7 +19,8 @@ class mshType;
 class Fibers {
 public:
   /// Location of the fiber directions in the input.
-  enum class DataLocation {
+  enum class DataCollocation {
+    /// No fiber directions are associated with the mesh.
     none,
     /// The fiber directions are associated with the mesh nodes.
     point,
@@ -28,11 +29,6 @@ public:
     /// The fiber directions are constant vectors defined in the input file.
     constant
   };
-
-  /**
-   * @brief Clears the fiber directions.
-   */
-  void clear();
 
   /**
    * @brief Reads fiber directions from file paths or constant vectors.
@@ -48,7 +44,7 @@ public:
   /**
    * @brief Returns the location of the fiber directions in the input.
    */
-  DataLocation get_data_location() const { return data_location; }
+  DataCollocation get_data_location() const { return data_location; }
 
   /// Returns the number of raw directions supplied by the user.
   int get_num_directions() const { return num_input_fibers; }
@@ -75,12 +71,6 @@ public:
       bool orthonormalize = false) const;
 
   /**
-   * @brief Gathers raw fibers for timestep-zero output.
-   */
-  Array<double> gather_fibers(const ComMod &com_mod, const CmMod &cm_mod,
-                              const mshType &mesh, int nsd) const;
-
-  /**
    * @brief Returns true if there are fiber directions.
    */
   bool has_fibers() const { return num_input_fibers != 0; }
@@ -94,29 +84,48 @@ private:
   /**
    * @brief Fiber directions read from the input.
    *
-   * Each column stores all supplied directions (nsd*num_input_fibers
-   * components). Column count depends on the data location: one for constant
-   * directions, one per cell for cell data, and one per point for point data.
-   * Not distributed: after @ref distribute only the master keeps it, and only
-   * for point data, where it is needed for timestep-zero output.
+   * Indexed as @c (component, location):
+   * - @c component packs all directions contiguously as
+   *   @f$ i \cdot n_{sd} + j @f$ for direction @f$ i @f$ and spatial
+   *   component @f$ j @f$;
+   * - @c location is the single constant entry, the cell, or the point,
+   *   depending on @ref data_location.
+   *
+   * Cleared early in @ref distribute once metadata is shared; partitioned
+   * fiber data live in @ref quadrature_fibers and @ref element_nodal_fibers.
    */
   Array<double> input_fibers;
 
   /**
    * @brief Raw fiber directions at the quadrature points.
+   *
+   * Indexed as @c (component, gauss_point, element):
+   * - @c component packs all directions as in @ref input_fibers;
+   * - @c gauss_point is the quadrature point within the element (always 0 for
+   *   constant and cell data);
+   * - @c element is the local element index after @ref distribute (or the
+   *   global element index before it).
+   *
+   * For constant data the array is @c (nsd*num_input_fibers, 1, 1).
    */
   Array3<double> quadrature_fibers;
 
   /**
    * @brief Point-associated input fibers gathered at each element's nodes.
    *
-   * Keeping this element-local representation allows interpolation with
-   * alternative basis functions after the mesh has been partitioned.
+   * Indexed as @c (component, local_node, element):
+   * - @c component packs all directions as in @ref input_fibers;
+   * - @c local_node is the element-local node index;
+   * - @c element is the local element index after @ref distribute (or the
+   *   global element index before it).
+   *
+   * Used only for point data so fibers can be re-interpolated with alternative
+   * basis functions after the mesh has been partitioned.
    */
   Array3<double> element_nodal_fibers;
 
   /// Location of the fiber directions in the input.
-  DataLocation data_location = DataLocation::none;
+  DataCollocation data_location = DataCollocation::none;
 
   /// Number of fiber directions supplied as input.
   int num_input_fibers = 0;
@@ -131,7 +140,7 @@ private:
    * association is required.
    */
   void read_from_file(const MeshParameters &mesh_parameters, mshType &mesh,
-                      int nsd, DataLocation expected_location);
+                      int nsd, DataCollocation expected_location);
 
   /**
    * @brief Reads constant fiber directions as specified in the input file.

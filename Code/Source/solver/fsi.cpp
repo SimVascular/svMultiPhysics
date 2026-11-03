@@ -172,11 +172,12 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs_1[0], e, urisFactorTotalEl, urisValveVelTermTotalEl);
     }
 
+    Array<double> fiber_values = Fibers::zero_fibers(nsd);
     for (int g = 0; g < fs_1[0].nG; g++) {
-      const auto fiber_values = !mesh_has_fibers
-        ? Fibers::zero_fibers(nsd)
-        : lM.fibers.get_quadrature_fibers(
+      if (mesh_has_fibers) {
+        fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
+      }
       const auto fibers = mat_fun::eigen_view(fiber_values);
 
       if (g == 0 || !fs_1[1].lShpF) {

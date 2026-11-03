@@ -26,6 +26,14 @@ using mat_fun::eigen_view;
 /// Returns whether a material model requires an orthonormal fiber basis.
 bool requires_orthonormal_fiber_basis(consts::ConstitutiveModelType model);
 
+/// Minimum number of fiber directions that must be supplied for @p model.
+///
+/// Returns 0 if the model does not require fibers. For models that complete an
+/// orthonormal basis from a partial input, returns @f$nsd - 1@f$ (@p nsd
+/// directions are also accepted).
+int minimum_fiber_directions_required(consts::ConstitutiveModelType model,
+                                      int nsd);
+
 void actv_strain(const ComMod& com_mod, const CepMod& cep_mod, const double gf,
     const int nfd, const Array<double>& fiber_basis, Array<double>& Fa);
 

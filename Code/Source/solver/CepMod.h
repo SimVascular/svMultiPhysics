@@ -168,9 +168,12 @@ class cepModelType
     double Diso = 0.0;
 
     /// @brief Additive conductivities along the fiber, sheet, and sheet-normal directions.
-    /// D[0]=D_f, optional D[1]=D_s, and optional D[2]=D_n. The number of stored
-    /// terms may not exceed the intrinsic mesh dimension.
-    /// The diffusion tensor is D = Diso I + Σ_i D[i] f_i ⊗ f_i.
+    ///
+    /// @f$D[0]=D_f@f$, optional @f$D[1]=D_s@f$, and optional @f$D[2]=D_n@f$.
+    /// The diffusion tensor is
+    /// @f[
+    ///   D = D_\mathrm{iso}\, I + \sum_i D[i]\, f_i \otimes f_i.
+    /// @f]
     Vector<double> D;
 
     /// @brief  External stimuli applied within this domain.

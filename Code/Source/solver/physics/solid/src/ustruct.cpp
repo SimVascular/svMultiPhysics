@@ -313,12 +313,13 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     //
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
+    Array<double> fiber_values = Fibers::zero_fibers(nsd);
 
     for (int g = 0; g < fs[0].nG; g++) {
-      const auto fiber_values = !mesh_has_fibers
-        ? Fibers::zero_fibers(nsd)
-        : lM.fibers.get_quadrature_fibers(
+      if (mesh_has_fibers) {
+        fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
+      }
       const auto fibers = mat_fun::eigen_view(fiber_values);
 
       // Shape function gradients and the viscous response are constant

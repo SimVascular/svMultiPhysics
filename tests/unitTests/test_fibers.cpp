@@ -93,9 +93,9 @@ void write_nodal_fiber_file(
 TEST(Fibers, LoadsRawThenCompletesConstantDirections)
 {
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{1.0, 0.0, 0.0}, false);
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{0.0, 1.0, 0.0}, false);
 
   auto mesh = make_single_element_mesh();
@@ -138,16 +138,12 @@ TEST(Fibers, LoadsRawThenCompletesConstantDirections)
   const auto second_basis = fibers.get_quadrature_fibers(3, 0, 0, true);
   EXPECT_NE(second_basis.data(), basis.data());
   EXPECT_DOUBLE_EQ(second_basis(2, 2), 1.0);
-
-  fibers.clear();
-  EXPECT_FALSE(fibers.has_fibers());
-  EXPECT_EQ(fibers.get_num_directions(), 0);
 }
 
 TEST(Fibers, AcceptsRawCountRejectedByOrthonormalization)
 {
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{1.0, 0.0, 0.0}, false);
 
   auto mesh = make_single_element_mesh();
@@ -163,9 +159,9 @@ TEST(Fibers, PreservesConstantDirectionsWhenCompletingBasis)
   constexpr double fiber_x = 1.0 + 5.0e-7;
   constexpr double sheet_y = 1.0 - 5.0e-7;
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{fiber_x, 0.0, 0.0}, false);
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{0.0, sheet_y, 0.0}, false);
 
   auto mesh = make_single_element_mesh();
@@ -181,7 +177,7 @@ TEST(Fibers, PreservesConstantDirectionsWhenCompletingBasis)
 TEST(Fibers, CompletesTwoDimensionalConstantBasisByRotation)
 {
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{0.6, 0.8}, false);
 
   auto mesh = make_single_element_mesh();
@@ -209,13 +205,13 @@ TEST(Fibers, AcceptsNoDirections)
 TEST(Fibers, AcceptsArbitraryRawDirectionCount)
 {
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{1.0, 0.0, 0.0}, false);
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{0.0, 1.0, 0.0}, false);
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{0.0, 0.0, 1.0}, false);
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{-1.0, 0.0, 0.0}, false);
 
   auto mesh = make_single_element_mesh();
@@ -230,9 +226,9 @@ TEST(Fibers, AcceptsArbitraryRawDirectionCount)
 TEST(Fibers, RejectsNonUnitConstantDirection)
 {
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{3.0, 4.0, 0.0}, false);
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{0.0, 1.0, 0.0}, false);
 
   auto mesh = make_single_element_mesh();
@@ -243,9 +239,9 @@ TEST(Fibers, RejectsNonUnitConstantDirection)
 TEST(Fibers, RejectsNonOrthogonalConstantDirections)
 {
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{1.0, 0.0, 0.0}, false);
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{0.6, 0.8, 0.0}, false);
 
   auto mesh = make_single_element_mesh();
@@ -430,7 +426,7 @@ TEST(Fibers, RejectsPointTagWithCellData)
 TEST(Fibers, RejectsMixedInputModes)
 {
   MeshParameters parameters;
-  parameters.fiber_directions.emplace_back("Fiber_direction_constant",
+  parameters.fiber_direction_constant.emplace_back("Fiber_direction_constant",
       std::vector<double>{1.0, 0.0, 0.0}, false);
   parameters.fiber_direction_file_paths_cells.set(
       "Fiber_direction_from_file_cells", false,

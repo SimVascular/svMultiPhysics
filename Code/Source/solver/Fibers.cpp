@@ -21,21 +21,30 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <string>
 #include <vector>
 
 namespace {
 
+/**
+ * @brief Completes an @p nsd-by-@p nsd fiber basis in place.
+ *
+ * @p basis must already hold @p num_input_fibers orthonormal columns. When
+ * @p num_input_fibers equals @p nsd the supplied orientation is left unchanged,
+ * including a left-handed frame. When it equals @p nsd - 1, the missing
+ * direction is filled with a right-handed normal (2D rotation or 3D cross
+ * product). Supported only for spatial dimensions 1, 2, and 3.
+ */
 void complete_fiber_basis(Eigen::MatrixXd& basis,
     const int num_input_fibers)
 {
   const int nsd = basis.rows();
-  if (basis.cols() != nsd ||
-      (num_input_fibers != nsd - 1 && num_input_fibers != nsd)) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-      "Fiber basis completion requires an nsd-by-nsd matrix containing "
-      "nsd - 1 or nsd directions.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+    basis.cols() != nsd ||
+      (num_input_fibers != nsd - 1 && num_input_fibers != nsd),
+    "Fiber basis completion requires an nsd-by-nsd matrix containing "
+    "nsd - 1 or nsd directions.");
 
   // A complete input basis keeps its supplied orientation, including a
   // left-handed one.
@@ -57,6 +66,16 @@ void complete_fiber_basis(Eigen::MatrixXd& basis,
   }
 }
 
+/**
+ * @brief Builds an orthonormal fiber basis from raw input directions.
+ *
+ * Applies modified Gram-Schmidt to the columns of @p input, then completes a
+ * partial basis with @ref complete_fiber_basis. @p input must provide
+ * @f$ n_{sd}-1 @f$ or @f$ n_{sd} @f$ linearly independent directions.
+ * @p location is appended to the linear-dependence error message.
+ *
+ * @return An @p nsd-by-@p nsd orthonormal basis.
+ */
 Eigen::MatrixXd orthonormalize_fiber_basis(
     const Eigen::Ref<const Eigen::MatrixXd>& input,
     const std::string& location)
@@ -64,10 +83,9 @@ Eigen::MatrixXd orthonormalize_fiber_basis(
   const int nsd = input.rows();
   const int num_input_fibers = input.cols();
 
-  if (num_input_fibers != nsd - 1 && num_input_fibers != nsd) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-      "An orthonormal fiber basis requires nsd - 1 or nsd directions.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+    num_input_fibers != nsd - 1 && num_input_fibers != nsd,
+    "An orthonormal fiber basis requires nsd - 1 or nsd directions.");
 
   Eigen::MatrixXd basis = Eigen::MatrixXd::Zero(nsd, nsd);
   constexpr double linear_dependence_tolerance = 1.0e-12;
@@ -83,11 +101,10 @@ Eigen::MatrixXd orthonormalize_fiber_basis(
     }
 
     const double norm = candidate.norm();
-    if (norm <= linear_dependence_tolerance) {
-      svmp::raise<svmp::ParseException>(
-        "Fiber direction " + std::to_string(direction + 1) +
-        " is linearly dependent " + location + ".");
-    }
+    svmp::throw_if<svmp::ParseException>(
+      norm <= linear_dependence_tolerance,
+      "Fiber direction " + std::to_string(direction + 1) +
+      " is linearly dependent " + location + ".");
     basis.col(direction) = candidate / norm;
   }
 
@@ -95,25 +112,28 @@ Eigen::MatrixXd orthonormalize_fiber_basis(
   return basis;
 }
 
-// Interpolates one nodal fiber direction to a quadrature point. The dyads are
-// interpolated before the principal direction is recovered, so opposite
-// representations of the same fiber direction do not cancel. The reference
-// direction is the nodal fiber at the node with the largest |N_a|; it is used
-// only to choose the sign of the recovered principal eigenvector.
+/**
+ * @brief Interpolates one nodal fiber direction to a quadrature point.
+ *
+ * Forms the shape-function-weighted average of the nodal fiber dyads
+ * @f$ \mathbf{f}\otimes\mathbf{f} @f$ from @p nodal_fibers (@c nsd by
+ * @c eNoN), recovers the principal eigenvector, and flips its sign to match
+ * the nodal fiber at the node with the largest @f$ |N_a| @f$ from
+ * @p shape_functions. Averaging dyads avoids cancellation when neighboring
+ * nodes store opposite representations of the same direction.
+ */
 Vector<double> interpolate_dyadic(
     const Array<double>& nodal_fibers,
     const Vector<double>& shape_functions)
 {
   const int nsd = nodal_fibers.nrows();
   const int num_nodes = nodal_fibers.ncols();
-  if (nsd == 0 || num_nodes == 0) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-      "Nodal fibers must be a non-empty array.");
-  }
-  if (shape_functions.size() != num_nodes) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-      "The number of shape functions must match the number of nodal fibers.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+    nsd == 0 || num_nodes == 0,
+    "Nodal fibers must be a non-empty array.");
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+    shape_functions.size() != num_nodes,
+    "The number of shape functions must match the number of nodal fibers.");
 
   Eigen::MatrixXd interpolated_dyad = Eigen::MatrixXd::Zero(nsd, nsd);
   Eigen::VectorXd reference_direction = Eigen::VectorXd::Zero(nsd);
@@ -140,18 +160,16 @@ Vector<double> interpolate_dyadic(
     }
   }
 
-  if (reference_weight < 0.0) {
-    svmp::raise<svmp::FE::InvalidArgumentException>(
-      "At least one shape function must be nonzero.");
-  }
+  svmp::throw_if<svmp::FE::InvalidArgumentException>(
+    reference_weight < 0.0,
+    "At least one shape function must be nonzero.");
 
   // Compute the principal direction of the interpolated fiber dyad by solving
   // the eigenvalue problem for the interpolated fiber dyad.
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigen_solver(interpolated_dyad);
-  if (eigen_solver.info() != Eigen::Success) {
-    svmp::raise<svmp::InternalErrorException>(
-      "Failed to compute the principal direction of the interpolated fiber dyad.");
-  }
+  svmp::throw_if<svmp::InternalErrorException>(
+    eigen_solver.info() != Eigen::Success,
+    "Failed to compute the principal direction of the interpolated fiber dyad.");
 
   Eigen::VectorXd interpolated_fiber = eigen_solver.eigenvectors().col(nsd - 1);
   const double interpolated_fiber_norm = interpolated_fiber.norm();
@@ -174,10 +192,15 @@ Vector<double> interpolate_dyadic(
   return result;
 }
 
-// Scatters element-associated data from the master to every rank. On the
-// master, global_data stores values_per_element contiguous values for each of
-// the mesh.gnEl elements in the original element ordering. Each rank receives
-// the values of its mesh.nEl partitioned elements in local_data.
+/**
+ * @brief Scatters element-associated data from the master to every rank.
+ *
+ * On the master, @p global_data stores @p values_per_element contiguous values
+ * for each of the @c mesh.gnEl elements in the original element ordering. The
+ * blocks are reordered with @c mesh.otnIEN so each rank's elements are
+ * contiguous, then @c MPI_Scatterv delivers the local partition into
+ * @p local_data (@c mesh.nEl blocks).
+ */
 void scatter_element_data(const double* global_data, double* local_data,
     const int values_per_element, const mshType& mesh, const CmMod& cm_mod,
     const cmType& cm)
@@ -218,7 +241,7 @@ void Fibers::distribute(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm,
   // Share the fiber metadata read on the master with all ranks.
   int location = static_cast<int>(data_location);
   cm.bcast(cm_mod, &location);
-  data_location = static_cast<DataLocation>(location);
+  data_location = static_cast<DataCollocation>(location);
   cm.bcast(cm_mod, &num_input_fibers);
   cm.bcast(cm_mod, &basis_input_is_orthogonal);
 
@@ -233,25 +256,22 @@ void Fibers::distribute(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm,
   }
   cm.bcast(cm_mod, &quadrature_components);
 
-  // The input fibers are not distributed: for cell and constant data they are
-  // duplicated by quadrature_fibers. The master keeps point input fibers for
-  // timestep-zero output.
-  if (data_location != DataLocation::point || cm.slv(cm_mod)) {
-    input_fibers.clear();
-  }
+  // Input fibers are not distributed; quadrature_fibers (and element_nodal
+  // fibers for point data) hold the partitioned data used after distribute.
+  input_fibers.clear();
 
   // Constant fibers are the same everywhere, so every rank gets a copy of the
   // single set of directions.
-  if (data_location == DataLocation::constant) {
+  if (data_location == DataCollocation::constant) {
     if (cm.slv(cm_mod)) {
       quadrature_fibers.resize(quadrature_components, 1, 1);
     }
-    MPI_Bcast(quadrature_fibers.data(), quadrature_components, cm_mod::mpreal,
-      cm_mod.master, cm.com());
+    cm.bcast(cm_mod, quadrature_fibers);
     return;
   }
 
-  if (data_location != DataLocation::cell && data_location != DataLocation::point) {
+  if (data_location != DataCollocation::cell &&
+      data_location != DataCollocation::point) {
     svmp::raise<svmp::InternalErrorException>(
       "Fiber input data has no cell, point, or constant direction association.");
   }
@@ -259,7 +279,7 @@ void Fibers::distribute(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm,
   // Cell fibers store one location per element and point fibers store one per
   // quadrature point. Point fibers also keep the nodal values of each element
   // so they can be interpolated with other basis functions later.
-  const bool is_point = data_location == DataLocation::point;
+  const bool is_point = data_location == DataCollocation::point;
   const int locations_per_element = is_point ? nG : 1;
 
   // Scatter the quadrature fibers.
@@ -281,83 +301,6 @@ void Fibers::distribute(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm,
 }
 
 
-Array<double> Fibers::gather_fibers(
-  const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh,
-  const int nsd) const
-{
-  Array<double> gathered;
-
-  if (data_location == DataLocation::none) {
-    return gathered;
-  }
-
-  const int num_components = nsd * get_num_directions();
-  auto& cm = com_mod.cm;
-
-  if (data_location == DataLocation::point) {
-    if (cm.mas(cm_mod)) {
-      if (input_fibers.nrows() != nsd * num_input_fibers ||
-          input_fibers.ncols() != mesh.gnNo) {
-        svmp::raise<svmp::InternalErrorException>(
-          "Point fiber dimensions are inconsistent with the mesh.");
-      }
-      gathered = input_fibers;
-    }
-    return gathered;
-  }
-
-  if (data_location != DataLocation::cell &&
-      data_location != DataLocation::constant) {
-    return gathered;
-  }
-
-  // Cell and constant fibers have one quadrature location per element, so the
-  // quadrature arrays hold the output values directly.
-  Array<double> local_fibers(num_components, mesh.nEl);
-  for (int e = 0; e < mesh.nEl; ++e) {
-    const int location = data_location == DataLocation::constant ? 0 : e;
-    for (int component = 0; component < num_components; ++component) {
-      local_fibers(component, e) = quadrature_fibers(component, 0, location);
-    }
-  }
-
-  Vector<int> counts(cm.np());
-  Vector<int> displacements(cm.np());
-  for (int rank = 0; rank < cm.np(); ++rank) {
-    displacements[rank] = mesh.eDist[rank] * num_components;
-    counts[rank] =
-      (mesh.eDist[rank + 1] - mesh.eDist[rank]) * num_components;
-  }
-
-  Array<double> partitioned_fibers;
-  if (cm.mas(cm_mod)) {
-    partitioned_fibers.resize(num_components, mesh.gnEl);
-  }
-  MPI_Gatherv(local_fibers.data(), mesh.nEl * num_components,
-    cm_mod::mpreal, partitioned_fibers.data(), counts.data(),
-    displacements.data(), cm_mod::mpreal, cm_mod.master, cm.com());
-
-  if (cm.mas(cm_mod)) {
-    gathered.resize(num_components, mesh.gnEl);
-    for (int e = 0; e < mesh.gnEl; ++e) {
-      gathered.set_col(e, partitioned_fibers.col(mesh.otnIEN[e]));
-    }
-  }
-  return gathered;
-}
-
-
-void Fibers::clear()
-{
-  input_fibers.clear();
-  quadrature_fibers.clear();
-  element_nodal_fibers.clear();
-  num_input_fibers = 0;
-  basis_input_is_orthogonal = true;
-  data_location = DataLocation::none;
-}
-
-
 Array<double> Fibers::zero_fibers(const int nsd)
 {
   Array<double> fibers(nsd, 1);
@@ -368,14 +311,12 @@ Array<double> Fibers::zero_fibers(const int nsd)
 
 void Fibers::read(const MeshParameters& mesh_parameters, mshType& mesh, const int nsd)
 {
-  clear();
-
   // Count the number of input modes.
   const int num_point_paths =
       mesh_parameters.fiber_direction_file_paths_points.size();
   const int num_cell_paths =
       mesh_parameters.fiber_direction_file_paths_cells.size();
-  const int num_dirs = mesh_parameters.fiber_directions.size();
+  const int num_dirs = mesh_parameters.fiber_direction_constant.size();
 
   // If no input modes are specified it means no fibers are needed, return early.
   const int num_input_modes =
@@ -395,9 +336,9 @@ void Fibers::read(const MeshParameters& mesh_parameters, mshType& mesh, const in
   if (num_dirs != 0) {
     read_directions(mesh_parameters, nsd);
   } else if (num_point_paths != 0) {
-    read_from_file(mesh_parameters, mesh, nsd, DataLocation::point);
+    read_from_file(mesh_parameters, mesh, nsd, DataCollocation::point);
   } else {
-    read_from_file(mesh_parameters, mesh, nsd, DataLocation::cell);
+    read_from_file(mesh_parameters, mesh, nsd, DataCollocation::cell);
   }
 
   // Check that the input fiber directions are unit vectors.
@@ -411,7 +352,7 @@ void Fibers::read(const MeshParameters& mesh_parameters, mshType& mesh, const in
 
 void Fibers::read_directions(const MeshParameters& mesh_parameters, const int nsd)
 {
-  const auto& directions = mesh_parameters.fiber_directions;
+  const auto& directions = mesh_parameters.fiber_direction_constant;
   const int num_dirs = directions.size();
 
   for (int i = 0; i < num_dirs; ++i) {
@@ -426,7 +367,7 @@ void Fibers::read_directions(const MeshParameters& mesh_parameters, const int ns
   }
 
   num_input_fibers = num_dirs;
-  data_location = DataLocation::constant;
+  data_location = DataCollocation::constant;
 
   input_fibers.resize(nsd * num_input_fibers, 1);
   input_fibers = 0.0;
@@ -439,9 +380,9 @@ void Fibers::read_directions(const MeshParameters& mesh_parameters, const int ns
 
 
 void Fibers::read_from_file(const MeshParameters& mesh_parameters, mshType& mesh,
-  const int nsd, const DataLocation expected_location)
+  const int nsd, const DataCollocation expected_location)
 {
-  const auto& path_parameter = expected_location == DataLocation::point
+  const auto& path_parameter = expected_location == DataCollocation::point
       ? mesh_parameters.fiber_direction_file_paths_points
       : mesh_parameters.fiber_direction_file_paths_cells;
   const int num_paths = path_parameter.size();
@@ -449,7 +390,7 @@ void Fibers::read_from_file(const MeshParameters& mesh_parameters, mshType& mesh
   data_location = expected_location;
 
   const auto paths = path_parameter();
-  const bool expect_cells = expected_location == DataLocation::cell;
+  const bool expect_cells = expected_location == DataCollocation::cell;
   const std::string association = expect_cells ? "cells" : "points";
   const std::string xml_tag = expect_cells
       ? "Fiber_direction_from_file_cells"
@@ -458,9 +399,7 @@ void Fibers::read_from_file(const MeshParameters& mesh_parameters, mshType& mesh
   for (int idx = 0; idx < num_input_fibers; ++idx) {
     const auto& file_name = paths[idx];
 
-    if (FILE* file = fopen(file_name.c_str(), "r")) {
-      fclose(file);
-    } else {
+    if (!std::filesystem::is_regular_file(file_name)) {
       svmp::raise<svmp::FileNotFoundException>(file_name);
     }
 
@@ -532,7 +471,7 @@ void Fibers::populate_quadrature_fibers(const mshType& mesh, const int nsd)
 {
   const int num_components = nsd * num_input_fibers;
 
-  if (data_location == DataLocation::constant) {
+  if (data_location == DataCollocation::constant) {
     quadrature_fibers.resize(num_components, 1, 1);
     for (int component = 0; component < num_components; ++component) {
       quadrature_fibers(component, 0, 0) = input_fibers(component, 0);
@@ -540,7 +479,7 @@ void Fibers::populate_quadrature_fibers(const mshType& mesh, const int nsd)
     return;
   }
 
-  if (data_location == DataLocation::cell) {
+  if (data_location == DataCollocation::cell) {
     quadrature_fibers.resize(num_components, 1, mesh.gnEl);
     for (int e = 0; e < mesh.gnEl; ++e) {
       for (int component = 0; component < num_components; ++component) {
@@ -550,7 +489,7 @@ void Fibers::populate_quadrature_fibers(const mshType& mesh, const int nsd)
     return;
   }
 
-  if (data_location != DataLocation::point || mesh.nG <= 0) {
+  if (data_location != DataCollocation::point || mesh.nG <= 0) {
     svmp::raise<svmp::InternalErrorException>(
       "Point fiber directions cannot be populated before mesh quadrature points are initialized.");
   }
@@ -658,10 +597,10 @@ Array<double> Fibers::get_quadrature_fibers(
   double* data = nullptr;
   int num_components = 0;
 
-  if (data_location == DataLocation::constant) {
+  if (data_location == DataCollocation::constant) {
     num_components = quadrature_fibers.nrows();
     data = quadrature_fibers.data();
-  } else if (data_location == DataLocation::cell) {
+  } else if (data_location == DataCollocation::cell) {
     if (e < 0 || e >= quadrature_fibers.nslices()) {
       svmp::raise<svmp::IndexOutOfRangeException>(
         "The requested fiber element index " + std::to_string(e) +
@@ -669,7 +608,7 @@ Array<double> Fibers::get_quadrature_fibers(
     }
     num_components = quadrature_fibers.nrows();
     data = quadrature_fibers.data() + e * num_components;
-  } else if (data_location == DataLocation::point) {
+  } else if (data_location == DataCollocation::point) {
     if (g < 0 || g >= quadrature_fibers.ncols() ||
         e < 0 || e >= quadrature_fibers.nslices()) {
       svmp::raise<svmp::IndexOutOfRangeException>(
@@ -711,7 +650,7 @@ Array<double> Fibers::get_quadrature_fibers(
   const Eigen::Map<const Eigen::MatrixXd> input(
     raw_fibers.data(), nsd, num_input_fibers);
   Eigen::MatrixXd basis;
-  if (data_location == DataLocation::point) {
+  if (data_location == DataCollocation::point) {
     // Independently interpolated point directions can lose orthogonality.
     basis = orthonormalize_fiber_basis(
       input, "at quadrature point " + std::to_string(g) +
@@ -734,7 +673,7 @@ Array<double> Fibers::get_quadrature_fibers(
   const int nsd, const Vector<double>& basis_functions, const int e,
   const bool orthonormalize) const
 {
-  if (data_location != DataLocation::point) {
+  if (data_location != DataCollocation::point) {
     return get_quadrature_fibers(nsd, 0, e, orthonormalize);
   }
 

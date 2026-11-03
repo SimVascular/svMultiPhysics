@@ -25,6 +25,22 @@ bool requires_orthonormal_fiber_basis(
          model == ConstitutiveModelType::stIso_HO_ma;
 }
 
+int minimum_fiber_directions_required(
+  const consts::ConstitutiveModelType model, const int nsd)
+{
+  using consts::ConstitutiveModelType;
+  switch (model) {
+    case ConstitutiveModelType::stIso_HGO:
+      return 2;
+    case ConstitutiveModelType::stIso_Gucci:
+    case ConstitutiveModelType::stIso_HO:
+    case ConstitutiveModelType::stIso_HO_ma:
+      return nsd - 1;
+    default:
+      return 0;
+  }
+}
+
 
 /// @brief Compute active component of deformation gradient tensor for
 /// electromechanics coupling based on active strain formulation
@@ -38,13 +54,12 @@ void actv_strain(const ComMod& com_mod, const CepMod& cep_mod, const double gf,
 
   int nsd = com_mod.nsd;
 
-  if (nfd < 3) {
-    throw std::runtime_error(
+  svmp::check<svmp::InternalErrorException>(
+      nfd >= 3,
       "[actv_strain] A completed 3D fiber basis is required.");
-  }
-  auto af = fiber_basis.col(0);
-  auto as = fiber_basis.col(1);
-  auto an = fiber_basis.col(2);
+  auto af = fiber_basis.rcol(0);
+  auto as = fiber_basis.rcol(1);
+  auto an = fiber_basis.rcol(2);
 
   double gn = 4.0 * gf;
   double gs = 1.0 / ((1.0+gf) * (1.0+gn)) - 1.0;
@@ -291,28 +306,18 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   const auto& fib_dir1 = fibers.col(0);
 
   // fib_dir2 / fib_dir3 only exist when nfd is large enough
-  Eigen::Matrix<double, nsd, 1> fib_dir2;
-  if (nfd >= 2) {
-    fib_dir2 = fibers.col(1);
-  } else {
-    fib_dir2 = Eigen::Matrix<double, nsd, 1>::Zero();
-  }
-
-  Eigen::Matrix<double, nsd, 1> fib_dir3;
-  if (nfd >= 3) {
-    fib_dir3 = fibers.col(2);
-  } else {
-    fib_dir3 = Eigen::Matrix<double, nsd, 1>::Zero();
-  }
+  const Eigen::Matrix<double, nsd, 1> fib_dir2 =
+      nfd >= 2 ? Eigen::Matrix<double, nsd, 1>(fibers.col(1))
+               : Eigen::Matrix<double, nsd, 1>::Zero();
+  const Eigen::Matrix<double, nsd, 1> fib_dir3 =
+      nfd >= 3 ? Eigen::Matrix<double, nsd, 1>(fibers.col(2))
+               : Eigen::Matrix<double, nsd, 1>::Zero();
 
   // Precompute outer products (used by anisotropic models)
-  Matrix<nsd> Hff = fib_dir1 * fib_dir1.transpose();
-  Matrix<nsd> Hss;
-  if (nfd >= 2) {
-    Hss = fib_dir2 * fib_dir2.transpose();
-  } else {
-    Hss = Matrix<nsd>::Zero();
-  }
+  const Matrix<nsd> Hff = fib_dir1 * fib_dir1.transpose();
+  const Matrix<nsd> Hss =
+      nfd >= 2 ? Matrix<nsd>(fib_dir2 * fib_dir2.transpose())
+               : Matrix<nsd>::Zero();
 
   // Electromechanics coupling - active strain
   Matrix<nsd> Fe  = F;
@@ -731,8 +736,8 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
 
   if (!utils::is_zero(Tsa) || !utils::is_zero(active_tension.d_sheets)) {
     svmp::check<svmp::InternalErrorException>(
-        nfd >= 2, "Applying active stress along sheets (eta_s > 0) requires a "
-                  "sheet direction, but only " +
+        nfd >= 2, "Applying active stress along sheets (eta_s > 0) requires at least "
+                  "two fiber directions, but only " +
                       std::to_string(nfd) + " fiber directions are defined.");
 
     S += Tsa * Hss;
@@ -743,8 +748,8 @@ void compute_pk2cc(const ComMod &com_mod, const CepMod &cep_mod,
   if (!utils::is_zero(Tna) || !utils::is_zero(active_tension.d_sheet_normals)) {
     svmp::check<svmp::InternalErrorException>(
         nfd >= 3,
-        "Applying active stress along normals (eta_n > 0) requires a completed "
-        "fiber basis, but only " +
+        "Applying active stress along normals (eta_n > 0) requires at least "
+        "three fiber directions, but only " +
             std::to_string(nfd) + " fiber directions are defined.");
 
     const Matrix<nsd> Hnn = fib_dir3 * fib_dir3.transpose();

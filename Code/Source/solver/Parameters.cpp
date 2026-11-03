@@ -3173,7 +3173,7 @@ void MeshParameters::print_parameters() {
     std::cout << key << ": " << value << std::endl;
   }
 
-  for (auto &dir : fiber_directions) {
+  for (auto &dir : fiber_direction_constant) {
     std::cout << dir.name() << ": " << dir.svalue() << std::endl;
   }
 
@@ -3205,7 +3205,7 @@ void MeshParameters::set_values(tinyxml2::XMLElement *mesh_elem,
           item, "Mesh Fiber_direction_constant XML element requires a value.");
       VectorParameter<double> dir("Fiber_direction_constant", {}, false, {});
       dir.set(value);
-      fiber_directions.push_back(dir);
+      fiber_direction_constant.push_back(dir);
 
     } else if (name == "Fiber_direction" ||
                name == "Fiber_direction_file_path") {

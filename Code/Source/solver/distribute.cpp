@@ -2376,7 +2376,7 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
     part.clear();
   }
 
-  // Reorder and distribute fiber directions with their owning mesh.
+  // Distribute fiber directions according to this mesh's element partition.
   lM.fibers.distribute(com_mod, cm_mod, cm, lM);
 
   // Now scattering the sorted lM%IEN to all processors.

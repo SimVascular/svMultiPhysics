@@ -15,10 +15,12 @@ namespace cep {
 
 namespace {
 
-/// Build the diffusion tensor D = D_iso I + Σ_i D[i] f_i ⊗ f_i from the
-/// isotropic conductivity and the fiber directions supplied for this domain
-/// (raw family for fiber-only anisotropy, completed basis when sheet or
-/// sheet-normal conductivity is present).
+/// Build the diffusion tensor
+/// @f[
+///   D = D_\mathrm{iso}\, I + \sum_i D[i]\, f_i \otimes f_i
+/// @f]
+/// from the isotropic conductivity and the fiber directions supplied for this
+/// domain.
 Array<double> diffusion_tensor(const int nsd, const double isotropic_conductivity,
                                const Vector<double>& conductivities,
                                const Array<double>& fibers)
@@ -78,17 +80,13 @@ void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
 
   double T1 = eq.af * eq.gam * dt;
   double amd = eq.am / T1;
-  double Df = dmn.cep.Diso;
-  if (dmn.cep.D.size() != 0) {
-    Df += dmn.cep.D[0];
-  }
-  int i = eq.s;
+  const double Df = dmn.cep.Diso + (dmn.cep.D.size() != 0 ? dmn.cep.D[0] : 0.0);
   double wl = w*T1;
   #ifdef debug_cep_1d 
   dmsg << "T1: " << T1;
   dmsg << "amd: " << amd;
   dmsg << "Df: " << Df;
-  dmsg << "i: " << i;
+  dmsg << "eq.s: " << eq.s;
   #endif
 
   double Td = 0.0;
@@ -96,8 +94,8 @@ void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
   Vector<double> DNx(eNoN);
 
   for (int a = 0; a < eNoN; a++) {
-    Td = Td + N(a)*al(i,a);
-    Tx = Tx + Nx(0,a)*yl(i,a);
+    Td = Td + N(a)*al(eq.s,a);
+    Tx = Tx + Nx(0,a)*yl(eq.s,a);
     DNx(a) = Df*Nx(0,a);
   }
 
@@ -143,15 +141,14 @@ void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
 
   const auto D = diffusion_tensor(2, dmn.cep.Diso, dmn.cep.D, fibers);
 
-  int i = eq.s;
   double Vd = 0.0;
   Vx = 0.0;
 
   for (int a = 0; a < eNoN; a++) {
-    Vd = Vd + N(a)*al(i,a);
+    Vd = Vd + N(a)*al(eq.s,a);
 
-    Vx(0) = Vx(0) + Nx(0,a)*yl(i,a);
-    Vx(1) = Vx(1) + Nx(1,a)*yl(i,a);
+    Vx(0) = Vx(0) + Nx(0,a)*yl(eq.s,a);
+    Vx(1) = Vx(1) + Nx(1,a)*yl(eq.s,a);
 
     DNx(0,a) = D(0,0)*Nx(0,a) + D(0,1)*Nx(1,a);
     DNx(1,a) = D(1,0)*Nx(0,a) + D(1,1)*Nx(1,a);
@@ -208,16 +205,15 @@ void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
 
   const auto D = diffusion_tensor(3, dmn.cep.Diso, dmn.cep.D, fibers);
 
-  int i = eq.s;
   double Vd = 0.0;
   Vx = 0.0;
 
   for (int a = 0; a < eNoN; a++) {
-     Vd = Vd + N(a)*al(i,a);
+     Vd = Vd + N(a)*al(eq.s,a);
 
-     Vx(0) = Vx(0) + Nx(0,a)*yl(i,a);
-     Vx(1) = Vx(1) + Nx(1,a)*yl(i,a);
-     Vx(2) = Vx(2) + Nx(2,a)*yl(i,a);
+     Vx(0) = Vx(0) + Nx(0,a)*yl(eq.s,a);
+     Vx(1) = Vx(1) + Nx(1,a)*yl(eq.s,a);
+     Vx(2) = Vx(2) + Nx(2,a)*yl(eq.s,a);
 
      DNx(0,a) = D(0,0)*Nx(0,a) + D(0,1)*Nx(1,a) + D(0,2)*Nx(2,a);
      DNx(1,a) = D(1,0)*Nx(0,a) + D(1,1)*Nx(1,a) + D(1,2)*Nx(2,a);
@@ -300,25 +296,8 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       continue;
     }
 
-    // Directional conductivity contributions must fit the intrinsic mesh
-    // dimension. Purely isotropic domains do not require fiber directions.
+    // Local fiber conductivities.
     const auto& fiber_conductivities = eq.dmn[cDmn].cep.D;
-    if (fiber_conductivities.size() > insd) {
-      throw std::runtime_error(
-          "[construct_cep] CEP domain " +
-          std::to_string(eq.dmn[cDmn].Id) + " defines " +
-          std::to_string(fiber_conductivities.size()) + " directional conductivity "
-          "value(s), but mesh '" + lM.name + "' supports at most " +
-          std::to_string(insd) + ".");
-    }
-    if (fiber_conductivities.size() != 0 && !lM.lFib &&
-        !lM.fibers.has_fibers()) {
-      throw std::runtime_error(
-          "[construct_cep] Directional conductivity requires fiber "
-          "directions on mesh '" + lM.name + "'.");
-    }
-    // Fiber-only anisotropy uses the raw fiber family. Sheet / sheet-normal
-    // conductivity needs a completed orthonormal basis.
     const bool orthonormalize_fibers = fiber_conductivities.size() > 1;
 
     // Update shape functions for NURBS
@@ -345,6 +324,7 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     lK = 0.0;
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
+    Array<double> fibers;
 
     for (int g = 0; g < lM.nG; g++) {
       if (g == 0 || !lM.lShpF) {
@@ -368,22 +348,16 @@ void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       dmsg << "lM.w(g): " << lM.w(g);
       #endif
 
-      if (insd == 3) {
-        Array<double> fibers;
+      if (insd == 3 || insd == 2) {
         if (fiber_conductivities.size() != 0) {
           fibers = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
         }
-        cep_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
-
-      } else if (insd == 2) {
-        Array<double> fibers;
-        if (fiber_conductivities.size() != 0) {
-          fibers = lM.fibers.get_quadrature_fibers(
-            nsd, g, e, orthonormalize_fibers);
+        if (insd == 3) {
+          cep_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
+        } else {
+          cep_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
         }
-        cep_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, fibers, lR, lK);
-
       } else if (insd == 1) {
         cep_1d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, lR, lK);
       }

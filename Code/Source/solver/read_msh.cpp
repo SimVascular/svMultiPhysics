@@ -1510,9 +1510,12 @@ void read_msh(Simulation* simulation)
   }
 
   // Read fiber orientations after all meshes have their global element counts.
-  for (int iM = 0; iM < com_mod.nMsh; ++iM) {
-    com_mod.msh[iM].fibers.read(*simulation->parameters.mesh_parameters[iM],
-        com_mod.msh[iM], com_mod.nsd);
+  // Remeshing keeps existing fiber state (constant only; point/cell are rejected).
+  if (!com_mod.resetSim) {
+    for (int iM = 0; iM < com_mod.nMsh; ++iM) {
+      com_mod.msh[iM].fibers.read(*simulation->parameters.mesh_parameters[iM],
+          com_mod.msh[iM], com_mod.nsd);
+    }
   }
 
   // Read prestress data.
