@@ -74,6 +74,25 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 - Uses `kt3k/license_checker` to verify copyright headers in `.h` and `.cpp` files
 - Fails the workflow if any files are missing proper copyright notices
 
+### 6. Review Policy Workflow (`workflows/review-policy.yml`)
+
+The required `review-policy` check normally requires two approvals from eligible reviewers with write access. A Refactoring Team member can apply one of the following labels to allow one approval from an eligible member of that team other than the PR author:
+
+| Label | Ordinary source changes | Workflow, action, or review-policy changes |
+| --- | --- | --- |
+| `OOP Refactor` | One approval | Two approvals |
+| `software engineering` | One approval | One approval |
+
+The `software engineering` exception includes changes to the review-policy script and its own workflows. When both labels are present, any authorized applicable label can grant the exception. Labels applied by someone outside the Refactoring Team are removed by the policy workflow. The PR author's approval never counts, and an eligible review requesting changes blocks the check. A potentially truncated changed-file list still requires two approvals.
+
+The workflow reevaluates open PRs when labels, PRs, or reviews change, when policy changes reach `main`, and on its scheduled refresh. It runs the policy code from `main`, so the PR introducing a policy change is evaluated under the policy already on `main`.
+
+Run the policy tests locally with Node.js 22 or newer:
+
+```sh
+node --test .github/scripts/review-policy.test.mjs
+```
+
 ## Testing Actions
 
 ### 1. Test Ubuntu Action (`actions/test-ubuntu/action.yml`)
