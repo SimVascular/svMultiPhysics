@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['s_0',['s',['../classeq_type.html#a0d6487ce5865cd71c9e3bcb78cbb1b77',1,'eqType::s'],['../classmat__models_1_1_viscous_response.html#ad4bc029099472088c28949b3b83c33d3',1,'mat_models::ViscousResponse::S()']]],
+  ['s_0',['s',['../classmat__models_1_1_viscous_response.html#ad4bc029099472088c28949b3b83c33d3',1,'mat_models::ViscousResponse::S()'],['../classeq_type.html#a0d6487ce5865cd71c9e3bcb78cbb1b77',1,'eqType::s']]],
   ['sac_5fcoefficient_1',['sac_coefficient',['../struct_ionic_model_trajectory_configuration.html#a037d0a21186057e828cfe8e8867bb106',1,'IonicModelTrajectoryConfiguration']]],
   ['save_5fstate_2',['save_state',['../class_coupled_boundary_condition.html#adf138ccf8065f6e32ca546a235730a0b',1,'CoupledBoundaryCondition']]],
   ['saveats_3',['saveATS',['../class_com_mod.html#af9e19449e4ebc131429a6086250550a8',1,'ComMod']]],

@@ -116,16 +116,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a60db2b7a89f7dc7834e1574b32a78ca2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the evaluator for a given element.  <br /></td></tr>
 <tr class="separator:a60db2b7a89f7dc7834e1574b32a78ca2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49b8beeaaf7f4fc168b4fd975f2f9920" id="r_a49b8beeaaf7f4fc168b4fd975f2f9920"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_active_stress_1_1_evaluator.html#a49b8beeaaf7f4fc168b4fd975f2f9920">clear</a> ()</td></tr>
-<tr class="memdesc:a49b8beeaaf7f4fc168b4fd975f2f9920"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset this evaluator so that <a class="el" href="class_active_stress_1_1_evaluator.html#aa79803bc530c90ec3d576ab103092961">evaluate</a> returns zero tension, until the next call to <a class="el" href="class_active_stress_1_1_evaluator.html#a60db2b7a89f7dc7834e1574b32a78ca2">update</a>.  <br /></td></tr>
+<tr class="memdesc:a49b8beeaaf7f4fc168b4fd975f2f9920"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset this evaluator so that <a class="el" href="class_active_stress_1_1_evaluator.html#a3bc2fdcd370488e75586ec3cf98051a4">evaluate</a> returns zero tension, until the next call to <a class="el" href="class_active_stress_1_1_evaluator.html#a60db2b7a89f7dc7834e1574b32a78ca2">update</a>.  <br /></td></tr>
 <tr class="separator:a49b8beeaaf7f4fc168b4fd975f2f9920"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa79803bc530c90ec3d576ab103092961" id="r_aa79803bc530c90ec3d576ab103092961"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:aa79803bc530c90ec3d576ab103092961"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="struct_active_stress_1_1_active_tension.html">ActiveTension</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_active_stress_1_1_evaluator.html#aa79803bc530c90ec3d576ab103092961">evaluate</a> (const Eigen::Ref&lt; const Eigen::VectorXd &gt; &amp;N, const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">mat_fun::Matrix</a>&lt; nsd &gt; &amp;F, const Eigen::Ref&lt; const Eigen::Matrix&lt; double, nsd, Eigen::Dynamic &gt; &gt; &amp;fN) const</td></tr>
-<tr class="memdesc:aa79803bc530c90ec3d576ab103092961"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension at a quadrature point.  <br /></td></tr>
-<tr class="separator:aa79803bc530c90ec3d576ab103092961"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bf6e865d7f0981d0cecc157181d486f" id="r_a2bf6e865d7f0981d0cecc157181d486f"><td class="memTemplParams" colspan="2"><a id="a2bf6e865d7f0981d0cecc157181d486f" name="a2bf6e865d7f0981d0cecc157181d486f"></a>
+<tr class="memitem:a3bc2fdcd370488e75586ec3cf98051a4" id="r_a3bc2fdcd370488e75586ec3cf98051a4"><td class="memTemplParams" colspan="2">template&lt;int nsd&gt; </td></tr>
+<tr class="memitem:a3bc2fdcd370488e75586ec3cf98051a4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="struct_active_stress_1_1_active_tension.html">ActiveTension</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_active_stress_1_1_evaluator.html#a3bc2fdcd370488e75586ec3cf98051a4">evaluate</a> (const Eigen::Ref&lt; const Eigen::VectorXd &gt; &amp;N, const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">mat_fun::Matrix</a>&lt; nsd &gt; &amp;F, const Eigen::Ref&lt; const Eigen::Matrix&lt; double, nsd, Eigen::Dynamic &gt; &gt; &amp;fibers) const</td></tr>
+<tr class="memdesc:a3bc2fdcd370488e75586ec3cf98051a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the active tension at a quadrature point.  <br /></td></tr>
+<tr class="separator:a3bc2fdcd370488e75586ec3cf98051a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e06939c1929e5049c85324deb1a40fb" id="r_a8e06939c1929e5049c85324deb1a40fb"><td class="memTemplParams" colspan="2"><a id="a8e06939c1929e5049c85324deb1a40fb" name="a8e06939c1929e5049c85324deb1a40fb"></a>
 template&lt;int nsd&gt; </td></tr>
-<tr class="memitem:a2bf6e865d7f0981d0cecc157181d486f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="struct_active_stress_1_1_active_tension.html">ActiveStress::ActiveTension</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>evaluate</b> (const Eigen::Ref&lt; const Eigen::VectorXd &gt; &amp;N, const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">mat_fun::Matrix</a>&lt; nsd &gt; &amp;F, const Eigen::Ref&lt; const Eigen::Matrix&lt; double, nsd, Eigen::Dynamic &gt; &gt; &amp;fN) const</td></tr>
-<tr class="separator:a2bf6e865d7f0981d0cecc157181d486f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e06939c1929e5049c85324deb1a40fb"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="struct_active_stress_1_1_active_tension.html">ActiveStress::ActiveTension</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>evaluate</b> (const Eigen::Ref&lt; const Eigen::VectorXd &gt; &amp;N, const <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">mat_fun::Matrix</a>&lt; nsd &gt; &amp;F, const Eigen::Ref&lt; const Eigen::Matrix&lt; double, nsd, Eigen::Dynamic &gt; &gt; &amp;fibers) const</td></tr>
+<tr class="separator:a8e06939c1929e5049c85324deb1a40fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Helper to evaluate active tension at quadrature points. </p>
@@ -154,13 +154,13 @@ template&lt;int nsd&gt; </td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reset this evaluator so that <a class="el" href="class_active_stress_1_1_evaluator.html#aa79803bc530c90ec3d576ab103092961">evaluate</a> returns zero tension, until the next call to <a class="el" href="class_active_stress_1_1_evaluator.html#a60db2b7a89f7dc7834e1574b32a78ca2">update</a>. </p>
+<p>Reset this evaluator so that <a class="el" href="class_active_stress_1_1_evaluator.html#a3bc2fdcd370488e75586ec3cf98051a4">evaluate</a> returns zero tension, until the next call to <a class="el" href="class_active_stress_1_1_evaluator.html#a60db2b7a89f7dc7834e1574b32a78ca2">update</a>. </p>
 <p>Used for elements whose domain has no active stress model. </p>
 
 </div>
 </div>
-<a id="aa79803bc530c90ec3d576ab103092961" name="aa79803bc530c90ec3d576ab103092961"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa79803bc530c90ec3d576ab103092961">&#9670;&#160;</a></span>evaluate()</h2>
+<a id="a3bc2fdcd370488e75586ec3cf98051a4" name="a3bc2fdcd370488e75586ec3cf98051a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bc2fdcd370488e75586ec3cf98051a4">&#9670;&#160;</a></span>evaluate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -183,7 +183,7 @@ template&lt;int nsd&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const Eigen::Ref&lt; const Eigen::Matrix&lt; double, nsd, Eigen::Dynamic &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>fN</em>&#160;</td>
+          <td class="paramname"><em>fibers</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -198,7 +198,7 @@ template&lt;int nsd&gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">N</td><td>Shape functions at the quadrature point, of the same nodes the state was gathered at by <a class="el" href="class_active_stress_1_1_evaluator.html#a60db2b7a89f7dc7834e1574b32a78ca2">update</a>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">F</td><td>Deformation gradient at the quadrature point. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">fN</td><td>Fiber directions of the element, one per column, the first column being the fiber direction itself.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fibers</td><td>Fiber directions of the element, one per column, the first column being the fiber direction itself.</td></tr>
   </table>
   </dd>
 </dl>

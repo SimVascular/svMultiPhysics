@@ -78,10 +78,10 @@ var searchData=
   ['ionic_5fmodel_75',['ionic_model',['../classcep_model_type.html#a88c28fd3839cb1634a3fa9de77b2e65c',1,'cepModelType']]],
   ['ionic_5fmodels_76',['ionic_models',['../class_domain_parameters.html#abf4b99b072002c79e4247f1b83284b2c',1,'DomainParameters']]],
   ['ionicinitialstateparameters_77',['ionicinitialstateparameters',['../class_ionic_initial_state_parameters.html#a7241cd1d558b5dca511885199796d383',1,'IonicInitialStateParameters::IonicInitialStateParameters()'],['../class_ionic_initial_state_parameters.html',1,'IonicInitialStateParameters']]],
-  ['ionicmodel_78',['ionicmodel',['../class_ionic_model.html',1,'IonicModel'],['../class_ionic_model.html#a0cd4651caa1256f01f9e78fad54063a0',1,'IonicModel::IonicModel(const InitialStates &amp;initial_X_, const InitialStates &amp;initial_Xg_, const double Vrest_)'],['../class_ionic_model.html#ab2b88a93ad5292a828d81b7e4ba7e5df',1,'IonicModel::IonicModel(const InitialStates &amp;initial_X_, const InitialStates &amp;initial_Xg_, const double Vrest_, const double Vscale_, const double Tscale_, const double Voffset_)']]],
+  ['ionicmodel_78',['ionicmodel',['../class_ionic_model.html#a0cd4651caa1256f01f9e78fad54063a0',1,'IonicModel::IonicModel()'],['../class_ionic_model.html',1,'IonicModel'],['../class_ionic_model.html#ab2b88a93ad5292a828d81b7e4ba7e5df',1,'IonicModel::IonicModel()']]],
   ['ionicmodelparameters_79',['ionicmodelparameters',['../class_ionic_model_parameters.html',1,'IonicModelParameters'],['../class_ionic_model_parameters.html#ae9f4797f55c4f6a8a1762dd477aafc52',1,'IonicModelParameters::IonicModelParameters()']]],
   ['ionicmodeltrajectoryconfiguration_80',['IonicModelTrajectoryConfiguration',['../struct_ionic_model_trajectory_configuration.html',1,'']]],
-  ['ionicmodeltrajectorytest_81',['ionicmodeltrajectorytest',['../class_ionic_model_trajectory_test.html#a8a2adb8108c8ec71b0c4fe14635e0ded',1,'IonicModelTrajectoryTest::IonicModelTrajectoryTest()'],['../class_ionic_model_trajectory_test.html',1,'IonicModelTrajectoryTest&lt; ConcreteModel &gt;']]],
+  ['ionicmodeltrajectorytest_81',['ionicmodeltrajectorytest',['../class_ionic_model_trajectory_test.html',1,'IonicModelTrajectoryTest&lt; ConcreteModel &gt;'],['../class_ionic_model_trajectory_test.html#a8a2adb8108c8ec71b0c4fe14635e0ded',1,'IonicModelTrajectoryTest::IonicModelTrajectoryTest()']]],
   ['iotype_82',['ioType',['../classio_type.html',1,'']]],
   ['is_5ffield_5ftype_83',['is_field_type',['../structsvmp_1_1_f_e_1_1is__field__type.html',1,'svmp::FE']]],
   ['is_5ffield_5ftype_3c_20fieldtype_20_3e_84',['is_field_type&lt; FieldType &gt;',['../structsvmp_1_1_f_e_1_1is__field__type_3_01_field_type_01_4.html',1,'svmp::FE']]],
@@ -94,9 +94,10 @@ var searchData=
   ['is_5findex_5ftype_5fv_91',['is_index_type_v',['../group___f_e___common_types.html#ga6331b0babeaa86e99b9d8930f53b39a8',1,'svmp::FE']]],
   ['is_5finitialized_92',['is_initialized',['../class_boundary_condition.html#afb5fc12d83abbbd9c09a01eb1d047d5e',1,'BoundaryCondition']]],
   ['is_5fvalid_93',['is_valid',['../classsvmp_1_1_f_e_1_1_dof_index.html#aa08c28341b3bbd67910ed3794bbb3e20',1,'svmp::FE::DofIndex']]],
-  ['isreqd_94',['isReqd',['../classrmsh_type.html#afe01d3fba20254f640ae6796827b499e',1,'rmshType']]],
-  ['istim_95',['Istim',['../classcep_model_type.html#a1101cae7b7a92d3b2f33c60c3571aac1',1,'cepModelType']]],
-  ['iteration_96',['iteration',['../classsvmp_1_1_f_e_1_1_convergence_exception.html#a520dbfbf46bea31d8263c4cf9bb76f79',1,'svmp::FE::ConvergenceException']]],
-  ['iterator_97',['Iterator',['../class_vector_1_1_iterator.html',1,'Vector']]],
-  ['itr_98',['itr',['../classeq_type.html#a729d8409204c2eca46848dfdf463e066',1,'eqType::itr'],['../classls_type.html#aa1fc30ce2b86d0aba12f67d208882903',1,'lsType::itr']]]
+  ['isotropic_5fconductivity_94',['isotropic_conductivity',['../class_domain_parameters.html#ab2b3f773c688299d072349e89e0bb805',1,'DomainParameters']]],
+  ['isreqd_95',['isReqd',['../classrmsh_type.html#afe01d3fba20254f640ae6796827b499e',1,'rmshType']]],
+  ['istim_96',['Istim',['../classcep_model_type.html#a1101cae7b7a92d3b2f33c60c3571aac1',1,'cepModelType']]],
+  ['iteration_97',['iteration',['../classsvmp_1_1_f_e_1_1_convergence_exception.html#a520dbfbf46bea31d8263c4cf9bb76f79',1,'svmp::FE::ConvergenceException']]],
+  ['iterator_98',['Iterator',['../class_vector_1_1_iterator.html',1,'Vector']]],
+  ['itr_99',['itr',['../classeq_type.html#a729d8409204c2eca46848dfdf463e066',1,'eqType::itr'],['../classls_type.html#aa1fc30ce2b86d0aba12f67d208882903',1,'lsType::itr']]]
 ];

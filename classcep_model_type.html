@@ -124,9 +124,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a8880458b31a59e1bcf3888d0cc49d362" id="r_a8880458b31a59e1bcf3888d0cc49d362"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a8880458b31a59e1bcf3888d0cc49d362">nG</a> = 0</td></tr>
 <tr class="memdesc:a8880458b31a59e1bcf3888d0cc49d362"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of gating variables.  <br /></td></tr>
 <tr class="separator:a8880458b31a59e1bcf3888d0cc49d362"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2db9f0997d90ca998330590c9349a8f2" id="r_a2db9f0997d90ca998330590c9349a8f2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a2db9f0997d90ca998330590c9349a8f2">nFn</a> = 0</td></tr>
-<tr class="memdesc:a2db9f0997d90ca998330590c9349a8f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of fiber directions.  <br /></td></tr>
-<tr class="separator:a2db9f0997d90ca998330590c9349a8f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf8dae39eb269c22c4d7cc52a4192588" id="r_adf8dae39eb269c22c4d7cc52a4192588"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#adf8dae39eb269c22c4d7cc52a4192588">imyo</a> = 1</td></tr>
 <tr class="memdesc:adf8dae39eb269c22c4d7cc52a4192588"><td class="mdescLeft">&#160;</td><td class="mdescRight">Myocardium zone id, default to epicardium.  <br /></td></tr>
 <tr class="separator:adf8dae39eb269c22c4d7cc52a4192588"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -137,11 +134,11 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:a45d1393149113626952c1a8d982c77bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constant for stretch-activated-currents.  <br /></td></tr>
 <tr class="separator:a45d1393149113626952c1a8d982c77bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08c91758afdcb42bc8350f18d1943cdb" id="r_a08c91758afdcb42bc8350f18d1943cdb"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a08c91758afdcb42bc8350f18d1943cdb">Diso</a> = 0.0</td></tr>
-<tr class="memdesc:a08c91758afdcb42bc8350f18d1943cdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Isotropic conductivity.  <br /></td></tr>
+<tr class="memdesc:a08c91758afdcb42bc8350f18d1943cdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Isotropic conductivity contribution.  <br /></td></tr>
 <tr class="separator:a08c91758afdcb42bc8350f18d1943cdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8781336826bf8adbee47388244504c75" id="r_a8781336826bf8adbee47388244504c75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a8781336826bf8adbee47388244504c75">Dani</a></td></tr>
-<tr class="memdesc:a8781336826bf8adbee47388244504c75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Anisotropic conductivity.  <br /></td></tr>
-<tr class="separator:a8781336826bf8adbee47388244504c75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53c431e3286f5784b55294f5367741d5" id="r_a53c431e3286f5784b55294f5367741d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_vector.html">Vector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a53c431e3286f5784b55294f5367741d5">D</a></td></tr>
+<tr class="memdesc:a53c431e3286f5784b55294f5367741d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Additive conductivities along the fiber, sheet, and sheet-normal directions.  <br /></td></tr>
+<tr class="separator:a53c431e3286f5784b55294f5367741d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1101cae7b7a92d3b2f33c60c3571aac1" id="r_a1101cae7b7a92d3b2f33c60c3571aac1"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classstim_type.html">stimType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcep_model_type.html#a1101cae7b7a92d3b2f33c60c3571aac1">Istim</a></td></tr>
 <tr class="memdesc:a1101cae7b7a92d3b2f33c60c3571aac1"><td class="mdescLeft">&#160;</td><td class="mdescRight">External stimuli applied within this domain.  <br /></td></tr>
 <tr class="separator:a1101cae7b7a92d3b2f33c60c3571aac1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -202,20 +199,25 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a8781336826bf8adbee47388244504c75" name="a8781336826bf8adbee47388244504c75"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8781336826bf8adbee47388244504c75">&#9670;&#160;</a></span>Dani</h2>
+<a id="a53c431e3286f5784b55294f5367741d5" name="a53c431e3286f5784b55294f5367741d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53c431e3286f5784b55294f5367741d5">&#9670;&#160;</a></span>D</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; cepModelType::Dani</td>
+          <td class="memname"><a class="el" href="class_vector.html">Vector</a>&lt;double&gt; cepModelType::D</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Anisotropic conductivity. </p>
-
+<p>Additive conductivities along the fiber, sheet, and sheet-normal directions. </p>
+<p>\(D[0]=D_f\), optional \(D[1]=D_s\), and optional \(D[2]=D_n\). The diffusion tensor is  </p><p class="formulaDsp">
+\[
+  D = D_\mathrm{iso}\, I + \sum_i D[i]\, f_i \otimes f_i.
+\]
+</p>
+ 
 </div>
 </div>
 <a id="a08c91758afdcb42bc8350f18d1943cdb" name="a08c91758afdcb42bc8350f18d1943cdb"></a>
@@ -230,7 +232,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Isotropic conductivity. </p>
+<p>Isotropic conductivity contribution. </p>
 
 </div>
 </div>
@@ -311,22 +313,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Constant for stretch-activated-currents. </p>
-
-</div>
-</div>
-<a id="a2db9f0997d90ca998330590c9349a8f2" name="a2db9f0997d90ca998330590c9349a8f2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2db9f0997d90ca998330590c9349a8f2">&#9670;&#160;</a></span>nFn</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int cepModelType::nFn = 0</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Number of fiber directions. </p>
 
 </div>
 </div>

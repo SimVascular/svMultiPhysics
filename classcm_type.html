@@ -127,6 +127,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a505393a87120d03fcd68e462f5d6254e" id="r_a505393a87120d03fcd68e462f5d6254e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a505393a87120d03fcd68e462f5d6254e">bcast</a> (<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">Array</a>&lt; <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a> &gt; &amp;data, <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> std::string &amp;name=&quot;&quot;) <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a></td></tr>
 <tr class="memdesc:a505393a87120d03fcd68e462f5d6254e"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast double array  <br /></td></tr>
 <tr class="separator:a505393a87120d03fcd68e462f5d6254e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f9011a9fcb956fcd16fa8ba62a7fc8c" id="r_a8f9011a9fcb956fcd16fa8ba62a7fc8c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a8f9011a9fcb956fcd16fa8ba62a7fc8c">bcast</a> (<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, <a class="el" href="class_array3.html">Array3</a>&lt; <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a> &gt; &amp;data, <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> std::string &amp;name=&quot;&quot;) <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a></td></tr>
+<tr class="memdesc:a8f9011a9fcb956fcd16fa8ba62a7fc8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast double <a class="el" href="class_array3.html" title="The Array3 template class implements a simple interface to 3D arrays.">Array3</a>  <br /></td></tr>
+<tr class="separator:a8f9011a9fcb956fcd16fa8ba62a7fc8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a506112cbbd42096210ec3304e1eb8f21" id="r_a506112cbbd42096210ec3304e1eb8f21"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_type.html#a506112cbbd42096210ec3304e1eb8f21">bcast</a> (<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">int</a> *data) <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a></td></tr>
 <tr class="memdesc:a506112cbbd42096210ec3304e1eb8f21"><td class="mdescLeft">&#160;</td><td class="mdescRight">bcast int  <br /></td></tr>
 <tr class="separator:a506112cbbd42096210ec3304e1eb8f21"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -240,8 +243,44 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The <a class="el" href="classcm_type.html" title="The cmType class stores data and defines methods used for mpi communication.">cmType</a> class stores data and defines methods used for mpi communication. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a8f9011a9fcb956fcd16fa8ba62a7fc8c" name="a8f9011a9fcb956fcd16fa8ba62a7fc8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f9011a9fcb956fcd16fa8ba62a7fc8c">&#9670;&#160;</a></span>bcast() <span class="overload">[1/11]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">void</a> cmType::bcast </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> <a class="el" href="class_cm_mod.html">CmMod</a> &amp;&#160;</td>
+          <td class="paramname"><em>cm_mod</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_array3.html">Array3</a>&lt; <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em> = <code>&quot;&quot;</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>bcast double <a class="el" href="class_array3.html" title="The Array3 template class implements a simple interface to 3D arrays.">Array3</a> </p>
+
+</div>
+</div>
 <a id="a505393a87120d03fcd68e462f5d6254e" name="a505393a87120d03fcd68e462f5d6254e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a505393a87120d03fcd68e462f5d6254e">&#9670;&#160;</a></span>bcast() <span class="overload">[1/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a505393a87120d03fcd68e462f5d6254e">&#9670;&#160;</a></span>bcast() <span class="overload">[2/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -277,7 +316,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a12048bb7d8f2c321c6a4b57ad74cb590" name="a12048bb7d8f2c321c6a4b57ad74cb590"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a12048bb7d8f2c321c6a4b57ad74cb590">&#9670;&#160;</a></span>bcast() <span class="overload">[2/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a12048bb7d8f2c321c6a4b57ad74cb590">&#9670;&#160;</a></span>bcast() <span class="overload">[3/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -313,7 +352,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a70d53a96477e38c9bf9c2a76f5395016" name="a70d53a96477e38c9bf9c2a76f5395016"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70d53a96477e38c9bf9c2a76f5395016">&#9670;&#160;</a></span>bcast() <span class="overload">[3/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a70d53a96477e38c9bf9c2a76f5395016">&#9670;&#160;</a></span>bcast() <span class="overload">[4/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -343,7 +382,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a47609099169d1b124ac6f3783ba3ad19" name="a47609099169d1b124ac6f3783ba3ad19"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a47609099169d1b124ac6f3783ba3ad19">&#9670;&#160;</a></span>bcast() <span class="overload">[4/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a47609099169d1b124ac6f3783ba3ad19">&#9670;&#160;</a></span>bcast() <span class="overload">[5/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -373,7 +412,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a506112cbbd42096210ec3304e1eb8f21" name="a506112cbbd42096210ec3304e1eb8f21"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a506112cbbd42096210ec3304e1eb8f21">&#9670;&#160;</a></span>bcast() <span class="overload">[5/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a506112cbbd42096210ec3304e1eb8f21">&#9670;&#160;</a></span>bcast() <span class="overload">[6/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -403,7 +442,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a89d67b06f822df72e6544e15b2f04e1f" name="a89d67b06f822df72e6544e15b2f04e1f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a89d67b06f822df72e6544e15b2f04e1f">&#9670;&#160;</a></span>bcast() <span class="overload">[6/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a89d67b06f822df72e6544e15b2f04e1f">&#9670;&#160;</a></span>bcast() <span class="overload">[7/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -433,7 +472,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="ab7d99899daee9ef6f07557256eed9f14" name="ab7d99899daee9ef6f07557256eed9f14"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab7d99899daee9ef6f07557256eed9f14">&#9670;&#160;</a></span>bcast() <span class="overload">[7/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7d99899daee9ef6f07557256eed9f14">&#9670;&#160;</a></span>bcast() <span class="overload">[8/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -463,7 +502,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="ac39e95c1b2d953e1e3964639aa652895" name="ac39e95c1b2d953e1e3964639aa652895"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac39e95c1b2d953e1e3964639aa652895">&#9670;&#160;</a></span>bcast() <span class="overload">[8/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac39e95c1b2d953e1e3964639aa652895">&#9670;&#160;</a></span>bcast() <span class="overload">[9/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -493,7 +532,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="a0239d3b3b83d3f3d1bb3fe56bba37356" name="a0239d3b3b83d3f3d1bb3fe56bba37356"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0239d3b3b83d3f3d1bb3fe56bba37356">&#9670;&#160;</a></span>bcast() <span class="overload">[9/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0239d3b3b83d3f3d1bb3fe56bba37356">&#9670;&#160;</a></span>bcast() <span class="overload">[10/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -529,7 +568,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>nProcs</b> = 0</td></t
 </div>
 </div>
 <a id="abed8108f0396e57e2bf83e68640a335e" name="abed8108f0396e57e2bf83e68640a335e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abed8108f0396e57e2bf83e68640a335e">&#9670;&#160;</a></span>bcast() <span class="overload">[10/10]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#abed8108f0396e57e2bf83e68640a335e">&#9670;&#160;</a></span>bcast() <span class="overload">[11/11]</span></h2>
 
 <div class="memitem">
 <div class="memproto">

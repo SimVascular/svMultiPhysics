@@ -1,9 +1,9 @@
 var searchData=
 [
-  ['d_5ffibers_0',['d_fibers',['../struct_active_stress_1_1_active_tension.html#afd43f25f847dd0d463301bc013ea7971',1,'ActiveStress::ActiveTension']]],
-  ['d_5fsheet_5fnormals_1',['d_sheet_normals',['../struct_active_stress_1_1_active_tension.html#a40f561e4f9c5cc98826ecd57dbdba733',1,'ActiveStress::ActiveTension']]],
-  ['d_5fsheets_2',['d_sheets',['../struct_active_stress_1_1_active_tension.html#a50c477e26406afd55951cfb7ecc9014a',1,'ActiveStress::ActiveTension']]],
-  ['dani_3',['Dani',['../classcep_model_type.html#a8781336826bf8adbee47388244504c75',1,'cepModelType']]],
+  ['d_0',['D',['../classcep_model_type.html#a53c431e3286f5784b55294f5367741d5',1,'cepModelType']]],
+  ['d_5ffibers_1',['d_fibers',['../struct_active_stress_1_1_active_tension.html#afd43f25f847dd0d463301bc013ea7971',1,'ActiveStress::ActiveTension']]],
+  ['d_5fsheet_5fnormals_2',['d_sheet_normals',['../struct_active_stress_1_1_active_tension.html#a40f561e4f9c5cc98826ecd57dbdba733',1,'ActiveStress::ActiveTension']]],
+  ['d_5fsheets_3',['d_sheets',['../struct_active_stress_1_1_active_tension.html#a50c477e26406afd55951cfb7ecc9014a',1,'ActiveStress::ActiveTension']]],
   ['db_4',['dB',['../classls_type.html#ad8cafee67652ba89cc53125a4dac5efa',1,'lsType']]],
   ['derivative_5fstep_5',['derivative_step',['../struct_active_stress_trajectory_configuration.html#a5eeffa03d7331d0cd0eeca810f910ebc',1,'ActiveStressTrajectoryConfiguration']]],
   ['derivative_5ftolerance_6',['derivative_tolerance',['../struct_active_stress_trajectory_configuration.html#a5c3318ecaf5c82b06aaacebf2ff8cbf2',1,'ActiveStressTrajectoryConfiguration']]],
@@ -15,7 +15,7 @@ var searchData=
   ['diso_12',['Diso',['../classcep_model_type.html#a08c91758afdcb42bc8350f18d1943cdb',1,'cepModelType']]],
   ['dmn_13',['dmn',['../classeq_type.html#a8444f77be8c6f85297aca3c3ce9eb1ec',1,'eqType']]],
   ['dmnib_14',['dmnIB',['../classeq_type.html#ac9596dcfa3a9f0e7505758df1783bcb0',1,'eqType']]],
-  ['dmnid_15',['dmnid',['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId'],['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID']]],
+  ['dmnid_15',['dmnid',['../classib_type.html#aa9af017514727ca16716c5860dae9755',1,'ibType::dmnID'],['../class_com_mod.html#af4c58496f29910587451362895704511',1,'ComMod::dmnId']]],
   ['dof_16',['dof',['../classeq_type.html#ad256e1ab17832d3c425de3925678a742',1,'eqType::dof'],['../class_com_mod.html#a2e33f05e98147d2b0e32c410fe24265f',1,'ComMod::dof']]],
   ['double_5fparameters_17',['double_parameters',['../class_active_stress_model_parameters.html#a2d4632add24457cacdcad8611c521557',1,'ActiveStressModelParameters']]],
   ['dt_18',['dt',['../classcep_model_type.html#a9150e6fecfe73b9e008600f0c4211cc1',1,'cepModelType::dt'],['../class_com_mod.html#a8a94399601d9bfca1102b5e5be27a055',1,'ComMod::dt']]],
