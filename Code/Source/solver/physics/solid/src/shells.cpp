@@ -32,7 +32,8 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
   #ifdef debug_construct_shell
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "lM.nFn: " << lM.nFn;
+  dmsg << "input fiber directions: "
+       << lM.fibers.get_num_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   dmsg << "lM.eNoN: " << lM.eNoN;
   #endif
@@ -50,11 +51,6 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     eNoN = 2 * eNoN;
   }
 
-  int nFn = lM.nFn;
-  if (nFn == 0) {
-    nFn = 1;
-  }
-
   // Initialize tensor operations
   mat_fun::ten_init(2);
 
@@ -62,7 +58,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
   //
   Vector<int> ptr(eNoN);
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
-                bfl(nsd,eNoN), fN(3,nFn), lR(dof,eNoN);
+                bfl(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN); 
 
   // Loop over all elements of mesh
@@ -74,6 +70,9 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     if (cPhys != EquationType::phys_shell) {
       continue;
     }
+    const bool orthonormalize_fibers =
+      mat_models::requires_orthonormal_fiber_basis(
+        eq.dmn[cDmn].stM.isoType);
 
 #if 0
     dmsg << " " << " ";
@@ -122,17 +121,6 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
       }
     }
 
-    //dmsg << "lM.fN.size(): " << lM.fN.size();
-    if (lM.fN.size() != 0) {
-      for (int iFn = 0; iFn < nFn; iFn++) {
-        for (int i = 0; i < 3; i++) {
-          fN(i,iFn) = lM.fN(i+nsd*iFn,e);
-        }
-      }
-    } else {
-      fN = 0.0;
-    }
-
     #ifdef debug_construct_shell
     dmsg << "-------------------" << "-------------------";
     dmsg << "ptr: " << ptr;
@@ -142,7 +130,14 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     //  Constant strain triangles, no numerical integration
     //
     if (lM.eType == ElementType::TRI3) {
-      shell_cst(com_mod, lM, e, eNoN, nFn, fN, al, yl, dl, xl, bfl, ptr);
+      Array<double> fibers;
+      if (!lM.fibers.has_fibers()) {
+        fibers = Fibers::zero_fibers(nsd);
+      } else {
+        fibers = lM.fibers.get_quadrature_fibers(
+          nsd, 0, e, orthonormalize_fibers);
+      }
+      shell_cst(com_mod, lM, e, eNoN, fibers, al, yl, dl, xl, bfl, ptr);
 
     } else {
       lR = 0.0;
@@ -153,7 +148,14 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
 
       // Gauss integration
       for (int g = 0; g < lM.nG; g++) {
-        shell_3d(com_mod, lM, g, eNoN, nFn, fN, al, yl, dl, xl, bfl, lR, lK);
+        Array<double> fibers;
+        if (!lM.fibers.has_fibers()) {
+          fibers = Fibers::zero_fibers(nsd);
+        } else {
+          fibers = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, orthonormalize_fibers);
+        }
+        shell_3d(com_mod, lM, g, eNoN, fibers, al, yl, dl, xl, bfl, lR, lK);
       }
     }
 
@@ -169,7 +171,7 @@ void construct_shell(ComMod& com_mod, const mshType& lM, const SolutionStates& s
 // Construct shell mechanics for higher order elements/NURBS
 //
 void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN, 
-    const int nFn, const Array<double>& fN,
+    const Array<double>& fibers,
     const Array<double>& al, const Array<double>& yl, const Array<double>& dl, const Array<double>& xl,
     const Array<double>& bfl, Array<double>& lR, Array3<double>& lK)
 {
@@ -179,6 +181,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   using namespace consts;
   using namespace mat_fun;
 
+  const int nFn = fibers.ncols();
   const int nsd = com_mod.nsd;
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
@@ -289,8 +292,8 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
 
   for (int iFn = 0; iFn < nFn; iFn++) {
     for (int l = 0; l < 3; l++) { 
-      fNa0(0,iFn) = fNa0(0,iFn) + fN(l,iFn)*aCnv0(l,0);
-      fNa0(1,iFn) = fNa0(1,iFn) + fN(l,iFn)*aCnv0(l,1);
+      fNa0(0,iFn) = fNa0(0,iFn) + fibers(l,iFn)*aCnv0(l,0);
+      fNa0(1,iFn) = fNa0(1,iFn) + fibers(l,iFn)*aCnv0(l,1);
     }
   }
 
@@ -342,7 +345,7 @@ void shell_3d(ComMod& com_mod, const mshType& lM, const int g, const int eNoN,
   Array<double> Sm(3,2);
   double lam3;
 
-  shl_strs_res(com_mod, dmn, nFn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
+  shl_strs_res(com_mod, dmn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
 
   // Variation in the membrane strain
   //
@@ -1181,12 +1184,13 @@ void shell_bf(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
 //
 // Reproduces Fortran SHELLCST.
 //
-void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, const int nFn, const Array<double>& fN,  
+void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, const Array<double>& fibers,
     const Array<double>& al, const Array<double>& yl, const Array<double>& dl, const Array<double>& xl, 
     const Array<double>& bfl, const Vector<int>& ptr)
 {
   using namespace consts;
 
+  const int nFn = fibers.ncols();
   const int nsd = com_mod.nsd;
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
@@ -1199,7 +1203,8 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   #ifdef debug_shell_cst 
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "lM.nFn: " << lM.nFn;
+  dmsg << "input fiber directions: "
+       << lM.fibers.get_num_directions();
   dmsg << "lM.nFs: " << lM.nFs;
   dmsg << "dof: " << dof;
   dmsg << "eNoN: " << eNoN;
@@ -1299,13 +1304,13 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   //
   Array<double> fNa0(2,nFn);
   //dmsg << "nFn: " << nFn;
-  //dmsg << "fN: " << fN;
+  //dmsg << "fibers: " << fibers;
   //dmsg << "aCnv0: " << aCnv0;
 
   for (int iFn = 0; iFn < nFn; iFn++) {
     for (int l = 0; l < 3; l++) {
-      fNa0(0,iFn) = fNa0(0,iFn) + fN(l,iFn)*aCnv0(l,0);
-      fNa0(1,iFn) = fNa0(1,iFn) + fN(l,iFn)*aCnv0(l,1);
+      fNa0(0,iFn) = fNa0(0,iFn) + fibers(l,iFn)*aCnv0(l,0);
+      fNa0(1,iFn) = fNa0(1,iFn) + fibers(l,iFn)*aCnv0(l,1);
     }
   }
   //dmsg << "fNa0: " << fNa0;
@@ -1391,7 +1396,7 @@ void shell_cst(ComMod& com_mod, const mshType& lM, const int e, const int eNoN, 
   Array3<double> Dm(3,3,3); 
   Array<double> Sm(3,2);
   double lam3;
-  shl_strs_res(com_mod, dmn, nFn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
+  shl_strs_res(com_mod, dmn, fNa0, aa_0, aa_x, bb_0, bb_x, lam3, Sm, Dm);
 
   /*
   dmsg << " " << " ";
@@ -1708,11 +1713,13 @@ void shell_fp(ComMod& com_mod, const int eNoN, const double w, const Vector<doub
 //
 // Reproduces Fortan SHL_STRS_RES.
 //
-void shl_strs_res(const ComMod& com_mod, const dmnType& lDmn, const int nFn, const Array<double>& fNa0, 
+void shl_strs_res(const ComMod& com_mod, const dmnType& lDmn, const Array<double>& fNa0, 
     const double aa_0[2][2], const double aa_x[2][2], const double bb_0[2][2], const double bb_x[2][2], 
     double& lam3, Array<double>& Sm, Array3<double>& Dm)
 {
   using namespace consts;
+
+  const int nFn = fNa0.ncols();
 
   #define n_debug_shl_strs_res
   #ifdef debug_shl_strs_res
