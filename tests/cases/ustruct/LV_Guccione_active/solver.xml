@@ -31,8 +31,8 @@
       <Face_file_path> mesh/P1/mesh-surfaces/base.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction_file_path> mesh/P1/fibersLong.vtu </Fiber_direction_file_path> 
-  <Fiber_direction_file_path> mesh/P1/fibersSheet.vtu </Fiber_direction_file_path> 
+  <Fiber_direction_from_file_cells> mesh/P1/fibersLong.vtu </Fiber_direction_from_file_cells> 
+  <Fiber_direction_from_file_cells> mesh/P1/fibersSheet.vtu </Fiber_direction_from_file_cells> 
 
   <!-- Mesh is in mm -->
 

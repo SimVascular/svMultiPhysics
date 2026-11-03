@@ -4,41 +4,77 @@ description: 'Run tests on macOS with all dependencies'
 runs:
   using: 'composite'
   steps:
+    - name: Report macOS runner hardware
+      shell: bash
+      run: |
+        echo "Architecture: $(uname -m)"
+        echo "Hardware model: $(sysctl -n hw.model)"
+        echo "Physical CPUs: $(sysctl -n hw.physicalcpu)"
+        echo "Logical CPUs: $(sysctl -n hw.logicalcpu)"
+        echo "Memory (bytes): $(sysctl -n hw.memsize)"
+        system_profiler SPHardwareDataType | awk '/Chip:|Processor Name:|Total Number of Cores:/ { print }'
+
     - name: Install macOS dependencies
       shell: bash
       run: |
         brew reinstall -v gcc
         brew install -v vtk openblas lapack mesa open-mpi qt
-        brew install lcov
+        if [ "$SVMP_OPTIMIZED_CI" != true ]; then
+          brew install lcov
+        fi
         sudo ln -s /usr/local/opt/qt5/mkspecs /usr/local/mkspecs
         sudo ln -s /usr/local/opt/qt5/plugins /usr/local/plugins
         
     - name: Install Miniconda
       shell: bash
       run: |
-        curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-        bash Miniconda3-latest-MacOSX-x86_64.sh -b -p $HOME/miniconda
-        echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+        installer="Miniconda3-latest-MacOSX-$(uname -m).sh"
+        curl -fsSLO "https://repo.anaconda.com/miniconda/$installer"
+        bash "$installer" -b -p "$HOME/miniconda"
+        echo "$HOME/miniconda/bin" >> "$GITHUB_PATH"
+
+    - name: Install compiler cache
+      shell: bash
+      run: |
+        brew install ccache
+        echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+
+    - name: Restore compiler cache
+      uses: actions/cache/restore@v4
+      with:
+        path: .ccache
+        key: macos-${{ runner.arch }}-${{ env.SVMP_OPTIMIZED_CI == 'true' && 'ccache-v1' || 'ccache-full-v1' }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: macos-${{ runner.arch }}-${{ env.SVMP_OPTIMIZED_CI == 'true' && 'ccache-v1' || 'ccache-full-v1' }}-
+
+    - name: Initialize compiler cache
+      shell: bash
+      run: |
+        ccache -M 1G
+        ccache -z
         
     - name: Build svZeroDSolver
       shell: bash
       run: |
-        git clone https://github.com/SimVascular/svZeroDSolver.git
-        cd svZeroDSolver
-        mkdir build
-        cd build
-        cmake .. \
-          -DCMAKE_PROJECT_svZeroDSolver_INCLUDE="$GITHUB_WORKSPACE/Code/ThirdParty/eigen/share/eigen3/cmake/Eigen3Config.cmake" \
-          -DFETCHCONTENT_SOURCE_DIR_EIGEN="$GITHUB_WORKSPACE/Code/ThirdParty/eigen"
-        make -j2
+        source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+        ci_build_svzerodsolver "$(sysctl -n hw.physicalcpu)"
         
     - name: Build svMultiPhysics
       shell: bash
       run: |
-        mkdir build
-        cd build
-        cmake -DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON -DENABLE_UNIT_TEST=ON ..
-        make -j2
+        source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+        ci_build_solver build "$(sysctl -n hw.physicalcpu)"
+
+    - name: Report compiler cache statistics
+      shell: bash
+      run: ccache -s
+
+    - name: Save compiler cache
+      uses: actions/cache/save@v4
+      with:
+        path: .ccache
+        key: macos-${{ runner.arch }}-${{ env.SVMP_OPTIMIZED_CI == 'true' && 'ccache-v1' || 'ccache-full-v1' }}-${{ github.run_id }}-${{ github.run_attempt }}
         
     - name: Install test dependencies
       shell: bash
@@ -49,9 +85,8 @@ runs:
     - name: Run integration tests
       shell: bash
       run: |
-        git lfs pull
-        cd tests
-        conda run -n svmultiphysics pytest -v -rfEP --durations=0
+        source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+        ci_run_integration_tests 2 1
         
     - name: Run unit tests
       shell: bash

@@ -21,7 +21,7 @@ using namespace svmp::FE::basis;
 
 namespace {
 
-using Point = math::Vector<double, 3>;
+using Point = svmp::math::Vector<double, 3>;
 
 // Tolerance convention (set from measured residuals, not guessed). Identities that
 // share a generator -- node coordinates, the lattice forward-image, span vs vector

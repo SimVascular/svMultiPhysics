@@ -26,7 +26,7 @@ namespace {
 constexpr double kHessianInvariantTol = double(1e-12);
 
 void numerical_gradient_helper(const BasisFunction& basis,
-                               const math::Vector<double, 3>& xi,
+                               const svmp::math::Vector<double, 3>& xi,
                                std::vector<Gradient>& gradients,
                                double eps = double(1e-6))
 {
@@ -36,8 +36,8 @@ void numerical_gradient_helper(const BasisFunction& basis,
 
     for (int d = 0; d < basis.dimension(); ++d) {
         const std::size_t sd = static_cast<std::size_t>(d);
-        math::Vector<double, 3> xi_p = xi;
-        math::Vector<double, 3> xi_m = xi;
+        svmp::math::Vector<double, 3> xi_p = xi;
+        svmp::math::Vector<double, 3> xi_m = xi;
         xi_p[sd] += eps;
         xi_m[sd] -= eps;
 
@@ -53,7 +53,7 @@ void numerical_gradient_helper(const BasisFunction& basis,
 }
 
 void numerical_hessian_helper(const BasisFunction& basis,
-                              const math::Vector<double, 3>& xi,
+                              const svmp::math::Vector<double, 3>& xi,
                               std::vector<Hessian>& hessians,
                               double eps = double(1e-5))
 {
@@ -62,8 +62,8 @@ void numerical_hessian_helper(const BasisFunction& basis,
 
     for (int i = 0; i < dim; ++i) {
         for (int j = 0; j < dim; ++j) {
-            math::Vector<double, 3> xi_p = xi;
-            math::Vector<double, 3> xi_m = xi;
+            svmp::math::Vector<double, 3> xi_p = xi;
+            svmp::math::Vector<double, 3> xi_m = xi;
             const std::size_t sj = static_cast<std::size_t>(j);
             xi_p[sj] += eps;
             xi_m[sj] -= eps;
@@ -81,7 +81,7 @@ void numerical_hessian_helper(const BasisFunction& basis,
     }
 }
 
-std::vector<math::Vector<double, 3>> sample_points_for(BasisTopology topology) {
+std::vector<svmp::math::Vector<double, 3>> sample_points_for(BasisTopology topology) {
     switch (topology) {
         case BasisTopology::Line:
             return {{double(-0.35), double(0), double(0)}, {double(0.2), double(0), double(0)}};
@@ -101,7 +101,7 @@ std::vector<math::Vector<double, 3>> sample_points_for(BasisTopology topology) {
 }
 
 void expect_gradients_match_numerical(const BasisFunction& basis,
-                                      const std::vector<math::Vector<double, 3>>& points,
+                                      const std::vector<svmp::math::Vector<double, 3>>& points,
                                       double tol,
                                       double eps = double(1e-6))
 {
@@ -125,7 +125,7 @@ void expect_gradients_match_numerical(const BasisFunction& basis,
 }
 
 void expect_hessians_match_numerical(const BasisFunction& basis,
-                                     const std::vector<math::Vector<double, 3>>& points,
+                                     const std::vector<svmp::math::Vector<double, 3>>& points,
                                      double tol,
                                      double eps = double(1e-5))
 {
@@ -152,7 +152,7 @@ void expect_hessians_match_numerical(const BasisFunction& basis,
 }
 
 void expect_partition_hessian_sum_zero(const BasisFunction& basis,
-                                       const math::Vector<double, 3>& xi,
+                                       const svmp::math::Vector<double, 3>& xi,
                                        double tol)
 {
     std::vector<Hessian> hessians;
@@ -179,7 +179,7 @@ void expect_partition_hessian_sum_zero(const BasisFunction& basis,
 }
 
 void expect_hessians_symmetric(const BasisFunction& basis,
-                               const math::Vector<double, 3>& xi,
+                               const svmp::math::Vector<double, 3>& xi,
                                double tol)
 {
     std::vector<Hessian> hessians;
@@ -197,7 +197,7 @@ void expect_hessians_symmetric(const BasisFunction& basis,
 }
 
 void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
-                                        const std::vector<math::Vector<double, 3>>& points,
+                                        const std::vector<svmp::math::Vector<double, 3>>& points,
                                         double tol)
 {
     ASSERT_EQ(basis.dimension(), 2);
@@ -228,7 +228,7 @@ void expect_inactive_z_derivatives_zero(const BasisFunction& basis,
     }
 }
 
-std::vector<math::Vector<double, 3>> serendipity_sample_points(BasisTopology topology) {
+std::vector<svmp::math::Vector<double, 3>> serendipity_sample_points(BasisTopology topology) {
     if (topology == BasisTopology::Quadrilateral) {
         return {{double(0.17), double(-0.31), double(0)}, {double(-0.45), double(0.25), double(0)}};
     }
@@ -265,7 +265,7 @@ TEST(BasisHessians, LagrangeHessiansSumToZeroAndAreSymmetric) {
     const struct Case {
         BasisTopology topology;
         int order;
-        math::Vector<double, 3> xi;
+        svmp::math::Vector<double, 3> xi;
     } cases[] = {
         {BasisTopology::Line, 3, {double(0.15), double(0), double(0)}},
         {BasisTopology::Triangle, 3, {double(0.2), double(0.25), double(0)}},
@@ -286,7 +286,7 @@ TEST(BasisHessians, SerendipityHessiansSumToZeroAndAreSymmetric) {
     const struct Case {
         ElementType type;
         int order;
-        math::Vector<double, 3> xi;
+        svmp::math::Vector<double, 3> xi;
     } cases[] = {
         {ElementType::Quad8, 2, {double(0.17), double(-0.31), double(0)}},
         {ElementType::Hex20, 2, {double(0.2), double(-0.1), double(0.3)}},
@@ -309,7 +309,7 @@ TEST(BasisHessians, SolverMappedVolumeSelectionsSatisfyInvariants) {
         ElementType type;
         BasisType basis_type;
         int order;
-        math::Vector<double, 3> xi;
+        svmp::math::Vector<double, 3> xi;
     } cases[] = {
         {ElementType::Line2, BasisType::Lagrange, 1, {double(0.15), double(0), double(0)}},
         {ElementType::Line3, BasisType::Lagrange, 2, {double(-0.25), double(0), double(0)}},

@@ -1,0 +1,51 @@
+name: Full Tests
+
+on:
+  push:
+    branches:
+      - main
+    # Keep in sync with the relevant filter in tests.yml.
+    paths:
+      - 'Code/**'
+      - 'tests/**'
+      - '.github/**'
+  pull_request:
+    types: [labeled, synchronize]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SVMP_OPTIMIZED_CI: 'false'
+  SVMP_PARALLEL_INTEGRATION_TESTS: 'true'
+  SVMP_TEST_PROCS: '1,3,4'
+
+jobs:
+  test-ubuntu:
+    name: Full Test Ubuntu
+    if: &run_full_tests >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+        ((github.event.action == 'labeled' && github.event.label.name == 'full-tests') ||
+         (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'full-tests'))))
+    runs-on: ubuntu-latest
+    container: simvascular/libraries:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run Ubuntu tests
+        uses: ./.github/actions/test-ubuntu
+        with:
+          codecov-token: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CODECOV_TOKEN || '' }}
+
+  test-macos:
+    name: Full Test macOS
+    if: *run_full_tests
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run macOS tests
+        uses: ./.github/actions/test-macos

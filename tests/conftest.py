@@ -108,8 +108,10 @@ RTOL = {
 # by floating point round-off.
 RTOL_TIME_VALUE = 1.0e-12
 
-# Number of processors to test
-PROCS = [1, 3, 4]
+# MPI rank counts to test; CI selects the fast or full set.
+PROCS = [int(value) for value in os.environ.get("SVMP_TEST_PROCS", "1,3,4").split(",")]
+if not PROCS or any(value < 1 for value in PROCS):
+    raise ValueError("SVMP_TEST_PROCS must be a comma-separated list of positive integers")
 
 
 def read_time_step_size(name_inp):

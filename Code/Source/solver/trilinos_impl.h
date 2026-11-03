@@ -39,7 +39,6 @@
 #include "Tpetra_CrsMatrix.hpp"                      // If you use Tpetra::CrsMatrix
 #include "Tpetra_MultiVector.hpp" 
 #include "Tpetra_Map_decl.hpp"
-#include "NOX_TpetraTypedefs.hpp"
 
 //Belos includes
 #include "BelosSolverFactory_Tpetra.hpp"
