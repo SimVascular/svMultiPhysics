@@ -1,75 +1,76 @@
-# Docker 
-In order to use the dockerfiles and/or docker containers, Docker Desktop must be installed. Docker [installation](https://www.docker.com/products/docker-desktop/) is straightforward. 
-Once installed, Docker engine can be started using the graphic interface of Docker. When the engine is running, the containers can be built and run using the terminal's commands.
-It is suggested to change the resources that Docker engine is using, since containers may require more memory than the default allocation. In order to do this, open Docker Desktop, then click on settings->resources, adjust based on personal needs. It is also useful to change the default storage limite of the Docker Engine in settings->Docker Engine and change the builder storage default.
+# Docker images
 
-## Docker containers
-A container is an isolated environment based on a specific operating system (OS) (typically Linux based), in which a solver can be built. The environment created in a container includes all the dependencies of the solver that needs to be built. Once the container is created, it can be run on any machine and the solver can be built directly in this virtual environment. 
-In this work the containers are created using software [Docker](https://www.docker.com). A Docker container is built from a dockerfile. After it is created, it is saved as an image that can be copied anywhere is needed or uploaded on the cloud [DockerHub](https://hub.docker.com).
+Docker Engine is required to build and run these images. On macOS, Docker Desktop
+provides the engine; on Linux, Docker Engine can be installed directly. Building
+the dependency image requires substantial CPU, memory, and disk space.
 
-## Dockerfile
-In the folder Docker/ there are three subfolders solver/, ubuntu20/, ubuntu22/ containing a dockerfile each. A dockerfile usually begins with an image import of the OS, which in this case is Ubuntu-20.04 and Ubuntu-22.04. It could also start by importing an image that contain the desired environment such as in the dockerfile in the solver/ folder.
-For more details about the dockerfiles created in this work, refer to the [simvascular DockerHub page](https://registry.hub.docker.com/u/simvascular).
+## Image roles
 
-## Build a container
-In this section the steps to build the image with a pre-compiled svMultiPhysics solver are briefly described. To create the image from the dockerfile provided in Docker/solver, follow the steps below:
-1) build an Ubuntu-based image containing the whole environment in which svMultiPhysics program can be compiled. The provided dockerfiles are based on Ubuntu-20.04 and Ubuntu-22.04, but they can be easily adapted to use the latest version of Ubuntu, by changing the following line in Docker/ubuntu20/dockerfile or Docker/ubuntu22/dockerfile: 
+- `Docker/ubuntu/dockerfile` builds an Ubuntu 26.04 image with the libraries and
+  tools needed to build and test svMultiPhysics. It does not contain a compiled
+  svMultiPhysics solver. This image is not currently built or published by a
+  repository workflow.
+- `Docker/solver/dockerfile` builds svMultiPhysics from the SimVascular GitHub
+  repository in PETSc and Trilinos configurations. Both its builder and final
+  stages use the published `simvascular/libraries:latest` dependency image, not
+  the local Ubuntu 26 image. The repository's Docker publishing workflow uses
+  this Dockerfile and publishes `simvascular/solver:latest` on pushes to `main`.
+
+Despite its tag name, `simvascular/solver:latest` is an svMultiPhysics image;
+it is not the separate Fortran CFD solver. The separately published
+`simvascular/svmultiphysics:latest` also contains svMultiPhysics PETSc and
+Trilinos builds, but the current repository workflow does not publish that tag.
+
+## Build the Ubuntu 26 dependency image
+
+From the repository root, run:
+
+```sh
+docker build --platform linux/amd64 \
+  -f Docker/ubuntu/dockerfile \
+  -t svmp-libraries:ubuntu26 Docker/ubuntu
 ```
-FROM ubuntu:20.04 AS base / FROM ubuntu:22.04 AS base
+
+The current Dockerfile downloads an x86-64 CMake binary, so this build targets
+`linux/amd64`. On Apple Silicon, Docker runs it under emulation. The Dockerfile
+uses `bsdtar` in archive-extracting stages under arm64-to-amd64 emulation to
+avoid a GNU tar failure.
+
+The `svmp-libraries:ubuntu26` tag is local to your machine unless you explicitly
+push it to a registry. Building it does not change either published Docker Hub
+image or the base image used by `Docker/solver/dockerfile`.
+
+## Build the existing solver image
+
+The solver Dockerfile's current steps clone svMultiPhysics and build its PETSc
+and Trilinos configurations using `simvascular/libraries:latest`. From the
+repository root, build it without changing those steps:
+
+```sh
+docker build --platform linux/amd64 \
+  -f Docker/solver/dockerfile \
+  -t svmp-solver:local .
 ```
-to 
-```
-FROM ubuntu:latest AS base
-```
-Build the environmnet Docker image: 
-```
-cd Docker/ubuntu20 or cd Docker/ubuntu22
-```
-```
-docker build -t RepositoryName:tagImage .
-```
-where -t allows the user to set the name for the image created. For example:
-```
-docker build -t libraries:latest .
-```
-2) build the image containing the compiled svMultiPhysics program. This image will be based on the environment created in the previous step (libraries:latest). In order to do this, open the Docker/solver/dockerfile and modify the following lines:
-```
-FROM simvascular/libraries:ubuntu22 AS builder 
-```
-to
-```
-FROM libraries:latest AS builder
-```
-and 
-```
-FROM simvascular/libraries:ubuntu22 AS final 
-```
-to
-```
-FROM libraries:latest AS final
-```
-Build the solver image:
-```
-cd Docker/solver
-```
-```
-docker build -t solver:latest .
-```
-The image include the PETSc-based svMultiPhysics executable in:
-```
+
+The PETSc and Trilinos executables are in:
+
+```text
 /build-petsc/svMultiPhysics-build/bin/svmultiphysics
-```
-and the Trilinos-based svMultiPhysics executable in:
-```
 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics
 ```
-## Run a container
-Once the image is created, it can be run interactively by running the following command:
 
-docker run -it -v FolderToUpload:/NameOfFolder RepositoryName:tagImage
+This solver build uses the published Ubuntu 24.04-based dependency image. It
+does not validate the new Ubuntu 26 dependency image. To test Ubuntu 26, run
+builds and tests inside `svmp-libraries:ubuntu26` instead; that does not require
+changing the existing solver Dockerfile or its publishing workflow.
 
-In this command:
-- -it: means run interactively Docker image
-- -v: mounts a directory 'FolderToUpload' from the host machine in the container where the directory has the name '/NameOfFolder'. For example the directory containing the source code of the solver and all the test cases can be mounted in the container.
+## Run an image
 
-When the container is running interactively, the solver can be built and the test cases can be run. When exiting the container, all the output files inside '/NameOfFolder' are not deleted and they will still be available in the host machine.
+To open a shell and mount a host directory at `/workspace`:
+
+```sh
+docker run --rm -it --platform linux/amd64 \
+  -v /absolute/path/on/host:/workspace svmp-libraries:ubuntu26
+```
+
+Files written under `/workspace` remain on the host after the container exits.
