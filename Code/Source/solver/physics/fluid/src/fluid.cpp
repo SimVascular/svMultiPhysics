@@ -1432,8 +1432,8 @@ void fluid_2d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   // Residual contribution Birkman term 
   // Local residue
   for (int a = 0; a < eNoNw; a++) {
-      lR(0,a) = lR(0,a) + mu*brinkman_inverse_permeability*w*Nw(a)*(u(0)+up(0));
-      lR(1,a) = lR(1,a) + mu*brinkman_inverse_permeability*w*Nw(a)*(u(1)+up(1));
+      lR(0,a) = lR(0,a) + mu*brinkman_inverse_permeability*w*Nw(a)*u(0);
+      lR(1,a) = lR(1,a) + mu*brinkman_inverse_permeability*w*Nw(a)*u(1);
   }
 }
 
@@ -2220,11 +2220,11 @@ void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   // Residual contribution Birkman term 
   // Local residue
   for (int a = 0; a < eNoNw; a++) {
-      lR(0,a) = lR(0,a) + mu*brinkman_inverse_permeability*w*Nw(a)*(u[0]+up[0])
+      lR(0,a) = lR(0,a) + mu*brinkman_inverse_permeability*w*Nw(a)*u[0]
                         + w*Nw(a)*(urisFactorTotal*u[0] - urisValveVelTermTotal[0]);
-      lR(1,a) = lR(1,a) + mu*brinkman_inverse_permeability*w*Nw(a)*(u[1]+up[1])
+      lR(1,a) = lR(1,a) + mu*brinkman_inverse_permeability*w*Nw(a)*u[1]
                         + w*Nw(a)*(urisFactorTotal*u[1] - urisValveVelTermTotal[1]);
-      lR(2,a) = lR(2,a) + mu*brinkman_inverse_permeability*w*Nw(a)*(u[2]+up[2])
+      lR(2,a) = lR(2,a) + mu*brinkman_inverse_permeability*w*Nw(a)*u[2]
                         + w*Nw(a)*(urisFactorTotal*u[2] - urisValveVelTermTotal[2]);
   }
 
