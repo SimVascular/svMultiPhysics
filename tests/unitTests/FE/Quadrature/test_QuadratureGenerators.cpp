@@ -14,6 +14,7 @@
 #include "FE/Quadrature/GaussLobattoQuadrature.h"
 #include "FE/Quadrature/GaussQuadrature.h"
 #include "FE/Quadrature/QuadratureRule.h"
+#include "FE/Quadrature/SymmetricTriangleQuadrature.h"
 #include "FE/Quadrature/TriangleQuadrature.h"
 #include "ReferenceMonomialIntegrals.h"
 
@@ -972,5 +973,30 @@ TEST(TriangleDuffyQualification, IntegratesIndependentGaussAndLobattoFactors)
                 EXPECT_THROW((void)make_triangle_rule(p + 1, u, v), InvalidArgumentException);
             }
         }
+    }
+}
+
+static_assert(max_symmetric_triangle_exactness() == 19);
+static_assert(noexcept(max_symmetric_triangle_exactness()));
+static_assert(std::is_same_v<decltype(&make_symmetric_triangle_rule), QuadratureRule (*)(int)>);
+
+TEST(SymmetricTriangleImplementation, AdvancesEveryRequestToARetainedTable)
+{
+    constexpr std::array<int, 20> degrees{1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 12, 13, 14, 17, 17, 17, 19, 19};
+    expect_same_ordered_rule(make_symmetric_triangle_rule(0), make_triangle_centroid_rule());
+    for (int request = 0; request <= max_symmetric_triangle_exactness(); ++request) {
+        SCOPED_TRACE(request);
+        const auto rule = make_symmetric_triangle_rule(request);
+        EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Triangle);
+        EXPECT_EQ(rule.polynomial_exactness(), degrees[request]);
+        expect_same_ordered_rule(rule, make_symmetric_triangle_rule(degrees[request]));
+    }
+}
+
+TEST(SymmetricTriangleImplementation, RejectsRequestsOutsideSupportedRange)
+{
+    for (const int request : {std::numeric_limits<int>::min(), -1, 20, std::numeric_limits<int>::max()}) {
+        expect_invalid_argument_with_message([request] { (void)make_symmetric_triangle_rule(request); },
+            "Symmetric triangle generator: requested_exactness must be in [0, 19]");
     }
 }
