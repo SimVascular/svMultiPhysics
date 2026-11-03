@@ -1000,3 +1000,127 @@ TEST(SymmetricTriangleImplementation, RejectsRequestsOutsideSupportedRange)
             "Symmetric triangle generator: requested_exactness must be in [0, 19]");
     }
 }
+
+namespace {
+
+struct OrbitSignature {
+    int size;
+    double a = 0.0;
+    double b = 0.0;
+};
+
+struct TableSignature {
+    int degree;
+    std::vector<OrbitSignature> orbits;
+};
+
+// Every retained table as its orbit sizes and leading barycentric coordinates in
+// source order, taken from Dunavant (1985) rather than the production tables.
+const TableSignature kSymmetricTriangleTables[] = {
+    {1, {{1}}},
+    {2, {{3, 1.0 / 6.0}}},
+    {3, {{1}, {3, 0.2}}},
+    {4, {{3, 0.445948490915965}, {3, 0.091576213509771}}},
+    {5, {{1}, {3, 0.470142064105115}, {3, 0.101286507323456}}},
+    {6, {{3, 0.249286745170910}, {3, 0.063089014491502},
+         {6, 0.053145049844817, 0.310352451033784}}},
+    {7, {{1}, {3, 0.260345966079040}, {3, 0.065130102902216},
+         {6, 0.048690315425316, 0.312865496004874}}},
+    {8, {{1}, {3, 0.459292588292723}, {3, 0.170569307751760}, {3, 0.050547228317031},
+         {6, 0.008394777409958, 0.263112829634638}}},
+    {9, {{1}, {3, 0.489682519198738}, {3, 0.437089591492937}, {3, 0.188203535619033},
+         {3, 0.044729513394453}, {6, 0.036838412054736, 0.221962989160766}}},
+    {10, {{1}, {3, 0.485577633383657}, {3, 0.109481575485037},
+          {6, 0.141707219414880, 0.307939838764121}, {6, 0.025003534762686, 0.246672560639903},
+          {6, 0.009540815400299, 0.066803251012200}}},
+    {12, {{3, 0.488217389773805}, {3, 0.439724392294460}, {3, 0.271210385012116},
+          {3, 0.127576145541586}, {3, 0.021317350453210}, {6, 0.115343494534698, 0.275713269685514},
+          {6, 0.022838332222257, 0.281325580989940}, {6, 0.025734050548330, 0.116251915907597}}},
+    {13, {{1}, {3, 0.495048184939705}, {3, 0.468716635109574}, {3, 0.414521336801277},
+          {3, 0.229399572042831}, {3, 0.114424495196330}, {3, 0.024811391363459},
+          {6, 0.094853828379579, 0.268794997058761}, {6, 0.018100773278807, 0.291730066734288},
+          {6, 0.022233076674090, 0.126357385491669}}},
+    {14, {{3, 0.488963910362179}, {3, 0.417644719340454}, {3, 0.273477528308839},
+          {3, 0.177205532412543}, {3, 0.061799883090873}, {3, 0.019390961248701},
+          {6, 0.057124757403648, 0.172266687821356}, {6, 0.092916249356972, 0.336861459796345},
+          {6, 0.014646950055654, 0.298372882136258}, {6, 0.001268330932872, 0.118974497696957}}},
+    {17, {{1}, {3, 0.497170540556774}, {3, 0.482176322624625}, {3, 0.450239969020782},
+          {3, 0.400266239377397}, {3, 0.252141267970953}, {3, 0.162047004658461},
+          {3, 0.075875882260746}, {3, 0.015654726967822}, {6, 0.010186928826919, 0.334319867363658},
+          {6, 0.135440871671036, 0.292221537796944}, {6, 0.054423924290583, 0.319574885423190},
+          {6, 0.012868560833637, 0.190704224192292}, {6, 0.067165782413524, 0.180483211648746},
+          {6, 0.014663182224828, 0.080711313679564}}},
+    {19, {{1}, {3, 0.489609987073006}, {3, 0.454536892697893}, {3, 0.401416680649431},
+          {3, 0.255551654403098}, {3, 0.177077942152130}, {3, 0.110061053227952},
+          {3, 0.055528624251840}, {3, 0.012621863777229}, {6, 0.003611417848412, 0.395754787356943},
+          {6, 0.134466754530780, 0.307929983880436}, {6, 0.014446025776115, 0.264566948406520},
+          {6, 0.046933578838178, 0.358539352205951}, {6, 0.002861120350567, 0.157807405968595},
+          {6, 0.223861424097916, 0.075050596975911}, {6, 0.034647074816760, 0.142421601113383},
+          {6, 0.010161119296278, 0.065494628082938}}},
+};
+
+// The (x, y) samples of one orbit, in the order documented by the generator.
+std::vector<std::array<double, 2>> expected_orbit_samples(const OrbitSignature& orbit)
+{
+    const auto [size, a, b] = orbit;
+    if (size == 1) {
+        return {{1.0 / 3.0, 1.0 / 3.0}};
+    }
+    if (size == 3) {
+        const double c = 1.0 - 2.0 * a;
+        return {{a, c}, {a, a}, {c, a}};
+    }
+    const double c = 1.0 - a - b;
+    return {{b, c}, {c, b}, {a, c}, {c, a}, {a, b}, {b, a}};
+}
+
+} // namespace
+
+TEST(SymmetricTriangleQualification, FollowsSourceOrbitOrder)
+{
+    for (const auto& [degree, orbits] : kSymmetricTriangleTables) {
+        SCOPED_TRACE(degree);
+        const auto rule = make_symmetric_triangle_rule(degree);
+        std::size_t q = 0;
+        for (const auto& orbit : orbits) {
+            const auto samples = expected_orbit_samples(orbit);
+            ASSERT_LE(q + samples.size(), rule.num_points());
+            const double weight = rule.weight(q);
+            for (const auto& [x, y] : samples) {
+                EXPECT_NEAR(rule.point(q)[0], x, kFixtureTolerance) << "point=" << q;
+                EXPECT_NEAR(rule.point(q)[1], y, kFixtureTolerance) << "point=" << q;
+                EXPECT_EQ(rule.weight(q), weight) << "point=" << q;
+                ++q;
+            }
+        }
+        EXPECT_EQ(q, rule.num_points());
+    }
+}
+
+TEST(SymmetricTriangleQualification, EveryTableIsExactContainedAndNormalized)
+{
+    constexpr long double tolerance = 256.0L * std::numeric_limits<double>::epsilon();
+    for (const auto& table : kSymmetricTriangleTables) {
+        SCOPED_TRACE(table.degree);
+        const auto rule = make_symmetric_triangle_rule(table.degree);
+        expect_triangle_moments(rule, table.degree);
+        CompensatedSum weights;
+        CompensatedSum absolute_weights;
+        for (std::size_t q = 0; q < rule.num_points(); ++q) {
+            const double x = rule.point(q)[0];
+            const double y = rule.point(q)[1];
+            EXPECT_TRUE(x >= 0.0 && y >= 0.0 && x + y <= 1.0) << "point=" << q;
+            for (std::size_t previous = 0; previous < q; ++previous) {
+                EXPECT_TRUE(x != rule.point(previous)[0] || y != rule.point(previous)[1])
+                    << "point=" << q << " repeats " << previous;
+            }
+            weights.add(rule.weight(q));
+            absolute_weights.add(std::abs(rule.weight(q)));
+        }
+        EXPECT_LE(std::abs(weights.value() - 0.5L), tolerance * std::max(0.5L, absolute_weights.value()));
+        // Only the centroids of degrees 3 and 7 have negative weights.
+        const auto negative_weights = std::count_if(rule.weights().begin(), rule.weights().end(),
+                                                    [](double weight) { return weight < 0.0; });
+        EXPECT_EQ(negative_weights, table.degree == 3 || table.degree == 7 ? 1 : 0);
+    }
+}
