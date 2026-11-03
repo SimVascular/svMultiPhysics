@@ -416,18 +416,11 @@ double Integrator::line_search_step_length(eqType &eq,
     //   changing the assembly code quite invasively, however, and repeatedly
     //   for all the equation types. This should be addressed as part of or
     //   after the refactoring of the assembly.
+    // @todo[michelebucelli] The assembly step might have some other side
+    //   effects besides those restored by restore_starting_point, which would
+    //   make the search not a pure function of the step length. This should be
+    //   considered carefully when refactoring the assembly code.
     assemble_linear_system(eq);
-
-    // The shortest step length is kept without being measured, since there is
-    // nothing left to compare it against. It is still assembled, so that the
-    // states that the assembly updates match the solution the caller applies.
-    if (step_length <= eq.line_search_minimum_step_length) {
-      if (report) {
-        std::cout << "    Line search: keeping the shortest step length "
-                  << step_length << std::endl;
-      }
-      break;
-    }
 
     const double norm = residual_norm(weights);
     const double limit =
