@@ -52,8 +52,8 @@
       <Face_file_path> mesh/mesh-surfaces/Z1.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction> (-0.76582, 0.0, 0.643055) </Fiber_direction> 
-  <Fiber_direction> ( 0.76582, 0.0, 0.643055) </Fiber_direction> 
+  <Fiber_direction_constant> (-0.7658199979227132, 0.0, 0.6430549982557133) </Fiber_direction_constant>
+  <Fiber_direction_constant> ( 0.7658199979227132, 0.0, 0.6430549982557133) </Fiber_direction_constant> 
 
 </Add_mesh>
 

@@ -11,17 +11,17 @@ namespace cep {
 
 void b_cep(ComMod& com_mod, const int eNoN, const double w, const Vector<double>& N, const double h, Array<double>& lR);
 
-void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w,
+void cep_1d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl,
     Array<double>& lR, Array3<double>& lK);
 
-void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w,
+void cep_2d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& fN, Array<double>& lR, Array3<double>& lK);
+    const Array<double>& dl, const Array<double>& fibers, Array<double>& lR, Array3<double>& lK);
 
-void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const int nFn, const double w,
+void cep_3d(ComMod& com_mod, CepMod& cep_mod, const int eNoN, const double w,
     const Vector<double>& N, const Array<double>& Nx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& fN, Array<double>& lR, Array3<double>& lK);
+    const Array<double>& dl, const Array<double>& fibers, Array<double>& lR, Array3<double>& lK);
 
 void construct_cep(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);
 

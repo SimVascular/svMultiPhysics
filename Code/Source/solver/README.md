@@ -916,7 +916,6 @@ Partition a mesh amongst N processors.
   cm.bcast(cm_mod, &lM.gnEl);
   cm.bcast(cm_mod, &lM.gnNo);
   cm.bcast(cm_mod, lM.name);
-  cm.bcast(cm_mod, &lM.nFn);
   cm.bcast(cm_mod, &lM.scF);
 ```
 

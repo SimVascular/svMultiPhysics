@@ -97,10 +97,8 @@ public:
         dmn.stM.khs = params.k;     // Smoothed Heaviside function parameter
         dmn.stM.Kpen = 0.0;         // Zero volumetric penalty parameter
 
-        // Set number of fiber directions and fiber directions
-        nFn = 2;
-        fN.set_col(0, params.f);
-        fN.set_col(1, params.s);
+        // Complete orthonormal fiber basis (fiber, sheet, fiber × sheet)
+        set_fiber_basis(params.f, params.s);
     }
 
     /**
