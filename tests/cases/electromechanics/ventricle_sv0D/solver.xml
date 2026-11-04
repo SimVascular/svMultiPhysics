@@ -39,8 +39,8 @@
 
     <Domain> 0 </Domain>
 
-    <Fiber_direction_file_path> mesh/fibersLong.vtu </Fiber_direction_file_path>
-    <Fiber_direction_file_path> mesh/fibersSheet.vtu </Fiber_direction_file_path>
+    <Fiber_direction_from_file_cells> mesh/fibersLong.vtu </Fiber_direction_from_file_cells>
+    <Fiber_direction_from_file_cells> mesh/fibersSheet.vtu </Fiber_direction_from_file_cells>
   </Add_mesh>
 
   <Add_equation type="CEP">
@@ -58,8 +58,8 @@
       <!-- One anisotropic value per fiber direction supplied above: along the
            fiber, then along the sheet. -->
       <Isotropic_conductivity> 0.02e-5 </Isotropic_conductivity>
-      <Anisotropic_conductivity> 0.1e-5 </Anisotropic_conductivity>
-      <Anisotropic_conductivity> 0.0 </Anisotropic_conductivity>
+      <Fiber_conductivity> 0.1e-5 </Fiber_conductivity>
+      <Sheet_conductivity> 0.0 </Sheet_conductivity>
 
       <Include_xml> ../../cep/ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 
