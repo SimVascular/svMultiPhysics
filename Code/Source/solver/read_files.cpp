@@ -8,12 +8,15 @@
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
 #include "ActiveStress.h"
+#include "Fibers.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "porous/darcy.h"
 #include "electrophysiology/IonicModel.h"
 #include "read_msh.h"
+#include "solid/mat_models.h"
 #include "vtk_xml.h"
+#include "utils.h"
 
 #include "Array.h"
 #include "CepMod.h"
@@ -1269,20 +1272,78 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     cep_mod.nXion = lDmn.cep.nX + lDmn.cep.nG;
   } 
 
-  // Set conductivity.
+  // Isotropic and directional conductivity contributions
+  const bool isotropic_defined =
+      domain_params->isotropic_conductivity.defined();
+  const bool fiber_defined = domain_params->fiber_conductivity.defined();
+  const bool sheet_defined = domain_params->sheet_conductivity.defined();
+  const bool sheet_normal_defined =
+      domain_params->sheet_normal_conductivity.defined();
+
+  svmp::throw_if<svmp::ParseException>(
+      !isotropic_defined && !fiber_defined,
+      "[read_cep_domain] CEP domains require Isotropic_conductivity, "
+      "Fiber_conductivity, or both.");
+  svmp::throw_if<svmp::ParseException>(
+      sheet_defined && !fiber_defined,
+      "[read_cep_domain] Sheet_conductivity cannot be specified without "
+      "Fiber_conductivity.");
+  svmp::throw_if<svmp::ParseException>(
+      sheet_normal_defined && !sheet_defined,
+      "[read_cep_domain] Sheet_normal_conductivity cannot be specified "
+      "without Sheet_conductivity.");
+
   lDmn.cep.Diso = domain_params->isotropic_conductivity();
 
-  // Set the number of fiber directions (nFn) determined by the
-  // given number of anisotropic conductivity values.
-  lDmn.cep.nFn = domain_params->anisotropic_conductivity.size(); 
-  if (lDmn.cep.nFn == 0) { 
-    lDmn.cep.nFn = 1;
+  const int num_conductivities = static_cast<int>(fiber_defined) +
+      static_cast<int>(sheet_defined) +
+      static_cast<int>(sheet_normal_defined);
+  lDmn.cep.D.resize(num_conductivities);
+  if (fiber_defined) {
+    lDmn.cep.D[0] = domain_params->fiber_conductivity();
+  }
+  if (sheet_defined) {
+    lDmn.cep.D[1] = domain_params->sheet_conductivity();
+  }
+  if (sheet_normal_defined) {
+    lDmn.cep.D[2] = domain_params->sheet_normal_conductivity();
   }
 
-  // Set the anisotropic conductivity values. 
-  lDmn.cep.Dani.resize(lDmn.cep.nFn);
-  for (int i = 0; i < domain_params->anisotropic_conductivity.size(); i++) {
-    lDmn.cep.Dani[i] = domain_params->anisotropic_conductivity[i];
+  // Directional conductivity must fit each mesh this domain can apply to,
+  // and non-fiber meshes need fiber directions when any D[i] term is present.
+  if (lDmn.cep.D.size() != 0) {
+    auto& com_mod = simulation->get_com_mod();
+    for (int iM = 0; iM < com_mod.nMsh; iM++) {
+      auto& msh = com_mod.msh[iM];
+
+      bool domain_applies = false;
+      if (lDmn.Id == -1) {
+        domain_applies = true;
+      } else if (msh.eId.size() != 0) {
+        for (int e = 0; e < msh.gnEl; e++) {
+          if (utils::btest(msh.eId[e], lDmn.Id)) {
+            domain_applies = true;
+            break;
+          }
+        }
+      }
+      if (!domain_applies) {
+        continue;
+      }
+
+      const int insd = msh.lFib ? 1 : com_mod.nsd;
+      svmp::throw_if<svmp::ParseException>(
+          lDmn.cep.D.size() > insd,
+          "[read_cep_domain] CEP domain " + std::to_string(lDmn.Id) +
+              " defines " + std::to_string(lDmn.cep.D.size()) +
+              " directional conductivity value(s), but mesh '" + msh.name +
+              "' supports at most " + std::to_string(insd) + ".");
+      svmp::throw_if<svmp::ParseException>(
+          !msh.lFib && !msh.fibers.has_fibers(),
+          "[read_cep_domain] Directional conductivity requires fiber "
+          "directions on mesh '" +
+              msh.name + "'.");
+    }
   }
 
   // Set myocardium zone id.
@@ -2016,7 +2077,18 @@ void read_files(Simulation* simulation, const std::string& file_name)
 
     if (com_mod.rmsh.isReqd && com_mod.eq[0].phys != EquationType::phys_FSI) {   
       throw std::runtime_error("Remeshing is applicable only for FSI equation");
-    }     
+    }
+
+    if (com_mod.rmsh.isReqd) {
+      for (int iM = 0; iM < com_mod.nMsh; ++iM) {
+        const auto location = com_mod.msh[iM].fibers.get_data_location();
+        svmp::throw_if<svmp::ParseException>(
+          location == Fibers::DataCollocation::point ||
+          location == Fibers::DataCollocation::cell,
+          "Remeshing is not supported with point- or cell-associated fiber "
+          "directions.");
+      }
+    }
 
     if (com_mod.iCntct) {   
       if (eq.phys != EquationType::phys_shell) {
@@ -2278,6 +2350,59 @@ void read_mat_model(Simulation* simulation, EquationParameters* eq_params, Domai
     set_material_props[cmodel_type](domain_params, mu, kap, lam, lDmn);
    } catch (const std::bad_function_call& exception) {
     throw std::runtime_error("[read_mat_model] Constitutive model type '" + cmodel_str + "' is not implemented.");
+  }
+
+  // Anisotropic models need enough fiber directions on every mesh this
+  // domain can apply to. 
+  auto& com_mod = simulation->get_com_mod();
+  const int nsd = com_mod.nsd;
+  const auto iso_type = lDmn.stM.isoType;
+  const int min_fiber_dirs =
+      mat_models::minimum_fiber_directions_required(iso_type, nsd);
+
+  if (min_fiber_dirs > 0) {
+    svmp::throw_if<svmp::ParseException>(
+        iso_type == ConstitutiveModelType::stIso_Gucci && nsd != 3,
+        "[read_mat_model] Guccione requires a 3D mesh.");
+
+    const bool needs_orthonormal_basis =
+        mat_models::requires_orthonormal_fiber_basis(iso_type);
+
+    for (int iM = 0; iM < com_mod.nMsh; iM++) {
+      auto& msh = com_mod.msh[iM];
+
+      bool domain_applies = false;
+      if (lDmn.Id == -1) {
+        domain_applies = true;
+      } else if (msh.eId.size() != 0) {
+        for (int e = 0; e < msh.gnEl; e++) {
+          if (utils::btest(msh.eId[e], lDmn.Id)) {
+            domain_applies = true;
+            break;
+          }
+        }
+      }
+      if (!domain_applies) {
+        continue;
+      }
+
+      const int num_dirs = msh.fibers.get_num_directions();
+      svmp::throw_if<svmp::ParseException>(
+          num_dirs < min_fiber_dirs,
+          "[read_mat_model] Constitutive model '" + cmodel_str +
+              "' requires at least " + std::to_string(min_fiber_dirs) +
+              " fiber direction(s), but mesh '" + msh.name + "' provides " +
+              std::to_string(num_dirs) + ".");
+      // Orthonormal models complete a partial basis, but cannot accept more
+      // directions than the spatial dimension.
+      svmp::throw_if<svmp::ParseException>(
+          needs_orthonormal_basis && num_dirs > nsd,
+          "[read_mat_model] Constitutive model '" + cmodel_str +
+              "' requires " + std::to_string(min_fiber_dirs) + " or " +
+              std::to_string(nsd) +
+              " fiber direction(s) to form an orthonormal basis, but mesh '" +
+              msh.name + "' provides " + std::to_string(num_dirs) + ".");
+    }
   }
 
   // Check for shell model
