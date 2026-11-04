@@ -111,6 +111,12 @@ void cmType::bcast(const CmMod& cm_mod, Array<double>& data, const std::string& 
   MPI_Bcast(data.data(), data.size(), cm_mod::mpreal, cm_mod.master, com());
 }
 
+/// @brief bcast double Array3
+void cmType::bcast(const CmMod& cm_mod, Array3<double>& data, const std::string& name) const
+{
+  MPI_Bcast(data.data(), data.size(), cm_mod::mpreal, cm_mod.master, com());
+}
+
 /// @brief bcast int array
 void cmType::bcast(const CmMod& cm_mod, Array<int>& data, const std::string& name) const
 {
