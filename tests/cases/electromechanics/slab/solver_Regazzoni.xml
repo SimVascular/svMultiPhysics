@@ -34,9 +34,8 @@
 
     <Domain_file_path> ./mesh/volume.vtu </Domain_file_path>
 
-    <Fiber_direction> (1, 0, 0)  </Fiber_direction>
-    <Fiber_direction> (0, 1, 0)  </Fiber_direction>
-    <Fiber_direction> (0, 1, 0)  </Fiber_direction>
+    <Fiber_direction_constant> (1, 0, 0)  </Fiber_direction_constant>
+    <Fiber_direction_constant> (0, 1, 0)  </Fiber_direction_constant>
   </Add_mesh>
 
   <Add_equation type="CEP">
@@ -50,9 +49,7 @@
       <Electrophysiology_model> TTP </Electrophysiology_model>
 
       <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
-      <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
-      <Anisotropic_conductivity> 0.0 </Anisotropic_conductivity>
-      <Anisotropic_conductivity> 0.0 </Anisotropic_conductivity>
+      <Fiber_conductivity> 0.082715 </Fiber_conductivity>
 
       <Include_xml> ../../cep/ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 
@@ -69,9 +66,7 @@
       <Electrophysiology_model> TTP </Electrophysiology_model>
 
       <Isotropic_conductivity> 0.012571 </Isotropic_conductivity>
-      <Anisotropic_conductivity> 0.082715 </Anisotropic_conductivity>
-      <Anisotropic_conductivity> 0.0 </Anisotropic_conductivity>
-      <Anisotropic_conductivity> 0.0 </Anisotropic_conductivity>
+      <Fiber_conductivity> 0.082715 </Fiber_conductivity>
 
       <Include_xml> ../../cep/ttp_parameters/ttp_epicardium_parameters.xml </Include_xml>
 

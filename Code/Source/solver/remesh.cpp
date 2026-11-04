@@ -3,6 +3,8 @@
 
 #include "remesh.h"
 
+#include "Core/Exception.h"
+#include "Fibers.h"
 #include "all_fun.h"
 #include "mat_fun.h"
 #include "nn.h"
@@ -1439,6 +1441,15 @@ void remesh_restart(Simulation* simulation)
   auto& stFileName = com_mod.stFileName;
   auto& rmsh = com_mod.rmsh;
 
+  for (int iM = 0; iM < com_mod.nMsh; ++iM) {
+    const auto location = com_mod.msh[iM].fibers.get_data_location();
+    svmp::throw_if<svmp::ParseException>(
+      location == Fibers::DataCollocation::point ||
+      location == Fibers::DataCollocation::cell,
+      "Remeshing is not supported with point- or cell-associated fiber "
+      "directions.");
+  }
+
   auto sTmp = stFileName + "_last.bin";
   #ifdef debug_remesh_restart 
   dmsg << "rmsh.rTS: " << rmsh.rTS;
@@ -1860,7 +1871,6 @@ void remesh_restart(Simulation* simulation)
       msh.N.clear();
       msh.Nb.clear();
       msh.nV.clear();
-      msh.fN.clear();
       msh.Nx.clear();
       msh.Nxx.clear();
 

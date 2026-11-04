@@ -222,7 +222,7 @@ public:
      * @param[in] N Shape functions at the quadrature point, of the same nodes
      *   the state was gathered at by @ref update.
      * @param[in] F Deformation gradient at the quadrature point.
-     * @param[in] fN Fiber directions of the element, one per column, the first
+     * @param[in] fibers Fiber directions of the element, one per column, the first
      *   column being the fiber direction itself.
      *
      * @return Active tension along fibers, sheets and sheet normals, and their
@@ -236,7 +236,7 @@ public:
     evaluate(const Eigen::Ref<const Eigen::VectorXd> &N,
              const mat_fun::Matrix<nsd> &F,
              const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>
-                 &fN) const;
+                 &fibers) const;
 
   private:
     /// Active stress model of the domain the element belongs to, or null if

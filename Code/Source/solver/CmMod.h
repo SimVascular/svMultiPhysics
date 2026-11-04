@@ -8,6 +8,7 @@
 #define CMMOD_H 
 
 #include "Array.h"
+#include "Array3.h"
 #include "Vector.h"
 
 #include "mpi.h"
@@ -80,6 +81,7 @@ class cmType {
     void bcast(const CmMod& cm_mod, double* data) const;
     void bcast(const CmMod& cm_mod, Vector<double>& data, const std::string& name="") const;
     void bcast(const CmMod& cm_mod, Array<double>& data, const std::string& name="") const;
+    void bcast(const CmMod& cm_mod, Array3<double>& data, const std::string& name="") const;
 
     void bcast(const CmMod& cm_mod, int* data) const;
     void bcast(const CmMod& cm_mod, Vector<int>& data) const;
