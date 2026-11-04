@@ -570,7 +570,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
       lKd(5,a,b) += Ku;
 
       T1 = (am*tauM*rho)*NqxFi(1,a)*Nw(b) + af*Nq(a)*NwxFi(1,b);
-      lK(8,a,b) += w*Jac*T1 + afm*Ku;
+      lK(7,a,b) += w*Jac*T1 + afm*Ku;
     }
   }
 
@@ -581,7 +581,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
       T0 = (am*beta + af*dbeta*pd)*Nq(a)*Nq(b);
       T1 = NqxFi.col(a).dot(vd);
       T2 = T0 + af*tauM*(NxNx + drho*T1*Nq(b));
-      lK(9,a,b) += w*Jac*T2;
+      lK(8,a,b) += w*Jac*T2;
     }
   }
 }
@@ -949,7 +949,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       lKd(0,a,b) += Ku;
 
       T1   = am*Jac*rho*Nw(a)*Nw(b);
-      T2   = T1 + af*Jac*tauC*rho*NxFi(0,a)*NxFi(0,b);
+      T2   = T1 + af*Jac*tauC*NxFi(0,a)*NxFi(0,b);
       Tv   = af*visc.dv(0,a,b);
       lK(0,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -963,7 +963,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(1,a,b));
       lKd(1,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(1,b);
+      T2   = af*Jac*tauC*NxFi(0,a)*NxFi(1,b);
       Tv   = af*visc.dv(1,a,b);
       lK(1,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -977,7 +977,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(2,a,b));
       lKd(2,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(0,b);
+      T2   = af*Jac*tauC*NxFi(1,a)*NxFi(0,b);
       Tv   = af*visc.dv(2,a,b);
       lK(3,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -991,7 +991,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       lKd(3,a,b) += Ku;
 
       T1   = am*Jac*rho*Nw(a)*Nw(b);
-      T2   = T1 + af*Jac*tauC*rho*NxFi(1,a)*NxFi(1,b);
+      T2   = T1 + af*Jac*tauC*NxFi(1,a)*NxFi(1,b);
       Tv   = af*visc.dv(3,a,b);
       lK(4,a,b) += w*(T2 + Tv) + afm*Ku;
     }
@@ -1008,7 +1008,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 
       // dM_1/dP
       T1 = T0*NxFi(1,a)*Nq(b) + af*drho*vd(1)*Nw(a)*Nq(b);
-      lK(6,a,b) += w*Jac*T1;
+      lK(5,a,b) += w*Jac*T1;
     }
   }
 }
@@ -1198,7 +1198,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       lKd(0,a,b) += Ku;
 
       T1   = am*Jac*rho*Nw(a)*Nw(b);
-      T2   = T1 + af*Jac*tauC*rho*NxFi(0,a)*NxFi(0,b);
+      T2   = T1 + af*Jac*tauC*NxFi(0,a)*NxFi(0,b);
       Tv   = af*visc.dv(0,a,b);
       lK(0,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -1211,7 +1211,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(1,a,b));
       lKd(1,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(1,b);
+      T2   = af*Jac*tauC*NxFi(0,a)*NxFi(1,b);
       Tv   = af*visc.dv(1,a,b);
       lK(1,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -1225,7 +1225,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(2,a,b));
       lKd(2,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(0,a)*NxFi(2,b);
+      T2   = af*Jac*tauC*NxFi(0,a)*NxFi(2,b);
       Tv   = af*visc.dv(2,a,b);
       lK(2,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -1240,7 +1240,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(3,a,b));
       lKd(3,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(0,b);
+      T2   = af*Jac*tauC*NxFi(1,a)*NxFi(0,b);
       Tv   = af*visc.dv(3,a,b);
 
       lK(4,a,b) += w*(T2 + Tv) + afm*Ku;
@@ -1258,7 +1258,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       lKd(4,a,b) += Ku;
 
       T1   = am*Jac*rho*Nw(a)*Nw(b);
-      T2   = T1 + af*Jac*tauC*rho*NxFi(1,a)*NxFi(1,b);
+      T2   = T1 + af*Jac*tauC*NxFi(1,a)*NxFi(1,b);
       Tv   = af*visc.dv(4,a,b);
       lK(5,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -1274,7 +1274,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(5,a,b));
       lKd(5,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(1,a)*NxFi(2,b);
+      T2   = af*Jac*tauC*NxFi(1,a)*NxFi(2,b);
       Tv   = af*visc.dv(5,a,b);
       lK(6,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -1289,7 +1289,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(6,a,b));
       lKd(6,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(2,a)*NxFi(0,b);
+      T2   = af*Jac*tauC*NxFi(2,a)*NxFi(0,b);
       Tv   = af*visc.dv(6,a,b);
       lK(8,a,b) += w*(T2 + Tv) + afm*Ku;
 
@@ -1304,7 +1304,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       Ku   = w*af*(T1 + T2 + T3 + BtDB + visc.du(7,a,b));
       lKd(7,a,b) += Ku;
 
-      T2   = af*Jac*tauC*rho*NxFi(2,a)*NxFi(1,b);
+      T2   = af*Jac*tauC*NxFi(2,a)*NxFi(1,b);
       Tv   = af*visc.dv(7,a,b);
 
       lK(9,a,b) += w*(T2 + Tv) + afm*Ku;
@@ -1320,7 +1320,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
       lKd(8,a,b) += Ku;
 
       T1   = am*Jac*rho*Nw(a)*Nw(b);
-      T2   = T1 + af*Jac*tauC*rho*NxFi(2,a)*NxFi(2,b);
+      T2   = T1 + af*Jac*tauC*NxFi(2,a)*NxFi(2,b);
       Tv   = af*visc.dv(8,a,b);
 
       lK(10,a,b) += w*(T2 + Tv) + afm*Ku;
@@ -1584,7 +1584,7 @@ void ustruct_r(ComMod& com_mod, const SolutionStates& solutions)
           continue;
         }
 
-        for (int i = rowPtr(a); i <= rowPtr(a+1); i++) {
+        for (int i = rowPtr(a); i <= rowPtr(a+1)-1; i++) {
           int c = colPtr(i);
           KU(0,a) = KU(0,a) + Kd(0,i)*Rd(0,c) + Kd(1,i)*Rd(1,c);
           KU(1,a) = KU(1,a) + Kd(2,i)*Rd(0,c) + Kd(3,i)*Rd(1,c);
