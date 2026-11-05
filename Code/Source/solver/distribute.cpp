@@ -15,6 +15,7 @@
 
 #include "mpi.h"
 
+#include <algorithm>
 #include <iostream>
 #include <math.h>
 
@@ -2429,6 +2430,26 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   #endif
 
   lM.nNo = nNo;
+
+  // all_fun::global takes each node from the highest process holding it, the
+  // source that writes it last when elements are gathered in process order.
+  std::vector<int> owner(lM.gnNo);
+  for (int Ac = 0; Ac < lM.gnNo; Ac++) {
+    owner[Ac] = (gtlPtr[Ac] == -1) ? -1 : task_id;
+  }
+  MPI_Allreduce(MPI_IN_PLACE, owner.data(), lM.gnNo, cm_mod::mpint, MPI_MAX, cm.com());
+  lM.gatherN.clear();
+  lM.gatherG.clear();
+  for (int Ac = 0; Ac < lM.gnNo; Ac++) {
+    if (owner[Ac] == task_id) {
+      lM.gatherN.push_back(gtlPtr[Ac]);
+    }
+    if (cm.mas(cm_mod) && owner[Ac] != -1) {
+      lM.gatherG.push_back(Ac);
+    }
+  }
+  std::stable_sort(lM.gatherG.begin(), lM.gatherG.end(), [&](int a, int b) { return owner[a] < owner[b]; });
+
   if (cm.slv(cm_mod)) {
     lM.gN.resize(lM.gnNo);
   }
