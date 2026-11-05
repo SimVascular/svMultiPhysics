@@ -75,7 +75,11 @@ void all_post(Simulation* simulation, Array<double>& res, const SolutionStates& 
     Array<double> tmpV(maxNSD,msh.nNo);
 
     if (outGrp == OutputNameType::outGrp_WSS ||  outGrp == OutputNameType::outGrp_trac) {
-      bpost(simulation, msh,  tmpV, solutions, outGrp);
+      Array<double> trac(maxNSD,msh.nNo);
+      bpost(simulation, msh, tmpV, trac, solutions);
+      if (outGrp == OutputNameType::outGrp_trac) {
+        tmpV = trac;
+      }
       for (int a = 0; a < com_mod.msh[iM].nNo; a++) {
         int Ac = msh.gN(a);
         res.set_col(Ac, tmpV.col(a));
@@ -121,11 +125,12 @@ void all_post(Simulation* simulation, Array<double>& res, const SolutionStates& 
 }
 
 /// @brief General purpose routine for post processing outputs at the
-/// faces. Currently this calculates WSS, which is t.n - (n.t.n)n
+/// faces. Currently this calculates WSS, which is t.n - (n.t.n)n, and
+/// traction, which is p n - t.n, in one pass over the faces.
 /// Here t is stress tensor: t = \mu (grad(u) + grad(u)^T)
 //
-void bpost(Simulation* simulation, const mshType& lM, Array<double>& res, const SolutionStates& solutions,
-    consts::OutputNameType outGrp)
+void bpost(Simulation* simulation, const mshType& lM, Array<double>& wss, Array<double>& trac,
+    const SolutionStates& solutions)
 {
   using namespace consts;
 
@@ -139,12 +144,7 @@ void bpost(Simulation* simulation, const mshType& lM, Array<double>& res, const 
   #ifdef debug_bpost
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "outGrp: " << outGrp;
 #endif
-
-  if ((outGrp != OutputNameType::outGrp_WSS) && (outGrp != OutputNameType::outGrp_trac)) {
-    throw std::runtime_error("Invalid output group. Correction is required in BPOST");
-  }
 
   int iEq = 0;
   int eNoN = lM.eNoN;
@@ -159,8 +159,10 @@ void bpost(Simulation* simulation, const mshType& lM, Array<double>& res, const 
   const int tnNo = com_mod.tnNo;
   const int nsd = com_mod.nsd;
 
-  Vector<double> sA(tnNo); 
-  Array<double> sF(maxNSD,tnNo); 
+  // Rows 0..nsd-1 hold WSS, rows nsd..2*nsd-1 traction and row iA the nodal
+  // weights, so one halo exchange synchronizes all of them.
+  const int iA = 2*nsd;
+  Array<double> sF(iA+1,tnNo);
   Array<double> xl(nsd,eNoN); 
   Array<double> ul(nsd,eNoN); 
   Array<double> gnV(nsd,tnNo); 
@@ -323,26 +325,20 @@ void bpost(Simulation* simulation, const mshType& lM, Array<double>& res, const 
         }
 
         taue = Tdn - ndTdn*nV;
-        Vector<double> lRes(maxNSD);
+        Vector<double> lRes(iA);
 
-        if (outGrp == OutputNameType::outGrp_WSS) {
-          for (int i = 0; i < nsd; i++) {
-            lRes(i) = -taue(i);
-          }
-
-        } else if (outGrp == OutputNameType::outGrp_trac) {
-          for (int i = 0; i < nsd; i++) {
-            lRes(i) = p*nV(i) - Tdn(i);
-          } 
+        for (int i = 0; i < nsd; i++) {
+          lRes(i) = -taue(i);
+          lRes(i+nsd) = p*nV(i) - Tdn(i);
         }
 
         // Mapping Tau into the nodes by assembling it into a local vector
         //
         for (int a = 0; a < eNoN; a++) {
           int Ac = lM.IEN(a,Ec);
-          sA(Ac) = sA(Ac) + w*N(a);
+          sF(iA,Ac) = sF(iA,Ac) + w*N(a);
 
-          for (int i = 0; i < maxNSD; i++) {
+          for (int i = 0; i < iA; i++) {
             sF(i,Ac) = sF(i,Ac) + w*N(a)*lRes(i);
           }
         }
@@ -351,26 +347,27 @@ void bpost(Simulation* simulation, const mshType& lM, Array<double>& res, const 
   }
 
   all_fun::commu(com_mod, sF);
-  all_fun::commu(com_mod, sA);
 
   for (int iFa = 0; iFa < lM.nFa; iFa++) {
     for (int a = 0; a < lM.fa[iFa].nNo; a++) {
       int Ac = lM.fa[iFa].gN(a);
-      if (!utils::is_zero(sA(Ac))) {
-        for (int i = 0; i < maxNSD; i++) {
-          sF(i,Ac) = sF(i,Ac) / sA(Ac);
+      if (!utils::is_zero(sF(iA,Ac))) {
+        for (int i = 0; i < iA; i++) {
+          sF(i,Ac) = sF(i,Ac) / sF(iA,Ac);
         }
-        sA(Ac) = 1.0;
+        sF(iA,Ac) = 1.0;
       }
     }
   }
 
-  res = 0.0;
+  wss = 0.0;
+  trac = 0.0;
 
   for (int a = 0; a < lM.nNo; a++) {
     int Ac = lM.gN(a);
-    for (int i = 0; i < maxNSD; i++) {
-      res(i,a) = sF(i,Ac);
+    for (int i = 0; i < nsd; i++) {
+      wss(i,a) = sF(i,Ac);
+      trac(i,a) = sF(i+nsd,Ac);
     }
   }
 }
