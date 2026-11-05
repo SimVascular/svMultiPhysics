@@ -48,7 +48,7 @@ void run_process(std::string executable, std::string input_file)
   while (waitpid(process, &status, 0) == -1) {
     if (errno != EINTR) throw std::system_error(errno, std::generic_category(), "Could not wait for " + executable);
   }
-  if (!WIFEXITED(status)) throw std::runtime_error("Process terminated abnormally: " + executable);
+  if (WIFSIGNALED(status)) throw std::runtime_error("Process terminated by signal " + std::to_string(WTERMSIG(status)) + ": " + executable);
   status = WEXITSTATUS(status);
 #endif
   if (status != 0) throw std::runtime_error("Process exited with status " + std::to_string(status) + ": " + executable);
