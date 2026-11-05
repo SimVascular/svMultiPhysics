@@ -1,0 +1,226 @@
+from dataclasses import dataclass
+from pathlib import Path
+import subprocess
+import time
+from typing import Self
+from platform import uname
+from os import cpu_count
+from datetime import datetime, UTC
+
+from ._expect import expect_str, expect_str_array
+
+
+def run_solver(
+    solver: SolverRun, context: SolveExecutionContext, cwd: Path
+) -> RunResult:
+    """
+    Runs the solver using the execution context and a working directory
+    """
+    command = solver.build_command(context)
+    return run_command(command, cwd)
+
+
+@dataclass(frozen=True)
+class ExecutionEnvironment:
+    """
+    This class automatically holds the execution environment (i.e. hardware) as best as possible
+    """
+
+    system: str
+    release: str
+    version: str
+    machine: str
+    processor: str
+    cpus: int | None
+
+    @classmethod
+    def capture(cls):
+        info = uname()
+        cpus = cpu_count()
+        return cls(
+            system=info.system,
+            release=info.release,
+            version=info.version,
+            machine=info.machine,
+            processor=info.processor,
+            cpus=cpus,
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class SolveExecutionContext:
+    """
+    Provides the "context" or environment defintions that allow to be run. Specifically this is solver call paths
+    and settings.
+
+    This is used in combination with the dataset TOML defined definitions to realize an actual command call to run
+    with the TOML defined intent
+    """
+
+    solver_executable: Path
+    solver_notes: str = ""
+    mpi_launcher: str = "mpirun"
+    mpi_args: tuple[str, ...] = ()
+    mpi_ranks: int = 1
+
+
+@dataclass(frozen=True)
+class SolverRun:
+    name: str
+    input: Path
+    cwd: Path
+
+    @classmethod
+    def from_dict(cls, name: str, data: dict[str, object]) -> Self:
+        input_str = expect_str(data["input"], "input")
+        cwd = Path(expect_str(data.get("cwd", ""), "cwd"))
+
+        return cls(name=name, input=Path(input_str), cwd=cwd)
+
+    def build_command(
+        self,
+        context: SolveExecutionContext,
+    ) -> Command:
+
+        return Command(
+            argv=(
+                context.mpi_launcher,
+                *context.mpi_args,
+                "-np",
+                str(context.mpi_ranks),
+                str(context.solver_executable),
+                str(self.input),
+            ),
+            cwd=self.cwd,
+        )
+
+    def build_named_command(self, context: SolveExecutionContext):
+        return NamedCommand(self.name, self.build_command(context))
+
+
+@dataclass(frozen=True)
+class SolverRunResult:
+    """
+    Holds the information pertaining to a single command run result
+    """
+
+    run_cmd: str
+    run_time_seconds: float
+    returncode: int
+    execution_environment: ExecutionEnvironment
+    utc: datetime
+    solve_execution_context: SolveExecutionContext
+
+    @classmethod
+    def from_run_result(
+        cls, run_result: RunResult, execution_context: SolveExecutionContext
+    ) -> Self:
+        return cls(
+            run_cmd=run_result.run_cmd,
+            run_time_seconds=run_result.run_time_seconds,
+            returncode=run_result.returncode,
+            execution_environment=run_result.execution_environment,
+            utc=run_result.utc,
+            solve_execution_context=execution_context,
+        )
+
+
+@dataclass(frozen=True)
+class Command:
+    argv: tuple[str, ...]
+    cwd: Path
+
+    def to_str(self) -> str:
+        return " ".join(self.argv)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> Self:
+        """
+        Creates a Command from a dictionary, raises errors if the argv does not exist or is incorrectly
+        formatted
+        """
+        argv = expect_str_array(data["argv"], "argv")
+        cwd = Path(expect_str(data.get("cwd", ""), "cwd"))
+        return cls(argv=tuple(argv), cwd=cwd)
+
+
+@dataclass(frozen=True)
+class NamedCommand:
+    name: str
+    command: Command
+
+    @classmethod
+    def from_dict(cls, name: str, data: dict[str, object]) -> Self:
+        """
+        Creates a Command from a dictionary, raises errors if the argv does not exist or is incorrectly
+        formatted
+        """
+        command = Command.from_dict(data)
+
+        return cls(name, command)
+
+
+@dataclass(frozen=True)
+class RunResult:
+    """
+    Holds the information pertaining to a single command run result
+    """
+
+    run_cmd: str
+    run_time_seconds: float
+    returncode: int
+    execution_environment: ExecutionEnvironment
+    utc: datetime
+
+
+@dataclass(frozen=True)
+class CaptureResult:
+    run_result: RunResult
+    stdout: str
+    stderr: str
+
+
+def run_command(command: Command, cwd: Path) -> RunResult:
+    """
+    Runs a step based on its context which provides a run.
+    """
+    execution_environment = ExecutionEnvironment.capture()
+    start_time = time.perf_counter()
+    result = subprocess.run(command.argv, cwd=cwd.joinpath(command.cwd), check=True)
+    end_time = time.perf_counter()
+
+    return RunResult(
+        run_cmd=command.to_str(),
+        run_time_seconds=end_time - start_time,
+        returncode=result.returncode,
+        execution_environment=execution_environment,
+        utc=datetime.now(UTC),
+    )
+
+
+def capture_command(command: Command, cwd: Path) -> CaptureResult:
+    """
+    Captures a command run, the command call does not print to terminal.
+    """
+    execution_environment = ExecutionEnvironment.capture()
+    start_time = time.perf_counter()
+    result = subprocess.run(
+        command.argv,
+        cwd=cwd.joinpath(command.cwd),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    end_time = time.perf_counter()
+
+    run_result = RunResult(
+        run_cmd=command.to_str(),
+        run_time_seconds=end_time - start_time,
+        returncode=result.returncode,
+        execution_environment=execution_environment,
+        utc=datetime.now(UTC),
+    )
+
+    return CaptureResult(
+        run_result=run_result, stdout=result.stdout, stderr=result.stderr
+    )

@@ -1,0 +1,21 @@
+schema = 1
+name = "Poiseuille_cylinder_bc_neuman"
+reference_source = "analytical"
+
+[preprocess.create_mesh]
+    argv = ["python", "preprocess/create_mesh.py"]
+
+[solver.bc_neuman_400]
+   input = "solver.xml"
+   cwd = "poissuille_neumann_h0-0050"
+
+[postprocess.add_errors]
+    argv = ["python", "postprocess/add_error.py", "poissuille_neumann_h0-0050/results/result_050.vtu", "evaluation/result.vtu"]
+
+[evaluation.L2_pressure]
+    argv = ["python", "evaluation/evaluate_normalized_L2.py", "evaluation/result.vtu", "Pressure"]
+    reference = 0
+    atol = 1e-4
+
+[cleanup.run]
+    argv = ["python", "cleanup.py"]
