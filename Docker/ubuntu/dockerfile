@@ -1,7 +1,7 @@
 # ================================================================================
 # BASE: Common base image with dependencies
 # ================================================================================
-FROM ubuntu:latest AS base
+FROM ubuntu:26.04 AS base
 
 # Any debian-based command will not prompt user-input
 ENV DEBIAN_FRONTEND=noninteractive
@@ -16,11 +16,23 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# GNU tar fails with "Function not implemented" under arm64-to-amd64 emulation;
+# use bsdtar only in stages that extract archives.
+FROM base AS tar-emulation-compat
+ARG BUILDARCH
+ARG TARGETARCH
+RUN if [ "${BUILDARCH}/${TARGETARCH}" = "arm64/amd64" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends libarchive-tools && \
+        ln -s /usr/bin/bsdtar /usr/local/bin/tar && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+
 # ================================================================================
 # CMAKE
 # ================================================================================
 # Use a base image for building tools and dependencise
-FROM base AS buildcmake
+FROM tar-emulation-compat AS buildcmake
 
 # Setting CMake version CMake installation directory
 ARG CMAKE_VERSION=3.29.0
@@ -30,25 +42,18 @@ ARG CMAKE_INSTALL_DIR=/cmake
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
-# Download, extract, install
-RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz && \
-    tar -xzvf cmake-${CMAKE_VERSION}.tar.gz && \
-    rm cmake-${CMAKE_VERSION}.tar.gz 
-
-WORKDIR /cmake-${CMAKE_VERSION}
-RUN ./bootstrap --prefix=${CMAKE_INSTALL_DIR} && \
-    make -j6 && \
-    make install
-
-# Cleanup
-WORKDIR / 
-RUN rm -rf /cmake-${CMAKE_VERSION}
+# Install Kitware's x86-64 binary instead of compiling CMake under emulation.
+RUN mkdir -p ${CMAKE_INSTALL_DIR} && \
+    wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz -O /tmp/cmake.tar.gz && \
+    tar -xzf /tmp/cmake.tar.gz -C ${CMAKE_INSTALL_DIR} --strip-components=1 && \
+    ${CMAKE_INSTALL_DIR}/bin/cmake --version && \
+    rm /tmp/cmake.tar.gz
 
 # ================================================================================
 # OPENMPI
 # ================================================================================
 # Use a base image for building tools and dependencise
-FROM base AS buildompi
+FROM tar-emulation-compat AS buildompi
 
 # Copy cmake binary from buildcmake 
 COPY --from=buildcmake /cmake /cmake
@@ -63,10 +68,11 @@ RUN useradd -ms /bin/bash luser
 # ================================================================================
 # Download, extract, install
 RUN wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OMPI_VERSION}.tar.gz && \
-    tar -xzvf openmpi-${OMPI_VERSION}.tar.gz && \
+    tar -xzf openmpi-${OMPI_VERSION}.tar.gz && \
     rm openmpi-${OMPI_VERSION}.tar.gz
 
 WORKDIR /openmpi-${OMPI_VERSION}
+# Open MPI also uses tar when unpacking bundled dependencies during configure.
 RUN ./configure --with-pmix --with-slurm --prefix=${OMPI_INSTALL_DIR} && \
     make -j6 all && \
     make install 
@@ -79,7 +85,7 @@ RUN rm -rf /openmpi-${OMPI_VERSION}
 # VTK
 # ================================================================================
 # Use a base image for building tools and dependencise
-FROM base AS buildvtk
+FROM tar-emulation-compat AS buildvtk
 
 # Copy cmake binary from buildcmake and set ENV
 COPY --from=buildcmake /cmake /cmake 
@@ -96,7 +102,7 @@ RUN useradd -ms /bin/bash luser
 # ================================================================================
 # Download, extract, install
 RUN wget https://www.vtk.org/files/release/9.3/VTK-${VTK_VERSION}.tar.gz && \
-    tar -xzvf VTK-${VTK_VERSION}.tar.gz && \
+    tar -xzf VTK-${VTK_VERSION}.tar.gz && \
     rm VTK-${VTK_VERSION}.tar.gz
 
 WORKDIR /build-vtk
@@ -137,7 +143,7 @@ RUN rm -rf /VTK-${VTK_VERSION} build-vtk
 # BOOST
 # ================================================================================
 # Use a base image for building tools and dependencise
-FROM base AS buildboost
+FROM tar-emulation-compat AS buildboost
 
 # Copy cmake binary from buildcmake and set ENV
 COPY --from=buildcmake /cmake /cmake 
@@ -154,7 +160,7 @@ RUN useradd -ms /bin/bash luser
 # ================================================================================
 # Download, extract, install
 RUN wget https://archives.boost.io/release/1.89.0/source/boost_${BOOST_VERSION}.tar.gz && \
-    tar -xzvf boost_${BOOST_VERSION}.tar.gz && \
+    tar -xzf boost_${BOOST_VERSION}.tar.gz && \
     rm boost_${BOOST_VERSION}.tar.gz
 
 WORKDIR /boost_${BOOST_VERSION}
@@ -312,6 +318,8 @@ WORKDIR /Trilinos/build
 
 # Build trilinos
 #-DTPL_ENABLE_MUMPS=ON \
+# ShyLU_NodeTacho enables the external gtest TPL even with Trilinos Gtest off.
+# This stage has no gtest libraries, so disable the TPL (and ShyLU_NodeTacho).
 RUN cmake \
 -DCMAKE_INSTALL_PREFIX=${TRILINOS_INSTALL_DIR} \
 -DTPL_ENABLE_MPI=ON \
@@ -351,7 +359,8 @@ RUN cmake \
 -DTpetra_INST_DOUBLE=ON \
 -DTpetra_INST_INT_INT=ON \
 -DMueLu_ENABLE_EXPLICIT_INSTANTIATION=ON \
--DTrilinos_ENABLE_Gtest=OFF /Trilinos && \
+-DTrilinos_ENABLE_Gtest=OFF \
+-DTPL_ENABLE_gtest=OFF /Trilinos && \
 make -j6 install
 
 # Cleanup
@@ -478,7 +487,7 @@ COPY --from=buildgtest /google /google
 
 # ================================================================================
 # CONDA
-ENV CONDA_DIR /conda
+ENV CONDA_DIR=/conda
 
 # Conda environment depending on architecture
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh && \
@@ -490,12 +499,16 @@ ENV PATH="${CONDA_DIR}/bin:${PATH}"
 RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
     
-RUN conda create -y -n svmultiphysics && \
-    conda run -n svmultiphysics pip install pytest pytest-cov pytest-mock numpy meshio pandas
-
+# Python 3.14 with meshio failed to read an integration-test VTU file (Base64
+# padding error); the same tests passed with Python 3.12.
+RUN conda create -y -n svmultiphysics python=3.12 pip && \
+    conda run -n svmultiphysics python -m pip install pytest pytest-cov pytest-mock numpy meshio pandas && \
+    conda run -n svmultiphysics python --version && \
+    conda list -n svmultiphysics --explicit && \
+    conda run -n svmultiphysics python -m pip freeze
 # Set libraries environment
 ENV PATH="/google:/vtk:/openmpi/bin:/cmake/bin:/trilinos/lib/cmake/Trilinos:${PATH}"
-ENV LD_LIBRARY_PATH="/openmpi/lib:/petsc/lib:/lapack:$LD_LIBRARY_PATH"
+ENV LD_LIBRARY_PATH="/openmpi/lib:/petsc/lib:/lapack"
 
 ENV OMPI_ALLOW_RUN_AS_ROOT=1
 ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
