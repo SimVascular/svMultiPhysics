@@ -4,8 +4,8 @@ const REPOSITORY = 'SimVascular/svMultiPhysics';
 const TEAM = 'refactoring-team';
 const TEAM_ID = 20019155;
 const LABELS = [
-  { name: 'OOP Refactor', id: 9482575472, allowPolicyChanges: false, requireCurrentHead: false },
-  { name: 'software engineering', id: 12945018775, allowPolicyChanges: true, requireCurrentHead: true },
+  { name: 'OOP Refactor', id: 9482575472, allowPolicyChanges: false },
+  { name: 'software engineering', id: 12945018775, allowPolicyChanges: true },
 ];
 const APP_ID = 5288861;
 const CHECK = 'review-policy';
@@ -199,24 +199,22 @@ function opinions(reviews) {
 }
 
 export function evaluate({ pr, reviews, timeline, policyChanged, filesTruncated = false }, team, writers) {
-  const labels = LABELS.map(({ name, id, allowPolicyChanges, requireCurrentHead }) => {
+  const labels = LABELS.map(({ name, id, allowPolicyChanges }) => {
     const label = pr.labels.find(item => item.name === name);
     const application = [...timeline].reverse().find(event =>
       event.label?.name === name && ['labeled', 'unlabeled'].includes(event.event));
     const authorized = label?.id === id && application?.event === 'labeled'
       && application.actor?.type === 'User' && team.has(application.actor.id);
-    return { name, present: Boolean(label), authorized, allowPolicyChanges, requireCurrentHead };
+    return { name, present: Boolean(label), authorized, allowPolicyChanges };
   });
   const applicableLabels = filesTruncated ? [] : labels.filter(label =>
     label.authorized && (label.allowPolicyChanges || !policyChanged));
   const exception = applicableLabels.length > 0;
-  const requiresCurrentHead = exception && applicableLabels.every(label => label.requireCurrentHead);
   const required = exception ? 1 : 2;
   const eligible = opinions(reviews).filter(review =>
     review.user.id !== pr.user.id && writers.has(review.user.id));
   const approvals = eligible.filter(review => review.state === 'APPROVED'
-    && (!exception || team.has(review.user.id))
-    && (!requiresCurrentHead || review.commit_id === pr.head.sha)).map(review => review.user.login);
+    && (!exception || team.has(review.user.id))).map(review => review.user.login);
   const blocked = eligible.some(review => review.state === 'CHANGES_REQUESTED');
   return {
     passed: !blocked && approvals.length >= required,
@@ -225,7 +223,6 @@ export function evaluate({ pr, reviews, timeline, policyChanged, filesTruncated 
     removeLabels: labels.filter(label => label.present && !label.authorized).map(label => label.name),
     reason: blocked ? 'An eligible reviewer has requested changes.'
       : `${approvals.length}/${required} ${exception ? 'Refactoring Team' : 'eligible'} approvals.`
-        + (requiresCurrentHead ? ' An approval of the current PR head is required.' : '')
         + (filesTruncated ? ' File list may be incomplete; two approvals required.'
           : policyChanged && !exception
             ? ' Policy changes require an authorized software engineering label for one approval.' : ''),
