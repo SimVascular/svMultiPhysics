@@ -61,72 +61,25 @@ void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, const int nsd, const int dof,
 ///
 /// Modifies: no globals
 //
-void depart(fsi_linear_solver::FSILS_lhsType& lhs, const int nsd, const int dof, const int nNo, const int nnz, 
+void depart(fsi_linear_solver::FSILS_lhsType& lhs, const int nsd, const int dof, const int nnz, 
     const Array<double>& Val, Array<double>& Gt, Array<double>& mK, Array<double>& mG, Array<double>& mD, Vector<double>& mL)
 {
-  Vector<double> tmp((nsd+1)*(nsd+1));
-
-  if (nsd == 2) {
-    for (int i = 0; i < nnz; i++) {
-      auto tmp = Val.col(i);
-
-      mK(0,i) = tmp(0);
-      mK(1,i) = tmp(1);
-      mK(2,i) = tmp(3);
-      mK(3,i) = tmp(4);
-
-      mG(0,i) = tmp(2);
-      mG(1,i) = tmp(5);
-
-      mD(0,i) = tmp(6);
-      mD(1,i) = tmp(7);
-
-      mL(i) = tmp(8);
+  for (int i = 0; i < nnz; i++) {
+    for (int a = 0; a < nsd; a++) {
+      for (int b = 0; b < nsd; b++) {
+        mK(a*nsd+b,i) = Val(a*dof+b,i);
+      }
+      mG(a,i) = Val(a*dof+nsd,i);
+      mD(a,i) = Val(nsd*dof+a,i);
     }
-
-  } else if (nsd == 3) {
-
-    for (int i = 0; i < nnz; i++) {
-      auto tmp = Val.col(i);
-
-      mK(0,i) = tmp(0);
-      mK(1,i) = tmp(1);
-      mK(2,i) = tmp(2);
-      mK(3,i) = tmp(4);
-      mK(4,i) = tmp(5);
-      mK(5,i) = tmp(6);
-      mK(6,i) = tmp(8);
-      mK(7,i) = tmp(9);
-      mK(8,i) = tmp(10);
-
-      mG(0,i) = tmp(3);
-      mG(1,i) = tmp(7);
-      mG(2,i) = tmp(11);
-
-      mD(0,i) = tmp(12);
-      mD(1,i) = tmp(13);
-      mD(2,i) = tmp(14);
-
-      mL(i)   = tmp(15);
-    }
-
-  } else {
-    //PRINT *, "FSILS: Not defined nsd for DEPART", nsd
-    //STOP "FSILS: FATAL ERROR"
+    mL(i) = Val(nsd*dof+nsd,i);
   }
 
-  for (int i = 0; i < nNo; i++) {
-    for (int j = lhs.rowPtr(0,i); j <= lhs.rowPtr(1,i); j++) {
-      int k = lhs.colPtr(j);
-
-      for (int l = lhs.rowPtr(0,k); l <= lhs.rowPtr(1,k); l++) {
-        if (lhs.colPtr(l) == i) {
-          for (int m = 0; m < Gt.nrows(); m++) {
-            Gt(m,l) = -mG(m,j);
-          }
-          break;
-        }
-      }
+  // Gt = -G^T, so entry i takes the G block of its transposed entry.
+  for (int i = 0; i < nnz; i++) {
+    int j = lhs.transPtr(i);
+    for (int m = 0; m < nsd; m++) {
+      Gt(m,i) = j < 0 ? 0.0 : -mG(m,j);
     }
   }
 }
@@ -222,14 +175,22 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
   dmsg << "ls.RI.fNorm: " << ls.RI.fNorm;
   #endif
 
-  Array<double> Gt(nsd,nnz), mK(nsd*nsd,nnz), mG(nsd,nnz), mD(nsd,nnz);
-  Vector<double> mL(nnz); 
+  auto &Gt = ls.Gt, &mK = ls.mK, &mG = ls.mG, &mD = ls.mD;
+  auto &mL = ls.mL;
+
+  if (mK.nrows() != nsd*nsd || mK.ncols() != nnz) {
+    Gt.resize(nsd,nnz);
+    mK.resize(nsd*nsd,nnz);
+    mG.resize(nsd,nnz);
+    mD.resize(nsd,nnz);
+    mL.resize(nnz);
+  }
 
   // Store sections of the 'Val' array into separate arrays: 'Gt', 'mK', etc.
   //
   // Modfies: Gt, mK, mG, mD, and mL.
   //
-  depart(lhs, nsd, dof, nNo, nnz, Val, Gt, mK, mG, mD, mL);
+  depart(lhs, nsd, dof, nnz, Val, Gt, mK, mG, mD, mL);
 
   // Computes lhs.face[].nS for each face.
   //
