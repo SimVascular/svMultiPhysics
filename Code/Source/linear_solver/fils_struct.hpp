@@ -197,6 +197,9 @@ class FSILS_lhsType
     /// Diagonal pointer                    (USE)
     Vector<int> diagPtr;
 
+    /// Transpose pointer, -1 if absent     (USE)
+    Vector<int> transPtr;
+
     /// Mapping of nodes                    (USE)
     Vector<int> map;
 
