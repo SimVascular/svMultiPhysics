@@ -142,8 +142,9 @@ void iterate_precomputed_time(Simulation* simulation, SolutionStates& solutions)
             n1 = cTS % Ys.nslices() - 1;
           }
         } else {
-          n1 = static_cast<int>(rT / precompDt) - 1;
-          alpha = std::fmod(rT, precompDt);
+          // n2 = n1 + 1 is the slice at or after rT, and alpha is its weight.
+          n1 = static_cast<int>(std::ceil(rT / precompDt)) - 1;
+          alpha = std::fmod(rT / precompDt, 1.0);
         }
         n2 = n1 + 1;
         for (int i = 0; i < tnNo; i++) {
