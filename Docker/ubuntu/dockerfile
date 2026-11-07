@@ -3,6 +3,9 @@
 # ================================================================================
 FROM ubuntu:26.04 AS base
 
+ARG DEPENDENCY_BUILD_TYPE=Release
+ENV DEPENDENCY_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE}
+
 # Any debian-based command will not prompt user-input
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -107,7 +110,7 @@ RUN wget https://www.vtk.org/files/release/9.3/VTK-${VTK_VERSION}.tar.gz && \
 
 WORKDIR /build-vtk
 RUN cmake -DBUILD_SHARED_LIBS:BOOL=OFF \
--DCMAKE_BUILD_TYPE:STRING=RELEASE \
+-DCMAKE_BUILD_TYPE:STRING=${DEPENDENCY_BUILD_TYPE} \
 -DBUILD_EXAMPLES=OFF \
 -DBUILD_TESTING=OFF \
 -DVTK_USE_SYSTEM_EXPAT:BOOL=ON \
@@ -165,7 +168,8 @@ RUN wget https://archives.boost.io/release/1.89.0/source/boost_${BOOST_VERSION}.
 
 WORKDIR /boost_${BOOST_VERSION}
 RUN ./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} && \
-    ./b2 install 
+    if [ "${DEPENDENCY_BUILD_TYPE}" = "Debug" ]; then variant=debug; else variant=release; fi && \
+    ./b2 install variant=${variant}
 
 # Cleanup
 WORKDIR / 
@@ -191,7 +195,7 @@ RUN useradd -ms /bin/bash luser
 # Download, extract, install
 RUN git clone https://github.com/Reference-LAPACK/lapack.git
 WORKDIR /build
-RUN cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_LIBDIR=${LAPACK_INSTALL_DIR} ../lapack && \
+RUN cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} -DCMAKE_INSTALL_LIBDIR=${LAPACK_INSTALL_DIR} ../lapack && \
     cmake --build . -j6 --target install
 
 # Cleanup
@@ -240,7 +244,7 @@ RUN cmake -C /hdf5build/hdf5/config/cmake/cacheinit.cmake -G "Unix Makefiles" \
 -DCMAKE_C_COMPILER=/openmpi/bin/mpicc \
 -DCMAKE_CXX_COMPILER=/openmpi/bin/mpicxx \
 -DCMAKE_Fortran_COMPILER=/openmpi/bin/mpif90 \
--DCMAKE_BUILD_TYPE=Release \
+-DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} \
 -DCMAKE_INSTALL_PREFIX=${HDF5_INSTALL_DIR} /hdf5build/hdf5 && \
     cmake --build . && \
     make install
@@ -321,6 +325,7 @@ WORKDIR /Trilinos/build
 # ShyLU_NodeTacho enables the external gtest TPL even with Trilinos Gtest off.
 # This stage has no gtest libraries, so disable the TPL (and ShyLU_NodeTacho).
 RUN cmake \
+-DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} \
 -DCMAKE_INSTALL_PREFIX=${TRILINOS_INSTALL_DIR} \
 -DTPL_ENABLE_MPI=ON \
 -DTPL_ENABLE_Boost=ON \
@@ -411,8 +416,13 @@ WORKDIR /petsc
 
 # Install petsc library in $PETSC_INSTALL_DIR 
 # Libraries path must be set explicitly
-RUN ./configure --prefix=$PETSC_INSTALL_DIR \
---with-debugging=0 \
+RUN if [ "${DEPENDENCY_BUILD_TYPE}" = "Debug" ]; then \
+        petsc_debugging=1; petsc_flags='-g -O0'; petsc_arch=arch-linux-c-debug; \
+    else \
+        petsc_debugging=0; petsc_flags='-g -O2'; petsc_arch=arch-linux-c-opt; \
+    fi && \
+PETSC_ARCH="${petsc_arch}" ./configure --prefix=$PETSC_INSTALL_DIR \
+--with-debugging=${petsc_debugging} \
 --with-precision=double \
 --download-suitesparse \
 --download-mumps \
@@ -429,11 +439,11 @@ RUN ./configure --prefix=$PETSC_INSTALL_DIR \
 --download-parmetis \
 --with-strict-petscerrorcode \
 --with-mpi-compilers=1 \
-COPTFLAGS='-g -O' \
-FOPTFLAGS='-g -O' \
-CXXOPTFLAGS='-g -O' && \
-make PETSC_DIR=/petsc PETSC_ARCH=arch-linux-c-opt all && \
-make PETSC_DIR=/petsc PETSC_ARCH=arch-linux-c-opt install && \
+COPTFLAGS="${petsc_flags}" \
+FOPTFLAGS="${petsc_flags}" \
+CXXOPTFLAGS="${petsc_flags}" && \
+make PETSC_DIR=/petsc PETSC_ARCH="${petsc_arch}" all && \
+make PETSC_DIR=/petsc PETSC_ARCH="${petsc_arch}" install && \
 make PETSC_DIR=$PETSC_INSTALL_DIR PETSC_ARCH="" check
 
 # Cleanup
@@ -459,7 +469,7 @@ RUN git clone https://github.com/google/googletest.git -b v1.14.0
 WORKDIR /googletest
 RUN mkdir build    && \
     cd build       && \
-    cmake .. -DBUILD_SHARED_LIBS=ON -DBUILD_GMOCK=OFF -DCMAKE_INSTALL_PREFIX=/google && \
+    cmake .. -DBUILD_SHARED_LIBS=ON -DBUILD_GMOCK=OFF -DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=/google && \
     make && \
     make install
 

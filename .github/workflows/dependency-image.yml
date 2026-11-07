@@ -1,0 +1,97 @@
+name: Build Ubuntu 26 dependency image
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: CMake build type for dependencies
+        type: choice
+        options:
+          - Release
+          - RelWithDebInfo
+          - Debug
+        default: Release
+  # Temporary fork test: a new workflow cannot be dispatched until it is on main.
+  push:
+    branches:
+      - feature/766-stage-ubuntu26-dependencies
+    paths:
+      - .github/workflows/dependency-image.yml
+      - Docker/ubuntu/dockerfile
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: dependency-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'bearsontheloose/svMultiPhysics'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      IMAGE: ghcr.io/bearsontheloose/svmultiphysics-dependencies-internal
+      BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Report runner and build inputs
+        run: |
+          cat /etc/os-release
+          df -h .
+          printf 'Source: %s\nBuild type: %s\n' "$GITHUB_SHA" "$BUILD_TYPE"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and stage by source commit
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: Docker/ubuntu
+          file: Docker/ubuntu/dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}-${{ env.BUILD_TYPE }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=1.0.0.0
+            org.simvascular.build-type=${{ env.BUILD_TYPE }}
+          build-args: |
+            DEPENDENCY_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Verify staged image
+        run: |
+          docker run --rm --platform linux/amd64 -e EXPECTED_BUILD_TYPE="$BUILD_TYPE" \
+            "$IMAGE:sha-$GITHUB_SHA-$BUILD_TYPE" \
+            bash -euc 'test "$DEPENDENCY_BUILD_TYPE" = "$EXPECTED_BUILD_TYPE" && \
+                       test -d /vtk && test -d /trilinos && test -d /petsc && \
+                       cmake --version && /openmpi/bin/mpicc --version && \
+                       conda run -n svmultiphysics python --version'
+
+      - name: Tag verified Release image
+        if: env.BUILD_TYPE == 'Release'
+        run: |
+          docker buildx imagetools create \
+            --tag "$IMAGE:1.0.0.0" "$IMAGE:sha-$GITHUB_SHA-$BUILD_TYPE"
+
+      - name: Summarize staged image
+        if: success()
+        run: |
+          printf '### Ubuntu 26 dependency image\n\n' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Source commit: `%s`\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Build type: `%s`\n' "$BUILD_TYPE" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Image: `%s:sha-%s-%s`\n' "$IMAGE" "$GITHUB_SHA" "$BUILD_TYPE" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Digest: `%s`\n' '${{ steps.build.outputs.digest }}' >> "$GITHUB_STEP_SUMMARY"
