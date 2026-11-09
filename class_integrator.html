@@ -101,7 +101,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> class encapsulates the Newton iteration loop for time integration.  
+<p><a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> class that encapsulates the Newton iteration loop for time integration.  
  <a href="class_integrator.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="_integrator_8h_source.html">Integrator.h</a>&gt;</code></p>
@@ -109,7 +109,7 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a3e97d2ea12a13ff4ab448404f3f2b210" id="r_a3e97d2ea12a13ff4ab448404f3f2b210"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_integrator.html#a3e97d2ea12a13ff4ab448404f3f2b210">Integrator</a> (<a class="el" href="class_simulation.html">Simulation</a> *<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">simulation</a>, <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;&amp;<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">solutions</a>)</td></tr>
-<tr class="memdesc:a3e97d2ea12a13ff4ab448404f3f2b210"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> object.  <br /></td></tr>
+<tr class="memdesc:a3e97d2ea12a13ff4ab448404f3f2b210"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> object.  <br /></td></tr>
 <tr class="separator:a3e97d2ea12a13ff4ab448404f3f2b210"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1602455d859896e9187ff586d2a2aec" id="r_aa1602455d859896e9187ff586d2a2aec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_integrator.html#aa1602455d859896e9187ff586d2a2aec">step</a> (<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">bool</a> <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">save_results</a>=<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">false</a>)</td></tr>
 <tr class="memdesc:aa1602455d859896e9187ff586d2a2aec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute one time step with Newton iteration loop.  <br /></td></tr>
@@ -143,14 +143,27 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3f06beb238d668f5a905f4e1f419b750"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> class encapsulates the Newton iteration loop for time integration. </p>
+<div class="textblock"><p><a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> class that encapsulates the Newton iteration loop for time integration. </p>
 <p>This class handles the nonlinear Newton iteration scheme for solving coupled multi-physics equations in svMultiPhysics. It manages:</p><ul>
 <li><a class="el" href="struct_solution.html" title="Represents solution variables at a single time step.">Solution</a> variables (Ag, Yg, Dg) at generalized-alpha time levels</li>
 <li>Newton iteration loop with convergence checking</li>
 <li>Linear system assembly and solve</li>
 <li>Boundary condition application</li>
 </ul>
-<p>Related to GitHub issue #442: Encapsulate the Newton iteration in main.cpp </p>
+<h2><a class="anchor" id="autotoc_md17"></a>
+Line search</h2>
+<p>The nonlinear iterations of an equation can be globalized by a backtracking line search, enabled by the <code>Line_search_experimental</code> XML element of the equation (see <a class="el" href="class_line_search_parameters.html">LineSearchParameters</a>). Without it, every iteration applies the full increment of the linear solve.</p>
+<p>At every nonlinear iteration of an equation with line search enabled, the increment \(\delta u\) of the linear solve is scaled by a step length \(\alpha\) before being applied, so that the solution is updated to \(u + \alpha\,\delta u\). The step lengths \(\alpha = 1, \rho, \rho^2,
+\dots\) are tried in turn, with \(\rho\) the step reduction factor, and the first one satisfying  </p><p class="formulaDsp">
+\[
+  \| R(u + \alpha\,\delta u) \|_W \leq (1 - c\,\alpha)\,\| R(u) \|_W
+\]
+</p>
+<p> is applied, with \(c\) the minimum decrease. Once the step length reaches the minimum step length, it is applied regardless of the residual decrease.</p>
+<p>The norm \(\|\cdot\|_W\) weights every residual entry by the inverse square root of the magnitude of the corresponding diagonal entry of the tangent at \(u\), as the Jacobi preconditioner of the linear solver does, so that it is dimensionally homogeneous across the degrees of freedom of the equation. Degrees of freedom constrained by a Dirichlet condition have zero weight, since their residual is the reaction of the constraint. The weights are computed once per iteration and kept fixed while step lengths are tried, so that the norms of different step lengths are comparable (see compute_residual_weights).</p>
+<p>The linear system is solved once per iteration, whatever the number of step lengths tried. Measuring a step length costs one assembly of the linear system at the trial solution, which re-advances implicitly coupled active stress models as any other assembly does. The convergence test that follows (see finalize_iteration) is the same with or without line search.</p>
+<p>Line search is not implemented for prestress simulations: the nodal prestress is accumulated over the assemblies of a time step, which would include those of the trial step lengths unless they were excluded.</p>
+<dl class="section warning"><dt>Warning</dt><dd>While it is implemented for all equations, line search is currently only tested for struct, should be regarded as experimental, and used with caution. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a3e97d2ea12a13ff4ab448404f3f2b210" name="a3e97d2ea12a13ff4ab448404f3f2b210"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3e97d2ea12a13ff4ab448404f3f2b210">&#9670;&#160;</a></span>Integrator()</h2>
@@ -178,7 +191,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> object. </p>
+<p>Construct a new <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">simulation</td><td>Pointer to the <a class="el" href="class_simulation.html">Simulation</a> object containing problem data </td></tr>

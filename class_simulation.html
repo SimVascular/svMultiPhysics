@@ -117,10 +117,10 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="class_com_mod.html">ComMod</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>get_com_mod</b> ()</td></tr>
 <tr class="separator:ae3c4ba07174bd9ad6680f96dd1977771"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b968b97c4e8530e15aeac38ed22cdeb" id="r_a8b968b97c4e8530e15aeac38ed22cdeb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_integrator.html">Integrator</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_simulation.html#a8b968b97c4e8530e15aeac38ed22cdeb">get_integrator</a> ()</td></tr>
-<tr class="memdesc:a8b968b97c4e8530e15aeac38ed22cdeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get reference to the <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> object.  <br /></td></tr>
+<tr class="memdesc:a8b968b97c4e8530e15aeac38ed22cdeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get reference to the <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> object.  <br /></td></tr>
 <tr class="separator:a8b968b97c4e8530e15aeac38ed22cdeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26d63e8a7fedd885fd13d0c1d07b4fd2" id="r_a26d63e8a7fedd885fd13d0c1d07b4fd2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_simulation.html#a26d63e8a7fedd885fd13d0c1d07b4fd2">initialize_integrator</a> (<a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;&amp;<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">solutions</a>)</td></tr>
-<tr class="memdesc:a26d63e8a7fedd885fd13d0c1d07b4fd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> object after simulation setup is complete.  <br /></td></tr>
+<tr class="memdesc:a26d63e8a7fedd885fd13d0c1d07b4fd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> object after simulation setup is complete.  <br /></td></tr>
 <tr class="separator:a26d63e8a7fedd885fd13d0c1d07b4fd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aade1883dedf6e7145283f3a09fd22b7d" id="r_aade1883dedf6e7145283f3a09fd22b7d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_simulation.html#aade1883dedf6e7145283f3a09fd22b7d">read_parameters</a> (<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">const</a> std::string &amp;<a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">fileName</a>)</td></tr>
 <tr class="memdesc:aade1883dedf6e7145283f3a09fd22b7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read solver parameters.  <br /></td></tr>
@@ -184,8 +184,8 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>history_file_n
       </table>
 </div><div class="memdoc">
 
-<p>Get reference to the <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> object. </p>
-<dl class="section return"><dt>Returns</dt><dd>Reference to the <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> </dd></dl>
+<p>Get reference to the <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> object. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to the <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> </dd></dl>
 
 </div>
 </div>
@@ -205,8 +205,8 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>history_file_n
       </table>
 </div><div class="memdoc">
 
-<p>Initialize the <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> object after simulation setup is complete. </p>
-<p>This should be called at the end of initialize() after solution states have been fully initialized. The <a class="el" href="class_integrator.html" title="Integrator class encapsulates the Newton iteration loop for time integration.">Integrator</a> takes ownership of these solution states.</p>
+<p>Initialize the <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> object after simulation setup is complete. </p>
+<p>This should be called at the end of initialize() after solution states have been fully initialized. The <a class="el" href="class_integrator.html" title="Integrator class that encapsulates the Newton iteration loop for time integration.">Integrator</a> takes ownership of these solution states.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">solutions</td><td><a class="el" href="struct_solution.html" title="Represents solution variables at a single time step.">Solution</a> states containing old acceleration, displacement, and velocity </td></tr>

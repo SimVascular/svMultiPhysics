@@ -14,7 +14,7 @@ var searchData=
   ['eigen_5fview_5frows_11',['eigen_view_rows',['../namespacemat__fun.html#abd9e75a414e4ca001769288ad084d282',1,'mat_fun']]],
   ['elem_5ftype_12',['elem_type',['../class_vtk_data.html#a1ad3af7f588b2fbc95bf71f16ad77e3b',1,'VtkData']]],
   ['elem_5ftype_5f_13',['elem_type_',['../class_vtk_data.html#a34f7b7dcd0ffb20a890ff01912120825',1,'VtkData']]],
-  ['element_20by_20element_20assembly_20trilinos_20native_14',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md41',1,'']]],
+  ['element_20by_20element_20assembly_20trilinos_20native_14',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]],
   ['element_5fdimension_15',['element_dimension',['../group___f_e___common_types.html#ga5169c5f7572909bf6c0b27f3f60674a9',1,'svmp::FE']]],
   ['element_5ftype_16',['element_type',['../structsvmp_1_1_f_e_1_1basis_1_1_basis_request.html#a1346c96469c28e3ef0e2f1e7f9e15f8a',1,'svmp::FE::basis::BasisRequest::element_type'],['../classsvmp_1_1_f_e_1_1_invalid_element_exception.html#ac0f72814d0750fddf10b781a56ae3396',1,'svmp::FE::InvalidElementException::element_type()']]],
   ['elementbyelement_17',['ElementByElement',['../group___f_e___common_types.html#gga6eaba08c9d38ba04b8c34d30371830d0a21c6101ed42e51ea8041e0462503e60a',1,'svmp::FE']]],
@@ -55,5 +55,5 @@ var searchData=
   ['exceptions_52',['exceptions',['../group___f_e___basis_exceptions.html',1,'Exceptions'],['../group___f_e___common_exceptions.html',1,'Exceptions']]],
   ['expl_5fgeom_5fcpl_53',['expl_geom_cpl',['../classeq_type.html#a2652bab94c8daed8fdbde4b97c3cbd5d',1,'eqType']]],
   ['extract_5fcoupled_5fdof_54',['extract_coupled_dof',['../class_one_d_solver_interface.html#aa24e1fb266bc6efe6f9d8108d4fa8aff',1,'OneDSolverInterface']]],
-  ['extraction_20adaptation_20and_20protocol_55',['Extraction, adaptation, and protocol',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener3c56ff5c6e14783702388bfc2d956e86.html#autotoc_md79',1,'']]]
+  ['extraction_20adaptation_20and_20protocol_55',['Extraction, adaptation, and protocol',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener3c56ff5c6e14783702388bfc2d956e86.html#autotoc_md80',1,'']]]
 ];

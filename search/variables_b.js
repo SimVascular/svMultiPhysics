@@ -14,12 +14,14 @@ var searchData=
   ['min_5fpivot_11',['min_pivot',['../structsvmp_1_1math_1_1_dense_l_u_solver.html#a42205391dd678c844c94435b858bcef4',1,'svmp::math::DenseLUSolver']]],
   ['min_5fsr_12',['min_sr',['../class_t_t_p.html#a8365eb81c4e3aa87f12563cb2516dfd6',1,'TTP']]],
   ['mindihedang_13',['minDihedAng',['../classrmsh_type.html#ad5609b14f1ed0e2b2adbb947785fbbfd',1,'rmshType']]],
-  ['minitr_14',['minItr',['../classeq_type.html#afb78f4d0d3be74c89f9cb3ae4843d65e',1,'eqType']]],
-  ['mitr_15',['mItr',['../classls_type.html#a865f76201c558c363d432780c56f8d43',1,'lsType']]],
-  ['model_5fname_16',['model_name',['../class_active_stress_parameters.html#a78d34e172421d35e90d170bf9b372721',1,'ActiveStressParameters']]],
-  ['msh_17',['msh',['../classib_type.html#ad9f55dd4dfde319040bc07fedb6dbf94',1,'ibType::msh'],['../classuris_type.html#a64a7871842f3b77b2c8e75aaa651f4c9',1,'urisType::msh'],['../class_com_mod.html#ad199457e957470c2f821c0e18d3c4c80',1,'ComMod::msh']]],
-  ['mthd_18',['mthd',['../classib_type.html#ad2dfda1e1916b30eb47769f92d886554',1,'ibType']]],
-  ['mu1_19',['mu1',['../class_aliev_panfilov.html#a8a970b98936ba991c5d946e19d628261',1,'AlievPanfilov']]],
-  ['mu2_20',['mu2',['../class_aliev_panfilov.html#a8b1dee3dc5a5570a8357275834002657',1,'AlievPanfilov']]],
-  ['mvmsh_21',['mvMsh',['../class_com_mod.html#ad9422942752e5ac626926b60ab3ea40d',1,'ComMod']]]
+  ['minimum_5fdecrease_14',['minimum_decrease',['../class_line_search_parameters.html#ac243972ab8ad0aa618f4cb973b65afda',1,'LineSearchParameters']]],
+  ['minimum_5fstep_5flength_15',['minimum_step_length',['../class_line_search_parameters.html#a84965c7cedd7927fcec237a23a37aa83',1,'LineSearchParameters']]],
+  ['minitr_16',['minItr',['../classeq_type.html#afb78f4d0d3be74c89f9cb3ae4843d65e',1,'eqType']]],
+  ['mitr_17',['mItr',['../classls_type.html#a865f76201c558c363d432780c56f8d43',1,'lsType']]],
+  ['model_5fname_18',['model_name',['../class_active_stress_parameters.html#a78d34e172421d35e90d170bf9b372721',1,'ActiveStressParameters']]],
+  ['msh_19',['msh',['../classib_type.html#ad9f55dd4dfde319040bc07fedb6dbf94',1,'ibType::msh'],['../classuris_type.html#a64a7871842f3b77b2c8e75aaa651f4c9',1,'urisType::msh'],['../class_com_mod.html#ad199457e957470c2f821c0e18d3c4c80',1,'ComMod::msh']]],
+  ['mthd_20',['mthd',['../classib_type.html#ad2dfda1e1916b30eb47769f92d886554',1,'ibType']]],
+  ['mu1_21',['mu1',['../class_aliev_panfilov.html#a8a970b98936ba991c5d946e19d628261',1,'AlievPanfilov']]],
+  ['mu2_22',['mu2',['../class_aliev_panfilov.html#a8b1dee3dc5a5570a8357275834002657',1,'AlievPanfilov']]],
+  ['mvmsh_23',['mvMsh',['../class_com_mod.html#ad9422942752e5ac626926b60ab3ea40d',1,'ComMod']]]
 ];

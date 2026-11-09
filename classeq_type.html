@@ -237,6 +237,22 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:aa38fe7bb149cec558ca09eacef052ac6" id="r_aa38fe7bb149cec558ca09eacef052ac6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classbf_type.html">bfType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#aa38fe7bb149cec558ca09eacef052ac6">bf</a></td></tr>
 <tr class="memdesc:aa38fe7bb149cec558ca09eacef052ac6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Body force associated with this equation.  <br /></td></tr>
 <tr class="separator:aa38fe7bb149cec558ca09eacef052ac6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">Line search settings.</div></td></tr>
+<tr class="memitem:afc512b248d59a7e4ad44000c8a0b8672" id="r_afc512b248d59a7e4ad44000c8a0b8672"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#afc512b248d59a7e4ad44000c8a0b8672">line_search_enabled</a> = <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">false</a></td></tr>
+<tr class="memdesc:afc512b248d59a7e4ad44000c8a0b8672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Toggle line search for this equation.  <br /></td></tr>
+<tr class="separator:afc512b248d59a7e4ad44000c8a0b8672"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a654699dab01cbddf20569a9d6dbb70ad" id="r_a654699dab01cbddf20569a9d6dbb70ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#a654699dab01cbddf20569a9d6dbb70ad">line_search_minimum_decrease</a> = 0.0</td></tr>
+<tr class="memdesc:a654699dab01cbddf20569a9d6dbb70ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum decrease of the residual norm for line search.  <br /></td></tr>
+<tr class="separator:a654699dab01cbddf20569a9d6dbb70ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2dd1610f6199a694cb8d96fd9768d2d" id="r_ad2dd1610f6199a694cb8d96fd9768d2d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#ad2dd1610f6199a694cb8d96fd9768d2d">line_search_step_reduction_factor</a> = 0.0</td></tr>
+<tr class="memdesc:ad2dd1610f6199a694cb8d96fd9768d2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Line search step reduction factor.  <br /></td></tr>
+<tr class="separator:ad2dd1610f6199a694cb8d96fd9768d2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acab4cc908760b47f4765e5ee2eafc4a0" id="r_acab4cc908760b47f4765e5ee2eafc4a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#acab4cc908760b47f4765e5ee2eafc4a0">line_search_minimum_step_length</a> = 0.0</td></tr>
+<tr class="memdesc:acab4cc908760b47f4765e5ee2eafc4a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Line search minimum step length.  <br /></td></tr>
+<tr class="separator:acab4cc908760b47f4765e5ee2eafc4a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a158fc585479768537d6ac9bd606e63b6" id="r_a158fc585479768537d6ac9bd606e63b6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classeq_type.html#a158fc585479768537d6ac9bd606e63b6">line_search_verbose</a> = <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">false</a></td></tr>
+<tr class="memdesc:a158fc585479768537d6ac9bd606e63b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">If enabled, report line search progress to stdout.  <br /></td></tr>
+<tr class="separator:a158fc585479768537d6ac9bd606e63b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Equation type. </p>
@@ -511,6 +527,94 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Number of performed iterations. </p>
+
+</div>
+</div>
+<a id="afc512b248d59a7e4ad44000c8a0b8672" name="afc512b248d59a7e4ad44000c8a0b8672"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc512b248d59a7e4ad44000c8a0b8672">&#9670;&#160;</a></span>line_search_enabled</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">bool</a> eqType::line_search_enabled = <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Toggle line search for this equation. </p>
+<p>See the documentation of <a class="el" href="class_integrator.html">Integrator</a> for additional details. </p>
+
+</div>
+</div>
+<a id="a654699dab01cbddf20569a9d6dbb70ad" name="a654699dab01cbddf20569a9d6dbb70ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a654699dab01cbddf20569a9d6dbb70ad">&#9670;&#160;</a></span>line_search_minimum_decrease</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a> eqType::line_search_minimum_decrease = 0.0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Minimum decrease of the residual norm for line search. </p>
+<p>A step is accepted if it decreases the residual norm by at least this fraction, relative to the norm at the start of the step.</p>
+<p>See the documentation of <a class="el" href="class_integrator.html">Integrator</a> for additional details. </p>
+
+</div>
+</div>
+<a id="acab4cc908760b47f4765e5ee2eafc4a0" name="acab4cc908760b47f4765e5ee2eafc4a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acab4cc908760b47f4765e5ee2eafc4a0">&#9670;&#160;</a></span>line_search_minimum_step_length</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a> eqType::line_search_minimum_step_length = 0.0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Line search minimum step length. </p>
+<p>A line search step shorter than or equal to this length is accepted unconditionally. Must be non-negative.</p>
+<p>See the documentation of <a class="el" href="class_integrator.html">Integrator</a> for additional details. </p>
+
+</div>
+</div>
+<a id="ad2dd1610f6199a694cb8d96fd9768d2d" name="ad2dd1610f6199a694cb8d96fd9768d2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad2dd1610f6199a694cb8d96fd9768d2d">&#9670;&#160;</a></span>line_search_step_reduction_factor</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">double</a> eqType::line_search_step_reduction_factor = 0.0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Line search step reduction factor. </p>
+<p>If a step is rejected, the step length is multiplied by this factor for the next trial. Must be in the range (0, 1).</p>
+<p>See the documentation of <a class="el" href="class_integrator.html">Integrator</a> for additional details. </p>
+
+</div>
+</div>
+<a id="a158fc585479768537d6ac9bd606e63b6" name="a158fc585479768537d6ac9bd606e63b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a158fc585479768537d6ac9bd606e63b6">&#9670;&#160;</a></span>line_search_verbose</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">bool</a> eqType::line_search_verbose = <a class="el" href="namespacemat__fun.html#a08c6284789e31d0f22dd0e0f23cc51cf">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>If enabled, report line search progress to stdout. </p>
+<p>See the documentation of <a class="el" href="class_integrator.html">Integrator</a> for additional details. </p>
 
 </div>
 </div>

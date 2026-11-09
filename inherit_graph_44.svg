@@ -11,7 +11,7 @@
 <!-- Node0 -->
 <g id="Node000000" class="node">
 <title>Node0</title>
-<g id="a_Node000000"><a xlink:href="class_integrator.html" target="_top" xlink:title="Integrator class encapsulates the Newton iteration loop for time integration.">
+<g id="a_Node000000"><a xlink:href="class_integrator.html" target="_top" xlink:title="Integrator class that encapsulates the Newton iteration loop for time integration.">
 <polygon fill="white" stroke="#666666" points="65,-19 0,-19 0,0 65,0 65,-19"/>
 <text text-anchor="middle" x="32.5" y="-7" font-family="Helvetica,sans-Serif" font-size="10.00">Integrator</text>
 </a>

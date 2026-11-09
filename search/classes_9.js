@@ -8,7 +8,8 @@ var searchData=
   ['linearalgebrafactory_5',['LinearAlgebraFactory',['../class_linear_algebra_factory.html',1,'']]],
   ['linearalgebraparameters_6',['LinearAlgebraParameters',['../class_linear_algebra_parameters.html',1,'']]],
   ['linearsolverparameters_7',['LinearSolverParameters',['../class_linear_solver_parameters.html',1,'']]],
-  ['lpnsolverinterface_8',['LPNSolverInterface',['../class_l_p_n_solver_interface.html',1,'']]],
-  ['lsctx_9',['LSCtx',['../struct_l_s_ctx.html',1,'']]],
-  ['lstype_10',['lsType',['../classls_type.html',1,'']]]
+  ['linesearchparameters_8',['LineSearchParameters',['../class_line_search_parameters.html',1,'']]],
+  ['lpnsolverinterface_9',['LPNSolverInterface',['../class_l_p_n_solver_interface.html',1,'']]],
+  ['lsctx_10',['LSCtx',['../struct_l_s_ctx.html',1,'']]],
+  ['lstype_11',['lsType',['../classls_type.html',1,'']]]
 ];

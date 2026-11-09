@@ -129,7 +129,7 @@ class ActiveStressTrajectoryTest&lt; ConcreteModel &gt;</div><p>Run a twitch exp
 <p>The twitch experiment uses a prescribed calcium transient to trigger contraction in the active stress model (see <a class="el" href="class_active_stress_trajectory_test.html#active_stress_calcium_transient">active_stress_calcium_transient</a>). Fiber stretch is also prescribed (see <a class="el" href="class_active_stress_trajectory_test.html#active_stress_fiber_stretch">active_stress_fiber_stretch</a>), and fiber stretch rate is obtained from the prescribed stretch trajectory.</p>
 <p>The active stress model is solved standalone, i.e. only one system of ODEs is solved rather than a coupled three-dimensional mechanics problem. Therefore, the test verifies the active stress ODE definition and time stepping independently of the mechanics solver.</p>
 <p><a class="anchor" id="active_stress_calcium_transient"></a></p>
-<h3><a class="anchor" id="autotoc_md73"></a>
+<h3><a class="anchor" id="autotoc_md74"></a>
 Prescribed calcium transient</h3>
 <p>The calcium concentration is  </p><p class="formulaDsp">
 \[
@@ -162,7 +162,7 @@ t_p =
 \]
 </p>
 <p><a class="anchor" id="active_stress_fiber_stretch"></a></p>
-<h3><a class="anchor" id="autotoc_md74"></a>
+<h3><a class="anchor" id="autotoc_md75"></a>
 Prescribed fiber stretch</h3>
 <p>Fiber stretch is defined as  </p><p class="formulaDsp">
 \[
@@ -197,13 +197,13 @@ t_m = 150\,\mathrm{ms}, \quad
 t_r = 350\,\mathrm{ms}.
 \]
 </p>
-<h3><a class="anchor" id="autotoc_md75"></a>
+<h3><a class="anchor" id="autotoc_md76"></a>
 Format of the reference solution</h3>
 <p>The reference CSV contains a header followed by reference values at selected simulation steps. The first two columns are <code>step</code> and <code>Ta</code>, containing the simulation step and active tension, respectively. If the model has additional internal state variables, their values follow in subsequent columns.</p>
 <p>The state variables are assumed by default to have the same order as in the concrete model being tested. If necessary, <code>state_reference_columns</code> supplies the CSV column name corresponding to each state variable, in the concrete model's state order.</p>
 <p>Comparisons are performed only at the checkpoints listed in the reference CSV; the file does not need to contain every simulated time step. At each checkpoint, active tension and each state variable are compared pointwise with the corresponding reference value. If a pointwise difference exceeds the prescribed tolerance, GoogleTest records a failed expectation and the test fails.</p>
 <p>Checkpoints are integer simulation-step indices and must coincide with simulated time steps; intermediate checkpoints are not interpolated. Checkpoint <code>N</code> is compared after the update starting at \( t = N \Delta t \), which advances the interval \([N\Delta t,(N+1)\Delta t]\).</p>
-<h3><a class="anchor" id="autotoc_md76"></a>
+<h3><a class="anchor" id="autotoc_md77"></a>
 Active tension derivative</h3>
 <p>After every update, the partial derivative of the active tension with respect to the fiber stretch, at fixed state, is compared with the central finite difference  </p><p class="formulaDsp">
 \[

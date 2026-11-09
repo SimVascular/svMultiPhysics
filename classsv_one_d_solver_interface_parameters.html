@@ -192,7 +192,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line">  &lt;<span class="keywordtype">Coupling_type</span>&gt; <span class="keyword">Implicit</span> &lt;/<span class="keywordtype">Coupling_type</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">Shared_library</span>&gt; /<span class="keyword">path</span>/<span class="keyword">to</span>/<span class="keyword">libsvoned_interface</span> &lt;/<span class="keywordtype">Shared_library</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">svOneDSolver_interface</span>&gt;</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md21"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md22"></a>
 Notes</h2>
 <p>Coupling_type: "Explicit" | "Implicit" | "Semi-implicit" Controls how the 3D Newton iteration couples to the 1D solver (same semantics as the 0D coupling_type). Shared_library: Path to the 1D interface shared library. The extension (.so or .dylib) may be omitted; it will be appended automatically based on the platform.</p>
 <p>Each coupled face specifies its own input file via &lt;Coupling_interface&gt; &lt;svOneDSolver_input_file&gt; ... &lt;/svOneDSolver_input_file&gt; &lt;/Coupling_interface&gt; inside the corresponding &lt;Add_BC&gt; element. </p>
