@@ -23,9 +23,9 @@
  * ## Line search
  *
  * The nonlinear iterations of an equation can be globalized by a backtracking
- * line search, enabled by the `Line_search` XML element of the equation (see
- * @ref LineSearchParameters). Without it, every iteration applies the full
- * increment of the linear solve.
+ * line search, enabled by the `Line_search_experimental` XML element of the
+ * equation (see @ref LineSearchParameters). Without it, every iteration applies
+ * the full increment of the linear solve.
  *
  * At every nonlinear iteration of an equation with line search enabled, the
  * increment @f$\delta u@f$ of the linear solve is scaled by a step length
@@ -59,6 +59,9 @@
  * prestress is accumulated over the assemblies of a time step, which would
  * include those of the trial step lengths unless they were excluded.
  *
+ * @warning While it is implemented for all equations, line search is currently
+ *   only tested for struct, should be regarded as experimental, and used with
+ *   caution.
  */
 class Integrator {
 
