@@ -31,7 +31,10 @@ approaches equilibrium. With one Newton iteration per step the tangent is that
 of the composed update, so once the time step is large the residual falls
 quadratically and reaches round-off by step 10 of the 20 here. The last
 result carries the prestrain as
-the cell arrays `Prestrain_F_g<g>`, one per Gauss point.
+the cell arrays `Prestrain_F_g<g>`, one per Gauss point. A prestrain run
+solves the struct (or ustruct) equation alone and does not accept
+`<Line_search_experimental>`; a forward run that reads the prestrain may use
+both.
 
 `forward.xml` loads that prestrain through `<Prestrain_file_path>`
 and holds the same 10 mmHg as a follower load. `check_hold.py` asserts that the

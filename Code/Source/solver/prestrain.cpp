@@ -122,14 +122,20 @@ void init(ComMod& com_mod)
         "A Prestrain run can not be restarted from a .bin file. "
         "Point Prestrain_file_path at its last VTU file instead.");
 
-    bool solid = false;
-    for (auto& eq : com_mod.eq) {
-      if (eq.phys == EquationType::phys_struct || eq.phys == EquationType::phys_ustruct) {
-        solid = true;
-      }
-    }
-    svmp::throw_if<svmp::FE::InvalidArgumentException>(!solid,
-        "Prestrain requires a struct or ustruct equation.");
+    // Every prestrain step restarts the solution from rest, and its time is
+    // fictitious, so any other physics would be erased or advanced meaninglessly.
+    const auto& eq = com_mod.eq[0];
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.nEq != 1 ||
+        (eq.phys != EquationType::phys_struct && eq.phys != EquationType::phys_ustruct),
+        "A Prestrain run solves a single struct or ustruct equation, but this input has " +
+        std::to_string(com_mod.nEq) + " equations. Every prestrain step starts the solution again "
+        "from rest in fictitious time, which other physics cannot follow.");
+
+    // A line search would judge each step by the forward residual, while a
+    // prestrain step is composed into F0 and judged by the next step's residual.
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.line_search_enabled,
+        "Line_search_experimental is not supported in a Prestrain run. It remains available "
+        "in forward runs that read a prestrain through Prestrain_file_path.");
   }
 
   for (auto& msh : com_mod.msh) {
@@ -172,7 +178,7 @@ static void compose(Array<double>& F0, const int e, const int g, const Array<dou
 }
 
 /// @brief F0 <- (I + Grad u) F0 at every Gauss point, with u = af * D, the
-/// rows s to s + nsd - 1 of D.
+/// rows s to s + nsd - 1 of D: the displacement of the run's one solid equation.
 static void accumulate(ComMod& com_mod, const int s, const double af, const Array<double>& D)
 {
   const int nsd = com_mod.nsd;
@@ -224,6 +230,8 @@ void start_step(ComMod& com_mod, SolutionStates& solutions)
     }
   }
 
+  // A prestrain run has a single, solid, equation (see init), so these are
+  // all its rows.
   Ao = 0.0;
   Yo = 0.0;
   Do = 0.0;
@@ -241,8 +249,9 @@ void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, Array
     return;
   }
 
-  // Every rank holds the same row count; the columns are its own elements.
-  const int rows = lM.F0.nrows();
+  // The row count follows from the mesh, the same on every rank; the columns
+  // are the rank's own elements, none on a rank that holds none of the mesh.
+  const int rows = com_mod.nsd * com_mod.nsd * lM.nG;
   const int np = cm.np();
 
   Vector<int> sCount(np), disps(np);

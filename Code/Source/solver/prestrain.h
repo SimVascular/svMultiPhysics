@@ -46,7 +46,9 @@
 /// imaged mesh, so that equilibrium holds on the imaged geometry rather than
 /// on a virtually deformed one. Each step is iterated like any other time
 /// step, up to Max_iterations. With Pseudo_transient its time step may be
-/// adapted to the residual (see PseudoTransientContinuation.h).
+/// adapted to the residual (see PseudoTransientContinuation.h). A prestrain run
+/// solves a single struct or ustruct equation, without a line search; forward
+/// runs that read a prestrain have neither restriction.
 ///
 /// F0 is stored per mesh as Array<double>(nsd*nsd*nG, nEl): one column per
 /// element holding the nG Gauss point tensors back to back, each in the
@@ -340,8 +342,10 @@ void correct_step_tangent_fibers(const mat_fun::Matrix<nsd>& F0, const mat_fun::
 void read(const std::string& file_name, mshType& mesh, int nsd);
 
 /// @brief Validate the settings and the prestrains read from file, and seed
-/// the identity where a prestrain run has none. Called once the meshes are
-/// partitioned.
+/// the identity where a prestrain run has none, so that every mesh of a
+/// prestrain run carries a prestrain. Called once the meshes are partitioned.
+/// Rejects a prestrain run with more than one equation, a non-solid one, or a
+/// line search.
 void init(ComMod& com_mod);
 
 /// @brief Start a prestrain step: accumulate the displacement u the previous
@@ -355,7 +359,8 @@ void init(ComMod& com_mod);
 void start_step(ComMod& com_mod, SolutionStates& solutions);
 
 /// @brief Gather a mesh's prestrain onto the master, in the mesh's original
-/// element order, for writing. All ranks must call it.
+/// element order, for writing. Collective: every rank must call it for the
+/// same meshes, also a rank that holds none of the mesh's elements.
 void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, Array<double>& gF0);
 
 };

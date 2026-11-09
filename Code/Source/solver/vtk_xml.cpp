@@ -1470,13 +1470,13 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   }
 
   // The prestrain deformation gradient of a prestrain run, gathered onto
-  // the master in each mesh's original element order. Every rank takes part.
+  // the master in each mesh's original element order. A prestrain run carries
+  // one on every mesh, and every rank takes part for every mesh, also ranks
+  // that hold none of a mesh's elements: the gather is collective.
   std::vector<Array<double>> gF0(nMsh);
   if (com_mod.prestrainEq) {
     for (int iM = 0; iM < nMsh; iM++) {
-      if (com_mod.msh[iM].F0.size() != 0) {
-        prestrain::gather(com_mod, cm_mod, com_mod.msh[iM], gF0[iM]);
-      }
+      prestrain::gather(com_mod, cm_mod, com_mod.msh[iM], gF0[iM]);
     }
   }
 
