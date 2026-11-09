@@ -213,16 +213,14 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   bool pstEq = com_mod.pstEq;
 
   int eNoN = lM.eNoN;
-  int nFn = lM.nFn;
-  if (nFn == 0) {
-    nFn = 1;
-  }
+  const bool mesh_has_fibers = lM.fibers.has_fibers();
 
   #ifdef debug_construct_dsolid
   dmsg << "lM.nEl: " << lM.nEl;
   dmsg << "eNoN: " << eNoN;
   dmsg << "nsymd: " << nsymd;
-  dmsg << "nFn: " << nFn;
+  dmsg << "input fiber directions: "
+       << lM.fibers.get_num_directions();
   dmsg << "lM.nG: " << lM.nG;
   #endif
 
@@ -231,8 +229,8 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   Vector<int> ptr(eNoN);
   Vector<double> pSl(nsymd), N(eNoN);
   ActiveStress::Evaluator active_stress_evaluator;
-  Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN), 
-                bfl(nsd,eNoN), fN(nsd,nFn), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
+  Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
+                bfl(nsd,eNoN), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN);
 
   const bool prestrained = (lM.F0.size() != 0);
@@ -246,6 +244,9 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     if (cPhys != EquationType::phys_struct) {
       continue; 
     }
+    const bool orthonormalize_fibers =
+      mat_models::requires_orthonormal_fiber_basis(
+        eq.dmn[cDmn].stM.isoType);
 
     // Update shape functions for NURBS
     if (lM.eType == ElementType::NRB) {
@@ -253,16 +254,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     }
 
     // Create local copies
-    fN  = 0.0;
     pS0l = 0.0;
-
-    if (lM.fN.size() != 0) {
-      for (int iFn = 0; iFn < nFn; iFn++) {
-        for (int i = 0; i < nsd; i++) {
-          fN(i,iFn) = lM.fN(i+nsd*iFn,e);
-        }
-      }
-    }
 
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
@@ -297,8 +289,19 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
+    Array<double> fiber_values = Fibers::zero_fibers(nsd);
 
     for (int g = 0; g < lM.nG; g++) {
+      if (mesh_has_fibers) {
+        fiber_values = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, orthonormalize_fibers);
+        // A prestrained element's fibers are pulled back to its stress-free configuration (see prestrain.h).
+        if (prestrained) {
+          prestrain::pull_back_fibers(lM, e, g, fiber_values);
+        }
+      }
+      const auto fibers = mat_fun::eigen_view(fiber_values);
+
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
       const bool recompute_visc = (g == 0 || !lM.lShpF);
@@ -312,7 +315,6 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         // A prestrained element is integrated on its stress-free configuration (see prestrain.h).
         if (prestrained) {
           Jac /= prestrain::pull_back(lM, e, g, Nx);
-          prestrain::pull_back_fibers(lM, e, g, fN);
         }
       }
       double w = lM.w(g) * Jac;
@@ -321,7 +323,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       if (nsd == 3) {
         const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
-        struct_3d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, F0, bfl, fN,
+        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, F0, bfl, fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
 
 #if 0
@@ -336,7 +338,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       } else if (nsd == 2) {
         const auto F0 = prestrain::deformation_gradient<2>(lM, e, g);
-        struct_2d(com_mod, cep_mod, eNoN, nFn, w, N, Nx, al, yl, dl, F0, bfl, fN,
+        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, F0, bfl, fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
       }
 
@@ -358,12 +360,13 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
 /// @brief Reproduces Fortran 'STRUCT2D' subroutine.
 //
-void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
+void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const mat_fun::Matrix<2> &F0,
                const Array<double> &bfl,
-               const Array<double> &fN, const Array<double> &pS0l,
+               const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
+               const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc) {
   using namespace consts;
@@ -375,6 +378,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   dmsg.banner();
   #endif
 
+  const int nFn = fibers.cols();
   const int dof = com_mod.dof;
   int cEq = com_mod.cEq;
   auto& eq = com_mod.eq[cEq];
@@ -428,7 +432,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   const Matrix<2> F  = F0 + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, eigen_view<2>(fN));
+  const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, fibers);
   
   #ifdef debug_struct_2d 
   dmsg << "ud: " << ud(0) << " " << ud(1);
@@ -442,21 +446,21 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   Matrix<2> S;
   Matrix<3> Dm;
   double Ja;
-  mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, eigen_view<2>(fN), Ta, S, Dm, Ja);
+  mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
 
   // A prestrain step of one Newton iteration is composed into F0 at once, which
   // also moves the fibers the material law sees (see prestrain.h).
   const bool prestrain_step = com_mod.prestrainEq && eq.maxItr == 1;
   if (prestrain_step) {
-    const auto stress = [&](const auto& fibers) {
+    const auto stress = [&](const auto& turned_fibers) {
       Matrix<2> S_f;
       Matrix<3> Dm_f;
       double Ja_f;
-      const auto Ta_f = active_stress_evaluator.evaluate<2>(Nm, F, fibers);
-      mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta_f, S_f, Dm_f, Ja_f);
+      const auto Ta_f = active_stress_evaluator.evaluate<2>(Nm, F, turned_fibers);
+      mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, turned_fibers, Ta_f, S_f, Dm_f, Ja_f);
       return S_f;
     };
-    prestrain::correct_step_tangent_fibers<2>(F0, F, S, Nxm, eigen_view<2>(fN), stress, w * afu, dof, lK);
+    prestrain::correct_step_tangent_fibers<2>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
   }
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
@@ -541,16 +545,19 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
 }
 
 /// @brief Reproduces Fortran 'STRUCT3D' subroutine.
-void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
+void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const mat_fun::Matrix<3> &F0,
                const Array<double> &bfl,
-               const Array<double> &fN, const Array<double> &pS0l,
+               const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
+               const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc) {          
   using namespace consts;
   using namespace mat_fun;
+
+  const int nFn = fibers.cols();
 
   #define n_debug_struct_3d 
   #ifdef debug_struct_3d 
@@ -617,7 +624,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   const Matrix<3> F  = F0 + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, eigen_view<3>(fN));
+  const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, fibers);
 
   // 2nd Piola-Kirchhoff tensor (S) and material stiffness tensor in
   // Voigt notation (Dm)
@@ -625,21 +632,21 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN, const int nFn,
   Matrix<3> S;
   Matrix<6> Dm;
   double Ja;
-  mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, eigen_view<3>(fN), Ta, S, Dm, Ja);
+  mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
 
   // A prestrain step of one Newton iteration is composed into F0 at once, which
   // also moves the fibers the material law sees (see prestrain.h).
   const bool prestrain_step = com_mod.prestrainEq && eq.maxItr == 1;
   if (prestrain_step) {
-    const auto stress = [&](const auto& fibers) {
+    const auto stress = [&](const auto& turned_fibers) {
       Matrix<3> S_f;
       Matrix<6> Dm_f;
       double Ja_f;
-      const auto Ta_f = active_stress_evaluator.evaluate<3>(Nm, F, fibers);
-      mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta_f, S_f, Dm_f, Ja_f);
+      const auto Ta_f = active_stress_evaluator.evaluate<3>(Nm, F, turned_fibers);
+      mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, turned_fibers, Ta_f, S_f, Dm_f, Ja_f);
       return S_f;
     };
-    prestrain::correct_step_tangent_fibers<3>(F0, F, S, Nxm, eigen_view<3>(fN), stress, w * afu, dof, lK);
+    prestrain::correct_step_tangent_fibers<3>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
   }
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.

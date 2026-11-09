@@ -44,8 +44,8 @@
       <Face_file_path> mesh/mesh-surfaces/top.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction_file_path> mesh/fibersLongCells.vtu </Fiber_direction_file_path>
-  <Fiber_direction_file_path> mesh/fibersSheetCells.vtu </Fiber_direction_file_path>
+  <Fiber_direction_from_file_cells> mesh/fibersLongCells.vtu </Fiber_direction_from_file_cells>
+  <Fiber_direction_from_file_cells> mesh/fibersSheetCells.vtu </Fiber_direction_from_file_cells>
 
   <!-- The prestrain displacement written by the last step of prestrain.xml -->
   <Prestrain_file_path> prestrain/result_020.vtu </Prestrain_file_path>

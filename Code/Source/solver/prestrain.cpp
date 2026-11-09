@@ -57,12 +57,12 @@ double pull_back(const mshType& lM, const int e, const int g, Array<double>& Nx)
   }
 }
 
-void pull_back_fibers(const mshType& lM, const int e, const int g, Array<double>& fN)
+void pull_back_fibers(const mshType& lM, const int e, const int g, Array<double>& fibers)
 {
-  if (fN.nrows() == 3) {
-    pull_back_fibers<3>(deformation_gradient<3>(lM, e, g), lM, e, fN);
+  if (fibers.nrows() == 3) {
+    pull_back_fibers<3>(deformation_gradient<3>(lM, e, g), fibers);
   } else {
-    pull_back_fibers<2>(deformation_gradient<2>(lM, e, g), lM, e, fN);
+    pull_back_fibers<2>(deformation_gradient<2>(lM, e, g), fibers);
   }
 }
 

@@ -10,6 +10,7 @@
 #include "fs.h"
 #include "lhsa.h"
 #include "nn.h"
+#include "solid/mat_models.h"
 #include "solid/sv_struct.h"
 #include "solid/ustruct.h"
 #include "utils.h"
@@ -19,6 +20,7 @@
 #include <array>
 #include <iomanip>
 #include <math.h>
+#include <optional>
 
 namespace fsi {
 
@@ -39,8 +41,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
   using namespace consts;
 
   int eNoN = lM.eNoN;
-  int nFn  = lM.nFn;
-  if (nFn == 0) nFn = 1;
+  const bool mesh_has_fibers = lM.fibers.has_fibers();
 
   bool  vmsStab = false;
   if (lM.nFs == 1) {
@@ -67,8 +68,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
   Vector<int> ptr(eNoN); 
   Array3<double> lK(dof*dof,eNoN,eNoN), lKd(dof*nsd,eNoN,eNoN);
-  Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN), bfl(nsd,eNoN), 
-      fN(nsd,nFn), pS0l(nsymd,eNoN), lR(dof,eNoN);
+  Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN), bfl(nsd,eNoN),
+      pS0l(nsymd,eNoN), lR(dof,eNoN);
   Vector<double> pSl(nsymd);
   ActiveStress::Evaluator active_stress_evaluator;
 
@@ -92,21 +93,17 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         (cPhys != Equation_struct) && (cPhys != Equation_ustruct)) {
       continue;
     }
+    const bool orthonormalize_fibers =
+      cPhys == Equation_struct || cPhys == Equation_ustruct
+      ? mat_models::requires_orthonormal_fiber_basis(
+          eq.dmn[cDmn].stM.isoType)
+      : false;
 
     // Update shape functions for NURBS
     //if (lM.eType == eType_NRB) CALL NRBNNX(lM, e)
 
     // Create local copies
-    fN  = 0.0;
     pS0l = 0.0;
-
-    if (lM.fN.size() != 0) {
-      for (int iFn = 0; iFn < nFn; iFn++) {
-        for (int i = 0; i < nsd; i++) {
-          fN(i,iFn) = lM.fN(i+nsd*iFn,e);
-        }
-      }
-    }
 
     for (int a = 0; a < eNoN; a++) {
       int Ac = lM.IEN(a,e);
@@ -179,7 +176,18 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       uris::eval_uris_ris_factors_quadrature(com_mod, lM, fs_1[0], e, urisFactorTotalEl, urisValveVelTermTotalEl);
     }
 
+    Array<double> fiber_values = Fibers::zero_fibers(nsd);
     for (int g = 0; g < fs_1[0].nG; g++) {
+      if (mesh_has_fibers) {
+        fiber_values = lM.fibers.get_quadrature_fibers(
+            nsd, g, e, orthonormalize_fibers);
+        // A prestrained solid element's fibers are pulled back to its stress-free configuration (see prestrain.h).
+        if (prestrained) {
+          prestrain::pull_back_fibers(lM, e, g, fiber_values);
+        }
+      }
+      const auto fibers = mat_fun::eigen_view(fiber_values);
+
       if (g == 0 || !fs_1[1].lShpF) {
         auto Nx = fs_1[1].Nx.rslice(g);
         nn::gnn(fs_1[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix);
@@ -205,7 +213,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         // A prestrained solid element is integrated on its stress-free configuration (see prestrain.h).
         if (prestrained) {
           Jac /= prestrain::pull_back(lM, e, g, Nwx);
-          prestrain::pull_back_fibers(lM, e, g, fN);
         }
       }
 
@@ -231,8 +238,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
             const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
-            struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
-                                 Nwx, al, yl, dl, F0, bfl, fN, pS0l, pSl,
+            struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
+                                 Nwx, al, yl, dl, F0, bfl, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;
           case Equation_lElas:
@@ -245,8 +252,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N1 = fs_1[1].N.col(g);
             const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
-                                  fs_1[1].eNoN, nFn, w, Jac, N0, N1, Nwx, al,
-                                  yl, dl, F0, bfl, fN, active_stress_evaluator, lR,
+                                  fs_1[1].eNoN, w, Jac, N0, N1, Nwx, al,
+                                  yl, dl, F0, bfl, fibers, active_stress_evaluator, lR,
                                   lK, lKd, recompute_visc);
           } break;
           }
@@ -269,14 +276,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
             const auto F0 = prestrain::deformation_gradient<2>(lM, e, g);
-            struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, nFn, w, N0,
-                                 Nwx, al, yl, dl, F0, bfl, fN, pS0l, pSl,
+            struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
+                                 Nwx, al, yl, dl, F0, bfl, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;
 
           case Equation_ustruct:
             throw std::runtime_error("[construct_fsi] USTRUCT2D_M not implemented");
-            //CALL USTRUCT2D_M(vmsStab, fs(1).eNoN, fs(2).eNoN, nFn, w, Jac, fs(1).N(:,g), fs(2).N(:,g), Nwx, al, yl, dl, bfl, fN, ya_l, lR, lK, lKd)
+            //CALL USTRUCT2D_M(vmsStab, fs(1).eNoN, fs(2).eNoN, nFn, w, Jac, fs(1).N(:,g), fs(2).N(:,g), Nwx, al, yl, dl, bfl, fibers, ya_l, lR, lK, lKd)
           break;
         }
       }

@@ -3,6 +3,8 @@
 
 #include "remesh.h"
 
+#include "Core/Exception.h"
+#include "Fibers.h"
 #include "all_fun.h"
 #include "mat_fun.h"
 #include "nn.h"
@@ -77,8 +79,7 @@ void dist_msh_srf(ComMod& com_mod, ChnlMod& chnl_mod, faceType& lFa, mshType& lM
   #endif
 
   std::string sTmp = chnl_mod.appPath + "/" + ".remesh_tmp.dir";
-  auto mkdir_arg = std::string("mkdir -p ") + sTmp;
-  std::system(mkdir_arg.c_str());
+  std::filesystem::create_directories(sTmp);
 
   for (int e = 0; e < lFa.nEl; e++) {
     for (int a = 0; a < lFa.eNoN; a++) {
@@ -1439,6 +1440,15 @@ void remesh_restart(Simulation* simulation)
   auto& stFileName = com_mod.stFileName;
   auto& rmsh = com_mod.rmsh;
 
+  for (int iM = 0; iM < com_mod.nMsh; ++iM) {
+    const auto location = com_mod.msh[iM].fibers.get_data_location();
+    svmp::throw_if<svmp::ParseException>(
+      location == Fibers::DataCollocation::point ||
+      location == Fibers::DataCollocation::cell,
+      "Remeshing is not supported with point- or cell-associated fiber "
+      "directions.");
+  }
+
   auto sTmp = stFileName + "_last.bin";
   #ifdef debug_remesh_restart 
   dmsg << "rmsh.rTS: " << rmsh.rTS;
@@ -1484,8 +1494,10 @@ void remesh_restart(Simulation* simulation)
   restart_file.close();
 
   if (cm.mas(cm_mod)) {
-    std::string link_cmd = "ln -f " + fTmp + " " + sTmp;
-    std::system(link_cmd.c_str());
+    std::error_code error;
+    std::filesystem::remove(sTmp, error);
+    std::filesystem::create_hard_link(fTmp, sTmp, error);
+    if (error) std::cerr << "Could not link " << sTmp << " to " << fTmp << ": " << error.message() << std::endl;
   }
 
   auto& x = com_mod.x;
@@ -1860,7 +1872,6 @@ void remesh_restart(Simulation* simulation)
       msh.N.clear();
       msh.Nb.clear();
       msh.nV.clear();
-      msh.fN.clear();
       msh.Nx.clear();
       msh.Nxx.clear();
 

@@ -8,6 +8,7 @@
 #include "vtk_xml_parser.h"
 #include "VtkData.h"
 
+#include "Core/Exception.h"
 #include "all_fun.h"
 #include "consts.h"
 #include "post.h"
@@ -907,6 +908,7 @@ void write_vtu_debug(ComMod& com_mod, mshType& lM, const std::string& fName)
   delete vtk_writer;
 }
 
+
 //------------
 // write_vtus
 //------------
@@ -976,7 +978,8 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
       if (oGrp == OutputNameType::outGrp_fN) {
         nFn = 1;
         for (int iM = 0; iM < nMsh; iM++) {
-          nFn = std::max(nFn, meshes[iM].nFn);
+          nFn = std::max(nFn,
+            meshes[iM].fibers.get_num_directions());
         }
         nOut = nOut + nFn;
         outDof = outDof + eq.output[iOut].l * nFn;
@@ -1206,7 +1209,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
           case OutputNameType::outGrp_fN:
             cOut = cOut - 1;
             tmpV.resize(nFn*nsd,msh.nNo);
-            if (msh.nFn != 0) {
+            if (msh.fibers.has_fibers()) {
               post::fib_dir_post(simulation, msh, nFn, tmpV, solutions, iEq);
             }
             for (int iFn = 0; iFn < nFn; iFn++) {
@@ -1227,7 +1230,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
 
           case OutputNameType::outGrp_fA:
             tmpV.resize(1,msh.nNo);
-            if (msh.nFn == 2) {
+            if (msh.fibers.get_num_directions() >= 2) {
               post::fib_algn_post(simulation, msh, tmpV, solutions, iEq);
             }
             for (int a = 0; a < msh.nNo; a++) {
@@ -1334,7 +1337,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
 
           case OutputNameType::outGrp_fibStretch: {
             Vector<double> res(msh.nNo);
-            if (msh.nFn != 0) {
+            if (msh.fibers.has_fibers()) {
               post::fib_stretch(simulation->com_mod, iEq, msh, solutions.current.get_displacement(), res);
             }
             for (int a = 0; a < msh.nNo; a++) {
@@ -1344,7 +1347,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
 
           case OutputNameType::outGrp_fibStretchRate: {
             Vector<double> res(msh.nNo);
-            if (msh.nFn != 0) {
+            if (msh.fibers.has_fibers()) {
               post::fib_stretch_rate(simulation->com_mod, iEq, msh, solutions, res);
             }
             for (int a = 0; a < msh.nNo; a++) {

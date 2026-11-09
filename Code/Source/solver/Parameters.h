@@ -128,6 +128,12 @@ class Parameter
     /// @brief Set the parameter value from a string.
     void set(const std::string& str_value)
     {
+      if constexpr (std::is_same_v<T, std::string>) {
+        value_ = str_value.substr(0, str_value.find_last_not_of(" \t\r\n") + 1);
+        value_.erase(0, value_.find_first_not_of(" \t\r\n"));
+        value_set_ = true;
+        return;
+      }
       if (str_value == "") {
         value_ = T{0};
       }
@@ -1645,7 +1651,6 @@ class DomainParameters : public ParameterLists
     Parameter<std::string> id;
 
     Parameter<double> absolute_tolerance;
-    VectorParameter<double> anisotropic_conductivity;
     Parameter<double> backflow_stabilization_coefficient;
 
     Parameter<double> conductivity;
@@ -1666,7 +1671,18 @@ class DomainParameters : public ParameterLists
     Parameter<double> force_z;
 
     Parameter<std::string> include_xml;
+
+    /// Conductivities for CEP diffusion:
+    /// @f[
+    ///   D = D_\mathrm{iso}\, I
+    ///     + D_f\, f\otimes f
+    ///     + D_s\, s\otimes s
+    ///     + D_n\, n\otimes n.
+    /// @f]
     Parameter<double> isotropic_conductivity;
+    Parameter<double> fiber_conductivity;
+    Parameter<double> sheet_conductivity;
+    Parameter<double> sheet_normal_conductivity;
 
     Parameter<double> mass_damping;
     Parameter<int> maximum_iterations;
@@ -1976,10 +1992,12 @@ class MeshParameters : public ParameterLists
     Parameter<int> domain_id;
     Parameter<std::string> domain_file_path;
 
-    VectorParameter<std::string> fiber_direction_file_paths;
-    //Parameter<std::string> fiber_direction_file_path;
-    std::vector<VectorParameter<double>> fiber_directions;
-    //VectorParameter<double> fiber_direction;
+    // Constant fiber directions from <Fiber_direction_constant>.
+    std::vector<VectorParameter<double>> fiber_direction_constant;
+    // Fiber VTU paths from <Fiber_direction_from_file_points>.
+    VectorParameter<std::string> fiber_direction_file_paths_points;
+    // Fiber VTU paths from <Fiber_direction_from_file_cells>.
+    VectorParameter<std::string> fiber_direction_file_paths_cells;
 
     Parameter<std::string> include_xml;
     Parameter<std::string> initial_displacements_file_path;

@@ -387,12 +387,6 @@ void genBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const std::string& genF
   auto& cplBC = com_mod.cplBC;
   auto& cm = com_mod.cm;
 
-  int len = cplBC.binPath.size() + 1 + cplBC.commuName.size() + 1;
-  char command[len];
-  strcpy(command, cplBC.binPath.c_str());
-  strcat(command, " ");
-  strcat(command, cplBC.commuName.c_str());
-
   // If this process is the master process on the communicator
   if (cm.mas(cm_mod)) {
     for (int iFa = 0; iFa < cplBC.nFa; iFa++) {
@@ -458,7 +452,7 @@ void genBC_Integ_X(ComMod& com_mod, const CmMod& cm_mod, const std::string& genF
     genBC_writer.close();
     
     // Call genBC executable which reads the communication file GenBC.int
-    system(command);
+    utils::run_process(cplBC.binPath, cplBC.commuName);
 
     // Read outputs from genBC, which are in the same GenBC.int
     std::ifstream genBC_reader(cplBC.commuName, std::ios::out | std::ios::binary);

@@ -41,8 +41,8 @@
       <Face_file_path> mesh/mesh-surfaces/top.vtp </Face_file_path>
   </Add_face>
 
-  <Fiber_direction_file_path> mesh/fibersLongCells.vtu </Fiber_direction_file_path>
-  <Fiber_direction_file_path> mesh/fibersSheetCells.vtu </Fiber_direction_file_path>
+  <Fiber_direction_from_file_cells> mesh/fibersLongCells.vtu </Fiber_direction_from_file_cells>
+  <Fiber_direction_from_file_cells> mesh/fibersSheetCells.vtu </Fiber_direction_from_file_cells>
 
   <Mesh_scale_factor> 100.0 </Mesh_scale_factor> <!-- Convert from m to cm -->
 </Add_mesh>
