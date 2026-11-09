@@ -28,3 +28,7 @@ def test_slab(model, n_proc):
     run_with_reference(base_folder, "slab", fields, n_proc, t_max=1,
                        name_inp=f"solver_{model}.xml",
                        name_ref=f"result_{model}_001.vtu")
+
+
+def test_ventricle(n_proc):
+    run_with_reference(base_folder, "ventricle_sv0D", fields, n_proc, t_max=5)

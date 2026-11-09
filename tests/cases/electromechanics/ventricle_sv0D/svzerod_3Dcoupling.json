@@ -1,0 +1,218 @@
+{
+  "description": {
+    "description of test case": "Open-loop Windkessel model of the systemic circulation coupled to the 3D electromechanics ventricle, following the idealized-LV example of Brown et al. (2024), A modular framework for implicit 3D-0D coupling in cardiac mechanics, CMAME 421:116764 (arXiv:2310.13780): Eqs. (64)-(67) for the topology and Appendix D Table 1 for the parameters.",
+    "topology": "p_at -[mitral]- p_v -[aortic]- p_p -Rp,Lp- p_d -Rd- p_ref, with Cp at p_p and Cd at p_d. The 3D LV injects its endocardial flux Q1 at the p_v node (junction J_LV); the LV node pressure p_v is returned as the follower pressure load on the endocardium.",
+    "units": "m, ms, kg; pressure in MPa; flow in m^3/ms (matches solver.xml)",
+    "deviations from the reference": "Ventricular contraction follows from electrophysiology rather than a prescribed active stress: the stimuli in solver.xml fire 60 ms after the onset of atrial systole, while in the reference the active stress starts 143 ms after it. The cycle starts at the ventricular stimuli rather than at the onset of atrial systole."
+  },
+  "simulation_parameters": {
+    "_comment_": "absolute_tolerance was 1e-16 while this circuit was linear (flow source + RCR), where Newton reaches the exact solution in one iteration and the residual sits at round-off. The tanh valves make the system nonlinear, and with Rmax/Rmin = 1e3 the attainable residual floor is ~1e-12 in these units (MPa, m^3/ms), so 1e-16 is unreachable. 1e-10 is ~1e-8 relative on the pressure rows and ~1e-3 relative on the flow rows, and stays far tighter than the 1e-7 flow perturbation svMultiPhysics uses for dP/dQ.",
+    "coupled_simulation": true,
+    "number_of_time_pts": 101,
+    "external_step_size": 1.0,
+    "output_all_cycles": true,
+    "steady_initial": false,
+    "absolute_tolerance": 1e-11,
+    "maximum_nonlinear_iterations": 10000
+  },
+  "_comment_initial_condition_": "Start the systemic side pressurized at 80 mmHg = 80 * 133.32e-6 MPa = 0.0106656 MPa, i.e. every DOF downstream of the aortic valve: p_p (the AORTIC-aorta_prox node), p_d (the aorta_prox-DISTAL node) and the Cd capacitor pressure inside the DISTAL RCR, which coincides with p_d because Rp = 0. The value equals the RCR's Pd, so no flow crosses Rd at t = 0. Keys are exact svZeroD DOF names, the same strings that head the svZeroD_data output; anything not listed here starts at 0, which leaves the LV, the atrial node and all flows as before. This is the actual t = 0 state only because steady_initial is false; with steady_initial true svZeroD would instead use it as the seed of a 31-step steady presolve.",
+  "initial_condition": {
+    "pressure:AORTIC:aorta_prox": 0.008239176,
+    "pressure:aorta_prox:DISTAL": 0.008239176,
+    "pressure_c:DISTAL": 0.007959204
+  },
+  "boundary_conditions": [
+    {
+      "_comment_": "Atrial pressure of Eq. (65) of Brown et al.: baseline p_at0 = 6 mmHg, raised-cosine atrial systole of amplitude 8 mmHg (peak 14 mmHg) and duration 200 ms, with 1 mmHg = 133.322e-6 MPa. The ventricular stimuli in solver.xml fire at 0 ms of each cycle. Atrial systole starts 60 ms before them, at 940 ms, and runs to 140 ms of the next cycle, so the first cycle starts 60 ms into atrial systole. Sampled every 5 ms; svZeroD interpolates linearly, which is within 0.013 mmHg of the cosine. The arrays span the 1000 ms Cycle_length of the CEP stimuli, which svZeroD takes as the cardiac cycle period.",
+      "bc_name": "ATRIUM",
+      "bc_type": "PRESSURE",
+      "bc_values": {
+        "t": [
+          0.0,
+          5.0,
+          10.0,
+          15.0,
+          20.0,
+          25.0,
+          30.0,
+          35.0,
+          40.0,
+          45.0,
+          50.0,
+          55.0,
+          60.0,
+          65.0,
+          70.0,
+          75.0,
+          80.0,
+          85.0,
+          90.0,
+          95.0,
+          100.0,
+          105.0,
+          110.0,
+          115.0,
+          120.0,
+          125.0,
+          130.0,
+          135.0,
+          140.0,
+          940.0,
+          945.0,
+          950.0,
+          955.0,
+          960.0,
+          965.0,
+          970.0,
+          975.0,
+          980.0,
+          985.0,
+          990.0,
+          995.0,
+          1000.0
+        ],
+        "P": [
+          1.4980151e-03,
+          1.5753277e-03,
+          1.6466788e-03,
+          1.7103116e-03,
+          1.7646591e-03,
+          1.8083831e-03,
+          1.8404070e-03,
+          1.8599423e-03,
+          1.8665080e-03,
+          1.8599423e-03,
+          1.8404070e-03,
+          1.8083831e-03,
+          1.7646591e-03,
+          1.7103116e-03,
+          1.6466788e-03,
+          1.5753277e-03,
+          1.4980151e-03,
+          1.4166446e-03,
+          1.3332200e-03,
+          1.2497954e-03,
+          1.1684249e-03,
+          1.0911123e-03,
+          1.0197612e-03,
+          9.5612844e-04,
+          9.0178095e-04,
+          8.5805691e-04,
+          8.2603297e-04,
+          8.0649766e-04,
+          7.9993200e-04,
+          7.9993200e-04,
+          8.0649766e-04,
+          8.2603297e-04,
+          8.5805691e-04,
+          9.0178095e-04,
+          9.5612844e-04,
+          1.0197612e-03,
+          1.0911123e-03,
+          1.1684249e-03,
+          1.2497954e-03,
+          1.3332200e-03,
+          1.4166446e-03,
+          1.4980151e-03
+        ]
+      }
+    },
+    {
+      "_comment_": "Distal node p_d: Cd to ground and Rd to the reference pressure (Rp=0 makes P_in = p_d).",
+      "bc_name": "DISTAL",
+      "bc_type": "RCR",
+      "bc_values": {
+        "Rp": 0.0,
+        "C": 8.7e-3,
+        "Rd": 1.0e5,
+        "Pd": 0.0
+      }
+    }
+  ],
+  "external_solver_coupling_blocks": [
+    {
+      "_comment_": "3D LV endocardium. Injects Q1 = int_Gamma_endo v.n dGamma (wall + cap) at the p_v node.",
+      "name": "LV_IN",
+      "type": "FLOW",
+      "location": "inlet",
+      "connected_block": "lv_node",
+      "periodic": false,
+      "values": {
+        "Q": [
+          0.0,
+          0.0
+        ],
+        "t": [
+          0.0,
+          1.0
+        ]
+      }
+    }
+  ],
+  "vessels": [
+    {
+      "_comment_": "Zero-impedance stub carrying the coupled flux from LV_IN to the p_v junction.",
+      "vessel_id": 0,
+      "vessel_length": 1.0,
+      "vessel_name": "lv_node",
+      "zero_d_element_type": "BloodVessel",
+      "zero_d_element_values": {
+        "R_poiseuille": 0.0,
+        "C": 0.0,
+        "L": 0.0
+      }
+    },
+    {
+      "_comment_": "Proximal systemic branch: Cp at the p_p node, then Rp and Lp in series to p_d.",
+      "boundary_conditions": {
+        "outlet": "DISTAL"
+      },
+      "vessel_id": 1,
+      "vessel_length": 1.0,
+      "vessel_name": "aorta_prox",
+      "zero_d_element_type": "BloodVesselCRL",
+      "zero_d_element_values": {
+        "R_poiseuille": 7.3e3,
+        "C": 7.7e-3,
+        "L": 1.3e5
+      }
+    }
+  ],
+  "junctions": [
+    {
+      "_comment_": "Ventricular node p_v: coupled 3D flux in, mitral valve in, aortic valve out.",
+      "junction_name": "J_LV",
+      "junction_type": "NORMAL_JUNCTION",
+      "inlet_blocks": [
+        "lv_node"
+      ],
+      "outlet_blocks": []
+    }
+  ],
+  "valves": [
+    {
+      "_comment_": "Atrioventricular (mitral) valve, Eq. (66): closed when p_v > p_at.",
+      "type": "ValveTanh",
+      "name": "MITRAL",
+      "params": {
+        "Rmax": 1.0e6,
+        "Rmin": 1.0e3,
+        "Steepness": 1.0e4,
+        "upstream_block": "ATRIUM",
+        "downstream_block": "J_LV"
+      }
+    },
+    {
+      "_comment_": "Semilunar (aortic) valve, Eq. (67): closed when p_p > p_v.",
+      "type": "ValveTanh",
+      "name": "AORTIC",
+      "params": {
+        "Rmax": 1.0e6,
+        "Rmin": 1.0e3,
+        "Steepness": 1.0e4,
+        "upstream_block": "J_LV",
+        "downstream_block": "aorta_prox"
+      }
+    }
+  ]
+}
