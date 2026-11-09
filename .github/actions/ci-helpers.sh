@@ -1,11 +1,15 @@
 ci_build_svzerodsolver() {
   local jobs="$1"
+  local ref="${2:-}"
   local cmake_args=()
   if [ "${SVMP_OPTIMIZED_CI:-false}" = true ]; then
     cmake_args+=(-DCMAKE_BUILD_TYPE=Release)
   fi
 
   git clone https://github.com/SimVascular/svZeroDSolver.git
+  if [ -n "$ref" ]; then
+    git -C svZeroDSolver checkout --detach "$ref"
+  fi
   mkdir svZeroDSolver/build
   (
     cd svZeroDSolver/build

@@ -37,7 +37,31 @@ For a risky pull request, a maintainer can apply the repository's `full-tests` l
 
 On pushes to `main`, only this workflow runs the solver test suite. The Fast Tests workflow is limited to pull requests to avoid repeating its unit tests and rank-1 and rank-3 integration tests after a merge.
 
-### 3. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
+### 3. Ubuntu 26 Dependency Image Workflow (`workflows/dependency-image.yml`)
+
+**Purpose**: Build, validate, and stage the Ubuntu 26 AMD64 dependency image in GitHub Container Registry (GHCR). This image is a build environment for svMultiPhysics, not the published solver image. Its version comes from `release.json`.
+
+**Intended trigger**: Manual `workflow_dispatch` from the Actions tab, using a selected source ref. GitHub requires the workflow file to exist on the repository's default branch before manual dispatch is available. The feature-branch push trigger and fork-only image name in this workflow are temporary validation plumbing and must be removed before upstream use.
+
+**Access control**: Only the Software Engineering team should be allowed to run this workflow in the upstream repository. A repository administrator must enforce that restriction with a GitHub Actions policy scoped to this workflow and the `workflow_dispatch` event. The workflow file itself does not restrict who can click **Run workflow**; until the policy is active, users with repository write access may be able to dispatch it. Do not treat the documentation or a job-level `if` as an access control. See [Control workflow execution](https://docs.github.com/en/actions/how-tos/administer/control-workflow-execution) and [Manually run a workflow](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+
+**Manual inputs**:
+
+| Input | Default | Meaning |
+| --- | --- | --- |
+| `release_stage` | `dev` | `dev` builds from scratch and runs validation. `rc` promotes the matching `dev` image; `final` promotes the matching `rc` image. Promotion does not rebuild. |
+| `source_commit` | Current workflow ref's commit for `dev` | Full 40-character svMultiPhysics commit SHA to build or promote. Required for `rc` and `final`; those stages also require the preceding stage's Git tag to point to this commit. |
+| `build_type` | `Release` | Dependency CMake build type: `Release`, `RelWithDebInfo`, or `Debug`. Only `Release` can be promoted to `rc` or `final`. |
+
+The workflow creates a versioned Git tag and GHCR image tag only after a `dev` build passes its image and solver tests. For `release.json` version `1.0.0.0`, Release tags are `v1.0.0.0-dev`, `v1.0.0.0-rc`, and `v1.0.0.0`; non-Release development tags add the lowercase build type. The source image is initially staged under a commit-based tag so failed tests cannot publish a versioned `dev` tag. An existing `dev` image tag causes a rerun to fail rather than silently replace it; change and commit the build number in `release.json` before a new build. Repeating an existing `rc` or `final` promotion verifies the image and leaves it unchanged.
+
+### 4. Ubuntu 26 Dependency Image Tests (`workflows/dependency-image-tests.yml`)
+
+**Purpose**: Validate the staged dependency image before it receives a versioned `dev` tag. This reusable workflow is called by the image workflow and cannot be started directly from the Actions tab.
+
+It receives the image repository, immutable image digest, svMultiPhysics source commit, and build type from the caller. On separate Ubuntu runners, it builds the default, Trilinos, and PETSc solver configurations against that exact image, builds svZeroDSolver, and runs unit and integration tests. Successful job summaries record the image digest, source commits, configuration, and build type; outcomes are shown in GitHub Actions. A failure prevents the caller from creating the versioned `dev` Git and image tags.
+
+### 5. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
 
 **Purpose**: Builds and publishes Docker images for the solver component.
 
@@ -50,7 +74,7 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 3. Builds the Docker image using `Docker/solver/dockerfile`
 4. Pushes the image to `simvascular/solver:latest`
 
-### 4. Documentation Workflow (`workflows/documentation.yml`)
+### 6. Documentation Workflow (`workflows/documentation.yml`)
 
 **Purpose**: Builds and deploys HTML documentation using Doxygen.
 
@@ -63,7 +87,7 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 3. Uploads documentation as an artifact
 4. Deploys documentation to GitHub Pages (only for `main` branch)
 
-### 5. Copyright Workflow (`workflows/copyright.yml`)
+### 7. Copyright Workflow (`workflows/copyright.yml`)
 
 **Purpose**: Ensures all source files contain proper copyright headers.
 
@@ -74,7 +98,7 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 - Uses `kt3k/license_checker` to verify copyright headers in `.h` and `.cpp` files
 - Fails the workflow if any files are missing proper copyright notices
 
-### 6. Review Policy Workflow (`workflows/review-policy.yml`)
+### 8. Review Policy Workflow (`workflows/review-policy.yml`)
 
 The required `review-policy` check normally requires two approvals from eligible reviewers with write access. A Refactoring Team member can apply one of the following labels to allow one approval from an eligible member of that team other than the PR author:
 
