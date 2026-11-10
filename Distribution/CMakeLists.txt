@@ -89,6 +89,7 @@ endif()
 if(LINUX)
   # Package name
   set(CPACK_PACKAGE_FILE_NAME "svMultiPhysics-linux-x64-${SV_FULL_VERSION}${INSTALL_TYPE_STR}")
+  set(CPACK_COMPONENTS_ALL CoreExecutables)
 
     if(SV_INSTALLER_TYPE STREQUAL DEB)
         set(CPACK_GENERATOR "DEB")

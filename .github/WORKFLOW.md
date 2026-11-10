@@ -43,7 +43,9 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 
 **Trigger**: Manual `workflow_dispatch`. Select the source branch or tag in the Actions tab; the workflow checks out the exact event commit. The workflow must be on the repository's default branch before it can be started manually. A temporary push trigger restricted to the #771 feature branch permits testing on the fork; remove it before the upstream PR.
 
-Each matrix job builds one solver configuration, runs its unit tests, checks the Debian package version, and uploads the package and SHA-256 checksum as an Actions artifact. Clean-container installation and integration tests are separate follow-up work; these artifacts are not published to SimTK by this workflow.
+**Access control**: Only members of the Software Engineering team may run this workflow in the upstream repository. A repository administrator must enforce this with an Actions policy scoped to this workflow and the `workflow_dispatch` event; the workflow file alone does not restrict who can start a manual run.
+
+Each package job builds one solver configuration, runs its unit tests, checks the Debian package version, and uploads the package and SHA-256 checksum as an Actions artifact. A dependent validation job for each configuration runs in a clean, digest-pinned Ubuntu 26.04 container. It verifies the pinned svZeroDSolver release package against the checksum in `release.json`, installs both packages, and runs the integration suite against the installed solver using Python 3.12. Test results are uploaded as separate artifacts. No package is published to SimTK by this workflow; use the packages for external testing only after both validation jobs pass.
 
 ### 4. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
 
