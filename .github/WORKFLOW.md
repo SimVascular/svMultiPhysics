@@ -41,7 +41,7 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 
 **Purpose**: Build the default and Trilinos Release `.deb` packages using the previously validated Ubuntu 26 dependency image. The image is pinned by digest, and the package version comes from `release.json` rather than the build date.
 
-**Trigger**: Manual `workflow_dispatch`. Select the source branch or tag in the Actions tab; the workflow checks out the exact event commit. The workflow must be on the repository's default branch before it can be started manually. A temporary push trigger restricted to the #771 feature branch permits testing on the fork; remove it before the upstream PR.
+**Trigger**: Manual `workflow_dispatch`. Select the workflow ref in the Actions tab and optionally enter a full 40-character `source_commit` SHA. The workflow checks that the selected commit belongs to upstream `main` before building it. If the input is empty, it uses the selected ref's commit, subject to the same check. The workflow must be on the repository's default branch before it can be started manually. A temporary push trigger restricted to the #771 feature branch permits testing on the fork; remove it before the upstream PR.
 
 **Access control**: Only members of the Software Engineering team may run this workflow in the upstream repository. A repository administrator must enforce this with an Actions policy scoped to this workflow and the `workflow_dispatch` event; the workflow file alone does not restrict who can start a manual run.
 
