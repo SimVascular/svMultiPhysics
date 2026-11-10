@@ -1,0 +1,99 @@
+name: Build Ubuntu 26 packages
+
+on:
+  # Temporary fork-branch trigger for package build validation. Remove before the upstream PR.
+  push:
+    branches:
+      - feature/771-build-ubuntu26-packages
+    paths:
+      - .github/workflows/ubuntu26-packages.yml
+      - .github/WORKFLOW.md
+      - CMakeLists.txt
+      - Code/CMake/SimVascularSystemSetup.cmake
+      - Distribution/CMakeLists.txt
+      - release.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build ${{ matrix.configuration }} package
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [default, trilinos]
+    container:
+      image: ghcr.io/bearsontheloose/svmultiphysics-dependencies@sha256:81f1c40daf9704899b44c52d2d956418d9c884b2f691936cc2bf450b658c74cc
+    env:
+      SVMP_OPTIMIZED_CI: 'true'
+    steps:
+      - name: Check out source and unit-test fixtures
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          lfs: true
+
+      - name: Read release version
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          version=$(python3 -c '
+          import json
+          with open("release.json", encoding="utf-8") as manifest:
+              release = json.load(manifest)
+          parts = [release[key] for key in ("major", "minor", "patch", "build")]
+          if any(type(part) is not int or part < 0 for part in parts):
+              raise SystemExit("release.json needs four non-negative integer version fields")
+          print(".".join(map(str, parts)))
+          ')
+          printf 'VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+          printf 'Source commit: %s\nVersion: %s\n' "$(git rev-parse HEAD)" "$version"
+
+      - name: Build svMultiPhysics
+        shell: bash
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+          args=(-DSV_ENABLE_DISTRIBUTION:BOOL=ON -DSV_PACKAGE_VERSION:STRING="$VERSION")
+          if [[ "$CONFIGURATION" == trilinos ]]; then
+            args+=(-DSV_USE_TRILINOS:BOOL=ON)
+          fi
+          ci_build_solver build "$(nproc)" "${args[@]}"
+
+      - name: Run unit tests
+        shell: bash
+        run: ctest --test-dir build/svMultiPhysics-build/Source/solver --output-on-failure
+
+      - name: Build Debian package
+        shell: bash
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          package="svMultiPhysics-Ubuntu-26-${CONFIGURATION}-${VERSION}.deb"
+          mkdir -p packages
+          cpack --config build/svMultiPhysics-build/Distribution/CPackConfig.cmake \
+            -G DEB -B packages \
+            -D "CPACK_PACKAGE_FILE_NAME=${package%.deb}"
+          test -s "packages/$package"
+          test "$(dpkg-deb --field "packages/$package" Version)" = "$VERSION"
+          test "$(dpkg-deb --field "packages/$package" Architecture)" = amd64
+          dpkg-deb --contents "packages/$package" | grep -E '/svmultiphysics$'
+          sha256sum "packages/$package" > "packages/$package.sha256"
+          printf '### Ubuntu 26 %s package\n\n' "$CONFIGURATION" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Source commit: `%s`\n' "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Dependency image: `%s`\n' 'ghcr.io/bearsontheloose/svmultiphysics-dependencies@sha256:81f1c40daf9704899b44c52d2d956418d9c884b2f691936cc2bf450b658c74cc' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Package: `%s`\n' "$package" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Build type: `Release`\n' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- SHA-256: `%s`\n' "$(cut -d' ' -f1 "packages/$package.sha256")" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload package and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu26-${{ matrix.configuration }}-${{ github.sha }}
+          path: packages/*
+          if-no-files-found: error

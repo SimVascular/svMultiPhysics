@@ -63,7 +63,15 @@ The workflow creates a versioned Git tag and GHCR image tag only after a `dev` b
 
 It receives the image repository, immutable image digest, svMultiPhysics source commit, and build type from the caller. It reads the svZeroDSolver tag and commit from that source commit's `release.json` and verifies that the tag still points to the pinned commit. On separate Ubuntu runners, it builds the default, Trilinos, and PETSc solver configurations against the exact image, builds the pinned svZeroDSolver commit, and runs unit and integration tests. Successful job summaries record the image digest, source commits, configuration, and build type; outcomes are shown in GitHub Actions. A failure prevents the caller from creating the versioned `dev` Git and image tags.
 
-### 5. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
+### 5. Ubuntu 26 Package Build (`workflows/ubuntu26-packages.yml`)
+
+**Purpose**: Build the default and Trilinos Release `.deb` packages using the previously validated Ubuntu 26 dependency image. The image is pinned by digest, and the package version comes from `release.json` rather than the build date.
+
+**Trigger**: Manual `workflow_dispatch`. Select the source branch or tag in the Actions tab; the workflow checks out the exact event commit. The workflow must be on the repository's default branch before it can be started manually. A temporary push trigger restricted to the #771 feature branch permits testing on the fork; remove it before the upstream PR.
+
+Each matrix job builds one solver configuration, runs its unit tests, checks the Debian package version, and uploads the package and SHA-256 checksum as an Actions artifact. Clean-container installation and integration tests are separate follow-up work; these artifacts are not published to SimTK by this workflow.
+
+### 6. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
 
 **Purpose**: Builds and publishes Docker images for the solver component.
 
@@ -76,7 +84,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 3. Builds the Docker image using `Docker/solver/dockerfile`
 4. Pushes the image to `simvascular/solver:latest`
 
-### 6. Documentation Workflow (`workflows/documentation.yml`)
+### 7. Documentation Workflow (`workflows/documentation.yml`)
 
 **Purpose**: Builds and deploys HTML documentation using Doxygen.
 
@@ -89,7 +97,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 3. Uploads documentation as an artifact
 4. Deploys documentation to GitHub Pages (only for `main` branch)
 
-### 7. Copyright Workflow (`workflows/copyright.yml`)
+### 8. Copyright Workflow (`workflows/copyright.yml`)
 
 **Purpose**: Ensures all source files contain proper copyright headers.
 
@@ -100,7 +108,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 - Uses `kt3k/license_checker` to verify copyright headers in `.h` and `.cpp` files
 - Fails the workflow if any files are missing proper copyright notices
 
-### 8. Review Policy Workflow (`workflows/review-policy.yml`)
+### 9. Review Policy Workflow (`workflows/review-policy.yml`)
 
 The required `review-policy` check normally requires two approvals from eligible reviewers with write access. A Refactoring Team member can apply one of the following labels to allow one approval from an eligible member of that team other than the PR author:
 
