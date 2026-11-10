@@ -20,17 +20,19 @@
 namespace svmp::FE::quadrature {
 namespace {
 
+// One orbit of a symmetric rule: the points whose barycentric coordinates
+// (1 - x - y, x, y) are the distinct permutations of one triple, all with the
+// same weight. Members follow the columns of Dunavant's Appendix II.
 struct Orbit {
-    std::size_t size;
-    double weight; // Published area-1 weight; scaled once during expansion.
-    double a = 0.0;
-    double b = 0.0;
+    std::size_t size; // 1: centroid; 3: permutations of (a, a, 1 - 2a); 6: of (a, b, 1 - a - b).
+    double weight;    // Published weight of each point (a rule's weights sum to 1); halved on expansion.
+    double a = 0.0;   // 3 points: beta (= gamma); 6 points: alpha.
+    double b = 0.0;   // 6 points: beta.
 };
 
-// kDegreeN is rule N of Dunavant (1985), doi:10.1002/nme.1620210612, in the
-// orbit order and 15-decimal precision of its Appendix II. Three-point orbits
-// store the repeated barycentric coordinate as a, six-point orbits store alpha
-// and beta as a and b. Repeating decimals are written as fractions.
+// kDegreeN is rule N of Dunavant (1985), https://doi.org/10.1002/nme.1620210612,
+// in the orbit order and 15-decimal precision of its Appendix II. Repeating
+// decimals are written as fractions.
 constexpr Orbit kDegree1[] = {{1, 1.0}};
 constexpr Orbit kDegree2[] = {{3, 1.0 / 3.0, 1.0 / 6.0}};
 constexpr Orbit kDegree3[] = {{1, -0.5625}, {3, 25.0 / 48.0, 0.2}};

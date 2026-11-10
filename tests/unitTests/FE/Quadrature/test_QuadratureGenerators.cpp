@@ -1059,7 +1059,7 @@ const TableSignature kSymmetricTriangleTables[] = {
           {6, 0.010161119296278, 0.065494628082938}}},
 };
 
-// The (x, y) samples of one orbit, in the order documented by the generator.
+// The (x, y) samples of one orbit, in the order the generator emits them.
 std::vector<std::array<double, 2>> expected_orbit_samples(const OrbitSignature& orbit)
 {
     const auto [size, a, b] = orbit;
@@ -1099,13 +1099,11 @@ TEST(SymmetricTriangleQualification, FollowsSourceOrbitOrder)
 
 TEST(SymmetricTriangleQualification, EveryTableIsExactContainedAndNormalized)
 {
-    constexpr long double tolerance = 256.0L * std::numeric_limits<double>::epsilon();
     for (const auto& table : kSymmetricTriangleTables) {
         SCOPED_TRACE(table.degree);
         const auto rule = make_symmetric_triangle_rule(table.degree);
         expect_triangle_moments(rule, table.degree);
         CompensatedSum weights;
-        CompensatedSum absolute_weights;
         for (std::size_t q = 0; q < rule.num_points(); ++q) {
             const double x = rule.point(q)[0];
             const double y = rule.point(q)[1];
@@ -1115,9 +1113,9 @@ TEST(SymmetricTriangleQualification, EveryTableIsExactContainedAndNormalized)
                     << "point=" << q << " repeats " << previous;
             }
             weights.add(rule.weight(q));
-            absolute_weights.add(std::abs(rule.weight(q)));
         }
-        EXPECT_LE(std::abs(weights.value() - 0.5L), tolerance * std::max(0.5L, absolute_weights.value()));
+        // The documented bound; the largest deviation, 4.0e-15, is degree 14.
+        EXPECT_LE(std::abs(weights.value() - 0.5L), 5e-15L);
         // Only the centroids of degrees 3 and 7 have negative weights.
         const auto negative_weights = std::count_if(rule.weights().begin(), rule.weights().end(),
                                                     [](double weight) { return weight < 0.0; });
