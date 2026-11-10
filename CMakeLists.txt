@@ -78,6 +78,7 @@ set(ENABLE_COVERAGE OFF CACHE BOOL "Enable code coverage")
 set(ENABLE_ARRAY_INDEX_CHECKING OFF CACHE BOOL "Enable Array index checking")
 set(SV_LOCAL_VTK_PATH "" CACHE STRING "Path to a local build of VTK.")
 set(ENABLE_UNIT_TEST OFF CACHE BOOL "Enable Unit Test by Google Test")
+option(SV_ENABLE_DISTRIBUTION "Build an installable package" OFF)
 
 #-----------------------------------------------------------------------------
 # RPATH handling
@@ -140,6 +141,8 @@ ExternalProject_Add(svMultiPhysics
     -DSV_PETSC_DIR:STRING=${SV_PETSC_DIR}
     -DENABLE_COVERAGE:BOOL=${ENABLE_COVERAGE}
     -DENABLE_UNIT_TEST:BOOL=${ENABLE_UNIT_TEST}
+    -DSV_ENABLE_DISTRIBUTION:BOOL=${SV_ENABLE_DISTRIBUTION}
+    -DSV_PACKAGE_VERSION:STRING=${SV_PACKAGE_VERSION}
     -DENABLE_ARRAY_INDEX_CHECKING:BOOL=${ENABLE_ARRAY_INDEX_CHECKING}
     -DSV_LOCAL_VTK_PATH:STRING=${SV_LOCAL_VTK_PATH}
     ${SV_APPLE_CMAKE_ARGS}

@@ -37,7 +37,15 @@ For a risky pull request, a maintainer can apply the repository's `full-tests` l
 
 On pushes to `main`, only this workflow runs the solver test suite. The Fast Tests workflow is limited to pull requests to avoid repeating its unit tests and rank-1 and rank-3 integration tests after a merge.
 
-### 3. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
+### 3. Ubuntu 26 Package Build (`workflows/ubuntu26-packages.yml`)
+
+**Purpose**: Build the default and Trilinos Release `.deb` packages using the previously validated Ubuntu 26 dependency image. The image is pinned by digest, and the package version comes from `release.json` rather than the build date.
+
+**Trigger**: Manual `workflow_dispatch`. Select the source branch or tag in the Actions tab; the workflow checks out the exact event commit. The workflow must be on the repository's default branch before it can be started manually. A temporary push trigger restricted to the #771 feature branch permits testing on the fork; remove it before the upstream PR.
+
+Each matrix job builds one solver configuration, runs its unit tests, checks the Debian package version, and uploads the package and SHA-256 checksum as an Actions artifact. Clean-container installation and integration tests are separate follow-up work; these artifacts are not published to SimTK by this workflow.
+
+### 4. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
 
 **Purpose**: Builds and publishes Docker images for the solver component.
 
@@ -50,7 +58,7 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 3. Builds the Docker image using `Docker/solver/dockerfile`
 4. Pushes the image to `simvascular/solver:latest`
 
-### 4. Documentation Workflow (`workflows/documentation.yml`)
+### 5. Documentation Workflow (`workflows/documentation.yml`)
 
 **Purpose**: Builds and deploys HTML documentation using Doxygen.
 
@@ -63,7 +71,7 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 3. Uploads documentation as an artifact
 4. Deploys documentation to GitHub Pages (only for `main` branch)
 
-### 5. Copyright Workflow (`workflows/copyright.yml`)
+### 6. Copyright Workflow (`workflows/copyright.yml`)
 
 **Purpose**: Ensures all source files contain proper copyright headers.
 
@@ -74,7 +82,7 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 - Uses `kt3k/license_checker` to verify copyright headers in `.h` and `.cpp` files
 - Fails the workflow if any files are missing proper copyright notices
 
-### 6. Review Policy Workflow (`workflows/review-policy.yml`)
+### 7. Review Policy Workflow (`workflows/review-policy.yml`)
 
 The required `review-policy` check normally requires two approvals from eligible reviewers with write access. A Refactoring Team member can apply one of the following labels to allow one approval from an eligible member of that team other than the PR author:
 
