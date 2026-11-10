@@ -25,6 +25,7 @@
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <math.h>
@@ -1718,6 +1719,21 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   lEq.tol = eq_params->tolerance.value();
   lEq.expl_geom_cpl = eq_params->explicit_geometric_coupling.value();
 
+  auto &line_search_params = eq_params->line_search;
+
+  // If the line search element is present, enable line search for this equation
+  // and set its parameters. Line search is disabled by default.
+  if (line_search_params.defined()) {
+    lEq.line_search_enabled = true;
+    lEq.line_search_minimum_decrease =
+        line_search_params.minimum_decrease.value();
+    lEq.line_search_step_reduction_factor =
+        line_search_params.step_reduction_factor.value();
+    lEq.line_search_minimum_step_length =
+        line_search_params.minimum_step_length.value();
+    lEq.line_search_verbose = line_search_params.verbose.value();
+  }
+
   // Initialize coupled BC.
   //
   auto& chnl_mod = simulation->chnl_mod;
@@ -1986,8 +2002,7 @@ void read_files(Simulation* simulation, const std::string& file_name)
     std::string hist_file_name;
 
     if (chnl_mod.appPath != "") { 
-      auto mkdir_arg = std::string("mkdir -p ") + chnl_mod.appPath;
-      std::system(mkdir_arg.c_str());
+      std::filesystem::create_directories(chnl_mod.appPath);
       hist_file_name = chnl_mod.appPath + "/" + simulation->history_file_name;
     } else {
       hist_file_name = simulation->history_file_name;

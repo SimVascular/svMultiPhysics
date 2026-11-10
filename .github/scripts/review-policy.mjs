@@ -3,8 +3,10 @@ import { pathToFileURL } from 'node:url';
 const REPOSITORY = 'SimVascular/svMultiPhysics';
 const TEAM = 'refactoring-team';
 const TEAM_ID = 20019155;
-const LABEL = 'OOP Refactor';
-const LABEL_ID = 9482575472;
+const LABELS = [
+  { name: 'OOP Refactor', id: 9482575472, allowPolicyChanges: false },
+  { name: 'software engineering', id: 12945018775, allowPolicyChanges: true },
+];
 const APP_ID = 5288861;
 const CHECK = 'review-policy';
 
@@ -58,7 +60,7 @@ function prFingerprint(pr) {
 }
 
 function reviewFingerprint(reviews) {
-  return JSON.stringify(opinions(reviews).map(review => [review.id, review.user.id, review.state]));
+  return JSON.stringify(opinions(reviews).map(review => [review.id, review.user.id, review.state, review.commit_id]));
 }
 
 function changesPolicy(files) {
@@ -110,8 +112,8 @@ export async function reconcile(api, { apply = false, detailsUrl } = {}) {
       const path = `${repoPath}/pulls/${original.number}`;
       let pr = await api.request(path);
       const reviews = await api.list(`${path}/reviews`);
-      const labeled = pr.labels.some(label => label.name === LABEL);
-      const timeline = labeled ? await api.list(`${repoPath}/issues/${pr.number}/timeline`) : [];
+      const labeled = pr.labels.some(label => LABELS.some(rule => rule.name === label.name));
+      let timeline = labeled ? await api.list(`${repoPath}/issues/${pr.number}/timeline`) : [];
       const files = labeled ? await api.list(`${path}/files`) : [];
       const writers = new Set();
       for (const { user } of opinions(reviews)) {
@@ -128,18 +130,24 @@ export async function reconcile(api, { apply = false, detailsUrl } = {}) {
         }
         if (permissions.get(user.id)) writers.add(user.id);
       }
-      const result = { number: pr.number, head_sha: original.head.sha,
-        ...evaluate({ pr, reviews, timeline, policyChanged: changesPolicy(files) }, team, writers) };
-      if (apply && result.removeLabel) {
+      const fileState = { policyChanged: changesPolicy(files), filesTruncated: files.length >= 3000 };
+      const evaluateCurrent = () => evaluate({ pr, reviews, timeline, ...fileState }, team, writers);
+      const result = { number: pr.number, head_sha: original.head.sha, ...evaluateCurrent() };
+      const removedLabels = [];
+      for (const { name } of LABELS) {
+        if (!apply || !result.removeLabels.includes(name)) continue;
         const currentTimeline = await api.list(`${repoPath}/issues/${pr.number}/timeline`);
         const current = await api.request(path);
         if (prFingerprint(current) !== prFingerprint(pr) || JSON.stringify(currentTimeline) !== JSON.stringify(timeline)) {
           throw new Error(`PR #${pr.number} changed before label removal; run the policy again.`);
         }
-        await api.request(`${repoPath}/issues/${pr.number}/labels/${encodeURIComponent(LABEL)}`, { method: 'DELETE' });
+        await api.request(`${repoPath}/issues/${pr.number}/labels/${encodeURIComponent(name)}`, { method: 'DELETE' });
         pr = await api.request(path);
-        result.reason += ' Unauthorized OOP Refactor label removed.';
+        timeline = await api.list(`${repoPath}/issues/${pr.number}/timeline`);
+        Object.assign(result, evaluateCurrent());
+        removedLabels.push(name);
       }
+      if (removedLabels.length) result.reason += ` Unauthorized labels removed: ${removedLabels.join(', ')}.`;
       if (pr.state !== 'open' || pr.base.ref !== 'main' || pr.head.sha !== original.head.sha) {
         result.passed = false;
         result.reason = 'PR changed during evaluation; run the policy again.';
@@ -190,13 +198,18 @@ function opinions(reviews) {
   return [...latest.values()];
 }
 
-export function evaluate({ pr, reviews, timeline, policyChanged }, team, writers) {
-  const label = pr.labels.find(item => item.name === LABEL);
-  const application = [...timeline].reverse().find(event =>
-    event.label?.name === LABEL && ['labeled', 'unlabeled'].includes(event.event));
-  const authorized = label?.id === LABEL_ID && application?.event === 'labeled'
-    && application.actor?.type === 'User' && team.has(application.actor.id);
-  const exception = authorized && !policyChanged;
+export function evaluate({ pr, reviews, timeline, policyChanged, filesTruncated = false }, team, writers) {
+  const labels = LABELS.map(({ name, id, allowPolicyChanges }) => {
+    const label = pr.labels.find(item => item.name === name);
+    const application = [...timeline].reverse().find(event =>
+      event.label?.name === name && ['labeled', 'unlabeled'].includes(event.event));
+    const authorized = label?.id === id && application?.event === 'labeled'
+      && application.actor?.type === 'User' && team.has(application.actor.id);
+    return { name, present: Boolean(label), authorized, allowPolicyChanges };
+  });
+  const applicableLabels = filesTruncated ? [] : labels.filter(label =>
+    label.authorized && (label.allowPolicyChanges || !policyChanged));
+  const exception = applicableLabels.length > 0;
   const required = exception ? 1 : 2;
   const eligible = opinions(reviews).filter(review =>
     review.user.id !== pr.user.id && writers.has(review.user.id));
@@ -207,10 +220,12 @@ export function evaluate({ pr, reviews, timeline, policyChanged }, team, writers
     passed: !blocked && approvals.length >= required,
     required,
     approvals,
-    removeLabel: Boolean(label && !authorized),
+    removeLabels: labels.filter(label => label.present && !label.authorized).map(label => label.name),
     reason: blocked ? 'An eligible reviewer has requested changes.'
       : `${approvals.length}/${required} ${exception ? 'Refactoring Team' : 'eligible'} approvals.`
-        + (policyChanged ? ' Policy changes require two approvals.' : ''),
+        + (filesTruncated ? ' File list may be incomplete; two approvals required.'
+          : policyChanged && !exception
+            ? ' Policy changes require an authorized software engineering label for one approval.' : ''),
   };
 }
 

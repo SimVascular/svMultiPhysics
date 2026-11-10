@@ -8,6 +8,7 @@
 #include "utils.h"
 
 #include <cstdio>
+#include <filesystem>
 #include <iomanip>
 #include <limits>
 #include <math.h>
@@ -361,8 +362,10 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
   // Create a soft link to the bin file for the last time step.
   //
   if (!com_mod.stFileRepl && cm.mas(cm_mod)) {
-    std::string cmd = "ln -f " + fName + " " + tmpS;
-    std::system(cmd.c_str());
+    std::error_code error;
+    std::filesystem::remove(tmpS, error);
+    std::filesystem::create_hard_link(fName, tmpS, error);
+    if (error) std::cerr << "Could not link " << tmpS << " to " << fName << ": " << error.message() << std::endl;
   }
 }
 

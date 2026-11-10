@@ -47,6 +47,9 @@ bool is_zero(double value1, double value2=0.0);
 
 double mem_usage(const bool print_usage=false, const std::string& prefix="");
 
+// Run an executable with one filename argument and wait for successful completion.
+void run_process(std::string executable, std::string input_file);
+
 /**
  * @brief Compute the square of the Euclidean norm of a vector.
  */
