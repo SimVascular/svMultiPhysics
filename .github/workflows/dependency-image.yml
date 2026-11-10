@@ -1,12 +1,6 @@
 name: Build Ubuntu 26 dependency image
 
 on:
-  # Temporary fork-only trigger for the final end-to-end image build. Remove before the upstream PR.
-  push:
-    branches:
-      - feature/766-stage-ubuntu26-dependencies
-    paths:
-      - .github/workflows/dependency-image.yml
   workflow_dispatch:
     inputs:
       release_stage:
@@ -39,7 +33,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository == 'bearsontheloose/svMultiPhysics'
+    if: github.repository == 'SimVascular/svMultiPhysics' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 350
     permissions:
@@ -56,7 +50,7 @@ jobs:
       already_published: ${{ steps.existing.outputs.already_published }}
       digest: ${{ steps.build.outputs.digest }}
     env:
-      IMAGE: ghcr.io/bearsontheloose/svmultiphysics-dependencies
+      IMAGE: ghcr.io/simvascular/svmultiphysics-dependencies
       BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
       RELEASE_STAGE: ${{ inputs.release_stage || 'dev' }}
     steps:
@@ -64,6 +58,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.source_commit || github.sha }}
+          fetch-depth: 0
 
       - name: Resolve release tags
         id: release
@@ -78,6 +73,11 @@ jobs:
           fi
           if [[ "$RELEASE_STAGE" != dev && -z "$REQUESTED_COMMIT" ]]; then
             echo "source_commit is required to promote an rc or final image" >&2
+            exit 1
+          fi
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$source_commit" FETCH_HEAD; then
+            echo "source_commit must be on the main branch" >&2
             exit 1
           fi
           version=$(jq -er '
@@ -239,7 +239,7 @@ jobs:
       contents: read
       packages: read
     with:
-      image: ghcr.io/bearsontheloose/svmultiphysics-dependencies
+      image: ghcr.io/simvascular/svmultiphysics-dependencies
       digest: ${{ needs.build.outputs.digest }}
       source_commit: ${{ needs.build.outputs.source_commit }}
       build_type: ${{ inputs.build_type || 'Release' }}
@@ -255,7 +255,7 @@ jobs:
       contents: write
       packages: write
     env:
-      IMAGE: ghcr.io/bearsontheloose/svmultiphysics-dependencies
+      IMAGE: ghcr.io/simvascular/svmultiphysics-dependencies
       RELEASE_STAGE: ${{ needs.build.outputs.release_stage }}
       SOURCE_COMMIT: ${{ needs.build.outputs.source_commit }}
       GIT_TAG: ${{ needs.build.outputs.git_tag }}
