@@ -264,7 +264,7 @@ void read(const std::string& file_name, mshType& mesh, int nsd);
 /// the identity where a prestrain run has none, so that every mesh of a
 /// prestrain run carries a prestrain. Called once the meshes are partitioned.
 /// Rejects a prestrain run with more than one equation, one that is not struct,
-/// or a line search, and any prestrain on a ustruct solid.
+/// or a line search, and any prestrain on a ustruct solid or with remeshing.
 void init(ComMod& com_mod);
 
 /// @brief Start a prestrain step: accumulate the displacement u the previous

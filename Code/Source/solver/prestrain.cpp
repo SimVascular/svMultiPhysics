@@ -174,17 +174,24 @@ void init(ComMod& com_mod)
         "equations (P1P1) on the mesh named '" + msh.name + "'; Taylor-Hood is not supported.");
   }
 
-  // A ustruct solid's hydrostatic prestress would have to come from its pressure
-  // field, which starts from zero. sstEq is broadcast, and after partitioning
-  // every rank's F0 has the mesh's row count, so every rank raises this.
-  bool prestrained = false;
+  // After partitioning every rank's F0 has the mesh's row count, so the checks
+  // below raise on every rank; sstEq and rmsh.isReqd are broadcast.
+  bool prestrained = com_mod.prestrainEq;
   for (const auto& msh : com_mod.msh) {
     prestrained = prestrained || msh.F0.nrows() != 0;
   }
+
+  // A ustruct solid's hydrostatic prestress would have to come from its pressure
+  // field, which starts from zero.
   svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.sstEq,
       "A prestrain can not be applied to a ustruct (velocity-pressure) solid: its hydrostatic "
       "part would have to be carried by the pressure field, which starts from zero. Use a struct "
       "equation for the prestrained solid.");
+
+  // F0 is held per element of the mesh as read; remeshing would leave it behind.
+  svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.rmsh.isReqd,
+      "A prestrain is not supported with remeshing: the prestrain is stored per element of the "
+      "original mesh and is not carried to a new one.");
 }
 
 /// @brief F0 <- (I + Grad u) F0 at Gauss point g of element e, in place.
