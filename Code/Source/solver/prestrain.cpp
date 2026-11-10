@@ -125,11 +125,19 @@ void init(ComMod& com_mod)
     // Every prestrain step restarts the solution from rest, and its time is
     // fictitious, so any other physics would be erased or advanced meaninglessly.
     const auto& eq = com_mod.eq[0];
-    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.nEq != 1 ||
-        (eq.phys != EquationType::phys_struct && eq.phys != EquationType::phys_ustruct),
-        "A Prestrain run solves a single struct or ustruct equation, but this input has " +
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.nEq != 1,
+        "A Prestrain run solves a single struct equation, but this input has " +
         std::to_string(com_mod.nEq) + " equations. Every prestrain step starts the solution again "
         "from rest in fictitious time, which other physics cannot follow.");
+    // A ustruct solid carries its whole volumetric stress in its pressure field,
+    // which the restart from rest discards, so it could never hold a hydrostatic
+    // prestress (see USTRUCT_PRESTRAIN.md for what support would take).
+    svmp::throw_if<svmp::NotImplementedException>(eq.phys == EquationType::phys_ustruct,
+        "Prestrain is not supported for a ustruct equation: the restart from rest at every step "
+        "discards the pressure field that carries a ustruct solid's volumetric stress. Compute the "
+        "prestrain with a struct equation.");
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.phys != EquationType::phys_struct,
+        "A Prestrain run solves a single struct equation, but this input's equation is not struct.");
 
     // A line search would judge each step by the forward residual, while a
     // prestrain step is composed into F0 and judged by the next step's residual.
@@ -165,6 +173,18 @@ void init(ComMod& com_mod)
         "A prestrain requires the same quadrature for the momentum and continuity "
         "equations (P1P1) on the mesh named '" + msh.name + "'; Taylor-Hood is not supported.");
   }
+
+  // A ustruct solid's hydrostatic prestress would have to come from its pressure
+  // field, which starts from zero. sstEq is broadcast, and after partitioning
+  // every rank's F0 has the mesh's row count, so every rank raises this.
+  bool prestrained = false;
+  for (const auto& msh : com_mod.msh) {
+    prestrained = prestrained || msh.F0.nrows() != 0;
+  }
+  svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.sstEq,
+      "A prestrain can not be applied to a ustruct (velocity-pressure) solid: its hydrostatic "
+      "part would have to be carried by the pressure field, which starts from zero. Use a struct "
+      "equation for the prestrained solid.");
 }
 
 /// @brief F0 <- (I + Grad u) F0 at Gauss point g of element e, in place.

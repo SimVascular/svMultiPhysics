@@ -49,8 +49,12 @@
 /// on a virtually deformed one. Each step is iterated like any other time
 /// step, up to Max_iterations. With Pseudo_transient its time step may be
 /// adapted to the residual (see PseudoTransientContinuation.h). A prestrain run
-/// solves a single struct or ustruct equation, without a line search; forward
-/// runs that read a prestrain have neither restriction.
+/// solves a single struct equation, without a line search; forward runs that
+/// read a prestrain may solve any equations, but not a ustruct solid: its
+/// volumetric stress lives in a pressure field, which the prestrain restart
+/// discards and a forward run starts from zero. The ustruct and FSI kernels
+/// carry the F0 kinematics all the same, as groundwork; USTRUCT_PRESTRAIN.md
+/// (outside the repository) describes what full support would take.
 ///
 /// F0 is stored per mesh as Array<double>(nsd*nsd*nG, nEl): one column per
 /// element holding the nG Gauss point tensors back to back, each in the
@@ -259,8 +263,8 @@ void read(const std::string& file_name, mshType& mesh, int nsd);
 /// @brief Validate the settings and the prestrains read from file, and seed
 /// the identity where a prestrain run has none, so that every mesh of a
 /// prestrain run carries a prestrain. Called once the meshes are partitioned.
-/// Rejects a prestrain run with more than one equation, a non-solid one, or a
-/// line search.
+/// Rejects a prestrain run with more than one equation, one that is not struct,
+/// or a line search, and any prestrain on a ustruct solid.
 void init(ComMod& com_mod);
 
 /// @brief Start a prestrain step: accumulate the displacement u the previous
