@@ -359,7 +359,7 @@ void cmmi(ComMod& com_mod, const mshType& lM, const Array<double>& al, const Arr
   const int dof = com_mod.dof;
   const int cEq = com_mod.cEq;
   const auto& eq = com_mod.eq[cEq];
-  const bool pstEq = com_mod.pstEq; 
+  const bool prestressEq = com_mod.prestressEq; 
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
 
@@ -392,7 +392,7 @@ void cmmi(ComMod& com_mod, const mshType& lM, const Array<double>& al, const Arr
     cmm_mass(com_mod, w, N, al, bfl, vwp, lR, lK);
 
     //  Prestress
-    if (pstEq) {
+    if (prestressEq) {
       for (int a = 0; a < 3; a++) {
         int Ac = ptr(a);
         for (int i = 0; i < pSn.nrows(); i++) {
@@ -674,7 +674,7 @@ void cmm_stiffness(ComMod& com_mod, const Array<double>& Nxi, const Array<double
   //
   pSl = 0.0;
 
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
     pSm = 0.0;
     pSm(0,0) = Sl(0);
     pSm(1,1) = Sl(1);
@@ -777,7 +777,7 @@ void construct_cmm(ComMod& com_mod, const mshType& lM, const SolutionStates& sol
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool pstEq = com_mod.pstEq;
+  bool prestressEq = com_mod.prestressEq;
 
   const bool cmmInit = com_mod.cmmInit;
   const bool cmmVarWall = com_mod.cmmVarWall;

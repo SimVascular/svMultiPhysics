@@ -482,7 +482,7 @@ void iterate_solution(Simulation* simulation)
 
     // [NOTE] Not implemented.
     //
-    if (com_mod.pstEq) {
+    if (com_mod.prestressEq) {
       //CALL OUTDNORM()
     }
 

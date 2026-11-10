@@ -75,7 +75,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   bool ibFlag = com_mod.ibFlag;
   bool dFlag = com_mod.dFlag;
   bool sstEq = com_mod.sstEq;
-  bool pstEq = com_mod.pstEq;
+  bool prestressEq = com_mod.prestressEq;
   bool cepEq = cep_mod.cepEq;
   bool risFlag = com_mod.risFlag;
   bool urisFlag = com_mod.urisFlag;
@@ -87,7 +87,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   #ifdef debug_init_from_bin 
   dmsg << "dFlag: " << dFlag;
   dmsg << "sstEq: " << sstEq;
-  dmsg << "pstEq: " << pstEq;
+  dmsg << "prestressEq: " << prestressEq;
   dmsg << "cepEq: " << cepEq;
   dmsg << "cm.tF(): " << cm.tF(cm_mod); 
   #endif
@@ -122,7 +122,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 
       if (sstEq) {
 
-        if (pstEq) {
+        if (prestressEq) {
           bin_file.read((char*)pS0.data(), pS0.msize());
           bin_file.read((char*)Ad.data(), Ad.msize());
 
@@ -144,7 +144,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 
       } else {
 
-        if (pstEq) {
+        if (prestressEq) {
           bin_file.read((char*)pS0.data(), pS0.msize());
 
         } else if (cepEq) {
@@ -180,7 +180,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   //
   } else {
     if (dFlag) {
-      if (pstEq) {
+      if (prestressEq) {
         //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do, pS0, ib.Yb, ib.Auo, ib.Ubo
       } else {
          //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do, ib.Yb, ib.Auo, ib.Ubo
@@ -442,7 +442,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     // would have to exclude those assemblies from the accumulation, which is
     // not implemented.
     svmp::throw_if<svmp::NotImplementedException>(
-        eq.line_search_enabled && com_mod.pstEq,
+        eq.line_search_enabled && com_mod.prestressEq,
         "Line search (the " + LineSearchParameters::xml_element_name_ +
             " XML element) is not implemented for prestress simulations.");
 
@@ -554,7 +554,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   i = 2*tDof;
   if (dFlag) i = 3*tDof;
-  if (com_mod.pstEq) i = i + com_mod.nsymd;
+  if (com_mod.prestressEq) i = i + com_mod.nsymd;
   if (com_mod.sstEq) i = i + nsd;
   if (cep_mod.cepEq) {
     i = i + cep_mod.nXion;
@@ -700,7 +700,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   }
 
   // PRESTRESS
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
     int nsymd = com_mod.nsymd; 
     com_mod.pS0.resize(nsymd,tnNo); 
     com_mod.pSn.resize(nsymd,tnNo); 

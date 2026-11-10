@@ -1248,7 +1248,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
             tmpV.resize(l,msh.nNo); 
             tmpVe.resize(msh.nEl);
 
-            if (com_mod.pstEq) {
+            if (com_mod.prestressEq) {
               for (int a = 0; a < msh.nNo; a++) {
                 int Ac = msh.gN(a);
                 for (int i = 0; i < l; i++) {

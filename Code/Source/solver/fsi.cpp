@@ -181,7 +181,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
-        // A prestrained solid element's fibers are pulled back to its stress-free configuration (see prestrain.h).
+        // A prestrained solid element's fibers are pulled back to its stress-free configuration.
         if (prestrained) {
           prestrain::pull_back_fibers(lM, e, g, fiber_values);
         }

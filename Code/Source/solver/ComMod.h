@@ -1026,9 +1026,8 @@ class mshType
     /// @brief Fiber orientations used for electrophysiology and solid mechanics.
     Fibers fibers;
 
-    /// @brief Deformation gradient from the stress-free configuration of a
-    /// prestrained body to this mesh, one nsd x nsd tensor per Gauss point per
-    /// element (see prestrain.h). Empty unless the mesh is prestrained.
+    /// @brief Prestrain deformation gradient from the unloaded configuraiton
+    /// to the reference mesh. One nsd x nsd tensor per gauss point.
     Array<double> F0;
 
     /// @brief Parent shape functions gradient
@@ -1705,7 +1704,7 @@ class ComMod {
     bool shlEq = false;
 
     /// @brief Whether PRESTRESS is being solved
-    bool pstEq = false;
+    bool prestressEq = false;
 
     /// @brief Whether a prestrain, an imprinted deformation gradient, is being
     /// solved for (see prestrain.h)

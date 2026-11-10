@@ -25,9 +25,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
 int get_col_ptr(ComMod& com_mod, const int rowN, const int colN);
 
-/// The ustruct kernels take w, Je, Nwx and Nqx on the stress-free configuration,
-/// which F0 maps to the mesh. Without a prestrain F0 is the identity and the
-/// stress-free configuration is the mesh (see prestrain.h).
 void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,

@@ -23,8 +23,6 @@
  * - Pseudo-transient continuation, when enabled: reports each step's update
  *   and, if asked, adapts the pseudo time step to the residual (see
  *   PseudoTransientContinuation.h)
- * - Prestrain: each step starts from rest, once the displacement the previous
- *   step reached has been composed into the prestrain (see prestrain.h)
  *
  * ## Line search
  *

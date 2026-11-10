@@ -42,7 +42,7 @@ void construct_mesh(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const S
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool pstEq = com_mod.pstEq;
+  bool prestressEq = com_mod.prestressEq;
 
   // Start and end DOF
   int is = nsd + 1;

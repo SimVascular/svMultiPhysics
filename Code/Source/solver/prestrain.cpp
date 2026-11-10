@@ -116,7 +116,7 @@ void init(ComMod& com_mod)
   const int nsd = com_mod.nsd;
 
   if (com_mod.prestrainEq) {
-    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.pstEq,
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.prestressEq,
         "Prestress and Prestrain can not both be set.");
     svmp::throw_if<svmp::NotImplementedException>(com_mod.stFileFlag,
         "A Prestrain run can not be restarted from a .bin file. "

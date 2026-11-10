@@ -733,7 +733,7 @@ void Integrator::predictor()
   #ifdef debug_picp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "pstEq: " << com_mod.pstEq;
+  dmsg << "prestressEq: " << com_mod.prestressEq;
   #endif
 
   // Variables for prestress calculations
@@ -751,7 +751,7 @@ void Integrator::predictor()
   auto& Dn = solutions_.current.get_displacement();
 
   // Prestress initialization
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
      pS0 = pS0 + pSn;
      Ao = 0.0;
      Yo = 0.0;
@@ -911,7 +911,7 @@ void Integrator::initiator(SolutionStates& solutions)
   dmsg << "eq.itr: " << eq.itr;
   dmsg << "dof: " << dof;
   dmsg << "tnNo: " << tnNo;
-  dmsg << "com_mod.pstEq: " << com_mod.pstEq;
+  dmsg << "com_mod.prestressEq: " << com_mod.prestressEq;
   #endif
 
   const auto& Ao = solutions.old.get_acceleration();
@@ -970,7 +970,7 @@ void Integrator::initiator(SolutionStates& solutions)
   }
 
   // prestress
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
     com_mod.pSn = 0.0;
     com_mod.pSa = 0.0;
   }
@@ -1144,7 +1144,7 @@ void Integrator::finalize_iteration()
 
   // Update prestress at the nodes and re-initialize
   //
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
     all_fun::commu(com_mod, pSn);
     all_fun::commu(com_mod, pSa);
 

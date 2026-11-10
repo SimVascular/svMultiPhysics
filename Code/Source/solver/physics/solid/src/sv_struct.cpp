@@ -210,7 +210,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool pstEq = com_mod.pstEq;
+  bool prestressEq = com_mod.prestressEq;
 
   int eNoN = lM.eNoN;
   const bool mesh_has_fibers = lM.fibers.has_fibers();
@@ -343,7 +343,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       }
 
       // Prestress
-      if (pstEq) {
+      if (prestressEq) {
         for (int a = 0; a < eNoN; a++) {
           int Ac = ptr(a);
           pSa(Ac) += w*N(a);

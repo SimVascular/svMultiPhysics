@@ -1810,7 +1810,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   // Set equation properties.
   //
   if (eq_params->prestress.defined() && eq_params->prestress.value()) {
-    simulation->com_mod.pstEq = true;
+    simulation->com_mod.prestressEq = true;
   }
 
   const bool prestrain = eq_params->prestrain.defined() && eq_params->prestrain.value();
