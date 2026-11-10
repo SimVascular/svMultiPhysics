@@ -5,14 +5,18 @@
 #define PRESTRAIN_H
 
 #include "Array.h"
-#include "CmMod.h"
-#include "ComMod.h"
-#include "SolutionStates.h"
+#include "Array3.h"
 #include "mat_fun.h"
 
 #include <array>
 #include <cmath>
-#include <string>
+
+class CmMod;
+class ComMod;
+class MeshParameters;
+class cmType;
+class mshType;
+struct SolutionStates;
 
 /// @brief Prestrain of a body imaged in a loaded configuration.
 ///
@@ -37,7 +41,8 @@
 ///
 /// Like the shape function gradients, F0 is constant within an element whose
 /// shape functions are linear, so those gradients are pulled back once. A
-/// prestrain run produces such fields, and read() checks fields from file.
+/// prestrain run produces such fields, and Prestrain::read checks fields from
+/// file.
 ///
 /// F0 is found by Newton's method on the imaged geometry. Every Newton
 /// iteration starts from rest under the full load, so its residual is that of
@@ -60,46 +65,118 @@
 /// carry the F0 kinematics all the same, as groundwork; USTRUCT_PRESTRAIN.md
 /// (outside the repository) describes what full support would take.
 ///
-/// F0 is stored per mesh as Array<double>(nsd*nsd*nG, nEl): one column per
-/// element holding the nG Gauss point tensors back to back, each in the
-/// column-major order of Matrix<nsd>. Written to and read from VTU cell arrays
-/// named Prestrain_F_g<g>, one per Gauss point.
+/// Each mesh holds its prestrain in a Prestrain, one tensor per Gauss point,
+/// written to and read from VTU cell arrays named Prestrain_F_g<g>, one per
+/// Gauss point.
 ///
+class Prestrain {
+public:
+  /**
+   * @brief Reads the prestrain from the Prestrain_F_g<g> cell arrays of the
+   * VTU file named by Prestrain_file_path, in the mesh's original element
+   * order. Called on the master before the mesh is partitioned; reads nothing
+   * when no file is given.
+   */
+  void read(const MeshParameters& mesh_parameters, mshType& mesh, int nsd);
+
+  /**
+   * @brief Parallel distribution of the prestrain according to the mesh's
+   * element partition.
+   */
+  void distribute(const CmMod& cm_mod, const cmType& cm, const mshType& mesh);
+
+  /**
+   * @brief Returns true if the mesh carries a prestrain. The same on every
+   * rank once distributed, also on a rank that holds none of the mesh's
+   * elements.
+   */
+  bool has_prestrain() const { return F0.nrows() != 0; }
+
+  /**
+   * @brief Sets the prestrain to the identity at every Gauss point.
+   */
+  void set_identity(int nsd, int nG, int nEl);
+
+  /**
+   * @brief Returns the prestrain at Gauss point g of element e, or the
+   * identity when the mesh carries none.
+   */
+  template <int nsd>
+  mat_fun::Matrix<nsd> get(const int g, const int e) const
+  {
+    if (!has_prestrain()) {
+      return mat_fun::Matrix<nsd>::Identity();
+    }
+    return Eigen::Map<const mat_fun::Matrix<nsd>>(block(g, e));
+  }
+
+  /**
+   * @brief Returns the element average of the prestrain, or the identity when
+   * the mesh carries none. For output whose quadrature differs from the mesh's.
+   */
+  template <int nsd>
+  mat_fun::Matrix<nsd> get_mean(const int e) const
+  {
+    if (!has_prestrain()) {
+      return mat_fun::Matrix<nsd>::Identity();
+    }
+    mat_fun::Matrix<nsd> mean = mat_fun::Matrix<nsd>::Zero();
+    for (int g = 0; g < F0.ncols(); g++) {
+      mean += get<nsd>(g, e);
+    }
+    return mean / F0.ncols();
+  }
+
+  /**
+   * @brief F0 <- F_step F0 at Gauss point g of element e.
+   */
+  template <int nsd>
+  void compose(const int g, const int e, const mat_fun::Matrix<nsd>& F_step)
+  {
+    Eigen::Map<mat_fun::Matrix<nsd>> F(block(g, e));
+    F = F_step * F;
+  }
+
+  /**
+   * @brief Gathers the prestrain onto the master in the mesh's original
+   * element order, for writing: one row per component and Gauss point, one
+   * column per element. Collective: every rank must call it, also a rank that
+   * holds none of the mesh's elements.
+   */
+  void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh, Array<double>& gF0) const;
+
+private:
+  /**
+   * @brief Prestrain at the quadrature points.
+   *
+   * Indexed as @c (component, gauss_point, element):
+   * - @c component packs the nsd x nsd tensor in the column-major order of
+   *   Matrix<nsd>, @f$ i + j \cdot n_{sd} @f$ for row @f$ i @f$ and column
+   *   @f$ j @f$;
+   * - @c element is the local element index after @ref distribute (or the
+   *   global element index before it).
+   */
+  Array3<double> F0;
+
+  /// The tensor of Gauss point g of element e.
+  double* block(const int g, const int e) const
+  {
+    return F0.data() + (static_cast<size_t>(e) * F0.ncols() + g) * F0.nrows();
+  }
+};
+
 namespace prestrain {
 
-/// @brief Deformation gradient from the stress-free configuration to the mesh
-/// at Gauss point g of element e, or the identity when the mesh carries none.
+/// @brief Pull the shape function gradients Nx back to the stress-free
+/// configuration, in place: Nx <- F0^T Nx. Returns det F0, the ratio of mesh
+/// to stress-free volume, by which the integration Jacobian is divided.
 template <int nsd>
-mat_fun::Matrix<nsd> deformation_gradient(const mshType& lM, const int e, const int g)
+double pull_back_gradients(const mat_fun::Matrix<nsd>& F0, Array<double>& Nx)
 {
-  if (lM.F0.size() == 0) {
-    return mat_fun::Matrix<nsd>::Identity();
-  }
-  return Eigen::Map<const mat_fun::Matrix<nsd>>(lM.F0.data() + e*lM.F0.nrows() + g*nsd*nsd);
+  auto Nxm = mat_fun::eigen_view_mutable(Nx);
+  Nxm = F0.transpose() * Nxm;
+  return F0.determinant();
 }
-
-/// @brief Element average of the deformation gradient from the stress-free
-/// configuration, or the identity when the mesh carries none. For output whose
-/// quadrature differs from the mesh's.
-template <int nsd>
-mat_fun::Matrix<nsd> mean_deformation_gradient(const mshType& lM, const int e)
-{
-  mat_fun::Matrix<nsd> F0 = mat_fun::Matrix<nsd>::Zero();
-  for (int g = 0; g < lM.nG; g++) {
-    F0 += deformation_gradient<nsd>(lM, e, g);
-  }
-  return F0 / lM.nG;
-}
-
-/// @brief The same, for callers whose number of spatial dimensions is not
-/// known at compile time.
-Array<double> deformation_gradient(const mshType& lM, int e, int g, int nsd);
-
-/// @brief Pull the shape function gradients Nx of Gauss point g of element e
-/// back to the stress-free configuration, in place: Nx <- F0^T Nx. Returns
-/// det F0, the ratio of mesh to stress-free volume, by which the integration
-/// Jacobian is divided.
-double pull_back(const mshType& lM, int e, int g, Array<double>& Nx);
 
 /// @brief Pull fibers given on the mesh back to the stress-free configuration
 /// that F0 maps to the mesh, in place, nsd x nFn.
@@ -125,10 +202,6 @@ void pull_back_fibers(const mat_fun::Matrix<nsd>& F0, Array<double>& fibers)
     f0.col(k) = (length > 0.0) ? Direction(d * (f.norm() / length)) : Direction::Zero();
   }
 }
-
-/// @brief The same with the prestrain of Gauss point g of element e, for
-/// callers whose number of spatial dimensions is not known at compile time.
-void pull_back_fibers(const mshType& lM, int e, int g, Array<double>& fibers);
 
 /// @brief Make a solid kernel's tangent that of a prestrain iteration.
 ///
@@ -207,9 +280,9 @@ std::array<Eigen::Matrix<double, nsd, 1>, nsd - 1> perpendicular_directions(cons
 /// @param stress the material law's S at F for other fibers, nsd x nFn.
 /// @param w_afu the weight times the stiffness scaling of lK.
 /// @param lK the element tangent, lK(i*dof + j, a, b).
-template <int nsd, class Gradients, class Fibers, class Stress>
+template <int nsd, class Gradients, class FiberMatrix, class Stress>
 void correct_composed_tangent_fibers(const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F,
-                                 const mat_fun::Matrix<nsd>& S, const Gradients& Nx0, const Fibers& fibers,
+                                 const mat_fun::Matrix<nsd>& S, const Gradients& Nx0, const FiberMatrix& fibers,
                                  const Stress& stress, const double w_afu, const int dof, Array3<double>& lK)
 {
   using Direction = Eigen::Matrix<double, nsd, 1>;
@@ -255,11 +328,6 @@ void correct_composed_tangent_fibers(const mat_fun::Matrix<nsd>& F0, const mat_f
   }
 }
 
-/// @brief Read the prestrain of a mesh from the Prestrain_F_g<g> cell arrays
-/// of a VTU file, in the mesh's original element order. Called on the master
-/// before the mesh is partitioned.
-void read(const std::string& file_name, mshType& mesh, int nsd);
-
 /// @brief Validate the settings and the prestrains read from file, and seed
 /// the identity where a prestrain run has none, so that every mesh of a
 /// prestrain run carries a prestrain. Called once the meshes are partitioned.
@@ -277,11 +345,6 @@ void init(ComMod& com_mod);
 /// is the state the iteration reached, so that is u; Dn itself would overshoot
 /// by 1/alpha_f.
 double compose_iteration(ComMod& com_mod, SolutionStates& solutions);
-
-/// @brief Gather a mesh's prestrain onto the master, in the mesh's original
-/// element order, for writing. Collective: every rank must call it for the
-/// same meshes, also a rank that holds none of the mesh's elements.
-void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, Array<double>& gF0);
 
 };
 

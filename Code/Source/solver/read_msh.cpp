@@ -1519,14 +1519,10 @@ void read_msh(Simulation* simulation)
     }
   }
 
-  // Read the deformation gradient of a prestrained configuration.
-  //
+  // Read the prestrain of each mesh that has one.
   for (int iM = 0; iM < com_mod.nMsh; iM++) {
-    auto mesh_param = simulation->parameters.mesh_parameters[iM];
-    if (mesh_param->prestrain_file_path.defined()) {
-      auto file_name = mesh_param->prestrain_file_path.value();
-      prestrain::read(file_name, com_mod.msh[iM], com_mod.nsd);
-    }
+    com_mod.msh[iM].prestrain.read(*simulation->parameters.mesh_parameters[iM],
+        com_mod.msh[iM], com_mod.nsd);
   }
 
   // Read prestress data.

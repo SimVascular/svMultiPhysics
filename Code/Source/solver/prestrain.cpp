@@ -3,72 +3,80 @@
 
 #include "prestrain.h"
 
+#include "ComMod.h"
 #include "Core/Exception.h"
 #include "FE/Common/FEException.h"
+#include "Parameters.h"
 #include "VtkData.h"
 #include "consts.h"
 #include "nn.h"
 
-#include <fstream>
+#include <algorithm>
+#include <filesystem>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "mpi.h"
 
-namespace prestrain {
+namespace {
 
 /// @brief Name of the VTU cell array holding Gauss point g.
-static std::string array_name(const int g)
+std::string array_name(const int g)
 {
   return "Prestrain_F_g" + std::to_string(g);
 }
 
-Array<double> deformation_gradient(const mshType& lM, const int e, const int g, const int nsd)
+/**
+ * @brief Scatters element-associated data from the master to every rank.
+ *
+ * On the master, @p global_data stores @p values_per_element contiguous values
+ * for each of the @c mesh.gnEl elements in the original element ordering. The
+ * blocks are reordered with @c mesh.otnIEN so each rank's elements are
+ * contiguous, then @c MPI_Scatterv delivers the local partition into
+ * @p local_data (@c mesh.nEl blocks).
+ */
+void scatter_element_data(const double* global_data, double* local_data,
+    const int values_per_element, const mshType& mesh, const CmMod& cm_mod,
+    const cmType& cm)
 {
-  auto F0 = mat_fun::mat_id(nsd);
-  if (lM.F0.size() == 0) {
-    return F0;
-  }
-
-  // Column-major nsd x nsd block at this Gauss point, as Matrix<nsd> lays it out.
-  const double* block = lM.F0.data() + e*lM.F0.nrows() + g*nsd*nsd;
-  for (int j = 0; j < nsd; j++) {
-    for (int i = 0; i < nsd; i++) {
-      F0(i,j) = block[i + j*nsd];
+  // Permute the element blocks into the partitioned ordering so that the
+  // elements owned by each rank are contiguous.
+  std::vector<double> reordered;
+  if (cm.mas(cm_mod)) {
+    reordered.resize(static_cast<size_t>(values_per_element) * mesh.gnEl);
+    for (int e = 0; e < mesh.gnEl; ++e) {
+      std::copy_n(global_data + static_cast<size_t>(e) * values_per_element,
+        values_per_element,
+        reordered.data() + static_cast<size_t>(mesh.otnIEN[e]) * values_per_element);
     }
   }
-  return F0;
-}
 
-template <int nsd>
-static double pull_back_gradients(const mshType& lM, const int e, const int g, Array<double>& Nx)
-{
-  const mat_fun::Matrix<nsd> F0 = deformation_gradient<nsd>(lM, e, g);
-  auto Nxm = mat_fun::eigen_view_mutable(Nx);
-  Nxm = F0.transpose() * Nxm;
-  return F0.determinant();
-}
-
-double pull_back(const mshType& lM, const int e, const int g, Array<double>& Nx)
-{
-  if (Nx.nrows() == 3) {
-    return pull_back_gradients<3>(lM, e, g, Nx);
-  } else {
-    return pull_back_gradients<2>(lM, e, g, Nx);
+  // Send each rank its contiguous range of elements.
+  const int num_proc = cm.np();
+  Vector<int> send_counts(num_proc), displacements(num_proc);
+  for (int i = 0; i < num_proc; ++i) {
+    displacements[i] = mesh.eDist[i] * values_per_element;
+    send_counts[i] = (mesh.eDist[i + 1] - mesh.eDist[i]) * values_per_element;
   }
+  MPI_Scatterv(reordered.data(), send_counts.data(), displacements.data(),
+    cm_mod::mpreal, local_data, mesh.nEl * values_per_element, cm_mod::mpreal,
+    cm_mod.master, cm.com());
 }
 
-void pull_back_fibers(const mshType& lM, const int e, const int g, Array<double>& fibers)
+} // namespace
+
+
+void Prestrain::read(const MeshParameters& mesh_parameters, mshType& mesh, const int nsd)
 {
-  if (fibers.nrows() == 3) {
-    pull_back_fibers<3>(deformation_gradient<3>(lM, e, g), fibers);
-  } else {
-    pull_back_fibers<2>(deformation_gradient<2>(lM, e, g), fibers);
+  if (!mesh_parameters.prestrain_file_path.defined()) {
+    return;
   }
-}
+  const auto file_name = mesh_parameters.prestrain_file_path.value();
 
-void read(const std::string& file_name, mshType& mesh, const int nsd)
-{
-  svmp::throw_if<svmp::FileNotFoundException>(!std::ifstream(file_name).good(), file_name);
+  if (!std::filesystem::is_regular_file(file_name)) {
+    svmp::raise<svmp::FileNotFoundException>(file_name);
+  }
   std::unique_ptr<VtkData> vtk_data(VtkData::create_reader(file_name));
 
   svmp::throw_if<svmp::FileFormatException>(vtk_data->num_elems() != mesh.gnEl, file_name,
@@ -76,7 +84,7 @@ void read(const std::string& file_name, mshType& mesh, const int nsd)
       mesh.name + "' has " + std::to_string(mesh.gnEl) + ".");
 
   const int ncomp = nsd*nsd;
-  mesh.F0 = Array<double>(ncomp*mesh.nG, mesh.gnEl);
+  F0.resize(ncomp, mesh.nG, mesh.gnEl);
 
   Array<double> Fg(ncomp, mesh.gnEl);
   for (int g = 0; g < mesh.nG; g++) {
@@ -88,7 +96,7 @@ void read(const std::string& file_name, mshType& mesh, const int nsd)
 
     for (int e = 0; e < mesh.gnEl; e++) {
       for (int c = 0; c < ncomp; c++) {
-        mesh.F0(g*ncomp + c, e) = Fg(c,e);
+        F0(c, g, e) = Fg(c,e);
       }
     }
   }
@@ -99,7 +107,7 @@ void read(const std::string& file_name, mshType& mesh, const int nsd)
     for (int e = 0; e < mesh.gnEl; e++) {
       for (int g = 1; g < mesh.nG; g++) {
         for (int c = 0; c < ncomp; c++) {
-          if (mesh.F0(g*ncomp + c, e) != mesh.F0(c, e)) {
+          if (F0(c, g, e) != F0(c, 0, e)) {
             svmp::raise<svmp::FileFormatException>(file_name,
                 "The prestrain varies between the Gauss points of element " + std::to_string(e) +
                 " of the mesh named '" + mesh.name + "', whose shape functions are linear.");
@@ -109,6 +117,81 @@ void read(const std::string& file_name, mshType& mesh, const int nsd)
     }
   }
 }
+
+
+void Prestrain::distribute(const CmMod& cm_mod, const cmType& cm, const mshType& mesh)
+{
+  // Share what the master read with all ranks.
+  bool has = has_prestrain();
+  cm.bcast(cm_mod, &has);
+  if (!has) {
+    return;
+  }
+  int ncomp = F0.nrows();
+  cm.bcast(cm_mod, &ncomp);
+
+  // Scatter the prestrain of each rank's elements.
+  const Array3<double> global = F0;
+  F0.resize(ncomp, mesh.nG, mesh.nEl);
+  scatter_element_data(global.data(), F0.data(), ncomp * mesh.nG, mesh, cm_mod, cm);
+}
+
+
+void Prestrain::set_identity(const int nsd, const int nG, const int nEl)
+{
+  F0.resize(nsd*nsd, nG, nEl);
+  F0 = 0.0;
+  for (int e = 0; e < nEl; e++) {
+    for (int g = 0; g < nG; g++) {
+      for (int k = 0; k < nsd; k++) {
+        F0(k*(nsd+1), g, e) = 1.0;
+      }
+    }
+  }
+}
+
+
+void Prestrain::gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh, Array<double>& gF0) const
+{
+  const auto& cm = com_mod.cm;
+
+  // The row count follows from the mesh, the same on every rank; the columns
+  // are the rank's own elements, none on a rank that holds none of the mesh.
+  const int rows = com_mod.nsd * com_mod.nsd * mesh.nG;
+
+  if (cm.seq()) {
+    gF0.resize(rows, mesh.nEl);
+    std::copy_n(F0.data(), F0.size(), gF0.data());
+    return;
+  }
+
+  const int np = cm.np();
+  Vector<int> sCount(np), disps(np);
+  for (int i = 0; i < np; i++) {
+    disps(i) = mesh.eDist(i) * rows;
+    sCount(i) = mesh.eDist(i+1) * rows - disps(i);
+  }
+
+  Array<double> tmp;
+  if (cm.mas(cm_mod)) {
+    tmp.resize(rows, mesh.gnEl);
+  }
+
+  MPI_Gatherv(F0.data(), rows*mesh.nEl, cm_mod::mpreal, tmp.data(), sCount.data(), disps.data(),
+      cm_mod::mpreal, cm_mod.master, cm.com());
+
+  // Back to the original element order, the inverse of the partitioning.
+  if (cm.mas(cm_mod)) {
+    gF0.resize(rows, mesh.gnEl);
+    for (int e = 0; e < mesh.gnEl; e++) {
+      const int Ec = mesh.otnIEN(e);
+      gF0.set_col(e, tmp.col(Ec));
+    }
+  }
+}
+
+
+namespace prestrain {
 
 void init(ComMod& com_mod)
 {
@@ -147,38 +230,23 @@ void init(ComMod& com_mod)
   }
 
   for (auto& msh : com_mod.msh) {
-    const int rows = nsd*nsd*msh.nG;
-
-    // The prestrain is read with the mesh's own number of Gauss points.
-    svmp::throw_if<svmp::InternalErrorException>(msh.F0.size() != 0 && msh.F0.nrows() != rows,
-        "The prestrain of the mesh named '" + msh.name + "' holds " + std::to_string(msh.F0.nrows() / (nsd*nsd)) +
-        " Gauss points per element but the mesh integrates with " + std::to_string(msh.nG) + ".");
-
-    if (com_mod.prestrainEq && msh.F0.size() == 0) {
-      // A prestrain run that starts from nothing starts from the identity.
-      msh.F0 = Array<double>(rows, msh.nEl);
-      msh.F0 = 0.0;
-      for (int e = 0; e < msh.nEl; e++) {
-        for (int g = 0; g < msh.nG; g++) {
-          for (int k = 0; k < nsd; k++) {
-            msh.F0(g*nsd*nsd + k*(nsd+1), e) = 1.0;
-          }
-        }
-      }
+    // A prestrain run that starts from nothing starts from the identity.
+    if (com_mod.prestrainEq && !msh.prestrain.has_prestrain()) {
+      msh.prestrain.set_identity(nsd, msh.nG, msh.nEl);
     }
 
     // The prestrain is held at the mesh's Gauss points, which the momentum and
     // continuity integrations of a Taylor-Hood element do not use.
-    svmp::throw_if<svmp::NotImplementedException>(msh.F0.size() != 0 && msh.nFs != 1,
+    svmp::throw_if<svmp::NotImplementedException>(msh.prestrain.has_prestrain() && msh.nFs != 1,
         "A prestrain requires the same quadrature for the momentum and continuity "
         "equations (P1P1) on the mesh named '" + msh.name + "'; Taylor-Hood is not supported.");
   }
 
-  // After partitioning every rank's F0 has the mesh's row count, so the checks
+  // has_prestrain is the same on every rank once distributed, so the checks
   // below raise on every rank; sstEq and rmsh.isReqd are broadcast.
   bool prestrained = com_mod.prestrainEq;
   for (const auto& msh : com_mod.msh) {
-    prestrained = prestrained || msh.F0.nrows() != 0;
+    prestrained = prestrained || msh.prestrain.has_prestrain();
   }
 
   // A ustruct solid's hydrostatic prestress would have to come from its pressure
@@ -194,24 +262,19 @@ void init(ComMod& com_mod)
       "original mesh and is not carried to a new one.");
 }
 
-/// @brief F0 <- (I + Grad u) F0 at Gauss point g of element e, in place.
-template <int nsd>
-static void compose(Array<double>& F0, const int e, const int g, const Array<double>& dl, const Array<double>& Nx)
+double compose_iteration(ComMod& com_mod, SolutionStates& solutions)
 {
-  Eigen::Map<mat_fun::Matrix<nsd>> F(F0.data() + e*F0.nrows() + g*nsd*nsd);
-  const mat_fun::Matrix<nsd> F_step = mat_fun::Matrix<nsd>::Identity() +
-      mat_fun::eigen_view_rows<nsd>(dl, 0) * mat_fun::eigen_view<nsd>(Nx).transpose();
-  F = F_step * F;
-}
-
-/// @brief F0 <- (I + Grad u) F0 at every Gauss point, with u = af * D, the
-/// rows s to s + nsd - 1 of D: the displacement of the run's one solid equation.
-static void accumulate(ComMod& com_mod, const int s, const double af, const Array<double>& D)
-{
+  // A prestrain run has a single struct equation (see init), so these are all
+  // its rows.
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  const auto& eq = com_mod.eq[0];
   const int nsd = com_mod.nsd;
 
+  // F0 <- (I + Grad u) F0 at every Gauss point, with u = af * D.
   for (auto& msh : com_mod.msh) {
-    if (msh.F0.size() == 0) {
+    if (!msh.prestrain.has_prestrain()) {
       continue;
     }
     const int eNoN = msh.eNoN;
@@ -223,7 +286,7 @@ static void accumulate(ComMod& com_mod, const int s, const double af, const Arra
         const int Ac = msh.IEN(a,e);
         for (int i = 0; i < nsd; i++) {
           xl(i,a) = com_mod.x(i,Ac);
-          dl(i,a) = af * D(s+i,Ac);
+          dl(i,a) = eq.af * Dn(eq.s+i,Ac);
         }
       }
 
@@ -234,32 +297,24 @@ static void accumulate(ComMod& com_mod, const int s, const double af, const Arra
           nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
         }
         if (nsd == 3) {
-          compose<3>(msh.F0, e, g, dl, Nx);
+          const mat_fun::Matrix<3> F_step = mat_fun::Matrix<3>::Identity() +
+              mat_fun::eigen_view_rows<3>(dl, 0) * mat_fun::eigen_view<3>(Nx).transpose();
+          msh.prestrain.compose<3>(g, e, F_step);
         } else {
-          compose<2>(msh.F0, e, g, dl, Nx);
+          const mat_fun::Matrix<2> F_step = mat_fun::Matrix<2>::Identity() +
+              mat_fun::eigen_view_rows<2>(dl, 0) * mat_fun::eigen_view<2>(Nx).transpose();
+          msh.prestrain.compose<2>(g, e, F_step);
         }
       }
     }
   }
-}
-
-double compose_iteration(ComMod& com_mod, SolutionStates& solutions)
-{
-  // A prestrain run has a single struct equation (see init), so these are all
-  // its rows.
-  auto& An = solutions.current.get_acceleration();
-  auto& Yn = solutions.current.get_velocity();
-  auto& Dn = solutions.current.get_displacement();
-  const auto& eq = com_mod.eq[0];
-
-  accumulate(com_mod, eq.s, eq.af, Dn);
 
   // This rank's largest nodal update; a NaN gets through rather than being
   // hidden by max().
   double umax = 0.0;
   for (int a = 0; a < com_mod.tnNo; a++) {
     double u2 = 0.0;
-    for (int i = 0; i < com_mod.nsd; i++) {
+    for (int i = 0; i < nsd; i++) {
       u2 += Dn(eq.s+i,a) * Dn(eq.s+i,a);
     }
     umax = (u2 > umax || std::isnan(u2)) ? u2 : umax;
@@ -269,44 +324,6 @@ double compose_iteration(ComMod& com_mod, SolutionStates& solutions)
   Yn = 0.0;
   Dn = 0.0;
   return eq.af * std::sqrt(umax);
-}
-
-void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, Array<double>& gF0)
-{
-  const auto& cm = com_mod.cm;
-
-  if (cm.seq()) {
-    gF0 = lM.F0;
-    return;
-  }
-
-  // The row count follows from the mesh, the same on every rank; the columns
-  // are the rank's own elements, none on a rank that holds none of the mesh.
-  const int rows = com_mod.nsd * com_mod.nsd * lM.nG;
-  const int np = cm.np();
-
-  Vector<int> sCount(np), disps(np);
-  for (int i = 0; i < np; i++) {
-    disps(i) = lM.eDist(i) * rows;
-    sCount(i) = lM.eDist(i+1) * rows - disps(i);
-  }
-
-  Array<double> tmp;
-  if (cm.mas(cm_mod)) {
-    tmp.resize(rows, lM.gnEl);
-  }
-
-  MPI_Gatherv(lM.F0.data(), rows*lM.nEl, cm_mod::mpreal, tmp.data(), sCount.data(), disps.data(),
-      cm_mod::mpreal, cm_mod.master, cm.com());
-
-  // Back to the original element order, the inverse of the partitioning.
-  if (cm.mas(cm_mod)) {
-    gF0.resize(rows, lM.gnEl);
-    for (int e = 0; e < lM.gnEl; e++) {
-      const int Ec = lM.otnIEN(e);
-      gF0.set_col(e, tmp.col(Ec));
-    }
-  }
 }
 
 };

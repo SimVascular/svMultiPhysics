@@ -18,6 +18,7 @@
 #include "CoupledBoundaryCondition.h"
 #include "FourierInterpolation.h"
 #include "Fibers.h"
+#include "prestrain.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
 #include "SolutionStates.h"
@@ -1026,9 +1027,8 @@ class mshType
     /// @brief Fiber orientations used for electrophysiology and solid mechanics.
     Fibers fibers;
 
-    /// @brief Prestrain deformation gradient from the unloaded configuration
-    /// to the reference mesh. One nsd x nsd tensor per Gauss point.
-    Array<double> F0;
+    /// @brief Deformation gradient from the unloaded configuration.
+    Prestrain prestrain;
 
     /// @brief Parent shape functions gradient
     /// double Nx(:,:,:)

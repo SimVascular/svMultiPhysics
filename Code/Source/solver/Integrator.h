@@ -153,9 +153,6 @@ private:
   /** @brief Pseudo-transient continuation, inactive unless enabled by the input */
   PseudoTransientContinuation pseudo_transient_;
 
-  /** @brief Largest nodal update the step's last iteration composed into the prestrain, on this rank */
-  double prestrain_update_ = 0.0;
-
   /** @brief Residual vector for face-based quantities */
   Vector<double> res_;
 

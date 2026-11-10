@@ -2260,9 +2260,7 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   part.clear();
 
   Array<int> tempIEN;
-  Array<double> tmpF0;
   flag = false;
-  bool f0Flag = false;
 
   #ifdef dbg_part_msh
   dmsg << "sCount: " << sCount;
@@ -2348,17 +2346,6 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
       lM.eId.clear();
     }
 
-    // Distribute the prestrain deformation gradient F0
-    if (lM.F0.size() != 0) {
-      f0Flag = true;
-      tmpF0.resize(lM.F0.nrows(), lM.gnEl);
-      for (int e = 0; e < lM.gnEl; e++) {
-        int Ec = lM.otnIEN[e];
-        tmpF0.set_col(Ec, lM.F0.col(e));
-      }
-      lM.F0.clear();
-    }
-
   } else { 
     lM.otnIEN.clear();
   }
@@ -2366,7 +2353,6 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   gPart.clear();
 
   cm.bcast(cm_mod, &flag);
-  cm.bcast(cm_mod, &f0Flag);
   cm.bcast(cm_mod, lM.eDist);
   if (com_mod.risFlag) {
     cm.bcast(cm_mod, lM.partRIS);
@@ -2375,7 +2361,6 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   nEl = lM.eDist[cm.id()+1] - lM.eDist[cm.id()];
   #ifdef dbg_part_msh
   dmsg << "flag: " << flag;
-  dmsg << "f0Flag: " << f0Flag;
   dmsg << "3 lM.eDist: " << lM.eDist;
   #endif
   lM.nEl = nEl;
@@ -2402,20 +2387,8 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   // Distribute fiber directions according to this mesh's element partition.
   lM.fibers.distribute(com_mod, cm_mod, cm, lM);
 
-  // Communicating F0, if necessary.
-  //
-  if (f0Flag) {
-    int rows = tmpF0.nrows();
-    cm.bcast(cm_mod, &rows);
-    lM.F0.resize(rows, nEl);
-    for (int i = 0; i < num_proc; i++) {
-      disp[i] = lM.eDist[i] * rows;
-      sCount[i] = lM.eDist[i+1] * rows - disp[i];
-    }
-    MPI_Scatterv(tmpF0.data(), sCount.data(), disp.data(), cm_mod::mpreal, lM.F0.data(), nEl*rows,
-        cm_mod::mpreal, cm_mod.master, cm.com());
-    tmpF0.clear();
-  }
+  // Distribute the prestrain according to this mesh's element partition.
+  lM.prestrain.distribute(cm_mod, cm, lM);
 
   // Now scattering the sorted lM%IEN to all processors.
   //

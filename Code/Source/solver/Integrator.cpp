@@ -77,8 +77,9 @@ bool Integrator::step(bool save_results) {
 
   // Newton iteration loop
   newton_count_ = 1;
-  prestrain_update_ = 0.0;
   int iEqOld;
+
+  double prestrain_update = 0.0;
 
   // Looping over Newton iterations
   while (true) {
@@ -120,7 +121,7 @@ bool Integrator::step(bool save_results) {
     // A prestrain run composes every iteration's update into the prestrain and
     // starts the next one from rest.
     if (com_mod.prestrainEq) {
-      prestrain_update_ = prestrain::compose_iteration(com_mod, solutions_);
+      prestrain_update = prestrain::compose_iteration(com_mod, solutions_);
     }
 
     finalize_iteration();
@@ -143,7 +144,7 @@ bool Integrator::step(bool save_results) {
       dmsg << "iEqOld: " << iEqOld + 1;
       #endif
       if (pseudo_transient_.enabled()) {
-        pseudo_transient_.finish_step(com_mod, simulation_->cm_mod, prestrain_update_);
+        pseudo_transient_.finish_step(com_mod, simulation_->cm_mod, prestrain_update);
       }
       return true;
     }

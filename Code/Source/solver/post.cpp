@@ -775,9 +775,11 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
 
       // A prestrained fiber is already stretched on the mesh: measure from its
       // stress-free length, as the material model does (see prestrain.h).
-      if (lM.F0.size() != 0) {
-        const auto F0_inv = mat_fun::mat_inv(prestrain::deformation_gradient(lM, e, g, nsd), nsd);
-        lambda *= utils::norm(fiber) / utils::norm(mat_fun::mat_mul(F0_inv, fiber));
+      if (lM.prestrain.has_prestrain()) {
+        const double stress_free_length = (nsd == 3)
+            ? (lM.prestrain.get<3>(g, e).inverse() * Eigen::Map<const Eigen::Vector3d>(fiber.data())).norm()
+            : (lM.prestrain.get<2>(g, e).inverse() * Eigen::Map<const Eigen::Vector2d>(fiber.data())).norm();
+        lambda *= utils::norm(fiber) / stress_free_length;
       }
 
       // L2 projection from integration points to nodes
@@ -1851,7 +1853,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
   Array<double> fibers;
   Vector<double> resl(m); 
 
-  const bool prestrained = (lM.F0.size() != 0);
+  const bool prestrained = lM.prestrain.has_prestrain();
   Array<double> Nx(nsd,fs.eNoN); 
   Vector<double> N(fs.eNoN);
   Vector<int> element_nodes(fs.eNoN);
@@ -1948,8 +1950,8 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
       // Deformation gradient from the stress-free configuration: F = (I + Grad u) F0.
       // Output of a quadratic element uses a linear one's quadrature, so takes
       // the element average of the prestrain.
-      const Matrix<nsd> F0 = (fs.nG == lM.nG) ? prestrain::deformation_gradient<nsd>(lM, e, g)
-                                              : prestrain::mean_deformation_gradient<nsd>(lM, e);
+      const Matrix<nsd> F0 = (fs.nG == lM.nG) ? lM.prestrain.get<nsd>(g, e)
+                                              : lM.prestrain.get_mean<nsd>(e);
       const Matrix<nsd> F = (Im + disp * Nxm.transpose()) * F0;
       const double detF = F.determinant();
       if (prestrained) {

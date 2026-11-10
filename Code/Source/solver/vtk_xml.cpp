@@ -4,7 +4,6 @@
 // The functions defined here replicate the Fortran functions defined in VTKXML.f.
 
 #include "vtk_xml.h"
-#include "prestrain.h"
 #include "vtk_xml_parser.h"
 #include "VtkData.h"
 
@@ -1476,7 +1475,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   std::vector<Array<double>> gF0(nMsh);
   if (com_mod.prestrainEq) {
     for (int iM = 0; iM < nMsh; iM++) {
-      prestrain::gather(com_mod, cm_mod, com_mod.msh[iM], gF0[iM]);
+      com_mod.msh[iM].prestrain.gather(com_mod, cm_mod, com_mod.msh[iM], gF0[iM]);
     }
   }
 
@@ -1622,7 +1621,8 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   }  // if (com_mod.savedOnce || nMsh > 1)
 
   // Prestrain deformation gradient of a prestrain run, one cell array per
-  // Gauss point. Cells of meshes that carry none get the identity.
+  // Gauss point of the mesh with the most; a mesh with fewer gets the
+  // identity in the arrays beyond its own.
   if (com_mod.prestrainEq) {
     int nGmax = 0;
     for (int iM = 0; iM < nMsh; iM++) {
@@ -1635,7 +1635,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
       int Ec = 0;
       for (int iM = 0; iM < nMsh; iM++) {
         const auto& F0 = gF0[iM];
-        const bool has_F0 = (F0.size() != 0) && (g < com_mod.msh[iM].nG);
+        const bool has_F0 = (g < com_mod.msh[iM].nG);
         for (int e = 0; e < d[iM].nEl; e++) {
           if (has_F0) {
             for (int c = 0; c < ncomp; c++) {

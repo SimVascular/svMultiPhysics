@@ -302,7 +302,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     Array<double> xql(nsd,fs[1].eNoN);
     Array<double> Nqx(nsd,fs[1].eNoN);
 
-    const bool prestrained = (lM.F0.size() != 0);
+    const bool prestrained = lM.prestrain.has_prestrain();
 
     xwl = xl;
 
@@ -322,10 +322,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
-        // A prestrained element's fibers are pulled back to its stress-free configuration (see prestrain.h).
-        if (prestrained) {
-          prestrain::pull_back_fibers(lM, e, g, fiber_values);
-        }
       }
       const auto fibers = mat_fun::eigen_view(fiber_values);
 
@@ -339,10 +335,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_usolid] Jacobian for element " + std::to_string(e) + " is < 0.");
         }
-        // A prestrained element is integrated on its stress-free configuration (see prestrain.h).
-        if (prestrained) {
-          Jac /= prestrain::pull_back(lM, e, g, Nwx);
-        }
       }
 
       double w = fs[0].w(g) * Jac;
@@ -350,7 +342,15 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
+        // Prestrained elements are integrated on their stress-free configuration.
+        const auto F0 = lM.prestrain.get<3>(g, e);
+        if (prestrained && mesh_has_fibers) {
+          prestrain::pull_back_fibers<3>(F0, fiber_values);
+        }
+        if (prestrained && recompute_visc) {
+          Jac /= prestrain::pull_back_gradients<3>(F0, Nwx);
+          w = fs[0].w(g) * Jac;
+        }
         ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
                      Jac, N0, N1, Nwx, al, yl, dl, F0, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
@@ -358,7 +358,14 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        const auto F0 = prestrain::deformation_gradient<2>(lM, e, g);
+        const auto F0 = lM.prestrain.get<2>(g, e);
+        if (prestrained && mesh_has_fibers) {
+          prestrain::pull_back_fibers<2>(F0, fiber_values);
+        }
+        if (prestrained && recompute_visc) {
+          Jac /= prestrain::pull_back_gradients<2>(F0, Nwx);
+          w = fs[0].w(g) * Jac;
+        }
         ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
                      Jac, N0, N1, Nwx, al, yl, dl, F0, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
@@ -378,9 +385,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_usolid] Jacobian for element " + std::to_string(e) + " is < 0.");
         }
-        if (prestrained) {
-          prestrain::pull_back(lM, e, g, Nwx);
-        }
       }
 
       if (g == 0 || !fs[1].lShpF) {
@@ -389,9 +393,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_usolid] Jacobian for element " + std::to_string(e) + " is < 0.");
         }
-        if (prestrained) {
-          Jac /= prestrain::pull_back(lM, e, g, Nqx);
-        }
       }
 
       double w = fs[1].w(g) * Jac;
@@ -399,14 +400,29 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
+        // Prestrained elements are integrated on their stress-free configuration.
+        const auto F0 = lM.prestrain.get<3>(g, e);
+        if (prestrained && (g == 0 || !fs[0].lShpF)) {
+          prestrain::pull_back_gradients<3>(F0, Nwx);
+        }
+        if (prestrained && (g == 0 || !fs[1].lShpF)) {
+          Jac /= prestrain::pull_back_gradients<3>(F0, Nqx);
+          w = fs[1].w(g) * Jac;
+        }
         ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
             Nqx, al, yl, dl, F0, bfl, lR, lK, lKd);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        const auto F0 = prestrain::deformation_gradient<2>(lM, e, g);
+        const auto F0 = lM.prestrain.get<2>(g, e);
+        if (prestrained && (g == 0 || !fs[0].lShpF)) {
+          prestrain::pull_back_gradients<2>(F0, Nwx);
+        }
+        if (prestrained && (g == 0 || !fs[1].lShpF)) {
+          Jac /= prestrain::pull_back_gradients<2>(F0, Nqx);
+          w = fs[1].w(g) * Jac;
+        }
         ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
             Nqx, al, yl, dl, F0, bfl, lR, lK, lKd);
       }

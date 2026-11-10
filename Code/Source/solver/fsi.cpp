@@ -153,7 +153,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     Array<double> xql(nsd,fs_1[1].eNoN);
     Array<double> Nqx(nsd,fs_1[1].eNoN);
 
-    const bool prestrained = (lM.F0.size() != 0) &&
+    const bool prestrained = lM.prestrain.has_prestrain() &&
         (cPhys == Equation_struct || cPhys == Equation_ustruct);
 
     xwl = xl;
@@ -181,10 +181,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
-        // A prestrained solid element's fibers are pulled back to its stress-free configuration.
-        if (prestrained) {
-          prestrain::pull_back_fibers(lM, e, g, fiber_values);
-        }
       }
       const auto fibers = mat_fun::eigen_view(fiber_values);
 
@@ -209,16 +205,20 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
         auto Nxx = fs_1[0].Nxx.rslice(g);
         nn::gn_nxx(l, fs_1[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx);
-
-        // A prestrained solid element is integrated on its stress-free configuration (see prestrain.h).
-        if (prestrained) {
-          Jac /= prestrain::pull_back(lM, e, g, Nwx);
-        }
       }
 
       double w = fs_1[0].w(g) * Jac;
 
       if (nsd == 3) {
+        // Prestrained elements are integrated on their unloaded configuration.
+        const auto F0 = lM.prestrain.get<3>(g, e);
+        if (prestrained && mesh_has_fibers) {
+          prestrain::pull_back_fibers<3>(F0, fiber_values);
+        }
+        if (prestrained && (g == 0 || !fs_1[0].lShpF)) {
+          Jac /= prestrain::pull_back_gradients<3>(F0, Nwx);
+          w = fs_1[0].w(g) * Jac;
+        }
         switch (cPhys) {
           case Equation_fluid: {
             auto N0 = fs_1[0].N.col(g);
@@ -237,7 +237,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
-            const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
             struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
                                  Nwx, al, yl, dl, F0, bfl, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
@@ -250,7 +249,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_ustruct: {
             auto N0 = fs_1[0].N.col(g);
             auto N1 = fs_1[1].N.col(g);
-            const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
                                   fs_1[1].eNoN, w, Jac, N0, N1, Nwx, al,
                                   yl, dl, F0, bfl, fibers, active_stress_evaluator, lR,
@@ -259,6 +257,15 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           }
 
       } else if (nsd == 2) {
+        // Prestrained elements are integrated on their unloaded configuration.
+        const auto F0 = lM.prestrain.get<2>(g, e);
+        if (prestrained && mesh_has_fibers) {
+          prestrain::pull_back_fibers<2>(F0, fiber_values);
+        }
+        if (prestrained && (g == 0 || !fs_1[0].lShpF)) {
+          Jac /= prestrain::pull_back_gradients<2>(F0, Nwx);
+          w = fs_1[0].w(g) * Jac;
+        }
         switch (cPhys) {
           case Equation_fluid: {
             auto N0 = fs_1[0].N.col(g);
@@ -275,7 +282,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
-            const auto F0 = prestrain::deformation_gradient<2>(lM, e, g);
             struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
                                  Nwx, al, yl, dl, F0, bfl, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
@@ -307,9 +313,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_fsi] Jacobian for element " + std::to_string(e) + " is < 0.");
         }
-        if (prestrained) {
-          prestrain::pull_back(lM, e, g, Nwx);
-        }
       }
 
       if (g == 0 || !fs_2[1].lShpF) {
@@ -319,13 +322,19 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_fsi] Jacobian for element " + std::to_string(e) + " is < 0.");
         }
-        if (prestrained) {
-          Jac /= prestrain::pull_back(lM, e, g, Nqx);
-        }
       }
       double w = fs_2[1].w(g) * Jac;
 
       if (nsd == 3) {
+        // Prestrained elements are integrated on their unloaded configuration.
+        const auto F0 = lM.prestrain.get<3>(g, e);
+        if (prestrained && (g == 0 || !fs_2[0].lShpF)) {
+          prestrain::pull_back_gradients<3>(F0, Nwx);
+        }
+        if (prestrained && (g == 0 || !fs_2[1].lShpF)) {
+          Jac /= prestrain::pull_back_gradients<3>(F0, Nqx);
+          w = fs_2[1].w(g) * Jac;
+        }
         switch (cPhys) {
           case Equation_fluid: {
             auto N0 = fs_2[0].N.col(g);
@@ -344,7 +353,6 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_ustruct: {
             auto N0 = fs_2[0].N.col(g);
             auto N1 = fs_2[1].N.col(g);
-            const auto F0 = prestrain::deformation_gradient<3>(lM, e, g);
             ustruct::ustruct_3d_c(com_mod, cep_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, Jac, N0, N1, Nwx, Nqx, al, yl, dl, F0, bfl, lR, lK, lKd);
           } break;
         }
