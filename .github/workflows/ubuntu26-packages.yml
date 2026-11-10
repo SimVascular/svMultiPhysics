@@ -76,7 +76,7 @@ jobs:
         run: |
           package="svMultiPhysics-Ubuntu-26-${CONFIGURATION}-${VERSION}.deb"
           mkdir -p packages
-          cpack --config build/svMultiPhysics-build/Distribution/CPackConfig.cmake \
+          cpack --config build/svMultiPhysics-build/CPackConfig.cmake \
             -G DEB -B packages \
             -D "CPACK_PACKAGE_FILE_NAME=${package%.deb}"
           test -s "packages/$package"
