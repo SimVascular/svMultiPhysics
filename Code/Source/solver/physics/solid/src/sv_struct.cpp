@@ -448,10 +448,9 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   double Ja;
   mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
 
-  // A prestrain step of one Newton iteration is composed into F0 at once, which
-  // also moves the fibers the material law sees (see prestrain.h).
-  const bool prestrain_step = com_mod.prestrainEq && eq.maxItr == 1;
-  if (prestrain_step) {
+  // Every Newton iteration of a prestrain run composes its update into F0,
+  // which also moves the fibers the material law sees (see prestrain.h).
+  if (com_mod.prestrainEq) {
     const auto stress = [&](const auto& turned_fibers) {
       Matrix<2> S_f;
       Matrix<3> Dm_f;
@@ -460,7 +459,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
       mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, turned_fibers, Ta_f, S_f, Dm_f, Ja_f);
       return S_f;
     };
-    prestrain::correct_step_tangent_fibers<2>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
+    prestrain::correct_composed_tangent_fibers<2>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
   }
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
@@ -539,8 +538,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
     }
   }
 
-  if (prestrain_step) {
-    prestrain::correct_step_tangent<2>(F, P, Nxm, w * afu, dof, lK);
+  if (com_mod.prestrainEq) {
+    prestrain::correct_composed_tangent<2>(F, P, Nxm, w * afu, dof, lK);
   }
 }
 
@@ -634,10 +633,9 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   double Ja;
   mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
 
-  // A prestrain step of one Newton iteration is composed into F0 at once, which
-  // also moves the fibers the material law sees (see prestrain.h).
-  const bool prestrain_step = com_mod.prestrainEq && eq.maxItr == 1;
-  if (prestrain_step) {
+  // Every Newton iteration of a prestrain run composes its update into F0,
+  // which also moves the fibers the material law sees (see prestrain.h).
+  if (com_mod.prestrainEq) {
     const auto stress = [&](const auto& turned_fibers) {
       Matrix<3> S_f;
       Matrix<6> Dm_f;
@@ -646,7 +644,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
       mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, turned_fibers, Ta_f, S_f, Dm_f, Ja_f);
       return S_f;
     };
-    prestrain::correct_step_tangent_fibers<3>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
+    prestrain::correct_composed_tangent_fibers<3>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
   }
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
@@ -754,8 +752,8 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
     }
   }
 
-  if (prestrain_step) {
-    prestrain::correct_step_tangent<3>(F, P, Nxm, w * afu, dof, lK);
+  if (com_mod.prestrainEq) {
+    prestrain::correct_composed_tangent<3>(F, P, Nxm, w * afu, dof, lK);
   }
 }
 };

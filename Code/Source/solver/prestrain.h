@@ -39,17 +39,21 @@
 /// shape functions are linear, so those gradients are pulled back once. A
 /// prestrain run produces such fields, and read() checks fields from file.
 ///
-/// F0 is found incrementally. Every time step starts from rest on the imaged
-/// geometry under the full load; the displacement u it reaches is accumulated
-/// as F0 <- (I + Grad u) F0 and discarded. At the fixed point the mesh carries
-/// the load in Cauchy stress equilibrium without moving. This is the
+/// F0 is found by Newton's method on the imaged geometry. Every Newton
+/// iteration starts from rest under the full load, so its residual is that of
+/// the current F0; the displacement u it reaches is composed into the
+/// prestrain, F0 <- (I + Grad u) F0, and discarded. At the fixed point the mesh
+/// carries the load in Cauchy stress equilibrium without moving. This is the
 /// incremental scheme of Gee, Forster and Wall, Int. J. Numer. Meth. Biomed.
 /// Engng. 26 (2010) 52-72, section 3, with the increments composed on the
 /// imaged mesh, so that equilibrium holds on the imaged geometry rather than
-/// on a virtually deformed one. Each step is iterated like any other time
-/// step, up to Max_iterations. With Pseudo_transient its time step may be
-/// adapted to the residual (see PseudoTransientContinuation.h). A prestrain run
-/// solves a single struct equation, without a line search; forward runs that
+/// on a virtually deformed one. Because each iteration is composed, the
+/// tangent of the composed residual differs from the kernel's own, and the
+/// solid kernels correct it (see correct_composed_tangent). Max_iterations and
+/// Tolerance bound the iterations of a time step as in any other run; with
+/// Pseudo_transient the time step is adapted to the residual between steps
+/// (see PseudoTransientContinuation.h). A prestrain run solves a single struct
+/// equation, without a line search; forward runs that
 /// read a prestrain may solve any equations, but not a ustruct solid: its
 /// volumetric stress lives in a pressure field, which the prestrain restart
 /// discards and a forward run starts from zero. The ustruct and FSI kernels
@@ -126,10 +130,10 @@ void pull_back_fibers(const mat_fun::Matrix<nsd>& F0, Array<double>& fibers)
 /// callers whose number of spatial dimensions is not known at compile time.
 void pull_back_fibers(const mshType& lM, int e, int g, Array<double>& fibers);
 
-/// @brief Make a solid kernel's tangent that of a prestrain step.
+/// @brief Make a solid kernel's tangent that of a prestrain iteration.
 ///
-/// A prestrain step composes the displacement u it reaches into F0 and starts
-/// again from rest, so the residual the next step sees is that of the Cauchy
+/// A prestrain iteration composes the displacement u it reaches into F0 and
+/// starts again from rest, so the residual the next iteration sees is that of the Cauchy
 /// stress on the mesh, which does not move. The kernel's tangent also carries
 /// the change of the current volume and of the current shape function gradients
 /// with u; this subtracts that part,
@@ -137,20 +141,16 @@ void pull_back_fibers(const mshType& lM, int e, int g, Array<double>& fibers);
 ///     w (tau Grad_x N_a (x) Grad_x N_b - tau Grad_x N_b (x) Grad_x N_a),
 ///
 /// with tau = P F^T the Kirchhoff stress, Grad_x N = F^-T Grad_0 N, and w the
-/// stress-free weight. Without it each step is an inexact Newton step whose
+/// stress-free weight. Without it each iteration is an inexact Newton step whose
 /// error grows with the stress, and the prestrain can stop converging once the
 /// pseudo time step is large. The fibers' part is added by
-/// correct_step_tangent_fibers.
-///
-/// Only for steps of one Newton iteration (Max_iterations 1). A step iterated
-/// further solves the kernel's own residual, whose tangent the kernel already
-/// has, and is composed only once it stops.
+/// correct_composed_tangent_fibers.
 ///
 /// @param Nx0 shape function gradients on the stress-free configuration.
 /// @param w_afu the weight times the stiffness scaling of lK.
 /// @param lK the element tangent, lK(i*dof + j, a, b).
 template <int nsd, class Gradients>
-void correct_step_tangent(const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P, const Gradients& Nx0,
+void correct_composed_tangent(const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P, const Gradients& Nx0,
                           const double w_afu, const int dof, Array3<double>& lK)
 {
   const mat_fun::NodalMatrix<nsd> Nxs = F.inverse().transpose() * Nx0;
@@ -182,10 +182,10 @@ std::array<Eigen::Matrix<double, nsd, 1>, nsd - 1> perpendicular_directions(cons
   }
 }
 
-/// @brief Add the fibers' part of a prestrain step's tangent to a solid
+/// @brief Add the fibers' part of a prestrain iteration's tangent to a solid
 /// kernel's tangent.
 ///
-/// Composing a step into F0 pulls the mesh's fibers back anew (see
+/// Composing an iteration's update into F0 pulls the mesh's fibers back anew (see
 /// pull_back_fibers), so the fibers the material law sees change with u. To
 /// first order, with G = F0^-1 Grad u F0, the gradient on the mesh carried to
 /// the stress-free configuration, each fiber f0 changes by
@@ -208,7 +208,7 @@ std::array<Eigen::Matrix<double, nsd, 1>, nsd - 1> perpendicular_directions(cons
 /// @param w_afu the weight times the stiffness scaling of lK.
 /// @param lK the element tangent, lK(i*dof + j, a, b).
 template <int nsd, class Gradients, class Fibers, class Stress>
-void correct_step_tangent_fibers(const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F,
+void correct_composed_tangent_fibers(const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F,
                                  const mat_fun::Matrix<nsd>& S, const Gradients& Nx0, const Fibers& fibers,
                                  const Stress& stress, const double w_afu, const int dof, Array3<double>& lK)
 {
@@ -267,15 +267,16 @@ void read(const std::string& file_name, mshType& mesh, int nsd);
 /// or a line search, and any prestrain on a ustruct solid or with remeshing.
 void init(ComMod& com_mod);
 
-/// @brief Start a prestrain step: accumulate the displacement u the previous
-/// step reached into the prestrain, F0 <- (I + Grad u) F0 at every Gauss
-/// point, and reset the solution to rest. Called from the Integrator's
-/// predictor, once the previous step's solution has become the old one.
+/// @brief Compose a Newton iteration's update into the prestrain,
+/// F0 <- (I + Grad u) F0 at every Gauss point, and reset the solution to rest
+/// for the next iteration. Called from the Integrator's Newton loop once the
+/// increment has been applied. Returns this rank's largest nodal update, for
+/// reporting.
 ///
 /// The kernels saw the generalized-alpha level displacement alpha_f*Dn, which
-/// is the state the step reached, so that is u; Dn itself would overshoot by
-/// 1/alpha_f.
-void start_step(ComMod& com_mod, SolutionStates& solutions);
+/// is the state the iteration reached, so that is u; Dn itself would overshoot
+/// by 1/alpha_f.
+double compose_iteration(ComMod& com_mod, SolutionStates& solutions);
 
 /// @brief Gather a mesh's prestrain onto the master, in the mesh's original
 /// element order, for writing. Collective: every rank must call it for the

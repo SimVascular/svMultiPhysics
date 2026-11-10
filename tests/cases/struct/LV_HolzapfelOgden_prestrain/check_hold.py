@@ -37,11 +37,8 @@ def main():
     pre = pv.read(pre_file)
     fwd = pv.read(fwd_file)
 
-    # The prestrain run's last displacement is that step's increment, which
-    # should already be small if the prestrain converged.
     b = np.array(fwd.bounds)
     size = np.linalg.norm(b[1::2] - b[0::2])   # bounding-box diagonal, mesh units
-    pre_disp = np.linalg.norm(pre.point_data["Displacement"], axis=1).max() / size
     fwd_disp = np.linalg.norm(fwd.point_data["Displacement"], axis=1).max() / size
 
     s_pre = pre.point_data["Stress"]
@@ -57,7 +54,6 @@ def main():
 
     print(f"prestrain run : {pre_file}")
     print(f"  mesh bounding-box diagonal       : {size:.4e} (mesh units)")
-    print(f"  last-step max nodal displacement : {pre_disp:.3e} of the mesh size")
     print(f"  prestrain cell arrays            : {len(F0_names)}, max |F0 - I| = {F0_dev:.3e}")
     print(f"forward run   : {fwd_file}")
     print(f"  max nodal displacement           : {fwd_disp:.3e} of the mesh size   (tol {DISP_REL_TOL:.0e})")

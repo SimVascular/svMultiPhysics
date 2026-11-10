@@ -1818,7 +1818,7 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     simulation->com_mod.prestrainEq = true;
   }
 
-  // Pseudo-transient continuation, so far only for prestrain, whose steps start from rest.
+  // Pseudo-transient continuation, so far only for prestrain, whose iterations start from rest.
   auto& pseudo_transient = simulation->com_mod.pseudoTransient;
   if (eq_params->pseudo_transient.defined() && eq_params->pseudo_transient.value()) {
     svmp::throw_if<svmp::ParseException>(!prestrain,
@@ -2073,11 +2073,6 @@ void read_files(Simulation* simulation, const std::string& file_name)
     auto& eq = com_mod.eq[iEq];
     auto& eq_params = simulation->parameters.equation_parameters[iEq]; 
     read_eq(simulation, eq_params, eq);
-
-    // The equation that enabled pseudo-transient continuation is the one monitored.
-    if (com_mod.pseudoTransient.enabled && com_mod.pseudoTransient.equation < 0) {
-      com_mod.pseudoTransient.equation = iEq;
-    }
 
     // [TODO:DaveP] IB is not implemented.
     if (com_mod.ibFlag) {

@@ -77,6 +77,7 @@ bool Integrator::step(bool save_results) {
 
   // Newton iteration loop
   newton_count_ = 1;
+  prestrain_update_ = 0.0;
   int iEqOld;
 
   // Looping over Newton iterations
@@ -115,6 +116,13 @@ bool Integrator::step(bool save_results) {
             : 1.0;
 
     apply_increment(eq, step_length);
+
+    // A prestrain run composes every iteration's update into the prestrain and
+    // starts the next one from rest.
+    if (com_mod.prestrainEq) {
+      prestrain_update_ = prestrain::compose_iteration(com_mod, solutions_);
+    }
+
     finalize_iteration();
 
     const bool all_converged =
@@ -135,7 +143,7 @@ bool Integrator::step(bool save_results) {
       dmsg << "iEqOld: " << iEqOld + 1;
       #endif
       if (pseudo_transient_.enabled()) {
-        pseudo_transient_.finish_step(com_mod, simulation_->cm_mod, solutions_);
+        pseudo_transient_.finish_step(com_mod, simulation_->cm_mod, prestrain_update_);
       }
       return true;
     }
@@ -756,12 +764,6 @@ void Integrator::predictor()
      Ao = 0.0;
      Yo = 0.0;
      Do = 0.0;
-  }
-
-  // Prestrain: compose the displacement the previous step reached into the
-  // prestrain and start again from rest.
-  if (com_mod.prestrainEq) {
-    prestrain::start_step(com_mod, solutions_);
   }
 
   // IB treatment: Set dirichlet BC and update traces. For explicit

@@ -122,25 +122,25 @@ void init(ComMod& com_mod)
         "A Prestrain run can not be restarted from a .bin file. "
         "Point Prestrain_file_path at its last VTU file instead.");
 
-    // Every prestrain step restarts the solution from rest, and its time is
+    // Every prestrain iteration restarts the solution from rest, and its time is
     // fictitious, so any other physics would be erased or advanced meaninglessly.
     const auto& eq = com_mod.eq[0];
     svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.nEq != 1,
         "A Prestrain run solves a single struct equation, but this input has " +
-        std::to_string(com_mod.nEq) + " equations. Every prestrain step starts the solution again "
+        std::to_string(com_mod.nEq) + " equations. Every prestrain iteration starts the solution again "
         "from rest in fictitious time, which other physics cannot follow.");
     // A ustruct solid carries its whole volumetric stress in its pressure field,
     // which the restart from rest discards, so it could never hold a hydrostatic
     // prestress (see USTRUCT_PRESTRAIN.md for what support would take).
     svmp::throw_if<svmp::NotImplementedException>(eq.phys == EquationType::phys_ustruct,
-        "Prestrain is not supported for a ustruct equation: the restart from rest at every step "
+        "Prestrain is not supported for a ustruct equation: the restart from rest at every iteration "
         "discards the pressure field that carries a ustruct solid's volumetric stress. Compute the "
         "prestrain with a struct equation.");
     svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.phys != EquationType::phys_struct,
         "A Prestrain run solves a single struct equation, but this input's equation is not struct.");
 
-    // A line search would judge each step by the forward residual, while a
-    // prestrain step is composed into F0 and judged by the next step's residual.
+    // A prestrain iteration composes its update into F0; a line search would
+    // have to compose every trial step to judge it by the composed residual.
     svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.line_search_enabled,
         "Line_search_experimental is not supported in a Prestrain run. It remains available "
         "in forward runs that read a prestrain through Prestrain_file_path.");
@@ -243,28 +243,32 @@ static void accumulate(ComMod& com_mod, const int s, const double af, const Arra
   }
 }
 
-void start_step(ComMod& com_mod, SolutionStates& solutions)
+double compose_iteration(ComMod& com_mod, SolutionStates& solutions)
 {
-  using namespace consts;
-  auto& Ao = solutions.old.get_acceleration();
-  auto& Yo = solutions.old.get_velocity();
-  auto& Do = solutions.old.get_displacement();
+  // A prestrain run has a single struct equation (see init), so these are all
+  // its rows.
+  auto& An = solutions.current.get_acceleration();
+  auto& Yn = solutions.current.get_velocity();
+  auto& Dn = solutions.current.get_displacement();
+  const auto& eq = com_mod.eq[0];
 
-  for (auto& eq : com_mod.eq) {
-    if (eq.phys == EquationType::phys_struct || eq.phys == EquationType::phys_ustruct) {
-      accumulate(com_mod, eq.s, eq.af, Do);
-      break;
+  accumulate(com_mod, eq.s, eq.af, Dn);
+
+  // This rank's largest nodal update; a NaN gets through rather than being
+  // hidden by max().
+  double umax = 0.0;
+  for (int a = 0; a < com_mod.tnNo; a++) {
+    double u2 = 0.0;
+    for (int i = 0; i < com_mod.nsd; i++) {
+      u2 += Dn(eq.s+i,a) * Dn(eq.s+i,a);
     }
+    umax = (u2 > umax || std::isnan(u2)) ? u2 : umax;
   }
 
-  // A prestrain run has a single, solid, equation (see init), so these are
-  // all its rows.
-  Ao = 0.0;
-  Yo = 0.0;
-  Do = 0.0;
-  if (com_mod.sstEq) {
-    com_mod.Ad = 0.0;   // ustruct's displacement rate state
-  }
+  An = 0.0;
+  Yn = 0.0;
+  Dn = 0.0;
+  return eq.af * std::sqrt(umax);
 }
 
 void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, Array<double>& gF0)

@@ -4,26 +4,24 @@
 #ifndef PSEUDO_TRANSIENT_CONTINUATION_H
 #define PSEUDO_TRANSIENT_CONTINUATION_H
 
-#include "Array.h"
 #include "CmMod.h"
 #include "ComMod.h"
-#include "SolutionStates.h"
 
 /// @brief Pseudo-transient continuation: solve a steady nonlinear problem by
 /// time stepping with a pseudo time step that grows as the residual falls, so
 /// that the iteration turns into Newton's method (Kelley & Keyes, SIAM J.
 /// Numer. Anal. 35 (1998) 508-523).
 ///
-/// Each pseudo-step is iterated like any other time step, up to
-/// Max_iterations; with Max_iterations 1, the default, it is a single Newton
-/// iteration, as in the reference. The pseudo time step of the next step is
+/// Each pseudo-step is one or more Newton iterations, each composed into the
+/// state it solves for (see prestrain.h); with Max_iterations 1, the default,
+/// it is a single one, as in the reference. The pseudo time step of the next step is
 /// set from the ratio of successive first residuals, capped by max_dt; a time
-/// step so large that the inertia term vanishes makes a single-iteration step
-/// a plain Newton iteration. Time is fictitious, so the loads must be steady.
+/// step so large that the inertia term vanishes makes each iteration a plain
+/// Newton iteration. Time is fictitious, so the loads must be steady.
 ///
-/// Owned and driven by the Integrator. Enabled by Pseudo_transient on an
-/// equation, whose residual is the one monitored. Prestrain is the only
-/// feature that uses it so far: each of its steps starts from rest and the
+/// Owned and driven by the Integrator. Enabled by Pseudo_transient on the
+/// run's one equation, whose residual it monitors. Prestrain is the only
+/// feature that uses it so far: each of its iterations starts from rest and the
 /// displacement it reaches is composed into the prestrain (see prestrain.h).
 class PseudoTransientContinuation {
 
@@ -36,16 +34,14 @@ class PseudoTransientContinuation {
     /// @brief Finish a pseudo-step: report the update it reached and set the
     /// next pseudo time step from its first residual. Called once the Newton
     /// loop has exited.
-    void finish_step(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
+    /// @param update this rank's largest nodal update composed by the step's
+    /// last iteration, which tends to zero as the step converges.
+    void finish_step(ComMod& com_mod, const CmMod& cm_mod, double update);
 
   private:
     /// @brief The pseudo time step for the next step, from the first residuals
     /// of the last two.
     double next_time_step(const double dt, const double residual_prev, const double residual) const;
-
-    /// @brief Largest nodal update of the monitored equation's displacement
-    /// dofs, over all ranks.
-    double max_update(const ComMod& com_mod, const CmMod& cm_mod, const Array<double>& update) const;
 
     PseudoTransientSettings settings_;
 

@@ -1026,8 +1026,8 @@ class mshType
     /// @brief Fiber orientations used for electrophysiology and solid mechanics.
     Fibers fibers;
 
-    /// @brief Prestrain deformation gradient from the unloaded configuraiton
-    /// to the reference mesh. One nsd x nsd tensor per gauss point.
+    /// @brief Prestrain deformation gradient from the unloaded configuration
+    /// to the reference mesh. One nsd x nsd tensor per Gauss point.
     Array<double> F0;
 
     /// @brief Parent shape functions gradient
@@ -1647,9 +1647,6 @@ class PseudoTransientSettings {
 
     /// @brief Largest pseudo time step allowed; 100 times the initial one when unset
     double max_dt = 0.0;
-
-    /// @brief The equation whose residual is monitored, the one that enabled it
-    int equation = -1;
 };
 
 class ComMod {
@@ -1712,7 +1709,6 @@ class ComMod {
 
     /// @brief Pseudo-transient continuation settings
     PseudoTransientSettings pseudoTransient;
-
 
     /// @brief Whether velocity-pressure based structural dynamics solver is used
     bool sstEq = false;

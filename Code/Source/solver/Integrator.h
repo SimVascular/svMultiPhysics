@@ -23,6 +23,8 @@
  * - Pseudo-transient continuation, when enabled: reports each step's update
  *   and, if asked, adapts the pseudo time step to the residual (see
  *   PseudoTransientContinuation.h)
+ * - Prestrain: every Newton iteration's update is composed into the prestrain
+ *   (see prestrain.h)
  *
  * ## Line search
  *
@@ -150,6 +152,9 @@ private:
 
   /** @brief Pseudo-transient continuation, inactive unless enabled by the input */
   PseudoTransientContinuation pseudo_transient_;
+
+  /** @brief Largest nodal update the step's last iteration composed into the prestrain, on this rank */
+  double prestrain_update_ = 0.0;
 
   /** @brief Residual vector for face-based quantities */
   Vector<double> res_;
