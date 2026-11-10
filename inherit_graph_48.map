@@ -1,3 +1,9 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classio_type.html" title="Only to group four channels, in case I rather have them as one variable." alt="" coords="5,5,69,31"/>
+<area shape="rect" id="Node000000" href="$class_linear_algebra.html" title="The LinearAlgebra class provides an abstract interface to linear algebra frameworks: FSILS,..." alt="" coords="5,57,117,85"/>
+<area shape="rect" id="Node000001" href="$class_fsils_linear_algebra.html" title="The FsilsLinearAlgebra class implements the LinearAlgebra interface for the FSILS numerical linear al..." alt="" coords="173,5,314,33"/>
+<area shape="poly" id="edge12_Node000000_Node000001" title=" " alt="" coords="126,50,194,32,190,35,128,55"/>
+<area shape="rect" id="Node000002" href="$class_petsc_linear_algebra.html" title="The PetscLinearAlgebra class implements the LinearAlgebra interface for the PETSc numerical linear al..." alt="" coords="170,57,316,85"/>
+<area shape="poly" id="edge13_Node000000_Node000002" title=" " alt="" coords="132,69,172,70,167,72,133,74"/>
+<area shape="rect" id="Node000003" href="$class_trilinos_linear_algebra.html" title="The TrilinosLinearAlgebra class implements the LinearAlgebra interface for the Trilinos numerical lin..." alt="" coords="165,109,322,137"/>
+<area shape="poly" id="edge14_Node000000_Node000003" title=" " alt="" coords="127,87,195,108,190,110,127,92"/>
 </map>

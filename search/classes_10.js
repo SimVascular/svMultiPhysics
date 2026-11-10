@@ -23,10 +23,12 @@ var searchData=
   ['stimulussphereparameters_20',['StimulusSphereParameters',['../class_stimulus_sphere_parameters.html',1,'']]],
   ['stmodeltype_21',['stModelType',['../classst_model_type.html',1,'']]],
   ['strongtype_22',['StrongType',['../classsvmp_1_1_f_e_1_1_strong_type.html',1,'svmp::FE']]],
-  ['strongtype_3c_20globalindex_2c_20doftag_20_3e_23',['StrongType&lt; GlobalIndex, DofTag &gt;',['../classsvmp_1_1_f_e_1_1_strong_type.html',1,'svmp::FE']]],
-  ['stvenantkirchhoffparameters_24',['StVenantKirchhoffParameters',['../class_st_venant_kirchhoff_parameters.html',1,'']]],
-  ['svonedsolverinterfacedata_25',['svOneDSolverInterfaceData',['../classsv_one_d_solver_interface_data.html',1,'']]],
-  ['svonedsolverinterfaceparameters_26',['svOneDSolverInterfaceParameters',['../classsv_one_d_solver_interface_parameters.html',1,'']]],
-  ['svzerodsolverinterfacedata_27',['svZeroDSolverInterfaceData',['../classsv_zero_d_solver_interface_data.html',1,'']]],
-  ['svzerodsolverinterfaceparameters_28',['svZeroDSolverInterfaceParameters',['../classsv_zero_d_solver_interface_parameters.html',1,'']]]
+  ['strongtype_3c_20double_2c_20quadratureweighttag_20_3e_23',['StrongType&lt; double, QuadratureWeightTag &gt;',['../classsvmp_1_1_f_e_1_1_strong_type.html',1,'svmp::FE']]],
+  ['strongtype_3c_20globalindex_2c_20doftag_20_3e_24',['StrongType&lt; GlobalIndex, DofTag &gt;',['../classsvmp_1_1_f_e_1_1_strong_type.html',1,'svmp::FE']]],
+  ['strongtype_3c_20localindex_2c_20quadraturepointtag_20_3e_25',['StrongType&lt; LocalIndex, QuadraturePointTag &gt;',['../classsvmp_1_1_f_e_1_1_strong_type.html',1,'svmp::FE']]],
+  ['stvenantkirchhoffparameters_26',['StVenantKirchhoffParameters',['../class_st_venant_kirchhoff_parameters.html',1,'']]],
+  ['svonedsolverinterfacedata_27',['svOneDSolverInterfaceData',['../classsv_one_d_solver_interface_data.html',1,'']]],
+  ['svonedsolverinterfaceparameters_28',['svOneDSolverInterfaceParameters',['../classsv_one_d_solver_interface_parameters.html',1,'']]],
+  ['svzerodsolverinterfacedata_29',['svZeroDSolverInterfaceData',['../classsv_zero_d_solver_interface_data.html',1,'']]],
+  ['svzerodsolverinterfaceparameters_30',['svZeroDSolverInterfaceParameters',['../classsv_zero_d_solver_interface_parameters.html',1,'']]]
 ];

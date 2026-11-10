@@ -1,15 +1,15 @@
 var searchData=
 [
-  ['a_0',['a',['../class_fitz_hugh_nagumo.html#a576d3cfb2d2d723cbf9fa0c4d78f5845',1,'FitzHughNagumo::a'],['../class_aliev_panfilov.html#a5cf17c85050319cd6f21517dc77af321',1,'AlievPanfilov::a']]],
+  ['a_0',['a',['../class_aliev_panfilov.html#a5cf17c85050319cd6f21517dc77af321',1,'AlievPanfilov::a'],['../class_fitz_hugh_nagumo.html#a576d3cfb2d2d723cbf9fa0c4d78f5845',1,'FitzHughNagumo::a']]],
   ['a0_1',['A0',['../classrmsh_type.html#a7713ca9ef22ab1dbf118af318605f7f4',1,'rmshType']]],
-  ['abstol_2',['abstol',['../classls_type.html#a12ed37fb635049635a90cbdcbe9e4176',1,'lsType::absTol'],['../classode_type.html#a03243152e72ef43acfa97318cd8e122a',1,'odeType::absTol']]],
+  ['abstol_2',['absTol',['../classls_type.html#a12ed37fb635049635a90cbdcbe9e4176',1,'lsType::absTol'],['../classode_type.html#a03243152e72ef43acfa97318cd8e122a',1,'odeType::absTol']]],
   ['active_5fstress_3',['active_stress',['../classdmn_type.html#a9a96888421bcaff6c4a44b677761b8a8',1,'dmnType']]],
   ['active_5fstress_5fmodel_5fname_4',['active_stress_model_name',['../classdmn_type.html#a6381804be7b28de2675c347e799d2215',1,'dmnType']]],
   ['active_5fstress_5fmodels_5',['active_stress_models',['../class_active_stress_parameters.html#a2b88052d1ef3c1ef063acc27d68839aa',1,'ActiveStressParameters']]],
   ['ad_6',['Ad',['../class_com_mod.html#a2ce2a9403ba5b438b995b618fe2128ca',1,'ComMod']]],
   ['aeff_7',['Aeff',['../class_active_stress_land_niederer.html#af323b2ceb1c0652de87cc7c26079f41a',1,'ActiveStressLandNiederer']]],
   ['af_8',['af',['../classeq_type.html#abb83ca2583ed26cfd4a4230386302786',1,'eqType']]],
-  ['alpha_9',['alpha',['../class_fitz_hugh_nagumo.html#a221b11ef10448045c9982de4d8083fd0',1,'FitzHughNagumo::alpha'],['../class_t_t_p.html#a9468eddfc6bbe281bd8cb559ca47746c',1,'TTP::alpha'],['../class_aliev_panfilov.html#a41a42b2f9b3545b3f5c7c3a1c0767e51',1,'AlievPanfilov::alpha']]],
+  ['alpha_9',['alpha',['../class_aliev_panfilov.html#a41a42b2f9b3545b3f5c7c3a1c0767e51',1,'AlievPanfilov::alpha'],['../class_fitz_hugh_nagumo.html#a221b11ef10448045c9982de4d8083fd0',1,'FitzHughNagumo::alpha'],['../class_t_t_p.html#a9468eddfc6bbe281bd8cb559ca47746c',1,'TTP::alpha']]],
   ['alwayssavedomainid_10',['alwaysSaveDomainID',['../class_com_mod.html#aa7f55e787a0953b07dea92b0d1058747',1,'ComMod']]],
   ['am_11',['am',['../classeq_type.html#a8615023d7532cdafc3a5fc78dc26de5d',1,'eqType']]],
   ['array_5fnames_5f_12',['array_names_',['../class_boundary_condition.html#a843bd39be5f2e0c4243b1b75aaf806f8',1,'BoundaryCondition']]],

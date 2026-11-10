@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['implementation_0',['Trilinos Linear Solver Implementation',['../md_solver_2_r_e_a_d_m_e-trilinos.html',1,'']]],
-  ['ionic_20reference_1',['ionic reference',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener78cbf6e17741944debcf27b2dc597e96.html',1,'Aliev&amp;ndash;Panfilov ionic reference'],['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener37e0fb237d83664381a80f7a0b555022.html',1,'FitzHugh&amp;ndash;Nagumo ionic reference']]],
-  ['ionic_20references_2',['ionic references',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener4982de9a8dd4e554ab4ba3c9597b0af4.html',1,'Bueno&amp;ndash;Orovio ionic references'],['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener91591955edeee931a1303da157cc7040.html',1,'Ten Tusscher&amp;ndash;Panfilov ionic references']]]
+  ['b_20global_20assembly_20fsils_20assembled_0',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'']]],
+  ['boundary_20conditions_1',['Coupled Neumann Boundary Conditions',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md49',1,'']]],
+  ['bueno_20orovio_20ionic_20references_2',['Bueno--Orovio ionic references',['../dir_c3b2202e46bb0350e73515b5d97b3607.html#autotoc_md84',1,'']]],
+  ['by_20element_20assembly_20trilinos_20native_3',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]]
 ];

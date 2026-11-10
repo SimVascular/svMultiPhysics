@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['bueno_20ndash_20orovio_20ionic_20references_0',['Bueno&amp;ndash;Orovio ionic references',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener4982de9a8dd4e554ab4ba3c9597b0af4.html',1,'']]]
+  ['2_20tpetra_20type_20aliases_0',['2. Tpetra Type Aliases',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md34',1,'']]],
+  ['2_3a_20assembly_1',['Phase 2: Assembly',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md41',1,'']]]
 ];

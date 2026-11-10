@@ -1,5 +1,7 @@
 <map id="svmp::FE::is_index_type&lt; LocalIndex &gt;" name="svmp::FE::is_index_type&lt; LocalIndex &gt;">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,79,164,119"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="29,5,141,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,44,87,79,82,79,82,44"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="55,81,212,126"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,123,33"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="86,43,118,80,112,81,84,48"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="147,5,258,33"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="184,44,153,82,150,78,179,46"/>
 </map>

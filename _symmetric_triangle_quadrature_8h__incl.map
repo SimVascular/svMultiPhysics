@@ -1,0 +1,29 @@
+<map id="solver/FE/Quadrature/SymmetricTriangleQuadrature.h" name="solver/FE/Quadrature/SymmetricTriangleQuadrature.h">
+<area shape="rect" id="Node000001" title="Contained Dunavant rules on the unit right triangle." alt="" coords="439,5,672,50"/>
+<area shape="rect" id="Node000002" href="$_quadrature_rule_8h.html" title="Value type for reference&#45;space quadrature rules." alt="" coords="460,98,651,143"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="557,48,558,84,553,81,554,52"/>
+<area shape="rect" id="Node000003" href="$_types_8h.html" title="Fundamental type definitions for the finite element library." alt="" coords="244,191,397,218"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="496,143,374,188,372,183,491,144"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="454,266,523,294"/>
+<area shape="poly" id="edge12_Node000002_Node000005" title=" " alt="" coords="527,142,506,166,490,192,484,222,485,253,481,249,479,221,485,190,502,163,523,145"/>
+<area shape="rect" id="Node000010" href="$common_2math_2include_2math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="500,191,611,218"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="557,141,557,177,553,173,554,145"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="634,191,687,218"/>
+<area shape="poly" id="edge13_Node000002_Node000012" title=" " alt="" coords="584,141,635,181,629,180,582,146"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="711,191,773,218"/>
+<area shape="poly" id="edge14_Node000002_Node000013" title=" " alt="" coords="605,141,701,184,696,184,604,146"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="374,266,430,294"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="336,216,379,256,374,255,334,221"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="351,216,448,260,442,260,350,221"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="5,266,71,294"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="268,222,87,268,85,263,266,216"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="94,266,152,294"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="288,219,168,265,167,260,283,219"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="176,266,268,294"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="306,218,253,259,250,255,300,220"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="292,266,350,294"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="323,217,323,252,318,249,319,221"/>
+<area shape="poly" id="edge11_Node000010_Node000005" title=" " alt="" coords="546,218,512,257,509,253,541,220"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="547,266,638,294"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="563,217,582,254,577,251,561,221"/>
+</map>

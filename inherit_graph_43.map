@@ -1,3 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$class_include_parameters_file.html" title=" " alt="" coords="5,5,172,31"/>
+<area shape="rect" id="Node000000" href="$class_ionic_model.html" title="Abstract ionic model class." alt="" coords="5,84,98,112"/>
+<area shape="rect" id="Node000001" href="$class_aliev_panfilov.html" title="Aliev&#45;Panfilov ionic model." alt="" coords="160,5,265,33"/>
+<area shape="poly" id="edge8_Node000000_Node000001" title=" " alt="" coords="88,74,144,43,175,32,171,35,147,48,91,78"/>
+<area shape="rect" id="Node000002" href="$class_bueno_orovio.html" title="Bueno&#45;Orovio ionic model." alt="" coords="160,57,265,85"/>
+<area shape="poly" id="edge9_Node000000_Node000002" title=" " alt="" coords="112,85,162,78,157,81,114,90"/>
+<area shape="rect" id="Node000003" href="$class_fitz_hugh_nagumo.html" title="FitzHugh&#45;Nagumo ionic model." alt="" coords="146,109,279,137"/>
+<area shape="poly" id="edge10_Node000000_Node000003" title=" " alt="" coords="113,105,148,112,143,114,113,110"/>
+<area shape="rect" id="Node000004" href="$class_t_t_p.html" title="Ten Tusscher&#45;Panfilov ionic model." alt="" coords="190,161,235,189"/>
+<area shape="poly" id="edge11_Node000000_Node000004" title=" " alt="" coords="91,117,147,146,192,167,187,167,145,151,90,122"/>
 </map>

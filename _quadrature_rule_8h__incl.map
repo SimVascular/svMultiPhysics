@@ -1,27 +1,27 @@
 <map id="solver/FE/Quadrature/QuadratureRule.h" name="solver/FE/Quadrature/QuadratureRule.h">
-<area shape="rect" id="Node000001" title="Value type for reference&#45;space quadrature rules." alt="" coords="481,5,639,45"/>
-<area shape="rect" id="Node000002" href="$_types_8h.html" title="Fundamental type definitions for the finite element library." alt="" coords="248,93,403,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="505,48,373,92,372,87,503,43"/>
-<area shape="rect" id="Node000004" title=" " alt="" coords="459,167,530,192"/>
-<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="534,47,512,68,494,94,489,124,491,153,486,153,484,124,490,92,507,65,530,43"/>
-<area shape="rect" id="Node000009" href="$common_2math_2include_2math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="504,93,616,119"/>
-<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="563,46,563,79,557,79,557,46"/>
-<area shape="rect" id="Node000011" title=" " alt="" coords="640,93,693,119"/>
-<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="587,43,641,83,638,87,584,48"/>
-<area shape="rect" id="Node000012" title=" " alt="" coords="718,93,781,119"/>
-<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="606,43,710,85,708,90,604,48"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="379,167,435,192"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="340,117,385,156,381,160,337,121"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="354,116,455,159,453,164,352,121"/>
-<area shape="rect" id="Node000005" title=" " alt="" coords="5,167,72,192"/>
-<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="279,121,86,169,85,164,278,116"/>
-<area shape="rect" id="Node000006" title=" " alt="" coords="96,167,155,192"/>
-<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="294,121,169,166,167,160,292,116"/>
-<area shape="rect" id="Node000007" title=" " alt="" coords="179,167,271,192"/>
-<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="311,121,254,161,251,156,308,117"/>
-<area shape="rect" id="Node000008" title=" " alt="" coords="296,167,355,192"/>
-<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="328,119,328,153,323,153,323,119"/>
-<area shape="poly" id="edge10_Node000009_Node000004" title=" " alt="" coords="551,121,516,158,513,155,547,117"/>
-<area shape="rect" id="Node000010" title=" " alt="" coords="554,167,646,192"/>
-<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="569,118,589,153,584,156,564,120"/>
+<area shape="rect" id="Node000001" title="Value type for reference&#45;space quadrature rules." alt="" coords="476,5,634,50"/>
+<area shape="rect" id="Node000002" href="$_types_8h.html" title="Fundamental type definitions for the finite element library." alt="" coords="244,98,397,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="496,50,374,95,372,90,491,51"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="454,174,523,201"/>
+<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="527,49,506,73,490,99,484,129,485,160,481,157,479,128,485,97,502,70,523,52"/>
+<area shape="rect" id="Node000009" href="$common_2math_2include_2math_2_vector_8h.html" title="Fixed&#45;size vector types for FE computations, backed by Eigen." alt="" coords="500,98,611,126"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="557,48,557,84,553,81,554,52"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="634,98,687,126"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="584,48,635,89,629,88,582,53"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="711,98,773,126"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="605,48,701,91,696,91,604,53"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="374,174,430,201"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="336,124,379,164,374,163,334,129"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="351,124,448,167,442,167,350,129"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="5,174,71,201"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="268,129,87,175,85,170,266,124"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="94,174,152,201"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="288,126,168,172,167,167,283,126"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="176,174,268,201"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="306,125,253,167,250,162,300,127"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="292,174,350,201"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="323,124,323,160,318,156,319,128"/>
+<area shape="poly" id="edge10_Node000009_Node000004" title=" " alt="" coords="546,125,512,164,509,160,541,127"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="547,174,638,201"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="563,124,582,161,577,159,561,129"/>
 </map>

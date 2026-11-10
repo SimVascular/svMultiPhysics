@@ -1,6 +1,6 @@
 <map id="FE Library" name="FE Library">
-<area shape="rect" id="Node000001" title="Finite&#45;element interfaces and utilities used by the solver." alt="" coords="5,55,92,80"/>
-<area shape="rect" id="Node000002" href="$group___f_e___basis.html" title="Basis&#45;function interfaces, concrete basis families, and reference&#45;node conventions." alt="" coords="159,5,216,31"/>
-<area shape="rect" id="Node000003" href="$group___f_e___common.html" title="Shared vocabulary types, constants, and exception infrastructure used by every FE module." alt="" coords="147,55,228,80"/>
-<area shape="rect" id="Node000004" href="$group___f_e___quadrature.html" title="Integration rules on canonical reference cells." alt="" coords="140,104,235,129"/>
+<area shape="rect" id="Node000001" title="Finite&#45;element interfaces and utilities used by the solver." alt="" coords="5,57,92,85"/>
+<area shape="rect" id="Node000002" href="$group___f_e___basis.html" title="Basis&#45;function interfaces, concrete basis families, and reference&#45;node conventions." alt="" coords="159,5,215,33"/>
+<area shape="rect" id="Node000003" href="$group___f_e___common.html" title="Shared vocabulary types, constants, and exception infrastructure used by every FE module." alt="" coords="147,57,227,85"/>
+<area shape="rect" id="Node000004" href="$group___f_e___quadrature.html" title="Integration rules on canonical reference cells." alt="" coords="140,109,234,137"/>
 </map>

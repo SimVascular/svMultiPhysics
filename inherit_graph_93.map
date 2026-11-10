@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structsvmp_1_1_f_e_1_1_basis_gradient_tag.html" title="Tag type for basis&#45;function gradients." alt="" coords="5,5,208,31"/>
+<area shape="rect" id="Node000000" href="$classsvmp_1_1_f_e_1_1_strong_type.html" title=" " alt="" coords="5,5,188,50"/>
+<area shape="rect" id="Node000001" href="$classsvmp_1_1_f_e_1_1_dof_index.html" title="DOF&#45;specific index type." alt="" coords="236,14,384,42"/>
+<area shape="poly" id="edge134_Node000000_Node000001" title=" " alt="" coords="203,25,238,27,233,28,203,30"/>
 </map>

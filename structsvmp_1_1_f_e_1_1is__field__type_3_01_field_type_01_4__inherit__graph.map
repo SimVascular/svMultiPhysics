@@ -1,5 +1,7 @@
 <map id="svmp::FE::is_field_type&lt; FieldType &gt;" name="svmp::FE::is_field_type&lt; FieldType &gt;">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,79,155,119"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="24,5,136,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,44,83,79,77,79,77,44"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="59,81,208,126"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,123,33"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="86,43,118,80,112,81,84,48"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="147,5,258,33"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="184,44,153,82,150,78,179,46"/>
 </map>

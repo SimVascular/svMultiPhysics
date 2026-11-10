@@ -1,5 +1,5 @@
 <map id="LinearSolverParameters" name="LinearSolverParameters">
-<area shape="rect" id="Node000001" title="The LinearSolverParameters class stores parameters for the &#39;LS&#39; XML element." alt="" coords="5,79,183,104"/>
-<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="35,5,153,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,44,97,79,91,79,91,44"/>
+<area shape="rect" id="Node000001" title="The LinearSolverParameters class stores parameters for the &#39;LS&#39; XML element." alt="" coords="5,81,182,109"/>
+<area shape="rect" id="Node000002" href="$class_parameter_lists.html" title="Defines parameter name and value, and stores them in maps for settng values from XML." alt="" coords="34,5,153,33"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,47,96,82,91,80,92,51"/>
 </map>

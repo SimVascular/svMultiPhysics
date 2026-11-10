@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['fitzhugh_20ndash_20nagumo_20ionic_20reference_0',['FitzHugh&amp;ndash;Nagumo ionic reference',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener37e0fb237d83664381a80f7a0b555022.html',1,'']]]
+  ['3_20trilinosmatvec_20operator_0',['3. &lt;span class=&quot;tt&quot;&gt;TrilinosMatVec&lt;/span&gt; Operator',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md36',1,'']]],
+  ['3_3a_20solve_1',['Phase 3: Solve',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md45',1,'']]]
 ];

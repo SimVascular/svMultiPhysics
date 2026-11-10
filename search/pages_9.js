@@ -1,8 +1,9 @@
 var searchData=
 [
-  ['readme_0',['readme',['../md_linear__solver_2_r_e_a_d_m_e.html',1,'README'],['../md_solver_2_r_e_a_d_m_e.html',1,'README']]],
-  ['reference_1',['reference',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener78cbf6e17741944debcf27b2dc597e96.html',1,'Aliev&amp;ndash;Panfilov ionic reference'],['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener37e0fb237d83664381a80f7a0b555022.html',1,'FitzHugh&amp;ndash;Nagumo ionic reference'],['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener39b6bfa4965c4b30e7f139f958606a47.html',1,'Land-Niederer active-stress reference'],['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener3c56ff5c6e14783702388bfc2d956e86.html',1,'Nash&amp;ndash;Panfilov active-stress reference'],['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener0582175bb3880e93a7d1e1f91cedffa9.html',1,'Regazzoni active-stress reference']]],
-  ['reference_20generators_2',['Unit-test reference generators',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__generators_2_r_e_a_d_m_e.html',1,'']]],
-  ['references_3',['references',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener4982de9a8dd4e554ab4ba3c9597b0af4.html',1,'Bueno&amp;ndash;Orovio ionic references'],['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener91591955edeee931a1303da157cc7040.html',1,'Ten Tusscher&amp;ndash;Panfilov ionic references']]],
-  ['regazzoni_20active_20stress_20reference_4',['Regazzoni active-stress reference',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__gener0582175bb3880e93a7d1e1f91cedffa9.html',1,'']]]
+  ['generation_20adaptation_20and_20protocol_0',['Generation, adaptation, and protocol',['../dir_e3bbfdba82f4111390c1fad3a850e214.html#autotoc_md83',1,'']]],
+  ['generators_1',['Unit-test reference generators',['../dir_4681773df7444325aa463d5ff4273cc8.html#autotoc_md91',1,'']]],
+  ['global_20assembly_20fsils_20assembled_2',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'']]],
+  ['graph_20and_20matrix_20construction_20details_3',['Graph and Matrix Construction Details',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md51',1,'']]],
+  ['graph_20construction_4',['Phase 1: Initialization and Graph Construction',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md39',1,'']]],
+  ['guide_5',['User guide',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md28',1,'']]]
 ];

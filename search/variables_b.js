@@ -4,7 +4,7 @@ var searchData=
   ['max_5fpivot_1',['max_pivot',['../structsvmp_1_1math_1_1_dense_l_u_solver.html#a25a0ab460a0e45efcafeb63cb898e4c4',1,'svmp::math::DenseLUSolver']]],
   ['max_5fsr_2',['max_sr',['../class_t_t_p.html#a6d4786caa1fc09b70069f9ae428c6789',1,'TTP']]],
   ['maxedgesize_3',['maxEdgeSize',['../classrmsh_type.html#af290abdffc627a1e6f1662e7fb5e936d',1,'rmshType']]],
-  ['maxitr_4',['maxitr',['../classode_type.html#ad24afe40416393519ff181274c376365',1,'odeType::maxItr'],['../classeq_type.html#a0cafc20771bb1a11e82d45a5c43a18d5',1,'eqType::maxItr']]],
+  ['maxitr_4',['maxItr',['../classeq_type.html#a0cafc20771bb1a11e82d45a5c43a18d5',1,'eqType::maxItr'],['../classode_type.html#ad24afe40416393519ff181274c376365',1,'odeType::maxItr']]],
   ['maxn_5',['maxN',['../classutils_1_1stack_type.html#a3f71cfeade4178b2bceb175b0678a852',1,'utils::stackType']]],
   ['meanfl_6',['meanFl',['../classris_face_type.html#adeb3d4a7ed7486ef1caefaeab39b71af',1,'risFaceType']]],
   ['meanp_7',['meanP',['../classris_face_type.html#a8c553c7f1bdb991308449a5e20fb4670',1,'risFaceType']]],

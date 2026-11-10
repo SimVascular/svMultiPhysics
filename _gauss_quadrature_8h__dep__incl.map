@@ -1,7 +1,7 @@
 <map id="solver/FE/Quadrature/GaussQuadrature.h" name="solver/FE/Quadrature/GaussQuadrature.h">
-<area shape="rect" id="Node000001" title="Bounded Gauss&#45;Legendre quadrature generation on the reference line." alt="" coords="152,5,311,45"/>
-<area shape="rect" id="Node000002" href="$test___quadrature_generators_8cpp.html" title="Tests for line and triangle quadrature generators." alt="" coords="5,93,236,163"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,56,160,95,156,91,199,53"/>
-<area shape="rect" id="Node000003" href="$_gauss_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Legendre line rules." alt="" coords="260,108,427,148"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="264,52,324,106,321,110,261,56"/>
+<area shape="rect" id="Node000001" title="Bounded Gauss&#45;Legendre quadrature generation on the reference line." alt="" coords="152,5,310,50"/>
+<area shape="rect" id="Node000002" href="$test___quadrature_generators_8cpp.html" title="Tests for line and triangle quadrature generators." alt="" coords="5,98,235,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,60,161,100,158,95,195,62"/>
+<area shape="rect" id="Node000003" href="$_gauss_quadrature_8cpp.html" title="Exactness&#45;requested generation of bounded Gauss&#45;Legendre line rules." alt="" coords="259,115,424,160"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="265,58,322,114,316,114,263,63"/>
 </map>

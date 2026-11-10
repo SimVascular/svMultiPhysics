@@ -20,7 +20,7 @@ var searchData=
   ['global_5fdata_5f_17',['global_data_',['../class_boundary_condition.html#ab71a7cd71d1b9442532ddf711044df90',1,'BoundaryCondition']]],
   ['global_5fnode_5fmap_5f_18',['global_node_map_',['../class_boundary_condition.html#a7236726780f17376f831669d0a1e984c',1,'BoundaryCondition']]],
   ['global_5fnum_5fnodes_5f_19',['global_num_nodes_',['../class_boundary_condition.html#a8dfba1e41a60293483b42bb46405e6c8',1,'BoundaryCondition']]],
-  ['gn_20',['gn',['../classmsh_type.html#a6b9e763e4c62813c31b095ac2ef22b22',1,'mshType::gN'],['../classib_comm_type.html#ae94882a1c23a4125a115a1e313f27edf',1,'ibCommType::gN']]],
+  ['gn_20',['gN',['../classmsh_type.html#a6b9e763e4c62813c31b095ac2ef22b22',1,'mshType::gN'],['../classib_comm_type.html#ae94882a1c23a4125a115a1e313f27edf',1,'ibCommType::gN']]],
   ['gnel_21',['gnEl',['../classmsh_type.html#a7e8fb50227cbe604cd6d01102231ad53',1,'mshType']]],
   ['gnno_22',['gnNo',['../classmsh_type.html#a4079f486ba185ef804b14e2ca4347325',1,'mshType']]],
   ['gpn_23',['gpN',['../classmsh_type.html#ad55452e0aad3ad591cbb41ef3151667c',1,'mshType']]],

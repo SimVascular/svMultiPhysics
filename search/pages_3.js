@@ -1,4 +1,27 @@
 var searchData=
 [
-  ['generators_0',['Unit-test reference generators',['../md__2home_2runner_2work_2sv_multi_physics_2sv_multi_physics_2tests_2unit_tests_2reference__generators_2_r_e_a_d_m_e.html',1,'']]]
+  ['a_20element_20by_20element_20assembly_20trilinos_20native_0',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]],
+  ['active_20stress_1',['Directional distribution of active stress',['../class_active_stress.html#activestress-directions',1,'']]],
+  ['active_20stress_20models_2',['Implementing concrete active stress models',['../class_active_stress.html#activestress-implementing',1,'']]],
+  ['active_20stress_20reference_3',['active stress reference',['../dir_0b6a12aaafe7cdeb212b940d031e0927.html#autotoc_md78',1,'Land-Niederer active-stress reference'],['../dir_b8fff63654249570bbc8a2cef0387389.html#autotoc_md79',1,'Nash--Panfilov active-stress reference'],['../dir_f2b95d355dbdff0d3dbc2e7a1ee9cf25.html#autotoc_md81',1,'Regazzoni active-stress reference']]],
+  ['active_20tension_20derivative_4',['Active tension derivative',['../class_active_stress_trajectory_test.html#autotoc_md77',1,'']]],
+  ['adaptation_20and_20protocol_5',['Adaptation and protocol',['../dir_9a68f9e99083b2778d49c93819977b3d.html#autotoc_md88',1,'Adaptation and protocol'],['../dir_0f467b8847eb69ba6c41d4b2dd70557b.html#autotoc_md90',1,'Adaptation and protocol']]],
+  ['adaptation_20and_20protocol_6',['adaptation and protocol',['../dir_b8fff63654249570bbc8a2cef0387389.html#autotoc_md80',1,'Extraction, adaptation, and protocol'],['../dir_e3bbfdba82f4111390c1fad3a850e214.html#autotoc_md83',1,'Generation, adaptation, and protocol']]],
+  ['adapter_7',['Reference scope and the solver adapter',['../group___f_e___basis.html#autotoc_md9',1,'']]],
+  ['aliases_8',['2. Tpetra Type Aliases',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md34',1,'']]],
+  ['aliev_20panfilov_20ionic_20reference_9',['Aliev--Panfilov ionic reference',['../dir_e3bbfdba82f4111390c1fad3a850e214.html#autotoc_md82',1,'']]],
+  ['allocation_20strategy_10',['Allocation Strategy',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md53',1,'']]],
+  ['and_20diagnostics_11',['Debugging and Diagnostics',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md55',1,'']]],
+  ['and_20evaluation_20contract_12',['Object and evaluation contract',['../group___f_e___basis.html#autotoc_md7',1,'']]],
+  ['and_20graph_20construction_13',['Phase 1: Initialization and Graph Construction',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md39',1,'']]],
+  ['and_20matrix_20construction_20details_14',['Graph and Matrix Construction Details',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md51',1,'']]],
+  ['and_20ownership_15',['Inputs and ownership',['../group___f_e___basis.html#autotoc_md8',1,'']]],
+  ['and_20protocol_16',['and protocol',['../dir_9a68f9e99083b2778d49c93819977b3d.html#autotoc_md88',1,'Adaptation and protocol'],['../dir_0f467b8847eb69ba6c41d4b2dd70557b.html#autotoc_md90',1,'Adaptation and protocol'],['../dir_b8fff63654249570bbc8a2cef0387389.html#autotoc_md80',1,'Extraction, adaptation, and protocol'],['../dir_e3bbfdba82f4111390c1fad3a850e214.html#autotoc_md83',1,'Generation, adaptation, and protocol'],['../dir_c3b2202e46bb0350e73515b5d97b3607.html#autotoc_md85',1,'Parameters and protocol']]],
+  ['and_20the_20solver_20adapter_17',['Reference scope and the solver adapter',['../group___f_e___basis.html#autotoc_md9',1,'']]],
+  ['and_20the_20supported_20order_20range_18',['Conditioning and the supported order range',['../classsvmp_1_1_f_e_1_1basis_1_1_lagrange_basis.html#autotoc_md12',1,'']]],
+  ['and_20the_20well_20conditioned_20order_20range_19',['Conditioning and the well-conditioned order range',['../classsvmp_1_1_f_e_1_1basis_1_1_serendipity_basis.html#autotoc_md13',1,'']]],
+  ['assembled_20',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'']]],
+  ['assembly_21',['Phase 2: Assembly',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md41',1,'']]],
+  ['assembly_20fsils_20assembled_22',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'']]],
+  ['assembly_20trilinos_20native_23',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]]
 ];

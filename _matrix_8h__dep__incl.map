@@ -1,11 +1,11 @@
 <map id="solver/common/math/include/math/Matrix.h" name="solver/common/math/include/math/Matrix.h">
-<area shape="rect" id="Node000001" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="255,5,424,45"/>
-<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="226,93,453,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="342,59,342,93,337,93,337,59"/>
-<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,174,223,199"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="295,126,148,176,146,171,293,121"/>
-<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="247,167,432,207"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="342,132,342,167,337,167,337,132"/>
-<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="456,167,655,207"/>
-<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="384,121,504,164,502,169,382,126"/>
+<area shape="rect" id="Node000001" title="Fixed&#45;size matrix types for FE computations, backed by Eigen." alt="" coords="253,5,422,50"/>
+<area shape="rect" id="Node000002" href="$_basis_function_8h_source.html" title=" " alt="" coords="224,98,451,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="339,64,340,99,335,96,336,68"/>
+<area shape="rect" id="Node000003" href="$_basis_factory_8h.html" title="Runtime creation of basis families." alt="" coords="5,182,222,210"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="290,132,150,184,149,179,285,130"/>
+<area shape="rect" id="Node000004" href="$_lagrange_basis_8h_source.html" title=" " alt="" coords="245,174,430,218"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="339,140,340,175,335,171,336,143"/>
+<area shape="rect" id="Node000005" href="$_serendipity_basis_8h.html" title="Reduced&#45;degree&#45;of&#45;freedom serendipity bases." alt="" coords="454,174,653,218"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="387,129,499,173,493,173,386,134"/>
 </map>

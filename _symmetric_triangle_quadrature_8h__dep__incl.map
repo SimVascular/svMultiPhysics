@@ -1,0 +1,7 @@
+<map id="solver/FE/Quadrature/SymmetricTriangleQuadrature.h" name="solver/FE/Quadrature/SymmetricTriangleQuadrature.h">
+<area shape="rect" id="Node000001" title="Contained Dunavant rules on the unit right triangle." alt="" coords="134,5,367,50"/>
+<area shape="rect" id="Node000002" href="$test___quadrature_generators_8cpp.html" title="Tests for line and triangle quadrature generators." alt="" coords="5,98,235,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,59,169,100,165,95,210,62"/>
+<area shape="rect" id="Node000003" href="$_symmetric_triangle_quadrature_8cpp.html" title="Fixed, contained Dunavant tables and ordered symmetry expansion." alt="" coords="259,115,506,160"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="290,57,359,114,353,114,288,62"/>
+</map>

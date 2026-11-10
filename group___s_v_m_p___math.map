@@ -1,5 +1,5 @@
 <map id="Math" name="Math">
-<area shape="rect" id="Node000001" title="Linear algebra vocabulary types and dense utilities for finite&#45;element computations." alt="" coords="5,31,60,56"/>
-<area shape="rect" id="Node000002" href="$group___s_v_m_p___math___matrix.html" title="Fixed&#45;size matrix type aliases." alt="" coords="108,5,172,31"/>
-<area shape="rect" id="Node000003" href="$group___s_v_m_p___math___vector.html" title="Fixed&#45;size vector type aliases." alt="" coords="109,55,171,80"/>
+<area shape="rect" id="Node000001" title="Linear algebra vocabulary types and dense utilities for finite&#45;element computations." alt="" coords="5,32,60,60"/>
+<area shape="rect" id="Node000002" href="$group___s_v_m_p___math___matrix.html" title="Fixed&#45;size matrix type aliases." alt="" coords="108,5,171,33"/>
+<area shape="rect" id="Node000003" href="$group___s_v_m_p___math___vector.html" title="Fixed&#45;size vector type aliases." alt="" coords="108,57,170,85"/>
 </map>
