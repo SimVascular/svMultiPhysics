@@ -660,17 +660,24 @@ void get_nn_bnds(const int nsd, consts::ElementType eType, const int eNoN, Array
 ///
 /// Replicates Fortran SUBROUTINE GETNNBNDS.
 //
-/// @brief Parametric coordinates of the nodes of a parent element.
+void get_nn_bnds(const ComMod& com_mod, mshType& mesh)
+{
+  int nsd = com_mod.nsd;
+  auto eType = mesh.eType;
+  int eNoN = mesh.eNoN;
+
+  get_nn_bnds(nsd, eType, eNoN, mesh.xib, mesh.Nb);
+}
+
+/// @brief Reference coordinates of the nodes of a parent element.
 ///
 /// 'xi(i,a)' is the i-th reference coordinate of solver-local node 'a', in the
 /// same node ordering and the same reference coordinates 'get_gnn' uses: the
-/// coordinates come from the FE Basis reference node layout and are permuted
-/// into solver node order by 'basis_index_for_solver_node'.
+/// coordinates come from the FE Basis reference node layout, permuted into
+/// solver node order by 'basis_index_for_solver_node'.
 ///
-/// These are a property of the parent element and must be read from it. They
-/// must not be recovered by inverse-mapping the physical node coordinates into
-/// the straight-sided element spanned by the corner nodes, because the edge,
-/// face and center nodes of a curved element lie outside of it.
+/// They are a property of the element type, so they are the same for every
+/// element of that type whatever its shape in the mesh.
 //
 void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Array<double>& xi)
 {
@@ -688,9 +695,9 @@ void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Arr
             " reference coordinates");
   }
 
-  // Reference directions the element does not use (xi rows beyond its own
-  // dimension, for a lower-dimensional element in a higher-dimensional mesh)
-  // are set to zero, as make_basis_point does for the Gauss points.
+  // Rows beyond the element's own reference dimension, which a
+  // lower-dimensional element in a higher-dimensional mesh has, are zero, as
+  // they are for the Gauss points in make_basis_point.
   const int ndim = std::min<int>(insd, basis.dimension());
 
   for (int a = 0; a < eNoN; ++a) {
@@ -700,15 +707,6 @@ void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Arr
       xi(d, a) = (d < ndim) ? nodes[basis_index][static_cast<std::size_t>(d)] : 0.0;
     }
   }
-}
-
-void get_nn_bnds(const ComMod& com_mod, mshType& mesh)
-{
-  int nsd = com_mod.nsd;
-  auto eType = mesh.eType;
-  int eNoN = mesh.eNoN;
-
-  get_nn_bnds(nsd, eType, eNoN, mesh.xib, mesh.Nb);
 }
 
 void get_nnx(const int nsd, const consts::ElementType eType, const int eNoN, const Array<double>& xl, 

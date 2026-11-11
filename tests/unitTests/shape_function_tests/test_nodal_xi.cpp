@@ -5,11 +5,10 @@
 /// @brief Tests for nn::get_nodal_xi, the reference coordinates of the nodes
 /// of a parent element.
 ///
-/// These coordinates are used by post::tpost to interpolate quantities
-/// computed at the corner nodes of a higher-order element to its edge, face
-/// and center nodes. They must be read from the parent element and not
-/// recovered from the physical node coordinates: on a curved element the edge
-/// nodes lie outside the straight-sided element spanned by the corner nodes.
+/// get_nodal_xi reads the coordinates from the FE Basis reference node layout
+/// and permutes them into solver node order. The tests check them against the
+/// shape functions get_gnn evaluates at them, and against the lower-order
+/// function space post::tensor_post builds over the corner nodes.
 
 #include "gtest/gtest.h"
 
@@ -30,7 +29,7 @@ struct ElementInfo {
   const char* name;
 };
 
-/// @brief Element types for which post::tpost builds a lower-order function
+/// @brief Element types for which post::tensor_post builds a lower-order function
 /// space over the corner nodes (see fs::set_thood_fs).
 const std::vector<ElementInfo> higher_order_elements = {
   {ElementType::TRI6,  2,  6, "TRI6" },
@@ -48,8 +47,9 @@ const std::vector<ElementInfo> lower_order_elements = {
   {ElementType::HEX8,  3, 8, "HEX8"},
 };
 
-/// @brief The shape functions of an element are a nodal (Lagrange) basis: N_b
-/// evaluated at the reference coordinates of node a is delta_ab.
+/// @brief Check that the shape functions of an element form a nodal basis at
+/// the coordinates get_nodal_xi returns: shape function b evaluated at the
+/// coordinates of node a is one for a == b and zero otherwise.
 ///
 /// This ties get_nodal_xi to get_gnn, so a wrong coordinate or a mismatch
 /// between the solver and FE Basis node orderings fails here.
@@ -86,13 +86,12 @@ TEST(NodalXi, IsNodalBasisOfLowerOrderElement)
   }
 }
 
-/// @brief The lower-order (Taylor-Hood) basis built on the corner nodes, when
-/// evaluated at the nodes of the higher-order element, is a partition of unity
-/// with no extrapolation that reproduces the corner values at the corner
-/// nodes. This is the property post::tpost relies on to interpolate to the
-/// edge, face and center nodes, and the one the old inverse map broke on
-/// curved elements, where it produced weights outside [0,1].
-TEST(NodalXi, LowerOrderBasisInterpolatesCornerValues)
+/// @brief The lower-order function space built on the corner nodes, evaluated
+/// at the nodes of the higher-order element, weights the corner values: the
+/// weights sum to one, each lies in [0,1], and at a corner node the weight of
+/// that corner is one. post::tensor_post uses these weights to interpolate the
+/// corner values to the edge, face and center nodes.
+TEST(NodalXi, LowerOrderBasisWeightsCornerValues)
 {
   for (const auto& elem : higher_order_elements) {
     SCOPED_TRACE(elem.name);
@@ -117,7 +116,6 @@ TEST(NodalXi, LowerOrderBasisInterpolatesCornerValues)
       }
       EXPECT_NEAR(sum, 1.0, 1.0e-12) << "node " << a;
 
-      // At a corner node the lower-order basis is nodal as well.
       if (a < fs.eNoN) {
         for (int b = 0; b < fs.eNoN; b++) {
           EXPECT_NEAR(N(b), (a == b) ? 1.0 : 0.0, 1.0e-12) << "corner node " << a << ", shape function " << b;
@@ -127,10 +125,10 @@ TEST(NodalXi, LowerOrderBasisInterpolatesCornerValues)
   }
 }
 
-/// @brief A mid-edge node of a quadratic element is the average of the two
-/// corner nodes of its edge in the lower-order basis, so post::tpost assigns
-/// it the average of the two corner values. Spot-check on TET10, whose six
-/// edges are (0,1), (1,2), (0,2), (0,3), (1,3), (2,3) in solver node order.
+/// @brief Each mid-edge node of a TET10 weights the two corner nodes of its
+/// own edge at 0.5 and the other two at zero, so post::tensor_post gives it the
+/// average of those two corner values. The six edges are (0,1), (1,2), (0,2),
+/// (0,3), (1,3) and (2,3) in solver node order.
 TEST(NodalXi, Tet10EdgeNodesAverageTheirCorners)
 {
   const int edges[6][2] = {{0,1}, {1,2}, {0,2}, {0,3}, {1,3}, {2,3}};

@@ -2195,10 +2195,9 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
     sA = 0.0;
 
     // Reference coordinates of the nodes of the higher-order parent element.
-    // The edge, face and center nodes of a curved element lie outside the
-    // straight-sided low-order element spanned by the corner nodes, so their
-    // position in the low-order element is read from the parent element rather
-    // than recovered from their physical coordinates.
+    // They give the position of the edge, face and center nodes within the
+    // low-order element, where the low-order shape functions below are
+    // evaluated to weight the corner values.
     //
     Array<double> xiN(nsd, lM.eNoN);
     nn::get_nodal_xi(nsd, lM.eType, lM.eNoN, xiN);
