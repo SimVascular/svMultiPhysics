@@ -367,7 +367,14 @@ jobs:
 
       - name: Summarize versioned image
         run: |
-          promoted_digest=$(docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" | awk '$1 == "Digest:" { print $2; exit }')
+          promoted_digest=""
+          for attempt in {1..8}; do
+            if promoted_digest=$(docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" 2>/dev/null | awk '$1 == "Digest:" { print $2; exit }') &&
+               [[ "$promoted_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+              break
+            fi
+            sleep 3
+          done
           expected_digest="$SOURCE_DIGEST"
           if [[ "$RELEASE_STAGE" == dev ]]; then
             expected_digest="$DIGEST"
