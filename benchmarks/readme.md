@@ -3,13 +3,13 @@
 > [!CAUTION]
 > This Readme and `svbenchmark` is currently a work in progress, and may change in the future.
 
-Benchmarking is an important part of solver development. Here, we are specifically refering to three different types of benchmarks:
+Benchmarking is an important part of solver development. Here, we are specifically referring to three different types of benchmarks:
 
 1. Verification - does the solver agree with the math that it is claiming to solve?
 2. Validation - does the solver and the assumptions made accurately represent the reality of interest?
-3. Performance - does the solver use an appropriate amount of resources?
+3. Performance - does the solver use an appropriate amount of resources? (Currently `svbenchmark` records a single wall-clock time per command.)
 
-Benchmarking serves as one component of testing the software, and specificaly tests the solver as a whole against reference solutions. This complements unit tests, integration tests, and system tests, that are testing the code itself, rather than the performance of the software.
+Benchmarking serves as one component of testing the software, and specifically tests the solver as a whole against reference solutions. This complements unit tests, integration tests, and system tests, that are testing the code itself, rather than the performance of the software.
 
 ## Adding a new Benchmark
 
