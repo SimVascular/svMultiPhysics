@@ -212,12 +212,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       if (nsd == 3) {
         // Prestrained elements are integrated on their unloaded configuration.
         const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained && mesh_has_fibers) {
-          prestrain::pull_back_fibers<3>(F0, fiber_values);
-        }
-        if (prestrained && (g == 0 || !fs_1[0].lShpF)) {
-          Jac /= prestrain::pull_back_gradients<3>(F0, Nwx);
-          w = fs_1[0].w(g) * Jac;
+        if (prestrained) {
+          if (mesh_has_fibers) {
+            prestrain::pull_back_fibers<3>(F0, fiber_values);
+          }
+          if (g == 0 || !fs_1[0].lShpF) {
+            Jac /= prestrain::pull_back_gradients<3>(F0, Nwx);
+            w = fs_1[0].w(g) * Jac;
+          }
         }
         switch (cPhys) {
           case Equation_fluid: {
@@ -238,7 +240,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
-                                 Nwx, al, yl, dl, F0, bfl, fibers, pS0l, pSl,
+                                 Nwx, al, yl, dl, bfl, F0, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;
           case Equation_lElas:
@@ -251,7 +253,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N1 = fs_1[1].N.col(g);
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
                                   fs_1[1].eNoN, w, Jac, N0, N1, Nwx, al,
-                                  yl, dl, F0, bfl, fibers, active_stress_evaluator, lR,
+                                  yl, dl, bfl, F0, fibers, active_stress_evaluator, lR,
                                   lK, lKd, recompute_visc);
           } break;
           }
@@ -259,12 +261,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       } else if (nsd == 2) {
         // Prestrained elements are integrated on their unloaded configuration.
         const auto F0 = lM.prestrain.get<2>(g, e);
-        if (prestrained && mesh_has_fibers) {
-          prestrain::pull_back_fibers<2>(F0, fiber_values);
-        }
-        if (prestrained && (g == 0 || !fs_1[0].lShpF)) {
-          Jac /= prestrain::pull_back_gradients<2>(F0, Nwx);
-          w = fs_1[0].w(g) * Jac;
+        if (prestrained) {
+          if (mesh_has_fibers) {
+            prestrain::pull_back_fibers<2>(F0, fiber_values);
+          }
+          if (g == 0 || !fs_1[0].lShpF) {
+            Jac /= prestrain::pull_back_gradients<2>(F0, Nwx);
+            w = fs_1[0].w(g) * Jac;
+          }
         }
         switch (cPhys) {
           case Equation_fluid: {
@@ -283,7 +287,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
-                                 Nwx, al, yl, dl, F0, bfl, fibers, pS0l, pSl,
+                                 Nwx, al, yl, dl, bfl, F0, fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;
 
@@ -328,12 +332,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       if (nsd == 3) {
         // Prestrained elements are integrated on their unloaded configuration.
         const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained && (g == 0 || !fs_2[0].lShpF)) {
-          prestrain::pull_back_gradients<3>(F0, Nwx);
-        }
-        if (prestrained && (g == 0 || !fs_2[1].lShpF)) {
-          Jac /= prestrain::pull_back_gradients<3>(F0, Nqx);
-          w = fs_2[1].w(g) * Jac;
+        if (prestrained) {
+          if (g == 0 || !fs_2[0].lShpF) {
+            prestrain::pull_back_gradients<3>(F0, Nwx);
+          }
+          if (g == 0 || !fs_2[1].lShpF) {
+            Jac /= prestrain::pull_back_gradients<3>(F0, Nqx);
+            w = fs_2[1].w(g) * Jac;
+          }
         }
         switch (cPhys) {
           case Equation_fluid: {
@@ -350,11 +356,11 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelTermTotal);
           } break;
 
-          case Equation_ustruct: {
+          case Equation_ustruct:
             auto N0 = fs_2[0].N.col(g);
             auto N1 = fs_2[1].N.col(g);
-            ustruct::ustruct_3d_c(com_mod, cep_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, Jac, N0, N1, Nwx, Nqx, al, yl, dl, F0, bfl, lR, lK, lKd);
-          } break;
+            ustruct::ustruct_3d_c(com_mod, cep_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, Jac, N0, N1, Nwx, Nqx, al, yl, dl, bfl, F0, lR, lK, lKd);
+          break;
         }
 
       } else if (nsd == 2) {

@@ -10,8 +10,10 @@
 #include "VtkData.h"
 #include "consts.h"
 #include "nn.h"
+#include "solid/mat_models.h"
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -62,6 +64,22 @@ void scatter_element_data(const double* global_data, double* local_data,
   MPI_Scatterv(reordered.data(), send_counts.data(), displacements.data(),
     cm_mod::mpreal, local_data, mesh.nEl * values_per_element, cm_mod::mpreal,
     cm_mod.master, cm.com());
+}
+
+/// @brief An orthonormal basis of the directions perpendicular to the unit
+/// vector d.
+template <int nsd>
+std::array<Eigen::Matrix<double, nsd, 1>, nsd - 1> perpendicular_directions(const Eigen::Matrix<double, nsd, 1>& d)
+{
+  if constexpr (nsd == 2) {
+    return {Eigen::Vector2d(-d(1), d(0))};
+  } else {
+    // Cross with the axis least aligned with d.
+    int k = 0;
+    d.cwiseAbs().minCoeff(&k);
+    const Eigen::Vector3d t = d.cross(Eigen::Vector3d::Unit(k)).normalized();
+    return {t, d.cross(t)};
+  }
 }
 
 } // namespace
@@ -192,6 +210,97 @@ void Prestrain::gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType
 
 
 namespace prestrain {
+
+template <int nsd>
+void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
+    const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
+    const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,
+    const double w_afu, const int dof, Array3<double>& lK)
+{
+  using Matrix = mat_fun::Matrix<nsd>;
+  using NodalMatrix = mat_fun::NodalMatrix<nsd>;
+  using Direction = Eigen::Matrix<double, nsd, 1>;
+
+  // The current configuration does not move with u.
+  const NodalMatrix Nxs = F.inverse().transpose() * Nx0;
+  const NodalMatrix tau_Nxs = (P * F.transpose()) * Nxs;
+  for (int b = 0; b < Nxs.cols(); b++) {
+    for (int a = 0; a < Nxs.cols(); a++) {
+      for (int i = 0; i < nsd; i++) {
+        for (int j = 0; j < nsd; j++) {
+          lK(i*dof + j, a, b) -= w_afu * (tau_Nxs(i,a) * Nxs(j,b) - tau_Nxs(i,b) * Nxs(j,a));
+        }
+      }
+    }
+  }
+
+  // The fibers turn with u.
+  const int nFn = fibers.cols();
+  if ((fibers.colwise().norm().array() == 0.0).all()) {
+    return;
+  }
+
+  // The material law's S at F for given fibers; the active tension, Dm and
+  // Ja are recomputed with each call and discarded.
+  const auto stress = [&](const auto& f) {
+    Matrix S;
+    mat_fun::Matrix<3*(nsd-1)> Dm;
+    double Ja;
+    const auto Ta = active_stress_evaluator.evaluate<nsd>(N, F, f);
+    mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, dmn, F, nFn, f, Ta, S, Dm, Ja);
+    return S;
+  };
+  const Matrix S = stress(fibers);
+
+  // Step of the finite differences, relative to the fiber's length
+  constexpr double h = 1.0e-7;
+
+  const Matrix F0_inv_t = F0.inverse().transpose();
+  Eigen::Matrix<double, nsd, Eigen::Dynamic> f = fibers;
+
+  for (int k = 0; k < nFn; k++) {
+    const Direction fk = fibers.col(k);
+    const double lk = fk.norm();
+    if (lk == 0.0) {
+      continue;
+    }
+    // Grad_0 N_b . f0 = Grad N_b . F0 f0, the gradient on the mesh along the fiber
+    const mat_fun::NodalVector fk_Nx = Nx0.transpose() * fk;
+
+    for (const Direction& t : perpendicular_directions<nsd>(Direction(fk / lk))) {
+      // The material law's S along t
+      f.col(k) = fk + (h * lk) * t;
+      const Matrix dS = (stress(f) - S) / (h * lk);
+      f.col(k) = fk;
+
+      // t . df0 = sum over b of C(:,b) . du_b, so lK += w_afu (F dS Grad_0 N_a) (x) C(:,b)
+      const NodalMatrix C = -(F0_inv_t * t) * fk_Nx.transpose();
+      const NodalMatrix dP_Nx = (F * dS) * Nx0;
+      for (int b = 0; b < Nx0.cols(); b++) {
+        for (int a = 0; a < Nx0.cols(); a++) {
+          for (int i = 0; i < nsd; i++) {
+            for (int j = 0; j < nsd; j++) {
+              lK(i*dof + j, a, b) += w_afu * dP_Nx(i,a) * C(j,b);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+template void correct_composed_tangent<2>(const ComMod&, const CepMod&, const dmnType&,
+    const ActiveStress::Evaluator&, const Eigen::Ref<const Eigen::VectorXd>&,
+    const mat_fun::Matrix<2>&, const mat_fun::Matrix<2>&, const mat_fun::Matrix<2>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>&, double, int, Array3<double>&);
+template void correct_composed_tangent<3>(const ComMod&, const CepMod&, const dmnType&,
+    const ActiveStress::Evaluator&, const Eigen::Ref<const Eigen::VectorXd>&,
+    const mat_fun::Matrix<3>&, const mat_fun::Matrix<3>&, const mat_fun::Matrix<3>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>&, double, int, Array3<double>&);
 
 void init(ComMod& com_mod)
 {

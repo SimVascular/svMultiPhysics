@@ -5,7 +5,6 @@
 #define INTEGRATOR_H
 
 #include "Array.h"
-#include "PseudoTransientContinuation.h"
 #include "SolutionStates.h"
 #include "Vector.h"
 #include "Simulation.h"
@@ -20,9 +19,7 @@
  * - Newton iteration loop with convergence checking
  * - Linear system assembly and solve
  * - Boundary condition application
- * - Pseudo-transient continuation, when enabled: reports each step's update
- *   and, if asked, adapts the pseudo time step to the residual (see
- *   PseudoTransientContinuation.h)
+ * - Pseudo-transient continuation, when enabled (see below)
  * - Prestrain: every Newton iteration's update is composed into the prestrain
  *   (see prestrain.h)
  *
@@ -68,6 +65,25 @@
  * @warning While it is implemented for all equations, line search is currently
  *   only tested for struct, should be regarded as experimental, and used with
  *   caution.
+ *
+ * ## Pseudo-transient continuation
+ *
+ * A steady nonlinear problem can be solved by time stepping with a pseudo
+ * time step that grows as the residual falls.
+ * (Kelley & Keyes, SIAM J. Numer. Anal. 35 (1998) 508-523)
+ * It is enabled by the `Pseudo_transient` XML element of the
+ * equation (see @ref PseudoTransientParameters).
+ *
+ * Each pseudo-step is a time step: one or more Newton iterations, bounded by
+ * Max_iterations and Tolerance as in any other run. Once a step has converged
+ * (see pseudo_transient_finish_step), the largest nodal update its last
+ * iteration composed, is
+ * reported; with `Adaptive_time_step` the next pseudo time step is then set
+ * by switched evolution relaxation (Mulder & van Leer 1985), the controller
+ * analysed by Kelley & Keyes: the time step is multiplied by the ratio of the
+ * first residuals of the last two steps and capped by `Maximum_time_step`. A
+ * time step so large that the inertia term vanishes makes each iteration a
+ * plain Newton iteration. Time is fictitious, so the loads must be steady.
  */
 class Integrator {
 
@@ -150,8 +166,8 @@ private:
   /** @brief Solution states at old, current, and intermediate time levels */
   SolutionStates solutions_;
 
-  /** @brief Pseudo-transient continuation, inactive unless enabled by the input */
-  PseudoTransientContinuation pseudo_transient_;
+  /** @brief First Newton residual of the previous pseudo-step of a pseudo-transient continuation */
+  double pseudo_transient_residual_prev_ = 0.0;
 
   /** @brief Residual vector for face-based quantities */
   Vector<double> res_;
@@ -230,6 +246,21 @@ private:
    */
   double line_search_step_length(eqType &eq, const Array<double> &weights,
                                  const double reference_norm);
+
+  /**
+   * @brief Finish a pseudo-step of a pseudo-transient continuation.
+   *
+   * Reports the update the step reached and, if the equation asks for it,
+   * sets the pseudo time step of the next step from the ratio of the first
+   * residuals of the last two steps, capped by the equation's maximum. The
+   * first step, and a step whose residual has reached round-off, leave the
+   * time step unchanged.
+   *
+   * @param[in] eq Equation whose pseudo-transient settings apply.
+   * @param[in] update This rank's largest nodal update composed by the step's
+   *   last iteration, which tends to zero as the prestrain converges.
+   */
+  void pseudo_transient_finish_step(const eqType &eq, double update);
 
   /**
    * @brief Update residual and increment arrays for linear solver

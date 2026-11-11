@@ -7,7 +7,6 @@
 #include "ActiveStress.h"
 #include "ComMod.h"
 #include "SolutionStates.h"
-#include "mat_fun.h"
 
 namespace struct_ns {
 
@@ -24,8 +23,8 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
-               const Array<double> &dl, const mat_fun::Matrix<2> &F0,
-               const Array<double> &bfl,
+               const Array<double> &dl, const Array<double> &bfl,
+               const Eigen::Matrix<double, 2, 2> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
@@ -34,8 +33,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
-               const Array<double> &dl, const mat_fun::Matrix<3> &F0,
-               const Array<double> &bfl,
+               const Array<double> &dl, const Array<double> &bfl,
+               const Eigen::Matrix<double, 3, 3> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,

@@ -32,7 +32,7 @@
 //------------------------
 Integrator::Integrator(Simulation* simulation, SolutionStates&& solutions)
   : simulation_(simulation), solutions_(std::move(solutions)),
-    pseudo_transient_(simulation->com_mod.pseudoTransient), newton_count_(0)
+    newton_count_(0)
 {
   initialize_arrays();
 }
@@ -118,8 +118,7 @@ bool Integrator::step(bool save_results) {
 
     apply_increment(eq, step_length);
 
-    // A prestrain run composes every iteration's update into the prestrain and
-    // starts the next one from rest.
+    // A prestrain solve composes every iteration's update into the prestrain
     if (com_mod.prestrainEq) {
       prestrain_update = prestrain::compose_iteration(com_mod, solutions_);
     }
@@ -143,8 +142,9 @@ bool Integrator::step(bool save_results) {
       dmsg << ">>> All OK" << std::endl;
       dmsg << "iEqOld: " << iEqOld + 1;
       #endif
-      if (pseudo_transient_.enabled()) {
-        pseudo_transient_.finish_step(com_mod, simulation_->cm_mod, prestrain_update);
+
+      if (com_mod.eq[0].pseudo_transient_enabled) {
+        pseudo_transient_finish_step(com_mod.eq[0], prestrain_update);
       }
       return true;
     }
@@ -461,6 +461,36 @@ double Integrator::line_search_step_length(eqType &eq,
   restore_starting_point();
 
   return step_length;
+}
+
+//------------------------------
+// pseudo_transient_finish_step
+//------------------------------
+//
+void Integrator::pseudo_transient_finish_step(const eqType &eq, const double update)
+{
+  auto& com_mod = simulation_->com_mod;
+  const auto& cm_mod = simulation_->cm_mod;
+  double& dt = com_mod.dt;
+
+  // pNorm is the step's first residual relative to iNorm, the run's first.
+  const double residual = eq.pNorm * eq.iNorm;
+  const double umax = com_mod.cm.reduce(cm_mod, update, MPI_MAX);
+
+  if (com_mod.cm.mas(cm_mod)) {
+    std::cout << " Pseudo-transient: max update = " << umax << "  (dt = " << dt
+              << ", first residual = " << residual << ", R/R0 = " << eq.pNorm << ")" << std::endl;
+  }
+
+  // Switched evolution relaxation: the next time step grows by the ratio of
+  // the first residuals of the last two steps. There is nothing to compare
+  // with on the first step, and dt stays where it is once the residual has
+  // reached round-off.
+  if (eq.pseudo_transient_adaptive_time_step && pseudo_transient_residual_prev_ > 0.0 &&
+      residual > 0.0 && std::isfinite(residual)) {
+    dt = std::min(eq.pseudo_transient_maximum_time_step, dt * pseudo_transient_residual_prev_ / residual);
+  }
+  pseudo_transient_residual_prev_ = residual;
 }
 
 //------------------------

@@ -1734,6 +1734,18 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     lEq.line_search_verbose = line_search_params.verbose.value();
   }
 
+  auto &pseudo_transient_params = eq_params->pseudo_transient;
+
+  // If the pseudo-transient element is present, enable pseudo-transient
+  // continuation for this equation and set its parameters.
+  if (pseudo_transient_params.defined()) {
+    lEq.pseudo_transient_enabled = true;
+    lEq.pseudo_transient_adaptive_time_step =
+        pseudo_transient_params.adaptive_time_step.value();
+    lEq.pseudo_transient_maximum_time_step =
+        pseudo_transient_params.maximum_time_step.value();
+  }
+
   // Initialize coupled BC.
   //
   auto& chnl_mod = simulation->chnl_mod;
@@ -1813,26 +1825,8 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     simulation->com_mod.prestressEq = true;
   }
 
-  const bool prestrain = eq_params->prestrain.defined() && eq_params->prestrain.value();
-  if (prestrain) {
+  if (eq_params->prestrain.defined() && eq_params->prestrain.value()) {
     simulation->com_mod.prestrainEq = true;
-  }
-
-  // Pseudo-transient continuation, so far only for prestrain, whose iterations start from rest.
-  auto& pseudo_transient = simulation->com_mod.pseudoTransient;
-  if (eq_params->pseudo_transient.defined() && eq_params->pseudo_transient.value()) {
-    svmp::throw_if<svmp::ParseException>(!prestrain,
-        "Pseudo_transient is only implemented for an equation with Prestrain.");
-    pseudo_transient.enabled = true;
-  }
-  svmp::throw_if<svmp::ParseException>(!pseudo_transient.enabled &&
-      (eq_params->pseudo_transient_adaptive_dt.defined() || eq_params->pseudo_transient_max_dt.defined()),
-      "Pseudo_transient_adaptive_dt and Pseudo_transient_max_dt require Pseudo_transient.");
-  if (eq_params->pseudo_transient_adaptive_dt.defined()) {
-    pseudo_transient.adaptive_dt = eq_params->pseudo_transient_adaptive_dt.value();
-  }
-  if (eq_params->pseudo_transient_max_dt.defined()) {
-    pseudo_transient.max_dt = eq_params->pseudo_transient_max_dt.value();
   }
 
   bool THflag = false; 

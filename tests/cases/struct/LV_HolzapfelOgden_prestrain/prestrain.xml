@@ -17,7 +17,7 @@
   The last result_NNN.vtu carries the prestrain as the cell arrays
   Prestrain_F_g<g>, one per Gauss point, which forward.xml reads.
 
-  With Pseudo_transient_adaptive_dt the pseudo time step grows by the ratio of
+  With Adaptive_time_step the pseudo time step grows by the ratio of
   successive first residuals as the state approaches equilibrium. Once the
   time step is large the residual falls quadratically: it reaches round-off,
   about 1e-14 of its first value, by step 10 of the 20 here. At a fixed dt the
@@ -74,9 +74,10 @@
    <Tolerance> 1e-10 </Tolerance>
 
    <Prestrain> true </Prestrain>
-   <Pseudo_transient> true </Pseudo_transient>
-   <Pseudo_transient_adaptive_dt> true </Pseudo_transient_adaptive_dt>
-   <Pseudo_transient_max_dt> 100.0 </Pseudo_transient_max_dt>
+   <Pseudo_transient>
+     <Adaptive_time_step> true </Adaptive_time_step>
+     <Maximum_time_step> 100.0 </Maximum_time_step>
+   </Pseudo_transient>
 
    <Density> 1.0 </Density>                           <!-- g/cm^3 -->
    <Elasticity_modulus> 1.0e6 </Elasticity_modulus>   <!-- dyne/cm^2 -->

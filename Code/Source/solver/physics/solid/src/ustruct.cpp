@@ -344,30 +344,34 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         auto N1 = fs[1].N.col(g);
         // Prestrained elements are integrated on their stress-free configuration.
         const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained && mesh_has_fibers) {
-          prestrain::pull_back_fibers<3>(F0, fiber_values);
-        }
-        if (prestrained && recompute_visc) {
-          Jac /= prestrain::pull_back_gradients<3>(F0, Nwx);
-          w = fs[0].w(g) * Jac;
+        if (prestrained) {
+          if (mesh_has_fibers) {
+            prestrain::pull_back_fibers<3>(F0, fiber_values);
+          }
+          if (recompute_visc) {
+            Jac /= prestrain::pull_back_gradients<3>(F0, Nwx);
+            w = fs[0].w(g) * Jac;
+          }
         }
         ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, F0, bfl, fibers,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, F0, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         const auto F0 = lM.prestrain.get<2>(g, e);
-        if (prestrained && mesh_has_fibers) {
-          prestrain::pull_back_fibers<2>(F0, fiber_values);
-        }
-        if (prestrained && recompute_visc) {
-          Jac /= prestrain::pull_back_gradients<2>(F0, Nwx);
-          w = fs[0].w(g) * Jac;
+        if (prestrained) {
+          if (mesh_has_fibers) {
+            prestrain::pull_back_fibers<2>(F0, fiber_values);
+          }
+          if (recompute_visc) {
+            Jac /= prestrain::pull_back_gradients<2>(F0, Nwx);
+            w = fs[0].w(g) * Jac;
+          }
         }
         ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, F0, bfl, fibers,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, F0, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
       }
 
@@ -402,29 +406,33 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         auto N1 = fs[1].N.col(g);
         // Prestrained elements are integrated on their stress-free configuration.
         const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained && (g == 0 || !fs[0].lShpF)) {
-          prestrain::pull_back_gradients<3>(F0, Nwx);
-        }
-        if (prestrained && (g == 0 || !fs[1].lShpF)) {
-          Jac /= prestrain::pull_back_gradients<3>(F0, Nqx);
-          w = fs[1].w(g) * Jac;
+        if (prestrained) {
+          if (g == 0 || !fs[0].lShpF) {
+            prestrain::pull_back_gradients<3>(F0, Nwx);
+          }
+          if (g == 0 || !fs[1].lShpF) {
+            Jac /= prestrain::pull_back_gradients<3>(F0, Nqx);
+            w = fs[1].w(g) * Jac;
+          }
         }
         ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
-            Nqx, al, yl, dl, F0, bfl, lR, lK, lKd);
+            Nqx, al, yl, dl, bfl, F0, lR, lK, lKd);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         const auto F0 = lM.prestrain.get<2>(g, e);
-        if (prestrained && (g == 0 || !fs[0].lShpF)) {
-          prestrain::pull_back_gradients<2>(F0, Nwx);
-        }
-        if (prestrained && (g == 0 || !fs[1].lShpF)) {
-          Jac /= prestrain::pull_back_gradients<2>(F0, Nqx);
-          w = fs[1].w(g) * Jac;
+        if (prestrained) {
+          if (g == 0 || !fs[0].lShpF) {
+            prestrain::pull_back_gradients<2>(F0, Nwx);
+          }
+          if (g == 0 || !fs[1].lShpF) {
+            Jac /= prestrain::pull_back_gradients<2>(F0, Nqx);
+            w = fs[1].w(g) * Jac;
+          }
         }
         ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
-            Nqx, al, yl, dl, F0, bfl, lR, lK, lKd);
+            Nqx, al, yl, dl, bfl, F0, lR, lK, lKd);
       }
 
     } // for g = 0 to fs[1].nG
@@ -461,8 +469,8 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN)
 void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const mat_fun::Matrix<2>& F0,
-    const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
+    const Array<double>& dl, const Array<double>& bfl,
+    const mat_fun::Matrix<2>& F0, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -630,8 +638,8 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const mat_fun::Matrix<3>& F0,
-    const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
+    const Array<double>& dl, const Array<double>& bfl,
+    const mat_fun::Matrix<3>& F0, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -815,8 +823,8 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
-                  const Array<double> &dl, const mat_fun::Matrix<2> &F0,
-                  const Array<double> &bfl,
+                  const Array<double> &dl, const Array<double> &bfl,
+                  const mat_fun::Matrix<2> &F0,
                   const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
@@ -1063,8 +1071,8 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const double w, const double Je, const Vector<double> &Nw,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
-                  const Array<double> &dl, const mat_fun::Matrix<3> &F0,
-                  const Array<double> &bfl,
+                  const Array<double> &dl, const Array<double> &bfl,
+                  const mat_fun::Matrix<3> &F0,
                   const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,

@@ -223,7 +223,6 @@ set(CSRCS
   fs.h fs.cpp
   initialize.h initialize.cpp
   Integrator.h Integrator.cpp
-  PseudoTransientContinuation.h PseudoTransientContinuation.cpp
   lhsa.h lhsa.cpp
   ls.h ls.cpp
   main.cpp

@@ -4,15 +4,17 @@
 #ifndef PRESTRAIN_H
 #define PRESTRAIN_H
 
+#include "ActiveStress.h"
 #include "Array.h"
 #include "Array3.h"
 #include "mat_fun.h"
 
-#include <array>
 #include <cmath>
 
+class CepMod;
 class CmMod;
 class ComMod;
+class dmnType;
 class MeshParameters;
 class cmType;
 class mshType;
@@ -57,7 +59,7 @@ struct SolutionStates;
 /// solid kernels correct it (see correct_composed_tangent). Max_iterations and
 /// Tolerance bound the iterations of a time step as in any other run; with
 /// Pseudo_transient the time step is adapted to the residual between steps
-/// (see PseudoTransientContinuation.h). A prestrain run solves a single struct
+/// (see Integrator.h). A prestrain run solves a single struct
 /// equation, without a line search; forward runs that
 /// read a prestrain may solve any equations, but not a ustruct solid: its
 /// volumetric stress lives in a pressure field, which the prestrain restart
@@ -206,59 +208,23 @@ void pull_back_fibers(const mat_fun::Matrix<nsd>& F0, Array<double>& fibers)
 /// @brief Make a solid kernel's tangent that of a prestrain iteration.
 ///
 /// A prestrain iteration composes the displacement u it reaches into F0 and
-/// starts again from rest, so the residual the next iteration sees is that of the Cauchy
-/// stress on the mesh, which does not move. The kernel's tangent also carries
-/// the change of the current volume and of the current shape function gradients
-/// with u; this subtracts that part,
+/// starts again from rest, so the residual the next iteration sees is that of
+/// the Cauchy stress on the mesh, which does not move, with the mesh's fibers
+/// pulled back anew. The kernel's tangent differs from that residual's in two
+/// ways, both corrected here.
+///
+/// The current configuration: the kernel's tangent carries the change of the
+/// current volume and of the current shape function gradients with u; this
+/// subtracts that part,
 ///
 ///     w (tau Grad_x N_a (x) Grad_x N_b - tau Grad_x N_b (x) Grad_x N_a),
 ///
 /// with tau = P F^T the Kirchhoff stress, Grad_x N = F^-T Grad_0 N, and w the
-/// stress-free weight. Without it each iteration is an inexact Newton step whose
-/// error grows with the stress, and the prestrain can stop converging once the
-/// pseudo time step is large. The fibers' part is added by
-/// correct_composed_tangent_fibers.
+/// stress-free weight. Without it each iteration is an inexact Newton step
+/// whose error grows with the stress, and the prestrain can stop converging
+/// once the pseudo time step is large.
 ///
-/// @param Nx0 shape function gradients on the stress-free configuration.
-/// @param w_afu the weight times the stiffness scaling of lK.
-/// @param lK the element tangent, lK(i*dof + j, a, b).
-template <int nsd, class Gradients>
-void correct_composed_tangent(const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P, const Gradients& Nx0,
-                          const double w_afu, const int dof, Array3<double>& lK)
-{
-  const mat_fun::NodalMatrix<nsd> Nxs = F.inverse().transpose() * Nx0;
-  const mat_fun::NodalMatrix<nsd> tau_Nxs = (P * F.transpose()) * Nxs;
-  for (int b = 0; b < Nxs.cols(); b++) {
-    for (int a = 0; a < Nxs.cols(); a++) {
-      for (int i = 0; i < nsd; i++) {
-        for (int j = 0; j < nsd; j++) {
-          lK(i*dof + j, a, b) -= w_afu * (tau_Nxs(i,a) * Nxs(j,b) - tau_Nxs(i,b) * Nxs(j,a));
-        }
-      }
-    }
-  }
-}
-
-/// @brief An orthonormal basis of the directions perpendicular to the unit
-/// vector d.
-template <int nsd>
-std::array<Eigen::Matrix<double, nsd, 1>, nsd - 1> perpendicular_directions(const Eigen::Matrix<double, nsd, 1>& d)
-{
-  if constexpr (nsd == 2) {
-    return {Eigen::Vector2d(-d(1), d(0))};
-  } else {
-    // Cross with the axis least aligned with d.
-    int k = 0;
-    d.cwiseAbs().minCoeff(&k);
-    const Eigen::Vector3d t = d.cross(Eigen::Vector3d::Unit(k)).normalized();
-    return {t, d.cross(t)};
-  }
-}
-
-/// @brief Add the fibers' part of a prestrain iteration's tangent to a solid
-/// kernel's tangent.
-///
-/// Composing an iteration's update into F0 pulls the mesh's fibers back anew (see
+/// The fibers: composing the update pulls the mesh's fibers back anew (see
 /// pull_back_fibers), so the fibers the material law sees change with u. To
 /// first order, with G = F0^-1 Grad u F0, the gradient on the mesh carried to
 /// the stress-free configuration, each fiber f0 changes by
@@ -272,61 +238,24 @@ std::array<Eigen::Matrix<double, nsd, 1>, nsd - 1> perpendicular_directions(cons
 ///
 /// taking the change dS of the material law's S by one-sided finite
 /// differences along the nsd - 1 directions perpendicular to each fiber, so it
-/// costs nsd - 1 calls of the material law per fiber.
+/// costs nsd - 1 calls of the material law per fiber, plus one for the
+/// baseline. A mesh without fibers pays nothing beyond the first part.
 ///
-/// @param S the material law's stress at F and the given fibers.
-/// @param Nx0 shape function gradients on the stress-free configuration.
-/// @param fibers the pulled-back fibers, nsd x nFn.
-/// @param stress the material law's S at F for other fibers, nsd x nFn.
+/// @param active_stress_evaluator the kernel's evaluator, updated for the element.
+/// @param N shape functions at the Gauss point, for the active tension.
+/// @param P the first Piola-Kirchhoff stress the kernel assembled, viscous and
+/// prestress parts included.
+/// @param Nx0 shape function gradients on the stress-free configuration, nsd x eNoN.
+/// @param fibers the pulled-back fibers the material law saw, nsd x nFn.
 /// @param w_afu the weight times the stiffness scaling of lK.
 /// @param lK the element tangent, lK(i*dof + j, a, b).
-template <int nsd, class Gradients, class FiberMatrix, class Stress>
-void correct_composed_tangent_fibers(const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F,
-                                 const mat_fun::Matrix<nsd>& S, const Gradients& Nx0, const FiberMatrix& fibers,
-                                 const Stress& stress, const double w_afu, const int dof, Array3<double>& lK)
-{
-  using Direction = Eigen::Matrix<double, nsd, 1>;
-  const int nFn = fibers.cols();
-  if (nFn == 0) {
-    return;
-  }
-
-  // Step of the finite differences, relative to the fiber's length
-  constexpr double h = 1.0e-7;
-
-  const mat_fun::Matrix<nsd> F0_inv_t = F0.inverse().transpose();
-  Eigen::Matrix<double, nsd, Eigen::Dynamic> f = fibers;
-
-  for (int k = 0; k < nFn; k++) {
-    const Direction fk = fibers.col(k);
-    const double lk = fk.norm();
-    if (lk == 0.0) {
-      continue;
-    }
-    // Grad_0 N_b . f0 = Grad N_b . F0 f0, the gradient on the mesh along the fiber
-    const mat_fun::NodalVector fk_Nx = Nx0.transpose() * fk;
-
-    for (const Direction& t : perpendicular_directions<nsd>(Direction(fk / lk))) {
-      // The material law's S along t
-      f.col(k) = fk + (h * lk) * t;
-      const mat_fun::Matrix<nsd> dS = (stress(f) - S) / (h * lk);
-      f.col(k) = fk;
-
-      // t . df0 = sum over b of C(:,b) . du_b, so lK += w_afu (F dS Grad_0 N_a) (x) C(:,b)
-      const mat_fun::NodalMatrix<nsd> C = -(F0_inv_t * t) * fk_Nx.transpose();
-      const mat_fun::NodalMatrix<nsd> dP_Nx = (F * dS) * Nx0;
-      for (int b = 0; b < Nx0.cols(); b++) {
-        for (int a = 0; a < Nx0.cols(); a++) {
-          for (int i = 0; i < nsd; i++) {
-            for (int j = 0; j < nsd; j++) {
-              lK(i*dof + j, a, b) += w_afu * dP_Nx(i,a) * C(j,b);
-            }
-          }
-        }
-      }
-    }
-  }
-}
+template <int nsd>
+void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
+    const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
+    const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,
+    double w_afu, int dof, Array3<double>& lK);
 
 /// @brief Validate the settings and the prestrains read from file, and seed
 /// the identity where a prestrain run has none, so that every mesh of a

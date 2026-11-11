@@ -1027,7 +1027,7 @@ class mshType
     /// @brief Fiber orientations used for electrophysiology and solid mechanics.
     Fibers fibers;
 
-    /// @brief Deformation gradient from the unloaded configuration.
+    /// @brief Deformation gradient from the unloaded configuration to the mesh.
     Prestrain prestrain;
 
     /// @brief Parent shape functions gradient
@@ -1211,6 +1211,22 @@ class eqType
     ///
     /// See the documentation of @ref Integrator for additional details.
     bool line_search_verbose = false;
+
+    /// @brief Toggle pseudo-transient continuation for this equation.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    bool pseudo_transient_enabled = false;
+
+    /// @brief Adapt the pseudo time step between steps to the ratio of their
+    /// first residuals.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    bool pseudo_transient_adaptive_time_step = false;
+
+    /// @brief Largest pseudo time step the adaptation may reach.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    double pseudo_transient_maximum_time_step = 0.0;
 
     /// @}
 
@@ -1634,21 +1650,6 @@ class urisType
 ///
 /// The data members here are the global variables exposed by the COMMOD module.
 //
-/// @brief Input settings of pseudo-transient continuation (see
-/// PseudoTransientContinuation.h). Parsed from an equation's Pseudo_transient
-/// options and broadcast; the Integrator owns the object that runs the scheme.
-class PseudoTransientSettings {
-  public:
-    /// @brief Whether the run is a pseudo-transient continuation
-    bool enabled = false;
-
-    /// @brief Whether the pseudo time step is adapted between steps
-    bool adaptive_dt = false;
-
-    /// @brief Largest pseudo time step allowed; 100 times the initial one when unset
-    double max_dt = 0.0;
-};
-
 class ComMod {
 
   public:
@@ -1703,12 +1704,8 @@ class ComMod {
     /// @brief Whether PRESTRESS is being solved
     bool prestressEq = false;
 
-    /// @brief Whether a prestrain, an imprinted deformation gradient, is being
-    /// solved for (see prestrain.h)
+    /// @brief Whether prestrain is being solved
     bool prestrainEq = false;
-
-    /// @brief Pseudo-transient continuation settings
-    PseudoTransientSettings pseudoTransient;
 
     /// @brief Whether velocity-pressure based structural dynamics solver is used
     bool sstEq = false;

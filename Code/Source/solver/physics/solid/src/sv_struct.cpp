@@ -316,14 +316,16 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         // Prestrained elements are integrated on their unloaded configuration.
         const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained && mesh_has_fibers) {
-          prestrain::pull_back_fibers<3>(F0, fiber_values);
+        if (prestrained) {
+          if (mesh_has_fibers) {
+            prestrain::pull_back_fibers<3>(F0, fiber_values);
+          }
+          if (g == 0 || !lM.lShpF) {
+            Jac /= prestrain::pull_back_gradients<3>(F0, Nx);
+            w = lM.w(g) * Jac;
+          }
         }
-        if (prestrained && (g == 0 || !lM.lShpF)) {
-          Jac /= prestrain::pull_back_gradients<3>(F0, Nx);
-          w = lM.w(g) * Jac;
-        }
-        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, F0, bfl, fibers,
+        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, F0, fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
 
 #if 0
@@ -339,14 +341,16 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       } else if (nsd == 2) {
         // Prestrained elements are integrated on their unloaded configuration.
         const auto F0 = lM.prestrain.get<2>(g, e);
-        if (prestrained && mesh_has_fibers) {
-          prestrain::pull_back_fibers<2>(F0, fiber_values);
+        if (prestrained) {
+          if (mesh_has_fibers) {
+            prestrain::pull_back_fibers<2>(F0, fiber_values);
+          }
+          if (g == 0 || !lM.lShpF) {
+            Jac /= prestrain::pull_back_gradients<2>(F0, Nx);
+            w = lM.w(g) * Jac;
+          }
         }
-        if (prestrained && (g == 0 || !lM.lShpF)) {
-          Jac /= prestrain::pull_back_gradients<2>(F0, Nx);
-          w = lM.w(g) * Jac;
-        }
-        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, F0, bfl, fibers,
+        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, F0, fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
       }
 
@@ -371,8 +375,8 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
-               const Array<double> &dl, const mat_fun::Matrix<2> &F0,
-               const Array<double> &bfl,
+               const Array<double> &dl, const Array<double> &bfl,
+               const mat_fun::Matrix<2> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
@@ -456,20 +460,6 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   double Ja;
   mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
 
-  // Every Newton iteration of a prestrain run composes its update into F0,
-  // which also moves the fibers the material law sees (see prestrain.h).
-  if (com_mod.prestrainEq) {
-    const auto stress = [&](const auto& turned_fibers) {
-      Matrix<2> S_f;
-      Matrix<3> Dm_f;
-      double Ja_f;
-      const auto Ta_f = active_stress_evaluator.evaluate<2>(Nm, F, turned_fibers);
-      mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, turned_fibers, Ta_f, S_f, Dm_f, Ja_f);
-      return S_f;
-    };
-    prestrain::correct_composed_tangent_fibers<2>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
-  }
-
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
   // Reuse from the previous Gauss point when shape function gradients
   // are constant within an element (e.g. linear triangles, tetrahedra).
@@ -546,8 +536,11 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
     }
   }
 
+  // Make the tangent that of a prestrain iteration, which composes its update
+  // into F0 (see prestrain.h).
   if (com_mod.prestrainEq) {
-    prestrain::correct_composed_tangent<2>(F, P, Nxm, w * afu, dof, lK);
+    prestrain::correct_composed_tangent<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
   }
 }
 
@@ -555,8 +548,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
-               const Array<double> &dl, const mat_fun::Matrix<3> &F0,
-               const Array<double> &bfl,
+               const Array<double> &dl, const Array<double> &bfl,
+               const mat_fun::Matrix<3> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
@@ -640,20 +633,6 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   Matrix<6> Dm;
   double Ja;
   mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
-
-  // Every Newton iteration of a prestrain run composes its update into F0,
-  // which also moves the fibers the material law sees (see prestrain.h).
-  if (com_mod.prestrainEq) {
-    const auto stress = [&](const auto& turned_fibers) {
-      Matrix<3> S_f;
-      Matrix<6> Dm_f;
-      double Ja_f;
-      const auto Ta_f = active_stress_evaluator.evaluate<3>(Nm, F, turned_fibers);
-      mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, turned_fibers, Ta_f, S_f, Dm_f, Ja_f);
-      return S_f;
-    };
-    prestrain::correct_composed_tangent_fibers<3>(F0, F, S, Nxm, fibers, stress, w * afu, dof, lK);
-  }
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
   // Reuse from the previous Gauss point when shape function gradients
@@ -760,8 +739,11 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
     }
   }
 
+  // Make the tangent that of a prestrain iteration, which composes its update
+  // into F0 (see prestrain.h).
   if (com_mod.prestrainEq) {
-    prestrain::correct_composed_tangent<3>(F, P, Nxm, w * afu, dof, lK);
+    prestrain::correct_composed_tangent<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
   }
 }
 };

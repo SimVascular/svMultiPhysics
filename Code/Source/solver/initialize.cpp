@@ -452,6 +452,13 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
             eq.linear_algebra_type == consts::LinearAlgebraType::trilinos &&
             eq.linear_algebra_assembly_type != consts::LinearAlgebraType::fsils,
         "Line search is not implemented for native Trilinos assembly.");
+
+    // Pseudo-transient continuation is currently only supported for prestrain.
+    svmp::throw_if<svmp::NotImplementedException>(
+        eq.pseudo_transient_enabled && !com_mod.prestrainEq,
+        "Pseudo-transient continuation (the " +
+            PseudoTransientParameters::xml_element_name_ +
+            " XML element) is only implemented for a Prestrain run.");
   }
 
 #ifdef debug_initialize
