@@ -688,16 +688,16 @@ void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Arr
             " reference coordinates");
   }
 
+  // Reference directions the element does not use (xi rows beyond its own
+  // dimension, for a lower-dimensional element in a higher-dimensional mesh)
+  // are set to zero, as make_basis_point does for the Gauss points.
   const int ndim = std::min<int>(insd, basis.dimension());
 
   for (int a = 0; a < eNoN; ++a) {
     const auto basis_index = basis_index_for_solver_node(eType, a);
 
     for (int d = 0; d < xi.nrows(); ++d) {
-      xi(d, a) = 0.0;
-    }
-    for (int d = 0; d < ndim; ++d) {
-      xi(d, a) = nodes[basis_index][static_cast<std::size_t>(d)];
+      xi(d, a) = (d < ndim) ? nodes[basis_index][static_cast<std::size_t>(d)] : 0.0;
     }
   }
 }
