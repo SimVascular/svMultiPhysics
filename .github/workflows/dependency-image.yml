@@ -137,6 +137,7 @@ jobs:
 
       - name: Resolve Ubuntu base image
         id: ubuntu_base
+        if: env.RELEASE_STAGE == 'dev'
         run: |
           digest=$(docker buildx imagetools inspect ubuntu:26.04 | awk '$1 == "Digest:" { print $2; exit }')
           if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
