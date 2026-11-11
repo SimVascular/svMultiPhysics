@@ -19,21 +19,18 @@ class EvaluationCriterion:
     name: str
     command: Command
     tolerance: AbsoluteTolerance | RelativeTolerance
-    cwd: Path
 
     @classmethod
     def from_dict(cls, name: str, data: dict[str, object]) -> Self:
         reference = expect_float(data["reference"], "reference")
         command = Command.from_dict(data)
         tolerance = cls.resolve_tolerance_from_dict(data)
-        cwd = Path(expect_str(data.get("cwd", ""), "cwd"))
 
         return cls(
             reference=reference,
             name=name,
             command=command,
             tolerance=tolerance,
-            cwd=cwd,
         )
 
     @staticmethod
