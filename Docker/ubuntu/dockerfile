@@ -5,6 +5,10 @@ FROM ubuntu:26.04 AS base
 
 ARG DEPENDENCY_BUILD_TYPE=Release
 ENV DEPENDENCY_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE}
+RUN case "${DEPENDENCY_BUILD_TYPE}" in \
+        Release|RelWithDebInfo|Debug) ;; \
+        *) echo "Unsupported DEPENDENCY_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE}" >&2; exit 1 ;; \
+    esac
 
 # Any debian-based command will not prompt user-input
 ENV DEBIAN_FRONTEND=noninteractive
@@ -428,6 +432,8 @@ WORKDIR /petsc
 
 # Install petsc library in $PETSC_INSTALL_DIR 
 # Libraries path must be set explicitly
+# Release and RelWithDebInfo intentionally share optimized PETSc flags; only
+# Release dependency images are eligible for rc/final promotion.
 RUN if [ "${DEPENDENCY_BUILD_TYPE}" = "Debug" ]; then \
         petsc_debugging=1; petsc_flags='-g -O0'; petsc_arch=arch-linux-c-debug; \
     else \

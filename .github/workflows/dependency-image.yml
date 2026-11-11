@@ -23,9 +23,7 @@ on:
           - RelWithDebInfo
           - Debug
         default: Release
-permissions:
-  contents: write
-  packages: write
+permissions: {}
 
 concurrency:
   group: dependency-image-${{ github.ref }}
@@ -47,6 +45,7 @@ jobs:
       git_tag_exists: ${{ steps.release.outputs.git_tag_exists }}
       image_tag: ${{ steps.release.outputs.image_tag }}
       source_image_tag: ${{ steps.release.outputs.source_image_tag }}
+      source_digest: ${{ steps.source_digest.outputs.digest }}
       already_published: ${{ steps.existing.outputs.already_published }}
       digest: ${{ steps.build.outputs.digest }}
     env:
@@ -67,7 +66,7 @@ jobs:
           REQUESTED_COMMIT: ${{ inputs.source_commit }}
         run: |
           source_commit=$(git rev-parse HEAD)
-          if [[ -n "$REQUESTED_COMMIT" && ( ! "$REQUESTED_COMMIT" =~ ^[0-9a-fA-F]{40}$ || "$REQUESTED_COMMIT" != "$source_commit" ) ]]; then
+          if [[ -n "$REQUESTED_COMMIT" && "$REQUESTED_COMMIT" != "$source_commit" ]]; then
             echo "source_commit must be the full SHA of the checked-out commit" >&2
             exit 1
           fi
@@ -105,7 +104,7 @@ jobs:
             echo "Tag $git_tag already points to $remote_tag_sha, not $source_commit; increment the build number in release.json" >&2
             exit 1
           fi
-          image_tag="$git_tag"
+          image_tag="${git_tag#v}"
 
           if [[ "$RELEASE_STAGE" == dev ]]; then
             source_image_tag="sha-$source_commit-$BUILD_TYPE"
@@ -120,7 +119,7 @@ jobs:
               echo "Tag $source_git_tag must point to source commit $source_commit" >&2
               exit 1
             fi
-            source_image_tag="$source_git_tag"
+            source_image_tag="${source_git_tag#v}"
           fi
 
           printf 'release_stage=%s\nversion=%s\nsource_commit=%s\ngit_tag=%s\ngit_tag_exists=%s\nimage_tag=%s\nsource_image_tag=%s\n' \
@@ -143,12 +142,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve preceding stage digest
+        id: source_digest
+        if: env.RELEASE_STAGE != 'dev'
+        env:
+          SOURCE_IMAGE_TAG: ${{ steps.release.outputs.source_image_tag }}
+          SOURCE_COMMIT: ${{ steps.release.outputs.source_commit }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          tag_digest=$(docker buildx imagetools inspect "$IMAGE:$SOURCE_IMAGE_TAG" | awk '$1 == "Digest:" { print $2; exit }')
+          if [[ ! "$tag_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Could not resolve a sha256 digest for $IMAGE:$SOURCE_IMAGE_TAG" >&2
+            exit 1
+          fi
+          docker pull --platform linux/amd64 "$IMAGE@$tag_digest"
+          image_commit=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$IMAGE@$tag_digest")
+          image_version=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$IMAGE@$tag_digest")
+          image_build_type=$(docker image inspect --format '{{ index .Config.Labels "org.simvascular.build-type" }}' "$IMAGE@$tag_digest")
+          if [[ "$image_commit" != "$SOURCE_COMMIT" || "$image_version" != "$VERSION" || "$image_build_type" != Release ]]; then
+            echo "The preceding stage image does not match the selected source commit, version, and Release build" >&2
+            exit 1
+          fi
+          echo "digest=$tag_digest" >> "$GITHUB_OUTPUT"
+
       - name: Check existing image tag
         id: existing
         env:
           IMAGE_TAG: ${{ steps.release.outputs.image_tag }}
           SOURCE_COMMIT: ${{ steps.release.outputs.source_commit }}
-          SOURCE_IMAGE_TAG: ${{ steps.release.outputs.source_image_tag }}
+          SOURCE_DIGEST: ${{ steps.source_digest.outputs.digest }}
           VERSION: ${{ steps.release.outputs.version }}
           GIT_TAG: ${{ steps.release.outputs.git_tag }}
           GIT_TAG_EXISTS: ${{ steps.release.outputs.git_tag_exists }}
@@ -177,11 +199,9 @@ jobs:
               echo 'already_published=true' >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            docker pull --platform linux/amd64 "$IMAGE:$SOURCE_IMAGE_TAG"
-            target_id=$(docker image inspect --format '{{ .Id }}' "$IMAGE:$IMAGE_TAG")
-            source_id=$(docker image inspect --format '{{ .Id }}' "$IMAGE:$SOURCE_IMAGE_TAG")
-            if [[ "$target_id" != "$source_id" ]]; then
-              echo "$IMAGE:$IMAGE_TAG does not match the source image" >&2
+            target_digest=$(docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" | awk '$1 == "Digest:" { print $2; exit }')
+            if [[ "$target_digest" != "$SOURCE_DIGEST" ]]; then
+              echo "$IMAGE:$IMAGE_TAG has digest ${target_digest:-nothing}, not the preceding stage digest $SOURCE_DIGEST" >&2
               exit 1
             fi
             echo 'already_published=true' >> "$GITHUB_OUTPUT"
@@ -197,7 +217,7 @@ jobs:
           platforms: linux/amd64
           no-cache: true
           push: true
-          tags: ${{ env.IMAGE }}:sha-${{ steps.release.outputs.source_commit }}-${{ env.BUILD_TYPE }}
+          tags: ${{ env.IMAGE }}:${{ steps.release.outputs.source_image_tag }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ steps.release.outputs.source_commit }}
@@ -211,12 +231,17 @@ jobs:
         env:
           SOURCE_COMMIT: ${{ steps.release.outputs.source_commit }}
           SOURCE_IMAGE_TAG: ${{ steps.release.outputs.source_image_tag }}
+          SOURCE_DIGEST: ${{ steps.source_digest.outputs.digest }}
         run: |
-          docker pull --platform linux/amd64 "$IMAGE:$SOURCE_IMAGE_TAG"
-          image_commit=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$IMAGE:$SOURCE_IMAGE_TAG")
+          source="$IMAGE:$SOURCE_IMAGE_TAG"
+          if [[ "$RELEASE_STAGE" != dev ]]; then
+            source="$IMAGE@$SOURCE_DIGEST"
+          fi
+          docker pull --platform linux/amd64 "$source"
+          image_commit=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$source")
           test "$image_commit" = "$SOURCE_COMMIT"
           docker run --rm --platform linux/amd64 -e EXPECTED_BUILD_TYPE="$BUILD_TYPE" \
-            "$IMAGE:$SOURCE_IMAGE_TAG" \
+            "$source" \
             bash -euc 'test "$DEPENDENCY_BUILD_TYPE" = "$EXPECTED_BUILD_TYPE" && \
                        test -d /vtk && test -d /trilinos && test -d /petsc && \
                        cmake --version && /openmpi/bin/mpicc --version && \
@@ -281,7 +306,7 @@ jobs:
       SOURCE_COMMIT: ${{ needs.build.outputs.source_commit }}
       GIT_TAG: ${{ needs.build.outputs.git_tag }}
       IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
-      SOURCE_IMAGE_TAG: ${{ needs.build.outputs.source_image_tag }}
+      SOURCE_DIGEST: ${{ needs.build.outputs.source_digest }}
       DIGEST: ${{ needs.build.outputs.digest }}
     steps:
       - name: Check out tested source
@@ -322,18 +347,30 @@ jobs:
       - name: Promote tested image
         if: needs.build.outputs.already_published != 'true'
         run: |
-          source="$IMAGE:$SOURCE_IMAGE_TAG"
+          source="$IMAGE@$SOURCE_DIGEST"
           if [[ "$RELEASE_STAGE" == dev ]]; then
             source="$IMAGE@$DIGEST"
           fi
-          docker buildx imagetools create --tag "$IMAGE:$IMAGE_TAG" "$source"
+          docker buildx imagetools create --prefer-index=false --tag "$IMAGE:$IMAGE_TAG" "$source"
 
       - name: Summarize versioned image
         run: |
+          promoted_digest=$(docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" | awk '$1 == "Digest:" { print $2; exit }')
+          expected_digest="$SOURCE_DIGEST"
+          if [[ "$RELEASE_STAGE" == dev ]]; then
+            expected_digest="$DIGEST"
+          fi
+          if [[ "$promoted_digest" != "$expected_digest" ]]; then
+            echo "$IMAGE:$IMAGE_TAG has digest ${promoted_digest:-nothing}, not $expected_digest" >&2
+            exit 1
+          fi
           printf '### Ubuntu 26 dependency image\n\n' >> "$GITHUB_STEP_SUMMARY"
           printf -- '- Source commit: `%s`\n' "$SOURCE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
           printf -- '- Source tag: `%s`\n' "$GIT_TAG" >> "$GITHUB_STEP_SUMMARY"
           printf -- '- Versioned image: `%s:%s`\n' "$IMAGE" "$IMAGE_TAG" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Versioned image digest: `%s`\n' "$promoted_digest" >> "$GITHUB_STEP_SUMMARY"
           if [[ "$RELEASE_STAGE" == dev ]]; then
             printf -- '- Validated digest: `%s`\n' "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf -- '- Preceding stage digest: `%s`\n' "$SOURCE_DIGEST" >> "$GITHUB_STEP_SUMMARY"
           fi
