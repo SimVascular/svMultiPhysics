@@ -110,6 +110,8 @@ def evaluate_criterion(
         capture_result = capture_command(criterion.command, cwd=cwd)
     except subprocess.CalledProcessError as e:
         e.add_note(f"Error during script run for criterion evaluation.{criterion.name}")
+        if e.stderr:
+            e.add_note(f"stderr:\n{e.stderr}")
         raise
 
     stdout = capture_result.stdout.strip()
