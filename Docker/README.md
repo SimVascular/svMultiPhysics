@@ -8,8 +8,8 @@ the dependency image requires substantial CPU, memory, and disk space.
 
 - `Docker/ubuntu/dockerfile` builds an Ubuntu 26.04 image with the libraries and
   tools needed to build and test svMultiPhysics. It does not contain a compiled
-  svMultiPhysics solver. This image is not currently built or published by a
-  repository workflow.
+  svMultiPhysics solver. The manually triggered dependency-image workflow stages
+  the image in GitHub Container Registry, then validates it before promotion.
 - `Docker/solver/dockerfile` builds svMultiPhysics from the SimVascular GitHub
   repository in PETSc and Trilinos configurations. Both its builder and final
   stages use the published `simvascular/libraries:latest` dependency image, not
@@ -39,6 +39,18 @@ avoid a GNU tar failure.
 The `svmp-libraries:ubuntu26` tag is local to your machine unless you explicitly
 push it to a registry. Building it does not change either published Docker Hub
 image or the base image used by `Docker/solver/dockerfile`.
+
+The image uses the Ubuntu 26.04 base tag and release tags for source-built
+libraries where available (or Git commits otherwise). The Conda environment
+requests Python 3.12; Ubuntu, Conda, and pip package versions are not pinned.
+The image contains `/usr/local/share/svMultiPhysics/dependency-versions.txt`
+with the resolved source commits and installed Ubuntu, Conda, and Python package
+versions.
+The dependency-image workflow also uploads this inventory as an artifact.
+Changing any pin creates a new image candidate and requires the default,
+Trilinos, and PETSc validation jobs to pass again. Do not assume that a pin
+selected from an older image reproduces its exact binaries when the older build
+did not record the source commit.
 
 ## Build the existing solver image
 

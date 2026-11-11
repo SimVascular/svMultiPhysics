@@ -96,7 +96,7 @@ COPY --from=buildcmake /cmake /cmake
 ENV PATH="/cmake/bin:${PATH}"
 
 # Setting VTK  version VTK installation directory
-ARG VTK_VERSION=9.3.0
+ARG VTK_VERSION=9.3.1
 ARG VTK_INSTALL_DIR=/vtk
 
 # Create new user
@@ -187,13 +187,15 @@ ENV PATH="/cmake/bin:${PATH}"
 
 # Setting lapack installation directory
 ARG LAPACK_INSTALL_DIR=/tmp/lapack
+ARG LAPACK_TAG=v3.12.1
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download, extract, install
-RUN git clone https://github.com/Reference-LAPACK/lapack.git
+RUN git clone --depth 1 --branch ${LAPACK_TAG} https://github.com/Reference-LAPACK/lapack.git && \
+    git -C /lapack rev-parse HEAD > /lapack-source-commit
 WORKDIR /build
 RUN cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} -DCMAKE_INSTALL_LIBDIR=${LAPACK_INSTALL_DIR} ../lapack && \
     cmake --build . -j6 --target install
@@ -216,6 +218,7 @@ ENV PATH="/cmake/bin:/openmpi:${PATH}"
 
 # Setting hdf5 installation directories
 ARG HDF5_INSTALL_DIR=/hdf5
+ARG HDF5_COMMIT=55e183236ff2591e0f8cd5e3c081e0666cd963cd
 
 # Create new user
 RUN useradd -ms /bin/bash luser
@@ -231,7 +234,9 @@ RUN mkdir ${HDF5_INSTALL_DIR}
 #    chown -R luser:luser ${HDF5_INSTALL_DIR}
 
 #USER luser
-RUN git clone https://github.com/HDFGroup/hdf5.git 
+RUN git clone https://github.com/HDFGroup/hdf5.git && \
+    git -C /hdf5build/hdf5 checkout --detach ${HDF5_COMMIT} && \
+    git -C /hdf5build/hdf5 rev-parse HEAD > /hdf5-source-commit
 
 # Build HDF5
 WORKDIR /hdf5build/build
@@ -273,13 +278,15 @@ ENV PATH="/cmake/bin:/openmpi/bin:/lapack:${PATH}"
 
 # Setting hypre installation directory
 ARG HYPRE_INSTALL_DIR=/hypre-install
+ARG HYPRE_TAG=v3.2.1
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download, extract, install
-RUN git clone https://github.com/hypre-space/hypre.git
+RUN git clone --depth 1 --branch ${HYPRE_TAG} https://github.com/hypre-space/hypre.git && \
+    git -C /hypre rev-parse HEAD > /hypre-source-commit
 
 WORKDIR /hypre/src/
 RUN ./configure --prefix=${HYPRE_INSTALL_DIR} && \
@@ -311,13 +318,16 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Setting hypre installation directory
 ARG TRILINOS_INSTALL_DIR=/trilinos
+ARG TRILINOS_COMMIT=01c06c6958dde35fd8a4151e95020c3a9e33d770
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download, extract, install
-RUN git clone https://github.com/trilinos/Trilinos.git
+RUN git clone https://github.com/trilinos/Trilinos.git && \
+    git -C /Trilinos checkout --detach ${TRILINOS_COMMIT} && \
+    git -C /Trilinos rev-parse HEAD > /trilinos-source-commit
 WORKDIR /Trilinos/build
 
 # Build trilinos
@@ -395,13 +405,15 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Setting petsc installation directory
 ARG PETSC_INSTALL_DIR=/petsc-install
+ARG PETSC_TAG=v3.26.1
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download and install
-RUN git clone -b release https://gitlab.com/petsc/petsc.git 
+RUN git clone --depth 1 --branch ${PETSC_TAG} https://gitlab.com/petsc/petsc.git && \
+    git -C /petsc rev-parse HEAD > /petsc-source-commit
 
 # Set permission for luser
 RUN chown -R luser:luser /petsc
@@ -465,7 +477,9 @@ ENV PATH="/cmake/bin:/openmpi/bin:${PATH}"
 
 # ================================================================================
 # GTEST
-RUN git clone https://github.com/google/googletest.git -b v1.14.0 
+ARG GTEST_TAG=v1.14.0
+RUN git clone --depth 1 --branch ${GTEST_TAG} https://github.com/google/googletest.git && \
+    git -C /googletest rev-parse HEAD > /gtest-source-commit
 WORKDIR /googletest
 RUN mkdir build    && \
     cd build       && \
@@ -494,13 +508,21 @@ COPY --from=buildhypre /hypre-install /hypre/
 COPY --from=buildtrilinos /trilinos /trilinos
 COPY --from=buildpetsc /petsc-install /petsc
 COPY --from=buildgtest /google /google  
+COPY --from=buildlapack /lapack-source-commit /source-revisions/lapack
+COPY --from=buildhdf5 /hdf5-source-commit /source-revisions/hdf5
+COPY --from=buildhypre /hypre-source-commit /source-revisions/hypre
+COPY --from=buildtrilinos /trilinos-source-commit /source-revisions/trilinos
+COPY --from=buildpetsc /petsc-source-commit /source-revisions/petsc
+COPY --from=buildgtest /gtest-source-commit /source-revisions/googletest
 
 # ================================================================================
 # CONDA
 ENV CONDA_DIR=/conda
 
 # Conda environment depending on architecture
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh && \
+ARG MINICONDA_SHA256=76cf791877078e74410f64e5c2ef7da4e217fd7a433c2c3674c9d9695225c3bb
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py314_26.9.4-1-Linux-x86_64.sh -O /miniconda.sh && \
+    echo "${MINICONDA_SHA256}  /miniconda.sh" | sha256sum -c - && \
     /bin/bash /miniconda.sh -b -p $CONDA_DIR
 
 ENV PATH="${CONDA_DIR}/bin:${PATH}"
@@ -512,10 +534,12 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 # Python 3.14 with meshio failed to read an integration-test VTU file (Base64
 # padding error); the same tests passed with Python 3.12.
 RUN conda create -y -n svmultiphysics python=3.12 pip && \
-    conda run -n svmultiphysics python -m pip install pytest pytest-cov pytest-mock numpy meshio pandas && \
-    conda run -n svmultiphysics python --version && \
-    conda list -n svmultiphysics --explicit && \
-    conda run -n svmultiphysics python -m pip freeze
+    conda run -n svmultiphysics python -m pip install pytest pytest-cov pytest-mock numpy meshio pandas
+
+COPY report-dependency-versions.sh /usr/local/bin/report-dependency-versions
+RUN chmod +x /usr/local/bin/report-dependency-versions && \
+    mkdir -p /usr/local/share/svMultiPhysics && \
+    /usr/local/bin/report-dependency-versions > /usr/local/share/svMultiPhysics/dependency-versions.txt
 # Set libraries environment
 ENV PATH="/google:/vtk:/openmpi/bin:/cmake/bin:/trilinos/lib/cmake/Trilinos:${PATH}"
 ENV LD_LIBRARY_PATH="/openmpi/lib:/petsc/lib:/lapack"

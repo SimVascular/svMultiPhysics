@@ -222,6 +222,27 @@ jobs:
                        cmake --version && /openmpi/bin/mpicc --version && \
                        conda run -n svmultiphysics python --version'
 
+      - name: Record dependency versions
+        if: env.RELEASE_STAGE == 'dev' && steps.existing.outputs.already_published != 'true'
+        env:
+          SOURCE_IMAGE_TAG: ${{ steps.release.outputs.source_image_tag }}
+        run: |
+          docker run --rm --platform linux/amd64 "$IMAGE:$SOURCE_IMAGE_TAG" \
+            /usr/local/bin/report-dependency-versions > dependency-versions.txt
+          printf '### Resolved dependency versions\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          docker run --rm --platform linux/amd64 "$IMAGE:$SOURCE_IMAGE_TAG" \
+            /usr/local/bin/report-dependency-versions --summary >> "$GITHUB_STEP_SUMMARY"
+          printf '```\n\nThe full Ubuntu, Conda, and Python package inventory is attached as a workflow artifact.\n' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload dependency inventory
+        if: env.RELEASE_STAGE == 'dev' && steps.existing.outputs.already_published != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-versions-${{ steps.release.outputs.source_commit }}
+          path: dependency-versions.txt
+          if-no-files-found: error
+
       - name: Summarize temporary image
         if: env.RELEASE_STAGE == 'dev' && steps.existing.outputs.already_published != 'true'
         run: |
