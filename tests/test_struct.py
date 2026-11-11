@@ -70,6 +70,13 @@ def test_directionally_distributed_active_stress(n_proc):
     test_folder = "directionally_distributed_active_stress"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_quadratic_tet10(n_proc):
+    """Thick-walled cylinder with TET10 elements whose mid-edge nodes lie on
+    the curved lumen and outer surfaces: the stress-type outputs are
+    interpolated from the corner nodes to the mid-edge nodes."""
+    test_folder = "quadratic_tet10"
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=2)
+
 def test_robin(n_proc):
     test_folder = "robin"
     run_with_reference(base_folder, test_folder, fields, n_proc)

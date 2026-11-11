@@ -28,6 +28,8 @@ namespace nn {
   void get_nn_bnds(const int nsd, consts::ElementType eType, const int eNoN, Array<double>& xib, Array<double>& Nb);
   void get_nn_bnds(const ComMod& com_mod, mshType& mesh);
 
+  void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Array<double>& xi);
+
   void get_nnx(const int nsd, const consts::ElementType eType, const int eNoN, const Array<double>& xl, 
       const Array<double>& xib, const Array<double>& Nb, const Vector<double>& xp, Vector<double>& xi, 
       Vector<double>& N, Array<double>& Nx);

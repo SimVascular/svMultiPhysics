@@ -660,6 +660,48 @@ void get_nn_bnds(const int nsd, consts::ElementType eType, const int eNoN, Array
 ///
 /// Replicates Fortran SUBROUTINE GETNNBNDS.
 //
+/// @brief Parametric coordinates of the nodes of a parent element.
+///
+/// 'xi(i,a)' is the i-th reference coordinate of solver-local node 'a', in the
+/// same node ordering and the same reference coordinates 'get_gnn' uses: the
+/// coordinates come from the FE Basis reference node layout and are permuted
+/// into solver node order by 'basis_index_for_solver_node'.
+///
+/// These are a property of the parent element and must be read from it. They
+/// must not be recovered by inverse-mapping the physical node coordinates into
+/// the straight-sided element spanned by the corner nodes, because the edge,
+/// face and center nodes of a curved element lie outside of it.
+//
+void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Array<double>& xi)
+{
+  const auto& basis = basis_for_solver_element(eType);
+  const auto& nodes = basis.nodes();
+
+  if (nodes.size() != static_cast<std::size_t>(eNoN)) {
+    svmp::raise<febasis::BasisNodeOrderingException>("FE Basis node count " + std::to_string(nodes.size()) +
+            " does not match solver eNoN " + std::to_string(eNoN) + " for " + solver_element_name(eType));
+  }
+
+  if (xi.nrows() < basis.dimension()) {
+    svmp::raise<febasis::BasisConfigurationException>("xi has " + std::to_string(xi.nrows()) +
+            " rows but FE Basis element requires " + std::to_string(basis.dimension()) +
+            " reference coordinates");
+  }
+
+  const int ndim = std::min<int>(insd, basis.dimension());
+
+  for (int a = 0; a < eNoN; ++a) {
+    const auto basis_index = basis_index_for_solver_node(eType, a);
+
+    for (int d = 0; d < xi.nrows(); ++d) {
+      xi(d, a) = 0.0;
+    }
+    for (int d = 0; d < ndim; ++d) {
+      xi(d, a) = nodes[basis_index][static_cast<std::size_t>(d)];
+    }
+  }
+}
+
 void get_nn_bnds(const ComMod& com_mod, mshType& mesh)
 {
   int nsd = com_mod.nsd;
