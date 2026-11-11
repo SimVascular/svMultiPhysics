@@ -7,6 +7,7 @@ Follows semantics of Rust "expect(...)" to raise an error if the type is not cor
 
 from typing import cast
 from math import isfinite
+from collections.abc import Iterable
 
 
 def expect_int(value: object, location: str) -> int:
@@ -75,3 +76,22 @@ def expect_str_array(value: object, location: str) -> tuple[str, ...]:
         raise ValueError(f"Expected '{location}' to be an array of strings")
 
     return tuple(value)
+
+
+def expect_keys(
+    table: dict[str, object],
+    location: str,
+    required: Iterable[str] = (),
+    optional: Iterable[str] = (),
+) -> None:
+    """
+    Checks that table has every required key and no keys outside required + optional. Otherwise throws an error
+    """
+    required_keys = set(required)
+    missing = sorted(required_keys.difference(table))
+    if missing:
+        raise ValueError(f"Expected '{location}' to have key(s) {', '.join(missing)}")
+
+    unknown = sorted(set(table).difference(required_keys, optional))
+    if unknown:
+        raise ValueError(f"Unknown key(s) in '{location}': {', '.join(unknown)}")
