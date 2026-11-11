@@ -112,7 +112,13 @@ def evaluate_criterion(
         e.add_note(f"Error during script run for criterion evaluation.{criterion.name}")
         raise
 
-    value = float(capture_result.stdout.strip())  # cast as a float
+    stdout = capture_result.stdout.strip()
+    try:
+        value = float(stdout)
+    except ValueError as e:
+        raise ValueError(
+            f"evaluation.{criterion.name}: expected a single number on stdout, got {stdout!r}"
+        ) from e
 
     # handle the two tolerance types
     match criterion.tolerance:
