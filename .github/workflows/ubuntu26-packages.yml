@@ -129,6 +129,10 @@ jobs:
           printf -- '- Package: `%s`\n' "$package" >> "$GITHUB_STEP_SUMMARY"
           printf -- '- Build type: `Release`\n' >> "$GITHUB_STEP_SUMMARY"
           printf -- '- SHA-256: `%s`\n' "$(cut -d' ' -f1 "packages/$package.sha256")" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Declared Ubuntu dependencies: `%s`\n' \
+            "$(dpkg-deb --field "packages/$package" Depends)" >> "$GITHUB_STEP_SUMMARY"
+          python3 .github/scripts/report-linked-dependencies.py "$CONFIGURATION" \
+            >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload package and checksum
         uses: actions/upload-artifact@v4
@@ -247,6 +251,16 @@ jobs:
           mkdir -p svZeroDSolver/build/src/interface
           ln -s "$interface" svZeroDSolver/build/src/interface/libsvzero_interface.so
           printf 'SVMP_SOLVER_EXECUTABLE=%s\n' "$solver" >> "$GITHUB_ENV"
+
+      - name: Report installed dependency versions
+        shell: bash
+        run: |
+          printf '### Installed Ubuntu 26 package versions (%s)\n\n' \
+            "$SVMP_SOLVER_CONFIGURATION" >> "$GITHUB_STEP_SUMMARY"
+          printf '| Package | Version |\n| --- | --- |\n' >> "$GITHUB_STEP_SUMMARY"
+          dpkg-query -W -f='| ${binary:Package} | ${Version} |\n' \
+            svmultiphysics svzerodsolver liblapack3 openmpi-bin libopenmpi40 \
+            >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install Python test environment
         shell: bash
