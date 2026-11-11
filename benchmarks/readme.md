@@ -31,13 +31,14 @@ The `benchmark.toml` is the Benchmark Specification and it contains directions f
 
 Specifically, the Benchmark Specification contains:
 
-1. name (Required) - The general name of the benchmark
-2. reference_source (Required) - The basis of the reference
-3. preprocess (Optional) - Command that runs any preprocessing
-4. solver (Required) - Solver input files and conditions
-5. postprocess (Optional) - Command that runs any postprocessing
-6. evaluation (Required) - Description of what is being evaluated and how to extract it (see below)
-7. cleanup (Optional) - Command that runs any cleanup at the end
+1. schema (Required) - Version of the `benchmark.toml` format
+2. name (Required) - The general name of the benchmark
+3. reference_source (Required) - The basis of the reference
+4. preprocess (Optional) - Command that runs any preprocessing
+5. solver (Required) - Solver input files and conditions
+6. postprocess (Optional) - Command that runs any postprocessing
+7. evaluation (Required) - Description of what is being evaluated and how to extract it (see below)
+8. cleanup (Optional) - Command that runs any cleanup at the end
 
 ```mermaid
 flowchart LR
