@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s nullglob
 
 macro_value() {
     awk -v name="$2" '$1 == "#define" && $2 == name { gsub(/"/, "", $3); print $3; found = 1; exit } END { if (!found) exit 1 }' "$1"
@@ -9,7 +10,7 @@ vtk_version=$(awk '/^set\(PACKAGE_VERSION / { gsub(/["\)]/, "", $2); print $2; f
     /vtk/lib/cmake/vtk-9.3/vtk-config-version.cmake)
 boost_number=$(macro_value /boost/include/boost/version.hpp BOOST_VERSION)
 lapack_configs=(/lapack/cmake/lapack-*/lapack-config-version.cmake)
-test -f "${lapack_configs[0]}"
+test "${#lapack_configs[@]}" -eq 1
 lapack_version=$(basename "$(dirname "${lapack_configs[0]}")")
 
 printf 'Ubuntu: '
@@ -36,8 +37,18 @@ printf 'GoogleTest: 1.14.0\n'
 printf 'Miniconda installer SHA256: %s\n' "$(sha256sum /miniconda.sh | awk '{print $1}')"
 printf 'Python: %s\n' "$(conda run -n svmultiphysics python -c 'import platform; print(platform.python_version())')"
 printf 'Source commits:\n'
-for source in /source-revisions/*; do
-    printf '  %s: %s\n' "${source##*/}" "$(cat "$source")"
+source_revisions=(/source-revisions/*)
+if (( ${#source_revisions[@]} == 0 )); then
+    echo 'Source revisions are missing from the dependency image' >&2
+    exit 1
+fi
+for source in "${source_revisions[@]}"; do
+    revision=$(cat "$source")
+    if [[ ! "$revision" =~ ^[0-9a-f]{40}$ ]]; then
+        echo "Invalid source revision in $source" >&2
+        exit 1
+    fi
+    printf '  %s: %s\n' "${source##*/}" "$revision"
 done
 
 if [[ "${1:-}" == --summary ]]; then
