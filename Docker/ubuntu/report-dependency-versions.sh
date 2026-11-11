@@ -1,24 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+macro_value() {
+    awk -v name="$2" '$1 == "#define" && $2 == name { gsub(/"/, "", $3); print $3; found = 1; exit } END { if (!found) exit 1 }' "$1"
+}
+
+vtk_version=$(awk '/^set\(PACKAGE_VERSION / { gsub(/["\)]/, "", $2); print $2; found = 1; exit } END { if (!found) exit 1 }' \
+    /vtk/lib/cmake/vtk-9.3/vtk-config-version.cmake)
+boost_number=$(macro_value /boost/include/boost/version.hpp BOOST_VERSION)
+lapack_configs=(/lapack/cmake/lapack-*/lapack-config-version.cmake)
+test -f "${lapack_configs[0]}"
+lapack_version=$(basename "$(dirname "${lapack_configs[0]}")")
+
 printf 'Ubuntu: '
 . /etc/os-release
 printf '%s\n' "$PRETTY_NAME"
+printf 'Ubuntu base image: %s\n' "$UBUNTU_BASE_IMAGE"
 printf 'Build type: %s\n' "$DEPENDENCY_BUILD_TYPE"
-/cmake/bin/cmake --version | head -n 1
-/openmpi/bin/ompi_info --version | head -n 1
-grep '^set(PACKAGE_VERSION ' /vtk/lib/cmake/vtk-9.3/vtk-config-version.cmake | head -n 1
-grep '^#define BOOST_LIB_VERSION ' /boost/include/boost/version.hpp
-ls /lapack/cmake/lapack-*/lapack-config-version.cmake
-grep -E '^#define H5_VERS_(MAJOR|MINOR|RELEASE) ' /hdf5/include/H5public.h
-grep '^#define HYPRE_RELEASE_VERSION ' /hypre/include/HYPRE_config.h
-grep '^#define TRILINOS_VERSION_STRING ' /trilinos/include/Trilinos_version.h
-grep -E '^#define PETSC_VERSION_(MAJOR|MINOR|SUBMINOR) ' /petsc/include/petscversion.h
-printf 'GoogleTest: v1.14.0\n'
-grep '^# VER:' /miniconda.sh
-printf 'Miniconda installer: '
-sha256sum /miniconda.sh
-conda run -n svmultiphysics python --version
+printf 'CMake: %s\n' "$(/cmake/bin/cmake --version | awk 'NR == 1 {print $3}')"
+printf 'Open MPI: %s\n' "$(/openmpi/bin/ompi_info --version | awk 'NR == 1 {print $NF}')"
+printf 'VTK: %s\n' "$vtk_version"
+printf 'Boost: %s.%s.%s\n' "$((boost_number / 100000))" "$(((boost_number / 100) % 1000))" "$((boost_number % 100))"
+printf 'LAPACK: %s (installed CMake package)\n' "${lapack_version#lapack-}"
+printf 'HDF5: %s.%s.%s\n' \
+    "$(macro_value /hdf5/include/H5public.h H5_VERS_MAJOR)" \
+    "$(macro_value /hdf5/include/H5public.h H5_VERS_MINOR)" \
+    "$(macro_value /hdf5/include/H5public.h H5_VERS_RELEASE)"
+printf 'HYPRE: %s\n' "$(macro_value /hypre/include/HYPRE_config.h HYPRE_RELEASE_VERSION)"
+printf 'Trilinos: %s\n' "$(macro_value /trilinos/include/Trilinos_version.h TRILINOS_VERSION_STRING)"
+printf 'PETSc: %s.%s.%s\n' \
+    "$(macro_value /petsc/include/petscversion.h PETSC_VERSION_MAJOR)" \
+    "$(macro_value /petsc/include/petscversion.h PETSC_VERSION_MINOR)" \
+    "$(macro_value /petsc/include/petscversion.h PETSC_VERSION_SUBMINOR)"
+printf 'GoogleTest: 1.14.0\n'
+printf 'Miniconda installer SHA256: %s\n' "$(sha256sum /miniconda.sh | awk '{print $1}')"
+printf 'Python: %s\n' "$(conda run -n svmultiphysics python -c 'import platform; print(platform.python_version())')"
 printf 'Source commits:\n'
 for source in /source-revisions/*; do
     printf '  %s: %s\n' "${source##*/}" "$(cat "$source")"

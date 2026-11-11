@@ -1,8 +1,11 @@
 # ================================================================================
 # BASE: Common base image with dependencies
 # ================================================================================
-FROM ubuntu:26.04 AS base
+ARG UBUNTU_BASE_IMAGE=ubuntu:26.04
+FROM ${UBUNTU_BASE_IMAGE} AS base
 
+ARG UBUNTU_BASE_IMAGE
+ENV UBUNTU_BASE_IMAGE=${UBUNTU_BASE_IMAGE}
 ARG DEPENDENCY_BUILD_TYPE=Release
 ENV DEPENDENCY_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE}
 RUN case "${DEPENDENCY_BUILD_TYPE}" in \

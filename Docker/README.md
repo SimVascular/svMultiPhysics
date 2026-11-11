@@ -48,8 +48,11 @@ The `svmp-libraries:ubuntu26` tag is local to your machine unless you explicitly
 push it to a registry. Building it does not change either published Docker Hub
 image or the base image used by `Docker/solver/dockerfile`.
 
-The image uses the Ubuntu 26.04 base tag and release tags for source-built
-libraries where available (or Git commits otherwise). The Conda environment
+The Dockerfile defaults to the Ubuntu 26.04 base tag; the dependency-image
+workflow resolves its digest before building and records the exact base image
+reference in the version inventory. Local builds can pass `UBUNTU_BASE_IMAGE`
+with a digest to get the same provenance. Source-built libraries use release
+tags where available (or Git commits otherwise). The Conda environment
 requests Python 3.12; Ubuntu, Conda, and pip package versions are not pinned.
 The image contains `/usr/local/share/svMultiPhysics/dependency-versions.txt`
 with the resolved source commits and installed Ubuntu, Conda, and Python package
