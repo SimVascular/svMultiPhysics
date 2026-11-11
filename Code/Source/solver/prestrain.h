@@ -236,10 +236,10 @@ void pull_back_fibers(const mat_fun::Matrix<nsd>& F0, Array<double>& fibers)
 ///
 ///     w F dS Grad_0 N_a,
 ///
-/// taking the change dS of the material law's S by one-sided finite
-/// differences along the nsd - 1 directions perpendicular to each fiber, so it
-/// costs nsd - 1 calls of the material law per fiber, plus one for the
-/// baseline. A mesh without fibers pays nothing beyond the first part.
+/// taking the gradient of the material law's S with respect to each fiber by
+/// one-sided finite differences along the axes and applying it to df0, so it
+/// costs nsd calls of the material law per fiber, plus one for the baseline.
+/// A mesh without fibers pays nothing beyond the first part.
 ///
 /// @param active_stress_evaluator the kernel's evaluator, updated for the element.
 /// @param N shape functions at the Gauss point, for the active tension.
@@ -254,7 +254,7 @@ void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, cons
     const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
     const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
     const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
-    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,   // mat_models::FiberRef<nsd>
     double w_afu, int dof, Array3<double>& lK);
 
 /// @brief Validate the settings and the prestrains read from file, and seed

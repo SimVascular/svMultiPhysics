@@ -46,8 +46,8 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl,
-    const Eigen::Matrix<double, 3, 3>& F0, Array<double>& lR, Array3<double>& lK, 
+    const Array<double>& dl, const Array<double>& bfl, const Eigen::Matrix<double, 3, 3>& F0,
+    Array<double>& lR, Array3<double>& lK, 
     Array3<double>& lKd);
 
 void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,

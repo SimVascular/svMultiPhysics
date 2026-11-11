@@ -523,8 +523,8 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   const Eigen::Vector2d v  = vel * Nwm;
   const Eigen::Vector2d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients on the stress-free configuration:
-  // Grad(v) and F = F0 + Grad(u) = (I + Grad u on the mesh) F0
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<2> vx = vel * Nwxm.transpose();
   const Matrix<2> F  = F0 + disp * Nwxm.transpose();
 
@@ -638,8 +638,8 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& bfl,
-    const mat_fun::Matrix<3>& F0, Array<double>& lR, Array3<double>& lK,
+    const Array<double>& dl, const Array<double>& bfl, const mat_fun::Matrix<3>& F0,
+    Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -693,8 +693,8 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   const Eigen::Vector3d v  = vel * Nwm;
   const Eigen::Vector3d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients on the stress-free configuration:
-  // Grad(v) and F = F0 + Grad(u) = (I + Grad u on the mesh) F0
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<3> vx = vel * Nwxm.transpose();
   const Matrix<3> F  = F0 + disp * Nwxm.transpose();
 
@@ -882,8 +882,8 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Eigen::Vector2d v  = vel * Nwm;
   const Eigen::Vector2d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients on the stress-free configuration:
-  // Grad(v) and F = F0 + Grad(u) = (I + Grad u on the mesh) F0
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<2> vx = vel * Nwxm.transpose();
   const Matrix<2> F  = F0 + disp * Nwxm.transpose();
 
@@ -1132,8 +1132,8 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Eigen::Vector3d v  = vel * Nwm;
   const Eigen::Vector3d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients on the stress-free configuration:
-  // Grad(v) and F = F0 + Grad(u) = (I + Grad u on the mesh) F0
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<3> vx = vel * Nwxm.transpose();
   const Matrix<3> F  = F0 + disp * Nwxm.transpose();
 

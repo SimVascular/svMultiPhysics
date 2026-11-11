@@ -438,8 +438,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   S0 << pS0g(0), pS0g(2),
         pS0g(2), pS0g(1);
 
-  // Velocity and deformation gradients on the stress-free configuration:
-  // Grad(v) and F = F0 + Grad(u) = (I + Grad u on the mesh) F0
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<2> vx = vel * Nxm.transpose();
   const Matrix<2> F  = F0 + disp * Nxm.transpose();
 
@@ -618,8 +618,8 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
         pS0g(3), pS0g(1), pS0g(4),
         pS0g(5), pS0g(4), pS0g(2);
 
-  // Velocity and deformation gradients on the stress-free configuration:
-  // Grad(v) and F = F0 + Grad(u) = (I + Grad u on the mesh) F0
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<3> vx = vel * Nxm.transpose();
   const Matrix<3> F  = F0 + disp * Nxm.transpose();
 

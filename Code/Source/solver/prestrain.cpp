@@ -13,7 +13,6 @@
 #include "solid/mat_models.h"
 
 #include <algorithm>
-#include <array>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -22,12 +21,6 @@
 #include "mpi.h"
 
 namespace {
-
-/// @brief Name of the VTU cell array holding Gauss point g.
-std::string array_name(const int g)
-{
-  return "Prestrain_F_g" + std::to_string(g);
-}
 
 /**
  * @brief Scatters element-associated data from the master to every rank.
@@ -66,22 +59,6 @@ void scatter_element_data(const double* global_data, double* local_data,
     cm_mod.master, cm.com());
 }
 
-/// @brief An orthonormal basis of the directions perpendicular to the unit
-/// vector d.
-template <int nsd>
-std::array<Eigen::Matrix<double, nsd, 1>, nsd - 1> perpendicular_directions(const Eigen::Matrix<double, nsd, 1>& d)
-{
-  if constexpr (nsd == 2) {
-    return {Eigen::Vector2d(-d(1), d(0))};
-  } else {
-    // Cross with the axis least aligned with d.
-    int k = 0;
-    d.cwiseAbs().minCoeff(&k);
-    const Eigen::Vector3d t = d.cross(Eigen::Vector3d::Unit(k)).normalized();
-    return {t, d.cross(t)};
-  }
-}
-
 } // namespace
 
 
@@ -106,7 +83,7 @@ void Prestrain::read(const MeshParameters& mesh_parameters, mshType& mesh, const
 
   Array<double> Fg(ncomp, mesh.gnEl);
   for (int g = 0; g < mesh.nG; g++) {
-    const auto name = array_name(g);
+    const auto name = "Prestrain_F_g" + std::to_string(g);
     svmp::throw_if<svmp::FileFormatException>(!vtk_data->has_cell_data(name), file_name,
         "No cell array named '" + name + "': the mesh named '" + mesh.name + "' integrates with " +
         std::to_string(mesh.nG) + " Gauss points per element.");
@@ -216,18 +193,22 @@ void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, cons
     const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
     const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
     const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
-    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,
-    const double w_afu, const int dof, Array3<double>& lK)
+    const mat_models::FiberRef<nsd>& fibers, const double w_afu, const int dof, Array3<double>& lK)
 {
   using Matrix = mat_fun::Matrix<nsd>;
   using NodalMatrix = mat_fun::NodalMatrix<nsd>;
   using Direction = Eigen::Matrix<double, nsd, 1>;
+  const int eNoN = Nx0.cols();
 
-  // The current configuration does not move with u.
+  // 1. The current configuration does not move with u. The kernel's tangent
+  //    carries the change of the current volume and shape function gradients
+  //    with u; take it out:
+  //        -w [ (tau Grad_x N_a)_i (Grad_x N_b)_j - (tau Grad_x N_b)_i (Grad_x N_a)_j ],
+  //    tau = P F^T, Grad_x N = F^-T Grad_0 N.
   const NodalMatrix Nxs = F.inverse().transpose() * Nx0;
   const NodalMatrix tau_Nxs = (P * F.transpose()) * Nxs;
-  for (int b = 0; b < Nxs.cols(); b++) {
-    for (int a = 0; a < Nxs.cols(); a++) {
+  for (int b = 0; b < eNoN; b++) {
+    for (int a = 0; a < eNoN; a++) {
       for (int i = 0; i < nsd; i++) {
         for (int j = 0; j < nsd; j++) {
           lK(i*dof + j, a, b) -= w_afu * (tau_Nxs(i,a) * Nxs(j,b) - tau_Nxs(i,b) * Nxs(j,a));
@@ -236,53 +217,63 @@ void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, cons
     }
   }
 
-  // The fibers turn with u.
-  const int nFn = fibers.cols();
-  if ((fibers.colwise().norm().array() == 0.0).all()) {
+  // 2. The fibers turn with u. Composing u pulls the mesh's fibers back anew,
+  //    so each fiber f0 the material law sees changes, to first order, by
+  //        df0 = -(I - f^ f^T) G f0,   G = F0^-1 Grad u F0,
+  //    turning without stretching. The kernel's tangent holds the fibers
+  //    fixed; add w F dS Grad_0 N_a, with dS the material law's change along
+  //    the turning: its gradient with respect to the fiber, by one-sided
+  //    finite differences along the axes, applied to df0.
+  const int nfd = fibers.cols();
+  if ((fibers.colwise().norm().array() == 0.0).all()) {   // Fibers::zero_fibers
     return;
   }
 
-  // The material law's S at F for given fibers; the active tension, Dm and
+  // S of the material law at F for given fibers; the active tension, Dm and
   // Ja are recomputed with each call and discarded.
-  const auto stress = [&](const auto& f) {
+  const auto stress = [&](const mat_models::FiberRef<nsd>& f) {
     Matrix S;
     mat_fun::Matrix<3*(nsd-1)> Dm;
     double Ja;
     const auto Ta = active_stress_evaluator.evaluate<nsd>(N, F, f);
-    mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, dmn, F, nFn, f, Ta, S, Dm, Ja);
+    mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, dmn, F, nfd, f, Ta, S, Dm, Ja);
     return S;
   };
   const Matrix S = stress(fibers);
 
-  // Step of the finite differences, relative to the fiber's length
-  constexpr double h = 1.0e-7;
+  constexpr double h = 1.0e-7;   // finite difference step, relative to the fiber's length
+  const Matrix F0_inv = F0.inverse();
+  Eigen::Matrix<double, nsd, Eigen::Dynamic> f = fibers;   // the fibers, one of them perturbed
 
-  const Matrix F0_inv_t = F0.inverse().transpose();
-  Eigen::Matrix<double, nsd, Eigen::Dynamic> f = fibers;
-
-  for (int k = 0; k < nFn; k++) {
+  for (int k = 0; k < nfd; k++) {
     const Direction fk = fibers.col(k);
     const double lk = fk.norm();
     if (lk == 0.0) {
       continue;
     }
+    const Direction d = fk / lk;
+
     // Grad_0 N_b . f0 = Grad N_b . F0 f0, the gradient on the mesh along the fiber
     const mat_fun::NodalVector fk_Nx = Nx0.transpose() * fk;
 
-    for (const Direction& t : perpendicular_directions<nsd>(Direction(fk / lk))) {
-      // The material law's S along t
-      f.col(k) = fk + (h * lk) * t;
-      const Matrix dS = (stress(f) - S) / (h * lk);
-      f.col(k) = fk;
+    // The turning, df0 = -(I - d d^T) F0^-1 du_b (Grad_0 N_b . f0): T maps
+    // du_b to df0 for node b, up to the factor fk_Nx(b).
+    const Matrix T = -(Matrix::Identity() - d * d.transpose()) * F0_inv;
 
-      // t . df0 = sum over b of C(:,b) . du_b, so lK += w_afu (F dS Grad_0 N_a) (x) C(:,b)
-      const NodalMatrix C = -(F0_inv_t * t) * fk_Nx.transpose();
+    for (int j = 0; j < nsd; j++) {
+      // dS along the axis e_j
+      f(j, k) = fk(j) + h * lk;
+      const Matrix dS = (stress(f) - S) / (h * lk);
+      f(j, k) = fk(j);
+
+      // df0_j = C(:,b) . du_b for every node b, so lK += w_afu (F dS Grad_0 N_a) (x) C(:,b)
       const NodalMatrix dP_Nx = (F * dS) * Nx0;
-      for (int b = 0; b < Nx0.cols(); b++) {
-        for (int a = 0; a < Nx0.cols(); a++) {
+      const NodalMatrix C = T.row(j).transpose() * fk_Nx.transpose();
+      for (int b = 0; b < eNoN; b++) {
+        for (int a = 0; a < eNoN; a++) {
           for (int i = 0; i < nsd; i++) {
-            for (int j = 0; j < nsd; j++) {
-              lK(i*dof + j, a, b) += w_afu * dP_Nx(i,a) * C(j,b);
+            for (int l = 0; l < nsd; l++) {
+              lK(i*dof + l, a, b) += w_afu * dP_Nx(i,a) * C(l,b);
             }
           }
         }

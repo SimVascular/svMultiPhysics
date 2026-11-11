@@ -31,8 +31,7 @@
 // Integrator Constructor
 //------------------------
 Integrator::Integrator(Simulation* simulation, SolutionStates&& solutions)
-  : simulation_(simulation), solutions_(std::move(solutions)),
-    newton_count_(0)
+  : simulation_(simulation), solutions_(std::move(solutions)), newton_count_(0)
 {
   initialize_arrays();
 }
@@ -79,8 +78,6 @@ bool Integrator::step(bool save_results) {
   newton_count_ = 1;
   int iEqOld;
 
-  double prestrain_update = 0.0;
-
   // Looping over Newton iterations
   while (true) {
     #ifdef debug_integrator_step
@@ -119,8 +116,9 @@ bool Integrator::step(bool save_results) {
     apply_increment(eq, step_length);
 
     // A prestrain solve composes every iteration's update into the prestrain
+    double prestrain_update = 0.0;
     if (com_mod.prestrainEq) {
-      prestrain_update = prestrain::compose_iteration(com_mod, solutions_);
+      const double prestrain_update = prestrain::compose_iteration(com_mod, solutions_);
     }
 
     finalize_iteration();
@@ -482,10 +480,8 @@ void Integrator::pseudo_transient_finish_step(const eqType &eq, const double upd
               << ", first residual = " << residual << ", R/R0 = " << eq.pNorm << ")" << std::endl;
   }
 
-  // Switched evolution relaxation: the next time step grows by the ratio of
-  // the first residuals of the last two steps. There is nothing to compare
-  // with on the first step, and dt stays where it is once the residual has
-  // reached round-off.
+  // Adaptive time stepping: the next time step grows by the ratio of
+  // the first residuals of the last two steps unless the max dt is reached.
   if (eq.pseudo_transient_adaptive_time_step && pseudo_transient_residual_prev_ > 0.0 &&
       residual > 0.0 && std::isfinite(residual)) {
     dt = std::min(eq.pseudo_transient_maximum_time_step, dt * pseudo_transient_residual_prev_ / residual);

@@ -19,9 +19,6 @@
  * - Newton iteration loop with convergence checking
  * - Linear system assembly and solve
  * - Boundary condition application
- * - Pseudo-transient continuation, when enabled (see below)
- * - Prestrain: every Newton iteration's update is composed into the prestrain
- *   (see prestrain.h)
  *
  * ## Line search
  *
