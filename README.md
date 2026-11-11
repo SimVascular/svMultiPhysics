@@ -8,6 +8,7 @@
 
 ### Table of Contents
 **[Introduction](#introduction)**<br>
+**[Installing Ubuntu 26 Packages](#ubuntu_26_packages)**<br>
 **[Building the svMultiPhysics Program from Source](#building)**<br>
 **[Building with External Linear Algebra Packages](#linear_algebra_packages)**<br>
 **[Running the svMultiPhysics Program](#running_svmultiphysics)**<br> 
@@ -33,6 +34,17 @@ The [svMultiPhysics Developer Gude Documentation](https://simvascular.github.io/
 ## Test Data
 The `svMultiPhysics/test/cases` directory contains mesh, data and solver XML files that are used for testing changes made to the svMultiPhysics code base. The VTK files located in these directories don't initially contain data after cloning the svMultiPhysics repository. They are stored using `git lfs` and must be downloaded separately. See 
 [Testing](tests/README.md) for details about how to use `git lfs`.
+
+<h1 id="ubuntu_26_packages"> Installing Ubuntu 26 Packages </h1>
+
+The Ubuntu 26.04.1 packages target AMD64. Download the svMultiPhysics default or Trilinos `.deb`. For the default configuration, install it with:
+
+```bash
+sudo apt update
+sudo apt install ./svMultiPhysics-Ubuntu-26-default-1.0.0.1.deb
+```
+
+Use `svMultiPhysics-Ubuntu-26-trilinos-1.0.0.1.deb` instead for the Trilinos configuration. Install the [svZeroDSolver v3.2 Ubuntu 26 package](https://github.com/SimVascular/svZeroDSolver/releases/download/v3.2/svZeroDSolver-Ubuntu-26-v3.2.deb) as well for cases coupled to the 0D solver. APT installs the svMultiPhysics package's declared runtime dependencies, including `liblapack3` (which brings in a BLAS provider) and `openmpi-bin`. No VTK, Trilinos, CMake, or compiler installation is needed to run the packaged solver. Run the installed executable at `/usr/local/sv/svMultiPhysics/1-0-0-1/bin/svmultiphysics` with `mpirun` and a solver input file.
 
 
 <!--- =================================================================================== -->
