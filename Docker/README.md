@@ -31,6 +31,14 @@ docker build --platform linux/amd64 \
   -t svmp-libraries:ubuntu26 Docker/ubuntu
 ```
 
+`DEPENDENCY_BUILD_TYPE` defaults to `Release` and accepts only `Release`,
+`RelWithDebInfo`, or `Debug`. CMake-built dependencies use the selected type.
+Boost and PETSc use their debug settings only for `Debug`. Both `Release` and
+`RelWithDebInfo` use Boost's release variant and the same optimized PETSc flags
+(`-g -O2`); this is intentional. The release process promotes only `Release`
+dependency images to `rc` or final. Other build-type spellings fail before
+dependencies are installed.
+
 The current Dockerfile downloads an x86-64 CMake binary, so this build targets
 `linux/amd64`. On Apple Silicon, Docker runs it under emulation. The Dockerfile
 uses `bsdtar` in archive-extracting stages under arm64-to-amd64 emulation to
