@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 import subprocess
-from typing import Self, assert_never
+from typing import Self, Literal, assert_never
 from .execution import Command, RunResult, capture_command
 from ._expect import expect_float, expect_float_positive, expect_str
 
@@ -73,11 +73,13 @@ class EvaluationCriterion:
 @dataclass(frozen=True)
 class AbsoluteTolerance:
     value: float
+    kind: Literal["atol"] = "atol"
 
 
 @dataclass(frozen=True)
 class RelativeTolerance:
     value: float
+    kind: Literal["rtol"] = "rtol"
 
 
 @dataclass(frozen=True)
