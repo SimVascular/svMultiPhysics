@@ -118,13 +118,13 @@ def evaluate_criterion(
     # handle the two tolerance types
     match criterion.tolerance:
         case AbsoluteTolerance(value=atol):
-            if abs(value - criterion.reference) < atol:
+            if abs(value - criterion.reference) <= atol:
                 status = EvaluationStatus.PASSED
             else:
                 status = EvaluationStatus.FAILED
 
         case RelativeTolerance(value=rtol):
-            if abs(value - criterion.reference) < abs(rtol * criterion.reference):
+            if abs(value - criterion.reference) <= abs(rtol * criterion.reference):
                 status = EvaluationStatus.PASSED
             else:
                 status = EvaluationStatus.FAILED
