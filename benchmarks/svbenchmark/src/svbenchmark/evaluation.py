@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 import subprocess
-from typing import Self, Literal, assert_never
+from typing import Self, Literal
 from .execution import Command, RunResult, capture_command
-from ._expect import expect_float, expect_float_positive, expect_str
+from ._expect import expect_float, expect_float_positive
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -58,11 +58,8 @@ class EvaluationCriterion:
             case (None, None):
                 raise ValueError("Either 'atol' or 'rtol' must be specified")
 
-            case (value1, value2):
+            case (_, _):
                 raise ValueError("'atol' and 'rtol' cannot both be specified")
-
-            case unexpected:
-                assert_never(unexpected)
 
         return tolerance
 
@@ -136,13 +133,6 @@ def evaluate_criterion(
             else:
                 status = EvaluationStatus.FAILED
 
-        # handle undefined cases
-        case None:
-            raise NotImplementedError(
-                "No defined tolerance (likely for future metric tracking) is not yet supported"
-            )
-        case unexpected:
-            assert_never(unexpected)
 
     return EvaluationCriterionResult(
         reference=criterion.reference,
