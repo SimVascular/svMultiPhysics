@@ -186,6 +186,43 @@ void Prestrain::gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType
 }
 
 
+void Prestrain::compose(const ComMod& com_mod, const mshType& mesh, const Array<double>& u)
+{
+  const int nsd = com_mod.nsd;
+  const int eNoN = mesh.eNoN;
+  Array<double> xl(nsd,eNoN), dl(nsd,eNoN), Nx(nsd,eNoN), ksix(nsd,nsd);
+  double Jac = 0.0;
+
+  for (int e = 0; e < mesh.nEl; e++) {
+    for (int a = 0; a < eNoN; a++) {
+      const int Ac = mesh.IEN(a,e);
+      for (int i = 0; i < nsd; i++) {
+        xl(i,a) = com_mod.x(i,Ac);
+        dl(i,a) = u(i,Ac);
+      }
+    }
+
+    for (int g = 0; g < mesh.nG; g++) {
+      // Shape function gradients on the mesh, constant within linear elements
+      if (g == 0 || !mesh.lShpF) {
+        auto Nx_g = mesh.Nx.slice(g);
+        nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
+      }
+      // F0 <- (I + Grad u) F0
+      if (nsd == 3) {
+        const mat_fun::Matrix<3> gradu = mat_fun::eigen_view<3>(dl) * mat_fun::eigen_view<3>(Nx).transpose();
+        Eigen::Map<mat_fun::Matrix<3>> F0_g(block(g, e));
+        F0_g = (mat_fun::Matrix<3>::Identity() + gradu) * F0_g;
+      } else {
+        const mat_fun::Matrix<2> gradu = mat_fun::eigen_view<2>(dl) * mat_fun::eigen_view<2>(Nx).transpose();
+        Eigen::Map<mat_fun::Matrix<2>> F0_g(block(g, e));
+        F0_g = (mat_fun::Matrix<2>::Identity() + gradu) * F0_g;
+      }
+    }
+  }
+}
+
+
 namespace prestrain {
 
 template <int nsd>
@@ -360,56 +397,6 @@ void init(ComMod& com_mod)
   svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.rmsh.isReqd,
       "A prestrain is not supported with remeshing: the prestrain is stored per element of the "
       "original mesh and is not carried to a new one.");
-}
-
-void compose_iteration(ComMod& com_mod, SolutionStates& solutions)
-{
-  auto& An = solutions.current.get_acceleration();
-  auto& Yn = solutions.current.get_velocity();
-  auto& Dn = solutions.current.get_displacement();
-  const auto& eq = com_mod.eq[0];
-  const int nsd = com_mod.nsd;
-
-  // F0 <- (I + Grad u) F0 at every Gauss point.
-  for (auto& msh : com_mod.msh) {
-    if (!msh.prestrain.has_prestrain()) {
-      continue;
-    }
-    const int eNoN = msh.eNoN;
-    Array<double> xl(nsd,eNoN), dl(nsd,eNoN), Nx(nsd,eNoN), ksix(nsd,nsd);
-    double Jac = 0.0;
-
-    for (int e = 0; e < msh.nEl; e++) {
-      for (int a = 0; a < eNoN; a++) {
-        const int Ac = msh.IEN(a,e);
-        for (int i = 0; i < nsd; i++) {
-          xl(i,a) = com_mod.x(i,Ac);
-          dl(i,a) = eq.af * Dn(eq.s+i,Ac);
-        }
-      }
-
-      for (int g = 0; g < msh.nG; g++) {
-        // Shape function gradients on the mesh, constant within linear elements
-        if (g == 0 || !msh.lShpF) {
-          auto Nx_g = msh.Nx.slice(g);
-          nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
-        }
-        if (nsd == 3) {
-          const mat_fun::Matrix<3> F_step = mat_fun::Matrix<3>::Identity() +
-              mat_fun::eigen_view_rows<3>(dl, 0) * mat_fun::eigen_view<3>(Nx).transpose();
-          msh.prestrain.compose<3>(g, e, F_step);
-        } else {
-          const mat_fun::Matrix<2> F_step = mat_fun::Matrix<2>::Identity() +
-              mat_fun::eigen_view_rows<2>(dl, 0) * mat_fun::eigen_view<2>(Nx).transpose();
-          msh.prestrain.compose<2>(g, e, F_step);
-        }
-      }
-    }
-  }
-  // Reset state to be at rest.
-  An = 0.0;
-  Yn = 0.0;
-  Dn = 0.0;
 }
 
 };

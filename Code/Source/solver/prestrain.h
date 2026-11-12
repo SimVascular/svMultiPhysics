@@ -18,7 +18,6 @@ class dmnType;
 class MeshParameters;
 class cmType;
 class mshType;
-struct SolutionStates;
 
 /// @brief Prestrain of a body imaged in a loaded configuration.
 ///
@@ -98,22 +97,18 @@ public:
   Eigen::MatrixXd get_mean(int nsd, int e) const;
 
   /**
-   * @brief F0 <- F_step F0 at Gauss point g of element e.
-   */
-  template <int nsd>
-  void compose(const int g, const int e, const mat_fun::Matrix<nsd>& F_step)
-  {
-    Eigen::Map<mat_fun::Matrix<nsd>> F(block(g, e));
-    F = F_step * F;
-  }
-
-  /**
    * @brief Gathers the prestrain onto the master in the mesh's original
    * element order, for writing: one row per component and Gauss point, one
    * column per element. Collective: every rank must call it, also a rank that
    * holds none of the mesh's elements.
    */
   void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh, Array<double>& gF0) const;
+
+  /**
+   * @brief F0 <- (I + Grad u) F0 at every Gauss point of the mesh, with u a
+   * nodal displacement field on the mesh, nsd x tnNo.
+   */
+  void compose(const ComMod& com_mod, const mshType& mesh, const Array<double>& u);
 
 private:
   /**
@@ -195,16 +190,6 @@ void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, cons
 /// Rejects a prestrain run with more than one equation, one that is not struct,
 /// or a line search, and any prestrain on a ustruct solid or with remeshing.
 void init(ComMod& com_mod);
-
-/// @brief Compose a Newton iteration's update into the prestrain,
-/// F0 <- (I + Grad u) F0 at every Gauss point, and reset the solution to rest
-/// for the next iteration. Called from the Integrator's Newton loop once the
-/// increment has been applied.
-///
-/// The kernels saw the generalized-alpha level displacement alpha_f*Dn, which
-/// is the state the iteration reached, so that is u; Dn itself would overshoot
-/// by 1/alpha_f.
-void compose_iteration(ComMod& com_mod, SolutionStates& solutions);
 
 };
 

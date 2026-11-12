@@ -14,7 +14,6 @@
 #include "nn.h"
 #include "output.h"
 #include "post.h"
-#include "prestrain.h"
 #include "ris.h"
 #include "set_bc.h"
 #include "solid/ustruct.h"
@@ -116,8 +115,21 @@ bool Integrator::step(bool save_results) {
     apply_increment(eq, step_length);
 
     // A prestrain solve composes every iteration's update into the prestrain
+    // and starts the next one from rest. The kernels saw the generalized-alpha
+    // level displacement af*Dn, so that is the update.
     if (com_mod.prestrainEq) {
-      prestrain::compose_iteration(com_mod, solutions_);
+      auto& An = solutions_.current.get_acceleration();
+      auto& Yn = solutions_.current.get_velocity();
+      auto& Dn = solutions_.current.get_displacement();
+      const Array<double> u = eq.af * Dn.rows(eq.s, eq.s + com_mod.nsd - 1);
+      for (auto& msh : com_mod.msh) {
+        if (msh.prestrain.has_prestrain()) {
+          msh.prestrain.compose(com_mod, msh, u);
+        }
+      }
+      An = 0.0;
+      Yn = 0.0;
+      Dn = 0.0;
     }
 
     finalize_iteration();
