@@ -396,7 +396,7 @@ ComMod</h2>
 <li><b> bf::set_bf(com_mod, Dg) </b><ul>
 <li><b> bf::set_bf_l(com_mod, eq.bf[iBf], com_mod.msh[iM], Dg) </b><ul>
 <li>"" "&lt;b&gt; ifft(com_mod, lBf.bt, f, rtmp) &lt;/b&gt;" - If bfType_ustd</li>
-<li>"" "&lt;b&gt; igbc(com_mod, lBf.bm, bfl, xl) &lt;/b&gt;" - If bfType_gen</li>
+<li>"" "&lt;b&gt; igbc(alpha_time, lBf.bm, bfl, xl) &lt;/b&gt;" - If bfType_gen</li>
 <li><b> bf::bf_construct(com_mod, lM, e, eNoN, idof, xl, dl, bfl, ptr) </b> - For shell follower pressre loads or init pressure for CMM</li>
 </ul>
 </li>
@@ -1339,7 +1339,7 @@ lD(tDof, tnNo)
  @icode 
  @endicode 
 
- - &lt;tt&gt;igbc(com_mod, lBc.gm, lY, lA)&lt;/tt&gt; - calculating values by the inverse of general BC
+ - &lt;tt&gt;igbc(com_mod.time, lBc.gm, lY, lA)&lt;/tt&gt; - calculating values by the inverse of general BC
 
  - &lt;tt&gt;ifft(com_mod, lBc.gt, dirY_v, dirA_v)&lt;/tt&gt;
 
@@ -1445,7 +1445,7 @@ Modifies
 
 - &lt;tt&gt;ifft(com_mod, lBf.bt, f, rtmp)&lt;/tt&gt; - If BodyForceType::bfType_ustd
 
-- &lt;tt&gt;igbc(com_mod, lBf.bm, bfl, xl)&lt;/tt&gt; - If BodyForceType::bfType_gen
+- &lt;tt&gt;igbc(alpha_time, lBf.bm, bfl, xl)&lt;/tt&gt; - If BodyForceType::bfType_gen
 
 - &lt;tt&gt;bf_construct(com_mod, lM, e, eNoN, idof, xl, dl, bfl, ptr)&lt;/tt&gt;
 
