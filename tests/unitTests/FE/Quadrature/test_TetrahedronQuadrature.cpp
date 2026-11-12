@@ -17,7 +17,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iomanip>
+#include <iostream>
 #include <limits>
+#include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
@@ -103,6 +107,232 @@ static_assert(std::is_same_v<decltype(make_tetrahedron_rule(0, std::declval<cons
 static_assert(std::is_same_v<decltype(make_tetrahedron_rule(0,
     std::declval<const QuadratureRule&>(), std::declval<const QuadratureRule&>(),
     std::declval<const QuadratureRule&>())), QuadratureRule>);
+
+constexpr long double kMomentRelativeTolerance = 2.0e-12L;
+using MomentTable = std::vector<std::vector<std::vector<CompensatedSum>>>;
+
+// Regroup only equal actual x and (x,y) coordinates, including disjoint groups
+// when samples are reordered. No factor data or reconstructed Duffy map enters
+// the sum. Store just the moments with a+b+c <= degree.
+MomentTable tetrahedron_moments(const QuadratureRule& rule, int degree)
+{
+    const std::size_t size = static_cast<std::size_t>(degree + 1);
+    MomentTable moments(size);
+    std::vector<std::vector<CompensatedSum>> plane(size);
+    std::vector<CompensatedSum> row(size);
+    for (std::size_t a = 0; a < size; ++a) {
+        moments[a].resize(size - a);
+        for (std::size_t b = 0; b < size - a; ++b) {
+            moments[a][b].resize(size - a - b);
+        }
+        plane[a].resize(size - a);
+    }
+    for (std::size_t first = 0; first < rule.num_points();) {
+        for (auto& row_of_plane : plane) {
+            std::fill(row_of_plane.begin(), row_of_plane.end(), CompensatedSum{});
+        }
+        const long double x = rule.point(first)[0];
+        do {
+            std::fill(row.begin(), row.end(), CompensatedSum{});
+            const long double y = rule.point(first)[1];
+            do {
+                const long double z = rule.point(first)[2];
+                long double power = 1.0L;
+                for (int c = 0; c <= degree; ++c) {
+                    row[c].add(static_cast<long double>(rule.weight(first)) * power);
+                    power *= z;
+                }
+                ++first;
+            } while (first < rule.num_points() && rule.point(first)[0] == x && rule.point(first)[1] == y);
+            long double power = 1.0L;
+            for (int b = 0; b <= degree; ++b) {
+                for (int c = 0; c <= degree - b; ++c) {
+                    plane[b][c].add(power * row[c].value());
+                }
+                power *= y;
+            }
+        } while (first < rule.num_points() && rule.point(first)[0] == x);
+        long double power = 1.0L;
+        for (int a = 0; a <= degree; ++a) {
+            for (int b = 0; b <= degree - a; ++b) {
+                for (int c = 0; c <= degree - a - b; ++c) {
+                    moments[a][b][c].add(power * plane[b][c].value());
+                }
+            }
+            power *= x;
+        }
+    }
+    return moments;
+}
+
+long double expect_all_moments(const QuadratureRule& rule, bool direct = false)
+{
+    const int degree = rule.polynomial_exactness();
+    const auto moments = direct ? MomentTable{} : tetrahedron_moments(rule, degree);
+    long double maximum_error = 0.0L;
+    std::array<int, 3> worst{};
+    std::size_t invalid = 0;
+    for (int a = 0; a <= degree; ++a) {
+        for (int b = 0; b <= degree - a; ++b) {
+            for (int c = 0; c <= degree - a - b; ++c) {
+                const long double expected = reference::tetrahedron_monomial_integral(a, b, c);
+                const long double actual = direct ? direct_moment(rule, a, b, c) : moments[a][b][c].value();
+                const long double error = std::isfinite(actual)
+                    ? std::abs(actual - expected) / expected : std::numeric_limits<long double>::infinity();
+                if (error > maximum_error) {
+                    maximum_error = error;
+                    worst = {a, b, c};
+                }
+                if (!(actual > 0.0L) || !(error <= kMomentRelativeTolerance)) {
+                    ++invalid;
+                }
+            }
+        }
+    }
+    EXPECT_EQ(invalid, 0u) << "degree " << degree << ", worst powers "
+        << worst[0] << ',' << worst[1] << ',' << worst[2]
+        << ", relative error " << maximum_error;
+    return maximum_error;
+}
+
+void record_moment_error(long double maximum_error)
+{
+    std::ostringstream value;
+    value << std::setprecision(21) << maximum_error;
+    ::testing::Test::RecordProperty("max_relative_error", value.str());
+    ::testing::Test::RecordProperty("long_double_digits", std::numeric_limits<long double>::digits);
+    ::testing::Test::RecordProperty("long_double_max_exponent", std::numeric_limits<long double>::max_exponent);
+    std::cout << "Maximum relative moment error: " << value.str() << std::endl;
+}
+
+QuadratureRule make_line(bool lobatto, int degree)
+{
+    return lobatto ? make_gauss_lobatto_rule(degree) : make_gauss_legendre_rule(degree);
+}
+
+void expect_structure(const QuadratureRule& rule, const QuadratureRule& u_rule,
+    const QuadratureRule& v_rule, const QuadratureRule& w_rule, bool closed)
+{
+    const std::size_t count = rule.num_points();
+    ASSERT_EQ(count, u_rule.num_points() * v_rule.num_points() * w_rule.num_points());
+    EXPECT_EQ(rule.cell_family(), svmp::CellFamily::Tetra);
+    EXPECT_EQ(rule.dimension(), 3u);
+    EXPECT_EQ(rule.reference_cell_measure(), 1.0 / 6.0);
+    EXPECT_EQ(rule.polynomial_exactness(), std::min({u_rule.polynomial_exactness() - 2,
+        v_rule.polynomial_exactness() - 1, w_rule.polynomial_exactness()}));
+    std::size_t first_nonfinite = count, first_exterior = count, first_bad_sign = count;
+    std::size_t first_bad_order = count, first_bad_collapse = count;
+    CompensatedSum measure;
+    constexpr double tolerance = 8.0 * std::numeric_limits<double>::epsilon();
+    for (std::size_t q = 0; q < count; ++q) {
+        const double x = rule.point(q)[0], y = rule.point(q)[1], z = rule.point(q)[2];
+        const double weight = rule.weight(q);
+        if (!(std::isfinite(x) && std::isfinite(y) && std::isfinite(z) && std::isfinite(weight))) {
+            first_nonfinite = std::min(first_nonfinite, q);
+        }
+        const bool inside = closed ? x >= 0.0 && y >= 0.0 && z >= 0.0 && x + y + z <= 1.0 + tolerance
+                                   : x > 0.0 && y > 0.0 && z > 0.0 && x + y + z < 1.0;
+        if (!inside) first_exterior = std::min(first_exterior, q);
+        if (!(closed ? weight >= 0.0 : weight > 0.0)) first_bad_sign = std::min(first_bad_sign, q);
+        const std::size_t i = q / (v_rule.num_points() * w_rule.num_points());
+        const std::size_t j = (q / w_rule.num_points()) % v_rule.num_points();
+        const std::size_t k = q % w_rule.num_points();
+        const double u = (u_rule.point(i)[0] + 1.0) / 2.0;
+        const double v = (v_rule.point(j)[0] + 1.0) / 2.0;
+        const double w = (w_rule.point(k)[0] + 1.0) / 2.0;
+        if (x != u || y != (1.0 - u) * v || z != (1.0 - u) * (1.0 - v) * w) {
+            first_bad_order = std::min(first_bad_order, q);
+        }
+        if ((u == 1.0 || v == 1.0) && weight != 0.0) {
+            first_bad_collapse = std::min(first_bad_collapse, q);
+        }
+        measure.add(weight);
+    }
+    EXPECT_EQ(first_nonfinite, count) << "first nonfinite sample";
+    EXPECT_EQ(first_exterior, count) << "first exterior sample";
+    EXPECT_EQ(first_bad_sign, count) << "first wrong weight sign";
+    EXPECT_EQ(first_bad_order, count) << "first wrong ordered coordinate";
+    EXPECT_EQ(first_bad_collapse, count) << "first nonzero collapsed weight";
+    EXPECT_NEAR(measure.value(), 1.0L / 6.0L, kMomentRelativeTolerance / 6.0L);
+}
+
+void expect_representative_rules(bool lobatto)
+{
+    long double maximum_error = 0.0L;
+    for (const int p : {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 31, 63,
+                       lobatto ? 250 : 252, lobatto ? 251 : 253}) {
+        SCOPED_TRACE(p);
+        const auto line = make_line(lobatto, p + 2);
+        const auto rule = make_tetrahedron_rule(p, line);
+        const std::size_t n = static_cast<std::size_t>(p / 2 + (lobatto ? 3 : 2));
+        EXPECT_EQ(rule.num_points(), n * n * n);
+        EXPECT_EQ(rule.polynomial_exactness(), 2 * static_cast<int>(n) - (lobatto ? 5 : 3));
+        expect_structure(rule, line, line, line, lobatto);
+        expect_same_rule(rule, make_tetrahedron_rule(p, line, line, line));
+        if (p <= 63) maximum_error = std::max(maximum_error, expect_all_moments(rule, p <= 12));
+    }
+    record_moment_error(maximum_error);
+}
+
+int maximum_mixed_request(int combination)
+{
+    return std::min({253, (combination & 4) ? 251 : 253,
+        (combination & 2) ? 252 : 254, (combination & 1) ? 253 : 255});
+}
+
+void expect_mixed_rules(bool exhaustive)
+{
+    long double maximum_error = 0.0L;
+    for (int combination = 0; combination < 8; ++combination) {
+        const std::vector requests = exhaustive ? std::vector{127, maximum_mixed_request(combination)}
+                                                : std::vector{0, 1, 2, 5, 31};
+        for (const int p : requests) {
+            SCOPED_TRACE(::testing::Message() << "combination " << combination << ", request " << p);
+            if (exhaustive) std::cout << "Mixed combination " << combination << ", request " << p << std::endl;
+            const auto u = make_line(combination & 4, p + 2);
+            const auto v = make_line(combination & 2, p + 1);
+            const auto w = make_line(combination & 1, p);
+            const auto rule = make_tetrahedron_rule(p, u, v, w);
+            EXPECT_EQ(rule.polynomial_exactness(), p);
+            expect_structure(rule, u, v, w, combination != 0);
+            maximum_error = std::max(maximum_error, expect_all_moments(rule, p <= 5));
+        }
+    }
+    record_moment_error(maximum_error);
+}
+
+void expect_every_rule(bool lobatto)
+{
+    const int last_request = lobatto ? 251 : 253;
+    int distinct = 0;
+    long double maximum_error = 0.0L;
+    std::optional<QuadratureRule> previous;
+    for (int p = 0; p <= last_request; ++p) {
+        SCOPED_TRACE(p);
+        const auto line = make_line(lobatto, p + 2);
+        auto rule = make_tetrahedron_rule(p, line);
+        const std::size_t n = static_cast<std::size_t>(p / 2 + (lobatto ? 3 : 2));
+        const int degree = 2 * static_cast<int>(n) - (lobatto ? 5 : 3);
+        ASSERT_EQ(rule.num_points(), n * n * n);
+        ASSERT_EQ(rule.polynomial_exactness(), degree);
+        expect_structure(rule, line, line, line, lobatto);
+        expect_same_rule(rule, make_tetrahedron_rule(p, line, line, line));
+        if (previous && previous->polynomial_exactness() == degree) {
+            expect_same_rule(*previous, rule);
+        } else {
+            ++distinct;
+            maximum_error = std::max(maximum_error, expect_all_moments(rule));
+        }
+        if (p % 32 == 0 || p == last_request) {
+            std::cout << (lobatto ? "Lobatto" : "Gauss") << " qualified through request " << p << std::endl;
+        }
+        previous = std::move(rule);
+    }
+    EXPECT_EQ(distinct, lobatto ? 126 : 127);
+    ASSERT_TRUE(previous.has_value());
+    EXPECT_EQ(previous->num_points(), 2097152u);
+    record_moment_error(maximum_error);
+}
 
 } // namespace
 
@@ -358,4 +588,75 @@ TEST(TetrahedronDuffyValidation, DetectsOutputMeasureMismatchWithoutCertifyingFa
     const auto accepted = make_tetrahedron_rule(0, false_u, compensating_v, single);
     EXPECT_EQ(accepted.polynomial_exactness(), 0);
     EXPECT_NEAR(direct_moment(accepted, 0, 0, 0), 1.0L / 6.0L, 2.0e-17L);
+}
+
+TEST(TetrahedronMomentAccumulation, MatchesDirectSumsOnIrregularSignedAndReorderedSamples)
+{
+    const QuadratureRule irregular(svmp::CellFamily::Tetra, 7,
+        {{0.25, 0.125, 0.25}, {0.25, 0.125, 0.25}, {0.25, 0.125, 0.5},
+         {0.25, 0.5, 0.0625}, {0.5, 0.25, 0.125}, {0.5, 0.125, 0.25},
+         {0.25, 0.125, 0.25}, {0.0, 0.0, 0.0}},
+        {2.0, -1.0, 0.75, -0.25, 0.5, 0.0, -0.125, 0.125});
+    for (const auto& rule : {irregular, reversed(irregular)}) {
+        const auto moments = tetrahedron_moments(rule, 7);
+        ASSERT_EQ(moments.size(), 8u);
+        for (int a = 0; a <= 7; ++a) {
+            ASSERT_EQ(moments[a].size(), 8u - a);
+            for (int b = 0; b <= 7 - a; ++b) {
+                ASSERT_EQ(moments[a][b].size(), 8u - a - b);
+                for (int c = 0; c <= 7 - a - b; ++c) {
+                    const long double direct = direct_moment(rule, a, b, c);
+                    EXPECT_NEAR(moments[a][b][c].value(), direct,
+                        256.0L * std::numeric_limits<long double>::epsilon() * std::max(1.0L, std::abs(direct)))
+                        << "powers " << a << ',' << b << ',' << c;
+                }
+            }
+        }
+    }
+}
+
+TEST(TetrahedronDuffyQualification, RepresentativeGaussRules)
+{
+    expect_representative_rules(false);
+}
+
+TEST(TetrahedronDuffyQualification, RepresentativeLobattoRules)
+{
+    expect_representative_rules(true);
+}
+
+TEST(TetrahedronDuffyQualification, RepresentativeMixedFactors)
+{
+    expect_mixed_rules(false);
+}
+
+TEST(TetrahedronDuffyQualification, RejectsRequestsBeyondEachMixedDirectionalLimit)
+{
+    for (int combination = 0; combination < 8; ++combination) {
+        SCOPED_TRACE(combination);
+        const auto u = make_line(combination & 4, (combination & 4) ? 253 : 255);
+        const auto v = make_line(combination & 2, (combination & 2) ? 253 : 255);
+        const auto w = make_line(combination & 1, (combination & 1) ? 253 : 255);
+        const int limit = maximum_mixed_request(combination);
+        expect_invalid([&] { (void)make_tetrahedron_rule(limit + 1, u, v, w); },
+            limit == 253 ? "requested_exactness" : "exactness");
+    }
+}
+
+// Required Release qualification, separate from routine CTest:
+// build/svMultiPhysics-build/bin/run_all_unit_tests --gtest_also_run_disabled_tests
+//   --gtest_filter='TetrahedronDuffyQualification.DISABLED_*'
+TEST(TetrahedronDuffyQualification, DISABLED_AllGaussMonomials)
+{
+    expect_every_rule(false);
+}
+
+TEST(TetrahedronDuffyQualification, DISABLED_AllLobattoMonomials)
+{
+    expect_every_rule(true);
+}
+
+TEST(TetrahedronDuffyQualification, DISABLED_MixedFactorMonomials)
+{
+    expect_mixed_rules(true);
 }
