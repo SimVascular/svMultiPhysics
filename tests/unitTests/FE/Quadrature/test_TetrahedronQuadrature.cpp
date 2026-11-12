@@ -428,6 +428,11 @@ TEST(TetrahedronDuffyImplementation, PreservesAnIndependentOrderedUnequalFixture
         {1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0, 0.0, 0.0});
     expect_same_rule(make_tetrahedron_rule(0, u, v, w), expected);
     expect_same_rule(make_tetrahedron_rule(0, reversed(u), v, reversed(w)), reversed(expected));
+    const QuadratureRule reversed_middle(svmp::CellFamily::Tetra, 0,
+        {{0.0, 1.0, 0.0}, {0.0, 0.0, 0.5}, {0.5, 0.5, 0.0},
+         {0.5, 0.0, 0.25}, {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}},
+        {0.0, 1.0 / 12.0, 0.0, 1.0 / 12.0, 0.0, 0.0});
+    expect_same_rule(make_tetrahedron_rule(0, u, reversed(make_gauss_lobatto_rule(1)), v), reversed_middle);
 }
 
 TEST(TetrahedronDuffyImplementation, UsesDirectionalExactnessAndOwnsItsStorage)
@@ -558,16 +563,19 @@ TEST(TetrahedronDuffyValidation, HandlesFiniteWeightsWhoseAbsoluteSumOverflows)
             continue;
         }
         const auto rule = make_tetrahedron_rule(1, factor);
+        ASSERT_EQ(rule.num_points(), 64u);
+        // Scale before summing: long double may have binary64 exponent range.
+        constexpr long double sum_scale = 1.0L / 64.0L;
         CompensatedSum absolute;
         for (double weight : rule.weights()) {
             ASSERT_TRUE(std::isfinite(weight));
-            absolute.add(std::abs(static_cast<long double>(weight)));
+            absolute.add(std::abs(static_cast<long double>(weight)) * sum_scale);
         }
         EXPECT_EQ(rule.weight(0), -rule.weight(1));
         EXPECT_EQ(rule.weight(0), -rule.weight(4));
         EXPECT_EQ(rule.weight(0), -rule.weight(16));
         if (magnitude == 1.0e103) {
-            EXPECT_GT(absolute.value(), static_cast<long double>(std::numeric_limits<double>::max()));
+            EXPECT_GT(absolute.value(), static_cast<long double>(std::numeric_limits<double>::max()) * sum_scale);
         } else {
             EXPECT_NEAR(direct_moment(rule, 0, 0, 0), 1.0L / 6.0L, 2.0e-16L);
         }
