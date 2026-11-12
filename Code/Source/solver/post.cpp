@@ -1951,7 +1951,9 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
       Matrix<nsd> F0 = Im;
       if (prestrained) {
         F0 = (fs.nG == lM.nG) ? lM.prestrain.get(nsd, g, e) : lM.prestrain.get_mean(nsd, e);
-        eigen_view_mutable(fibers) = (F0.inverse() * eigen_view<nsd>(fibers)).colwise().normalized();
+        if (lM.fibers.has_fibers()) {
+          eigen_view_mutable(fibers) = (F0.inverse() * eigen_view<nsd>(fibers)).colwise().normalized();
+        }
       }
       const Matrix<nsd> F = (Im + disp * Nxm.transpose()) * F0;
       const double detF = F.determinant();

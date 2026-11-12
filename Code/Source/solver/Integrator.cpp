@@ -114,18 +114,15 @@ bool Integrator::step(bool save_results) {
 
     apply_increment(eq, step_length);
 
-    // A prestrain solve composes every iteration's update into the prestrain
-    // and starts the next one from rest. The kernels saw the generalized-alpha
-    // level displacement af*Dn, so that is the update.
+    // If solving for prestrain, compose update into prestrain
+    // and reset state to rest.
     if (com_mod.prestrainEq) {
       auto& An = solutions_.current.get_acceleration();
       auto& Yn = solutions_.current.get_velocity();
       auto& Dn = solutions_.current.get_displacement();
       const Array<double> u = eq.af * Dn.rows(eq.s, eq.s + com_mod.nsd - 1);
       for (auto& msh : com_mod.msh) {
-        if (msh.prestrain.has_prestrain()) {
-          msh.prestrain.compose(com_mod, msh, u);
-        }
+        msh.prestrain.compose(com_mod, msh, u);
       }
       An = 0.0;
       Yn = 0.0;
@@ -493,7 +490,7 @@ void Integrator::pseudo_transient_finish_step(const eqType &eq)
   // Adaptive time stepping: the next time step grows by the ratio of
   // the first residuals of the last two steps unless the max dt is reached.
   if (eq.pseudo_transient_adaptive_time_step && pseudo_transient_residual_prev_ > 0.0 &&
-      residual > 0.0 && std::isfinite(residual)) {
+      std::isfinite(residual)) {
     dt = std::min(eq.pseudo_transient_maximum_time_step, dt * pseudo_transient_residual_prev_ / residual);
   }
   pseudo_transient_residual_prev_ = residual;

@@ -278,29 +278,24 @@ void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, cons
   };
   const Matrix S = stress(fibers);
 
-  constexpr double h = 1.0e-7;   // finite difference step, relative to the fiber's length
+  constexpr double h = 1.0e-7;   // finite difference step
   const Matrix F0_inv = F0.inverse();
   Eigen::Matrix<double, nsd, Eigen::Dynamic> f = fibers;   // the fibers, one of them perturbed
 
   for (int k = 0; k < nfd; k++) {
     const Direction fk = fibers.col(k);
-    const double lk = fk.norm();
-    if (lk == 0.0) {
-      continue;
-    }
-    const Direction d = fk / lk;
 
     // Grad_0 N_b . f0 = Grad N_b . F0 f0, the gradient on the mesh along the fiber
     const mat_fun::NodalVector fk_Nx = Nx0.transpose() * fk;
 
     // The turning, df0 = -(I - d d^T) F0^-1 du_b (Grad_0 N_b . f0): T maps
     // du_b to df0 for node b, up to the factor fk_Nx(b).
-    const Matrix T = -(Matrix::Identity() - d * d.transpose()) * F0_inv;
+    const Matrix T = -(Matrix::Identity() - fk * fk.transpose()) * F0_inv;
 
     for (int j = 0; j < nsd; j++) {
       // dS along the axis e_j
-      f(j, k) = fk(j) + h * lk;
-      const Matrix dS = (stress(f) - S) / (h * lk);
+      f(j, k) = fk(j) + h;
+      const Matrix dS = (stress(f) - S) / h;
       f(j, k) = fk(j);
 
       // df0_j = C(:,b) . du_b for every node b, so lK += w_afu (F dS Grad_0 N_a) (x) C(:,b)
@@ -381,7 +376,7 @@ void init(ComMod& com_mod)
 
   // has_prestrain is the same on every rank once distributed, so the checks
   // below raise on every rank; sstEq and rmsh.isReqd are broadcast.
-  bool prestrained = com_mod.prestrainEq;
+  bool prestrained = false;
   for (const auto& msh : com_mod.msh) {
     prestrained = prestrained || msh.prestrain.has_prestrain();
   }
