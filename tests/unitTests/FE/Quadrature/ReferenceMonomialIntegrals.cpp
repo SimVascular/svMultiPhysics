@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 /** @file ReferenceMonomialIntegrals.cpp
- * @brief Stable test-only moments on the reference line and triangle.
+ * @brief Stable test-only moments on the reference line and simplices.
  */
 
 #include "ReferenceMonomialIntegrals.h"
 
 #include <algorithm>
+#include <array>
 #include <stdexcept>
 
 namespace svmp::FE::quadrature::test {
@@ -32,6 +33,28 @@ long double triangle_monomial_integral(int a, int b)
     for (int k = 0; k < smaller; ++k) {
         const long double numerator = static_cast<long double>(k) + 1.0L;
         integral *= numerator / (larger + 2.0L + numerator);
+    }
+    return integral;
+}
+
+long double tetrahedron_monomial_integral(int a, int b, int c)
+{
+    if (a < 0 || b < 0 || c < 0) {
+        throw std::invalid_argument("Tetrahedron monomial exponents must be non-negative");
+    }
+    std::array<int, 3> powers{a, b, c};
+    std::sort(powers.begin(), powers.end());
+    const long double largest = powers[2];
+    // a! b! c! / (a+b+c+3)! without factorials or integer exponent sums.
+    long double integral = 1.0L / ((largest + 1.0L) * (largest + 2.0L) * (largest + 3.0L));
+    for (int k = 0; k < powers[1]; ++k) {
+        const long double numerator = static_cast<long double>(k) + 1.0L;
+        integral *= numerator / (largest + 3.0L + numerator);
+    }
+    const long double partial_degree = largest + static_cast<long double>(powers[1]);
+    for (int k = 0; k < powers[0]; ++k) {
+        const long double numerator = static_cast<long double>(k) + 1.0L;
+        integral *= numerator / (partial_degree + 3.0L + numerator);
     }
     return integral;
 }

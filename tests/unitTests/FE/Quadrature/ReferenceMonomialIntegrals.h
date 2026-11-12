@@ -19,6 +19,11 @@ long double line_monomial_integral(int power);
  */
 long double triangle_monomial_integral(int a, int b);
 
+/** @brief Integrate x^a y^b z^c on the unit tetrahedron using bounded ratios.
+ * @throws std::invalid_argument If any exponent is negative.
+ */
+long double tetrahedron_monomial_integral(int a, int b, int c);
+
 } // namespace svmp::FE::quadrature::test
 
 #endif // SVMP_TEST_REFERENCE_MONOMIAL_INTEGRALS_H
