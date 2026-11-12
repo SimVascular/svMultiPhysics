@@ -168,8 +168,7 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
   #endif
 
   Vector<double> Rc(nNo), Rci(nNo), tmp(nB*nB+nB), tmpG(nB*nB+nB), B(nB), xB(nB), oldxB(nB); 
-  Array<double> Rm(nsd,nNo), Rmi(nsd,nNo), A(nB,nB), P(nNo,iB), MP(nNo,nB);
-  Array3<double> U(nsd,nNo,iB), MU(nsd,nNo,nB);
+  Array<double> Rm(nsd,nNo), Rmi(nsd,nNo), A(nB,nB);
 
   for (int i = 0; i < nsd; i++) {
     for (int j = 0; j < Ri.ncols(); j++) {
@@ -222,8 +221,25 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
   dmsg << "ls.RI.fNorm: " << ls.RI.fNorm;
   #endif
 
-  Array<double> Gt(nsd,nnz), mK(nsd*nsd,nnz), mG(nsd,nnz), mD(nsd,nnz);
-  Vector<double> mL(nnz); 
+  // The work arrays are kept in 'ls' and reallocated only when their shape
+  // changes. Entries are written before they are read, so they are not zeroed,
+  // except Gt, whose entries without a transposed entry in the pattern stay zero.
+  auto &Gt = ls.Gt, &mK = ls.mK, &mG = ls.mG, &mD = ls.mD, &P = ls.P, &MP = ls.MP;
+  auto &mL = ls.mL;
+  auto &U = ls.U, &MU = ls.MU;
+
+  if (mK.nrows() != nsd*nsd || mK.ncols() != nnz || U.ncols() != nNo || U.nslices() != iB) {
+    Gt.resize(nsd,nnz);
+    mK.resize(nsd*nsd,nnz);
+    mG.resize(nsd,nnz);
+    mD.resize(nsd,nnz);
+    mL.resize(nnz);
+    P.resize(nNo,iB,false);
+    MP.resize(nNo,nB,false);
+    U.resize(nsd,nNo,iB,false);
+    MU.resize(nsd,nNo,nB,false);
+  }
+  Gt = 0.0;
 
   // Store sections of the 'Val' array into separate arrays: 'Gt', 'mK', etc.
   //
@@ -265,9 +281,8 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
 
     // Solve for U = inv(mK) * Rm
     //
-    auto U_slice = U.slice(i);
+    auto U_slice = U.rslice(i);
     gmres::gmres(lhs, ls.GM, nsd, mK, Rm, U_slice);
-    U.set_slice(i, U_slice);
 
     // P = D*U
     //
