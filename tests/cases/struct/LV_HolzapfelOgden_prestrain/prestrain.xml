@@ -10,8 +10,8 @@
   the prestrain, F0 <- (I + Grad u) F0 (the incremental scheme of Gee, Forster
   & Wall 2010), with the tangent of that composed update. Max_iterations 1
   makes every step a single such iteration; more per step are allowed. With
-  Pseudo_transient the printed "max update" tends to zero as the state
-  converges.
+  Pseudo_transient each step's first residual is printed; it tends to zero as
+  the state converges.
 
   The load is a dead load on the imaged surface (Follower_pressure_load false).
   The last result_NNN.vtu carries the prestrain as the cell arrays

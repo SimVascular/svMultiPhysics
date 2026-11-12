@@ -95,22 +95,6 @@ void Prestrain::read(const MeshParameters& mesh_parameters, mshType& mesh, const
       }
     }
   }
-
-  // Elements with linear shape functions are pulled back once, which needs the
-  // prestrain to be the same at all their Gauss points.
-  if (mesh.lShpF) {
-    for (int e = 0; e < mesh.gnEl; e++) {
-      for (int g = 1; g < mesh.nG; g++) {
-        for (int c = 0; c < ncomp; c++) {
-          if (F0(c, g, e) != F0(c, 0, e)) {
-            svmp::raise<svmp::FileFormatException>(file_name,
-                "The prestrain varies between the Gauss points of element " + std::to_string(e) +
-                " of the mesh named '" + mesh.name + "', whose shape functions are linear.");
-          }
-        }
-      }
-    }
-  }
 }
 
 
@@ -129,6 +113,22 @@ void Prestrain::distribute(const CmMod& cm_mod, const cmType& cm, const mshType&
   const Array3<double> global = F0;
   F0.resize(ncomp, mesh.nG, mesh.nEl);
   scatter_element_data(global.data(), F0.data(), ncomp * mesh.nG, mesh, cm_mod, cm);
+}
+
+
+Eigen::MatrixXd Prestrain::get(const int nsd, const int g, const int e) const
+{
+  return Eigen::Map<const Eigen::MatrixXd>(block(g, e), nsd, nsd);
+}
+
+
+Eigen::MatrixXd Prestrain::get_mean(const int nsd, const int e) const
+{
+  Eigen::MatrixXd mean = Eigen::MatrixXd::Zero(nsd, nsd);
+  for (int g = 0; g < F0.ncols(); g++) {
+    mean += get(nsd, g, e);
+  }
+  return mean / F0.ncols();
 }
 
 
@@ -362,17 +362,15 @@ void init(ComMod& com_mod)
       "original mesh and is not carried to a new one.");
 }
 
-double compose_iteration(ComMod& com_mod, SolutionStates& solutions)
+void compose_iteration(ComMod& com_mod, SolutionStates& solutions)
 {
-  // A prestrain run has a single struct equation (see init), so these are all
-  // its rows.
   auto& An = solutions.current.get_acceleration();
   auto& Yn = solutions.current.get_velocity();
   auto& Dn = solutions.current.get_displacement();
   const auto& eq = com_mod.eq[0];
   const int nsd = com_mod.nsd;
 
-  // F0 <- (I + Grad u) F0 at every Gauss point, with u = af * D.
+  // F0 <- (I + Grad u) F0 at every Gauss point.
   for (auto& msh : com_mod.msh) {
     if (!msh.prestrain.has_prestrain()) {
       continue;
@@ -408,22 +406,10 @@ double compose_iteration(ComMod& com_mod, SolutionStates& solutions)
       }
     }
   }
-
-  // This rank's largest nodal update; a NaN gets through rather than being
-  // hidden by max().
-  double umax = 0.0;
-  for (int a = 0; a < com_mod.tnNo; a++) {
-    double u2 = 0.0;
-    for (int i = 0; i < nsd; i++) {
-      u2 += Dn(eq.s+i,a) * Dn(eq.s+i,a);
-    }
-    umax = (u2 > umax || std::isnan(u2)) ? u2 : umax;
-  }
-
+  // Reset state to be at rest.
   An = 0.0;
   Yn = 0.0;
   Dn = 0.0;
-  return eq.af * std::sqrt(umax);
 }
 
 };

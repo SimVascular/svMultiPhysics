@@ -73,9 +73,8 @@
  *
  * Each pseudo-step is a time step: one or more Newton iterations, bounded by
  * Max_iterations and Tolerance as in any other run. Once a step has converged
- * (see pseudo_transient_finish_step), the largest nodal update its last
- * iteration composed, is
- * reported; with `Adaptive_time_step` the next pseudo time step is then set
+ * (see pseudo_transient_finish_step), its first residual is reported; with
+ * `Adaptive_time_step` the next pseudo time step is then set
  * by switched evolution relaxation (Mulder & van Leer 1985), the controller
  * analysed by Kelley & Keyes: the time step is multiplied by the ratio of the
  * first residuals of the last two steps and capped by `Maximum_time_step`. A
@@ -247,17 +246,15 @@ private:
   /**
    * @brief Finish a pseudo-step of a pseudo-transient continuation.
    *
-   * Reports the update the step reached and, if the equation asks for it,
+   * Reports the step's first residual and, if the equation asks for it,
    * sets the pseudo time step of the next step from the ratio of the first
    * residuals of the last two steps, capped by the equation's maximum. The
    * first step, and a step whose residual has reached round-off, leave the
    * time step unchanged.
    *
    * @param[in] eq Equation whose pseudo-transient settings apply.
-   * @param[in] update This rank's largest nodal update composed by the step's
-   *   last iteration, which tends to zero as the prestrain converges.
    */
-  void pseudo_transient_finish_step(const eqType &eq, double update);
+  void pseudo_transient_finish_step(const eqType &eq);
 
   /**
    * @brief Update residual and increment arrays for linear solver

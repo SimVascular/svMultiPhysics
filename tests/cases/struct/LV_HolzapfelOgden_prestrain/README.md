@@ -25,7 +25,7 @@ python check_hold.py                                     # equilibrium hold test
 starts from rest and composes the displacement it reaches into the prestrain,
 with the tangent of that composed update; `Max_iterations 1` makes each step a
 single such iteration, and more per step are allowed. With `Pseudo_transient`
-the run prints `Pseudo-transient: max update` after each step, and with
+the run prints each step's first residual, and with
 `Adaptive_time_step` the pseudo time step grows as the state
 approaches equilibrium, so once it is large the residual falls quadratically
 and reaches round-off by step 10 of the 20 here. The last

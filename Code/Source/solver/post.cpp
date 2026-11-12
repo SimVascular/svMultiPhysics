@@ -776,10 +776,8 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
       // A prestrained fiber is already stretched on the mesh: measure from its
       // stress-free length, as the material model does (see prestrain.h).
       if (lM.prestrain.has_prestrain()) {
-        const double stress_free_length = (nsd == 3)
-            ? (lM.prestrain.get<3>(g, e).inverse() * Eigen::Map<const Eigen::Vector3d>(fiber.data())).norm()
-            : (lM.prestrain.get<2>(g, e).inverse() * Eigen::Map<const Eigen::Vector2d>(fiber.data())).norm();
-        lambda *= utils::norm(fiber) / stress_free_length;
+        const Eigen::Map<const Eigen::VectorXd> f(fiber.data(), nsd);
+        lambda *= f.norm() / (lM.prestrain.get(nsd, g, e).inverse() * f).norm();
       }
 
       // L2 projection from integration points to nodes
@@ -1950,13 +1948,13 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
       // Deformation gradient from the stress-free configuration: F = (I + Grad u) F0.
       // Output of a quadratic element uses a linear one's quadrature, so takes
       // the element average of the prestrain.
-      const Matrix<nsd> F0 = (fs.nG == lM.nG) ? lM.prestrain.get<nsd>(g, e)
-                                              : lM.prestrain.get_mean<nsd>(e);
+      Matrix<nsd> F0 = Im;
+      if (prestrained) {
+        F0 = (fs.nG == lM.nG) ? lM.prestrain.get(nsd, g, e) : lM.prestrain.get_mean(nsd, e);
+        eigen_view_mutable(fibers) = (F0.inverse() * eigen_view<nsd>(fibers)).colwise().normalized();
+      }
       const Matrix<nsd> F = (Im + disp * Nxm.transpose()) * F0;
       const double detF = F.determinant();
-      if (prestrained) {
-        prestrain::pull_back_fibers<nsd>(F0, fibers);
-      }
 
       Vector<double> ed(com_mod.nsymd);
 

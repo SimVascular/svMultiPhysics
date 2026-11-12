@@ -116,9 +116,8 @@ bool Integrator::step(bool save_results) {
     apply_increment(eq, step_length);
 
     // A prestrain solve composes every iteration's update into the prestrain
-    double prestrain_update = 0.0;
     if (com_mod.prestrainEq) {
-      const double prestrain_update = prestrain::compose_iteration(com_mod, solutions_);
+      prestrain::compose_iteration(com_mod, solutions_);
     }
 
     finalize_iteration();
@@ -142,7 +141,7 @@ bool Integrator::step(bool save_results) {
       #endif
 
       if (com_mod.eq[0].pseudo_transient_enabled) {
-        pseudo_transient_finish_step(com_mod.eq[0], prestrain_update);
+        pseudo_transient_finish_step(com_mod.eq[0]);
       }
       return true;
     }
@@ -465,7 +464,7 @@ double Integrator::line_search_step_length(eqType &eq,
 // pseudo_transient_finish_step
 //------------------------------
 //
-void Integrator::pseudo_transient_finish_step(const eqType &eq, const double update)
+void Integrator::pseudo_transient_finish_step(const eqType &eq)
 {
   auto& com_mod = simulation_->com_mod;
   const auto& cm_mod = simulation_->cm_mod;
@@ -473,11 +472,10 @@ void Integrator::pseudo_transient_finish_step(const eqType &eq, const double upd
 
   // pNorm is the step's first residual relative to iNorm, the run's first.
   const double residual = eq.pNorm * eq.iNorm;
-  const double umax = com_mod.cm.reduce(cm_mod, update, MPI_MAX);
 
   if (com_mod.cm.mas(cm_mod)) {
-    std::cout << " Pseudo-transient: max update = " << umax << "  (dt = " << dt
-              << ", first residual = " << residual << ", R/R0 = " << eq.pNorm << ")" << std::endl;
+    std::cout << " Pseudo-transient: dt = " << dt << ", first residual = " << residual
+              << ", R/R0 = " << eq.pNorm << std::endl;
   }
 
   // Adaptive time stepping: the next time step grows by the ratio of

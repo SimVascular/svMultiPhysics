@@ -290,23 +290,34 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
     Array<double> fiber_values = Fibers::zero_fibers(nsd);
+    Eigen::MatrixXd F0 = Eigen::MatrixXd::Identity(nsd, nsd);
 
     for (int g = 0; g < lM.nG; g++) {
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       }
-      const auto fibers = mat_fun::eigen_view(fiber_values);
+      auto fibers = mat_fun::eigen_view_mutable(fiber_values);
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
       const bool recompute_visc = (g == 0 || !lM.lShpF);
 
-      if (recompute_visc) {
+      if (recompute_visc || prestrained) {
         auto Nx_g = lM.Nx.slice(g);
         nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
         if (utils::is_zero(Jac)) {
           throw std::runtime_error("[construct_dsolid] Jacobian for element " + std::to_string(e) + " is < 0.");
+        }
+      }
+
+      // Prestrained elements are integrated on their unloaded configuration.
+      if (prestrained) {
+        F0 = lM.prestrain.get(nsd, g, e);
+        mat_fun::eigen_view_mutable(Nx) = F0.transpose() * mat_fun::eigen_view(Nx);
+        Jac /= F0.determinant();
+        if (mesh_has_fibers) {
+          fibers = (F0.inverse() * fibers).colwise().normalized();
         }
       }
       double w = lM.w(g) * Jac;
@@ -314,18 +325,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       pSl = 0.0;
 
       if (nsd == 3) {
-        // Prestrained elements are integrated on their unloaded configuration.
-        const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained) {
-          if (mesh_has_fibers) {
-            prestrain::pull_back_fibers<3>(F0, fiber_values);
-          }
-          if (g == 0 || !lM.lShpF) {
-            Jac /= prestrain::pull_back_gradients<3>(F0, Nx);
-            w = lM.w(g) * Jac;
-          }
-        }
-        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, F0, fibers,
+        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
 
 #if 0
@@ -339,18 +339,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 #endif
 
       } else if (nsd == 2) {
-        // Prestrained elements are integrated on their unloaded configuration.
-        const auto F0 = lM.prestrain.get<2>(g, e);
-        if (prestrained) {
-          if (mesh_has_fibers) {
-            prestrain::pull_back_fibers<2>(F0, fiber_values);
-          }
-          if (g == 0 || !lM.lShpF) {
-            Jac /= prestrain::pull_back_gradients<2>(F0, Nx);
-            w = lM.w(g) * Jac;
-          }
-        }
-        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, F0, fibers,
+        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
       }
 

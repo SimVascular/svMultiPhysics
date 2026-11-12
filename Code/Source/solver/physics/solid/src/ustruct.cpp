@@ -317,23 +317,34 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
     Array<double> fiber_values = Fibers::zero_fibers(nsd);
+    Eigen::MatrixXd F0 = Eigen::MatrixXd::Identity(nsd, nsd);
 
     for (int g = 0; g < fs[0].nG; g++) {
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       }
-      const auto fibers = mat_fun::eigen_view(fiber_values);
+      auto fibers = mat_fun::eigen_view_mutable(fiber_values);
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra. triangles).
       const bool recompute_visc = (g == 0 || !fs[0].lShpF);
 
-      if (recompute_visc) {
+      if (recompute_visc || prestrained) {
         auto Nx = fs[0].Nx.slice(g);
         nn::gnn(fs[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_usolid] Jacobian for element " + std::to_string(e) + " is < 0.");
+        }
+      }
+
+      // Prestrained elements are integrated on their unloaded configuration.
+      if (prestrained) {
+        F0 = lM.prestrain.get(nsd, g, e);
+        mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
+        Jac /= F0.determinant();
+        if (mesh_has_fibers) {
+          fibers = (F0.inverse() * fibers).colwise().normalized();
         }
       }
 
@@ -342,36 +353,15 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        // Prestrained elements are integrated on their stress-free configuration.
-        const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained) {
-          if (mesh_has_fibers) {
-            prestrain::pull_back_fibers<3>(F0, fiber_values);
-          }
-          if (recompute_visc) {
-            Jac /= prestrain::pull_back_gradients<3>(F0, Nwx);
-            w = fs[0].w(g) * Jac;
-          }
-        }
         ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, F0, fibers,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        const auto F0 = lM.prestrain.get<2>(g, e);
-        if (prestrained) {
-          if (mesh_has_fibers) {
-            prestrain::pull_back_fibers<2>(F0, fiber_values);
-          }
-          if (recompute_visc) {
-            Jac /= prestrain::pull_back_gradients<2>(F0, Nwx);
-            w = fs[0].w(g) * Jac;
-          }
-        }
         ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, F0, fibers,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
       }
 
@@ -383,7 +373,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     // Gauss integration 2
     //
     for (int g = 0; g < fs[1].nG; g++) {
-      if (g == 0 || !fs[0].lShpF) {
+      if (g == 0 || !fs[0].lShpF || prestrained) {
         auto Nx = fs[0].Nx.slice(g);
         nn::gnn(fs[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -391,7 +381,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         }
       }
 
-      if (g == 0 || !fs[1].lShpF) {
+      if (g == 0 || !fs[1].lShpF || prestrained) {
         auto Nx = fs[1].Nx.slice(g);
         nn::gnn(fs[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -399,40 +389,27 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         }
       }
 
+      // Prestrained elements are integrated on their unloaded configuration.
+      if (prestrained) {
+        F0 = lM.prestrain.get(nsd, g, e);
+        mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
+        mat_fun::eigen_view_mutable(Nqx) = F0.transpose() * mat_fun::eigen_view(Nqx);
+        Jac /= F0.determinant();
+      }
+
       double w = fs[1].w(g) * Jac;
 
       if (nsd == 3) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        // Prestrained elements are integrated on their stress-free configuration.
-        const auto F0 = lM.prestrain.get<3>(g, e);
-        if (prestrained) {
-          if (g == 0 || !fs[0].lShpF) {
-            prestrain::pull_back_gradients<3>(F0, Nwx);
-          }
-          if (g == 0 || !fs[1].lShpF) {
-            Jac /= prestrain::pull_back_gradients<3>(F0, Nqx);
-            w = fs[1].w(g) * Jac;
-          }
-        }
         ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
-            Nqx, al, yl, dl, bfl, F0, lR, lK, lKd);
+            Nqx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), lR, lK, lKd);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
-        const auto F0 = lM.prestrain.get<2>(g, e);
-        if (prestrained) {
-          if (g == 0 || !fs[0].lShpF) {
-            prestrain::pull_back_gradients<2>(F0, Nwx);
-          }
-          if (g == 0 || !fs[1].lShpF) {
-            Jac /= prestrain::pull_back_gradients<2>(F0, Nqx);
-            w = fs[1].w(g) * Jac;
-          }
-        }
         ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
-            Nqx, al, yl, dl, bfl, F0, lR, lK, lKd);
+            Nqx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), lR, lK, lKd);
       }
 
     } // for g = 0 to fs[1].nG
