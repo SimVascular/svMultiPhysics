@@ -216,7 +216,7 @@ namespace all_fun {
 
   /// @brief This routine is for calculating values by the inverse of general BC
   //
-  void igbc(const ComMod &com_mod, const MBType &gm, Array<double> &Y,
+  void igbc(double time, const MBType &gm, Array<double> &Y,
             Array<double> &dY);
 };
 
