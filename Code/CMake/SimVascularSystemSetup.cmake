@@ -106,23 +106,26 @@ string(TIMESTAMP DATE_IMESTAMP %y%m%d)
 math(EXPR SV_VERSION_TIMESTAMP "${DATE_IMESTAMP}-140000")
 string(TIMESTAMP SV_RELEASE_TIMESTAMP %y%m%d%H%M%S)
 set(SV_PLATFORM ${ARCH})
-simvascular_today(YEAR MONTH DAY)
-set(SV_MAJOR_VERSION ${YEAR})   # YEAR
-set(SV_MINOR_VERSION ${MONTH})   # MONTH
-set(SV_PATCH_VERSION ${DAY})  # DAY
+include(SimVascularReleaseIdentity)
+if(NOT SV_PACKAGE_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$")
+  message(FATAL_ERROR "SV_PACKAGE_VERSION must have the form major.minor.patch.build")
+endif()
+string(REPLACE "." ";" _sv_version_parts "${SV_PACKAGE_VERSION}")
+list(GET _sv_version_parts 0 SV_MAJOR_VERSION)
+list(GET _sv_version_parts 1 SV_MINOR_VERSION)
+list(GET _sv_version_parts 2 SV_PATCH_VERSION)
+list(GET _sv_version_parts 3 SV_RELEASE_BUILD)
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 # Other helpful sv variables
-set(SV_RELEASE_BUILD 0)
 set(SV_MAJOR_VER_NO ${SV_MAJOR_VERSION})
 set(SV_FULL_VER_NO
 	"${SV_MAJOR_VERSION}.${SV_MINOR_VERSION}")
-set(SV_FULL_VERSION
-	"${SV_MAJOR_VERSION}.${SV_MINOR_VERSION}.${SV_PATCH_VERSION}")
+set(SV_FULL_VERSION "${SV_PACKAGE_VERSION}")
 set(SV_REGISTRY_TOPLEVEL "SV")
 
-message(STATUS "SimVascular Version: ${SV_VERSION} ${SV_MAJOR_VERSION}-${SV_MINOR_VERSION}-${SV_PATCH_VERSION}")
+message(STATUS "SimVascular Version: ${SV_VERSION} ${SV_FULL_VERSION}")
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

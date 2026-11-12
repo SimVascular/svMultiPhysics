@@ -61,6 +61,8 @@ include(ExternalProject)
 
 #-----------------------------------------------------------------------------
 # SimVascular Includes
+option(SV_ENABLE_DISTRIBUTION "Build packages" OFF)
+option(SV_RELEASE_PACKAGE "Require a clean tree and matching tag for an official package" OFF)
 include(SimVascularMacros)
 include(SimVascularFunctions)
 include(SimVascularSystemSetup)
@@ -142,6 +144,9 @@ ExternalProject_Add(svMultiPhysics
     -DENABLE_UNIT_TEST:BOOL=${ENABLE_UNIT_TEST}
     -DENABLE_ARRAY_INDEX_CHECKING:BOOL=${ENABLE_ARRAY_INDEX_CHECKING}
     -DSV_LOCAL_VTK_PATH:STRING=${SV_LOCAL_VTK_PATH}
+    -DSV_ENABLE_DISTRIBUTION:BOOL=${SV_ENABLE_DISTRIBUTION}
+    -DSV_RELEASE_PACKAGE:BOOL=${SV_RELEASE_PACKAGE}
+    -DSV_PACKAGE_VERSION:STRING=${SV_PACKAGE_VERSION}
     ${SV_APPLE_CMAKE_ARGS}
     ${SV_ADDITIONAL_CMAKE_ARGS}
     )
