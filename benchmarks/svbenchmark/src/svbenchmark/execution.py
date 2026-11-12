@@ -12,16 +12,6 @@ from datetime import datetime, UTC
 from ._expect import expect_str, expect_str_array
 
 
-def run_solver(
-    solver: SolverRun, context: SolveExecutionContext, cwd: Path
-) -> RunResult:
-    """
-    Runs the solver using the execution context and a working directory
-    """
-    command = solver.build_command(context)
-    return run_command(command, cwd)
-
-
 @dataclass(frozen=True)
 class ExecutionEnvironment:
     """
