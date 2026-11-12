@@ -59,7 +59,10 @@ if(SV_RELEASE_PACKAGE)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_QUIET
     RESULT_VARIABLE _sv_tag_result)
-  if(NOT _sv_tag_result EQUAL 0 OR NOT _sv_tag_commit STREQUAL SV_SOURCE_COMMIT)
+  if(_sv_tag_result EQUAL 0 AND NOT _sv_tag_commit STREQUAL SV_SOURCE_COMMIT)
+    message(FATAL_ERROR "Release tag v${SV_PACKAGE_VERSION} points to another source commit, not ${SV_SOURCE_COMMIT}")
+  endif()
+  if(NOT _sv_tag_result EQUAL 0 AND NOT SV_TAG_AFTER_VALIDATION)
     message(FATAL_ERROR "Release tag v${SV_PACKAGE_VERSION} must exist and point to source commit ${SV_SOURCE_COMMIT}")
   endif()
   set(SV_RELEASE_TAG "v${SV_PACKAGE_VERSION}")

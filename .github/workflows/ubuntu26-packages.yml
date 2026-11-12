@@ -1,26 +1,38 @@
 name: Build Ubuntu 26 packages
 
 on:
-  # Temporary fork-branch trigger for package build validation. Remove before the upstream PR.
+  # Temporary fork-only trigger for validating #771. Remove before the upstream PR.
   push:
     branches:
       - feature/771-build-ubuntu26-packages
-    paths:
-      - .github/workflows/ubuntu26-packages.yml
-      - .github/WORKFLOW.md
-      - CMakeLists.txt
-      - Code/CMake/SimVascularSystemSetup.cmake
-      - Distribution/CMakeLists.txt
-      - release.json
   workflow_dispatch:
     inputs:
-      source_commit:
-        description: 'Full SHA on upstream main to build (defaults to the selected ref)'
+      dependency_image:
+        description: 'Fully qualified GHCR dependency image tag or digest to build against'
+        required: true
+        default: 'ghcr.io/simvascular/svmultiphysics-dependencies:1.0.0.1-dev'
+        type: string
+      build_type:
+        description: 'Solver CMake build type'
+        required: true
+        default: Release
+        type: choice
+        options:
+          - Release
+          - RelWithDebInfo
+          - Debug
+      source_ref:
+        description: 'Full 40-character commit SHA or complete dev, rc, or final Git tag'
         required: false
         type: string
 
 permissions:
   contents: read
+  packages: read
+
+concurrency:
+  group: ubuntu26-packages-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   select_source:
@@ -28,33 +40,104 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       commit: ${{ steps.select.outputs.commit }}
+      version: ${{ steps.select.outputs.version }}
+      version_tag: ${{ steps.select.outputs.version_tag }}
+      source_ref: ${{ steps.select.outputs.source_ref }}
+      dependency_image: ${{ steps.image.outputs.reference }}
     steps:
       - name: Check out workflow ref
-        if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Verify source on upstream main
+      - name: Resolve source and check release tag
         id: select
         shell: bash
         env:
-          REQUESTED_COMMIT: ${{ inputs.source_commit }}
+          REQUESTED_REF: ${{ inputs.source_ref }}
         run: |
-          source_commit=${REQUESTED_COMMIT:-$GITHUB_SHA}
-          if [[ ! "$source_commit" =~ ^[0-9a-fA-F]{40}$ ]]; then
-            echo 'source_commit must be a full 40-character commit SHA' >&2
+          source_ref=${REQUESTED_REF:-${GITHUB_SHA}}
+          if [[ ! "${source_ref}" =~ ^[0-9a-fA-F]{40}$ && ! "${source_ref}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(-(dev|rc))?$ ]]; then
+            echo 'source_ref must be a full 40-character commit SHA or a complete Git tag such as v1.0.0.1-dev, v1.0.0.1-rc, or v1.0.0.1' >&2
             exit 1
           fi
-          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            git fetch --no-tags https://github.com/SimVascular/svMultiPhysics.git \
-              refs/heads/main:refs/remotes/upstream/main
-            if ! git merge-base --is-ancestor "$source_commit" refs/remotes/upstream/main; then
-              echo "Commit $source_commit is not on upstream main" >&2
+          git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+          if [[ "${source_ref}" == v* ]]; then
+            git fetch --no-tags origin "refs/tags/${source_ref}"
+            source_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
+          else
+            source_commit=$(git rev-parse "${source_ref}^{commit}")
+          fi
+          if [[ "${GITHUB_EVENT_NAME}" == push ]]; then
+            test "${source_commit}" = "${GITHUB_SHA}"
+          elif ! git merge-base --is-ancestor "${source_commit}" refs/remotes/origin/main; then
+            echo "Commit ${source_commit} is not on this repository's main branch" >&2
+            exit 1
+          fi
+          release_version() {
+            git show "${1}:release.json" | python3 -c '
+          import json, sys
+          release = json.load(sys.stdin)
+          parts = [release[key] for key in ("major", "minor", "patch", "build")]
+          if any(type(part) is not int or part < 0 for part in parts):
+              raise SystemExit("release.json needs four non-negative integer version fields")
+          print(".".join(map(str, parts)))
+          '
+          }
+          version=$(release_version "${source_commit}")
+          if [[ "${source_ref}" == v* ]]; then
+            if [[ "${source_ref}" != "v${version}" && "${source_ref}" != "v${version}-rc" && "${source_ref}" != "v${version}-dev" ]]; then
+              echo "Source tag ${source_ref} does not match release.json version ${version}" >&2
               exit 1
             fi
           fi
-          printf 'commit=%s\n' "$source_commit" >> "$GITHUB_OUTPUT"
+          version_tag="v${version}"
+          existing_tag=$(git ls-remote origin "refs/tags/${version_tag}^{}" | awk 'NR == 1 { print $1 }')
+          if [[ -z "${existing_tag}" ]]; then
+            existing_tag=$(git ls-remote --refs origin "refs/tags/${version_tag}" | awk 'NR == 1 { print $1 }')
+          fi
+          if [[ -n "${existing_tag}" && "${existing_tag}" != "${source_commit}" ]]; then
+            echo "Tag ${version_tag} already points to ${existing_tag}, not selected source ${source_commit}; increment the build number" >&2
+            exit 1
+          fi
+          printf 'commit=%s\nversion=%s\nversion_tag=%s\nsource_ref=%s\n' \
+            "${source_commit}" "${version}" "${version_tag}" "${source_ref}" >> "${GITHUB_OUTPUT}"
+          printf 'Selected solver source: %s; intended release tag: %s\n' "${source_commit}" "${version_tag}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve dependency image digest
+        id: image
+        shell: bash
+        env:
+          REQUESTED_IMAGE: ${{ inputs.dependency_image || vars.UBUNTU26_DEPENDENCY_IMAGE }}
+        run: |
+          if [[ -z "${REQUESTED_IMAGE}" ]]; then
+            echo 'dependency_image is required; set the input for manual runs or UBUNTU26_DEPENDENCY_IMAGE for the temporary push test' >&2
+            exit 1
+          fi
+          requested_image=${REQUESTED_IMAGE}
+          if [[ ! "${requested_image}" =~ ^ghcr\.io/[a-z0-9._/-]+(:[A-Za-z0-9_.-]+|@sha256:[0-9a-f]{64})$ ]]; then
+            echo 'dependency_image must be a fully qualified GHCR tag or SHA-256 digest' >&2
+            exit 1
+          fi
+          repository=${requested_image%%@*}
+          repository=${repository%:*}
+          digest=$(docker buildx imagetools inspect "${requested_image}" | awk '$1 == "Digest:" { print $2; exit }')
+          if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Could not resolve ${requested_image} to an image digest" >&2
+            exit 1
+          fi
+          printf 'reference=%s@%s\n' "${repository}" "${digest}" >> "${GITHUB_OUTPUT}"
+          printf 'Dependency image: %s@%s\n' "${repository}" "${digest}"
 
   package:
     name: Build ${{ matrix.configuration }} package
@@ -66,20 +149,38 @@ jobs:
       matrix:
         configuration: [default, trilinos]
     container:
-      image: ghcr.io/bearsontheloose/svmultiphysics-dependencies@sha256:81f1c40daf9704899b44c52d2d956418d9c884b2f691936cc2bf450b658c74cc
+      image: ${{ needs.select_source.outputs.dependency_image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     env:
       SVMP_OPTIMIZED_CI: 'true'
+      SVMP_CMAKE_BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+      SVMP_SOLVER_CONFIGURATION: ${{ matrix.configuration }}
+      SVMP_TEST_PROCS: '1,3,4'
     steps:
-      - name: Check out source and unit-test fixtures
+      - name: Check out selected solver source and test fixtures
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.select_source.outputs.commit }}
           lfs: true
 
-      - name: Read release version
+      - name: Verify and report solver source commit
         shell: bash
+        env:
+          VERSION_TAG: ${{ needs.select_source.outputs.version_tag }}
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          solver_commit=$(git rev-parse HEAD)
+          expected_commit='${{ needs.select_source.outputs.commit }}'
+          printf 'Solver build commit: %s\nIntended release tag: %s\n' \
+            "${solver_commit}" "${VERSION_TAG}"
+          if [[ "${solver_commit}" != "${expected_commit}" ]]; then
+            echo 'Solver checkout does not match the selected source commit' >&2
+            exit 1
+          fi
+          printf -- '- Solver build commit: `%s` (intended tag `%s`)\n' \
+            "${solver_commit}" "${VERSION_TAG}" >> "${GITHUB_STEP_SUMMARY}"
           version=$(python3 -c '
           import json
           with open("release.json", encoding="utf-8") as manifest:
@@ -89,17 +190,20 @@ jobs:
               raise SystemExit("release.json needs four non-negative integer version fields")
           print(".".join(map(str, parts)))
           ')
-          printf 'VERSION=%s\n' "$version" >> "$GITHUB_ENV"
-          printf 'Source commit: %s\nVersion: %s\n' "$(git rev-parse HEAD)" "$version"
+          printf 'VERSION=%s\n' "${version}" >> "${GITHUB_ENV}"
+          test "${version}" = '${{ needs.select_source.outputs.version }}'
+          printf 'Solver build commit: %s\nVersion: %s\n' "${solver_commit}" "${version}"
 
       - name: Build svMultiPhysics
         shell: bash
         env:
           CONFIGURATION: ${{ matrix.configuration }}
         run: |
-          source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
-          args=(-DSV_ENABLE_DISTRIBUTION:BOOL=ON -DSV_PACKAGE_VERSION:STRING="$VERSION")
-          if [[ "$CONFIGURATION" == trilinos ]]; then
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          args=(-DSV_ENABLE_DISTRIBUTION:BOOL=ON -DSV_RELEASE_PACKAGE:BOOL=ON
+                -DSV_TAG_AFTER_VALIDATION:BOOL=ON
+                -DSV_PACKAGE_VERSION:STRING="${VERSION}")
+          if [[ "${CONFIGURATION}" == trilinos ]]; then
             args+=(-DSV_USE_TRILINOS:BOOL=ON)
           fi
           ci_build_solver build "$(nproc)" "${args[@]}"
@@ -107,6 +211,23 @@ jobs:
       - name: Run unit tests
         shell: bash
         run: ctest --test-dir build/svMultiPhysics-build/Source/solver --output-on-failure
+
+      - name: Check build-tree solver version
+        shell: bash
+        run: |
+          actual=$(build/svMultiPhysics-build/bin/svmultiphysics --version)
+          expected="[svMultiPhysics] version ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }}"
+          test "${actual}" = "${expected}"
+          printf '%s\n' "${actual}"
+
+      - name: Build pinned svZeroDSolver and run integration tests
+        shell: bash
+        run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          zero_commit=$(ci_resolve_svzerodsolver "${GITHUB_WORKSPACE}/release.json")
+          ci_build_svzerodsolver "$(nproc)" "${zero_commit}"
+          export SVMP_SOLVER_EXECUTABLE="${GITHUB_WORKSPACE}/build/svMultiPhysics-build/bin/svmultiphysics"
+          ci_run_integration_tests 2 1
 
       - name: Build Debian package
         shell: bash
@@ -116,23 +237,37 @@ jobs:
           package="svMultiPhysics-Ubuntu-26-${CONFIGURATION}-${VERSION}.deb"
           mkdir -p packages
           cpack --config build/svMultiPhysics-build/CPackConfig.cmake \
-            -G DEB -B packages \
-            -D "CPACK_PACKAGE_FILE_NAME=${package%.deb}"
-          test -s "packages/$package"
-          test "$(dpkg-deb --field "packages/$package" Version)" = "$VERSION"
-          test "$(dpkg-deb --field "packages/$package" Architecture)" = amd64
-          dpkg-deb --contents "packages/$package" | grep -E '/svmultiphysics$'
-          sha256sum "packages/$package" > "packages/$package.sha256"
-          printf '### Ubuntu 26 %s package\n\n' "$CONFIGURATION" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Source commit: `%s`\n' "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Dependency image: `%s`\n' 'ghcr.io/bearsontheloose/svmultiphysics-dependencies@sha256:81f1c40daf9704899b44c52d2d956418d9c884b2f691936cc2bf450b658c74cc' >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Package: `%s`\n' "$package" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Build type: `Release`\n' >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- SHA-256: `%s`\n' "$(cut -d' ' -f1 "packages/$package.sha256")" >> "$GITHUB_STEP_SUMMARY"
+            -G DEB -B packages
+          test -s "packages/${package}"
+          test "$(dpkg-deb --field "packages/${package}" Version)" = "${VERSION}"
+          test "$(dpkg-deb --field "packages/${package}" Architecture)" = amd64
+          dpkg-deb --contents "packages/${package}" | grep -E '/svmultiphysics$'
+          sha256sum "packages/${package}" > "packages/${package}.sha256"
+          printf '### Ubuntu 26 %s package\n\n' "${CONFIGURATION}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Solver build commit: `%s`\n' "$(git rev-parse HEAD)" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Intended release tag: `%s`\n' '${{ needs.select_source.outputs.version_tag }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Dependency image: `%s`\n' '${{ needs.select_source.outputs.dependency_image }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Package: `%s`\n' "${package}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Build type: `%s`\n' "${SVMP_CMAKE_BUILD_TYPE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- SHA-256: `%s`\n' "$(cut -d' ' -f1 "packages/${package}.sha256")" >> "${GITHUB_STEP_SUMMARY}"
           printf -- '- Declared Ubuntu dependencies: `%s`\n' \
-            "$(dpkg-deb --field "packages/$package" Depends)" >> "$GITHUB_STEP_SUMMARY"
-          python3 .github/scripts/report-linked-dependencies.py "$CONFIGURATION" \
-            >> "$GITHUB_STEP_SUMMARY"
+            "$(dpkg-deb --field "packages/${package}" Depends)" >> "${GITHUB_STEP_SUMMARY}"
+          printf '\n#### Solver link inputs\n\n' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Common: Open MPI, zlib, BLAS, LAPACK, and VTK (CommonCore, CommonDataModel, CommonMisc, FiltersGeometry, IOXML).\n' \
+            >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Bundled: METIS, ParMETIS, TetGen, and TinyXML.\n' >> "${GITHUB_STEP_SUMMARY}"
+          if [[ "${CONFIGURATION}" == trilinos ]]; then
+            printf -- '- Trilinos configuration: Trilinos and its third-party link libraries.\n' \
+              >> "${GITHUB_STEP_SUMMARY}"
+          fi
+          printf '\n#### Dependency image versions\n\n```text\n' >> "${GITHUB_STEP_SUMMARY}"
+          /usr/local/bin/report-dependency-versions --summary >> "${GITHUB_STEP_SUMMARY}"
+          printf '```\n' >> "${GITHUB_STEP_SUMMARY}"
+          if [[ "${CONFIGURATION}" == default ]]; then
+            report="svMultiPhysics-Ubuntu-26-dependencies-${VERSION}.txt"
+            /usr/local/bin/report-dependency-versions > "packages/${report}"
+            sha256sum "packages/${report}" > "packages/${report}.sha256"
+          fi
 
       - name: Upload package and checksum
         uses: actions/upload-artifact@v4
@@ -141,6 +276,7 @@ jobs:
           path: |
             packages/*.deb
             packages/*.sha256
+            packages/*.txt
           if-no-files-found: error
 
   validate:
@@ -191,7 +327,7 @@ jobs:
         env:
           CONFIGURATION: ${{ matrix.configuration }}
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
           read -r version zero_tag zero_commit zero_sha < <(python3 -c '
           import json, re
           with open("release.json", encoding="utf-8") as manifest:
@@ -208,59 +344,68 @@ jobs:
               raise SystemExit("Invalid svZeroDSolver package checksum")
           print(version, zero["tag"], zero["commit"], zero["ubuntu26_package_sha256"])
           ')
-          remote_commit=$(git ls-remote https://github.com/SimVascular/svZeroDSolver.git "refs/tags/$zero_tag^{}" | awk 'NR == 1 { print $1 }')
-          if [[ -z "$remote_commit" ]]; then
-            remote_commit=$(git ls-remote --refs https://github.com/SimVascular/svZeroDSolver.git "refs/tags/$zero_tag" | awk 'NR == 1 { print $1 }')
+          remote_commit=$(git ls-remote https://github.com/SimVascular/svZeroDSolver.git "refs/tags/${zero_tag}^{}" | awk 'NR == 1 { print $1 }')
+          if [[ -z "${remote_commit}" ]]; then
+            remote_commit=$(git ls-remote --refs https://github.com/SimVascular/svZeroDSolver.git "refs/tags/${zero_tag}" | awk 'NR == 1 { print $1 }')
           fi
-          test "$remote_commit" = "$zero_commit"
+          test "${remote_commit}" = "${zero_commit}"
           package="svMultiPhysics-Ubuntu-26-${CONFIGURATION}-${version}.deb"
-          test "$(dpkg-deb --field "packages/$package" Version)" = "$version"
-          depends=$(dpkg-deb --field "packages/$package" Depends)
-          [[ "$depends" =~ (^|,[[:space:]]*)liblapack3(,|$) ]]
-          [[ "$depends" =~ (^|,[[:space:]]*)openmpi-bin(,|$) ]]
-          sha256sum -c "packages/$package.sha256"
+          test "${version}" = '${{ needs.select_source.outputs.version }}'
+          test "$(dpkg-deb --field "packages/${package}" Version)" = "${version}"
+          depends=$(dpkg-deb --field "packages/${package}" Depends)
+          [[ "${depends}" =~ (^|,[[:space:]]*)liblapack3(,|$) ]]
+          [[ "${depends}" =~ (^|,[[:space:]]*)openmpi-bin(,|$) ]]
+          sha256sum -c "packages/${package}.sha256"
           printf 'VERSION=%s\nSVZEROD_TAG=%s\nSVZEROD_SHA256=%s\nPACKAGE=%s\n' \
-            "$version" "$zero_tag" "$zero_sha" "$package" >> "$GITHUB_ENV"
+            "${version}" "${zero_tag}" "${zero_sha}" "${package}" >> "${GITHUB_ENV}"
 
       - name: Download and verify svZeroDSolver package
         shell: bash
         run: |
           zero_package="svZeroDSolver-Ubuntu-26-${SVZEROD_TAG}.deb"
-          curl -fL --retry 3 -o "$zero_package" \
+          curl -fL --retry 3 -o "${zero_package}" \
             "https://github.com/SimVascular/svZeroDSolver/releases/download/${SVZEROD_TAG}/${zero_package}"
-          printf '%s  %s\n' "$SVZEROD_SHA256" "$zero_package" | sha256sum -c -
-          test "$(dpkg-deb --field "$zero_package" Version)" = "${SVZEROD_TAG#v}"
-          printf 'ZERO_PACKAGE=%s\n' "$zero_package" >> "$GITHUB_ENV"
+          printf '%s  %s\n' "${SVZEROD_SHA256}" "${zero_package}" | sha256sum -c -
+          test "$(dpkg-deb --field "${zero_package}" Version)" = "${SVZEROD_TAG#v}"
+          printf 'ZERO_PACKAGE=%s\n' "${zero_package}" >> "${GITHUB_ENV}"
 
       - name: Install packages and locate installed executables
         shell: bash
         run: |
-          apt-get install -y --no-install-recommends "./$ZERO_PACKAGE" "./packages/$PACKAGE"
+          apt-get install -y --no-install-recommends "./${ZERO_PACKAGE}" "./packages/${PACKAGE}"
           solver=$(find /usr/local/sv/svMultiPhysics -type f -name svmultiphysics -print -quit)
           interface=$(find /usr/local/sv/svZeroDSolver -type f -name libsvzero_interface.so -print -quit)
-          test -x "$solver"
-          test -f "$interface"
-          if ldd "$solver" | grep 'not found'; then
+          test -x "${solver}"
+          test -f "${interface}"
+          if ldd "${solver}" | grep 'not found'; then
             echo 'The installed solver has missing shared-library dependencies' >&2
             exit 1
           fi
-          if ldd "$interface" | grep 'not found'; then
+          if ldd "${interface}" | grep 'not found'; then
             echo 'The installed svZeroDSolver interface has missing shared-library dependencies' >&2
             exit 1
           fi
           mkdir -p svZeroDSolver/build/src/interface
-          ln -s "$interface" svZeroDSolver/build/src/interface/libsvzero_interface.so
-          printf 'SVMP_SOLVER_EXECUTABLE=%s\n' "$solver" >> "$GITHUB_ENV"
+          ln -s "${interface}" svZeroDSolver/build/src/interface/libsvzero_interface.so
+          printf 'SVMP_SOLVER_EXECUTABLE=%s\n' "${solver}" >> "${GITHUB_ENV}"
+
+      - name: Check installed solver version
+        shell: bash
+        run: |
+          actual=$("${SVMP_SOLVER_EXECUTABLE}" --version)
+          expected="[svMultiPhysics] version ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }}"
+          test "${actual}" = "${expected}"
+          printf '%s\n' "${actual}"
 
       - name: Report installed dependency versions
         shell: bash
         run: |
           printf '### Installed Ubuntu 26 package versions (%s)\n\n' \
-            "$SVMP_SOLVER_CONFIGURATION" >> "$GITHUB_STEP_SUMMARY"
-          printf '| Package | Version |\n| --- | --- |\n' >> "$GITHUB_STEP_SUMMARY"
+            "${SVMP_SOLVER_CONFIGURATION}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '| Package | Version |\n| --- | --- |\n' >> "${GITHUB_STEP_SUMMARY}"
           dpkg-query -W -f='| ${binary:Package} | ${Version} |\n' \
             svmultiphysics svzerodsolver liblapack3 openmpi-bin libopenmpi40 \
-            >> "$GITHUB_STEP_SUMMARY"
+            >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Install Python test environment
         shell: bash
@@ -278,20 +423,22 @@ jobs:
           cd tests
           /opt/conda/bin/conda run --no-capture-output -n svmultiphysics \
             pytest -v -rfEP --durations=0 \
-            --junitxml="$GITHUB_WORKSPACE/test-results/${SVMP_SOLVER_CONFIGURATION}.xml"
+            --junitxml="${GITHUB_WORKSPACE}/test-results/${SVMP_SOLVER_CONFIGURATION}.xml"
 
       - name: Summarize package validation
         if: success()
         shell: bash
         run: |
-          printf '### Ubuntu 26 %s package validation\n\n' "$SVMP_SOLVER_CONFIGURATION" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Source commit: `%s`\n' "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Package: `%s`\n' "$PACKAGE" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Package SHA-256: `%s`\n' "$(cut -d' ' -f1 "packages/$PACKAGE.sha256")" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- svZeroDSolver package: `%s`\n' "$ZERO_PACKAGE" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- svZeroDSolver SHA-256: `%s`\n' "$SVZEROD_SHA256" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Dependency image: `%s`\n' 'ghcr.io/bearsontheloose/svmultiphysics-dependencies@sha256:81f1c40daf9704899b44c52d2d956418d9c884b2f691936cc2bf450b658c74cc' >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- Ubuntu test image: `%s`\n' 'ubuntu:26.04@sha256:157dc3d6e4a3e4f2c68d12df9df9ed6e808b59af6d4c3757b432b4f519916725' >> "$GITHUB_STEP_SUMMARY"
+          printf '### Ubuntu 26 %s package validation\n\n' "${SVMP_SOLVER_CONFIGURATION}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Test fixtures commit: `%s`\n' "$(git rev-parse HEAD)" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Solver build commit: `%s`\n' '${{ needs.select_source.outputs.commit }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Intended release tag: `%s`\n' '${{ needs.select_source.outputs.version_tag }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Package: `%s`\n' "${PACKAGE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Package SHA-256: `%s`\n' "$(cut -d' ' -f1 "packages/${PACKAGE}.sha256")" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svZeroDSolver package: `%s`\n' "${ZERO_PACKAGE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svZeroDSolver SHA-256: `%s`\n' "${SVZEROD_SHA256}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Dependency image: `%s`\n' '${{ needs.select_source.outputs.dependency_image }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Ubuntu test image: `%s`\n' 'ubuntu:26.04@sha256:157dc3d6e4a3e4f2c68d12df9df9ed6e808b59af6d4c3757b432b4f519916725' >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload integration-test results
         if: always()
@@ -300,3 +447,149 @@ jobs:
           name: ubuntu26-${{ matrix.configuration }}-test-results-${{ needs.select_source.outputs.commit }}
           path: test-results/*.xml
           if-no-files-found: ignore
+
+  tag_release:
+    name: Tag validated solver release
+    needs: [select_source, package, validate]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.build_type == 'Release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.select_source.outputs.commit }}
+          fetch-depth: 0
+
+      - name: Create final tag without moving an existing tag
+        shell: bash
+        env:
+          VERSION_TAG: ${{ needs.select_source.outputs.version_tag }}
+          SOURCE_COMMIT: ${{ needs.select_source.outputs.commit }}
+        run: |
+          test "$(git rev-parse HEAD)" = "${SOURCE_COMMIT}"
+          remote_commit=$(git ls-remote origin "refs/tags/${VERSION_TAG}^{}" | awk 'NR == 1 { print $1 }')
+          if [[ -z "${remote_commit}" ]]; then
+            remote_commit=$(git ls-remote --refs origin "refs/tags/${VERSION_TAG}" | awk 'NR == 1 { print $1 }')
+          fi
+          if [[ -n "${remote_commit}" ]]; then
+            if [[ "${remote_commit}" != "${SOURCE_COMMIT}" ]]; then
+              echo "Tag ${VERSION_TAG} already points to ${remote_commit}, not ${SOURCE_COMMIT}" >&2
+              exit 1
+            fi
+            echo "Tag ${VERSION_TAG} already points to the validated commit ${SOURCE_COMMIT}"
+          else
+            git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              tag -a "${VERSION_TAG}" "${SOURCE_COMMIT}" -m "Validated Ubuntu 26 packages for ${VERSION_TAG}"
+            git push origin "refs/tags/${VERSION_TAG}"
+          fi
+          printf '### Validated release tag\n\n- Tag: `%s`\n- Solver commit: `%s`\n' \
+            "${VERSION_TAG}" "${SOURCE_COMMIT}" >> "${GITHUB_STEP_SUMMARY}"
+
+  publish_release:
+    name: Publish validated Ubuntu 26 packages
+    needs: [select_source, tag_release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      VERSION_TAG: ${{ needs.select_source.outputs.version_tag }}
+      SOURCE_COMMIT: ${{ needs.select_source.outputs.commit }}
+      VERSION: ${{ needs.select_source.outputs.version }}
+      DEPENDENCY_IMAGE: ${{ needs.select_source.outputs.dependency_image }}
+    steps:
+      - name: Check out selected release manifest
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.select_source.outputs.commit }}
+
+      - name: Download default package and checksum
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu26-default-${{ needs.select_source.outputs.commit }}
+          path: packages
+
+      - name: Download Trilinos package and checksum
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu26-trilinos-${{ needs.select_source.outputs.commit }}
+          path: packages
+
+      - name: Verify both package artifacts
+        shell: bash
+        run: |
+          for configuration in default trilinos; do
+            package="packages/svMultiPhysics-Ubuntu-26-${configuration}-${VERSION}.deb"
+            test -s "${package}"
+            test -s "${package}.sha256"
+            sha256sum -c "${package}.sha256"
+            test "$(dpkg-deb --field "${package}" Version)" = "${VERSION}"
+          done
+          report="packages/svMultiPhysics-Ubuntu-26-dependencies-${VERSION}.txt"
+          test -s "${report}"
+          test -s "${report}.sha256"
+          sha256sum -c "${report}.sha256"
+
+      - name: Publish or verify GitHub Release assets
+        shell: bash
+        run: |
+          report="packages/svMultiPhysics-Ubuntu-26-dependencies-${VERSION}.txt"
+          read -r zero_tag zero_commit < <(python3 -c '
+          import json
+          with open("release.json", encoding="utf-8") as manifest:
+              zero = json.load(manifest)["dependencies"]["svZeroDSolver"]
+          print(zero["tag"], zero["commit"])
+          ')
+          {
+            printf '## Ubuntu 26.04 packages\n\n'
+            printf 'Default and Trilinos Release packages for svMultiPhysics %s. Both configurations passed unit and integration tests, followed by installation and integration tests in separate clean Ubuntu 26.04 containers.\n\n' "${VERSION}"
+            printf -- '- Workflow commit: `%s`\n' "${GITHUB_SHA}"
+            printf -- '- Built solver commit: `%s`\n' "${SOURCE_COMMIT}"
+            printf -- '- Solver tag: `%s`\n' "${VERSION_TAG}"
+            printf -- '- Solver build type: `Release`\n'
+            printf -- '- Dependency image (resolved digest): `%s`\n' "${DEPENDENCY_IMAGE}"
+            printf -- '- svZeroDSolver: `%s` (`%s`)\n' "${zero_tag}" "${zero_commit}"
+            printf -- '- Validation run: %s/%s/actions/runs/%s\n\n' \
+              "${GITHUB_SERVER_URL}" "${GITHUB_REPOSITORY}" "${GITHUB_RUN_ID}"
+            printf '### Dependency image versions\n\n```text\n'
+            sed '/^Ubuntu packages:/,$d' "${report}"
+            printf '```\n\n'
+            printf 'The attached dependency report includes the full Ubuntu, Conda, and Python package versions available in the image. Not every library in the image is linked into both solver configurations. These packages are available here for external testing; SimTK publication is separate.\n'
+          } > release-notes.md
+          if ! gh release view "${VERSION_TAG}" >/dev/null 2>&1; then
+            gh release create "${VERSION_TAG}" --verify-tag --draft \
+              --title "svMultiPhysics ${VERSION}" --notes-file release-notes.md
+          else
+            existing_notes=$(gh release view "${VERSION_TAG}" --json body --jq '.body')
+            for expected in \
+              "Workflow commit: \`${GITHUB_SHA}\`" \
+              "Built solver commit: \`${SOURCE_COMMIT}\`" \
+              "Dependency image (resolved digest): \`${DEPENDENCY_IMAGE}\`"; do
+              if ! grep -Fq -- "${expected}" <<< "${existing_notes}"; then
+                echo "Existing release ${VERSION_TAG} has different provenance; refusing to add assets" >&2
+                exit 1
+              fi
+            done
+          fi
+          for file in packages/*; do
+            name=${file##*/}
+            if gh release view "${VERSION_TAG}" --json assets --jq '.assets[].name' | grep -Fxq "${name}"; then
+              mkdir -p existing-assets
+              gh release download "${VERSION_TAG}" --pattern "${name}" --dir existing-assets
+              if ! cmp -s "${file}" "existing-assets/${name}"; then
+                echo "Release asset ${name} already exists with different content; refusing to replace it" >&2
+                exit 1
+              fi
+            else
+              gh release upload "${VERSION_TAG}" "${file}"
+            fi
+          done
+          if [[ "$(gh release view "${VERSION_TAG}" --json isDraft --jq '.isDraft')" == true ]]; then
+            gh release edit "${VERSION_TAG}" --draft=false
+          fi
+          printf '### GitHub Release\n\n- Tag: `%s`\n- Workflow commit: `%s`\n- Built solver commit: `%s`\n- Dependency image: `%s`\n- Packages: default and Trilinos for Ubuntu 26.04\n- Full dependency inventory: attached version report\n' \
+            "${VERSION_TAG}" "${GITHUB_SHA}" "${SOURCE_COMMIT}" "${DEPENDENCY_IMAGE}" >> "${GITHUB_STEP_SUMMARY}"

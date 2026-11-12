@@ -46,6 +46,14 @@ def test_release_manifest_and_tag_must_match(tmp_path):
     assert missing_tag.returncode != 0
     assert "must exist and point to source commit" in missing_tag.stderr
 
+    deferred_tag = subprocess.run(
+        ["cmake", "-DSV_ENABLE_DISTRIBUTION=ON", "-DSV_RELEASE_PACKAGE=ON",
+         "-DSV_TAG_AFTER_VALIDATION=ON", "-P", str(check)],
+        capture_output=True, text=True,
+    )
+    assert deferred_tag.returncode == 0, deferred_tag.stderr
+    assert "svMultiPhysics source: v1.0.0.2" in deferred_tag.stdout
+
     subprocess.run(["git", "-C", str(source), "tag", "v1.0.0.2"], check=True)
     assert subprocess.run(command, capture_output=True, text=True).returncode == 0
     (source / "release.json").write_text((source / "release.json").read_text() + "\n")
@@ -63,7 +71,14 @@ def test_release_manifest_and_tag_must_match(tmp_path):
                     "-qm", "later commit"], check=True)
     moved_source = subprocess.run(command, capture_output=True, text=True)
     assert moved_source.returncode != 0
-    assert "must exist and point to source commit" in moved_source.stderr
+    assert "points to another source commit" in moved_source.stderr
+    deferred_wrong_tag = subprocess.run(
+        ["cmake", "-DSV_ENABLE_DISTRIBUTION=ON", "-DSV_RELEASE_PACKAGE=ON",
+         "-DSV_TAG_AFTER_VALIDATION=ON", "-P", str(check)],
+        capture_output=True, text=True,
+    )
+    assert deferred_wrong_tag.returncode != 0
+    assert "points to another source commit" in deferred_wrong_tag.stderr
 
 
 def test_ubuntu_package_name_and_metadata(tmp_path):

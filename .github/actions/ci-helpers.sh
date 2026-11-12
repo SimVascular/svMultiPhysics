@@ -53,7 +53,7 @@ ci_build_solver() {
 
   local cmake_args=(-DENABLE_COVERAGE=ON -DENABLE_ARRAY_INDEX_CHECKING=ON)
   if [ "${SVMP_OPTIMIZED_CI:-false}" = true ]; then
-    cmake_args=(-DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF -DENABLE_ARRAY_INDEX_CHECKING=OFF)
+    cmake_args=(-DCMAKE_BUILD_TYPE="${SVMP_CMAKE_BUILD_TYPE:-Release}" -DENABLE_COVERAGE=OFF -DENABLE_ARRAY_INDEX_CHECKING=OFF)
   fi
 
   mkdir "$build_dir"
