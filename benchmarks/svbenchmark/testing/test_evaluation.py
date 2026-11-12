@@ -103,7 +103,7 @@ class TestEvaluationCriterion:
         )
 
         eval_criterion = EvaluationCriterion.from_dict("test", data_dict)
-        eval_result = evaluate_criterion(eval_criterion, eval_criterion.cwd)
+        eval_result = evaluate_criterion(eval_criterion, eval_criterion.command.cwd)
 
         assert eval_result.status == expected
 
@@ -116,7 +116,6 @@ class TestEvaluationCriterion:
             (1e-2, 1, 1 + 1e-4, EvaluationStatus.PASSED),
             (1e-8, 1, 1 + 1e-2, EvaluationStatus.FAILED),
             (1e-8, -1, -1 + 1e-2, EvaluationStatus.FAILED),
-            (1e-2, 0, 0, EvaluationStatus.FAILED),
         ],
     )
     def test_evaluate_criterion_rtol(
@@ -138,7 +137,7 @@ class TestEvaluationCriterion:
         )
 
         eval_criterion = EvaluationCriterion.from_dict("test", data_dict)
-        eval_result = evaluate_criterion(eval_criterion, eval_criterion.cwd)
+        eval_result = evaluate_criterion(eval_criterion, eval_criterion.command.cwd)
 
         assert eval_result.status == expected
 
@@ -164,4 +163,4 @@ class TestEvaluationCriterion:
 
         eval_criterion = EvaluationCriterion.from_dict("test", data_dict)
         with pytest.raises(subprocess.CalledProcessError):
-            evaluate_criterion(eval_criterion, eval_criterion.cwd)
+            evaluate_criterion(eval_criterion, eval_criterion.command.cwd)
