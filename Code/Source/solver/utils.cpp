@@ -72,6 +72,13 @@ double cput()
   return std::chrono::duration<double>(now.time_since_epoch()).count();
 }
 
+double generalized_alpha_time(const double endpoint_time,
+                              const double time_step,
+                              const double alpha_f)
+{
+  return endpoint_time - (1.0 - alpha_f) * time_step;
+}
+
 Vector<double> 
 cross(const Array<double>& V) 
 {
