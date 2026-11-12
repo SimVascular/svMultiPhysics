@@ -1,0 +1,13 @@
+{
+  "major": 1,
+  "minor": 0,
+  "patch": 0,
+  "build": 1,
+  "dependencies": {
+    "svZeroDSolver": {
+      "repository": "SimVascular/svZeroDSolver",
+      "tag": "v3.2",
+      "commit": "62aecfece16302879257dc4b6a8a93ea19ebf19d"
+    }
+  }
+}

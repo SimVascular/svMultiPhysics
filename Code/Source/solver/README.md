@@ -171,7 +171,7 @@ C++ functions are defined within a `namespace` defined for each Fortran file. Fo
          - [<b> bf::set_bf(com_mod, Dg) </b>](#set_bf)
            - [<b> bf::set_bf_l(com_mod, eq.bf[iBf], com_mod.msh[iM], Dg) </b>](#set_bf_l)
              - [<b> ifft(com_mod, lBf.bt, f, rtmp) </b>](#) - If bfType_ustd
-             - [<b> igbc(com_mod, lBf.bm, bfl, xl) </b>](#) - If bfType_gen
+             - [<b> igbc(alpha_time, lBf.bm, bfl, xl) </b>](#) - If bfType_gen
              - [<b> bf::bf_construct(com_mod, lM, e, eNoN, idof, xl, dl, bfl, ptr) </b>](#bf_construct) - For shell follower pressre loads or init  pressure for CMM
          - [<b> eq_assem::global_eq_assem(com_mod, com_mod.msh[iM], Ag, Yg, Dg) </b>](#global_eq_assem) - For each mesh iM
            - [<b> fluid::construct_fluid(com_mod, lM, Ag, Yg) </b>](#construct_fluid) -  If EquationType::phys_fluid
@@ -1338,7 +1338,7 @@ lD(tDof, tnNo)
  ```
  ```
  
- - `igbc(com_mod, lBc.gm, lY, lA)` - calculating values by the inverse of general BC
+ - `igbc(com_mod.time, lBc.gm, lY, lA)` - calculating values by the inverse of general BC
  
  - `ifft(com_mod, lBc.gt, dirY_v, dirA_v)`
  
@@ -1444,7 +1444,7 @@ Modifies
  
 - `ifft(com_mod, lBf.bt, f, rtmp)` - If BodyForceType::bfType_ustd
  
-- `igbc(com_mod, lBf.bm, bfl, xl)` - If BodyForceType::bfType_gen
+- `igbc(alpha_time, lBf.bm, bfl, xl)` - If BodyForceType::bfType_gen
  
 - `bf_construct(com_mod, lM, e, eNoN, idof, xl, dl, bfl, ptr)`
  
