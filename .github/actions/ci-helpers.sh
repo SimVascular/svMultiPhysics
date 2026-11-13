@@ -1,11 +1,41 @@
+ci_resolve_svzerodsolver() {
+  local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
+  local repository tag commit remote_commit
+
+  repository=$(jq -er '.dependencies.svZeroDSolver.repository | select(type == "string")' "$manifest") || return 1
+  tag=$(jq -er '.dependencies.svZeroDSolver.tag | select(type == "string")' "$manifest") || return 1
+  commit=$(jq -er '.dependencies.svZeroDSolver.commit | select(type == "string")' "$manifest") || return 1
+
+  if [[ "$repository" != SimVascular/svZeroDSolver || ! "$tag" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ || ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "release.json must pin the official svZeroDSolver repository, a tag, and a full commit SHA" >&2
+    return 1
+  fi
+
+  local remote="https://github.com/$repository.git"
+  remote_commit=$(git ls-remote "$remote" "refs/tags/$tag^{}" | awk 'NR == 1 { print $1 }') || return 1
+  if [[ -z "$remote_commit" ]]; then
+    remote_commit=$(git ls-remote --refs "$remote" "refs/tags/$tag" | awk 'NR == 1 { print $1 }') || return 1
+  fi
+  if [[ "$remote_commit" != "$commit" ]]; then
+    echo "svZeroDSolver tag $tag resolves to ${remote_commit:-nothing}, not pinned commit $commit" >&2
+    return 1
+  fi
+
+  printf '%s\n' "$commit"
+}
+
 ci_build_svzerodsolver() {
   local jobs="$1"
+  local ref="${2:-}"
   local cmake_args=()
   if [ "${SVMP_OPTIMIZED_CI:-false}" = true ]; then
     cmake_args+=(-DCMAKE_BUILD_TYPE=Release)
   fi
 
   git clone https://github.com/SimVascular/svZeroDSolver.git
+  if [ -n "$ref" ]; then
+    git -C svZeroDSolver checkout --detach "$ref"
+  fi
   mkdir svZeroDSolver/build
   (
     cd svZeroDSolver/build

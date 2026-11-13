@@ -9,6 +9,7 @@
 //
 #include "Simulation.h"
 #include "Integrator.h"
+#include "simvascular_version.h"
 
 #include "all_fun.h"
 #include "bf.h"
@@ -568,6 +569,12 @@ int main(int argc, char *argv[])
   if (argc < 2) {
     std::cout << "[svMultiPhysics] ERROR: The svMultiPhysics program requires the solver input XML file name as an argument." << std::endl;
     exit(1);
+  }
+
+  if (std::string(argv[1]) == "--version") {
+    std::cout << "[svMultiPhysics] version " << SV_SOURCE_TAG
+              << " commit " << SV_SOURCE_COMMIT << std::endl;
+    return 0;
   }
 
   // Process extra arguments for XML parameter substitution.
