@@ -1,27 +1,32 @@
-ci_resolve_svzerodsolver() {
+ci_svzerodsolver_identity() {
   local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
-  local repository tag commit remote_commit pinned
 
-  pinned=$(python3 - "$manifest" <<'PY'
+  python3 - "$manifest" <<'PY'
 import json
+import re
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as manifest:
     dependency = json.load(manifest)["dependencies"]["svZeroDSolver"]
-values = [dependency[key] for key in ("repository", "tag", "commit")]
-if any(not isinstance(value, str) for value in values):
-    raise SystemExit("release.json must pin string values for svZeroDSolver")
-print(" ".join(values))
+repository, tag, commit = (dependency[key] for key in ("repository", "tag", "commit"))
+if (repository != "SimVascular/svZeroDSolver"
+        or not isinstance(tag, str)
+        or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", tag)
+        or not isinstance(commit, str)
+        or not re.fullmatch(r"[0-9a-f]{40}", commit)):
+    raise SystemExit("release.json must pin the official svZeroDSolver repository, a tag, and a full commit SHA")
+print(tag, commit)
 PY
-  ) || return 1
-  read -r repository tag commit <<< "$pinned"
+}
 
-  if [[ "$repository" != SimVascular/svZeroDSolver || ! "$tag" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ || ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
-    echo "release.json must pin the official svZeroDSolver repository, a tag, and a full commit SHA" >&2
-    return 1
-  fi
+ci_resolve_svzerodsolver() {
+  local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
+  local tag commit remote_commit pinned
 
-  local remote="https://github.com/$repository.git"
+  pinned=$(ci_svzerodsolver_identity "$manifest") || return 1
+  read -r tag commit <<< "$pinned"
+
+  local remote="https://github.com/SimVascular/svZeroDSolver.git"
   remote_commit=$(git ls-remote "$remote" "refs/tags/$tag^{}" | awk 'NR == 1 { print $1 }') || return 1
   if [[ -z "$remote_commit" ]]; then
     remote_commit=$(git ls-remote --refs "$remote" "refs/tags/$tag" | awk 'NR == 1 { print $1 }') || return 1

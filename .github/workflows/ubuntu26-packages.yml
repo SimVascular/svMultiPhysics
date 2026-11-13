@@ -1,6 +1,10 @@
 name: Build Ubuntu 26 packages
 
 on:
+  # Temporary fork-only trigger for the final end-to-end #771 check.
+  push:
+    branches:
+      - feature/771-build-ubuntu26-packages
   workflow_dispatch:
     inputs:
       dependency_image:
@@ -531,12 +535,9 @@ jobs:
         shell: bash
         run: |
           report="packages/svMultiPhysics-Ubuntu-26-dependencies-${VERSION}.txt"
-          read -r zero_tag zero_commit < <(python3 -c '
-          import json
-          with open("release.json", encoding="utf-8") as manifest:
-              zero = json.load(manifest)["dependencies"]["svZeroDSolver"]
-          print(zero["tag"], zero["commit"])
-          ')
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          zero_pinned=$(ci_svzerodsolver_identity "${GITHUB_WORKSPACE}/release.json")
+          read -r zero_tag zero_commit <<< "${zero_pinned}"
           {
             printf '## Ubuntu 26.04 packages\n\n'
             printf 'Default and Trilinos Release packages for svMultiPhysics %s. Both configurations passed unit and integration tests, followed by installation and integration tests in separate clean Ubuntu 26.04 containers.\n\n' "${VERSION}"

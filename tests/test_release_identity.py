@@ -93,6 +93,12 @@ def test_ci_helper_resolves_pinned_svzerodsolver_without_jq(tmp_path):
         "repository": "SimVascular/svZeroDSolver", "tag": "v3.2", "commit": commit,
     }}}))
     helper = Path(__file__).resolve().parents[1] / ".github/actions/ci-helpers.sh"
+    identity = subprocess.run(
+        ["bash", "-c", f'source "{helper}"; ci_svzerodsolver_identity "{manifest}"'],
+        capture_output=True, text=True,
+    )
+    assert identity.returncode == 0, identity.stderr
+    assert identity.stdout.strip() == f"v3.2 {commit}"
     script = (f'source "{helper}"; '
               f'git() {{ printf "%s\\n" "{commit}"; }}; '
               f'ci_resolve_svzerodsolver "{manifest}"')
