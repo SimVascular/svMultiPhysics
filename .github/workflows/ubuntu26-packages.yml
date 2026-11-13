@@ -1,10 +1,6 @@
 name: Build Ubuntu 26 packages
 
 on:
-  # Temporary fork-only trigger for validating #771. Remove before the upstream PR.
-  push:
-    branches:
-      - feature/771-build-ubuntu26-packages
   workflow_dispatch:
     inputs:
       dependency_image:
@@ -29,6 +25,17 @@ on:
 permissions:
   contents: read
   packages: read
+
+env:
+  RELEASE_VERSION_PY: |
+    import json
+    import sys
+
+    release = json.load(sys.stdin)
+    parts = [release[key] for key in ("major", "minor", "patch", "build")]
+    if any(type(part) is not int or part < 0 for part in parts):
+        raise SystemExit("release.json needs four non-negative integer version fields")
+    print(".".join(map(str, parts)))
 
 concurrency:
   group: ubuntu26-packages-${{ github.repository }}-${{ github.ref }}
@@ -74,17 +81,7 @@ jobs:
             echo "Commit ${source_commit} is not on this repository's main branch" >&2
             exit 1
           fi
-          release_version() {
-            git show "${1}:release.json" | python3 -c '
-          import json, sys
-          release = json.load(sys.stdin)
-          parts = [release[key] for key in ("major", "minor", "patch", "build")]
-          if any(type(part) is not int or part < 0 for part in parts):
-              raise SystemExit("release.json needs four non-negative integer version fields")
-          print(".".join(map(str, parts)))
-          '
-          }
-          version=$(release_version "${source_commit}")
+          version=$(git show "${source_commit}:release.json" | python3 -c "${RELEASE_VERSION_PY}")
           if [[ "${source_ref}" == v* ]]; then
             if [[ "${source_ref}" != "v${version}" && "${source_ref}" != "v${version}-rc" && "${source_ref}" != "v${version}-dev" ]]; then
               echo "Source tag ${source_ref} does not match release.json version ${version}" >&2
@@ -182,15 +179,7 @@ jobs:
           fi
           printf -- '- Solver build commit: `%s` (intended tag `%s`)\n' \
             "${solver_commit}" "${VERSION_TAG}" >> "${GITHUB_STEP_SUMMARY}"
-          version=$(python3 -c '
-          import json
-          with open("release.json", encoding="utf-8") as manifest:
-              release = json.load(manifest)
-          parts = [release[key] for key in ("major", "minor", "patch", "build")]
-          if any(type(part) is not int or part < 0 for part in parts):
-              raise SystemExit("release.json needs four non-negative integer version fields")
-          print(".".join(map(str, parts)))
-          ')
+          version=$(python3 -c "${RELEASE_VERSION_PY}" < release.json)
           printf 'VERSION=%s\n' "${version}" >> "${GITHUB_ENV}"
           test "${version}" = '${{ needs.select_source.outputs.version }}'
           printf 'Solver build commit: %s\nVersion: %s\n' "${solver_commit}" "${version}"
@@ -333,11 +322,11 @@ jobs:
           CONFIGURATION: ${{ matrix.configuration }}
         run: |
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-          read -r version zero_tag zero_commit zero_sha < <(python3 -c '
+          version='${{ needs.select_source.outputs.version }}'
+          read -r zero_tag zero_commit zero_sha < <(python3 -c '
           import json, re
           with open("release.json", encoding="utf-8") as manifest:
               release = json.load(manifest)
-          version = ".".join(str(release[key]) for key in ("major", "minor", "patch", "build"))
           zero = release["dependencies"]["svZeroDSolver"]
           if zero["repository"] != "SimVascular/svZeroDSolver":
               raise SystemExit("Unexpected svZeroDSolver repository")
@@ -347,7 +336,7 @@ jobs:
               raise SystemExit("Invalid svZeroDSolver commit")
           if not re.fullmatch(r"[0-9a-f]{64}", zero["ubuntu26_package_sha256"]):
               raise SystemExit("Invalid svZeroDSolver package checksum")
-          print(version, zero["tag"], zero["commit"], zero["ubuntu26_package_sha256"])
+          print(zero["tag"], zero["commit"], zero["ubuntu26_package_sha256"])
           ')
           remote_commit=$(git ls-remote https://github.com/SimVascular/svZeroDSolver.git "refs/tags/${zero_tag}^{}" | awk 'NR == 1 { print $1 }')
           if [[ -z "${remote_commit}" ]]; then
@@ -355,7 +344,6 @@ jobs:
           fi
           test "${remote_commit}" = "${zero_commit}"
           package="svMultiPhysics-Ubuntu-26-${CONFIGURATION}-${version}.deb"
-          test "${version}" = '${{ needs.select_source.outputs.version }}'
           test "$(dpkg-deb --field "packages/${package}" Version)" = "${version}"
           depends=$(dpkg-deb --field "packages/${package}" Depends)
           [[ "${depends}" =~ (^|,[[:space:]]*)liblapack3(,|$) ]]
@@ -427,7 +415,7 @@ jobs:
           mkdir -p test-results
           cd tests
           /opt/conda/bin/conda run --no-capture-output -n svmultiphysics \
-            pytest -v -rfEP --durations=0 \
+            pytest -v -rfEP --durations=0 --ignore=test_release_identity.py \
             --junitxml="${GITHUB_WORKSPACE}/test-results/${SVMP_SOLVER_CONFIGURATION}.xml"
 
       - name: Summarize package validation

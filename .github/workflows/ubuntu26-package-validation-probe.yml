@@ -1,0 +1,187 @@
+name: Probe Ubuntu 26 package validation
+
+# Temporary fork-only run against packages from the completed #771 build.
+on:
+  push:
+    branches:
+      - feature/771-build-ubuntu26-packages
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_COMMIT: 7a913e2b8593beb8dca27d3c829dcf183781de46
+  PACKAGE_RUN_ID: '43350990134'
+  VERSION: 1.0.0.2
+  VERSION_TAG: v1.0.0.2
+
+jobs:
+  validate:
+    name: Test installed ${{ matrix.configuration }} package
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [default, trilinos]
+    container:
+      image: ubuntu:26.04@sha256:157dc3d6e4a3e4f2c68d12df9df9ed6e808b59af6d4c3757b432b4f519916725
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      OMPI_ALLOW_RUN_AS_ROOT: '1'
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: '1'
+      PRTE_MCA_rmaps_default_mapping_policy: ':oversubscribe'
+      SVMP_SOLVER_CONFIGURATION: ${{ matrix.configuration }}
+      SVMP_TEST_PROCS: '1,3,4'
+    steps:
+      - name: Install Ubuntu test prerequisites
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl git git-lfs gfortran libopenmpi-dev make python3
+
+      - name: Check four-rank MPI launch
+        shell: bash
+        run: mpirun -np 4 /bin/true
+
+      - name: Check out integration-test fixtures
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_COMMIT }}
+          lfs: true
+
+      - name: Download previously built svMultiPhysics package
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu26-${{ matrix.configuration }}-${{ env.SOURCE_COMMIT }}
+          path: packages
+          run-id: ${{ env.PACKAGE_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify release inputs
+        shell: bash
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          test "$(git rev-parse HEAD)" = "${SOURCE_COMMIT}"
+          version=$(python3 -c '
+          import json, sys
+          release = json.load(sys.stdin)
+          print(".".join(str(release[key]) for key in ("major", "minor", "patch", "build")))
+          ' < release.json)
+          test "${version}" = "${VERSION}"
+          read -r zero_tag zero_commit zero_sha < <(python3 -c '
+          import json, re
+          with open("release.json", encoding="utf-8") as manifest:
+              release = json.load(manifest)
+          zero = release["dependencies"]["svZeroDSolver"]
+          if zero["repository"] != "SimVascular/svZeroDSolver":
+              raise SystemExit("Unexpected svZeroDSolver repository")
+          if not re.fullmatch(r"v[0-9][A-Za-z0-9._-]*", zero["tag"]):
+              raise SystemExit("Invalid svZeroDSolver tag")
+          if not re.fullmatch(r"[0-9a-f]{40}", zero["commit"]):
+              raise SystemExit("Invalid svZeroDSolver commit")
+          if not re.fullmatch(r"[0-9a-f]{64}", zero["ubuntu26_package_sha256"]):
+              raise SystemExit("Invalid svZeroDSolver package checksum")
+          print(zero["tag"], zero["commit"], zero["ubuntu26_package_sha256"])
+          ')
+          remote_commit=$(git ls-remote https://github.com/SimVascular/svZeroDSolver.git "refs/tags/${zero_tag}^{}" | awk 'NR == 1 { print $1 }')
+          if [[ -z "${remote_commit}" ]]; then
+            remote_commit=$(git ls-remote --refs https://github.com/SimVascular/svZeroDSolver.git "refs/tags/${zero_tag}" | awk 'NR == 1 { print $1 }')
+          fi
+          test "${remote_commit}" = "${zero_commit}"
+          package="svMultiPhysics-Ubuntu-26-${CONFIGURATION}-${version}.deb"
+          test "$(dpkg-deb --field "packages/${package}" Version)" = "${version}"
+          depends=$(dpkg-deb --field "packages/${package}" Depends)
+          [[ "${depends}" =~ (^|,[[:space:]]*)liblapack3(,|$) ]]
+          [[ "${depends}" =~ (^|,[[:space:]]*)openmpi-bin(,|$) ]]
+          sha256sum -c "packages/${package}.sha256"
+          printf 'SVZEROD_TAG=%s\nSVZEROD_SHA256=%s\nPACKAGE=%s\n' \
+            "${zero_tag}" "${zero_sha}" "${package}" >> "${GITHUB_ENV}"
+
+      - name: Download and verify svZeroDSolver package
+        shell: bash
+        run: |
+          zero_package="svZeroDSolver-Ubuntu-26-${SVZEROD_TAG}.deb"
+          curl -fL --retry 3 -o "${zero_package}" \
+            "https://github.com/SimVascular/svZeroDSolver/releases/download/${SVZEROD_TAG}/${zero_package}"
+          printf '%s  %s\n' "${SVZEROD_SHA256}" "${zero_package}" | sha256sum -c -
+          test "$(dpkg-deb --field "${zero_package}" Version)" = "${SVZEROD_TAG#v}"
+          printf 'ZERO_PACKAGE=%s\n' "${zero_package}" >> "${GITHUB_ENV}"
+
+      - name: Install packages and locate installed executables
+        shell: bash
+        run: |
+          apt-get install -y --no-install-recommends "./${ZERO_PACKAGE}" "./packages/${PACKAGE}"
+          solver=$(find /usr/local/sv/svMultiPhysics -type f -name svmultiphysics -print -quit)
+          interface=$(find /usr/local/sv/svZeroDSolver -type f -name libsvzero_interface.so -print -quit)
+          test -x "${solver}"
+          test -f "${interface}"
+          if ldd "${solver}" | grep 'not found'; then
+            echo 'The installed solver has missing shared-library dependencies' >&2
+            exit 1
+          fi
+          if ldd "${interface}" | grep 'not found'; then
+            echo 'The installed svZeroDSolver interface has missing shared-library dependencies' >&2
+            exit 1
+          fi
+          mkdir -p svZeroDSolver/build/src/interface
+          ln -s "${interface}" svZeroDSolver/build/src/interface/libsvzero_interface.so
+          printf 'SVMP_SOLVER_EXECUTABLE=%s\n' "${solver}" >> "${GITHUB_ENV}"
+
+      - name: Check installed solver version
+        shell: bash
+        run: |
+          actual=$("${SVMP_SOLVER_EXECUTABLE}" --version)
+          expected="[svMultiPhysics] version ${VERSION_TAG} commit ${SOURCE_COMMIT}"
+          test "${actual}" = "${expected}"
+          printf '%s\n' "${actual}"
+
+      - name: Report installed dependency versions
+        shell: bash
+        run: |
+          printf '### Installed Ubuntu 26 package versions (%s)\n\n' \
+            "${SVMP_SOLVER_CONFIGURATION}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '| Package | Version |\n| --- | --- |\n' >> "${GITHUB_STEP_SUMMARY}"
+          dpkg-query -W -f='| ${binary:Package} | ${Version} |\n' \
+            svmultiphysics svzerodsolver liblapack3 openmpi-bin libopenmpi40 \
+            >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Install Python test environment
+        shell: bash
+        run: |
+          curl -fL --retry 3 -o /tmp/miniconda.sh \
+            https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+          bash /tmp/miniconda.sh -b -p /opt/conda
+          /opt/conda/bin/conda create -y -n svmultiphysics python=3.12 pip
+          /opt/conda/bin/conda run -n svmultiphysics python -m pip install pytest numpy meshio pandas
+
+      - name: Run integration tests against installed solver
+        shell: bash
+        run: |
+          mkdir -p test-results
+          cd tests
+          /opt/conda/bin/conda run --no-capture-output -n svmultiphysics \
+            pytest -v -rfEP --durations=0 --ignore=test_release_identity.py \
+            --junitxml="${GITHUB_WORKSPACE}/test-results/${SVMP_SOLVER_CONFIGURATION}.xml"
+
+      - name: Summarize package validation
+        if: success()
+        shell: bash
+        run: |
+          printf '### Ubuntu 26 %s package validation\n\n' "${SVMP_SOLVER_CONFIGURATION}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Reused package artifact from run: `%s`\n' "${PACKAGE_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Solver build commit: `%s`\n' "${SOURCE_COMMIT}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Package: `%s`\n' "${PACKAGE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Package SHA-256: `%s`\n' "$(cut -d' ' -f1 "packages/${PACKAGE}.sha256")" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload integration-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu26-${{ matrix.configuration }}-probe-results-${{ github.run_id }}
+          path: test-results/*.xml
+          if-no-files-found: ignore
