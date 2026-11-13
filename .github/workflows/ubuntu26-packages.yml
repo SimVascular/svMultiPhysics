@@ -131,7 +131,8 @@ jobs:
           fi
           repository=${requested_image%%@*}
           repository=${repository%:*}
-          digest=$(docker buildx imagetools inspect "${requested_image}" | awk '$1 == "Digest:" { print $2; exit }')
+          inspect_output=$(docker buildx imagetools inspect "${requested_image}")
+          digest=$(awk '$1 == "Digest:" && !found++ { print $2 }' <<< "${inspect_output}")
           if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
             echo "Could not resolve ${requested_image} to an image digest" >&2
             exit 1
