@@ -17,6 +17,7 @@ execute_process(
 
 set(SV_PACKAGE_VERSION "" CACHE STRING "Four-part version from release.json")
 file(READ "${SV_REPOSITORY_ROOT}/release.json" _sv_release_json)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${SV_REPOSITORY_ROOT}/release.json")
 foreach(_part major minor patch build)
   string(JSON _value ERROR_VARIABLE _error GET "${_sv_release_json}" "${_part}")
   if(_error OR NOT _value MATCHES "^[0-9]+$")
@@ -28,7 +29,7 @@ list(JOIN _sv_version_parts "." _sv_manifest_version)
 if(SV_PACKAGE_VERSION AND NOT SV_PACKAGE_VERSION STREQUAL _sv_manifest_version)
   message(FATAL_ERROR "SV_PACKAGE_VERSION disagrees with release.json: ${SV_PACKAGE_VERSION} != ${_sv_manifest_version}")
 endif()
-set(SV_PACKAGE_VERSION "${_sv_manifest_version}" CACHE STRING "Four-part version from release.json" FORCE)
+set(SV_PACKAGE_VERSION "${_sv_manifest_version}")
 
 if(SV_SOURCE_COMMIT STREQUAL "unknown")
   set(SV_RELEASE_TAG "unknown")

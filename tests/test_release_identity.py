@@ -2,6 +2,7 @@ import json
 import re
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 from .conftest import cpp_exec
@@ -84,6 +85,42 @@ def test_release_manifest_and_tag_must_match(tmp_path):
 def test_top_level_build_forwards_deferred_tag_option():
     cmake_lists = (Path(__file__).resolve().parents[1] / "CMakeLists.txt").read_text()
     assert "-DSV_TAG_AFTER_VALIDATION:BOOL=${SV_TAG_AFTER_VALIDATION}" in cmake_lists
+    assert "-DSV_PACKAGE_VERSION:STRING=${SV_PACKAGE_VERSION}" not in cmake_lists
+
+
+def test_release_manifest_change_reconfigures_reused_build(tmp_path):
+    source = tmp_path / "source"
+    module_dir = source / "Code" / "CMake"
+    module_dir.mkdir(parents=True)
+    repo = Path(__file__).resolve().parents[1]
+    shutil.copyfile(repo / "Code/CMake/SimVascularReleaseIdentity.cmake",
+                    module_dir / "SimVascularReleaseIdentity.cmake")
+    manifest = source / "release.json"
+    manifest.write_text(json.dumps({"major": 1, "minor": 0, "patch": 0, "build": 2}))
+    (source / "CMakeLists.txt").write_text(
+        "cmake_minimum_required(VERSION 3.22)\n"
+        "project(release_identity NONE)\n"
+        f'include("{module_dir / "SimVascularReleaseIdentity.cmake"}")\n'
+        'file(WRITE "${CMAKE_BINARY_DIR}/version.txt" "${SV_PACKAGE_VERSION}")\n'
+    )
+    build = tmp_path / "build"
+    configured = subprocess.run(["cmake", "-S", str(source), "-B", str(build)],
+                                capture_output=True, text=True)
+    assert configured.returncode == 0, configured.stdout + configured.stderr
+    assert (build / "version.txt").read_text() == "1.0.0.2"
+
+    time.sleep(1.1)
+    manifest.write_text(json.dumps({"major": 1, "minor": 0, "patch": 0, "build": 3}))
+    rebuilt = subprocess.run(["cmake", "--build", str(build)], capture_output=True, text=True)
+    assert rebuilt.returncode == 0, rebuilt.stdout + rebuilt.stderr
+    assert (build / "version.txt").read_text() == "1.0.0.3"
+
+    mismatch = subprocess.run(
+        ["cmake", "-S", str(source), "-B", str(tmp_path / "explicit"),
+         "-DSV_PACKAGE_VERSION=1.0.0.2"], capture_output=True, text=True,
+    )
+    assert mismatch.returncode != 0
+    assert "SV_PACKAGE_VERSION disagrees with release.json" in mismatch.stderr
 
 
 def test_ci_helper_resolves_pinned_svzerodsolver_without_jq(tmp_path):

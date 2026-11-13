@@ -148,7 +148,7 @@ ExternalProject_Add(svMultiPhysics
     -DSV_ENABLE_DISTRIBUTION:BOOL=${SV_ENABLE_DISTRIBUTION}
     -DSV_RELEASE_PACKAGE:BOOL=${SV_RELEASE_PACKAGE}
     -DSV_TAG_AFTER_VALIDATION:BOOL=${SV_TAG_AFTER_VALIDATION}
-    -DSV_PACKAGE_VERSION:STRING=${SV_PACKAGE_VERSION}
+    # The nested build reads release.json itself; do not cache a derived version here.
     ${SV_APPLE_CMAKE_ARGS}
     ${SV_ADDITIONAL_CMAKE_ARGS}
     )
