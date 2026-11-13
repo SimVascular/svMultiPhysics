@@ -18,6 +18,7 @@
 #include "CoupledBoundaryCondition.h"
 #include "FourierInterpolation.h"
 #include "Fibers.h"
+#include "prestrain.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
 #include "SolutionStates.h"
@@ -1026,6 +1027,9 @@ class mshType
     /// @brief Fiber orientations used for electrophysiology and solid mechanics.
     Fibers fibers;
 
+    /// @brief Deformation gradient from the unloaded configuration to the mesh.
+    Prestrain prestrain;
+
     /// @brief Parent shape functions gradient
     /// double Nx(:,:,:)
     Array3<double> Nx;
@@ -1207,6 +1211,22 @@ class eqType
     ///
     /// See the documentation of @ref Integrator for additional details.
     bool line_search_verbose = false;
+
+    /// @brief Toggle pseudo-transient continuation for this equation.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    bool pseudo_transient_enabled = false;
+
+    /// @brief Adapt the pseudo time step between steps to the ratio of their
+    /// first residuals.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    bool pseudo_transient_adaptive_time_step = false;
+
+    /// @brief Largest pseudo time step the adaptation may reach.
+    ///
+    /// See the documentation of @ref Integrator for additional details.
+    double pseudo_transient_maximum_time_step = 0.0;
 
     /// @}
 
@@ -1682,7 +1702,10 @@ class ComMod {
     bool shlEq = false;
 
     /// @brief Whether PRESTRESS is being solved
-    bool pstEq = false;
+    bool prestressEq = false;
+
+    /// @brief Whether prestrain is being solved
+    bool prestrainEq = false;
 
     /// @brief Whether velocity-pressure based structural dynamics solver is used
     bool sstEq = false;

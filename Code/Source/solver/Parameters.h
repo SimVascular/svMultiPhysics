@@ -1817,6 +1817,43 @@ class LineSearchParameters : public ParameterLists
     bool value_set = false;
 };
 
+//----------------------------
+// PseudoTransientParameters
+//----------------------------
+/// @brief Parameters of the pseudo-transient continuation of an equation.
+///
+/// Pseudo-transient continuation is enabled by the presence of the XML
+/// element and disabled by its absence. Within it, Maximum_time_step has to
+/// be given and Adaptive_time_step defaults to false.
+///
+/// XML element: \code {.xml}
+/// <Pseudo_transient>
+///   <Adaptive_time_step> true </Adaptive_time_step>
+///   <Maximum_time_step> 100.0 </Maximum_time_step>
+/// </Pseudo_transient>
+/// \endcode
+//
+class PseudoTransientParameters : public ParameterLists
+{
+  public:
+    PseudoTransientParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void set_values(tinyxml2::XMLElement* xml_elem);
+    void print_parameters();
+
+    /// @brief Adapt the pseudo time step between steps to the ratio of their
+    /// first residuals.
+    Parameter<bool> adaptive_time_step;
+
+    /// @brief Largest pseudo time step the adaptation may reach.
+    Parameter<double> maximum_time_step;
+
+    bool value_set = false;
+};
+
 /// @brief The EquationParameters class stores parameters for the 'Add_equation'
 /// XML element used to specify an equation to be solved (e.g. fluid).
 ///
@@ -1862,6 +1899,7 @@ class EquationParameters : public ParameterLists
     Parameter<double> penalty_parameter;
     Parameter<double> poisson_ratio;
     Parameter<bool> prestress;
+    Parameter<bool> prestrain;
 
     Parameter<double> source_term;
     Parameter<double> tolerance;
@@ -1893,6 +1931,8 @@ class EquationParameters : public ParameterLists
     LinearSolverParameters linear_solver;
 
     LineSearchParameters line_search;
+
+    PseudoTransientParameters pseudo_transient;
 
     std::vector<OutputParameters*> outputs;
 
@@ -2054,6 +2094,7 @@ class MeshParameters : public ParameterLists
     Parameter<std::string> mesh_file_path;
     Parameter<double> mesh_scale_factor;
     Parameter<std::string> prestress_file_path;
+    Parameter<std::string> prestrain_file_path;
 
     Parameter<bool> set_mesh_as_fibers;
     Parameter<bool> set_mesh_as_shell;

@@ -2673,6 +2673,55 @@ void LineSearchParameters::print_parameters() {
 }
 
 //////////////////////////////////////////////////////////
+//              PseudoTransientParameters               //
+//////////////////////////////////////////////////////////
+
+const std::string PseudoTransientParameters::xml_element_name_ =
+    "Pseudo_transient";
+
+PseudoTransientParameters::PseudoTransientParameters() {
+
+  bool required = true;
+
+  set_xml_element_name(xml_element_name_);
+
+  set_parameter("Adaptive_time_step", false, !required, adaptive_time_step);
+  set_parameter("Maximum_time_step", 0.0, required, maximum_time_step);
+}
+
+void PseudoTransientParameters::set_values(tinyxml2::XMLElement *xml_elem) {
+  svmp::check<svmp::ParseException>(xml_elem->GetText() == nullptr,
+      xml_element_name_ + " takes no value of its own: it encloses "
+      "Adaptive_time_step and Maximum_time_step.");
+
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  std::function<void(const std::string &, const std::string &)> ftpr =
+      std::bind(&PseudoTransientParameters::set_parameter_value, *this, _1, _2);
+  xml_util_set_parameters(ftpr, xml_elem, error_msg);
+
+  check_required();
+
+  svmp::check<svmp::ParseException>(maximum_time_step.value() > 0.0,
+      "Pseudo_transient Maximum_time_step must be positive.");
+
+  value_set = true;
+}
+
+void PseudoTransientParameters::print_parameters() {
+  std::cout << std::endl;
+  std::cout << "---------------------------" << std::endl;
+  std::cout << "Pseudo-Transient Parameters" << std::endl;
+  std::cout << "---------------------------" << std::endl;
+
+  auto params_name_value = get_parameter_list();
+  for (auto &[key, value] : params_name_value) {
+    std::cout << key << ": " << value << std::endl;
+  }
+}
+
+//////////////////////////////////////////////////////////
 //                  EquationParameters                  //
 //////////////////////////////////////////////////////////
 
@@ -2704,6 +2753,7 @@ EquationParameters::EquationParameters() {
   set_parameter("Min_iterations", 1, !required, min_iterations);
 
   set_parameter("Prestress", false, !required, prestress);
+  set_parameter("Prestrain", false, !required, prestrain);
 
   set_parameter("Tolerance", 0.5, !required, tolerance);
   set_parameter("Use_taylor_hood_type_basis", false, !required,
@@ -2813,6 +2863,9 @@ void EquationParameters::set_values(tinyxml2::XMLElement *eq_elem,
 
     } else if (name == LineSearchParameters::xml_element_name_) {
       line_search.set_values(item);
+
+    } else if (name == PseudoTransientParameters::xml_element_name_) {
+      pseudo_transient.set_values(item);
 
     } else if (name == OutputParameters::xml_element_name_) {
       auto output_params = new OutputParameters();
@@ -3208,6 +3261,7 @@ MeshParameters::MeshParameters() {
   set_parameter("Mesh_file_path", "", !required, mesh_file_path);
   set_parameter("Mesh_scale_factor", 1.0, !required, mesh_scale_factor);
   set_parameter("Prestress_file_path", "", !required, prestress_file_path);
+  set_parameter("Prestrain_file_path", "", !required, prestrain_file_path);
 
   set_parameter("Include_xml", "", !required, include_xml);
   set_parameter("Initial_displacements_file_path", "", !required,

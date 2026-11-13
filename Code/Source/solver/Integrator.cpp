@@ -113,6 +113,22 @@ bool Integrator::step(bool save_results) {
             : 1.0;
 
     apply_increment(eq, step_length);
+
+    // If solving for prestrain, compose update into prestrain
+    // and reset state to rest.
+    if (com_mod.prestrainEq) {
+      auto& An = solutions_.current.get_acceleration();
+      auto& Yn = solutions_.current.get_velocity();
+      auto& Dn = solutions_.current.get_displacement();
+      const Array<double> u = eq.af * Dn.rows(eq.s, eq.s + com_mod.nsd - 1);
+      for (auto& msh : com_mod.msh) {
+        msh.prestrain.compose(com_mod, msh, u);
+      }
+      An = 0.0;
+      Yn = 0.0;
+      Dn = 0.0;
+    }
+
     finalize_iteration();
 
     const bool all_converged =
@@ -132,6 +148,10 @@ bool Integrator::step(bool save_results) {
       dmsg << ">>> All OK" << std::endl;
       dmsg << "iEqOld: " << iEqOld + 1;
       #endif
+
+      if (com_mod.eq[0].pseudo_transient_enabled) {
+        pseudo_transient_finish_step(com_mod.eq[0]);
+      }
       return true;
     }
 
@@ -449,6 +469,33 @@ double Integrator::line_search_step_length(eqType &eq,
   return step_length;
 }
 
+//------------------------------
+// pseudo_transient_finish_step
+//------------------------------
+//
+void Integrator::pseudo_transient_finish_step(const eqType &eq)
+{
+  auto& com_mod = simulation_->com_mod;
+  const auto& cm_mod = simulation_->cm_mod;
+  double& dt = com_mod.dt;
+
+  // pNorm is the step's first residual relative to iNorm, the run's first.
+  const double residual = eq.pNorm * eq.iNorm;
+
+  if (com_mod.cm.mas(cm_mod)) {
+    std::cout << " Pseudo-transient: dt = " << dt << ", first residual = " << residual
+              << ", R/R0 = " << eq.pNorm << std::endl;
+  }
+
+  // Adaptive time stepping: the next time step grows by the ratio of
+  // the first residuals of the last two steps unless the max dt is reached.
+  if (eq.pseudo_transient_adaptive_time_step && pseudo_transient_residual_prev_ > 0.0 &&
+      std::isfinite(residual)) {
+    dt = std::min(eq.pseudo_transient_maximum_time_step, dt * pseudo_transient_residual_prev_ / residual);
+  }
+  pseudo_transient_residual_prev_ = residual;
+}
+
 //------------------------
 // compute_residual_weights
 //------------------------
@@ -728,7 +775,7 @@ void Integrator::predictor()
   #ifdef debug_picp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "pstEq: " << com_mod.pstEq;
+  dmsg << "prestressEq: " << com_mod.prestressEq;
   #endif
 
   // Variables for prestress calculations
@@ -746,7 +793,7 @@ void Integrator::predictor()
   auto& Dn = solutions_.current.get_displacement();
 
   // Prestress initialization
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
      pS0 = pS0 + pSn;
      Ao = 0.0;
      Yo = 0.0;
@@ -900,7 +947,7 @@ void Integrator::initiator(SolutionStates& solutions)
   dmsg << "eq.itr: " << eq.itr;
   dmsg << "dof: " << dof;
   dmsg << "tnNo: " << tnNo;
-  dmsg << "com_mod.pstEq: " << com_mod.pstEq;
+  dmsg << "com_mod.prestressEq: " << com_mod.prestressEq;
   #endif
 
   const auto& Ao = solutions.old.get_acceleration();
@@ -959,7 +1006,7 @@ void Integrator::initiator(SolutionStates& solutions)
   }
 
   // prestress
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
     com_mod.pSn = 0.0;
     com_mod.pSa = 0.0;
   }
@@ -1133,7 +1180,7 @@ void Integrator::finalize_iteration()
 
   // Update prestress at the nodes and re-initialize
   //
-  if (com_mod.pstEq) {
+  if (com_mod.prestressEq) {
     all_fun::commu(com_mod, pSn);
     all_fun::commu(com_mod, pSa);
 

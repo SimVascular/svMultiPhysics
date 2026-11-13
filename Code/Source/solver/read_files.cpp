@@ -1734,6 +1734,18 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
     lEq.line_search_verbose = line_search_params.verbose.value();
   }
 
+  auto &pseudo_transient_params = eq_params->pseudo_transient;
+
+  // If the pseudo-transient element is present, enable pseudo-transient
+  // continuation for this equation and set its parameters.
+  if (pseudo_transient_params.defined()) {
+    lEq.pseudo_transient_enabled = true;
+    lEq.pseudo_transient_adaptive_time_step =
+        pseudo_transient_params.adaptive_time_step.value();
+    lEq.pseudo_transient_maximum_time_step =
+        pseudo_transient_params.maximum_time_step.value();
+  }
+
   // Initialize coupled BC.
   //
   auto& chnl_mod = simulation->chnl_mod;
@@ -1810,7 +1822,11 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   // Set equation properties.
   //
   if (eq_params->prestress.defined() && eq_params->prestress.value()) {
-    simulation->com_mod.pstEq = true;
+    simulation->com_mod.prestressEq = true;
+  }
+
+  if (eq_params->prestrain.defined() && eq_params->prestrain.value()) {
+    simulation->com_mod.prestrainEq = true;
   }
 
   bool THflag = false; 

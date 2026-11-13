@@ -9,6 +9,7 @@
 #include "solid/sv_struct.h"
 
 #include "all_fun.h"
+#include "prestrain.h"
 #include "consts.h"
 #include "lhsa.h"
 #include "mat_fun.h"
@@ -209,7 +210,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool pstEq = com_mod.pstEq;
+  bool prestressEq = com_mod.prestressEq;
 
   int eNoN = lM.eNoN;
   const bool mesh_has_fibers = lM.fibers.has_fibers();
@@ -231,6 +232,8 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
                 bfl(nsd,eNoN), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN);
+
+  const bool prestrained = lM.prestrain.has_prestrain();
 
   // Loop over all elements of mesh
 
@@ -287,23 +290,34 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
     Array<double> fiber_values = Fibers::zero_fibers(nsd);
+    Eigen::MatrixXd F0 = Eigen::MatrixXd::Identity(nsd, nsd);
 
     for (int g = 0; g < lM.nG; g++) {
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       }
-      const auto fibers = mat_fun::eigen_view(fiber_values);
+      auto fibers = mat_fun::eigen_view_mutable(fiber_values);
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
       const bool recompute_visc = (g == 0 || !lM.lShpF);
 
-      if (recompute_visc) {
+      if (recompute_visc || prestrained) {
         auto Nx_g = lM.Nx.slice(g);
         nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
         if (utils::is_zero(Jac)) {
           throw std::runtime_error("[construct_dsolid] Jacobian for element " + std::to_string(e) + " is < 0.");
+        }
+      }
+
+      // Prestrained elements are integrated on their unloaded configuration.
+      if (prestrained) {
+        F0 = lM.prestrain.get(nsd, g, e);
+        mat_fun::eigen_view_mutable(Nx) = F0.transpose() * mat_fun::eigen_view(Nx);
+        Jac /= F0.determinant();
+        if (mesh_has_fibers) {
+          fibers = (F0.inverse() * fibers).colwise().normalized();
         }
       }
       double w = lM.w(g) * Jac;
@@ -311,7 +325,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       pSl = 0.0;
 
       if (nsd == 3) {
-        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, fibers,
+        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
 
 #if 0
@@ -325,12 +339,12 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 #endif
 
       } else if (nsd == 2) {
-        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, fibers,
+        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
       }
 
       // Prestress
-      if (pstEq) {
+      if (prestressEq) {
         for (int a = 0; a < eNoN; a++) {
           int Ac = ptr(a);
           pSa(Ac) += w*N(a);
@@ -351,6 +365,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
+               const mat_fun::Matrix<2> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
@@ -374,8 +389,10 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Set parameters
   //
-  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  // Per unit stress-free volume: det F0 times the values given for the mesh
+  const double J0 = F0.determinant();
+  double rho = J0 * dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = J0 * dmn.prop.at(PhysicalPropertyType::damping);
   const Eigen::Vector2d fb{dmn.prop.at(PhysicalPropertyType::f_x),
                            dmn.prop.at(PhysicalPropertyType::f_y)};
   double afu = eq.af * eq.beta*dt*dt;
@@ -410,9 +427,10 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   S0 << pS0g(0), pS0g(2),
         pS0g(2), pS0g(1);
 
-  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<2> vx = vel * Nxm.transpose();
-  const Matrix<2> F  = Matrix<2>::Identity() + disp * Nxm.transpose();
+  const Matrix<2> F  = F0 + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
   const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, fibers);
@@ -506,6 +524,13 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
       lK(dof+1,a,b) += w*( T1 + afu*(BmDBm + visc.du(3,a,b)) + afv*visc.dv(3,a,b) );
     }
   }
+
+  // Make the tangent that of a prestrain iteration, which composes its update
+  // into F0 (see prestrain.h).
+  if (com_mod.prestrainEq) {
+    prestrain::correct_composed_tangent<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
+  }
 }
 
 /// @brief Reproduces Fortran 'STRUCT3D' subroutine.
@@ -513,6 +538,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
+               const mat_fun::Matrix<3> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
@@ -539,8 +565,10 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Set parameters
   //
-  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  // Per unit stress-free volume: det F0 times the values given for the mesh
+  const double J0 = F0.determinant();
+  double rho = J0 * dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = J0 * dmn.prop.at(PhysicalPropertyType::damping);
   const Eigen::Vector3d fb{dmn.prop.at(PhysicalPropertyType::f_x),
                            dmn.prop.at(PhysicalPropertyType::f_y),
                            dmn.prop.at(PhysicalPropertyType::f_z)};
@@ -579,9 +607,10 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
         pS0g(3), pS0g(1), pS0g(4),
         pS0g(5), pS0g(4), pS0g(2);
 
-  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<3> vx = vel * Nxm.transpose();
-  const Matrix<3> F  = Matrix<3>::Identity() + disp * Nxm.transpose();
+  const Matrix<3> F  = F0 + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
   const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, fibers);
@@ -697,6 +726,13 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
       BmDBm = Bm[a].col(2).dot(DBm.col(2));
       lK(2*dof+2,a,b) += w*( T1 + afu*(BmDBm + visc.du(8,a,b)) + afv*visc.dv(8,a,b) );
     }
+  }
+
+  // Make the tangent that of a prestrain iteration, which composes its update
+  // into F0 (see prestrain.h).
+  if (com_mod.prestrainEq) {
+    prestrain::correct_composed_tangent<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
   }
 }
 };

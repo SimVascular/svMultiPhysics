@@ -12,6 +12,7 @@
 #include "Fibers.h"
 #include "load_msh.h"
 #include "nn.h"
+#include "prestrain.h"
 #include "read_msh.h"
 #include "utils.h"
 #include "vtk_xml.h"
@@ -1516,6 +1517,12 @@ void read_msh(Simulation* simulation)
       com_mod.msh[iM].fibers.read(*simulation->parameters.mesh_parameters[iM],
           com_mod.msh[iM], com_mod.nsd);
     }
+  }
+
+  // Read the prestrain of each mesh that has one.
+  for (int iM = 0; iM < com_mod.nMsh; iM++) {
+    com_mod.msh[iM].prestrain.read(*simulation->parameters.mesh_parameters[iM],
+        com_mod.msh[iM], com_mod.nsd);
   }
 
   // Read prestress data.
