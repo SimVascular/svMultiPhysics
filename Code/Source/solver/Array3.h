@@ -90,7 +90,7 @@ class Array3
     int nrows() const { return nrows_; }
     int nslices() const { return nslices_; }
 
-    void allocate(const int num_rows, const int num_cols, const int num_slices, const bool row_major=true)
+    void allocate(const int num_rows, const int num_cols, const int num_slices, const bool row_major=true, const bool zero=true)
     {
       nrows_ = num_rows;
       ncols_ = num_cols;
@@ -98,7 +98,7 @@ class Array3
       slice_size_ = ncols_ * nrows_;
       size_ = nrows_ * ncols_ * nslices_;
       data_ = new T [size_];
-      memset(data_, 0, sizeof(T)*size_);
+      if (zero) memset(data_, 0, sizeof(T)*size_);
       memory_in_use += sizeof(T) * size_;;
     }
 
@@ -241,8 +241,8 @@ class Array3
       return size_ * sizeof(T);
     }
 
-    /// @brief Resize the array.
-    void resize(const int num_rows, const int num_cols, const int num_slices)
+    /// @brief Resize the array, zeroing it unless 'zero' is false.
+    void resize(const int num_rows, const int num_cols, const int num_slices, const bool zero=true)
     {
       // [NOTE] This is tfu but need to mimic fortran.
       nrows_ = num_rows;
@@ -260,7 +260,7 @@ class Array3
         data_ = nullptr;
       }
 
-      allocate(num_rows, num_cols, num_slices);
+      allocate(num_rows, num_cols, num_slices, true, zero);
     }
 
     /// @brief Set the array values from an Array with the equivalent number of values.

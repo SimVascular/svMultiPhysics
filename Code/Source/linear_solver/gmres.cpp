@@ -114,6 +114,17 @@ void orthogonalize_v(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
   omp_la::omp_mul_v(dof, nNo, 1.0 / h(i + 1, i), w);
 }
 
+/// @brief Return the Krylov basis kept in 'ls', reallocating it only when its
+/// shape changes. Each basis vector is written before it is read, so the basis
+/// is never zeroed and pages of vectors no solve reaches are never touched.
+Array3<double>& krylov_basis(fsi_linear_solver::FSILS_subLsType &ls,
+                             const int dof, const int nNo) {
+  if (ls.u.nrows() != dof || ls.u.ncols() != nNo || ls.u.nslices() != ls.sD + 1) {
+    ls.u.resize(dof, nNo, ls.sD + 1, false);
+  }
+  return ls.u;
+}
+
 } // namespace
 
 /// @brief Solver the system Val * X = R.
@@ -144,8 +155,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
   #endif
 
   Array<double> h(ls.sD+1,ls.sD); 
-  Array3<double> u(dof,nNo,ls.sD+1); 
-  Array<double> unCondU(dof,nNo);
+  auto &u = krylov_basis(ls, dof, nNo);
   Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD+1);
 
   double time = fsi_linear_solver::fsils_cpu_t();
@@ -343,7 +353,8 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   }
 
   Array<double> h(ls.sD + 1, ls.sD);
-  Array<double> u(nNo, ls.sD + 1);
+  // A one-row basis is laid out as nNo x (sD + 1), one basis vector per column.
+  Array<double> u(nNo, ls.sD + 1, krylov_basis(ls, 1, nNo).slice_data(0));
   Vector<double> X(nNo), y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD + 1);
 
   for (int l = 0; l < ls.mItr; l++) {
@@ -353,7 +364,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     #endif
     ls.dB = ls.fNorm;
     ls.itr = ls.itr + 1;
-    auto u_col = u.col(0);
+    auto u_col = u.rcol(0);
     spar_mul::fsils_spar_mul_ss(lhs, lhs.rowPtr, lhs.colPtr, Val, X, u_col);
     u.set_col(0, R - u_col);
 
@@ -377,9 +388,8 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       ls.itr = ls.itr + 1;
       last_i = i;
       auto u_col = u.col(i);
-      auto u_col_1 = u.col(i+1);
+      auto u_col_1 = u.rcol(i+1);
       spar_mul::fsils_spar_mul_ss(lhs, lhs.rowPtr, lhs.colPtr, Val, u_col, u_col_1);
-      u.set_col(i+1, u_col_1);
 
       orthogonalize_s(lhs, nNo, mynNo, i, u, h);
 
@@ -497,8 +507,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   }
 
   Array<double> h(ls.sD + 1, ls.sD), X(dof, nNo);
-  Array3<double> u(dof, nNo, ls.sD + 1);
-  Array<double> unCondU(dof, nNo);
+  auto &u = krylov_basis(ls, dof, nNo);
   Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD + 1);
 
   for (int l = 0; l < ls.mItr; l++) {
