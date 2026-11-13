@@ -81,6 +81,11 @@ def test_release_manifest_and_tag_must_match(tmp_path):
     assert "points to another source commit" in deferred_wrong_tag.stderr
 
 
+def test_top_level_build_forwards_deferred_tag_option():
+    cmake_lists = (Path(__file__).resolve().parents[1] / "CMakeLists.txt").read_text()
+    assert "-DSV_TAG_AFTER_VALIDATION:BOOL=${SV_TAG_AFTER_VALIDATION}" in cmake_lists
+
+
 def test_ubuntu_package_name_and_metadata(tmp_path):
     repo = Path(__file__).resolve().parents[1]
     cmake_lists = (
