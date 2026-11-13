@@ -34,6 +34,7 @@
 
 #include "mpi.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <math.h>
@@ -884,6 +885,47 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   // Preparing faces and BCs
   //
   baf_ini_ns::baf_ini(simulation, initial_solutions);
+
+  // Warn about Taylor-Hood fluid and Stokes elements whose nodes all lie on
+  // faces with a strong Dirichlet velocity BC: the pressure of a corner node
+  // shared only by such elements is undetermined.
+  //
+  for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
+    using namespace consts;
+    const auto& eq = com_mod.eq[iEq];
+    Vector<double> fixed(tnNo);
+    for (const auto& bc : eq.bc) {
+      const bool dir = (utils::btest(bc.bType, iBC_Dir) && !bc.weakDir) || (utils::btest(bc.bType, iBC_Coupled) &&
+          bc.coupled_bc.get_bc_type() == BoundaryConditionType::bType_Dir);
+      const auto nDrn = std::count_if(bc.eDrn.begin(), bc.eDrn.end(), [](int d) { return d != 0; });
+      if (dir && (nDrn == 0 || nDrn == com_mod.nsd)) {
+        const auto& fa = com_mod.msh[bc.iM].fa[bc.iFa];
+        for (int a = 0; a < fa.nNo; a++) {
+          fixed(fa.gN(a)) = 1.0;
+        }
+      }
+    }
+    all_fun::commu(com_mod, fixed);
+
+    double nEl = 0.0;
+    for (const auto& msh : com_mod.msh) {
+      for (int e = 0; e < msh.nEl && msh.nFs == 2; e++) {
+        const auto phys = eq.dmn[all_fun::domain(com_mod, msh, iEq, e)].phys;
+        bool allFixed = (phys == Equation_fluid || phys == Equation_stokes);
+        for (int a = 0; a < msh.eNoN && allFixed; a++) {
+          allFixed = (fixed(msh.IEN(a,e)) > 0.0);
+        }
+        nEl += allFixed;
+      }
+    }
+    nEl = cm.reduce(cm_mod, nEl);
+    if (nEl > 0.0 && cm.mas(cm_mod)) {
+      std::cout << "WARNING: " << static_cast<int>(nEl) << " Taylor-Hood element(s) of equation '" << eq.sym
+                << "' have all of their nodes on faces with a strong Dirichlet velocity BC. The pressure at a corner"
+                << " node shared only by such elements is undetermined, so it can be wrong and the linear solver may"
+                << " fail to converge. Remesh so that every element has a node off these faces." << std::endl;
+    }
+  }
 
   // As all the arrays are allocated, call BIN to VTK for conversion
   //
