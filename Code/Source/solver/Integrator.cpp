@@ -14,6 +14,7 @@
 #include "nn.h"
 #include "output.h"
 #include "post.h"
+#include "precond.h"
 #include "ris.h"
 #include "set_bc.h"
 #include "solid/ustruct.h"
@@ -499,6 +500,9 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
       }
     }
   }
+
+  // A zero pressure diagonal is scaled as in the linear solve
+  precond::scale_zero_diagonal_pressure(lhs, dof, Val, weights);
 }
 
 //------------------------

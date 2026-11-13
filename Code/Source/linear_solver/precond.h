@@ -15,4 +15,7 @@ void precond_rcs(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPtr
 
 void pre_mul(const Array<int>& rowPtr, const int nNo, const int nnz, const int dof, Array<double>& Val, const Array<double>& W);
 
+void scale_zero_diagonal_pressure(const fsi_linear_solver::FSILS_lhsType& lhs, const int dof, const Array<double>& Val,
+    Array<double>& W);
+
 };
