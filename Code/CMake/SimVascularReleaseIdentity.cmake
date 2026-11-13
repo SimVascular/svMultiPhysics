@@ -34,15 +34,18 @@ set(SV_PACKAGE_VERSION "${_sv_manifest_version}")
 if(SV_SOURCE_COMMIT STREQUAL "unknown")
   set(SV_RELEASE_TAG "unknown")
 elseif(_sv_status_result EQUAL 0 AND _sv_status STREQUAL "")
-  execute_process(
-    COMMAND git -C "${SV_REPOSITORY_ROOT}" describe --tags --exact-match HEAD
-    OUTPUT_VARIABLE SV_RELEASE_TAG
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-    RESULT_VARIABLE _sv_tag_result)
-  if(NOT _sv_tag_result EQUAL 0)
-    set(SV_RELEASE_TAG "untagged")
-  endif()
+  set(SV_RELEASE_TAG "untagged")
+  foreach(_sv_candidate "v${SV_PACKAGE_VERSION}" "v${SV_PACKAGE_VERSION}-rc" "v${SV_PACKAGE_VERSION}-dev")
+    execute_process(
+      COMMAND git -C "${SV_REPOSITORY_ROOT}" rev-parse --verify --quiet "refs/tags/${_sv_candidate}^{commit}"
+      OUTPUT_VARIABLE _sv_candidate_commit
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      RESULT_VARIABLE _sv_candidate_result)
+    if(_sv_candidate_result EQUAL 0 AND _sv_candidate_commit STREQUAL SV_SOURCE_COMMIT)
+      set(SV_RELEASE_TAG "${_sv_candidate}")
+      break()
+    endif()
+  endforeach()
 else()
   set(SV_RELEASE_TAG "uncommitted")
 endif()

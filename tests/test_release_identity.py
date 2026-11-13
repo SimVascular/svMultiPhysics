@@ -88,6 +88,39 @@ def test_top_level_build_forwards_deferred_tag_option():
     assert "-DSV_PACKAGE_VERSION:STRING=${SV_PACKAGE_VERSION}" not in cmake_lists
 
 
+def test_developer_build_prefers_matching_release_tag(tmp_path):
+    source = tmp_path / "source"
+    module_dir = source / "Code" / "CMake"
+    module_dir.mkdir(parents=True)
+    repo = Path(__file__).resolve().parents[1]
+    shutil.copyfile(repo / "Code/CMake/SimVascularReleaseIdentity.cmake",
+                    module_dir / "SimVascularReleaseIdentity.cmake")
+    (source / "release.json").write_text(json.dumps({
+        "major": 1, "minor": 0, "patch": 0, "build": 2,
+    }))
+    check = source / "check.cmake"
+    check.write_text(f'include("{module_dir / "SimVascularReleaseIdentity.cmake"}")\n')
+    subprocess.run(["git", "init", "-q", str(source)], check=True)
+    subprocess.run(["git", "-C", str(source), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(source), "-c", "user.name=Test",
+                    "-c", "user.email=test@example.com", "commit", "-qm", "fixture"], check=True)
+
+    def reported_tag():
+        result = subprocess.run(["cmake", "-P", str(check)], capture_output=True, text=True)
+        assert result.returncode == 0, result.stdout + result.stderr
+        return result.stdout
+
+    subprocess.run(["git", "-C", str(source), "tag", "March_2025"], check=True)
+    assert "svMultiPhysics source: untagged" in reported_tag()
+    for tag in ("v1.0.0.2-dev", "v1.0.0.2-rc"):
+        subprocess.run(["git", "-C", str(source), "tag", tag], check=True)
+        assert f"svMultiPhysics source: {tag}" in reported_tag()
+    subprocess.run(["git", "-C", str(source), "-c", "user.name=Test",
+                    "-c", "user.email=test@example.com", "tag", "-a", "v1.0.0.2",
+                    "-m", "final"], check=True)
+    assert "svMultiPhysics source: v1.0.0.2" in reported_tag()
+
+
 def test_release_manifest_change_reconfigures_reused_build(tmp_path):
     source = tmp_path / "source"
     module_dir = source / "Code" / "CMake"
