@@ -67,7 +67,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 
 **Purpose**: Build default and Trilinos `.deb` packages using a selected Ubuntu 26 dependency image. The workflow resolves the image to a digest before building, and the package version comes from `release.json` rather than the build date.
 
-**Trigger**: Manual `workflow_dispatch`. The workflow must be on the repository's default branch before it can be started manually. A temporary push trigger tests this #771 branch against the fork's validated dependency image. Set the fork's `UBUNTU26_DEPENDENCY_IMAGE` Actions variable to that image's full GHCR tag or digest for this test. Remove the trigger, variable fallback, and push-event source exception before the upstream PR.
+**Trigger**: Manual `workflow_dispatch`. The workflow must be on the repository's default branch before it can be started manually. A temporary push trigger tests this #771 branch against the `1.0.0.1-dev` dependency image, resolved to an immutable digest before building. The fork's `UBUNTU26_DEPENDENCY_IMAGE` Actions variable can override that image with a full GHCR tag or digest. Remove the trigger, variable fallback, and push-event source exception before the upstream PR.
 
 **Manual inputs**:
 
