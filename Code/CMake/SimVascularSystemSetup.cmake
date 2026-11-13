@@ -175,18 +175,9 @@ if(APPLE)
 
 elseif(LINUX)
 
-  # To get the distribution and the version, we need to use lsb
-  find_program(LSB_RELEASE lsb_release)
-
-  # Get distribution name
-  execute_process(COMMAND ${LSB_RELEASE} -is
-    OUTPUT_VARIABLE LSB_DISTRIB
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-  # Get distribution release version
-  execute_process(COMMAND ${LSB_RELEASE} -rs
-    OUTPUT_VARIABLE LSB_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  # Read /etc/os-release directly; minimal build images may lack lsb_release.
+  cmake_host_system_information(RESULT LSB_DISTRIB QUERY DISTRIB_NAME)
+  cmake_host_system_information(RESULT LSB_VERSION QUERY DISTRIB_VERSION_ID)
 
   string(TOLOWER "${LSB_DISTRIB}" _platform_lower)
 
