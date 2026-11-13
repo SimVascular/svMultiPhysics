@@ -118,7 +118,7 @@ jobs:
         id: image
         shell: bash
         env:
-          REQUESTED_IMAGE: ${{ inputs.dependency_image || vars.UBUNTU26_DEPENDENCY_IMAGE || 'ghcr.io/simvascular/svmultiphysics-dependencies:1.0.0.1-dev' }}
+          REQUESTED_IMAGE: ${{ inputs.dependency_image || vars.UBUNTU26_DEPENDENCY_IMAGE || 'ghcr.io/bearsontheloose/svmultiphysics-dependencies@sha256:c80e31faf1d7a7646f5c0cfb4ded23be611b610f5524c8d9c5953a30ef2d9fde' }}
         run: |
           if [[ -z "${REQUESTED_IMAGE}" ]]; then
             echo 'dependency_image is required; set the input for manual runs or UBUNTU26_DEPENDENCY_IMAGE for the temporary push test' >&2
