@@ -118,10 +118,10 @@ jobs:
         id: image
         shell: bash
         env:
-          REQUESTED_IMAGE: ${{ inputs.dependency_image || vars.UBUNTU26_DEPENDENCY_IMAGE || 'ghcr.io/bearsontheloose/svmultiphysics-dependencies@sha256:c80e31faf1d7a7646f5c0cfb4ded23be611b610f5524c8d9c5953a30ef2d9fde' }}
+          REQUESTED_IMAGE: ${{ inputs.dependency_image || format('ghcr.io/{0}/svmultiphysics-dependencies:1.0.0.1-dev', github.repository_owner) }}
         run: |
           if [[ -z "${REQUESTED_IMAGE}" ]]; then
-            echo 'dependency_image is required; set the input for manual runs or UBUNTU26_DEPENDENCY_IMAGE for the temporary push test' >&2
+            echo 'dependency_image is required' >&2
             exit 1
           fi
           requested_image=${REQUESTED_IMAGE}
@@ -194,6 +194,10 @@ jobs:
           test "${version}" = '${{ needs.select_source.outputs.version }}'
           printf 'Solver build commit: %s\nVersion: %s\n' "${solver_commit}" "${version}"
 
+      - name: Check dependency version report before building
+        shell: bash
+        run: bash "${GITHUB_WORKSPACE}/Docker/ubuntu/report-dependency-versions.sh" --summary
+
       - name: Build svMultiPhysics
         shell: bash
         env:
@@ -261,11 +265,11 @@ jobs:
               >> "${GITHUB_STEP_SUMMARY}"
           fi
           printf '\n#### Dependency image versions\n\n```text\n' >> "${GITHUB_STEP_SUMMARY}"
-          /usr/local/bin/report-dependency-versions --summary >> "${GITHUB_STEP_SUMMARY}"
+          bash "${GITHUB_WORKSPACE}/Docker/ubuntu/report-dependency-versions.sh" --summary >> "${GITHUB_STEP_SUMMARY}"
           printf '```\n' >> "${GITHUB_STEP_SUMMARY}"
           if [[ "${CONFIGURATION}" == default ]]; then
             report="svMultiPhysics-Ubuntu-26-dependencies-${VERSION}.txt"
-            /usr/local/bin/report-dependency-versions > "packages/${report}"
+            bash "${GITHUB_WORKSPACE}/Docker/ubuntu/report-dependency-versions.sh" > "packages/${report}"
             sha256sum "packages/${report}" > "packages/${report}.sha256"
           fi
 

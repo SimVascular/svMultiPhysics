@@ -65,7 +65,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 
 ### 5. Ubuntu 26 Package Build (`workflows/ubuntu26-packages.yml`)
 
-**Purpose**: Build default and Trilinos `.deb` packages using a selected Ubuntu 26 dependency image. The workflow resolves the image to a digest before building, and the package version comes from `release.json` rather than the build date.
+**Purpose**: Build default and Trilinos `.deb` packages using a selected Ubuntu 26 dependency image. The workflow resolves the image to a digest before building, and the package version comes from `release.json`.
 
 **Trigger**: Manual `workflow_dispatch`. The workflow must be on the repository's default branch before it can be started manually.
 
