@@ -41,10 +41,10 @@ The Ubuntu 26.04.1 packages target AMD64. Download the svMultiPhysics default or
 
 ```bash
 sudo apt update
-sudo apt install ./svMultiPhysics-Ubuntu-26-default-1.0.0.1.deb
+sudo apt install ./svMultiPhysics-Ubuntu-26-default-1.0.0.2.deb
 ```
 
-Use `svMultiPhysics-Ubuntu-26-trilinos-1.0.0.1.deb` instead for the Trilinos configuration. Install the [svZeroDSolver v3.2 Ubuntu 26 package](https://github.com/SimVascular/svZeroDSolver/releases/download/v3.2/svZeroDSolver-Ubuntu-26-v3.2.deb) as well for cases coupled to the 0D solver. APT installs the svMultiPhysics package's declared runtime dependencies, including `liblapack3` (which brings in a BLAS provider) and `openmpi-bin`. No VTK, Trilinos, CMake, or compiler installation is needed to run the packaged solver. Run the installed executable at `/usr/local/sv/svMultiPhysics/1-0-0-1/bin/svmultiphysics` with `mpirun` and a solver input file.
+Use `svMultiPhysics-Ubuntu-26-trilinos-1.0.0.2.deb` instead for the Trilinos configuration. Install the [svZeroDSolver v3.2 Ubuntu 26 package](https://github.com/SimVascular/svZeroDSolver/releases/download/v3.2/svZeroDSolver-Ubuntu-26-v3.2.deb) as well for cases coupled to the 0D solver. APT installs the svMultiPhysics package's declared runtime dependencies, including `liblapack3` (which brings in a BLAS provider) and `openmpi-bin`. No VTK, Trilinos, CMake, or compiler installation is needed to run the packaged solver. Run the installed executable at `/usr/local/sv/svMultiPhysics/1-0-0-2/bin/svmultiphysics` with `mpirun` and a solver input file.
 
 
 <!--- =================================================================================== -->
