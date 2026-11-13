@@ -210,7 +210,7 @@ jobs:
         shell: bash
         run: |
           actual=$(build/svMultiPhysics-build/bin/svmultiphysics --version)
-          expected="[svMultiPhysics] version ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }}"
+          expected="[svMultiPhysics] version ${VERSION} tag ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }} configuration ${SVMP_SOLVER_CONFIGURATION}"
           test "${actual}" = "${expected}"
           printf '%s\n' "${actual}"
 
@@ -386,7 +386,7 @@ jobs:
         shell: bash
         run: |
           actual=$("${SVMP_SOLVER_EXECUTABLE}" --version)
-          expected="[svMultiPhysics] version ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }}"
+          expected="[svMultiPhysics] version ${{ needs.select_source.outputs.version }} tag ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }} configuration ${SVMP_SOLVER_CONFIGURATION}"
           test "${actual}" = "${expected}"
           printf '%s\n' "${actual}"
 

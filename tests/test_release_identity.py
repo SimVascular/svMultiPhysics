@@ -219,7 +219,9 @@ def test_solver_reports_tag_and_commit():
     )
     assert result.returncode == 0, result.stderr
     assert re.fullmatch(
-        r"\[svMultiPhysics\] version \S+ commit ([0-9a-f]{40}|unknown)\n",
+        r"\[svMultiPhysics\] version [0-9]+(?:\.[0-9]+){3} "
+        r"tag \S+ commit ([0-9a-f]{40}|unknown) "
+        r"configuration (default|trilinos|petsc|trilinos-petsc)\n",
         result.stdout,
     )
 
