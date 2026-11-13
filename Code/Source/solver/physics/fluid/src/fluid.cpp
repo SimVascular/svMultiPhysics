@@ -1286,8 +1286,8 @@ void fluid_2d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   
   kS = ctC * kS * pow(mu/rho,2.0);
   
-  // tauM = tau_M / rho = tau_SUPS / rho
-  double tauM = 1.0 / (rho * sqrt( kT + kU + kS ));
+  // tauM = tau_M / rho = tau_SUPS / rho; 0 for Taylor-Hood (no VMS stabilization)
+  double tauM = vmsFlag ? 1.0 / (rho * sqrt( kT + kU + kS )) : 0.0;
 
   // rV[i] = ith component of (acceleration + convective term - body force)
   Vector<double> rV(2);
@@ -2009,7 +2009,8 @@ void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
             + Kxi(0,1)*Kxi(0,1) + Kxi(1,1)*Kxi(1,1) + Kxi(2,1)*Kxi(2,1)
             + Kxi(0,2)*Kxi(0,2) + Kxi(1,2)*Kxi(1,2) + Kxi(2,2)*Kxi(2,2);
   kS = ctC * kS * pow(mu/rho,2.0);
-  double tauM = 1.0 / (rho * sqrt( kT + kU + kS ));
+  // 0 for Taylor-Hood (no VMS stabilization)
+  double tauM = vmsFlag ? 1.0 / (rho * sqrt( kT + kU + kS )) : 0.0;
 
   #ifdef debug_fluid_3d_m
   dmsg << "kT: " << kT;
