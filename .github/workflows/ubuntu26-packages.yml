@@ -1,10 +1,6 @@
 name: Build Ubuntu 26 packages
 
 on:
-  # Temporary fork-only trigger for the final end-to-end #771 check.
-  push:
-    branches:
-      - feature/771-build-ubuntu26-packages
   workflow_dispatch:
     inputs:
       dependency_image:
