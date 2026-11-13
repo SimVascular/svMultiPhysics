@@ -89,6 +89,7 @@ endif()
 if(LINUX)
   # Package name
   set(CPACK_PACKAGE_FILE_NAME "svMultiPhysics-linux-x64-${SV_FULL_VERSION}${INSTALL_TYPE_STR}")
+  set(CPACK_COMPONENTS_ALL CoreExecutables)
 
   if(SV_PACKAGE_VERSION AND LSB_DISTRIB STREQUAL "Ubuntu" AND LSB_VERSION MATCHES "^26\\.")
     if(SV_USE_TRILINOS)
@@ -104,6 +105,7 @@ if(LINUX)
 
     if(SV_INSTALLER_TYPE STREQUAL DEB)
         set(CPACK_GENERATOR "DEB")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "liblapack3, openmpi-bin")
         set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local/sv/svMultiPhysics/${SV_INSTALL_VERSION_DIR}")
     elseif(SV_INSTALLER_TYPE STREQUAL TGZ)
       set(CPACK_GENERATOR "TGZ")

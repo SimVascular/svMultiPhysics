@@ -16,7 +16,7 @@ lapack_version=$(basename "$(dirname "${lapack_configs[0]}")")
 printf 'Ubuntu: '
 . /etc/os-release
 printf '%s\n' "$PRETTY_NAME"
-printf 'Ubuntu base image: %s\n' "$UBUNTU_BASE_IMAGE"
+printf 'Ubuntu base image: %s\n' "${UBUNTU_BASE_IMAGE:-not recorded}"
 printf 'Build type: %s\n' "$DEPENDENCY_BUILD_TYPE"
 printf 'CMake: %s\n' "$(/cmake/bin/cmake --version | awk 'NR == 1 {print $3}')"
 printf 'Open MPI: %s\n' "$(/openmpi/bin/ompi_info --version | awk 'NR == 1 {print $NF}')"
@@ -39,8 +39,7 @@ printf 'Python: %s\n' "$(conda run -n svmultiphysics python -c 'import platform;
 printf 'Source commits:\n'
 source_revisions=(/source-revisions/*)
 if (( ${#source_revisions[@]} == 0 )); then
-    echo 'Source revisions are missing from the dependency image' >&2
-    exit 1
+    printf '  Not recorded in this dependency image\n'
 fi
 for source in "${source_revisions[@]}"; do
     revision=$(cat "$source")
