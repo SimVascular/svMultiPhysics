@@ -1,10 +1,20 @@
 ci_resolve_svzerodsolver() {
   local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
-  local repository tag commit remote_commit
+  local repository tag commit remote_commit pinned
 
-  repository=$(jq -er '.dependencies.svZeroDSolver.repository | select(type == "string")' "$manifest") || return 1
-  tag=$(jq -er '.dependencies.svZeroDSolver.tag | select(type == "string")' "$manifest") || return 1
-  commit=$(jq -er '.dependencies.svZeroDSolver.commit | select(type == "string")' "$manifest") || return 1
+  pinned=$(python3 - "$manifest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as manifest:
+    dependency = json.load(manifest)["dependencies"]["svZeroDSolver"]
+values = [dependency[key] for key in ("repository", "tag", "commit")]
+if any(not isinstance(value, str) for value in values):
+    raise SystemExit("release.json must pin string values for svZeroDSolver")
+print(" ".join(values))
+PY
+  ) || return 1
+  read -r repository tag commit <<< "$pinned"
 
   if [[ "$repository" != SimVascular/svZeroDSolver || ! "$tag" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ || ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
     echo "release.json must pin the official svZeroDSolver repository, a tag, and a full commit SHA" >&2

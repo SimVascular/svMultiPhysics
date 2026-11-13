@@ -86,6 +86,21 @@ def test_top_level_build_forwards_deferred_tag_option():
     assert "-DSV_TAG_AFTER_VALIDATION:BOOL=${SV_TAG_AFTER_VALIDATION}" in cmake_lists
 
 
+def test_ci_helper_resolves_pinned_svzerodsolver_without_jq(tmp_path):
+    commit = "62aecfece16302879257dc4b6a8a93ea19ebf19d"
+    manifest = tmp_path / "release.json"
+    manifest.write_text(json.dumps({"dependencies": {"svZeroDSolver": {
+        "repository": "SimVascular/svZeroDSolver", "tag": "v3.2", "commit": commit,
+    }}}))
+    helper = Path(__file__).resolve().parents[1] / ".github/actions/ci-helpers.sh"
+    script = (f'source "{helper}"; '
+              f'git() {{ printf "%s\\n" "{commit}"; }}; '
+              f'ci_resolve_svzerodsolver "{manifest}"')
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == commit
+
+
 def test_ubuntu_package_name_and_metadata(tmp_path):
     repo = Path(__file__).resolve().parents[1]
     cmake_lists = (
