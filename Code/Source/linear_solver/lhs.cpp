@@ -24,6 +24,7 @@ namespace fsi_linear_solver {
 ///  lhs.colPtr
 ///  lhs.rowPtr
 ///  lhs.diagPtr
+///  lhs.transPtr
 ///  lhs.map
 ///  lhs.face
 //
@@ -62,6 +63,24 @@ void fsils_lhs_create(FSILS_lhsType& lhs, FSILS_commuType& commu, int gnNo, int 
   lhs.diagPtr.resize(nNo);
   lhs.map.resize(nNo); 
   lhs.face.resize(nFaces);
+
+  // transPtr points to the transposed entry. Renumbering the nodes below
+  // keeps entry positions, so the input numbering can be used here.
+  //
+  lhs.transPtr.resize(nnz);
+  lhs.transPtr = -1;
+
+  for (int a = 0; a < nNo; a++) {
+    for (int i = rowPtr(a); i < rowPtr(a+1); i++) {
+      int b = colPtr(i);
+      for (int j = rowPtr(b); j < rowPtr(b+1); j++) {
+        if (colPtr(j) == a) {
+          lhs.transPtr(i) = j;
+          break;
+        }
+      }
+    }
+  }
 
   // For a sequential simulation. 
   //

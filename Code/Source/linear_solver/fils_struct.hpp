@@ -185,6 +185,9 @@ class FSILS_lhsType
     /// Diagonal pointer                    (USE)
     Vector<int> diagPtr;
 
+    /// Transpose pointer, -1 if absent     (USE)
+    Vector<int> transPtr;
+
     /// Mapping of nodes                    (USE)
     Vector<int> map;
 
@@ -259,6 +262,10 @@ class FSILS_lsType
     FSILS_subLsType GM;
     FSILS_subLsType CG;
     FSILS_subLsType RI;
+
+    /// NS solver blocks of Val, kept between solves (TMP)
+    Array<double> Gt, mK, mG, mD;
+    Vector<double> mL;
 };
 
 
