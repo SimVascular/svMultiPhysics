@@ -561,6 +561,24 @@ void run_simulation(Simulation* simulation)
 }
 
 
+static void print_version()
+{
+#if defined(WITH_TRILINOS) && defined(USE_PETSC)
+  const char* configuration = "trilinos-petsc";
+#elif defined(WITH_TRILINOS)
+  const char* configuration = "trilinos";
+#elif defined(USE_PETSC)
+  const char* configuration = "petsc";
+#else
+  const char* configuration = "default";
+#endif
+  std::cout << "[svMultiPhysics] version " << SV_FULL_VERSION
+            << " tag " << SV_SOURCE_TAG
+            << " commit " << SV_SOURCE_COMMIT
+            << " configuration " << configuration << std::endl;
+}
+
+
 /// @brief Run a simulation from the command line using the name of a solver input 
 /// XML file as an argument.
 //
@@ -572,8 +590,7 @@ int main(int argc, char *argv[])
   }
 
   if (std::string(argv[1]) == "--version") {
-    std::cout << "[svMultiPhysics] version " << SV_SOURCE_TAG
-              << " commit " << SV_SOURCE_COMMIT << std::endl;
+    print_version();
     return 0;
   }
 

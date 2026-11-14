@@ -7,7 +7,8 @@
     "svZeroDSolver": {
       "repository": "SimVascular/svZeroDSolver",
       "tag": "v3.2",
-      "commit": "62aecfece16302879257dc4b6a8a93ea19ebf19d"
+      "commit": "62aecfece16302879257dc4b6a8a93ea19ebf19d",
+      "ubuntu26_package_sha256": "af4a2bf5c14024eb7a7085b900425113e550b699a481197410c8241e6466c7a8"
     }
   }
 }
