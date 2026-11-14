@@ -227,9 +227,9 @@ class Array
       }
     }
 
-    /// @brief Resize the array.
+    /// @brief Resize the array, zeroing it unless 'zero' is false.
     //
-    void resize(const int num_rows, const int num_cols) 
+    void resize(const int num_rows, const int num_cols, const bool zero=true) 
     {
       // [NOTE] This is tfu but need to mimic fortran.
       nrows_ = num_rows;
@@ -254,7 +254,7 @@ class Array
         #endif
       }
 
-      allocate(num_rows, num_cols);
+      allocate(num_rows, num_cols, zero);
     }
 
     int size() const
@@ -916,7 +916,7 @@ class Array
 
     /// @brief Allocate memory for array data.
     //
-    void allocate(const int num_rows, const int num_cols)
+    void allocate(const int num_rows, const int num_cols, const bool zero=true)
     {
       data_reference_ = false;
       nrows_ = num_rows;
@@ -932,7 +932,7 @@ class Array
 
       if (size_ != 0) {
         data_ = new T [size_];
-        memset(data_, 0, sizeof(T)*size_);
+        if (zero) memset(data_, 0, sizeof(T)*size_);
       }
     }
 
