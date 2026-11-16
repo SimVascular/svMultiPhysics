@@ -246,22 +246,23 @@ class Array
     //
     void resize(const int num_rows, const int num_cols) 
     {
+      if (data_reference_) {
+        throw std::runtime_error("[Array] Can't resize an Array with reference data.");
+      }
+
       if (data_ != nullptr) {
-        if (data_reference_) {
-          throw std::runtime_error("[Array] Can't resize an Array with reference data.");
-        }
         delete [] data_;
         #if Array_gather_stats
         memory_in_use -= sizeof(T) * size_;;
         memory_returned += sizeof(T) * size_;;
         #endif
         data_ = nullptr;
-        size_ = 0;
       }
 
       // [NOTE] This is tfu but need to mimic fortran.
       nrows_ = num_rows;
       ncols_ = num_cols;
+      size_ = 0;
 
       if ((num_rows <= 0) || (num_cols <= 0)) {
         return;

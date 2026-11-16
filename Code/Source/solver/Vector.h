@@ -144,16 +144,17 @@ class Vector
     //
     void resize(const int size)
     { 
+      if (reference_data_) {
+        throw std::runtime_error("[Vector] Can't resize a Vector with reference data.");
+      }
+
       if (data_ != nullptr) {
-        if (reference_data_) { 
-          throw std::runtime_error("[Vector] Can't resize a Vector with reference data.");
-        }
-        delete[] data_; 
+        delete[] data_;
         memory_in_use -= sizeof(T) * size_;;
         memory_returned += sizeof(T) * size_;;
-        size_ = 0;
         data_ = nullptr;
-      } 
+      }
+      size_ = 0;
       allocate(size);
     }
     
