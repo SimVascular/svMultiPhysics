@@ -138,13 +138,12 @@ class Vector
     }   
 
     /// @brief Resize the vector's memory.
+    ///
+    /// The previous content is discarded and the new elements are set to
+    /// zero. A size of zero or less leaves the vector empty.
     //
     void resize(const int size)
     { 
-      if (size <= 0) {
-        //throw std::runtime_error(+"Allocating a zero size Vector.");
-        return;
-      }
       if (data_ != nullptr) {
         if (reference_data_) { 
           throw std::runtime_error("[Vector] Can't resize a Vector with reference data.");
@@ -181,23 +180,27 @@ class Vector
       data_ = new_data;
     }
 
+    /// @brief Replace the content of the vector with a list of values.
+    ///
+    /// The previous content is discarded. An empty list leaves the vector
+    /// empty.
+    //
     void set_values(std::initializer_list<T> values)
     {
-      if (values.size() == 0) {
-        return;
-      }
       check_type();
-      allocate(values.size());
+      resize(values.size());
       std::copy(values.begin(), values.end(), data_);
     }
 
+    /// @brief Replace the content of the vector with a list of values.
+    ///
+    /// The previous content is discarded. An empty list leaves the vector
+    /// empty.
+    //
     void set_values(std::vector<T> values)
     {
-      if (values.size() == 0) {
-        return;
-      }
       check_type();
-      allocate(values.size());
+      resize(values.size());
       std::copy(values.begin(), values.end(), data_);
     }
 
@@ -240,13 +243,11 @@ class Vector
     ///   2) Copy data_
     ///
     /// Fortran using 2) I think.
+    ///
+    /// Assigning an empty vector leaves this vector empty.
     //
     Vector& operator=(const Vector& rhs)
     {
-      if (rhs.size_ <= 0) {
-        return *this;
-      }
-
       if (this == &rhs) {
         return *this;
       }
@@ -256,7 +257,9 @@ class Vector
         allocate(rhs.size_);
       }
 
-      memcpy(data_, rhs.data_, sizeof(T) * size_);
+      if (size_ > 0) {
+        memcpy(data_, rhs.data_, sizeof(T) * size_);
+      }
 
       return *this;
     }
