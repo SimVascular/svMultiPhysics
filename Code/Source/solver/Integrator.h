@@ -223,6 +223,38 @@ private:
                                  const double reference_norm);
 
   /**
+   * @brief Temporary diagnostic that measures the error of the tangent along
+   * the increment of the linear solve and prints it.
+   *
+   * With an exact tangent and an exact linear solve, moving the solution by a
+   * small fraction 'step' of the increment multiplies the residual by
+   * (1 - step), up to terms of second order in the step. The diagnostic
+   * assembles the residual at two small steps and prints, for each,
+   *
+   *   norm(residual(step) - (1 - step) * residual(0)) / (step * norm(residual(0)))
+   *
+   * which is the relative error of the tangent applied to the increment, plus
+   * the relative residual of the linear solve, plus a curvature term
+   * proportional to the step. A value that is the same at both steps is
+   * therefore an error of the tangent or of the linear solve, and one that
+   * scales with the step is curvature.
+   *
+   * The linear system is assembled again at the starting solution at the end,
+   * so the solution, the increment and the state left by the assembly are as
+   * they were found.
+   *
+   * @param[in,out] eq Equation whose tangent is measured.
+   * @param[in] weights Weight of every residual entry in the norm, as computed
+   *   by compute_residual_weights at the solution the check starts from.
+   * @param[in] residual Residual assembled at the solution the check starts
+   *   from, as it was before the linear solve.
+   * @param[in] reference_norm Norm of \p residual, measured with \p weights.
+   */
+  void report_tangent_error(eqType &eq, const Array<double> &weights,
+                            const Array<double> &residual,
+                            const double reference_norm);
+
+  /**
    * @brief Update residual and increment arrays for linear solver
    *
    * @param eq Reference to the equation being solved

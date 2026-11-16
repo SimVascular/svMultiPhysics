@@ -20,11 +20,38 @@
 #include "utils.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <set>
 
 #define n_debug_integrator_step
+
+namespace {
+
+/// @brief Whether the temporary tangent check is switched on, which is the
+/// case when the environment variable SVMP_TANGENT_CHECK is set for the master
+/// process.
+///
+/// The first call is collective: every process has to make it.
+///
+/// @param[in] cm Communicator of the simulation.
+/// @param[in] cm_mod Communication module of the simulation.
+///
+/// @return True if the tangent check is switched on.
+bool tangent_check_enabled(const cmType &cm, const CmMod &cm_mod) {
+  static int enabled = -1;
+
+  if (enabled < 0) {
+    enabled = (std::getenv("SVMP_TANGENT_CHECK") != nullptr) ? 1 : 0;
+    cm.bcast(cm_mod, &enabled);
+  }
+
+  return enabled == 1;
+}
+
+} // namespace
 
 //------------------------
 // Integrator Constructor
@@ -100,12 +127,26 @@ bool Integrator::step(bool save_results) {
     Array<double> weights;
     double reference_norm = 0.0;
 
-    if (eq.line_search_enabled) {
+    // Temporary diagnostic: tangent check on the struct equation.
+    const bool check_tangent =
+        tangent_check_enabled(com_mod.cm, simulation_->cm_mod) &&
+        eq.phys == Equation_struct;
+    Array<double> assembled_residual;
+
+    if (eq.line_search_enabled || check_tangent) {
       compute_residual_weights(weights);
       reference_norm = residual_norm(weights);
     }
 
+    if (check_tangent) {
+      assembled_residual = com_mod.R;
+    }
+
     solve_linear_system();
+
+    if (check_tangent) {
+      report_tangent_error(eq, weights, assembled_residual, reference_norm);
+    }
 
     const double step_length =
         eq.line_search_enabled
@@ -447,6 +488,66 @@ double Integrator::line_search_step_length(eqType &eq,
   restore_starting_point();
 
   return step_length;
+}
+
+//------------------------
+// report_tangent_error
+//------------------------
+void Integrator::report_tangent_error(eqType &eq, const Array<double> &weights,
+                                      const Array<double> &residual,
+                                      const double reference_norm) {
+  if (utils::is_zero(reference_norm)) {
+    return;
+  }
+
+  auto &com_mod = simulation_->com_mod;
+
+  // The solution the check starts from and the increment of the linear solve,
+  // both of which assembling a trial solution overwrites.
+  const Array<double> initial_A = solutions_.current.get_acceleration();
+  const Array<double> initial_Y = solutions_.current.get_velocity();
+  const Array<double> initial_D = solutions_.current.get_displacement();
+  const Array<double> increment = com_mod.R;
+
+  const Array<double> initial_Ad = com_mod.Ad;
+  const Array<double> increment_d = com_mod.Rd;
+
+  auto restore_starting_point = [&]() {
+    solutions_.current.get_acceleration() = initial_A;
+    solutions_.current.get_velocity() = initial_Y;
+    solutions_.current.get_displacement() = initial_D;
+    com_mod.Ad = initial_Ad;
+    com_mod.R = increment;
+    com_mod.Rd = increment_d;
+  };
+
+  const std::array<double, 2> steps = {1.0e-2, 1.0e-3};
+  std::array<double, 2> errors = {0.0, 0.0};
+
+  for (std::size_t k = 0; k < steps.size(); k++) {
+    restore_starting_point();
+    apply_increment(eq, steps[k]);
+    assemble_linear_system(eq);
+
+    // What is left of the residual after removing the part that an exact
+    // tangent predicts.
+    for (int i = 0; i < com_mod.R.size(); i++) {
+      com_mod.R(i) = com_mod.R(i) - (1.0 - steps[k]) * residual(i);
+    }
+
+    errors[k] = residual_norm(weights) / (steps[k] * reference_norm);
+  }
+
+  // Leave the state of the assembly as it was at the starting solution.
+  restore_starting_point();
+  assemble_linear_system(eq);
+  restore_starting_point();
+
+  if (com_mod.cm.mas(simulation_->cm_mod)) {
+    std::cout << "    Tangent check: relative error " << std::setprecision(3)
+              << errors[0] << " at step " << steps[0] << ", " << errors[1]
+              << " at step " << steps[1] << std::endl;
+  }
 }
 
 //------------------------
