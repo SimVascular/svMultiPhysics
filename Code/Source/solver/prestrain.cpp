@@ -330,8 +330,8 @@ void init(ComMod& com_mod)
   using namespace consts;
   const int nsd = com_mod.nsd;
 
-  if (com_mod.prestrainEq) {
-    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.prestressEq,
+  if (com_mod.prestrain_enabled) {
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.prestress_enabled,
         "Prestress and Prestrain can not both be set.");
     svmp::throw_if<svmp::NotImplementedException>(com_mod.stFileFlag,
         "A Prestrain run can not be restarted from a .bin file. "
@@ -363,7 +363,7 @@ void init(ComMod& com_mod)
 
   for (auto& msh : com_mod.msh) {
     // A prestrain run that starts from nothing starts from the identity.
-    if (com_mod.prestrainEq && !msh.prestrain.has_prestrain()) {
+    if (com_mod.prestrain_enabled && !msh.prestrain.has_prestrain()) {
       msh.prestrain.set_identity(nsd, msh.nG, msh.nEl);
     }
 

@@ -340,8 +340,8 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.cmmVarWall);
 
     cm.bcast(cm_mod, &com_mod.shlEq);
-    cm.bcast(cm_mod, &com_mod.prestressEq);
-    cm.bcast(cm_mod, &com_mod.prestrainEq);
+    cm.bcast(cm_mod, &com_mod.prestress_enabled);
+    cm.bcast(cm_mod, &com_mod.prestrain_enabled);
     cm.bcast(cm_mod, &com_mod.sstEq);
 
     cm.bcast(cm_mod, &simulation->cep_mod.cepEq);
@@ -1464,9 +1464,6 @@ void dist_eq(ComMod& com_mod, const CmMod& cm_mod, const cmType& cm, const std::
   cm.bcast(cm_mod, &lEq.line_search_step_reduction_factor);
   cm.bcast(cm_mod, &lEq.line_search_minimum_step_length);
   cm.bcast(cm_mod, &lEq.line_search_verbose);
-  cm.bcast(cm_mod, &lEq.pseudo_transient_enabled);
-  cm.bcast(cm_mod, &lEq.pseudo_transient_adaptive_time_step);
-  cm.bcast(cm_mod, &lEq.pseudo_transient_maximum_time_step);
 
 #ifdef dist_eq
   dmsg << "lEq.nOutput: " << lEq.nOutput;

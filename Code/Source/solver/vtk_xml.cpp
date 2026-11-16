@@ -1247,7 +1247,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
             tmpV.resize(l,msh.nNo); 
             tmpVe.resize(msh.nEl);
 
-            if (com_mod.prestressEq) {
+            if (com_mod.prestress_enabled) {
               for (int a = 0; a < msh.nNo; a++) {
                 int Ac = msh.gN(a);
                 for (int i = 0; i < l; i++) {
@@ -1473,7 +1473,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   // one on every mesh, and every rank takes part for every mesh, also ranks
   // that hold none of a mesh's elements: the gather is collective.
   std::vector<Array<double>> gF0(nMsh);
-  if (com_mod.prestrainEq) {
+  if (com_mod.prestrain_enabled) {
     for (int iM = 0; iM < nMsh; iM++) {
       com_mod.msh[iM].prestrain.gather(com_mod, cm_mod, com_mod.msh[iM], gF0[iM]);
     }
@@ -1623,7 +1623,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
   // Prestrain deformation gradient of a prestrain run, one cell array per
   // Gauss point of the mesh with the most; a mesh with fewer gets the
   // identity in the arrays beyond its own.
-  if (com_mod.prestrainEq) {
+  if (com_mod.prestrain_enabled) {
     int nGmax = 0;
     for (int iM = 0; iM < nMsh; iM++) {
       nGmax = std::max(nGmax, com_mod.msh[iM].nG);

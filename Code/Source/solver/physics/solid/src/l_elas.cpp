@@ -55,7 +55,7 @@ void construct_l_elas(ComMod& com_mod, const mshType& lM, const SolutionStates& 
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool prestressEq = com_mod.prestressEq;
+  bool prestress_enabled = com_mod.prestress_enabled;
 
   int eNoN = lM.eNoN;
 
@@ -128,7 +128,7 @@ void construct_l_elas(ComMod& com_mod, const mshType& lM, const SolutionStates& 
       }
 
       // Prestress
-      if (prestressEq) {
+      if (prestress_enabled) {
         for (int a = 0; a < eNoN; a++) {
           int Ac = ptr(a);
           pSa(Ac) = pSa(Ac) + w*N(a);

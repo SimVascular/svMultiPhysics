@@ -210,7 +210,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool prestressEq = com_mod.prestressEq;
+  bool prestress_enabled = com_mod.prestress_enabled;
 
   int eNoN = lM.eNoN;
   const bool mesh_has_fibers = lM.fibers.has_fibers();
@@ -344,7 +344,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       }
 
       // Prestress
-      if (prestressEq) {
+      if (prestress_enabled) {
         for (int a = 0; a < eNoN; a++) {
           int Ac = ptr(a);
           pSa(Ac) += w*N(a);
@@ -359,7 +359,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   } 
 }
 
-/// @brief Reproduces Fortran 'STRUCT2D' subroutine.
+// Reproduces Fortran 'STRUCT2D' subroutine.
 //
 void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
@@ -527,13 +527,13 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Make the tangent that of a prestrain iteration, which composes its update
   // into F0 (see prestrain.h).
-  if (com_mod.prestrainEq) {
+  if (com_mod.prestrain_enabled) {
     prestrain::correct_composed_tangent<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
                                            F0, F, P, Nxm, fibers, w * afu, dof, lK);
   }
 }
 
-/// @brief Reproduces Fortran 'STRUCT3D' subroutine.
+// Reproduces Fortran 'STRUCT3D' subroutine.
 void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
@@ -730,7 +730,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Make the tangent that of a prestrain iteration, which composes its update
   // into F0 (see prestrain.h).
-  if (com_mod.prestrainEq) {
+  if (com_mod.prestrain_enabled) {
     prestrain::correct_composed_tangent<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
                                            F0, F, P, Nxm, fibers, w * afu, dof, lK);
   }

@@ -503,9 +503,9 @@ TEST(Prestrain, ComposedTangentMatchesFiniteDifferences)
 
     Array<double> lR;
     Array3<double> lK_forward, lK;
-    element.com_mod.prestrainEq = false;
+    element.com_mod.prestrain_enabled = false;
     element.evaluate(F0, rest, lR, lK_forward);
-    element.com_mod.prestrainEq = true;
+    element.com_mod.prestrain_enabled = true;
     element.evaluate(F0, rest, lR, lK);
 
     const auto composed_residual = [&](const Array<double>& du) {

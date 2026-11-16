@@ -481,12 +481,6 @@ void iterate_solution(Simulation* simulation)
       vtk_xml::write_vtus(simulation, solutions, /* lAvg = */ false);
     }
 
-    // [NOTE] Not implemented.
-    //
-    if (com_mod.prestressEq) {
-      //CALL OUTDNORM()
-    }
-
     if (com_mod.ibFlag) {
       //CALL IB_OUTCPUT()
     }

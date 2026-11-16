@@ -1820,7 +1820,7 @@ class LineSearchParameters : public ParameterLists
 //----------------------------
 // PseudoTransientParameters
 //----------------------------
-/// @brief Parameters of the pseudo-transient continuation of an equation.
+/// @brief Parameters of the pseudo-transient continuation of a simulation.
 ///
 /// Pseudo-transient continuation is enabled by the presence of the XML
 /// element and disabled by its absence. Within it, Maximum_time_step has to
@@ -1932,8 +1932,6 @@ class EquationParameters : public ParameterLists
 
     LineSearchParameters line_search;
 
-    PseudoTransientParameters pseudo_transient;
-
     std::vector<OutputParameters*> outputs;
 
     RemesherParameters remesher;
@@ -1980,6 +1978,8 @@ class GeneralSimulationParameters : public ParameterLists
     void set_values(tinyxml2::XMLElement* xml_element, bool from_external_xml = false);
 
     std::string xml_element_name;
+
+    PseudoTransientParameters pseudo_transient;
 
     Parameter<bool> check_ien_order;
     Parameter<bool> continue_previous_simulation;

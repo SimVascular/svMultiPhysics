@@ -3,7 +3,7 @@
 Two-phase example of `<Prestrain>` on the `LV_HolzapfelOgden_passive`
 geometry at an endocardial pressure of 10 mmHg (13332.2 dyne/cm²).
 
-The imaged geometry is taken to be the loaded configuration. The prestrain is
+The imaged geometry is taken to be subject to the load. The prestrain is
 a deformation gradient `F0` at every Gauss point, from an unknown stress-free
 configuration to the mesh, and a displacement `u` from the mesh gives
 `F = (I + Grad u) F0`. The coordinates never change; instead every Newton
@@ -25,7 +25,8 @@ python check_hold.py                                     # equilibrium hold test
 starts from rest and composes the displacement it reaches into the prestrain,
 with the tangent of that composed update; `Max_iterations 1` makes each step a
 single such iteration, and more per step are allowed. With `Pseudo_transient`
-the run prints each step's first residual, and with
+in the general simulation parameters the run prints each step's first
+residual, and with
 `Adaptive_time_step` the pseudo time step grows as the state
 approaches equilibrium, so once it is large the residual falls quadratically
 and reaches round-off by step 10 of the 20 here. The last

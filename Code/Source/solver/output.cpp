@@ -224,7 +224,7 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
   const bool ibFlag = com_mod.ibFlag;
   const bool dFlag = com_mod.dFlag;
   const bool sstEq = com_mod.sstEq; 
-  const bool prestressEq = com_mod.prestressEq;
+  const bool prestress_enabled = com_mod.prestress_enabled;
   const bool cepEq = cep_mod.cepEq;
   const bool risFlag = com_mod.risFlag;
   const bool urisFlag = com_mod.urisFlag;
@@ -239,7 +239,7 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
   dmsg << "stFileName: " << stFileName;
   dmsg << "dFlag: " << dFlag;
   dmsg << "sstEq: " << sstEq;
-  dmsg << "prestressEq: " << prestressEq;
+  dmsg << "prestress_enabled: " << prestress_enabled;
   dmsg << "cepEq: " << cepEq;
   dmsg << "stFileName: " << stFileName;
   dmsg << "stFileRepl: " << stFileRepl;
@@ -304,7 +304,7 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
 
       if (sstEq) {
 
-        if (prestressEq) {
+        if (prestress_enabled) {
           restart_file.write((char*)pS0.data(), pS0.msize());
           restart_file.write((char*)Ad.data(), Ad.msize());
 
@@ -328,7 +328,7 @@ void write_restart(Simulation* simulation, std::array<double,3>& timeP, const So
 
       } else {
 
-        if (prestressEq) {
+        if (prestress_enabled) {
           restart_file.write((char*)pS0.data(), pS0.msize());
 
         } else if (cepEq) {

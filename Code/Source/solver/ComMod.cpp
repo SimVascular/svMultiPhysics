@@ -31,8 +31,8 @@ ComMod::ComMod()
   cmmInit            = false;
   cmmVarWall         = false;
   shlEq              = false;
-  prestressEq        = false;
-  prestrainEq        = false;
+  prestress_enabled  = false;
+  prestrain_enabled  = false;
   sstEq              = false;
   ibFlag             = false;
   risFlag            = false;

@@ -33,6 +33,36 @@ Integrator::Integrator(Simulation* simulation, SolutionStates&& solutions)
   : simulation_(simulation), solutions_(std::move(solutions)), newton_count_(0)
 {
   initialize_arrays();
+  initialize_pseudo_transient();
+}
+
+//-----------------------------
+// initialize_pseudo_transient
+//-----------------------------
+void Integrator::initialize_pseudo_transient() {
+  auto& com_mod = simulation_->com_mod;
+  const auto& cm_mod = simulation_->cm_mod;
+  const auto& cm = com_mod.cm;
+
+  // The parameters are only read on the master.
+  if (cm.mas(cm_mod)) {
+    const auto& params = simulation_->parameters.general_simulation_parameters.pseudo_transient;
+    if (params.defined()) {
+      pseudo_transient_enabled_ = true;
+      pseudo_transient_adaptive_time_step_ = params.adaptive_time_step.value();
+      pseudo_transient_maximum_time_step_ = params.maximum_time_step.value();
+    }
+  }
+  cm.bcast(cm_mod, &pseudo_transient_enabled_);
+  cm.bcast(cm_mod, &pseudo_transient_adaptive_time_step_);
+  cm.bcast(cm_mod, &pseudo_transient_maximum_time_step_);
+
+  // Pseudo-transient continuation is currently only supported for prestrain.
+  svmp::throw_if<svmp::NotImplementedException>(
+      pseudo_transient_enabled_ && !com_mod.prestrain_enabled,
+      "Pseudo-transient continuation (the " +
+          PseudoTransientParameters::xml_element_name_ +
+          " XML element) is only implemented for a Prestrain run.");
 }
 
 //------------------------
@@ -116,7 +146,7 @@ bool Integrator::step(bool save_results) {
 
     // If solving for prestrain, compose update into prestrain
     // and reset state to rest.
-    if (com_mod.prestrainEq) {
+    if (com_mod.prestrain_enabled) {
       auto& An = solutions_.current.get_acceleration();
       auto& Yn = solutions_.current.get_velocity();
       auto& Dn = solutions_.current.get_displacement();
@@ -149,8 +179,8 @@ bool Integrator::step(bool save_results) {
       dmsg << "iEqOld: " << iEqOld + 1;
       #endif
 
-      if (com_mod.eq[0].pseudo_transient_enabled) {
-        pseudo_transient_finish_step(com_mod.eq[0]);
+      if (pseudo_transient_enabled_) {
+        com_mod.dt = pseudo_transient_adapt_time_step(eq);
       }
       return true;
     }
@@ -470,14 +500,14 @@ double Integrator::line_search_step_length(eqType &eq,
 }
 
 //------------------------------
-// pseudo_transient_finish_step
-//------------------------------
+// pseudo_transient_adapt_time_step
+//----------------------------------
 //
-void Integrator::pseudo_transient_finish_step(const eqType &eq)
+double Integrator::pseudo_transient_adapt_time_step(const eqType &eq)
 {
-  auto& com_mod = simulation_->com_mod;
+  const auto& com_mod = simulation_->com_mod;
   const auto& cm_mod = simulation_->cm_mod;
-  double& dt = com_mod.dt;
+  const double dt = com_mod.dt;
 
   // pNorm is the step's first residual relative to iNorm, the run's first.
   const double residual = eq.pNorm * eq.iNorm;
@@ -487,13 +517,21 @@ void Integrator::pseudo_transient_finish_step(const eqType &eq)
               << ", R/R0 = " << eq.pNorm << std::endl;
   }
 
+  // The residual may be NaN or infinite if the previous step diverged.
+  // In this case, the time step is unchanged.
+  if (!pseudo_transient_adaptive_time_step_ || !std::isfinite(residual)) {
+    return dt;
+  }
+
   // Adaptive time stepping: the next time step grows by the ratio of
   // the first residuals of the last two steps unless the max dt is reached.
-  if (eq.pseudo_transient_adaptive_time_step && pseudo_transient_residual_prev_ > 0.0 &&
-      std::isfinite(residual)) {
-    dt = std::min(eq.pseudo_transient_maximum_time_step, dt * pseudo_transient_residual_prev_ / residual);
+  // The first step has no previous residual, so the time step is unchanged.
+  double next_dt = dt;
+  if (pseudo_transient_residual_prev_ > 0.0) {
+    next_dt = std::min(pseudo_transient_maximum_time_step_, dt * pseudo_transient_residual_prev_ / residual);
   }
   pseudo_transient_residual_prev_ = residual;
+  return next_dt;
 }
 
 //------------------------
@@ -775,7 +813,7 @@ void Integrator::predictor()
   #ifdef debug_picp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "prestressEq: " << com_mod.prestressEq;
+  dmsg << "prestress_enabled: " << com_mod.prestress_enabled;
   #endif
 
   // Variables for prestress calculations
@@ -793,7 +831,7 @@ void Integrator::predictor()
   auto& Dn = solutions_.current.get_displacement();
 
   // Prestress initialization
-  if (com_mod.prestressEq) {
+  if (com_mod.prestress_enabled) {
      pS0 = pS0 + pSn;
      Ao = 0.0;
      Yo = 0.0;
@@ -947,7 +985,7 @@ void Integrator::initiator(SolutionStates& solutions)
   dmsg << "eq.itr: " << eq.itr;
   dmsg << "dof: " << dof;
   dmsg << "tnNo: " << tnNo;
-  dmsg << "com_mod.prestressEq: " << com_mod.prestressEq;
+  dmsg << "com_mod.prestress_enabled: " << com_mod.prestress_enabled;
   #endif
 
   const auto& Ao = solutions.old.get_acceleration();
@@ -1006,7 +1044,7 @@ void Integrator::initiator(SolutionStates& solutions)
   }
 
   // prestress
-  if (com_mod.prestressEq) {
+  if (com_mod.prestress_enabled) {
     com_mod.pSn = 0.0;
     com_mod.pSa = 0.0;
   }
@@ -1180,7 +1218,7 @@ void Integrator::finalize_iteration()
 
   // Update prestress at the nodes and re-initialize
   //
-  if (com_mod.prestressEq) {
+  if (com_mod.prestress_enabled) {
     all_fun::commu(com_mod, pSn);
     all_fun::commu(com_mod, pSa);
 

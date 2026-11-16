@@ -2864,9 +2864,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement *eq_elem,
     } else if (name == LineSearchParameters::xml_element_name_) {
       line_search.set_values(item);
 
-    } else if (name == PseudoTransientParameters::xml_element_name_) {
-      pseudo_transient.set_values(item);
-
     } else if (name == OutputParameters::xml_element_name_) {
       auto output_params = new OutputParameters();
       output_params->set_values(item);
@@ -3057,6 +3054,9 @@ void GeneralSimulationParameters::set_values(tinyxml2::XMLElement *xml_element,
           "GeneralSimulationParameters Include_xml requires a file name.");
       IncludeParametersFile include_parameters(value);
       set_values(include_parameters.root_element, true);
+
+    } else if (name == PseudoTransientParameters::xml_element_name_) {
+      pseudo_transient.set_values(item);
 
     } else {
       auto value =

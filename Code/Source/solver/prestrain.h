@@ -19,41 +19,60 @@ class MeshParameters;
 class cmType;
 class mshType;
 
-/// @brief Prestrain of a body imaged in a loaded configuration.
+/// @brief Prestrain of a body imaged while subject to a load.
 ///
-/// The mesh is the imaged, loaded geometry. The prestrain is a deformation
-/// gradient F0 at every Gauss point that maps an unknown stress-free
-/// configuration to the mesh. A displacement u from the mesh then gives the deformation
-/// gradient from the stress-free configuration
+/// The mesh is the imaged geometry, which is subject to a load. The prestrain
+/// is a deformation gradient @f$ F_0 @f$ at every Gauss point that maps an
+/// unknown stress-free configuration to the mesh. A displacement @f$ u @f$
+/// from the mesh then gives the deformation gradient from the stress-free
+/// configuration by the multiplicative decomposition
+/// @f[
+///   F = (I + \nabla u) \, F_0,
+/// @f]
+/// with @f$ \nabla @f$ the gradient on the mesh.
 ///
-///     F = (I + Grad u) F0,
+/// The prestrain is used in a structural simulation to pull the integrals of
+/// the weak form back to the stress-free configuration. Where the assembly
+/// loops compute the shape function gradients, they transform in place
+/// - the shape function gradients, @f$ \nabla N \to \nabla_0 N = F_0^T \nabla N @f$,
+/// - the volume element, @f$ dV \to dV / \det F_0 @f$,
+/// - every fiber direction, @f$ f \to f_0 = F_0^{-1} f / |F_0^{-1} f| @f$.
 ///
-/// with Grad taken on the mesh. The solid kernels integrate on the stress-free
-/// configuration: where the assembly loops compute the shape function
-/// gradients, they pull them back in place, F0^T Grad N, with the volume
-/// dV / det F0, and pull the fibers back as material lines, F0^-1 f normalized,
-/// each on its own, so that a basis orthonormal on the mesh is orthonormal in
-/// the imaged configuration, not in the unloaded one. The kernels then form
-/// F = F0 + Grad_0 u and keep their total Lagrangian form.
-/// The formulation is objective: rotating the deformed body
-/// rigidly rotates F and the internal forces with it.
+/// The solid kernels then keep their total Lagrangian form, with the
+/// deformation gradient above, which the pulled-back gradients give as
+/// @f$ F = F_0 + \sum_a u_a \otimes \nabla_0 N_a @f$.
 ///
-/// F0 is found by Newton's method on the imaged geometry. Every Newton
-/// iteration starts from rest under the full load, so its residual is that of
-/// the current F0. The displacement u it reaches is composed into the
-/// prestrain, F0 <- (I + Grad u) F0, and discarded. At the fixed point the mesh
-/// carries the load in Cauchy stress equilibrium without moving. This is the
-/// incremental scheme of Gee, Forster and Wall, Int. J. Numer. Meth. Biomed.
-/// Engng. 26 (2010) 52-72, section 3, with the increments composed on the
-/// imaged mesh, so that equilibrium holds on the imaged geometry rather than
-/// on a virtually deformed one. Because each iteration is composed, the
-/// tangent of the composed residual differs from the kernel's own, and the
-/// solid kernels correct it (see correct_composed_tangent). Max_iterations and
-/// Tolerance bound the iterations of a time step as in any other run. With
-/// Pseudo_transient the time step is adapted to the residual between steps
-/// (see Integrator.h).
+/// A fiber is a material line, so @f$ F_0^{-1} @f$ carries it from the mesh to
+/// the stress-free configuration and changes its length by the stretch the
+/// prestrain gives it. The material laws expect a unit direction in their
+/// reference configuration and measure the fiber stretch as @f$ |F f_0| @f$,
+/// so the pulled-back vector is normalized; at @f$ u = 0 @f$ that stretch is
+/// then the fiber's prestretch, @f$ 1 / |F_0^{-1} f| @f$. Every fiber is pulled
+/// back on its own, so a basis orthonormal on the mesh is orthonormal in the
+/// imaged configuration, not in the stress-free one.
 ///
-/// Each mesh holds F0 in a Prestrain, one tensor per Gauss point,
+/// The formulation is objective: rotating the deformed body rigidly rotates
+/// @f$ F @f$ and the internal forces with it.
+///
+/// @f$ F_0 @f$ is found by Newton's method on the imaged geometry. Every
+/// Newton iteration starts from rest under the full load, so its residual is
+/// that of the current @f$ F_0 @f$. The displacement @f$ u @f$ it reaches is
+/// composed into the prestrain,
+/// @f[
+///   F_0 \leftarrow (I + \nabla u) \, F_0,
+/// @f]
+/// and discarded. At the fixed point the mesh carries the load in Cauchy
+/// stress equilibrium without moving. This is the incremental scheme of
+/// [Gee, Forster and Wall (2010)](https://doi.org/10.1002/cnm.1236), section
+/// 3, with the increments composed on the imaged mesh, so that equilibrium
+/// holds on the imaged geometry rather than on a virtually deformed one.
+/// Because each iteration is composed, the tangent of the composed residual
+/// differs from the kernel's own, and the solid kernels correct it (see
+/// correct_composed_tangent). Max_iterations and Tolerance bound the
+/// iterations of a time step as in any other run. With Pseudo_transient the
+/// time step is adapted to the residual between steps (see Integrator.h).
+///
+/// Each mesh holds @f$ F_0 @f$ in a Prestrain, one tensor per Gauss point,
 /// written to and read from VTU cell arrays named Prestrain_F_g<g>, one per
 /// Gauss point.
 ///
@@ -134,39 +153,43 @@ namespace prestrain {
 
 /// @brief Make a solid kernel's tangent that of a prestrain iteration.
 ///
-/// A prestrain iteration composes the displacement u it reaches into F0 and
-/// starts again from rest, so the residual the next iteration sees is that of
-/// the Cauchy stress on the mesh, which does not move, with the mesh's fibers
-/// pulled back anew. The kernel's tangent differs from that residual's in two
-/// ways, both corrected here.
+/// A prestrain iteration composes the displacement @f$ u @f$ it reaches into
+/// @f$ F_0 @f$ and starts again from rest, so the residual the next iteration
+/// sees is that of the Cauchy stress on the mesh, which does not move, with
+/// the mesh's fibers pulled back anew. The kernel's tangent differs from that
+/// residual's in two ways, both corrected here.
 ///
 /// The current configuration: the kernel's tangent carries the change of the
-/// current volume and of the current shape function gradients with u; this
-/// subtracts that part,
-///
-///     w (tau Grad_x N_a (x) Grad_x N_b - tau Grad_x N_b (x) Grad_x N_a),
-///
-/// with tau = P F^T the Kirchhoff stress, Grad_x N = F^-T Grad_0 N, and w the
-/// stress-free weight. Without it each iteration is an inexact Newton step
-/// whose error grows with the stress, and the prestrain can stop converging
-/// once the pseudo time step is large.
+/// current volume and of the current shape function gradients with @f$ u @f$;
+/// this subtracts that part,
+/// @f[
+///   w \left( \tau \nabla_x N_a \otimes \nabla_x N_b
+///          - \tau \nabla_x N_b \otimes \nabla_x N_a \right),
+/// @f]
+/// with @f$ \tau = P F^T @f$ the Kirchhoff stress,
+/// @f$ \nabla_x N = F^{-T} \nabla_0 N @f$, and @f$ w @f$ the stress-free
+/// weight. Without it each iteration is an inexact Newton step whose error
+/// grows with the stress, and the prestrain can stop converging once the
+/// pseudo time step is large.
 ///
 /// The fibers: composing the update pulls the mesh's fibers back anew (see
-/// the overview above), so the fibers the material law sees change with u. To
-/// first order, with G = F0^-1 Grad u F0, the gradient on the mesh carried to
-/// the stress-free configuration, each fiber f0 changes by
-///
-///     df0 = -(I - f^ f^T) G f0,
-///
-/// f^ being its unit vector: it turns without stretching. The kernel's tangent
-/// holds the fibers fixed; this adds
-///
-///     w F dS Grad_0 N_a,
-///
-/// taking the gradient of the material law's S with respect to each fiber by
-/// one-sided finite differences along the axes and applying it to df0, so it
-/// costs nsd calls of the material law per fiber, plus one for the baseline.
-/// A mesh without fibers pays nothing beyond the first part.
+/// the overview above), so the fibers the material law sees change with
+/// @f$ u @f$. To first order, with @f$ G = F_0^{-1} \, \nabla u \, F_0 @f$, the
+/// gradient on the mesh carried to the stress-free configuration, each fiber
+/// @f$ f_0 @f$ changes by
+/// @f[
+///   \delta f_0 = -(I - \hat{f} \hat{f}^T) \, G \, f_0,
+/// @f]
+/// @f$ \hat{f} @f$ being its unit vector: it turns without stretching. The
+/// kernel's tangent holds the fibers fixed; this adds
+/// @f[
+///   w \, F \, \delta S \, \nabla_0 N_a,
+/// @f]
+/// taking the gradient of the material law's @f$ S @f$ with respect to each
+/// fiber by one-sided finite differences along the axes and applying it to
+/// @f$ \delta f_0 @f$, so it costs nsd calls of the material law per fiber,
+/// plus one for the baseline. A mesh without fibers pays nothing beyond the
+/// first part.
 ///
 /// @param active_stress_evaluator the kernel's evaluator, updated for the element.
 /// @param N shape functions at the Gauss point, for the active tension.
