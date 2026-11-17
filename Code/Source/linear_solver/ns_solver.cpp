@@ -24,39 +24,6 @@
 
 namespace ns_solver {
 
-/// @brief Modifies: lhs.face[].nS
-//
-void bc_pre(fsi_linear_solver::FSILS_lhsType& lhs, const int nsd, const int dof, const int nNo, const int mynNo) 
-{
-  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto& face = lhs.face[faIn];
-
-    if (face.coupledFlag) {
-      if (face.sharedFlag) {
-        Array<double> v(nsd,nNo);
-
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            v(i,Ac) = face.scaled_unit_pressure_load(i,a);
-          }
-        }
-
-        face.nS = pow(norm::fsi_ls_normv(nsd, mynNo, lhs.commu, v),2.0);
-
-      } else {
-        face.nS = 0.0;
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            face.nS = face.nS + pow(face.scaled_unit_pressure_load(i,a),2.0);
-          }
-        }
-      }
-    }
-  }
-}
-
 /// @brief Store sections of the 'Val' into separate arrays: 'Gt', 'mK', etc.
 ///
 /// Modifies: no globals
@@ -233,7 +200,7 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
 
   // Computes lhs.face[].nS for each face.
   //
-  bc_pre(lhs, nsd, dof, nNo, mynNo);
+  add_bc_mul::compute_coupled_face_norms(lhs, nsd);
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
     auto& face = lhs.face[faIn];

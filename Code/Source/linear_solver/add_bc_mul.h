@@ -32,4 +32,16 @@ using namespace fsi_linear_solver;
 ///   as 'X'.
 void add_bc_mul(const FSILS_lhsType& lhs, const BcopType op_Type, const Array<double>& X, Array<double>& Y);
 
+/// @brief Compute the squared norm of the scaled unit pressure load of each
+/// coupled Neumann face.
+///
+/// The result is stored in face.nS, which add_bc_mul() reads for the
+/// contribution to the preconditioner. Every process has to make this call.
+///
+/// @param[in,out] lhs The left-hand side of the linear system. Only the nS of
+///   its coupled faces is modified.
+/// @param[in] num_components The number of components per node that enter the
+///   norm, starting from the first.
+void compute_coupled_face_norms(FSILS_lhsType& lhs, const int num_components);
+
 };

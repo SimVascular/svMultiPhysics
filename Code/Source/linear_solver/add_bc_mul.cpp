@@ -86,4 +86,47 @@ void add_bc_mul(const FSILS_lhsType &lhs, const BcopType op_Type,
     }
   }
 }
+
+void compute_coupled_face_norms(FSILS_lhsType &lhs, const int num_components) {
+  // Sum of the squares of the scaled unit pressure load of each coupled face,
+  // over the nodes that this process owns
+  Vector<double> squared_norms(lhs.nFaces);
+  bool has_coupled_face = false;
+
+  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
+    const auto &face = lhs.face[faIn];
+
+    if (face.coupledFlag) {
+      has_coupled_face = true;
+
+      for (int a = 0; a < face.nNo; a++) {
+        // Skip the nodes that this process does not own.
+        if (face.glob(a) >= lhs.mynNo) {
+          continue;
+        }
+
+        for (int i = 0; i < num_components; i++) {
+          const double value = face.scaled_unit_pressure_load(i, a);
+          squared_norms(faIn) += value * value;
+        }
+      }
+    }
+  }
+
+  // coupledFlag is the same on every process, so either all of them return
+  // here or none does.
+  if (!has_coupled_face) {
+    return;
+  }
+
+  // Every node is owned by one process, so the sums are added up over the
+  // processes.
+  bcast::fsils_bcast_v(lhs.nFaces, squared_norms, lhs.commu);
+
+  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
+    if (lhs.face[faIn].coupledFlag) {
+      lhs.face[faIn].nS = squared_norms(faIn);
+    }
+  }
+}
 };

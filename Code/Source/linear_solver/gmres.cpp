@@ -26,39 +26,6 @@ namespace gmres {
 
 namespace {
 
-void bc_pre(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
-            const int mynNo, const int nNo) {
-  int nsd = dof - 1;
-  Array<double> v(nsd,nNo);
-
-  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto &face = lhs.face[faIn];
-    if (face.coupledFlag) {
-      if (face.sharedFlag) {
-        v = 0.0;
-
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            v(i,Ac) = face.scaled_unit_pressure_load(i,a);
-          }
-        }
-
-        face.nS = pow(norm::fsi_ls_normv(nsd, mynNo, lhs.commu, v), 2.0);
-
-      } else { 
-        face.nS = 0.0;
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            face.nS = face.nS + pow(face.scaled_unit_pressure_load(i,a), 2.0);
-          }
-        }
-      }
-    }
-  }
-}
-
 /// @brief Orthogonalize the newest Krylov vector against the preceding ones,
 /// for one unknown per node.
 ///
@@ -486,7 +453,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   dmsg << "eps: " << eps;
   #endif
 
-  bc_pre(lhs, dof, mynNo, nNo);
+  add_bc_mul::compute_coupled_face_norms(lhs, dof - 1);
 
   if (ls.iNorm <= ls.absTol) {
     ls.callD = std::numeric_limits<double>::epsilon();
