@@ -1,7 +1,8 @@
 # Prestraining the LV
 
-Two-phase example of `<Prestrain>` on the `LV_HolzapfelOgden_passive`
-geometry at an endocardial pressure of 10 mmHg (13332.2 dyne/cm²).
+Two-stage example of `<Prestrain>` on the `LV_HolzapfelOgden_passive`
+geometry at an endocardial pressure of 10 mmHg (13332.2 dyne/cm²). Both stages
+read the mesh and fibers in `mesh/`.
 
 The imaged geometry is taken to be subject to the load. The prestrain is
 a deformation gradient `F0` at every Gauss point, from an unknown stress-free
@@ -14,34 +15,33 @@ the increments composed on the imaged mesh, so the state converges to one that
 carries the load on the imaged geometry without deforming, and rigid motions
 of the deformed body leave the stress unchanged.
 
+| Folder | Input | Reference |
+|---|---|---|
+| `1-prestrain/` | `solver.xml`: prestrain run, 3 steps | `result_003.vtu` |
+| `2-forward/` | `solver.xml`: forward run, 3 steps, reads `prestrain.vtu` | `result_003.vtu` |
+
+`2-forward/prestrain.vtu` is the converged prestrain: the result of the
+`1-prestrain` input run for 20 steps. The regression test
+(`test_LV_HolzapfelOgden_prestrain` in `tests/test_struct.py`) runs each stage
+from its folder and compares its last result with the reference.
+
 ```
-mpirun -np 1 <build>/bin/svmultiphysics prestrain.xml    # writes prestrain/result_NNN.vtu
-mpirun -np 1 <build>/bin/svmultiphysics forward.xml      # reads prestrain/result_020.vtu
-python check_hold.py                                     # equilibrium hold test
+cd 1-prestrain && mpirun -np 1 <build>/bin/svmultiphysics solver.xml   # writes 1-procs/result_NNN.vtu
+cd 2-forward   && mpirun -np 1 <build>/bin/svmultiphysics solver.xml   # reads prestrain.vtu
 ```
 
-`prestrain.xml` applies the full load from the first step as a dead load
+To regenerate `2-forward/prestrain.vtu`, set `Number_of_time_steps` to 20 in
+`1-prestrain/solver.xml`, run it, and copy `1-procs/result_020.vtu`.
+
+`1-prestrain` applies the full load from the first step as a dead load
 (`Follower_pressure_load false`, as in the paper). Every Newton iteration
-starts from rest and composes the displacement it reaches into the prestrain,
-with the tangent of that composed update; `Max_iterations 1` makes each step a
-single such iteration, and more per step are allowed. With
-`Adaptive_time_step` in the general simulation parameters the time step grows
+starts from rest and composes the displacement it reaches into the prestrain.
+With `Adaptive_time_step` in the general simulation parameters the time step grows
 as the state approaches equilibrium, so once it is large the residual falls
-quadratically
-and reaches round-off by step 10 of the 20 here. The last
-result carries the prestrain as
-the cell arrays `Prestrain_F_g<g>`, one per Gauss point. A prestrain run
-solves the struct equation alone and does not accept
-`<Line_search_experimental>`; a forward run that reads the prestrain may use
-both. Prestrain is not available for ustruct solids, whose volumetric stress is
-a pressure field that the prestrain does not carry.
+quadratically and reaches round-off by step 14 of a 20-step run. Every result
+carries the prestrain as the cell arrays `Prestrain_F_g<g>`, one per Gauss
+point.
 
-`forward.xml` loads that prestrain through `<Prestrain_file_path>`
-and holds the same 10 mmHg as a follower load. `check_hold.py` asserts that the
-geometry does not move and that the reported stress reproduces the prestrain
-stress. Raise the pressure in `forward.xml` to simulate the prestrained LV; run
-it without the file path to see the naive inflation for contrast.
-
-The forward run may be started on any number of ranks regardless of how many
-the prestrain run used: the prestrain is written in the mesh's original
-element order and partitioned on input like the fibre directions.
+`2-forward` loads the converged prestrain through `<Prestrain_file_path>`
+and holds the same 10 mmHg as a follower load, so the geometry should not move:
+its displacement stays at round-off. Raise the pressure in
