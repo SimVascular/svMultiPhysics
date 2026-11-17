@@ -443,10 +443,8 @@ public:
     /// @param[in,out] lhs_face The linear solver face, one of
     ///   com_mod.lhs.face, whose flow rate derivative is extended.
     /// @param[in] cfg The configuration in which the cap is integrated.
-    /// @param[in] solutions Not used.
     void append_cap_flowrate_derivative(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
-                                        consts::MechanicalConfigurationType cfg,
-                                        const SolutionStates& solutions) const;
+                                        consts::MechanicalConfigurationType cfg) const;
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,

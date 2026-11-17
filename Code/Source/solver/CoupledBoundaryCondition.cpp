@@ -1325,8 +1325,7 @@ void bcast_cap_flowrate_derivative(ComMod &com_mod, const CmMod &cm_mod,
 
 void CoupledBoundaryCondition::append_cap_flowrate_derivative(ComMod& com_mod,
                                                               fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                              consts::MechanicalConfigurationType cfg,
-                                                              const SolutionStates& solutions) const
+                                                              consts::MechanicalConfigurationType cfg) const
 {
     const int cap_nNo = cap_n_no_;
     Vector<int> cap_global_node_ids;
