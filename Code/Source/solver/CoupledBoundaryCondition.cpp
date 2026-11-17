@@ -572,9 +572,6 @@ void CoupledBoundaryCondition::initialize_cap(ComMod& com_mod)
     // Initialize the cap face quadrature.
     cap_->init_cap_face_quadrature(com_mod);
 
-    // Initialize the storage of the flow rate derivative.
-    cap_->initialize_flowrate_derivative();
-
     // Reset the cap global mesh state buffers.
     int nsd = com_mod.nsd;
     int n_cap = cap_n_no_;
@@ -957,7 +954,6 @@ void check_cap_shares_nodes_with_coupled_face(const faceType& coupled_face, cons
 
 CappingSurface::CappingSurface(const CappingSurface& other)
     : global_node_ids_(other.global_node_ids_)
-    , flowrate_derivative_(other.flowrate_derivative_)
     , normals_(other.normals_)
 {
     if (other.face_) {
@@ -969,7 +965,6 @@ CappingSurface& CappingSurface::operator=(const CappingSurface& other)
 {
     if (this != &other) {
         global_node_ids_ = other.global_node_ids_;
-        flowrate_derivative_ = other.flowrate_derivative_;
         normals_ = other.normals_;
         if (other.face_) {
             face_ = std::make_unique<faceType>(*other.face_);
@@ -1092,17 +1087,6 @@ void CappingSurface::init_cap_face_quadrature(const ComMod& com_mod)
     } catch (const std::exception& e) {
         throw CappingSurfaceQuadratureException(std::string(e.what()));
     }
-}
-
-/// @brief Initialize the storage of the flow rate derivative.
-void CappingSurface::initialize_flowrate_derivative()
-{
-    if (!face_) {
-        flowrate_derivative_.resize(0, 0);
-        return;
-    }
-    flowrate_derivative_.resize(cap_nsd_, face_->nNo);
-    flowrate_derivative_ = 0.0;
 }
 
 /// @brief Updates the element position in global coordinates.
@@ -1238,11 +1222,11 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
 }
 
 
-void CappingSurface::compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const
+Array<double> CappingSurface::compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const
 {
     int cap_nNo = face_->nNo;
 
-    flowrate_derivative_ = 0.0;
+    Array<double> flowrate_derivative(cap_nsd_, cap_nNo);
 
     // Map global node IDs to cap face-local indices
     std::unordered_map<int, int> gnNo_to_cap_local;
@@ -1259,11 +1243,13 @@ void CappingSurface::compute_flowrate_derivative(consts::MechanicalConfiguration
                 int gnNo_idx = face_->IEN(a, e);
                 int cap_a = gnNo_to_cap_local.at(gnNo_idx);
                 for (int i = 0; i < cap_nsd_; i++) {
-                    flowrate_derivative_(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);
+                    flowrate_derivative(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);
                 }
             }
         }
     }
+
+    return flowrate_derivative;
 }
 
 namespace {
@@ -1342,7 +1328,6 @@ void CoupledBoundaryCondition::append_cap_flowrate_derivative(ComMod& com_mod,
                                                               consts::MechanicalConfigurationType cfg,
                                                               const SolutionStates& solutions) const
 {
-    const int nsd = com_mod.nsd;
     const int cap_nNo = cap_n_no_;
     Vector<int> cap_global_node_ids;
     Array<double> cap_flowrate_derivative;
@@ -1350,14 +1335,10 @@ void CoupledBoundaryCondition::append_cap_flowrate_derivative(ComMod& com_mod,
     // Calculate the cap contribution to the linear solver face (in master rank)
     if (owns_cap_ && cap_) {
         const faceType* cap_face = cap_->face();
-        cap_->compute_flowrate_derivative(cfg, cap_global_mesh_state_);
+        cap_flowrate_derivative = cap_->compute_flowrate_derivative(cfg, cap_global_mesh_state_);
         cap_global_node_ids.resize(cap_nNo);
-        cap_flowrate_derivative.resize(nsd, cap_nNo);
         for (int a = 0; a < cap_nNo; a++) {
             cap_global_node_ids(a) = cap_face->gN(a);
-            for (int i = 0; i < nsd; i++) {
-                cap_flowrate_derivative(i, a) = cap_->flowrate_derivative()(i, a);
-            }
         }
     }
 

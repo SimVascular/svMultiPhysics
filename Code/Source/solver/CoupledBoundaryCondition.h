@@ -145,9 +145,6 @@ class CappingSurface {
         /// @brief Initialize the cap face quadrature.
         void init_cap_face_quadrature(const ComMod& com_mod);
 
-        /// @brief Initialize the storage of the flow rate derivative.
-        void initialize_flowrate_derivative();
-    
         /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
         double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
             consts::MechanicalConfigurationType cfg);
@@ -155,20 +152,17 @@ class CappingSurface {
         /// @brief Compute the change of the flow rate through the cap per unit
         /// change of the velocity of each cap node.
         ///
-        /// Fills \ref flowrate_derivative_.
-        ///
         /// @param[in] cfg The configuration in which the cap is integrated.
         /// @param[in] st The positions and displacements of the cap nodes,
         ///   with one column per cap node.
-        void compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
+        ///
+        /// @return The flow rate derivative (number of space dimensions x
+        ///   number of cap nodes), with the columns in the order of the nodes
+        ///   of the cap face.
+        Array<double> compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
 
         /// @brief Get the cap face.
         const faceType* face() const { return face_.get(); }
-
-        /// @brief Get the flow rate derivative (number of space dimensions x
-        /// number of cap nodes), with the columns in the order of the nodes of
-        /// the cap face.
-        const Array<double>& flowrate_derivative() const { return flowrate_derivative_; }
 
     private:
         /// @brief The cap face.
@@ -191,9 +185,6 @@ class CappingSurface {
     
         /// @brief Compute the Jacobian and normal vector for a given element and Gauss point.
         std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const;
-
-        /// @brief Change of the flow rate through the cap per unit change of the velocity of each cap node; \c mutable so it can be refreshed under \c const *this.
-        mutable Array<double> flowrate_derivative_;
     };
 
 /// @brief Object-oriented Coupled boundary condition
