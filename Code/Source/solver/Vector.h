@@ -47,7 +47,6 @@ class Vector
     {
       // [NOTE] This is tfu but need to mimic Fortran that can allocate 0-sized arrays.
       if (size <= 0) {
-        is_allocated_ = true;
         return;
       }
       check_type();
@@ -103,10 +102,13 @@ class Vector
       num_allocated += 1;
       active += 1;
     }
-  
+
+    /// @brief Test if the vector has a positive size.
+    ///
+    /// @return True if the size of the vector is greater than zero.
     bool allocated() const
     {
-      return is_allocated_ ;
+      return size_ > 0;
     }
 
     /// @brief Free the array data. 
@@ -124,7 +126,6 @@ class Vector
         memory_returned += sizeof(T) * size_;;
       }
 
-      is_allocated_  = false;
       size_ = 0;
       data_ = nullptr;
     }
@@ -625,7 +626,6 @@ class Vector
     }
 
   private:
-    bool is_allocated_ = false;
     int size_ = 0;
     bool reference_data_ = false;
     T *data_ = nullptr;
