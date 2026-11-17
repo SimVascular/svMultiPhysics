@@ -5,41 +5,53 @@
 
 #include "bcast.h"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace add_bc_mul {
 
-void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const Array<double>& X, Array<double>& Y)
-{
-  Vector<double> coef(lhs.nFaces);
+namespace {
 
+/// @brief Coefficient of the operator that a coupled Neumann face contributes.
+///
+/// @param[in] face The coupled face.
+/// @param[in] op_Type Whether the contribution is to the matrix-vector product
+///   or to the preconditioner.
+///
+/// @return face.res for the product, -face.res / (1 + face.res * face.nS) for
+///   the preconditioner.
+double coupling_coefficient(const FSILS_faceType &face,
+                            const BcopType op_Type) {
   if (op_Type == BcopType::BCOP_TYPE_ADD) {
-    for (int i = 0; i < lhs.nFaces; i++) {
-      coef(i) = lhs.face[i].res;
-    }
-  } else if (op_Type == BcopType::BCOP_TYPE_PRE) {
-    for (int i = 0; i < lhs.nFaces; i++) {
-      coef(i) = -lhs.face[i].res / (1.0 + (lhs.face[i].res*lhs.face[i].nS));
-    }
-  } else { 
-    throw std::runtime_error("[add_bc_mul] op_Type is not defined");
+    return face.res;
   }
 
+  if (op_Type == BcopType::BCOP_TYPE_PRE) {
+    return -face.res / (1.0 + (face.res * face.nS));
+  }
+
+  throw std::runtime_error("[add_bc_mul] op_Type is not defined");
+}
+
+} // namespace
+
+void add_bc_mul(const FSILS_lhsType &lhs, const BcopType op_Type,
+                const Array<double> &X, Array<double> &Y) {
   // Scalar product of the scaled flow rate derivative of each coupled face
   // with X, over the entries that this process stores
   Vector<double> S(lhs.nFaces);
   bool has_coupled_face = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto& face = lhs.face[faIn];
-    int nsd = std::min(face.dof, dof);
+    const auto &face = lhs.face[faIn];
+    const int num_components = std::min(face.dof, X.nrows());
 
     if (face.coupledFlag) {
       has_coupled_face = true;
 
       for (int a = 0; a < face.scaled_flowrate_derivative.ncols(); a++) {
         int Ac = face.flowrate_derivative_node_indices(a);
-        for (int i = 0; i < nsd; i++) {
+        for (int i = 0; i < num_components; i++) {
           S(faIn) = S(faIn) + face.scaled_flowrate_derivative(i, a) * X(i, Ac);
         }
       }
@@ -58,19 +70,20 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
 
   // Computing Y = Y + coef * scaled unit pressure load * S
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto &face = lhs.face[faIn];
-    int nsd = std::min(face.dof, dof);
+    const auto &face = lhs.face[faIn];
+    const int num_components = std::min(face.dof, X.nrows());
 
     if (face.coupledFlag) {
+      const double coef = coupling_coefficient(face, op_Type);
+
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
-        for (int i = 0; i < nsd; i++) {
-          Y(i, Ac) = Y(i, Ac) + face.scaled_unit_pressure_load(i, a) *
-                                    coef(faIn) * S(faIn);
+        for (int i = 0; i < num_components; i++) {
+          Y(i, Ac) =
+              Y(i, Ac) + face.scaled_unit_pressure_load(i, a) * coef * S(faIn);
         }
       }
     }
   }
 }
-
 };

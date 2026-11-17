@@ -26,9 +26,10 @@ using namespace fsi_linear_solver;
 ///   read.
 /// @param[in] op_Type Whether to compute the contribution to the product or
 ///   to the preconditioner.
-/// @param[in] dof The number of components per node of 'X' and 'Y'.
-/// @param[in] X The vector that the operator is applied to.
-/// @param[in,out] Y The vector that the result is added to.
-void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const Array<double>& X, Array<double>& Y);
+/// @param[in] X The vector that the operator is applied to (components per
+///   node x lhs.nNo).
+/// @param[in,out] Y The vector that the result is added to, of the same size
+///   as 'X'.
+void add_bc_mul(const FSILS_lhsType& lhs, const BcopType op_Type, const Array<double>& X, Array<double>& Y);
 
 };

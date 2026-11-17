@@ -166,7 +166,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       auto u_slice = u.rslice(0);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, X, u_slice);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, X, u_slice);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, X, u_slice);
 
       ls.itr = ls.itr + 1;
       u.set_slice(0, R - u_slice);
@@ -176,7 +176,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       if (face.coupledFlag) {
         auto u_slice = u.rslice(0);
         auto unCondU = u.rslice(0);
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice);
         break; 
       }
     }
@@ -216,7 +216,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       auto u_slice_1 = u.rslice(i+1);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, u_slice, u_slice_1);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, u_slice, u_slice_1);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, u_slice, u_slice_1);
 
       ls.itr = ls.itr + 1;
 
@@ -224,7 +224,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
         if (face.coupledFlag) {
           auto u_slice_1 = u.rslice(i+1);
           auto unCondU = u.rslice(i+1);
-          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice_1);
+          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice_1);
           break;
         }
       }
@@ -510,7 +510,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     auto u_slice = u.rslice(0);
     spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, X, u_slice);
 
-    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, X, u_slice);
+    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, X, u_slice);
 
     u_slice = R - u_slice;
 
@@ -518,7 +518,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       if (face.coupledFlag && flag) {
         auto u_slice = u.rslice(0);
         auto unCondU = u.rslice(0);
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice);
         break;
       }
     }
@@ -543,13 +543,13 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       auto u_slice_1 = u.rslice(i+1);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, u_slice, u_slice_1);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, u_slice, u_slice_1);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, u_slice, u_slice_1);
 
       for (auto& face : lhs.face) {
         if (face.coupledFlag && flag) {
           auto u_slice_1 = u.rslice(i+1);
           auto unCondU = u.rslice(i+1);
-          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice_1);
+          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice_1);
           break;
         }
       }

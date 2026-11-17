@@ -313,7 +313,7 @@ void ns_solver(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_l
     spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, nsd, mK, U.rslice(i), MU_iBB);
     //MU.set_slice(iBB, MU_iBB);
 
-    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, nsd, U.rslice(i), MU_iBB);
+    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, U.rslice(i), MU_iBB);
     //MU.set_slice(iBB, MU_iBB);
 
     // MP1 = L*P
