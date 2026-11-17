@@ -41,9 +41,9 @@ On pushes to `main`, only this workflow runs the solver test suite. The Fast Tes
 
 **Purpose**: Build, validate, and stage the Ubuntu 26 AMD64 dependency image in GitHub Container Registry (GHCR). This image is a build environment for svMultiPhysics, not the published solver image. Its four-part version comes from the numeric `major`, `minor`, `patch`, and `build` fields in `release.json`.
 
-**Trigger**: Manual `workflow_dispatch` from the Actions tab on `main`. GitHub requires the workflow file to exist on the repository's default branch before manual dispatch is available. The selected source commit must belong to `main`; the workflow does not run from the fork or from another branch.
+**Trigger**: Manual `workflow_dispatch` from the Actions tab on `main`. GitHub requires the workflow file to exist on the repository's default branch before manual dispatch is available. The selected source commit must belong to the current repository's `main` branch.
 
-**Access control**: Only the Software Engineering team should be allowed to run this workflow in the upstream repository. A repository administrator must enforce that restriction with a GitHub Actions policy scoped to this workflow and the `workflow_dispatch` event. The workflow file itself does not restrict who can click **Run workflow**; until the policy is active, users with repository write access may be able to dispatch it. Do not treat the documentation or a job-level `if` as an access control. See [Control workflow execution](https://docs.github.com/en/actions/how-tos/administer/control-workflow-execution) and [Manually run a workflow](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+**Access control**: The upstream repository's GitHub Actions policy restricts this workflow to members of the Refactoring Team. The workflow file itself does not restrict who can click **Run workflow**; keep the policy scoped to this workflow and the `workflow_dispatch` event. Do not treat the documentation or a job-level `if` as an access control. See [Control workflow execution](https://docs.github.com/en/actions/how-tos/administer/control-workflow-execution) and [Manually run a workflow](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
 
 **Manual inputs**:
 
@@ -63,7 +63,31 @@ The workflow creates a versioned Git tag and GHCR image tag only after a `dev` b
 
 It receives the image repository, immutable image digest, svMultiPhysics source commit, and build type from the caller. It reads the svZeroDSolver tag and commit from that source commit's `release.json` and verifies that the tag still points to the pinned commit. On separate Ubuntu runners, it builds the default, Trilinos, and PETSc solver configurations against the exact image, builds the pinned svZeroDSolver commit, and runs unit and integration tests. Successful job summaries record the image digest, source commits, configuration, and build type; outcomes are shown in GitHub Actions. A failure prevents the caller from creating the versioned `dev` Git and image tags.
 
-### 5. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
+### 5. Ubuntu 26 Package Build (`workflows/ubuntu26-packages.yml`)
+
+**Purpose**: Build default and Trilinos `.deb` packages using a selected Ubuntu 26 dependency image. The workflow resolves the image to a digest before building, and the package version comes from `release.json`.
+
+**Trigger**: Manual `workflow_dispatch`. The workflow must be on the repository's default branch before it can be started manually.
+
+**Manual inputs**:
+
+| Input | Default | Meaning |
+| --- | --- | --- |
+| `source_ref` | Selected workflow ref's commit | Full 40-character commit SHA or complete `-dev`, `-rc`, or final Git tag, including the `v` prefix (for example, `v1.0.0.2-dev`, `v1.0.0.2-rc`, or `v1.0.0.2`). The selected commit supplies the solver, version, and test fixtures and must belong to the current repository's `main`. |
+| `dependency_image` | `ghcr.io/simvascular/svmultiphysics-dependencies:1.0.0.1-dev` | Fully qualified GHCR image tag or digest. It may identify a dependency image from an earlier release. The workflow resolves it to one digest for both package jobs. |
+| `build_type` | `Release` | Solver CMake build type: `Release`, `RelWithDebInfo`, or `Debug`. Only a successful `Release` run can create the final Git tag. |
+
+The package filename and embedded version use the four-part version from `release.json` without a `-dev` suffix; selecting a different build type does not change that filename.
+
+The selected solver commit's `release.json` supplies the final four-part version. The final `v<version>` tag need not exist when the workflow starts. If it already exists, it must point to the selected commit; the workflow never moves it. The package job checks out the selected commit, passes `SV_RELEASE_PACKAGE=ON` and `SV_TAG_AFTER_VALIDATION=ON` to CMake, and checks that the build-tree solver reports the intended final tag and commit. CPack generates the final package filename and version metadata; the workflow verifies both. The default and Trilinos configurations each run unit and integration tests before packaging. A separate clean Ubuntu 26.04 container then verifies each installed solver's `--version` output and runs its integration tests against that executable.
+
+Only after the default and Trilinos validation jobs pass does a manual Release run on `main` create the final Git tag on the tested commit and upload the two `.deb` packages, their SHA-256 checksums, and a full third-party dependency report to a GitHub Release under that tag. The release notes record the workflow commit, built solver commit, resolved dependency image digest, pinned svZeroDSolver revision, and key dependency versions. The release starts as a draft and becomes public only after all assets are present. A rerun verifies existing assets and provenance and refuses to replace different content. The dependency image is selected independently: solver releases may reuse a previously built dependency image.
+
+**Access control**: Only members of the Refactoring Team may run this workflow in the upstream repository. A repository administrator must enforce this with an Actions policy scoped to this workflow and the `workflow_dispatch` event; the workflow file alone does not restrict who can start a manual run.
+
+Each package job builds one solver configuration, runs its unit and integration tests with the pinned svZeroDSolver source, checks the Debian package version, and uploads the package and SHA-256 checksum as an Actions artifact. The default job also captures the dependency image's full version inventory, including Ubuntu, Conda, and Python packages. A dependent validation job for each configuration runs in a clean, digest-pinned Ubuntu 26.04 container. It verifies the pinned svZeroDSolver release package against the checksum in `release.json`, installs both packages, checks the installed solver identity, and runs the integration suite against the installed solver using Python 3.12. Test results are uploaded as separate artifacts. After validation, the Ubuntu packages, checksums, and dependency inventory are also published to GitHub Releases for external testing. SimTK publication remains separate.
+
+### 6. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
 
 **Purpose**: Builds and publishes Docker images for the solver component.
 
@@ -76,7 +100,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 3. Builds the Docker image using `Docker/solver/dockerfile`
 4. Pushes the image to `simvascular/solver:latest`
 
-### 6. Documentation Workflow (`workflows/documentation.yml`)
+### 7. Documentation Workflow (`workflows/documentation.yml`)
 
 **Purpose**: Builds and deploys HTML documentation using Doxygen.
 
@@ -89,7 +113,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 3. Uploads documentation as an artifact
 4. Deploys documentation to GitHub Pages (only for `main` branch)
 
-### 7. Copyright Workflow (`workflows/copyright.yml`)
+### 8. Copyright Workflow (`workflows/copyright.yml`)
 
 **Purpose**: Ensures all source files contain proper copyright headers.
 
@@ -100,7 +124,7 @@ It receives the image repository, immutable image digest, svMultiPhysics source 
 - Uses `kt3k/license_checker` to verify copyright headers in `.h` and `.cpp` files
 - Fails the workflow if any files are missing proper copyright notices
 
-### 8. Review Policy Workflow (`workflows/review-policy.yml`)
+### 9. Review Policy Workflow (`workflows/review-policy.yml`)
 
 The required `review-policy` check normally requires two approvals from eligible reviewers with write access. A Refactoring Team member can apply one of the following labels to allow one approval from an eligible member of that team other than the PR author:
 
