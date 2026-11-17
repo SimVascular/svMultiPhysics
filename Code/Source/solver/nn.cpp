@@ -34,6 +34,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace nn {
@@ -1024,20 +1025,43 @@ void get_mesh_element_nodes(const ComMod &com_mod, const faceType &lFa,
   }
 }
 
-} // namespace
-
-Array<double> face_element_tangents(const ComMod &com_mod, const faceType &lFa,
-                                    const int e, const Array<double> &Nx,
-                                    const SolutionStates &solutions,
-                                    consts::MechanicalConfigurationType cfg,
-                                    const unsigned int displacement_index) {
+/// @brief Return the tangent vectors of a face element at a Gauss point.
+///
+/// Tangent vector 'k' is the sum over the nodes of the face element of
+/// Nx(k,a) times the position of node 'a'. utils::cross() of the tangent
+/// vectors, multiplied by the returned sign, is the area-weighted outward
+/// normal that gnnb() returns.
+///
+/// Not available for the faces of shell meshes, where the normal is not the
+/// cross product of the tangent vectors.
+///
+/// @param[in] com_mod The common module.
+/// @param[in] lFa The boundary face.
+/// @param[in] e The face-local index of the element.
+/// @param[in] Nx The shape function derivatives at the Gauss point
+///   (insd x eNoNb).
+/// @param[in] solutions The solution states that the displacement fields are
+///   extracted from.
+/// @param[in] cfg The configuration in which the tangent vectors are computed
+///   (reference, old or current).
+/// @param[in] displacement_index The index of the displacement field in the
+///   solution arrays.
+///
+/// @return The tangent vectors, one per column (nsd x insd), and the sign of
+///   the outward normal: 1 if utils::cross() of the tangent vectors points out
+///   of the mesh, -1 if it points into it.
+std::pair<Array<double>, double>
+face_element_tangents(const ComMod &com_mod, const faceType &lFa, const int e,
+                      const Array<double> &Nx, const SolutionStates &solutions,
+                      consts::MechanicalConfigurationType cfg,
+                      const unsigned int displacement_index) {
   const int nsd = com_mod.nsd;
   const int insd = Nx.nrows();
   const int eNoNb = Nx.ncols();
 
   if (com_mod.msh[lFa.iM].lShl) {
     svmp::raise<fe::InvalidArgumentException>(
-        "[svMultiPhysics::face_element_tangents] ERROR: The '" + lFa.name +
+        "[svMultiPhysics::nn] ERROR: The '" + lFa.name +
         "' face belongs to a shell mesh, where the normal is not the cross "
         "product of the tangent vectors.");
   }
@@ -1058,7 +1082,7 @@ Array<double> face_element_tangents(const ComMod &com_mod, const faceType &lFa,
     }
   }
 
-  // Changing the sign if neccessary. 'a' locates on the face and 'b'
+  // Finding the sign of the outward normal. 'a' locates on the face and 'b'
   // in the interior of the element. v points outward along ba
   //
   int a = ptr(0);
@@ -1069,15 +1093,12 @@ Array<double> face_element_tangents(const ComMod &com_mod, const faceType &lFa,
     v(i) = lX(i, a) - lX(i, b);
   }
 
-  // Negating one tangent vector negates the cross product.
-  if (insd > 0 && utils::cross(xXi) * v < 0.0) {
-    for (int i = 0; i < nsd; i++) {
-      xXi(i, 0) = -xXi(i, 0);
-    }
-  }
+  const double outward_sign = (utils::cross(xXi) * v < 0.0) ? -1.0 : 1.0;
 
-  return xXi;
+  return {xXi, outward_sign};
 }
+
+} // namespace
 
 Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
                     const int g, const Array<double> &Nx,
@@ -1177,8 +1198,16 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
     return n;
 
   } else {
-    return utils::cross(face_element_tangents(com_mod, lFa, e, Nx, solutions,
-                                              cfg, displacement_index));
+    const auto [tangents, outward_sign] = face_element_tangents(
+        com_mod, lFa, e, Nx, solutions, cfg, displacement_index);
+
+    n = utils::cross(tangents);
+
+    if (outward_sign < 0.0) {
+      n = -n;
+    }
+
+    return n;
   }
 }
 
@@ -1190,6 +1219,45 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
   return gnnb(com_mod, lFa, e, g, Nx, solutions,
               consts::MechanicalConfigurationType::reference,
               unused_displacement_index);
+}
+
+Array3<double> derivative_of_outward_normal_wrt_position(
+    const ComMod &com_mod, const faceType &lFa, const int e,
+    const Array<double> &Nx, const SolutionStates &solutions,
+    consts::MechanicalConfigurationType cfg,
+    const unsigned int displacement_index) {
+  const int nsd = com_mod.nsd;
+  const int insd = Nx.nrows();
+  const int eNoNb = Nx.ncols();
+
+  const auto [tangents, outward_sign] = face_element_tangents(
+      com_mod, lFa, e, Nx, solutions, cfg, displacement_index);
+
+  Array3<double> derivative(nsd, nsd, eNoNb);
+
+  // The normal is linear in each tangent vector. So its derivative with
+  // respect to component 'i' of tangent 'k' is the normal obtained with
+  // tangent 'k' replaced by the i-th unit vector. The derivative of that
+  // component with respect to coordinate 'i' of node 'a' is Nx(k,a).
+  for (int k = 0; k < insd; k++) {
+    for (int i = 0; i < nsd; i++) {
+      Array<double> modified_tangents(tangents);
+
+      for (int j = 0; j < nsd; j++) {
+        modified_tangents(j, k) = (j == i) ? 1.0 : 0.0;
+      }
+
+      const auto normal_from_modified_tangents = utils::cross(modified_tangents);
+
+      for (int a = 0; a < eNoNb; a++) {
+        for (int j = 0; j < nsd; j++) {
+          derivative(j, i, a) = derivative(j, i, a) + outward_sign * Nx(k, a) * normal_from_modified_tangents(j);
+        }
+      }
+    }
+  }
+
+  return derivative;
 }
 
 /// @brief Compute shell kinematics: normal vector, covariant & contravariant basis vectors

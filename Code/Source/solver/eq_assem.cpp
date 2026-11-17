@@ -349,10 +349,9 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
       }
 
       if (flowrate_depends_on_displacement) {
-        // The flow rate density is outward_sign * velocity . cross(tangents)
-        double outward_sign;
-        const auto tangents = nn::face_element_tangents(
-            com_mod, lFa, e, Nx, solutions, cfg, eq.s, outward_sign);
+        const auto derivative_of_normal =
+            nn::derivative_of_outward_normal_wrt_position(com_mod, lFa, e, Nx,
+                                                          solutions, cfg, eq.s);
 
         // Retrieve the velocity at the Gauss point
         Vector<double> velocity(nsd);
@@ -363,16 +362,16 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
           }
         }
 
-        const auto derivative =
-            all_fun::flowrate_density_derivative_wrt_position(tangents, Nx,
-                                                              velocity);
-
+        // The flow rate density is velocity . normal, so its derivative with
+        // respect to the node positions is velocity . derivative_of_normal
         for (int a = 0; a < lFa.eNoN; a++) {
           int Ac = lFa.IEN(a, e);
           for (int i = 0; i < nsd; i++) {
-            flowrate_derivative(i, Ac) += displacement_per_velocity *
-                                          outward_sign * lFa.w(g) *
-                                          derivative(i, a);
+            for (int j = 0; j < nsd; j++) {
+              flowrate_derivative(i, Ac) += displacement_per_velocity *
+                                            lFa.w(g) * velocity(j) *
+                                            derivative_of_normal(j, i, a);
+            }
           }
         }
       }

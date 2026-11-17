@@ -967,46 +967,6 @@ double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
                unused_displacement_index);
 }
 
-Array<double>
-flowrate_density_derivative_wrt_position(const Array<double> &tangents,
-                                         const Array<double> &Nx,
-                                         const Vector<double> &velocity) {
-  const int nsd = tangents.nrows();
-  const int insd = tangents.ncols();
-  const int num_nodes = Nx.ncols();
-
-  // The flow rate density is linear in each tangent vector. So its derivative
-  // with respect to component 'i' of tangent 'k' is the flow rate density
-  // obtained with tangent 'k' replaced by the i-th unit vector.
-  Array<double> tangent_derivative(nsd, insd);
-
-  for (int k = 0; k < insd; k++) {
-    for (int i = 0; i < nsd; i++) {
-      Array<double> modified_tangents(tangents);
-
-      for (int j = 0; j < nsd; j++) {
-        modified_tangents(j, k) = (j == i) ? 1.0 : 0.0;
-      }
-
-      tangent_derivative(i, k) = velocity * utils::cross(modified_tangents);
-    }
-  }
-
-  // The derivative of component 'i' of tangent 'k' with respect to coordinate
-  // 'i' of node 'a' is Nx(k,a).
-  Array<double> derivative(nsd, num_nodes);
-
-  for (int a = 0; a < num_nodes; a++) {
-    for (int k = 0; k < insd; k++) {
-      for (int i = 0; i < nsd; i++) {
-        derivative(i, a) += Nx(k, a) * tangent_derivative(i, k);
-      }
-    }
-  }
-
-  return derivative;
-}
-
 double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
              const Array<double> &s, const int l,
              const SolutionStates &solutions, std::optional<int> uo,

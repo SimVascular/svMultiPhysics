@@ -39,38 +39,6 @@ namespace nn {
       double& Jac, Array<double>& ks);
 
   /**
-   * @brief Return the tangent vectors of a face element at a Gauss point.
-   *
-   * Tangent vector 'k' is the sum over the nodes of the face element of
-   * Nx(k,a) times the position of node 'a'. The first tangent vector is
-   * negated if needed, so that utils::cross() of the result is the
-   * area-weighted outward normal that gnnb() returns.
-   *
-   * Not available for the faces of shell meshes, where the normal is not the
-   * cross product of the tangent vectors.
-   *
-   * @param[in] com_mod The common module.
-   * @param[in] lFa The boundary face.
-   * @param[in] e The face-local index of the element.
-   * @param[in] Nx The shape function derivatives at the Gauss point. Its shape
-   *   (insd x eNoNb) determines the surface's intrinsic dimension and the
-   *   number of nodes per face element.
-   * @param[in] solutions The solution states that the displacement fields are
-   *   extracted from.
-   * @param[in] cfg The configuration in which the tangent vectors are computed
-   *   (reference, old or current).
-   * @param[in] displacement_index The index of the displacement field in the
-   *   solution arrays. This should correspond to the start index of the
-   *   equation that solves for the displacement.
-   * @return The tangent vectors, one per column (nsd x insd).
-   */
-  Array<double> face_element_tangents(const ComMod &com_mod, const faceType &lFa,
-                                      const int e, const Array<double> &Nx,
-                                      const SolutionStates &solutions,
-                                      consts::MechanicalConfigurationType cfg,
-                                      const unsigned int displacement_index);
-
-  /**
    * @brief Return the area-weighted surface normal at a given element and Gauss
    * point.
    *
@@ -87,6 +55,9 @@ namespace nn {
    * - old configuration (the mesh is displaced by the displacement field from
    *   previous time step).
    *
+   * @todo[michelebucelli] This could be renamed to outward_normal, to match the
+   *   function below.
+   *
    * @param[in] com_mod The common module.
    * @param[in] lFa The boundary face for which the normal vector is computed.
    * @param[in] e The face-local index of the element for which the normal
@@ -102,6 +73,7 @@ namespace nn {
    * @param[in] displacement_index The index of the displacement field in the
    *   solution arrays. This should correspond to the start index of the
    *   equation that solves for the displacement.
+   *
    * @return The area-weighted outward normal vector.
    */
   Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
@@ -122,6 +94,9 @@ namespace nn {
    * the ability to compute the normal in a displaced configuration, which is
    * only relevant for simulations involving structural displacement.
    *
+   * @todo[michelebucelli] This could be renamed to outward_normal, to match the
+   *   function below.
+   *
    * @param[in] com_mod The common module.
    * @param[in] lFa The boundary face for which the normal vector is computed.
    * @param[in] e The face-local index of the element for which the normal
@@ -130,11 +105,43 @@ namespace nn {
    * @param[in] Nx The shape function derivatives at the Gauss point.
    * @param[in] solutions The solution states that the displacement fields are
    *   extracted from.
+   *
    * @return The area-weighted outward normal vector.
    */
   Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
                       const int g, const Array<double> &Nx,
                       const SolutionStates &solutions);
+
+  /**
+   * @brief Differentiate the area-weighted outward normal of a face element at
+   * a Gauss point with respect to the positions of the element nodes.
+   *
+   * The normal is the one that gnnb() returns.
+   *
+   * Not available for the faces of shell meshes.
+   *
+   * @param[in] com_mod The common module.
+   * @param[in] lFa The boundary face.
+   * @param[in] e The face-local index of the element.
+   * @param[in] Nx The shape function derivatives at the Gauss point. Its shape
+   *   (insd x eNoNb) determines the surface's intrinsic dimension and the
+   *   number of nodes per face element.
+   * @param[in] solutions The solution states that the displacement fields are
+   *   extracted from.
+   * @param[in] cfg The configuration in which the normal is computed
+   *   (reference, old or current).
+   * @param[in] displacement_index The index of the displacement field in the
+   *   solution arrays. This should correspond to the start index of the
+   *   equation that solves for the displacement.
+   * @return The derivative (nsd x nsd x eNoNb): entry (j,i,a) is the derivative
+   *   of component 'j' of the normal with respect to coordinate 'i' of node
+   *   'a' of the face element.
+   */
+  Array3<double> derivative_of_outward_normal_wrt_position(
+      const ComMod &com_mod, const faceType &lFa, const int e,
+      const Array<double> &Nx, const SolutionStates &solutions,
+      consts::MechanicalConfigurationType cfg,
+      const unsigned int displacement_index);
 
   void gnns(const int nsd, const int eNoN, const Array<double>& Nxi, Array<double>& xl, Vector<double>& nV, 
       Array<double>& gCov, Array<double>& gCnv);
