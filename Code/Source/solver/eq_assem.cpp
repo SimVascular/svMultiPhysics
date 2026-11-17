@@ -303,16 +303,35 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
   int tnNo = com_mod.tnNo;
   int nNo = lFa.nNo;
 
-  Array<double> sVl(nsd,nNo); 
-  Array<double> sV(nsd,tnNo); 
+  // Load that a unit pressure on the face puts on each node: the surface
+  // integral of the shape function times the normal vector
+  Array<double> unit_pressure_load(nsd, tnNo);
+  Array<double> unit_pressure_load_on_face_nodes(nsd, nNo);
 
-  // Updating the value of the surface integral of the normal vector
-  // using the deformed configuration ('n' = new = timestep n+1)
-  sV = 0.0;
+  const auto &eq = com_mod.eq[com_mod.cEq];
+  const auto &Yn = solutions.current.get_velocity();
+
+  // The flow rate of a struct equation coupled to svZeroD or svOneD is
+  // integrated on the deformed face, so it also depends on the displacement.
+  const bool flowrate_depends_on_displacement =
+      (eq.phys == EquationType::phys_struct) &&
+      utils::btest(lBc.bType,
+                   static_cast<int>(BoundaryConditionType::bType_Coupled));
+
+  // Derivative of the flow rate with respect to the nodal velocities, which
+  // is equal to the unit pressure load. Where the flow rate depends on the
+  // displacement, its derivative with respect to the nodal displacements is
+  // added, with the velocity held fixed. It is multiplied by beta*dt/gamma,
+  // the change of displacement per unit change of velocity that an increment
+  // of the unknown produces.
+  Array<double> flowrate_derivative(nsd, tnNo);
+  Array<double> flowrate_derivative_on_face_nodes(nsd, nNo);
+  const double displacement_per_velocity = eq.beta * com_mod.dt / eq.gam;
+
+  // Updating the value of the surface integrals using the deformed
+  // configuration ('n' = new = timestep n+1)
+  unit_pressure_load = 0.0;
   for (int e = 0; e < lFa.nEl; e++) {
-    if (lFa.eType == ElementType::NRB) {
-      // CALL NRBNNXB(msh(iM),lFa,e)
-    }
     for (int g = 0; g < lFa.nG; g++) {
       auto Nx = lFa.Nx.rslice(g);
 
@@ -324,7 +343,37 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
       for (int a = 0; a < lFa.eNoN; a++) {
         int Ac = lFa.IEN(a,e);
         for (int i = 0; i < nsd; i++) {
-          sV(i,Ac) = sV(i,Ac) + lFa.N(a,g)*lFa.w(g)*n(i);
+          unit_pressure_load(i, Ac) += lFa.N(a, g) * lFa.w(g) * n(i);
+          flowrate_derivative(i, Ac) += lFa.N(a, g) * lFa.w(g) * n(i);
+        }
+      }
+
+      if (flowrate_depends_on_displacement) {
+        // The flow rate density is outward_sign * velocity . cross(tangents)
+        double outward_sign;
+        const auto tangents = nn::face_element_tangents(
+            com_mod, lFa, e, Nx, solutions, cfg, eq.s, outward_sign);
+
+        // Retrieve the velocity at the Gauss point
+        Vector<double> velocity(nsd);
+        for (int a = 0; a < lFa.eNoN; a++) {
+          int Ac = lFa.IEN(a, e);
+          for (int i = 0; i < nsd; i++) {
+            velocity(i) += lFa.N(a, g) * Yn(eq.s + i, Ac);
+          }
+        }
+
+        const auto derivative =
+            all_fun::flowrate_density_derivative_wrt_position(tangents, Nx,
+                                                              velocity);
+
+        for (int a = 0; a < lFa.eNoN; a++) {
+          int Ac = lFa.IEN(a, e);
+          for (int i = 0; i < nsd; i++) {
+            flowrate_derivative(i, Ac) += displacement_per_velocity *
+                                          outward_sign * lFa.w(g) *
+                                          derivative(i, a);
+          }
         }
       }
     }
@@ -332,13 +381,14 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
 
   for (int a = 0; a < lFa.nNo; a++) {
     int Ac = lFa.gN(a);
-    sVl.set_col(a, sV.col(Ac));
+    unit_pressure_load_on_face_nodes.set_col(a, unit_pressure_load.col(Ac));
+    flowrate_derivative_on_face_nodes.set_col(a, flowrate_derivative.col(Ac));
   }
 
   // Update the unit pressure load and the flow rate derivative of lhs.face(i)
-  // with the new value of the surface integral
-  fsils_bc_update(com_mod.lhs, lBc.lsPtr, sVl, sVl);
-  
+  fsils_bc_update(com_mod.lhs, lBc.lsPtr, unit_pressure_load_on_face_nodes,
+                  flowrate_derivative_on_face_nodes);
+
   // If this is a Coupled BC with a cap, append the cap contribution to the
   // flow rate derivative of the linear solver face
   if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_Coupled))) {
@@ -350,7 +400,7 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
       cpl.copy_cap_surface_to_linear_solver_face(com_mod, face, cfg, solutions);
     }
   }
-};
+}
 
 /// @brief This routine assembles the equation on a given mesh.
 ///
