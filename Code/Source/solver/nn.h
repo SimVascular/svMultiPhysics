@@ -39,6 +39,38 @@ namespace nn {
       double& Jac, Array<double>& ks);
 
   /**
+   * @brief Return the tangent vectors of a face element at a Gauss point.
+   *
+   * Tangent vector 'k' is the sum over the nodes of the face element of
+   * Nx(k,a) times the position of node 'a'. The first tangent vector is
+   * negated if needed, so that utils::cross() of the result is the
+   * area-weighted outward normal that gnnb() returns.
+   *
+   * Not available for the faces of shell meshes, where the normal is not the
+   * cross product of the tangent vectors.
+   *
+   * @param[in] com_mod The common module.
+   * @param[in] lFa The boundary face.
+   * @param[in] e The face-local index of the element.
+   * @param[in] Nx The shape function derivatives at the Gauss point. Its shape
+   *   (insd x eNoNb) determines the surface's intrinsic dimension and the
+   *   number of nodes per face element.
+   * @param[in] solutions The solution states that the displacement fields are
+   *   extracted from.
+   * @param[in] cfg The configuration in which the tangent vectors are computed
+   *   (reference, old or current).
+   * @param[in] displacement_index The index of the displacement field in the
+   *   solution arrays. This should correspond to the start index of the
+   *   equation that solves for the displacement.
+   * @return The tangent vectors, one per column (nsd x insd).
+   */
+  Array<double> face_element_tangents(const ComMod &com_mod, const faceType &lFa,
+                                      const int e, const Array<double> &Nx,
+                                      const SolutionStates &solutions,
+                                      consts::MechanicalConfigurationType cfg,
+                                      const unsigned int displacement_index);
+
+  /**
    * @brief Return the area-weighted surface normal at a given element and Gauss
    * point.
    *

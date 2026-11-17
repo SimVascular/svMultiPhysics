@@ -896,49 +896,45 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
   }
 }
 
-Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
-                    const int g, const Array<double> &Nx,
-                    const SolutionStates &solutions,
-                    consts::MechanicalConfigurationType cfg,
-                    const unsigned int displacement_index) {
+namespace {
+
+/// @brief Get the positions of the nodes of the mesh element that a face
+/// element belongs to, and the order that lists the face element nodes first.
+///
+/// @param[in] com_mod The common module.
+/// @param[in] lFa The boundary face.
+/// @param[in] e The face-local index of the face element.
+/// @param[in] eNoNb The number of nodes of the face element.
+/// @param[in] solutions The solution states that the displacement fields are
+///   extracted from.
+/// @param[in] cfg The configuration in which the positions are taken
+///   (reference, old or current).
+/// @param[in] displacement_index The index of the displacement field in the
+///   solution arrays.
+/// @param[out] lX The positions of the nodes of the mesh element (nsd x number
+///   of mesh element nodes), nodes ordered as in the mesh element.
+/// @param[out] ptr The indices in the mesh element of its nodes, listed with
+///   the nodes of the face element first, in the order of the face element,
+///   and the other nodes after.
+void get_mesh_element_nodes(const ComMod &com_mod, const faceType &lFa,
+                            const int e, const int eNoNb,
+                            const SolutionStates &solutions,
+                            consts::MechanicalConfigurationType cfg,
+                            const unsigned int displacement_index,
+                            Array<double> &lX, Vector<int> &ptr) {
   // Local aliases for displacement arrays
   const auto& Dn = solutions.current.get_displacement();
   const auto& Do = solutions.old.get_displacement();
-  auto& cm = com_mod.cm;
 
   const int nsd = com_mod.nsd;
-  const int insd = Nx.nrows();
-  const int eNoNb = Nx.ncols();
-
-  Vector<double> n(nsd);
-
-  #define n_debug_gnnb 
-  #ifdef debug_gnnb 
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
-  dmsg.banner();
-  dmsg << "e: " << e+1;
-  dmsg << "g: " << g+1;
-  dmsg << "nsd: " << nsd;
-  dmsg << "insd: " << insd;
-  dmsg << "eNoNb: " << eNoNb;
-  dmsg << "cfg: " << cfg;
-  #endif
 
   int iM = lFa.iM;
   int Ec = lFa.gE(e);
   auto& msh = com_mod.msh[iM];
   int eNoN = msh.eNoN;
 
-  #ifdef debug_gnnb 
-  dmsg << "iM: " << iM+1;
-  dmsg << "Ec: " << Ec+1;
-  dmsg << "eNoN: " << eNoN;
-  dmsg << "msh.IEN.nrows: " << msh.IEN.nrows();
-  dmsg << "msh.IEN.ncols: " << msh.IEN.ncols();
-  #endif
-
-  Array<double> lX(nsd,eNoN); 
-  Vector<int> ptr(eNoN); 
+  lX.resize(nsd,eNoN);
+  ptr.resize(eNoN);
   std::vector<bool> setIt(eNoN);
 
   // Creating a ptr list that contains pointer to the nodes of elements
@@ -1026,9 +1022,96 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
       }
     }
   }
+}
+
+} // namespace
+
+Array<double> face_element_tangents(const ComMod &com_mod, const faceType &lFa,
+                                    const int e, const Array<double> &Nx,
+                                    const SolutionStates &solutions,
+                                    consts::MechanicalConfigurationType cfg,
+                                    const unsigned int displacement_index) {
+  const int nsd = com_mod.nsd;
+  const int insd = Nx.nrows();
+  const int eNoNb = Nx.ncols();
+
+  if (com_mod.msh[lFa.iM].lShl) {
+    svmp::raise<fe::InvalidArgumentException>(
+        "[svMultiPhysics::face_element_tangents] ERROR: The '" + lFa.name +
+        "' face belongs to a shell mesh, where the normal is not the cross "
+        "product of the tangent vectors.");
+  }
+
+  Array<double> lX;
+  Vector<int> ptr;
+  get_mesh_element_nodes(com_mod, lFa, e, eNoNb, solutions, cfg,
+                         displacement_index, lX, ptr);
+
+  Array<double> xXi(nsd,insd);
+
+  for (int a = 0; a < eNoNb; a++) {
+    int b = ptr(a);
+    for (int i = 0; i < insd; i++) {
+      for (int j = 0; j < nsd; j++) {
+        xXi(j,i) = xXi(j,i) + Nx(i,a)*lX(j,b);
+      }
+    }
+  }
+
+  // Changing the sign if neccessary. 'a' locates on the face and 'b'
+  // in the interior of the element. v points outward along ba
+  //
+  int a = ptr(0);
+  int b = ptr(lFa.eNoN);
+  Vector<double> v(nsd);
+
+  for (int i = 0; i < nsd; i++) {
+    v(i) = lX(i, a) - lX(i, b);
+  }
+
+  // Negating one tangent vector negates the cross product.
+  if (insd > 0 && utils::cross(xXi) * v < 0.0) {
+    for (int i = 0; i < nsd; i++) {
+      xXi(i, 0) = -xXi(i, 0);
+    }
+  }
+
+  return xXi;
+}
+
+Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
+                    const int g, const Array<double> &Nx,
+                    const SolutionStates &solutions,
+                    consts::MechanicalConfigurationType cfg,
+                    const unsigned int displacement_index) {
+  const int nsd = com_mod.nsd;
+  const int insd = Nx.nrows();
+  const int eNoNb = Nx.ncols();
+
+  Vector<double> n(nsd);
+
+  #define n_debug_gnnb
+  #ifdef debug_gnnb
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  dmsg << "e: " << e+1;
+  dmsg << "g: " << g+1;
+  dmsg << "nsd: " << nsd;
+  dmsg << "insd: " << insd;
+  dmsg << "eNoNb: " << eNoNb;
+  dmsg << "cfg: " << cfg;
+  #endif
+
+  auto& msh = com_mod.msh[lFa.iM];
+  int eNoN = msh.eNoN;
 
   // Calculating surface deflation
   if (msh.lShl) {
+    Array<double> lX;
+    Vector<int> ptr;
+    get_mesh_element_nodes(com_mod, lFa, e, eNoNb, solutions, cfg,
+                           displacement_index, lX, ptr);
+
     // Since the face has only one parametric coordinate (edge), find
     // its normal from cross product of mesh normal and interior edge
 
@@ -1094,36 +1177,8 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
     return n;
 
   } else {
-
-    Array<double> xXi(nsd,insd);
-
-    for (int a = 0; a < eNoNb; a++) {
-      int b = ptr(a);
-      for (int i = 0; i < insd; i++) {
-        for (int j = 0; j < nsd; j++) {
-          xXi(j,i) = xXi(j,i) + Nx(i,a)*lX(j,b);
-        }
-      }
-    }
-
-    n = utils::cross(xXi);
-
-    // Changing the sign if neccessary. 'a' locates on the face and 'b'
-    // in the interior of the element. v points outward along ba
-    //
-    a = ptr(0);
-    int b = ptr(lFa.eNoN);
-    Vector<double> v(nsd);
-
-    for (int i = 0; i < nsd; i++) {
-      v(i) = lX(i, a) - lX(i, b);
-    }
-
-    if (n * v < 0.0) {
-      n = -n;
-    }
-
-    return n;
+    return utils::cross(face_element_tangents(com_mod, lFa, e, Nx, solutions,
+                                              cfg, displacement_index));
   }
 }
 
