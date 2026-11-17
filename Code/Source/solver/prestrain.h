@@ -69,8 +69,9 @@ class mshType;
 /// Because each iteration is composed, the tangent of the composed residual
 /// differs from the kernel's own, and the solid kernels correct it (see
 /// correct_composed_tangent). Max_iterations and Tolerance bound the
-/// iterations of a time step as in any other run. With Adaptive_time_step the
-/// time step is adapted to the residual between steps (see Integrator.h).
+/// iterations of a time step as in any other run. The residual force of every
+/// step is reported, and with Adaptive_time_step the time step is adapted to
+/// the residual between steps (see Integrator.h).
 ///
 /// Each mesh holds @f$ F_0 @f$ in a Prestrain, one tensor per Gauss point,
 /// written to and read from VTU cell arrays named Prestrain_F_g<g>, one per

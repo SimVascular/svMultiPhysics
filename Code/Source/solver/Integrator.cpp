@@ -121,6 +121,17 @@ bool Integrator::step(bool save_results) {
 
     assemble_linear_system(eq);
 
+    // Output the unscaled residual force as a diagnostic for prestrain runs
+    if (com_mod.prestrain_enabled && eq.itr == 1) {
+      Array<double> weights(com_mod.R.nrows(), com_mod.lhs.nNo);
+      weights = 1.0;
+      mask_constrained_dofs(weights);
+      const double residual_force = residual_norm(weights);
+      if (com_mod.cm.mas(simulation_->cm_mod)) {
+        std::cout << " Prestrain: residual force = " << residual_force << std::endl;
+      }
+    }
+
     // The residual at the current solution, which a line search measures the
     // trial solutions against. The linear solve overwrites com_mod.R with the
     // increment, and assembling a trial solution overwrites com_mod.Val, so
@@ -506,10 +517,10 @@ double Integrator::adapt_time_step(const double residual)
 {
   const double dt = simulation_->com_mod.dt;
 
-  // The residual is NaN or infinite when the solution diverged in a step
-  // that still counts as converged, because it reached Max_iterations. It
-  // then says nothing about the rate of convergence, so the time step is
-  // unchanged and the last finite residual is kept for the next ratio.
+  // The residual can be NaN or infinite when the solution diverges in a step
+  // when it reaches Max_iterations, but still counts as converged.
+  // In this case, the next time step is unchanged.
+
   if (!std::isfinite(residual)) {
     return dt;
   }
@@ -555,6 +566,16 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
                      ? 1.0
                      : 1.0 / std::sqrt(std::fabs(weights(i)));
   }
+
+  mask_constrained_dofs(weights);
+}
+
+//------------------------
+// mask_constrained_dofs
+//------------------------
+void Integrator::mask_constrained_dofs(Array<double> &weights) const {
+  const auto &lhs = simulation_->com_mod.lhs;
+  const int dof = weights.nrows();
 
   // The linear solve eliminates the degrees of freedom constrained by a
   // Dirichlet condition, for which face.val is zero, so their residual is

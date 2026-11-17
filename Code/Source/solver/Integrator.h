@@ -360,6 +360,19 @@ private:
   double residual_norm(const Array<double> &weights) const;
 
   /**
+   * @brief Zero the weights of the degrees of freedom constrained by a
+   * Dirichlet condition
+   *
+   * The linear solve eliminates those degrees of freedom, so a norm of the
+   * residual drops them as well: their residual is the reaction of the
+   * constraint rather than an equation left to be satisfied.
+   *
+   * @param[in,out] weights Weight of every degree of freedom of every node, in
+   *   the node numbering of the linear solver.
+   */
+  void mask_constrained_dofs(Array<double> &weights) const;
+
+  /**
    * @brief Compute the fiber stretch and fiber stretch rate at every node.
    *
    * The stretch is computed from the current displacement, so that calling this
