@@ -890,10 +890,11 @@ void constructJacobiScaling(const Teuchos::RCP<Trilinos> &trilinos_, const doubl
 } // void constructJacobiScaling()
 
 // ----------------------------------------------------------------------------
-void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_,
-  const std::vector<Array<double>> &pressure_load_list,
-  const std::vector<Array<double>> &flowrate_derivative_list, bool &isCoupledBC)
-{
+void trilinos_bc_create_(
+    const Teuchos::RCP<Trilinos> &trilinos_,
+    const std::vector<Array<double>> &pressure_load_list,
+    const std::vector<Array<double>> &flowrate_derivative_list,
+    bool isCoupledBC) {
   // store as global to determine which matvec multiply to use in solver
   coupledBC = isCoupledBC;
 

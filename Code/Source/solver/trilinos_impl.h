@@ -213,9 +213,11 @@ public:
    * \param[in] isCoupledBC Whether there is a coupled Neumann boundary
    *   condition.
    */
-  void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_,
-    const std::vector<Array<double>> &pressure_load_list,
-    const std::vector<Array<double>> &flowrate_derivative_list, bool &isCoupledBC);
+  void trilinos_bc_create_(
+      const Teuchos::RCP<Trilinos> &trilinos_,
+      const std::vector<Array<double>> &pressure_load_list,
+      const std::vector<Array<double>> &flowrate_derivative_list,
+      bool isCoupledBC);
 
   void trilinos_doassem_(const Teuchos::RCP<Trilinos> &trilinos_, int &numNodesPerElement, const int *eqN,
           const double *lK, double *lR);
