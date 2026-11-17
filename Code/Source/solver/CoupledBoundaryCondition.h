@@ -169,8 +169,6 @@ class CappingSurface {
         std::unique_ptr<faceType> face_;
         /// @brief The global node IDs.
         Vector<int> global_node_ids_;
-        /// @brief The normals.
-        Array<double> normals_;
 
         /// @brief The number of spatial dimensions (3D).
         static constexpr int cap_nsd_ = 3;  
@@ -183,8 +181,8 @@ class CappingSurface {
                                                      const Array<double>& mesh_Dn,
                                                      const std::unordered_map<int, int>& gn_to_cap_local) const;
     
-        /// @brief Compute the Jacobian and normal vector for a given element and Gauss point.
-        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const;
+        /// @brief Compute the Jacobian and normal vector of an element at a Gauss point.
+        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int g) const;
     };
 
 /// @brief Object-oriented Coupled boundary condition

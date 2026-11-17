@@ -11,6 +11,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 #include <vtkCellType.h>
 
@@ -878,14 +879,18 @@ VtkVtpData load_cap_vtp(const std::string& vtp_file_path)
     return vtp_data;
 }
 
-/// @brief Loads the cell "Normals" from the cap VTP file.
-/// @param vtp_data The VTP data.
-/// @param vtp_file_path The path to the VTP file.
-/// @param num_elems The number of elements.
-/// @param normals Output array for cell normals (num_comp x num_elems).
-void load_cap_vtp_normals(VtkVtpData& vtp_data, const std::string& vtp_file_path, int num_elems,
-                                    Array<double>& normals)
+/// @brief Load the cell "Normals" from the cap VTP file.
+///
+/// @param[in] vtp_data The VTP data.
+/// @param[in] vtp_file_path The path to the VTP file.
+/// @param[in] num_elems The number of elements.
+///
+/// @return The cell normals (number of components x num_elems), or an empty
+///   array if the file has none.
+Array<double> load_cap_vtp_normals(VtkVtpData& vtp_data, const std::string& vtp_file_path, int num_elems)
 {
+    Array<double> normals;
+
     try {
         bool has_normals = vtp_data.has_cell_data("Normals");
         if (has_normals) {
@@ -918,13 +923,52 @@ void load_cap_vtp_normals(VtkVtpData& vtp_data, const std::string& vtp_file_path
                                                  ", Actual size: " + std::to_string(normals.nrows()) + "x" +
                                                  std::to_string(normals.ncols()));
             }
-        } else {
-            normals.resize(0, 0);
         }
     } catch (const CappingSurfaceBaseException&) {
         throw;
     } catch (const std::exception& e) {
         throw CappingSurfaceVtpException("Failed to load Normals from VTP file '" + vtp_file_path + "': " + e.what());
+    }
+
+    return normals;
+}
+
+/// @brief Order the nodes of each cap element so that the cross product of its
+/// tangent vectors points along the normal that the cap VTP file gives for it.
+///
+/// Does nothing if the file gives no normals.
+///
+/// @param[in] points The coordinates of the points of the cap VTP file (3 x
+///   the number of points).
+/// @param[in] normals The normals of the elements in the cap VTP file (3 x
+///   the number of elements), or an empty array if the file has none.
+/// @param[in,out] conn The points of each element (3 x the number of
+///   elements), as indices into 'points'.
+void orient_cap_elements(const Array<double>& points, const Array<double>& normals, Array<int>& conn)
+{
+    if (normals.ncols() == 0 || normals.nrows() != points.nrows()) {
+        return;
+    }
+
+    for (int e = 0; e < conn.ncols(); e++) {
+        // The tangent vectors of a linear triangle are x_0 - x_2 and x_1 - x_2.
+        Array<double> tangents(points.nrows(), 2);
+        for (int i = 0; i < points.nrows(); i++) {
+            tangents(i, 0) = points(i, conn(0, e)) - points(i, conn(2, e));
+            tangents(i, 1) = points(i, conn(1, e)) - points(i, conn(2, e));
+        }
+
+        const Vector<double> n = utils::cross(tangents);
+
+        double dot_product = 0.0;
+        for (int i = 0; i < points.nrows(); i++) {
+            dot_product += n(i) * normals(i, e);
+        }
+
+        // Swapping two nodes reverses the cross product.
+        if (dot_product < 0.0) {
+            std::swap(conn(0, e), conn(1, e));
+        }
     }
 }
 
@@ -954,7 +998,6 @@ void check_cap_shares_nodes_with_coupled_face(const faceType& coupled_face, cons
 
 CappingSurface::CappingSurface(const CappingSurface& other)
     : global_node_ids_(other.global_node_ids_)
-    , normals_(other.normals_)
 {
     if (other.face_) {
         face_ = std::make_unique<faceType>(*other.face_);
@@ -965,7 +1008,6 @@ CappingSurface& CappingSurface::operator=(const CappingSurface& other)
 {
     if (this != &other) {
         global_node_ids_ = other.global_node_ids_;
-        normals_ = other.normals_;
         if (other.face_) {
             face_ = std::make_unique<faceType>(*other.face_);
         } else {
@@ -1040,6 +1082,10 @@ void CappingSurface::load_from_vtp(const std::string& vtp_file_path, const faceT
         face_->gN(a) = global_node_ids_(a) - 1;
     }
 
+    // Order the nodes of each element along the normals of the VTP file.
+    const Array<double> normals = load_cap_vtp_normals(vtp_data, vtp_file_path, num_elems);
+    orient_cap_elements(vtp_data.get_points(), normals, conn);
+
     // Copy the connectivity to the face object.
     face_->IEN.resize(face_->eNoN, num_elems);
 
@@ -1049,9 +1095,6 @@ void CappingSurface::load_from_vtp(const std::string& vtp_file_path, const faceT
             face_->IEN(a, e) = face_->gN(local_node_idx);
         }
     }
-
-    // Load the normals from the VTP file.
-    load_cap_vtp_normals(vtp_data, vtp_file_path, num_elems, normals_);
 
     // Check if the cap face shares any nodes with the coupled face.
     check_cap_shares_nodes_with_coupled_face(coupled_face, *face_, vtp_file_path, coupled_face_name);
@@ -1127,10 +1170,9 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
 
 /// @brief Computes the Jacobian and normal vector for a given element and Gauss point.
 /// @param xl The element position in global coordinates.
-/// @param e The element index.
 /// @param g The Gauss point index.
 /// @return The Jacobian and normal vector.
-std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const
+std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int g) const
 {
     // Get the shape function derivatives for the Gauss point.
     Array<double> Nx_g = face_->Nx.rslice(g);
@@ -1159,29 +1201,6 @@ std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(co
 
     n = n / Jac;
 
-    // Check if the initial normals are provided and if they are valid.
-    if (normals_.ncols() > 0 && normals_.nrows() == cap_nsd_) {
-
-        Vector<double> n0(cap_nsd_);
-        for (int i = 0; i < cap_nsd_; i++) {
-            n0(i) = normals_(i, e);
-        }
-
-        double n0_norm = utils::norm(n0);
-        if (!utils::is_zero(n0_norm)) {
-            n0 = n0 / n0_norm;
-
-            double dot_product = 0.0;
-            for (int i = 0; i < cap_nsd_; i++) {
-                dot_product += n(i) * n0(i);
-            }
-
-            if (dot_product < 0.0) {
-                n = -n;
-            }
-        }
-    }
-
     return std::make_pair(Jac, n);
 }
 
@@ -1205,7 +1224,7 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
     for (int e = 0; e < face_->nEl; e++) {
         Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn, gn_to_cap_local);
         for (int g = 0; g < face_->nG; g++) {
-            auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
+            auto [Jac, n] = compute_jacobian_and_normal(xl, g);
             double sHat = 0.0;
             for (int a = 0; a < face_->eNoN; a++) {
                 int gn = face_->IEN(a, e);
@@ -1238,7 +1257,7 @@ Array<double> CappingSurface::compute_flowrate_derivative(consts::MechanicalConf
     for (int e = 0; e < face_->nEl; e++) {
         Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn, gnNo_to_cap_local);
         for (int g = 0; g < face_->nG; g++) {
-            auto [Jac, n] = compute_jacobian_and_normal(xl, e, g);
+            auto [Jac, n] = compute_jacobian_and_normal(xl, g);
             for (int a = 0; a < face_->eNoN; a++) {
                 int gnNo_idx = face_->IEN(a, e);
                 int cap_a = gnNo_to_cap_local.at(gnNo_idx);
