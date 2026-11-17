@@ -1274,15 +1274,12 @@ Array<double> CappingSurface::compute_flowrate_derivative(consts::MechanicalConf
 namespace {
 
 /// @brief Broadcast the cap contribution to the flow rate derivative from the
-/// master process, and append it to the flow rate derivative of a linear
-/// solver face.
+/// master process.
 ///
 /// Every process has to make this call.
 ///
 /// @param[in] com_mod The simulation data.
 /// @param[in] cm_mod The communication module of the simulation.
-/// @param[in,out] lhs_face The linear solver face, one of com_mod.lhs.face,
-///   whose flow rate derivative is extended.
 /// @param[in] cap_nNo The number of cap nodes (the same on all processes).
 /// @param[in,out] cap_global_node_ids The global node IDs of the cap nodes.
 ///   Read on the master process, set on the other processes.
@@ -1290,8 +1287,8 @@ namespace {
 ///   nodes (number of space dimensions x cap_nNo). Read on the master
 ///   process, set on the other processes.
 void bcast_cap_flowrate_derivative(ComMod &com_mod, const CmMod &cm_mod,
-                                   fsi_linear_solver::FSILS_faceType &lhs_face,
-                                   int cap_nNo, Vector<int> &cap_global_node_ids,
+                                   int cap_nNo,
+                                   Vector<int> &cap_global_node_ids,
                                    Array<double> &cap_flowrate_derivative) {
   auto &cm = com_mod.cm;
   const bool i_am_sender = cm.mas(cm_mod);
@@ -1306,6 +1303,31 @@ void bcast_cap_flowrate_derivative(ComMod &com_mod, const CmMod &cm_mod,
     cm.bcast(cm_mod, cap_global_node_ids);
     cm.bcast(cm_mod, cap_flowrate_derivative);
   }
+}
+
+} // namespace
+
+void CoupledBoundaryCondition::append_cap_flowrate_derivative(
+    ComMod &com_mod, fsi_linear_solver::FSILS_faceType &lhs_face,
+    consts::MechanicalConfigurationType cfg) const {
+  const int cap_nNo = cap_n_no_;
+  Vector<int> cap_global_node_ids;
+  Array<double> cap_flowrate_derivative;
+
+  // Calculate the cap contribution to the linear solver face (in master rank)
+  if (owns_cap_ && cap_) {
+    const faceType *cap_face = cap_->face();
+    cap_flowrate_derivative =
+        cap_->compute_flowrate_derivative(cfg, cap_global_mesh_state_);
+    cap_global_node_ids.resize(cap_nNo);
+    for (int a = 0; a < cap_nNo; a++) {
+      cap_global_node_ids(a) = cap_face->gN(a);
+    }
+  }
+
+  // Broadcast the cap contribution to all ranks
+  bcast_cap_flowrate_derivative(com_mod, cm_mod_, cap_nNo, cap_global_node_ids,
+                                cap_flowrate_derivative);
 
   // Cap nodes that are in the mesh of this process: their column in
   // cap_flowrate_derivative and their mesh index.
@@ -1328,7 +1350,7 @@ void bcast_cap_flowrate_derivative(ComMod &com_mod, const CmMod &cm_mod,
 
   const int num_nodes = mesh_indices.size();
   Vector<int> gNodes(num_nodes);
-  Array<double> values(nsd, num_nodes);
+  Array<double> values(com_mod.nsd, num_nodes);
 
   for (int b = 0; b < num_nodes; b++) {
     gNodes(b) = mesh_indices[b];
@@ -1338,30 +1360,6 @@ void bcast_cap_flowrate_derivative(ComMod &com_mod, const CmMod &cm_mod,
   // Appends the nodes that this process owns.
   fsi_linear_solver::fsils_bc_append_flowrate_derivative(com_mod.lhs, lhs_face,
                                                          gNodes, values);
-}
-
-} // namespace
-
-void CoupledBoundaryCondition::append_cap_flowrate_derivative(ComMod& com_mod,
-                                                              fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                              consts::MechanicalConfigurationType cfg) const
-{
-    const int cap_nNo = cap_n_no_;
-    Vector<int> cap_global_node_ids;
-    Array<double> cap_flowrate_derivative;
-
-    // Calculate the cap contribution to the linear solver face (in master rank)
-    if (owns_cap_ && cap_) {
-        const faceType* cap_face = cap_->face();
-        cap_flowrate_derivative = cap_->compute_flowrate_derivative(cfg, cap_global_mesh_state_);
-        cap_global_node_ids.resize(cap_nNo);
-        for (int a = 0; a < cap_nNo; a++) {
-            cap_global_node_ids(a) = cap_face->gN(a);
-        }
-    }
-
-    // Broadcast the cap contribution to all ranks
-    bcast_cap_flowrate_derivative(com_mod, cm_mod_, lhs_face, cap_nNo, cap_global_node_ids, cap_flowrate_derivative);
 }
 
 /// @brief Broadcasts the coupled Neumann pressure to all ranks.
