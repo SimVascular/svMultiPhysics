@@ -1168,40 +1168,51 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
     return xl;
 }
 
-/// @brief Computes the Jacobian and normal vector for a given element and Gauss point.
+Array<double> CappingSurface::element_tangents(const Array<double> &xl,
+                                               int g) const {
+  // Get the shape function derivatives for the Gauss point.
+  Array<double> Nx_g = face_->Nx.rslice(g);
+  Array<double> xXi(cap_nsd_, cap_insd_);
+  xXi = 0.0;
+
+  // Compute the Jacobian matrix of the element.
+  for (int a = 0; a < face_->eNoN; a++) {
+    for (int i = 0; i < cap_insd_; i++) {
+      for (int j = 0; j < cap_nsd_; j++) {
+        xXi(j, i) += xl(j, a) * Nx_g(i, a);
+      }
+    }
+  }
+
+  return xXi;
+}
+
+/// @brief Computes the Jacobian and normal vector for a given element and Gauss
+/// point.
 /// @param xl The element position in global coordinates.
 /// @param g The Gauss point index.
 /// @return The Jacobian and normal vector.
-std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int g) const
-{
-    // Get the shape function derivatives for the Gauss point.
-    Array<double> Nx_g = face_->Nx.rslice(g);
-    Array<double> xXi(cap_nsd_, cap_insd_);
-    xXi = 0.0;
+std::pair<double, Vector<double>>
+CappingSurface::compute_jacobian_and_normal(const Array<double> &xl,
+                                            int g) const {
+  const Array<double> tangents = element_tangents(xl, g);
 
-    // Compute the Jacobian matrix of the element.
-    for (int a = 0; a < face_->eNoN; a++) {
-        for (int i = 0; i < cap_insd_; i++) {
-            for (int j = 0; j < cap_nsd_; j++) {
-                xXi(j, i) += xl(j, a) * Nx_g(i, a);
-            }
-        }
-    }
+  // Compute the Jacobian and normal vector.
+  double Jac = 0.0;
+  Vector<double> n(cap_nsd_);
+  n = utils::cross(tangents);
+  Jac = utils::norm(n);
 
-    // Compute the Jacobian and normal vector.
-    double Jac = 0.0;
-    Vector<double> n(cap_nsd_);
-    n = utils::cross(xXi);
-    Jac = utils::norm(n);
+  if (utils::is_zero(Jac)) {
+    throw CappingSurfaceGeometryException(
+        "[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss "
+        "point " +
+        std::to_string(g));
+  }
 
-    if (utils::is_zero(Jac)) {
-        throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] Zero Jacobian at Gauss point " +
-                                              std::to_string(g));
-    }
+  n = n / Jac;
 
-    n = n / Jac;
-
-    return std::make_pair(Jac, n);
+  return std::make_pair(Jac, n);
 }
 
 /// @brief Integrates the velocity flux over the cap surface.
@@ -1240,35 +1251,70 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
     return result;
 }
 
+Array<double> CappingSurface::compute_flowrate_derivative(
+    consts::MechanicalConfigurationType cfg, const CapGlobalMeshState &st,
+    double displacement_per_velocity) const {
+  int cap_nNo = face_->nNo;
 
-Array<double> CappingSurface::compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const
-{
-    int cap_nNo = face_->nNo;
+  Array<double> flowrate_derivative(cap_nsd_, cap_nNo);
 
-    Array<double> flowrate_derivative(cap_nsd_, cap_nNo);
+  // Map global node IDs to cap face-local indices
+  std::unordered_map<int, int> gnNo_to_cap_local;
+  for (int a = 0; a < cap_nNo; a++) {
+    int gnNo = face_->gN(a);
+    gnNo_to_cap_local[gnNo] = a;
+  }
 
-    // Map global node IDs to cap face-local indices
-    std::unordered_map<int, int> gnNo_to_cap_local;
-    for (int a = 0; a < cap_nNo; a++) {
-        int gnNo = face_->gN(a);
-        gnNo_to_cap_local[gnNo] = a;
-    }
-
-    for (int e = 0; e < face_->nEl; e++) {
-        Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do, st.Dn, gnNo_to_cap_local);
-        for (int g = 0; g < face_->nG; g++) {
-            auto [Jac, n] = compute_jacobian_and_normal(xl, g);
-            for (int a = 0; a < face_->eNoN; a++) {
-                int gnNo_idx = face_->IEN(a, e);
-                int cap_a = gnNo_to_cap_local.at(gnNo_idx);
-                for (int i = 0; i < cap_nsd_; i++) {
-                    flowrate_derivative(i, cap_a) += face_->N(a, g) * face_->w(g) * Jac * n(i);
-                }
-            }
+  for (int e = 0; e < face_->nEl; e++) {
+    Array<double> xl = update_element_position_global(e, cfg, st.x, st.Do,
+                                                      st.Dn, gnNo_to_cap_local);
+    for (int g = 0; g < face_->nG; g++) {
+      auto [Jac, n] = compute_jacobian_and_normal(xl, g);
+      for (int a = 0; a < face_->eNoN; a++) {
+        int gnNo_idx = face_->IEN(a, e);
+        int cap_a = gnNo_to_cap_local.at(gnNo_idx);
+        for (int i = 0; i < cap_nsd_; i++) {
+          flowrate_derivative(i, cap_a) +=
+              face_->N(a, g) * face_->w(g) * Jac * n(i);
         }
-    }
+      }
 
-    return flowrate_derivative;
+      if (displacement_per_velocity == 0.0) {
+        continue;
+      }
+
+      // The flow rate density is the velocity times the cross product
+      // of the tangent vectors, so its derivative with respect to the
+      // node positions is the velocity times the derivative of the
+      // cross product.
+      const Array<double> Nx_g = face_->Nx.rslice(g);
+      const auto derivative_of_cross_product =
+          nn::derivative_of_tangents_cross_product_wrt_position(
+              element_tangents(xl, g), Nx_g);
+
+      // Retrieve the velocity at the Gauss point
+      Vector<double> velocity(cap_nsd_);
+      for (int a = 0; a < face_->eNoN; a++) {
+        int cap_a = gnNo_to_cap_local.at(face_->IEN(a, e));
+        for (int i = 0; i < cap_nsd_; i++) {
+          velocity(i) += face_->N(a, g) * st.Yn(i, cap_a);
+        }
+      }
+
+      for (int a = 0; a < face_->eNoN; a++) {
+        int cap_a = gnNo_to_cap_local.at(face_->IEN(a, e));
+        for (int i = 0; i < cap_nsd_; i++) {
+          for (int j = 0; j < cap_nsd_; j++) {
+            flowrate_derivative(i, cap_a) +=
+                displacement_per_velocity * face_->w(g) * velocity(j) *
+                derivative_of_cross_product(j, i, a);
+          }
+        }
+      }
+    }
+  }
+
+  return flowrate_derivative;
 }
 
 namespace {
@@ -1309,7 +1355,8 @@ void bcast_cap_flowrate_derivative(ComMod &com_mod, const CmMod &cm_mod,
 
 void CoupledBoundaryCondition::append_cap_flowrate_derivative(
     ComMod &com_mod, fsi_linear_solver::FSILS_faceType &lhs_face,
-    consts::MechanicalConfigurationType cfg) const {
+    consts::MechanicalConfigurationType cfg,
+    double displacement_per_velocity) const {
   const int cap_nNo = cap_n_no_;
   Vector<int> cap_global_node_ids;
   Array<double> cap_flowrate_derivative;
@@ -1317,8 +1364,10 @@ void CoupledBoundaryCondition::append_cap_flowrate_derivative(
   // Calculate the cap contribution to the linear solver face (in master rank)
   if (owns_cap_ && cap_) {
     const faceType *cap_face = cap_->face();
-    cap_flowrate_derivative =
-        cap_->compute_flowrate_derivative(cfg, cap_global_mesh_state_);
+
+    cap_flowrate_derivative = cap_->compute_flowrate_derivative(
+        cfg, cap_global_mesh_state_, displacement_per_velocity);
+
     cap_global_node_ids.resize(cap_nNo);
     for (int a = 0; a < cap_nNo; a++) {
       cap_global_node_ids(a) = cap_face->gN(a);

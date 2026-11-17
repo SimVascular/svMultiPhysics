@@ -152,14 +152,24 @@ class CappingSurface {
         /// @brief Compute the change of the flow rate through the cap per unit
         /// change of the velocity of each cap node.
         ///
+        /// The flow rate depends on the node velocities directly and, where
+        /// the cap is integrated in a deformed configuration, on the node
+        /// displacements through the normal. The second part is the
+        /// derivative with respect to the displacement, with the velocity
+        /// held fixed, times displacement_per_velocity.
+        ///
         /// @param[in] cfg The configuration in which the cap is integrated.
-        /// @param[in] st The positions and displacements of the cap nodes,
-        ///   with one column per cap node.
+        /// @param[in] st The positions, displacements and velocities of the
+        ///   cap nodes, with one column per cap node.
+        /// @param[in] displacement_per_velocity The change of the displacement
+        ///   of a node per unit change of its velocity. Zero if the flow rate
+        ///   does not depend on the displacement.
         ///
         /// @return The flow rate derivative (number of space dimensions x
         ///   number of cap nodes), with the columns in the order of the nodes
         ///   of the cap face.
-        Array<double> compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
+        Array<double> compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st,
+                                                  double displacement_per_velocity) const;
 
         /// @brief Get the cap face.
         const faceType* face() const { return face_.get(); }
@@ -180,7 +190,20 @@ class CappingSurface {
                                                      const Array<double>& mesh_x, const Array<double>& mesh_Do,
                                                      const Array<double>& mesh_Dn,
                                                      const std::unordered_map<int, int>& gn_to_cap_local) const;
-    
+
+        /// @brief Compute the tangent vectors of a cap element at a Gauss
+        /// point.
+        ///
+        /// Tangent vector 'k' is the derivative of the position with respect
+        /// to parametric coordinate 'k'. The cross product of the tangent
+        /// vectors is the area-weighted normal of the cap.
+        ///
+        /// @param[in] xl The positions of the element nodes, one per column.
+        /// @param[in] g The index of the Gauss point.
+        ///
+        /// @return The tangent vectors, one per column.
+        Array<double> element_tangents(const Array<double> &xl, int g) const;
+
         /// @brief Compute the Jacobian and normal vector of an element at a Gauss point.
         std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int g) const;
     };
@@ -441,8 +464,12 @@ public:
     /// @param[in,out] lhs_face The linear solver face, one of
     ///   com_mod.lhs.face, whose flow rate derivative is extended.
     /// @param[in] cfg The configuration in which the cap is integrated.
+    /// @param[in] displacement_per_velocity The change of the displacement of
+    ///   a node per unit change of its velocity. Zero if the flow rate does
+    ///   not depend on the displacement.
     void append_cap_flowrate_derivative(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
-                                        consts::MechanicalConfigurationType cfg) const;
+                                        consts::MechanicalConfigurationType cfg,
+                                        double displacement_per_velocity) const;
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,

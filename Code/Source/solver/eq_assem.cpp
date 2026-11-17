@@ -396,7 +396,9 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
 
     auto& cpl = lBc.coupled_bc;
     if (cpl.has_cap()) {
-      cpl.append_cap_flowrate_derivative(com_mod, face, cfg);
+      cpl.append_cap_flowrate_derivative(
+          com_mod, face, cfg,
+          flowrate_depends_on_displacement ? displacement_per_velocity : 0.0);
     }
   }
 }
