@@ -427,6 +427,24 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   double time = fsi_linear_solver::fsils_cpu_t();
   #endif
 
+  // @todo[michelebucelli] The preconditioning of coupled Neumann faces is
+  // inconsistent:
+  // - 'flag' is always false, so this function never applies the approximate
+  //   inverse of the operator of the coupled faces (BCOP_TYPE_PRE), and does
+  //   not use face.nS, which compute_coupled_face_norms() computes below.
+  //   gmres() and cgrad::schur() do apply it. gmres_s() declares the same
+  //   variable and does not use it.
+  // - compute_coupled_face_norms() is called with dof - 1 components. For an
+  //   equation with dof == nsd, such as struct, this leaves out the last
+  //   component of the face vectors, while add_bc_mul() applies all of them.
+  // - face.nS is the squared norm of the scaled unit pressure load. The
+  //   Sherman-Morrison formula takes its scalar product with the scaled flow
+  //   rate derivative, which is a different vector for a struct equation
+  //   coupled to svZeroD or svOneD.
+  // With 'flag' true, all components and the scalar product, a ventricle case
+  // coupled to svZeroD takes about one GMRES iteration less per solve while
+  // both valves are closed (0.1 % less over a run), and the Newton residuals
+  // are 15 % larger on average in that phase.
   bool flag = false;
   int nNo = lhs.nNo;
   int mynNo = lhs.mynNo;
