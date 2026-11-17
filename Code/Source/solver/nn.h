@@ -113,6 +113,28 @@ namespace nn {
                       const SolutionStates &solutions);
 
   /**
+   * @brief Differentiate the cross product of the tangent vectors of a
+   * surface element at a Gauss point with respect to the positions of the
+   * element nodes.
+   *
+   * Tangent vector 'k' is the derivative of the position with respect to
+   * parametric coordinate 'k': the sum over the element nodes of Nx(k,a) times
+   * the position of node 'a'. The cross product is the one that utils::cross()
+   * returns, an area-weighted normal of the element.
+   *
+   * @param[in] tangents The tangent vectors at the Gauss point, one per column
+   *   (nsd x insd).
+   * @param[in] Nx The shape function derivatives at the Gauss point
+   *   (insd x eNoNb).
+   *
+   * @return The derivative (nsd x nsd x eNoNb): entry (j,i,a) is the derivative
+   *   of component 'j' of the cross product with respect to coordinate 'i' of
+   *   node 'a' of the element.
+   */
+  Array3<double> derivative_of_tangents_cross_product_wrt_position(
+      const Array<double> &tangents, const Array<double> &Nx);
+
+  /**
    * @brief Differentiate the area-weighted outward normal of a face element at
    * a Gauss point with respect to the positions of the element nodes.
    *
@@ -133,6 +155,7 @@ namespace nn {
    * @param[in] displacement_index The index of the displacement field in the
    *   solution arrays. This should correspond to the start index of the
    *   equation that solves for the displacement.
+   *
    * @return The derivative (nsd x nsd x eNoNb): entry (j,i,a) is the derivative
    *   of component 'j' of the normal with respect to coordinate 'i' of node
    *   'a' of the face element.

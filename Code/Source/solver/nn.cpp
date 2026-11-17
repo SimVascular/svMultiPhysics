@@ -1221,24 +1221,19 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
               unused_displacement_index);
 }
 
-Array3<double> derivative_of_outward_normal_wrt_position(
-    const ComMod &com_mod, const faceType &lFa, const int e,
-    const Array<double> &Nx, const SolutionStates &solutions,
-    consts::MechanicalConfigurationType cfg,
-    const unsigned int displacement_index) {
-  const int nsd = com_mod.nsd;
+Array3<double>
+derivative_of_tangents_cross_product_wrt_position(const Array<double> &tangents,
+                                                  const Array<double> &Nx) {
+  const int nsd = tangents.nrows();
   const int insd = Nx.nrows();
   const int eNoNb = Nx.ncols();
 
-  const auto [tangents, outward_sign] = face_element_tangents(
-      com_mod, lFa, e, Nx, solutions, cfg, displacement_index);
-
   Array3<double> derivative(nsd, nsd, eNoNb);
 
-  // The normal is linear in each tangent vector. So its derivative with
-  // respect to component 'i' of tangent 'k' is the normal obtained with
-  // tangent 'k' replaced by the i-th unit vector. The derivative of that
-  // component with respect to coordinate 'i' of node 'a' is Nx(k,a).
+  // The cross product is linear in each tangent vector. So its derivative
+  // with respect to component 'i' of tangent 'k' is the cross product
+  // obtained with tangent 'k' replaced by the i-th unit vector. The derivative
+  // of that component with respect to coordinate 'i' of node 'a' is Nx(k,a).
   for (int k = 0; k < insd; k++) {
     for (int i = 0; i < nsd; i++) {
       Array<double> modified_tangents(tangents);
@@ -1247,15 +1242,36 @@ Array3<double> derivative_of_outward_normal_wrt_position(
         modified_tangents(j, k) = (j == i) ? 1.0 : 0.0;
       }
 
-      const auto normal_from_modified_tangents = utils::cross(modified_tangents);
+      const auto cross_product_of_modified_tangents =
+          utils::cross(modified_tangents);
 
       for (int a = 0; a < eNoNb; a++) {
         for (int j = 0; j < nsd; j++) {
-          derivative(j, i, a) = derivative(j, i, a) + outward_sign * Nx(k, a) * normal_from_modified_tangents(j);
+          derivative(j, i, a) +=
+              Nx(k, a) * cross_product_of_modified_tangents(j);
         }
       }
     }
   }
+
+  return derivative;
+}
+
+Array3<double> derivative_of_outward_normal_wrt_position(
+    const ComMod &com_mod, const faceType &lFa, const int e,
+    const Array<double> &Nx, const SolutionStates &solutions,
+    consts::MechanicalConfigurationType cfg,
+    const unsigned int displacement_index) {
+  const auto [tangents, outward_sign] = face_element_tangents(
+      com_mod, lFa, e, Nx, solutions, cfg, displacement_index);
+
+  // The nodes are not necessarily ordered in such a way to guarantee that the
+  // normal they define points outward. Therefore, we multiply the derivative of
+  // the cross product by the outward sign, to ensure that it is consistent with
+  // the outward normal.
+  auto derivative =
+      derivative_of_tangents_cross_product_wrt_position(tangents, Nx);
+  derivative *= outward_sign;
 
   return derivative;
 }
