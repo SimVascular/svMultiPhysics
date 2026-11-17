@@ -41,11 +41,12 @@ void fsils_bc_create(FSILS_lhsType &lhs, int faIn, BcType BC_type,
 /// @param[in,out] lhs The left-hand side of the linear system. Only
 ///   lhs.face[faIn] is modified.
 /// @param[in] faIn The index of the face in lhs.face.
-/// @param[in] nNo The number of nodes of the face on this process.
 /// @param[in] dof The number of components per node.
 /// @param[in] BC_type The type of the boundary condition.
-/// @param[in] gNodes The mesh indices of the nodes of the face.
-void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_type, const Vector<int>& gNodes);
+/// @param[in] gNodes The mesh indices of the nodes of the face on this
+///   process. Its size is the number of those nodes.
+void fsils_bc_create(FSILS_lhsType &lhs, int faIn, int dof, BcType BC_type,
+                     const Vector<int> &gNodes);
 
 void fsils_bc_free(FSILS_lhsType& lhs, int faIn);
 

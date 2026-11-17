@@ -228,9 +228,9 @@ void fsils_bc_create(FSILS_lhsType &lhs, int faIn, BcType BC_type,
   }
 }
 
-void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_type, const Vector<int>& gNodes)
-{
-  Array<double> Val(dof, nNo);
+void fsils_bc_create(FSILS_lhsType &lhs, int faIn, int dof, BcType BC_type,
+                     const Vector<int> &gNodes) {
+  Array<double> Val(dof, gNodes.size());
   fsils_bc_create(lhs, faIn, BC_type, gNodes, Val);
 }
 

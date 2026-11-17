@@ -250,7 +250,7 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
     dmsg << "i: " << i;
     #endif
 
-    fsils_bc_create(com_mod.lhs, lsPtr, i, nsd, BcType::BC_TYPE_Dir, gNodes); 
+    fsils_bc_create(com_mod.lhs, lsPtr, nsd, BcType::BC_TYPE_Dir, gNodes);
   }
 
   if (com_mod.cmmInit) {
@@ -270,7 +270,7 @@ void baf_ini(Simulation* simulation, SolutionStates& solutions)
     }
 
     lsPtr = com_mod.nFacesLS - 1;
-    fsils_bc_create(com_mod.lhs, lsPtr, i, nsd, BcType::BC_TYPE_Dir, gNodes); 
+    fsils_bc_create(com_mod.lhs, lsPtr, nsd, BcType::BC_TYPE_Dir, gNodes);
   }
 }
 
