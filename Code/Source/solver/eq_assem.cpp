@@ -299,11 +299,8 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
   dmsg << "lFa.name: " << lFa.name;
   #endif
 
-  auto& cm = com_mod.cm;
   int nsd = com_mod.nsd;
   int tnNo = com_mod.tnNo;
-
-  int iM = lFa.iM;
   int nNo = lFa.nNo;
 
   Array<double> sVl(nsd,nNo); 
@@ -333,12 +330,11 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
     }
   }
 
-  if (sVl.size() != 0) { 
-    for (int a = 0; a < lFa.nNo; a++) {
-      int Ac = lFa.gN(a);
-      sVl.set_col(a, sV.col(Ac));
-    }
+  for (int a = 0; a < lFa.nNo; a++) {
+    int Ac = lFa.gN(a);
+    sVl.set_col(a, sV.col(Ac));
   }
+
   // Update the unit pressure load and the flow rate derivative of lhs.face(i)
   // with the new value of the surface integral
   fsils_bc_update(com_mod.lhs, lBc.lsPtr, sVl, sVl);
