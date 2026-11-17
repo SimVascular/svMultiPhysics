@@ -995,7 +995,7 @@ void PetscLinearAlgebra::PetscImpl::init_dir_and_coupneu_bc(ComMod& com_mod,
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
-          W_(i,Ac) = W_(i,Ac) * face.val(i,a);
+          W_(i,Ac) = W_(i,Ac) * face.free_component_mask(i,a);
         }
       }
     }
@@ -1013,7 +1013,7 @@ void PetscLinearAlgebra::PetscImpl::init_dir_and_coupneu_bc(ComMod& com_mod,
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
-          V_(i,Ac) = V_(i,Ac) + sqrt(fabs(res(faIn))) * face.val(i,a);
+          V_(i,Ac) = V_(i,Ac) + sqrt(fabs(res(faIn))) * face.unit_pressure_load(i,a);
         }
       }
     }

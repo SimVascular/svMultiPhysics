@@ -191,7 +191,7 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < n; i++) {
-          W(i,Ac) = W(i,Ac) * face.val(i,a);
+          W(i,Ac) = W(i,Ac) * face.free_component_mask(i,a);
         }
       }
     }
@@ -222,19 +222,14 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < std::min(face.dof,dof); i++) {
-          face.valM(i,a) = face.val(i,a) * W(i,Ac);
+          face.scaled_unit_pressure_load(i,a) = face.unit_pressure_load(i,a) * W(i,Ac);
         }
       }
-      
-      // If this is a Coupled BC with a cap, also compute cap_valM from cap_val
-      if (face.has_cap) {
-        int cap_nNo = face.cap_val.ncols();
-        for (int a = 0; a < cap_nNo; a++) {
-          int Ac = face.cap_glob(a);
-          if (Ac < 0) continue;  // cap node not on this rank
-          for (int i = 0; i < std::min(face.dof,dof); i++) {
-            face.cap_valM(i,a) = face.cap_val(i,a) * W(i,Ac);
-          }
+
+      for (int a = 0; a < face.flowrate_derivative.ncols(); a++) {
+        int Ac = face.flowrate_derivative_node_indices(a);
+        for (int i = 0; i < std::min(face.dof,dof); i++) {
+          face.scaled_flowrate_derivative(i,a) = face.flowrate_derivative(i,a) * W(i,Ac);
         }
       }
     }
@@ -278,7 +273,7 @@ void precond_rcs(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPtr
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < n; i++) {
-          Wr(i,Ac) = Wr(i,Ac) * face.val(i,a);
+          Wr(i,Ac) = Wr(i,Ac) * face.free_component_mask(i,a);
         }
       }
     }
@@ -286,7 +281,7 @@ void precond_rcs(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPtr
 
   fsils_commuv(lhs, dof, Wr);
 
-  // For parallel case, val and Wr can be larger than 1 due to
+  // For parallel case, free_component_mask and Wr can be larger than 1 due to
   // the addition operator in FSILS_COMMUV. Hence need renormalization.
   //
   Wr = Wr - 0.5;

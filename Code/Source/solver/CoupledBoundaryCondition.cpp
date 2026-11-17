@@ -1,15 +1,17 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "ComMod.h"
 #include "CoupledBoundaryCondition.h"
-#include "all_fun.h"
-#include "utils.h"
+#include "ComMod.h"
 #include "VtkData.h"
+#include "all_fun.h"
+#include "fsils_api.hpp"
 #include "nn.h"
+#include "utils.h"
 #include <fstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include <vtkCellType.h>
 
 // =========================================================================
@@ -1269,76 +1271,71 @@ void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const
 
 namespace {
 
+/// @brief Broadcast the cap contribution to the flow rate derivative from the
+/// master process, and append it to the flow rate derivative of a linear
+/// solver face.
+///
+/// Every process has to make this call.
+///
+/// @param[in] com_mod The simulation data.
+/// @param[in] cm_mod The communication module of the simulation.
+/// @param[in,out] lhs_face The linear solver face, one of com_mod.lhs.face,
+///   whose flow rate derivative is extended.
+/// @param[in] cap_nNo The number of cap nodes (the same on all processes).
+/// @param[in,out] cap_gN_all The global node IDs of the cap nodes. Read on
+///   the master process, set on the other processes.
+/// @param[in,out] cap_val_all The values at the cap nodes (number of space
+///   dimensions x cap_nNo). Read on the master process, set on the other
+///   processes.
+void bcast_cap_lhs_contribution(ComMod &com_mod, const CmMod &cm_mod,
+                                fsi_linear_solver::FSILS_faceType &lhs_face,
+                                int cap_nNo, Vector<int> &cap_gN_all,
+                                Array<double> &cap_val_all) {
+  auto &cm = com_mod.cm;
+  const bool i_am_sender = cm.mas(cm_mod);
+  const int nsd = com_mod.nsd;
 
-/// @brief Broadcasts the cap contribution to the linear solver face to all ranks.
-/// @param com_mod The com_mod object.
-/// @param cm_mod The cm_mod object.
-/// @param lhs_face The linear solver face.
-/// @param cap_nNo The number of cap nodes (same on all ranks: \c cap_n_no_ from \c distribute()).
-/// @param cap_gN_all The global node IDs of the cap nodes.
-/// @param cap_val_all The values of the cap nodes.
-void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
-                                fsi_linear_solver::FSILS_faceType& lhs_face, int cap_nNo,
-                                Vector<int>& cap_gN_all, Array<double>& cap_val_all)
-{
-    auto& cm = com_mod.cm;
-    const bool i_am_sender = cm.mas(cm_mod);
-    const int nsd = com_mod.nsd;
+  if (!i_am_sender && cap_nNo > 0) {
+    cap_gN_all.resize(cap_nNo);
+    cap_val_all.resize(nsd, cap_nNo);
+  }
 
-    if (!i_am_sender && cap_nNo > 0) {
-        cap_gN_all.resize(cap_nNo);
-        cap_val_all.resize(nsd, cap_nNo);
+  if (cap_nNo > 0) {
+    cm.bcast(cm_mod, cap_gN_all);
+    cm.bcast(cm_mod, cap_val_all);
+  }
+
+  // Cap nodes that are in the mesh of this process: their column in
+  // cap_val_all and their mesh index.
+  std::vector<int> cap_columns;
+  std::vector<int> mesh_indices;
+
+  for (int a = 0; a < cap_nNo; a++) {
+    for (int i = 0; i < com_mod.tnNo; i++) {
+      if (com_mod.ltg(i) == cap_gN_all(a)) {
+        cap_columns.push_back(a);
+        mesh_indices.push_back(i);
+        break;
+      }
     }
+  }
 
-    if (cap_nNo > 0) {
-        cm.bcast(cm_mod, cap_gN_all);
-        cm.bcast(cm_mod, cap_val_all);
-    }
+  if (mesh_indices.empty()) {
+    return;
+  }
 
-    // Count cap nodes owned by this rank only (exclude ghost duplicates).
-    // Ownership follows FSILS ordering: mapped index in [0, mynNo).
-    int n_owned = 0;
-    for (int a = 0; a < cap_nNo; a++) {
-        int gnNo = cap_gN_all(a);
-        for (int i = 0; i < com_mod.tnNo; i++) {
-            if (com_mod.ltg(i) == gnNo) {
-                int mapped = com_mod.lhs.map(i);
-                if (mapped >= 0 && mapped < com_mod.lhs.mynNo) {
-                    n_owned++;
-                }
-                break;
-            }
-        }
-    }
+  const int num_nodes = mesh_indices.size();
+  Vector<int> gNodes(num_nodes);
+  Array<double> values(nsd, num_nodes);
 
-    // Resize the cap contribution to the linear solver face (in all ranks)
-    lhs_face.cap_glob.resize(n_owned);
-    lhs_face.cap_val.resize(nsd, n_owned);
-    lhs_face.cap_valM.resize(nsd, n_owned);
-    lhs_face.cap_valM = 0.0;
+  for (int b = 0; b < num_nodes; b++) {
+    gNodes(b) = mesh_indices[b];
+    values.set_col(b, cap_val_all.col(cap_columns[b]));
+  }
 
-    // Fill the cap contribution to the linear solver face (in all ranks)
-    int idx = 0;
-    for (int a = 0; a < cap_nNo; a++) {
-        int gnNo = cap_gN_all(a);
-        int localIdx = -1;
-        for (int i = 0; i < com_mod.tnNo; i++) {
-            if (com_mod.ltg(i) == gnNo) {
-                localIdx = i;
-                break;
-            }
-        }
-        if (localIdx >= 0) {
-            int mapped = com_mod.lhs.map(localIdx);
-            if (mapped >= 0 && mapped < com_mod.lhs.mynNo) {
-                lhs_face.cap_glob(idx) = mapped;
-                for (int i = 0; i < nsd; i++) {
-                    lhs_face.cap_val(i, idx) = cap_val_all(i, a);
-                }
-                idx++;
-            }
-        }
-    }
+  // Appends the nodes that this process owns.
+  fsi_linear_solver::fsils_bc_append_flowrate_derivative(com_mod.lhs, lhs_face,
+                                                         gNodes, values);
 }
 
 } // namespace

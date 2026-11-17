@@ -126,8 +126,11 @@ struct Trilinos
   Teuchos::RCP<Tpetra_Vector> X;
   Teuchos::RCP<Tpetra_Vector> ghostX;
   Teuchos::RCP<Tpetra_Import> Importer;
-  std::vector<Teuchos::RCP<Tpetra_MultiVector>> bdryVec_list;
-  std::vector<Teuchos::RCP<Tpetra_MultiVector>> bdryCapVec_list;
+  // Each coupled Neumann face adds to the matrix the rank-one operator
+  //   bdryPressureLoadVec * bdryFlowrateDerivativeVec^T
+  // The two lists have one vector per linear solver face.
+  std::vector<Teuchos::RCP<Tpetra_MultiVector>> bdryPressureLoadVec_list;
+  std::vector<Teuchos::RCP<Tpetra_MultiVector>> bdryFlowrateDerivativeVec_list;
   Teuchos::RCP<const Teuchos::Comm<int>> comm;
   Teuchos::RCP<Tpetra_CrsGraph> K_graph;
 
@@ -195,11 +198,24 @@ public:
           const int dof, const int cpp_index, const int proc_id, const int numCoupledNeumannBC);
 
   /**
-   * \param v           coeff in the scalar product
-   * \param isCoupledBC determines if coupled resistance BC is turned on
+   * \brief Store the two vectors of each coupled Neumann boundary condition.
+   *
+   * Both lists hold one array per linear solver face, of size dof x number of
+   * nodes on this process, with nodes in linear solver order. Only the values
+   * at the nodes that this process owns are stored.
+   *
+   * \param[in,out] trilinos_ The Trilinos data, whose bdryPressureLoadVec_list
+   *   and bdryFlowrateDerivativeVec_list are filled.
+   * \param[in] pressure_load_list For each face, sqrt(|res|) times its unit
+   *   pressure load.
+   * \param[in] flowrate_derivative_list For each face, sqrt(|res|) times its
+   *   flow rate derivative.
+   * \param[in] isCoupledBC Whether there is a coupled Neumann boundary
+   *   condition.
    */
-  void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_, const std::vector<Array<double>> &v_list,
-    const std::vector<Array<double>> &vcap_list, bool &isCoupledBC);
+  void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_,
+    const std::vector<Array<double>> &pressure_load_list,
+    const std::vector<Array<double>> &flowrate_derivative_list, bool &isCoupledBC);
 
   void trilinos_doassem_(const Teuchos::RCP<Trilinos> &trilinos_, int &numNodesPerElement, const int *eqN,
           const double *lK, double *lR);

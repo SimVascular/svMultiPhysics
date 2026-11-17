@@ -40,7 +40,7 @@ void bc_pre(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);
           for (int i = 0; i < nsd; i++) {
-            v(i,Ac) = face.valM(i,a);
+            v(i,Ac) = face.scaled_unit_pressure_load(i,a);
           }
         }
 
@@ -51,7 +51,7 @@ void bc_pre(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
         for (int a = 0; a < face.nNo; a++) {
           int Ac = face.glob(a);
           for (int i = 0; i < nsd; i++) {
-            face.nS = face.nS + pow(face.valM(i,a), 2.0);
+            face.nS = face.nS + pow(face.scaled_unit_pressure_load(i,a), 2.0);
           }
         }
       }

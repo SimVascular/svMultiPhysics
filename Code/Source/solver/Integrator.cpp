@@ -582,10 +582,10 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
   }
 
   // The linear solve eliminates the degrees of freedom constrained by a
-  // Dirichlet condition, for which face.val is zero, so their residual is
-  // dropped from the norm as well: it is the reaction of the constraint rather
-  // than an equation left to be satisfied. The faces the linear system does
-  // not include are those the linear solve skips too.
+  // Dirichlet condition, for which face.free_component_mask is zero, so their
+  // residual is dropped from the norm as well: it is the reaction of the
+  // constraint rather than an equation left to be satisfied. The faces the
+  // linear system does not include are those the linear solve skips too.
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
     const auto &face = lhs.face[faIn];
 
@@ -596,7 +596,8 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
 
     for (int a = 0; a < face.nNo; a++) {
       for (int i = 0; i < std::min(face.dof, dof); i++) {
-        weights(i, face.glob(a)) = weights(i, face.glob(a)) * face.val(i, a);
+        weights(i, face.glob(a)) =
+            weights(i, face.glob(a)) * face.free_component_mask(i, a);
       }
     }
   }

@@ -286,17 +286,6 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
   }
 }
 
-/// @brief Update the surface integral involved in the coupled/resistance BC
-/// contribution to the stiffness matrix to reflect deformed geometry, if using
-/// a follower pressure load.
-/// The value of this integral is stored in lhs%face%val.
-/// This integral is sV = int_Gammat (Na * n_i) (See Brown et al. 2024, Eq. 56)
-/// where Na is the shape function and n_i is the normal vector.
-///
-/// This function updates the variable lhs%face%val with the new value, which
-/// is eventually used in ADDBCMUL() in the linear solver to add the contribution
-/// from the resistance BC to the matrix-vector product of the tangent matrix and
-/// an arbitrary vector.
 void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const SolutionStates& solutions)
 {
   using namespace consts;
@@ -350,26 +339,20 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
       sVl.set_col(a, sV.col(Ac));
     }
   }
-  // Update lhs.face(i).val with the new value of the surface integral
-  fsils_bc_update(com_mod.lhs, lBc.lsPtr, lFa.nNo, nsd, sVl);
+  // Update the unit pressure load and the flow rate derivative of lhs.face(i)
+  // with the new value of the surface integral
+  fsils_bc_update(com_mod.lhs, lBc.lsPtr, sVl, sVl);
   
-  // If this is a Coupled BC, copy cap data to linear solver face structure
+  // If this is a Coupled BC with a cap, append the cap contribution to the
+  // flow rate derivative of the linear solver face
   if (utils::btest(lBc.bType, static_cast<int>(BoundaryConditionType::bType_Coupled))) {
     auto& face = com_mod.lhs.face[lBc.lsPtr];
     auto cfg = MechanicalConfigurationType::new_timestep;
 
     auto& cpl = lBc.coupled_bc;
-    face.has_cap = cpl.has_cap();
     if (cpl.has_cap()) {
       cpl.copy_cap_surface_to_linear_solver_face(com_mod, face, cfg, solutions);
     }
-  } else {
-    // Clear cap fields if not a Coupled BC
-    auto& face = com_mod.lhs.face[lBc.lsPtr];
-    face.cap_val.resize(0, 0);
-    face.cap_valM.resize(0, 0);
-    face.cap_glob.resize(0);
-    face.has_cap = false;
   }
 };
 

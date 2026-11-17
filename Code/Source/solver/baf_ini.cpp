@@ -781,7 +781,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
           }
         }
       }
-      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
+      fsils_bc_create(com_mod.lhs, lsPtr, BcType::BC_TYPE_Dir, gNodes, sVl); 
     }
     
   } else if (btest(lBc.bType, iBC_Neu) || btest(lBc.bType, iBC_Coupled)) {
@@ -794,7 +794,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       lsPtr = lsPtr + 1;
       lBc.lsPtr = lsPtr;
       sVl = 0.0;
-      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl);
+      fsils_bc_create(com_mod.lhs, lsPtr, BcType::BC_TYPE_Dir, gNodes, sVl);
 
     } else if (btest(lBc.bType, iBC_res)) {
       // Compute integral of normal vector over the face (needed for resistance BC/0D-coupling)
@@ -826,8 +826,8 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       lsPtr = lsPtr + 1;
       lBc.lsPtr = lsPtr;
       
-      // Fills lhs.face(i) variables, including val is sVl exists
-      fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Neu, gNodes, sVl); 
+      // Fills lhs.face(i) variables, including unit_pressure_load
+      fsils_bc_create(com_mod.lhs, lsPtr, BcType::BC_TYPE_Neu, gNodes, sVl); 
     } else {
       lBc.lsPtr = -1;
     }
@@ -875,7 +875,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
       }
     }
 
-    fsils_bc_create(com_mod.lhs, lsPtr, nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl); 
+    fsils_bc_create(com_mod.lhs, lsPtr, BcType::BC_TYPE_Dir, gNodes, sVl); 
   } else {
     throw std::runtime_error("Unxpected bType in FSILSINI");
   }

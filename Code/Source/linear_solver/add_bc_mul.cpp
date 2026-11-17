@@ -3,30 +3,15 @@
 
 #include "add_bc_mul.h"
 
-#include "dot.h"
+#include "bcast.h"
+
+#include <stdexcept>
 
 namespace add_bc_mul {
 
-/// @brief The contribution of coupled BCs is added to the matrix-vector
-/// product operation. Depending on the type of operation (adding the
-/// contribution or computing the PC contribution) different
-/// coefficients are used.
-///
-/// For reference, see 
-/// Moghadam et al. 2013 eq. 27 (https://doi.org/10.1016/j.jcp.2012.07.035) and
-/// Moghadam et al. 2013b (https://doi.org/10.1007/s00466-013-0868-1).
-///
-/// Reproduces code in ADDBCMUL.f.
-/// @param lhs The left-hand side of the linear system. 0D resistance is stored in the face(i).res field.
-/// @param op_Type The type of operation (addition or PC contribution)
-/// @param dof The number of degrees of freedom.
-/// @param X The input vector.
-/// @param Y The current matrix-vector product (Y = K*X), to which we add K^BC * X = res * v * v^T * X.
-/// The expression is slightly different if preconditioning.
 void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const Array<double>& X, Array<double>& Y)
 {
-  Vector<double> coef(lhs.nFaces); 
-  Array<double> v(dof,lhs.nNo);
+  Vector<double> coef(lhs.nFaces);
 
   if (op_Type == BcopType::BCOP_TYPE_ADD) {
     for (int i = 0; i < lhs.nFaces; i++) {
@@ -37,90 +22,55 @@ void add_bc_mul(FSILS_lhsType& lhs, const BcopType op_Type, const int dof, const
       coef(i) = -lhs.face[i].res / (1.0 + (lhs.face[i].res*lhs.face[i].nS));
     }
   } else { 
-    //PRINT *, "FSILS: op_Type is not defined"
-    //STOP "FSILS: FATAL ERROR"
+    throw std::runtime_error("[add_bc_mul] op_Type is not defined");
   }
+
+  // Scalar product of the scaled flow rate derivative of each coupled face
+  // with X, over the entries that this process stores
+  Vector<double> S(lhs.nFaces);
+  bool has_coupled_face = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
     auto& face = lhs.face[faIn];
     int nsd = std::min(face.dof, dof);
 
     if (face.coupledFlag) {
-      // If face is shared across procs
-      if (face.sharedFlag) {
-        v = 0.0;
-        // Setting vector v = int{N_A n_i} dGamma
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            v(i,Ac) = face.valM(i,a);
-          }
-        }
-        // Computing S = coef * v^T * X
-        double S = coef(faIn) * dot::fsils_dot_v(dof, lhs.mynNo, lhs.commu, v, X);
-        
-        // Add cap surface contribution to S
-        // Cap surfaces contribute to flow rate but not pressure
-        if (face.has_cap) {
-          // Compute sparse cap contribution directly over cap nodes.
-          // This avoids forming a full dof x nNo temporary array.
-          double Scap = 0.0;
-          for (int a = 0; a < face.cap_glob.size(); a++) {
-            int Ac = face.cap_glob(a);
-            if (Ac < 0) continue;  // cap node not on this rank
-            for (int i = 0; i < nsd; i++) {
-              Scap += face.cap_valM(i,a) * X(i,Ac);
-            }
-          }
-          if (lhs.commu.nTasks > 1) {
-            double tmp = 0.0;
-            MPI_Allreduce(&Scap, &tmp, 1, cm_mod::mpreal, MPI_SUM, lhs.commu.comm);
-            Scap = tmp;
-          }
-          S = S + coef(faIn) * Scap;
-        }
-        // Computing Y = Y + v * S
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            Y(i,Ac) = Y(i,Ac) + v(i,Ac)*S;
-          }
-        }
+      has_coupled_face = true;
 
-      } 
-      // If face is not shared across procs
-      else  {
-        // Computing S = coef * v^T * X
-        double S = 0.0;
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            S = S + face.valM(i,a)*X(i,Ac);
-          }
-        }
-        
-        // If capping surface is present add its contribution to S
-        if (face.has_cap) {
-          for (int a = 0; a < face.cap_glob.size(); a++) {
-            int Ac = face.cap_glob(a);
-            if (Ac < 0) continue;  // cap node not on this rank
-            for (int i = 0; i < nsd; i++) {
-              S = S + face.cap_valM(i,a)*X(i,Ac);
-            }
-          }
-        }
-        S = coef(faIn) * S;
-
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            Y(i,Ac) = Y(i,Ac) + face.valM(i,a)*S;
-          }
+      for (int a = 0; a < face.scaled_flowrate_derivative.ncols(); a++) {
+        int Ac = face.flowrate_derivative_node_indices(a);
+        for (int i = 0; i < nsd; i++) {
+          S(faIn) = S(faIn) + face.scaled_flowrate_derivative(i, a) * X(i, Ac);
         }
       }
     }
   }
 
+  // coupledFlag is the same on every process, so either all of them return
+  // here or none does.
+  if (!has_coupled_face) {
+    return;
+  }
+
+  // A process stores the entries of the nodes it owns, so the scalar products
+  // are summed over the processes.
+  bcast::fsils_bcast_v(lhs.nFaces, S, lhs.commu);
+
+  // Computing Y = Y + coef * scaled unit pressure load * S
+  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
+    auto &face = lhs.face[faIn];
+    int nsd = std::min(face.dof, dof);
+
+    if (face.coupledFlag) {
+      for (int a = 0; a < face.nNo; a++) {
+        int Ac = face.glob(a);
+        for (int i = 0; i < nsd; i++) {
+          Y(i, Ac) = Y(i, Ac) + face.scaled_unit_pressure_load(i, a) *
+                                    coef(faIn) * S(faIn);
+        }
+      }
+    }
+  }
 }
 
 };
