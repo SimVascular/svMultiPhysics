@@ -1,3 +1,69 @@
+ci_release_version() {
+  local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
+
+  python3 - "$manifest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as manifest:
+    release = json.load(manifest)
+parts = [release[key] for key in ("major", "minor", "patch", "build")]
+if any(type(part) is not int or part < 0 for part in parts):
+    raise SystemExit("release.json needs four non-negative integer version fields")
+print(".".join(map(str, parts)))
+PY
+}
+
+ci_resolve_remote_tag() {
+  local remote="$1"
+  local tag="$2"
+  local commit
+
+  commit=$(git ls-remote "$remote" "refs/tags/$tag^{}" | awk 'NR == 1 { print $1 }') || return 1
+  if [[ -z "$commit" ]]; then
+    commit=$(git ls-remote --refs "$remote" "refs/tags/$tag" | awk 'NR == 1 { print $1 }') || return 1
+  fi
+  if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "Tag $tag does not resolve to a full commit SHA at $remote" >&2
+    return 1
+  fi
+
+  printf '%s\n' "$commit"
+}
+
+ci_commit_is_on_origin_main() {
+  local commit="$1"
+
+  git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main || return 1
+  git merge-base --is-ancestor "$commit" refs/remotes/origin/main
+}
+
+ci_resolve_ghcr_image() {
+  local requested_image="$1"
+  local digest inspect_output repository
+
+  if [[ ! "$requested_image" =~ ^ghcr\.io/[a-z0-9._/-]+(:[A-Za-z0-9_.-]+|@sha256:[0-9a-f]{64})$ ]]; then
+    echo 'Image must be a fully qualified GHCR tag or SHA-256 digest' >&2
+    return 1
+  fi
+  inspect_output=$(docker buildx imagetools inspect "$requested_image") || return 1
+  digest=$(awk '$1 == "Digest:" && !found++ { print $2 }' <<< "$inspect_output")
+  if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    echo "Could not resolve $requested_image to an image digest" >&2
+    return 1
+  fi
+  if [[ "$requested_image" == *@* && "${requested_image##*@}" != "$digest" ]]; then
+    echo "Requested digest ${requested_image##*@} resolved as $digest" >&2
+    return 1
+  fi
+  repository=${requested_image%%@*}
+  if [[ "$repository" == "$requested_image" ]]; then
+    repository=${requested_image%:*}
+  fi
+
+  printf '%s %s %s@%s\n' "$repository" "$digest" "$repository" "$digest"
+}
+
 ci_svzerodsolver_identity() {
   local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
 
@@ -19,6 +85,27 @@ print(tag, commit)
 PY
 }
 
+ci_svzerodsolver_package_identity() {
+  local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
+  local checksum commit tag
+
+  read -r tag commit < <(ci_svzerodsolver_identity "$manifest") || return 1
+  checksum=$(python3 - "$manifest" <<'PY'
+import json
+import re
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as manifest:
+    checksum = json.load(manifest)["dependencies"]["svZeroDSolver"]["ubuntu26_package_sha256"]
+if not isinstance(checksum, str) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
+    raise SystemExit("release.json must pin the svZeroDSolver Ubuntu 26 package checksum")
+print(checksum)
+PY
+  ) || return 1
+
+  printf 'SimVascular/svZeroDSolver %s %s %s\n' "$tag" "$commit" "$checksum"
+}
+
 ci_resolve_svzerodsolver() {
   local manifest="${1:-${GITHUB_WORKSPACE:-.}/release.json}"
   local tag commit remote_commit pinned
@@ -27,10 +114,7 @@ ci_resolve_svzerodsolver() {
   read -r tag commit <<< "$pinned"
 
   local remote="https://github.com/SimVascular/svZeroDSolver.git"
-  remote_commit=$(git ls-remote "$remote" "refs/tags/$tag^{}" | awk 'NR == 1 { print $1 }') || return 1
-  if [[ -z "$remote_commit" ]]; then
-    remote_commit=$(git ls-remote --refs "$remote" "refs/tags/$tag" | awk 'NR == 1 { print $1 }') || return 1
-  fi
+  remote_commit=$(ci_resolve_remote_tag "$remote" "$tag") || return 1
   if [[ "$remote_commit" != "$commit" ]]; then
     echo "svZeroDSolver tag $tag resolves to ${remote_commit:-nothing}, not pinned commit $commit" >&2
     return 1
