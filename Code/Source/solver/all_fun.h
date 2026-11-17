@@ -192,6 +192,29 @@ namespace all_fun {
   double integ(const ComMod &com_mod, const CmMod &cm_mod, const faceType &lFa,
                const Array<double> &s, const SolutionStates &solutions);
 
+  /**
+   * @brief Differentiate the flow rate density through a boundary element
+   * with respect to the positions of the element nodes, at one Gauss point.
+   *
+   * The flow rate density is velocity . utils::cross(tangents), the quantity
+   * that integ() integrates over a face to give the flow rate. Tangent vector
+   * 'k' is the sum over the element nodes of Nx(k,a) times the position of
+   * node 'a'. The velocity is held fixed.
+   *
+   * @param[in] tangents The tangent vectors at the Gauss point, one per column
+   *   (nsd x insd).
+   * @param[in] Nx The shape function derivatives at the Gauss point
+   *   (insd x number of element nodes).
+   * @param[in] velocity The velocity at the Gauss point (nsd).
+   *
+   * @return The derivative of the flow rate density with respect to each
+   *   coordinate of each element node (nsd x number of element nodes).
+   */
+  Array<double>
+  flowrate_density_derivative_wrt_position(const Array<double> &tangents,
+                                           const Array<double> &Nx,
+                                           const Vector<double> &velocity);
+
   bool is_domain(const ComMod& com_mod, const eqType& eq, const int node, const consts::EquationType phys);
 
   double jacobian(ComMod& com_mod, const int nDim, const int eNoN, const Array<double>& x, const Array<double>&Nxi);
