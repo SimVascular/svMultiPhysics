@@ -145,21 +145,30 @@ class CappingSurface {
         /// @brief Initialize the cap face quadrature.
         void init_cap_face_quadrature(const ComMod& com_mod);
 
-        /// @brief Initialize the cap contribution storage.
-        void initialize_valM();
+        /// @brief Initialize the storage of the flow rate derivative.
+        void initialize_flowrate_derivative();
     
         /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
         double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
             consts::MechanicalConfigurationType cfg);
         
-        /// @brief Compute the cap contribution to the linear solver face (fills \ref valM_; safe under \c const *this).
-        void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
+        /// @brief Compute the change of the flow rate through the cap per unit
+        /// change of the velocity of each cap node.
+        ///
+        /// Fills \ref flowrate_derivative_.
+        ///
+        /// @param[in] cfg The configuration in which the cap is integrated.
+        /// @param[in] st The positions and displacements of the cap nodes,
+        ///   with one column per cap node.
+        void compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
 
         /// @brief Get the cap face.
         const faceType* face() const { return face_.get(); }
 
-        /// @brief Get the cap contribution.
-        const Array<double>& valM() const { return valM_; }
+        /// @brief Get the flow rate derivative (number of space dimensions x
+        /// number of cap nodes), with the columns in the order of the nodes of
+        /// the cap face.
+        const Array<double>& flowrate_derivative() const { return flowrate_derivative_; }
 
     private:
         /// @brief The cap face.
@@ -183,8 +192,8 @@ class CappingSurface {
         /// @brief Compute the Jacobian and normal vector for a given element and Gauss point.
         std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const;
 
-        /// @brief Cap contribution to the linear solver face; \c mutable so it can be refreshed under \c const *this.
-        mutable Array<double> valM_;
+        /// @brief Change of the flow rate through the cap per unit change of the velocity of each cap node; \c mutable so it can be refreshed under \c const *this.
+        mutable Array<double> flowrate_derivative_;
     };
 
 /// @brief Object-oriented Coupled boundary condition
@@ -264,7 +273,7 @@ private:
     /// @brief Cap-only mesh state for integration (columns 0..n_cap-1); refreshed by \ref gather_global_mesh_state.
     mutable CapGlobalMeshState cap_global_mesh_state_;
 
-    /// @brief Simulation \c CmMod copy; set in \c distribute() for cap MPI (e.g. \c copy_cap_surface_to_linear_solver_face).
+    /// @brief Simulation \c CmMod copy; set in \c distribute() for cap MPI (e.g. \c append_cap_flowrate_derivative).
     CmMod cm_mod_{};
 
     /// Build \ref cap_g_to_cap_col_ from \ref cap_mesh_global_node_ids_.
@@ -432,10 +441,21 @@ public:
     /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
     void initialize_cap(ComMod& com_mod);
 
-    /// @brief Compute cap \a valM from current cap mesh state on owner and copy/broadcast cap data to FSILS face.
-    void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                consts::MechanicalConfigurationType cfg,
-                                                const SolutionStates& solutions) const;
+    /// @brief Append the cap contribution to the flow rate derivative of a
+    /// linear solver face.
+    ///
+    /// The process that holds the cap computes the contribution from the
+    /// current cap mesh state and broadcasts it. Every process has to make
+    /// this call.
+    ///
+    /// @param[in] com_mod The simulation data.
+    /// @param[in,out] lhs_face The linear solver face, one of
+    ///   com_mod.lhs.face, whose flow rate derivative is extended.
+    /// @param[in] cfg The configuration in which the cap is integrated.
+    /// @param[in] solutions Not used.
+    void append_cap_flowrate_derivative(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
+                                        consts::MechanicalConfigurationType cfg,
+                                        const SolutionStates& solutions) const;
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,

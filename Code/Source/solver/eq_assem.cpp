@@ -396,7 +396,7 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
 
     auto& cpl = lBc.coupled_bc;
     if (cpl.has_cap()) {
-      cpl.copy_cap_surface_to_linear_solver_face(com_mod, face, cfg, solutions);
+      cpl.append_cap_flowrate_derivative(com_mod, face, cfg, solutions);
     }
   }
 }
