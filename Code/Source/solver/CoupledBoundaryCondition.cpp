@@ -1146,6 +1146,11 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
 {
     using namespace consts;
 
+    if (cfg == MechanicalConfigurationType::intermediate_timestep) {
+        throw CappingSurfaceGeometryException("[CappingSurface::update_element_position_global] The intermediate "
+                                              "configuration is not available for the cap.");
+    }
+
     Array<double> xl(cap_nsd_, face_->eNoN);
 
     for (int a = 0; a < face_->eNoN; a++) {

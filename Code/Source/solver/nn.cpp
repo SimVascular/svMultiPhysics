@@ -909,7 +909,7 @@ namespace {
 /// @param[in] solutions The solution states that the displacement fields are
 ///   extracted from.
 /// @param[in] cfg The configuration in which the positions are taken
-///   (reference, old or current).
+///   (reference, old, current or intermediate).
 /// @param[in] displacement_index The index of the displacement field in the
 ///   solution arrays.
 /// @param[out] lX The positions of the nodes of the mesh element (nsd x number
@@ -926,6 +926,7 @@ void get_mesh_element_nodes(const ComMod &com_mod, const faceType &lFa,
   // Local aliases for displacement arrays
   const auto& Dn = solutions.current.get_displacement();
   const auto& Do = solutions.old.get_displacement();
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   const int nsd = com_mod.nsd;
 
@@ -1016,6 +1017,12 @@ void get_mesh_element_nodes(const ComMod &com_mod, const faceType &lFa,
           for (int i = 0; i < lX.nrows(); i++) {
             // Add displacement at timestep n+1
             lX(i, a) = lX(i, a) + Dn(displacement_index + i, Ac);
+          }
+          break;
+        case MechanicalConfigurationType::intermediate_timestep:
+          for (int i = 0; i < lX.nrows(); i++) {
+            // Add displacement at the intermediate time level
+            lX(i, a) = lX(i, a) + Dg(displacement_index + i, Ac);
           }
           break;
         default:

@@ -304,7 +304,9 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
   int nNo = lFa.nNo;
 
   // Load that a unit pressure on the face puts on each node: the surface
-  // integral of the shape function times the normal vector
+  // integral of the shape function times the normal vector. It is taken in
+  // the intermediate configuration, where the residual of the follower
+  // pressure load is assembled.
   Array<double> unit_pressure_load(nsd, tnNo);
   Array<double> unit_pressure_load_on_face_nodes(nsd, nNo);
 
@@ -318,9 +320,10 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
       utils::btest(lBc.bType,
                    static_cast<int>(BoundaryConditionType::bType_Coupled));
 
-  // Derivative of the flow rate with respect to the nodal velocities, which
-  // is equal to the unit pressure load. Where the flow rate depends on the
-  // displacement, its derivative with respect to the nodal displacements is
+  // Derivative of the flow rate with respect to the nodal velocities: the
+  // surface integral of the shape function times the normal vector, in the
+  // configuration at the end of the time step. Where the flow rate depends on
+  // the displacement, its derivative with respect to the nodal displacements is
   // added, with the velocity held fixed. It is multiplied by beta*dt/gamma,
   // the change of displacement per unit change of velocity that an increment
   // of the unknown produces.
@@ -329,29 +332,33 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
   const double displacement_per_velocity = eq.beta * com_mod.dt / eq.gam;
 
   // Updating the value of the surface integrals using the deformed
-  // configuration ('n' = new = timestep n+1)
+  // configurations
   unit_pressure_load = 0.0;
   for (int e = 0; e < lFa.nEl; e++) {
     for (int g = 0; g < lFa.nG; g++) {
-      auto Nx = lFa.Nx.rslice(g);
+      const auto Nx = lFa.Nx.rslice(g);
+      const Vector<double> n = nn::gnnb(
+          com_mod, lFa, e, g, Nx, solutions,
+          MechanicalConfigurationType::new_timestep, com_mod.eq[com_mod.cEq].s);
 
-      auto cfg = MechanicalConfigurationType::new_timestep;
-
-      const Vector<double> n = nn::gnnb(com_mod, lFa, e, g, Nx, solutions, cfg,
-                                        com_mod.eq[com_mod.cEq].s);
+      const Vector<double> n_intermediate =
+          nn::gnnb(com_mod, lFa, e, g, Nx, solutions,
+                   MechanicalConfigurationType::intermediate_timestep, eq.s);
 
       for (int a = 0; a < lFa.eNoN; a++) {
         int Ac = lFa.IEN(a,e);
         for (int i = 0; i < nsd; i++) {
-          unit_pressure_load(i, Ac) += lFa.N(a, g) * lFa.w(g) * n(i);
+          unit_pressure_load(i, Ac) +=
+              lFa.N(a, g) * lFa.w(g) * n_intermediate(i);
           flowrate_derivative(i, Ac) += lFa.N(a, g) * lFa.w(g) * n(i);
         }
       }
 
       if (flowrate_depends_on_displacement) {
         const auto derivative_of_normal =
-            nn::derivative_of_outward_normal_wrt_position(com_mod, lFa, e, Nx,
-                                                          solutions, cfg, eq.s);
+            nn::derivative_of_outward_normal_wrt_position(
+                com_mod, lFa, e, Nx, solutions,
+                MechanicalConfigurationType::new_timestep, eq.s);
 
         // Retrieve the velocity at the Gauss point
         Vector<double> velocity(nsd);

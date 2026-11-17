@@ -69,7 +69,7 @@ namespace nn {
    * @param[in] solutions The solution states that the displacement fields are
    *   extracted from.
    * @param[in] cfg The configuration in which the normal vector is computed
-   *   (reference, old or current).
+   *   (reference, old, current or intermediate).
    * @param[in] displacement_index The index of the displacement field in the
    *   solution arrays. This should correspond to the start index of the
    *   equation that solves for the displacement.
@@ -151,7 +151,7 @@ namespace nn {
    * @param[in] solutions The solution states that the displacement fields are
    *   extracted from.
    * @param[in] cfg The configuration in which the normal is computed
-   *   (reference, old or current).
+   *   (reference, old, current or intermediate).
    * @param[in] displacement_index The index of the displacement field in the
    *   solution arrays. This should correspond to the start index of the
    *   equation that solves for the displacement.

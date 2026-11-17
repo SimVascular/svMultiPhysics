@@ -18,13 +18,16 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 /// contribution of a resistance or coupled boundary condition, so that they
 /// follow the deformed geometry under a follower pressure load.
 ///
-/// Computes the unit pressure load, whose value at node a is the integral over
-/// the face of N_a * n in the configuration at the end of the time step, where
-/// N_a is the shape function of node a and n is the normal (see Brown et al.
-/// 2024, Eq. 56). The result is stored in the linear solver face
-/// com_mod.lhs.face[lBc.lsPtr], as unit_pressure_load and as
-/// flowrate_derivative: it is the derivative of the flow rate with respect to
-/// the nodal velocities.
+/// Computes the integral over the face of N_a * n for each node a, where N_a
+/// is the shape function of the node and n is the normal (see Brown et al.
+/// 2024, Eq. 56), and stores it in the linear solver face
+/// com_mod.lhs.face[lBc.lsPtr] twice:
+/// - as unit_pressure_load, in the intermediate configuration of the
+///   generalized-alpha method, where the residual of the follower pressure
+///   load is assembled;
+/// - as flowrate_derivative, in the configuration at the end of the time
+///   step: it is the derivative of the flow rate with respect to the nodal
+///   velocities.
 ///
 /// The flow rate of a struct equation coupled to svZeroD or svOneD is
 /// integrated on the deformed face, so it also depends on the nodal
