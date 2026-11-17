@@ -69,7 +69,7 @@ class mshType;
 /// Because each iteration is composed, the tangent of the composed residual
 /// differs from the kernel's own, and the solid kernels correct it (see
 /// correct_composed_tangent). Max_iterations and Tolerance bound the
-/// iterations of a time step as in any other run. With Pseudo_transient the
+/// iterations of a time step as in any other run. With Adaptive_time_step the
 /// time step is adapted to the residual between steps (see Integrator.h).
 ///
 /// Each mesh holds @f$ F_0 @f$ in a Prestrain, one tensor per Gauss point,

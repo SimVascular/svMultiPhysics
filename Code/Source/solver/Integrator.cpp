@@ -33,35 +33,33 @@ Integrator::Integrator(Simulation* simulation, SolutionStates&& solutions)
   : simulation_(simulation), solutions_(std::move(solutions)), newton_count_(0)
 {
   initialize_arrays();
-  initialize_pseudo_transient();
+  initialize_adaptive_time_step();
 }
 
 //-----------------------------
-// initialize_pseudo_transient
+// initialize_adaptive_time_step
 //-----------------------------
-void Integrator::initialize_pseudo_transient() {
+void Integrator::initialize_adaptive_time_step() {
   auto& com_mod = simulation_->com_mod;
   const auto& cm_mod = simulation_->cm_mod;
   const auto& cm = com_mod.cm;
 
   // The parameters are only read on the master.
   if (cm.mas(cm_mod)) {
-    const auto& params = simulation_->parameters.general_simulation_parameters.pseudo_transient;
+    const auto& params = simulation_->parameters.general_simulation_parameters.adaptive_time_step;
     if (params.defined()) {
-      pseudo_transient_enabled_ = true;
-      pseudo_transient_adaptive_time_step_ = params.adaptive_time_step.value();
-      pseudo_transient_maximum_time_step_ = params.maximum_time_step.value();
+      adaptive_time_step_enabled_ = true;
+      adaptive_time_step_maximum_ = params.maximum_time_step.value();
     }
   }
-  cm.bcast(cm_mod, &pseudo_transient_enabled_);
-  cm.bcast(cm_mod, &pseudo_transient_adaptive_time_step_);
-  cm.bcast(cm_mod, &pseudo_transient_maximum_time_step_);
+  cm.bcast(cm_mod, &adaptive_time_step_enabled_);
+  cm.bcast(cm_mod, &adaptive_time_step_maximum_);
 
-  // Pseudo-transient continuation is currently only supported for prestrain.
+  // The adaptive time step is currently only supported for prestrain.
   svmp::throw_if<svmp::NotImplementedException>(
-      pseudo_transient_enabled_ && !com_mod.prestrain_enabled,
-      "Pseudo-transient continuation (the " +
-          PseudoTransientParameters::xml_element_name_ +
+      adaptive_time_step_enabled_ && !com_mod.prestrain_enabled,
+      "The adaptive time step (the " +
+          AdaptiveTimeStepParameters::xml_element_name_ +
           " XML element) is only implemented for a Prestrain run.");
 }
 
@@ -179,8 +177,9 @@ bool Integrator::step(bool save_results) {
       dmsg << "iEqOld: " << iEqOld + 1;
       #endif
 
-      if (pseudo_transient_enabled_) {
-        com_mod.dt = pseudo_transient_adapt_time_step(eq);
+      if (adaptive_time_step_enabled_) {
+        // pNorm is the step's first residual relative to iNorm, the run's first.
+        com_mod.dt = adapt_time_step(eq.pNorm * eq.iNorm);
       }
       return true;
     }
@@ -499,27 +498,19 @@ double Integrator::line_search_step_length(eqType &eq,
   return step_length;
 }
 
-//------------------------------
-// pseudo_transient_adapt_time_step
-//----------------------------------
+//------------------------
+// adapt_time_step
+//------------------------
 //
-double Integrator::pseudo_transient_adapt_time_step(const eqType &eq)
+double Integrator::adapt_time_step(const double residual)
 {
-  const auto& com_mod = simulation_->com_mod;
-  const auto& cm_mod = simulation_->cm_mod;
-  const double dt = com_mod.dt;
+  const double dt = simulation_->com_mod.dt;
 
-  // pNorm is the step's first residual relative to iNorm, the run's first.
-  const double residual = eq.pNorm * eq.iNorm;
-
-  if (com_mod.cm.mas(cm_mod)) {
-    std::cout << " Pseudo-transient: dt = " << dt << ", first residual = " << residual
-              << ", R/R0 = " << eq.pNorm << std::endl;
-  }
-
-  // The residual may be NaN or infinite if the previous step diverged.
-  // In this case, the time step is unchanged.
-  if (!pseudo_transient_adaptive_time_step_ || !std::isfinite(residual)) {
+  // The residual is NaN or infinite when the solution diverged in a step
+  // that still counts as converged, because it reached Max_iterations. It
+  // then says nothing about the rate of convergence, so the time step is
+  // unchanged and the last finite residual is kept for the next ratio.
+  if (!std::isfinite(residual)) {
     return dt;
   }
 
@@ -527,10 +518,10 @@ double Integrator::pseudo_transient_adapt_time_step(const eqType &eq)
   // the first residuals of the last two steps unless the max dt is reached.
   // The first step has no previous residual, so the time step is unchanged.
   double next_dt = dt;
-  if (pseudo_transient_residual_prev_ > 0.0) {
-    next_dt = std::min(pseudo_transient_maximum_time_step_, dt * pseudo_transient_residual_prev_ / residual);
+  if (residual_prev_ > 0.0) {
+    next_dt = std::min(adaptive_time_step_maximum_, dt * residual_prev_ / residual);
   }
-  pseudo_transient_residual_prev_ = residual;
+  residual_prev_ = residual;
   return next_dt;
 }
 

@@ -1818,25 +1818,23 @@ class LineSearchParameters : public ParameterLists
 };
 
 //----------------------------
-// PseudoTransientParameters
+// AdaptiveTimeStepParameters
 //----------------------------
-/// @brief Parameters of the pseudo-transient continuation of a simulation.
+/// @brief Parameters of the adaptive time step of a simulation.
 ///
-/// Pseudo-transient continuation is enabled by the presence of the XML
-/// element and disabled by its absence. Within it, Maximum_time_step has to
-/// be given and Adaptive_time_step defaults to false.
+/// The time step is adapted between steps when the XML element is present
+/// and fixed when it is absent. Within it, Maximum_time_step has to be given.
 ///
 /// XML element: \code {.xml}
-/// <Pseudo_transient>
-///   <Adaptive_time_step> true </Adaptive_time_step>
+/// <Adaptive_time_step>
 ///   <Maximum_time_step> 100.0 </Maximum_time_step>
-/// </Pseudo_transient>
+/// </Adaptive_time_step>
 /// \endcode
 //
-class PseudoTransientParameters : public ParameterLists
+class AdaptiveTimeStepParameters : public ParameterLists
 {
   public:
-    PseudoTransientParameters();
+    AdaptiveTimeStepParameters();
 
     static const std::string xml_element_name_;
 
@@ -1844,11 +1842,7 @@ class PseudoTransientParameters : public ParameterLists
     void set_values(tinyxml2::XMLElement* xml_elem);
     void print_parameters();
 
-    /// @brief Adapt the pseudo time step between steps to the ratio of their
-    /// first residuals.
-    Parameter<bool> adaptive_time_step;
-
-    /// @brief Largest pseudo time step the adaptation may reach.
+    /// @brief Largest time step the adaptation may reach.
     Parameter<double> maximum_time_step;
 
     bool value_set = false;
@@ -1979,7 +1973,7 @@ class GeneralSimulationParameters : public ParameterLists
 
     std::string xml_element_name;
 
-    PseudoTransientParameters pseudo_transient;
+    AdaptiveTimeStepParameters adaptive_time_step;
 
     Parameter<bool> check_ien_order;
     Parameter<bool> continue_previous_simulation;

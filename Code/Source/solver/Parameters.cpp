@@ -2673,47 +2673,46 @@ void LineSearchParameters::print_parameters() {
 }
 
 //////////////////////////////////////////////////////////
-//              PseudoTransientParameters               //
+//              AdaptiveTimeStepParameters              //
 //////////////////////////////////////////////////////////
 
-const std::string PseudoTransientParameters::xml_element_name_ =
-    "Pseudo_transient";
+const std::string AdaptiveTimeStepParameters::xml_element_name_ =
+    "Adaptive_time_step";
 
-PseudoTransientParameters::PseudoTransientParameters() {
+AdaptiveTimeStepParameters::AdaptiveTimeStepParameters() {
 
   bool required = true;
 
   set_xml_element_name(xml_element_name_);
 
-  set_parameter("Adaptive_time_step", false, !required, adaptive_time_step);
   set_parameter("Maximum_time_step", 0.0, required, maximum_time_step);
 }
 
-void PseudoTransientParameters::set_values(tinyxml2::XMLElement *xml_elem) {
+void AdaptiveTimeStepParameters::set_values(tinyxml2::XMLElement *xml_elem) {
   svmp::check<svmp::ParseException>(xml_elem->GetText() == nullptr,
       xml_element_name_ + " takes no value of its own: it encloses "
-      "Adaptive_time_step and Maximum_time_step.");
+      "Maximum_time_step.");
 
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
   using std::placeholders::_1;
   using std::placeholders::_2;
   std::function<void(const std::string &, const std::string &)> ftpr =
-      std::bind(&PseudoTransientParameters::set_parameter_value, *this, _1, _2);
+      std::bind(&AdaptiveTimeStepParameters::set_parameter_value, *this, _1, _2);
   xml_util_set_parameters(ftpr, xml_elem, error_msg);
 
   check_required();
 
   svmp::check<svmp::ParseException>(maximum_time_step.value() > 0.0,
-      "Pseudo_transient Maximum_time_step must be positive.");
+      "Adaptive_time_step Maximum_time_step must be positive.");
 
   value_set = true;
 }
 
-void PseudoTransientParameters::print_parameters() {
+void AdaptiveTimeStepParameters::print_parameters() {
   std::cout << std::endl;
-  std::cout << "---------------------------" << std::endl;
-  std::cout << "Pseudo-Transient Parameters" << std::endl;
-  std::cout << "---------------------------" << std::endl;
+  std::cout << "-----------------------------" << std::endl;
+  std::cout << "Adaptive Time Step Parameters" << std::endl;
+  std::cout << "-----------------------------" << std::endl;
 
   auto params_name_value = get_parameter_list();
   for (auto &[key, value] : params_name_value) {
@@ -3055,8 +3054,8 @@ void GeneralSimulationParameters::set_values(tinyxml2::XMLElement *xml_element,
       IncludeParametersFile include_parameters(value);
       set_values(include_parameters.root_element, true);
 
-    } else if (name == PseudoTransientParameters::xml_element_name_) {
-      pseudo_transient.set_values(item);
+    } else if (name == AdaptiveTimeStepParameters::xml_element_name_) {
+      adaptive_time_step.set_values(item);
 
     } else {
       auto value =
