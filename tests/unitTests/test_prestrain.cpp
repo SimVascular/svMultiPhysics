@@ -491,7 +491,7 @@ TEST(Prestrain, InternalForcesAreObjectiveUnderRigidRotation)
   EXPECT_LT(error / max_abs(lR), 1.0e-13);
 }
 
-TEST(Prestrain, ComposedTangentMatchesFiniteDifferences)
+TEST(Prestrain, TangentCorrectionMatchesFiniteDifferences)
 {
   struct Case {
     const char* name;

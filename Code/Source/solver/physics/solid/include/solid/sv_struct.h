@@ -97,6 +97,62 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc);
+
+/// @brief Make a solid kernel's tangent that of a prestrain iteration.
+///
+/// A prestrain iteration composes the displacement @f$ u @f$ it reaches into
+/// @f$ F_0 @f$ and starts again from rest, so the residual the next iteration
+/// sees is that of the Cauchy stress on the mesh, which does not move, with
+/// the mesh's fibers pulled back anew. The kernel's tangent differs from that
+/// residual's in two ways, both corrected here.
+///
+/// The current configuration: the kernel's tangent carries the change of the
+/// current volume and of the current shape function gradients with @f$ u @f$;
+/// this subtracts that part,
+/// @f[
+///   w \left( \tau \nabla_x N_a \otimes \nabla_x N_b
+///          - \tau \nabla_x N_b \otimes \nabla_x N_a \right),
+/// @f]
+/// with @f$ \tau = P F^T @f$ the Kirchhoff stress,
+/// @f$ \nabla_x N = F^{-T} \nabla_0 N @f$, and @f$ w @f$ the stress-free
+/// weight. Without it each iteration is an inexact Newton step whose error
+/// grows with the stress, and the prestrain can stop converging once the
+/// pseudo time step is large.
+///
+/// The fibers: composing the update pulls the mesh's fibers back anew (see
+/// Prestrain), so the fibers the material law sees change with
+/// @f$ u @f$. To first order, with @f$ G = F_0^{-1} \, \nabla u \, F_0 @f$, the
+/// gradient on the mesh carried to the stress-free configuration, each fiber
+/// @f$ f_0 @f$ changes by
+/// @f[
+///   \delta f_0 = -(I - \hat{f} \hat{f}^T) \, G \, f_0,
+/// @f]
+/// @f$ \hat{f} @f$ being its unit vector: it keeps unit length. The
+/// kernel's tangent holds the fibers fixed; this adds
+/// @f[
+///   w \, F \, \delta S \, \nabla_0 N_a,
+/// @f]
+/// taking the gradient of the material law's @f$ S @f$ with respect to each
+/// fiber by one-sided finite differences along the axes and applying it to
+/// @f$ \delta f_0 @f$, so it costs nsd calls of the material law per fiber,
+/// plus one for the baseline. A mesh without fibers pays nothing beyond the
+/// first part.
+///
+/// @param active_stress_evaluator the kernel's evaluator, updated for the element.
+/// @param N shape functions at the Gauss point, for the active tension.
+/// @param P the first Piola-Kirchhoff stress the kernel assembled, viscous and
+/// prestress parts included.
+/// @param Nx0 shape function gradients on the stress-free configuration, nsd x eNoN.
+/// @param fibers the pulled-back fibers the material law saw, nsd x nFn.
+/// @param w_afu the weight times the stiffness scaling of lK.
+/// @param lK the element tangent, lK(i*dof + j, a, b).
+template <int nsd>
+void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
+    const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
+    const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,   // mat_models::FiberRef<nsd>
+    double w_afu, int dof, Array3<double>& lK);
 };
 
 #endif
