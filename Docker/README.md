@@ -1,27 +1,98 @@
 # Docker images
 
 Docker Engine is required to build and run these images. On macOS, Docker Desktop
-provides the engine; on Linux, Docker Engine can be installed directly. Building
-the dependency image requires substantial CPU, memory, and disk space.
+provides the engine; on Linux, Docker Engine can be installed directly. The
+release images currently target `linux/amd64`.
 
 ## Image roles
 
-- `Docker/ubuntu/dockerfile` builds an Ubuntu 26.04 image with the libraries and
-  tools needed to build and test svMultiPhysics. It does not contain a compiled
-  svMultiPhysics solver. The manually triggered dependency-image workflow stages
-  the image in GitHub Container Registry, then validates it before promotion.
-- `Docker/solver/dockerfile` builds svMultiPhysics from the SimVascular GitHub
-  repository in PETSc and Trilinos configurations. Both its builder and final
-  stages use the published `simvascular/libraries:latest` dependency image, not
-  the local Ubuntu 26 image. The repository's Docker publishing workflow uses
-  this Dockerfile and publishes `simvascular/solver:latest` on pushes to `main`.
+- `Docker/ubuntu/dockerfile` builds the Ubuntu 26.04 dependency image containing
+  the libraries and tools required to build and run svMultiPhysics. It does not
+  contain svMultiPhysics itself. The `Build Ubuntu 26 dependency image` workflow
+  builds, validates, and publishes this image to GitHub Container Registry.
+- `Docker/svmultiphysics/dockerfile` builds a final svMultiPhysics runtime image
+  from a digest-pinned dependency image. It installs verified svMultiPhysics and
+  svZeroDSolver Ubuntu packages rather than compiling source in the image.
+- `Docker/solver/dockerfile` is the legacy Docker Hub recipe. It builds PETSc and
+  Trilinos configurations from source using `simvascular/libraries:latest` and
+  is maintained by the existing `Build and Push Docker Image` workflow.
 
-Despite its tag name, `simvascular/solver:latest` is an svMultiPhysics image;
-it is not the separate Fortran CFD solver. The separately published
-`simvascular/svmultiphysics:latest` also contains svMultiPhysics PETSc and
-Trilinos builds, but the current repository workflow does not publish that tag.
+## Final svMultiPhysics images
 
-## Build the Ubuntu 26 dependency image
+Each final release publishes two separate images:
+
+```text
+ghcr.io/simvascular/svmultiphysics:<version>-default
+ghcr.io/simvascular/svmultiphysics:<version>-trilinos
+```
+
+The `default` image contains the default svMultiPhysics configuration. The
+`trilinos` image contains the Trilinos configuration. Both images:
+
+- use an Ubuntu 26.04 AMD64 dependency image pinned by digest;
+- install the corresponding Release svMultiPhysics package;
+- install the svZeroDSolver package pinned by `release.json`;
+- expose `svmultiphysics` on `PATH`; and
+- record source, package, dependency-image, and workflow provenance in image
+  labels.
+
+No floating `latest` tag is published by this workflow. Select an explicit
+release version and configuration.
+
+### Pull and inspect an image
+
+Replace `<version>` with a four-part svMultiPhysics release version:
+
+```sh
+docker pull ghcr.io/simvascular/svmultiphysics:<version>-default
+docker run --rm --platform linux/amd64 \
+  ghcr.io/simvascular/svmultiphysics:<version>-default \
+  svmultiphysics --version
+```
+
+Use the `-trilinos` tag instead to run the Trilinos configuration.
+
+### Run a case
+
+Mount the case directory at `/case`, make it the working directory, and invoke
+the installed executable directly:
+
+```sh
+docker run --rm --platform linux/amd64 \
+  -v /absolute/path/to/case:/case \
+  -w /case \
+  ghcr.io/simvascular/svmultiphysics:<version>-default \
+  mpirun --allow-run-as-root --oversubscribe -n 4 \
+    svmultiphysics solver.xml
+```
+
+Files written under `/case` remain on the host after the container exits.
+
+## Release workflow
+
+The `Build svMultiPhysics images` workflow accepts a dependency-image reference
+and a final svMultiPhysics release tag. It:
+
+1. resolves and verifies the source tag, commit, release metadata, dependency
+   image digest, and package checksums;
+2. builds the `default` and `trilinos` images in parallel;
+3. saves each complete image as a short-lived workflow artifact;
+4. loads and validates both artifacts independently, including version output,
+   labels, package provenance, shared libraries, MPI, and integration tests; and
+5. publishes both images to GHCR only after both validations pass.
+
+Publication is protected by the `release` GitHub Environment. Only the
+publication job receives `packages: write`. If both requested tags already
+contain images with matching provenance, a rerun succeeds without rebuilding,
+retesting, or republishing them. An existing tag with different content causes
+the workflow to fail.
+
+The Dockerfile is intentionally parameterized for this workflow. Local builds
+must provide the digest-pinned dependency image, the downloaded package files
+and checksums, source provenance, and image metadata as build arguments. See
+`.github/workflows/svmultiphysics-image.yml` for the canonical invocation.
+
+## Build the Ubuntu 26 dependency image locally
 
 From the repository root, run:
 
@@ -35,39 +106,19 @@ docker build --platform linux/amd64 \
 `RelWithDebInfo`, or `Debug`. CMake-built dependencies use the selected type.
 Boost and PETSc use their debug settings only for `Debug`. Both `Release` and
 `RelWithDebInfo` use Boost's release variant and the same optimized PETSc flags
-(`-g -O2`); this is intentional. The release process promotes only `Release`
-dependency images to `rc` or final. Other build-type spellings fail before
-dependencies are installed.
+(`-g -O2`). The release process promotes only `Release` dependency images.
 
-The current Dockerfile downloads an x86-64 CMake binary, so this build targets
-`linux/amd64`. On Apple Silicon, Docker runs it under emulation. The Dockerfile
-uses `bsdtar` in archive-extracting stages under arm64-to-amd64 emulation to
-avoid a GNU tar failure.
+The Dockerfile downloads an x86-64 CMake binary, so this build targets
+`linux/amd64`. On Apple Silicon, Docker runs it under emulation. The image
+contains `/usr/local/share/svMultiPhysics/dependency-versions.txt` with resolved
+source commits and installed Ubuntu, Conda, and Python package versions.
 
-The `svmp-libraries:ubuntu26` tag is local to your machine unless you explicitly
-push it to a registry. Building it does not change either published Docker Hub
-image or the base image used by `Docker/solver/dockerfile`.
+The `svmp-libraries:ubuntu26` tag is local unless explicitly pushed. Building it
+does not change any published image.
 
-The Dockerfile defaults to the Ubuntu 26.04 base tag; the dependency-image
-workflow resolves its digest before building and records the exact base image
-reference in the version inventory. Local builds can pass `UBUNTU_BASE_IMAGE`
-with a digest to get the same provenance. Source-built libraries use release
-tags where available (or Git commits otherwise). The Conda environment
-requests Python 3.12; Ubuntu, Conda, and pip package versions are not pinned.
-The image contains `/usr/local/share/svMultiPhysics/dependency-versions.txt`
-with the resolved source commits and installed Ubuntu, Conda, and Python package
-versions.
-The dependency-image workflow also uploads this inventory as an artifact.
-Changing any pin creates a new image candidate and requires the default,
-Trilinos, and PETSc validation jobs to pass again. Do not assume that a pin
-selected from an older image reproduces its exact binaries when the older build
-did not record the source commit.
+## Legacy Docker Hub image
 
-## Build the existing solver image
-
-The solver Dockerfile's current steps clone svMultiPhysics and build its PETSc
-and Trilinos configurations using `simvascular/libraries:latest`. From the
-repository root, build it without changing those steps:
+The legacy recipe remains available while its separate workflow is maintained:
 
 ```sh
 docker build --platform linux/amd64 \
@@ -75,25 +126,12 @@ docker build --platform linux/amd64 \
   -t svmp-solver:local .
 ```
 
-The PETSc and Trilinos executables are in:
+Its PETSc and Trilinos executables are located at:
 
 ```text
 /build-petsc/svMultiPhysics-build/bin/svmultiphysics
 /build-trilinos/svMultiPhysics-build/bin/svmultiphysics
 ```
 
-This solver build uses the published Ubuntu 24.04-based dependency image. It
-does not validate the new Ubuntu 26 dependency image. To test Ubuntu 26, run
-builds and tests inside `svmp-libraries:ubuntu26` instead; that does not require
-changing the existing solver Dockerfile or its publishing workflow.
-
-## Run an image
-
-To open a shell and mount a host directory at `/workspace`:
-
-```sh
-docker run --rm -it --platform linux/amd64 \
-  -v /absolute/path/on/host:/workspace svmp-libraries:ubuntu26
-```
-
-Files written under `/workspace` remain on the host after the container exits.
+The legacy image uses an Ubuntu 24.04-based dependency image and is independent
+of the Ubuntu 26 package-based release images described above.
