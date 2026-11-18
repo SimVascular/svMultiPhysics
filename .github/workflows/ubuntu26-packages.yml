@@ -325,33 +325,22 @@ jobs:
           test "$(dpkg-deb --field "${zero_package}" Version)" = "${SVZEROD_TAG#v}"
           printf 'ZERO_PACKAGE=%s\n' "${zero_package}" >> "${GITHUB_ENV}"
 
-      - name: Install packages and locate installed executables
+      - name: Install packages
         shell: bash
         run: |
           apt-get install -y --no-install-recommends "./${ZERO_PACKAGE}" "./packages/${PACKAGE}"
-          solver=$(find /usr/local/sv/svMultiPhysics -type f -name svmultiphysics -print -quit)
-          interface=$(find /usr/local/sv/svZeroDSolver -type f -name libsvzero_interface.so -print -quit)
-          test -x "${solver}"
-          test -f "${interface}"
-          if ldd "${solver}" | grep 'not found'; then
-            echo 'The installed solver has missing shared-library dependencies' >&2
-            exit 1
-          fi
-          if ldd "${interface}" | grep 'not found'; then
-            echo 'The installed svZeroDSolver interface has missing shared-library dependencies' >&2
-            exit 1
-          fi
-          mkdir -p svZeroDSolver/build/src/interface
-          ln -s "${interface}" svZeroDSolver/build/src/interface/libsvzero_interface.so
-          printf 'SVMP_SOLVER_EXECUTABLE=%s\n' "${solver}" >> "${GITHUB_ENV}"
 
-      - name: Check installed solver version
+      - name: Verify installed svMultiPhysics runtime
         shell: bash
         run: |
-          actual=$("${SVMP_SOLVER_EXECUTABLE}" --version)
-          expected="[svMultiPhysics] version ${{ needs.select_source.outputs.version }} tag ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }} configuration ${SVMP_SOLVER_CONFIGURATION}"
-          test "${actual}" = "${expected}"
-          printf '%s\n' "${actual}"
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          ci_check_installed_svmultiphysics_version \
+            '${{ needs.select_source.outputs.version }}' \
+            '${{ needs.select_source.outputs.version_tag }}' \
+            '${{ needs.select_source.outputs.commit }}' \
+            "${SVMP_SOLVER_CONFIGURATION}"
+          ci_check_installed_svmultiphysics_libraries
+          ci_check_installed_svmultiphysics_mpi
 
       - name: Report installed dependency versions
         shell: bash
@@ -372,14 +361,13 @@ jobs:
           /opt/conda/bin/conda create -y -n svmultiphysics python=3.12 pip
           /opt/conda/bin/conda run -n svmultiphysics python -m pip install pytest numpy meshio pandas
 
-      - name: Run integration tests against installed solver
+      - name: Run integration tests against installed svMultiPhysics
         shell: bash
         run: |
-          mkdir -p test-results
-          cd tests
-          /opt/conda/bin/conda run --no-capture-output -n svmultiphysics \
-            pytest -v -rfEP --durations=0 --ignore=test_release_identity.py \
-            --junitxml="${GITHUB_WORKSPACE}/test-results/${SVMP_SOLVER_CONFIGURATION}.xml"
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          ci_run_installed_svmultiphysics_tests \
+            "${GITHUB_WORKSPACE}/test-results/${SVMP_SOLVER_CONFIGURATION}.xml" \
+            /opt/conda/bin/conda
 
       - name: Summarize package validation
         if: success()

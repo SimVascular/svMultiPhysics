@@ -194,3 +194,82 @@ ci_run_integration_tests() {
     conda run --no-capture-output -n svmultiphysics pytest -v -rfEP --durations=0
   fi
 }
+
+ci_installed_svmultiphysics_paths() {
+  local executable="${SVMP_SOLVER_EXECUTABLE:-}"
+  local interface
+
+  if [ -z "$executable" ]; then
+    executable=$(find /usr/local/sv/svMultiPhysics -type f -name svmultiphysics -executable -print -quit) || return 1
+  fi
+  interface=$(find /usr/local/sv/svZeroDSolver -type f -name libsvzero_interface.so -print -quit) || return 1
+  if [ ! -x "$executable" ]; then
+    echo 'Could not locate the installed svMultiPhysics executable' >&2
+    return 1
+  fi
+  if [ ! -f "$interface" ]; then
+    echo 'Could not locate the installed svZeroDSolver interface library' >&2
+    return 1
+  fi
+
+  printf '%s %s\n' "$executable" "$interface"
+}
+
+ci_check_installed_svmultiphysics_version() {
+  local version="$1"
+  local tag="$2"
+  local commit="$3"
+  local configuration="$4"
+  local executable interface actual expected
+
+  read -r executable interface < <(ci_installed_svmultiphysics_paths) || return 1
+  actual=$("$executable" --version) || return 1
+  expected="[svMultiPhysics] version $version tag $tag commit $commit configuration $configuration"
+  if [ "$actual" != "$expected" ]; then
+    echo "Expected: $expected" >&2
+    echo "Actual:   $actual" >&2
+    return 1
+  fi
+  printf '%s\n' "$actual"
+}
+
+ci_check_installed_svmultiphysics_libraries() {
+  local executable interface
+
+  read -r executable interface < <(ci_installed_svmultiphysics_paths) || return 1
+  if ldd "$executable" | grep 'not found'; then
+    echo 'svMultiPhysics has missing shared-library dependencies' >&2
+    return 1
+  fi
+  if ldd "$interface" | grep 'not found'; then
+    echo 'svZeroDSolver has missing shared-library dependencies' >&2
+    return 1
+  fi
+}
+
+ci_check_installed_svmultiphysics_mpi() {
+  local rank
+  local ranks=()
+
+  IFS=, read -r -a ranks <<< "${SVMP_TEST_PROCS:-1,3,4}"
+  for rank in "${ranks[@]}"; do
+    mpirun --oversubscribe -np "$rank" /bin/true || return 1
+  done
+}
+
+ci_run_installed_svmultiphysics_tests() {
+  local result_file="$1"
+  local conda_executable="${2:-conda}"
+  local executable interface
+
+  read -r executable interface < <(ci_installed_svmultiphysics_paths) || return 1
+  mkdir -p "$(dirname "$result_file")" "${GITHUB_WORKSPACE}/svZeroDSolver/build/src/interface"
+  ln -sfn "$interface" "${GITHUB_WORKSPACE}/svZeroDSolver/build/src/interface/libsvzero_interface.so"
+  export SVMP_SOLVER_EXECUTABLE="$executable"
+  (
+    cd "${GITHUB_WORKSPACE}/tests"
+    "$conda_executable" run --no-capture-output -n svmultiphysics \
+      pytest -v -rfEP --durations=0 --ignore=test_release_identity.py \
+      --junitxml="$result_file"
+  )
+}
