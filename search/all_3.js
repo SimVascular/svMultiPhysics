@@ -38,7 +38,7 @@ var searchData=
   ['aliev_20panfilov_20ionic_20reference_35',['Aliev--Panfilov ionic reference',['../dir_e3bbfdba82f4111390c1fad3a850e214.html#autotoc_md82',1,'']]],
   ['alievpanfilov_36',['AlievPanfilov',['../class_aliev_panfilov.html',1,'AlievPanfilov'],['../class_aliev_panfilov.html#ae46eccc13eba2591ea065e6ac5255b81',1,'AlievPanfilov::AlievPanfilov()']]],
   ['alloc_37',['alloc',['../class_fsils_linear_algebra.html#a8b59c6ae61413494b739245fea026bc6',1,'FsilsLinearAlgebra::alloc()'],['../class_petsc_linear_algebra.html#aeb93907e199cdb63ed8f7f5988030dd5',1,'PetscLinearAlgebra::alloc()'],['../class_trilinos_linear_algebra_1_1_trilinos_impl.html#af8ccec80c3533004591d4162235de7ed',1,'TrilinosLinearAlgebra::TrilinosImpl::alloc()'],['../class_trilinos_linear_algebra.html#aecf8e1f2cc47d83198099f82a163d7c7',1,'TrilinosLinearAlgebra::alloc()']]],
-  ['allocated_38',['allocated',['../class_array3.html#adfea8b38f94f99ab7d80670805ba0950',1,'Array3']]],
+  ['allocated_38',['allocated',['../class_array3.html#adfea8b38f94f99ab7d80670805ba0950',1,'Array3::allocated()'],['../class_vector.html#a40b17cbe0bde98ce6d2aeb4ec9d6d5d7',1,'Vector::allocated()']]],
   ['allocation_20strategy_39',['Allocation Strategy',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md53',1,'']]],
   ['alpha_40',['alpha',['../class_aliev_panfilov.html#a41a42b2f9b3545b3f5c7c3a1c0767e51',1,'AlievPanfilov::alpha'],['../class_fitz_hugh_nagumo.html#a221b11ef10448045c9982de4d8083fd0',1,'FitzHughNagumo::alpha'],['../class_t_t_p.html#a9468eddfc6bbe281bd8cb559ca47746c',1,'TTP::alpha']]],
   ['alwayssavedomainid_41',['alwaysSaveDomainID',['../class_com_mod.html#aa7f55e787a0953b07dea92b0d1058747',1,'ComMod']]],

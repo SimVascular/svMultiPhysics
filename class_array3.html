@@ -226,6 +226,7 @@ template&lt;typename T&gt; </div>
 </div><div class="memdoc">
 
 <p>Array copy. </p>
+<p>The copy of an array that has no rows, no columns or no slices holds no data and has the same numbers of rows, columns and slices. </p>
 
 </div>
 </div>
@@ -421,7 +422,7 @@ template&lt;typename T&gt; </div>
 </div><div class="memdoc">
 
 <p>Array assignment. </p>
-<p>Copy data to replicate Fortran behavior. </p>
+<p>Copy data to replicate Fortran behavior. Assigning an array that has no rows, no columns or no slices leaves this array with no data and with the same numbers of rows, columns and slices. </p>
 
 </div>
 </div>
@@ -460,6 +461,7 @@ template&lt;typename T&gt; </div>
 </div><div class="memdoc">
 
 <p>Resize the array. </p>
+<p>The previous content is discarded and the new entries are set to zero. If there are no rows, no columns or no slices, the array holds no data and keeps the given numbers of rows, columns and slices. </p>
 
 </div>
 </div>
