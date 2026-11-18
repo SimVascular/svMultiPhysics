@@ -80,8 +80,11 @@ ci_ghcr_image_labels() {
 
 ci_ghcr_image_platform() {
   local image="$1"
+  local platform
 
-  docker buildx imagetools inspect "$image" --format '{{.Image.OS}} {{.Image.Architecture}}'
+  platform=$(docker buildx imagetools inspect \
+    "$image" --format '{{.Image.OS}} {{.Image.Architecture}}') || return 1
+  printf '%s\n' "$platform"
 }
 
 ci_svzerodsolver_identity() {
