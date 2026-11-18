@@ -1338,8 +1338,8 @@ void Integrator::corrector_taylor_hood()
     int eNoN = msh.fs[0].eNoN;
     int eNoNq = msh.fs[1].eNoN;
 
-    Array<double> xl(nsd,eNoN), xql(nsd,eNoNq), Nqx(nsd,eNoNq);
-    Vector<double> pl(eNoNq), Nq(eNoNq);
+    Array<double> xl(nsd,eNoN), xql(nsd,eNoNq), Nqx(nsd,eNoNq), Nx(nsd,eNoN);
+    Vector<double> pl(eNoNq), Nq(eNoNq), N(eNoN);
 
     Vector<double> xp(nsd), xi0(nsd), xi(nsd);
     Array<double> ksix(nsd,nsd);
@@ -1396,8 +1396,10 @@ void Integrator::corrector_taylor_hood()
         for (int i = 0; i < nsd; i++) {
           xp(i) = xl(i,a);
         }
+        // Find the node in the element given by all of its nodes, which may be curved
         xi = xi0;
-        nn::get_nnx(nsd, eType, eNoNq, xql, msh.fs[1].xib, msh.fs[1].Nb, xp, xi, Nq, Nqx);
+        nn::get_nnx(nsd, msh.fs[0].eType, eNoN, xl, msh.fs[0].xib, msh.fs[0].Nb, xp, xi, N, Nx);
+        nn::get_gnn(nsd, eType, eNoNq, xi, Nq, Nqx);
 
         double p = 0.0;
         for (int b = 0; b < eNoNq; b++) {
