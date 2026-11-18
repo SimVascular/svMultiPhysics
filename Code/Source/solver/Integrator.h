@@ -88,14 +88,15 @@
  * the controller of pseudo-transient continuation analysed by
  * [Kelley & Keyes (1998)](https://doi.org/10.1137/S0036142996304796):
  * @f[
- *   \Delta t_{n+1} = \min\left( \Delta t_{\max},\;
- *                    \Delta t_n \, \frac{R_{n-1}}{R_n} \right),
+ *   \Delta t_{n+1} = \max\left( \Delta t_{\min},\; \min\left( \Delta t_{\max},\;
+ *                    g\,\Delta t_n,\; \Delta t_n \, \frac{R_{n-1}}{R_n} \right) \right),
  * @f]
- * with @f$ \Delta t_{\max} @f$ given by `Maximum_time_step` (see
- * adapt_time_step). The first step has no @f$ R_{n-1} @f$ and keeps its time
- * step, and so does a step whose first residual is not finite. A time step
- * so large that the inertia term vanishes makes each iteration a plain
- * Newton iteration.
+ * with @f$ \Delta t_{\max} @f$, @f$ \Delta t_{\min} @f$ and @f$ g @f$ given by
+ * `Maximum_time_step` and the optional `Minimum_time_step` and
+ * `Maximum_growth_factor` (see adapt_time_step). The first step has no
+ * @f$ R_{n-1} @f$ and keeps its time step, and so does a step whose first
+ * residual is not finite. A time step so large that the inertia term vanishes
+ * makes each iteration a plain Newton iteration.
  *
  * The controller does not rely on the problem being steady: the first
  * residual of a step measures how well the previous solution satisfies the
@@ -192,6 +193,12 @@ private:
   /** @brief Largest time step the adaptation may reach */
   double adaptive_time_step_maximum_ = 0.0;
 
+  /** @brief Smallest time step the adaptation may reach */
+  double adaptive_time_step_minimum_ = 0.0;
+
+  /** @brief Largest ratio of a time step to the one before it; 0 if unlimited */
+  double adaptive_time_step_maximum_growth_factor_ = 0.0;
+
   /** @brief First residual of the previous step, which the adaptation of the time step uses */
   double residual_prev_ = 0.0;
 
@@ -285,7 +292,8 @@ private:
    * @brief Time step of the next step, adapted to the residual.
    *
    * Returns the current time step multiplied by the ratio of the first
-   * residuals of the last two steps, capped by `Maximum_time_step`. The
+   * residuals of the last two steps, capped by `Maximum_time_step` and
+   * `Maximum_growth_factor` and bounded below by `Minimum_time_step`. The
    * current time step is returned unchanged after the first step and after a
    * step whose first residual is not finite.
    *

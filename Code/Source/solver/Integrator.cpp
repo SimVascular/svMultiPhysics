@@ -50,10 +50,18 @@ void Integrator::initialize_adaptive_time_step() {
     if (params.defined()) {
       adaptive_time_step_enabled_ = true;
       adaptive_time_step_maximum_ = params.maximum_time_step.value();
+      if (params.minimum_time_step.defined()) {
+        adaptive_time_step_minimum_ = params.minimum_time_step.value();
+      }
+      if (params.maximum_growth_factor.defined()) {
+        adaptive_time_step_maximum_growth_factor_ = params.maximum_growth_factor.value();
+      }
     }
   }
   cm.bcast(cm_mod, &adaptive_time_step_enabled_);
   cm.bcast(cm_mod, &adaptive_time_step_maximum_);
+  cm.bcast(cm_mod, &adaptive_time_step_minimum_);
+  cm.bcast(cm_mod, &adaptive_time_step_maximum_growth_factor_);
 
   // The adaptive time step is currently only supported for prestrain.
   svmp::throw_if<svmp::NotImplementedException>(
@@ -526,11 +534,16 @@ double Integrator::adapt_time_step(const double residual)
   }
 
   // Adaptive time stepping: the next time step grows by the ratio of
-  // the first residuals of the last two steps unless the max dt is reached.
-  // The first step has no previous residual, so the time step is unchanged.
+  // the first residuals of the last two steps, within the bounds on dt and
+  // its growth. The first step has no previous residual, so the time step is
+  // unchanged.
   double next_dt = dt;
   if (residual_prev_ > 0.0) {
     next_dt = std::min(adaptive_time_step_maximum_, dt * residual_prev_ / residual);
+    if (adaptive_time_step_maximum_growth_factor_ > 0.0) {
+      next_dt = std::min(next_dt, adaptive_time_step_maximum_growth_factor_ * dt);
+    }
+    next_dt = std::max(adaptive_time_step_minimum_, next_dt);
   }
   residual_prev_ = residual;
   return next_dt;

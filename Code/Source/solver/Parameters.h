@@ -1823,11 +1823,14 @@ class LineSearchParameters : public ParameterLists
 /// @brief Parameters of the adaptive time step of a simulation.
 ///
 /// The time step is adapted between steps when the XML element is present
-/// and fixed when it is absent. Within it, Maximum_time_step has to be given.
+/// and fixed when it is absent. Within it, Maximum_time_step has to be given;
+/// Minimum_time_step and Maximum_growth_factor are optional.
 ///
 /// XML element: \code {.xml}
 /// <Adaptive_time_step>
 ///   <Maximum_time_step> 100.0 </Maximum_time_step>
+///   <Minimum_time_step> 1.0e-4 </Minimum_time_step>
+///   <Maximum_growth_factor> 10.0 </Maximum_growth_factor>
 /// </Adaptive_time_step>
 /// \endcode
 //
@@ -1844,6 +1847,13 @@ class AdaptiveTimeStepParameters : public ParameterLists
 
     /// @brief Largest time step the adaptation may reach.
     Parameter<double> maximum_time_step;
+
+    /// @brief Smallest time step the adaptation may reach.
+    Parameter<double> minimum_time_step;
+
+    /// @brief Largest ratio of a time step to the one before it. Does not
+    /// limit shrinking.
+    Parameter<double> maximum_growth_factor;
 
     bool value_set = false;
 };

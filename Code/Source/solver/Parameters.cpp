@@ -2686,12 +2686,14 @@ AdaptiveTimeStepParameters::AdaptiveTimeStepParameters() {
   set_xml_element_name(xml_element_name_);
 
   set_parameter("Maximum_time_step", 0.0, required, maximum_time_step);
+  set_parameter("Minimum_time_step", 0.0, !required, minimum_time_step);
+  set_parameter("Maximum_growth_factor", 0.0, !required, maximum_growth_factor);
 }
 
 void AdaptiveTimeStepParameters::set_values(tinyxml2::XMLElement *xml_elem) {
   svmp::check<svmp::ParseException>(xml_elem->GetText() == nullptr,
       xml_element_name_ + " takes no value of its own: it encloses "
-      "Maximum_time_step.");
+      "Maximum_time_step, Minimum_time_step and Maximum_growth_factor.");
 
   std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
   using std::placeholders::_1;
@@ -2704,6 +2706,17 @@ void AdaptiveTimeStepParameters::set_values(tinyxml2::XMLElement *xml_elem) {
 
   svmp::check<svmp::ParseException>(maximum_time_step.value() > 0.0,
       "Adaptive_time_step Maximum_time_step must be positive.");
+
+  if (minimum_time_step.defined()) {
+    svmp::check<svmp::ParseException>(minimum_time_step.value() > 0.0 &&
+        minimum_time_step.value() < maximum_time_step.value(),
+        "Adaptive_time_step Minimum_time_step must be positive and smaller than Maximum_time_step.");
+  }
+
+  if (maximum_growth_factor.defined()) {
+    svmp::check<svmp::ParseException>(maximum_growth_factor.value() > 1.0,
+        "Adaptive_time_step Maximum_growth_factor must be greater than 1.");
+  }
 
   value_set = true;
 }
