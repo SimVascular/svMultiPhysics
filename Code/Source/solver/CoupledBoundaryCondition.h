@@ -4,15 +4,16 @@
 #ifndef COUPLED_BOUNDARY_CONDITION_H
 #define COUPLED_BOUNDARY_CONDITION_H
 
-#include <string>
-#include <memory>
-#include <exception>
-#include <optional>
-#include <unordered_map>
-#include <utility>
-#include "consts.h"
 #include "CmMod.h"
 #include "SolutionStates.h"
+#include "consts.h"
+#include <exception>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // Forward declarations to avoid heavy includes
 class LPNSolverInterface;
@@ -145,7 +146,15 @@ class CappingSurface {
         /// @brief Initialize the cap face quadrature.
         void init_cap_face_quadrature(const ComMod& com_mod);
 
-        /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
+        /// @brief Integrate the flux of the velocity through the cap.
+        ///
+        /// @param[in] st The positions, displacements and velocities of the
+        ///   cap nodes, with one column per cap node.
+        /// @param[in] use_Yn_velocity Whether to integrate the velocity at the
+        ///   current time step (true) or at the old one (false).
+        /// @param[in] cfg The configuration in which the cap is integrated.
+        ///
+        /// @return The flux of the velocity through the cap.
         double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
             consts::MechanicalConfigurationType cfg);
         
@@ -180,16 +189,30 @@ class CappingSurface {
         /// @brief The global node IDs.
         Vector<int> global_node_ids_;
 
+        /// @brief The cap node of each node of each element (number of nodes
+        /// per element x number of elements). A cap node is the index of a
+        /// column in the arrays that have one column per cap node.
+        Array<int> element_node_columns_;
+
         /// @brief The number of spatial dimensions (3D).
         static constexpr int cap_nsd_ = 3;  
         /// @brief The number of independent spatial dimensions (2D).
-        static constexpr int cap_insd_ = 2; 
+        static constexpr int cap_insd_ = 2;
 
-        /// @brief Update the element position using cap-compact mesh columns (\a gn_to_cap_local maps global node id to column).
-        Array<double> update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
-                                                     const Array<double>& mesh_x, const Array<double>& mesh_Do,
-                                                     const Array<double>& mesh_Dn,
-                                                     const std::unordered_map<int, int>& gn_to_cap_local) const;
+        /// @brief Get the positions of the nodes of a cap element in a given
+        /// configuration.
+        ///
+        /// @param[in] e The index of the element.
+        /// @param[in] cfg The configuration: reference, old or new time step.
+        /// @param[in] st The positions and displacements of the cap nodes,
+        ///   with one column per cap node.
+        ///
+        /// @return The positions of the element nodes (number of space
+        ///   dimensions x number of nodes per element).
+        Array<double>
+        update_element_position_global(int e,
+                                       consts::MechanicalConfigurationType cfg,
+                                       const CapGlobalMeshState &st) const;
 
         /// @brief Compute the tangent vectors of a cap element at a Gauss
         /// point.
@@ -280,6 +303,11 @@ private:
     Vector<int> cap_mesh_global_node_ids_;
     /// @brief Cached map: global cap node id -> cap column index (derived from \ref cap_mesh_global_node_ids_).
     std::unordered_map<int, int> cap_g_to_cap_col_;
+    /// @brief Mesh indices, on this process, of the cap nodes that are in the
+    /// mesh of this process, sorted by cap column (set in \c initialize_cap()).
+    std::vector<int> cap_node_mesh_indices_;
+    /// @brief Cap column index of each node of \ref cap_node_mesh_indices_.
+    std::vector<int> cap_node_columns_;
     /// @brief Cap geometry on ranks with \ref owns_cap_; empty on non-owning MPI ranks.
     std::optional<CappingSurface> cap_;
     /// @brief Cap-only mesh state for integration (columns 0..n_cap-1); refreshed by \ref gather_global_mesh_state.
@@ -450,7 +478,13 @@ public:
     /// @param cm_mod CmMod reference for communication
     void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
-    /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
+    /// @brief Find the cap nodes that are in the mesh of this process and, on
+    /// the process that holds the cap, initialize its quadrature and its mesh
+    /// state.
+    ///
+    /// Every process has to make this call, after the mesh is partitioned.
+    ///
+    /// @param[in] com_mod The simulation data.
     void initialize_cap(ComMod& com_mod);
 
     /// @brief Append the cap contribution to the flow rate derivative of a
