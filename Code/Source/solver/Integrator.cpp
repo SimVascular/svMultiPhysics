@@ -474,6 +474,9 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
 
   fsi_linear_solver::fsils_commuv(lhs, dof, weights);
 
+  // The summed diagonal, which the pressure scaling needs below
+  const Array<double> diagonal = weights;
+
   for (int i = 0; i < weights.size(); i++) {
     // A degree of freedom the tangent does not reach is left unscaled.
     weights(i) = utils::is_zero(weights(i))
@@ -502,7 +505,7 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
   }
 
   // A zero pressure diagonal is scaled as in the linear solve
-  precond::scale_zero_diagonal_pressure(lhs, dof, Val, weights);
+  precond::scale_zero_diagonal_pressure(lhs, dof, Val, diagonal, weights);
 }
 
 //------------------------

@@ -84,37 +84,57 @@ void pos_mul(const Array<int>& rowPtr, const Vector<int>& colPtr, const int nNo,
 }
 
 /// @brief Scale the last degree of freedom, the pressure of a saddle point
-/// problem, at the nodes where its diagonal is zero, as for the Taylor-Hood
-/// pressure. There W(p) is 1 on entry, which leaves the pressure unscaled
-/// against the velocity rows scaled by W. It is divided by the norm of the
-/// pressure column in the scaled velocity rows, so that the scaled Schur
-/// complement G^T G has a unit diagonal. The entries of rows shared with other
-/// processes are partial sums, so at those columns the norm is approximate.
+/// problem, at the nodes where its diagonal is zero but that of another degree
+/// of freedom is not, as for the Taylor-Hood pressure. There W(p) is 1 on
+/// entry, which leaves the pressure unscaled against the velocity rows scaled
+/// by W. It is divided by the norm of the pressure column in the scaled
+/// velocity rows, so that the scaled Schur complement G^T G has a unit
+/// diagonal. diag is the diagonal summed over the processes. Unless some
+/// process has such a node, the pass over the matrix for the norms is skipped.
+/// The entries of rows shared with other processes are partial sums, so at
+/// those columns the norm is approximate.
 //
 void scale_zero_diagonal_pressure(const fsi_linear_solver::FSILS_lhsType& lhs, const int dof, const Array<double>& Val,
-    Array<double>& W)
+    const Array<double>& diag, Array<double>& W)
 {
   if (dof < 2) {
     return;
   }
   const int p = dof - 1;
 
-  // The pressure diagonal and the squared norm of the pressure column
-  Array<double> D(2, lhs.nNo);
+  // The nodes, of those the equation reaches, whose pressure diagonal is zero
+  Vector<int> zero(lhs.nNo);
+  int found = 0;
   for (int Ac = 0; Ac < lhs.nNo; Ac++) {
-    D(0,Ac) = Val(p*dof + p, lhs.diagPtr(Ac));
+    bool reached = false;
+    for (int c = 0; c < p; c++) {
+      reached = reached || diag(c,Ac) != 0.0;
+    }
+    zero(Ac) = reached && diag(p,Ac) == 0.0;
+    found |= zero(Ac);
+  }
+  if (lhs.commu.nTasks > 1) {
+    MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_MAX, lhs.commu.comm);
+  }
+  if (!found) {
+    return;
+  }
+
+  // The squared norm of the pressure column
+  Array<double> D(1, lhs.nNo);
+  for (int Ac = 0; Ac < lhs.nNo; Ac++) {
     for (int i = lhs.rowPtr(0,Ac); i <= lhs.rowPtr(1,Ac); i++) {
       for (int c = 0; c < p; c++) {
         const double g = W(c,Ac) * Val(c*dof + p, i);
-        D(1,lhs.colPtr(i)) += g*g;
+        D(0,lhs.colPtr(i)) += g*g;
       }
     }
   }
-  fsils_commuv(lhs, 2, D);
+  fsils_commuv(lhs, 1, D);
 
   for (int Ac = 0; Ac < lhs.nNo; Ac++) {
-    if (D(0,Ac) == 0.0 && D(1,Ac) > 0.0) {
-      W(p,Ac) = W(p,Ac) / sqrt(D(1,Ac));
+    if (zero(Ac) && D(0,Ac) > 0.0) {
+      W(p,Ac) = W(p,Ac) / sqrt(D(0,Ac));
     }
   }
 }
@@ -196,6 +216,12 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
 
   fsils_commuv(lhs, dof, W);
 
+  // The summed diagonal, which the pressure scaling needs once W is inverted
+  Array<double> diag;
+  if (dof > 1) {
+    diag = W;
+  }
+
   // Accounting for Dirichlet BC and inversing W = W^{-1/2}
   //
   for (int Ac = 0; Ac < nNo; Ac++) {
@@ -233,7 +259,7 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
     }
   }
 
-  scale_zero_diagonal_pressure(lhs, dof, Val, W);
+  scale_zero_diagonal_pressure(lhs, dof, Val, diag, W);
 
   // Pre-multipling K with W: K = W*K
   pre_mul(rowPtr, lhs.nNo, lhs.nnz, dof, Val, W);
