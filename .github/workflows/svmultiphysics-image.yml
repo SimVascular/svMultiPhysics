@@ -1,10 +1,6 @@
 name: Build svMultiPhysics images
 
 on:
-  # Temporary fork-only trigger for #788 validation; remove before merging.
-  push:
-    branches:
-      - feature/788-build-validate-container-images
   workflow_dispatch:
     inputs:
       dependency_image:
@@ -80,8 +76,7 @@ permissions: {}
 env:
   SOURCE_REPOSITORY: SimVascular/svMultiPhysics
   SOURCE_REMOTE: https://github.com/SimVascular/svMultiPhysics.git
-  # The fork repository is used only by the temporary #788 end-to-end test.
-  SVMP_IMAGE_REPOSITORY: ${{ github.repository == 'bearsontheloose/svMultiPhysics' && 'ghcr.io/bearsontheloose/svmultiphysics-node24-test' || 'ghcr.io/simvascular/svmultiphysics' }}
+  SVMP_IMAGE_REPOSITORY: ghcr.io/simvascular/svmultiphysics
 
 concurrency:
   group: svmultiphysics-image-${{ github.repository }}-${{ github.ref }}
@@ -117,18 +112,9 @@ jobs:
         id: execution
         shell: bash
         run: |
-          canonical_main_run=false
-          fork_test=false
-          if [[ "${GITHUB_REPOSITORY}" == SimVascular/svMultiPhysics && "${GITHUB_REF}" == refs/heads/main ]]; then
-            canonical_main_run=true
-          fi
-          # Temporary fork-only path for testing this workflow before merging #788.
-          if [[ "${GITHUB_REPOSITORY}" == bearsontheloose/svMultiPhysics &&
-                "${GITHUB_REF}" == refs/heads/feature/788-build-validate-container-images ]]; then
-            fork_test=true
-          fi
-          if [[ "${canonical_main_run}" != true && "${fork_test}" != true ]]; then
-            echo 'This workflow must run from canonical main or the approved fork test branch' >&2
+          if [[ "${GITHUB_REPOSITORY}" != SimVascular/svMultiPhysics ||
+                "${GITHUB_REF}" != refs/heads/main ]]; then
+            echo 'This workflow must run from SimVascular/svMultiPhysics main' >&2
             exit 1
           fi
           printf 'image_repository=%s\n' "${SVMP_IMAGE_REPOSITORY}" >> "${GITHUB_OUTPUT}"
@@ -142,7 +128,7 @@ jobs:
         id: source
         shell: bash
         env:
-          REQUESTED_REF: ${{ inputs.svmultiphysics_ref || 'v1.0.0.2' }}
+          REQUESTED_REF: ${{ inputs.svmultiphysics_ref }}
         run: |
           source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
           if [[ ! "${REQUESTED_REF}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -180,9 +166,7 @@ jobs:
         id: image
         shell: bash
         env:
-          # The fork token can read the fork-owned staging image; canonical runs
-          # continue to use the released image from the SimVascular namespace.
-          REQUESTED_IMAGE: ${{ inputs.dependency_image || (github.repository == 'bearsontheloose/svMultiPhysics' && 'ghcr.io/bearsontheloose/svmultiphysics-dependencies:1.0.0.1-dev' || 'ghcr.io/simvascular/svmultiphysics-dependencies:1.0.0.1') }}
+          REQUESTED_IMAGE: ${{ inputs.dependency_image }}
         run: |
           source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
           read -r _ digest resolved_image < <(ci_resolve_ghcr_image "${REQUESTED_IMAGE}")
@@ -196,9 +180,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.source.outputs.tag }}
           SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
-          # The temporary fork test builds from its accessible staging mirror,
-          # while the release records the corresponding canonical dependency.
-          RELEASE_DEPENDENCY_IMAGE: ${{ github.repository == 'bearsontheloose/svMultiPhysics' && 'ghcr.io/simvascular/svmultiphysics-dependencies@sha256:f0cebd311a7edf6f0a87eb0156a0ff286f43609ab7e4cb976d4b8646755e811a' || steps.image.outputs.image }}
+          RESOLVED_IMAGE: ${{ steps.image.outputs.image }}
         run: |
           gh api "repos/${SOURCE_REPOSITORY}/releases/tags/${RELEASE_TAG}" > release-metadata.json
           test "$(jq -r '.tag_name' release-metadata.json)" = "${RELEASE_TAG}"
@@ -207,7 +189,7 @@ jobs:
           grep -Fqx -- "- Built solver commit: \`${SOURCE_COMMIT}\`" <<< "${release_body}"
           grep -Fqx -- "- Solver tag: \`${RELEASE_TAG}\`" <<< "${release_body}"
           grep -Fqx -- '- Solver build type: `Release`' <<< "${release_body}"
-          grep -Fqx -- "- Dependency image (resolved digest): \`${RELEASE_DEPENDENCY_IMAGE}\`" <<< "${release_body}"
+          grep -Fqx -- "- Dependency image (resolved digest): \`${RESOLVED_IMAGE}\`" <<< "${release_body}"
           printf 'url=%s\n' "${release_url}" >> "${GITHUB_OUTPUT}"
 
       - name: Download and verify svMultiPhysics packages
@@ -774,12 +756,11 @@ jobs:
     needs: [prepare, validate]
     if: >-
       needs.prepare.outputs.already_published != 'true' &&
-      ((github.repository == 'SimVascular/svMultiPhysics' && github.ref == 'refs/heads/main') ||
-       (github.repository == 'bearsontheloose/svMultiPhysics' &&
-        github.ref == 'refs/heads/feature/788-build-validate-container-images'))
+      github.repository == 'SimVascular/svMultiPhysics' &&
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-26.04
     timeout-minutes: 45
-    environment: ${{ github.repository == 'SimVascular/svMultiPhysics' && 'release' || 'fork-test' }}
+    environment: release
     permissions:
       contents: read
       packages: write
