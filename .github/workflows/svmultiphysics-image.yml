@@ -90,7 +90,7 @@ concurrency:
 jobs:
   prepare:
     name: Resolve and verify image inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       packages: read
@@ -434,7 +434,7 @@ jobs:
     name: Build ${{ matrix.configuration }} image
     needs: prepare
     if: needs.prepare.outputs.already_published != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 90
     permissions:
       contents: read
@@ -577,7 +577,7 @@ jobs:
     name: Validate ${{ matrix.configuration }} image
     needs: [prepare, build]
     if: needs.prepare.outputs.already_published != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 120
     permissions:
       contents: read
@@ -777,7 +777,7 @@ jobs:
       ((github.repository == 'SimVascular/svMultiPhysics' && github.ref == 'refs/heads/main') ||
        (github.repository == 'bearsontheloose/svMultiPhysics' &&
         github.ref == 'refs/heads/feature/788-build-validate-container-images'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
     environment: ${{ github.repository == 'SimVascular/svMultiPhysics' && 'release' || 'fork-test' }}
     permissions:
