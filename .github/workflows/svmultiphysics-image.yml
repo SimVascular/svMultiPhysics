@@ -80,6 +80,8 @@ permissions: {}
 env:
   SOURCE_REPOSITORY: SimVascular/svMultiPhysics
   SOURCE_REMOTE: https://github.com/SimVascular/svMultiPhysics.git
+  # The fork repository is used only by the temporary #788 end-to-end test.
+  SVMP_IMAGE_REPOSITORY: ${{ github.repository == 'bearsontheloose/svMultiPhysics' && 'ghcr.io/bearsontheloose/svmultiphysics' || 'ghcr.io/simvascular/svmultiphysics' }}
 
 concurrency:
   group: svmultiphysics-image-${{ github.repository }}-${{ github.ref }}
@@ -113,17 +115,17 @@ jobs:
       - name: Require an approved workflow source
         shell: bash
         run: |
-          canonical_release=false
+          canonical_main_run=false
           fork_test=false
           if [[ "${GITHUB_REPOSITORY}" == SimVascular/svMultiPhysics && "${GITHUB_REF}" == refs/heads/main ]]; then
-            canonical_release=true
+            canonical_main_run=true
           fi
           # Temporary fork-only path for testing this workflow before merging #788.
           if [[ "${GITHUB_REPOSITORY}" == bearsontheloose/svMultiPhysics &&
                 "${GITHUB_REF}" == refs/heads/feature/788-build-validate-container-images ]]; then
             fork_test=true
           fi
-          if [[ "${canonical_release}" != true && "${fork_test}" != true ]]; then
+          if [[ "${canonical_main_run}" != true && "${fork_test}" != true ]]; then
             echo 'This workflow must run from canonical main or the approved fork test branch' >&2
             exit 1
           fi
@@ -324,7 +326,6 @@ jobs:
 
       - name: Check for already-published images
         id: existing
-        if: github.repository == 'SimVascular/svMultiPhysics' && github.ref == 'refs/heads/main'
         shell: bash
         env:
           VERSION: ${{ steps.source.outputs.version }}
@@ -345,7 +346,7 @@ jobs:
           source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
           matching_images=0
           for configuration in default trilinos; do
-            reference="ghcr.io/simvascular/svmultiphysics:${VERSION}-${configuration}"
+            reference="${SVMP_IMAGE_REPOSITORY}:${VERSION}-${configuration}"
             if ! docker buildx imagetools inspect "${reference}" > /dev/null 2>&1; then
               continue
             fi
@@ -440,7 +441,7 @@ jobs:
       matrix:
         configuration: [default, trilinos]
     env:
-      IMAGE_REFERENCE: ghcr.io/simvascular/svmultiphysics:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+      IMAGE_REFERENCE: ${{ env.SVMP_IMAGE_REPOSITORY }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
       SVMP_PACKAGE: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package || needs.prepare.outputs.trilinos_package }}
       SVMP_PACKAGE_SHA256: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package_sha256 || needs.prepare.outputs.trilinos_package_sha256 }}
       WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -582,7 +583,7 @@ jobs:
       matrix:
         configuration: [default, trilinos]
     env:
-      IMAGE_REFERENCE: ghcr.io/simvascular/svmultiphysics:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+      IMAGE_REFERENCE: ${{ env.SVMP_IMAGE_REPOSITORY }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
       SVMP_PACKAGE: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package || needs.prepare.outputs.trilinos_package }}
       SVMP_PACKAGE_SHA256: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package_sha256 || needs.prepare.outputs.trilinos_package_sha256 }}
       SVMP_SOLVER_CONFIGURATION: ${{ matrix.configuration }}
@@ -770,16 +771,17 @@ jobs:
     needs: [prepare, validate]
     if: >-
       needs.prepare.outputs.already_published != 'true' &&
-      github.repository == 'SimVascular/svMultiPhysics' &&
-      github.ref == 'refs/heads/main'
+      ((github.repository == 'SimVascular/svMultiPhysics' && github.ref == 'refs/heads/main') ||
+       (github.repository == 'bearsontheloose/svMultiPhysics' &&
+        github.ref == 'refs/heads/feature/788-build-validate-container-images'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    environment: release
+    environment: ${{ github.repository == 'SimVascular/svMultiPhysics' && 'release' || 'fork-test' }}
     permissions:
       contents: read
       packages: write
     env:
-      IMAGE: ghcr.io/simvascular/svmultiphysics
+      IMAGE: ${{ env.SVMP_IMAGE_REPOSITORY }}
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - name: Download validated default image
