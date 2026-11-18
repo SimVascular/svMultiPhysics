@@ -31,11 +31,19 @@ ci_resolve_remote_tag() {
   printf '%s\n' "$commit"
 }
 
+ci_commit_is_on_remote_main() {
+  local commit="$1"
+  local remote="$2"
+  local tracking_ref="$3"
+
+  git fetch --no-tags "$remote" "refs/heads/main:${tracking_ref}" || return 1
+  git merge-base --is-ancestor "$commit" "$tracking_ref"
+}
+
 ci_commit_is_on_origin_main() {
   local commit="$1"
 
-  git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main || return 1
-  git merge-base --is-ancestor "$commit" refs/remotes/origin/main
+  ci_commit_is_on_remote_main "$commit" origin refs/remotes/origin/main
 }
 
 ci_resolve_ghcr_image() {
@@ -62,6 +70,18 @@ ci_resolve_ghcr_image() {
   fi
 
   printf '%s %s %s@%s\n' "$repository" "$digest" "$repository" "$digest"
+}
+
+ci_ghcr_image_labels() {
+  local image="$1"
+
+  docker buildx imagetools inspect "$image" --format '{{json .Image.Config.Labels}}'
+}
+
+ci_ghcr_image_platform() {
+  local image="$1"
+
+  docker buildx imagetools inspect "$image" --format '{{.Image.OS}} {{.Image.Architecture}}'
 }
 
 ci_svzerodsolver_identity() {
