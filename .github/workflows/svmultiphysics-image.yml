@@ -134,7 +134,7 @@ jobs:
           printf 'image_repository=%s\n' "${SVMP_IMAGE_REPOSITORY}" >> "${GITHUB_OUTPUT}"
 
       - name: Check out workflow source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -167,10 +167,10 @@ jobs:
             "${REQUESTED_REF}" "${source_commit}" "${version}" >> "${GITHUB_OUTPUT}"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -424,7 +424,7 @@ jobs:
 
       - name: Upload verified package inputs
         if: steps.existing.outputs.already_published != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: svmultiphysics-image-inputs-${{ steps.source.outputs.commit }}
           path: verified-packages/
@@ -450,19 +450,19 @@ jobs:
       WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Check out image recipe
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download verified package inputs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: svmultiphysics-image-inputs-${{ needs.prepare.outputs.commit }}
           path: packages
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -565,7 +565,7 @@ jobs:
           printf -- '- Saved image: `%s`\n' '${{ steps.export.outputs.archive }}' >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload image artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
           path: image/
@@ -594,14 +594,14 @@ jobs:
       WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Check out integration-test fixtures
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: SimVascular/svMultiPhysics
           ref: ${{ needs.prepare.outputs.commit }}
           lfs: true
 
       - name: Download image artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
           path: image
@@ -745,7 +745,7 @@ jobs:
 
       - name: Upload integration-test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}-test-results
           path: test-results/*.xml
@@ -788,13 +788,13 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - name: Download validated default image
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-default
           path: images/default
 
       - name: Download validated Trilinos image
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-trilinos
           path: images/trilinos
@@ -813,10 +813,10 @@ jobs:
           done
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
