@@ -81,7 +81,7 @@ env:
   SOURCE_REPOSITORY: SimVascular/svMultiPhysics
   SOURCE_REMOTE: https://github.com/SimVascular/svMultiPhysics.git
   # The fork repository is used only by the temporary #788 end-to-end test.
-  SVMP_IMAGE_REPOSITORY: ${{ github.repository == 'bearsontheloose/svMultiPhysics' && 'ghcr.io/bearsontheloose/svmultiphysics' || 'ghcr.io/simvascular/svmultiphysics' }}
+  SVMP_IMAGE_REPOSITORY: ${{ github.repository == 'bearsontheloose/svMultiPhysics' && 'ghcr.io/bearsontheloose/svmultiphysics-node24-test' || 'ghcr.io/simvascular/svmultiphysics' }}
 
 concurrency:
   group: svmultiphysics-image-${{ github.repository }}-${{ github.ref }}
