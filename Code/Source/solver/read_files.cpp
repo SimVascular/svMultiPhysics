@@ -2138,6 +2138,55 @@ void read_files(Simulation* simulation, const std::string& file_name)
   dmsg << "Done Read equations " << " ";
   #endif
 
+  if (com_mod.prestrain_enabled) {
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.prestress_enabled,
+        "Prestress and Prestrain can not both be set.");
+    svmp::throw_if<svmp::NotImplementedException>(com_mod.stFileFlag,
+        "A Prestrain run can not be restarted from a .bin file. "
+        "Point Prestrain_file_path at its last VTU file instead.");
+
+    // Every prestrain iteration restarts the solution from rest, and its time is
+    // fictitious, so any other physics would be erased or advanced meaninglessly.
+    const auto& eq = com_mod.eq[0];
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.nEq != 1,
+        "A Prestrain run solves a single struct equation, but this input has " +
+        std::to_string(com_mod.nEq) + " equations. Every prestrain iteration starts the solution again "
+        "from rest in fictitious time, which other physics cannot follow.");
+
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.phys != EquationType::phys_struct,
+        "Prestrain solves are currently only supported for struct equations.");
+
+    // A prestrain iteration composes its update into F0; a line search would
+    // have to compose every trial step to judge it by the composed residual.
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.line_search_enabled,
+        "Line_search_experimental is not supported in a Prestrain run. It remains available "
+        "in forward runs that read a prestrain through Prestrain_file_path.");
+  }
+
+  bool prestrained = com_mod.prestrain_enabled;
+  for (const auto& msh : com_mod.msh) {
+    const bool mesh_prestrained = com_mod.prestrain_enabled || msh.prestrain.has_prestrain();
+    prestrained = prestrained || mesh_prestrained;
+
+    // The prestrain is held at the mesh's Gauss points, which the momentum and
+    // continuity integrations of a Taylor-Hood element do not use.
+    svmp::throw_if<svmp::NotImplementedException>(mesh_prestrained && msh.nFs != 1,
+        "A prestrain requires the same quadrature for the momentum and continuity "
+        "equations (P1P1) on the mesh named '" + msh.name + "'; Taylor-Hood is not supported.");
+  }
+
+  // A ustruct solid's hydrostatic prestress would have to come from its pressure
+  // field, which starts from zero.
+  svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.sstEq,
+      "A prestrain can not be applied to a ustruct (velocity-pressure) solid: its hydrostatic "
+      "part would have to be carried by the pressure field, which starts from zero. Use a struct "
+      "equation for the prestrained solid.");
+
+  // F0 is held per element of the mesh as read. remeshing would leave it behind.
+  svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.rmsh.isReqd,
+      "A prestrain is not supported with remeshing: the prestrain is stored per element of the "
+      "original mesh and is not carried to a new one.");
+
   auto& cep_mod = simulation->get_cep_mod();
 
   // Read equation-specific parameters for a cardiac electrophysiology model (ECG leads only, at the moment)

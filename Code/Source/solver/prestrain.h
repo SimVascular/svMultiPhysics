@@ -208,13 +208,6 @@ void correct_composed_tangent(const ComMod& com_mod, const CepMod& cep_mod, cons
     const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,   // mat_models::FiberRef<nsd>
     double w_afu, int dof, Array3<double>& lK);
 
-/// @brief Validate the settings and the prestrains read from file, and seed
-/// the identity where a prestrain run has none, so that every mesh of a
-/// prestrain run carries a prestrain. Called once the meshes are partitioned.
-/// Rejects a prestrain run with more than one equation, one that is not struct,
-/// or a line search, and any prestrain on a ustruct solid or with remeshing.
-void init(ComMod& com_mod);
-
 };
 
 #endif

@@ -50,7 +50,7 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN);
 /// @param[in] F0 Prestrain deformation gradient at the Gauss point, from the
 ///   stress-free configuration to the mesh (see Prestrain), with which the
 ///   deformation gradient is @f$ F = (I + \nabla u) F_0 @f$. A prestrain is
-///   not currently supported for ustruct (see prestrain::init), so this is
+///   not currently supported for ustruct (see read_files.cpp), so this is
 ///   always the identity.
 /// @param[in,out] lR Element residual, dof x eNoNw; the contribution is added.
 /// @param[in,out] lK Element tangent with respect to the velocity and
@@ -89,7 +89,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 /// @param[in] F0 Prestrain deformation gradient at the Gauss point, from the
 ///   stress-free configuration to the mesh (see Prestrain), with which the
 ///   deformation gradient is @f$ F = (I + \nabla u) F_0 @f$. A prestrain is
-///   not currently supported for ustruct (see prestrain::init), so this is
+///   not currently supported for ustruct (see read_files.cpp), so this is
 ///   always the identity.
 /// @param[in] fibers Fiber directions at the Gauss point, one per column.
 /// @param[in] active_stress_evaluator Active stress model, updated for the

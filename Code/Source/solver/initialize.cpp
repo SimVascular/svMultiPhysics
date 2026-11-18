@@ -706,10 +706,15 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     com_mod.pSa.resize(tnNo); 
   } 
 
-  // Check that the prestrains read from a file
-  // are supported by the meshes and equations that use them.
-  // Set the prestrain of every mesh that read none to the identity.
-  prestrain::init(com_mod);
+  // Prestrain runs are intialize to F0 = I
+  // unless a prestain file is provided for a mesh.
+  if (com_mod.prestrain_enabled) {
+    for (auto& msh : com_mod.msh) {
+      if (!msh.prestrain.has_prestrain()) {
+        msh.prestrain.set_identity(nsd, msh.nG, msh.nEl);
+      }
+    }
+  }
 
   // Electrophysiology
   //
