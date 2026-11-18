@@ -111,8 +111,10 @@ jobs:
       svzerod_package_sha256: ${{ steps.svzerod.outputs.sha256 }}
       svzerod_tag: ${{ steps.svzerod.outputs.tag }}
       svzerod_commit: ${{ steps.svzerod.outputs.commit }}
+      image_repository: ${{ steps.execution.outputs.image_repository }}
     steps:
       - name: Require an approved workflow source
+        id: execution
         shell: bash
         run: |
           canonical_main_run=false
@@ -129,6 +131,7 @@ jobs:
             echo 'This workflow must run from canonical main or the approved fork test branch' >&2
             exit 1
           fi
+          printf 'image_repository=%s\n' "${SVMP_IMAGE_REPOSITORY}" >> "${GITHUB_OUTPUT}"
 
       - name: Check out workflow source
         uses: actions/checkout@v4
@@ -441,7 +444,7 @@ jobs:
       matrix:
         configuration: [default, trilinos]
     env:
-      IMAGE_REFERENCE: ${{ env.SVMP_IMAGE_REPOSITORY }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+      IMAGE_REFERENCE: ${{ needs.prepare.outputs.image_repository }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
       SVMP_PACKAGE: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package || needs.prepare.outputs.trilinos_package }}
       SVMP_PACKAGE_SHA256: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package_sha256 || needs.prepare.outputs.trilinos_package_sha256 }}
       WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -583,7 +586,7 @@ jobs:
       matrix:
         configuration: [default, trilinos]
     env:
-      IMAGE_REFERENCE: ${{ env.SVMP_IMAGE_REPOSITORY }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+      IMAGE_REFERENCE: ${{ needs.prepare.outputs.image_repository }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
       SVMP_PACKAGE: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package || needs.prepare.outputs.trilinos_package }}
       SVMP_PACKAGE_SHA256: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package_sha256 || needs.prepare.outputs.trilinos_package_sha256 }}
       SVMP_SOLVER_CONFIGURATION: ${{ matrix.configuration }}
@@ -781,7 +784,7 @@ jobs:
       contents: read
       packages: write
     env:
-      IMAGE: ${{ env.SVMP_IMAGE_REPOSITORY }}
+      IMAGE: ${{ needs.prepare.outputs.image_repository }}
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - name: Download validated default image
