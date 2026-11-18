@@ -14,15 +14,13 @@ namespace {
 ///
 /// @param[in] lhs The left-hand side of the linear system.
 /// @param[in] gNodes The mesh indices of the nodes.
-/// @param[in] num_nodes The number of nodes.
 ///
 /// @return The linear solver indices of the nodes.
 Vector<int> linear_solver_node_indices(const FSILS_lhsType &lhs,
-                                       const Vector<int> &gNodes,
-                                       int num_nodes) {
-  Vector<int> node_indices(num_nodes);
+                                       const Vector<int> &gNodes) {
+  Vector<int> node_indices(gNodes.size());
 
-  for (int a = 0; a < num_nodes; a++) {
+  for (int a = 0; a < gNodes.size(); a++) {
     node_indices(a) = lhs.map(gNodes(a));
   }
 
@@ -153,9 +151,9 @@ void append_owned_flowrate_derivative(const FSILS_lhsType &lhs,
 void set_flowrate_derivative_on_face_nodes(const FSILS_lhsType &lhs,
                                            FSILS_faceType &face,
                                            const Array<double> &values) {
-  face.flowrate_derivative_node_indices.clear();
-  face.flowrate_derivative.clear();
-  face.scaled_flowrate_derivative.clear();
+  face.flowrate_derivative_node_indices.resize(0);
+  face.flowrate_derivative.resize(face.dof, 0);
+  face.scaled_flowrate_derivative.resize(face.dof, 0);
 
   append_owned_flowrate_derivative(lhs, face, face.glob, values);
 }
@@ -201,21 +199,18 @@ void fsils_bc_create(FSILS_lhsType &lhs, int faIn, BcType BC_type,
   lhs.face[faIn].nNo = nNo;
   lhs.face[faIn].dof = dof;
   lhs.face[faIn].bGrp = BC_type;
-  lhs.face[faIn].glob = linear_solver_node_indices(lhs, gNodes, nNo);
+  lhs.face[faIn].glob = linear_solver_node_indices(lhs, gNodes);
 
   lhs.face[faIn].sharedFlag = is_shared_between_processes(lhs, nNo);
 
   // Store the values and synchronize them on nodes on boundary between
-  // processes. The resize sets the size on a process that has no node of the
-  // face, where the assignment does nothing.
+  // processes.
   if (BC_type == BcType::BC_TYPE_Dir) {
-    lhs.face[faIn].free_component_mask.resize(dof, nNo);
     lhs.face[faIn].free_component_mask = Val;
 
     sum_nodal_values_over_processes(lhs, lhs.face[faIn],
                                     lhs.face[faIn].free_component_mask);
   } else {
-    lhs.face[faIn].unit_pressure_load.resize(dof, nNo);
     lhs.face[faIn].unit_pressure_load = Val;
 
     sum_nodal_values_over_processes(lhs, lhs.face[faIn],
@@ -274,7 +269,6 @@ void fsils_bc_append_flowrate_derivative(const FSILS_lhsType &lhs,
                                          const Array<double> &values) {
 
   append_owned_flowrate_derivative(
-      lhs, face, linear_solver_node_indices(lhs, gNodes, values.ncols()),
-      values);
+      lhs, face, linear_solver_node_indices(lhs, gNodes), values);
 }
 };
