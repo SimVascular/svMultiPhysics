@@ -397,6 +397,26 @@ TEST(Prestrain, RejectsMissingGaussPointArray)
   std::filesystem::remove(file_name);
 }
 
+TEST(Prestrain, RejectsComponentCountMismatch)
+{
+  const std::string file_name = ::testing::TempDir() + "three_dimensional_prestrain.vtu";
+  write_prestrain_file(file_name, 1, {{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}});
+
+  MeshParameters parameters;
+  parameters.prestrain_file_path.set(file_name);
+
+  // Too many components: a 3D prestrain read on a 2D mesh.
+  auto mesh = make_single_element_mesh();
+  Prestrain prestrain;
+  EXPECT_THROW(prestrain.read(parameters, mesh, 2), svmp::FileFormatException);
+
+  // Too few components: a 2D prestrain read on a 3D mesh.
+  write_prestrain_file(file_name, 1, {{1.0, 0.0, 0.0, 1.0}});
+  EXPECT_THROW(prestrain.read(parameters, mesh, 3), svmp::FileFormatException);
+
+  std::filesystem::remove(file_name);
+}
+
 TEST(Prestrain, ComposesDisplacementGradientOnTheLeft)
 {
   ComMod com_mod;

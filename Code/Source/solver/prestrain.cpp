@@ -87,6 +87,10 @@ void Prestrain::read(const MeshParameters& mesh_parameters, mshType& mesh, const
     svmp::throw_if<svmp::FileFormatException>(!vtk_data->has_cell_data(name), file_name,
         "No cell array named '" + name + "': the mesh named '" + mesh.name + "' integrates with " +
         std::to_string(mesh.nG) + " Gauss points per element.");
+    const int file_ncomp = vtk_data->get_cell_data_dimensions(name).first;
+    svmp::throw_if<svmp::FileFormatException>(file_ncomp != ncomp, file_name,
+        "The cell array '" + name + "' has " + std::to_string(file_ncomp) + " components, but a prestrain in " +
+        std::to_string(nsd) + "D has " + std::to_string(ncomp) + ".");
     vtk_data->copy_cell_data(name, Fg);
 
     for (int e = 0; e < mesh.gnEl; e++) {
