@@ -473,10 +473,8 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
   }
 }
 
-/// @brief Physical gradients Nqx of the Taylor-Hood pressure basis fs_q at Gauss point g.
-/// The element geometry is given by all velocity nodes xwl (basis fs_w), so the pressure
-/// basis is mapped with the Jacobian of that geometry. The pressure (vertex) nodes alone
-/// give it only for straight-sided elements.
+/// @brief Gradients Nqx of the Taylor-Hood pressure basis fs_q at Gauss point g, mapped with
+/// the Jacobian of the element geometry xwl (basis fs_w), so curved elements are handled.
 static void thood_pressure_gradients(const int nsd, const fsType& fs_w, const fsType& fs_q, const int g,
     const Array<double>& xwl, Array<double>& Nqx)
 {

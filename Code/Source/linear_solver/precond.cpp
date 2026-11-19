@@ -83,16 +83,10 @@ void pos_mul(const Array<int>& rowPtr, const Vector<int>& colPtr, const int nNo,
   }
 }
 
-/// @brief Scale the last degree of freedom, the pressure of a saddle point
-/// problem, at the nodes where its diagonal is zero but that of another degree
-/// of freedom is not, as for the Taylor-Hood pressure. There W(p) is 1 on
-/// entry, which leaves the pressure unscaled against the velocity rows scaled
-/// by W. It is divided by the norm of the pressure column in the scaled
-/// velocity rows, so that the scaled Schur complement G^T G has a unit
-/// diagonal. diag is the diagonal summed over the processes. Unless some
-/// process has such a node, the pass over the matrix for the norms is skipped.
-/// The entries of rows shared with other processes are partial sums, so at
-/// those columns the norm is approximate.
+/// @brief Scale a zero-diagonal pressure (last dof), as for Taylor-Hood elements,
+/// by the inverse norm of its column in the scaled velocity rows, so that the
+/// scaled G^T G has a unit diagonal. diag is the diagonal summed over processes;
+/// at shared nodes the norms use partial rows.
 //
 void scale_zero_diagonal_pressure(const fsi_linear_solver::FSILS_lhsType& lhs, const int dof, const Array<double>& Val,
     const Array<double>& diag, Array<double>& W)
@@ -140,7 +134,7 @@ void scale_zero_diagonal_pressure(const fsi_linear_solver::FSILS_lhsType& lhs, c
 }
 
 //--------------
-// precond_diag
+// precond_diag 
 //--------------
 // Jacobi symmetic preconditioner, to precondition both LHS and RHS.
 //
