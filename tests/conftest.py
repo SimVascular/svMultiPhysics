@@ -10,7 +10,9 @@ import xml.etree.ElementTree as ET
 import meshio
 
 this_file_dir = os.path.abspath(os.path.dirname(__file__))
-cpp_exec = os.path.join(this_file_dir, "..", "build", "svMultiPhysics-build", "bin", "svmultiphysics")
+cpp_exec = os.environ.get("SVMP_SOLVER_EXECUTABLE") or os.path.join(
+    this_file_dir, "..", "build", "svMultiPhysics-build", "bin", "svmultiphysics"
+)
 cpp_exec_p = os.path.join(this_file_dir, "..", "build-petsc", "svMultiPhysics-build", "bin", "svmultiphysics")
 
 
@@ -38,11 +40,15 @@ def cmake_cache_path_for(exe_path):
 # CMakeCache.txt of the corresponding build (PETSc tests use the separate build
 # at cpp_exec_p; Trilinos is linked into the main build at cpp_exec). PETSc is
 # enabled when SV_PETSC_DIR is a non-empty path, Trilinos when SV_USE_TRILINOS
-# is ON. A missing cache (e.g. the build does not exist) means "not available".
+# is ON. Package validation supplies the installed executable and configuration
+# explicitly because a clean test container has no CMake build cache.
 HAS_PETSC = bool(read_cmake_cache_variable(cmake_cache_path_for(cpp_exec_p), "SV_PETSC_DIR"))
-HAS_TRILINOS = (
-    read_cmake_cache_variable(cmake_cache_path_for(cpp_exec), "SV_USE_TRILINOS") or ""
-).upper() in ("ON", "1", "TRUE", "YES")
+if os.environ.get("SVMP_SOLVER_EXECUTABLE"):
+    HAS_TRILINOS = os.environ.get("SVMP_SOLVER_CONFIGURATION") == "trilinos"
+else:
+    HAS_TRILINOS = (
+        read_cmake_cache_variable(cmake_cache_path_for(cpp_exec), "SV_USE_TRILINOS") or ""
+    ).upper() in ("ON", "1", "TRUE", "YES")
 
 # Reusable markers to decorate PETSc/Trilinos tests at their definition site.
 skip_if_no_petsc = pytest.mark.skipif(

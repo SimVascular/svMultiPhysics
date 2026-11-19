@@ -63,6 +63,7 @@ include(ExternalProject)
 # SimVascular Includes
 option(SV_ENABLE_DISTRIBUTION "Build packages" OFF)
 option(SV_RELEASE_PACKAGE "Require a clean tree and matching tag for an official package" OFF)
+option(SV_TAG_AFTER_VALIDATION "Allow an official package to be built before its final tag is created" OFF)
 include(SimVascularMacros)
 include(SimVascularFunctions)
 include(SimVascularSystemSetup)
@@ -146,7 +147,8 @@ ExternalProject_Add(svMultiPhysics
     -DSV_LOCAL_VTK_PATH:STRING=${SV_LOCAL_VTK_PATH}
     -DSV_ENABLE_DISTRIBUTION:BOOL=${SV_ENABLE_DISTRIBUTION}
     -DSV_RELEASE_PACKAGE:BOOL=${SV_RELEASE_PACKAGE}
-    -DSV_PACKAGE_VERSION:STRING=${SV_PACKAGE_VERSION}
+    -DSV_TAG_AFTER_VALIDATION:BOOL=${SV_TAG_AFTER_VALIDATION}
+    # The nested build reads release.json itself; do not cache a derived version here.
     ${SV_APPLE_CMAKE_ARGS}
     ${SV_ADDITIONAL_CMAKE_ARGS}
     )
