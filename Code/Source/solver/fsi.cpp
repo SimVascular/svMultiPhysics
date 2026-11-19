@@ -153,8 +153,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     Array<double> xql(nsd,fs_1[1].eNoN);
     Array<double> Nqx(nsd,fs_1[1].eNoN);
 
-    const bool prestrained = lM.prestrain.has_prestrain() &&
-        (cPhys == Equation_struct || cPhys == Equation_ustruct);
+    const bool prestrained = lM.prestrain.has_prestrain() && cPhys == Equation_struct;
 
     xwl = xl;
 
@@ -196,7 +195,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
-      const bool recompute_visc = (g == 0 || !fs_1[0].lShpF);
+      bool recompute_visc = (g == 0 || !fs_1[0].lShpF);
 
       if (recompute_visc || prestrained) {
         auto Nx = fs_1[0].Nx.rslice(g);
@@ -211,7 +210,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
       // Prestrained elements are integrated on their unloaded configuration.
       if (prestrained) {
-        F0 = lM.prestrain.get(nsd, g, e);
+        const Eigen::MatrixXd F0_g = lM.prestrain.get(nsd, g, e);
+        recompute_visc = recompute_visc || F0_g != F0;
+        F0 = F0_g;
         mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
         Jac /= F0.determinant();
         if (mesh_has_fibers) {
@@ -254,7 +255,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N1 = fs_1[1].N.col(g);
             ustruct::ustruct_3d_m(com_mod, cep_mod, vmsStab, fs_1[0].eNoN,
                                   fs_1[1].eNoN, w, Jac, N0, N1, Nwx, al,
-                                  yl, dl, bfl, mat_fun::Matrix<3>(F0), fibers, active_stress_evaluator, lR,
+                                  yl, dl, bfl, fibers, active_stress_evaluator, lR,
                                   lK, lKd, recompute_visc);
           } break;
           }
@@ -300,7 +301,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     // Gauss integration 2
     //
     for (int g = 0; g < fs_2[1].nG; g++) {
-      if (g == 0 || !fs_2[0].lShpF || prestrained) {
+      if (g == 0 || !fs_2[0].lShpF) {
         auto Nx = fs_2[0].Nx.rslice(g);
         nn::gnn(fs_2[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
 
@@ -309,21 +310,13 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         }
       }
 
-      if (g == 0 || !fs_2[1].lShpF || prestrained) {
+      if (g == 0 || !fs_2[1].lShpF) {
         auto Nx = fs_2[1].Nx.rslice(g);
         nn::gnn(fs_2[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix);
 
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_fsi] Jacobian for element " + std::to_string(e) + " is < 0.");
         }
-      }
-
-      // Prestrained elements are integrated on their unloaded configuration.
-      if (prestrained) {
-        F0 = lM.prestrain.get(nsd, g, e);
-        mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
-        mat_fun::eigen_view_mutable(Nqx) = F0.transpose() * mat_fun::eigen_view(Nqx);
-        Jac /= F0.determinant();
       }
       double w = fs_2[1].w(g) * Jac;
 
@@ -346,7 +339,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_ustruct:
             auto N0 = fs_2[0].N.col(g);
             auto N1 = fs_2[1].N.col(g);
-            ustruct::ustruct_3d_c(com_mod, cep_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, Jac, N0, N1, Nwx, Nqx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), lR, lK, lKd);
+            ustruct::ustruct_3d_c(com_mod, cep_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, Jac, N0, N1, Nwx, Nqx, al, yl, dl, bfl, lR, lK, lKd);
           break;
         }
 

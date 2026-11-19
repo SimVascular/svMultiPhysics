@@ -38,10 +38,10 @@ To regenerate `2-forward/prestrain.vtu`, set `Number_of_time_steps` to 20 in
 starts from rest and composes the displacement it reaches into the prestrain.
 With `Adaptive_time_step` in the general simulation parameters the time step grows
 as the state approaches equilibrium, so once it is large the residual falls
-quadratically and reaches round-off by step 14 of a 20-step run. Every result
+quadratically and reaches round-off by step 9 of a 20-step run. Every result
 carries the prestrain as the cell arrays `Prestrain_F_g<g>`, one per Gauss
 point.
 
 `2-forward` loads the converged prestrain through `<Prestrain_file_path>`
 and holds the same 10 mmHg as a follower load, so the geometry should not move:
-its displacement stays at round-off. Raise the pressure in
+its displacement stays at round-off.

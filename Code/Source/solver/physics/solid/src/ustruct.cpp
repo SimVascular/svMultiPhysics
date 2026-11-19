@@ -22,7 +22,6 @@
 #include "solid/ustruct.h"
 
 #include "all_fun.h"
-#include "prestrain.h"
 #include "fs.h"
 #include "mat_fun.h"
 #include "solid/mat_models.h"
@@ -302,8 +301,6 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     Array<double> xql(nsd,fs[1].eNoN);
     Array<double> Nqx(nsd,fs[1].eNoN);
 
-    const bool prestrained = lM.prestrain.has_prestrain();
-
     xwl = xl;
 
     for (int i = 0; i < nsd; i++) {
@@ -317,34 +314,23 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
     Array<double> fiber_values = Fibers::zero_fibers(nsd);
-    Eigen::MatrixXd F0 = Eigen::MatrixXd::Identity(nsd, nsd);
 
     for (int g = 0; g < fs[0].nG; g++) {
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       }
-      auto fibers = mat_fun::eigen_view_mutable(fiber_values);
+      const auto fibers = mat_fun::eigen_view(fiber_values);
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra. triangles).
       const bool recompute_visc = (g == 0 || !fs[0].lShpF);
 
-      if (recompute_visc || prestrained) {
+      if (recompute_visc) {
         auto Nx = fs[0].Nx.slice(g);
         nn::gnn(fs[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_usolid] Jacobian for element " + std::to_string(e) + " is < 0.");
-        }
-      }
-
-      // Prestrained elements are integrated on their unloaded configuration.
-      if (prestrained) {
-        F0 = lM.prestrain.get(nsd, g, e);
-        mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
-        Jac /= F0.determinant();
-        if (mesh_has_fibers) {
-          fibers = (F0.inverse() * fibers).colwise().normalized();
         }
       }
 
@@ -354,14 +340,14 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         ustruct_3d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), fibers,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         ustruct_2d_m(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w,
-                     Jac, N0, N1, Nwx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), fibers,
+                     Jac, N0, N1, Nwx, al, yl, dl, bfl, fibers,
                      active_stress_evaluator, lR, lK, lKd, recompute_visc);
       }
 
@@ -373,7 +359,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     // Gauss integration 2
     //
     for (int g = 0; g < fs[1].nG; g++) {
-      if (g == 0 || !fs[0].lShpF || prestrained) {
+      if (g == 0 || !fs[0].lShpF) {
         auto Nx = fs[0].Nx.slice(g);
         nn::gnn(fs[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -381,20 +367,12 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         }
       }
 
-      if (g == 0 || !fs[1].lShpF || prestrained) {
+      if (g == 0 || !fs[1].lShpF) {
         auto Nx = fs[1].Nx.slice(g);
         nn::gnn(fs[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix);
         if (utils::is_zero(Jac)) {
            throw std::runtime_error("[construct_usolid] Jacobian for element " + std::to_string(e) + " is < 0.");
         }
-      }
-
-      // Prestrained elements are integrated on their unloaded configuration.
-      if (prestrained) {
-        F0 = lM.prestrain.get(nsd, g, e);
-        mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
-        mat_fun::eigen_view_mutable(Nqx) = F0.transpose() * mat_fun::eigen_view(Nqx);
-        Jac /= F0.determinant();
       }
 
       double w = fs[1].w(g) * Jac;
@@ -403,13 +381,13 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         ustruct_3d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
-            Nqx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), lR, lK, lKd);
+            Nqx, al, yl, dl, bfl, lR, lK, lKd);
 
       } else if (nsd == 2) {
         auto N0 = fs[0].N.col(g);
         auto N1 = fs[1].N.col(g);
         ustruct_2d_c(com_mod, cep_mod, vmsStab, fs[0].eNoN, fs[1].eNoN, w, Jac, N0, N1, Nwx,
-            Nqx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), lR, lK, lKd);
+            Nqx, al, yl, dl, bfl, lR, lK, lKd);
       }
 
     } // for g = 0 to fs[1].nG
@@ -444,8 +422,7 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN)
 void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& bfl,
-    const mat_fun::Matrix<2>& F0, Array<double>& lR, Array3<double>& lK,
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -498,10 +475,9 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   const Eigen::Vector2d v  = vel * Nwm;
   const Eigen::Vector2d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
-  // F0 = I if no prestrain is present.
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
   const Matrix<2> vx = vel * Nwxm.transpose();
-  const Matrix<2> F  = F0 + disp * Nwxm.transpose();
+  const Matrix<2> F  = Matrix<2>::Identity() + disp * Nwxm.transpose();
 
   double Jac = F.determinant();
   const Matrix<2> Fi = F.inverse();
@@ -611,8 +587,7 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& bfl, const mat_fun::Matrix<3>& F0,
-    Array<double>& lR, Array3<double>& lK,
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK,
     Array3<double>& lKd)
 {
   using namespace consts;
@@ -666,10 +641,9 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   const Eigen::Vector3d v  = vel * Nwm;
   const Eigen::Vector3d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
-  // F0 = I if no prestrain is present.
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
   const Matrix<3> vx = vel * Nwxm.transpose();
-  const Matrix<3> F  = F0 + disp * Nwxm.transpose();
+  const Matrix<3> F  = Matrix<3>::Identity() + disp * Nwxm.transpose();
 
   double Jac = F.determinant();
   const Matrix<3> Fi = F.inverse();
@@ -795,7 +769,6 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const mat_fun::Matrix<2> &F0,
                   const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
@@ -853,10 +826,9 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Eigen::Vector2d v  = vel * Nwm;
   const Eigen::Vector2d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
-  // F0 = I if no prestrain is present.
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
   const Matrix<2> vx = vel * Nwxm.transpose();
-  const Matrix<2> F  = F0 + disp * Nwxm.transpose();
+  const Matrix<2> F  = Matrix<2>::Identity() + disp * Nwxm.transpose();
 
   double Jac = F.determinant();
   const Matrix<2> Fi = F.inverse();
@@ -1041,7 +1013,6 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const mat_fun::Matrix<3> &F0,
                   const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
@@ -1101,10 +1072,9 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   const Eigen::Vector3d v  = vel * Nwm;
   const Eigen::Vector3d vd = (acc - bfm) * Nwm - fb;
 
-  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
-  // F0 = I if no prestrain is present.
+  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
   const Matrix<3> vx = vel * Nwxm.transpose();
-  const Matrix<3> F  = F0 + disp * Nwxm.transpose();
+  const Matrix<3> F  = Matrix<3>::Identity() + disp * Nwxm.transpose();
 
   double Jac = F.determinant();
   const Matrix<3> Fi = F.inverse();

@@ -47,11 +47,6 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN);
 /// @param[in] yl Nodal velocities and pressures of the element, tDof x eNoNw.
 /// @param[in] dl Nodal displacements of the element, tDof x eNoNw.
 /// @param[in] bfl Nodal body forces of the element, nsd x eNoNw.
-/// @param[in] F0 Prestrain deformation gradient at the Gauss point, from the
-///   stress-free configuration to the mesh (see Prestrain), with which the
-///   deformation gradient is @f$ F = (I + \nabla u) F_0 @f$. A prestrain is
-///   not currently supported for ustruct (see read_files.cpp), so this is
-///   always the identity.
 /// @param[in,out] lR Element residual, dof x eNoNw; the contribution is added.
 /// @param[in,out] lK Element tangent with respect to the velocity and
 ///   pressure, indexed lK(i*dof + j, a, b); the contribution is added.
@@ -60,8 +55,7 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN);
 void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
-    const Array<double>& dl, const Array<double>& bfl,
-    const Eigen::Matrix<double, 2, 2>& F0, Array<double>& lR, Array3<double>& lK, 
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
     Array3<double>& lKd);
 
 /// @brief Contribution of one Gauss point to the element residual and
@@ -86,11 +80,6 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
 /// @param[in] yl Nodal velocities and pressures of the element, tDof x eNoNw.
 /// @param[in] dl Nodal displacements of the element, tDof x eNoNw.
 /// @param[in] bfl Nodal body forces of the element, nsd x eNoNw.
-/// @param[in] F0 Prestrain deformation gradient at the Gauss point, from the
-///   stress-free configuration to the mesh (see Prestrain), with which the
-///   deformation gradient is @f$ F = (I + \nabla u) F_0 @f$. A prestrain is
-///   not currently supported for ustruct (see read_files.cpp), so this is
-///   always the identity.
 /// @param[in] fibers Fiber directions at the Gauss point, one per column.
 /// @param[in] active_stress_evaluator Active stress model, updated for the
 ///   element.
@@ -108,7 +97,6 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Eigen::Matrix<double, 2, 2> &F0,
                   const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,
@@ -119,8 +107,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl, 
-    const Array<double>& dl, const Array<double>& bfl, const Eigen::Matrix<double, 3, 3>& F0,
-    Array<double>& lR, Array3<double>& lK, 
+    const Array<double>& dl, const Array<double>& bfl, Array<double>& lR, Array3<double>& lK, 
     Array3<double>& lKd);
 
 /// @brief Three-dimensional counterpart of ustruct_2d_m.
@@ -131,7 +118,6 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const Vector<double> &Nq, const Array<double> &Nwx,
                   const Array<double> &al, const Array<double> &yl,
                   const Array<double> &dl, const Array<double> &bfl,
-                  const Eigen::Matrix<double, 3, 3> &F0,
                   const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                   const ActiveStress::Evaluator &active_stress_evaluator,
                   Array<double> &lR, Array3<double> &lK, Array3<double> &lKd,

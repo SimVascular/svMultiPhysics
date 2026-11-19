@@ -301,7 +301,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
-      const bool recompute_visc = (g == 0 || !lM.lShpF);
+      bool recompute_visc = (g == 0 || !lM.lShpF);
 
       if (recompute_visc || prestrained) {
         auto Nx_g = lM.Nx.slice(g);
@@ -313,7 +313,9 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       // Prestrained elements are integrated on their unloaded configuration.
       if (prestrained) {
-        F0 = lM.prestrain.get(nsd, g, e);
+        const Eigen::MatrixXd F0_g = lM.prestrain.get(nsd, g, e);
+        recompute_visc = recompute_visc || F0_g != F0;
+        F0 = F0_g;
         mat_fun::eigen_view_mutable(Nx) = F0.transpose() * mat_fun::eigen_view(Nx);
         Jac /= F0.determinant();
         if (mesh_has_fibers) {

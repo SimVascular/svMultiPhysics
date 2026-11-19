@@ -69,7 +69,7 @@
 <Add_equation type="struct" >
    <Coupled> true </Coupled>
    <Min_iterations> 1 </Min_iterations>
-   <Max_iterations> 1 </Max_iterations>
+   <Max_iterations> 3 </Max_iterations>
    <Tolerance> 1e-10 </Tolerance>
 
    <Prestrain> true </Prestrain>
