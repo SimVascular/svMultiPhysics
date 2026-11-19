@@ -39,7 +39,9 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 /// @param[in] yl Nodal velocities of the element, tDof x eNoN.
 /// @param[in] dl Nodal displacements of the element, tDof x eNoN.
 /// @param[in] bfl Nodal body forces of the element, nsd x eNoN.
-/// @param[in] F0 Prestrain deformation gradient at the Gauss point.
+/// @param[in] F0 Prestrain at the Gauss point: the deformation gradient from
+///   the stress-free configuration to the mesh, so that F = (I + Grad u) F0
+///   (see Prestrain). The identity when the mesh has no prestrain.
 /// @param[in] fibers Fiber directions at the Gauss point, one per column.
 /// @param[in] pS0l Nodal prestress of the element in Voigt order.
 /// @param[out] pSl PK2 stress at the Gauss point in Voigt order.
@@ -48,7 +50,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 /// @param[in,out] lK Element tangent, indexed lK(i*dof + j, a, b) for the
 ///   derivative of component i at node a with respect to component j at node b.
 /// @param[in] recompute_visc Whether the viscosity model has to recompute the
-///   quantities that depend on the shape function gradients within an element.
+///   quantities that depend on the shape function gradients.
 void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
@@ -78,7 +80,9 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 /// @param[in] yl Nodal velocities of the element, tDof x eNoN.
 /// @param[in] dl Nodal displacements of the element, tDof x eNoN.
 /// @param[in] bfl Nodal body forces of the element, nsd x eNoN.
-/// @param[in] F0 Prestrain deformation gradient at the Gauss point.
+/// @param[in] F0 Prestrain at the Gauss point: the deformation gradient from
+///   the stress-free configuration to the mesh, so that F = (I + Grad u) F0
+///   (see Prestrain). The identity when the mesh has no prestrain.
 /// @param[in] fibers Fiber directions at the Gauss point, one per column.
 /// @param[in] pS0l Nodal prestress of the element in Voigt order.
 /// @param[out] pSl PK2 stress at the Gauss point in Voigt order.
@@ -87,7 +91,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 /// @param[in,out] lK Element tangent, indexed lK(i*dof + j, a, b) for the
 ///   derivative of component i at node a with respect to component j at node b.
 /// @param[in] recompute_visc Whether the viscosity model has to recompute the
-///   quantities that depend on the shape function gradients within an element.
+///   quantities that depend on the shape function gradients.
 void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
