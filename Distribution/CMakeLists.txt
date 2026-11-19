@@ -21,7 +21,7 @@ endif()
 #-----------------------------------------------------------------------------
 set(CPACK_PACKAGE_NAME "svMultiPhysics")
 set(CPACK_PACKAGE_VENDOR "SimVascular.org")
-set(CPACK_PACKAGE_CONTACT "SimVascular<sv@simvascular.org>")
+set(CPACK_PACKAGE_CONTACT "SimVascular <sv@simvascular.org>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "SimVascular Solvers")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
 set(CPACK_PACKAGE_VERSION_MAJOR ${SV_MAJOR_VERSION})
@@ -117,8 +117,32 @@ endif()
 # APPLE
 #-----------------------------------------------------------------------------
 if(APPLE)
-  # Package name
-  set(CPACK_PACKAGE_FILE_NAME "svMultiPhysics-darwin-x64-${SV_FULL_VERSION}${INSTALL_TYPE_STR}")
+  if(SV_USE_TRILINOS)
+    set(_sv_solver_configuration "trilinos")
+  elseif(SV_PETSC_DIR)
+    set(_sv_solver_configuration "petsc")
+  else()
+    set(_sv_solver_configuration "default")
+  endif()
+
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    set(_sv_macos_architecture "arm")
+  else()
+    set(_sv_macos_architecture "x64")
+  endif()
+
+  if(SV_OSX_MAJOR_VERSION STREQUAL "26")
+    set(_sv_macos_release "Tahoe")
+  else()
+    set(_sv_macos_release "${SV_OSX_MAJOR_VERSION}")
+  endif()
+
+  set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+    "svMultiPhysics finite element multiphysics solver (${_sv_solver_configuration})")
+  set(CPACK_PACKAGE_FILE_NAME
+    "svMultiPhysics-MacOS-${_sv_macos_release}-${_sv_macos_architecture}-${_sv_solver_configuration}-${SV_PACKAGE_VERSION}")
+  set(CPACK_PRODUCTBUILD_IDENTIFIER
+    "org.simvascular.svmultiphysics.${_sv_solver_configuration}")
 
   # Components. Just install the svMultiPhysics executable.
   set(CPACK_COMPONENTS_ALL CoreExecutables) 
@@ -129,7 +153,7 @@ if(APPLE)
   #  ${CMAKE_CURRENT_BINARY_DIR}/OSX/Info.plist @ONLY)
 
   # Install location
-  set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local/sv/svMultiPhysics/${SV_INSTALL_VERSION_DIR}")
+  set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local/sv/svMultiPhysics/${SV_PACKAGE_VERSION}")
 endif()
 
 if(CPACK_PACKAGE_FILENAME_TAG)
