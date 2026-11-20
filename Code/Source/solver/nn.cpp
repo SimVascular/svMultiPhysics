@@ -669,6 +669,46 @@ void get_nn_bnds(const ComMod& com_mod, mshType& mesh)
   get_nn_bnds(nsd, eType, eNoN, mesh.xib, mesh.Nb);
 }
 
+/// @brief Reference coordinates of the nodes of a parent element.
+///
+/// 'xi(i,a)' is the i-th reference coordinate of solver-local node 'a', in the
+/// same node ordering and the same reference coordinates 'get_gnn' uses: the
+/// coordinates come from the FE Basis reference node layout, permuted into
+/// solver node order by 'basis_index_for_solver_node'.
+///
+/// They are a property of the element type, so they are the same for every
+/// element of that type whatever its shape in the mesh.
+//
+void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Array<double>& xi)
+{
+  const auto& basis = basis_for_solver_element(eType);
+  const auto& nodes = basis.nodes();
+
+  if (nodes.size() != static_cast<std::size_t>(eNoN)) {
+    svmp::raise<febasis::BasisNodeOrderingException>("FE Basis node count " + std::to_string(nodes.size()) +
+            " does not match solver eNoN " + std::to_string(eNoN) + " for " + solver_element_name(eType));
+  }
+
+  if (xi.nrows() < basis.dimension()) {
+    svmp::raise<febasis::BasisConfigurationException>("xi has " + std::to_string(xi.nrows()) +
+            " rows but FE Basis element requires " + std::to_string(basis.dimension()) +
+            " reference coordinates");
+  }
+
+  // Rows beyond the element's own reference dimension, which a
+  // lower-dimensional element in a higher-dimensional mesh has, are zero, as
+  // they are for the Gauss points in make_basis_point.
+  const int ndim = std::min<int>(insd, basis.dimension());
+
+  for (int a = 0; a < eNoN; ++a) {
+    const auto basis_index = basis_index_for_solver_node(eType, a);
+
+    for (int d = 0; d < xi.nrows(); ++d) {
+      xi(d, a) = (d < ndim) ? nodes[basis_index][static_cast<std::size_t>(d)] : 0.0;
+    }
+  }
+}
+
 void get_nnx(const int nsd, const consts::ElementType eType, const int eNoN, const Array<double>& xl, 
     const Array<double>& xib, const Array<double>& Nb, const Vector<double>& xp, Vector<double>& xi, 
     Vector<double>& N, Array<double>& Nx)
