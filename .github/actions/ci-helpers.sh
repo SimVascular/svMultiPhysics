@@ -257,14 +257,16 @@ ci_check_installed_svmultiphysics_version() {
 }
 
 ci_check_installed_svmultiphysics_libraries() {
-  local executable interface
+  local executable interface libraries
 
   read -r executable interface < <(ci_installed_svmultiphysics_paths) || return 1
-  if ldd "$executable" | grep 'not found'; then
+  libraries=$(ldd "$executable") || return 1
+  if grep 'not found' <<< "$libraries"; then
     echo 'svMultiPhysics has missing shared-library dependencies' >&2
     return 1
   fi
-  if ldd "$interface" | grep 'not found'; then
+  libraries=$(ldd "$interface") || return 1
+  if grep 'not found' <<< "$libraries"; then
     echo 'svZeroDSolver has missing shared-library dependencies' >&2
     return 1
   fi

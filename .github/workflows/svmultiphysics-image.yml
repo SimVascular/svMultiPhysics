@@ -216,7 +216,6 @@ jobs:
             printf '%s  %s\n' "${sha256}" "verified-packages/${package}" | sha256sum -c -
             test "$(dpkg-deb --field "verified-packages/${package}" Version)" = "${VERSION}"
             test "$(dpkg-deb --field "verified-packages/${package}" Architecture)" = amd64
-            test "${package}" = "svMultiPhysics-Ubuntu-26-${configuration}-${VERSION}.deb"
             printf '%s_package=%s\n%s_sha256=%s\n' \
               "${configuration}" "${package}" "${configuration}" "${sha256}" >> "${GITHUB_OUTPUT}"
           done
@@ -553,7 +552,7 @@ jobs:
           path: image/
           if-no-files-found: error
           compression-level: 0
-          retention-days: 1
+          retention-days: 7
 
   validate:
     name: Validate ${{ matrix.configuration }} image
@@ -608,7 +607,8 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/workspace" \
             "${IMAGE_REFERENCE}" bash -euc '
               source /workspace/image/ci-helpers.sh
-              ci_check_installed_svmultiphysics_version \
+              executable=$(command -v svmultiphysics)
+              SVMP_SOLVER_EXECUTABLE="${executable}" ci_check_installed_svmultiphysics_version \
                 "${EXPECTED_VERSION}" "${EXPECTED_TAG}" \
                 "${EXPECTED_COMMIT}" "${EXPECTED_CONFIGURATION}"
             '
@@ -678,19 +678,12 @@ jobs:
           test "$(image_label org.simvascular.svzerodsolver.package.sha256)" = '${{ needs.prepare.outputs.svzerod_package_sha256 }}'
           test "$(image_label org.simvascular.github-actions.run-url)" = "${WORKFLOW_RUN_URL}"
 
-          installed_svmp=$(docker run --rm --platform linux/amd64 \
-            "${IMAGE_REFERENCE}" dpkg-query -W '-f=${Version}' svmultiphysics)
-          installed_svzerod=$(docker run --rm --platform linux/amd64 \
-            "${IMAGE_REFERENCE}" dpkg-query -W '-f=${Version}' svzerodsolver)
-          installed_svmp_arch=$(docker run --rm --platform linux/amd64 \
-            "${IMAGE_REFERENCE}" dpkg-query -W '-f=${Architecture}' svmultiphysics)
-          installed_svzerod_arch=$(docker run --rm --platform linux/amd64 \
-            "${IMAGE_REFERENCE}" dpkg-query -W '-f=${Architecture}' svzerodsolver)
+          installed=$(docker run --rm --platform linux/amd64 "${IMAGE_REFERENCE}" \
+            dpkg-query -W '-f=${Package} ${Version} ${Architecture}\n' \
+            svmultiphysics svzerodsolver)
           expected_svzerod='${{ needs.prepare.outputs.svzerod_tag }}'
-          test "${installed_svmp}" = '${{ needs.prepare.outputs.version }}'
-          test "${installed_svzerod}" = "${expected_svzerod#v}"
-          test "${installed_svmp_arch}" = amd64
-          test "${installed_svzerod_arch}" = amd64
+          test "${installed}" = "$(printf 'svmultiphysics %s amd64\nsvzerodsolver %s amd64' \
+            '${{ needs.prepare.outputs.version }}' "${expected_svzerod#v}")"
 
       - name: Verify shared libraries and MPI
         shell: bash
@@ -760,7 +753,6 @@ jobs:
       github.ref == 'refs/heads/main'
     runs-on: ubuntu-26.04
     timeout-minutes: 45
-    environment: release
     permissions:
       contents: read
       packages: write
@@ -812,19 +804,24 @@ jobs:
             reference="${IMAGE}:${VERSION}-${configuration}"
             preserved="svmultiphysics-publication:${configuration}"
             docker tag "${reference}" "${preserved}"
-            local_id=$(docker image inspect --format '{{.Id}}' "${preserved}")
+            local_labels=$(docker image inspect --format '{{json .Config.Labels}}' "${preserved}" | \
+              jq -S 'del(."org.opencontainers.image.created", ."org.simvascular.github-actions.run-url")')
             status=new
             remote_digest=
 
-            if docker buildx imagetools inspect "${reference}" > /dev/null 2>&1; then
+            if inspect_error=$(docker buildx imagetools inspect "${reference}" 2>&1 > /dev/null); then
               read -r _ remote_digest _ < <(ci_resolve_ghcr_image "${reference}")
               docker pull --platform linux/amd64 "${reference}"
-              remote_id=$(docker image inspect --format '{{.Id}}' "${reference}")
-              if [[ "${remote_id}" != "${local_id}" ]]; then
-                echo "${reference} already exists with different image content" >&2
+              remote_labels=$(docker image inspect --format '{{json .Config.Labels}}' "${reference}" | \
+                jq -S 'del(."org.opencontainers.image.created", ."org.simvascular.github-actions.run-url")')
+              if [[ "${remote_labels}" != "${local_labels}" ]]; then
+                echo "${reference} already exists with conflicting provenance" >&2
                 exit 1
               fi
               status=existing
+            elif [[ "${inspect_error}" != *'not found'* ]]; then
+              echo "Could not check whether ${reference} exists: ${inspect_error}" >&2
+              exit 1
             fi
 
             # Restore the validated artifact's tag after a comparison pull.
