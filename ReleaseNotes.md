@@ -144,7 +144,7 @@ Verify the installation:
 ```
 
 Simulations using 3D-0D coupling additionally require the
-[svZeroDSolver `v3.2` package](https://github.com/SimVascular/svZeroDSolver/releases/tag/v3.2):
+[svZeroDSolver `v3.2` package](https://simtk.org/projects/simvascular):
 
 ```console
 sudo installer -pkg svZeroDSolver-MacOS-Tahoe-arm-v3.2.pkg -target /
@@ -183,7 +183,7 @@ sudo apt-get install ./svMultiPhysics-Ubuntu-26-trilinos-1.0.0.3.deb
 ```
 
 For simulations using 3D-0D coupling, install the pinned
-[svZeroDSolver `v3.2` package](https://github.com/SimVascular/svZeroDSolver/releases/tag/v3.2)
+[svZeroDSolver `v3.2` package](https://simtk.org/projects/simvascular)
 alongside svMultiPhysics:
 
 ```console
@@ -212,8 +212,8 @@ Verify the installation:
 
 ### Container images
 
-- `ghcr.io/simvascular/svmultiphysics:1.0.0.3-default`
-- `ghcr.io/simvascular/svmultiphysics:1.0.0.3-trilinos`
+- [`simvascular/svmultiphysics:1.0.0.3-default`](https://hub.docker.com/r/simvascular/svmultiphysics)
+- [`simvascular/svmultiphysics:1.0.0.3-trilinos`](https://hub.docker.com/r/simvascular/svmultiphysics)
 
 Checksums, container digests, and release provenance will be published with the artifacts.
 
