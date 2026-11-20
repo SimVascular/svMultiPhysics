@@ -189,9 +189,9 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_svOneD_face</b> ()
 <tr class="memitem:af25d583e97a2411d3498b8065528c6d6" id="r_af25d583e97a2411d3498b8065528c6d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af25d583e97a2411d3498b8065528c6d6">compute_flowrates</a> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;solutions)</td></tr>
 <tr class="memdesc:af25d583e97a2411d3498b8065528c6d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute flowrates at the boundary face at old and new timesteps.  <br /></td></tr>
 <tr class="memitem:a3f263fa71ecf4449a31813d7d6e56e55" id="r_a3f263fa71ecf4449a31813d7d6e56e55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3f263fa71ecf4449a31813d7d6e56e55">initialize_cap</a> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod)</td></tr>
-<tr class="memdesc:a3f263fa71ecf4449a31813d7d6e56e55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize cap quadrature on the master (call from <code>baf_ini</code> after partition).  <br /></td></tr>
-<tr class="memitem:a423da5462cd43e0812ed6972e33c1674" id="r_a423da5462cd43e0812ed6972e33c1674"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a423da5462cd43e0812ed6972e33c1674">copy_cap_surface_to_linear_solver_face</a> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, fsi_linear_solver::FSILS_faceType &amp;lhs_face, consts::MechanicalConfigurationType cfg, const <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;solutions) const</td></tr>
-<tr class="memdesc:a423da5462cd43e0812ed6972e33c1674"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute cap <em class="arg">valM</em> from current cap mesh state on owner and copy/broadcast cap data to FSILS face.  <br /></td></tr>
+<tr class="memdesc:a3f263fa71ecf4449a31813d7d6e56e55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the cap nodes that are in the mesh of this process and, on the process that holds the cap, initialize its quadrature and its mesh state.  <br /></td></tr>
+<tr class="memitem:ae2504da66266c6c4572f4599e9b814cf" id="r_ae2504da66266c6c4572f4599e9b814cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae2504da66266c6c4572f4599e9b814cf">append_cap_flowrate_derivative</a> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, fsi_linear_solver::FSILS_faceType &amp;lhs_face, consts::MechanicalConfigurationType cfg, double displacement_per_velocity) const</td></tr>
+<tr class="memdesc:ae2504da66266c6c4572f4599e9b814cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append the cap contribution to the flow rate derivative of a linear solver face.  <br /></td></tr>
 <tr class="memitem:a0c2fbf0e29494108ee48ef13ddc9eac6" id="r_a0c2fbf0e29494108ee48ef13ddc9eac6"><td class="memItemLeft" align="right" valign="top">std::pair&lt; double, double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0c2fbf0e29494108ee48ef13ddc9eac6">calculate_cap_contribution</a> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;solutions, consts::MechanicalConfigurationType cfg_o, consts::MechanicalConfigurationType cfg_n)</td></tr>
 <tr class="memdesc:a0c2fbf0e29494108ee48ef13ddc9eac6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.  <br /></td></tr>
 <tr class="memitem:a474fe32bc6db16b41e2e2e5a502e4259" id="r_a474fe32bc6db16b41e2e2e5a502e4259"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a474fe32bc6db16b41e2e2e5a502e4259">compute_pressures</a> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, const <a class="el" href="class_cm_mod.html">CmMod</a> &amp;cm_mod, const <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;solutions)</td></tr>
@@ -455,6 +455,49 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_svOneD_face</b> ()
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
+<a id="ae2504da66266c6c4572f4599e9b814cf" name="ae2504da66266c6c4572f4599e9b814cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2504da66266c6c4572f4599e9b814cf">&#9670;&#160;</a></span>append_cap_flowrate_derivative()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CoupledBoundaryCondition::append_cap_flowrate_derivative </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="class_com_mod.html">ComMod</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>com_mod</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">fsi_linear_solver::FSILS_faceType &amp;</td>          <td class="paramname"><span class="paramname"><em>lhs_face</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">consts::MechanicalConfigurationType</td>          <td class="paramname"><span class="paramname"><em>cfg</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>displacement_per_velocity</em></span>&#160;) const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Append the cap contribution to the flow rate derivative of a linear solver face. </p>
+<p>The process that holds the cap computes the contribution from the current cap mesh state and broadcasts it. Every process has to make this call.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">com_mod</td><td>The simulation data. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">lhs_face</td><td>The linear solver face, one of com_mod.lhs.face, whose flow rate derivative is extended. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cfg</td><td>The configuration in which the cap is integrated. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">displacement_per_velocity</td><td>The change of the displacement of a node per unit change of its velocity. Zero if the flow rate does not depend on the displacement. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a0789fab849cfbf29e450f83fae983138" name="a0789fab849cfbf29e450f83fae983138"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0789fab849cfbf29e450f83fae983138">&#9670;&#160;</a></span>bcast_coupled_dir_flowrate()</h2>
 
@@ -630,48 +673,6 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_svOneD_face</b> ()
 </dl>
 <p>This replicates the pressure computation done in set_bc::calc_der_cpl_bc and set_bc::set_bc_cpl for coupled Dirichlet boundary conditions.</p>
 <p>The pressure is computed as the average pressure over the face by integrating pressure (at index nsd in the solution vector) and dividing by the face area. </p>
-
-</div>
-</div>
-<a id="a423da5462cd43e0812ed6972e33c1674" name="a423da5462cd43e0812ed6972e33c1674"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a423da5462cd43e0812ed6972e33c1674">&#9670;&#160;</a></span>copy_cap_surface_to_linear_solver_face()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="class_com_mod.html">ComMod</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>com_mod</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">fsi_linear_solver::FSILS_faceType &amp;</td>          <td class="paramname"><span class="paramname"><em>lhs_face</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">consts::MechanicalConfigurationType</td>          <td class="paramname"><span class="paramname"><em>cfg</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="struct_solution_states.html">SolutionStates</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>solutions</em></span>&#160;) const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Compute cap <em class="arg">valM</em> from current cap mesh state on owner and copy/broadcast cap data to FSILS face. </p>
-<p>Calculates the cap contribution to the linear solver face and broadcasts it to all ranks.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">com_mod</td><td>The com_mod object. </td></tr>
-    <tr><td class="paramname">lhs_face</td><td>The linear solver face. </td></tr>
-    <tr><td class="paramname">cfg</td><td>The mechanical configuration type. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -1285,11 +1286,11 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_svOneD_face</b> ()
       </table>
 </div><div class="memdoc">
 
-<p>Initialize cap quadrature on the master (call from <code>baf_ini</code> after partition). </p>
-<p>Initialize the cap quadrature.</p>
+<p>Find the cap nodes that are in the mesh of this process and, on the process that holds the cap, initialize its quadrature and its mesh state. </p>
+<p>Every process has to make this call, after the mesh is partitioned.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">com_mod</td><td>The com_mod object. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">com_mod</td><td>The simulation data. </td></tr>
   </table>
   </dd>
 </dl>

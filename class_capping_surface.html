@@ -124,16 +124,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a24af507db602a7d10b7c0cb833847b23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load the cap face from a VTP file.  <br /></td></tr>
 <tr class="memitem:ac2c0ea69c5b75e70ba8e9030e18d4683" id="r_ac2c0ea69c5b75e70ba8e9030e18d4683"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac2c0ea69c5b75e70ba8e9030e18d4683">init_cap_face_quadrature</a> (const <a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod)</td></tr>
 <tr class="memdesc:ac2c0ea69c5b75e70ba8e9030e18d4683"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the cap face quadrature.  <br /></td></tr>
-<tr class="memitem:a2db45171c4e9777385cb6e728df2c5f4" id="r_a2db45171c4e9777385cb6e728df2c5f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2db45171c4e9777385cb6e728df2c5f4">initialize_valM</a> ()</td></tr>
-<tr class="memdesc:a2db45171c4e9777385cb6e728df2c5f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the cap contribution storage.  <br /></td></tr>
 <tr class="memitem:a95c2bcf204769fa6a4c4fa08ab07c215" id="r_a95c2bcf204769fa6a4c4fa08ab07c215"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a95c2bcf204769fa6a4c4fa08ab07c215">integrate_velocity_flux</a> (const <a class="el" href="struct_cap_global_mesh_state.html">CapGlobalMeshState</a> &amp;st, bool use_Yn_velocity, consts::MechanicalConfigurationType cfg)</td></tr>
-<tr class="memdesc:a95c2bcf204769fa6a4c4fa08ab07c215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Surface velocity flux through the cap using <em class="arg">st</em> columns indexed by cap IEN / GlobalNodeID (master / serial).  <br /></td></tr>
-<tr class="memitem:a02c29b0eebb08de09312b90f83b96866" id="r_a02c29b0eebb08de09312b90f83b96866"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a02c29b0eebb08de09312b90f83b96866">compute_valM</a> (consts::MechanicalConfigurationType cfg, const <a class="el" href="struct_cap_global_mesh_state.html">CapGlobalMeshState</a> &amp;st) const</td></tr>
-<tr class="memdesc:a02c29b0eebb08de09312b90f83b96866"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the cap contribution to the linear solver face (fills valM_; safe under <code>const</code> *this).  <br /></td></tr>
+<tr class="memdesc:a95c2bcf204769fa6a4c4fa08ab07c215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integrate the flux of the velocity through the cap.  <br /></td></tr>
+<tr class="memitem:a24b1249d2315b0fe77dde944d9619c67" id="r_a24b1249d2315b0fe77dde944d9619c67"><td class="memItemLeft" align="right" valign="top">Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a24b1249d2315b0fe77dde944d9619c67">compute_flowrate_derivative</a> (consts::MechanicalConfigurationType cfg, const <a class="el" href="struct_cap_global_mesh_state.html">CapGlobalMeshState</a> &amp;st, double displacement_per_velocity) const</td></tr>
+<tr class="memdesc:a24b1249d2315b0fe77dde944d9619c67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the change of the flow rate through the cap per unit change of the velocity of each cap node.  <br /></td></tr>
 <tr class="memitem:aaf00a11f893d9b74e90a300dcbb0ec2b" id="r_aaf00a11f893d9b74e90a300dcbb0ec2b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classface_type.html">faceType</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaf00a11f893d9b74e90a300dcbb0ec2b">face</a> () const</td></tr>
 <tr class="memdesc:aaf00a11f893d9b74e90a300dcbb0ec2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the cap face.  <br /></td></tr>
-<tr class="memitem:a3e9e871a83f2d94a9c174a13e963d073" id="r_a3e9e871a83f2d94a9c174a13e963d073"><td class="memItemLeft" align="right" valign="top">const Array&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3e9e871a83f2d94a9c174a13e963d073">valM</a> () const</td></tr>
-<tr class="memdesc:a3e9e871a83f2d94a9c174a13e963d073"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the cap contribution.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Capping surface geometry and integration for a coupled boundary. </p>
@@ -212,34 +208,41 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a02c29b0eebb08de09312b90f83b96866" name="a02c29b0eebb08de09312b90f83b96866"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a02c29b0eebb08de09312b90f83b96866">&#9670;&#160;</a></span>compute_valM()</h2>
+<a id="a24b1249d2315b0fe77dde944d9619c67" name="a24b1249d2315b0fe77dde944d9619c67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24b1249d2315b0fe77dde944d9619c67">&#9670;&#160;</a></span>compute_flowrate_derivative()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void CappingSurface::compute_valM </td>
+          <td class="memname">Array&lt; double &gt; CappingSurface::compute_flowrate_derivative </td>
           <td>(</td>
           <td class="paramtype">consts::MechanicalConfigurationType</td>          <td class="paramname"><span class="paramname"><em>cfg</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="struct_cap_global_mesh_state.html">CapGlobalMeshState</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>st</em></span>&#160;) const</td>
+          <td class="paramtype">const <a class="el" href="struct_cap_global_mesh_state.html">CapGlobalMeshState</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>st</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>displacement_per_velocity</em></span>&#160;) const</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Compute the cap contribution to the linear solver face (fills valM_; safe under <code>const</code> *this). </p>
-<p>Computes the cap contribution to the linear solver face.</p>
+<p>Compute the change of the flow rate through the cap per unit change of the velocity of each cap node. </p>
+<p>The flow rate depends on the node velocities directly and, where the cap is integrated in a deformed configuration, on the node displacements through the normal. The second part is the derivative with respect to the displacement, with the velocity held fixed, times displacement_per_velocity.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">cfg</td><td>The mechanical configuration type. </td></tr>
-    <tr><td class="paramname">st</td><td>The cap global mesh state. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cfg</td><td>The configuration in which the cap is integrated. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">st</td><td>The positions, displacements and velocities of the cap nodes, with one column per cap node. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">displacement_per_velocity</td><td>The change of the displacement of a node per unit change of its velocity. Zero if the flow rate does not depend on the displacement.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>The flow rate derivative (number of space dimensions x number of cap nodes), with the columns in the order of the nodes of the cap face. </dd></dl>
 
 </div>
 </div>
@@ -296,25 +299,6 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a2db45171c4e9777385cb6e728df2c5f4" name="a2db45171c4e9777385cb6e728df2c5f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2db45171c4e9777385cb6e728df2c5f4">&#9670;&#160;</a></span>initialize_valM()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void CappingSurface::initialize_valM </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Initialize the cap contribution storage. </p>
-
-</div>
-</div>
 <a id="a95c2bcf204769fa6a4c4fa08ab07c215" name="a95c2bcf204769fa6a4c4fa08ab07c215"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a95c2bcf204769fa6a4c4fa08ab07c215">&#9670;&#160;</a></span>integrate_velocity_flux()</h2>
 
@@ -339,17 +323,16 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Surface velocity flux through the cap using <em class="arg">st</em> columns indexed by cap IEN / GlobalNodeID (master / serial). </p>
-<p>Integrates the velocity flux over the cap surface.</p>
+<p>Integrate the flux of the velocity through the cap. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">st</td><td>The cap global mesh state. </td></tr>
-    <tr><td class="paramname">use_Yn_velocity</td><td>Whether to use the Yn velocity. </td></tr>
-    <tr><td class="paramname">cfg</td><td>The mechanical configuration type. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">st</td><td>The positions, displacements and velocities of the cap nodes, with one column per cap node. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">use_Yn_velocity</td><td>Whether to integrate the velocity at the current time step (true) or at the old one (false). </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cfg</td><td>The configuration in which the cap is integrated.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The velocity flux. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The flux of the velocity through the cap. </dd></dl>
 
 </div>
 </div>
@@ -433,33 +416,6 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Copy assignment operator. </p>
-
-</div>
-</div>
-<a id="a3e9e871a83f2d94a9c174a13e963d073" name="a3e9e871a83f2d94a9c174a13e963d073"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3e9e871a83f2d94a9c174a13e963d073">&#9670;&#160;</a></span>valM()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const Array&lt; double &gt; &amp; CappingSurface::valM </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get the cap contribution. </p>
 
 </div>
 </div>

@@ -576,25 +576,26 @@ $(function() {
 <div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>{ </div>
 <div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>  reference, <span class="comment">// reference configuration</span></div>
 <div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>  old_timestep, <span class="comment">// old timestep (n) configuration</span></div>
-<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>  new_timestep <span class="comment">// new timestep (n+1) configuration</span></div>
-<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>};</div>
-<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span> </div>
-<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span><span class="comment">//-------------------</span></div>
-<div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span><span class="comment">// LinearAlgebraType</span></div>
-<div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span><span class="comment">//-------------------</span></div>
-<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span><span class="comment">// The type of the numerical linear algebra library.</span></div>
-<div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span><span class="comment">//</span></div>
-<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span><span class="keyword">enum class</span> LinearAlgebraType {</div>
-<div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span>  none,</div>
-<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span>  fsils,</div>
-<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>  petsc,</div>
-<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>  trilinos</div>
-<div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>};</div>
-<div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span> </div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>  new_timestep, <span class="comment">// new timestep (n+1) configuration</span></div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>  intermediate_timestep <span class="comment">// intermediate (generalized-alpha) configuration</span></div>
+<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>};</div>
+<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span> </div>
+<div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span><span class="comment">//-------------------</span></div>
+<div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span><span class="comment">// LinearAlgebraType</span></div>
+<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span><span class="comment">//-------------------</span></div>
+<div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span><span class="comment">// The type of the numerical linear algebra library.</span></div>
+<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span><span class="comment">//</span></div>
+<div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span><span class="keyword">enum class</span> LinearAlgebraType {</div>
+<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span>  none,</div>
+<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>  fsils,</div>
+<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>  petsc,</div>
+<div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>  trilinos</div>
+<div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span>};</div>
 <div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span> </div>
-<div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>};</div>
-<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span> </div>
-<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span> </div>
+<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span>};</div>
+<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span> </div>
+<div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span><span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

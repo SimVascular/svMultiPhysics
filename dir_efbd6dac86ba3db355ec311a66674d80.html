@@ -367,7 +367,7 @@ ComMod</h2>
 <li>"" "&lt;b&gt;set_bc::genBC_Integ_X(com_mod, cm_mod, &amp;quot;I&amp;quot;)&lt;/b&gt;"</li>
 <li>"" "&lt;b&gt;set_bc::calc_der_cpl_bc(com_mod, cm_mod)&lt;/b&gt;"</li>
 <li><b>fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr)</b></li>
-<li><b>fsils_bc_create(com_mod.lhs, lsPtr, i, nsd, BcType::BC_TYPE_Dir, gNodes)</b></li>
+<li><b>fsils_bc_create(com_mod.lhs, lsPtr, nsd, BcType::BC_TYPE_Dir, gNodes)</b></li>
 </ul>
 </li>
 <li><b>set_bc::set_bc_dir(com_mod, com_mod.Ao, com_mod.Yo, com_mod.Do)</b> - Preparing BCs<ul>
@@ -1270,7 +1270,7 @@ Modifies:
 
  - &lt;tt&gt;fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr)&lt;/tt&gt;
 
- - &lt;tt&gt;fsils_bc_create(com_mod.lhs, lsPtr, i, nsd, BcType::BC_TYPE_Dir, gNodes)&lt;/tt&gt;
+ - &lt;tt&gt;fsils_bc_create(com_mod.lhs, lsPtr, nsd, BcType::BC_TYPE_Dir, gNodes)&lt;/tt&gt;
 
 
 
@@ -1287,15 +1287,15 @@ Modifies:
  
  @endicode 
 
- - &lt;tt&gt;fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl)&lt;/tt&gt;
+ - &lt;tt&gt;fsils_bc_create(com_mod.lhs, lsPtr, BcType::BC_TYPE_Dir, gNodes, sVl)&lt;/tt&gt;
 
 
 
 
 
 
-&lt;h2 id="fsils_bc_create"&gt; void fsils_bc_create(FSILS_lhsType&amp; lhs, int faIn, int nNo, int dof, BcType BC_type, const Vector&lt;int&gt;&amp; gNodes,
-    Array&lt;double&gt; Val) &lt;/h2&gt;
+&lt;h2 id="fsils_bc_create"&gt; void fsils_bc_create(FSILS_lhsType&amp; lhs, int faIn, BcType BC_type, const Vector&lt;int&gt;&amp; gNodes,
+    const Array&lt;double&gt;&amp; Val) &lt;/h2&gt;
 
 &lt;a href="<a href="https://github.com/ktbolt/svFSI/blob/Implement-svFSI-using-cpp_19/Code/Source/svFSILS_cinterface/bc.cpp">https://github.com/ktbolt/svFSI/blob/Implement-svFSI-using-cpp_19/Code/Source/svFSILS_cinterface/bc.cpp</a>" &gt;bc.cpp&lt;/a&gt;
 
@@ -1304,9 +1304,9 @@ Modifies:
  lhs.face[faIn]
  @endicode 
 
- - &lt;tt&gt;MPI_Allreduce(\&amp;a, \&amp;Ac, 1, cm_mod::mpint, MPI_SUM, lhs.commu.comm)&lt;/tt&gt;
+ - &lt;tt&gt;MPI_Allreduce(\&amp;has_nodes, \&amp;num_processes_with_nodes, 1, cm_mod::mpint, MPI_SUM, lhs.commu.comm)&lt;/tt&gt;
 
- - &lt;tt&gt;fsils_commuv(lhs, dof, v)&lt;/tt&gt;
+ - &lt;tt&gt;fsils_commuv(lhs, face.dof, v)&lt;/tt&gt;
 
 
 

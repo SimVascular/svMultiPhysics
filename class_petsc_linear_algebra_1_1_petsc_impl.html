@@ -119,6 +119,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>set_preconditioner</b
 void&#160;</td><td class="memItemRight" valign="bottom"><b>solve</b> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, <a class="el" href="classeq_type.html">eqType</a> &amp;lEq, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;incL, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;res)</td></tr>
 <tr class="memitem:a106b4237cc41faf50536979446553dfb" id="r_a106b4237cc41faf50536979446553dfb"><td class="memItemLeft" align="right" valign="top"><a id="a106b4237cc41faf50536979446553dfb" name="a106b4237cc41faf50536979446553dfb"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>init_dir_and_coupneu_bc</b> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, const <a class="el" href="class_vector.html">Vector</a>&lt; int &gt; &amp;incL, const <a class="el" href="class_vector.html">Vector</a>&lt; double &gt; &amp;res)</td></tr>
+<tr class="memitem:ab390b7c5a528bd85ac1927ec46074d4f" id="r_ab390b7c5a528bd85ac1927ec46074d4f"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; PetscInt &gt;, std::vector&lt; PetscInt &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab390b7c5a528bd85ac1927ec46074d4f">coupled_neumann_dofs</a> (const <a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod) const</td></tr>
+<tr class="memdesc:ab390b7c5a528bd85ac1927ec46074d4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the degrees of freedom where the two vectors of the coupled Neumann faces can be nonzero.  <br /></td></tr>
 <tr class="memitem:aaaf745e2aef8a378929eb6a410d47f81" id="r_aaaf745e2aef8a378929eb6a410d47f81"><td class="memItemLeft" align="right" valign="top"><a id="aaaf745e2aef8a378929eb6a410d47f81" name="aaaf745e2aef8a378929eb6a410d47f81"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize</b> (<a class="el" href="class_com_mod.html">ComMod</a> &amp;com_mod, <a class="el" href="classeq_type.html">eqType</a> &amp;lEq)</td></tr>
 <tr class="memitem:a815adf31b3c062b85b77e64aef39dd58" id="r_a815adf31b3c062b85b77e64aef39dd58"><td class="memItemLeft" align="right" valign="top"><a id="a815adf31b3c062b85b77e64aef39dd58" name="a815adf31b3c062b85b77e64aef39dd58"></a>
@@ -136,14 +138,44 @@ consts::PreconditionerType&#160;</td><td class="memItemRight" valign="bottom"><b
 Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>W_</b></td></tr>
 <tr class="memitem:ab0425c0b266d2f69e85853cf95859cdb" id="r_ab0425c0b266d2f69e85853cf95859cdb"><td class="memItemLeft" align="right" valign="top"><a id="ab0425c0b266d2f69e85853cf95859cdb" name="ab0425c0b266d2f69e85853cf95859cdb"></a>
 Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>R_</b></td></tr>
-<tr class="memitem:a4c28869e4dd31722f93c02dd138d2e7b" id="r_a4c28869e4dd31722f93c02dd138d2e7b"><td class="memItemLeft" align="right" valign="top"><a id="a4c28869e4dd31722f93c02dd138d2e7b" name="a4c28869e4dd31722f93c02dd138d2e7b"></a>
-Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>V_</b></td></tr>
+<tr class="memitem:a13966c2270a1fd0ccb71d3ff33eada36" id="r_a13966c2270a1fd0ccb71d3ff33eada36"><td class="memItemLeft" align="right" valign="top"><a id="a13966c2270a1fd0ccb71d3ff33eada36" name="a13966c2270a1fd0ccb71d3ff33eada36"></a>
+Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>pressure_load_</b></td></tr>
+<tr class="memitem:ae2b2eb403cbc5a531c1d1d44613a00ac" id="r_ae2b2eb403cbc5a531c1d1d44613a00ac"><td class="memItemLeft" align="right" valign="top"><a id="ae2b2eb403cbc5a531c1d1d44613a00ac" name="ae2b2eb403cbc5a531c1d1d44613a00ac"></a>
+Array&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>flowrate_derivative_</b></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-attribs" class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a0eaf428bbd33f5dc89b0f495755e6f06" id="r_a0eaf428bbd33f5dc89b0f495755e6f06"><td class="memItemLeft" align="right" valign="top"><a id="a0eaf428bbd33f5dc89b0f495755e6f06" name="a0eaf428bbd33f5dc89b0f495755e6f06"></a>
 static bool&#160;</td><td class="memItemRight" valign="bottom"><b>pesc_initialized</b> = false</td></tr>
 </table>
+<a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
+<a id="ab390b7c5a528bd85ac1927ec46074d4f" name="ab390b7c5a528bd85ac1927ec46074d4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab390b7c5a528bd85ac1927ec46074d4f">&#9670;&#160;</a></span>coupled_neumann_dofs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; std::vector&lt; PetscInt &gt;, std::vector&lt; PetscInt &gt; &gt; PetscLinearAlgebra::PetscImpl::coupled_neumann_dofs </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_com_mod.html">ComMod</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>com_mod</em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Find the degrees of freedom where the two vectors of the coupled Neumann faces can be nonzero. </p>
+<p>They are the degrees of freedom of the nodes of the Neumann faces that init_dir_and_coupneu_bc() included, for the pressure load, and of the nodes of their flow rate derivative, for the flow rate derivative. They do not depend on the values of the two vectors. Only the nodes owned by this process are considered.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">com_mod</td><td>The solver data, whose dof and lhs are read.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The O2 indices of the degrees of freedom of the pressure load (first) and of the flow rate derivative (second), sorted and without repetitions. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>solver/<b>petsc_impl.cpp</b></li>
 <li>solver/<b>PetscLinearAlgebra.cpp</b></li>
