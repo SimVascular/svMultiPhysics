@@ -92,7 +92,9 @@ if(LINUX)
   set(CPACK_COMPONENTS_ALL CoreExecutables)
 
   if(SV_PACKAGE_VERSION AND LSB_DISTRIB STREQUAL "Ubuntu" AND LSB_VERSION MATCHES "^26\\.")
-    if(SV_USE_TRILINOS)
+    if(SV_USE_TRILINOS AND SV_PETSC_DIR)
+      set(_sv_solver_configuration "trilinos-petsc")
+    elseif(SV_USE_TRILINOS)
       set(_sv_solver_configuration "trilinos")
     elseif(SV_PETSC_DIR)
       set(_sv_solver_configuration "petsc")
@@ -117,7 +119,13 @@ endif()
 # APPLE
 #-----------------------------------------------------------------------------
 if(APPLE)
-  if(SV_USE_TRILINOS)
+  if(CMAKE_VERSION VERSION_LESS 3.23)
+    message(FATAL_ERROR "macOS packages require CMake 3.23 or newer")
+  endif()
+
+  if(SV_USE_TRILINOS AND SV_PETSC_DIR)
+    set(_sv_solver_configuration "trilinos-petsc")
+  elseif(SV_USE_TRILINOS)
     set(_sv_solver_configuration "trilinos")
   elseif(SV_PETSC_DIR)
     set(_sv_solver_configuration "petsc")
@@ -139,6 +147,9 @@ if(APPLE)
 
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "svMultiPhysics finite element multiphysics solver (${_sv_solver_configuration})")
+  set(CPACK_COMPONENT_COREEXECUTABLES_DISPLAY_NAME
+    "svMultiPhysics (${_sv_solver_configuration})")
+  set(CPACK_COMPONENT_COREEXECUTABLES_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
   set(CPACK_PACKAGE_FILE_NAME
     "svMultiPhysics-MacOS-${_sv_macos_release}-${_sv_macos_architecture}-${_sv_solver_configuration}-${SV_PACKAGE_VERSION}")
   set(CPACK_PRODUCTBUILD_IDENTIFIER

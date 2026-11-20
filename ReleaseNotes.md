@@ -70,7 +70,7 @@ This release contains changes made since the June 11, 2026 svMultiPhysics packag
 - Introduce a common solver math layer. (#727)
 - Modularize the solver Core and finite-element components with per-directory CMake targets. (#622)
 - Reorganize physics sources and public headers. (#670)
-- Use fixed-size Eigen operations for structural and unstructured calculations and reuse the viscous response for linear elements.
+- Use fixed-size Eigen operations for `struct` and `ustruct` calculations and reuse the viscous response for linear elements. (#640)
 - Remove unnecessary locking from the solver basis cache. (#686)
 
 ## Build and Platform Support

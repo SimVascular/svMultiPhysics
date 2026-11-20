@@ -2,6 +2,10 @@ if(NOT CPACK_PACKAGE_FILES)
   message(FATAL_ERROR "CPack did not provide a macOS package to post-process")
 endif()
 
+if(CPACK_PRODUCTBUILD_IDENTITY_NAME)
+  message(FATAL_ERROR "Sign the package after this script; repacking it discards the productbuild signature")
+endif()
+
 foreach(_package IN LISTS CPACK_PACKAGE_FILES)
   if(NOT _package MATCHES "[.]pkg$")
     continue()
