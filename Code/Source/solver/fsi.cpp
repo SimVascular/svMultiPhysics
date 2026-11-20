@@ -217,8 +217,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
               urisValveVelTermTotal = urisValveVelTermTotalEl.rcol(g);
             }
             
-            // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelTermTotal);
+            double K_inv = eq.dmn[cDmn].prop.at(PhysicalPropertyType::brinkman_inverse_permeability);
+            fluid::fluid_3d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inv, urisFactorTotal, urisValveVelTermTotal);
 
           } break;
 
@@ -249,8 +249,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_1[0].N.col(g);
             auto N1 = fs_1[1].N.col(g);
             
-            // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_2d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            double K_inv = eq.dmn[cDmn].prop.at(PhysicalPropertyType::brinkman_inverse_permeability);
+            fluid::fluid_2d_m(com_mod, vmsStab, fs_1[0].eNoN, fs_1[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inv);
           } break;
 
           case Equation_lElas:
@@ -315,8 +315,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
               urisValveVelTermTotal = urisValveVelTermTotalEl.rcol(g);
             }
             
-            // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0, urisFactorTotal, urisValveVelTermTotal);
+            double K_inv = eq.dmn[cDmn].prop.at(PhysicalPropertyType::brinkman_inverse_permeability);
+            fluid::fluid_3d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inv, urisFactorTotal, urisValveVelTermTotal);
           } break;
 
           case Equation_ustruct:
@@ -332,8 +332,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
             auto N0 = fs_2[0].N.col(g);
             auto N1 = fs_2[1].N.col(g);
             
-            // using zero permeability to use Navier-Stokes here, not Navier-Stokes-Brinkman
-            fluid::fluid_2d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, 0.0);
+            double K_inv = eq.dmn[cDmn].prop.at(PhysicalPropertyType::brinkman_inverse_permeability);
+            fluid::fluid_2d_c(com_mod, vmsStab, fs_2[0].eNoN, fs_2[1].eNoN, w, ksix, N0, N1, Nwx, Nqx, Nwxx, al, yl, bfl, lR, lK, K_inv);
           } break;
 
           case Equation_ustruct:

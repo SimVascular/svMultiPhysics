@@ -323,10 +323,11 @@ SetEquationPropertiesMapType set_equation_props = {
   int n = 0;
   propL[0][n] = PhysicalPropertyType::fluid_density;
   propL[1][n] = PhysicalPropertyType::backflow_stab;
-  propL[2][n] = PhysicalPropertyType::f_x;
-  propL[3][n] = PhysicalPropertyType::f_y;
+  propL[2][n] = PhysicalPropertyType::brinkman_inverse_permeability;
+  propL[3][n] = PhysicalPropertyType::f_x;
+  propL[4][n] = PhysicalPropertyType::f_y;
   if (simulation->com_mod.nsd == 3) {
-    propL[4][n] = PhysicalPropertyType::f_z;
+    propL[5][n] = PhysicalPropertyType::f_z;
   }
 
   // Set struct properties.
