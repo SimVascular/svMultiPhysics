@@ -149,6 +149,8 @@ if(APPLE)
 
   # Cpack install help
   set(CPACK_GENERATOR "productbuild")
+  set(CPACK_POST_BUILD_SCRIPTS
+    "${CMAKE_CURRENT_SOURCE_DIR}/OSX/AddArm64PackageArchitecture.cmake")
   #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OSX/Info.plist.in
   #  ${CMAKE_CURRENT_BINARY_DIR}/OSX/Info.plist @ONLY)
 

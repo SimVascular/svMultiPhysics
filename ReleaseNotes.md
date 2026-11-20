@@ -11,7 +11,7 @@ This release contains changes made since the June 11, 2026 svMultiPhysics packag
 - Improve electromechanics active-stress and force-length coupling. (#650)
 - Support multiple and geometrically filtered cellular-electrophysiology stimuli. (#586, #579)
 - Add scaffold-surface support and velocity handling for URIS valves. (#569, #565)
-- Add line search to the nonlinear integrator. (#701)
+- Add experimental line search to the nonlinear integrator. (#701)
 - Add tools for initializing coupled 0D RCR boundary conditions. (#613, #637)
 - Add validated, package-based container images for the default and Trilinos configurations. (#788)
 
@@ -108,15 +108,107 @@ svmultiphysics --version
 
 The release provides separate Release builds for the default and Trilinos configurations.
 
+The native packages follow the same dependency model as the June 2026 packages: they install
+the `svmultiphysics` executable, while platform runtime prerequisites are installed separately.
+
+### macOS Tahoe ARM installation
+
+Install [Homebrew](https://brew.sh/) and the common runtime prerequisites:
+
+```console
+brew install open-mpi vtk
+```
+
+The Trilinos configuration also requires:
+
+```console
+brew install hypre lapack openblas
+```
+
+Install one svMultiPhysics configuration:
+
+```console
+sudo installer -pkg svMultiPhysics-MacOS-Tahoe-arm-default-1.0.0.3.pkg -target /
+```
+
+or:
+
+```console
+sudo installer -pkg svMultiPhysics-MacOS-Tahoe-arm-trilinos-1.0.0.3.pkg -target /
+```
+
+Verify the installation:
+
+```console
+/usr/local/sv/svMultiPhysics/1.0.0.3/bin/svmultiphysics --version
+```
+
+Simulations using 3D-0D coupling additionally require the
+[svZeroDSolver `v3.2` package](https://github.com/SimVascular/svZeroDSolver/releases/tag/v3.2):
+
+```console
+sudo installer -pkg svZeroDSolver-MacOS-Tahoe-arm-v3.2.pkg -target /
+```
+
+The package installs the coupling library at:
+
+```text
+/usr/local/sv/svZeroDSolver/v3.2/lib/libsvzero_interface.dylib
+```
+
+Set the solver input file's `Shared_library` value to this installed path.
+
+The locally built default and Trilinos svMultiPhysics packages and the final signed and
+notarized svZeroDSolver package were validated on a clean macOS Tahoe ARM virtual machine.
+Validation included a standalone svZeroDSolver case, a default 3D fluid case, a case using the
+Trilinos backend, and coupled 3D-0D cases with both svMultiPhysics configurations using 1, 3,
+and 4 MPI ranks. The official svMultiPhysics packages will be retested before publication.
+
+### Ubuntu 26.04 installation
+
+Install one svMultiPhysics package with `apt`. The package declares its LAPACK and Open MPI
+runtime prerequisites, and `apt` installs them automatically. No separate prerequisite
+installation command is required when using `apt`:
+
+```console
+sudo apt-get update
+sudo apt-get install ./svMultiPhysics-Ubuntu-26-default-1.0.0.3.deb
+```
+
+or:
+
+```console
+sudo apt-get update
+sudo apt-get install ./svMultiPhysics-Ubuntu-26-trilinos-1.0.0.3.deb
+```
+
+For simulations using 3D-0D coupling, install the pinned
+[svZeroDSolver `v3.2` package](https://github.com/SimVascular/svZeroDSolver/releases/tag/v3.2)
+alongside svMultiPhysics:
+
+```console
+sudo apt-get install \
+  ./svZeroDSolver-Ubuntu-26-v3.2.deb \
+  ./svMultiPhysics-Ubuntu-26-default-1.0.0.3.deb
+```
+
+Verify the installation:
+
+```console
+/usr/local/sv/svMultiPhysics/1.0.0.3/bin/svmultiphysics --version
+```
+
 ### macOS Tahoe ARM
 
 - `svMultiPhysics-MacOS-Tahoe-arm-default-1.0.0.3.pkg`
 - `svMultiPhysics-MacOS-Tahoe-arm-trilinos-1.0.0.3.pkg`
+- `svZeroDSolver-MacOS-Tahoe-arm-v3.2.pkg`
 
 ### Ubuntu 26.04
 
 - `svMultiPhysics-Ubuntu-26-default-1.0.0.3.deb`
 - `svMultiPhysics-Ubuntu-26-trilinos-1.0.0.3.deb`
+- `svZeroDSolver-Ubuntu-26-v3.2.deb`
 
 ### Container images
 
