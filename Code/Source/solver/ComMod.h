@@ -984,6 +984,12 @@ class mshType
     /// @brief gIEN mapper from old to new
     Vector<int> otnIEN;
 
+    /// @brief all_fun::global: local nodes this process sends to master
+    std::vector<int> gatherN;
+
+    /// @brief all_fun::global (master only): global node of each gathered value
+    std::vector<int> gatherG;
+
     /// @brief Local knot pointer (NURBS)
     Array<int> INN;
 
