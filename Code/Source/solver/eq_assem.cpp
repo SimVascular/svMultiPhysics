@@ -313,8 +313,8 @@ void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const S
   const auto &eq = com_mod.eq[com_mod.cEq];
   const auto &Yn = solutions.current.get_velocity();
 
-  // The flow rate of a struct equation coupled to svZeroD or svOneD is
-  // integrated on the deformed face, so it also depends on the displacement.
+  // The flow rate of a struct equation coupled to svZeroD is integrated on the
+  // deformed face, so it also depends on the displacement.
   const bool flowrate_depends_on_displacement =
       (eq.phys == EquationType::phys_struct) &&
       utils::btest(lBc.bType,

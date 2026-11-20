@@ -440,7 +440,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   // - face.nS is the squared norm of the scaled unit pressure load. The
   //   Sherman-Morrison formula takes its scalar product with the scaled flow
   //   rate derivative, which is a different vector for a struct equation
-  //   coupled to svZeroD or svOneD.
+  //   coupled to svZeroD.
   // With 'flag' true, all components and the scalar product, a ventricle case
   // coupled to svZeroD takes about one GMRES iteration less per solve while
   // both valves are closed (0.1 % less over a run), and the Newton residuals

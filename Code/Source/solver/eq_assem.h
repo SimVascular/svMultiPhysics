@@ -29,12 +29,13 @@ void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const
 ///   step: it is the derivative of the flow rate with respect to the nodal
 ///   velocities.
 ///
-/// The flow rate of a struct equation coupled to svZeroD or svOneD is
-/// integrated on the deformed face, so it also depends on the nodal
-/// displacements. Its derivative with respect to them, with the velocity
-/// held fixed, is added to flowrate_derivative multiplied by beta*dt/gamma:
-/// the ratio between the changes of displacement and velocity that an
-/// increment of the unknown produces.
+/// The flow rate of a struct equation coupled to svZeroD or is integrated on
+/// the deformed face, so it also depends on the nodal displacements. Its
+/// derivative with respect to them, with the velocity held fixed, is added to
+/// flowrate_derivative multiplied by beta*dt/gamma: the ratio between the
+/// changes of displacement and velocity that an increment of the unknown
+/// produces. This is currently not supported for ustruct or svOneD (struct
+/// cannot currently be coupled to svOneD).
 ///
 /// For a coupled boundary condition with a cap, the contribution of the cap
 /// is appended to flowrate_derivative. The linear solver reads the two vectors
