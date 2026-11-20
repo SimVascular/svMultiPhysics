@@ -292,8 +292,14 @@ SetEquationPropertiesMapType set_equation_props = {
 
     read_domain(simulation, eq_params, lEq, propL);
 
+    bool has_storage = false;
     for (const auto& domain : lEq.dmn) {
       darcy::validate_material_properties(domain);
+      has_storage = has_storage || domain.prop.at(PhysicalPropertyType::darcy_compressibility) > 0.0;
+    }
+
+    if (!has_storage) {
+      lEq.roInf = 0.0;
     }
 
     nDOP = {2,1,1,0};
