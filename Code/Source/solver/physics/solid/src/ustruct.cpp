@@ -226,7 +226,7 @@ void construct_usolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool pstEq = com_mod.pstEq;
+  bool prestress_enabled = com_mod.prestress_enabled;
 
   int eNoN = lM.eNoN;
   const bool mesh_has_fibers = lM.fibers.has_fibers();
@@ -419,8 +419,6 @@ int get_col_ptr(ComMod& com_mod, const int rowN, const int colN)
   return ptr;
 }
 
-/// @brief Reproduces Fortran USTRUCT2D_C.
-//
 void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
@@ -586,8 +584,6 @@ void ustruct_2d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   }
 }
 
-/// @brief Reproduces Fortran USTRUCT3D_C.
-//
 void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const int eNoNw, const int eNoNq,
     const double w, const double Je, const Vector<double>& Nw,  const Vector<double>& Nq,
     const Array<double>& Nwx, const Array<double>& Nqx, const Array<double>& al, const Array<double>& yl,
@@ -767,8 +763,6 @@ void ustruct_3d_c(ComMod& com_mod, CepMod& cep_mod, const bool vmsFlag, const in
   }
 }
 
-/// @brief Replicates Fortran USTRUCT2D_M.
-//
 void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,
@@ -1013,8 +1007,6 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   }
 }
 
-/// @brief Reproduces Fortran USTRUCT3D_M.
-//
 void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
                   const int eNoNw, const int eNoNq,
                   const double w, const double Je, const Vector<double> &Nw,

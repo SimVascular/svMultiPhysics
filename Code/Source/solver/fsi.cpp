@@ -4,6 +4,7 @@
 #include "fsi.h"
 
 #include "all_fun.h"
+#include "prestrain.h"
 #include "consts.h"
 #include "fluid/fluid.h"
 #include "fs.h"
@@ -152,6 +153,8 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     Array<double> xql(nsd,fs_1[1].eNoN);
     Array<double> Nqx(nsd,fs_1[1].eNoN);
 
+    const bool prestrained = lM.prestrain.has_prestrain() && cPhys == Equation_struct;
+
     xwl = xl;
 
     for (int i = 0; i < xql.nrows(); i++) {
@@ -173,12 +176,14 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
     }
 
     Array<double> fiber_values = Fibers::zero_fibers(nsd);
+    Eigen::MatrixXd F0 = Eigen::MatrixXd::Identity(nsd, nsd);
+
     for (int g = 0; g < fs_1[0].nG; g++) {
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       }
-      const auto fibers = mat_fun::eigen_view(fiber_values);
+      auto fibers = mat_fun::eigen_view_mutable(fiber_values);
 
       if (g == 0 || !fs_1[1].lShpF) {
         auto Nx = fs_1[1].Nx.rslice(g);
@@ -190,9 +195,9 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
-      const bool recompute_visc = (g == 0 || !fs_1[0].lShpF);
+      bool recompute_visc = (g == 0 || !fs_1[0].lShpF);
 
-      if (recompute_visc) {
+      if (recompute_visc || prestrained) {
         auto Nx = fs_1[0].Nx.rslice(g);
         nn::gnn(fs_1[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -201,6 +206,18 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
         auto Nxx = fs_1[0].Nxx.rslice(g);
         nn::gn_nxx(l, fs_1[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx);
+      }
+
+      // Prestrained elements are integrated on their unloaded configuration.
+      if (prestrained) {
+        const Eigen::MatrixXd F0_g = lM.prestrain.get(nsd, g, e);
+        recompute_visc = recompute_visc || F0_g != F0;
+        F0 = F0_g;
+        mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
+        Jac /= F0.determinant();
+        if (mesh_has_fibers) {
+          fibers = (F0.inverse() * fibers).colwise().normalized();
+        }
       }
 
       double w = fs_1[0].w(g) * Jac;
@@ -225,7 +242,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_3d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
-                                 Nwx, al, yl, dl, bfl, fibers, pS0l, pSl,
+                                 Nwx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;
           case Equation_lElas:
@@ -261,7 +278,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
           case Equation_struct: {
             auto N0 = fs_1[0].N.col(g);
             struct_ns::struct_2d(com_mod, cep_mod, fs_1[0].eNoN, w, N0,
-                                 Nwx, al, yl, dl, bfl, fibers, pS0l, pSl,
+                                 Nwx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), fibers, pS0l, pSl,
                                  active_stress_evaluator, lR, lK, recompute_visc);
           } break;
 

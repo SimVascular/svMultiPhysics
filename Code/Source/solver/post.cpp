@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "post.h"
+#include "prestrain.h"
 
 #include "ActiveStress.h"
 #include "Core/Exception.h"
@@ -771,6 +772,13 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
       }
       auto fl = mat_fun::mat_mul(F, fiber);
       double lambda = utils::norm(fl);
+
+      // A prestrained fiber is already stretched on the mesh: measure from its
+      // stress-free length, as the material model does (see prestrain.h).
+      if (lM.prestrain.has_prestrain()) {
+        const Eigen::Map<const Eigen::VectorXd> f(fiber.data(), nsd);
+        lambda *= f.norm() / (lM.prestrain.get(nsd, g, e).inverse() * f).norm();
+      }
 
       // L2 projection from integration points to nodes
       double w = lM.w(g)*Jac;
@@ -1842,6 +1850,8 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
   Array<double> yl(tDof,fs.eNoN); 
   Array<double> fibers;
   Vector<double> resl(m); 
+
+  const bool prestrained = lM.prestrain.has_prestrain();
   Array<double> Nx(nsd,fs.eNoN); 
   Vector<double> N(fs.eNoN);
   Vector<int> element_nodes(fs.eNoN);
@@ -1935,8 +1945,17 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
       const auto disp = eigen_view_rows<nsd>(dl, i);  // nodal displacements
       const auto vel  = eigen_view_rows<nsd>(yl, i);  // nodal velocities
 
-      // Deformation gradient: F = I + Grad(u)
-      const Matrix<nsd> F = Im + disp * Nxm.transpose();
+      // Deformation gradient from the stress-free configuration: F = (I + Grad u) F0.
+      // Output of a quadratic element uses a linear one's quadrature, so takes
+      // the element average of the prestrain.
+      Matrix<nsd> F0 = Im;
+      if (prestrained) {
+        F0 = (fs.nG == lM.nG) ? lM.prestrain.get(nsd, g, e) : lM.prestrain.get_mean(nsd, e);
+        if (lM.fibers.has_fibers()) {
+          eigen_view_mutable(fibers) = (F0.inverse() * eigen_view<nsd>(fibers)).colwise().normalized();
+        }
+      }
+      const Matrix<nsd> F = (Im + disp * Nxm.transpose()) * F0;
       const double detF = F.determinant();
 
       Vector<double> ed(com_mod.nsymd);

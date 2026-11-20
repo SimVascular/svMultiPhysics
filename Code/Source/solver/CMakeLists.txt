@@ -236,6 +236,7 @@ set(CSRCS
   read_msh.h read_msh.cpp
   remesh.h remesh.cpp
   remeshTet.cpp
+  prestrain.h prestrain.cpp
   set_bc.h set_bc.cpp
   svZeroD_interface.h svZeroD_interface.cpp
   svOneD_interface.h svOneD_interface.cpp

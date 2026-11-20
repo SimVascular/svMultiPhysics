@@ -9,6 +9,7 @@
 #include "solid/sv_struct.h"
 
 #include "all_fun.h"
+#include "prestrain.h"
 #include "consts.h"
 #include "lhsa.h"
 #include "mat_fun.h"
@@ -209,7 +210,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool pstEq = com_mod.pstEq;
+  bool prestress_enabled = com_mod.prestress_enabled;
 
   int eNoN = lM.eNoN;
   const bool mesh_has_fibers = lM.fibers.has_fibers();
@@ -231,6 +232,8 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   Array<double> xl(nsd,eNoN), al(tDof,eNoN), yl(tDof,eNoN), dl(tDof,eNoN),
                 bfl(nsd,eNoN), pS0l(nsymd,eNoN), Nx(nsd,eNoN), lR(dof,eNoN);
   Array3<double> lK(dof*dof,eNoN,eNoN);
+
+  const bool prestrained = lM.prestrain.has_prestrain();
 
   // Loop over all elements of mesh
 
@@ -287,23 +290,36 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
     double Jac{0.0};
     Array<double> ksix(nsd,nsd);
     Array<double> fiber_values = Fibers::zero_fibers(nsd);
+    Eigen::MatrixXd F0 = Eigen::MatrixXd::Identity(nsd, nsd);
 
     for (int g = 0; g < lM.nG; g++) {
       if (mesh_has_fibers) {
         fiber_values = lM.fibers.get_quadrature_fibers(
             nsd, g, e, orthonormalize_fibers);
       }
-      const auto fibers = mat_fun::eigen_view(fiber_values);
+      auto fibers = mat_fun::eigen_view_mutable(fiber_values);
 
       // Shape function gradients and the viscous response are constant
       // within linear triangles and tetrahedra.
-      const bool recompute_visc = (g == 0 || !lM.lShpF);
+      bool recompute_visc = (g == 0 || !lM.lShpF);
 
-      if (recompute_visc) {
+      if (recompute_visc || prestrained) {
         auto Nx_g = lM.Nx.slice(g);
         nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
         if (utils::is_zero(Jac)) {
           throw std::runtime_error("[construct_dsolid] Jacobian for element " + std::to_string(e) + " is < 0.");
+        }
+      }
+
+      // Prestrained elements are integrated on their unloaded configuration.
+      if (prestrained) {
+        const Eigen::MatrixXd F0_g = lM.prestrain.get(nsd, g, e);
+        recompute_visc = recompute_visc || F0_g != F0;
+        F0 = F0_g;
+        mat_fun::eigen_view_mutable(Nx) = F0.transpose() * mat_fun::eigen_view(Nx);
+        Jac /= F0.determinant();
+        if (mesh_has_fibers) {
+          fibers = (F0.inverse() * fibers).colwise().normalized();
         }
       }
       double w = lM.w(g) * Jac;
@@ -311,7 +327,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       pSl = 0.0;
 
       if (nsd == 3) {
-        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, fibers,
+        struct_3d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, mat_fun::Matrix<3>(F0), fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
 
 #if 0
@@ -325,12 +341,12 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 #endif
 
       } else if (nsd == 2) {
-        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, fibers,
+        struct_2d(com_mod, cep_mod, eNoN, w, N, Nx, al, yl, dl, bfl, mat_fun::Matrix<2>(F0), fibers,
                   pS0l, pSl, active_stress_evaluator, lR, lK, recompute_visc);
       }
 
       // Prestress
-      if (pstEq) {
+      if (prestress_enabled) {
         for (int a = 0; a < eNoN; a++) {
           int Ac = ptr(a);
           pSa(Ac) += w*N(a);
@@ -345,12 +361,13 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   } 
 }
 
-/// @brief Reproduces Fortran 'STRUCT2D' subroutine.
+// Reproduces Fortran 'STRUCT2D' subroutine.
 //
 void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
+               const mat_fun::Matrix<2> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
@@ -374,8 +391,10 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Set parameters
   //
-  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  // Per unit stress-free volume: det F0 times the values given for the mesh
+  const double J0 = F0.determinant();
+  double rho = J0 * dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = J0 * dmn.prop.at(PhysicalPropertyType::damping);
   const Eigen::Vector2d fb{dmn.prop.at(PhysicalPropertyType::f_x),
                            dmn.prop.at(PhysicalPropertyType::f_y)};
   double afu = eq.af * eq.beta*dt*dt;
@@ -410,9 +429,10 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   S0 << pS0g(0), pS0g(2),
         pS0g(2), pS0g(1);
 
-  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<2> vx = vel * Nxm.transpose();
-  const Matrix<2> F  = Matrix<2>::Identity() + disp * Nxm.transpose();
+  const Matrix<2> F  = F0 + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
   const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, fibers);
@@ -506,13 +526,21 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
       lK(dof+1,a,b) += w*( T1 + afu*(BmDBm + visc.du(3,a,b)) + afv*visc.dv(3,a,b) );
     }
   }
+
+  // Make the tangent that of a prestrain iteration, which composes its update
+  // into F0 (see prestrain.h).
+  if (com_mod.prestrain_enabled) {
+    prestrain_tangent_correction<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
+  }
 }
 
-/// @brief Reproduces Fortran 'STRUCT3D' subroutine.
+// Reproduces Fortran 'STRUCT3D' subroutine.
 void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                const double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
+               const mat_fun::Matrix<3> &F0,
                const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
@@ -539,8 +567,10 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Set parameters
   //
-  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
-  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
+  // Per unit stress-free volume: det F0 times the values given for the mesh
+  const double J0 = F0.determinant();
+  double rho = J0 * dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = J0 * dmn.prop.at(PhysicalPropertyType::damping);
   const Eigen::Vector3d fb{dmn.prop.at(PhysicalPropertyType::f_x),
                            dmn.prop.at(PhysicalPropertyType::f_y),
                            dmn.prop.at(PhysicalPropertyType::f_z)};
@@ -579,9 +609,10 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
         pS0g(3), pS0g(1), pS0g(4),
         pS0g(5), pS0g(4), pS0g(2);
 
-  // Velocity and deformation gradients: Grad(v) and F = I + Grad(u)
+  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
+  // F0 = I if no prestrain is present.
   const Matrix<3> vx = vel * Nxm.transpose();
-  const Matrix<3> F  = Matrix<3>::Identity() + disp * Nxm.transpose();
+  const Matrix<3> F  = F0 + disp * Nxm.transpose();
 
   // Active tension, evaluated here from the fiber stretch of F.
   const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, fibers);
@@ -698,5 +729,114 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
       lK(2*dof+2,a,b) += w*( T1 + afu*(BmDBm + visc.du(8,a,b)) + afv*visc.dv(8,a,b) );
     }
   }
+
+  // Make the tangent that of a prestrain iteration, which composes its update
+  // into F0 (see prestrain.h).
+  if (com_mod.prestrain_enabled) {
+    prestrain_tangent_correction<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
+  }
 }
+
+template <int nsd>
+void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
+    const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
+    const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
+    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
+    const mat_models::FiberRef<nsd>& fibers, const double w_afu, const int dof, Array3<double>& lK)
+{
+  using Matrix = mat_fun::Matrix<nsd>;
+  using NodalMatrix = mat_fun::NodalMatrix<nsd>;
+  using Direction = Eigen::Matrix<double, nsd, 1>;
+  const int eNoN = Nx0.cols();
+
+  // 1. During prestrain solves, the current configuration does not move with u.
+  //    The tangent needs to be corrected by removing the derivatives of the
+  //    volume and shape function gradients with respect to u:
+  //        -w [ (tau Grad_x N_a)_i (Grad_x N_b)_j - (tau Grad_x N_b)_i (Grad_x N_a)_j ],
+  //    tau = P F^T, Grad_x N = F^-T Grad_0 N.
+  const NodalMatrix Nxs = F.inverse().transpose() * Nx0;
+  const NodalMatrix tau_Nxs = (P * F.transpose()) * Nxs;
+  for (int b = 0; b < eNoN; b++) {
+    for (int a = 0; a < eNoN; a++) {
+      for (int i = 0; i < nsd; i++) {
+        for (int j = 0; j < nsd; j++) {
+          lK(i*dof + j, a, b) -= w_afu * (tau_Nxs(i,a) * Nxs(j,b) - tau_Nxs(i,b) * Nxs(j,a));
+        }
+      }
+    }
+  }
+
+  // 2. During a prestrain solve, the current configuration does not move
+  //    but fibers must still be pulled back such that they have unit length
+  //    and are unstretched in the unloaded configuration. To first order,
+  //    a displacement du_b of node b changes each fiber by:
+  //        df0 = -(I - f0 f0^T) F0^-1 du_b (Grad_0 N_b . f0).
+  //    The tangent must be corrected by:
+  //        lK += w F dS Grad_0 N_a,
+  //    where dS is the change in the material law's S when f0
+  //    moves along df0, computed from finite differences.
+  const int nfd = fibers.cols();
+  if ((fibers.colwise().norm().array() == 0.0).all()) {   // Fibers::zero_fibers
+    return;
+  }
+
+  // S of the material law at F for given fibers. The active tension, Dm and
+  // Ja are recomputed with each call and discarded.
+  const auto stress = [&](const mat_models::FiberRef<nsd>& f) {
+    Matrix S;
+    mat_fun::Matrix<3*(nsd-1)> Dm;
+    double Ja;
+    const auto Ta = active_stress_evaluator.evaluate<nsd>(N, F, f);
+    mat_models::compute_pk2cc<nsd>(com_mod, cep_mod, dmn, F, nfd, f, Ta, S, Dm, Ja);
+    return S;
+  };
+  const Matrix S = stress(fibers);
+
+  constexpr double h = 1.0e-7;   // finite difference step
+  const Matrix F0_inv = F0.inverse();
+  Eigen::Matrix<double, nsd, Eigen::Dynamic> f = fibers;   // the fibers, one of them perturbed
+
+  for (int k = 0; k < nfd; k++) {
+    const Direction fk = fibers.col(k);
+
+    // Grad_0 N_b . f0 = Grad N_b . F0 f0, the gradient on the mesh along the fiber
+    const mat_fun::NodalVector fk_Nx = Nx0.transpose() * fk;
+
+    // The turning, df0 = -(I - f0 f0^T) F0^-1 du_b (Grad_0 N_b . f0): T maps
+    // du_b to df0 for node b, up to the factor fk_Nx(b).
+    const Matrix T = -(Matrix::Identity() - fk * fk.transpose()) * F0_inv;
+
+    for (int j = 0; j < nsd; j++) {
+      // dS along the axis e_j
+      f(j, k) = fk(j) + h;
+      const Matrix dS = (stress(f) - S) / h;
+      f(j, k) = fk(j);
+
+      // df0_j = C(:,b) . du_b for every node b, so lK += w_afu (F dS Grad_0 N_a) (x) C(:,b)
+      const NodalMatrix dP_Nx = (F * dS) * Nx0;
+      const NodalMatrix C = T.row(j).transpose() * fk_Nx.transpose();
+      for (int b = 0; b < eNoN; b++) {
+        for (int a = 0; a < eNoN; a++) {
+          for (int i = 0; i < nsd; i++) {
+            for (int l = 0; l < nsd; l++) {
+              lK(i*dof + l, a, b) += w_afu * dP_Nx(i,a) * C(l,b);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+template void prestrain_tangent_correction<2>(const ComMod&, const CepMod&, const dmnType&,
+    const ActiveStress::Evaluator&, const Eigen::Ref<const Eigen::VectorXd>&,
+    const mat_fun::Matrix<2>&, const mat_fun::Matrix<2>&, const mat_fun::Matrix<2>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>&, double, int, Array3<double>&);
+template void prestrain_tangent_correction<3>(const ComMod&, const CepMod&, const dmnType&,
+    const ActiveStress::Evaluator&, const Eigen::Ref<const Eigen::VectorXd>&,
+    const mat_fun::Matrix<3>&, const mat_fun::Matrix<3>&, const mat_fun::Matrix<3>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>&,
+    const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>&, double, int, Array3<double>&);
 };
