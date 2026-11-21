@@ -21,7 +21,7 @@ void fsils_bcast(double& u, FSILS_commuType& commu)
 }
 
 
-void fsils_bcast_v(const int n, Vector<double>& u, FSILS_commuType& commu)
+void fsils_bcast_v(const int n, Vector<double>& u, const FSILS_commuType& commu)
 {
   if (commu.nTasks > 1) { 
     Vector<double> uG(n);

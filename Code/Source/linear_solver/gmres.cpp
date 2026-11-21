@@ -26,39 +26,6 @@ namespace gmres {
 
 namespace {
 
-void bc_pre(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
-            const int mynNo, const int nNo) {
-  int nsd = dof - 1;
-  Array<double> v(nsd,nNo);
-
-  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto &face = lhs.face[faIn];
-    if (face.coupledFlag) {
-      if (face.sharedFlag) {
-        v = 0.0;
-
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            v(i,Ac) = face.valM(i,a);
-          }
-        }
-
-        face.nS = pow(norm::fsi_ls_normv(nsd, mynNo, lhs.commu, v), 2.0);
-
-      } else { 
-        face.nS = 0.0;
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            face.nS = face.nS + pow(face.valM(i,a), 2.0);
-          }
-        }
-      }
-    }
-  }
-}
-
 /// @brief Orthogonalize the newest Krylov vector against the preceding ones,
 /// for one unknown per node.
 ///
@@ -166,7 +133,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       auto u_slice = u.rslice(0);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, X, u_slice);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, X, u_slice);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, X, u_slice);
 
       ls.itr = ls.itr + 1;
       u.set_slice(0, R - u_slice);
@@ -176,7 +143,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       if (face.coupledFlag) {
         auto u_slice = u.rslice(0);
         auto unCondU = u.rslice(0);
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice);
         break; 
       }
     }
@@ -216,7 +183,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       auto u_slice_1 = u.rslice(i+1);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, u_slice, u_slice_1);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, u_slice, u_slice_1);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, u_slice, u_slice_1);
 
       ls.itr = ls.itr + 1;
 
@@ -224,7 +191,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
         if (face.coupledFlag) {
           auto u_slice_1 = u.rslice(i+1);
           auto unCondU = u.rslice(i+1);
-          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice_1);
+          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice_1);
           break;
         }
       }
@@ -460,6 +427,24 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   double time = fsi_linear_solver::fsils_cpu_t();
   #endif
 
+  // @todo[michelebucelli] The preconditioning of coupled Neumann faces is
+  // inconsistent:
+  // - 'flag' is always false, so this function never applies the approximate
+  //   inverse of the operator of the coupled faces (BCOP_TYPE_PRE), and does
+  //   not use face.nS, which compute_coupled_face_norms() computes below.
+  //   gmres() and cgrad::schur() do apply it. gmres_s() declares the same
+  //   variable and does not use it.
+  // - compute_coupled_face_norms() is called with dof - 1 components. For an
+  //   equation with dof == nsd, such as struct, this leaves out the last
+  //   component of the face vectors, while add_bc_mul() applies all of them.
+  // - face.nS is the squared norm of the scaled unit pressure load. The
+  //   Sherman-Morrison formula takes its scalar product with the scaled flow
+  //   rate derivative, which is a different vector for a struct equation
+  //   coupled to svZeroD.
+  // With 'flag' true, all components and the scalar product, a ventricle case
+  // coupled to svZeroD takes about one GMRES iteration less per solve while
+  // both valves are closed (0.1 % less over a run), and the Newton residuals
+  // are 15 % larger on average in that phase.
   bool flag = false;
   int nNo = lhs.nNo;
   int mynNo = lhs.mynNo;
@@ -486,7 +471,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   dmsg << "eps: " << eps;
   #endif
 
-  bc_pre(lhs, dof, mynNo, nNo);
+  add_bc_mul::compute_coupled_face_norms(lhs, dof - 1);
 
   if (ls.iNorm <= ls.absTol) {
     ls.callD = std::numeric_limits<double>::epsilon();
@@ -510,7 +495,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     auto u_slice = u.rslice(0);
     spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, X, u_slice);
 
-    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, X, u_slice);
+    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, X, u_slice);
 
     u_slice = R - u_slice;
 
@@ -518,7 +503,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       if (face.coupledFlag && flag) {
         auto u_slice = u.rslice(0);
         auto unCondU = u.rslice(0);
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice);
         break;
       }
     }
@@ -543,13 +528,13 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       auto u_slice_1 = u.rslice(i+1);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, u_slice, u_slice_1);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, u_slice, u_slice_1);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, u_slice, u_slice_1);
 
       for (auto& face : lhs.face) {
         if (face.coupledFlag && flag) {
           auto u_slice_1 = u.rslice(i+1);
           auto unCondU = u.rslice(i+1);
-          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice_1);
+          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice_1);
           break;
         }
       }
