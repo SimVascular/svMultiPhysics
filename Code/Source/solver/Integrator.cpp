@@ -65,7 +65,7 @@ void Integrator::initialize_adaptive_time_step() {
 
   // The adaptive time step is currently only supported for prestrain.
   svmp::throw_if<svmp::NotImplementedException>(
-      adaptive_time_step_enabled_ && !com_mod.prestrain_enabled,
+      adaptive_time_step_enabled_ && !com_mod.compute_prestrain,
       "The adaptive time step (the " +
           AdaptiveTimeStepParameters::xml_element_name_ +
           " XML element) is only implemented for a Prestrain run.");
@@ -130,7 +130,7 @@ bool Integrator::step(bool save_results) {
     assemble_linear_system(eq);
 
     // Output the unscaled residual force as a diagnostic for prestrain runs
-    if (com_mod.prestrain_enabled && eq.itr == 1) {
+    if (com_mod.compute_prestrain && eq.itr == 1) {
       Array<double> weights(com_mod.R.nrows(), com_mod.lhs.nNo);
       weights = 1.0;
       mask_constrained_dofs(weights);
@@ -163,7 +163,7 @@ bool Integrator::step(bool save_results) {
 
     // If solving for prestrain, compose update into prestrain
     // and reset state to rest.
-    if (com_mod.prestrain_enabled) {
+    if (com_mod.compute_prestrain) {
       auto& An = solutions_.current.get_acceleration();
       auto& Yn = solutions_.current.get_velocity();
       auto& Dn = solutions_.current.get_displacement();
@@ -838,7 +838,7 @@ void Integrator::predictor()
   #ifdef debug_picp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "prestress_enabled: " << com_mod.prestress_enabled;
+  dmsg << "compute_prestress: " << com_mod.compute_prestress;
   #endif
 
   // Variables for prestress calculations
@@ -856,7 +856,7 @@ void Integrator::predictor()
   auto& Dn = solutions_.current.get_displacement();
 
   // Prestress initialization
-  if (com_mod.prestress_enabled) {
+  if (com_mod.compute_prestress) {
      pS0 = pS0 + pSn;
      Ao = 0.0;
      Yo = 0.0;
@@ -1010,7 +1010,7 @@ void Integrator::initiator(SolutionStates& solutions)
   dmsg << "eq.itr: " << eq.itr;
   dmsg << "dof: " << dof;
   dmsg << "tnNo: " << tnNo;
-  dmsg << "com_mod.prestress_enabled: " << com_mod.prestress_enabled;
+  dmsg << "com_mod.compute_prestress: " << com_mod.compute_prestress;
   #endif
 
   const auto& Ao = solutions.old.get_acceleration();
@@ -1069,7 +1069,7 @@ void Integrator::initiator(SolutionStates& solutions)
   }
 
   // prestress
-  if (com_mod.prestress_enabled) {
+  if (com_mod.compute_prestress) {
     com_mod.pSn = 0.0;
     com_mod.pSa = 0.0;
   }
@@ -1243,7 +1243,7 @@ void Integrator::finalize_iteration()
 
   // Update prestress at the nodes and re-initialize
   //
-  if (com_mod.prestress_enabled) {
+  if (com_mod.compute_prestress) {
     all_fun::commu(com_mod, pSn);
     all_fun::commu(com_mod, pSa);
 

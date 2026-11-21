@@ -7,6 +7,7 @@
 #include "ActiveStress.h"
 #include "ComMod.h"
 #include "SolutionStates.h"
+#include "solid/mat_models.h"
 
 namespace struct_ns {
 
@@ -62,7 +63,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc);
 
 /// @brief Contribution of one Gauss point to the element residual and
-/// tangent of the struct equation (displacement-based nonlinear solid), in two
+/// tangent of the struct equation (displacement-based nonlinear solid), in three
 /// dimensions.
 ///
 /// Adds the inertia, damping, body force and internal force terms of the
@@ -142,21 +143,28 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 /// plus one for the baseline. A mesh without fibers pays nothing beyond the
 /// first part.
 ///
-/// @param active_stress_evaluator the kernel's evaluator, updated for the element.
-/// @param N shape functions at the Gauss point, for the active tension.
-/// @param P the first Piola-Kirchhoff stress the kernel assembled, viscous and
+/// @param[in] com_mod Simulation data.
+/// @param[in] cep_mod Electrophysiology data.
+/// @param[in] dmn The domain of the element.
+/// @param[in] active_stress_evaluator the kernel's evaluator, updated for the element.
+/// @param[in] N shape functions at the Gauss point, for the active tension.
+/// @param[in] F0 the prestrain at the Gauss point.
+/// @param[in] F the deformation gradient from the stress-free configuration,
+/// (I + Grad u) F0.
+/// @param[in] P the first Piola-Kirchhoff stress the kernel assembled, viscous and
 /// prestress parts included.
-/// @param Nx0 shape function gradients on the stress-free configuration, nsd x eNoN.
-/// @param fibers the pulled-back fibers the material law saw, nsd x nFn.
-/// @param w_afu the weight times the stiffness scaling of lK.
-/// @param lK the element tangent, lK(i*dof + j, a, b).
+/// @param[in] Nx0 shape function gradients on the stress-free configuration, nsd x eNoN.
+/// @param[in] fibers the pulled-back fibers the material law saw, nsd x nFn.
+/// @param[in] w_afu the weight times the stiffness scaling of lK.
+/// @param[in] dof the degrees of freedom per node of lK.
+/// @param[in,out] lK the element tangent, lK(i*dof + j, a, b); the correction
+/// is added to it.
 template <int nsd>
 void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
     const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
     const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
     const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
-    const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& fibers,   // mat_models::FiberRef<nsd>
-    double w_afu, int dof, Array3<double>& lK);
+    const mat_models::FiberRef<nsd>& fibers, double w_afu, int dof, Array3<double>& lK);
 };
 
 #endif

@@ -310,9 +310,9 @@ TEST(Prestrain, SetsIdentityAtEveryGaussPoint)
   ASSERT_TRUE(prestrain.has_prestrain());
   for (int e = 0; e < 2; ++e) {
     for (int g = 0; g < 3; ++g) {
-      EXPECT_TRUE(prestrain.get(2, g, e).isIdentity(0.0));
+      EXPECT_TRUE(prestrain.get(g, e).isIdentity(0.0));
     }
-    EXPECT_TRUE(prestrain.get_mean(2, e).isIdentity(0.0));
+    EXPECT_TRUE(prestrain.get_mean(e).isIdentity(0.0));
   }
 }
 
@@ -332,7 +332,7 @@ TEST(Prestrain, LoadsGaussPointPrestrainFromVtu)
   prestrain.read(parameters, mesh, 3);
 
   ASSERT_TRUE(prestrain.has_prestrain());
-  const auto F0_g0 = prestrain.get(3, 0, 0);
+  const auto F0_g0 = prestrain.get(0, 0);
   ASSERT_EQ(F0_g0.rows(), 3);
   ASSERT_EQ(F0_g0.cols(), 3);
   EXPECT_DOUBLE_EQ(F0_g0(0, 0), 1.1);
@@ -345,11 +345,11 @@ TEST(Prestrain, LoadsGaussPointPrestrainFromVtu)
   EXPECT_DOUBLE_EQ(F0_g0(1, 2), 0.7);
   EXPECT_DOUBLE_EQ(F0_g0(2, 2), 1.2);
 
-  const auto F0_g1 = prestrain.get(3, 1, 0);
+  const auto F0_g1 = prestrain.get(1, 0);
   EXPECT_DOUBLE_EQ(F0_g1(0, 0), 1.3);
   EXPECT_DOUBLE_EQ(F0_g1(1, 2), 0.3);
 
-  const auto mean = prestrain.get_mean(3, 0);
+  const auto mean = prestrain.get_mean(0);
   EXPECT_DOUBLE_EQ(mean(0, 0), 1.2);
   EXPECT_DOUBLE_EQ(mean(1, 0), 0.1);
   EXPECT_DOUBLE_EQ(mean(1, 2), 0.5);
@@ -442,7 +442,7 @@ TEST(Prestrain, ComposesDisplacementGradientOnTheLeft)
   const Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
   const Eigen::Matrix3d expected = (I + B) * (I + A);
   for (int g = 0; g < mesh.nG; ++g) {
-    EXPECT_TRUE(prestrain.get(3, g, 0).isApprox(expected, 1.0e-12));
+    EXPECT_TRUE(prestrain.get(g, 0).isApprox(expected, 1.0e-12));
   }
   EXPECT_FALSE(expected.isApprox((I + A) * (I + B), 1.0e-3));
 }
@@ -467,7 +467,7 @@ TEST(Prestrain, ComposesTwoDimensionalDisplacementGradientOnTheLeft)
   prestrain.compose(com_mod, mesh, affine_displacement(B, corners));
 
   const Eigen::Matrix2d I = Eigen::Matrix2d::Identity();
-  EXPECT_TRUE(prestrain.get(2, 0, 0).isApprox((I + B) * (I + A), 1.0e-12));
+  EXPECT_TRUE(prestrain.get(0, 0).isApprox((I + B) * (I + A), 1.0e-12));
 }
 
 TEST(Prestrain, InternalForcesAreObjectiveUnderRigidRotation)
@@ -523,9 +523,9 @@ TEST(Prestrain, TangentCorrectionMatchesFiniteDifferences)
 
     Array<double> lR;
     Array3<double> lK_forward, lK;
-    element.com_mod.prestrain_enabled = false;
+    element.com_mod.compute_prestrain = false;
     element.evaluate(F0, rest, lR, lK_forward);
-    element.com_mod.prestrain_enabled = true;
+    element.com_mod.compute_prestrain = true;
     element.evaluate(F0, rest, lR, lK);
 
     const auto composed_residual = [&](const Array<double>& du) {

@@ -777,7 +777,7 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
       // stress-free length, as the material model does (see prestrain.h).
       if (lM.prestrain.has_prestrain()) {
         const Eigen::Map<const Eigen::VectorXd> f(fiber.data(), nsd);
-        lambda *= f.norm() / (lM.prestrain.get(nsd, g, e).inverse() * f).norm();
+        lambda *= f.norm() / (lM.prestrain.get(g, e).inverse() * f).norm();
       }
 
       // L2 projection from integration points to nodes
@@ -1950,7 +1950,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
       // the element average of the prestrain.
       Matrix<nsd> F0 = Im;
       if (prestrained) {
-        F0 = (fs.nG == lM.nG) ? lM.prestrain.get(nsd, g, e) : lM.prestrain.get_mean(nsd, e);
+        F0 = (fs.nG == lM.nG) ? lM.prestrain.get(g, e) : lM.prestrain.get_mean(e);
         if (lM.fibers.has_fibers()) {
           eigen_view_mutable(fibers) = (F0.inverse() * eigen_view<nsd>(fibers)).colwise().normalized();
         }

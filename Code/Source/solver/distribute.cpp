@@ -340,8 +340,8 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.cmmVarWall);
 
     cm.bcast(cm_mod, &com_mod.shlEq);
-    cm.bcast(cm_mod, &com_mod.prestress_enabled);
-    cm.bcast(cm_mod, &com_mod.prestrain_enabled);
+    cm.bcast(cm_mod, &com_mod.compute_prestress);
+    cm.bcast(cm_mod, &com_mod.compute_prestrain);
     cm.bcast(cm_mod, &com_mod.sstEq);
 
     cm.bcast(cm_mod, &simulation->cep_mod.cepEq);

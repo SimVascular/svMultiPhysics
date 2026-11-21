@@ -1810,11 +1810,11 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
   // Set equation properties.
   //
   if (eq_params->prestress.defined() && eq_params->prestress.value()) {
-    simulation->com_mod.prestress_enabled = true;
+    simulation->com_mod.compute_prestress = true;
   }
 
   if (eq_params->prestrain.defined() && eq_params->prestrain.value()) {
-    simulation->com_mod.prestrain_enabled = true;
+    simulation->com_mod.compute_prestrain = true;
   }
 
   bool THflag = false; 
@@ -2138,8 +2138,8 @@ void read_files(Simulation* simulation, const std::string& file_name)
   dmsg << "Done Read equations " << " ";
   #endif
 
-  if (com_mod.prestrain_enabled) {
-    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.prestress_enabled,
+  if (com_mod.compute_prestrain) {
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(com_mod.compute_prestress,
         "Prestress and Prestrain can not both be set.");
     svmp::throw_if<svmp::NotImplementedException>(com_mod.stFileFlag,
         "A Prestrain run can not be restarted from a .bin file. "
@@ -2161,11 +2161,18 @@ void read_files(Simulation* simulation, const std::string& file_name)
     svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.line_search_enabled,
         "Line_search_experimental is not supported in a Prestrain run. It remains available "
         "in forward runs that read a prestrain through Prestrain_file_path.");
+
+    for (const auto& bc : eq.bc) {
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(bc.flwP,
+          "A Prestrain run applies its pressure on the imaged surface, which does not move, so "
+          "Follower_pressure_load must be false. Follower loads remain available in forward runs "
+          "that read a prestrain through Prestrain_file_path.");
+    }
   }
 
-  bool prestrained = com_mod.prestrain_enabled;
+  bool prestrained = com_mod.compute_prestrain;
   for (const auto& msh : com_mod.msh) {
-    const bool mesh_prestrained = com_mod.prestrain_enabled || msh.prestrain.has_prestrain();
+    const bool mesh_prestrained = com_mod.compute_prestrain || msh.prestrain.has_prestrain();
     prestrained = prestrained || mesh_prestrained;
 
     // The prestrain is held at the mesh's Gauss points, which the momentum and
@@ -2182,7 +2189,7 @@ void read_files(Simulation* simulation, const std::string& file_name)
       "part would have to be carried by the pressure field, which starts from zero. Use a struct "
       "equation for the prestrained solid.");
 
-  // F0 is held per element of the mesh as read. remeshing would leave it behind.
+  // F0 is held per element of the mesh as read. Remeshing would leave it behind.
   svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.rmsh.isReqd,
       "A prestrain is not supported with remeshing: the prestrain is stored per element of the "
       "original mesh and is not carried to a new one.");

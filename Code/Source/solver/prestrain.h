@@ -79,7 +79,7 @@ public:
    * VTU file named by Prestrain_file_path, in the mesh's original element
    * order.
    */
-  void read(const MeshParameters& mesh_parameters, mshType& mesh, int nsd);
+  void read(const MeshParameters& mesh_parameters, const mshType& mesh, int nsd);
 
   /**
    * @brief Parallel distribution of the prestrain according to the mesh's
@@ -103,21 +103,22 @@ public:
    * @brief Returns the prestrain at Gauss point g of element e, nsd x nsd.
    * The mesh must carry a prestrain (see has_prestrain).
    */
-  Eigen::MatrixXd get(int nsd, int g, int e) const;
+  Eigen::MatrixXd get(int g, int e) const;
 
   /**
    * @brief Returns the element average of the prestrain, for output whose
    * quadrature differs from the mesh's. The mesh must carry a prestrain.
    */
-  Eigen::MatrixXd get_mean(int nsd, int e) const;
+  Eigen::MatrixXd get_mean(int e) const;
 
   /**
    * @brief Gathers the prestrain onto the master in the mesh's original
-   * element order, for writing: one row per component and Gauss point, one
-   * column per element. Collective: every rank must call it, also a rank that
-   * holds none of the mesh's elements.
+   * element order, for writing, and returns it there: one row per component
+   * and Gauss point, one column per element. Empty on the other ranks.
+   * Collective: every rank must call it, also a rank that holds none of the
+   * mesh's elements.
    */
-  void gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh, Array<double>& gF0) const;
+  Array<double> gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh) const;
 
   /**
    * @brief F0 <- (I + Grad u) F0 at every Gauss point of the mesh, with u a
@@ -138,8 +139,16 @@ private:
    */
   Array3<double> F0;
 
-  /// The tensor of Gauss point g of element e.
-  double* block(const int g, const int e) const
+  /// Number of spatial dimensions of the prestrain tensors.
+  int nsd = 0;
+
+  /// The tensor of Gauss point g of element e, ready only.
+  const double* block(const int g, const int e) const
+  {
+    return F0.data() + (static_cast<size_t>(e) * F0.ncols() + g) * F0.nrows();
+  }
+  // The tensor of Gauss point g of element 3, writable.
+  double* block(const int g, const int e)
   {
     return F0.data() + (static_cast<size_t>(e) * F0.ncols() + g) * F0.nrows();
   }

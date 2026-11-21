@@ -210,7 +210,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
 
       // Prestrained elements are integrated on their unloaded configuration.
       if (prestrained) {
-        const Eigen::MatrixXd F0_g = lM.prestrain.get(nsd, g, e);
+        const Eigen::MatrixXd F0_g = lM.prestrain.get(g, e);
         recompute_visc = recompute_visc || F0_g != F0;
         F0 = F0_g;
         mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);

@@ -210,7 +210,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
   auto& pS0 = com_mod.pS0;
   auto& pSn = com_mod.pSn;
   auto& pSa = com_mod.pSa;
-  bool prestress_enabled = com_mod.prestress_enabled;
+  bool compute_prestress = com_mod.compute_prestress;
 
   int eNoN = lM.eNoN;
   const bool mesh_has_fibers = lM.fibers.has_fibers();
@@ -313,7 +313,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 
       // Prestrained elements are integrated on their unloaded configuration.
       if (prestrained) {
-        const Eigen::MatrixXd F0_g = lM.prestrain.get(nsd, g, e);
+        const Eigen::MatrixXd F0_g = lM.prestrain.get(g, e);
         recompute_visc = recompute_visc || F0_g != F0;
         F0 = F0_g;
         mat_fun::eigen_view_mutable(Nx) = F0.transpose() * mat_fun::eigen_view(Nx);
@@ -346,7 +346,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       }
 
       // Prestress
-      if (prestress_enabled) {
+      if (compute_prestress) {
         for (int a = 0; a < eNoN; a++) {
           int Ac = ptr(a);
           pSa(Ac) += w*N(a);
@@ -529,7 +529,7 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Make the tangent that of a prestrain iteration, which composes its update
   // into F0 (see prestrain.h).
-  if (com_mod.prestrain_enabled) {
+  if (com_mod.compute_prestrain) {
     prestrain_tangent_correction<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
                                            F0, F, P, Nxm, fibers, w * afu, dof, lK);
   }
@@ -732,7 +732,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Make the tangent that of a prestrain iteration, which composes its update
   // into F0 (see prestrain.h).
-  if (com_mod.prestrain_enabled) {
+  if (com_mod.compute_prestrain) {
     prestrain_tangent_correction<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
                                            F0, F, P, Nxm, fibers, w * afu, dof, lK);
   }

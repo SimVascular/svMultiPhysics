@@ -59,7 +59,7 @@ void scatter_element_data(const double* global_data, double* local_data,
 } // namespace
 
 
-void Prestrain::read(const MeshParameters& mesh_parameters, mshType& mesh, const int nsd)
+void Prestrain::read(const MeshParameters& mesh_parameters, const mshType& mesh, const int nsd)
 {
   if (!mesh_parameters.prestrain_file_path.defined()) {
     return;
@@ -75,6 +75,7 @@ void Prestrain::read(const MeshParameters& mesh_parameters, mshType& mesh, const
       "The prestrain file has " + std::to_string(vtk_data->num_elems()) + " elements but the mesh named '" +
       mesh.name + "' has " + std::to_string(mesh.gnEl) + ".");
 
+  this->nsd = nsd;
   const int ncomp = nsd*nsd;
   F0.resize(ncomp, mesh.nG, mesh.gnEl);
 
@@ -107,8 +108,8 @@ void Prestrain::distribute(const CmMod& cm_mod, const cmType& cm, const mshType&
   if (!has) {
     return;
   }
-  int ncomp = F0.nrows();
-  cm.bcast(cm_mod, &ncomp);
+  cm.bcast(cm_mod, &nsd);
+  const int ncomp = nsd*nsd;
 
   // Scatter the prestrain of each rank's elements.
   const Array3<double> global = F0;
@@ -117,17 +118,17 @@ void Prestrain::distribute(const CmMod& cm_mod, const cmType& cm, const mshType&
 }
 
 
-Eigen::MatrixXd Prestrain::get(const int nsd, const int g, const int e) const
+Eigen::MatrixXd Prestrain::get(const int g, const int e) const
 {
   return Eigen::Map<const Eigen::MatrixXd>(block(g, e), nsd, nsd);
 }
 
 
-Eigen::MatrixXd Prestrain::get_mean(const int nsd, const int e) const
+Eigen::MatrixXd Prestrain::get_mean(const int e) const
 {
   Eigen::MatrixXd mean = Eigen::MatrixXd::Zero(nsd, nsd);
   for (int g = 0; g < F0.ncols(); g++) {
-    mean += get(nsd, g, e);
+    mean += get(g, e);
   }
   return mean / F0.ncols();
 }
@@ -135,6 +136,7 @@ Eigen::MatrixXd Prestrain::get_mean(const int nsd, const int e) const
 
 void Prestrain::set_identity(const int nsd, const int nG, const int nEl)
 {
+  this->nsd = nsd;
   F0.resize(nsd*nsd, nG, nEl);
   F0 = 0.0;
   for (int e = 0; e < nEl; e++) {
@@ -147,8 +149,9 @@ void Prestrain::set_identity(const int nsd, const int nG, const int nEl)
 }
 
 
-void Prestrain::gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh, Array<double>& gF0) const
+Array<double> Prestrain::gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType& mesh) const
 {
+  Array<double> gF0;
   const auto& cm = com_mod.cm;
 
   // The row count follows from the mesh, the same on every rank; the columns
@@ -158,7 +161,7 @@ void Prestrain::gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType
   if (cm.seq()) {
     gF0.resize(rows, mesh.nEl);
     std::copy_n(F0.data(), F0.size(), gF0.data());
-    return;
+    return gF0;
   }
 
   const int np = cm.np();
@@ -184,6 +187,7 @@ void Prestrain::gather(const ComMod& com_mod, const CmMod& cm_mod, const mshType
       gF0.set_col(e, tmp.col(Ec));
     }
   }
+  return gF0;
 }
 
 

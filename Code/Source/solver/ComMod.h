@@ -1687,10 +1687,10 @@ class ComMod {
     bool shlEq = false;
 
     /// @brief Whether PRESTRESS is being solved
-    bool prestress_enabled = false;
+    bool compute_prestress = false;
 
     /// @brief Whether prestrain is being solved
-    bool prestrain_enabled = false;
+    bool compute_prestrain = false;
 
     /// @brief Whether velocity-pressure based structural dynamics solver is used
     bool sstEq = false;
