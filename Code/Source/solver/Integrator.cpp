@@ -162,7 +162,8 @@ bool Integrator::step(bool save_results) {
     apply_increment(eq, step_length);
 
     // If solving for prestrain, compose update into prestrain
-    // and reset state to rest.
+    // and reset state to rest. This assumes homogeneous Dirichlet conditions
+    // and a start from rest, which read_files checks.
     if (com_mod.compute_prestrain) {
       auto& An = solutions_.current.get_acceleration();
       auto& Yn = solutions_.current.get_velocity();

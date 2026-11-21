@@ -2156,6 +2156,10 @@ void read_files(Simulation* simulation, const std::string& file_name)
     svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.phys != EquationType::phys_struct,
         "Prestrain solves are currently only supported for struct equations.");
 
+    svmp::throw_if<svmp::NotImplementedException>(com_mod.nMsh != 1,
+        "A Prestrain solves only supports a single mesh, but this input has "
+        + std::to_string(com_mod.nMsh) + " meshes.");
+
     // A prestrain iteration composes its update into F0; a line search would
     // have to compose every trial step to judge it by the composed residual.
     svmp::throw_if<svmp::FE::InvalidArgumentException>(eq.line_search_enabled,
@@ -2167,7 +2171,19 @@ void read_files(Simulation* simulation, const std::string& file_name)
           "A Prestrain run applies its pressure on the imaged surface, which does not move, so "
           "Follower_pressure_load must be false. Follower loads remain available in forward runs "
           "that read a prestrain through Prestrain_file_path.");
+
+      const bool dirichlet = utils::btest(bc.bType, enum_int(BoundaryConditionType::bType_Dir));
+      const bool steady_zero = utils::btest(bc.bType, enum_int(BoundaryConditionType::bType_std)) && bc.g == 0.0;
+      svmp::throw_if<svmp::FE::InvalidArgumentException>(dirichlet && !steady_zero,
+          "The Dirichlet condition on the face named '" + com_mod.msh[bc.iM].fa[bc.iFa].name +
+          "' must be steady with a value of 0 in a Prestrain solve.");
     }
+
+    svmp::throw_if<svmp::FE::InvalidArgumentException>(
+        !com_mod.iniFilePath.empty() || com_mod.Dinit.size() != 0 || com_mod.Vinit.size() != 0,
+        "A Prestrain run starts every iteration from rest, so it does not support "
+        "Simulation_initialization_file_path, Initial_displacements_file_path or "
+        "Initial_velocities_file_path.");
   }
 
   bool prestrained = com_mod.compute_prestrain;
@@ -2180,6 +2196,28 @@ void read_files(Simulation* simulation, const std::string& file_name)
     svmp::throw_if<svmp::NotImplementedException>(mesh_prestrained && msh.nFs != 1,
         "A prestrain requires the same quadrature for the momentum and continuity "
         "equations (P1P1) on the mesh named '" + msh.name + "'; Taylor-Hood is not supported.");
+
+    if (!mesh_prestrained) {
+      continue;
+    }
+    bool linear_or_shell = msh.lShl;
+    for (const auto& lEq : com_mod.eq) {
+      for (const auto& lDmn : lEq.dmn) {
+        if (lDmn.phys != EquationType::phys_lElas) {
+          continue;
+        }
+        if (lDmn.Id == -1) {
+          linear_or_shell = true;
+        } else if (msh.eId.size() != 0) {
+          for (int e = 0; e < msh.gnEl && !linear_or_shell; e++) {
+            linear_or_shell = utils::btest(msh.eId[e], lDmn.Id);
+          }
+        }
+      }
+    }
+    svmp::throw_if<svmp::NotImplementedException>(linear_or_shell,
+        "The mesh named '" + msh.name + "' has a prestrain, but it is solved as linear elasticity "
+        "or as a shell, which do not apply it. Only struct solids support a prestrain.");
   }
 
   // A ustruct solid's hydrostatic prestress would have to come from its pressure
