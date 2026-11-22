@@ -22,8 +22,7 @@ void b_struct_3d(const ComMod& com_mod, const int eNoN, const double w, const Ve
 void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);
 
 /// @brief Contribution of one Gauss point to the element residual and
-/// tangent of the struct equation (displacement-based nonlinear solid), in two
-/// dimensions.
+/// tangent of the struct equation (displacement-based nonlinear solid).
 ///
 /// Adds the inertia, damping, body force and internal force terms of the
 /// momentum balance in total Lagrangian form, at the generalized-alpha time
