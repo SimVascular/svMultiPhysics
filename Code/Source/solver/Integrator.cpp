@@ -21,6 +21,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <set>
 
@@ -129,14 +131,20 @@ bool Integrator::step(bool save_results) {
 
     assemble_linear_system(eq);
 
-    // Output the unscaled residual force as a diagnostic for prestrain runs
+    // Write the unscaled residual force of each step of a prestrain run to
+    // prestrain_residual.csv in the results folder, as a convergence diagnostic
     if (com_mod.compute_prestrain && eq.itr == 1) {
       Array<double> weights(com_mod.R.nrows(), com_mod.lhs.nNo);
       weights = 1.0;
       mask_constrained_dofs(weights);
       const double residual_force = residual_norm(weights);
       if (com_mod.cm.mas(simulation_->cm_mod)) {
-        std::cout << " Prestrain: residual force = " << residual_force << std::endl;
+        std::ofstream file(simulation_->get_chnl_mod().appPath + "prestrain_residual.csv",
+            cTS == 1 ? std::ios::trunc : std::ios::app);
+        if (cTS == 1) {
+          file << "step,residual_force" << std::endl;
+        }
+        file << cTS << "," << std::scientific << std::setprecision(10) << residual_force << std::endl;
       }
     }
 

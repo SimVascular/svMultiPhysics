@@ -65,7 +65,8 @@ class mshType;
 /// differs from the kernel's own, and the solid kernels correct it (see
 /// struct_ns::prestrain_tangent_correction). Max_iterations and Tolerance
 /// bound the iterations of a time step as in any other run. The residual force of every
-/// step is reported, and with Adaptive_time_step the time step is adapted to
+/// step is written to prestrain_residual.csv in the results folder, and with
+/// Adaptive_time_step the time step is adapted to
 /// the residual between steps (see Integrator.h).
 ///
 /// Each mesh holds @f$ F_0 @f$ in a Prestrain, one tensor per Gauss point,

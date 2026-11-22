@@ -9,7 +9,8 @@
   from rest under the full load and composes the displacement it reaches into
   the prestrain, F0 <- (I + Grad u) F0 (the incremental scheme of Gee, Forster
   & Wall 2010), with the tangent of that composed update. Each
-  step's residual force is printed, which tends to zero as the state converges.
+  step's residual force is written to prestrain_residual.csv in the results
+  folder, which tends to zero as the state converges.
 
   The load is a dead load on the imaged surface (Follower_pressure_load false).
   Each result_NNN.vtu carries the prestrain as the cell arrays
