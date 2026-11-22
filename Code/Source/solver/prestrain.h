@@ -34,8 +34,8 @@ class mshType;
 /// - every fiber direction, @f$ f \to f_0 = F_0^{-1} f / |F_0^{-1} f| @f$.
 ///
 /// The solid kernels then keep their total Lagrangian form, with the
-/// deformation gradient above, which the pulled-back gradients give as
-/// @f$ F = F_0 + \sum_a u_a \otimes \nabla_0 N_a @f$.
+/// deformation gradient above, computed from the displacement on the mesh as
+/// @f$ F = (I + \sum_a u_a \otimes \nabla N_a) \, F_0 @f$.
 ///
 /// A fiber is a material line, so @f$ F_0^{-1} @f$ carries it from the mesh to
 /// the stress-free configuration and changes its length by the stretch the

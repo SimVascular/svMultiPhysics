@@ -41,8 +41,9 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 /// @param[in] dl Nodal displacements of the element, tDof x eNoN.
 /// @param[in] bfl Nodal body forces of the element, nsd x eNoN.
 /// @param[in] F0 Prestrain at the Gauss point: the deformation gradient from
-///   the stress-free configuration to the mesh, so that F = (I + Grad u) F0
-///   (see Prestrain). The identity when the mesh has no prestrain.
+///   the unloaded configuration to the mesh, so that F = (I + Grad u) F0
+///   (see Prestrain). The identity when the mesh has no prestrain. If present,
+///   then w, Nx, and fibers are pulled back to the unloaded configuration.
 /// @param[in] fibers Fiber directions at the Gauss point, one per column.
 /// @param[in] pS0l Nodal prestress of the element in Voigt order.
 /// @param[out] pSl PK2 stress at the Gauss point in Voigt order.
@@ -82,8 +83,9 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 /// @param[in] dl Nodal displacements of the element, tDof x eNoN.
 /// @param[in] bfl Nodal body forces of the element, nsd x eNoN.
 /// @param[in] F0 Prestrain at the Gauss point: the deformation gradient from
-///   the stress-free configuration to the mesh, so that F = (I + Grad u) F0
-///   (see Prestrain). The identity when the mesh has no prestrain.
+///   the unloaded configuration to the mesh, so that F = (I + Grad u) F0
+///   (see Prestrain). The identity when the mesh has no prestrain. If present,
+///   then w, Nx, and fibers are pulled back to the unloaded configuration.
 /// @param[in] fibers Fiber directions at the Gauss point, one per column.
 /// @param[in] pS0l Nodal prestress of the element in Voigt order.
 /// @param[out] pSl PK2 stress at the Gauss point in Voigt order.

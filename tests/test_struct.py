@@ -43,7 +43,8 @@ def test_LV_HolzapfelOgden_prestrain(n_proc):
 
     prestrain_folder = os.path.join(folder, "1-prestrain")
     run_with_reference(base_folder, prestrain_folder, prestrain_fields,
-                       n_proc, 3, check_time_value=False)
+                       n_proc, 3, check_time_value=False,
+                       cell_fields=["Prestrain_F_g" + str(g) for g in range(4)])
 
     forward_folder = os.path.join(folder, "2-forward")
     run_with_reference(base_folder, forward_folder, prestrain_fields,
