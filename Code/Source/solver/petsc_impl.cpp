@@ -11,6 +11,16 @@
 #include <utility>
 #include <vector>
 
+/* Each lumped parameter BC adds the product of two vectors, scaled by res:
+   pressure load * flow rate derivative^T. Rows are owned by this process;
+   columns include all processes that share the face. */
+struct PetscFaceTangent {
+    PetscReal resistance;
+    std::vector<std::pair<PetscInt, PetscReal>> owned_rows;
+    std::vector<PetscInt> columns;
+    std::vector<PetscReal> flux;
+};
+
 LHSCtx plhs;       /* PETSc lhs */
 LSCtx *psol;       /* PETSc solver */
 PetscLogStage stages[6];  /* performance tuning. */
@@ -539,55 +549,6 @@ PetscErrorCode petsc_create_bc(const PetscInt dof, const PetscInt cEq, \
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode petsc_collect_face(const fsi_linear_solver::FSILS_faceType& face,
-    int dof, PetscFaceTangent& tangent)
-{
-    PetscFunctionBeginUser;
-    const int components = std::min(face.dof, dof);
-    std::map<PetscInt, PetscReal> local_flux;
-    // The linear solver numbers the nodes owned by this process first.
-    for (int a = 0; a < face.nNo; ++a) {
-        const int node = face.glob(a);
-        if (node >= plhs.mynNo) continue;
-        for (int i = 0; i < components; ++i) {
-            const PetscInt id = dof * plhs.ltg[node] + i;
-            tangent.owned_rows.emplace_back(id, face.unit_pressure_load(i,a));
-        }
-    }
-    // A node index may repeat in flowrate_derivative_node_indices: its
-    // values add up.
-    for (int a = 0; a < face.flowrate_derivative.ncols(); ++a) {
-        const int node = face.flowrate_derivative_node_indices(a);
-        for (int i = 0; i < components; ++i) {
-            local_flux[dof * plhs.ltg[node] + i] += face.flowrate_derivative(i,a);
-        }
-    }
-
-    std::vector<PetscInt> local_ids;
-    std::vector<PetscReal> local_weights;
-    for (const auto& [id, weight] : local_flux) {
-        local_ids.push_back(id);
-        local_weights.push_back(weight);
-    }
-    PetscMPIInt size, nlocal;
-    PetscCallMPI(MPI_Comm_size(MPI_COMM_WORLD, &size));
-    PetscCall(PetscMPIIntCast(local_ids.size(), &nlocal));
-    std::vector<PetscMPIInt> counts(size), offsets(size);
-    PetscCallMPI(MPI_Allgather(&nlocal, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD));
-    PetscInt count = 0;
-    for (PetscMPIInt rank = 0; rank < size; ++rank) {
-        PetscCall(PetscMPIIntCast(count, &offsets[rank]));
-        PetscCall(PetscIntSumError(count, counts[rank], &count));
-    }
-    tangent.columns.resize(count);
-    tangent.flux.resize(count);
-    PetscCallMPI(MPI_Allgatherv(local_ids.data(), nlocal, MPIU_INT, tangent.columns.data(),
-        counts.data(), offsets.data(), MPIU_INT, MPI_COMM_WORLD));
-    PetscCallMPI(MPI_Allgatherv(local_weights.data(), nlocal, MPIU_REAL, tangent.flux.data(),
-        counts.data(), offsets.data(), MPIU_REAL, MPI_COMM_WORLD));
-    PetscFunctionReturn(PETSC_SUCCESS);
-}
-
 static PetscErrorCode petsc_add_face_tangents(Mat matrix,
     const std::vector<PetscFaceTangent>& faces, InsertMode mode)
 {
@@ -952,6 +913,9 @@ class PetscLinearAlgebra::PetscImpl {
     void init_dir_and_coupneu_bc(ComMod& com_mod, const Vector<int>& incL, const Vector<double>& res,
                                 std::vector<PetscFaceTangent>& faces);
 
+    PetscErrorCode coupled_neumann_dofs(const ComMod& com_mod, const fsi_linear_solver::FSILS_faceType& face,
+                                        PetscFaceTangent& tangent) const;
+
     consts::PreconditionerType preconditioner_;
 
     // Local to global mapping
@@ -1031,9 +995,66 @@ void PetscLinearAlgebra::PetscImpl::init_dir_and_coupneu_bc(ComMod& com_mod,
     } else if (face.bGrp == BcType::BC_TYPE_Neu && (!psol[com_mod.cEq].created || face.coupledFlag)) {
       auto& tangent = faces.emplace_back();
       tangent.resistance = res(faIn);
-      PetscCallAbort(MPI_COMM_WORLD, petsc_collect_face(face, dof, tangent));
+      PetscCallAbort(MPI_COMM_WORLD, coupled_neumann_dofs(com_mod, face, tangent));
     }
   }
+}
+
+//----------------------
+// coupled_neumann_dofs
+//----------------------
+//
+PetscErrorCode PetscLinearAlgebra::PetscImpl::coupled_neumann_dofs(const ComMod& com_mod,
+    const fsi_linear_solver::FSILS_faceType& face, PetscFaceTangent& tangent) const
+{
+  PetscFunctionBeginUser;
+  const int dof = com_mod.dof;
+  const auto& lhs = com_mod.lhs;
+  const int faDof = std::min(face.dof,dof);
+
+  // The linear solver numbers the nodes owned by this process first.
+  for (int a = 0; a < face.nNo; a++) {
+    const int Ac = face.glob(a);
+    if (Ac >= lhs.mynNo) {
+      continue;
+    }
+    for (int i = 0; i < faDof; i++) {
+      tangent.owned_rows.emplace_back(plhs.ltg[Ac]*dof + i, face.unit_pressure_load(i,a));
+    }
+  }
+
+  // The flow rate derivative only has nodes owned by this process.
+  std::map<PetscInt, PetscReal> local_flux;
+  for (int a = 0; a < face.flowrate_derivative.ncols(); a++) {
+    const int Ac = face.flowrate_derivative_node_indices(a);
+    for (int i = 0; i < faDof; i++) {
+      local_flux[plhs.ltg[Ac]*dof + i] += face.flowrate_derivative(i,a);
+    }
+  }
+
+  std::vector<PetscInt> local_ids;
+  std::vector<PetscReal> local_weights;
+  for (const auto& [id, weight] : local_flux) {
+    local_ids.push_back(id);
+    local_weights.push_back(weight);
+  }
+  PetscMPIInt size, nlocal;
+  PetscCallMPI(MPI_Comm_size(MPI_COMM_WORLD, &size));
+  PetscCall(PetscMPIIntCast(local_ids.size(), &nlocal));
+  std::vector<PetscMPIInt> counts(size), offsets(size);
+  PetscCallMPI(MPI_Allgather(&nlocal, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD));
+  PetscInt count = 0;
+  for (PetscMPIInt rank = 0; rank < size; ++rank) {
+    PetscCall(PetscMPIIntCast(count, &offsets[rank]));
+    PetscCall(PetscIntSumError(count, counts[rank], &count));
+  }
+  tangent.columns.resize(count);
+  tangent.flux.resize(count);
+  PetscCallMPI(MPI_Allgatherv(local_ids.data(), nlocal, MPIU_INT, tangent.columns.data(),
+      counts.data(), offsets.data(), MPIU_INT, MPI_COMM_WORLD));
+  PetscCallMPI(MPI_Allgatherv(local_weights.data(), nlocal, MPIU_REAL, tangent.flux.data(),
+      counts.data(), offsets.data(), MPIU_REAL, MPI_COMM_WORLD));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 //------------

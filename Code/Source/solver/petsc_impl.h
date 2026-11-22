@@ -10,17 +10,11 @@
 #include <petscao.h>
 #include <stdbool.h>
 
-#include <utility>
 #include <vector>
 
 #include "consts.h"
 
-struct PetscFaceTangent {
-    PetscReal resistance;
-    std::vector<std::pair<PetscInt, PetscReal>> owned_rows;
-    std::vector<PetscInt> columns;
-    std::vector<PetscReal> flux;
-};
+struct PetscFaceTangent;
 
 //--------
 // LHSCtx
