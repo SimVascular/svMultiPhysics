@@ -690,7 +690,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   } 
 
   // When computing prestrain, a mesh without a <Prestrain_file_path>
-  // start from F0 = I.
+  // starts from F0 = I.
   if (com_mod.compute_prestrain) {
     for (auto& msh : com_mod.msh) {
       if (!msh.prestrain.has_prestrain()) {

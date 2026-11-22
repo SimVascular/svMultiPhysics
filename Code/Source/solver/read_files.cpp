@@ -2186,51 +2186,47 @@ void read_files(Simulation* simulation, const std::string& file_name)
         "Initial_velocities_file_path.");
   }
 
-  bool prestrained = com_mod.compute_prestrain;
   for (const auto& msh : com_mod.msh) {
-    const bool mesh_prestrained = com_mod.compute_prestrain || msh.prestrain.has_prestrain();
-    prestrained = prestrained || mesh_prestrained;
+    // If this mesh carries a prestrain either through a prestrain solve or input file.
+    if (com_mod.compute_prestrain || msh.prestrain.has_prestrain()) {
+      // The prestrain is held at the mesh's Gauss points, which the momentum and
+      // continuity integrations of a Taylor-Hood element do not use.
+      svmp::throw_if<svmp::NotImplementedException>(msh.nFs != 1,
+          "A prestrain requires the same quadrature for the momentum and continuity "
+          "equations (P1P1) on the mesh named '" + msh.name + "'; Taylor-Hood is not supported.");
 
-    // The prestrain is held at the mesh's Gauss points, which the momentum and
-    // continuity integrations of a Taylor-Hood element do not use.
-    svmp::throw_if<svmp::NotImplementedException>(mesh_prestrained && msh.nFs != 1,
-        "A prestrain requires the same quadrature for the momentum and continuity "
-        "equations (P1P1) on the mesh named '" + msh.name + "'; Taylor-Hood is not supported.");
-
-    if (!mesh_prestrained) {
-      continue;
-    }
-    bool linear_or_shell = msh.lShl;
-    for (const auto& lEq : com_mod.eq) {
-      for (const auto& lDmn : lEq.dmn) {
-        if (lDmn.phys != EquationType::phys_lElas) {
-          continue;
-        }
-        if (lDmn.Id == -1) {
-          linear_or_shell = true;
-        } else if (msh.eId.size() != 0) {
-          for (int e = 0; e < msh.gnEl && !linear_or_shell; e++) {
-            linear_or_shell = utils::btest(msh.eId[e], lDmn.Id);
+      bool linear_or_shell = msh.lShl;
+      for (const auto& lEq : com_mod.eq) {
+        for (const auto& lDmn : lEq.dmn) {
+          if (lDmn.phys != EquationType::phys_lElas) {
+            continue;
+          }
+          if (lDmn.Id == -1) {
+            linear_or_shell = true;
+          } else if (msh.eId.size() != 0) {
+            for (int e = 0; e < msh.gnEl && !linear_or_shell; e++) {
+              linear_or_shell = utils::btest(msh.eId[e], lDmn.Id);
+            }
           }
         }
       }
+      svmp::throw_if<svmp::NotImplementedException>(linear_or_shell,
+          "The mesh named '" + msh.name + "' has a prestrain, but it is solved as linear elasticity "
+          "or as a shell, which do not apply it. Only struct solids support a prestrain.");
+
+      // A ustruct solid's hydrostatic prestress would have to come from its pressure
+      // field, which starts from zero.
+      svmp::throw_if<svmp::NotImplementedException>(com_mod.sstEq,
+          "A prestrain can not be applied to a ustruct (velocity-pressure) solid: its hydrostatic "
+          "part would have to be carried by the pressure field, which starts from zero. Use a struct "
+          "equation for the prestrained solid.");
+
+      // F0 is held per element of the mesh as read. Remeshing would leave it behind.
+      svmp::throw_if<svmp::NotImplementedException>(com_mod.rmsh.isReqd,
+          "A prestrain is not supported with remeshing: the prestrain is stored per element of the "
+          "original mesh and is not carried to a new one.");
     }
-    svmp::throw_if<svmp::NotImplementedException>(linear_or_shell,
-        "The mesh named '" + msh.name + "' has a prestrain, but it is solved as linear elasticity "
-        "or as a shell, which do not apply it. Only struct solids support a prestrain.");
   }
-
-  // A ustruct solid's hydrostatic prestress would have to come from its pressure
-  // field, which starts from zero.
-  svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.sstEq,
-      "A prestrain can not be applied to a ustruct (velocity-pressure) solid: its hydrostatic "
-      "part would have to be carried by the pressure field, which starts from zero. Use a struct "
-      "equation for the prestrained solid.");
-
-  // F0 is held per element of the mesh as read. Remeshing would leave it behind.
-  svmp::throw_if<svmp::NotImplementedException>(prestrained && com_mod.rmsh.isReqd,
-      "A prestrain is not supported with remeshing: the prestrain is stored per element of the "
-      "original mesh and is not carried to a new one.");
 
   auto& cep_mod = simulation->get_cep_mod();
 
