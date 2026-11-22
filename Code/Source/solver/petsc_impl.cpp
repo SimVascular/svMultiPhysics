@@ -6,8 +6,10 @@
 
 #include "petsc_impl.h"
 #include <filesystem>
-#include <map>
 #include <locale.h>
+#include <map>
+#include <utility>
+#include <vector>
 
 LHSCtx plhs;       /* PETSc lhs */
 LSCtx *psol;       /* PETSc solver */
@@ -537,6 +539,55 @@ PetscErrorCode petsc_create_bc(const PetscInt dof, const PetscInt cEq, \
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+static PetscErrorCode petsc_collect_face(const fsi_linear_solver::FSILS_faceType& face,
+    int dof, PetscFaceTangent& tangent)
+{
+    PetscFunctionBeginUser;
+    const int components = std::min(face.dof, dof);
+    std::map<PetscInt, PetscReal> local_flux;
+    // The linear solver numbers the nodes owned by this process first.
+    for (int a = 0; a < face.nNo; ++a) {
+        const int node = face.glob(a);
+        if (node >= plhs.mynNo) continue;
+        for (int i = 0; i < components; ++i) {
+            const PetscInt id = dof * plhs.ltg[node] + i;
+            tangent.owned_rows.emplace_back(id, face.unit_pressure_load(i,a));
+        }
+    }
+    // A node index may repeat in flowrate_derivative_node_indices: its
+    // values add up.
+    for (int a = 0; a < face.flowrate_derivative.ncols(); ++a) {
+        const int node = face.flowrate_derivative_node_indices(a);
+        for (int i = 0; i < components; ++i) {
+            local_flux[dof * plhs.ltg[node] + i] += face.flowrate_derivative(i,a);
+        }
+    }
+
+    std::vector<PetscInt> local_ids;
+    std::vector<PetscReal> local_weights;
+    for (const auto& [id, weight] : local_flux) {
+        local_ids.push_back(id);
+        local_weights.push_back(weight);
+    }
+    PetscMPIInt size, nlocal;
+    PetscCallMPI(MPI_Comm_size(MPI_COMM_WORLD, &size));
+    PetscCall(PetscMPIIntCast(local_ids.size(), &nlocal));
+    std::vector<PetscMPIInt> counts(size), offsets(size);
+    PetscCallMPI(MPI_Allgather(&nlocal, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD));
+    PetscInt count = 0;
+    for (PetscMPIInt rank = 0; rank < size; ++rank) {
+        PetscCall(PetscMPIIntCast(count, &offsets[rank]));
+        PetscCall(PetscIntSumError(count, counts[rank], &count));
+    }
+    tangent.columns.resize(count);
+    tangent.flux.resize(count);
+    PetscCallMPI(MPI_Allgatherv(local_ids.data(), nlocal, MPIU_INT, tangent.columns.data(),
+        counts.data(), offsets.data(), MPIU_INT, MPI_COMM_WORLD));
+    PetscCallMPI(MPI_Allgatherv(local_weights.data(), nlocal, MPIU_REAL, tangent.flux.data(),
+        counts.data(), offsets.data(), MPIU_REAL, MPI_COMM_WORLD));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 static PetscErrorCode petsc_add_face_tangents(Mat matrix,
     const std::vector<PetscFaceTangent>& faces, InsertMode mode)
 {
@@ -599,7 +650,7 @@ PetscErrorCode petsc_create_vecmat(const PetscInt dof, const PetscInt cEq, const
             PetscCall(MatSetValuesBlocked(preallocator, 1, &row, 1, &col, value, INSERT_VALUES));
         }
     }
-    /* Points with lumped parameter BC */
+    /* Rows and columns of the lumped parameter BCs */
     PetscCall(petsc_add_face_tangents(preallocator, faces, INSERT_VALUES));
     PetscCall(MatAssemblyBegin(preallocator, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(preallocator, MAT_FINAL_ASSEMBLY));
@@ -898,6 +949,8 @@ class PetscLinearAlgebra::PetscImpl {
     void initialize(ComMod& com_mod, eqType& lEq);
     void set_preconditioner(consts::PreconditionerType prec_type);
     void solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res);
+    void init_dir_and_coupneu_bc(ComMod& com_mod, const Vector<int>& incL, const Vector<double>& res,
+                                std::vector<PetscFaceTangent>& faces);
 
     consts::PreconditionerType preconditioner_;
 
@@ -918,75 +971,69 @@ PetscLinearAlgebra::PetscImpl::PetscImpl()
 {
 }
 
-static PetscErrorCode petsc_collect_face(const fsi_linear_solver::FSILS_faceType& face,
-    int dof, PetscFaceTangent& tangent)
+//-------------------------
+// init_dir_and_coupneu_bc
+//-------------------------
+//
+void PetscLinearAlgebra::PetscImpl::init_dir_and_coupneu_bc(ComMod& com_mod,
+    const Vector<int>& incL, const Vector<double>& res, std::vector<PetscFaceTangent>& faces)
 {
-    PetscFunctionBeginUser;
-    const int components = std::min(face.dof, dof);
-    std::map<PetscInt, PetscReal> local_flux;
-    for (int a = 0; a < face.nNo; ++a) {
-        const int node = face.glob(a);
-        if (node >= plhs.mynNo) continue;
-        for (int i = 0; i < components; ++i) {
-            const PetscInt id = dof * plhs.ltg[node] + i;
-            tangent.owned_rows.emplace_back(id, face.unit_pressure_load(i,a));
-        }
-    }
-    for (int a = 0; a < face.flowrate_derivative.ncols(); ++a) {
-        const int node = face.flowrate_derivative_node_indices(a);
-        for (int i = 0; i < components; ++i) {
-            local_flux[dof * plhs.ltg[node] + i] += face.flowrate_derivative(i,a);
-        }
+  using namespace consts;
+  using namespace fsi_linear_solver;
+
+  int dof = com_mod.dof;
+  auto& lhs = com_mod.lhs;
+
+  if(lhs.nFaces != 0) {
+    for (auto& face : lhs.face) {
+      face.incFlag = true;
     }
 
-    std::vector<PetscInt> local_ids;
-    std::vector<PetscReal> local_weights;
-    for (const auto& [id, weight] : local_flux) {
-        local_ids.push_back(id);
-        local_weights.push_back(weight);
+    for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
+      if (incL(faIn) == 0)  {
+        lhs.face[faIn].incFlag = false;
+      }
     }
-    PetscMPIInt size, nlocal;
-    PetscCallMPI(MPI_Comm_size(MPI_COMM_WORLD, &size));
-    PetscCall(PetscMPIIntCast(local_ids.size(), &nlocal));
-    std::vector<PetscMPIInt> counts(size), offsets(size);
-    PetscCallMPI(MPI_Allgather(&nlocal, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD));
-    PetscInt count = 0;
-    for (PetscMPIInt rank = 0; rank < size; ++rank) {
-        PetscCall(PetscMPIIntCast(count, &offsets[rank]));
-        PetscCall(PetscIntSumError(count, counts[rank], &count));
-    }
-    tangent.columns.resize(count);
-    tangent.flux.resize(count);
-    PetscCallMPI(MPI_Allgatherv(local_ids.data(), nlocal, MPIU_INT, tangent.columns.data(),
-        counts.data(), offsets.data(), MPIU_INT, MPI_COMM_WORLD));
-    PetscCallMPI(MPI_Allgatherv(local_weights.data(), nlocal, MPIU_REAL, tangent.flux.data(),
-        counts.data(), offsets.data(), MPIU_REAL, MPI_COMM_WORLD));
-    PetscFunctionReturn(PETSC_SUCCESS);
-}
 
-static PetscErrorCode petsc_prepare_boundary_conditions(const fsi_linear_solver::FSILS_lhsType& lhs,
-    int dof, const Vector<int>& incL, const Vector<double>& res, bool preallocate,
-    Array<double>& W_, std::vector<PetscFaceTangent>& faces)
-{
-    using fsi_linear_solver::BcType;
-    PetscFunctionBeginUser;
-    W_ = 1.0;
-    for (int faIn = 0; faIn < lhs.nFaces; ++faIn) {
-        if (incL(faIn) == 0) continue;
-        const auto& face = lhs.face[faIn];
-        if (face.bGrp == BcType::BC_TYPE_Dir) {
-            for (int a = 0; a < face.nNo; ++a) {
-                for (int i = 0; i < std::min(face.dof, dof); ++i) {
-                    W_(i, face.glob(a)) *= face.free_component_mask(i,a);
-                }
-            }
-        } else if (face.bGrp == BcType::BC_TYPE_Neu && (preallocate || res(faIn) != 0.0)) {
-            auto& tangent = faces.emplace_back();
-            tangent.resistance = res(faIn);
-            PetscCall(petsc_collect_face(face, dof, tangent));
-        }
+    for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
+      auto& face = lhs.face[faIn];
+      face.coupledFlag = false;
+      if (!face.incFlag) {
+        continue;
+      }
+
+      bool flag = (face.bGrp == BcType::BC_TYPE_Neu);
+
+      if (flag && res(faIn) != 0.0) {
+        face.res = res(faIn);
+        face.coupledFlag = true;
+      }
     }
-    PetscFunctionReturn(PETSC_SUCCESS);
+  }
+
+  W_ = 1.0;
+
+  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
+    auto& face = lhs.face[faIn];
+    if (!face.incFlag) {
+      continue;
+    }
+
+    int faDof = std::min(face.dof,dof);
+
+    if (face.bGrp == BcType::BC_TYPE_Dir) {
+      for (int a = 0; a < face.nNo; a++) {
+        int Ac = face.glob(a);
+        for (int i = 0; i < faDof; i++) {
+          W_(i,Ac) = W_(i,Ac) * face.free_component_mask(i,a);
+        }
+      }
+    } else if (face.bGrp == BcType::BC_TYPE_Neu && (!psol[com_mod.cEq].created || face.coupledFlag)) {
+      auto& tangent = faces.emplace_back();
+      tangent.resistance = res(faIn);
+      PetscCallAbort(MPI_COMM_WORLD, petsc_collect_face(face, dof, tangent));
+    }
+  }
 }
 
 //------------
@@ -1039,12 +1086,13 @@ void PetscLinearAlgebra::PetscImpl::solve(ComMod& com_mod, eqType& lEq, const Ve
   W_.resize(com_mod.dof, com_mod.tnNo);
 
   std::vector<PetscFaceTangent> faces;
-  PetscCallAbort(MPI_COMM_WORLD, petsc_prepare_boundary_conditions(com_mod.lhs, com_mod.dof,
-      incL, res, !psol[com_mod.cEq].created, W_, faces));
+  init_dir_and_coupneu_bc(com_mod, incL, res, faces);
 
   // only excute once for each equation
   //
-  petsc_create_linearsystem(com_mod.dof, com_mod.cEq, com_mod.nEq, W_.data(), faces);
+  if (!psol[com_mod.cEq].created) {
+    petsc_create_linearsystem(com_mod.dof, com_mod.cEq, com_mod.nEq, W_.data(), faces);
+  }
 
   petsc_set_values(com_mod.dof, com_mod.cEq, com_mod.R.data(), com_mod.Val.data(), W_.data(), faces);
 

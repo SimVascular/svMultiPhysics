@@ -71,8 +71,8 @@ void petsc_initialize(const PetscInt nNo, const PetscInt mynNo,
 ///
 /// Does nothing if they are already created. The nonzero pattern of the
 /// matrix is fixed here. It holds the entries of the mesh adjacency and, for
-/// the lumped parameter boundary conditions, one entry per pressure-load row and flow-derivative
-/// column on the same coupled face.
+/// the lumped parameter boundary conditions, one entry for each pair of a row
+/// and a column belonging to the same face.
 ///
 /// The O2 index of a degree of freedom is the O2 index of its node times dof,
 /// plus its component.
@@ -96,9 +96,9 @@ void petsc_create_linearsolver(const consts::PreconditionerType lsType, const co
 /// @brief Fill the vector and the matrix of the linear system of an equation.
 ///
 /// Each coupled face adds its signed pressure-load/flow-derivative outer
-/// product, including columns owned by other processes. The Dirichlet boundary
-/// conditions are then applied, and the system is scaled if the row and
-/// column scaling preconditioner is active.
+/// product, including columns owned by other processes.
+/// The Dirichlet boundary conditions are then applied, and the
+/// system is scaled if the row and column scaling preconditioner is active.
 ///
 /// @param[in] dof Number of degrees of freedom per node.
 /// @param[in] iEq Index of the equation.
