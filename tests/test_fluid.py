@@ -139,6 +139,21 @@ def test_iliac_artery(n_proc):
     test_folder = "iliac_artery"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+@skip_if_no_petsc
+def test_iliac_artery_petsc(n_proc, tmp_path, monkeypatch):
+    source = Path(__file__).parent / "cases/fluid"
+    case = tmp_path / "iliac_artery_petsc"
+    shutil.copytree(source / "iliac_artery", case, ignore=shutil.ignore_patterns("*-procs"))
+    tree = ET.parse(case / "solver.xml")
+    equation = tree.find("Add_equation")
+    equation.remove(equation.find("LS"))
+    equation.append(ET.parse(source / "pipe_RCR_3d_petsc/solver.xml").find(".//LS"))
+    tree.write(case / "solver.xml")
+    # Solve the linear system directly to isolate the outlet Jacobian.
+    monkeypatch.setenv("PETSC_OPTIONS", "-mat_type aij -ksp_type preonly -pc_type redundant "
+                                       f"-pc_redundant_number {n_proc}")
+    run_with_reference("", str(case), ["Pressure", "Velocity"], n_proc)
+
 @skip_if_no_trilinos
 def test_iliac_artery_trilinos_gmres_ilut(n_proc):
     test_folder = "iliac_artery_trilinos_gmres_ilut"
