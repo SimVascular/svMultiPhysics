@@ -27,8 +27,8 @@ class mshType;
 /// with @f$ \nabla @f$ the gradient on the mesh.
 ///
 /// The prestrain is used in a structural simulation to pull the integrals of
-/// the weak form back to the stress-free configuration. Where the assembly
-/// loops compute the shape function gradients, they transform in place
+/// the weak form back to the stress-free configuration. The solid kernels
+/// (struct_ns::struct_2d and struct_3d) transform
 /// - the shape function gradients, @f$ \nabla N \to \nabla_0 N = F_0^T \nabla N @f$,
 /// - the volume element, @f$ dV \to dV / \det F_0 @f$,
 /// - every fiber direction, @f$ f \to f_0 = F_0^{-1} f / |F_0^{-1} f| @f$.

@@ -197,7 +197,7 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
       // within linear triangles and tetrahedra.
       bool recompute_visc = (g == 0 || !fs_1[0].lShpF);
 
-      if (recompute_visc || prestrained) {
+      if (recompute_visc) {
         auto Nx = fs_1[0].Nx.rslice(g);
         nn::gnn(fs_1[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -208,16 +208,10 @@ void construct_fsi(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const So
         nn::gn_nxx(l, fs_1[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx);
       }
 
-      // Prestrained elements are integrated on their unloaded configuration.
       if (prestrained) {
         const Eigen::MatrixXd F0_g = lM.prestrain.get(g, e);
         recompute_visc = recompute_visc || F0_g != F0;
         F0 = F0_g;
-        mat_fun::eigen_view_mutable(Nwx) = F0.transpose() * mat_fun::eigen_view(Nwx);
-        Jac /= F0.determinant();
-        if (mesh_has_fibers) {
-          fibers = (F0.inverse() * fibers).colwise().normalized();
-        }
       }
 
       double w = fs_1[0].w(g) * Jac;

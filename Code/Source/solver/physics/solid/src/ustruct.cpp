@@ -859,7 +859,7 @@ void ustruct_2d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   // element (e.g. linear triangles and tetrahedra).
   static mat_models::ViscousResponse<2> visc;
 
-  visc.update(dmn, eNoNw, Nwx, vx, F, recompute_visc);
+  visc.update(dmn, eNoNw, Nwxm, vx, F, recompute_visc);
 
   // Compute rho and beta depending on the volumetric penalty model
   //
@@ -1105,7 +1105,7 @@ void ustruct_3d_m(ComMod &com_mod, CepMod &cep_mod, const bool vmsFlag,
   // previous Gauss point's when shape function gradients are constant within an
   // element (e.g. linear triangles and tetrahedra).
   static mat_models::ViscousResponse<3> visc;
-  visc.update(dmn, eNoNw, Nwx, vx, F, recompute_visc);
+  visc.update(dmn, eNoNw, Nwxm, vx, F, recompute_visc);
 
   // Compute rho and beta depending on the volumetric penalty model
   //

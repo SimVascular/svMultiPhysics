@@ -303,7 +303,7 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
       // within linear triangles and tetrahedra.
       bool recompute_visc = (g == 0 || !lM.lShpF);
 
-      if (recompute_visc || prestrained) {
+      if (recompute_visc) {
         auto Nx_g = lM.Nx.slice(g);
         nn::gnn(eNoN, nsd, nsd, Nx_g, xl, Nx, Jac, ksix);
         if (utils::is_zero(Jac)) {
@@ -311,16 +311,13 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
         }
       }
 
-      // Prestrained elements are integrated on their unloaded configuration.
       if (prestrained) {
         const Eigen::MatrixXd F0_g = lM.prestrain.get(g, e);
+        // If F0 is nonuniform across a linear element,
+        // then the pulled back Nx will be nonuniform
+        // and viscosity must be recomputed.
         recompute_visc = recompute_visc || F0_g != F0;
         F0 = F0_g;
-        mat_fun::eigen_view_mutable(Nx) = F0.transpose() * mat_fun::eigen_view(Nx);
-        Jac /= F0.determinant();
-        if (mesh_has_fibers) {
-          fibers = (F0.inverse() * fibers).colwise().normalized();
-        }
       }
       double w = lM.w(g) * Jac;
       N = lM.N.col(g);
@@ -364,11 +361,11 @@ void construct_dsolid(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const
 // Reproduces Fortran 'STRUCT2D' subroutine.
 //
 void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
-               const double w, const Vector<double> &N, const Array<double> &Nx,
+               double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
                const mat_fun::Matrix<2> &F0,
-               const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>> &fibers,
+               const mat_models::FiberRef<2> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc) {
@@ -391,10 +388,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Set parameters
   //
-  // Per unit stress-free volume: det F0 times the values given for the mesh
-  const double J0 = F0.determinant();
-  double rho = J0 * dmn.prop.at(PhysicalPropertyType::solid_density);
-  double dmp = J0 * dmn.prop.at(PhysicalPropertyType::damping);
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
   const Eigen::Vector2d fb{dmn.prop.at(PhysicalPropertyType::f_x),
                            dmn.prop.at(PhysicalPropertyType::f_y)};
   double afu = eq.af * eq.beta*dt*dt;
@@ -411,13 +406,36 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   #endif
 
   // This element's nodal fields, as Eigen views over the caller's storage
-  const auto Nxm  = eigen_view<2>(Nx);                    // grad(N_a) per column
+  NodalMatrix<2> Nxm = eigen_view<2>(Nx);                 // grad(N_a) per column
   const auto Nm   = eigen_view(N);                        // shape functions
   const auto disp = eigen_view_rows<2>(dl, i);            // nodal displacements
   const auto vel  = eigen_view_rows<2>(yl, i);            // nodal velocities
   const auto acc  = eigen_view_rows<2>(al, i);            // nodal accelerations
   const auto bfm  = eigen_view<2>(bfl);                   // nodal body force
   auto       lRv  = eigen_view_mutable(lR).topRows<2>();  // rows this kernel adds to
+
+  // Velocity and deformation gradients on the mesh: Grad(v) and F = I + Grad(u)
+  Matrix<2> vx = vel * Nxm.transpose();
+  Matrix<2> F  = Matrix<2>::Identity() + disp * Nxm.transpose();
+
+  // Prestrained elements are integrated in their unloaded configuration,
+  // where F = F * F0. Pull back other quantities as well.
+  Eigen::Matrix<double, 2, Eigen::Dynamic> pulled_back_fibers;
+  const bool prestrained = !F0.isIdentity(0.0);
+  if (prestrained) {
+    const double J0 = F0.determinant();
+    w /= J0;
+    rho *= J0;
+    dmp *= J0;
+    amd *= J0;
+    F = F * F0;
+    vx = vx * F0;
+    Nxm = F0.transpose() * Nxm;
+    // Fibers are pulled back and normalized in the unloaded configuration.
+    pulled_back_fibers = (F0.inverse() * fibers).colwise().normalized();
+  }
+  const mat_models::FiberRef<2> fibers0 =
+      prestrained ? mat_models::FiberRef<2>(pulled_back_fibers) : fibers;
 
   // Inertia, damping and body force: the term the residual weights with N
   const Eigen::Vector2d ud = (rho*(acc - bfm) + dmp*vel) * Nm - rho * fb;
@@ -429,13 +447,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   S0 << pS0g(0), pS0g(2),
         pS0g(2), pS0g(1);
 
-  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
-  // F0 = I if no prestrain is present.
-  const Matrix<2> vx = vel * Nxm.transpose();
-  const Matrix<2> F  = F0 + disp * Nxm.transpose();
-
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, fibers);
+  const auto Ta = active_stress_evaluator.evaluate<2>(Nm, F, fibers0);
   
   #ifdef debug_struct_2d 
   dmsg << "ud: " << ud(0) << " " << ud(1);
@@ -449,13 +462,13 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   Matrix<2> S;
   Matrix<3> Dm;
   double Ja;
-  mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
+  mat_models::compute_pk2cc<2>(com_mod, cep_mod, dmn, F, nFn, fibers0, Ta, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
   // Reuse from the previous Gauss point when shape function gradients
   // are constant within an element (e.g. linear triangles, tetrahedra).
   static mat_models::ViscousResponse<2> visc;
-  visc.update(dmn, eNoN, Nx, vx, F, recompute_visc);
+  visc.update(dmn, eNoN, Nxm, vx, F, recompute_visc);
 
   // Elastic + Viscous stresses
   S = S + visc.S();
@@ -531,17 +544,17 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   // into F0 (see prestrain.h).
   if (com_mod.compute_prestrain) {
     prestrain_tangent_correction<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
-                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
+                                           F0, F, P, Nxm, fibers0, w * afu, dof, lK);
   }
 }
 
 // Reproduces Fortran 'STRUCT3D' subroutine.
 void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
-               const double w, const Vector<double> &N, const Array<double> &Nx,
+               double w, const Vector<double> &N, const Array<double> &Nx,
                const Array<double> &al, const Array<double> &yl,
                const Array<double> &dl, const Array<double> &bfl,
                const mat_fun::Matrix<3> &F0,
-               const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>> &fibers,
+               const mat_models::FiberRef<3> &fibers,
                const Array<double> &pS0l,
                Vector<double> &pSl, const ActiveStress::Evaluator &active_stress_evaluator,
                Array<double> &lR, Array3<double> &lK, const bool recompute_visc) {          
@@ -567,10 +580,8 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 
   // Set parameters
   //
-  // Per unit stress-free volume: det F0 times the values given for the mesh
-  const double J0 = F0.determinant();
-  double rho = J0 * dmn.prop.at(PhysicalPropertyType::solid_density);
-  double dmp = J0 * dmn.prop.at(PhysicalPropertyType::damping);
+  double rho = dmn.prop.at(PhysicalPropertyType::solid_density);
+  double dmp = dmn.prop.at(PhysicalPropertyType::damping);
   const Eigen::Vector3d fb{dmn.prop.at(PhysicalPropertyType::f_x),
                            dmn.prop.at(PhysicalPropertyType::f_y),
                            dmn.prop.at(PhysicalPropertyType::f_z)};
@@ -590,13 +601,36 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   int i = eq.s;
 
   // This element's nodal fields, as Eigen views over the caller's storage
-  const auto Nxm  = eigen_view<3>(Nx);                    // grad(N_a) per column
+  NodalMatrix<3> Nxm = eigen_view<3>(Nx);                 // grad(N_a) per column
   const auto Nm   = eigen_view(N);                        // shape functions
   const auto disp = eigen_view_rows<3>(dl, i);            // nodal displacements
   const auto vel  = eigen_view_rows<3>(yl, i);            // nodal velocities
   const auto acc  = eigen_view_rows<3>(al, i);            // nodal accelerations
   const auto bfm  = eigen_view<3>(bfl);                   // nodal body force
   auto       lRv  = eigen_view_mutable(lR).topRows<3>();  // rows this kernel adds to
+
+  // Velocity and deformation gradients on the mesh: Grad(v) and F = I + Grad(u)
+  Matrix<3> vx = vel * Nxm.transpose();
+  Matrix<3> F  = Matrix<3>::Identity() + disp * Nxm.transpose();
+
+  // Prestrained elements are integrated in their unloaded configuration,
+  // where F = F * F0. Pull back other quantities as well.
+  Eigen::Matrix<double, 3, Eigen::Dynamic> pulled_back_fibers;
+  const bool prestrained = !F0.isIdentity(0.0);
+  if (prestrained) {
+    const double J0 = F0.determinant();
+    w /= J0;
+    rho *= J0;
+    dmp *= J0;
+    amd *= J0;
+    F = F * F0;
+    vx = vx * F0;
+    Nxm = F0.transpose() * Nxm;
+    // Fibers are pulled back and normalized in the unloaded configuration.
+    pulled_back_fibers = (F0.inverse() * fibers).colwise().normalized();
+  }
+  const mat_models::FiberRef<3> fibers0 =
+      prestrained ? mat_models::FiberRef<3>(pulled_back_fibers) : fibers;
 
   // Inertia, damping and body force.
   const Eigen::Vector3d ud = (rho*(acc - bfm) + dmp*vel) * Nm - rho * fb;
@@ -609,13 +643,8 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
         pS0g(3), pS0g(1), pS0g(4),
         pS0g(5), pS0g(4), pS0g(2);
 
-  // Velocity and deformation gradients: Grad(v) and F = F0 + Grad(u)
-  // F0 = I if no prestrain is present.
-  const Matrix<3> vx = vel * Nxm.transpose();
-  const Matrix<3> F  = F0 + disp * Nxm.transpose();
-
   // Active tension, evaluated here from the fiber stretch of F.
-  const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, fibers);
+  const auto Ta = active_stress_evaluator.evaluate<3>(Nm, F, fibers0);
 
   // 2nd Piola-Kirchhoff tensor (S) and material stiffness tensor in
   // Voigt notation (Dm)
@@ -623,13 +652,13 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   Matrix<3> S;
   Matrix<6> Dm;
   double Ja;
-  mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, fibers, Ta, S, Dm, Ja);
+  mat_models::compute_pk2cc<3>(com_mod, cep_mod, dmn, F, nFn, fibers0, Ta, S, Dm, Ja);
 
   // Viscous 2nd Piola-Kirchhoff stress and tangent contributions.
   // Reuse from the previous Gauss point when shape function gradients
   // are constant within an element (e.g. linear triangles, tetrahedra).
   static mat_models::ViscousResponse<3> visc;
-  visc.update(dmn, eNoN, Nx, vx, F, recompute_visc);
+  visc.update(dmn, eNoN, Nxm, vx, F, recompute_visc);
 
   // Elastic + Viscous stresses
   S = S + visc.S();
@@ -734,7 +763,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   // into F0 (see prestrain.h).
   if (com_mod.compute_prestrain) {
     prestrain_tangent_correction<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
-                                           F0, F, P, Nxm, fibers, w * afu, dof, lK);
+                                           F0, F, P, Nxm, fibers0, w * afu, dof, lK);
   }
 }
 

@@ -2102,7 +2102,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
                 eigen_view<nsd>(fibers), Ta, S, Dm, Ja);
 
             static mat_models::ViscousResponse<nsd> visc;
-            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            visc.update(eq.dmn[cDmn], fs.eNoN, mat_fun::eigen_view<nsd>(Nx), vx, F, recompute_visc);
             // Match assembly: elastic + viscous + prestress.
             S = S + visc.S() + S0;
 
@@ -2123,7 +2123,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
                 eigen_view<nsd>(fibers), Ta, S, Dm, Ja);
 
             static mat_models::ViscousResponse<nsd> visc;
-            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            visc.update(eq.dmn[cDmn], fs.eNoN, mat_fun::eigen_view<nsd>(Nx), vx, F, recompute_visc);
             // Match assembly: elastic + viscous + prestress.
             S = S + visc.S() + S0;
 

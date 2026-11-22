@@ -252,14 +252,9 @@ public:
     lK.resize(9, 4, 4);
     lK = 0.0;
 
-    Array<double> Nx0 = Nx;
-    mat_fun::eigen_view_mutable(Nx0) = F0.transpose() * mat_fun::eigen_view(Nx);
-    Array<double> pulled_back_fibers = fibers;
-    mat_fun::eigen_view_mutable(pulled_back_fibers) =
-      (F0.inverse() * mat_fun::eigen_view(fibers)).colwise().normalized();
     ActiveStress::Evaluator active_stress_evaluator;
-    struct_ns::struct_3d(com_mod, cep_mod, 4, w / F0.determinant(), N, Nx0, al, yl, u, bfl, F0,
-        mat_fun::eigen_view(pulled_back_fibers), pS0l, pSl, active_stress_evaluator, lR, lK, true);
+    struct_ns::struct_3d(com_mod, cep_mod, 4, w, N, Nx, al, yl, u, bfl, F0,
+        mat_fun::eigen_view<3>(fibers), pS0l, pSl, active_stress_evaluator, lR, lK, true);
   }
 
   ComMod com_mod;
