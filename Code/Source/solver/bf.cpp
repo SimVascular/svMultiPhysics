@@ -136,6 +136,8 @@ void set_bf_l(ComMod& com_mod, bfType& lBf, mshType& lM, const SolutionStates& s
   const int nNo = lM.nNo;
   const int idof = lBf.dof;
   const int eNoN = lM.eNoN;
+  const double alpha_time = utils::generalized_alpha_time(
+      com_mod.time, com_mod.dt, com_mod.eq[com_mod.cEq].af);
   #ifdef debug_set_bf_l 
   dmsg << "nsd: " << nsd;
   dmsg << "idof: " << idof;
@@ -150,12 +152,12 @@ void set_bf_l(ComMod& com_mod, bfType& lBf, mshType& lM, const SolutionStates& s
     f = lBf.b;
 
   } else if (utils::btest(lBf.bType, enum_int(BodyForceType::bfType_ustd))) {
-    f = lBf.bt.value(com_mod.time);
+    f = lBf.bt.value(alpha_time);
 
   } else if (utils::btest(lBf.bType, enum_int(BodyForceType::bfType_gen))) {
     bfl.resize(idof,nNo); 
     Array<double> xl(idof,nNo);
-    all_fun::igbc(com_mod, lBf.bm, bfl, xl);
+    all_fun::igbc(alpha_time, lBf.bm, bfl, xl);
   }
 
   Array<double> bfg(idof,tnNo);

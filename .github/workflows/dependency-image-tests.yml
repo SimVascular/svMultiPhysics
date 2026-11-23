@@ -1,0 +1,155 @@
+name: Test Ubuntu 26 dependency image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Container image repository without a tag
+        type: string
+        required: true
+      digest:
+        description: Immutable digest of the image to test
+        type: string
+        required: true
+      source_commit:
+        description: svMultiPhysics commit used to build the image
+        type: string
+        required: true
+      build_type:
+        description: CMake build type for the solver
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  resolve-svzerod:
+    name: Select svZeroDSolver source
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      commit: ${{ steps.resolve.outputs.commit }}
+    steps:
+      - name: Check out tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_commit }}
+
+      - name: Resolve source commit
+        id: resolve
+        run: |
+          source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+          commit=$(ci_resolve_svzerodsolver "$GITHUB_WORKSPACE/release.json")
+          tag=$(jq -er '.dependencies.svZeroDSolver.tag' "$GITHUB_WORKSPACE/release.json")
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "svZeroDSolver tag: $tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "svZeroDSolver commit: $commit" >> "$GITHUB_STEP_SUMMARY"
+
+  test:
+    name: Test ${{ matrix.configuration }} solver
+    needs: resolve-svzerod
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [default, trilinos, petsc]
+    container:
+      image: ${{ inputs.image }}@${{ inputs.digest }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      BUILD_TYPE: ${{ inputs.build_type }}
+      SVZEROD_TAG: ${{ needs.resolve-svzerod.outputs.tag }}
+      SVZEROD_COMMIT: ${{ needs.resolve-svzerod.outputs.commit }}
+      SVMP_OPTIMIZED_CI: 'true'
+      SVMP_PARALLEL_INTEGRATION_TESTS: 'false'
+      SVMP_TEST_PROCS: '1,3,4'
+    steps:
+      - name: Check out tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_commit }}
+          lfs: true
+
+      - name: Trust checked-out workspace
+        shell: bash
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Report image and source
+        shell: bash
+        run: |
+          echo "Image: ${{ inputs.image }}@${{ inputs.digest }}"
+          echo "Source: $(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD)" = '${{ inputs.source_commit }}'
+          test "$DEPENDENCY_BUILD_TYPE" = "$BUILD_TYPE"
+
+      - name: Build svZeroDSolver
+        shell: bash
+        run: |
+          source /conda/etc/profile.d/conda.sh
+          conda activate svmultiphysics
+          source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+          ci_build_svzerodsolver "$(nproc)" "$SVZEROD_COMMIT"
+          echo "svZeroDSolver source: $(git -C svZeroDSolver rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build svMultiPhysics
+        shell: bash
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+          if [[ "$CONFIGURATION" == trilinos ]]; then
+            ci_build_solver build "$(nproc)" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DSV_USE_TRILINOS:BOOL=ON
+          else
+            ci_build_solver build "$(nproc)" -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
+          fi
+          if [[ "$CONFIGURATION" == petsc ]]; then
+            ci_build_solver build-petsc "$(nproc)" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DSV_PETSC_DIR:STRING=/petsc
+          fi
+
+      - name: Confirm solver configuration
+        shell: bash
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          test -x build/svMultiPhysics-build/bin/svmultiphysics
+          if [[ "$CONFIGURATION" == trilinos ]]; then
+            grep -q '^SV_USE_TRILINOS:BOOL=ON$' build/svMultiPhysics-build/CMakeCache.txt
+          fi
+          if [[ "$CONFIGURATION" == petsc ]]; then
+            test -x build-petsc/svMultiPhysics-build/bin/svmultiphysics
+            grep -q '^SV_PETSC_DIR:STRING=/petsc$' build-petsc/svMultiPhysics-build/CMakeCache.txt
+          fi
+
+      - name: Run unit tests
+        shell: bash
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          ctest --test-dir build/svMultiPhysics-build/Source/solver --output-on-failure
+          if [[ "$CONFIGURATION" == petsc ]]; then
+            ctest --test-dir build-petsc/svMultiPhysics-build/Source/solver --output-on-failure
+          fi
+
+      - name: Run integration tests
+        shell: bash
+        run: |
+          source "$GITHUB_WORKSPACE/.github/actions/ci-helpers.sh"
+          ci_run_integration_tests 2 1
+
+      - name: Summarize validation
+        if: success()
+        shell: bash
+        run: |
+          printf '### Dependency image validation\n\n' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Configuration: `%s`\n' '${{ matrix.configuration }}' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Image: `%s@%s`\n' '${{ inputs.image }}' '${{ inputs.digest }}' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- svMultiPhysics commit: `%s`\n' '${{ inputs.source_commit }}' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- svZeroDSolver tag: `%s`\n' "$SVZEROD_TAG" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- svZeroDSolver commit: `%s`\n' "$SVZEROD_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Build type: `%s`\n' "$BUILD_TYPE" >> "$GITHUB_STEP_SUMMARY"

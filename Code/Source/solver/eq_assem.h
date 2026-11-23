@@ -14,6 +14,39 @@ void b_assem_neu_bc(ComMod& com_mod, const faceType& lFa, const Vector<double>& 
 
 void b_neu_folw_p(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const Vector<double>& hg, const SolutionStates& solutions);
 
+/// @brief Update the vectors that the linear solver uses for the tangent
+/// contribution of a resistance or coupled boundary condition, so that they
+/// follow the deformed geometry under a follower pressure load.
+///
+/// Computes the integral over the face of N_a * n for each node a, where N_a
+/// is the shape function of the node and n is the normal (see Brown et al.
+/// 2024, Eq. 56), and stores it in the linear solver face
+/// com_mod.lhs.face[lBc.lsPtr] twice:
+/// - as unit_pressure_load, in the intermediate configuration of the
+///   generalized-alpha method, where the residual of the follower pressure
+///   load is assembled;
+/// - as flowrate_derivative, in the configuration at the end of the time
+///   step: it is the derivative of the flow rate with respect to the nodal
+///   velocities.
+///
+/// The flow rate of a struct equation coupled to svZeroD or is integrated on
+/// the deformed face, so it also depends on the nodal displacements. Its
+/// derivative with respect to them, with the velocity held fixed, is added to
+/// flowrate_derivative multiplied by beta*dt/gamma: the ratio between the
+/// changes of displacement and velocity that an increment of the unknown
+/// produces. This is currently not supported for ustruct or svOneD (struct
+/// cannot currently be coupled to svOneD).
+///
+/// For a coupled boundary condition with a cap, the contribution of the cap
+/// is appended to flowrate_derivative. The linear solver reads the two vectors
+/// in add_bc_mul().
+///
+/// @param[in,out] com_mod The simulation data. Only
+///   com_mod.lhs.face[lBc.lsPtr] is modified.
+/// @param[in] lBc The boundary condition.
+/// @param[in] lFa The face of the boundary condition.
+/// @param[in] solutions The solution states, from which the displacement and
+///   the velocity are read.
 void fsi_ls_upd(ComMod& com_mod, const bcType& lBc, const faceType& lFa, const SolutionStates& solutions);
 
 void global_eq_assem(ComMod& com_mod, CepMod& cep_mod, const mshType& lM, const SolutionStates& solutions);

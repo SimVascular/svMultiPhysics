@@ -106,23 +106,23 @@ string(TIMESTAMP DATE_IMESTAMP %y%m%d)
 math(EXPR SV_VERSION_TIMESTAMP "${DATE_IMESTAMP}-140000")
 string(TIMESTAMP SV_RELEASE_TIMESTAMP %y%m%d%H%M%S)
 set(SV_PLATFORM ${ARCH})
-simvascular_today(YEAR MONTH DAY)
-set(SV_MAJOR_VERSION ${YEAR})   # YEAR
-set(SV_MINOR_VERSION ${MONTH})   # MONTH
-set(SV_PATCH_VERSION ${DAY})  # DAY
+include(SimVascularReleaseIdentity)
+string(REPLACE "." ";" _sv_version_parts "${SV_PACKAGE_VERSION}")
+list(GET _sv_version_parts 0 SV_MAJOR_VERSION)
+list(GET _sv_version_parts 1 SV_MINOR_VERSION)
+list(GET _sv_version_parts 2 SV_PATCH_VERSION)
+list(GET _sv_version_parts 3 SV_RELEASE_BUILD)
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 # Other helpful sv variables
-set(SV_RELEASE_BUILD 0)
 set(SV_MAJOR_VER_NO ${SV_MAJOR_VERSION})
 set(SV_FULL_VER_NO
 	"${SV_MAJOR_VERSION}.${SV_MINOR_VERSION}")
-set(SV_FULL_VERSION
-	"${SV_MAJOR_VERSION}.${SV_MINOR_VERSION}.${SV_PATCH_VERSION}")
+set(SV_FULL_VERSION "${SV_PACKAGE_VERSION}")
 set(SV_REGISTRY_TOPLEVEL "SV")
 
-message(STATUS "SimVascular Version: ${SV_VERSION} ${SV_MAJOR_VERSION}-${SV_MINOR_VERSION}-${SV_PATCH_VERSION}")
+message(STATUS "SimVascular Version: ${SV_VERSION} ${SV_FULL_VERSION}")
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -172,18 +172,9 @@ if(APPLE)
 
 elseif(LINUX)
 
-  # To get the distribution and the version, we need to use lsb
-  find_program(LSB_RELEASE lsb_release)
-
-  # Get distribution name
-  execute_process(COMMAND ${LSB_RELEASE} -is
-    OUTPUT_VARIABLE LSB_DISTRIB
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-  # Get distribution release version
-  execute_process(COMMAND ${LSB_RELEASE} -rs
-    OUTPUT_VARIABLE LSB_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  # Read /etc/os-release directly; minimal build images may lack lsb_release.
+  cmake_host_system_information(RESULT LSB_DISTRIB QUERY DISTRIB_NAME)
+  cmake_host_system_information(RESULT LSB_VERSION QUERY DISTRIB_VERSION_ID)
 
   string(TOLOWER "${LSB_DISTRIB}" _platform_lower)
 

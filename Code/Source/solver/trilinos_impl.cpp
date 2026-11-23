@@ -52,10 +52,11 @@ bool coupledBC;
 /**
  * Define the matrix vector multiplication operation to do at each iteration of
  * an iterative linear solver. This function is called by the AztecOO
- * (K + v1*v1' + v2*v2' + ...) *x = K*x + v1*(v1'*x) + v2*(v2'*x), 
- * where [v1, v2, ...] = bdryVec_list
+ * (K + l1*r1' + l2*r2' + ...) *x = K*x + l1*(r1'*x) + l2*(r2'*x),
+ * where [l1, l2, ...] = bdryPressureLoadVec_list
+ * and   [r1, r2, ...] = bdryFlowrateDerivativeVec_list
  *
- * For coupled Neumann boundary terms (v1*v1', v2*v2'), we use efficient an vectorized 
+ * For coupled Neumann boundary terms (l1*r1', l2*r2'), we use efficient and vectorized
  * operation rather than explicitly forming the rank 1 outer product matrix and 
  * adding it to the global stiffness matrix K.
  *
@@ -68,28 +69,18 @@ void TrilinosMatVec::apply(const Tpetra_MultiVector& x, Tpetra_MultiVector& y,
   // Store initial matrix vector product result in y (y = K*x if alpha = 1.0, beta = 0.0) 
   trilinos_->K->apply(x, y, mode, alpha, beta); //Y = beta*Y + alpha*K*X 
 
-  // Now add on the coupled Neumann boundary contribution y += v1*(v1'*x) + v2*(v2'*x) + ...
+  // Now add on the coupled Neumann boundary contribution y += l1*(r1'*x) + l2*(r2'*x) + ...
   if (coupledBC)
   {
-    // Cap terms contribute to the flux scalar term only, not to pressure update rows.
-    // So we compute (v_face^T x + v_cap^T x) and apply it with v_face.
-    for (size_t i = 0; i < trilinos_->bdryVec_list.size(); ++i)
+    for (size_t i = 0; i < trilinos_->bdryPressureLoadVec_list.size(); ++i)
     {
-      Scalar_d dot_face = 0.0;
-      Scalar_d dot_cap = 0.0;
       Teuchos::Array<Scalar_d> dots(1);
 
-      auto bdryVec = trilinos_->bdryVec_list[i];
-      x.dot(*bdryVec, dots());
-      dot_face = dots[0];
+      auto bdryFlowrateDerivativeVec = trilinos_->bdryFlowrateDerivativeVec_list[i];
+      x.dot(*bdryFlowrateDerivativeVec, dots());
 
-      if (i < trilinos_->bdryCapVec_list.size()) {
-        auto bdryCapVec = trilinos_->bdryCapVec_list[i];
-        x.dot(*bdryCapVec, dots());
-        dot_cap = dots[0];
-      }
-
-      y.update(dot_face + dot_cap, *bdryVec, 1.0);
+      auto bdryPressureLoadVec = trilinos_->bdryPressureLoadVec_list[i];
+      y.update(dots[0], *bdryPressureLoadVec, 1.0);
     }
   }
 }
@@ -302,13 +293,13 @@ void trilinos_lhs_create(const Teuchos::RCP<Trilinos> &trilinos_, const int numG
   //construct RHS force vector ghostF topology
   trilinos_->ghostF = Teuchos::rcp(new Tpetra_MultiVector(trilinos_->ghostMap, 1));
 
-  // Construct a boundary vector for each coupled Neumann boundary condition
-  trilinos_->bdryVec_list.clear();
-  trilinos_->bdryCapVec_list.clear();
+  // Construct the two boundary vectors of each coupled Neumann boundary condition
+  trilinos_->bdryPressureLoadVec_list.clear();
+  trilinos_->bdryFlowrateDerivativeVec_list.clear();
   for (int i = 0; i < numCoupledNeumannBC; ++i)
   {
-    trilinos_->bdryVec_list.push_back(Teuchos::rcp(new Tpetra_MultiVector(trilinos_->Map, 1)));
-    trilinos_->bdryCapVec_list.push_back(Teuchos::rcp(new Tpetra_MultiVector(trilinos_->Map, 1)));
+    trilinos_->bdryPressureLoadVec_list.push_back(Teuchos::rcp(new Tpetra_MultiVector(trilinos_->Map, 1)));
+    trilinos_->bdryFlowrateDerivativeVec_list.push_back(Teuchos::rcp(new Tpetra_MultiVector(trilinos_->Map, 1)));
   }
 
   // Initialize solution vector which is unique and does not include the ghost
@@ -655,10 +646,10 @@ void trilinos_solve_(const Teuchos::RCP<Trilinos> &trilinos_, double *x, const d
   trilinos_->ghostF->putScalar(0.0);
   trilinos_->F->putScalar(0.0);
   if (coupledBC) {
-    for (auto bdryVec : trilinos_->bdryVec_list)
-      bdryVec->putScalar(0.0);
-    for (auto bdryCapVec : trilinos_->bdryCapVec_list)
-      bdryCapVec->putScalar(0.0);
+    for (auto bdryPressureLoadVec : trilinos_->bdryPressureLoadVec_list)
+      bdryPressureLoadVec->putScalar(0.0);
+    for (auto bdryFlowrateDerivativeVec : trilinos_->bdryFlowrateDerivativeVec_list)
+      bdryFlowrateDerivativeVec->putScalar(0.0);
 
   }
   trilinos_->X->putScalar(0.0);
@@ -889,23 +880,21 @@ void constructJacobiScaling(const Teuchos::RCP<Trilinos> &trilinos_, const doubl
 
   // Scale boundary vectors if coupledBC is set
   if (coupledBC) {
-    for (auto bdryVec : trilinos_->bdryVec_list) {
-      bdryVec->elementWiseMultiply(1.0, diagonal, *bdryVec, 0.0);
+    for (auto bdryPressureLoadVec : trilinos_->bdryPressureLoadVec_list) {
+      bdryPressureLoadVec->elementWiseMultiply(1.0, diagonal, *bdryPressureLoadVec, 0.0);
     }
-    for (auto bdryCapVec : trilinos_->bdryCapVec_list) {
-      bdryCapVec->elementWiseMultiply(1.0, diagonal, *bdryCapVec, 0.0);
+    for (auto bdryFlowrateDerivativeVec : trilinos_->bdryFlowrateDerivativeVec_list) {
+      bdryFlowrateDerivativeVec->elementWiseMultiply(1.0, diagonal, *bdryFlowrateDerivativeVec, 0.0);
     }
   }
 } // void constructJacobiScaling()
 
 // ----------------------------------------------------------------------------
-/**
- * \param  v            coupled boundary vector
- * \param  isCoupledBC  determines if coupled resistance BC is turned on
- */
-void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_,
-  const std::vector<Array<double>> &v_list, const std::vector<Array<double>> &vcap_list, bool &isCoupledBC)
-{
+void trilinos_bc_create_(
+    const Teuchos::RCP<Trilinos> &trilinos_,
+    const std::vector<Array<double>> &pressure_load_list,
+    const std::vector<Array<double>> &flowrate_derivative_list,
+    bool isCoupledBC) {
   // store as global to determine which matvec multiply to use in solver
   coupledBC = isCoupledBC;
 
@@ -915,16 +904,16 @@ void trilinos_bc_create_(const Teuchos::RCP<Trilinos> &trilinos_,
     {
       auto globalRow = static_cast<GO>(localToGlobalSorted[i]);
 
-      for (int k = 0; k < v_list.size(); ++k)
+      for (int k = 0; k < pressure_load_list.size(); ++k)
       {
-        const double* v = v_list[k].data();
-        auto bdryVec = trilinos_->bdryVec_list[k];
-        const double* vcap = vcap_list[k].data();
-        auto bdryCapVec = trilinos_->bdryCapVec_list[k];
+        const double* pressure_load = pressure_load_list[k].data();
+        auto bdryPressureLoadVec = trilinos_->bdryPressureLoadVec_list[k];
+        const double* flowrate_derivative = flowrate_derivative_list[k].data();
+        auto bdryFlowrateDerivativeVec = trilinos_->bdryFlowrateDerivativeVec_list[k];
         for (int j = 0; j < dof; ++j)
         {
-          bdryVec->replaceGlobalValue(globalRow * dof + j, 0, v[i * dof + j]);
-          bdryCapVec->replaceGlobalValue(globalRow * dof + j, 0, vcap[i * dof + j]);
+          bdryPressureLoadVec->replaceGlobalValue(globalRow * dof + j, 0, pressure_load[i * dof + j]);
+          bdryFlowrateDerivativeVec->replaceGlobalValue(globalRow * dof + j, 0, flowrate_derivative[i * dof + j]);
         }
       }
     }
@@ -1141,14 +1130,16 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
-          W_(i,Ac) = W_(i,Ac) * face.val(i,a);
+          W_(i,Ac) = W_(i,Ac) * face.free_component_mask(i,a);
         }
       }
     }
   }
 
-  std::vector<Array<double>> v_list;
-  std::vector<Array<double>> vcap_list;
+  // The two vectors of each coupled Neumann face, scaled by sqrt(|res|) and
+  // stored by linear solver node index (dof x tnNo).
+  std::vector<Array<double>> pressure_load_list;
+  std::vector<Array<double>> flowrate_derivative_list;
   bool isCoupledBC = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
@@ -1156,39 +1147,35 @@ void TrilinosLinearAlgebra::TrilinosImpl::init_dir_and_coup_neu(ComMod& com_mod,
     auto& face = lhs.face[faIn]; 
 
     // Create a new array for each face and add it to the list
-    v_list.push_back(Array<double>(dof,tnNo));
-    auto& v = v_list.back();
-    vcap_list.push_back(Array<double>(dof,tnNo));
-    auto& vcap = vcap_list.back();
+    pressure_load_list.push_back(Array<double>(dof,tnNo));
+    auto& pressure_load = pressure_load_list.back();
+    flowrate_derivative_list.push_back(Array<double>(dof,tnNo));
+    auto& flowrate_derivative = flowrate_derivative_list.back();
     
     if (face.coupledFlag) {
       isCoupledBC = true;
       int faDof = std::min(face.dof,dof);
 
-      // Compute the coupled Neumann BC vector and store it in v (main face contribution)
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
-          v(i,Ac) = v(i,Ac) + sqrt(fabs(res(faIn))) * face.val(i,a);
+          pressure_load(i,Ac) = pressure_load(i,Ac) + sqrt(fabs(res(faIn))) * face.unit_pressure_load(i,a);
         }
       }
-      
-      // Add cap contribution (if cap exists for this face)
-      if (face.cap_val.size() != 0 && face.cap_glob.size() != 0) {
-        int cap_nNo = face.cap_val.ncols();
-        for (int a = 0; a < cap_nNo; a++) {
-          int Ac = face.cap_glob(a);
-          if (Ac < 0) continue;  // cap node not on this rank
-          for (int i = 0; i < faDof; i++) {
-            vcap(i,Ac) = vcap(i,Ac) + sqrt(fabs(res(faIn))) * face.cap_val(i,a);
-          }
+
+      // A node index may repeat in flowrate_derivative_node_indices: its
+      // values add up.
+      for (int a = 0; a < face.flowrate_derivative.ncols(); a++) {
+        int Ac = face.flowrate_derivative_node_indices(a);
+        for (int i = 0; i < faDof; i++) {
+          flowrate_derivative(i,Ac) = flowrate_derivative(i,Ac) + sqrt(fabs(res(faIn))) * face.flowrate_derivative(i,a);
         }
       }
     }
   }
 
-  // Add the v vectors to global bdryVec_list
-  trilinos_bc_create_(trilinos_, v_list, vcap_list, isCoupledBC);
+  // Copy the vectors to bdryPressureLoadVec_list and bdryFlowrateDerivativeVec_list
+  trilinos_bc_create_(trilinos_, pressure_load_list, flowrate_derivative_list, isCoupledBC);
 
 }
 

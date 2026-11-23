@@ -1702,9 +1702,9 @@ void split_jobs(int tid, int m, int n, Array<double>& A, Vector<double>& b)
   #endif
 }
 
-void igbc(const ComMod &com_mod, const MBType &gm, Array<double> &Y,
+void igbc(const double time, const MBType &gm, Array<double> &Y,
           Array<double> &dY) {
-  double t = fmod(com_mod.time, gm.period);
+  double t = fmod(time, gm.period);
   int i = 0;
 
   for (int ii = 0; ii < gm.nTP - 1; ii++) {
