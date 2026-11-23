@@ -543,8 +543,8 @@ void struct_2d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   // Make the tangent that of a prestrain iteration, which composes its update
   // into F0 (see prestrain.h).
   if (com_mod.compute_prestrain) {
-    prestrain_tangent_correction<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
-                                           F0, F, P, Nxm, fibers0, w * afu, dof, lK);
+    lK += prestrain_tangent_correction<2>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                          F0, F, P, Nxm, fibers0, w * afu, dof);
   }
 }
 
@@ -762,22 +762,23 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
   // Make the tangent that of a prestrain iteration, which composes its update
   // into F0 (see prestrain.h).
   if (com_mod.compute_prestrain) {
-    prestrain_tangent_correction<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
-                                           F0, F, P, Nxm, fibers0, w * afu, dof, lK);
+    lK += prestrain_tangent_correction<3>(com_mod, cep_mod, dmn, active_stress_evaluator, Nm,
+                                          F0, F, P, Nxm, fibers0, w * afu, dof);
   }
 }
 
 template <int nsd>
-void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
+Array3<double> prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
     const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
     const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
     const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
-    const mat_models::FiberRef<nsd>& fibers, const double w_afu, const int dof, Array3<double>& lK)
+    const mat_models::FiberRef<nsd>& fibers, const double w_afu, const int dof)
 {
   using Matrix = mat_fun::Matrix<nsd>;
   using NodalMatrix = mat_fun::NodalMatrix<nsd>;
   using Direction = Eigen::Matrix<double, nsd, 1>;
   const int eNoN = Nx0.cols();
+  Array3<double> dlK(dof*dof, eNoN, eNoN);
 
   // 1. During prestrain solves, the current configuration does not move with u.
   //    The tangent needs to be corrected by removing the derivatives of the
@@ -790,7 +791,7 @@ void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, 
     for (int a = 0; a < eNoN; a++) {
       for (int i = 0; i < nsd; i++) {
         for (int j = 0; j < nsd; j++) {
-          lK(i*dof + j, a, b) -= w_afu * (tau_Nxs(i,a) * Nxs(j,b) - tau_Nxs(i,b) * Nxs(j,a));
+          dlK(i*dof + j, a, b) -= w_afu * (tau_Nxs(i,a) * Nxs(j,b) - tau_Nxs(i,b) * Nxs(j,a));
         }
       }
     }
@@ -807,7 +808,7 @@ void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, 
   //    moves along df0, computed from finite differences.
   const int nfd = fibers.cols();
   if ((fibers.colwise().norm().array() == 0.0).all()) {   // Fibers::zero_fibers
-    return;
+    return dlK;
   }
 
   // S of the material law at F for given fibers. The active tension, Dm and
@@ -849,23 +850,24 @@ void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, 
         for (int a = 0; a < eNoN; a++) {
           for (int i = 0; i < nsd; i++) {
             for (int l = 0; l < nsd; l++) {
-              lK(i*dof + l, a, b) += w_afu * dP_Nx(i,a) * C(l,b);
+              dlK(i*dof + l, a, b) += w_afu * dP_Nx(i,a) * C(l,b);
             }
           }
         }
       }
     }
   }
+  return dlK;
 }
 
-template void prestrain_tangent_correction<2>(const ComMod&, const CepMod&, const dmnType&,
+template Array3<double> prestrain_tangent_correction<2>(const ComMod&, const CepMod&, const dmnType&,
     const ActiveStress::Evaluator&, const Eigen::Ref<const Eigen::VectorXd>&,
     const mat_fun::Matrix<2>&, const mat_fun::Matrix<2>&, const mat_fun::Matrix<2>&,
     const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>&,
-    const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>&, double, int, Array3<double>&);
-template void prestrain_tangent_correction<3>(const ComMod&, const CepMod&, const dmnType&,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, Eigen::Dynamic>>&, double, int);
+template Array3<double> prestrain_tangent_correction<3>(const ComMod&, const CepMod&, const dmnType&,
     const ActiveStress::Evaluator&, const Eigen::Ref<const Eigen::VectorXd>&,
     const mat_fun::Matrix<3>&, const mat_fun::Matrix<3>&, const mat_fun::Matrix<3>&,
     const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>&,
-    const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>&, double, int, Array3<double>&);
+    const Eigen::Ref<const Eigen::Matrix<double, 3, Eigen::Dynamic>>&, double, int);
 };

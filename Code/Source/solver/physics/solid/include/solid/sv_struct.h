@@ -158,14 +158,13 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 /// @param[in] fibers the pulled-back fibers the material law saw, nsd x nFn.
 /// @param[in] w_afu the weight times the stiffness scaling of lK.
 /// @param[in] dof the degrees of freedom per node of lK.
-/// @param[in,out] lK the element tangent, lK(i*dof + j, a, b); the correction
-/// is added to it.
+/// @return the correction to the element tangent, laid out as dlK(i*dof + j, a, b).
 template <int nsd>
-void prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
+Array3<double> prestrain_tangent_correction(const ComMod& com_mod, const CepMod& cep_mod, const dmnType& dmn,
     const ActiveStress::Evaluator& active_stress_evaluator, const Eigen::Ref<const Eigen::VectorXd>& N,
     const mat_fun::Matrix<nsd>& F0, const mat_fun::Matrix<nsd>& F, const mat_fun::Matrix<nsd>& P,
     const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx0,
-    const mat_models::FiberRef<nsd>& fibers, double w_afu, int dof, Array3<double>& lK);
+    const mat_models::FiberRef<nsd>& fibers, double w_afu, int dof);
 };
 
 #endif
