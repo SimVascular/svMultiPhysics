@@ -97,3 +97,13 @@ docker run --rm -it --platform linux/amd64 \
 ```
 
 Files written under `/workspace` remain on the host after the container exits.
+
+## Package-based svMultiPhysics images
+
+`Docker/svmultiphysics/dockerfile` defines the final svMultiPhysics images for
+the new release process described in
+[#729](https://github.com/SimVascular/svMultiPhysics/issues/729). It uses a
+validated dependency image and installs verified svMultiPhysics and
+svZeroDSolver Ubuntu packages to produce separate `default` and `trilinos`
+images. This new recipe and release process do not change the existing Docker
+images, Dockerfiles, or publication workflow described above.
