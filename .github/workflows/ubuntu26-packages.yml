@@ -26,17 +26,6 @@ permissions:
   contents: read
   packages: read
 
-env:
-  RELEASE_VERSION_PY: |
-    import json
-    import sys
-
-    release = json.load(sys.stdin)
-    parts = [release[key] for key in ("major", "minor", "patch", "build")]
-    if any(type(part) is not int or part < 0 for part in parts):
-        raise SystemExit("release.json needs four non-negative integer version fields")
-    print(".".join(map(str, parts)))
-
 concurrency:
   group: ubuntu26-packages-${{ github.repository }}-${{ github.ref }}
   cancel-in-progress: false
@@ -63,12 +52,12 @@ jobs:
         env:
           REQUESTED_REF: ${{ inputs.source_ref }}
         run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
           source_ref=${REQUESTED_REF:-${GITHUB_SHA}}
           if [[ ! "${source_ref}" =~ ^[0-9a-fA-F]{40}$ && ! "${source_ref}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(-(dev|rc))?$ ]]; then
             echo 'source_ref must be a full 40-character commit SHA or a complete Git tag such as v1.0.0.1-dev, v1.0.0.1-rc, or v1.0.0.1' >&2
             exit 1
           fi
-          git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
           if [[ "${source_ref}" == v* ]]; then
             git fetch --no-tags origin "refs/tags/${source_ref}"
             source_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
@@ -77,11 +66,11 @@ jobs:
           fi
           if [[ "${GITHUB_EVENT_NAME}" == push ]]; then
             test "${source_commit}" = "${GITHUB_SHA}"
-          elif ! git merge-base --is-ancestor "${source_commit}" refs/remotes/origin/main; then
+          elif ! ci_commit_is_on_origin_main "${source_commit}"; then
             echo "Commit ${source_commit} is not on this repository's main branch" >&2
             exit 1
           fi
-          version=$(git show "${source_commit}:release.json" | python3 -c "${RELEASE_VERSION_PY}")
+          version=$(ci_release_version <(git show "${source_commit}:release.json"))
           if [[ "${source_ref}" == v* ]]; then
             if [[ "${source_ref}" != "v${version}" && "${source_ref}" != "v${version}-rc" && "${source_ref}" != "v${version}-dev" ]]; then
               echo "Source tag ${source_ref} does not match release.json version ${version}" >&2
@@ -117,25 +106,14 @@ jobs:
         env:
           REQUESTED_IMAGE: ${{ inputs.dependency_image || format('ghcr.io/{0}/svmultiphysics-dependencies:1.0.0.1-dev', github.repository_owner) }}
         run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
           if [[ -z "${REQUESTED_IMAGE}" ]]; then
             echo 'dependency_image is required' >&2
             exit 1
           fi
-          requested_image=${REQUESTED_IMAGE}
-          if [[ ! "${requested_image}" =~ ^ghcr\.io/[a-z0-9._/-]+(:[A-Za-z0-9_.-]+|@sha256:[0-9a-f]{64})$ ]]; then
-            echo 'dependency_image must be a fully qualified GHCR tag or SHA-256 digest' >&2
-            exit 1
-          fi
-          repository=${requested_image%%@*}
-          repository=${repository%:*}
-          inspect_output=$(docker buildx imagetools inspect "${requested_image}")
-          digest=$(awk '$1 == "Digest:" && !found++ { print $2 }' <<< "${inspect_output}")
-          if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
-            echo "Could not resolve ${requested_image} to an image digest" >&2
-            exit 1
-          fi
-          printf 'reference=%s@%s\n' "${repository}" "${digest}" >> "${GITHUB_OUTPUT}"
-          printf 'Dependency image: %s@%s\n' "${repository}" "${digest}"
+          read -r _ _ resolved_image < <(ci_resolve_ghcr_image "${REQUESTED_IMAGE}")
+          printf 'reference=%s\n' "${resolved_image}" >> "${GITHUB_OUTPUT}"
+          printf 'Dependency image: %s\n' "${resolved_image}"
 
   package:
     name: Build ${{ matrix.configuration }} package
@@ -168,6 +146,7 @@ jobs:
         env:
           VERSION_TAG: ${{ needs.select_source.outputs.version_tag }}
         run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
           solver_commit=$(git rev-parse HEAD)
           expected_commit='${{ needs.select_source.outputs.commit }}'
@@ -179,7 +158,7 @@ jobs:
           fi
           printf -- '- Solver build commit: `%s` (intended tag `%s`)\n' \
             "${solver_commit}" "${VERSION_TAG}" >> "${GITHUB_STEP_SUMMARY}"
-          version=$(python3 -c "${RELEASE_VERSION_PY}" < release.json)
+          version=$(ci_release_version release.json)
           printf 'VERSION=%s\n' "${version}" >> "${GITHUB_ENV}"
           test "${version}" = '${{ needs.select_source.outputs.version }}'
           printf 'Solver build commit: %s\nVersion: %s\n' "${solver_commit}" "${version}"
@@ -321,28 +300,12 @@ jobs:
         env:
           CONFIGURATION: ${{ matrix.configuration }}
         run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
           version='${{ needs.select_source.outputs.version }}'
-          read -r zero_tag zero_commit zero_sha < <(python3 -c '
-          import json, re
-          with open("release.json", encoding="utf-8") as manifest:
-              release = json.load(manifest)
-          zero = release["dependencies"]["svZeroDSolver"]
-          if zero["repository"] != "SimVascular/svZeroDSolver":
-              raise SystemExit("Unexpected svZeroDSolver repository")
-          if not re.fullmatch(r"v[0-9][A-Za-z0-9._-]*", zero["tag"]):
-              raise SystemExit("Invalid svZeroDSolver tag")
-          if not re.fullmatch(r"[0-9a-f]{40}", zero["commit"]):
-              raise SystemExit("Invalid svZeroDSolver commit")
-          if not re.fullmatch(r"[0-9a-f]{64}", zero["ubuntu26_package_sha256"]):
-              raise SystemExit("Invalid svZeroDSolver package checksum")
-          print(zero["tag"], zero["commit"], zero["ubuntu26_package_sha256"])
-          ')
-          remote_commit=$(git ls-remote https://github.com/SimVascular/svZeroDSolver.git "refs/tags/${zero_tag}^{}" | awk 'NR == 1 { print $1 }')
-          if [[ -z "${remote_commit}" ]]; then
-            remote_commit=$(git ls-remote --refs https://github.com/SimVascular/svZeroDSolver.git "refs/tags/${zero_tag}" | awk 'NR == 1 { print $1 }')
-          fi
-          test "${remote_commit}" = "${zero_commit}"
+          read -r _ zero_tag zero_commit zero_sha \
+            < <(ci_svzerodsolver_package_identity release.json)
+          test "$(ci_resolve_svzerodsolver release.json)" = "${zero_commit}"
           package="svMultiPhysics-Ubuntu-26-${CONFIGURATION}-${version}.deb"
           test "$(dpkg-deb --field "packages/${package}" Version)" = "${version}"
           depends=$(dpkg-deb --field "packages/${package}" Depends)
@@ -362,33 +325,22 @@ jobs:
           test "$(dpkg-deb --field "${zero_package}" Version)" = "${SVZEROD_TAG#v}"
           printf 'ZERO_PACKAGE=%s\n' "${zero_package}" >> "${GITHUB_ENV}"
 
-      - name: Install packages and locate installed executables
+      - name: Install packages
         shell: bash
         run: |
           apt-get install -y --no-install-recommends "./${ZERO_PACKAGE}" "./packages/${PACKAGE}"
-          solver=$(find /usr/local/sv/svMultiPhysics -type f -name svmultiphysics -print -quit)
-          interface=$(find /usr/local/sv/svZeroDSolver -type f -name libsvzero_interface.so -print -quit)
-          test -x "${solver}"
-          test -f "${interface}"
-          if ldd "${solver}" | grep 'not found'; then
-            echo 'The installed solver has missing shared-library dependencies' >&2
-            exit 1
-          fi
-          if ldd "${interface}" | grep 'not found'; then
-            echo 'The installed svZeroDSolver interface has missing shared-library dependencies' >&2
-            exit 1
-          fi
-          mkdir -p svZeroDSolver/build/src/interface
-          ln -s "${interface}" svZeroDSolver/build/src/interface/libsvzero_interface.so
-          printf 'SVMP_SOLVER_EXECUTABLE=%s\n' "${solver}" >> "${GITHUB_ENV}"
 
-      - name: Check installed solver version
+      - name: Verify installed svMultiPhysics runtime
         shell: bash
         run: |
-          actual=$("${SVMP_SOLVER_EXECUTABLE}" --version)
-          expected="[svMultiPhysics] version ${{ needs.select_source.outputs.version }} tag ${{ needs.select_source.outputs.version_tag }} commit ${{ needs.select_source.outputs.commit }} configuration ${SVMP_SOLVER_CONFIGURATION}"
-          test "${actual}" = "${expected}"
-          printf '%s\n' "${actual}"
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          ci_check_installed_svmultiphysics_version \
+            '${{ needs.select_source.outputs.version }}' \
+            '${{ needs.select_source.outputs.version_tag }}' \
+            '${{ needs.select_source.outputs.commit }}' \
+            "${SVMP_SOLVER_CONFIGURATION}"
+          ci_check_installed_svmultiphysics_libraries
+          ci_check_installed_svmultiphysics_mpi
 
       - name: Report installed dependency versions
         shell: bash
@@ -409,14 +361,13 @@ jobs:
           /opt/conda/bin/conda create -y -n svmultiphysics python=3.12 pip
           /opt/conda/bin/conda run -n svmultiphysics python -m pip install pytest numpy meshio pandas
 
-      - name: Run integration tests against installed solver
+      - name: Run integration tests against installed svMultiPhysics
         shell: bash
         run: |
-          mkdir -p test-results
-          cd tests
-          /opt/conda/bin/conda run --no-capture-output -n svmultiphysics \
-            pytest -v -rfEP --durations=0 --ignore=test_release_identity.py \
-            --junitxml="${GITHUB_WORKSPACE}/test-results/${SVMP_SOLVER_CONFIGURATION}.xml"
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          ci_run_installed_svmultiphysics_tests \
+            "${GITHUB_WORKSPACE}/test-results/${SVMP_SOLVER_CONFIGURATION}.xml" \
+            /opt/conda/bin/conda
 
       - name: Summarize package validation
         if: success()

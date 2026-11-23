@@ -81,11 +81,17 @@ if(SV_USE_TRILINOS)
     MESSAGE("End of Trilinos details\n")
 
     if(NOT Trilinos_LIBRARIES)
+      if(SV_RELEASE_PACKAGE)
+        MESSAGE(FATAL_ERROR "SV_USE_TRILINOS is ON, but Trilinos libraries were not found")
+      endif()
       MESSAGE(WARNING "Trilinos_FOUND is true but Trilinos_LIBRARIES is empty. This suggests that FIND_PACKAGE(Trilinos) failed quietly. Proceed with caution.")
     endif()
 
     set(USE_TRILINOS 1)
   ELSE()
+    if(SV_RELEASE_PACKAGE)
+      MESSAGE(FATAL_ERROR "SV_USE_TRILINOS is ON, but Trilinos was not found")
+    endif()
     MESSAGE(WARNING "Could not find Trilinos. Compiling svMultiPhysics without Trilinos.")
   ENDIF()
 
