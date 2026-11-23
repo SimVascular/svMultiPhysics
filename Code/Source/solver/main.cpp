@@ -129,10 +129,12 @@ void iterate_precomputed_time(Simulation* simulation, SolutionStates& solutions)
         // in time and no interpolation is performed
         // If there are multiple temporal slices, then the solution is linearly interpolated
         // between the known time values and the current time.
-        // Slice k is the solution at time k*Time_step. The slices are one period of
-        // nslices*Time_step, so slice 0 is not repeated at the end.
+        // Slice k is the solution at time k*Time_step. Periodic slices are one period of
+        // nslices*Time_step, so slice 0 is not repeated at the end. Otherwise the last
+        // slice is held after its time.
         const int nslices = Ys.nslices();
-        const double s = std::fmod(cTS * (dt / com_mod.precompDt), nslices);
+        double s = cTS * (dt / com_mod.precompDt);
+        s = com_mod.precompPeriodic ? std::fmod(s, nslices) : std::fmin(s, nslices - 1.0);
         const int n1 = static_cast<int>(s);
         const int n2 = (n1 + 1) % nslices;
         const double alpha = s - n1;
