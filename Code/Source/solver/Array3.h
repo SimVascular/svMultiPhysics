@@ -63,9 +63,15 @@ class Array3
     }
 
     /// @brief Array copy
+    ///
+    /// The copy of an array that has no rows, no columns or no slices holds no
+    /// data and has the same numbers of rows, columns and slices.
     Array3(const Array3 &rhs)
     {
       if ((rhs.nrows_ <= 0) || (rhs.ncols_ <= 0) || (rhs.nslices_ <= 0)) {
+        nrows_ = rhs.nrows_;
+        ncols_ = rhs.ncols_;
+        nslices_ = rhs.nslices_;
         return;
       }
 
@@ -242,22 +248,28 @@ class Array3
     }
 
     /// @brief Resize the array.
+    ///
+    /// The previous content is discarded and the new entries are set to zero.
+    /// If there are no rows, no columns or no slices, the array holds no data
+    /// and keeps the given numbers of rows, columns and slices.
     void resize(const int num_rows, const int num_cols, const int num_slices)
     {
-      // [NOTE] This is tfu but need to mimic fortran.
-      nrows_ = num_rows;
-      ncols_ = num_cols;
-      nslices_ = num_slices;
-
-      if ((num_rows <= 0) || (num_cols <= 0) || (num_slices <= 0)) { 
-        return; 
-      }
-
       if (data_ != nullptr) {
         delete [] data_;
         memory_in_use -= sizeof(T) * size_;;
         memory_returned += sizeof(T) * size_;;
         data_ = nullptr;
+      }
+
+      // [NOTE] This is tfu but need to mimic fortran.
+      nrows_ = num_rows;
+      ncols_ = num_cols;
+      nslices_ = num_slices;
+      slice_size_ = 0;
+      size_ = 0;
+
+      if ((num_rows <= 0) || (num_cols <= 0) || (num_slices <= 0)) { 
+        return; 
       }
 
       allocate(num_rows, num_cols, num_slices);
@@ -327,19 +339,25 @@ class Array3
 
     /// @brief Array assignment 
     ///
-    /// Copy data to replicate Fortran behavior.
+    /// Copy data to replicate Fortran behavior. Assigning an array that has no
+    /// rows, no columns or no slices leaves this array with no data and with
+    /// the same numbers of rows, columns and slices.
     Array3& operator = (const Array3& rhs)
     {
+      if (this == &rhs) {
+        return *this;
+      }
+
       if ((rhs.nrows_ <= 0) || (rhs.ncols_ <= 0) || (rhs.nslices_ <= 0)) { 
+        clear();
+        nrows_ = rhs.nrows_;
+        ncols_ = rhs.ncols_;
+        nslices_ = rhs.nslices_;
         return *this;
       }
 
       if (rhs.data_ == nullptr) { 
         throw std::runtime_error(+"RHS has null data.");
-      }
-
-      if (this == &rhs) {
-        return *this;
       }
 
       if (size_ != rhs.size_) {

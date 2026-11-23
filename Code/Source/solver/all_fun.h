@@ -62,7 +62,7 @@ namespace all_fun {
    * @param[in] pFlag Whether to use the Taylor-Hood function space for the
    *   pressure field.
    * @param[in] cfg The configuration in which the integral is computed
-   *   (reference, old or current).
+   *   (reference, old, current or intermediate).
    * @param[in] displacement_index The index of the displacement field in the
    *   solution arrays. This should correspond to the start index of the
    *   equation that solves for the displacement.
@@ -120,7 +120,7 @@ namespace all_fun {
    * @param[in] THflag Whether to use the Taylor-Hood function space for the
    *   pressure field.
    * @param[in] cfg The configuration in which the integral is computed
-   *   (reference, old or current).
+   *   (reference, old, current or intermediate).
    * @param[in] displacement_index The index of the displacement field in the
    *   solution arrays. This should correspond to the start index of the
    *   equation that solves for the displacement.
@@ -171,7 +171,7 @@ namespace all_fun {
    * @param[in] solutions The solution states that the displacement fields are
    *   extracted from.
    * @param[in] cfg The configuration in which the integral is computed
-   *   (reference, old or current).
+   *   (reference, old, current or intermediate).
    * @param[in] displacement_index The index of the displacement field in the
    *   solution arrays. This should correspond to the start index of the
    *   equation that solves for the displacement.

@@ -4,15 +4,16 @@
 #ifndef COUPLED_BOUNDARY_CONDITION_H
 #define COUPLED_BOUNDARY_CONDITION_H
 
-#include <string>
-#include <memory>
-#include <exception>
-#include <optional>
-#include <unordered_map>
-#include <utility>
-#include "consts.h"
 #include "CmMod.h"
 #include "SolutionStates.h"
+#include "consts.h"
+#include <exception>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // Forward declarations to avoid heavy includes
 class LPNSolverInterface;
@@ -145,46 +146,89 @@ class CappingSurface {
         /// @brief Initialize the cap face quadrature.
         void init_cap_face_quadrature(const ComMod& com_mod);
 
-        /// @brief Initialize the cap contribution storage.
-        void initialize_valM();
-    
-        /// Surface velocity flux through the cap using \a st columns indexed by cap IEN / GlobalNodeID (master / serial).
+        /// @brief Integrate the flux of the velocity through the cap.
+        ///
+        /// @param[in] st The positions, displacements and velocities of the
+        ///   cap nodes, with one column per cap node.
+        /// @param[in] use_Yn_velocity Whether to integrate the velocity at the
+        ///   current time step (true) or at the old one (false).
+        /// @param[in] cfg The configuration in which the cap is integrated.
+        ///
+        /// @return The flux of the velocity through the cap.
         double integrate_velocity_flux(const CapGlobalMeshState& st, bool use_Yn_velocity,
             consts::MechanicalConfigurationType cfg);
         
-        /// @brief Compute the cap contribution to the linear solver face (fills \ref valM_; safe under \c const *this).
-        void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
+        /// @brief Compute the change of the flow rate through the cap per unit
+        /// change of the velocity of each cap node.
+        ///
+        /// The flow rate depends on the node velocities directly and, where
+        /// the cap is integrated in a deformed configuration, on the node
+        /// displacements through the normal. The second part is the
+        /// derivative with respect to the displacement, with the velocity
+        /// held fixed, times displacement_per_velocity.
+        ///
+        /// @param[in] cfg The configuration in which the cap is integrated.
+        /// @param[in] st The positions, displacements and velocities of the
+        ///   cap nodes, with one column per cap node.
+        /// @param[in] displacement_per_velocity The change of the displacement
+        ///   of a node per unit change of its velocity. Zero if the flow rate
+        ///   does not depend on the displacement.
+        ///
+        /// @return The flow rate derivative (number of space dimensions x
+        ///   number of cap nodes), with the columns in the order of the nodes
+        ///   of the cap face.
+        Array<double> compute_flowrate_derivative(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st,
+                                                  double displacement_per_velocity) const;
 
         /// @brief Get the cap face.
         const faceType* face() const { return face_.get(); }
-
-        /// @brief Get the cap contribution.
-        const Array<double>& valM() const { return valM_; }
 
     private:
         /// @brief The cap face.
         std::unique_ptr<faceType> face_;
         /// @brief The global node IDs.
         Vector<int> global_node_ids_;
-        /// @brief The normals.
-        Array<double> normals_;
+
+        /// @brief The cap node of each node of each element (number of nodes
+        /// per element x number of elements). A cap node is the index of a
+        /// column in the arrays that have one column per cap node.
+        Array<int> element_node_columns_;
 
         /// @brief The number of spatial dimensions (3D).
         static constexpr int cap_nsd_ = 3;  
         /// @brief The number of independent spatial dimensions (2D).
-        static constexpr int cap_insd_ = 2; 
+        static constexpr int cap_insd_ = 2;
 
-        /// @brief Update the element position using cap-compact mesh columns (\a gn_to_cap_local maps global node id to column).
-        Array<double> update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
-                                                     const Array<double>& mesh_x, const Array<double>& mesh_Do,
-                                                     const Array<double>& mesh_Dn,
-                                                     const std::unordered_map<int, int>& gn_to_cap_local) const;
-    
-        /// @brief Compute the Jacobian and normal vector for a given element and Gauss point.
-        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const;
+        /// @brief Get the positions of the nodes of a cap element in a given
+        /// configuration.
+        ///
+        /// @param[in] e The index of the element.
+        /// @param[in] cfg The configuration: reference, old or new time step.
+        /// @param[in] st The positions and displacements of the cap nodes,
+        ///   with one column per cap node.
+        ///
+        /// @return The positions of the element nodes (number of space
+        ///   dimensions x number of nodes per element).
+        Array<double>
+        update_element_position_global(int e,
+                                       consts::MechanicalConfigurationType cfg,
+                                       const CapGlobalMeshState &st) const;
 
-        /// @brief Cap contribution to the linear solver face; \c mutable so it can be refreshed under \c const *this.
-        mutable Array<double> valM_;
+        /// @brief Compute the tangent vectors of a cap element at a Gauss
+        /// point.
+        ///
+        /// Tangent vector 'k' is the derivative of the position with respect
+        /// to parametric coordinate 'k'. The cross product of the tangent
+        /// vectors is the area-weighted normal of the cap.
+        ///
+        /// @param[in] xl The positions of the element nodes, one per column.
+        /// @param[in] g The index of the Gauss point.
+        ///
+        /// @return The tangent vectors, one per column.
+        Array<double> element_tangents(const Array<double> &xl, int g) const;
+
+        /// @brief Compute the Jacobian and normal vector of an element at a Gauss point.
+        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int g) const;
     };
 
 /// @brief Object-oriented Coupled boundary condition
@@ -259,12 +303,17 @@ private:
     Vector<int> cap_mesh_global_node_ids_;
     /// @brief Cached map: global cap node id -> cap column index (derived from \ref cap_mesh_global_node_ids_).
     std::unordered_map<int, int> cap_g_to_cap_col_;
+    /// @brief Mesh indices, on this process, of the cap nodes that are in the
+    /// mesh of this process, sorted by cap column (set in \c initialize_cap()).
+    std::vector<int> cap_node_mesh_indices_;
+    /// @brief Cap column index of each node of \ref cap_node_mesh_indices_.
+    std::vector<int> cap_node_columns_;
     /// @brief Cap geometry on ranks with \ref owns_cap_; empty on non-owning MPI ranks.
     std::optional<CappingSurface> cap_;
     /// @brief Cap-only mesh state for integration (columns 0..n_cap-1); refreshed by \ref gather_global_mesh_state.
     mutable CapGlobalMeshState cap_global_mesh_state_;
 
-    /// @brief Simulation \c CmMod copy; set in \c distribute() for cap MPI (e.g. \c copy_cap_surface_to_linear_solver_face).
+    /// @brief Simulation \c CmMod copy; set in \c distribute() for cap MPI (e.g. \c append_cap_flowrate_derivative).
     CmMod cm_mod_{};
 
     /// Build \ref cap_g_to_cap_col_ from \ref cap_mesh_global_node_ids_.
@@ -429,13 +478,32 @@ public:
     /// @param cm_mod CmMod reference for communication
     void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
-    /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
+    /// @brief Find the cap nodes that are in the mesh of this process and, on
+    /// the process that holds the cap, initialize its quadrature and its mesh
+    /// state.
+    ///
+    /// Every process has to make this call, after the mesh is partitioned.
+    ///
+    /// @param[in] com_mod The simulation data.
     void initialize_cap(ComMod& com_mod);
 
-    /// @brief Compute cap \a valM from current cap mesh state on owner and copy/broadcast cap data to FSILS face.
-    void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                consts::MechanicalConfigurationType cfg,
-                                                const SolutionStates& solutions) const;
+    /// @brief Append the cap contribution to the flow rate derivative of a
+    /// linear solver face.
+    ///
+    /// The process that holds the cap computes the contribution from the
+    /// current cap mesh state and broadcasts it. Every process has to make
+    /// this call.
+    ///
+    /// @param[in] com_mod The simulation data.
+    /// @param[in,out] lhs_face The linear solver face, one of
+    ///   com_mod.lhs.face, whose flow rate derivative is extended.
+    /// @param[in] cfg The configuration in which the cap is integrated.
+    /// @param[in] displacement_per_velocity The change of the displacement of
+    ///   a node per unit change of its velocity. Zero if the flow rate does
+    ///   not depend on the displacement.
+    void append_cap_flowrate_derivative(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
+                                        consts::MechanicalConfigurationType cfg,
+                                        double displacement_per_velocity) const;
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,
