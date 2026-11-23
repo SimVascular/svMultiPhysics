@@ -141,8 +141,7 @@ void struct_3d(ComMod &com_mod, CepMod &cep_mod, const int eNoN,
 /// taking the gradient of the material law's @f$ S @f$ with respect to each
 /// fiber by one-sided finite differences along the axes and applying it to
 /// @f$ \delta f_0 @f$, so it costs nsd calls of the material law per fiber,
-/// plus one for the baseline. A mesh without fibers pays nothing beyond the
-/// first part.
+/// plus one for the baseline. This term is skipped if fibers are not present.
 ///
 /// @param[in] com_mod Simulation data.
 /// @param[in] cep_mod Electrophysiology data.

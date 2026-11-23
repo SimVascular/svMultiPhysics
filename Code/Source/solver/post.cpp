@@ -2090,7 +2090,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
             }
 
             // The VTK writer adds nodal prestress during prestress initialization.
-            if (!com_mod.pstEq) {
+            if (!com_mod.compute_prestress) {
               sigma += S0;
             }
 
