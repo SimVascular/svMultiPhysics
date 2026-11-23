@@ -76,7 +76,7 @@ void schur(FSILS_lhsType& lhs, FSILS_subLsType& ls, const int dof, const Array<d
     for (auto& face : lhs.face) {
       if (face.coupledFlag) {
         auto unCondU = GP;
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, GP);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, GP);
         break;
       }
     }
