@@ -251,6 +251,9 @@ class FSILS_subLsType
 
     /// Calling duration            (OUT)
     double callD;  
+
+    /// GMRES Krylov basis, kept between solves (TMP)
+    Array3<double> u;
 };
 
 class FSILS_lsType 
@@ -271,6 +274,11 @@ class FSILS_lsType
     FSILS_subLsType GM;
     FSILS_subLsType CG;
     FSILS_subLsType RI;
+
+    /// NS solver blocks of Val and outer-iteration directions, kept between solves (TMP)
+    Array<double> Gt, mK, mG, mD, P, MP;
+    Vector<double> mL;
+    Array3<double> U, MU;
 };
 
 
