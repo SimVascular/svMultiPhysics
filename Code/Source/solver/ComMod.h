@@ -1050,6 +1050,8 @@ class mshType
     /// @brief Function spaces (basis)
     std::vector<fsType> fs;
 
+    Array<double> pressure_node_weights;
+
     /// @brief BSpline in different directions (NURBS)
     std::vector<bsType> bs;
 

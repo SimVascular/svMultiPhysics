@@ -460,6 +460,26 @@ void get_gip(Simulation* simulation, faceType& face)
   }
 }
 
+template <typename Scalar>
+static void get_nodal_xi(int insd, consts::ElementType eType, int eNoN, Array<Scalar>& xi)
+{
+  const auto& nodes = basis_for_solver_element(eType).nodes();
+  for (int a = 0; a < eNoN; ++a) {
+    const auto& point = nodes.at(basis_index_for_solver_node(eType, a));
+    for (int d = 0; d < insd; ++d) {
+      xi(d,a) = point[d];
+    }
+  }
+}
+
+Array<double> get_nodal_xi(const fsType& space)
+{
+  const int insd = space.xi.nrows();
+  Array<double> xi(insd, space.eNoN);
+  get_nodal_xi(insd, space.eType, space.eNoN, xi);
+  return xi;
+}
+
 /// Computes shape functions and derivatives at given natural coords.
 //
 void get_gnn(const int insd, consts::ElementType eType, const int eNoN, const int g, Array<double>& xi, 

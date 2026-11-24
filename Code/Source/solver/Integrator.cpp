@@ -1335,23 +1335,12 @@ void Integrator::corrector_taylor_hood()
       continue;
     }
 
-    auto eType = msh.fs[1].eType;
     int eNoN = msh.fs[0].eNoN;
     int eNoNq = msh.fs[1].eNoN;
 
-    Array<double> xl(nsd,eNoN), xql(nsd,eNoNq), Nqx(nsd,eNoNq), Nx(nsd,eNoN);
-    Vector<double> pl(eNoNq), Nq(eNoNq), N(eNoN);
-
-    Vector<double> xp(nsd), xi0(nsd), xi(nsd);
+    Array<double> xql(nsd,eNoNq), Nqx(nsd,eNoNq);
+    Vector<double> pl(eNoNq);
     Array<double> ksix(nsd,nsd);
-
-    for (int g = 0; g < msh.fs[1].nG; g++) {
-      for (int i = 0; i < nsd; i++) {
-        xi0(i) = xi0(i) + msh.fs[1].xi(i,g);
-      }
-    }
-
-    xi0 = xi0 / static_cast<double>(msh.fs[1].nG);
 
     for (int e = 0; e < msh.nEl; e++) {
       cDmn = all_fun::domain(com_mod, msh, cEq, e);       // setting global cDmn
@@ -1361,18 +1350,11 @@ void Integrator::corrector_taylor_hood()
         continue;
       }
 
-      for (int a = 0; a < eNoN; a++) {
-        int Ac = msh.IEN(a,e);
-        for (int i = 0; i < nsd; i++) {
-          xl(i,a) = com_mod.x(i,Ac);
-        }
-      }
-
       for (int a = 0; a < eNoNq; a++) {
         int Ac = msh.IEN(a,e);
         pl(a) = Yn(s+nsd,Ac);
         for (int i = 0; i < nsd; i++) {
-          xql(i,a) = xl(i,a);
+          xql(i,a) = com_mod.x(i,Ac);
         }
       }
 
@@ -1394,17 +1376,9 @@ void Integrator::corrector_taylor_hood()
 
       for (int a = eNoNq; a < eNoN; a++) {
         int Ac = msh.IEN(a,e);
-        for (int i = 0; i < nsd; i++) {
-          xp(i) = xl(i,a);
-        }
-        // Find the node in the element given by all of its nodes, which may be curved
-        xi = xi0;
-        nn::get_nnx(nsd, msh.fs[0].eType, eNoN, xl, msh.fs[0].xib, msh.fs[0].Nb, xp, xi, N, Nx);
-        nn::get_gnn(nsd, eType, eNoNq, xi, Nq, Nqx);
-
         double p = 0.0;
         for (int b = 0; b < eNoNq; b++) {
-          p = p + pl(b)*Nq(b);
+          p += pl(b) * msh.pressure_node_weights(b,a);
         }
 
         sF(Ac) = sF(Ac) + p*eVol;

@@ -4,6 +4,7 @@ import subprocess
 import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
+import numpy as np
 import pytest
 
 # Common folder for all tests in this file
@@ -149,3 +150,23 @@ def test_quadratic_tet10(n_proc):
     t_max = 3
     fields = ["Velocity", "Pressure", "Vorticity", "Divergence"]
     run_with_reference(base_folder, test_folder, fields, n_proc, t_max) 
+
+
+def test_taylor_hood_curved_tet10_edge_pressures(n_proc, tmp_path):
+    case = Path(__file__).parent / "cases/fluid/quadratic_tet10"
+    shutil.copytree(case / "quad-mesh-complete", tmp_path / "quad-mesh-complete")
+    tree = ET.parse(case / "solver.xml")
+    general = tree.find("GeneralSimulationParameters")
+    general.find("Number_of_time_steps").text = "1"
+    general.find("Increment_in_saving_VTK_files").text = "1"
+    ET.SubElement(tree.find("Add_equation"), "Use_taylor_hood_type_basis").text = "true"
+    tree.write(tmp_path / "solver.xml")
+
+    result = run_by_name(str(tmp_path), "solver.xml", 1, n_proc)
+    pressure = result.point_data["Pressure"].ravel()
+    elements = result.cells_dict["tetra10"]
+    assert np.ptp(pressure) > 0
+    edges = [(0, 1), (1, 2), (2, 0), (0, 3), (1, 3), (2, 3)]
+    for node, (a, b) in enumerate(edges, start=4):
+        expected = 0.5 * (pressure[elements[:, a]] + pressure[elements[:, b]])
+        np.testing.assert_allclose(pressure[elements[:, node]], expected, rtol=1e-12, atol=1e-10)
