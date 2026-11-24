@@ -350,6 +350,7 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.urisFlag);
     cm.bcast(cm_mod, &com_mod.urisActFlag);
     cm.bcast(cm_mod, &com_mod.usePrecomp);
+    cm.bcast(cm_mod, &com_mod.precompPeriodic);
     if (com_mod.rmsh.isReqd) {
       auto& rmsh = com_mod.rmsh;
       cm.bcast_enum(cm_mod, &rmsh.method);

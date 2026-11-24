@@ -957,6 +957,7 @@ class PrecomputedSolutionParameters: public ParameterLists
 
     Parameter<std::string> field_name;
     Parameter<std::string> file_path;
+    Parameter<bool> periodic;
     Parameter<double> time_step;
     Parameter<bool> use_precomputed_solution;
 };
