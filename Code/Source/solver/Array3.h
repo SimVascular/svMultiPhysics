@@ -419,6 +419,14 @@ class Array3
       return *this;
     }
 
+    Array3<T>& operator += (const Array3<T>& rhs)
+    {
+      for (int i = 0; i < size_; i++) {
+        data_[i] += rhs.data_[i];
+      }
+      return *this;
+    }
+
     friend const Array3<T> operator * (const T value, const Array3& rhs)
     {
       if (rhs.data_ == nullptr) { 
