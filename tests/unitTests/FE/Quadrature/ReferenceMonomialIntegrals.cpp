@@ -44,18 +44,16 @@ long double tetrahedron_monomial_integral(int a, int b, int c)
         svmp::raise<InvalidArgumentException>("Tetrahedron monomial exponents must be non-negative");
     }
     std::array<int, 3> powers{a, b, c};
-    std::sort(powers.begin(), powers.end());
-    const long double largest = powers[2];
+    std::sort(powers.rbegin(), powers.rend());
+    long double partial_degree = powers[0];
     // a! b! c! / (a+b+c+3)! without factorials or integer exponent sums.
-    long double integral = 1.0L / ((largest + 1.0L) * (largest + 2.0L) * (largest + 3.0L));
-    for (int k = 0; k < powers[1]; ++k) {
-        const long double numerator = static_cast<long double>(k) + 1.0L;
-        integral *= numerator / (largest + 3.0L + numerator);
-    }
-    const long double partial_degree = largest + static_cast<long double>(powers[1]);
-    for (int k = 0; k < powers[0]; ++k) {
-        const long double numerator = static_cast<long double>(k) + 1.0L;
-        integral *= numerator / (partial_degree + 3.0L + numerator);
+    long double integral = 1.0L / ((partial_degree + 1) * (partial_degree + 2) * (partial_degree + 3));
+    for (const int power : {powers[1], powers[2]}) {
+        for (int k = 0; k < power; ++k) {
+            const long double numerator = static_cast<long double>(k) + 1;
+            integral *= numerator / (partial_degree + 3 + numerator);
+        }
+        partial_degree += power;
     }
     return integral;
 }

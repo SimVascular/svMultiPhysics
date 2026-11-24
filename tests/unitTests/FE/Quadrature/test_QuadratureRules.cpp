@@ -5,15 +5,13 @@
 
 #include <gtest/gtest.h>
 
-#include "FE/Common/FEException.h"
 #include "FE/Quadrature/QuadratureRule.h"
+#include "QuadratureTestHelpers.h"
 
 #include <array>
 #include <cmath>
-#include <exception>
 #include <limits>
 #include <span>
-#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -23,6 +21,7 @@ using namespace svmp::FE::quadrature;
 
 namespace {
 
+using svmp::FE::quadrature::test::expect_invalid_argument_with_message;
 using ExpectedPoint = std::array<double, 3>;
 
 QuadratureRule make_two_point_gauss_legendre_rule()
@@ -33,27 +32,6 @@ QuadratureRule make_two_point_gauss_legendre_rule()
         3,
         {{-abscissa, 0.0, 0.0}, {abscissa, 0.0, 0.0}},
         {1.0, 1.0});
-}
-
-template <typename Function>
-void expect_invalid_argument_with_message(
-    Function&& function,
-    const std::string& expected_message)
-{
-    try {
-        std::forward<Function>(function)();
-        FAIL() << "Expected InvalidArgumentException containing: "
-               << expected_message;
-    } catch (const InvalidArgumentException& exception) {
-        const std::string actual_message = exception.what();
-        EXPECT_NE(actual_message.find(expected_message), std::string::npos)
-            << "actual message: " << actual_message;
-    } catch (const std::exception& exception) {
-        FAIL() << "Expected InvalidArgumentException, received: "
-               << exception.what();
-    } catch (...) {
-        FAIL() << "Expected InvalidArgumentException, received an unknown exception";
-    }
 }
 
 } // namespace
