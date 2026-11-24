@@ -17,7 +17,8 @@ var searchData=
   ['precompdt_14',['precompDt',['../class_com_mod.html#abe181c74acd266e321951a90182a9758',1,'ComMod']]],
   ['precompfieldname_15',['precompFieldName',['../class_com_mod.html#a7e1a59c4ebba44640b4d4bc7b55cd82b',1,'ComMod']]],
   ['precompfilename_16',['precompFileName',['../class_com_mod.html#a5703dd4af9a8701876de31e2e4ae0a61',1,'ComMod']]],
-  ['ps0_17',['pS0',['../class_com_mod.html#af6037b9453a02db9505b7af5bc403cae',1,'ComMod']]],
-  ['pseudo_5fecg_18',['pseudo_ECG',['../classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a',1,'ecgLeadsType']]],
-  ['psteq_19',['pstEq',['../class_com_mod.html#a87707963de89cffba1c523da18569cd8',1,'ComMod']]]
+  ['precompperiodic_17',['precompPeriodic',['../class_com_mod.html#a5253e04aefc229b003321272185cabd7',1,'ComMod']]],
+  ['ps0_18',['pS0',['../class_com_mod.html#af6037b9453a02db9505b7af5bc403cae',1,'ComMod']]],
+  ['pseudo_5fecg_19',['pseudo_ECG',['../classecg_leads_type.html#a0af07d8fdafb0ee1e7d2b2e51928393a',1,'ecgLeadsType']]],
+  ['psteq_20',['pstEq',['../class_com_mod.html#a87707963de89cffba1c523da18569cd8',1,'ComMod']]]
 ];

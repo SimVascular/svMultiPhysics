@@ -168,6 +168,8 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:a6ee4397f29b232ef418235132f3bbc4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fluid-related node mask for URIS SDF. Built once when consistent with tnNo; rebuilt automatically if tnNo changes.  <br /></td></tr>
 <tr class="memitem:a949caadf37a65de770358a86798b0060" id="r_a949caadf37a65de770358a86798b0060"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a949caadf37a65de770358a86798b0060">usePrecomp</a> = false</td></tr>
 <tr class="memdesc:a949caadf37a65de770358a86798b0060"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether to use precomputed state-variable solutions.  <br /></td></tr>
+<tr class="memitem:a5253e04aefc229b003321272185cabd7" id="r_a5253e04aefc229b003321272185cabd7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5253e04aefc229b003321272185cabd7">precompPeriodic</a> = true</td></tr>
+<tr class="memdesc:a5253e04aefc229b003321272185cabd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the precomputed state-variables repeat after the last slice.  <br /></td></tr>
 <tr class="memitem:a2531f9b8c811b8704b842ab878ce643b" id="r_a2531f9b8c811b8704b842ab878ce643b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2531f9b8c811b8704b842ab878ce643b">have_initial_homogeneous_pressure</a> = false</td></tr>
 <tr class="memdesc:a2531f9b8c811b8704b842ab878ce643b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether a spatially uniform initial pressure is provided in solver.xml.  <br /></td></tr>
 <tr class="memitem:ac21829e679241101a965db3ff21a65f4" id="r_ac21829e679241101a965db3ff21a65f4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac21829e679241101a965db3ff21a65f4">cDmn</a> = 0</td></tr>
@@ -1086,6 +1088,22 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>debug_active</b> = fa
 </div><div class="memdoc">
 
 <p>Precomputed state-variable file name. </p>
+
+</div>
+</div>
+<a id="a5253e04aefc229b003321272185cabd7" name="a5253e04aefc229b003321272185cabd7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5253e04aefc229b003321272185cabd7">&#9670;&#160;</a></span>precompPeriodic</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ComMod::precompPeriodic = true</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether the precomputed state-variables repeat after the last slice. </p>
 
 </div>
 </div>
