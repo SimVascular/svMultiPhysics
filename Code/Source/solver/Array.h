@@ -240,11 +240,12 @@ class Array
 
     /// @brief Resize the array.
     ///
-    /// The previous content is discarded and the new entries are set to zero.
+    /// The previous content is discarded and the new entries are set to zero
+    /// unless 'zero' is false.
     /// If there are no rows or no columns, the array holds no data and keeps
     /// the given numbers of rows and columns.
     //
-    void resize(const int num_rows, const int num_cols) 
+    void resize(const int num_rows, const int num_cols, const bool zero=true) 
     {
       if (data_reference_) {
         throw std::runtime_error("[Array] Can't resize an Array with reference data.");
@@ -268,7 +269,7 @@ class Array
         return;
       }
 
-      allocate(num_rows, num_cols);
+      allocate(num_rows, num_cols, zero);
     }
 
     int size() const
@@ -930,7 +931,7 @@ class Array
 
     /// @brief Allocate memory for array data.
     //
-    void allocate(const int num_rows, const int num_cols)
+    void allocate(const int num_rows, const int num_cols, const bool zero=true)
     {
       data_reference_ = false;
       nrows_ = num_rows;
@@ -946,7 +947,7 @@ class Array
 
       if (size_ != 0) {
         data_ = new T [size_];
-        memset(data_, 0, sizeof(T)*size_);
+        if (zero) memset(data_, 0, sizeof(T)*size_);
       }
     }
 
