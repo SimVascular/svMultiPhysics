@@ -7,6 +7,9 @@
 #include "petsc_impl.h"
 #include <filesystem>
 #include <locale.h>
+#include <set>
+#include <utility>
+#include <vector>
 
 LHSCtx plhs;       /* PETSc lhs */
 LSCtx *psol;       /* PETSc solver */
@@ -76,7 +79,8 @@ void petsc_initialize(const PetscInt nNo, const PetscInt mynNo, const PetscInt n
     Create parallel vector and matrix data structures.
 */
 void petsc_create_linearsystem(const PetscInt dof, const PetscInt iEq, const PetscInt nEq, 
-    const PetscReal *svFSI_DirBC, const PetscReal *svFSI_lpBC)
+    const PetscReal *svFSI_DirBC, const std::vector<PetscInt> &lp_rows,
+    const std::vector<PetscInt> &lp_cols)
 {   
     // PetscInt cEq = *iEq - 1;
     PetscInt cEq = iEq;   // in Fortran, cEq = 1; in C++, cEq = 0;
@@ -86,7 +90,7 @@ void petsc_create_linearsystem(const PetscInt dof, const PetscInt iEq, const Pet
     }
 
     PetscLogStagePush(stages[1]);
-    petsc_create_bc(dof, cEq, svFSI_DirBC, svFSI_lpBC); /* bc info is required for mat_create */
+    petsc_create_bc(dof, cEq, svFSI_DirBC, lp_rows, lp_cols); /* bc info is required for mat_create */
     petsc_create_vecmat(dof, cEq, nEq);
     psol[cEq].created = PETSC_TRUE;
     PetscLogStagePop();
@@ -238,7 +242,8 @@ void petsc_create_linearsolver(const consts::SolverType lsType, const consts::Pr
     Set up the linear system.
 */
 void petsc_set_values(const PetscInt dof, const PetscInt iEq, const PetscReal *R, 
-    const PetscReal *Val, const PetscReal *svFSI_DirBC, const PetscReal *svFSI_lpBC)
+    const PetscReal *Val, const PetscReal *svFSI_DirBC, const PetscReal *pressure_load,
+    const PetscReal *flowrate_derivative)
 {   
     // PetscInt cEq = *iEq - 1;
     PetscInt cEq = iEq;   // in Fortran, cEq = 1; in C++, cEq = 0;
@@ -247,7 +252,7 @@ void petsc_set_values(const PetscInt dof, const PetscInt iEq, const PetscReal *R
     PetscLogStagePush(stages[3]);
     petsc_set_vec(dof, cEq, R);
     petsc_set_mat(dof, cEq, Val);
-    petsc_set_bc(cEq, svFSI_DirBC, svFSI_lpBC);
+    petsc_set_bc(cEq, svFSI_DirBC, pressure_load, flowrate_derivative);
     PetscLogStagePop();
 
     /* Scale A and b if RCS preconditioner is activated. */
@@ -371,8 +376,11 @@ void petsc_destroy_all(const PetscInt nEq)
 
             psol[cEq].created = PETSC_FALSE;
 
-            psol[cEq].lpPts = 0;
-            PetscFree2(psol[cEq].lpBC_l, psol[cEq].lpBC_g);
+            psol[cEq].lpRowPts = 0;
+            PetscFree2(psol[cEq].lpRow_l, psol[cEq].lpRow_g);
+
+            psol[cEq].lpColPts = 0;
+            PetscFree2(psol[cEq].lpCol_l, psol[cEq].lpCol_g);
 
             psol[cEq].DirPts = 0;
             PetscFree (psol[cEq].DirBC);
@@ -511,11 +519,12 @@ PetscErrorCode petsc_create_lhs(const PetscInt nNo, const PetscInt mynNo, const 
     Creating PETSc data structure for Dirichlet and lumped parameter BC with svFSI info.
 */
 PetscErrorCode petsc_create_bc(const PetscInt dof, const PetscInt cEq, \
-                               const PetscReal *svFSI_DirBC, const PetscReal *svFSI_lpBC)
+                               const PetscReal *svFSI_DirBC, \
+                               const std::vector<PetscInt> &lp_rows, \
+                               const std::vector<PetscInt> &lp_cols)
 {   
     PetscInt  i, j, cc, ii;
-    PetscInt *row1, *row2;
-    PetscReal eps = 1.0e6*PETSC_MACHINE_EPSILON;
+    PetscInt *row1;
 
     PetscFunctionBeginUser;
 
@@ -536,27 +545,26 @@ PetscErrorCode petsc_create_bc(const PetscInt dof, const PetscInt cEq, \
         psol[cEq].DirBC[i] = row1[i];
     }
 
-    /* Find O2 and PETSc index of dofs with lumped parameter BC */
-    PetscCall(PetscMalloc1(plhs.mynNo*dof, &row2));
-    cc = 0;
-    for (i = 0; i < plhs.mynNo; i++) {
-        ii = i * dof;
-        for (j = 0; j < dof; j++) {
-            if ( PetscAbsReal(svFSI_lpBC[ii+j]) > eps) {
-                row1[cc] = ii + j;
-                row2[cc] = plhs.ltg[i]*dof + j;
-                cc++;
-            }
-        }
-    }
-    PetscCall(PetscMalloc2(cc, &psol[cEq].lpBC_l, cc, &psol[cEq].lpBC_g));
-    psol[cEq].lpPts = cc;
-    for (i = 0; i < cc; i++){
-        psol[cEq].lpBC_l[i] = row1[i];
-        psol[cEq].lpBC_g[i] = row2[i];
-    }
     PetscCall(PetscFree(row1));
-    PetscCall(PetscFree(row2));
+
+    /* Store O2 and PETSc index of the rows and columns of the lumped parameter BCs */
+    cc = lp_rows.size();
+    PetscCall(PetscMalloc2(cc, &psol[cEq].lpRow_l, cc, &psol[cEq].lpRow_g));
+    psol[cEq].lpRowPts = cc;
+    for (i = 0; i < cc; i++){
+        ii = lp_rows[i];
+        psol[cEq].lpRow_l[i] = ii;
+        psol[cEq].lpRow_g[i] = plhs.ltg[ii/dof]*dof + ii%dof;
+    }
+
+    cc = lp_cols.size();
+    PetscCall(PetscMalloc2(cc, &psol[cEq].lpCol_l, cc, &psol[cEq].lpCol_g));
+    psol[cEq].lpColPts = cc;
+    for (i = 0; i < cc; i++){
+        ii = lp_cols[i];
+        psol[cEq].lpCol_l[i] = ii;
+        psol[cEq].lpCol_g[i] = plhs.ltg[ii/dof]*dof + ii%dof;
+    }
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -601,11 +609,11 @@ PetscErrorCode petsc_create_vecmat(const PetscInt dof, const PetscInt cEq, const
             PetscCall(MatSetValuesBlocked(preallocator, 1, &row, 1, &col, value, INSERT_VALUES));
         }
     }
-    /* Points with lumped parameter BC */
-    for (i = 0; i < psol[cEq].lpPts; i++){
-        row = psol[cEq].lpBC_g[i];
-        for (j = 0; j < psol[cEq].lpPts; j++){
-            col = psol[cEq].lpBC_g[j];
+    /* Rows and columns of the lumped parameter BCs */
+    for (i = 0; i < psol[cEq].lpRowPts; i++){
+        row = psol[cEq].lpRow_g[i];
+        for (j = 0; j < psol[cEq].lpColPts; j++){
+            col = psol[cEq].lpCol_g[j];
             PetscCall(MatSetValue(preallocator, row, col, 0.0, INSERT_VALUES));
         }
     }
@@ -706,7 +714,8 @@ PetscErrorCode petsc_set_mat(const PetscInt dof, const PetscInt cEq, const Petsc
 /*
     Set up Dirichlet BC and resistance BC.
 */
-PetscErrorCode petsc_set_bc(const PetscInt cEq, const PetscReal *DirBC, const PetscReal *lpBC)
+PetscErrorCode petsc_set_bc(const PetscInt cEq, const PetscReal *DirBC, const PetscReal *pressure_load,
+                            const PetscReal *flowrate_derivative)
 {   
     Vec x;
     PetscInt  i, j, ii, jj, row, col;
@@ -715,13 +724,13 @@ PetscErrorCode petsc_set_bc(const PetscInt cEq, const PetscReal *DirBC, const Pe
     PetscFunctionBeginUser;
 
     /* Apply lumped parameter BC by augmenting the matrix A. */
-    for (i = 0; i < psol[cEq].lpPts; i++){
-        ii  = psol[cEq].lpBC_l[i];
-        row = psol[cEq].lpBC_g[i];
-        for (j = 0; j < psol[cEq].lpPts; j++){
-            jj  = psol[cEq].lpBC_l[j];
-            col = psol[cEq].lpBC_g[j];
-            value = lpBC[ii] * lpBC[jj];
+    for (i = 0; i < psol[cEq].lpRowPts; i++){
+        ii  = psol[cEq].lpRow_l[i];
+        row = psol[cEq].lpRow_g[i];
+        for (j = 0; j < psol[cEq].lpColPts; j++){
+            jj  = psol[cEq].lpCol_l[j];
+            col = psol[cEq].lpCol_g[j];
+            value = pressure_load[ii] * flowrate_derivative[jj];
             PetscCall(MatSetValue(psol[cEq].A, row, col, value, ADD_VALUES));
         }
     }
@@ -919,6 +928,22 @@ class PetscLinearAlgebra::PetscImpl {
     void solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res);
     void init_dir_and_coupneu_bc(ComMod& com_mod, const Vector<int>& incL, const Vector<double>& res);
 
+    /// @brief Find the degrees of freedom where the two vectors of the coupled
+    /// Neumann faces can be nonzero.
+    ///
+    /// They are the degrees of freedom of the nodes of the Neumann faces that
+    /// init_dir_and_coupneu_bc() included, for the pressure load, and of the
+    /// nodes of their flow rate derivative, for the flow rate derivative.
+    /// They do not depend on the values of the two vectors. Only the nodes
+    /// owned by this process are considered.
+    ///
+    /// @param[in] com_mod The solver data, whose dof and lhs are read.
+    ///
+    /// @return The O2 indices of the degrees of freedom of the pressure load
+    /// (first) and of the flow rate derivative (second), sorted and without
+    /// repetitions.
+    std::pair<std::vector<PetscInt>, std::vector<PetscInt>> coupled_neumann_dofs(const ComMod& com_mod) const;
+
     consts::PreconditionerType preconditioner_;
 
     // Local to global mapping
@@ -930,8 +955,17 @@ class PetscLinearAlgebra::PetscImpl {
     // Residue
     Array<double> R_;
 
-    // Factor for Lumped Parameter BCs
-    Array<double> V_;
+    // The coupled Neumann faces add to the matrix the product
+    //   pressure_load_ * flowrate_derivative_^T
+    // Both are stored by linear solver node index (dof x tnNo).
+
+    // Sum over the coupled Neumann faces of sqrt(|res|) times the unit
+    // pressure load
+    Array<double> pressure_load_;
+
+    // Sum over the coupled Neumann faces of sqrt(|res|) times the flow rate
+    // derivative
+    Array<double> flowrate_derivative_;
 
 };
 
@@ -995,13 +1029,14 @@ void PetscLinearAlgebra::PetscImpl::init_dir_and_coupneu_bc(ComMod& com_mod,
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
-          W_(i,Ac) = W_(i,Ac) * face.val(i,a);
+          W_(i,Ac) = W_(i,Ac) * face.free_component_mask(i,a);
         }
       }
     }
   }
 
-  V_ = 0.0;
+  pressure_load_ = 0.0;
+  flowrate_derivative_ = 0.0;
   bool isCoupledBC = false;
 
   for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
@@ -1013,11 +1048,67 @@ void PetscLinearAlgebra::PetscImpl::init_dir_and_coupneu_bc(ComMod& com_mod,
       for (int a = 0; a < face.nNo; a++) {
         int Ac = face.glob(a);
         for (int i = 0; i < faDof; i++) {
-          V_(i,Ac) = V_(i,Ac) + sqrt(fabs(res(faIn))) * face.val(i,a);
+          pressure_load_(i,Ac) = pressure_load_(i,Ac) + sqrt(fabs(res(faIn))) * face.unit_pressure_load(i,a);
+        }
+      }
+
+      // A node index may repeat in flowrate_derivative_node_indices: its
+      // values add up.
+      for (int a = 0; a < face.flowrate_derivative.ncols(); a++) {
+        int Ac = face.flowrate_derivative_node_indices(a);
+        for (int i = 0; i < faDof; i++) {
+          flowrate_derivative_(i,Ac) = flowrate_derivative_(i,Ac) + sqrt(fabs(res(faIn))) * face.flowrate_derivative(i,a);
         }
       }
     }
   }
+}
+
+//----------------------
+// coupled_neumann_dofs
+//----------------------
+//
+std::pair<std::vector<PetscInt>, std::vector<PetscInt>>
+PetscLinearAlgebra::PetscImpl::coupled_neumann_dofs(const ComMod& com_mod) const
+{
+  using namespace fsi_linear_solver;
+
+  const int dof = com_mod.dof;
+  const auto& lhs = com_mod.lhs;
+
+  std::set<PetscInt> pressure_load_dofs;
+  std::set<PetscInt> flowrate_derivative_dofs;
+
+  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
+    const auto& face = lhs.face[faIn];
+    if (!face.incFlag || face.bGrp != BcType::BC_TYPE_Neu) {
+      continue;
+    }
+
+    const int faDof = std::min(face.dof,dof);
+
+    // The linear solver numbers the nodes owned by this process first.
+    for (int a = 0; a < face.nNo; a++) {
+      const int Ac = face.glob(a);
+      if (Ac >= lhs.mynNo) {
+        continue;
+      }
+      for (int i = 0; i < faDof; i++) {
+        pressure_load_dofs.insert(Ac*dof + i);
+      }
+    }
+
+    // The flow rate derivative only has nodes owned by this process.
+    for (int a = 0; a < face.flowrate_derivative.ncols(); a++) {
+      const int Ac = face.flowrate_derivative_node_indices(a);
+      for (int i = 0; i < faDof; i++) {
+        flowrate_derivative_dofs.insert(Ac*dof + i);
+      }
+    }
+  }
+
+  return {std::vector<PetscInt>(pressure_load_dofs.begin(), pressure_load_dofs.end()),
+          std::vector<PetscInt>(flowrate_derivative_dofs.begin(), flowrate_derivative_dofs.end())};
 }
 
 //------------
@@ -1068,15 +1159,20 @@ void PetscLinearAlgebra::PetscImpl::set_preconditioner(consts::PreconditionerTyp
 void PetscLinearAlgebra::PetscImpl::solve(ComMod& com_mod, eqType& lEq, const Vector<int>& incL, const Vector<double>& res)
 {
   W_.resize(com_mod.dof, com_mod.tnNo);
-  V_.resize(com_mod.dof, com_mod.tnNo);
+  pressure_load_.resize(com_mod.dof, com_mod.tnNo);
+  flowrate_derivative_.resize(com_mod.dof, com_mod.tnNo);
 
   init_dir_and_coupneu_bc(com_mod, incL, res);
 
   // only excute once for each equation
   //
-  petsc_create_linearsystem(com_mod.dof, com_mod.cEq, com_mod.nEq, W_.data(), V_.data());
+  if (!psol[com_mod.cEq].created) {
+    const auto [lp_rows, lp_cols] = coupled_neumann_dofs(com_mod);
+    petsc_create_linearsystem(com_mod.dof, com_mod.cEq, com_mod.nEq, W_.data(), lp_rows, lp_cols);
+  }
 
-  petsc_set_values(com_mod.dof, com_mod.cEq, com_mod.R.data(), com_mod.Val.data(), W_.data(), V_.data());
+  petsc_set_values(com_mod.dof, com_mod.cEq, com_mod.R.data(), com_mod.Val.data(), W_.data(),
+      pressure_load_.data(), flowrate_derivative_.data());
 
   petsc_solve(&lEq.FSILS.RI.fNorm, &lEq.FSILS.RI.iNorm, &lEq.FSILS.RI.dB,
               &lEq.FSILS.RI.callD, &lEq.FSILS.RI.success, &lEq.FSILS.RI.itr,

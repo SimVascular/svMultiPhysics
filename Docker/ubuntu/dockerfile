@@ -1,7 +1,17 @@
 # ================================================================================
 # BASE: Common base image with dependencies
 # ================================================================================
-FROM ubuntu:26.04 AS base
+ARG UBUNTU_BASE_IMAGE=ubuntu:26.04
+FROM ${UBUNTU_BASE_IMAGE} AS base
+
+ARG UBUNTU_BASE_IMAGE
+ENV UBUNTU_BASE_IMAGE=${UBUNTU_BASE_IMAGE}
+ARG DEPENDENCY_BUILD_TYPE=Release
+ENV DEPENDENCY_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE}
+RUN case "${DEPENDENCY_BUILD_TYPE}" in \
+        Release|RelWithDebInfo|Debug) ;; \
+        *) echo "Unsupported DEPENDENCY_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE}" >&2; exit 1 ;; \
+    esac
 
 # Any debian-based command will not prompt user-input
 ENV DEBIAN_FRONTEND=noninteractive
@@ -93,7 +103,7 @@ COPY --from=buildcmake /cmake /cmake
 ENV PATH="/cmake/bin:${PATH}"
 
 # Setting VTK  version VTK installation directory
-ARG VTK_VERSION=9.3.0
+ARG VTK_VERSION=9.3.1
 ARG VTK_INSTALL_DIR=/vtk
 
 # Create new user
@@ -107,7 +117,7 @@ RUN wget https://www.vtk.org/files/release/9.3/VTK-${VTK_VERSION}.tar.gz && \
 
 WORKDIR /build-vtk
 RUN cmake -DBUILD_SHARED_LIBS:BOOL=OFF \
--DCMAKE_BUILD_TYPE:STRING=RELEASE \
+-DCMAKE_BUILD_TYPE:STRING=${DEPENDENCY_BUILD_TYPE} \
 -DBUILD_EXAMPLES=OFF \
 -DBUILD_TESTING=OFF \
 -DVTK_USE_SYSTEM_EXPAT:BOOL=ON \
@@ -165,7 +175,8 @@ RUN wget https://archives.boost.io/release/1.89.0/source/boost_${BOOST_VERSION}.
 
 WORKDIR /boost_${BOOST_VERSION}
 RUN ./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} && \
-    ./b2 install 
+    if [ "${DEPENDENCY_BUILD_TYPE}" = "Debug" ]; then variant=debug; else variant=release; fi && \
+    ./b2 install variant=${variant}
 
 # Cleanup
 WORKDIR / 
@@ -183,15 +194,17 @@ ENV PATH="/cmake/bin:${PATH}"
 
 # Setting lapack installation directory
 ARG LAPACK_INSTALL_DIR=/tmp/lapack
+ARG LAPACK_TAG=v3.12.1
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download, extract, install
-RUN git clone https://github.com/Reference-LAPACK/lapack.git
+RUN git clone --depth 1 --branch ${LAPACK_TAG} https://github.com/Reference-LAPACK/lapack.git && \
+    git -C /lapack rev-parse HEAD > /lapack-source-commit
 WORKDIR /build
-RUN cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_LIBDIR=${LAPACK_INSTALL_DIR} ../lapack && \
+RUN cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} -DCMAKE_INSTALL_LIBDIR=${LAPACK_INSTALL_DIR} ../lapack && \
     cmake --build . -j6 --target install
 
 # Cleanup
@@ -212,6 +225,7 @@ ENV PATH="/cmake/bin:/openmpi:${PATH}"
 
 # Setting hdf5 installation directories
 ARG HDF5_INSTALL_DIR=/hdf5
+ARG HDF5_COMMIT=55e183236ff2591e0f8cd5e3c081e0666cd963cd
 
 # Create new user
 RUN useradd -ms /bin/bash luser
@@ -227,7 +241,9 @@ RUN mkdir ${HDF5_INSTALL_DIR}
 #    chown -R luser:luser ${HDF5_INSTALL_DIR}
 
 #USER luser
-RUN git clone https://github.com/HDFGroup/hdf5.git 
+RUN git clone https://github.com/HDFGroup/hdf5.git && \
+    git -C /hdf5build/hdf5 checkout --detach ${HDF5_COMMIT} && \
+    git -C /hdf5build/hdf5 rev-parse HEAD > /hdf5-source-commit
 
 # Build HDF5
 WORKDIR /hdf5build/build
@@ -240,7 +256,7 @@ RUN cmake -C /hdf5build/hdf5/config/cmake/cacheinit.cmake -G "Unix Makefiles" \
 -DCMAKE_C_COMPILER=/openmpi/bin/mpicc \
 -DCMAKE_CXX_COMPILER=/openmpi/bin/mpicxx \
 -DCMAKE_Fortran_COMPILER=/openmpi/bin/mpif90 \
--DCMAKE_BUILD_TYPE=Release \
+-DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} \
 -DCMAKE_INSTALL_PREFIX=${HDF5_INSTALL_DIR} /hdf5build/hdf5 && \
     cmake --build . && \
     make install
@@ -269,13 +285,15 @@ ENV PATH="/cmake/bin:/openmpi/bin:/lapack:${PATH}"
 
 # Setting hypre installation directory
 ARG HYPRE_INSTALL_DIR=/hypre-install
+ARG HYPRE_TAG=v3.2.1
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download, extract, install
-RUN git clone https://github.com/hypre-space/hypre.git
+RUN git clone --depth 1 --branch ${HYPRE_TAG} https://github.com/hypre-space/hypre.git && \
+    git -C /hypre rev-parse HEAD > /hypre-source-commit
 
 WORKDIR /hypre/src/
 RUN ./configure --prefix=${HYPRE_INSTALL_DIR} && \
@@ -307,13 +325,16 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Setting hypre installation directory
 ARG TRILINOS_INSTALL_DIR=/trilinos
+ARG TRILINOS_COMMIT=01c06c6958dde35fd8a4151e95020c3a9e33d770
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download, extract, install
-RUN git clone https://github.com/trilinos/Trilinos.git
+RUN git clone https://github.com/trilinos/Trilinos.git && \
+    git -C /Trilinos checkout --detach ${TRILINOS_COMMIT} && \
+    git -C /Trilinos rev-parse HEAD > /trilinos-source-commit
 WORKDIR /Trilinos/build
 
 # Build trilinos
@@ -321,6 +342,7 @@ WORKDIR /Trilinos/build
 # ShyLU_NodeTacho enables the external gtest TPL even with Trilinos Gtest off.
 # This stage has no gtest libraries, so disable the TPL (and ShyLU_NodeTacho).
 RUN cmake \
+-DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} \
 -DCMAKE_INSTALL_PREFIX=${TRILINOS_INSTALL_DIR} \
 -DTPL_ENABLE_MPI=ON \
 -DTPL_ENABLE_Boost=ON \
@@ -390,13 +412,15 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Setting petsc installation directory
 ARG PETSC_INSTALL_DIR=/petsc-install
+ARG PETSC_TAG=v3.26.1
 
 # Create new user
 RUN useradd -ms /bin/bash luser
 
 # ================================================================================
 # Download and install
-RUN git clone -b release https://gitlab.com/petsc/petsc.git 
+RUN git clone --depth 1 --branch ${PETSC_TAG} https://gitlab.com/petsc/petsc.git && \
+    git -C /petsc rev-parse HEAD > /petsc-source-commit
 
 # Set permission for luser
 RUN chown -R luser:luser /petsc
@@ -411,8 +435,15 @@ WORKDIR /petsc
 
 # Install petsc library in $PETSC_INSTALL_DIR 
 # Libraries path must be set explicitly
-RUN ./configure --prefix=$PETSC_INSTALL_DIR \
---with-debugging=0 \
+# Release and RelWithDebInfo intentionally share optimized PETSc flags; only
+# Release dependency images are eligible for rc/final promotion.
+RUN if [ "${DEPENDENCY_BUILD_TYPE}" = "Debug" ]; then \
+        petsc_debugging=1; petsc_flags='-g -O0'; petsc_arch=arch-linux-c-debug; \
+    else \
+        petsc_debugging=0; petsc_flags='-g -O2'; petsc_arch=arch-linux-c-opt; \
+    fi && \
+PETSC_ARCH="${petsc_arch}" ./configure --prefix=$PETSC_INSTALL_DIR \
+--with-debugging=${petsc_debugging} \
 --with-precision=double \
 --download-suitesparse \
 --download-mumps \
@@ -429,11 +460,11 @@ RUN ./configure --prefix=$PETSC_INSTALL_DIR \
 --download-parmetis \
 --with-strict-petscerrorcode \
 --with-mpi-compilers=1 \
-COPTFLAGS='-g -O' \
-FOPTFLAGS='-g -O' \
-CXXOPTFLAGS='-g -O' && \
-make PETSC_DIR=/petsc PETSC_ARCH=arch-linux-c-opt all && \
-make PETSC_DIR=/petsc PETSC_ARCH=arch-linux-c-opt install && \
+COPTFLAGS="${petsc_flags}" \
+FOPTFLAGS="${petsc_flags}" \
+CXXOPTFLAGS="${petsc_flags}" && \
+make PETSC_DIR=/petsc PETSC_ARCH="${petsc_arch}" all && \
+make PETSC_DIR=/petsc PETSC_ARCH="${petsc_arch}" install && \
 make PETSC_DIR=$PETSC_INSTALL_DIR PETSC_ARCH="" check
 
 # Cleanup
@@ -455,11 +486,13 @@ ENV PATH="/cmake/bin:/openmpi/bin:${PATH}"
 
 # ================================================================================
 # GTEST
-RUN git clone https://github.com/google/googletest.git -b v1.14.0 
+ARG GTEST_TAG=v1.14.0
+RUN git clone --depth 1 --branch ${GTEST_TAG} https://github.com/google/googletest.git && \
+    git -C /googletest rev-parse HEAD > /gtest-source-commit
 WORKDIR /googletest
 RUN mkdir build    && \
     cd build       && \
-    cmake .. -DBUILD_SHARED_LIBS=ON -DBUILD_GMOCK=OFF -DCMAKE_INSTALL_PREFIX=/google && \
+    cmake .. -DBUILD_SHARED_LIBS=ON -DBUILD_GMOCK=OFF -DCMAKE_BUILD_TYPE=${DEPENDENCY_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=/google && \
     make && \
     make install
 
@@ -484,13 +517,21 @@ COPY --from=buildhypre /hypre-install /hypre/
 COPY --from=buildtrilinos /trilinos /trilinos
 COPY --from=buildpetsc /petsc-install /petsc
 COPY --from=buildgtest /google /google  
+COPY --from=buildlapack /lapack-source-commit /source-revisions/lapack
+COPY --from=buildhdf5 /hdf5-source-commit /source-revisions/hdf5
+COPY --from=buildhypre /hypre-source-commit /source-revisions/hypre
+COPY --from=buildtrilinos /trilinos-source-commit /source-revisions/trilinos
+COPY --from=buildpetsc /petsc-source-commit /source-revisions/petsc
+COPY --from=buildgtest /gtest-source-commit /source-revisions/googletest
 
 # ================================================================================
 # CONDA
 ENV CONDA_DIR=/conda
 
 # Conda environment depending on architecture
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh && \
+ARG MINICONDA_SHA256=76cf791877078e74410f64e5c2ef7da4e217fd7a433c2c3674c9d9695225c3bb
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py314_26.9.4-1-Linux-x86_64.sh -O /miniconda.sh && \
+    echo "${MINICONDA_SHA256}  /miniconda.sh" | sha256sum -c - && \
     /bin/bash /miniconda.sh -b -p $CONDA_DIR
 
 ENV PATH="${CONDA_DIR}/bin:${PATH}"
@@ -502,10 +543,12 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 # Python 3.14 with meshio failed to read an integration-test VTU file (Base64
 # padding error); the same tests passed with Python 3.12.
 RUN conda create -y -n svmultiphysics python=3.12 pip && \
-    conda run -n svmultiphysics python -m pip install pytest pytest-cov pytest-mock numpy meshio pandas && \
-    conda run -n svmultiphysics python --version && \
-    conda list -n svmultiphysics --explicit && \
-    conda run -n svmultiphysics python -m pip freeze
+    conda run -n svmultiphysics python -m pip install pytest pytest-cov pytest-mock numpy meshio pandas
+
+COPY report-dependency-versions.sh /usr/local/bin/report-dependency-versions
+RUN chmod +x /usr/local/bin/report-dependency-versions && \
+    mkdir -p /usr/local/share/svMultiPhysics && \
+    /usr/local/bin/report-dependency-versions > /usr/local/share/svMultiPhysics/dependency-versions.txt
 # Set libraries environment
 ENV PATH="/google:/vtk:/openmpi/bin:/cmake/bin:/trilinos/lib/cmake/Trilinos:${PATH}"
 ENV LD_LIBRARY_PATH="/openmpi/lib:/petsc/lib:/lapack"

@@ -1,0 +1,395 @@
+name: Build Ubuntu 26 dependency image
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_stage:
+        description: Release stage for the image and source tag
+        type: choice
+        options:
+          - dev
+          - rc
+          - final
+        default: dev
+      source_commit:
+        description: Full source commit SHA (required for rc and final promotion)
+        type: string
+        required: false
+      build_type:
+        description: CMake build type for dependencies
+        type: choice
+        options:
+          - Release
+          - RelWithDebInfo
+          - Debug
+        default: Release
+permissions: {}
+
+concurrency:
+  group: dependency-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'SimVascular/svMultiPhysics' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      release_stage: ${{ steps.release.outputs.release_stage }}
+      source_commit: ${{ steps.release.outputs.source_commit }}
+      version: ${{ steps.release.outputs.version }}
+      git_tag: ${{ steps.release.outputs.git_tag }}
+      git_tag_exists: ${{ steps.release.outputs.git_tag_exists }}
+      image_tag: ${{ steps.release.outputs.image_tag }}
+      source_image_tag: ${{ steps.release.outputs.source_image_tag }}
+      source_digest: ${{ steps.source_digest.outputs.digest }}
+      already_published: ${{ steps.existing.outputs.already_published }}
+      digest: ${{ steps.build.outputs.digest }}
+    env:
+      IMAGE: ghcr.io/simvascular/svmultiphysics-dependencies
+      BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+      RELEASE_STAGE: ${{ inputs.release_stage || 'dev' }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_commit || github.sha }}
+          fetch-depth: 0
+
+      - name: Resolve release tags
+        id: release
+        shell: bash
+        env:
+          REQUESTED_COMMIT: ${{ inputs.source_commit }}
+        run: |
+          source_commit=$(git rev-parse HEAD)
+          if [[ -n "$REQUESTED_COMMIT" && "$REQUESTED_COMMIT" != "$source_commit" ]]; then
+            echo "source_commit must be the full SHA of the checked-out commit" >&2
+            exit 1
+          fi
+          if [[ "$RELEASE_STAGE" != dev && -z "$REQUESTED_COMMIT" ]]; then
+            echo "source_commit is required to promote an rc or final image" >&2
+            exit 1
+          fi
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$source_commit" FETCH_HEAD; then
+            echo "source_commit must be on the main branch" >&2
+            exit 1
+          fi
+          version=$(jq -er '
+            [.major, .minor, .patch, .build] as $parts
+            | if ($parts | all(type == "number" and . >= 0 and . == floor))
+              then ($parts | map(tostring) | join("."))
+              else error("release.json must contain non-negative integer major, minor, patch, and build fields")
+              end
+          ' release.json)
+          if [[ "$RELEASE_STAGE" != dev && "$BUILD_TYPE" != Release ]]; then
+            echo "Release candidates and final images require a Release build" >&2
+            exit 1
+          fi
+
+          git_tag="v$version"
+          if [[ "$RELEASE_STAGE" != final ]]; then
+            git_tag="${git_tag}-${RELEASE_STAGE}"
+          fi
+          if [[ "$BUILD_TYPE" != Release ]]; then
+            git_tag="${git_tag}-${BUILD_TYPE,,}"
+          fi
+
+          remote_tag_sha=$(git ls-remote --refs --tags origin "refs/tags/$git_tag" | awk '{print $1}')
+          if [[ -n "$remote_tag_sha" && "$remote_tag_sha" != "$source_commit" ]]; then
+            echo "Tag $git_tag already points to $remote_tag_sha, not $source_commit; increment the build number in release.json" >&2
+            exit 1
+          fi
+          image_tag="${git_tag#v}"
+
+          if [[ "$RELEASE_STAGE" == dev ]]; then
+            source_image_tag="sha-$source_commit-$BUILD_TYPE"
+          else
+            previous_stage=dev
+            if [[ "$RELEASE_STAGE" == final ]]; then
+              previous_stage=rc
+            fi
+            source_git_tag="v$version-$previous_stage"
+            previous_tag_sha=$(git ls-remote --refs --tags origin "refs/tags/$source_git_tag" | awk '{print $1}')
+            if [[ "$previous_tag_sha" != "$source_commit" ]]; then
+              echo "Tag $source_git_tag must point to source commit $source_commit" >&2
+              exit 1
+            fi
+            source_image_tag="${source_git_tag#v}"
+          fi
+
+          printf 'release_stage=%s\nversion=%s\nsource_commit=%s\ngit_tag=%s\ngit_tag_exists=%s\nimage_tag=%s\nsource_image_tag=%s\n' \
+            "$RELEASE_STAGE" "$version" "$source_commit" "$git_tag" "${remote_tag_sha:+true}" "$image_tag" "$source_image_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Report runner and build inputs
+        run: |
+          cat /etc/os-release
+          df -h .
+          printf 'Source: %s\nBuild type: %s\nRelease tag: %s\n' \
+            '${{ steps.release.outputs.source_commit }}' "$BUILD_TYPE" '${{ steps.release.outputs.git_tag }}'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve Ubuntu base image
+        id: ubuntu_base
+        if: env.RELEASE_STAGE == 'dev'
+        run: |
+          digest=$(docker buildx imagetools inspect ubuntu:26.04 | awk '$1 == "Digest:" { print $2; exit }')
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Could not resolve the Ubuntu 26.04 base image digest" >&2
+            exit 1
+          fi
+          echo "image=ubuntu:26.04@$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve preceding stage digest
+        id: source_digest
+        if: env.RELEASE_STAGE != 'dev'
+        env:
+          SOURCE_IMAGE_TAG: ${{ steps.release.outputs.source_image_tag }}
+          SOURCE_COMMIT: ${{ steps.release.outputs.source_commit }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          tag_digest=$(docker buildx imagetools inspect "$IMAGE:$SOURCE_IMAGE_TAG" | awk '$1 == "Digest:" { print $2; exit }')
+          if [[ ! "$tag_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Could not resolve a sha256 digest for $IMAGE:$SOURCE_IMAGE_TAG" >&2
+            exit 1
+          fi
+          docker pull --platform linux/amd64 "$IMAGE@$tag_digest"
+          image_commit=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$IMAGE@$tag_digest")
+          image_version=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$IMAGE@$tag_digest")
+          image_build_type=$(docker image inspect --format '{{ index .Config.Labels "org.simvascular.build-type" }}' "$IMAGE@$tag_digest")
+          if [[ "$image_commit" != "$SOURCE_COMMIT" || "$image_version" != "$VERSION" || "$image_build_type" != Release ]]; then
+            echo "The preceding stage image does not match the selected source commit, version, and Release build" >&2
+            exit 1
+          fi
+          echo "digest=$tag_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Check existing image tag
+        id: existing
+        env:
+          IMAGE_TAG: ${{ steps.release.outputs.image_tag }}
+          SOURCE_COMMIT: ${{ steps.release.outputs.source_commit }}
+          SOURCE_DIGEST: ${{ steps.source_digest.outputs.digest }}
+          VERSION: ${{ steps.release.outputs.version }}
+          GIT_TAG: ${{ steps.release.outputs.git_tag }}
+          GIT_TAG_EXISTS: ${{ steps.release.outputs.git_tag_exists }}
+        run: |
+          if docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" > /dev/null 2>&1; then
+            docker pull --platform linux/amd64 "$IMAGE:$IMAGE_TAG"
+            image_commit=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$IMAGE:$IMAGE_TAG")
+            image_version=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$IMAGE:$IMAGE_TAG")
+            image_build_type=$(docker image inspect --format '{{ index .Config.Labels "org.simvascular.build-type" }}' "$IMAGE:$IMAGE_TAG")
+            if [[ "$image_commit" != "$SOURCE_COMMIT" ]]; then
+              echo "$IMAGE:$IMAGE_TAG was built from $image_commit, not $SOURCE_COMMIT; increment the build number in release.json" >&2
+              exit 1
+            fi
+            if [[ "$image_version" != "$VERSION" || "$image_build_type" != "$BUILD_TYPE" ]]; then
+              echo "$IMAGE:$IMAGE_TAG has unexpected version or build type; refusing to reuse it" >&2
+              exit 1
+            fi
+            if [[ "$RELEASE_STAGE" == dev ]]; then
+              if [[ "$GIT_TAG_EXISTS" != true ]]; then
+                echo "$IMAGE:$IMAGE_TAG exists but Git tag $GIT_TAG is missing; refusing to reuse an incomplete release" >&2
+                exit 1
+              fi
+              echo "Git tag $GIT_TAG and image $IMAGE:$IMAGE_TAG already exist for $SOURCE_COMMIT; nothing to do"
+              printf '### Ubuntu 26 dependency image already exists\n\n- Source commit: `%s`\n- Git tag: `%s`\n- Image: `%s:%s`\n' \
+                "$SOURCE_COMMIT" "$GIT_TAG" "$IMAGE" "$IMAGE_TAG" >> "$GITHUB_STEP_SUMMARY"
+              echo 'already_published=true' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            target_digest=$(docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" | awk '$1 == "Digest:" { print $2; exit }')
+            if [[ "$target_digest" != "$SOURCE_DIGEST" ]]; then
+              echo "$IMAGE:$IMAGE_TAG has digest ${target_digest:-nothing}, not the preceding stage digest $SOURCE_DIGEST" >&2
+              exit 1
+            fi
+            echo 'already_published=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and stage by source commit
+        id: build
+        if: env.RELEASE_STAGE == 'dev' && steps.existing.outputs.already_published != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: Docker/ubuntu
+          file: Docker/ubuntu/dockerfile
+          platforms: linux/amd64
+          no-cache: true
+          push: true
+          tags: ${{ env.IMAGE }}:${{ steps.release.outputs.source_image_tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ steps.release.outputs.source_commit }}
+            org.opencontainers.image.version=${{ steps.release.outputs.version }}
+            org.simvascular.build-type=${{ env.BUILD_TYPE }}
+          build-args: |
+            DEPENDENCY_BUILD_TYPE=${{ env.BUILD_TYPE }}
+            UBUNTU_BASE_IMAGE=${{ steps.ubuntu_base.outputs.image }}
+
+      - name: Verify staged image
+        if: steps.existing.outputs.already_published != 'true'
+        env:
+          SOURCE_COMMIT: ${{ steps.release.outputs.source_commit }}
+          SOURCE_IMAGE_TAG: ${{ steps.release.outputs.source_image_tag }}
+          SOURCE_DIGEST: ${{ steps.source_digest.outputs.digest }}
+        run: |
+          source="$IMAGE:$SOURCE_IMAGE_TAG"
+          if [[ "$RELEASE_STAGE" != dev ]]; then
+            source="$IMAGE@$SOURCE_DIGEST"
+          fi
+          docker pull --platform linux/amd64 "$source"
+          image_commit=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$source")
+          test "$image_commit" = "$SOURCE_COMMIT"
+          docker run --rm --platform linux/amd64 -e EXPECTED_BUILD_TYPE="$BUILD_TYPE" \
+            "$source" \
+            bash -euc 'test "$DEPENDENCY_BUILD_TYPE" = "$EXPECTED_BUILD_TYPE" && \
+                       test -d /vtk && test -d /trilinos && test -d /petsc && \
+                       cmake --version && /openmpi/bin/mpicc --version && \
+                       conda run -n svmultiphysics python --version'
+
+      - name: Record dependency versions
+        if: env.RELEASE_STAGE == 'dev' && steps.existing.outputs.already_published != 'true'
+        env:
+          SOURCE_IMAGE_TAG: ${{ steps.release.outputs.source_image_tag }}
+        run: |
+          docker run --rm --platform linux/amd64 "$IMAGE:$SOURCE_IMAGE_TAG" \
+            /usr/local/bin/report-dependency-versions > dependency-versions.txt
+          printf '### Resolved dependency versions\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          docker run --rm --platform linux/amd64 "$IMAGE:$SOURCE_IMAGE_TAG" \
+            /usr/local/bin/report-dependency-versions --summary >> "$GITHUB_STEP_SUMMARY"
+          printf '```\n\nThe full Ubuntu, Conda, and Python package inventory is attached as a workflow artifact.\n' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload dependency inventory
+        if: env.RELEASE_STAGE == 'dev' && steps.existing.outputs.already_published != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-versions-${{ steps.release.outputs.source_commit }}
+          path: dependency-versions.txt
+          if-no-files-found: error
+
+      - name: Summarize temporary image
+        if: env.RELEASE_STAGE == 'dev' && steps.existing.outputs.already_published != 'true'
+        run: |
+          printf '### Ubuntu 26 dependency image awaiting validation\n\n' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Source commit: `%s`\n' '${{ steps.release.outputs.source_commit }}' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Build type: `%s`\n' "$BUILD_TYPE" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Temporary image: `%s:%s`\n' "$IMAGE" '${{ steps.release.outputs.source_image_tag }}' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Digest to validate: `%s`\n' '${{ steps.build.outputs.digest }}' >> "$GITHUB_STEP_SUMMARY"
+
+  validate-image:
+    needs: build
+    if: needs.build.outputs.release_stage == 'dev' && needs.build.outputs.already_published != 'true'
+    uses: ./.github/workflows/dependency-image-tests.yml
+    permissions:
+      contents: read
+      packages: read
+    with:
+      image: ghcr.io/simvascular/svmultiphysics-dependencies
+      digest: ${{ needs.build.outputs.digest }}
+      source_commit: ${{ needs.build.outputs.source_commit }}
+      build_type: ${{ inputs.build_type || 'Release' }}
+
+  promote:
+    needs: [build, validate-image]
+    if: >-
+      always() && !cancelled() && needs.build.result == 'success' &&
+      (needs.build.outputs.release_stage != 'dev' ||
+       (needs.build.outputs.already_published != 'true' && needs.validate-image.result == 'success'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    env:
+      IMAGE: ghcr.io/simvascular/svmultiphysics-dependencies
+      RELEASE_STAGE: ${{ needs.build.outputs.release_stage }}
+      SOURCE_COMMIT: ${{ needs.build.outputs.source_commit }}
+      GIT_TAG: ${{ needs.build.outputs.git_tag }}
+      IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
+      SOURCE_DIGEST: ${{ needs.build.outputs.source_digest }}
+      DIGEST: ${{ needs.build.outputs.digest }}
+    steps:
+      - name: Check out tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.source_commit }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Confirm versioned image has not appeared
+        if: env.RELEASE_STAGE == 'dev'
+        run: |
+          if docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" > /dev/null 2>&1; then
+            echo "$IMAGE:$IMAGE_TAG already exists; update release.json before building again" >&2
+            exit 1
+          fi
+
+      - name: Tag tested source commit
+        run: |
+          remote_tag_sha=$(git ls-remote --refs --tags origin "refs/tags/$GIT_TAG" | awk '{print $1}')
+          if [[ -n "$remote_tag_sha" && "$remote_tag_sha" != "$SOURCE_COMMIT" ]]; then
+            echo "$GIT_TAG points to another commit; refusing to move it" >&2
+            exit 1
+          fi
+          if [[ -z "$remote_tag_sha" ]]; then
+            git tag "$GIT_TAG" "$SOURCE_COMMIT"
+            git push origin "refs/tags/$GIT_TAG"
+          fi
+
+      - name: Promote tested image
+        if: needs.build.outputs.already_published != 'true'
+        run: |
+          source="$IMAGE@$SOURCE_DIGEST"
+          if [[ "$RELEASE_STAGE" == dev ]]; then
+            source="$IMAGE@$DIGEST"
+          fi
+          docker buildx imagetools create --prefer-index=false --tag "$IMAGE:$IMAGE_TAG" "$source"
+
+      - name: Summarize versioned image
+        run: |
+          promoted_digest=""
+          for attempt in {1..8}; do
+            if promoted_digest=$(docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" 2>/dev/null | awk '$1 == "Digest:" { print $2; exit }') &&
+               [[ "$promoted_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+              break
+            fi
+            sleep 3
+          done
+          expected_digest="$SOURCE_DIGEST"
+          if [[ "$RELEASE_STAGE" == dev ]]; then
+            expected_digest="$DIGEST"
+          fi
+          if [[ "$promoted_digest" != "$expected_digest" ]]; then
+            echo "$IMAGE:$IMAGE_TAG has digest ${promoted_digest:-nothing}, not $expected_digest" >&2
+            exit 1
+          fi
+          printf '### Ubuntu 26 dependency image\n\n' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Source commit: `%s`\n' "$SOURCE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Source tag: `%s`\n' "$GIT_TAG" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Versioned image: `%s:%s`\n' "$IMAGE" "$IMAGE_TAG" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- Versioned image digest: `%s`\n' "$promoted_digest" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$RELEASE_STAGE" == dev ]]; then
+            printf -- '- Validated digest: `%s`\n' "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf -- '- Preceding stage digest: `%s`\n' "$SOURCE_DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          fi

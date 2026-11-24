@@ -1,0 +1,83 @@
+# syntax=docker/dockerfile:1.7
+
+ARG DEPENDENCY_IMAGE
+FROM ${DEPENDENCY_IMAGE}
+
+ARG DEPENDENCY_IMAGE
+ARG DEPENDENCY_IMAGE_REFERENCE
+ARG DEPENDENCY_IMAGE_DIGEST
+ARG SVMP_PACKAGE
+ARG SVMP_PACKAGE_FILENAME
+ARG SVMP_PACKAGE_SHA256
+ARG SVMP_CONFIGURATION
+ARG SVMP_VERSION
+ARG SVMP_TAG
+ARG SVMP_COMMIT
+ARG SVZEROD_PACKAGE
+ARG SVZEROD_PACKAGE_FILENAME
+ARG SVZEROD_PACKAGE_SHA256
+ARG SVZEROD_TAG
+ARG SVZEROD_COMMIT
+ARG BUILD_TYPE=Release
+ARG IMAGE_CREATED
+ARG RELEASE_URL
+ARG WORKFLOW_RUN_URL
+
+USER root
+
+COPY ${SVMP_PACKAGE} /tmp/svmultiphysics.deb
+COPY ${SVZEROD_PACKAGE} /tmp/svzerodsolver.deb
+
+RUN set -eux; \
+    case "${DEPENDENCY_IMAGE}" in \
+      ghcr.io/*@sha256:*) ;; \
+      *) echo "DEPENDENCY_IMAGE must be a digest-pinned GHCR image" >&2; exit 1 ;; \
+    esac; \
+    test "${DEPENDENCY_IMAGE##*@}" = "${DEPENDENCY_IMAGE_DIGEST}"; \
+    test "${BUILD_TYPE}" = "Release"; \
+    case "${SVMP_CONFIGURATION}" in default|trilinos) ;; *) exit 1 ;; esac; \
+    test -n "${DEPENDENCY_IMAGE_REFERENCE}"; \
+    test -n "${SVMP_VERSION}"; \
+    test -n "${SVMP_TAG}"; \
+    test -n "${SVMP_COMMIT}"; \
+    test -n "${SVZEROD_TAG}"; \
+    test -n "${SVZEROD_COMMIT}"; \
+    test -n "${IMAGE_CREATED}"; \
+    test -n "${RELEASE_URL}"; \
+    test -n "${WORKFLOW_RUN_URL}"; \
+    test "${SVMP_PACKAGE##*/}" = "${SVMP_PACKAGE_FILENAME}"; \
+    test "${SVZEROD_PACKAGE##*/}" = "${SVZEROD_PACKAGE_FILENAME}"; \
+    printf '%s  %s\n' "${SVMP_PACKAGE_SHA256}" /tmp/svmultiphysics.deb | sha256sum -c -; \
+    printf '%s  %s\n' "${SVZEROD_PACKAGE_SHA256}" /tmp/svzerodsolver.deb | sha256sum -c -; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+      /tmp/svmultiphysics.deb \
+      /tmp/svzerodsolver.deb; \
+    executable="$(find /usr/local/sv/svMultiPhysics -type f -name svmultiphysics -executable -print -quit)"; \
+    interface="$(find /usr/local/sv/svZeroDSolver -type f -name libsvzero_interface.so -print -quit)"; \
+    test -n "${executable}"; \
+    test -n "${interface}"; \
+    ln -s "${executable}" /usr/local/bin/svmultiphysics; \
+    rm -rf /var/lib/apt/lists/* /tmp/svmultiphysics.deb /tmp/svzerodsolver.deb
+
+ENV PATH="/usr/local/bin:${PATH}"
+
+LABEL org.opencontainers.image.title="svMultiPhysics ${SVMP_CONFIGURATION}" \
+      org.opencontainers.image.description="svMultiPhysics ${SVMP_CONFIGURATION} configuration for Ubuntu 26.04 AMD64" \
+      org.opencontainers.image.source="https://github.com/SimVascular/svMultiPhysics" \
+      org.opencontainers.image.version="${SVMP_VERSION}" \
+      org.opencontainers.image.revision="${SVMP_COMMIT}" \
+      org.opencontainers.image.ref.name="${SVMP_TAG}" \
+      org.opencontainers.image.created="${IMAGE_CREATED}" \
+      org.opencontainers.image.url="${RELEASE_URL}" \
+      org.simvascular.svmultiphysics.configuration="${SVMP_CONFIGURATION}" \
+      org.simvascular.build.type="${BUILD_TYPE}" \
+      org.simvascular.dependency-image.reference="${DEPENDENCY_IMAGE_REFERENCE}" \
+      org.simvascular.dependency-image.digest="${DEPENDENCY_IMAGE_DIGEST}" \
+      org.simvascular.svmultiphysics.package.filename="${SVMP_PACKAGE_FILENAME}" \
+      org.simvascular.svmultiphysics.package.sha256="${SVMP_PACKAGE_SHA256}" \
+      org.simvascular.svzerodsolver.tag="${SVZEROD_TAG}" \
+      org.simvascular.svzerodsolver.commit="${SVZEROD_COMMIT}" \
+      org.simvascular.svzerodsolver.package.filename="${SVZEROD_PACKAGE_FILENAME}" \
+      org.simvascular.svzerodsolver.package.sha256="${SVZEROD_PACKAGE_SHA256}" \
+      org.simvascular.github-actions.run-url="${WORKFLOW_RUN_URL}"

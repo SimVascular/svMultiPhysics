@@ -495,7 +495,8 @@ enum class MechanicalConfigurationType
 { 
   reference, // reference configuration
   old_timestep, // old timestep (n) configuration
-  new_timestep // new timestep (n+1) configuration
+  new_timestep, // new timestep (n+1) configuration
+  intermediate_timestep // intermediate (generalized-alpha) configuration
 };
 
 //-------------------
