@@ -34,10 +34,9 @@ namespace svmp::FE::quadrature {
 [[nodiscard]] QuadratureRule make_tetrahedron_centroid_rule();
 
 /**
- * @brief Compose three canonical line rules into a Duffy tetrahedron rule.
+ * @brief Compose canonical line rules into a Duffy tetrahedron rule.
  *
- * @details Duffy maps the unit cube onto @f$x,y,z\geq0,\ x+y+z\leq1@f$.
- * For supplied points @f$\xi_i,\eta_j,\zeta_k@f$ and weights @f$a_i,b_j,c_k@f$,
+ * @details For input nodes @f$\xi_i,\eta_j,\zeta_k@f$ and weights @f$a_i,b_j,c_k@f$,
  * @f[
  * u_i=(\xi_i+1)/2,\quad v_j=(\eta_j+1)/2,\quad w_k=(\zeta_k+1)/2,
  * @f]
@@ -45,41 +44,36 @@ namespace svmp::FE::quadrature {
  * \mathbf{x}_{ijk}=(u_i,(1-u_i)v_j,(1-u_i)(1-v_j)w_k),\qquad
  * W_{ijk}=a_i b_j c_k(1-u_i)^2(1-v_j)/8.
  * @f]
- * Weights include the Jacobian and all three interval scalings. Including the
- * Jacobian, @f$x^a y^b z^c@f$ becomes
- * @f$u^a(1-u)^{b+c+2}v^b(1-v)^{c+1}w^c@f$; total degree @f$p@f$ requires
- * @f$e_u\geq p+2@f$, @f$e_v\geq p+1@f$, and @f$e_w\geq p@f$.
+ * The map covers @f$x,y,z\geq0,\ x+y+z\leq1@f$ with Jacobian
+ * @f$(1-u)^2(1-v)@f$. It collapses @f$u=1@f$ to vertex @f$(1,0,0)@f$
+ * and @f$v=1@f$ to edge @f$(u,1-u,0)@f$.
  *
- * Factors may differ in generator, count, order, and exactness. All samples
- * are used in input order, @f$q=(i n_v+j)n_w+k@f$, including duplicates,
- * collapsed points, and signed/zero weights. Requests zero and one still use
- * the supplied factors; select make_tetrahedron_centroid_rule() explicitly.
- * Duffy rules are not permutation-symmetric tetrahedron tables.
+ * Factors must be nonempty canonical Line rules on @f$[-1,1]@f$; generators,
+ * counts, order, and exactness may differ. All samples are kept in input
+ * order @f$q=(i n_v+j)n_w+k@f$, including duplicates, collapsed points, and
+ * signed/zero weights. Even requests 0 and 1 use the supplied factors;
+ * select make_tetrahedron_centroid_rule() explicitly. Permutation symmetry
+ * is not guaranteed. Points lie in the tetrahedron up to rounding;
+ * no clipping or weight rescaling occurs.
  *
- * Each rule requires @f$|\sum w-M|\leq\tau\max(M,\sum|w|)@f$, with @f$M=2@f$
- * for each line, @f$M=1/6@f$ for the tetrahedron, and @f$\tau=256\epsilon@f$
- * for binary64 machine epsilon @f$\epsilon@f$. Factor exactness metadata is
- * trusted: this measure check does not certify individual factor moments,
- * since directional errors can compensate. Mapped points lie in the
- * tetrahedron up to rounding; no clipping or weight rescaling is performed.
+ * Each rule must satisfy @f$|\sum w-M|\leq256\epsilon\max(M,\sum|w|)@f$,
+ * where @f$\epsilon@f$ is binary64 machine epsilon, @f$M=2@f$ for inputs,
+ * and @f$M=1/6@f$ for output. Exactness metadata is trusted; this check
+ * cannot certify factor moments because directional errors can cancel.
  *
- * @param requested_exactness Minimum total degree @f$p@f$ in [0, 253],
- *        inclusive (see max_tetrahedron_exactness()).
- * @param u_rule Nonempty canonical Line rule on @f$[-1,1]@f$ with trusted
- *        @f$e_u\geq p+2@f$.
- * @param v_rule Nonempty canonical Line rule on @f$[-1,1]@f$ with trusted
- *        @f$e_v\geq p+1@f$.
- * @param w_rule Nonempty canonical Line rule on @f$[-1,1]@f$ with trusted
- *        @f$e_w\geq p@f$.
- * @return Owning Tetra rule with exactness @f$\min(e_u-2,e_v-1,e_w)@f$ and
- *         @f$n_u n_v n_w@f$ samples; the request limit does not clamp metadata.
- * @throws InvalidArgumentException If the request or factors violate these
- *         contracts, or @f$n_u n_v n_w@f$ exceeds 2097152. The request,
- *         nonempty inputs, and capacity are checked before degree conversion,
- *         product multiplication, and output allocation.
- * @throws ConvergenceException If generated weights are nonfinite, including
- *         after intermediate product overflow, or do not reproduce measure
- *         @f$1/6@f$ within the stated tolerance.
+ * @param requested_exactness Minimum total degree @f$p\in[0,253]@f$
+ *        (see max_tetrahedron_exactness()).
+ * @param u_rule Line factor with @f$e_u\geq p+2@f$.
+ * @param v_rule Line factor with @f$e_v\geq p+1@f$.
+ * @param w_rule Line factor with @f$e_w\geq p@f$.
+ * @return Owning Tetra rule with @f$n_u n_v n_w@f$ samples and exactness
+ *         @f$\min(e_u-2,e_v-1,e_w)@f$, which may exceed 253.
+ * @throws InvalidArgumentException For invalid requests or factors, or
+ *         @f$n_u n_v n_w>2097152@f$. Request, nonemptiness, and capacity
+ *         checks precede forming directional requirements @f$p+2@f$ and
+ *         @f$p+1@f$, multiplying counts, and allocating output.
+ * @throws ConvergenceException For nonfinite generated weights (including
+ *         intermediate product overflow) or failed output normalization.
  */
 [[nodiscard]] QuadratureRule make_tetrahedron_rule(
     int requested_exactness, const QuadratureRule& u_rule,
@@ -88,13 +82,12 @@ namespace svmp::FE::quadrature {
 /**
  * @brief Reuse one line rule in all three Duffy directions.
  * @details Equivalent to make_tetrahedron_rule(requested_exactness, line_rule,
- * line_rule, line_rule), with the same validation and sample-preservation
- * contracts. Selecting make_gauss_legendre_rule(p + 2) for a validated request
- * gives @f$n=\lfloor p/2\rfloor+2@f$ points per direction and degree @f$2n-3@f$.
- * @param requested_exactness Minimum total degree @f$p@f$ in [0, 253], inclusive.
- * @param line_rule Canonical Line rule with @f$1\leq n\leq128@f$ points and
- *        trusted exactness @f$e\geq p+2@f$.
- * @return Owning Tetra rule with exactness @f$e-2@f$ and @f$n^3@f$ samples.
+ * line_rule, line_rule); all its contracts apply. For validated @f$p@f$,
+ * make_gauss_legendre_rule(p + 2) gives the smallest repeated Gauss factor:
+ * @f$n=\lfloor p/2\rfloor+2@f$ points and tetrahedron degree @f$2n-3@f$.
+ * @param requested_exactness Minimum total degree @f$p\in[0,253]@f$.
+ * @param line_rule Line factor with @f$1\leq n\leq128@f$ and @f$e\geq p+2@f$.
+ * @return Owning Tetra rule with @f$n^3@f$ samples and exactness @f$e-2@f$.
  */
 [[nodiscard]] QuadratureRule make_tetrahedron_rule(
     int requested_exactness, const QuadratureRule& line_rule);

@@ -25,11 +25,12 @@ namespace {
 
 constexpr std::size_t kMaximumProductPoints = 128u * 128u * 128u;
 constexpr double kValidationTolerance = 256.0 * std::numeric_limits<double>::epsilon();
-// An exact power of two keeps capacity*max_double finite during validation.
+// Scale validation sums by a power of two to keep bounded sums in binary64 range.
+// Stored weights and relative tolerances are unchanged.
 constexpr double kValidationSumScale = 0.5 / static_cast<double>(kMaximumProductPoints);
 
-// Check abs(sum(w)-measure) <= tau*max(measure,sum(abs(w))) without overflowing
-// large signed or absolute sums. The caller first bounds the number of terms.
+// Return whether abs(sum(w)-measure) <= tau*max(measure,sum(abs(w))) for at most
+// kMaximumProductPoints weights. Any nonfinite weight fails.
 bool reproduces_measure(std::span<const double> weights, double measure)
 {
     double sum = 0.0;
@@ -37,6 +38,7 @@ bool reproduces_measure(std::span<const double> weights, double measure)
     double scale = 0.0;
     for (const double weight : weights) {
         const double term = weight * kValidationSumScale;
+        // Neumaier compensation keeps long signed sums accurate.
         const double next = sum + term;
         correction += std::abs(sum) >= std::abs(term) ? (sum - next) + term : (term - next) + sum;
         sum = next;
@@ -93,6 +95,7 @@ QuadratureRule make_tetrahedron_rule(
     validate_line_rule(v_rule, requested_exactness + 1, "v_rule");
     validate_line_rule(w_rule, requested_exactness, "w_rule");
 
+    // Checked interval nodes and the Duffy map establish containment up to rounding.
     std::vector<QuadPoint> points(n_u * n_v * n_w, QuadPoint::Zero());
     std::vector<double> weights(points.size());
     for (std::size_t i = 0; i < n_u; ++i) {
@@ -106,12 +109,13 @@ QuadratureRule make_tetrahedron_rule(
             for (std::size_t k = 0; k < n_w; ++k) {
                 const std::size_t q = (i * n_v + j) * n_w + k;
                 const double w = (w_rule.point(k)[0] + 1.0) / 2.0;
-                // Checked interval nodes and the Duffy map establish containment.
                 points[q] = QuadPoint{u, remaining_u * v, remaining_u * remaining_v * w};
                 weights[q] = middle_weight * w_rule.weight(k);
             }
         }
     }
+    // Validate transformed volume and reject nonfinite products. This does not
+    // certify individual factor moments; directional errors can compensate.
     svmp::check<ConvergenceException>(reproduces_measure(weights, 1.0 / 6.0),
         "Tetrahedron Duffy generator: output weights do not reproduce measure 1/6");
 

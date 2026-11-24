@@ -88,6 +88,14 @@ QuadratureRule reversed(const QuadratureRule& rule)
         {rule.weights().rbegin(), rule.weights().rend()});
 }
 
+QuadratureRule make_cancelling_factor(double magnitude)
+{
+    const double node = 1.0 / std::sqrt(3.0);
+    return QuadratureRule(svmp::CellFamily::Line, 3,
+        {{-node, 0.0, 0.0}, {-node, 0.0, 0.0}, {-node, 0.0, 0.0}, {node, 0.0, 0.0}},
+        {magnitude, -magnitude, 1.0, 1.0});
+}
+
 template<class Function>
 void expect_invalid(Function&& function, std::string_view diagnostic)
 {
@@ -210,6 +218,11 @@ QuadratureRule make_line(bool lobatto, int degree)
     return lobatto ? make_gauss_lobatto_rule(degree) : make_gauss_legendre_rule(degree);
 }
 
+int max_line_exactness(bool lobatto)
+{
+    return lobatto ? max_gauss_lobatto_exactness() : max_gauss_legendre_exactness();
+}
+
 void expect_structure(const QuadratureRule& rule, const QuadratureRule& u_rule,
     const QuadratureRule& v_rule, const QuadratureRule& w_rule, bool closed)
 {
@@ -274,10 +287,13 @@ void expect_representative_rules(bool lobatto)
     record_moment_error(maximum_error);
 }
 
+// A set bit selects Lobatto: 4 = u, 2 = v, 1 = w.
 int maximum_mixed_request(int combination)
 {
-    return std::min({253, (combination & 4) ? 251 : 253,
-        (combination & 2) ? 252 : 254, (combination & 1) ? 253 : 255});
+    const int e_u = max_line_exactness(combination & 4);
+    const int e_v = max_line_exactness(combination & 2);
+    const int e_w = max_line_exactness(combination & 1);
+    return std::min({max_tetrahedron_exactness(), e_u - 2, e_v - 1, e_w});
 }
 
 void expect_mixed_rules(bool exhaustive)
@@ -551,35 +567,39 @@ TEST(TetrahedronDuffyValidation, PreservesSignedZeroDuplicateAndCollapsedSamples
     }
 }
 
+TEST(TetrahedronDuffyValidation, PreservesCancellingFiniteWeights)
+{
+    const auto rule = make_tetrahedron_rule(1, make_cancelling_factor(1.0));
+    ASSERT_EQ(rule.num_points(), 64u);
+    for (double weight : rule.weights()) {
+        ASSERT_TRUE(std::isfinite(weight));
+    }
+    EXPECT_EQ(rule.weight(0), -rule.weight(1));
+    EXPECT_EQ(rule.weight(0), -rule.weight(4));
+    EXPECT_EQ(rule.weight(0), -rule.weight(16));
+    EXPECT_NEAR(direct_moment(rule, 0, 0, 0), 1.0L / 6.0L, 2.0e-16L);
+}
+
 TEST(TetrahedronDuffyValidation, HandlesFiniteWeightsWhoseAbsoluteSumOverflows)
 {
-    const double node = 1.0 / std::sqrt(3.0);
-    for (const double magnitude : {1.0, 1.0e103, 1.0e200}) {
-        const QuadratureRule factor(svmp::CellFamily::Line, 3,
-            {{-node, 0.0, 0.0}, {-node, 0.0, 0.0}, {-node, 0.0, 0.0}, {node, 0.0, 0.0}},
-            {magnitude, -magnitude, 1.0, 1.0});
-        if (magnitude == 1.0e200) {
-            EXPECT_THROW((void)make_tetrahedron_rule(1, factor), ConvergenceException);
-            continue;
-        }
-        const auto rule = make_tetrahedron_rule(1, factor);
-        ASSERT_EQ(rule.num_points(), 64u);
-        // Scale before summing: long double may have binary64 exponent range.
-        constexpr long double sum_scale = 1.0L / 64.0L;
-        CompensatedSum absolute;
-        for (double weight : rule.weights()) {
-            ASSERT_TRUE(std::isfinite(weight));
-            absolute.add(std::abs(static_cast<long double>(weight)) * sum_scale);
-        }
-        EXPECT_EQ(rule.weight(0), -rule.weight(1));
-        EXPECT_EQ(rule.weight(0), -rule.weight(4));
-        EXPECT_EQ(rule.weight(0), -rule.weight(16));
-        if (magnitude == 1.0e103) {
-            EXPECT_GT(absolute.value(), static_cast<long double>(std::numeric_limits<double>::max()) * sum_scale);
-        } else {
-            EXPECT_NEAR(direct_moment(rule, 0, 0, 0), 1.0L / 6.0L, 2.0e-16L);
-        }
+    const auto rule = make_tetrahedron_rule(1, make_cancelling_factor(1.0e103));
+    ASSERT_EQ(rule.num_points(), 64u);
+    // Scale before summing: long double may have binary64 exponent range.
+    constexpr long double sum_scale = 1.0L / 64.0L;
+    CompensatedSum absolute;
+    for (double weight : rule.weights()) {
+        ASSERT_TRUE(std::isfinite(weight));
+        absolute.add(std::abs(static_cast<long double>(weight)) * sum_scale);
     }
+    EXPECT_EQ(rule.weight(0), -rule.weight(1));
+    EXPECT_EQ(rule.weight(0), -rule.weight(4));
+    EXPECT_EQ(rule.weight(0), -rule.weight(16));
+    EXPECT_GT(absolute.value(), static_cast<long double>(std::numeric_limits<double>::max()) * sum_scale);
+}
+
+TEST(TetrahedronDuffyValidation, RejectsNonfiniteProductWeights)
+{
+    EXPECT_THROW((void)make_tetrahedron_rule(1, make_cancelling_factor(1.0e200)), ConvergenceException);
 }
 
 TEST(TetrahedronDuffyValidation, DetectsOutputMeasureMismatchWithoutCertifyingFactorMoments)
@@ -642,12 +662,12 @@ TEST(TetrahedronDuffyQualification, RejectsRequestsBeyondEachMixedDirectionalLim
 {
     for (int combination = 0; combination < 8; ++combination) {
         SCOPED_TRACE(combination);
-        const auto u = make_line(combination & 4, (combination & 4) ? 253 : 255);
-        const auto v = make_line(combination & 2, (combination & 2) ? 253 : 255);
-        const auto w = make_line(combination & 1, (combination & 1) ? 253 : 255);
+        const auto u = make_line(combination & 4, max_line_exactness(combination & 4));
+        const auto v = make_line(combination & 2, max_line_exactness(combination & 2));
+        const auto w = make_line(combination & 1, max_line_exactness(combination & 1));
         const int limit = maximum_mixed_request(combination);
         expect_invalid([&] { (void)make_tetrahedron_rule(limit + 1, u, v, w); },
-            limit == 253 ? "requested_exactness" : "exactness");
+            limit == max_tetrahedron_exactness() ? "requested_exactness" : "exactness");
     }
 }
 
