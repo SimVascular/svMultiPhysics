@@ -58,7 +58,7 @@ SetEquationPropertiesMapType set_equation_props = {
   auto& com_mod = simulation->get_com_mod();
   lEq.phys = consts::EquationType::phys_CMM;
 
-  bool pstEq = eq_params->prestress.defined() && eq_params->prestress.value(); 
+  bool compute_prestress = eq_params->prestress.defined() && eq_params->prestress.value(); 
 
   com_mod.cmmBdry.resize(com_mod.gtnNo);
   if (eq_params->initialize.defined()) {
@@ -74,9 +74,9 @@ SetEquationPropertiesMapType set_equation_props = {
     std::transform(init_str.begin(), init_str.end(), init_str.begin(), ::tolower);
 
     if (std::set<std::string>{"inflate", "inf"}.count(init_str) != 0) {
-      com_mod.pstEq = false;
+      com_mod.compute_prestress = false;
     } else if (std::set<std::string>{"prestress", "prest"}.count(init_str) != 0) {
-      com_mod.pstEq = true;
+      com_mod.compute_prestress = true;
     } else {
       throw std::runtime_error("Unknown CMM initialize type '" + init_str + "'.");
     }
@@ -156,7 +156,7 @@ SetEquationPropertiesMapType set_equation_props = {
       propL[9][0] = PhysicalPropertyType::f_z;
     }
 
-    if (pstEq) {
+    if (compute_prestress) {
       nDOP = {2, 2, 0, 0};
       outPuts = { OutputNameType::out_displacement, OutputNameType::out_stress };
     } else { 
@@ -584,7 +584,6 @@ SetEquationPropertiesMapType set_equation_props = {
   if (eq_params->prestress.defined() && eq_params->prestress.value()) { 
     nDOP = {4,2,0,0};
     outPuts = {OutputNameType::out_displacement, OutputNameType::out_stress, OutputNameType::out_cauchy, OutputNameType::out_strain};
-    //simulation->com_mod.pstEq = true;
   } else {
     nDOP = {17, 2, 0, 0};
     outPuts = {OutputNameType::out_displacement,

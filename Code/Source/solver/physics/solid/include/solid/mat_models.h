@@ -116,7 +116,8 @@ class ViscousResponse {
     /// @param[in] vx Velocity gradient.
     /// @param[in] F Deformation gradient.
     /// @param[in] recompute Whether the stored values must be recomputed.
-    void update(const dmnType& lDmn, const int eNoN, const Array<double>& Nx,
+    void update(const dmnType& lDmn, const int eNoN,
+                const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx,
                 const Matrix<nsd>& vx, const Matrix<nsd>& F, const bool recompute);
 
     /// @brief Viscous 2nd Piola-Kirchhoff stress.

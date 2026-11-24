@@ -340,7 +340,8 @@ void distribute(Simulation* simulation)
     cm.bcast(cm_mod, &com_mod.cmmVarWall);
 
     cm.bcast(cm_mod, &com_mod.shlEq);
-    cm.bcast(cm_mod, &com_mod.pstEq);
+    cm.bcast(cm_mod, &com_mod.compute_prestress);
+    cm.bcast(cm_mod, &com_mod.compute_prestrain);
     cm.bcast(cm_mod, &com_mod.sstEq);
 
     cm.bcast(cm_mod, &simulation->cep_mod.cepEq);
@@ -2358,7 +2359,6 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
   nEl = lM.eDist[cm.id()+1] - lM.eDist[cm.id()];
   #ifdef dbg_part_msh
   dmsg << "flag: " << flag;
-  dmsg << "fnFlag: " << fnFlag;
   dmsg << "3 lM.eDist: " << lM.eDist;
   #endif
   lM.nEl = nEl;
@@ -2384,6 +2384,9 @@ void part_msh(Simulation* simulation, int iM, mshType& lM, Vector<int>& gmtl, in
 
   // Distribute fiber directions according to this mesh's element partition.
   lM.fibers.distribute(com_mod, cm_mod, cm, lM);
+
+  // Distribute the prestrain according to this mesh's element partition.
+  lM.prestrain.distribute(cm_mod, cm, lM);
 
   // Now scattering the sorted lM%IEN to all processors.
   //
