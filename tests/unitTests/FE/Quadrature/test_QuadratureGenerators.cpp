@@ -869,6 +869,7 @@ TEST(TriangleDuffyImplementation, PreservesSignedZeroAndDuplicateSamples)
             {1.125, -0.375, 0.0, -0.375, 0.125, 0.0, 0.0, 0.0, 0.0}));
 }
 
+/// @test The line node immediately below one maps to a positive transverse coordinate and weight.
 TEST(TriangleDuffyImplementation, KeepsInteriorSamplesNextToTheCollapsedEdge)
 {
     const double xi = std::nextafter(1.0, 0.0);
@@ -881,6 +882,7 @@ TEST(TriangleDuffyImplementation, KeepsInteriorSamplesNextToTheCollapsedEdge)
     EXPECT_EQ(rule.weight(0), 0x1p-55);
 }
 
+/// @test Signed weights recover after partial underflow and retain their sign on final underflow.
 TEST(TriangleDuffyImplementation, PreservesSignedProductsAcrossIntermediateUnderflow)
 {
     const double xi = 1.0 - 0x1p-52;
