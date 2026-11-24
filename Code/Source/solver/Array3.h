@@ -96,7 +96,7 @@ class Array3
     int nrows() const { return nrows_; }
     int nslices() const { return nslices_; }
 
-    void allocate(const int num_rows, const int num_cols, const int num_slices, const bool row_major=true)
+    void allocate(const int num_rows, const int num_cols, const int num_slices, const bool row_major=true, const bool zero=true)
     {
       nrows_ = num_rows;
       ncols_ = num_cols;
@@ -104,7 +104,7 @@ class Array3
       slice_size_ = ncols_ * nrows_;
       size_ = nrows_ * ncols_ * nslices_;
       data_ = new T [size_];
-      memset(data_, 0, sizeof(T)*size_);
+      if (zero) memset(data_, 0, sizeof(T)*size_);
       memory_in_use += sizeof(T) * size_;;
     }
 
@@ -249,10 +249,11 @@ class Array3
 
     /// @brief Resize the array.
     ///
-    /// The previous content is discarded and the new entries are set to zero.
+    /// The previous content is discarded and the new entries are set to zero
+    /// unless 'zero' is false.
     /// If there are no rows, no columns or no slices, the array holds no data
     /// and keeps the given numbers of rows, columns and slices.
-    void resize(const int num_rows, const int num_cols, const int num_slices)
+    void resize(const int num_rows, const int num_cols, const int num_slices, const bool zero=true)
     {
       if (data_ != nullptr) {
         delete [] data_;
@@ -272,7 +273,7 @@ class Array3
         return; 
       }
 
-      allocate(num_rows, num_cols, num_slices);
+      allocate(num_rows, num_cols, num_slices, true, zero);
     }
 
     /// @brief Set the array values from an Array with the equivalent number of values.
