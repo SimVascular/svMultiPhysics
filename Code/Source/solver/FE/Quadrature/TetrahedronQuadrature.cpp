@@ -10,7 +10,7 @@
 #include "FE/Quadrature/TetrahedronQuadrature.h"
 
 #include "FE/Common/FEException.h"
-#include "FE/Quadrature/DuffyQuadratureDetail.h"
+#include "FE/Quadrature/DuffyQuadrature.h"
 
 #include <algorithm>
 #include <cstddef>

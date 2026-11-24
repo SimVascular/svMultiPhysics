@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the University of California, and others.
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef SVMP_FE_DUFFY_QUADRATURE_DETAIL_H
-#define SVMP_FE_DUFFY_QUADRATURE_DETAIL_H
+#ifndef SVMP_FE_DUFFY_QUADRATURE_H
+#define SVMP_FE_DUFFY_QUADRATURE_H
 
 #include "FE/Quadrature/QuadratureRule.h"
 
@@ -40,4 +40,4 @@ void validate_line_rule(const QuadratureRule& rule, int required_exactness, std:
 
 } // namespace svmp::FE::quadrature::detail
 
-#endif // SVMP_FE_DUFFY_QUADRATURE_DETAIL_H
+#endif // SVMP_FE_DUFFY_QUADRATURE_H
