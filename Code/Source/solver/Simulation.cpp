@@ -97,6 +97,7 @@ void Simulation::set_module_parameters()
   com_mod.precompFileName = precomp_sol.file_path.value();
   com_mod.precompFieldName = precomp_sol.field_name.value();
   com_mod.precompDt = precomp_sol.time_step.value();
+  com_mod.precompPeriodic = precomp_sol.periodic.value();
 
   if ((com_mod.precompDt == 0.0) && (com_mod.usePrecomp)) {
     std::cout << "Precomputed time step size is zero. Setting to simulation time step size." << std::endl;
