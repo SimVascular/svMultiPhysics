@@ -3317,6 +3317,7 @@ PrecomputedSolutionParameters::PrecomputedSolutionParameters() {
 
   set_parameter("Field_name", "", required, field_name);
   set_parameter("File_path", "", required, file_path);
+  set_parameter("Periodic", true, !required, periodic);
   set_parameter("Time_step", 0.0, !required, time_step);
   set_parameter("Use_precomputed_solution", false, !required,
                 use_precomputed_solution);
