@@ -1315,8 +1315,13 @@ void CreateCoarseGraph_Global(ctrl_t *ctrl, graph_t *graph, idx_t cnvtxs)
 
       cnedges += nedges;
 
-      /* Clearing a collision chain one key at a time can read cadjncy[-1]. */
-      iset(htsize, -1, htable);
+      /* reset the htable -- reverse order (LIFO) is critical to prevent cadjncy[-1]
+       * indexing due to a remove of an earlier entry in a collision chain */
+      for (j=cnedges-1; j>=cxadj[cnvtxs]; j--) {
+        k = cadjncy[j];
+        for (kk=k&mask; cadjncy[htable[kk]]!=k; kk=((kk+1)&mask));
+        htable[kk] = -1;
+      }
 
       cxadj[++cnvtxs] = cnedges;
     }
