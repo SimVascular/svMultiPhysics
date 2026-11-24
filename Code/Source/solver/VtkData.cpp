@@ -599,9 +599,8 @@ void VtkVtpData::write() const {
   auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   writer->SetInputDataObject(vtk_polydata);
   writer->SetFileName(file_name_.c_str());
-  // Raw (not base64) appended data and zlib level 1 give faster writes and smaller files.
   writer->SetEncodeAppendedData(false);
-  writer->SetCompressionLevel(1);
+  writer->SetCompressionLevel(2);
 
   const int status = writer->Write();
   svmp::check<svmp::CoreException>(
@@ -685,9 +684,8 @@ void VtkVtuData::write() const {
   auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
   writer->SetInputDataObject(vtk_ugrid);
   writer->SetFileName(file_name_.c_str());
-  // Raw (not base64) appended data and zlib level 1 give faster writes and smaller files.
   writer->SetEncodeAppendedData(false);
-  writer->SetCompressionLevel(1);
+  writer->SetCompressionLevel(2);
 
   const int status = writer->Write();
   svmp::check<svmp::CoreException>(
