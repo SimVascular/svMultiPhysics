@@ -26,7 +26,6 @@
 #include <limits>
 #include <optional>
 #include <span>
-#include <stdexcept>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -272,7 +271,9 @@ void expect_invalid_argument_with_message(
         FAIL() << "Expected InvalidArgumentException containing: "
                << expected_substring;
     } catch (const InvalidArgumentException& exception) {
-        const std::string_view actual_message{exception.what()};
+        EXPECT_EQ(exception.status_code(), svmp::StatusCode::InvalidArgument);
+        EXPECT_GT(exception.context().line(), 0);
+        const std::string_view actual_message{exception.message()};
         EXPECT_NE(
             actual_message.find(expected_substring),
             std::string_view::npos)
@@ -731,10 +732,12 @@ TEST(QuadratureMonomialReferences, MatchesIndependentValuesAndRejectsNegativePow
             EXPECT_EQ(value, reference::triangle_monomial_integral(b, a));
         }
     }
-    EXPECT_THROW(reference::line_monomial_integral(-1), std::invalid_argument);
-    EXPECT_THROW(reference::line_monomial_integral(std::numeric_limits<int>::min()), std::invalid_argument);
-    EXPECT_THROW(reference::triangle_monomial_integral(-1, 0), std::invalid_argument);
-    EXPECT_THROW(reference::triangle_monomial_integral(0, -1), std::invalid_argument);
+    expect_invalid_argument_with_message(
+        [] { reference::line_monomial_integral(-1); }, "Line monomial exponent");
+    EXPECT_THROW(reference::line_monomial_integral(std::numeric_limits<int>::min()), InvalidArgumentException);
+    expect_invalid_argument_with_message(
+        [] { reference::triangle_monomial_integral(-1, 0); }, "Triangle monomial exponents");
+    EXPECT_THROW(reference::triangle_monomial_integral(0, -1), InvalidArgumentException);
 }
 
 TEST(QuadratureGeneratorTestSupport, GroupsOnlyEqualActualCoordinates)

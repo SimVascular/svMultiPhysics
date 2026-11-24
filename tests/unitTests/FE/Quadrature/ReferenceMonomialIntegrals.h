@@ -10,17 +10,17 @@
 namespace svmp::FE::quadrature::test {
 
 /** @brief Integrate x^power on [-1,1].
- * @throws std::invalid_argument If power is negative.
+ * @throws svmp::FE::InvalidArgumentException If power is negative.
  */
 long double line_monomial_integral(int power);
 
 /** @brief Integrate x^a y^b on the unit right triangle using bounded ratios.
- * @throws std::invalid_argument If either exponent is negative.
+ * @throws svmp::FE::InvalidArgumentException If either exponent is negative.
  */
 long double triangle_monomial_integral(int a, int b);
 
 /** @brief Integrate x^a y^b z^c on the unit tetrahedron using bounded ratios.
- * @throws std::invalid_argument If any exponent is negative.
+ * @throws svmp::FE::InvalidArgumentException If any exponent is negative.
  */
 long double tetrahedron_monomial_integral(int a, int b, int c);
 

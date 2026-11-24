@@ -7,16 +7,17 @@
 
 #include "ReferenceMonomialIntegrals.h"
 
+#include "FE/Common/FEException.h"
+
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 
 namespace svmp::FE::quadrature::test {
 
 long double line_monomial_integral(int power)
 {
     if (power < 0) {
-        throw std::invalid_argument("Line monomial exponent must be non-negative");
+        svmp::raise<InvalidArgumentException>("Line monomial exponent must be non-negative");
     }
     return power % 2 != 0 ? 0.0L : 2.0L / (static_cast<long double>(power) + 1.0L);
 }
@@ -24,7 +25,7 @@ long double line_monomial_integral(int power)
 long double triangle_monomial_integral(int a, int b)
 {
     if (a < 0 || b < 0) {
-        throw std::invalid_argument("Triangle monomial exponents must be non-negative");
+        svmp::raise<InvalidArgumentException>("Triangle monomial exponents must be non-negative");
     }
     const int smaller = std::min(a, b);
     const long double larger = std::max(a, b);
@@ -40,7 +41,7 @@ long double triangle_monomial_integral(int a, int b)
 long double tetrahedron_monomial_integral(int a, int b, int c)
 {
     if (a < 0 || b < 0 || c < 0) {
-        throw std::invalid_argument("Tetrahedron monomial exponents must be non-negative");
+        svmp::raise<InvalidArgumentException>("Tetrahedron monomial exponents must be non-negative");
     }
     std::array<int, 3> powers{a, b, c};
     std::sort(powers.begin(), powers.end());

@@ -22,7 +22,6 @@
 #include <limits>
 #include <optional>
 #include <sstream>
-#include <stdexcept>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -104,7 +103,9 @@ void expect_invalid(Function&& function, std::string_view diagnostic)
         function();
         FAIL() << "Expected InvalidArgumentException containing " << diagnostic;
     } catch (const InvalidArgumentException& error) {
-        EXPECT_NE(std::string_view(error.what()).find(diagnostic), std::string_view::npos)
+        EXPECT_EQ(error.status_code(), svmp::StatusCode::InvalidArgument);
+        EXPECT_GT(error.context().line(), 0);
+        EXPECT_NE(error.message().find(diagnostic), std::string_view::npos)
             << error.what();
     }
 }
@@ -467,9 +468,10 @@ TEST(TetrahedronMonomialReferences, IsPositiveFiniteAndPermutationInvariantThrou
 TEST(TetrahedronMonomialReferences, RejectsEachNegativeExponent)
 {
     for (const int negative : {-1, std::numeric_limits<int>::min()}) {
-        EXPECT_THROW((void)reference::tetrahedron_monomial_integral(negative, 0, 0), std::invalid_argument);
-        EXPECT_THROW((void)reference::tetrahedron_monomial_integral(0, negative, 0), std::invalid_argument);
-        EXPECT_THROW((void)reference::tetrahedron_monomial_integral(0, 0, negative), std::invalid_argument);
+        expect_invalid([&] { reference::tetrahedron_monomial_integral(negative, 0, 0); },
+            "Tetrahedron monomial exponents");
+        EXPECT_THROW((void)reference::tetrahedron_monomial_integral(0, negative, 0), InvalidArgumentException);
+        EXPECT_THROW((void)reference::tetrahedron_monomial_integral(0, 0, negative), InvalidArgumentException);
     }
 }
 
@@ -750,7 +752,13 @@ TEST(TetrahedronDuffyValidation, HandlesFiniteWeightsWhoseAbsoluteSumOverflows)
 
 TEST(TetrahedronDuffyValidation, RejectsNonfiniteProductWeights)
 {
-    EXPECT_THROW((void)make_tetrahedron_rule(1, make_cancelling_factor(1.0e200)), ConvergenceException);
+    try {
+        (void)make_tetrahedron_rule(1, make_cancelling_factor(1.0e200));
+        FAIL() << "Expected ConvergenceException for nonfinite weights";
+    } catch (const ConvergenceException& error) {
+        EXPECT_EQ(error.status_code(), svmp::StatusCode::InvalidState);
+        EXPECT_GT(error.context().line(), 0);
+    }
 }
 
 TEST(TetrahedronDuffyValidation, DetectsOutputMeasureMismatchWithoutCertifyingFactorMoments)
