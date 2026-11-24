@@ -21,6 +21,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <set>
 
@@ -33,6 +35,42 @@ Integrator::Integrator(Simulation* simulation, SolutionStates&& solutions)
   : simulation_(simulation), solutions_(std::move(solutions)), newton_count_(0)
 {
   initialize_arrays();
+  initialize_adaptive_time_step();
+}
+
+//-----------------------------
+// initialize_adaptive_time_step
+//-----------------------------
+void Integrator::initialize_adaptive_time_step() {
+  auto& com_mod = simulation_->com_mod;
+  const auto& cm_mod = simulation_->cm_mod;
+  const auto& cm = com_mod.cm;
+
+  // The parameters are only read on the master.
+  if (cm.mas(cm_mod)) {
+    const auto& params = simulation_->parameters.general_simulation_parameters.adaptive_time_step;
+    if (params.defined()) {
+      adaptive_time_step_enabled_ = true;
+      adaptive_time_step_maximum_ = params.maximum_time_step.value();
+      if (params.minimum_time_step.defined()) {
+        adaptive_time_step_minimum_ = params.minimum_time_step.value();
+      }
+      if (params.maximum_growth_factor.defined()) {
+        adaptive_time_step_maximum_growth_factor_ = params.maximum_growth_factor.value();
+      }
+    }
+  }
+  cm.bcast(cm_mod, &adaptive_time_step_enabled_);
+  cm.bcast(cm_mod, &adaptive_time_step_maximum_);
+  cm.bcast(cm_mod, &adaptive_time_step_minimum_);
+  cm.bcast(cm_mod, &adaptive_time_step_maximum_growth_factor_);
+
+  // The adaptive time step is currently only supported for prestrain.
+  svmp::throw_if<svmp::NotImplementedException>(
+      adaptive_time_step_enabled_ && !com_mod.compute_prestrain,
+      "The adaptive time step (the " +
+          AdaptiveTimeStepParameters::xml_element_name_ +
+          " XML element) is only implemented for a Prestrain run.");
 }
 
 //------------------------
@@ -93,6 +131,23 @@ bool Integrator::step(bool save_results) {
 
     assemble_linear_system(eq);
 
+    // Write the unscaled residual force of each step of a prestrain run to
+    // prestrain_residual.csv in the results folder, as a convergence diagnostic
+    if (com_mod.compute_prestrain && eq.itr == 1) {
+      Array<double> weights(com_mod.R.nrows(), com_mod.lhs.nNo);
+      weights = 1.0;
+      mask_constrained_dofs(weights);
+      const double residual_force = residual_norm(weights);
+      if (com_mod.cm.mas(simulation_->cm_mod)) {
+        std::ofstream file(simulation_->get_chnl_mod().appPath + "prestrain_residual.csv",
+            cTS == 1 ? std::ios::trunc : std::ios::app);
+        if (cTS == 1) {
+          file << "step,residual_force" << std::endl;
+        }
+        file << cTS << "," << std::scientific << std::setprecision(10) << residual_force << std::endl;
+      }
+    }
+
     // The residual at the current solution, which a line search measures the
     // trial solutions against. The linear solve overwrites com_mod.R with the
     // increment, and assembling a trial solution overwrites com_mod.Val, so
@@ -113,6 +168,23 @@ bool Integrator::step(bool save_results) {
             : 1.0;
 
     apply_increment(eq, step_length);
+
+    // If solving for prestrain, compose update into prestrain
+    // and reset state to rest. This assumes homogeneous Dirichlet conditions
+    // and a start from rest, which read_files checks.
+    if (com_mod.compute_prestrain) {
+      auto& An = solutions_.current.get_acceleration();
+      auto& Yn = solutions_.current.get_velocity();
+      auto& Dn = solutions_.current.get_displacement();
+      const Array<double> u = eq.af * Dn.rows(eq.s, eq.s + com_mod.nsd - 1);
+      for (auto& msh : com_mod.msh) {
+        msh.prestrain.compose(com_mod, msh, u);
+      }
+      An = 0.0;
+      Yn = 0.0;
+      Dn = 0.0;
+    }
+
     finalize_iteration();
 
     const bool all_converged =
@@ -132,6 +204,11 @@ bool Integrator::step(bool save_results) {
       dmsg << ">>> All OK" << std::endl;
       dmsg << "iEqOld: " << iEqOld + 1;
       #endif
+
+      if (adaptive_time_step_enabled_) {
+        // pNorm is the step's first residual relative to iNorm, the run's first.
+        com_mod.dt = adapt_time_step(eq.pNorm * eq.iNorm);
+      }
       return true;
     }
 
@@ -450,6 +527,38 @@ double Integrator::line_search_step_length(eqType &eq,
 }
 
 //------------------------
+// adapt_time_step
+//------------------------
+//
+double Integrator::adapt_time_step(const double residual)
+{
+  const double dt = simulation_->com_mod.dt;
+
+  // The residual can be NaN or infinite when the solution diverges in a step
+  // when it reaches Max_iterations, but still counts as converged.
+  // In this case, the next time step is unchanged.
+
+  if (!std::isfinite(residual)) {
+    return dt;
+  }
+
+  // Adaptive time stepping: the next time step grows by the ratio of
+  // the first residuals of the last two steps, within the bounds on dt and
+  // its growth. The first step has no previous residual, so the time step is
+  // unchanged.
+  double next_dt = dt;
+  if (residual_prev_ > 0.0) {
+    next_dt = std::min(adaptive_time_step_maximum_, dt * residual_prev_ / residual);
+    if (adaptive_time_step_maximum_growth_factor_ > 0.0) {
+      next_dt = std::min(next_dt, adaptive_time_step_maximum_growth_factor_ * dt);
+    }
+    next_dt = std::max(adaptive_time_step_minimum_, next_dt);
+  }
+  residual_prev_ = residual;
+  return next_dt;
+}
+
+//------------------------
 // compute_residual_weights
 //------------------------
 void Integrator::compute_residual_weights(Array<double> &weights) const {
@@ -479,6 +588,16 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
                      ? 1.0
                      : 1.0 / std::sqrt(std::fabs(weights(i)));
   }
+
+  mask_constrained_dofs(weights);
+}
+
+//------------------------
+// mask_constrained_dofs
+//------------------------
+void Integrator::mask_constrained_dofs(Array<double> &weights) const {
+  const auto &lhs = simulation_->com_mod.lhs;
+  const int dof = weights.nrows();
 
   // The linear solve eliminates the degrees of freedom constrained by a
   // Dirichlet condition, for which face.free_component_mask is zero, so their
@@ -729,7 +848,7 @@ void Integrator::predictor()
   #ifdef debug_picp
   DebugMsg dmsg(__func__, com_mod.cm.idcm());
   dmsg.banner();
-  dmsg << "pstEq: " << com_mod.pstEq;
+  dmsg << "compute_prestress: " << com_mod.compute_prestress;
   #endif
 
   // Variables for prestress calculations
@@ -747,7 +866,7 @@ void Integrator::predictor()
   auto& Dn = solutions_.current.get_displacement();
 
   // Prestress initialization
-  if (com_mod.pstEq) {
+  if (com_mod.compute_prestress) {
      pS0 = pS0 + pSn;
      Ao = 0.0;
      Yo = 0.0;
@@ -901,7 +1020,7 @@ void Integrator::initiator(SolutionStates& solutions)
   dmsg << "eq.itr: " << eq.itr;
   dmsg << "dof: " << dof;
   dmsg << "tnNo: " << tnNo;
-  dmsg << "com_mod.pstEq: " << com_mod.pstEq;
+  dmsg << "com_mod.compute_prestress: " << com_mod.compute_prestress;
   #endif
 
   const auto& Ao = solutions.old.get_acceleration();
@@ -960,7 +1079,7 @@ void Integrator::initiator(SolutionStates& solutions)
   }
 
   // prestress
-  if (com_mod.pstEq) {
+  if (com_mod.compute_prestress) {
     com_mod.pSn = 0.0;
     com_mod.pSa = 0.0;
   }
@@ -1134,7 +1253,7 @@ void Integrator::finalize_iteration()
 
   // Update prestress at the nodes and re-initialize
   //
-  if (com_mod.pstEq) {
+  if (com_mod.compute_prestress) {
     all_fun::commu(com_mod, pSn);
     all_fun::commu(com_mod, pSa);
 

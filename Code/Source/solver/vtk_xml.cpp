@@ -1256,7 +1256,7 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
             tmpV.resize(l,msh.nNo); 
             tmpVe.resize(msh.nEl);
 
-            if (com_mod.pstEq) {
+            if (com_mod.compute_prestress) {
               for (int a = 0; a < msh.nNo; a++) {
                 int Ac = msh.gN(a);
                 for (int i = 0; i < l; i++) {
@@ -1477,6 +1477,17 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
     nEl = nEl + d[iM].nEl;
   }
 
+  // The prestrain deformation gradient of a prestrain run, gathered onto
+  // the master in each mesh's original element order. A prestrain run carries
+  // one on every mesh, and every rank takes part for every mesh, also ranks
+  // that hold none of a mesh's elements: the gather is collective.
+  std::vector<Array<double>> gF0(nMsh);
+  if (com_mod.compute_prestrain) {
+    for (int iM = 0; iM < nMsh; iM++) {
+      gF0[iM] = com_mod.msh[iM].prestrain.gather(com_mod, cm_mod, com_mod.msh[iM]);
+    }
+  }
+
   if (cm.slv(cm_mod)) {
     com_mod.savedOnce = true;
     return; 
@@ -1617,6 +1628,42 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
       vtk_writer->set_element_data("Mesh_ID", tmpI);
     }
   }  // if (com_mod.savedOnce || nMsh > 1)
+
+  // Prestrain deformation gradient of a prestrain run, one cell array per
+  // Gauss point of the mesh with the most; a mesh with fewer gets the
+  // identity in the arrays beyond its own.
+  if (com_mod.compute_prestrain) {
+    int nGmax = 0;
+    for (int iM = 0; iM < nMsh; iM++) {
+      nGmax = std::max(nGmax, com_mod.msh[iM].nG);
+    }
+    const int ncomp = nsd*nsd;
+
+    for (int g = 0; g < nGmax; g++) {
+      Array<double> tmpF(ncomp, nEl);
+      int Ec = 0;
+      for (int iM = 0; iM < nMsh; iM++) {
+        const auto& F0 = gF0[iM];
+        const bool has_F0 = (g < com_mod.msh[iM].nG);
+        for (int e = 0; e < d[iM].nEl; e++) {
+          if (has_F0) {
+            for (int c = 0; c < ncomp; c++) {
+              tmpF(c,Ec) = F0(g*ncomp + c, e);
+            }
+          } else {
+            for (int c = 0; c < ncomp; c++) {
+              tmpF(c,Ec) = 0.0;
+            }
+            for (int k = 0; k < nsd; k++) {
+              tmpF(k*(nsd+1),Ec) = 1.0;
+            }
+          }
+          Ec = Ec + 1;
+        }
+      }
+      vtk_writer->set_element_data("Prestrain_F_g" + std::to_string(g), tmpF);
+    }
+  }
   // Write element Jacobian and von Mises stress if necessary
   //
   for (int l = 0; l < nOute; l++) {

@@ -129,28 +129,19 @@ void iterate_precomputed_time(Simulation* simulation, SolutionStates& solutions)
         // in time and no interpolation is performed
         // If there are multiple temporal slices, then the solution is linearly interpolated
         // between the known time values and the current time.
-        double precompDt = com_mod.precompDt;
-        double preTT = precompDt * (Ys.nslices() - 1);
-        double cT = cTS * dt;
-        double rT = std::fmod(cT, preTT);
-        int n1, n2;
-        double alpha;
-        if (precompDt == dt) {
-          alpha =  0.0;
-          if (cTS < Ys.nslices()) {
-            n1 = cTS - 1;
-          } else {
-            n1 = cTS % Ys.nslices() - 1;
-          }
-        } else {
-          n1 = static_cast<int>(rT / precompDt) - 1;
-          alpha = std::fmod(rT, precompDt);
-        }
-        n2 = n1 + 1;
+        // Slice k is the solution at time k*Time_step. Periodic slices are one period of
+        // nslices*Time_step, so slice 0 is not repeated at the end. Otherwise the last
+        // slice is held after its time.
+        const int nslices = Ys.nslices();
+        double s = cTS * (dt / com_mod.precompDt);
+        s = com_mod.precompPeriodic ? std::fmod(s, nslices) : std::fmin(s, nslices - 1.0);
+        const int n1 = static_cast<int>(s);
+        const int n2 = (n1 + 1) % nslices;
+        const double alpha = s - n1;
         for (int i = 0; i < tnNo; i++) {
           for (int j = 0; j < nsd; j++) {
             if (alpha == 0.0) {
-              Yn(j, i) = Ys(j, i, n2);
+              Yn(j, i) = Ys(j, i, n1);
             } else {
               Yn(j, i) = (1.0 - alpha) * Ys(j, i, n1) + alpha * Ys(j, i, n2);
             }
@@ -479,12 +470,6 @@ void iterate_solution(Simulation* simulation)
 
     if (save_vtu) {
       vtk_xml::write_vtus(simulation, solutions, /* lAvg = */ false);
-    }
-
-    // [NOTE] Not implemented.
-    //
-    if (com_mod.pstEq) {
-      //CALL OUTDNORM()
     }
 
     if (com_mod.ibFlag) {
