@@ -144,8 +144,10 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:a23d913097f2af06eb08b019ebd0da63e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether variable wall properties are used for CMM.  <br /></td></tr>
 <tr class="memitem:ab94d1b72bf24148fe48a1106731a4023" id="r_ab94d1b72bf24148fe48a1106731a4023"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab94d1b72bf24148fe48a1106731a4023">shlEq</a> = false</td></tr>
 <tr class="memdesc:ab94d1b72bf24148fe48a1106731a4023"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether shell equation is being solved.  <br /></td></tr>
-<tr class="memitem:a87707963de89cffba1c523da18569cd8" id="r_a87707963de89cffba1c523da18569cd8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a87707963de89cffba1c523da18569cd8">pstEq</a> = false</td></tr>
-<tr class="memdesc:a87707963de89cffba1c523da18569cd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether PRESTRESS is being solved.  <br /></td></tr>
+<tr class="memitem:ac0d59ea2934860e03e332a43bd28936e" id="r_ac0d59ea2934860e03e332a43bd28936e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac0d59ea2934860e03e332a43bd28936e">compute_prestress</a> = false</td></tr>
+<tr class="memdesc:ac0d59ea2934860e03e332a43bd28936e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether PRESTRESS is being solved.  <br /></td></tr>
+<tr class="memitem:a601c4b47c765a8518ffa54e6be22c032" id="r_a601c4b47c765a8518ffa54e6be22c032"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a601c4b47c765a8518ffa54e6be22c032">compute_prestrain</a> = false</td></tr>
+<tr class="memdesc:a601c4b47c765a8518ffa54e6be22c032"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether prestrain is being solved.  <br /></td></tr>
 <tr class="memitem:afee120d485cad75438312953ccad3b46" id="r_afee120d485cad75438312953ccad3b46"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afee120d485cad75438312953ccad3b46">sstEq</a> = false</td></tr>
 <tr class="memdesc:afee120d485cad75438312953ccad3b46"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether velocity-pressure based structural dynamics solver is used.  <br /></td></tr>
 <tr class="memitem:abc4cc109baf35b50f891c85194ebc4fd" id="r_abc4cc109baf35b50f891c85194ebc4fd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abc4cc109baf35b50f891c85194ebc4fd">iCntct</a> = false</td></tr>
@@ -512,6 +514,38 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>debug_active</b> = fa
 </div><div class="memdoc">
 
 <p>Column pointer (for sparse LHS matrix structure) Modified in: lhsa(). </p>
+
+</div>
+</div>
+<a id="a601c4b47c765a8518ffa54e6be22c032" name="a601c4b47c765a8518ffa54e6be22c032"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a601c4b47c765a8518ffa54e6be22c032">&#9670;&#160;</a></span>compute_prestrain</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ComMod::compute_prestrain = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether prestrain is being solved. </p>
+
+</div>
+</div>
+<a id="ac0d59ea2934860e03e332a43bd28936e" name="ac0d59ea2934860e03e332a43bd28936e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0d59ea2934860e03e332a43bd28936e">&#9670;&#160;</a></span>compute_prestress</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ComMod::compute_prestress = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether PRESTRESS is being solved. </p>
 
 </div>
 </div>
@@ -1120,22 +1154,6 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>debug_active</b> = fa
 </div><div class="memdoc">
 
 <p>Variables for prestress calculations. </p>
-
-</div>
-</div>
-<a id="a87707963de89cffba1c523da18569cd8" name="a87707963de89cffba1c523da18569cd8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a87707963de89cffba1c523da18569cd8">&#9670;&#160;</a></span>pstEq</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool ComMod::pstEq = false</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Whether PRESTRESS is being solved. </p>
 
 </div>
 </div>

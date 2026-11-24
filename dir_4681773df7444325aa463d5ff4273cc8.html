@@ -109,14 +109,14 @@ Directory dependency graph for reference_generators:</div>
 <div class="center"><iframe scrolling="no" loading="lazy" frameborder="0" src="dir_4681773df7444325aa463d5ff4273cc8_dep.svg" width="491" height="131"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md91"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md92"></a>
 Unit-test reference generators</h1>
 <p>These tools generate the trusted trajectory CSVs stored in <span class="tt">tests/unitTests/reference_data</span>. They use the cited external model sources; none reads svMultiPhysics output. The separately produced Bueno&ndash;Orovio and Regazzoni references are documented in their model directories but are not regenerated in-repo.</p>
 <p>Generators are grouped by tested interface:</p>
 <div class="fragment"><div class="line">active_stress/   Nash-Panfilov generator and Regazzoni reference documentation</div>
 <div class="line">ionic_model/     Aliev-Panfilov, FitzHugh-Nagumo, TP06, and BO documentation</div>
 </div><!-- fragment --><p>Generator READMEs record their source, protocol, adaptations, and generation command. The Bueno&ndash;Orovio and Regazzoni READMEs instead record how their external references were produced. Generators write only to an explicit <span class="tt">--output</span> path or stdout and do not modify repository reference data.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md92"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md93"></a>
 Requirements</h1>
 <p>The Python reference generators and verifier require Python 3.10+ and use only the standard library.</p>
 <p>For example:</p>

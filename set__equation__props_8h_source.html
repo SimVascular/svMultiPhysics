@@ -139,7 +139,7 @@ $(function() {
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  <span class="keyword">auto</span>&amp; com_mod = simulation-&gt;get_com_mod();</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  lEq.phys = consts::EquationType::phys_CMM;</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  <span class="keywordtype">bool</span> pstEq = eq_params-&gt;prestress.defined() &amp;&amp; eq_params-&gt;prestress.value(); </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  <span class="keywordtype">bool</span> compute_prestress = eq_params-&gt;prestress.defined() &amp;&amp; eq_params-&gt;prestress.value(); </div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  com_mod.cmmBdry.resize(com_mod.gtnNo);</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  <span class="keywordflow">if</span> (eq_params-&gt;initialize.defined()) {</div>
@@ -155,9 +155,9 @@ $(function() {
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    std::transform(init_str.begin(), init_str.end(), init_str.begin(), ::tolower);</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keywordflow">if</span> (std::set&lt;std::string&gt;{<span class="stringliteral">&quot;inflate&quot;</span>, <span class="stringliteral">&quot;inf&quot;</span>}.count(init_str) != 0) {</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>      com_mod.pstEq = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>      com_mod.compute_prestress = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (std::set&lt;std::string&gt;{<span class="stringliteral">&quot;prestress&quot;</span>, <span class="stringliteral">&quot;prest&quot;</span>}.count(init_str) != 0) {</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>      com_mod.pstEq = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>      com_mod.compute_prestress = <span class="keyword">true</span>;</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>      <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Unknown CMM initialize type &#39;&quot;</span> + init_str + <span class="stringliteral">&quot;&#39;.&quot;</span>);</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    }</div>
@@ -237,7 +237,7 @@ $(function() {
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>      propL[9][0] = PhysicalPropertyType::f_z;</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    }</div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <span class="keywordflow">if</span> (pstEq) {</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <span class="keywordflow">if</span> (compute_prestress) {</div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>      nDOP = {2, 2, 0, 0};</div>
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>      outPuts = { OutputNameType::out_displacement, OutputNameType::out_stress };</div>
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    } <span class="keywordflow">else</span> { </div>
@@ -665,89 +665,88 @@ $(function() {
 <div class="line"><a id="l00584" name="l00584"></a><span class="lineno">  584</span>  <span class="keywordflow">if</span> (eq_params-&gt;prestress.defined() &amp;&amp; eq_params-&gt;prestress.value()) { </div>
 <div class="line"><a id="l00585" name="l00585"></a><span class="lineno">  585</span>    nDOP = {4,2,0,0};</div>
 <div class="line"><a id="l00586" name="l00586"></a><span class="lineno">  586</span>    outPuts = {OutputNameType::out_displacement, OutputNameType::out_stress, OutputNameType::out_cauchy, OutputNameType::out_strain};</div>
-<div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span>    <span class="comment">//simulation-&gt;com_mod.pstEq = true;</span></div>
-<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span>  } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>    nDOP = {17, 2, 0, 0};</div>
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>    outPuts = {OutputNameType::out_displacement,</div>
-<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>               OutputNameType::out_mises,</div>
-<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>               OutputNameType::out_stress,</div>
-<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>               OutputNameType::out_cauchy,</div>
-<div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>               OutputNameType::out_strain,</div>
-<div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span>               OutputNameType::out_jacobian,</div>
-<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>               OutputNameType::out_defGrad,</div>
-<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>               OutputNameType::out_integ,</div>
-<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>               OutputNameType::out_fibDir,</div>
-<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>               OutputNameType::out_fibAlign,</div>
-<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>               OutputNameType::out_velocity,</div>
-<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>               OutputNameType::out_acceleration,</div>
-<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>               OutputNameType::out_fibStretch,</div>
-<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>               OutputNameType::out_fibStretchRate,</div>
-<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span>               OutputNameType::out_activeTensionFibers,</div>
-<div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span>               OutputNameType::out_activeTensionSheets,</div>
-<div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span>               OutputNameType::out_activeTensionNormal};</div>
-<div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span>  }</div>
-<div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span> </div>
-<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>  <span class="comment">// Set solver parameters.</span></div>
-<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>  read_ls(simulation, eq_params, SolverType::lSolver_CG, lEq);</div>
-<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span> </div>
-<div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span>} },</div>
-<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span> </div>
-<div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span><span class="comment">//---------------------------//</span></div>
-<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span><span class="comment">//        phys_ustruct       //</span></div>
-<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span><span class="comment">//---------------------------//</span></div>
-<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span><span class="comment">//</span></div>
-<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>{consts::EquationType::phys_ustruct, [](<a class="code hl_class" href="class_simulation.html">Simulation</a>* simulation, <a class="code hl_class" href="class_equation_parameters.html">EquationParameters</a>* eq_params, <a class="code hl_class" href="classeq_type.html">eqType</a>&amp; lEq, EquationProps&amp; propL,</div>
-<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>      EquationOutputs&amp; outPuts, EquationNdop&amp; nDOP) -&gt; <span class="keywordtype">void</span></div>
-<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>{ </div>
-<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span>  <span class="keyword">using namespace </span>consts;</div>
-<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>  <span class="keyword">auto</span>&amp; com_mod = simulation-&gt;get_com_mod();</div>
-<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span> </div>
-<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>  lEq.phys = consts::EquationType::phys_ustruct;</div>
-<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span>  com_mod.sstEq = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>  </div>
-<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>  propL[0][0] = PhysicalPropertyType::solid_density;</div>
-<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>  propL[1][0] = PhysicalPropertyType::elasticity_modulus;</div>
-<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>  propL[2][0] = PhysicalPropertyType::poisson_ratio;</div>
-<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>  propL[3][0] = PhysicalPropertyType::ctau_M;</div>
-<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>  propL[4][0] = PhysicalPropertyType::ctau_C;</div>
-<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>  propL[5][0] = PhysicalPropertyType::f_x;</div>
-<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>  propL[6][0] = PhysicalPropertyType::f_y;</div>
-<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>  <span class="keywordflow">if</span> (simulation-&gt;com_mod.nsd == 3) {</div>
-<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>    propL[7][0] = PhysicalPropertyType::f_z;</div>
-<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>  }</div>
-<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span> </div>
-<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>  read_domain(simulation, eq_params, lEq, propL);</div>
-<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span> </div>
-<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>  nDOP = {19, 2, 0, 0};</div>
-<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>  outPuts = {OutputNameType::out_displacement,</div>
-<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>             OutputNameType::out_mises,</div>
-<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>             OutputNameType::out_stress,</div>
-<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>             OutputNameType::out_cauchy,</div>
-<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>             OutputNameType::out_strain,</div>
-<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>             OutputNameType::out_jacobian,</div>
-<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>             OutputNameType::out_defGrad,</div>
-<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>             OutputNameType::out_integ,</div>
-<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>             OutputNameType::out_fibDir,</div>
-<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span>             OutputNameType::out_fibAlign,</div>
-<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span>             OutputNameType::out_velocity,</div>
-<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span>             OutputNameType::out_pressure,</div>
-<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>             OutputNameType::out_acceleration,</div>
-<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>             OutputNameType::out_divergence,</div>
-<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>             OutputNameType::out_fibStretch,</div>
-<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>             OutputNameType::out_fibStretchRate,</div>
-<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>             OutputNameType::out_activeTensionFibers,</div>
-<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>             OutputNameType::out_activeTensionSheets,</div>
-<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>             OutputNameType::out_activeTensionNormal};</div>
-<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span> </div>
-<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>  <span class="comment">// Set solver parameters.</span></div>
-<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>  read_ls(simulation, eq_params, SolverType::lSolver_GMRES, lEq);</div>
-<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span> </div>
-<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>} },</div>
-<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>};</div>
-<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span> </div>
-<div class="ttc" id="aclass_equation_parameters_html"><div class="ttname"><a href="class_equation_parameters.html">EquationParameters</a></div><div class="ttdoc">The EquationParameters class stores parameters for the &#39;Add_equation&#39; XML element used to specify an ...</div><div class="ttdef"><b>Definition</b> Parameters.h:1835</div></div>
+<div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span>  } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span>    nDOP = {17, 2, 0, 0};</div>
+<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>    outPuts = {OutputNameType::out_displacement,</div>
+<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>               OutputNameType::out_mises,</div>
+<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>               OutputNameType::out_stress,</div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>               OutputNameType::out_cauchy,</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>               OutputNameType::out_strain,</div>
+<div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>               OutputNameType::out_jacobian,</div>
+<div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span>               OutputNameType::out_defGrad,</div>
+<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>               OutputNameType::out_integ,</div>
+<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>               OutputNameType::out_fibDir,</div>
+<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>               OutputNameType::out_fibAlign,</div>
+<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>               OutputNameType::out_velocity,</div>
+<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>               OutputNameType::out_acceleration,</div>
+<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>               OutputNameType::out_fibStretch,</div>
+<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>               OutputNameType::out_fibStretchRate,</div>
+<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>               OutputNameType::out_activeTensionFibers,</div>
+<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span>               OutputNameType::out_activeTensionSheets,</div>
+<div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span>               OutputNameType::out_activeTensionNormal};</div>
+<div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span>  }</div>
+<div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span> </div>
+<div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span>  <span class="comment">// Set solver parameters.</span></div>
+<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>  read_ls(simulation, eq_params, SolverType::lSolver_CG, lEq);</div>
+<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span> </div>
+<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span>} },</div>
+<div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span> </div>
+<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span><span class="comment">//---------------------------//</span></div>
+<div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span><span class="comment">//        phys_ustruct       //</span></div>
+<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span><span class="comment">//---------------------------//</span></div>
+<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span><span class="comment">//</span></div>
+<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span>{consts::EquationType::phys_ustruct, [](<a class="code hl_class" href="class_simulation.html">Simulation</a>* simulation, <a class="code hl_class" href="class_equation_parameters.html">EquationParameters</a>* eq_params, <a class="code hl_class" href="classeq_type.html">eqType</a>&amp; lEq, EquationProps&amp; propL,</div>
+<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>      EquationOutputs&amp; outPuts, EquationNdop&amp; nDOP) -&gt; <span class="keywordtype">void</span></div>
+<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>{ </div>
+<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>  <span class="keyword">using namespace </span>consts;</div>
+<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span>  <span class="keyword">auto</span>&amp; com_mod = simulation-&gt;get_com_mod();</div>
+<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span> </div>
+<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span>  lEq.phys = consts::EquationType::phys_ustruct;</div>
+<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>  com_mod.sstEq = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span>  </div>
+<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>  propL[0][0] = PhysicalPropertyType::solid_density;</div>
+<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>  propL[1][0] = PhysicalPropertyType::elasticity_modulus;</div>
+<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>  propL[2][0] = PhysicalPropertyType::poisson_ratio;</div>
+<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>  propL[3][0] = PhysicalPropertyType::ctau_M;</div>
+<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>  propL[4][0] = PhysicalPropertyType::ctau_C;</div>
+<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>  propL[5][0] = PhysicalPropertyType::f_x;</div>
+<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>  propL[6][0] = PhysicalPropertyType::f_y;</div>
+<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>  <span class="keywordflow">if</span> (simulation-&gt;com_mod.nsd == 3) {</div>
+<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>    propL[7][0] = PhysicalPropertyType::f_z;</div>
+<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>  }</div>
+<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span> </div>
+<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span>  read_domain(simulation, eq_params, lEq, propL);</div>
+<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span> </div>
+<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>  nDOP = {19, 2, 0, 0};</div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>  outPuts = {OutputNameType::out_displacement,</div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>             OutputNameType::out_mises,</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>             OutputNameType::out_stress,</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>             OutputNameType::out_cauchy,</div>
+<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>             OutputNameType::out_strain,</div>
+<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>             OutputNameType::out_jacobian,</div>
+<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>             OutputNameType::out_defGrad,</div>
+<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>             OutputNameType::out_integ,</div>
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>             OutputNameType::out_fibDir,</div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>             OutputNameType::out_fibAlign,</div>
+<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span>             OutputNameType::out_velocity,</div>
+<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span>             OutputNameType::out_pressure,</div>
+<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span>             OutputNameType::out_acceleration,</div>
+<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>             OutputNameType::out_divergence,</div>
+<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>             OutputNameType::out_fibStretch,</div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>             OutputNameType::out_fibStretchRate,</div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>             OutputNameType::out_activeTensionFibers,</div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>             OutputNameType::out_activeTensionSheets,</div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>             OutputNameType::out_activeTensionNormal};</div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span> </div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span>  <span class="comment">// Set solver parameters.</span></div>
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>  read_ls(simulation, eq_params, SolverType::lSolver_GMRES, lEq);</div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span> </div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>} },</div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>};</div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span> </div>
+<div class="ttc" id="aclass_equation_parameters_html"><div class="ttname"><a href="class_equation_parameters.html">EquationParameters</a></div><div class="ttdoc">The EquationParameters class stores parameters for the &#39;Add_equation&#39; XML element used to specify an ...</div><div class="ttdef"><b>Definition</b> Parameters.h:1876</div></div>
 <div class="ttc" id="aclass_simulation_html"><div class="ttname"><a href="class_simulation.html">Simulation</a></div><div class="ttdef"><b>Definition</b> Simulation.h:19</div></div>
-<div class="ttc" id="aclasseq_type_html"><div class="ttname"><a href="classeq_type.html">eqType</a></div><div class="ttdoc">Equation type.</div><div class="ttdef"><b>Definition</b> ComMod.h:1081</div></div>
+<div class="ttc" id="aclasseq_type_html"><div class="ttname"><a href="classeq_type.html">eqType</a></div><div class="ttdoc">Equation type.</div><div class="ttdef"><b>Definition</b> ComMod.h:1085</div></div>
 <div class="ttc" id="anamespacedarcy_html_a2818e027c56e2a9bcdf3406c6b4bbc45"><div class="ttname"><a href="namespacedarcy.html#a2818e027c56e2a9bcdf3406c6b4bbc45">darcy::validate_material_properties</a></div><div class="ttdeci">void validate_material_properties(const dmnType &amp;domain)</div><div class="ttdef"><b>Definition</b> darcy.cpp:15</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

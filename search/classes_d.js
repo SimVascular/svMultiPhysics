@@ -13,5 +13,6 @@ var searchData=
   ['platformcapabilities_10',['PlatformCapabilities',['../structsvmp_1_1_platform_capabilities.html',1,'svmp']]],
   ['platformsupport_11',['PlatformSupport',['../classsvmp_1_1_platform_support.html',1,'svmp']]],
   ['precomputedsolutionparameters_12',['PrecomputedSolutionParameters',['../class_precomputed_solution_parameters.html',1,'']]],
-  ['projectionparameters_13',['ProjectionParameters',['../class_projection_parameters.html',1,'']]]
+  ['prestrain_13',['Prestrain',['../class_prestrain.html',1,'']]],
+  ['projectionparameters_14',['ProjectionParameters',['../class_projection_parameters.html',1,'']]]
 ];

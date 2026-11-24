@@ -99,12 +99,12 @@ $(function() {
   <div class="headertitle"><div class="title">Trilinos Linear Solver Implementation </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md26"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md27"></a></p>
 <p>Developer guide for the Trilinos-based parallel linear solver used in svMultiPhysics.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md27"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md28"></a>
 Overview</h1>
 <p>This implementation uses the <b><a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a></b> framework (specifically <b>Tpetra</b>, <b>Belos</b>, <b>Ifpack2</b>, and <b>MueLu</b> packages) to solve large-scale sparse linear systems arising from finite element discretizations in parallel MPI environments. For detailed instructions on the <a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a> built used for this project, please refer to the svMultiPhysics/Docker/ubuntu/dockerfile. The instructions found in the dockerfile can be easily adapted for a Linux&ndash;based installation.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md28"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md29"></a>
 User guide</h1>
 <p>The <a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a> interface of svMultiPhysics allows users to select linear solvers and preconditioners from the <a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a> linear algebra package for solving large-scale sparse linear systems. This section describes the solvers and preconditioners available through the interface, using the exact names that can be specified in the input .xml file. The linear solvers available are:</p><ul>
 <li><span class="tt">GMRES</span>: Generalized Minimal Residual method, a robust and widely used Krylov&ndash;subspace solver suitable for general non-symmetric sparse systems. It is typically used for CFD and FSI applications due to its stability and flexibility.</li>
@@ -118,7 +118,7 @@ User guide</h1>
 <li><span class="tt">trilinos-riluk1</span>: similar to riluk0 but includes one level of fill, improving accuracy at the cost of additional computation.</li>
 <li><span class="tt">trilinos-ml</span>: an algebraic multigrid (AMG) preconditioner from the MueLu package. This is generally the preferred choice for displacement&ndash;based structural problems in FSI (<span class="tt">struct</span> equation), and it has also proven effective for large&ndash;scale CFD systems. AMG preconditioners can be expensive to build but scale very well for large problems, making them ideal for high-resolution simulations. </li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md29"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md30"></a>
 Notes on the trilinos-ml</h2>
 <p>AMG can be extremely powerful, but only when configured appropriately for the specific PDE, mesh size, and physical model. Because of the large number of tunable parameters and because optimal settings differ between CFD, FSI, and structural mechanics, exposing everything through the standard .xml input file would be cumbersome and hard&ndash;coding problem specific AMG parameters in the source code requires solver rebuilding everytime a change is implemented. Instead, svMultiPhysics allows a dedicated AMG parameters file, letting advanced users:</p><ul>
 <li>override defaults (hard&ndash;coded in the solver already) for smoother and coarsening choices</li>
@@ -130,9 +130,9 @@ Notes on the trilinos-ml</h2>
 <li><span class="tt">trilinos_impl.cpp</span> — implementation of assembly, matrix construction, and solve routines</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md31"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md32"></a>
 Key Data Structures</h1>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md32"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md33"></a>
 1. <span class="tt">Trilinos</span> Struct</h2>
 <p>Central container holding all Tpetra/Trilinos objects for a linear system solve:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span><a class="code hl_struct" href="struct_trilinos.html">Trilinos</a> {</div>
@@ -158,7 +158,7 @@ Key Data Structures</h1>
 <li>Vectors (<span class="tt">F</span>, <span class="tt">X</span>) use <span class="tt">Map</span>; ghost vectors (<span class="tt">ghostF</span>, <span class="tt">ghostX</span>) use <span class="tt">ghostMap</span>.</li>
 </ul>
 <hr  />
-<h2 class="doxsection"><a class="anchor" id="autotoc_md34"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md35"></a>
 2. Tpetra Type Aliases</h2>
 <p>Defined in <span class="tt"><a class="el" href="trilinos__impl_8h_source.html">trilinos_impl.h</a></span> for clarity and portability:</p>
 <table class="markdownTable">
@@ -187,7 +187,7 @@ Key Data Structures</h1>
 <li><span class="tt">Node</span>: Kokkos node type (typically default)</li>
 </ul>
 <hr  />
-<h2 class="doxsection"><a class="anchor" id="autotoc_md36"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md37"></a>
 3. <span class="tt">TrilinosMatVec</span> Operator</h2>
 <p>Custom <span class="tt">Tpetra::Operator</span> that applies the linear operator:</p>
 <p>$$ A x = K x + \sum_i v_i (v_i^T x) $$</p>
@@ -203,9 +203,9 @@ Key Data Structures</h1>
 <li>Adds coupled Neumann contributions: <span class="tt">y += v_i * (v_i^T * x)</span> for each boundary vector</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md38"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md39"></a>
 Workflow</h1>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md39"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md40"></a>
 Phase 1: Initialization and Graph Construction</h2>
 <p><b>Function:</b> <span class="tt">trilinos_lhs_create(...)</span></p>
 <p><b>Inputs:</b></p><ul>
@@ -241,10 +241,10 @@ Phase 1: Initialization and Graph Construction</h2>
 </ol>
 <p><b>Key detail:</b> DOF expansion — node-level CSR connectivity is expanded to DOF-level by iterating over <span class="tt">dof × dof</span> blocks per node-node connection.</p>
 <hr  />
-<h2 class="doxsection"><a class="anchor" id="autotoc_md41"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md42"></a>
 Phase 2: Assembly</h2>
 <p>Two assembly modes are supported:</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md42"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md43"></a>
 A. Element-by-Element Assembly (Trilinos-native)</h3>
 <p><b>Function:</b> <span class="tt">trilinos_doassem_(...)</span></p>
 <p><b>Inputs:</b></p><ul>
@@ -264,7 +264,7 @@ A. Element-by-Element Assembly (Trilinos-native)</h3>
 <li>Sum force vector entries into <span class="tt">ghostF</span> via <span class="tt">sumIntoGlobalValue(...)</span>.</li>
 </ol>
 <p><b>Note:</b> assembly uses <span class="tt">ghostF</span> (includes ghost nodes); final communication done later.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md43"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md44"></a>
 B. Global Assembly (FSILS-assembled)</h3>
 <p><b>Function:</b> <span class="tt">trilinos_global_solve_(...)</span></p>
 <p><b>Inputs:</b></p><ul>
@@ -278,7 +278,7 @@ B. Global Assembly (FSILS-assembled)</h3>
 </ol>
 <p><b>Use case:</b> when matrix/RHS are assembled externally (e.g., legacy FSILS assembly), this path avoids redundant element loops.</p>
 <hr  />
-<h2 class="doxsection"><a class="anchor" id="autotoc_md45"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md46"></a>
 Phase 3: Solve</h2>
 <p><b>Function:</b> <span class="tt">trilinos_solve_(...)</span></p>
 <p><b>Inputs:</b></p><ul>
@@ -335,7 +335,7 @@ Phase 3: Solve</h2>
 </li>
 </ol>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md47"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md48"></a>
 Preconditioners</h1>
 <p>Implemented in <span class="tt">setPreconditioner(...)</span>:</p>
 <table class="markdownTable">
@@ -364,7 +364,7 @@ Preconditioners</h1>
 <li>Can load custom parameters from <span class="tt">mueluOptions.xml</span> if present.</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md49"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md50"></a>
 Coupled Neumann Boundary Conditions</h1>
 <p><b>Motivation:</b> resistance boundary conditions add low-rank updates to the stiffness matrix:</p>
 <p>$$ A = K + \sum_i v_i v_i^T $$</p>
@@ -383,9 +383,9 @@ Coupled Neumann Boundary Conditions</h1>
 <li>Efficient vectorized operations.</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md51"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md52"></a>
 Graph and Matrix Construction Details</h1>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md52"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md53"></a>
 DOF Ordering</h2>
 <ul>
 <li><b>Node-based CSR:</b> input adjacency (<span class="tt">rowPtr</span>, <span class="tt">colInd</span>) is node-to-node connectivity.</li>
@@ -397,7 +397,7 @@ DOF Ordering</h2>
 </ul>
 </li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md53"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md54"></a>
 Allocation Strategy</h2>
 <ul>
 <li>Pre-allocate <span class="tt">nnzPerDofRow</span> for each DOF row (reduces memory overhead).</li>
@@ -408,9 +408,9 @@ Allocation Strategy</h2>
 </li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md55"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md56"></a>
 Debugging and Diagnostics</h1>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md56"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md57"></a>
 Matrix/Vector Printing</h2>
 <p>Functions available for debugging (write ASCII files):</p><ul>
 <li><span class="tt">printMatrixToFile(trilinos_)</span> → writes <span class="tt">K.txt</span> (global row/col/value triples).</li>
@@ -418,7 +418,7 @@ Matrix/Vector Printing</h2>
 <li><span class="tt">printSolutionToFile(trilinos_)</span> → writes <span class="tt">X.txt</span>.</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md58"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md59"></a>
 Solver Types</h1>
 <p>Defined in <span class="tt"><a class="el" href="trilinos__impl_8h_source.html">trilinos_impl.h</a></span>:</p>
 <table class="markdownTable">
@@ -437,7 +437,7 @@ Solver Types</h1>
 <li>Orthogonalization: DGKS (recommended for robustness).</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md60"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md61"></a>
 Memory Management</h1>
 <ul>
 <li><b>Reference-counted pointers:</b> all <a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a> objects use <span class="tt">Teuchos::RCP</span> (similar to <span class="tt">std::shared_ptr</span>).</li>
@@ -445,9 +445,9 @@ Memory Management</h1>
 <li><b>Kokkos:</b> initialized once (<span class="tt">Kokkos::initialize()</span>) and finalized at program exit.</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md62"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md63"></a>
 Integration Points</h1>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md63"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md64"></a>
 Called from svMultiPhyisics</h2>
 <p>Functions bridge C++ <a class="el" href="struct_trilinos.html" title="Initialize all Epetra types we need separate from Fortran.">Trilinos</a> to svMultiPhysics implementation:</p><ul>
 <li><span class="tt">trilinos_lhs_create(...)</span> — graph/matrix setup (once per timestep/Newton iteration).</li>
@@ -455,7 +455,7 @@ Called from svMultiPhyisics</h2>
 <li><span class="tt">trilinos_global_solve_(...)</span> — solve with pre-assembled data.</li>
 <li><span class="tt">trilinos_bc_create_(...)</span> — setup coupled Neumann BCs.</li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md64"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md65"></a>
 TrilinosLinearAlgebra Class</h2>
 <p>Higher-level C++ wrapper (<span class="tt"><a class="el" href="class_trilinos_linear_algebra_1_1_trilinos_impl.html">TrilinosLinearAlgebra::TrilinosImpl</a></span>) provides:</p><ul>
 <li><span class="tt">alloc(...)</span> — allocate data structures.</li>
@@ -464,7 +464,7 @@ TrilinosLinearAlgebra Class</h2>
 <li><span class="tt">init_dir_and_coup_neu(...)</span> — setup boundary conditions.</li>
 </ul>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md66"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md67"></a>
 Tips for new development</h1>
 <ol type="1">
 <li><b>Adding a new preconditioner:</b><ul>
@@ -492,7 +492,7 @@ Tips for new development</h1>
 </li>
 </ol>
 <hr  />
-<h1 class="doxsection"><a class="anchor" id="autotoc_md68"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md69"></a>
 References</h1>
 <ul>
 <li><a href="https://trilinos.github.io/">Trilinos Documentation</a></li>

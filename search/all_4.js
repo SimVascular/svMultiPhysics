@@ -1,7 +1,7 @@
 var searchData=
 [
   ['b_0',['b',['../class_aliev_panfilov.html#a1c0ce5df9b2c64289b1e3a879e875d0f',1,'AlievPanfilov::b'],['../class_fitz_hugh_nagumo.html#ab585f8c3c89191d773a38c25c102b9c8',1,'FitzHughNagumo::b']]],
-  ['b_20global_20assembly_20fsils_20assembled_1',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'']]],
+  ['b_20global_20assembly_20fsils_20assembled_1',['B. Global Assembly (FSILS-assembled)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md44',1,'']]],
   ['b_5fdarcy_2',['b_darcy',['../namespacedarcy.html#a0441358723eddc2ce5285eab05349a74',1,'darcy']]],
   ['backend_5fname_3',['backend_name',['../classsvmp_1_1_f_e_1_1_backend_exception.html#a79b6da2ea4b0f302ef6b24d24675c5b8',1,'svmp::FE::BackendException']]],
   ['backendexception_4',['BackendException',['../classsvmp_1_1_f_e_1_1_backend_exception.html',1,'svmp::FE::BackendException'],['../classsvmp_1_1_f_e_1_1_backend_exception.html#a444b5a8bc8d6bc590ba66894bcc73019',1,'svmp::FE::BackendException::BackendException()']]],
@@ -39,7 +39,7 @@ var searchData=
   ['blockid_36',['BlockId',['../group___f_e___common_types.html#ga382894b703b38de9dad14ecafbeaddde',1,'svmp::FE']]],
   ['bodyforceparameters_37',['BodyForceParameters',['../class_body_force_parameters.html',1,'']]],
   ['bool_5fparameters_38',['bool_parameters',['../class_active_stress_model_parameters.html#a10285ed7c0de6af74d335a4729848cbc',1,'ActiveStressModelParameters']]],
-  ['boundary_20conditions_39',['Coupled Neumann Boundary Conditions',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md49',1,'']]],
+  ['boundary_20conditions_39',['Coupled Neumann Boundary Conditions',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md50',1,'']]],
   ['boundarycondition_40',['BoundaryCondition',['../class_boundary_condition.html',1,'BoundaryCondition'],['../class_boundary_condition.html#a2e0903a6b189a3914d02285d32a02096',1,'BoundaryCondition::BoundaryCondition()=default'],['../class_boundary_condition.html#ac94dc294b229d48f091b69bc6d432ad8',1,'BoundaryCondition::BoundaryCondition(const std::string &amp;vtp_file_path, const std::vector&lt; std::string &gt; &amp;array_names, const StringBoolMap &amp;flags, const faceType &amp;face, SimulationLogger &amp;logger)'],['../class_boundary_condition.html#a939dec4babbadc60114b4f3ece8464a3',1,'BoundaryCondition::BoundaryCondition(const StringDoubleMap &amp;uniform_values, const StringBoolMap &amp;flags, const faceType &amp;face, SimulationLogger &amp;logger)'],['../class_boundary_condition.html#add8cf0232591bb66dde6fdac0d11d9e6',1,'BoundaryCondition::BoundaryCondition(const BoundaryCondition &amp;other)'],['../class_boundary_condition.html#af3b8db504d02c32da05785bc4103c6ee',1,'BoundaryCondition::BoundaryCondition(BoundaryCondition &amp;&amp;other) noexcept']]],
   ['boundaryconditionarrayexception_41',['BoundaryConditionArrayException',['../class_boundary_condition_array_exception.html',1,'']]],
   ['boundaryconditionbaseexception_42',['BoundaryConditionBaseException',['../class_boundary_condition_base_exception.html',1,'BoundaryConditionBaseException'],['../class_boundary_condition_base_exception.html#a2c7179ca2ba0cae35f18b50d22dc97a7',1,'BoundaryConditionBaseException::BoundaryConditionBaseException()']]],
@@ -58,10 +58,10 @@ var searchData=
   ['boundaryconditionvtparrayexception_55',['BoundaryConditionVtpArrayException',['../class_boundary_condition_vtp_array_exception.html',1,'']]],
   ['bs_56',['bs',['../classmsh_type.html#aec1de46a85638c002dcdb97e0b5743e9',1,'mshType']]],
   ['bstype_57',['bsType',['../classbs_type.html',1,'']]],
-  ['bueno_20orovio_20ionic_20references_58',['Bueno--Orovio ionic references',['../dir_c3b2202e46bb0350e73515b5d97b3607.html#autotoc_md84',1,'']]],
+  ['bueno_20orovio_20ionic_20references_58',['Bueno--Orovio ionic references',['../dir_c3b2202e46bb0350e73515b5d97b3607.html#autotoc_md85',1,'']]],
   ['buenoorovio_59',['BuenoOrovio',['../class_bueno_orovio.html',1,'BuenoOrovio'],['../class_bueno_orovio.html#af148545a19f3324ea55feb53c17d5da5',1,'BuenoOrovio::BuenoOrovio()']]],
   ['buf_5fc_60',['Buf_c',['../class_t_t_p.html#ade5a3229a1ef8076b85903f732b5c346',1,'TTP']]],
   ['buf_5fsr_61',['Buf_sr',['../class_t_t_p.html#a05dde0cbe69b460a0adc14244786da38',1,'TTP']]],
   ['buf_5fss_62',['Buf_ss',['../class_t_t_p.html#a88767bdc20c4b90b25bcd3b8a89ea8a6',1,'TTP']]],
-  ['by_20element_20assembly_20trilinos_20native_63',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md42',1,'']]]
+  ['by_20element_20assembly_20trilinos_20native_63',['A. Element-by-Element Assembly (Trilinos-native)',['../md_solver_2_r_e_a_d_m_e-trilinos.html#autotoc_md43',1,'']]]
 ];

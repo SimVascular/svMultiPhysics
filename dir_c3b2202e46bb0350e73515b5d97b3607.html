@@ -109,11 +109,11 @@ Directory dependency graph for bueno_orovio:</div>
 <div class="center"><iframe scrolling="no" loading="lazy" frameborder="0" src="dir_c3b2202e46bb0350e73515b5d97b3607_dep.svg" width="163" height="110"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md84"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md85"></a>
 Bueno--Orovio ionic references</h1>
 <p>The committed EPI, ENDO, and M-cell references were produced from openCARP's external <a href="https://git.opencarp.org/openCARP/openCARP/-/blob/ac4e96792db082958fa9a830341f6e0642cc6bb8/physics/limpet/models/Bueno.model"><span class="tt">Bueno.model</span></a> implementation at commit <span class="tt">ac4e96792db082958fa9a830341f6e0642cc6bb8</span>. The model file has SHA-256 <span class="tt">71a70bc3771fc4dce98af1a88051df1f732d0c4dc079be44e17cb7f4c25734bf</span>; the generated CPU implementation <span class="tt">physics/limpet/src/imps_src/Bueno.cc</span> at that commit has SHA-256 <span class="tt">e0b4886910cb928bc08e0314aa54f22a485e1c69130cc272cef23a5690fd436c</span>. The model cites Bueno-Orovio, Cherry, and Fenton (2008), <a href="https://doi.org/10.1016/j.jtbi.2008.03.029">doi:10.1016/j.jtbi.2008.03.029</a>.</p>
 <p>The pinned openCARP source is covered by the <a href="https://git.opencarp.org/openCARP/openCARP/-/blob/ac4e96792db082958fa9a830341f6e0642cc6bb8/LICENSE.md">openCARP Academic Public License v1.1</a>. <span class="tt">Bueno.model</span> has no file-level license override. No openCARP source is copied into svMultiPhysics.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md85"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md86"></a>
 Parameters and protocol</h1>
 <p>The openCARP model defaults are the ENDO parameters. EPI and M-cell runs set the following phenotype values explicitly:</p>
 <table class="markdownTable">
@@ -170,7 +170,7 @@ Parameters and protocol</h1>
 20000, 24067, 28075, 28557, 28755, 28876, 30720, 40000, 60000, 120000</span>. M-cell checkpoints are <span class="tt">0, 1000, 1001, 1106, 1200, 2021, 2500, 4651,
 10000, 20000, 30000, 36369, 44724, 46147, 46456, 46640, 48735, 60000,
 120000</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md86"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md87"></a>
 Reproduction</h1>
 <p>Check out the pinned openCARP commit and build its generated CPU ionic-model implementation. Configure <span class="tt">Bueno</span> in transformed mode with the parameter set above. Because voltage is an external openCARP state, drive one cell by first evaluating the generated <span class="tt">Iion</span> and <span class="tt">diff_v</span>, <span class="tt">diff_w</span>, and <span class="tt">diff_s</span> expressions from state <span class="tt">n</span>, then apply the four Forward-Euler updates simultaneously. The voltage update is</p>
 <div class="fragment"><div class="line">V_mV[n+1] = V_mV[n] - dt * (Iion[n] + Istim[n]).</div>

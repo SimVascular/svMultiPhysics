@@ -114,8 +114,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a5956a1a267b030b6191b832fbc8122b3" id="r_a5956a1a267b030b6191b832fbc8122b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5956a1a267b030b6191b832fbc8122b3">update</a> (const <a class="el" href="classdmn_type.html">dmnType</a> &amp;lDmn, const int eNoN, const Array&lt; double &gt; &amp;Nx, const <a class="el" href="namespacemat__fun.html#a09574731c0747a19b23bea33ec2958c6">Matrix</a>&lt; nsd &gt; &amp;vx, const <a class="el" href="namespacemat__fun.html#a09574731c0747a19b23bea33ec2958c6">Matrix</a>&lt; nsd &gt; &amp;F, const bool recompute)</td></tr>
-<tr class="memdesc:a5956a1a267b030b6191b832fbc8122b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the domain's viscosity model at this Gauss point.  <br /></td></tr>
+<tr class="memitem:ace06c8886a6ef79609757f50fd8f817c" id="r_ace06c8886a6ef79609757f50fd8f817c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ace06c8886a6ef79609757f50fd8f817c">update</a> (const <a class="el" href="classdmn_type.html">dmnType</a> &amp;lDmn, const int eNoN, const Eigen::Ref&lt; const Eigen::Matrix&lt; double, nsd, Eigen::Dynamic &gt; &gt; &amp;Nx, const <a class="el" href="namespacemat__fun.html#a09574731c0747a19b23bea33ec2958c6">Matrix</a>&lt; nsd &gt; &amp;vx, const <a class="el" href="namespacemat__fun.html#a09574731c0747a19b23bea33ec2958c6">Matrix</a>&lt; nsd &gt; &amp;F, const bool recompute)</td></tr>
+<tr class="memdesc:ace06c8886a6ef79609757f50fd8f817c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the domain's viscosity model at this Gauss point.  <br /></td></tr>
 <tr class="memitem:ad4bc029099472088c28949b3b83c33d3" id="r_ad4bc029099472088c28949b3b83c33d3"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespacemat__fun.html#a09574731c0747a19b23bea33ec2958c6">Matrix</a>&lt; nsd &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad4bc029099472088c28949b3b83c33d3">S</a> () const</td></tr>
 <tr class="memdesc:ad4bc029099472088c28949b3b83c33d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Viscous 2nd Piola-Kirchhoff stress.  <br /></td></tr>
 <tr class="memitem:a176f2b27e722703f4bcbc73ecbde0b8a" id="r_a176f2b27e722703f4bcbc73ecbde0b8a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a176f2b27e722703f4bcbc73ecbde0b8a">du</a> (const int ij, const int a, const int b) const</td></tr>
@@ -239,8 +239,8 @@ template&lt;int nsd&gt; </div>
 
 </div>
 </div>
-<a id="a5956a1a267b030b6191b832fbc8122b3" name="a5956a1a267b030b6191b832fbc8122b3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5956a1a267b030b6191b832fbc8122b3">&#9670;&#160;</a></span>update()</h2>
+<a id="ace06c8886a6ef79609757f50fd8f817c" name="ace06c8886a6ef79609757f50fd8f817c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace06c8886a6ef79609757f50fd8f817c">&#9670;&#160;</a></span>update()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -260,7 +260,7 @@ template&lt;int nsd&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Array&lt; double &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>Nx</em></span>, </td>
+          <td class="paramtype">const Eigen::Ref&lt; const Eigen::Matrix&lt; double, nsd, Eigen::Dynamic &gt; &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>Nx</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
