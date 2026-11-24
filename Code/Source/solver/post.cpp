@@ -2070,6 +2070,14 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
               sigma(1,0) = sigma(0,1);
             }
 
+            // The VTK writer adds nodal prestress during prestress initialization.
+            if (!com_mod.pstEq) {
+              sigma += S0;
+            }
+
+            // Small-strain theory: the 2nd Piola-Kirchhoff stress output equals sigma.
+            S = sigma;
+
           } else if (cPhys == EquationType::phys_ustruct) {
             double p = 0.0;
             for (int a = 0; a < fs.eNoN; a++) {

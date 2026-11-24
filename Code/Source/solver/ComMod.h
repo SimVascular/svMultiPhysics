@@ -1720,6 +1720,9 @@ class ComMod {
     /// @brief Whether to use precomputed state-variable solutions
     bool usePrecomp = false;
 
+    /// @brief Whether the precomputed state-variables repeat after the last slice
+    bool precompPeriodic = true;
+
     /// @brief Whether a spatially uniform initial pressure is provided in solver.xml
     bool have_initial_homogeneous_pressure = false;
 
