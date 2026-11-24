@@ -19,6 +19,7 @@
 #include "nn.h"
 #include "output.h"
 #include "post.h"
+#include "prestrain.h"
 #include "set_bc.h"
 #include "txt.h"
 #include "utils.h"
@@ -74,7 +75,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   bool ibFlag = com_mod.ibFlag;
   bool dFlag = com_mod.dFlag;
   bool sstEq = com_mod.sstEq;
-  bool pstEq = com_mod.pstEq;
+  bool compute_prestress = com_mod.compute_prestress;
   bool cepEq = cep_mod.cepEq;
   bool risFlag = com_mod.risFlag;
   bool urisFlag = com_mod.urisFlag;
@@ -86,7 +87,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   #ifdef debug_init_from_bin 
   dmsg << "dFlag: " << dFlag;
   dmsg << "sstEq: " << sstEq;
-  dmsg << "pstEq: " << pstEq;
+  dmsg << "compute_prestress: " << compute_prestress;
   dmsg << "cepEq: " << cepEq;
   dmsg << "cm.tF(): " << cm.tF(cm_mod); 
   #endif
@@ -121,7 +122,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 
       if (sstEq) {
 
-        if (pstEq) {
+        if (compute_prestress) {
           bin_file.read((char*)pS0.data(), pS0.msize());
           bin_file.read((char*)Ad.data(), Ad.msize());
 
@@ -143,7 +144,7 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
 
       } else {
 
-        if (pstEq) {
+        if (compute_prestress) {
           bin_file.read((char*)pS0.data(), pS0.msize());
 
         } else if (cepEq) {
@@ -177,23 +178,6 @@ void init_from_bin(Simulation* simulation, const std::string& fName, std::array<
   //
   // [TODO:DaveP] not implemented.
   //
-  } else {
-    if (dFlag) {
-      if (pstEq) {
-        //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do, pS0, ib.Yb, ib.Auo, ib.Ubo
-      } else {
-         //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, Do, ib.Yb, ib.Auo, ib.Ubo
-      }
-    } else {
-      //READ(fid,REC=cm.tF()) tStamp, cTS, time, timeP(1), eq.iNorm, cplBC.xo, Yo, Ao, ib.Yb, ib.Auo, ib.Ubo
-    }
-
-    /*
-    if (com_mod.ib.cpld == ibCpld_I) {
-      com_mod.ib.Aun = com_mod.ib.Auo;
-      com_mod.ib.Ubn = com_mod.ib.Ubo;
-    }
-    */
   }
 
   bin_file.close();
@@ -441,7 +425,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
     // would have to exclude those assemblies from the accumulation, which is
     // not implemented.
     svmp::throw_if<svmp::NotImplementedException>(
-        eq.line_search_enabled && com_mod.pstEq,
+        eq.line_search_enabled && com_mod.compute_prestress,
         "Line search (the " + LineSearchParameters::xml_element_name_ +
             " XML element) is not implemented for prestress simulations.");
 
@@ -553,7 +537,7 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
 
   i = 2*tDof;
   if (dFlag) i = 3*tDof;
-  if (com_mod.pstEq) i = i + com_mod.nsymd;
+  if (com_mod.compute_prestress) i = i + com_mod.nsymd;
   if (com_mod.sstEq) i = i + nsd;
   if (cep_mod.cepEq) {
     i = i + cep_mod.nXion;
@@ -699,12 +683,22 @@ void initialize(Simulation* simulation, Vector<double>& timeP)
   }
 
   // PRESTRESS
-  if (com_mod.pstEq) {
+  if (com_mod.compute_prestress) {
     int nsymd = com_mod.nsymd; 
     com_mod.pS0.resize(nsymd,tnNo); 
     com_mod.pSn.resize(nsymd,tnNo); 
     com_mod.pSa.resize(tnNo); 
   } 
+
+  // When computing prestrain, a mesh without a <Prestrain_file_path>
+  // starts from F0 = I.
+  if (com_mod.compute_prestrain) {
+    for (auto& msh : com_mod.msh) {
+      if (!msh.prestrain.has_prestrain()) {
+        msh.prestrain.set_identity(nsd, msh.nG, msh.nEl);
+      }
+    }
+  }
 
   // Electrophysiology
   //

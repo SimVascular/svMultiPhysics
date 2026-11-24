@@ -472,12 +472,6 @@ void iterate_solution(Simulation* simulation)
       vtk_xml::write_vtus(simulation, solutions, /* lAvg = */ false);
     }
 
-    // [NOTE] Not implemented.
-    //
-    if (com_mod.pstEq) {
-      //CALL OUTDNORM()
-    }
-
     if (com_mod.ibFlag) {
       //CALL IB_OUTCPUT()
     }

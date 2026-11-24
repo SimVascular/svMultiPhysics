@@ -36,6 +36,20 @@ def test_LV_HolzapfelOgden_passive(n_proc):
     test_folder = "LV_HolzapfelOgden_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_LV_HolzapfelOgden_prestrain(n_proc):
+    folder = "LV_HolzapfelOgden_prestrain"
+    prestrain_fields = ["Cauchy_stress", "Def_grad", "Displacement",
+                        "Jacobian", "Stress", "VonMises_stress"]
+
+    prestrain_folder = os.path.join(folder, "1-prestrain")
+    run_with_reference(base_folder, prestrain_folder, prestrain_fields,
+                       n_proc, 3, check_time_value=False,
+                       cell_fields=["Prestrain_F_g" + str(g) for g in range(4)])
+
+    forward_folder = os.path.join(folder, "2-forward")
+    run_with_reference(base_folder, forward_folder, prestrain_fields,
+                       n_proc, 3)
+
 def test_LV_HolzapfelOgden_passive_CANN(n_proc):
     test_folder = "LV_HolzapfelOgden_passive_CANN"
     run_with_reference(base_folder, test_folder, fields, n_proc)

@@ -62,6 +62,49 @@
  * @warning While it is implemented for all equations, line search is currently
  *   only tested for struct, should be regarded as experimental, and used with
  *   caution.
+ *
+ * ## Adaptive time step
+ *
+ * The time step can be adapted between steps to the residual, so that it
+ * grows as the solution approaches equilibrium. It is enabled by the
+ * `Adaptive_time_step` XML element of GeneralSimulationParameters (see
+ * @ref AdaptiveTimeStepParameters), whose `Time_step_size` is the first
+ * time step. The settings apply to the whole simulation and are held by the
+ * Integrator.
+ *
+ * Each step is one or more Newton iterations, bounded by Max_iterations and
+ * Tolerance as in any other run. Let @f$ R_n @f$ be the first residual of
+ * step @f$ n @f$: the norm of the residual assembled at the step's first
+ * Newton iteration, before any update of that step is applied, so it
+ * measures how far the solution of the previous step is from equilibrium. It
+ * is the norm the linear solver reports for its right-hand side
+ * (`eq.FSILS.RI.iNorm`), not normalized by any other residual; the Newton
+ * stopping criterion uses the same norm relative to the first residual of
+ * the run, @f$ R_n / R_1 @f$ (`eq.pNorm`).
+ *
+ * Once a step has converged, the next time step is set by switched evolution
+ * relaxation
+ * ([Mulder & van Leer (1985)](https://doi.org/10.1016/0021-9991(85)90144-5)),
+ * the controller of pseudo-transient continuation analysed by
+ * [Kelley & Keyes (1998)](https://doi.org/10.1137/S0036142996304796):
+ * @f[
+ *   \Delta t_{n+1} = \max\left( \Delta t_{\min},\; \min\left( \Delta t_{\max},\;
+ *                    g\,\Delta t_n,\; \Delta t_n \, \frac{R_{n-1}}{R_n} \right) \right),
+ * @f]
+ * with @f$ \Delta t_{\max} @f$, @f$ \Delta t_{\min} @f$ and @f$ g @f$ given by
+ * `Maximum_time_step` and the optional `Minimum_time_step` and
+ * `Maximum_growth_factor` (see adapt_time_step). The first step has no
+ * @f$ R_{n-1} @f$ and keeps its time step, and so does a step whose first
+ * residual is not finite. A time step so large that the inertia term vanishes
+ * makes each iteration a plain Newton iteration.
+ *
+ * The controller does not rely on the problem being steady: the first
+ * residual of a step measures how well the previous solution satisfies the
+ * current equations, which is meaningful for an unsteady problem too. It is
+ * currently supported, and tested, only for a Prestrain run, where time is
+ * fictitious and the loads must be steady. The ratio it uses lags the
+ * textbook one by a step, since the residual at the end of a step is only
+ * assembled as the first residual of the next.
  */
 class Integrator {
 
@@ -144,6 +187,21 @@ private:
   /** @brief Solution states at old, current, and intermediate time levels */
   SolutionStates solutions_;
 
+  /** @brief Whether the time step is adapted to the ratio of the first residuals of successive steps */
+  bool adaptive_time_step_enabled_ = false;
+
+  /** @brief Largest time step the adaptation may reach */
+  double adaptive_time_step_maximum_ = 0.0;
+
+  /** @brief Smallest time step the adaptation may reach */
+  double adaptive_time_step_minimum_ = 0.0;
+
+  /** @brief Largest ratio of a time step to the one before it; 0 if unlimited */
+  double adaptive_time_step_maximum_growth_factor_ = 0.0;
+
+  /** @brief First residual of the previous step, which the adaptation of the time step uses */
+  double residual_prev_ = 0.0;
+
   /** @brief Residual vector for face-based quantities */
   Vector<double> res_;
 
@@ -223,6 +281,28 @@ private:
                                  const double reference_norm);
 
   /**
+   * @brief Read the adaptive time step settings and share them with all ranks.
+   *
+   * The master takes them from the `Adaptive_time_step` XML element of
+   * GeneralSimulationParameters and broadcasts them.
+   */
+  void initialize_adaptive_time_step();
+
+  /**
+   * @brief Time step of the next step, adapted to the residual.
+   *
+   * Returns the current time step multiplied by the ratio of the first
+   * residuals of the last two steps, capped by `Maximum_time_step` and
+   * `Maximum_growth_factor` and bounded below by `Minimum_time_step`. The
+   * current time step is returned unchanged after the first step and after a
+   * step whose first residual is not finite.
+   *
+   * @param[in] residual First residual of the step that has just converged.
+   * @return Time step size for the next step.
+   */
+  double adapt_time_step(const double residual);
+
+  /**
    * @brief Update residual and increment arrays for linear solver
    *
    * @param eq Reference to the equation being solved
@@ -286,6 +366,19 @@ private:
    * @return Weighted Euclidean norm of the assembled residual.
    */
   double residual_norm(const Array<double> &weights) const;
+
+  /**
+   * @brief Zero the weights of the degrees of freedom constrained by a
+   * Dirichlet condition
+   *
+   * The linear solve eliminates those degrees of freedom, so a norm of the
+   * residual drops them as well: their residual is the reaction of the
+   * constraint rather than an equation left to be satisfied.
+   *
+   * @param[in,out] weights Weight of every degree of freedom of every node, in
+   *   the node numbering of the linear solver.
+   */
+  void mask_constrained_dofs(Array<double> &weights) const;
 
   /**
    * @brief Compute the fiber stretch and fiber stretch rate at every node.
