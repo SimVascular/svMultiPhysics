@@ -275,11 +275,77 @@ void expect_structure(const QuadratureRule& rule, const QuadratureRule& u_rule,
     EXPECT_NEAR(measure.value(), 1.0L / 6.0L, kMomentRelativeTolerance / 6.0L);
 }
 
+// Evaluate P_(p-1)(2t-1) and P_p(2t-1) together for p >= 1.
+// Advancing a block of independent samples allows the inner loop to vectorize.
+template <std::size_t N>
+auto shifted_legendre_pair(std::array<double, N> coordinates, int p)
+{
+    for (double& t : coordinates) {
+        t = 2.0 * t - 1.0;
+    }
+    std::array<double, N> previous;
+    previous.fill(1.0);
+    auto current = coordinates;
+    for (int k = 2; k <= p; ++k) {
+        // P_k = s P_(k-1) + (k-1)/k [s P_(k-1) - P_(k-2)].
+        const double ratio = static_cast<double>(k - 1) / k;
+        for (std::size_t i = 0; i < N; ++i) {
+            const double product = coordinates[i] * current[i];
+            const double next = product + ratio * (product - previous[i]);
+            previous[i] = current[i];
+            current[i] = next;
+        }
+    }
+    return std::pair{previous, current};
+}
+
+void expect_high_degree_legendre_moments(const QuadratureRule& rule, int p)
+{
+    // At odd p, symmetry can hide a short u factor in the top z moment.
+    // The preceding z moment exposes that error. The x moment checks the outer factor independently.
+    std::array<CompensatedSum, 3> sums{}, magnitudes{};
+    std::optional<double> previous_x;
+    double x_high = 0.0;
+    constexpr std::size_t block_size = 128;
+    for (std::size_t first = 0; first < rule.num_points(); first += block_size) {
+        const std::size_t count = std::min(block_size, rule.num_points() - first);
+        std::array<double, block_size> z{};
+        for (std::size_t i = 0; i < count; ++i) {
+            z[i] = rule.point(first + i)[2];
+        }
+        const auto [z_previous, z_high] = shifted_legendre_pair(z, p);
+        for (std::size_t i = 0; i < count; ++i) {
+            const double x = rule.point(first + i)[0];
+            if (x != previous_x) {
+                x_high = shifted_legendre_pair(std::array{x}, p).second[0];
+                previous_x = x;
+            }
+            const std::array values{x_high, z_previous[i], z_high[i]};
+            for (std::size_t j = 0; j < values.size(); ++j) {
+                const long double term = static_cast<long double>(rule.weight(first + i)) * values[j];
+                sums[j].add(term);
+                magnitudes[j].add(std::abs(term));
+            }
+        }
+    }
+
+    // At fixed x or z = t the cross-section has area (1-t)^2/2, orthogonal
+    // to every shifted Legendre polynomial of degree greater than two.
+    // Allow for the O(p^2) endpoint sensitivity of the polynomial on double
+    // coordinates, scaled by the absolute weighted terms in each zero moment.
+    const long double roundoff = p * (p + 1) * std::numeric_limits<double>::epsilon();
+    constexpr std::array labels{"P_p(2x-1)", "P_(p-1)(2z-1)", "P_p(2z-1)"};
+    for (std::size_t i = 0; i < sums.size(); ++i) {
+        EXPECT_LE(std::abs(sums[i].value()), roundoff * magnitudes[i].value()) << labels[i];
+    }
+}
+
 void expect_representative_rules(bool lobatto)
 {
+    const int last_request = lobatto ? 251 : 253;
     long double maximum_error = 0.0L;
     for (const int p : {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 31, 63,
-                       lobatto ? 250 : 252, lobatto ? 251 : 253}) {
+                       last_request - 1, last_request}) {
         SCOPED_TRACE(p);
         const auto line = make_line(lobatto, p + 2);
         const auto rule = make_tetrahedron_rule(p, line);
@@ -288,7 +354,11 @@ void expect_representative_rules(bool lobatto)
         EXPECT_EQ(rule.polynomial_exactness(), 2 * static_cast<int>(n) - (lobatto ? 5 : 3));
         expect_structure(rule, line, line, line, lobatto);
         expect_same_rule(rule, make_tetrahedron_rule(p, line, line, line));
-        if (p <= 63) maximum_error = std::max(maximum_error, expect_all_moments(rule, p <= 12));
+        if (p <= 63) {
+            maximum_error = std::max(maximum_error, expect_all_moments(rule, p <= 12));
+        } else if (p == last_request) {
+            expect_high_degree_legendre_moments(rule, p);
+        }
     }
     record_moment_error(maximum_error);
 }
@@ -527,28 +597,38 @@ TEST(TetrahedronDuffyValidation, ChecksEachFactorContractInEveryDirection)
 
 TEST(TetrahedronDuffyValidation, BoundsTheFullProductBeforeFactorChecks)
 {
-    constexpr std::size_t capacity = 2097152;
-    const auto two = make_gauss_legendre_rule(3);
-    const auto single = make_gauss_legendre_rule(1);
-    for (int role = 0; role < 3; ++role) {
-        const std::size_t count = role == 0 ? capacity : capacity / 2;
-        std::vector<QuadPoint> points(count, QuadPoint::Zero());
-        if (role == 0) {
-            for (std::size_t i = 0; i < count; ++i) {
-                points[i] = two.point(i % 2);
-            }
-        }
-        const QuadratureRule many(svmp::CellFamily::Line, 3, std::move(points),
-            std::vector<double>(count, 2.0 / count));
-        std::array factors{role == 0 ? single : two, single, single};
-        factors[role] = many;
-        const auto rule = make_tetrahedron_rule(0, factors[0], factors[1], factors[2]);
+    constexpr std::size_t capacity = 128u * 128u * 128u;
+    const auto pair = make_gauss_legendre_rule(3);
+    const auto split_gauss_pair = [&pair](std::size_t count) {
+        // Split each Gauss node's weight evenly among its copies.
+        const std::size_t first_count = count / 2;
+        std::vector<QuadPoint> points(count, pair.point(1));
+        std::fill_n(points.begin(), first_count, pair.point(0));
+        std::vector<double> weights(count, pair.weight(1) / (count - first_count));
+        std::fill_n(weights.begin(), first_count, pair.weight(0) / first_count);
+        return QuadratureRule(pair.cell_family(), pair.polynomial_exactness(), std::move(points), std::move(weights));
+    };
+
+    const std::array at_limit{split_gauss_pair(256), split_gauss_pair(128), split_gauss_pair(64)};
+    for (std::size_t i = 0; i < at_limit.size(); ++i) {
+        SCOPED_TRACE(i);
+        const auto rule = make_tetrahedron_rule(0,
+            at_limit[i], at_limit[(i + 1) % 3], at_limit[(i + 2) % 3]);
         EXPECT_EQ(rule.num_points(), capacity);
         EXPECT_NEAR(direct_moment(rule, 0, 0, 0), 1.0L / 6.0L, 2.0e-16L);
-        // Deliberately invalid metadata/measure: the product bound has precedence.
-        factors[role] = QuadratureRule(svmp::CellFamily::Line, 0,
-            std::vector<QuadPoint>(count + 1, QuadPoint::Zero()), std::vector<double>(count + 1, 0.0));
-        expect_invalid([&] { (void)make_tetrahedron_rule(0, factors[0], factors[1], factors[2]); }, "2097152");
+    }
+
+    // The 9 x 43 x 5419 product exceeds the limit by one. Rotate the
+    // unnormalized factor through all roles to check the order of validation.
+    const std::array above_limit{split_gauss_pair(9), split_gauss_pair(43),
+        QuadratureRule(svmp::CellFamily::Line, 0,
+            std::vector<QuadPoint>(5419, QuadPoint::Zero()), std::vector<double>(5419, 0.0))};
+    for (std::size_t i = 0; i < above_limit.size(); ++i) {
+        SCOPED_TRACE(i);
+        expect_invalid([&] {
+            (void)make_tetrahedron_rule(0,
+                above_limit[i], above_limit[(i + 1) % 3], above_limit[(i + 2) % 3]);
+        }, "2097152");
     }
     const QuadratureRule oversized(svmp::CellFamily::Line, 0,
         std::vector<QuadPoint>(129, QuadPoint::Zero()), std::vector<double>(129, 0.0));
