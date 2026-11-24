@@ -107,6 +107,7 @@ RTOL = {
     "Active_tension_fibers": 1.0e-10,
     "Active_tension_sheets": 1.0e-10,
     "Active_tension_normal": 1.0e-10,
+    **{"Prestrain_F_g" + str(g): 1.0e-10 for g in range(27)},
 }
 
 # Relative tolerance for the TimeValue field data. The solver accumulates the
@@ -215,6 +216,7 @@ def run_with_reference(
     name_inp="solver.xml",
     check_time_value=True,
     clean=True,
+    cell_fields=(),
 ):
     """
     Run a test case and compare it to a stored reference solution
@@ -227,6 +229,7 @@ def run_with_reference(
         name_ref: name of reference file (.vtu)
         check_time_value: whether to compare the TimeValue field data against
             the time reached at time step t_max
+        cell_fields: cell array fields to compare (e.g. ["Prestrain_F_g0"])
     """
     # default reference name
     if not name_ref:
@@ -258,15 +261,17 @@ def run_with_reference(
             msg += " Result is " + str(time_value)
             msg += " instead of " + str(time_expected) + ".\n"
 
-    for f in fields:
+    for f in list(fields) + list(cell_fields):
         # extract field
-        if f not in res.point_data.keys():
+        res_data = res.cell_data if f in cell_fields else res.point_data
+        if f not in res_data.keys():
             raise ValueError("Field " + f + " not in simulation result")
-        a = res.point_data[f]
+        a = np.concatenate(res_data[f]) if f in cell_fields else res_data[f]
 
-        if f not in ref.point_data.keys():
+        ref_data = ref.cell_data if f in cell_fields else ref.point_data
+        if f not in ref_data.keys():
             raise ValueError("Field " + f + " not in reference result")
-        b = ref.point_data[f]
+        b = np.concatenate(ref_data[f]) if f in cell_fields else ref_data[f]
 
         # truncate last dimension if solution is 2D but reference is 3D
         if len(a.shape) == 2:

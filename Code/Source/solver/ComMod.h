@@ -18,6 +18,7 @@
 #include "CoupledBoundaryCondition.h"
 #include "FourierInterpolation.h"
 #include "Fibers.h"
+#include "prestrain.h"
 #include "Parameters.h"
 #include "RobinBoundaryCondition.h"
 #include "SolutionStates.h"
@@ -1026,6 +1027,9 @@ class mshType
     /// @brief Fiber orientations used for electrophysiology and solid mechanics.
     Fibers fibers;
 
+    /// @brief Deformation gradient from the unloaded configuration to the mesh.
+    Prestrain prestrain;
+
     /// @brief Parent shape functions gradient
     /// double Nx(:,:,:)
     Array3<double> Nx;
@@ -1207,6 +1211,7 @@ class eqType
     ///
     /// See the documentation of @ref Integrator for additional details.
     bool line_search_verbose = false;
+
 
     /// @}
 
@@ -1682,7 +1687,10 @@ class ComMod {
     bool shlEq = false;
 
     /// @brief Whether PRESTRESS is being solved
-    bool pstEq = false;
+    bool compute_prestress = false;
+
+    /// @brief Whether prestrain is being solved
+    bool compute_prestrain = false;
 
     /// @brief Whether velocity-pressure based structural dynamics solver is used
     bool sstEq = false;
@@ -1717,6 +1725,9 @@ class ComMod {
 
     /// @brief Whether to use precomputed state-variable solutions
     bool usePrecomp = false;
+
+    /// @brief Whether the precomputed state-variables repeat after the last slice
+    bool precompPeriodic = true;
 
     /// @brief Whether a spatially uniform initial pressure is provided in solver.xml
     bool have_initial_homogeneous_pressure = false;
