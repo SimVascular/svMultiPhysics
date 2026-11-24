@@ -122,8 +122,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>ncols</b> () const</td
 int&#160;</td><td class="memItemRight" valign="bottom"><b>nrows</b> () const</td></tr>
 <tr class="memitem:a25f218bf394c53c25b4a50b3c7994e6f" id="r_a25f218bf394c53c25b4a50b3c7994e6f"><td class="memItemLeft" align="right" valign="top"><a id="a25f218bf394c53c25b4a50b3c7994e6f" name="a25f218bf394c53c25b4a50b3c7994e6f"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>nslices</b> () const</td></tr>
-<tr class="memitem:ae1b4ef03ed95649a59a74d42505be287" id="r_ae1b4ef03ed95649a59a74d42505be287"><td class="memItemLeft" align="right" valign="top"><a id="ae1b4ef03ed95649a59a74d42505be287" name="ae1b4ef03ed95649a59a74d42505be287"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> (const int num_rows, const int num_cols, const int num_slices, const bool row_major=true)</td></tr>
+<tr class="memitem:a39c037010d5344116240677c9ee97547" id="r_a39c037010d5344116240677c9ee97547"><td class="memItemLeft" align="right" valign="top"><a id="a39c037010d5344116240677c9ee97547" name="a39c037010d5344116240677c9ee97547"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> (const int num_rows, const int num_cols, const int num_slices, const bool row_major=true, const bool zero=true)</td></tr>
 <tr class="memitem:a1d994069d3172f22e765c61d645423f8" id="r_a1d994069d3172f22e765c61d645423f8"><td class="memItemLeft" align="right" valign="top"><a id="a1d994069d3172f22e765c61d645423f8" name="a1d994069d3172f22e765c61d645423f8"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>check_index</b> (const int i, const int j, const int k) const</td></tr>
 <tr class="memitem:a4a7e3f6bc01c1658fec1576791832524" id="r_a4a7e3f6bc01c1658fec1576791832524"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4a7e3f6bc01c1658fec1576791832524">clear</a> ()</td></tr>
@@ -146,8 +146,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const</td>
 <tr class="memdesc:adfea8b38f94f99ab7d80670805ba0950"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test if an array has rows or columns or slices set but no data.  <br /></td></tr>
 <tr class="memitem:adbb2baadf19fa0458aeb505425cad74d" id="r_adbb2baadf19fa0458aeb505425cad74d"><td class="memItemLeft" align="right" valign="top"><a id="adbb2baadf19fa0458aeb505425cad74d" name="adbb2baadf19fa0458aeb505425cad74d"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>msize</b> () const</td></tr>
-<tr class="memitem:ad8f9340b441a4bab8f407ed4441fb71e" id="r_ad8f9340b441a4bab8f407ed4441fb71e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad8f9340b441a4bab8f407ed4441fb71e">resize</a> (const int num_rows, const int num_cols, const int num_slices)</td></tr>
-<tr class="memdesc:ad8f9340b441a4bab8f407ed4441fb71e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resize the array.  <br /></td></tr>
+<tr class="memitem:a1a54d7eb21948ef205fcb442c138bf8c" id="r_a1a54d7eb21948ef205fcb442c138bf8c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1a54d7eb21948ef205fcb442c138bf8c">resize</a> (const int num_rows, const int num_cols, const int num_slices, const bool zero=true)</td></tr>
+<tr class="memdesc:a1a54d7eb21948ef205fcb442c138bf8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resize the array.  <br /></td></tr>
 <tr class="memitem:ab89c3a5d1fee2f4e664ff84a4376f59b" id="r_ab89c3a5d1fee2f4e664ff84a4376f59b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab89c3a5d1fee2f4e664ff84a4376f59b">set_values</a> (Array&lt; T &gt; &amp;rhs)</td></tr>
 <tr class="memdesc:ab89c3a5d1fee2f4e664ff84a4376f59b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the array values from an Array with the equivalent number of values.  <br /></td></tr>
 <tr class="memitem:a373da4bcd086dbe813005db4a900fa51" id="r_a373da4bcd086dbe813005db4a900fa51"><td class="memItemLeft" align="right" valign="top"><a id="a373da4bcd086dbe813005db4a900fa51" name="a373da4bcd086dbe813005db4a900fa51"></a>
@@ -426,8 +426,8 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
-<a id="ad8f9340b441a4bab8f407ed4441fb71e" name="ad8f9340b441a4bab8f407ed4441fb71e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad8f9340b441a4bab8f407ed4441fb71e">&#9670;&#160;</a></span>resize()</h2>
+<a id="a1a54d7eb21948ef205fcb442c138bf8c" name="a1a54d7eb21948ef205fcb442c138bf8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a54d7eb21948ef205fcb442c138bf8c">&#9670;&#160;</a></span>resize()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -450,7 +450,12 @@ template&lt;typename T&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const int</td>          <td class="paramname"><span class="paramname"><em>num_slices</em></span>&#160;)</td>
+          <td class="paramtype">const int</td>          <td class="paramname"><span class="paramname"><em>num_slices</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>zero</em></span><span class="paramdefsep"> = </span><span class="paramdefval">true</span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -461,7 +466,7 @@ template&lt;typename T&gt; </div>
 </div><div class="memdoc">
 
 <p>Resize the array. </p>
-<p>The previous content is discarded and the new entries are set to zero. If there are no rows, no columns or no slices, the array holds no data and keeps the given numbers of rows, columns and slices. </p>
+<p>The previous content is discarded and the new entries are set to zero unless 'zero' is false. If there are no rows, no columns or no slices, the array holds no data and keeps the given numbers of rows, columns and slices. </p>
 
 </div>
 </div>
