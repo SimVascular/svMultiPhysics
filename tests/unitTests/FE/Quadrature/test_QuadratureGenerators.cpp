@@ -869,6 +869,48 @@ TEST(TriangleDuffyImplementation, PreservesSignedZeroAndDuplicateSamples)
             {1.125, -0.375, 0.0, -0.375, 0.125, 0.0, 0.0, 0.0, 0.0}));
 }
 
+TEST(TriangleDuffyImplementation, KeepsInteriorSamplesNextToTheCollapsedEdge)
+{
+    const double xi = std::nextafter(1.0, 0.0);
+    const QuadratureRule u(svmp::CellFamily::Line, 1,
+        {{xi, 0.0, 0.0}, {-xi, 0.0, 0.0}}, {1.0, 1.0});
+    const auto rule = make_triangle_rule(0, u, make_gauss_legendre_rule(1));
+    ASSERT_EQ(rule.num_points(), 2u);
+    EXPECT_EQ(rule.point(0)[0], 1.0);
+    EXPECT_EQ(rule.point(0)[1], 0x1p-55);
+    EXPECT_EQ(rule.weight(0), 0x1p-55);
+}
+
+TEST(TriangleDuffyImplementation, PreservesSignedProductsAcrossIntermediateUnderflow)
+{
+    const double xi = 1.0 - 0x1p-52;
+    const QuadratureRule v(svmp::CellFamily::Line, 0,
+        std::vector<QuadPoint>(3, QuadPoint::Zero()), {0x1p1020, -0x1p1020, 2.0});
+    struct Case {
+        double u_weight;
+        double product_with_large_weight;
+        double product_with_two;
+    };
+    // The first partial weight rounds to zero. The second lies halfway between
+    // the first two positive subnormals. A later v weight can recover both.
+    for (const auto [u_weight, large_product, small_product] :
+        {Case{0x1p-1022, 0x1p-57, 0.0}, Case{0x1.8p-1019, 0x1.8p-54, 0x1.8p-1073}}) {
+        SCOPED_TRACE(u_weight);
+        const QuadratureRule u(svmp::CellFamily::Line, 1,
+            {{xi, 0.0, 0.0}, {xi, 0.0, 0.0}, {0.0, 0.0, 0.0}}, {u_weight, -u_weight, 2.0});
+        const auto rule = make_triangle_rule(0, u, v);
+        ASSERT_EQ(rule.num_points(), 9u);
+        EXPECT_EQ(rule.weight(0), large_product);
+        EXPECT_EQ(rule.weight(1), -large_product);
+        EXPECT_EQ(rule.weight(2), small_product);
+        EXPECT_EQ(rule.weight(3), -large_product);
+        EXPECT_EQ(rule.weight(4), large_product);
+        EXPECT_EQ(rule.weight(5), -small_product);
+        EXPECT_FALSE(std::signbit(rule.weight(2)));
+        EXPECT_TRUE(std::signbit(rule.weight(5)));
+    }
+}
+
 TEST(TriangleDuffyImplementation, AcceptsFiniteProductsWithLargeSignedWeights)
 {
     const QuadratureRule factor(svmp::CellFamily::Line, 1,
