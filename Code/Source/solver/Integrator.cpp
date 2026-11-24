@@ -594,6 +594,7 @@ void Integrator::compute_residual_weights(Array<double> &weights) const {
   }
 
   mask_constrained_dofs(weights);
+  precond::scale_zero_diagonal_pressure(lhs, dof, Val, diagonal, weights);
 }
 
 //------------------------
@@ -623,9 +624,6 @@ void Integrator::mask_constrained_dofs(Array<double> &weights) const {
       }
     }
   }
-
-  // A zero pressure diagonal is scaled as in the linear solve
-  precond::scale_zero_diagonal_pressure(lhs, dof, Val, diagonal, weights);
 }
 
 //------------------------
