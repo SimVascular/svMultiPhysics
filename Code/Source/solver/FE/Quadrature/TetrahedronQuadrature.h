@@ -53,8 +53,10 @@ namespace svmp::FE::quadrature {
  * order @f$q=(i n_v+j)n_w+k@f$, including duplicates, collapsed points, and
  * signed/zero weights. Even requests 0 and 1 use the supplied factors;
  * select make_tetrahedron_centroid_rule() explicitly. Permutation symmetry
- * is not guaranteed. Points lie in the tetrahedron up to rounding;
- * no clipping or weight rescaling occurs.
+ * is not guaranteed. Distances to collapsed faces are computed from the
+ * original line nodes. The returned points may lie on a face to rounding
+ * even when the Jacobian is positive. Weights include the Jacobian without
+ * renormalization.
  *
  * Each rule must satisfy @f$|\sum w-M|\leq256\epsilon\max(M,\sum|w|)@f$,
  * where @f$\epsilon@f$ is binary64 machine epsilon, @f$M=2@f$ for inputs,

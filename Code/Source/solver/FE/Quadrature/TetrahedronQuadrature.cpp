@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
 #include <limits>
 #include <span>
 #include <string>
@@ -28,6 +29,24 @@ constexpr double kValidationTolerance = 256.0 * std::numeric_limits<double>::eps
 // Scale validation sums by a power of two to keep bounded sums in binary64 range.
 // Stored weights and relative tolerances are unchanged.
 constexpr double kValidationSumScale = 0.5 / static_cast<double>(kMaximumProductPoints);
+
+// A later large weight can amplify rounding in this subnormal or zero intermediate.
+bool needs_scaled_product(double product, double left, double right)
+{
+    return std::abs(product) < std::numeric_limits<double>::min() && left != 0.0 && right != 0.0;
+}
+
+// Multiply bounded significands and restore the exponent only after the last factor.
+double scaled_product(std::initializer_list<double> factors, int exponent)
+{
+    double significand = 1.0;
+    for (const double factor : factors) {
+        int shift;
+        significand *= std::frexp(factor, &shift);
+        exponent += shift;
+    }
+    return std::scalbn(significand, exponent);
+}
 
 // Return whether abs(sum(w)-measure) <= tau*max(measure,sum(abs(w))) for at most
 // kMaximumProductPoints weights. Any nonfinite weight fails.
@@ -99,18 +118,31 @@ QuadratureRule make_tetrahedron_rule(
     std::vector<QuadPoint> points(n_u * n_v * n_w, QuadPoint::Zero());
     std::vector<double> weights(points.size());
     for (std::size_t i = 0; i < n_u; ++i) {
-        const double u = (u_rule.point(i)[0] + 1.0) / 2.0;
-        const double remaining_u = 1.0 - u;
-        const double outer_weight = u_rule.weight(i) * (remaining_u * remaining_u / 8.0);
+        const double xi = u_rule.point(i)[0];
+        const double u = (1.0 + xi) / 2.0;
+        // An interior node can round to u == 1 while its distance to the face is still positive.
+        const double remaining_u = (1.0 - xi) / 2.0;
+        const double u_weight = u_rule.weight(i);
+        const double u_scale = remaining_u * remaining_u / 8.0;
+        const double outer_weight = u_weight * u_scale;
+        const bool scale_outer = needs_scaled_product(outer_weight, u_weight, u_scale);
         for (std::size_t j = 0; j < n_v; ++j) {
-            const double v = (v_rule.point(j)[0] + 1.0) / 2.0;
-            const double remaining_v = 1.0 - v;
-            const double middle_weight = outer_weight * (v_rule.weight(j) * remaining_v);
+            const double eta = v_rule.point(j)[0];
+            const double v = (1.0 + eta) / 2.0;
+            const double remaining_v = (1.0 - eta) / 2.0;
+            const double v_weight = v_rule.weight(j);
+            const double weighted_v = v_weight * remaining_v;
+            const double middle_weight = outer_weight * weighted_v;
+            const bool rescale = scale_outer || needs_scaled_product(weighted_v, v_weight, remaining_v) ||
+                needs_scaled_product(middle_weight, outer_weight, weighted_v);
             for (std::size_t k = 0; k < n_w; ++k) {
                 const std::size_t q = (i * n_v + j) * n_w + k;
                 const double w = (w_rule.point(k)[0] + 1.0) / 2.0;
                 points[q] = QuadPoint{u, remaining_u * v, remaining_u * remaining_v * w};
-                weights[q] = middle_weight * w_rule.weight(k);
+                const double w_weight = w_rule.weight(k);
+                weights[q] = rescale
+                    ? scaled_product({u_weight, v_weight, w_weight, remaining_u, remaining_u, remaining_v}, -3)
+                    : middle_weight * w_weight;
             }
         }
     }

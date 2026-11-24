@@ -88,11 +88,12 @@ QuadratureRule reversed(const QuadratureRule& rule)
         {rule.weights().rbegin(), rule.weights().rend()});
 }
 
-QuadratureRule make_cancelling_factor(double magnitude)
+const double gauss_node = 1.0 / std::sqrt(3.0);
+
+QuadratureRule make_cancelling_factor(double magnitude, double node = -gauss_node)
 {
-    const double node = 1.0 / std::sqrt(3.0);
     return QuadratureRule(svmp::CellFamily::Line, 3,
-        {{-node, 0.0, 0.0}, {-node, 0.0, 0.0}, {-node, 0.0, 0.0}, {node, 0.0, 0.0}},
+        {{node, 0.0, 0.0}, {node, 0.0, 0.0}, {-gauss_node, 0.0, 0.0}, {gauss_node, 0.0, 0.0}},
         {magnitude, -magnitude, 1.0, 1.0});
 }
 
@@ -250,13 +251,18 @@ void expect_structure(const QuadratureRule& rule, const QuadratureRule& u_rule,
         const std::size_t i = q / (v_rule.num_points() * w_rule.num_points());
         const std::size_t j = (q / w_rule.num_points()) % v_rule.num_points();
         const std::size_t k = q % w_rule.num_points();
-        const double u = (u_rule.point(i)[0] + 1.0) / 2.0;
-        const double v = (v_rule.point(j)[0] + 1.0) / 2.0;
-        const double w = (w_rule.point(k)[0] + 1.0) / 2.0;
-        if (x != u || y != (1.0 - u) * v || z != (1.0 - u) * (1.0 - v) * w) {
+        const long double xi = u_rule.point(i)[0];
+        const long double eta = v_rule.point(j)[0];
+        const long double zeta = w_rule.point(k)[0];
+        const long double expected_x = (1 + xi) / 2;
+        const long double expected_y = (1 - xi) * (1 + eta) / 4;
+        const long double expected_z = (1 - xi) * (1 - eta) * (1 + zeta) / 8;
+        if (std::abs(x - expected_x) > tolerance * expected_x ||
+            std::abs(y - expected_y) > tolerance * expected_y ||
+            std::abs(z - expected_z) > tolerance * expected_z) {
             first_bad_order = std::min(first_bad_order, q);
         }
-        if ((u == 1.0 || v == 1.0) && weight != 0.0) {
+        if ((xi == 1 || eta == 1) && weight != 0.0) {
             first_bad_collapse = std::min(first_bad_collapse, q);
         }
         measure.add(weight);
@@ -578,6 +584,71 @@ TEST(TetrahedronDuffyValidation, PreservesCancellingFiniteWeights)
     EXPECT_EQ(rule.weight(0), -rule.weight(4));
     EXPECT_EQ(rule.weight(0), -rule.weight(16));
     EXPECT_NEAR(direct_moment(rule, 0, 0, 0), 1.0L / 6.0L, 2.0e-16L);
+}
+
+TEST(TetrahedronDuffyValidation, PreservesInteriorSamplesNextToCollapsedFaces)
+{
+    const double near = std::nextafter(1.0, 0.0);
+    const auto midpoint = make_gauss_legendre_rule(1);
+    // The distance to the collapsed face in unit coordinates is exactly 2^-54.
+    const auto u = make_tetrahedron_rule(0, make_cancelling_factor(1.0, near), midpoint, midpoint);
+    EXPECT_EQ(u.point(0)[1], 0x1p-55);
+    EXPECT_EQ(u.point(0)[2], 0x1p-56);
+    EXPECT_EQ(u.weight(0), 0x1p-110);
+
+    const QuadratureRule near_pair(svmp::CellFamily::Line, 1,
+        {{-near, 0.0, 0.0}, {near, 0.0, 0.0}}, {1.0, 1.0});
+    const auto v = make_tetrahedron_rule(0, make_cancelling_factor(1.0, -1.0), near_pair, midpoint);
+    EXPECT_EQ(v.point(1)[2], 0x1p-55);
+    EXPECT_EQ(v.weight(1), 0x1p-56);
+}
+
+TEST(TetrahedronDuffyValidation, IntegratesSignedFactorNearEndpoint)
+{
+    const double near = std::nextafter(1.0, 0.0);
+    // The equally spaced final three nodes contribute zero to both line moments.
+    const QuadratureRule factor(svmp::CellFamily::Line, 1,
+        {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {near, 0.0, 0.0}, {std::nextafter(near, 0.0), 0.0, 0.0}},
+        {2.0, 1024.0, -2048.0, 1024.0});
+    const auto rule = make_tetrahedron_rule(0, make_gauss_legendre_rule(3), factor, make_gauss_legendre_rule(1));
+    EXPECT_EQ(rule.weight(1), 0.0);
+    EXPECT_LT(rule.weight(2), 0.0);
+    EXPECT_NEAR(direct_moment(rule, 0, 0, 0), 1.0L / 6.0L, 2.0e-16L);
+}
+
+TEST(TetrahedronDuffyValidation, RecoversWeightsAfterPartialUnderflow)
+{
+    // At three zero nodes the Duffy weight is a*b*c/64. Every expected value is dyadic.
+    const auto tiny = make_cancelling_factor(0x1p-540, 0.0);
+    const auto large = make_cancelling_factor(0x1p+1020, 0.0);
+    const auto rule = make_tetrahedron_rule(1, tiny, tiny, large);
+    EXPECT_EQ(rule.weight(0), 0x1p-66);
+    EXPECT_EQ(rule.weight(1), -0x1p-66);
+    EXPECT_EQ(make_tetrahedron_rule(1, tiny, tiny, make_cancelling_factor(0x1p+12, 0.0)).weight(0),
+        std::numeric_limits<double>::denorm_min());
+    const auto underflow = make_tetrahedron_rule(1, tiny, tiny, make_cancelling_factor(0x1p+10, 0.0));
+    EXPECT_EQ(underflow.weight(0), 0.0);
+    EXPECT_EQ(underflow.weight(1), 0.0);
+    EXPECT_TRUE(std::signbit(underflow.weight(1)));
+
+    // Each of the three intermediate products can lose a bit before a large multiplier.
+    const auto unit = make_cancelling_factor(1.0, 0.0);
+    const auto small_u = make_cancelling_factor(3 * 0x1p-1022, 1.0 - 0x1p-24);
+    EXPECT_EQ(make_tetrahedron_rule(1, small_u, large, unit).weight(0), 3 * 0x1p-56);
+    const auto small_v = make_cancelling_factor(3 * 0x1p-1022, 1.0 - 0x1p-52);
+    EXPECT_EQ(make_tetrahedron_rule(1, make_cancelling_factor(0x1p+1018, 0.0), small_v, unit).weight(0),
+        3 * 0x1p-62);
+    EXPECT_EQ(make_tetrahedron_rule(1, make_cancelling_factor(3 * 0x1p-534, 0.0),
+        make_cancelling_factor(0x1p-535, 0.0), large).weight(0), 3 * 0x1p-55);
+}
+
+TEST(TetrahedronDuffyValidation, RejectsIntermediateOverflowEvenWhenFinalWeightsFit)
+{
+    const QuadratureRule w(svmp::CellFamily::Line, 1,
+        std::vector<QuadPoint>(8, QuadPoint::Zero()), std::vector<double>(8, 0.25));
+    // The partial product is 2^1025 at the first pair of nodes; each final weight would fit.
+    EXPECT_THROW((void)make_tetrahedron_rule(0, make_cancelling_factor(0x1p+600, 0.0),
+        make_cancelling_factor(0x1p+431, 0.0), w), ConvergenceException);
 }
 
 TEST(TetrahedronDuffyValidation, HandlesFiniteWeightsWhoseAbsoluteSumOverflows)
