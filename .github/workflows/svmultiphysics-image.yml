@@ -1,0 +1,871 @@
+name: Build svMultiPhysics images
+
+on:
+  workflow_dispatch:
+    inputs:
+      dependency_image:
+        description: 'Fully qualified GHCR dependency image tag or digest'
+        required: true
+        type: string
+      svmultiphysics_ref:
+        description: 'Final svMultiPhysics release tag, such as v1.0.0.2'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      dependency_image:
+        description: 'Fully qualified GHCR dependency image tag or digest'
+        required: true
+        type: string
+      svmultiphysics_ref:
+        description: 'Final svMultiPhysics release tag, such as v1.0.0.2'
+        required: true
+        type: string
+    outputs:
+      version:
+        description: 'Resolved svMultiPhysics release version'
+        value: ${{ jobs.prepare.outputs.version }}
+      tag:
+        description: 'Validated final svMultiPhysics release tag'
+        value: ${{ jobs.prepare.outputs.tag }}
+      commit:
+        description: 'Commit identified by the svMultiPhysics release tag'
+        value: ${{ jobs.prepare.outputs.commit }}
+      already_published:
+        description: 'Whether both final images already match the resolved release inputs'
+        value: ${{ jobs.prepare.outputs.already_published }}
+      release_url:
+        description: 'GitHub Release URL containing the verified packages'
+        value: ${{ jobs.prepare.outputs.release_url }}
+      dependency_image:
+        description: 'Dependency image pinned to its resolved digest'
+        value: ${{ jobs.prepare.outputs.dependency_image }}
+      dependency_image_reference:
+        description: 'Dependency image reference supplied by the caller'
+        value: ${{ jobs.prepare.outputs.dependency_image_reference }}
+      dependency_image_digest:
+        description: 'Resolved dependency image digest'
+        value: ${{ jobs.prepare.outputs.dependency_image_digest }}
+      default_package:
+        description: 'Verified default package filename'
+        value: ${{ jobs.prepare.outputs.default_package }}
+      default_package_sha256:
+        description: 'Verified default package SHA-256 digest'
+        value: ${{ jobs.prepare.outputs.default_package_sha256 }}
+      trilinos_package:
+        description: 'Verified Trilinos package filename'
+        value: ${{ jobs.prepare.outputs.trilinos_package }}
+      trilinos_package_sha256:
+        description: 'Verified Trilinos package SHA-256 digest'
+        value: ${{ jobs.prepare.outputs.trilinos_package_sha256 }}
+      svzerod_package:
+        description: 'Verified svZeroDSolver package filename'
+        value: ${{ jobs.prepare.outputs.svzerod_package }}
+      svzerod_package_sha256:
+        description: 'Verified svZeroDSolver package SHA-256 digest'
+        value: ${{ jobs.prepare.outputs.svzerod_package_sha256 }}
+      svzerod_tag:
+        description: 'Pinned svZeroDSolver release tag'
+        value: ${{ jobs.prepare.outputs.svzerod_tag }}
+      svzerod_commit:
+        description: 'Pinned svZeroDSolver commit SHA'
+        value: ${{ jobs.prepare.outputs.svzerod_commit }}
+
+permissions: {}
+
+env:
+  SOURCE_REPOSITORY: SimVascular/svMultiPhysics
+  SOURCE_REMOTE: https://github.com/SimVascular/svMultiPhysics.git
+  SVMP_IMAGE_REPOSITORY: ghcr.io/simvascular/svmultiphysics
+
+concurrency:
+  group: svmultiphysics-image-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Resolve and verify image inputs
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      version: ${{ steps.source.outputs.version }}
+      tag: ${{ steps.source.outputs.tag }}
+      commit: ${{ steps.source.outputs.commit }}
+      already_published: ${{ steps.existing.outputs.already_published }}
+      release_url: ${{ steps.release.outputs.url }}
+      dependency_image: ${{ steps.image.outputs.image }}
+      dependency_image_reference: ${{ steps.image.outputs.reference }}
+      dependency_image_digest: ${{ steps.image.outputs.digest }}
+      default_package: ${{ steps.packages.outputs.default_package }}
+      default_package_sha256: ${{ steps.packages.outputs.default_sha256 }}
+      trilinos_package: ${{ steps.packages.outputs.trilinos_package }}
+      trilinos_package_sha256: ${{ steps.packages.outputs.trilinos_sha256 }}
+      svzerod_package: ${{ steps.svzerod.outputs.package }}
+      svzerod_package_sha256: ${{ steps.svzerod.outputs.sha256 }}
+      svzerod_tag: ${{ steps.svzerod.outputs.tag }}
+      svzerod_commit: ${{ steps.svzerod.outputs.commit }}
+      image_repository: ${{ steps.execution.outputs.image_repository }}
+    steps:
+      - name: Require an approved workflow source
+        id: execution
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REPOSITORY}" != SimVascular/svMultiPhysics ||
+                "${GITHUB_REF}" != refs/heads/main ]]; then
+            echo 'This workflow must run from SimVascular/svMultiPhysics main' >&2
+            exit 1
+          fi
+          printf 'image_repository=%s\n' "${SVMP_IMAGE_REPOSITORY}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out workflow source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve final svMultiPhysics release tag
+        id: source
+        shell: bash
+        env:
+          REQUESTED_REF: ${{ inputs.svmultiphysics_ref }}
+        run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          if [[ ! "${REQUESTED_REF}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'svmultiphysics_ref must be a final release tag such as v1.0.0.2' >&2
+            exit 1
+          fi
+          source_commit=$(ci_resolve_remote_tag "${SOURCE_REMOTE}" "${REQUESTED_REF}")
+          if ! ci_commit_is_on_remote_main \
+            "${source_commit}" "${SOURCE_REMOTE}" refs/remotes/svmultiphysics/main; then
+            echo "${REQUESTED_REF} does not identify a commit on main" >&2
+            exit 1
+          fi
+          git fetch --no-tags "${SOURCE_REMOTE}" "refs/tags/${REQUESTED_REF}"
+          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "${source_commit}"
+          git show "${source_commit}:release.json" > resolved-release.json
+          version=$(ci_release_version resolved-release.json)
+          if [[ "${REQUESTED_REF}" != "v${version}" ]]; then
+            echo "Tag ${REQUESTED_REF} does not match release.json version ${version}" >&2
+            exit 1
+          fi
+          printf 'tag=%s\ncommit=%s\nversion=%s\n' \
+            "${REQUESTED_REF}" "${source_commit}" "${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve dependency image digest
+        id: image
+        shell: bash
+        env:
+          REQUESTED_IMAGE: ${{ inputs.dependency_image }}
+        run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          read -r _ digest resolved_image < <(ci_resolve_ghcr_image "${REQUESTED_IMAGE}")
+          printf 'reference=%s\ndigest=%s\nimage=%s@%s\n' \
+            "${REQUESTED_IMAGE}" "${digest}" "${resolved_image%@*}" "${digest}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify GitHub Release provenance
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+          RESOLVED_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          gh api "repos/${SOURCE_REPOSITORY}/releases/tags/${RELEASE_TAG}" > release-metadata.json
+          test "$(jq -r '.tag_name' release-metadata.json)" = "${RELEASE_TAG}"
+          release_url=$(jq -er '.html_url' release-metadata.json)
+          release_body=$(jq -er '.body' release-metadata.json)
+          grep -Fqx -- "- Built solver commit: \`${SOURCE_COMMIT}\`" <<< "${release_body}"
+          grep -Fqx -- "- Solver tag: \`${RELEASE_TAG}\`" <<< "${release_body}"
+          grep -Fqx -- '- Solver build type: `Release`' <<< "${release_body}"
+          grep -Fqx -- "- Dependency image (resolved digest): \`${RESOLVED_IMAGE}\`" <<< "${release_body}"
+          printf 'url=%s\n' "${release_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Download and verify svMultiPhysics packages
+        id: packages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+          VERSION: ${{ steps.source.outputs.version }}
+        run: |
+          mkdir -p verified-packages
+          for configuration in default trilinos; do
+            package="svMultiPhysics-Ubuntu-26-${configuration}-${VERSION}.deb"
+            checksum_file="${package}.sha256"
+            gh release download "${RELEASE_TAG}" --repo "${SOURCE_REPOSITORY}" \
+              --pattern "${package}" --pattern "${checksum_file}" --dir verified-packages
+            test -s "verified-packages/${package}"
+            test -s "verified-packages/${checksum_file}"
+            sha256=$(awk 'NF { print $1; exit }' "verified-packages/${checksum_file}")
+            if [[ ! "${sha256}" =~ ^[0-9a-f]{64}$ ]]; then
+              echo "Invalid checksum for ${package}" >&2
+              exit 1
+            fi
+            printf '%s  %s\n' "${sha256}" "verified-packages/${package}" | sha256sum -c -
+            test "$(dpkg-deb --field "verified-packages/${package}" Version)" = "${VERSION}"
+            test "$(dpkg-deb --field "verified-packages/${package}" Architecture)" = amd64
+            printf '%s_package=%s\n%s_sha256=%s\n' \
+              "${configuration}" "${package}" "${configuration}" "${sha256}" >> "${GITHUB_OUTPUT}"
+          done
+
+      - name: Download and verify pinned svZeroDSolver package
+        id: svzerod
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          read -r repository tag commit sha256 \
+            < <(ci_svzerodsolver_package_identity resolved-release.json)
+          test "$(ci_resolve_svzerodsolver resolved-release.json)" = "${commit}"
+          gh api "repos/${repository}/releases/tags/${tag}" > svzerod-release-metadata.json
+          test "$(jq -r '.tag_name' svzerod-release-metadata.json)" = "${tag}"
+          package="svZeroDSolver-Ubuntu-26-${tag}.deb"
+          gh release download "${tag}" --repo "${repository}" \
+            --pattern "${package}" --dir verified-packages
+          test -s "verified-packages/${package}"
+          printf '%s  %s\n' "${sha256}" "verified-packages/${package}" | sha256sum -c -
+          test "$(dpkg-deb --field "verified-packages/${package}" Version)" = "${tag#v}"
+          test "$(dpkg-deb --field "verified-packages/${package}" Architecture)" = amd64
+          printf 'package=%s\nsha256=%s\ntag=%s\ncommit=%s\n' \
+            "${package}" "${sha256}" "${tag}" "${commit}" >> "${GITHUB_OUTPUT}"
+
+      - name: Record verified provenance
+        shell: bash
+        env:
+          VERSION: ${{ steps.source.outputs.version }}
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+          RELEASE_URL: ${{ steps.release.outputs.url }}
+          DEPENDENCY_IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
+          DEPENDENCY_IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          DEPENDENCY_IMAGE: ${{ steps.image.outputs.image }}
+          DEFAULT_PACKAGE: ${{ steps.packages.outputs.default_package }}
+          DEFAULT_SHA256: ${{ steps.packages.outputs.default_sha256 }}
+          TRILINOS_PACKAGE: ${{ steps.packages.outputs.trilinos_package }}
+          TRILINOS_SHA256: ${{ steps.packages.outputs.trilinos_sha256 }}
+          SVZEROD_PACKAGE: ${{ steps.svzerod.outputs.package }}
+          SVZEROD_SHA256: ${{ steps.svzerod.outputs.sha256 }}
+          SVZEROD_TAG: ${{ steps.svzerod.outputs.tag }}
+          SVZEROD_COMMIT: ${{ steps.svzerod.outputs.commit }}
+        run: |
+          jq -n \
+            --arg version "${VERSION}" \
+            --arg tag "${RELEASE_TAG}" \
+            --arg commit "${SOURCE_COMMIT}" \
+            --arg release_url "${RELEASE_URL}" \
+            --arg dependency_image_reference "${DEPENDENCY_IMAGE_REFERENCE}" \
+            --arg dependency_image_digest "${DEPENDENCY_IMAGE_DIGEST}" \
+            --arg dependency_image "${DEPENDENCY_IMAGE}" \
+            --arg default_package "${DEFAULT_PACKAGE}" \
+            --arg default_sha256 "${DEFAULT_SHA256}" \
+            --arg trilinos_package "${TRILINOS_PACKAGE}" \
+            --arg trilinos_sha256 "${TRILINOS_SHA256}" \
+            --arg svzerod_package "${SVZEROD_PACKAGE}" \
+            --arg svzerod_sha256 "${SVZEROD_SHA256}" \
+            --arg svzerod_tag "${SVZEROD_TAG}" \
+            --arg svzerod_commit "${SVZEROD_COMMIT}" \
+            '{
+              svmultiphysics: {
+                version: $version, tag: $tag, commit: $commit, release_url: $release_url,
+                packages: {
+                  default: {filename: $default_package, sha256: $default_sha256},
+                  trilinos: {filename: $trilinos_package, sha256: $trilinos_sha256}
+                }
+              },
+              dependency_image: {
+                requested: $dependency_image_reference,
+                digest: $dependency_image_digest,
+                resolved: $dependency_image
+              },
+              svzerodsolver: {
+                tag: $svzerod_tag, commit: $svzerod_commit,
+                package: {filename: $svzerod_package, sha256: $svzerod_sha256}
+              },
+              build_type: "Release"
+            }' > verified-packages/provenance.json
+          cp resolved-release.json verified-packages/release.json
+          printf '### Verified svMultiPhysics image inputs\n\n' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Release: [`%s`](%s)\n' "${RELEASE_TAG}" "${RELEASE_URL}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Commit: `%s`\n' "${SOURCE_COMMIT}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Version: `%s`\n' "${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Build type: `Release`\n' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Dependency image: `%s`\n' "${DEPENDENCY_IMAGE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Default package: `%s` (`%s`)\n' "${DEFAULT_PACKAGE}" "${DEFAULT_SHA256}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Trilinos package: `%s` (`%s`)\n' "${TRILINOS_PACKAGE}" "${TRILINOS_SHA256}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svZeroDSolver package: `%s` (`%s`)\n' "${SVZEROD_PACKAGE}" "${SVZEROD_SHA256}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svZeroDSolver source: `%s` (`%s`)\n' "${SVZEROD_TAG}" "${SVZEROD_COMMIT}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Check for already-published images
+        id: existing
+        shell: bash
+        env:
+          VERSION: ${{ steps.source.outputs.version }}
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+          RELEASE_URL: ${{ steps.release.outputs.url }}
+          DEPENDENCY_IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
+          DEPENDENCY_IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          DEFAULT_PACKAGE: ${{ steps.packages.outputs.default_package }}
+          DEFAULT_SHA256: ${{ steps.packages.outputs.default_sha256 }}
+          TRILINOS_PACKAGE: ${{ steps.packages.outputs.trilinos_package }}
+          TRILINOS_SHA256: ${{ steps.packages.outputs.trilinos_sha256 }}
+          SVZEROD_PACKAGE: ${{ steps.svzerod.outputs.package }}
+          SVZEROD_SHA256: ${{ steps.svzerod.outputs.sha256 }}
+          SVZEROD_TAG: ${{ steps.svzerod.outputs.tag }}
+          SVZEROD_COMMIT: ${{ steps.svzerod.outputs.commit }}
+        run: |
+          source "${GITHUB_WORKSPACE}/.github/actions/ci-helpers.sh"
+          matching_images=0
+          for configuration in default trilinos; do
+            reference="${SVMP_IMAGE_REPOSITORY}:${VERSION}-${configuration}"
+            if ! docker buildx imagetools inspect "${reference}" > /dev/null 2>&1; then
+              continue
+            fi
+
+            package="${DEFAULT_PACKAGE}"
+            package_sha256="${DEFAULT_SHA256}"
+            if [[ "${configuration}" == trilinos ]]; then
+              package="${TRILINOS_PACKAGE}"
+              package_sha256="${TRILINOS_SHA256}"
+            fi
+            read -r image_os image_architecture < <(ci_ghcr_image_platform "${reference}")
+            if [[ "${image_os}" != linux || "${image_architecture}" != amd64 ]]; then
+              echo "${reference} is ${image_os}/${image_architecture}, not linux/amd64" >&2
+              exit 1
+            fi
+            labels=$(ci_ghcr_image_labels "${reference}")
+            if ! jq -e \
+              --arg title "svMultiPhysics ${configuration}" \
+              --arg description "svMultiPhysics ${configuration} configuration for Ubuntu 26.04 AMD64" \
+              --arg version "${VERSION}" \
+              --arg tag "${RELEASE_TAG}" \
+              --arg commit "${SOURCE_COMMIT}" \
+              --arg release_url "${RELEASE_URL}" \
+              --arg configuration "${configuration}" \
+              --arg dependency_reference "${DEPENDENCY_IMAGE_REFERENCE}" \
+              --arg dependency_digest "${DEPENDENCY_IMAGE_DIGEST}" \
+              --arg package "${package}" \
+              --arg package_sha256 "${package_sha256}" \
+              --arg svzerod_package "${SVZEROD_PACKAGE}" \
+              --arg svzerod_sha256 "${SVZEROD_SHA256}" \
+              --arg svzerod_tag "${SVZEROD_TAG}" \
+              --arg svzerod_commit "${SVZEROD_COMMIT}" \
+              '.["org.opencontainers.image.title"] == $title and
+               .["org.opencontainers.image.description"] == $description and
+               .["org.opencontainers.image.source"] == "https://github.com/SimVascular/svMultiPhysics" and
+               .["org.opencontainers.image.version"] == $version and
+               .["org.opencontainers.image.revision"] == $commit and
+               .["org.opencontainers.image.ref.name"] == $tag and
+               .["org.opencontainers.image.url"] == $release_url and
+               .["org.opencontainers.image.created"] != null and
+               .["org.simvascular.svmultiphysics.configuration"] == $configuration and
+               .["org.simvascular.build.type"] == "Release" and
+               .["org.simvascular.dependency-image.reference"] == $dependency_reference and
+               .["org.simvascular.dependency-image.digest"] == $dependency_digest and
+               .["org.simvascular.svmultiphysics.package.filename"] == $package and
+               .["org.simvascular.svmultiphysics.package.sha256"] == $package_sha256 and
+               .["org.simvascular.svzerodsolver.tag"] == $svzerod_tag and
+               .["org.simvascular.svzerodsolver.commit"] == $svzerod_commit and
+               .["org.simvascular.svzerodsolver.package.filename"] == $svzerod_package and
+               .["org.simvascular.svzerodsolver.package.sha256"] == $svzerod_sha256 and
+               .["org.simvascular.github-actions.run-url"] != null' \
+              <<< "${labels}" > /dev/null; then
+              echo "${reference} already exists with conflicting provenance" >&2
+              exit 1
+            fi
+
+            read -r _ digest _ < <(ci_resolve_ghcr_image "${reference}")
+            matching_images=$((matching_images + 1))
+            printf '### Existing validated svMultiPhysics %s image\n\n' \
+              "${configuration}" >> "${GITHUB_STEP_SUMMARY}"
+            printf -- '- Image: `%s`\n' "${reference}" >> "${GITHUB_STEP_SUMMARY}"
+            printf -- '- Digest: `%s`\n' "${digest}" >> "${GITHUB_STEP_SUMMARY}"
+          done
+
+          already_published=false
+          if [[ "${matching_images}" -eq 2 ]]; then
+            already_published=true
+            printf 'Both final images already match the requested release; build, validation, and publication are skipped.\n' \
+              >> "${GITHUB_STEP_SUMMARY}"
+          fi
+          printf 'already_published=%s\n' "${already_published}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload verified package inputs
+        if: steps.existing.outputs.already_published != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: svmultiphysics-image-inputs-${{ steps.source.outputs.commit }}
+          path: verified-packages/
+          if-no-files-found: error
+
+  build:
+    name: Build ${{ matrix.configuration }} image
+    needs: prepare
+    if: needs.prepare.outputs.already_published != 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [default, trilinos]
+    env:
+      IMAGE_REFERENCE: ${{ needs.prepare.outputs.image_repository }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+      SVMP_PACKAGE: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package || needs.prepare.outputs.trilinos_package }}
+      SVMP_PACKAGE_SHA256: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package_sha256 || needs.prepare.outputs.trilinos_package_sha256 }}
+      WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Check out image recipe
+        uses: actions/checkout@v7
+
+      - name: Download verified package inputs
+        uses: actions/download-artifact@v8
+        with:
+          name: svmultiphysics-image-inputs-${{ needs.prepare.outputs.commit }}
+          path: packages
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image from verified packages
+        id: image
+        shell: bash
+        run: |
+          image_created=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          mkdir -p image
+          docker buildx build \
+            --platform linux/amd64 \
+            --load \
+            --file Docker/svmultiphysics/dockerfile \
+            --tag "${IMAGE_REFERENCE}" \
+            --metadata-file image/build-metadata.json \
+            --build-arg "DEPENDENCY_IMAGE=${{ needs.prepare.outputs.dependency_image }}" \
+            --build-arg "DEPENDENCY_IMAGE_REFERENCE=${{ needs.prepare.outputs.dependency_image_reference }}" \
+            --build-arg "DEPENDENCY_IMAGE_DIGEST=${{ needs.prepare.outputs.dependency_image_digest }}" \
+            --build-arg "SVMP_PACKAGE=packages/${SVMP_PACKAGE}" \
+            --build-arg "SVMP_PACKAGE_FILENAME=${SVMP_PACKAGE}" \
+            --build-arg "SVMP_PACKAGE_SHA256=${SVMP_PACKAGE_SHA256}" \
+            --build-arg "SVMP_CONFIGURATION=${{ matrix.configuration }}" \
+            --build-arg "SVMP_VERSION=${{ needs.prepare.outputs.version }}" \
+            --build-arg "SVMP_TAG=${{ needs.prepare.outputs.tag }}" \
+            --build-arg "SVMP_COMMIT=${{ needs.prepare.outputs.commit }}" \
+            --build-arg "SVZEROD_PACKAGE=packages/${{ needs.prepare.outputs.svzerod_package }}" \
+            --build-arg "SVZEROD_PACKAGE_FILENAME=${{ needs.prepare.outputs.svzerod_package }}" \
+            --build-arg "SVZEROD_PACKAGE_SHA256=${{ needs.prepare.outputs.svzerod_package_sha256 }}" \
+            --build-arg "SVZEROD_TAG=${{ needs.prepare.outputs.svzerod_tag }}" \
+            --build-arg "SVZEROD_COMMIT=${{ needs.prepare.outputs.svzerod_commit }}" \
+            --build-arg 'BUILD_TYPE=Release' \
+            --build-arg "IMAGE_CREATED=${image_created}" \
+            --build-arg "RELEASE_URL=${{ needs.prepare.outputs.release_url }}" \
+            --build-arg "WORKFLOW_RUN_URL=${WORKFLOW_RUN_URL}" \
+            .
+          printf 'created=%s\n' "${image_created}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify image metadata and export image
+        id: export
+        shell: bash
+        env:
+          IMAGE_CREATED: ${{ steps.image.outputs.created }}
+        run: |
+          image_label() {
+            docker image inspect --format "{{ index .Config.Labels \"$1\" }}" "${IMAGE_REFERENCE}"
+          }
+          test "$(image_label org.opencontainers.image.version)" = '${{ needs.prepare.outputs.version }}'
+          test "$(image_label org.opencontainers.image.revision)" = '${{ needs.prepare.outputs.commit }}'
+          test "$(image_label org.opencontainers.image.ref.name)" = '${{ needs.prepare.outputs.tag }}'
+          test "$(image_label org.opencontainers.image.created)" = "${IMAGE_CREATED}"
+          test "$(image_label org.opencontainers.image.url)" = '${{ needs.prepare.outputs.release_url }}'
+          test "$(image_label org.simvascular.svmultiphysics.configuration)" = '${{ matrix.configuration }}'
+          test "$(image_label org.simvascular.build.type)" = Release
+          test "$(image_label org.simvascular.dependency-image.reference)" = '${{ needs.prepare.outputs.dependency_image_reference }}'
+          test "$(image_label org.simvascular.dependency-image.digest)" = '${{ needs.prepare.outputs.dependency_image_digest }}'
+          test "$(image_label org.simvascular.svmultiphysics.package.filename)" = "${SVMP_PACKAGE}"
+          test "$(image_label org.simvascular.svmultiphysics.package.sha256)" = "${SVMP_PACKAGE_SHA256}"
+          test "$(image_label org.simvascular.svzerodsolver.tag)" = '${{ needs.prepare.outputs.svzerod_tag }}'
+          test "$(image_label org.simvascular.svzerodsolver.commit)" = '${{ needs.prepare.outputs.svzerod_commit }}'
+          test "$(image_label org.simvascular.svzerodsolver.package.filename)" = '${{ needs.prepare.outputs.svzerod_package }}'
+          test "$(image_label org.simvascular.svzerodsolver.package.sha256)" = '${{ needs.prepare.outputs.svzerod_package_sha256 }}'
+          test "$(image_label org.simvascular.github-actions.run-url)" = "${WORKFLOW_RUN_URL}"
+
+          archive="image/svmultiphysics-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}.tar.gz"
+          docker image inspect "${IMAGE_REFERENCE}" > "image/${{ matrix.configuration }}-inspect.json"
+          cp packages/provenance.json "image/${{ matrix.configuration }}-provenance.json"
+          # Validation checks out the release commit, so preserve the current workflow's helpers in the artifact.
+          cp .github/actions/ci-helpers.sh image/ci-helpers.sh
+          docker buildx prune --all --force
+          docker save "${IMAGE_REFERENCE}" | gzip -1 > "${archive}"
+          test -s "${archive}"
+          image_id=$(docker image inspect --format '{{.Id}}' "${IMAGE_REFERENCE}")
+          image_size=$(docker image inspect --format '{{.Size}}' "${IMAGE_REFERENCE}")
+          printf 'archive=%s\nid=%s\nsize=%s\n' \
+            "${archive}" "${image_id}" "${image_size}" >> "${GITHUB_OUTPUT}"
+
+      - name: Summarize image build
+        shell: bash
+        env:
+          IMAGE_CREATED: ${{ steps.image.outputs.created }}
+          IMAGE_ID: ${{ steps.export.outputs.id }}
+          IMAGE_SIZE: ${{ steps.export.outputs.size }}
+        run: |
+          printf '### svMultiPhysics %s image\n\n' '${{ matrix.configuration }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Image: `%s`\n' "${IMAGE_REFERENCE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Image ID: `%s`\n' "${IMAGE_ID}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Image size: `%s` bytes\n' "${IMAGE_SIZE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Created: `%s`\n' "${IMAGE_CREATED}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svMultiPhysics source: `%s` (`%s`)\n' \
+            '${{ needs.prepare.outputs.tag }}' '${{ needs.prepare.outputs.commit }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svMultiPhysics package: `%s` (`%s`)\n' \
+            "${SVMP_PACKAGE}" "${SVMP_PACKAGE_SHA256}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svZeroDSolver package: `%s` (`%s`)\n' \
+            '${{ needs.prepare.outputs.svzerod_package }}' \
+            '${{ needs.prepare.outputs.svzerod_package_sha256 }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Dependency image: `%s`\n' \
+            '${{ needs.prepare.outputs.dependency_image }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Saved image: `%s`\n' '${{ steps.export.outputs.archive }}' >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+          path: image/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  validate:
+    name: Validate ${{ matrix.configuration }} image
+    needs: [prepare, build]
+    if: needs.prepare.outputs.already_published != 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [default, trilinos]
+    env:
+      IMAGE_REFERENCE: ${{ needs.prepare.outputs.image_repository }}:${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+      SVMP_PACKAGE: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package || needs.prepare.outputs.trilinos_package }}
+      SVMP_PACKAGE_SHA256: ${{ matrix.configuration == 'default' && needs.prepare.outputs.default_package_sha256 || needs.prepare.outputs.trilinos_package_sha256 }}
+      SVMP_SOLVER_CONFIGURATION: ${{ matrix.configuration }}
+      SVMP_TEST_PROCS: '1,3,4'
+      WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Check out integration-test fixtures
+        uses: actions/checkout@v7
+        with:
+          repository: SimVascular/svMultiPhysics
+          ref: ${{ needs.prepare.outputs.commit }}
+          lfs: true
+
+      - name: Download image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}
+          path: image
+
+      - name: Load image artifact
+        shell: bash
+        run: |
+          archive="image/svmultiphysics-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}.tar.gz"
+          test -s "${archive}"
+          gzip -dc "${archive}" | docker load
+          docker image inspect "${IMAGE_REFERENCE}" > /dev/null
+          rm -f "${archive}"
+
+      - name: Check svMultiPhysics version
+        shell: bash
+        run: |
+          docker run --rm --platform linux/amd64 \
+            -e EXPECTED_VERSION='${{ needs.prepare.outputs.version }}' \
+            -e EXPECTED_TAG='${{ needs.prepare.outputs.tag }}' \
+            -e EXPECTED_COMMIT='${{ needs.prepare.outputs.commit }}' \
+            -e EXPECTED_CONFIGURATION='${{ matrix.configuration }}' \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            "${IMAGE_REFERENCE}" bash -euc '
+              source /workspace/image/ci-helpers.sh
+              executable=$(command -v svmultiphysics)
+              SVMP_SOLVER_EXECUTABLE="${executable}" ci_check_installed_svmultiphysics_version \
+                "${EXPECTED_VERSION}" "${EXPECTED_TAG}" \
+                "${EXPECTED_COMMIT}" "${EXPECTED_CONFIGURATION}"
+            '
+
+      - name: Verify labels and package provenance
+        shell: bash
+        run: |
+          provenance="image/${{ matrix.configuration }}-provenance.json"
+          test -s "${provenance}"
+          jq -e \
+            --arg version '${{ needs.prepare.outputs.version }}' \
+            --arg tag '${{ needs.prepare.outputs.tag }}' \
+            --arg commit '${{ needs.prepare.outputs.commit }}' \
+            --arg release_url '${{ needs.prepare.outputs.release_url }}' \
+            --arg dependency_reference '${{ needs.prepare.outputs.dependency_image_reference }}' \
+            --arg dependency_digest '${{ needs.prepare.outputs.dependency_image_digest }}' \
+            --arg dependency_image '${{ needs.prepare.outputs.dependency_image }}' \
+            --arg configuration '${{ matrix.configuration }}' \
+            --arg package "${SVMP_PACKAGE}" \
+            --arg package_sha256 "${SVMP_PACKAGE_SHA256}" \
+            --arg svzerod_package '${{ needs.prepare.outputs.svzerod_package }}' \
+            --arg svzerod_sha256 '${{ needs.prepare.outputs.svzerod_package_sha256 }}' \
+            --arg svzerod_tag '${{ needs.prepare.outputs.svzerod_tag }}' \
+            --arg svzerod_commit '${{ needs.prepare.outputs.svzerod_commit }}' \
+            '.svmultiphysics.version == $version and
+             .svmultiphysics.tag == $tag and
+             .svmultiphysics.commit == $commit and
+             .svmultiphysics.release_url == $release_url and
+             .svmultiphysics.packages[$configuration].filename == $package and
+             .svmultiphysics.packages[$configuration].sha256 == $package_sha256 and
+             .dependency_image.requested == $dependency_reference and
+             .dependency_image.digest == $dependency_digest and
+             .dependency_image.resolved == $dependency_image and
+             .svzerodsolver.tag == $svzerod_tag and
+             .svzerodsolver.commit == $svzerod_commit and
+             .svzerodsolver.package.filename == $svzerod_package and
+             .svzerodsolver.package.sha256 == $svzerod_sha256 and
+             .build_type == "Release"' "${provenance}" > /dev/null
+
+          image_label() {
+            docker image inspect --format "{{ index .Config.Labels \"$1\" }}" "${IMAGE_REFERENCE}"
+          }
+          test "$(docker image inspect --format '{{.Id}}' "${IMAGE_REFERENCE}")" = \
+            "$(jq -er '.[0].Id' "image/${{ matrix.configuration }}-inspect.json")"
+          test "$(docker image inspect --format '{{.Architecture}}' "${IMAGE_REFERENCE}")" = amd64
+          test "$(image_label org.opencontainers.image.title)" = \
+            'svMultiPhysics ${{ matrix.configuration }}'
+          test "$(image_label org.opencontainers.image.description)" = \
+            'svMultiPhysics ${{ matrix.configuration }} configuration for Ubuntu 26.04 AMD64'
+          test "$(image_label org.opencontainers.image.source)" = \
+            'https://github.com/SimVascular/svMultiPhysics'
+          test "$(image_label org.opencontainers.image.version)" = '${{ needs.prepare.outputs.version }}'
+          test "$(image_label org.opencontainers.image.revision)" = '${{ needs.prepare.outputs.commit }}'
+          test "$(image_label org.opencontainers.image.ref.name)" = '${{ needs.prepare.outputs.tag }}'
+          image_created=$(image_label org.opencontainers.image.created)
+          date -d "${image_created}" > /dev/null
+          test "$(image_label org.opencontainers.image.url)" = '${{ needs.prepare.outputs.release_url }}'
+          test "$(image_label org.simvascular.svmultiphysics.configuration)" = '${{ matrix.configuration }}'
+          test "$(image_label org.simvascular.build.type)" = Release
+          test "$(image_label org.simvascular.dependency-image.reference)" = '${{ needs.prepare.outputs.dependency_image_reference }}'
+          test "$(image_label org.simvascular.dependency-image.digest)" = '${{ needs.prepare.outputs.dependency_image_digest }}'
+          test "$(image_label org.simvascular.svmultiphysics.package.filename)" = "${SVMP_PACKAGE}"
+          test "$(image_label org.simvascular.svmultiphysics.package.sha256)" = "${SVMP_PACKAGE_SHA256}"
+          test "$(image_label org.simvascular.svzerodsolver.tag)" = '${{ needs.prepare.outputs.svzerod_tag }}'
+          test "$(image_label org.simvascular.svzerodsolver.commit)" = '${{ needs.prepare.outputs.svzerod_commit }}'
+          test "$(image_label org.simvascular.svzerodsolver.package.filename)" = '${{ needs.prepare.outputs.svzerod_package }}'
+          test "$(image_label org.simvascular.svzerodsolver.package.sha256)" = '${{ needs.prepare.outputs.svzerod_package_sha256 }}'
+          test "$(image_label org.simvascular.github-actions.run-url)" = "${WORKFLOW_RUN_URL}"
+
+          installed=$(docker run --rm --platform linux/amd64 "${IMAGE_REFERENCE}" \
+            dpkg-query -W '-f=${Package} ${Version} ${Architecture}\n' \
+            svmultiphysics svzerodsolver)
+          expected_svzerod='${{ needs.prepare.outputs.svzerod_tag }}'
+          test "${installed}" = "$(printf 'svmultiphysics %s amd64\nsvzerodsolver %s amd64' \
+            '${{ needs.prepare.outputs.version }}' "${expected_svzerod#v}")"
+
+      - name: Verify shared libraries and MPI
+        shell: bash
+        run: |
+          docker run --rm --platform linux/amd64 \
+            -e OMPI_ALLOW_RUN_AS_ROOT=1 \
+            -e OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+            -e PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe \
+            -e SVMP_TEST_PROCS \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            "${IMAGE_REFERENCE}" bash -euc '
+              source /workspace/image/ci-helpers.sh
+              ci_check_installed_svmultiphysics_libraries
+              ci_check_installed_svmultiphysics_mpi
+            '
+
+      - name: Run integration tests against installed svMultiPhysics
+        shell: bash
+        run: |
+          mkdir -p test-results
+          docker run --rm --platform linux/amd64 \
+            -e OMPI_ALLOW_RUN_AS_ROOT=1 \
+            -e OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+            -e PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe \
+            -e GITHUB_WORKSPACE=/workspace \
+            -e SVMP_SOLVER_CONFIGURATION \
+            -e SVMP_TEST_PROCS \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            "${IMAGE_REFERENCE}" bash -euc '
+              source /workspace/image/ci-helpers.sh
+              ci_run_installed_svmultiphysics_tests \
+                "/workspace/test-results/${SVMP_SOLVER_CONFIGURATION}.xml"
+            '
+
+      - name: Upload integration-test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-${{ matrix.configuration }}-test-results
+          path: test-results/*.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Summarize image validation
+        if: success()
+        shell: bash
+        run: |
+          printf '### svMultiPhysics %s image validation\n\n' '${{ matrix.configuration }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Image: `%s`\n' "${IMAGE_REFERENCE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Version: `%s`\n' '${{ needs.prepare.outputs.version }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Source: `%s` (`%s`)\n' \
+            '${{ needs.prepare.outputs.tag }}' '${{ needs.prepare.outputs.commit }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svMultiPhysics package: `%s` (`%s`)\n' \
+            "${SVMP_PACKAGE}" "${SVMP_PACKAGE_SHA256}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- svZeroDSolver package: `%s` (`%s`)\n' \
+            '${{ needs.prepare.outputs.svzerod_package }}' \
+            '${{ needs.prepare.outputs.svzerod_package_sha256 }}' >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- MPI ranks checked: `%s`\n' "${SVMP_TEST_PROCS}" >> "${GITHUB_STEP_SUMMARY}"
+          printf -- '- Integration tests: passed\n' >> "${GITHUB_STEP_SUMMARY}"
+
+  publish:
+    name: Publish validated images
+    needs: [prepare, validate]
+    if: >-
+      needs.prepare.outputs.already_published != 'true' &&
+      github.repository == 'SimVascular/svMultiPhysics' &&
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ${{ needs.prepare.outputs.image_repository }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Download validated default image
+        uses: actions/download-artifact@v8
+        with:
+          name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-default
+          path: images/default
+
+      - name: Download validated Trilinos image
+        uses: actions/download-artifact@v8
+        with:
+          name: svmultiphysics-image-${{ needs.prepare.outputs.version }}-trilinos
+          path: images/trilinos
+
+      - name: Load validated images
+        shell: bash
+        run: |
+          cmp images/default/ci-helpers.sh images/trilinos/ci-helpers.sh
+          for configuration in default trilinos; do
+            archive="images/${configuration}/svmultiphysics-${VERSION}-${configuration}.tar.gz"
+            reference="${IMAGE}:${VERSION}-${configuration}"
+            test -s "${archive}"
+            gzip -dc "${archive}" | docker load
+            docker image inspect "${reference}" > /dev/null
+            rm -f "${archive}"
+          done
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for conflicting image tags
+        shell: bash
+        run: |
+          source images/default/ci-helpers.sh
+          mkdir -p publication
+          for configuration in default trilinos; do
+            reference="${IMAGE}:${VERSION}-${configuration}"
+            preserved="svmultiphysics-publication:${configuration}"
+            docker tag "${reference}" "${preserved}"
+            local_labels=$(docker image inspect --format '{{json .Config.Labels}}' "${preserved}" | \
+              jq -S 'del(."org.opencontainers.image.created", ."org.simvascular.github-actions.run-url")')
+            status=new
+            remote_digest=
+
+            if inspect_error=$(docker buildx imagetools inspect "${reference}" 2>&1 > /dev/null); then
+              read -r _ remote_digest _ < <(ci_resolve_ghcr_image "${reference}")
+              docker pull --platform linux/amd64 "${reference}"
+              remote_labels=$(docker image inspect --format '{{json .Config.Labels}}' "${reference}" | \
+                jq -S 'del(."org.opencontainers.image.created", ."org.simvascular.github-actions.run-url")')
+              if [[ "${remote_labels}" != "${local_labels}" ]]; then
+                echo "${reference} already exists with conflicting provenance" >&2
+                exit 1
+              fi
+              status=existing
+            elif [[ "${inspect_error}" != *'not found'* ]]; then
+              echo "Could not check whether ${reference} exists: ${inspect_error}" >&2
+              exit 1
+            fi
+
+            # Restore the validated artifact's tag after a comparison pull.
+            docker tag "${preserved}" "${reference}"
+            printf '%s\n' "${status}" > "publication/${configuration}.status"
+            printf '%s\n' "${remote_digest}" > "publication/${configuration}.digest"
+          done
+
+      - name: Push and verify both images
+        shell: bash
+        run: |
+          source images/default/ci-helpers.sh
+          for configuration in default trilinos; do
+            reference="${IMAGE}:${VERSION}-${configuration}"
+            status=$(<"publication/${configuration}.status")
+            expected_digest=$(<"publication/${configuration}.digest")
+
+            if [[ "${status}" == new ]]; then
+              push_output=$(docker push "${reference}")
+              printf '%s\n' "${push_output}"
+              expected_digest=$(awk '{ for (i = 1; i <= NF; i++) if ($i == "digest:") { print $(i + 1); exit } }' <<< "${push_output}")
+              if [[ ! "${expected_digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+                echo "Could not determine the pushed digest for ${reference}" >&2
+                exit 1
+              fi
+            fi
+
+            published_digest=
+            for attempt in {1..8}; do
+              if read -r _ published_digest _ < <(ci_resolve_ghcr_image "${reference}" 2>/dev/null) &&
+                 [[ "${published_digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+                break
+              fi
+              sleep 3
+            done
+            if [[ "${published_digest}" != "${expected_digest}" ]]; then
+              echo "${reference} resolves to ${published_digest:-nothing}, not ${expected_digest}" >&2
+              exit 1
+            fi
+
+            printf '### Published svMultiPhysics %s image\n\n' "${configuration}" >> "${GITHUB_STEP_SUMMARY}"
+            printf -- '- Image: `%s`\n' "${reference}" >> "${GITHUB_STEP_SUMMARY}"
+            printf -- '- Digest: `%s`\n' "${published_digest}" >> "${GITHUB_STEP_SUMMARY}"
+            printf -- '- Source tag: `%s`\n' '${{ needs.prepare.outputs.tag }}' >> "${GITHUB_STEP_SUMMARY}"
+            printf -- '- Source commit: `%s`\n' '${{ needs.prepare.outputs.commit }}' >> "${GITHUB_STEP_SUMMARY}"
+            printf -- '- Publication status: `%s`\n' "${status}" >> "${GITHUB_STEP_SUMMARY}"
+          done

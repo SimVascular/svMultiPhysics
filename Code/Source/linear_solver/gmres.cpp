@@ -26,39 +26,6 @@ namespace gmres {
 
 namespace {
 
-void bc_pre(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
-            const int mynNo, const int nNo) {
-  int nsd = dof - 1;
-  Array<double> v(nsd,nNo);
-
-  for (int faIn = 0; faIn < lhs.nFaces; faIn++) {
-    auto &face = lhs.face[faIn];
-    if (face.coupledFlag) {
-      if (face.sharedFlag) {
-        v = 0.0;
-
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            v(i,Ac) = face.valM(i,a);
-          }
-        }
-
-        face.nS = pow(norm::fsi_ls_normv(nsd, mynNo, lhs.commu, v), 2.0);
-
-      } else { 
-        face.nS = 0.0;
-        for (int a = 0; a < face.nNo; a++) {
-          int Ac = face.glob(a);
-          for (int i = 0; i < nsd; i++) {
-            face.nS = face.nS + pow(face.valM(i,a), 2.0);
-          }
-        }
-      }
-    }
-  }
-}
-
 /// @brief Orthogonalize the newest Krylov vector against the preceding ones,
 /// for one unknown per node.
 ///
@@ -114,6 +81,17 @@ void orthogonalize_v(fsi_linear_solver::FSILS_lhsType &lhs, const int dof,
   omp_la::omp_mul_v(dof, nNo, 1.0 / h(i + 1, i), w);
 }
 
+/// @brief Return the Krylov basis kept in 'ls', reallocating it only when its
+/// shape changes. Each basis vector is written before it is read, so the basis
+/// is never zeroed and pages of vectors no solve reaches are never touched.
+Array3<double>& krylov_basis(fsi_linear_solver::FSILS_subLsType &ls,
+                             const int dof, const int nNo) {
+  if (ls.u.nrows() != dof || ls.u.ncols() != nNo || ls.u.nslices() != ls.sD + 1) {
+    ls.u.resize(dof, nNo, ls.sD + 1, false);
+  }
+  return ls.u;
+}
+
 } // namespace
 
 /// @brief Solver the system Val * X = R.
@@ -144,8 +122,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
   #endif
 
   Array<double> h(ls.sD+1,ls.sD); 
-  Array3<double> u(dof,nNo,ls.sD+1); 
-  Array<double> unCondU(dof,nNo);
+  auto &u = krylov_basis(ls, dof, nNo);
   Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD+1);
 
   double time = fsi_linear_solver::fsils_cpu_t();
@@ -166,7 +143,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       auto u_slice = u.rslice(0);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, X, u_slice);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, X, u_slice);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, X, u_slice);
 
       ls.itr = ls.itr + 1;
       u.set_slice(0, R - u_slice);
@@ -176,7 +153,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       if (face.coupledFlag) {
         auto u_slice = u.rslice(0);
         auto unCondU = u.rslice(0);
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice);
         break; 
       }
     }
@@ -216,7 +193,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
       auto u_slice_1 = u.rslice(i+1);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, u_slice, u_slice_1);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, u_slice, u_slice_1);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, u_slice, u_slice_1);
 
       ls.itr = ls.itr + 1;
 
@@ -224,7 +201,7 @@ void gmres(fsi_linear_solver::FSILS_lhsType &lhs,
         if (face.coupledFlag) {
           auto u_slice_1 = u.rslice(i+1);
           auto unCondU = u.rslice(i+1);
-          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice_1);
+          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice_1);
           break;
         }
       }
@@ -343,7 +320,8 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   }
 
   Array<double> h(ls.sD + 1, ls.sD);
-  Array<double> u(nNo, ls.sD + 1);
+  // A one-row basis is laid out as nNo x (sD + 1), one basis vector per column.
+  Array<double> u(nNo, ls.sD + 1, krylov_basis(ls, 1, nNo).slice_data(0));
   Vector<double> X(nNo), y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD + 1);
 
   for (int l = 0; l < ls.mItr; l++) {
@@ -353,7 +331,7 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     #endif
     ls.dB = ls.fNorm;
     ls.itr = ls.itr + 1;
-    auto u_col = u.col(0);
+    auto u_col = u.rcol(0);
     spar_mul::fsils_spar_mul_ss(lhs, lhs.rowPtr, lhs.colPtr, Val, X, u_col);
     u.set_col(0, R - u_col);
 
@@ -377,9 +355,8 @@ void gmres_s(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       ls.itr = ls.itr + 1;
       last_i = i;
       auto u_col = u.col(i);
-      auto u_col_1 = u.col(i+1);
+      auto u_col_1 = u.rcol(i+1);
       spar_mul::fsils_spar_mul_ss(lhs, lhs.rowPtr, lhs.colPtr, Val, u_col, u_col_1);
-      u.set_col(i+1, u_col_1);
 
       orthogonalize_s(lhs, nNo, mynNo, i, u, h);
 
@@ -460,6 +437,24 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   double time = fsi_linear_solver::fsils_cpu_t();
   #endif
 
+  // @todo[michelebucelli] The preconditioning of coupled Neumann faces is
+  // inconsistent:
+  // - 'flag' is always false, so this function never applies the approximate
+  //   inverse of the operator of the coupled faces (BCOP_TYPE_PRE), and does
+  //   not use face.nS, which compute_coupled_face_norms() computes below.
+  //   gmres() and cgrad::schur() do apply it. gmres_s() declares the same
+  //   variable and does not use it.
+  // - compute_coupled_face_norms() is called with dof - 1 components. For an
+  //   equation with dof == nsd, such as struct, this leaves out the last
+  //   component of the face vectors, while add_bc_mul() applies all of them.
+  // - face.nS is the squared norm of the scaled unit pressure load. The
+  //   Sherman-Morrison formula takes its scalar product with the scaled flow
+  //   rate derivative, which is a different vector for a struct equation
+  //   coupled to svZeroD.
+  // With 'flag' true, all components and the scalar product, a ventricle case
+  // coupled to svZeroD takes about one GMRES iteration less per solve while
+  // both valves are closed (0.1 % less over a run), and the Newton residuals
+  // are 15 % larger on average in that phase.
   bool flag = false;
   int nNo = lhs.nNo;
   int mynNo = lhs.mynNo;
@@ -486,7 +481,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   dmsg << "eps: " << eps;
   #endif
 
-  bc_pre(lhs, dof, mynNo, nNo);
+  add_bc_mul::compute_coupled_face_norms(lhs, dof - 1);
 
   if (ls.iNorm <= ls.absTol) {
     ls.callD = std::numeric_limits<double>::epsilon();
@@ -497,8 +492,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
   }
 
   Array<double> h(ls.sD + 1, ls.sD), X(dof, nNo);
-  Array3<double> u(dof, nNo, ls.sD + 1);
-  Array<double> unCondU(dof, nNo);
+  auto &u = krylov_basis(ls, dof, nNo);
   Vector<double> y(ls.sD), c(ls.sD), s(ls.sD), err(ls.sD + 1);
 
   for (int l = 0; l < ls.mItr; l++) {
@@ -510,7 +504,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
     auto u_slice = u.rslice(0);
     spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, X, u_slice);
 
-    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, X, u_slice);
+    add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, X, u_slice);
 
     u_slice = R - u_slice;
 
@@ -518,7 +512,7 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       if (face.coupledFlag && flag) {
         auto u_slice = u.rslice(0);
         auto unCondU = u.rslice(0);
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice);
         break;
       }
     }
@@ -543,13 +537,13 @@ void gmres_v(fsi_linear_solver::FSILS_lhsType& lhs, fsi_linear_solver::FSILS_sub
       auto u_slice_1 = u.rslice(i+1);
       spar_mul::fsils_spar_mul_vv(lhs, lhs.rowPtr, lhs.colPtr, dof,  Val, u_slice, u_slice_1);
 
-      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, dof, u_slice, u_slice_1);
+      add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_ADD, u_slice, u_slice_1);
 
       for (auto& face : lhs.face) {
         if (face.coupledFlag && flag) {
           auto u_slice_1 = u.rslice(i+1);
           auto unCondU = u.rslice(i+1);
-          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, u_slice_1);
+          add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, u_slice_1);
           break;
         }
       }

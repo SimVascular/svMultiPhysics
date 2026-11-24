@@ -47,7 +47,6 @@ class Vector
     {
       // [NOTE] This is tfu but need to mimic Fortran that can allocate 0-sized arrays.
       if (size <= 0) {
-        is_allocated_ = true;
         return;
       }
       check_type();
@@ -103,10 +102,13 @@ class Vector
       num_allocated += 1;
       active += 1;
     }
-  
+
+    /// @brief Test if the vector has a positive size.
+    ///
+    /// @return True if the size of the vector is greater than zero.
     bool allocated() const
     {
-      return is_allocated_ ;
+      return size_ > 0;
     }
 
     /// @brief Free the array data. 
@@ -124,7 +126,6 @@ class Vector
         memory_returned += sizeof(T) * size_;;
       }
 
-      is_allocated_  = false;
       size_ = 0;
       data_ = nullptr;
     }
@@ -138,23 +139,23 @@ class Vector
     }   
 
     /// @brief Resize the vector's memory.
+    ///
+    /// The previous content is discarded and the new elements are set to
+    /// zero. A size of zero or less leaves the vector empty.
     //
     void resize(const int size)
     { 
-      if (size <= 0) {
-        //throw std::runtime_error(+"Allocating a zero size Vector.");
-        return;
+      if (reference_data_) {
+        throw std::runtime_error("[Vector] Can't resize a Vector with reference data.");
       }
+
       if (data_ != nullptr) {
-        if (reference_data_) { 
-          throw std::runtime_error("[Vector] Can't resize a Vector with reference data.");
-        }
-        delete[] data_; 
+        delete[] data_;
         memory_in_use -= sizeof(T) * size_;;
         memory_returned += sizeof(T) * size_;;
-        size_ = 0;
         data_ = nullptr;
-      } 
+      }
+      size_ = 0;
       allocate(size);
     }
     
@@ -181,23 +182,27 @@ class Vector
       data_ = new_data;
     }
 
+    /// @brief Replace the content of the vector with a list of values.
+    ///
+    /// The previous content is discarded. An empty list leaves the vector
+    /// empty.
+    //
     void set_values(std::initializer_list<T> values)
     {
-      if (values.size() == 0) {
-        return;
-      }
       check_type();
-      allocate(values.size());
+      resize(values.size());
       std::copy(values.begin(), values.end(), data_);
     }
 
+    /// @brief Replace the content of the vector with a list of values.
+    ///
+    /// The previous content is discarded. An empty list leaves the vector
+    /// empty.
+    //
     void set_values(std::vector<T> values)
     {
-      if (values.size() == 0) {
-        return;
-      }
       check_type();
-      allocate(values.size());
+      resize(values.size());
       std::copy(values.begin(), values.end(), data_);
     }
 
@@ -240,13 +245,11 @@ class Vector
     ///   2) Copy data_
     ///
     /// Fortran using 2) I think.
+    ///
+    /// Assigning an empty vector leaves this vector empty.
     //
     Vector& operator=(const Vector& rhs)
     {
-      if (rhs.size_ <= 0) {
-        return *this;
-      }
-
       if (this == &rhs) {
         return *this;
       }
@@ -256,7 +259,9 @@ class Vector
         allocate(rhs.size_);
       }
 
-      memcpy(data_, rhs.data_, sizeof(T) * size_);
+      if (size_ > 0) {
+        memcpy(data_, rhs.data_, sizeof(T) * size_);
+      }
 
       return *this;
     }
@@ -621,7 +626,6 @@ class Vector
     }
 
   private:
-    bool is_allocated_ = false;
     int size_ = 0;
     bool reference_data_ = false;
     T *data_ = nullptr;

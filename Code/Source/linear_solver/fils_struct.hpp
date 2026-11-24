@@ -104,7 +104,7 @@ class FSILS_faceType
     /// Number of nodes                (IN)
     int nNo = 0;
 
-    /// Degrees of freedom for val     (IN)
+    /// Components per node            (IN)
     int dof = 0;
 
     /// Dir/Neu                        (IN)
@@ -116,31 +116,43 @@ class FSILS_faceType
     /// Global node number             (IN)
     Vector<int> glob;
 
-    /// ||Sai||**2._LSRP                   (USE)
+    /// Neumann: squared norm of scaled_unit_pressure_load  (USE)
     double nS = 0.0;
 
     /// Neu: P = res*Q                 (IN)
     double res = 0.0;
 
-    /// nodal Sai for Neu              (IN)
-    Array<double> val;
+    /// Dirichlet: 0 where a node component is constrained, nonzero where it
+    /// is free. Size dof x nNo, nodes ordered as in glob.  (IN)
+    Array<double> free_component_mask;
 
-    /// Neu W*Sai                      (TMP)
-    Array<double> valM;
-    
-    /// Coupled: Cap contribution (precomputed cap normal integrals, nsd x cap_nNo)
-    Array<double> cap_val;
-    
-    /// Coupled: Cap contribution after preconditioning (W*cap_val), nsd x cap_nNo
-    /// Only allocated if this is a Coupled face with a cap
-    Array<double> cap_valM;
-    
-    /// Coupled: Cap node mapping from cap face-local index to linear solver index
-    /// Similar to glob, but for cap nodes
-    Vector<int> cap_glob;
+    // A coupled Neumann face adds to the matrix the rank-one operator
+    //
+    //   res * unit_pressure_load * flowrate_derivative^T
+    //
+    // whose two vectors are stored below. W is the diagonal scaling of the
+    // linear system.
 
-    /// Coupled: True if this face has a cap (set from coupled_bc.has_cap() so all ranks agree in parallel)
-    bool has_cap = false;
+    /// Neumann: integral over the face of N_a * n, for each face node a
+    /// (N_a: shape function, n: normal). Size dof x nNo, nodes ordered as in
+    /// glob.  (IN)
+    Array<double> unit_pressure_load;
+
+    /// Neumann: W * unit_pressure_load  (TMP)
+    Array<double> scaled_unit_pressure_load;
+
+    /// Neumann: linear solver indices of the nodes of flowrate_derivative.
+    /// Only nodes owned by this process. An index may repeat: its columns add
+    /// up.  (IN)
+    Vector<int> flowrate_derivative_node_indices;
+
+    /// Neumann: derivative of the flow rate through the face and its cap
+    /// with respect to the velocity of each node of
+    /// flowrate_derivative_node_indices. Size dof x number of indices.  (IN)
+    Array<double> flowrate_derivative;
+
+    /// Neumann: W * flowrate_derivative  (TMP)
+    Array<double> scaled_flowrate_derivative;
 };
 
 /// @brief Modified in:
@@ -239,6 +251,9 @@ class FSILS_subLsType
 
     /// Calling duration            (OUT)
     double callD;  
+
+    /// GMRES Krylov basis, kept between solves (TMP)
+    Array3<double> u;
 };
 
 class FSILS_lsType 
@@ -259,6 +274,11 @@ class FSILS_lsType
     FSILS_subLsType GM;
     FSILS_subLsType CG;
     FSILS_subLsType RI;
+
+    /// NS solver blocks of Val and outer-iteration directions, kept between solves (TMP)
+    Array<double> Gt, mK, mG, mD, P, MP;
+    Vector<double> mL;
+    Array3<double> U, MU;
 };
 
 

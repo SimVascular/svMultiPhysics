@@ -2070,6 +2070,14 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
               sigma(1,0) = sigma(0,1);
             }
 
+            // The VTK writer adds nodal prestress during prestress initialization.
+            if (!com_mod.pstEq) {
+              sigma += S0;
+            }
+
+            // Small-strain theory: the 2nd Piola-Kirchhoff stress output equals sigma.
+            S = sigma;
+
           } else if (cPhys == EquationType::phys_ustruct) {
             double p = 0.0;
             for (int a = 0; a < fs.eNoN; a++) {
@@ -2194,13 +2202,13 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
     sF = 0.0;
     sA = 0.0;
 
-    Vector<double> xi0(nsd);
-    for (int g = 0; g < fs.nG; g++) {
-      for (int i = 0; i < fs.xi.nrows(); i++) {
-        xi0 = xi0 + fs.xi(i,g);
-      }
-    }
-    xi0 = xi0 / static_cast<double>(fs.nG);
+    // Reference coordinates of the nodes of the higher-order parent element.
+    // They give the position of the edge, face and center nodes within the
+    // low-order element, where the low-order shape functions below are
+    // evaluated to weight the corner values.
+    //
+    Array<double> xiN(nsd, lM.eNoN);
+    nn::get_nodal_xi(nsd, lM.eType, lM.eNoN, xiN);
 
     Array<double> yl(m,fs.eNoN); 
     Vector<double> eNds(tnNo);
@@ -2236,15 +2244,13 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
 
       for (int a = fs.eNoN; a < lM.eNoN; a++) {
         int Ac = lM.IEN(a,e);
-        auto xp = com_mod.x.col(Ac);
-        auto xi = xi0;
-        nn::get_nnx(nsd, fs.eType, fs.eNoN, xl, fs.xib, fs.Nb, xp, xi, N, Nx);
+        auto xi = xiN.col(a);
+        nn::get_gnn(nsd, fs.eType, fs.eNoN, xi, N, Nx);
 
         resl = 0.0;
         for (int i = 0; i < fs.eNoN; i++) {
           resl = resl + N(i)*yl.col(i);
         }
-        i = fs.eNoN - 1;
 
         if (eNds(Ac) == 0) {
           eNds(Ac) = 1;

@@ -17,6 +17,7 @@ execute_process(
 
 set(SV_PACKAGE_VERSION "" CACHE STRING "Four-part version from release.json")
 file(READ "${SV_REPOSITORY_ROOT}/release.json" _sv_release_json)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${SV_REPOSITORY_ROOT}/release.json")
 foreach(_part major minor patch build)
   string(JSON _value ERROR_VARIABLE _error GET "${_sv_release_json}" "${_part}")
   if(_error OR NOT _value MATCHES "^[0-9]+$")
@@ -28,20 +29,23 @@ list(JOIN _sv_version_parts "." _sv_manifest_version)
 if(SV_PACKAGE_VERSION AND NOT SV_PACKAGE_VERSION STREQUAL _sv_manifest_version)
   message(FATAL_ERROR "SV_PACKAGE_VERSION disagrees with release.json: ${SV_PACKAGE_VERSION} != ${_sv_manifest_version}")
 endif()
-set(SV_PACKAGE_VERSION "${_sv_manifest_version}" CACHE STRING "Four-part version from release.json" FORCE)
+set(SV_PACKAGE_VERSION "${_sv_manifest_version}")
 
 if(SV_SOURCE_COMMIT STREQUAL "unknown")
   set(SV_RELEASE_TAG "unknown")
 elseif(_sv_status_result EQUAL 0 AND _sv_status STREQUAL "")
-  execute_process(
-    COMMAND git -C "${SV_REPOSITORY_ROOT}" describe --tags --exact-match HEAD
-    OUTPUT_VARIABLE SV_RELEASE_TAG
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-    RESULT_VARIABLE _sv_tag_result)
-  if(NOT _sv_tag_result EQUAL 0)
-    set(SV_RELEASE_TAG "untagged")
-  endif()
+  set(SV_RELEASE_TAG "untagged")
+  foreach(_sv_candidate "v${SV_PACKAGE_VERSION}" "v${SV_PACKAGE_VERSION}-rc" "v${SV_PACKAGE_VERSION}-dev")
+    execute_process(
+      COMMAND git -C "${SV_REPOSITORY_ROOT}" rev-parse --verify --quiet "refs/tags/${_sv_candidate}^{commit}"
+      OUTPUT_VARIABLE _sv_candidate_commit
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      RESULT_VARIABLE _sv_candidate_result)
+    if(_sv_candidate_result EQUAL 0 AND _sv_candidate_commit STREQUAL SV_SOURCE_COMMIT)
+      set(SV_RELEASE_TAG "${_sv_candidate}")
+      break()
+    endif()
+  endforeach()
 else()
   set(SV_RELEASE_TAG "uncommitted")
 endif()
@@ -59,7 +63,10 @@ if(SV_RELEASE_PACKAGE)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_QUIET
     RESULT_VARIABLE _sv_tag_result)
-  if(NOT _sv_tag_result EQUAL 0 OR NOT _sv_tag_commit STREQUAL SV_SOURCE_COMMIT)
+  if(_sv_tag_result EQUAL 0 AND NOT _sv_tag_commit STREQUAL SV_SOURCE_COMMIT)
+    message(FATAL_ERROR "Release tag v${SV_PACKAGE_VERSION} points to another source commit, not ${SV_SOURCE_COMMIT}")
+  endif()
+  if(NOT _sv_tag_result EQUAL 0 AND NOT SV_TAG_AFTER_VALIDATION)
     message(FATAL_ERROR "Release tag v${SV_PACKAGE_VERSION} must exist and point to source commit ${SV_SOURCE_COMMIT}")
   endif()
   set(SV_RELEASE_TAG "v${SV_PACKAGE_VERSION}")

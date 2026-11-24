@@ -103,10 +103,15 @@ class Array
     }
 
     /// @brief Array copy
+    ///
+    /// The copy of an array that has no rows or no columns holds no data and
+    /// has the same numbers of rows and columns.
     //
     Array(const Array &rhs)
     {
       if ((rhs.nrows_ <= 0) || (rhs.ncols_ <= 0)) { 
+        nrows_ = rhs.nrows_;
+        ncols_ = rhs.ncols_;
         return;
       }
 
@@ -118,6 +123,9 @@ class Array
     }
 
     /// @brief Array assignment 
+    ///
+    /// Assigning an array that has no rows or no columns leaves this array
+    /// with no data and with the same numbers of rows and columns.
     //
     Array& operator=(const Array& rhs)
     {
@@ -126,6 +134,9 @@ class Array
       }
 
       if ((rhs.nrows_ <= 0) || (rhs.ncols_ <= 0)) { 
+        clear();
+        nrows_ = rhs.nrows_;
+        ncols_ = rhs.ncols_;
         return *this;
       }
 
@@ -228,33 +239,37 @@ class Array
     }
 
     /// @brief Resize the array.
+    ///
+    /// The previous content is discarded and the new entries are set to zero
+    /// unless 'zero' is false.
+    /// If there are no rows or no columns, the array holds no data and keeps
+    /// the given numbers of rows and columns.
     //
-    void resize(const int num_rows, const int num_cols) 
+    void resize(const int num_rows, const int num_cols, const bool zero=true) 
     {
-      // [NOTE] This is tfu but need to mimic fortran.
-      nrows_ = num_rows;
-      ncols_ = num_cols;
-
-      if ((num_rows <= 0) || (num_cols <= 0)) { 
-        return;
+      if (data_reference_) {
+        throw std::runtime_error("[Array] Can't resize an Array with reference data.");
       }
 
       if (data_ != nullptr) {
-        if (data_reference_) {
-          throw std::runtime_error("[Array] Can't resize an Array with reference data.");
-        }
         delete [] data_;
-        data_ = nullptr;
-        size_ = 0;
-        nrows_ = 0;
-        ncols_ = 0;
         #if Array_gather_stats
         memory_in_use -= sizeof(T) * size_;;
         memory_returned += sizeof(T) * size_;;
         #endif
+        data_ = nullptr;
       }
 
-      allocate(num_rows, num_cols);
+      // [NOTE] This is tfu but need to mimic fortran.
+      nrows_ = num_rows;
+      ncols_ = num_cols;
+      size_ = 0;
+
+      if ((num_rows <= 0) || (num_cols <= 0)) {
+        return;
+      }
+
+      allocate(num_rows, num_cols, zero);
     }
 
     int size() const
@@ -916,7 +931,7 @@ class Array
 
     /// @brief Allocate memory for array data.
     //
-    void allocate(const int num_rows, const int num_cols)
+    void allocate(const int num_rows, const int num_cols, const bool zero=true)
     {
       data_reference_ = false;
       nrows_ = num_rows;
@@ -932,7 +947,7 @@ class Array
 
       if (size_ != 0) {
         data_ = new T [size_];
-        memset(data_, 0, sizeof(T)*size_);
+        if (zero) memset(data_, 0, sizeof(T)*size_);
       }
     }
 
