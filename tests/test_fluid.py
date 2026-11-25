@@ -149,8 +149,9 @@ def test_iliac_artery_petsc(n_proc, tmp_path, monkeypatch):
     equation.remove(equation.find("LS"))
     equation.append(ET.parse(source / "pipe_RCR_3d_petsc/solver.xml").find(".//LS"))
     tree.write(case / "solver.xml")
-    # Solve the linear system directly to isolate the outlet Jacobian.
-    monkeypatch.setenv("PETSC_OPTIONS", "-mat_type aij -ksp_type preonly -pc_type redundant "
+    # Precondition with a direct solve to isolate the outlet Jacobian; FGMRES
+    # then only has to resolve the outlet terms, which the operator adds.
+    monkeypatch.setenv("PETSC_OPTIONS", "-mat_type aij -ksp_type fgmres -pc_type redundant "
                                        f"-pc_redundant_number {n_proc}")
     run_with_reference("", str(case), ["Pressure", "Velocity"], n_proc)
 

@@ -48,6 +48,8 @@ typedef struct {
 
     Vec       b;        /* rhs/solution vector of owned vertices */
     Mat       A;        /* stiffness matrix */
+    Mat       op;       /* A plus the coupled faces' outer products, applied
+                           without assembling them; A if there are none */
     KSP       ksp;      /* linear solver context */
 
     PetscBool rcs;      /* whether rcs preconditioner is activated */
@@ -64,9 +66,9 @@ void petsc_initialize(const PetscInt nNo, const PetscInt mynNo,
 /// equation.
 ///
 /// Does nothing if they are already created. The nonzero pattern of the
-/// matrix is fixed here. It holds the entries of the mesh adjacency and, for
-/// the lumped parameter boundary conditions, one entry for each pair of a row
-/// and a column belonging to the same face.
+/// matrix is fixed here: the entries of the mesh adjacency. The lumped
+/// parameter boundary conditions are applied by the operator psol[iEq].op
+/// without being assembled.
 ///
 /// The O2 index of a degree of freedom is the O2 index of its node times dof,
 /// plus its component.
@@ -77,10 +79,11 @@ void petsc_initialize(const PetscInt nNo, const PetscInt mynNo,
 /// @param[in] svFSI_DirBC For each degree of freedom on this process, by O2
 ///   index, zero if a Dirichlet boundary condition constrains it and
 ///   nonzero otherwise.
-/// @param[in] faces Owned rows and global columns for each coupled face.
+/// @param[in] coupled Whether the equation has lumped parameter boundary
+///   conditions, which need an operator other than the matrix.
 void petsc_create_linearsystem(const PetscInt dof, const PetscInt iEq,
                                const PetscInt nEq, const PetscReal *svFSI_DirBC,
-                               const std::vector<PetscFaceTangent>& faces);
+                               bool coupled);
 
 void petsc_create_linearsolver(const consts::PreconditionerType lsType, const consts::PreconditionerType pcType, 
     const PetscInt kSpace, const PetscInt maxIter, const PetscReal relTol, 
@@ -90,7 +93,7 @@ void petsc_create_linearsolver(const consts::PreconditionerType lsType, const co
 /// @brief Fill the vector and the matrix of the linear system of an equation.
 ///
 /// Each coupled face adds its signed pressure-load/flow-derivative outer
-/// product, including columns owned by other processes.
+/// product to the operator, which applies it without assembling it.
 /// The Dirichlet boundary conditions are then applied, and the
 /// system is scaled if the row and column scaling preconditioner is active.
 ///
@@ -132,14 +135,13 @@ PetscErrorCode petsc_create_lhs(const PetscInt, const PetscInt, const PetscInt,
 PetscErrorCode petsc_create_bc(const PetscInt dof, const PetscInt cEq,
                                const PetscReal *svFSI_DirBC);
 
-PetscErrorCode petsc_create_vecmat(const PetscInt, const PetscInt, const PetscInt,
-                                  const std::vector<PetscFaceTangent>&);
+PetscErrorCode petsc_create_vecmat(const PetscInt, const PetscInt, const PetscInt, bool);
 
 PetscErrorCode petsc_set_vec(const PetscInt, const PetscInt, const PetscReal *);
 
 PetscErrorCode petsc_set_mat(const PetscInt, const PetscInt, const PetscReal *);
 
-/// @brief Add the lumped parameter boundary conditions to the matrix of an
+/// @brief Give the lumped parameter boundary conditions to the operator of an
 /// equation, then apply its Dirichlet boundary conditions to the matrix and
 /// the right-hand side.
 ///
