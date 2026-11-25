@@ -14,6 +14,8 @@
 
 #include "consts.h"
 
+struct PetscFaceTangent;
+
 //--------
 // LHSCtx
 //---------
@@ -41,22 +43,13 @@ typedef struct {
     PetscBool created;  /* Whether mat and vec is created */
     const char *pre;      /* option prefix for different equations */
 
-    /* The lumped parameter BCs add to the matrix the product of two vectors,
-       pressure load * flow rate derivative^T. Its rows are the dofs of the
-       pressure load and its columns the dofs of the flow rate derivative,
-       among those that the current process owns. */
-    PetscInt lpRowPts; /* number of rows of the lumped parameter BCs */
-    PetscInt *lpRow_l; /* O2 index for rows of the lumped parameter BCs */
-    PetscInt *lpRow_g; /* PETSc index for rows of the lumped parameter BCs */
-    PetscInt lpColPts; /* number of columns of the lumped parameter BCs */
-    PetscInt *lpCol_l; /* O2 index for columns of the lumped parameter BCs */
-    PetscInt *lpCol_g; /* PETSc index for columns of the lumped parameter BCs */
-
     PetscInt  DirPts;   /* number of dofs with Dirichlet BC */
     PetscInt *DirBC;    /* PETSc index for dofs with Dirichlet BC */
 
     Vec       b;        /* rhs/solution vector of owned vertices */
     Mat       A;        /* stiffness matrix */
+    Mat       op;       /* A plus the coupled faces' outer products, applied
+                           without assembling them; A if there are none */
     KSP       ksp;      /* linear solver context */
 
     PetscBool rcs;      /* whether rcs preconditioner is activated */
@@ -73,9 +66,9 @@ void petsc_initialize(const PetscInt nNo, const PetscInt mynNo,
 /// equation.
 ///
 /// Does nothing if they are already created. The nonzero pattern of the
-/// matrix is fixed here. It holds the entries of the mesh adjacency and, for
-/// the lumped parameter boundary conditions, one entry for each pair of a row
-/// of lp_rows and a column of lp_cols.
+/// matrix is fixed here: the entries of the mesh adjacency. The lumped
+/// parameter boundary conditions are applied by the operator psol[iEq].op
+/// without being assembled.
 ///
 /// The O2 index of a degree of freedom is the O2 index of its node times dof,
 /// plus its component.
@@ -86,16 +79,11 @@ void petsc_initialize(const PetscInt nNo, const PetscInt mynNo,
 /// @param[in] svFSI_DirBC For each degree of freedom on this process, by O2
 ///   index, zero if a Dirichlet boundary condition constrains it and
 ///   nonzero otherwise.
-/// @param[in] lp_rows O2 indices of the degrees of freedom owned by this
-///   process where the pressure load of the lumped parameter boundary
-///   conditions can be nonzero.
-/// @param[in] lp_cols O2 indices of the degrees of freedom owned by this
-///   process where the flow rate derivative of the lumped parameter boundary
-///   conditions can be nonzero.
+/// @param[in] coupled Whether the equation has lumped parameter boundary
+///   conditions, which need an operator other than the matrix.
 void petsc_create_linearsystem(const PetscInt dof, const PetscInt iEq,
                                const PetscInt nEq, const PetscReal *svFSI_DirBC,
-                               const std::vector<PetscInt> &lp_rows,
-                               const std::vector<PetscInt> &lp_cols);
+                               bool coupled);
 
 void petsc_create_linearsolver(const consts::PreconditionerType lsType, const consts::PreconditionerType pcType, 
     const PetscInt kSpace, const PetscInt maxIter, const PetscReal relTol, 
@@ -104,12 +92,9 @@ void petsc_create_linearsolver(const consts::PreconditionerType lsType, const co
 
 /// @brief Fill the vector and the matrix of the linear system of an equation.
 ///
-/// The lumped parameter boundary conditions add to the matrix the product
-/// pressure_load * flowrate_derivative^T, on the rows and columns given to
-/// petsc_create_linearsystem(). Those are owned by the current process, so
-/// the entries whose row and column are owned by different processes are not
-/// added: on more than one process, the matrix holds only part of the
-/// product. The Dirichlet boundary conditions are then applied, and the
+/// Each coupled face adds its signed pressure-load/flow-derivative outer
+/// product to the operator, which applies it without assembling it.
+/// The Dirichlet boundary conditions are then applied, and the
 /// system is scaled if the row and column scaling preconditioner is active.
 ///
 /// @param[in] dof Number of degrees of freedom per node.
@@ -121,17 +106,11 @@ void petsc_create_linearsolver(const consts::PreconditionerType lsType, const co
 /// @param[in] svFSI_DirBC For each degree of freedom on this process, by O2
 ///   index, zero if a Dirichlet boundary condition constrains it and
 ///   nonzero otherwise.
-/// @param[in] pressure_load For each degree of freedom on this process, by O2
-///   index, the sum over the coupled Neumann faces of sqrt(|res|) times the
-///   unit pressure load.
-/// @param[in] flowrate_derivative For each degree of freedom on this process,
-///   by O2 index, the sum over the coupled Neumann faces of sqrt(|res|) times
-///   the flow rate derivative.
+/// @param[in] faces Signed tangent and its two vectors for each coupled face.
 void petsc_set_values(const PetscInt dof, const PetscInt iEq,
                       const PetscReal *R, const PetscReal *Val,
                       const PetscReal *svFSI_DirBC,
-                      const PetscReal *pressure_load,
-                      const PetscReal *flowrate_derivative);
+                      const std::vector<PetscFaceTangent>& faces);
 
 void petsc_solve(PetscReal *resNorm,  PetscReal *initNorm,  PetscReal *dB, 
     PetscReal *execTime, bool *converged, PetscInt *numIter, 
@@ -144,54 +123,37 @@ PetscErrorCode petsc_create_lhs(const PetscInt, const PetscInt, const PetscInt,
                                 const PetscInt *, const PetscInt *, 
                                 const PetscInt *, const PetscInt *);
 
-/// @brief Store the degrees of freedom of the Dirichlet and of the lumped
-/// parameter boundary conditions of an equation.
+/// @brief Store the Dirichlet degrees of freedom of an equation.
 ///
 /// @param[in] dof Number of degrees of freedom per node.
 /// @param[in] cEq Index of the equation.
 /// @param[in] svFSI_DirBC For each degree of freedom on this process, by O2
 ///   index, zero if a Dirichlet boundary condition constrains it and
 ///   nonzero otherwise.
-/// @param[in] lp_rows O2 indices of the rows of the lumped parameter boundary
-///   conditions, as in petsc_create_linearsystem().
-/// @param[in] lp_cols O2 indices of the columns of the lumped parameter
-///   boundary conditions, as in petsc_create_linearsystem().
 ///
 /// @return A PETSc error code.
 PetscErrorCode petsc_create_bc(const PetscInt dof, const PetscInt cEq,
-                               const PetscReal *svFSI_DirBC,
-                               const std::vector<PetscInt> &lp_rows,
-                               const std::vector<PetscInt> &lp_cols);
+                               const PetscReal *svFSI_DirBC);
 
-PetscErrorCode petsc_create_vecmat(const PetscInt, const PetscInt, const PetscInt);
+PetscErrorCode petsc_create_vecmat(const PetscInt, const PetscInt, const PetscInt, bool);
 
 PetscErrorCode petsc_set_vec(const PetscInt, const PetscInt, const PetscReal *);
 
 PetscErrorCode petsc_set_mat(const PetscInt, const PetscInt, const PetscReal *);
 
-/// @brief Add the lumped parameter boundary conditions to the matrix of an
+/// @brief Give the lumped parameter boundary conditions to the operator of an
 /// equation, then apply its Dirichlet boundary conditions to the matrix and
 /// the right-hand side.
-///
-/// The lumped parameter boundary conditions add to the matrix the product
-/// pressure_load * flowrate_derivative^T. Each process adds the entries whose
-/// row and column it both owns, so the entries whose row and column are owned
-/// by different processes are not added. On more than one process, the matrix
-/// holds only part of the product.
 ///
 /// @param[in] cEq Index of the equation.
 /// @param[in] DirBC For each degree of freedom on this process, by O2 index,
 ///   zero if a Dirichlet boundary condition constrains it and nonzero
 ///   otherwise.
-/// @param[in] pressure_load Left vector of the lumped parameter boundary
-///   conditions, as in petsc_set_values().
-/// @param[in] flowrate_derivative Right vector of the lumped parameter
-///   boundary conditions, as in petsc_set_values().
+/// @param[in] faces Per-face tangents, as in petsc_set_values().
 ///
 /// @return A PETSc error code.
 PetscErrorCode petsc_set_bc(const PetscInt cEq, const PetscReal *DirBC,
-                            const PetscReal *pressure_load,
-                            const PetscReal *flowrate_derivative);
+                            const std::vector<PetscFaceTangent>& faces);
 
 PetscErrorCode petsc_set_pcfieldsplit(const PetscInt, const PetscInt);
 
