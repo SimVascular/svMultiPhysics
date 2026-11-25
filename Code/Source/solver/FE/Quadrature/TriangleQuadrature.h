@@ -43,7 +43,8 @@ namespace svmp::FE::quadrature {
  * u_i=(\xi_i+1)/2,\quad v_j=(\eta_j+1)/2,\quad
  * \mathbf{x}_{ij}=(u_i,(1-u_i)v_j,0),\quad W_{ij}=a_i b_j(1-u_i)/4.
  * @f]
- * Weights include the Jacobian @f$1-u@f$ and both interval scalings.
+ * Weights include both interval scalings and the Jacobian @f$(1-\xi_i)/2@f$,
+ * which stays positive at interior nodes even when @f$u_i@f$ rounds to one.
  * Including the Jacobian, @f$x^a y^b@f$ becomes @f$u^a(1-u)^{b+1}v^b@f$;
  * total degree @f$p@f$ therefore requires @f$e_u\geq p+1@f$ and @f$e_v\geq p@f$.
  *

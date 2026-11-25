@@ -16,17 +16,16 @@
 #include "FE/Quadrature/QuadratureRule.h"
 #include "FE/Quadrature/SymmetricTriangleQuadrature.h"
 #include "FE/Quadrature/TriangleQuadrature.h"
+#include "QuadratureTestHelpers.h"
 #include "ReferenceMonomialIntegrals.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <exception>
 #include <limits>
 #include <optional>
 #include <span>
-#include <stdexcept>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -38,6 +37,7 @@ using namespace svmp::FE::quadrature;
 namespace {
 
 namespace reference = svmp::FE::quadrature::test;
+using namespace svmp::FE::quadrature::test;
 
 // Exhaustive supported-domain sweeps observed structure, measure, and moment
 // errors below 1.2e-15; these envelopes retain cross-toolchain headroom
@@ -258,30 +258,6 @@ void expect_canonical_rule(
         accumulate_line_moment(rule, first_unadvertised_even_power) -
         reference::line_monomial_integral(expected_exactness + 1));
     EXPECT_GT(first_unadvertised_error, static_cast<long double>(kMomentTolerance));
-}
-
-template <typename Function>
-void expect_invalid_argument_with_message(
-    Function&& function,
-    std::string_view expected_substring)
-{
-    ASSERT_FALSE(expected_substring.empty());
-
-    try {
-        std::forward<Function>(function)();
-        FAIL() << "Expected InvalidArgumentException containing: "
-               << expected_substring;
-    } catch (const InvalidArgumentException& exception) {
-        const std::string_view actual_message{exception.what()};
-        EXPECT_NE(
-            actual_message.find(expected_substring),
-            std::string_view::npos)
-            << "actual message: " << actual_message;
-    } catch (const std::exception& exception) {
-        FAIL() << "Received a different exception type: " << exception.what();
-    } catch (...) {
-        FAIL() << "Received an unknown exception type";
-    }
 }
 
 } // namespace
@@ -562,21 +538,6 @@ static_assert(std::is_same_v<decltype(make_triangle_rule(0,
 // over 30-fold cross-toolchain headroom and stays meaningful for tiny moments.
 constexpr long double kTriangleRelativeTolerance = 2.0e-12L;
 
-struct CompensatedSum {
-    long double sum = 0.0L;
-    long double correction = 0.0L;
-
-    void add(long double term)
-    {
-        const long double next = sum + term;
-        correction += std::abs(sum) >= std::abs(term)
-            ? (sum - next) + term : (term - next) + sum;
-        sum = next;
-    }
-
-    long double value() const { return sum + correction; }
-};
-
 // Group only samples whose actual returned x is exactly equal. For each group,
 // sum actual w*y^b, then multiply by actual x^a. This is the full sample sum,
 // algebraically regrouped: no assumption about row lengths, y, or weights.
@@ -623,21 +584,6 @@ void expect_triangle_moments(const QuadratureRule& rule, int degree)
             EXPECT_LE(std::abs(actual - expected) / expected, kTriangleRelativeTolerance)
                 << "a=" << a << ", b=" << b;
         }
-    }
-}
-
-void expect_same_ordered_rule(const QuadratureRule& left, const QuadratureRule& right)
-{
-    ASSERT_EQ(left.num_points(), right.num_points());
-    EXPECT_EQ(left.cell_family(), right.cell_family());
-    EXPECT_EQ(left.dimension(), right.dimension());
-    EXPECT_EQ(left.reference_cell_measure(), right.reference_cell_measure());
-    EXPECT_EQ(left.polynomial_exactness(), right.polynomial_exactness());
-    for (std::size_t q = 0; q < left.num_points(); ++q) {
-        for (std::size_t axis = 0; axis < 3; ++axis) {
-            EXPECT_EQ(left.point(q)[axis], right.point(q)[axis]) << "point=" << q << ", axis=" << axis;
-        }
-        EXPECT_EQ(left.weight(q), right.weight(q)) << "point=" << q;
     }
 }
 
@@ -731,10 +677,12 @@ TEST(QuadratureMonomialReferences, MatchesIndependentValuesAndRejectsNegativePow
             EXPECT_EQ(value, reference::triangle_monomial_integral(b, a));
         }
     }
-    EXPECT_THROW(reference::line_monomial_integral(-1), std::invalid_argument);
-    EXPECT_THROW(reference::line_monomial_integral(std::numeric_limits<int>::min()), std::invalid_argument);
-    EXPECT_THROW(reference::triangle_monomial_integral(-1, 0), std::invalid_argument);
-    EXPECT_THROW(reference::triangle_monomial_integral(0, -1), std::invalid_argument);
+    expect_invalid_argument_with_message(
+        [] { reference::line_monomial_integral(-1); }, "Line monomial exponent");
+    EXPECT_THROW(reference::line_monomial_integral(std::numeric_limits<int>::min()), InvalidArgumentException);
+    expect_invalid_argument_with_message(
+        [] { reference::triangle_monomial_integral(-1, 0); }, "Triangle monomial exponents");
+    EXPECT_THROW(reference::triangle_monomial_integral(0, -1), InvalidArgumentException);
 }
 
 TEST(QuadratureGeneratorTestSupport, GroupsOnlyEqualActualCoordinates)
@@ -867,6 +815,44 @@ TEST(TriangleDuffyImplementation, PreservesSignedZeroAndDuplicateSamples)
         QuadratureRule(svmp::CellFamily::Triangle, 0,
             std::vector<QuadPoint>(9, QuadPoint{0.5, 0.25, 0.0}),
             {1.125, -0.375, 0.0, -0.375, 0.125, 0.0, 0.0, 0.0, 0.0}));
+}
+
+/// @test The line node immediately below one maps to a positive transverse coordinate and weight.
+TEST(TriangleDuffyImplementation, KeepsInteriorSamplesNextToTheCollapsedEdge)
+{
+    const double xi = std::nextafter(1.0, 0.0);
+    const QuadratureRule u(svmp::CellFamily::Line, 1,
+        {{xi, 0.0, 0.0}, {-xi, 0.0, 0.0}}, {1.0, 1.0});
+    const auto rule = make_triangle_rule(0, u, make_gauss_legendre_rule(1));
+    ASSERT_EQ(rule.num_points(), 2u);
+    EXPECT_EQ(rule.point(0)[0], 1.0);
+    EXPECT_EQ(rule.point(0)[1], 0x1p-55);
+    EXPECT_EQ(rule.weight(0), 0x1p-55);
+}
+
+/// @test Signed weights recover after partial underflow and retain their sign on final underflow.
+TEST(TriangleDuffyImplementation, PreservesSignedProductsAcrossIntermediateUnderflow)
+{
+    const double xi = 1.0 - 0x1p-52;
+    const QuadratureRule v(svmp::CellFamily::Line, 0,
+        std::vector<QuadPoint>(3, QuadPoint::Zero()), {0x1p1020, -0x1p1020, 2.0});
+    // The first partial weight rounds to zero. The second lies halfway between
+    // the first two positive subnormals. A later v weight can recover both.
+    const std::array cases{std::array{0x1p-1022, 0x1p-57, 0.0},
+                           std::array{0x1.8p-1019, 0x1.8p-54, 0x1.8p-1073}};
+    for (const auto [u_weight, large_product, small_product] : cases) {
+        SCOPED_TRACE(u_weight);
+        const QuadratureRule u(svmp::CellFamily::Line, 1,
+            {{xi, 0.0, 0.0}, {xi, 0.0, 0.0}, {0.0, 0.0, 0.0}}, {u_weight, -u_weight, 2.0});
+        const auto rule = make_triangle_rule(0, u, v);
+        ASSERT_EQ(rule.num_points(), 9u);
+        const std::array expected{large_product, -large_product, small_product,
+                                  -large_product, large_product, -small_product};
+        for (std::size_t q = 0; q < expected.size(); ++q) {
+            EXPECT_EQ(rule.weight(q), expected[q]) << "sample " << q;
+            EXPECT_EQ(std::signbit(rule.weight(q)), std::signbit(expected[q])) << "sample " << q;
+        }
+    }
 }
 
 TEST(TriangleDuffyImplementation, AcceptsFiniteProductsWithLargeSignedWeights)

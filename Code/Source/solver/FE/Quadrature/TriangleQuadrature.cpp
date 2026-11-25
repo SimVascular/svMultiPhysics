@@ -10,12 +10,10 @@
 #include "FE/Quadrature/TriangleQuadrature.h"
 
 #include "FE/Common/FEException.h"
+#include "FE/Quadrature/DuffyQuadrature.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
-#include <limits>
-#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -24,47 +22,6 @@ namespace svmp::FE::quadrature {
 namespace {
 
 constexpr std::size_t kMaximumProductPoints = 128u * 128u;
-constexpr double kValidationTolerance = 256.0 * std::numeric_limits<double>::epsilon();
-// Scale validation sums by a power of two so even capacity*max_double stays
-// within binary64 range. Stored weights and relative tolerances are unchanged.
-constexpr double kValidationSumScale = 0.5 / static_cast<double>(kMaximumProductPoints);
-
-// Return whether abs(sum(w)-measure) <= tau*max(measure,sum(abs(w))) for at most
-// kMaximumProductPoints weights. Any non-finite weight fails.
-bool reproduces_measure(std::span<const double> weights, double measure)
-{
-    double sum = 0.0;
-    double correction = 0.0;
-    double scale = 0.0;
-    for (const double weight : weights) {
-        const double term = weight * kValidationSumScale;
-        // Neumaier compensation keeps long signed sums accurate.
-        const double next = sum + term;
-        correction += std::abs(sum) >= std::abs(term) ? (sum - next) + term : (term - next) + sum;
-        sum = next;
-        scale += std::abs(term);
-    }
-    sum += correction;
-    const double scaled_measure = measure * kValidationSumScale;
-    return std::isfinite(sum) && std::isfinite(scale) &&
-        std::abs(sum - scaled_measure) <= kValidationTolerance * std::max(scaled_measure, scale);
-}
-
-void validate_line_rule(const QuadratureRule& rule, int required_exactness, const char* name)
-{
-    const std::string prefix = std::string{"Triangle Duffy generator: "} + name;
-    svmp::check<InvalidArgumentException>(rule.cell_family() == svmp::CellFamily::Line,
-        prefix + " must have canonical Line family");
-    svmp::check<InvalidArgumentException>(rule.polynomial_exactness() >= required_exactness,
-        prefix + " exactness is below the directional requirement");
-    for (const QuadPoint& point : rule.points()) {
-        if (std::abs(point[0]) > 1.0) {
-            svmp::raise<InvalidArgumentException>(prefix + " contains a point outside [-1,1]");
-        }
-    }
-    svmp::check<InvalidArgumentException>(reproduces_measure(rule.weights(), 2.0),
-        prefix + " normalization does not reproduce measure 2");
-}
 
 } // namespace
 
@@ -88,28 +45,36 @@ QuadratureRule make_triangle_rule(
     svmp::check<InvalidArgumentException>(
         n_u <= kMaximumProductPoints / n_v,
         "Triangle Duffy generator: product exceeds " + std::to_string(kMaximumProductPoints) + " samples");
-    validate_line_rule(u_rule, requested_exactness + 1, "u_rule");
-    validate_line_rule(v_rule, requested_exactness, "v_rule");
+    detail::validate_line_rule(u_rule, requested_exactness + 1, kMaximumProductPoints,
+        "Triangle Duffy generator: u_rule");
+    detail::validate_line_rule(v_rule, requested_exactness, kMaximumProductPoints,
+        "Triangle Duffy generator: v_rule");
 
-    // Factor points in [-1,1] give u,v in [0,1], so (u,(1-u)v) lies in the
-    // triangle up to one rounding of 1-u.
+    // Checked interval nodes and the Duffy map establish containment up to rounding.
     std::vector<QuadPoint> points(n_u * n_v, QuadPoint::Zero());
     std::vector<double> weights(points.size());
     for (std::size_t i = 0; i < n_u; ++i) {
-        const double u = (u_rule.point(i)[0] + 1.0) / 2.0;
-        const double remaining = 1.0 - u;
+        const double xi = u_rule.point(i)[0];
+        const double u = (1.0 + xi) / 2.0;
+        const double remaining = detail::unit_interval_complement(xi);
         // Two interval factors of 1/2 and the Duffy Jacobian (1-u).
-        const double outer_weight = u_rule.weight(i) * (remaining / 4.0);
+        const double u_weight = u_rule.weight(i);
+        const double u_scale = remaining / 4.0;
+        const double outer_weight = u_weight * u_scale;
+        const bool scale_outer = detail::needs_scaled_product(outer_weight, u_weight, u_scale);
         for (std::size_t j = 0; j < n_v; ++j) {
             const std::size_t q = i * n_v + j;
             const double v = (v_rule.point(j)[0] + 1.0) / 2.0;
             points[q] = QuadPoint{u, remaining * v, 0.0};
-            weights[q] = outer_weight * v_rule.weight(j);
+            const double v_weight = v_rule.weight(j);
+            weights[q] = scale_outer
+                ? detail::scaled_product({u_weight, v_weight, remaining}, -2)
+                : outer_weight * v_weight;
         }
     }
     // Given both factor measures, this checks the u_rule first moment and
     // rejects overflowed products.
-    svmp::check<ConvergenceException>(reproduces_measure(weights, 0.5),
+    svmp::check<ConvergenceException>(detail::reproduces_measure(weights, 0.5, kMaximumProductPoints),
         "Triangle Duffy generator: output weights do not reproduce measure 1/2");
 
     // x^a y^b maps to u^a (1-u)^(b+1) v^b, so u_rule needs one degree more than it delivers.
