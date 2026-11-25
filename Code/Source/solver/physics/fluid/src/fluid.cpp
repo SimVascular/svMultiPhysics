@@ -473,6 +473,39 @@ void bw_fluid_3d(ComMod& com_mod, const int eNoNw, const int eNoNq, const double
   }
 }
 
+/// @brief Gradients Nqx of the Taylor-Hood pressure basis fs_q at Gauss point g, mapped with
+/// the Jacobian of the element geometry xwl (basis fs_w), so curved elements are handled.
+static void thood_pressure_gradients(const int nsd, const fsType& fs_w, const fsType& fs_q, const int g,
+    const Array<double>& xwl, Array<double>& Nqx)
+{
+  // Jacobian J = dx/dxi, with J[2][2] = 1 in 2D so that the 3D cofactors apply.
+  double J[3][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, nsd == 2 ? 1.0 : 0.0}};
+  for (int a = 0; a < fs_w.eNoN; a++) {
+    for (int i = 0; i < nsd; i++) {
+      for (int j = 0; j < nsd; j++) {
+        J[i][j] += xwl(i,a) * fs_w.Nx(j,a,g);
+      }
+    }
+  }
+
+  // Cofactors C of J, so that inverse(J)(j,i) = C[i][j] / det(J).
+  const double C[3][3] = {
+      {J[1][1]*J[2][2] - J[1][2]*J[2][1], J[1][2]*J[2][0] - J[1][0]*J[2][2], J[1][0]*J[2][1] - J[1][1]*J[2][0]},
+      {J[0][2]*J[2][1] - J[0][1]*J[2][2], J[0][0]*J[2][2] - J[0][2]*J[2][0], J[0][1]*J[2][0] - J[0][0]*J[2][1]},
+      {J[0][1]*J[1][2] - J[0][2]*J[1][1], J[0][2]*J[1][0] - J[0][0]*J[1][2], J[0][0]*J[1][1] - J[0][1]*J[1][0]}};
+  const double det = J[0][0]*C[0][0] + J[0][1]*C[0][1] + J[0][2]*C[0][2];
+
+  for (int a = 0; a < fs_q.eNoN; a++) {
+    for (int i = 0; i < nsd; i++) {
+      double s = 0.0;
+      for (int j = 0; j < nsd; j++) {
+        s += fs_q.Nx(j,a,g) * C[i][j];
+      }
+      Nqx(i,a) = s / det;
+    }
+  }
+}
+
 /// @brief This is for solving fluid transport equation solving Navier-Stokes
 /// equations. Dirichlet boundary conditions are either treated
 /// strongly or weakly.
@@ -588,7 +621,6 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     Array<double> Nwx(nsd,fs[0].eNoN); 
     Array<double> Nwxx(l,fs[0].eNoN);
 
-    Array<double> xql(nsd,fs[1].eNoN); 
     Array<double> Nqx(nsd,fs[1].eNoN);
 
     #ifdef debug_construct_fluid
@@ -599,12 +631,6 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& s
     #endif
 
     xwl = xl;
-
-    for (int i = 0; i < xql.nrows(); i++) { 
-      for (int j = 0; j < fs[1].eNoN; j++) { 
-        xql(i,j) = xl(i,j);
-      }
-    }
 
     // Gauss integration 1
     //
@@ -631,14 +657,6 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& s
       #ifdef debug_construct_fluid
       dmsg << "===== g: " << g+1;
       #endif
-      if (g == 0 || !fs[1].lShpF) {
-        auto Nx = fs[1].Nx.rslice(g);
-        nn::gnn(fs[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix);
-        if (utils::is_zero(Jac)) {
-           throw std::runtime_error("[construct_fluid] Jacobian for element " + std::to_string(e) + " is < 0.");
-        }
-      }
-
       if (g == 0 || !fs[0].lShpF) {
         auto Nx = fs[0].Nx.rslice(g);
         nn::gnn(fs[0].eNoN, nsd, nsd, Nx, xwl, Nwx, Jac, ksix);
@@ -648,6 +666,12 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& s
 
         auto Nxx = fs[0].Nxx.rslice(g);
         nn::gn_nxx(l, fs[0].eNoN, nsd, nsd, Nx, Nxx, xwl, Nwx, Nwxx); 
+      }
+
+      if (vmsStab) {
+        Nqx = Nwx;
+      } else {
+        thood_pressure_gradients(nsd, fs[0], fs[1], g, xwl, Nqx);
       }
 
       double w = fs[0].w(g) * Jac;
@@ -712,13 +736,10 @@ void construct_fluid(ComMod& com_mod, const mshType& lM, const SolutionStates& s
         }
       }
 
-      if (g == 0 || !fs[1].lShpF) {
-        auto Nx = fs[1].Nx.rslice(g);
-        nn::gnn(fs[1].eNoN, nsd, nsd, Nx, xql, Nqx, Jac, ksix);
-
-        if (utils::is_zero(Jac)) {
-           throw std::runtime_error("[construct_fluid] Jacobian for element " + std::to_string(e) + " is < 0.");
-        }
+      if (vmsStab) {
+        Nqx = Nwx;
+      } else {
+        thood_pressure_gradients(nsd, fs[0], fs[1], g, xwl, Nqx);
       }
       double w = fs[1].w(g) * Jac;
 
@@ -1286,8 +1307,8 @@ void fluid_2d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
   
   kS = ctC * kS * pow(mu/rho,2.0);
   
-  // tauM = tau_M / rho = tau_SUPS / rho
-  double tauM = 1.0 / (rho * sqrt( kT + kU + kS ));
+  // tauM = tau_M / rho = tau_SUPS / rho; 0 for Taylor-Hood (no VMS stabilization)
+  double tauM = vmsFlag ? 1.0 / (rho * sqrt( kT + kU + kS )) : 0.0;
 
   // rV[i] = ith component of (acceleration + convective term - body force)
   Vector<double> rV(2);
@@ -2009,7 +2030,8 @@ void fluid_3d_m(ComMod& com_mod, const int vmsFlag, const int eNoNw, const int e
             + Kxi(0,1)*Kxi(0,1) + Kxi(1,1)*Kxi(1,1) + Kxi(2,1)*Kxi(2,1)
             + Kxi(0,2)*Kxi(0,2) + Kxi(1,2)*Kxi(1,2) + Kxi(2,2)*Kxi(2,2);
   kS = ctC * kS * pow(mu/rho,2.0);
-  double tauM = 1.0 / (rho * sqrt( kT + kU + kS ));
+  // 0 for Taylor-Hood (no VMS stabilization)
+  double tauM = vmsFlag ? 1.0 / (rho * sqrt( kT + kU + kS )) : 0.0;
 
   #ifdef debug_fluid_3d_m
   dmsg << "kT: " << kT;

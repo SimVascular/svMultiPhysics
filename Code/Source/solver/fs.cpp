@@ -325,6 +325,14 @@ void init_fs_msh(const ComMod& com_mod, mshType& lM)
     // Initialize the function space
     init_fs(lM.fs[1], nsd, insd);
     populate_reference_hessians(lM.fs[1], insd);
+
+    const auto& pressure = lM.fs[1];
+    auto nodes = nn::get_nodal_xi(lM.fs[0]);
+    lM.pressure_node_weights.resize(pressure.eNoN, lM.eNoN);
+    Array3<double> gradients(insd, pressure.eNoN, lM.eNoN);
+    for (int a = 0; a < lM.eNoN; ++a) {
+      nn::get_gnn(insd, pressure.eType, pressure.eNoN, a, nodes, lM.pressure_node_weights, gradients);
+    }
   }
 }
 

@@ -1381,16 +1381,10 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
     Vector<double> Nw(fs[0].eNoN); 
     Array<double> Nwx(nsd,fs[0].eNoN), Nwxi(nsd,fs[0].eNoN);
 
-    Array<double> xql(nsd,fs[1].eNoN), Nqx(nsd,fs[1].eNoN);
+    Array<double> Nqx(nsd,fs[1].eNoN);
     Vector<double> Nq(fs[1].eNoN); 
 
     xwl = xl;
-
-    for (int i = 0; i < nsd; i++) {
-      for (int j = 0; j < fs[1].eNoN; j++) {
-        xql(i,j) = xl(i,j);
-      }
-    }
 
     // Create local copies of the wall/solid/interface quantites
     //
@@ -1444,11 +1438,10 @@ void set_bc_dir_wl(ComMod& com_mod, const bcType& lBc, const mshType& lM, const 
         nn::gnn(fs[0].eNoN, nsd, nsd, Nwxi, xwl, Nwx, Jac, Ks);
       }
 
-      // Compute Nq of the mesh at the face integration point using
-      // Newton method.
+      // Compute Nq at the same parametric coordinate, which also holds
+      // for curved elements.
       //
-      xi = xi0;
-      nn::get_nnx(nsd, fs[1].eType, fs[1].eNoN, xql, fs[1].xib, fs[1].Nb, xp, xi, Nq, Nqx);
+      nn::get_gnn(nsd, fs[1].eType, fs[1].eNoN, xi, Nq, Nqx);
 
       if (nsd == 3) {
         fluid::bw_fluid_3d(com_mod, fs[0].eNoN, fs[1].eNoN, w, Nw, Nq, Nwx, yl, ub, nV, tauB, lR, lK);

@@ -83,6 +83,56 @@ void pos_mul(const Array<int>& rowPtr, const Vector<int>& colPtr, const int nNo,
   }
 }
 
+/// @brief Scale a zero-diagonal pressure (last dof), as for Taylor-Hood elements,
+/// by the inverse norm of its column in the scaled velocity rows, so that the
+/// scaled G^T G has a unit diagonal. diag is the diagonal summed over processes;
+/// at shared nodes the norms use partial rows.
+//
+void scale_zero_diagonal_pressure(const fsi_linear_solver::FSILS_lhsType& lhs, const int dof, const Array<double>& Val,
+    const Array<double>& diag, Array<double>& W)
+{
+  if (dof < 2) {
+    return;
+  }
+  const int p = dof - 1;
+
+  // The nodes, of those the equation reaches, whose pressure diagonal is zero
+  Vector<int> zero(lhs.nNo);
+  int found = 0;
+  for (int Ac = 0; Ac < lhs.nNo; Ac++) {
+    bool reached = false;
+    for (int c = 0; c < p; c++) {
+      reached = reached || diag(c,Ac) != 0.0;
+    }
+    zero(Ac) = reached && diag(p,Ac) == 0.0;
+    found |= zero(Ac);
+  }
+  if (lhs.commu.nTasks > 1) {
+    MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_MAX, lhs.commu.comm);
+  }
+  if (!found) {
+    return;
+  }
+
+  // The squared norm of the pressure column
+  Array<double> D(1, lhs.nNo);
+  for (int Ac = 0; Ac < lhs.nNo; Ac++) {
+    for (int i = lhs.rowPtr(0,Ac); i <= lhs.rowPtr(1,Ac); i++) {
+      for (int c = 0; c < p; c++) {
+        const double g = W(c,Ac) * Val(c*dof + p, i);
+        D(0,lhs.colPtr(i)) += g*g;
+      }
+    }
+  }
+  fsils_commuv(lhs, 1, D);
+
+  for (int Ac = 0; Ac < lhs.nNo; Ac++) {
+    if (zero(Ac) && D(0,Ac) > 0.0) {
+      W(p,Ac) = W(p,Ac) / sqrt(D(0,Ac));
+    }
+  }
+}
+
 //--------------
 // precond_diag 
 //--------------
@@ -160,6 +210,12 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
 
   fsils_commuv(lhs, dof, W);
 
+  // The summed diagonal, which the pressure scaling needs once W is inverted
+  Array<double> diag;
+  if (dof > 1) {
+    diag = W;
+  }
+
   // Accounting for Dirichlet BC and inversing W = W^{-1/2}
   //
   for (int Ac = 0; Ac < nNo; Ac++) {
@@ -196,6 +252,8 @@ void precond_diag(fsi_linear_solver::FSILS_lhsType& lhs, const Array<int>& rowPt
       }
     }
   }
+
+  scale_zero_diagonal_pressure(lhs, dof, Val, diag, W);
 
   // Pre-multipling K with W: K = W*K
   pre_mul(rowPtr, lhs.nNo, lhs.nnz, dof, Val, W);

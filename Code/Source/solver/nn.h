@@ -15,6 +15,8 @@ namespace nn {
   void get_gip(Simulation* simulation, faceType& face);
   void get_gip(mshType& mesh);
 
+  Array<double> get_nodal_xi(const fsType& space);
+
   void get_gnn(const int insd, consts::ElementType eType, const int eNoN, const int g, Array<double>& xi,
       Array<double>& N, Array3<double>& Nx);
   void get_gnn(const int insd, consts::ElementType eType, const int eNoN, Vector<double>& xi, Vector<double>& N, 
