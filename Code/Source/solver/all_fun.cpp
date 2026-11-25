@@ -218,50 +218,38 @@ global(const ComMod& com_mod, const CmMod& cm_mod, const mshType& lM, const Arra
   Array<double> result;
   Vector<int> sCount(cm.np()); 
   Vector<int> disp(cm.np());
-  Array<double> ienU(m*lM.eNoN, lM.nEl);
-  Array<double> gienU;
+  int n = lM.gatherN.size();
+  Array<double> sU(m, n);
+  Array<double> gU;
 
   if (cm.mas(cm_mod)) {
-    gienU.resize(m*lM.eNoN, lM.gnEl); 
+    gU.resize(m, lM.gatherG.size());
     result.resize(m,lM.gnNo);
-   } else {
   }
 
-  for (int e = 0; e < lM.nEl; e++) {
-    for (int a = 0; a < lM.eNoN; a++) {
-      int Ac = lM.IEN(a,e);
-      Ac = lM.lN(Ac);
-      for (int i = 0; i < m; i++) {
-        ienU(m*a+i,e) = U(i,Ac);
-      }
+  // Each node is sent once, by the process part_msh chose for it.
+  for (int j = 0; j < n; j++) {
+    for (int i = 0; i < m; i++) {
+      sU(i,j) = U(i,lM.gatherN[j]);
     }
   }
 
-  int a = lM.eNoN*m;
-
-  for (int i = 0; i < cm.np(); i++) {
-    disp(i) = lM.eDist(i)*a;
-    sCount(i) = lM.eDist(i+1)*a - disp(i);
-    #ifdef debug_global_rv 
-    dmsg << ">>> i: " << i;
-    dmsg << "  disp(i): " << disp(i);
-    dmsg << "  sCount(i): " << sCount(i);
-    #endif
+  int count = m*n;
+  MPI_Gather(&count, 1, cm_mod::mpint, sCount.data(), 1, cm_mod::mpint, cm_mod.master, cm.com());
+  for (int i = 1; i < cm.np(); i++) {
+    disp(i) = disp(i-1) + sCount(i-1);
   }
 
-  MPI_Gatherv(ienU.data(), lM.nEl*a, cm_mod::mpreal, gienU.data(), sCount.data(), disp.data(), cm_mod::mpreal, cm_mod.master, cm.com());
+  MPI_Gatherv(sU.data(), count, cm_mod::mpreal, gU.data(), sCount.data(), disp.data(), cm_mod::mpreal, cm_mod.master, cm.com());
 
   // If a slave process return an empty result.
   if (cm.slv(cm_mod)) {
     return result;
   }
 
-  for (int e = 0; e < lM.gnEl; e++) {
-    for (int a = 0; a < lM.eNoN; a++) {
-      int Ac = lM.gIEN(a,e);
-      for (int i = 0; i < m; i++) {
-        result(i,Ac) = gienU(m*a+i,e);
-      }
+  for (int j = 0; j < gU.ncols(); j++) {
+    for (int i = 0; i < m; i++) {
+      result(i,lM.gatherG[j]) = gU(i,j);
     }
   }
 

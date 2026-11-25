@@ -1036,6 +1036,10 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
     d[iM].xe.resize(nOute,msh.nEl);
     Array<double> tmpV(consts::maxNSD,msh.nNo);
 
+    // WSS and traction come from one bpost call, made on the first request.
+    Array<double> wss, trac;
+    bool bpost_computed = false;
+
     int cOut = 0;
     outS[cOut] = 0;
     outS[cOut+1] = nsd;
@@ -1171,11 +1175,16 @@ void write_vtus(Simulation* simulation, const SolutionStates& solutions, const b
 
           case OutputNameType::outGrp_WSS:
           case OutputNameType::outGrp_trac:
-            post::bpost(simulation, msh, tmpV, solutions, oGrp);
+            if (!bpost_computed) {
+              wss.resize(maxNSD, msh.nNo);
+              trac.resize(maxNSD, msh.nNo);
+              post::bpost(simulation, msh, wss, trac, solutions);
+              bpost_computed = true;
+            }
 
             for (int a = 0; a < msh.nNo; a++) {
               for (int i = 0; i < l; i++) {
-                 d[iM].x(i+is,a) = tmpV(i,a); 
+                 d[iM].x(i+is,a) = (oGrp == OutputNameType::outGrp_WSS) ? wss(i,a) : trac(i,a);
               }
             }
           break;
