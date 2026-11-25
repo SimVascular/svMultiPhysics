@@ -87,18 +87,51 @@ Only after the default and Trilinos validation jobs pass does a manual Release r
 
 Each package job builds one solver configuration, runs its unit and integration tests with the pinned svZeroDSolver source, checks the Debian package version, and uploads the package and SHA-256 checksum as an Actions artifact. The default job also captures the dependency image's full version inventory, including Ubuntu, Conda, and Python packages. A dependent validation job for each configuration runs in a clean, digest-pinned Ubuntu 26.04 container. It verifies the pinned svZeroDSolver release package against the checksum in `release.json`, installs both packages, checks the installed solver identity, and runs the integration suite against the installed solver using Python 3.12. Test results are uploaded as separate artifacts. After validation, the Ubuntu packages, checksums, and dependency inventory are also published to GitHub Releases for external testing. SimTK publication remains separate.
 
-### 6. Docker Solver Build Workflow (`workflows/docker_solver_build.yml`)
+### 6. Build svMultiPhysics images ([`workflows/svmultiphysics-image.yml`](workflows/svmultiphysics-image.yml))
 
-**Purpose**: Builds and publishes Docker images for the solver component.
+Builds two Ubuntu 26.04 AMD64 solver images from the released Debian packages, not from source. Run it after the Ubuntu package workflow has published the final GitHub Release with both configurations and their checksums. The svZeroDSolver release pinned in the solver tag's `release.json` must also have its Ubuntu package available.
 
-**Triggers**:
-- Pushes to the `main` branch
+#### Invocation
 
-**Process**:
-1. Sets up QEMU and Docker Buildx for multi-platform builds
-2. Authenticates with DockerHub using stored credentials
-3. Builds the Docker image using `Docker/solver/dockerfile`
-4. Pushes the image to `simvascular/solver:latest`
+In [upstream Actions](https://github.com/SimVascular/svMultiPhysics/actions/workflows/svmultiphysics-image.yml), select **Build svMultiPhysics images**, choose **Run workflow**, and select the **main** branch. The workflow branch is `main`; the release tag goes in the input field.
+
+Dispatch the workflow as an authorized upstream release maintainer. GitHub requires repository write access for [manual dispatch](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), and any additional repository Actions restrictions still apply. The workflow rejects runs from forks or refs other than `main`; that guard checks the source, not team membership. The workflow also supports `workflow_call` with the same inputs and source restrictions.
+
+| Required input | How to choose it |
+| --- | --- |
+| `svmultiphysics_ref` | The complete final solver tag, such as `v1.0.0.3`. Use the tag on the GitHub Release, not `main`, a commit SHA, or a `-dev`/`-rc` tag. It must point to a commit on upstream `main` and agree with that commit's `release.json`. |
+| `dependency_image` | A fully qualified GHCR tag or digest reference. For a new run, copy the **Dependency image (resolved digest)** reference from the solver's GitHub Release. A tag is accepted only if it resolves to that same image digest. The dependency image can be from an earlier release. On a rerun, reuse the exact input string from the original run: the original reference and the resolved digest are both checked against existing image provenance. |
+
+#### Validation and evidence
+
+1. **Resolve and verify image inputs** checks that the GitHub Release records the expected solver tag, commit, Release build type, and dependency image. It verifies the SHA-256, version, and architecture of both solver packages and the pinned svZeroDSolver package. Check the job summary for the resolved inputs before reviewing the builds.
+2. **Build default image** and **Build trilinos image** install the verified packages in the digest-pinned dependency image and check OCI provenance labels. The image artifacts include the saved images, inspection output, and provenance records.
+3. **Validate default image** and **Validate trilinos image** load those artifacts and check the installed solver identity (`svmultiphysics --version`), package metadata and provenance, shared libraries, and MPI startup at 1, 3, and 4 ranks. They run the integration suite against the installed solver using fixtures from the release commit. Check that both validation jobs passed and review their summaries and JUnit XML test-result artifacts.
+
+#### Publication and safe reruns
+
+After both configurations pass validation, **Publish validated images** loads those same artifacts and publishes them to GHCR without rebuilding. For solver version `<version>` without the leading `v`, the final references are:
+
+- `ghcr.io/simvascular/svmultiphysics:<version>-default`
+- `ghcr.io/simvascular/svmultiphysics:<version>-trilinos`
+
+Check the publication summary for both references and registry digests. Use those full references to inspect or pull the images. This workflow does not publish to Docker Hub or update a `latest` tag.
+
+- **Both tags already match:** the workflow reports their registry digests and skips build, validation, and publication. This is a provenance check, not a fresh test run; use the original run for test evidence.
+- **Only one tag matches:** dispatch a new run with the same inputs. Both configurations are rebuilt and validated before publication. A matching existing tag is left unchanged; only the missing tag is pushed, and both remote digests are verified.
+- **A tag conflicts:** the workflow fails rather than overwriting it. Confirm the inputs and inspect the existing image's provenance before deciding how to recover.
+
+#### Troubleshooting
+
+| Failure | What to check |
+| --- | --- |
+| Cannot start the workflow, or the source or tag is rejected | Check that you selected upstream `main` and supplied an existing final release tag. If the Run workflow button is unavailable, ask a repository maintainer to verify Actions access. |
+| Dependency image does not match | The image must exist in GHCR and resolve to the **Dependency image (resolved digest)** reference on the GitHub Release. This is the image used to build the Ubuntu packages. It can come from an earlier release and does not need to share the solver's source commit. |
+| Solver commit does not match | Compare the commit pointed to by the solver release tag with **Built solver commit** on the GitHub Release. This check is independent of the dependency image check. |
+| Package missing or checksum, version, or architecture check fails | Check the Debian packages and checksum assets on the solver release and the svZeroDSolver pin in the tagged `release.json`. Investigate the asset or pin before retrying; do not bypass the check. |
+| Image build or validation fails | Open the failing configuration's logs. Check the package-install and image-export steps for build failures; for validation failures, check the solver identity, shared-library and MPI steps, and any available JUnit XML results. Both configurations must pass before publication. |
+| GHCR returns an authorization error or a tag cannot be inspected | Verify upstream Actions access and that the repository workflow token can read the dependency package and write the solver package. Resolve the access or registry error before treating an uninspectable tag as absent. |
+| Existing tag conflicts or publication stops after one push | Compare the existing tag's labels and digest with the original run and release records. For a matching partial publication, rerun with the same inputs. For a conflict, stop and involve a release maintainer; do not manually overwrite the tag. |
 
 ### 7. Documentation Workflow (`workflows/documentation.yml`)
 
@@ -191,7 +224,7 @@ Configures code coverage reporting with Codecov:
    2. "documentation" in `documentation.yml`
    3. "Required Tests Summary" in `fast-tests.yml`
    4. "review-policy" from the svMultiPhysics Review Policy app
-2. **Docker Releases**: Docker images are automatically built and pushed when changes are merged to `main`
+2. **Solver Image Releases**: Run [Build svMultiPhysics images](#6-build-svmultiphysics-images-workflowssvmultiphysics-imageyml) from `main` after the final Ubuntu packages are published.
 3. **Documentation**: Documentation is automatically deployed to GitHub Pages from the `main` branch
 
 ## Dependencies
@@ -201,5 +234,5 @@ Configures code coverage reporting with Codecov:
 The workflows require the following secrets to be configured in the repository settings:
 
 - `CODECOV_TOKEN`: Token for uploading coverage reports to Codecov
-- `DOCKER_PASSWORD`: Password for DockerHub authentication
-- `GITHUB_TOKEN`: Automatically provided by GitHub for documentation deployment
+- `DOCKER_PASSWORD`: Used by workflows that publish to Docker Hub, not by the svMultiPhysics release image workflow
+- `GITHUB_TOKEN`: Automatically provided by GitHub; the release image workflow uses it for GHCR access with per-job read or write permissions
