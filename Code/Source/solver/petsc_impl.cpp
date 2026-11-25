@@ -1121,7 +1121,10 @@ void PetscLinearAlgebra::PetscImpl::coupled_neumann_dofs(const ComMod& com_mod,
       continue;
     }
     for (int i = 0; i < faDof; i++) {
-      tangent.owned_rows.emplace_back(plhs.ltg[Ac]*dof + i, W_(i,Ac) * face.unit_pressure_load(i,a));
+      // Shared Dirichlet faces sum the mask across ranks. Any nonzero value is free.
+      if (W_(i,Ac) != 0.0) {
+        tangent.owned_rows.emplace_back(plhs.ltg[Ac]*dof + i, face.unit_pressure_load(i,a));
+      }
     }
   }
 
@@ -1129,8 +1132,10 @@ void PetscLinearAlgebra::PetscImpl::coupled_neumann_dofs(const ComMod& com_mod,
   for (int a = 0; a < face.flowrate_derivative.ncols(); a++) {
     const int Ac = face.flowrate_derivative_node_indices(a);
     for (int i = 0; i < faDof; i++) {
-      tangent.columns.push_back(plhs.ltg[Ac]*dof + i);
-      tangent.flux.push_back(W_(i,Ac) * face.flowrate_derivative(i,a));
+      if (W_(i,Ac) != 0.0) {
+        tangent.columns.push_back(plhs.ltg[Ac]*dof + i);
+        tangent.flux.push_back(face.flowrate_derivative(i,a));
+      }
     }
   }
 }
