@@ -9,6 +9,7 @@
 //
 #include "Simulation.h"
 #include "Integrator.h"
+#include "simvascular_version.h"
 
 #include "all_fun.h"
 #include "bf.h"
@@ -128,28 +129,19 @@ void iterate_precomputed_time(Simulation* simulation, SolutionStates& solutions)
         // in time and no interpolation is performed
         // If there are multiple temporal slices, then the solution is linearly interpolated
         // between the known time values and the current time.
-        double precompDt = com_mod.precompDt;
-        double preTT = precompDt * (Ys.nslices() - 1);
-        double cT = cTS * dt;
-        double rT = std::fmod(cT, preTT);
-        int n1, n2;
-        double alpha;
-        if (precompDt == dt) {
-          alpha =  0.0;
-          if (cTS < Ys.nslices()) {
-            n1 = cTS - 1;
-          } else {
-            n1 = cTS % Ys.nslices() - 1;
-          }
-        } else {
-          n1 = static_cast<int>(rT / precompDt) - 1;
-          alpha = std::fmod(rT, precompDt);
-        }
-        n2 = n1 + 1;
+        // Slice k is the solution at time k*Time_step. Periodic slices are one period of
+        // nslices*Time_step, so slice 0 is not repeated at the end. Otherwise the last
+        // slice is held after its time.
+        const int nslices = Ys.nslices();
+        double s = cTS * (dt / com_mod.precompDt);
+        s = com_mod.precompPeriodic ? std::fmod(s, nslices) : std::fmin(s, nslices - 1.0);
+        const int n1 = static_cast<int>(s);
+        const int n2 = (n1 + 1) % nslices;
+        const double alpha = s - n1;
         for (int i = 0; i < tnNo; i++) {
           for (int j = 0; j < nsd; j++) {
             if (alpha == 0.0) {
-              Yn(j, i) = Ys(j, i, n2);
+              Yn(j, i) = Ys(j, i, n1);
             } else {
               Yn(j, i) = (1.0 - alpha) * Ys(j, i, n1) + alpha * Ys(j, i, n2);
             }
@@ -480,12 +472,6 @@ void iterate_solution(Simulation* simulation)
       vtk_xml::write_vtus(simulation, solutions, /* lAvg = */ false);
     }
 
-    // [NOTE] Not implemented.
-    //
-    if (com_mod.pstEq) {
-      //CALL OUTDNORM()
-    }
-
     if (com_mod.ibFlag) {
       //CALL IB_OUTCPUT()
     }
@@ -560,6 +546,24 @@ void run_simulation(Simulation* simulation)
 }
 
 
+static void print_version()
+{
+#if defined(WITH_TRILINOS) && defined(USE_PETSC)
+  const char* configuration = "trilinos-petsc";
+#elif defined(WITH_TRILINOS)
+  const char* configuration = "trilinos";
+#elif defined(USE_PETSC)
+  const char* configuration = "petsc";
+#else
+  const char* configuration = "default";
+#endif
+  std::cout << "[svMultiPhysics] version " << SV_FULL_VERSION
+            << " tag " << SV_SOURCE_TAG
+            << " commit " << SV_SOURCE_COMMIT
+            << " configuration " << configuration << std::endl;
+}
+
+
 /// @brief Run a simulation from the command line using the name of a solver input 
 /// XML file as an argument.
 //
@@ -568,6 +572,11 @@ int main(int argc, char *argv[])
   if (argc < 2) {
     std::cout << "[svMultiPhysics] ERROR: The svMultiPhysics program requires the solver input XML file name as an argument." << std::endl;
     exit(1);
+  }
+
+  if (std::string(argv[1]) == "--version") {
+    print_version();
+    return 0;
   }
 
   // Process extra arguments for XML parameter substitution.

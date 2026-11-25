@@ -154,7 +154,7 @@ C++ functions are defined within a `namespace` defined for each Fortran file. Fo
            - [<b>set_bc::genBC_Integ_X(com_mod, cm_mod, "I")</b>](#)
            - [<b>set_bc::calc_der_cpl_bc(com_mod, cm_mod)</b>](#)
            - [<b>fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr)</b>](#fsi_ls_ini) 
-           - [<b>fsils_bc_create(com_mod.lhs, lsPtr, i, nsd, BcType::BC_TYPE_Dir, gNodes)</b>](#fsils_bc_create)
+           - [<b>fsils_bc_create(com_mod.lhs, lsPtr, nsd, BcType::BC_TYPE_Dir, gNodes)</b>](#fsils_bc_create)
          - [<b>set_bc::set_bc_dir(com_mod, com_mod.Ao, com_mod.Yo, com_mod.Do)</b>](#set_bc_dir) - Preparing BCs
            - [<b>set_bc::set_bc_dir_l(com_mod, bc, com_mod.msh[iM].fa[iFa], tmpA, tmpY, lDof)</b>](#set_bc_dir_l)
          - [<b>txt_ns::txt(simulation, true)</b>]() -
@@ -1269,7 +1269,7 @@ Modifies:
  
  - `fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr)`
  
- - `fsils_bc_create(com_mod.lhs, lsPtr, i, nsd, BcType::BC_TYPE_Dir, gNodes)`
+ - `fsils_bc_create(com_mod.lhs, lsPtr, nsd, BcType::BC_TYPE_Dir, gNodes)`
  
 
  
@@ -1286,15 +1286,15 @@ Modifies:
  
  ```
  
- - `fsils_bc_create(com_mod.lhs, lsPtr, lFa.nNo, nsd, BcType::BC_TYPE_Dir, gNodes, sVl)`
+ - `fsils_bc_create(com_mod.lhs, lsPtr, BcType::BC_TYPE_Dir, gNodes, sVl)`
  
  
 <!-- =================== -->
 <!--    fsils_bc_create  -->
 <!-- =================== -->
 
-<h2 id="fsils_bc_create"> void fsils_bc_create(FSILS_lhsType& lhs, int faIn, int nNo, int dof, BcType BC_type, const Vector<int>& gNodes,
-    Array<double> Val) </h2>
+<h2 id="fsils_bc_create"> void fsils_bc_create(FSILS_lhsType& lhs, int faIn, BcType BC_type, const Vector<int>& gNodes,
+    const Array<double>& Val) </h2>
 
 [bc.cpp](https://github.com/ktbolt/svFSI/blob/Implement-svFSI-using-cpp_19/Code/Source/svFSILS_cinterface/bc.cpp)
 
@@ -1303,9 +1303,9 @@ Modifies:
  lhs.face[faIn]
  ```
  
- - `MPI_Allreduce(&a, &Ac, 1, cm_mod::mpint, MPI_SUM, lhs.commu.comm)`
+ - `MPI_Allreduce(&has_nodes, &num_processes_with_nodes, 1, cm_mod::mpint, MPI_SUM, lhs.commu.comm)`
  
- - `fsils_commuv(lhs, dof, v)`
+ - `fsils_commuv(lhs, face.dof, v)`
  
   
 <!-- =================== -->

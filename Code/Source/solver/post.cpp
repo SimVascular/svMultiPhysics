@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "post.h"
+#include "prestrain.h"
 
 #include "ActiveStress.h"
 #include "Core/Exception.h"
@@ -771,6 +772,13 @@ void fib_stretch(const ComMod& com_mod, const int iEq, const mshType& lM,
       }
       auto fl = mat_fun::mat_mul(F, fiber);
       double lambda = utils::norm(fl);
+
+      // A prestrained fiber is already stretched on the mesh: measure from its
+      // stress-free length, as the material model does (see prestrain.h).
+      if (lM.prestrain.has_prestrain()) {
+        const Eigen::Map<const Eigen::VectorXd> f(fiber.data(), nsd);
+        lambda *= f.norm() / (lM.prestrain.get(g, e).inverse() * f).norm();
+      }
 
       // L2 projection from integration points to nodes
       double w = lM.w(g)*Jac;
@@ -1842,6 +1850,8 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
   Array<double> yl(tDof,fs.eNoN); 
   Array<double> fibers;
   Vector<double> resl(m); 
+
+  const bool prestrained = lM.prestrain.has_prestrain();
   Array<double> Nx(nsd,fs.eNoN); 
   Vector<double> N(fs.eNoN);
   Vector<int> element_nodes(fs.eNoN);
@@ -1935,8 +1945,17 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
       const auto disp = eigen_view_rows<nsd>(dl, i);  // nodal displacements
       const auto vel  = eigen_view_rows<nsd>(yl, i);  // nodal velocities
 
-      // Deformation gradient: F = I + Grad(u)
-      const Matrix<nsd> F = Im + disp * Nxm.transpose();
+      // Deformation gradient from the stress-free configuration: F = (I + Grad u) F0.
+      // Output of a quadratic element uses a linear one's quadrature, so takes
+      // the element average of the prestrain.
+      Matrix<nsd> F0 = Im;
+      if (prestrained) {
+        F0 = (fs.nG == lM.nG) ? lM.prestrain.get(g, e) : lM.prestrain.get_mean(e);
+        if (lM.fibers.has_fibers()) {
+          eigen_view_mutable(fibers) = (F0.inverse() * eigen_view<nsd>(fibers)).colwise().normalized();
+        }
+      }
+      const Matrix<nsd> F = (Im + disp * Nxm.transpose()) * F0;
       const double detF = F.determinant();
 
       Vector<double> ed(com_mod.nsymd);
@@ -2070,6 +2089,14 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
               sigma(1,0) = sigma(0,1);
             }
 
+            // The VTK writer adds nodal prestress during prestress initialization.
+            if (!com_mod.compute_prestress) {
+              sigma += S0;
+            }
+
+            // Small-strain theory: the 2nd Piola-Kirchhoff stress output equals sigma.
+            S = sigma;
+
           } else if (cPhys == EquationType::phys_ustruct) {
             double p = 0.0;
             for (int a = 0; a < fs.eNoN; a++) {
@@ -2083,7 +2110,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
                 eigen_view<nsd>(fibers), Ta, S, Dm, Ja);
 
             static mat_models::ViscousResponse<nsd> visc;
-            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            visc.update(eq.dmn[cDmn], fs.eNoN, mat_fun::eigen_view<nsd>(Nx), vx, F, recompute_visc);
             // Match assembly: elastic + viscous + prestress.
             S = S + visc.S() + S0;
 
@@ -2104,7 +2131,7 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
                 eigen_view<nsd>(fibers), Ta, S, Dm, Ja);
 
             static mat_models::ViscousResponse<nsd> visc;
-            visc.update(eq.dmn[cDmn], fs.eNoN, Nx, vx, F, recompute_visc);
+            visc.update(eq.dmn[cDmn], fs.eNoN, mat_fun::eigen_view<nsd>(Nx), vx, F, recompute_visc);
             // Match assembly: elastic + viscous + prestress.
             S = S + visc.S() + S0;
 
@@ -2194,13 +2221,13 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
     sF = 0.0;
     sA = 0.0;
 
-    Vector<double> xi0(nsd);
-    for (int g = 0; g < fs.nG; g++) {
-      for (int i = 0; i < fs.xi.nrows(); i++) {
-        xi0 = xi0 + fs.xi(i,g);
-      }
-    }
-    xi0 = xi0 / static_cast<double>(fs.nG);
+    // Reference coordinates of the nodes of the higher-order parent element.
+    // They give the position of the edge, face and center nodes within the
+    // low-order element, where the low-order shape functions below are
+    // evaluated to weight the corner values.
+    //
+    Array<double> xiN(nsd, lM.eNoN);
+    nn::get_nodal_xi(nsd, lM.eType, lM.eNoN, xiN);
 
     Array<double> yl(m,fs.eNoN); 
     Vector<double> eNds(tnNo);
@@ -2236,15 +2263,13 @@ void tensor_post_impl(Simulation* simulation, const mshType& lM, const int m, Ar
 
       for (int a = fs.eNoN; a < lM.eNoN; a++) {
         int Ac = lM.IEN(a,e);
-        auto xp = com_mod.x.col(Ac);
-        auto xi = xi0;
-        nn::get_nnx(nsd, fs.eType, fs.eNoN, xl, fs.xib, fs.Nb, xp, xi, N, Nx);
+        auto xi = xiN.col(a);
+        nn::get_gnn(nsd, fs.eType, fs.eNoN, xi, N, Nx);
 
         resl = 0.0;
         for (int i = 0; i < fs.eNoN; i++) {
           resl = resl + N(i)*yl.col(i);
         }
-        i = fs.eNoN - 1;
 
         if (eNds(Ac) == 0) {
           eNds(Ac) = 1;

@@ -1505,7 +1505,8 @@ namespace {
  * @param[out] Kvis_v Viscous tangent matrix contribution due to velocity
  */
 template <int nsd>
-void compute_visc_stress_potential(const double mu, const int eNoN, const Array<double>& Nx,
+void compute_visc_stress_potential(const double mu, const int eNoN,
+                           const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nxm,
                            const Matrix<nsd>& vx, const Matrix<nsd>& F,
                            Matrix<nsd>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v) {
 
@@ -1516,7 +1517,6 @@ void compute_visc_stress_potential(const double mu, const int eNoN, const Array<
     const Matrix<nsd> F_vxt = F * vx.transpose();
 
     // F_Nx(i,a) = sum_j F(i,j) * Nx(j,a), and likewise for vx.
-    const auto Nxm = eigen_view<nsd>(Nx);
     const NodalMatrix<nsd> F_Nx  = F  * Nxm;
     const NodalMatrix<nsd> vx_Nx = vx * Nxm;
 
@@ -1564,7 +1564,8 @@ void compute_visc_stress_potential(const double mu, const int eNoN, const Array<
  * @param[out] Kvis_v Viscous tangent matrix contribution due to velocity
  */
 template <int nsd>
-void compute_visc_stress_newtonian(const double mu, const int eNoN, const Array<double>& Nx,
+void compute_visc_stress_newtonian(const double mu, const int eNoN,
+                           const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nxm,
                            const Matrix<nsd>& vx, const Matrix<nsd>& F,
                            Matrix<nsd>& Svis, Array3<double>& Kvis_u, Array3<double>& Kvis_v) {
 
@@ -1581,7 +1582,6 @@ void compute_visc_stress_newtonian(const double mu, const int eNoN, const Array<
     const Matrix<nsd> ddev = d - (d.trace() / nsd) * Idm;
 
     // Nx_Fi(i,a) = sum_j Nx(j,a) * Fi(j,i), which is Fi^T * Nx.
-    const auto Nxm = eigen_view<nsd>(Nx);
     const NodalMatrix<nsd> Nx_Fi       = Fi.transpose() * Nxm;
     const NodalMatrix<nsd> ddev_Nx_Fi  = ddev  * Nx_Fi;
     const NodalMatrix<nsd> vx_Fi_Nx_Fi = vx_Fi * Nx_Fi;
@@ -1621,7 +1621,8 @@ void compute_visc_stress_newtonian(const double mu, const int eNoN, const Array<
 /// zeroes the contributions when the domain has no viscosity model.
 template <int nsd>
 void ViscousResponse<nsd>::update(const dmnType& lDmn, const int eNoN,
-                                 const Array<double>& Nx, const Matrix<nsd>& vx, const Matrix<nsd>& F,
+                                 const Eigen::Ref<const Eigen::Matrix<double, nsd, Eigen::Dynamic>>& Nx,
+                                 const Matrix<nsd>& vx, const Matrix<nsd>& F,
                                  const bool recompute) {
 
     // Reuse current stored values.

@@ -34,6 +34,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace nn {
@@ -669,6 +670,46 @@ void get_nn_bnds(const ComMod& com_mod, mshType& mesh)
   get_nn_bnds(nsd, eType, eNoN, mesh.xib, mesh.Nb);
 }
 
+/// @brief Reference coordinates of the nodes of a parent element.
+///
+/// 'xi(i,a)' is the i-th reference coordinate of solver-local node 'a', in the
+/// same node ordering and the same reference coordinates 'get_gnn' uses: the
+/// coordinates come from the FE Basis reference node layout, permuted into
+/// solver node order by 'basis_index_for_solver_node'.
+///
+/// They are a property of the element type, so they are the same for every
+/// element of that type whatever its shape in the mesh.
+//
+void get_nodal_xi(const int insd, consts::ElementType eType, const int eNoN, Array<double>& xi)
+{
+  const auto& basis = basis_for_solver_element(eType);
+  const auto& nodes = basis.nodes();
+
+  if (nodes.size() != static_cast<std::size_t>(eNoN)) {
+    svmp::raise<febasis::BasisNodeOrderingException>("FE Basis node count " + std::to_string(nodes.size()) +
+            " does not match solver eNoN " + std::to_string(eNoN) + " for " + solver_element_name(eType));
+  }
+
+  if (xi.nrows() < basis.dimension()) {
+    svmp::raise<febasis::BasisConfigurationException>("xi has " + std::to_string(xi.nrows()) +
+            " rows but FE Basis element requires " + std::to_string(basis.dimension()) +
+            " reference coordinates");
+  }
+
+  // Rows beyond the element's own reference dimension, which a
+  // lower-dimensional element in a higher-dimensional mesh has, are zero, as
+  // they are for the Gauss points in make_basis_point.
+  const int ndim = std::min<int>(insd, basis.dimension());
+
+  for (int a = 0; a < eNoN; ++a) {
+    const auto basis_index = basis_index_for_solver_node(eType, a);
+
+    for (int d = 0; d < xi.nrows(); ++d) {
+      xi(d, a) = (d < ndim) ? nodes[basis_index][static_cast<std::size_t>(d)] : 0.0;
+    }
+  }
+}
+
 void get_nnx(const int nsd, const consts::ElementType eType, const int eNoN, const Array<double>& xl, 
     const Array<double>& xib, const Array<double>& Nb, const Vector<double>& xp, Vector<double>& xi, 
     Vector<double>& N, Array<double>& Nx)
@@ -896,49 +937,46 @@ void gnn(const int eNoN, const int nsd, const int insd, Array<double>& Nxi, Arra
   }
 }
 
-Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
-                    const int g, const Array<double> &Nx,
-                    const SolutionStates &solutions,
-                    consts::MechanicalConfigurationType cfg,
-                    const unsigned int displacement_index) {
+namespace {
+
+/// @brief Get the positions of the nodes of the mesh element that a face
+/// element belongs to, and the order that lists the face element nodes first.
+///
+/// @param[in] com_mod The common module.
+/// @param[in] lFa The boundary face.
+/// @param[in] e The face-local index of the face element.
+/// @param[in] eNoNb The number of nodes of the face element.
+/// @param[in] solutions The solution states that the displacement fields are
+///   extracted from.
+/// @param[in] cfg The configuration in which the positions are taken
+///   (reference, old, current or intermediate).
+/// @param[in] displacement_index The index of the displacement field in the
+///   solution arrays.
+/// @param[out] lX The positions of the nodes of the mesh element (nsd x number
+///   of mesh element nodes), nodes ordered as in the mesh element.
+/// @param[out] ptr The indices in the mesh element of its nodes, listed with
+///   the nodes of the face element first, in the order of the face element,
+///   and the other nodes after.
+void get_mesh_element_nodes(const ComMod &com_mod, const faceType &lFa,
+                            const int e, const int eNoNb,
+                            const SolutionStates &solutions,
+                            consts::MechanicalConfigurationType cfg,
+                            const unsigned int displacement_index,
+                            Array<double> &lX, Vector<int> &ptr) {
   // Local aliases for displacement arrays
   const auto& Dn = solutions.current.get_displacement();
   const auto& Do = solutions.old.get_displacement();
-  auto& cm = com_mod.cm;
+  const auto& Dg = solutions.intermediate.get_displacement();
 
   const int nsd = com_mod.nsd;
-  const int insd = Nx.nrows();
-  const int eNoNb = Nx.ncols();
-
-  Vector<double> n(nsd);
-
-  #define n_debug_gnnb 
-  #ifdef debug_gnnb 
-  DebugMsg dmsg(__func__, com_mod.cm.idcm());
-  dmsg.banner();
-  dmsg << "e: " << e+1;
-  dmsg << "g: " << g+1;
-  dmsg << "nsd: " << nsd;
-  dmsg << "insd: " << insd;
-  dmsg << "eNoNb: " << eNoNb;
-  dmsg << "cfg: " << cfg;
-  #endif
 
   int iM = lFa.iM;
   int Ec = lFa.gE(e);
   auto& msh = com_mod.msh[iM];
   int eNoN = msh.eNoN;
 
-  #ifdef debug_gnnb 
-  dmsg << "iM: " << iM+1;
-  dmsg << "Ec: " << Ec+1;
-  dmsg << "eNoN: " << eNoN;
-  dmsg << "msh.IEN.nrows: " << msh.IEN.nrows();
-  dmsg << "msh.IEN.ncols: " << msh.IEN.ncols();
-  #endif
-
-  Array<double> lX(nsd,eNoN); 
-  Vector<int> ptr(eNoN); 
+  lX.resize(nsd,eNoN);
+  ptr.resize(eNoN);
   std::vector<bool> setIt(eNoN);
 
   // Creating a ptr list that contains pointer to the nodes of elements
@@ -1021,14 +1059,127 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
             lX(i, a) = lX(i, a) + Dn(displacement_index + i, Ac);
           }
           break;
+        case MechanicalConfigurationType::intermediate_timestep:
+          for (int i = 0; i < lX.nrows(); i++) {
+            // Add displacement at the intermediate time level
+            lX(i, a) = lX(i, a) + Dg(displacement_index + i, Ac);
+          }
+          break;
         default:
           svmp::raise<fe::InvalidArgumentException>("gnnb: invalid MechanicalConfigurationType provided");
       }
     }
   }
+}
+
+/// @brief Return the tangent vectors of a face element at a Gauss point.
+///
+/// Tangent vector 'k' is the sum over the nodes of the face element of
+/// Nx(k,a) times the position of node 'a'. utils::cross() of the tangent
+/// vectors, multiplied by the returned sign, is the area-weighted outward
+/// normal that gnnb() returns.
+///
+/// Not available for the faces of shell meshes, where the normal is not the
+/// cross product of the tangent vectors.
+///
+/// @param[in] com_mod The common module.
+/// @param[in] lFa The boundary face.
+/// @param[in] e The face-local index of the element.
+/// @param[in] Nx The shape function derivatives at the Gauss point
+///   (insd x eNoNb).
+/// @param[in] solutions The solution states that the displacement fields are
+///   extracted from.
+/// @param[in] cfg The configuration in which the tangent vectors are computed
+///   (reference, old or current).
+/// @param[in] displacement_index The index of the displacement field in the
+///   solution arrays.
+///
+/// @return The tangent vectors, one per column (nsd x insd), and the sign of
+///   the outward normal: 1 if utils::cross() of the tangent vectors points out
+///   of the mesh, -1 if it points into it.
+std::pair<Array<double>, double>
+face_element_tangents(const ComMod &com_mod, const faceType &lFa, const int e,
+                      const Array<double> &Nx, const SolutionStates &solutions,
+                      consts::MechanicalConfigurationType cfg,
+                      const unsigned int displacement_index) {
+  const int nsd = com_mod.nsd;
+  const int insd = Nx.nrows();
+  const int eNoNb = Nx.ncols();
+
+  if (com_mod.msh[lFa.iM].lShl) {
+    svmp::raise<fe::InvalidArgumentException>(
+        "[svMultiPhysics::nn] ERROR: The '" + lFa.name +
+        "' face belongs to a shell mesh, where the normal is not the cross "
+        "product of the tangent vectors.");
+  }
+
+  Array<double> lX;
+  Vector<int> ptr;
+  get_mesh_element_nodes(com_mod, lFa, e, eNoNb, solutions, cfg,
+                         displacement_index, lX, ptr);
+
+  Array<double> xXi(nsd,insd);
+
+  for (int a = 0; a < eNoNb; a++) {
+    int b = ptr(a);
+    for (int i = 0; i < insd; i++) {
+      for (int j = 0; j < nsd; j++) {
+        xXi(j,i) = xXi(j,i) + Nx(i,a)*lX(j,b);
+      }
+    }
+  }
+
+  // Finding the sign of the outward normal. 'a' locates on the face and 'b'
+  // in the interior of the element. v points outward along ba
+  //
+  int a = ptr(0);
+  int b = ptr(lFa.eNoN);
+  Vector<double> v(nsd);
+
+  for (int i = 0; i < nsd; i++) {
+    v(i) = lX(i, a) - lX(i, b);
+  }
+
+  const double outward_sign = (utils::cross(xXi) * v < 0.0) ? -1.0 : 1.0;
+
+  return {xXi, outward_sign};
+}
+
+} // namespace
+
+Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
+                    const int g, const Array<double> &Nx,
+                    const SolutionStates &solutions,
+                    consts::MechanicalConfigurationType cfg,
+                    const unsigned int displacement_index) {
+  const int nsd = com_mod.nsd;
+  const int insd = Nx.nrows();
+  const int eNoNb = Nx.ncols();
+
+  Vector<double> n(nsd);
+
+  #define n_debug_gnnb
+  #ifdef debug_gnnb
+  DebugMsg dmsg(__func__, com_mod.cm.idcm());
+  dmsg.banner();
+  dmsg << "e: " << e+1;
+  dmsg << "g: " << g+1;
+  dmsg << "nsd: " << nsd;
+  dmsg << "insd: " << insd;
+  dmsg << "eNoNb: " << eNoNb;
+  dmsg << "cfg: " << cfg;
+  #endif
+
+  auto& msh = com_mod.msh[lFa.iM];
+  int eNoN = msh.eNoN;
 
   // Calculating surface deflation
   if (msh.lShl) {
+    Array<double> lX;
+    Vector<int> ptr;
+    get_mesh_element_nodes(com_mod, lFa, e, eNoNb, solutions, cfg,
+                           displacement_index, lX, ptr);
+
     // Since the face has only one parametric coordinate (edge), find
     // its normal from cross product of mesh normal and interior edge
 
@@ -1094,32 +1245,12 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
     return n;
 
   } else {
+    const auto [tangents, outward_sign] = face_element_tangents(
+        com_mod, lFa, e, Nx, solutions, cfg, displacement_index);
 
-    Array<double> xXi(nsd,insd);
+    n = utils::cross(tangents);
 
-    for (int a = 0; a < eNoNb; a++) {
-      int b = ptr(a);
-      for (int i = 0; i < insd; i++) {
-        for (int j = 0; j < nsd; j++) {
-          xXi(j,i) = xXi(j,i) + Nx(i,a)*lX(j,b);
-        }
-      }
-    }
-
-    n = utils::cross(xXi);
-
-    // Changing the sign if neccessary. 'a' locates on the face and 'b'
-    // in the interior of the element. v points outward along ba
-    //
-    a = ptr(0);
-    int b = ptr(lFa.eNoN);
-    Vector<double> v(nsd);
-
-    for (int i = 0; i < nsd; i++) {
-      v(i) = lX(i, a) - lX(i, b);
-    }
-
-    if (n * v < 0.0) {
+    if (outward_sign < 0.0) {
       n = -n;
     }
 
@@ -1135,6 +1266,61 @@ Vector<double> gnnb(const ComMod &com_mod, const faceType &lFa, const int e,
   return gnnb(com_mod, lFa, e, g, Nx, solutions,
               consts::MechanicalConfigurationType::reference,
               unused_displacement_index);
+}
+
+Array3<double>
+derivative_of_tangents_cross_product_wrt_position(const Array<double> &tangents,
+                                                  const Array<double> &Nx) {
+  const int nsd = tangents.nrows();
+  const int insd = Nx.nrows();
+  const int eNoNb = Nx.ncols();
+
+  Array3<double> derivative(nsd, nsd, eNoNb);
+
+  // The cross product is linear in each tangent vector. So its derivative
+  // with respect to component 'i' of tangent 'k' is the cross product
+  // obtained with tangent 'k' replaced by the i-th unit vector. The derivative
+  // of that component with respect to coordinate 'i' of node 'a' is Nx(k,a).
+  for (int k = 0; k < insd; k++) {
+    for (int i = 0; i < nsd; i++) {
+      Array<double> modified_tangents(tangents);
+
+      for (int j = 0; j < nsd; j++) {
+        modified_tangents(j, k) = (j == i) ? 1.0 : 0.0;
+      }
+
+      const auto cross_product_of_modified_tangents =
+          utils::cross(modified_tangents);
+
+      for (int a = 0; a < eNoNb; a++) {
+        for (int j = 0; j < nsd; j++) {
+          derivative(j, i, a) +=
+              Nx(k, a) * cross_product_of_modified_tangents(j);
+        }
+      }
+    }
+  }
+
+  return derivative;
+}
+
+Array3<double> derivative_of_outward_normal_wrt_position(
+    const ComMod &com_mod, const faceType &lFa, const int e,
+    const Array<double> &Nx, const SolutionStates &solutions,
+    consts::MechanicalConfigurationType cfg,
+    const unsigned int displacement_index) {
+  const auto [tangents, outward_sign] = face_element_tangents(
+      com_mod, lFa, e, Nx, solutions, cfg, displacement_index);
+
+  // The nodes are not necessarily ordered in such a way to guarantee that the
+  // normal they define points outward. Therefore, we multiply the derivative of
+  // the cross product by the outward sign, to ensure that it is consistent with
+  // the outward normal.
+  auto derivative =
+      derivative_of_tangents_cross_product_wrt_position(tangents, Nx);
+  derivative *= outward_sign;
+
+  return derivative;
 }
 
 /// @brief Compute shell kinematics: normal vector, covariant & contravariant basis vectors

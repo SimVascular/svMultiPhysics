@@ -33,7 +33,7 @@ void schur(FSILS_lhsType& lhs, FSILS_subLsType& ls, const int dof, const Array<d
   int mynNo = lhs.mynNo;
 
   Vector<double> X(nNo), P(nNo), SP(nNo), DGP(nNo); 
-  Array<double> GP(dof,nNo), unCondU(dof,nNo);
+  Array<double> GP(dof,nNo);
 
   double time = fsi_linear_solver::fsils_cpu_t();
   ls.success = false;
@@ -76,7 +76,7 @@ void schur(FSILS_lhsType& lhs, FSILS_subLsType& ls, const int dof, const Array<d
     for (auto& face : lhs.face) {
       if (face.coupledFlag) {
         auto unCondU = GP;
-        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, dof, unCondU, GP);
+        add_bc_mul::add_bc_mul(lhs, BcopType::BCOP_TYPE_PRE, unCondU, GP);
         break;
       }
     }

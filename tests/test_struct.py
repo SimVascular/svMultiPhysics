@@ -36,6 +36,20 @@ def test_LV_HolzapfelOgden_passive(n_proc):
     test_folder = "LV_HolzapfelOgden_passive"
     run_with_reference(base_folder, test_folder, fields, n_proc)
 
+def test_LV_HolzapfelOgden_prestrain(n_proc):
+    folder = "LV_HolzapfelOgden_prestrain"
+    prestrain_fields = ["Cauchy_stress", "Def_grad", "Displacement",
+                        "Jacobian", "Stress", "VonMises_stress"]
+
+    prestrain_folder = os.path.join(folder, "1-prestrain")
+    run_with_reference(base_folder, prestrain_folder, prestrain_fields,
+                       n_proc, 3, check_time_value=False,
+                       cell_fields=["Prestrain_F_g" + str(g) for g in range(4)])
+
+    forward_folder = os.path.join(folder, "2-forward")
+    run_with_reference(base_folder, forward_folder, prestrain_fields,
+                       n_proc, 3)
+
 def test_LV_HolzapfelOgden_passive_CANN(n_proc):
     test_folder = "LV_HolzapfelOgden_passive_CANN"
     run_with_reference(base_folder, test_folder, fields, n_proc)
@@ -69,6 +83,13 @@ def test_block_compression_CANN(n_proc):
 def test_directionally_distributed_active_stress(n_proc):
     test_folder = "directionally_distributed_active_stress"
     run_with_reference(base_folder, test_folder, fields, n_proc)
+
+def test_quadratic_tet10(n_proc):
+    """Thick-walled cylinder with TET10 elements whose mid-edge nodes lie on
+    the curved lumen and outer surfaces: the stress-type outputs are
+    interpolated from the corner nodes to the mid-edge nodes."""
+    test_folder = "quadratic_tet10"
+    run_with_reference(base_folder, test_folder, fields, n_proc, t_max=2)
 
 def test_robin(n_proc):
     test_folder = "robin"

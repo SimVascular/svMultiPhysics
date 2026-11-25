@@ -21,12 +21,15 @@ endif()
 #-----------------------------------------------------------------------------
 set(CPACK_PACKAGE_NAME "svMultiPhysics")
 set(CPACK_PACKAGE_VENDOR "SimVascular.org")
-set(CPACK_PACKAGE_CONTACT "SimVascular<sv@simvascular.org>")
+set(CPACK_PACKAGE_CONTACT "SimVascular <sv@simvascular.org>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "SimVascular Solvers")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
 set(CPACK_PACKAGE_VERSION_MAJOR ${SV_MAJOR_VERSION})
 set(CPACK_PACKAGE_VERSION_MINOR ${SV_MINOR_VERSION})
 set(CPACK_PACKAGE_VERSION_PATCH ${SV_PATCH_VERSION})
+if(SV_PACKAGE_VERSION)
+  set(CPACK_PACKAGE_VERSION "${SV_PACKAGE_VERSION}")
+endif()
 set(INSTALL_TYPE_STR)
 string(REPLACE "." "-" SV_INSTALL_VERSION_DIR ${SV_FULL_VERSION})
 
@@ -86,9 +89,25 @@ endif()
 if(LINUX)
   # Package name
   set(CPACK_PACKAGE_FILE_NAME "svMultiPhysics-linux-x64-${SV_FULL_VERSION}${INSTALL_TYPE_STR}")
+  set(CPACK_COMPONENTS_ALL CoreExecutables)
+
+  if(SV_PACKAGE_VERSION AND LSB_DISTRIB STREQUAL "Ubuntu" AND LSB_VERSION MATCHES "^26\\.")
+    if(SV_USE_TRILINOS AND SV_PETSC_DIR)
+      set(_sv_solver_configuration "trilinos-petsc")
+    elseif(SV_USE_TRILINOS)
+      set(_sv_solver_configuration "trilinos")
+    elseif(SV_PETSC_DIR)
+      set(_sv_solver_configuration "petsc")
+    else()
+      set(_sv_solver_configuration "default")
+    endif()
+    set(CPACK_PACKAGE_FILE_NAME "svMultiPhysics-Ubuntu-26-${_sv_solver_configuration}-${SV_PACKAGE_VERSION}")
+    set(CPACK_DEBIAN_PACKAGE_VERSION "${SV_PACKAGE_VERSION}")
+  endif()
 
     if(SV_INSTALLER_TYPE STREQUAL DEB)
         set(CPACK_GENERATOR "DEB")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "liblapack3, openmpi-bin")
         set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local/sv/svMultiPhysics/${SV_INSTALL_VERSION_DIR}")
     elseif(SV_INSTALLER_TYPE STREQUAL TGZ)
       set(CPACK_GENERATOR "TGZ")
@@ -100,23 +119,64 @@ endif()
 # APPLE
 #-----------------------------------------------------------------------------
 if(APPLE)
-  # Package name
-  set(CPACK_PACKAGE_FILE_NAME "svMultiPhysics-darwin-x64-${SV_FULL_VERSION}${INSTALL_TYPE_STR}")
+  if(CMAKE_VERSION VERSION_LESS 3.23)
+    message(FATAL_ERROR "macOS packages require CMake 3.23 or newer")
+  endif()
+
+  if(SV_USE_TRILINOS AND SV_PETSC_DIR)
+    set(_sv_solver_configuration "trilinos-petsc")
+  elseif(SV_USE_TRILINOS)
+    set(_sv_solver_configuration "trilinos")
+  elseif(SV_PETSC_DIR)
+    set(_sv_solver_configuration "petsc")
+  else()
+    set(_sv_solver_configuration "default")
+  endif()
+
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    set(_sv_macos_architecture "arm")
+  else()
+    set(_sv_macos_architecture "x64")
+  endif()
+
+  if(SV_OSX_MAJOR_VERSION STREQUAL "26")
+    set(_sv_macos_release "Tahoe")
+  else()
+    set(_sv_macos_release "${SV_OSX_MAJOR_VERSION}")
+  endif()
+
+  set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+    "svMultiPhysics finite element multiphysics solver (${_sv_solver_configuration})")
+  set(CPACK_COMPONENT_COREEXECUTABLES_DISPLAY_NAME
+    "svMultiPhysics (${_sv_solver_configuration})")
+  set(CPACK_COMPONENT_COREEXECUTABLES_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
+  set(CPACK_PACKAGE_FILE_NAME
+    "svMultiPhysics-MacOS-${_sv_macos_release}-${_sv_macos_architecture}-${_sv_solver_configuration}-${SV_PACKAGE_VERSION}")
+  set(CPACK_PRODUCTBUILD_IDENTIFIER
+    "org.simvascular.svmultiphysics.${_sv_solver_configuration}")
 
   # Components. Just install the svMultiPhysics executable.
   set(CPACK_COMPONENTS_ALL CoreExecutables) 
 
   # Cpack install help
   set(CPACK_GENERATOR "productbuild")
+  set(CPACK_POST_BUILD_SCRIPTS
+    "${CMAKE_CURRENT_SOURCE_DIR}/OSX/AddArm64PackageArchitecture.cmake")
   #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OSX/Info.plist.in
   #  ${CMAKE_CURRENT_BINARY_DIR}/OSX/Info.plist @ONLY)
 
   # Install location
-  set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local/sv/svMultiPhysics/${SV_INSTALL_VERSION_DIR}")
+  set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local/sv/svMultiPhysics/${SV_PACKAGE_VERSION}")
 endif()
 
 if(CPACK_PACKAGE_FILENAME_TAG)
 	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${CPACK_PACKAGE_FILENAME_TAG}")
+endif()
+if(NOT SV_RELEASE_PACKAGE)
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-local")
+  if(LINUX AND SV_INSTALLER_TYPE STREQUAL DEB)
+    set(CPACK_DEBIAN_PACKAGE_VERSION "${SV_PACKAGE_VERSION}~local")
+  endif()
 endif()
 
 message(STATUS "Packname name: ${CPACK_PACKAGE_FILE_NAME}")
